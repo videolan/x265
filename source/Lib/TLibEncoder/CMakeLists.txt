@@ -2,12 +2,12 @@ add_library(TLibEncoder
     AnnexBwrite.h
     NALwrite.cpp NALwrite.h
     SEIwrite.cpp SEIwrite.h
-    SyntaxElementwriter.cpp SyntaxElementWriter.h
+    SyntaxElementWriter.cpp SyntaxElementWriter.h
     TEncAnalyze.cpp TEncAnalyze.h
     TEncBinCoder.h
     TEncBinCoderCABAC.cpp TEncBinCoderCABAC.h
     TEncBinCoderCABACCounter.cpp TEncBinCoderCABACCounter.h
-    TEncCAVLC.cpp TEncCAVLC.h
+    TEncCavlc.cpp TEncCavlc.h
     TEncCfg.h
     TEncCu.cpp TEncCu.h
     TEncEntropy.cpp TEncEntropy.h
