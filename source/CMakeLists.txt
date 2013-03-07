@@ -8,7 +8,7 @@ if(MSVC)
     include_directories(compat/msvc)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wall -Werror)
+    add_definitions(-Wall -Wshadow -Wno-sign-compare -Werror)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(Lib)
