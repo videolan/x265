@@ -12,3 +12,7 @@ add_subdirectory(TLibEncoder)
 add_library(TLibVideoIO
     TLibVideoIO/TVideoIOYuv.cpp
     TLibVideoIO/TVideoIOYuv.h)
+
+if(ENABLE_PPA)
+    add_subdirectory(PPA)
+endif(ENABLE_PPA)

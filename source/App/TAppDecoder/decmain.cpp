@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "TAppDecTop.h"
+#include "PPA/ppa.h"
 
 //! \ingroup TAppDecoder
 //! \{
@@ -60,6 +61,8 @@ int main(int argc, char* argv[])
   fprintf( stdout, NVM_COMPILEDBY );
   fprintf( stdout, NVM_BITS );
   fprintf( stdout, "\n" );
+
+  PPA_INIT();
 
   // create application decoder class
   cTAppDecTop.create();

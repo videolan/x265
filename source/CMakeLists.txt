@@ -13,6 +13,11 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(Lib)
 
+option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
+if(ENABLE_PPA)
+    add_definitions(-DENABLE_PPA)
+endif(ENABLE_PPA)
+
 add_subdirectory(Lib)
 add_subdirectory(App/TAppEncoder)
 add_subdirectory(App/TAppDecoder)

@@ -39,6 +39,7 @@
 #include <iostream>
 #include "TAppEncTop.h"
 #include "TAppCommon/program_options_lite.h"
+#include "PPA/ppa.h"
 
 using namespace std;
 namespace po = df::program_options_lite;
@@ -61,6 +62,8 @@ int main(int argc, char* argv[])
   fprintf( stdout, NVM_COMPILEDBY );
   fprintf( stdout, NVM_BITS );
   fprintf( stdout, "\n" );
+
+  PPA_INIT();
 
   // create application encoder class
   cTAppEncTop.create();
