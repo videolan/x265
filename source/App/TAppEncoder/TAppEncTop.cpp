@@ -44,6 +44,7 @@
 
 #include "TAppEncTop.h"
 #include "TLibEncoder/AnnexBwrite.h"
+#include "PPA/ppa.h"
 
 using namespace std;
 
@@ -417,7 +418,9 @@ Void TAppEncTop::encode()
     xGetBuffer(pcPicYuvRec);
 
     // read input YUV file
+    PPAStartCpuEventFunc(read_yuv);
     m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, m_aiPad );
+    PPAStopCpuEventFunc(read_yuv);
     
     // increase number of received frames
     m_iFrameRcvd++;
@@ -435,13 +438,17 @@ Void TAppEncTop::encode()
     }
 
     // call encoding function for one frame
+    PPAStartCpuEventFunc(encode_frame);
     m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+    PPAStopCpuEventFunc(encode_frame);
     
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )
     {
+      PPAStartCpuEventFunc(bitstream_write);
       xWriteOutput(bitstreamFile, iNumEncoded, outputAccessUnits);
       outputAccessUnits.clear();
+      PPAStopCpuEventFunc(bitstream_write);
     }
   }
 
