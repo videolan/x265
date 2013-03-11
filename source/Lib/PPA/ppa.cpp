@@ -103,6 +103,7 @@ void initializePPA(void)
 
 #else /* linux & unix & cygwin */
 #include <dlfcn.h>
+#include <stdio.h>
 
 #if defined(_M_X64) || defined(__x86_64__) || defined(__amd64__)
 # define PPA_LIB_NAME "libppa64.so"
@@ -113,17 +114,24 @@ void initializePPA(void)
 void initializePPA(void)
 {
     if (ppabase)
+    {
+        printf("PPA: already initialized\n");
         return;
+    }
 
     void *_ppaDllHandle = dlopen(PPA_LIB_NAME, RTLD_LAZY);
     if (!_ppaDllHandle)
+    {
+        printf("PPA: Unable to load %s\n", PPA_LIB_NAME);
         return;
+    }
 
-    FUNC_PPALibInit* _pfuncPpaInit = (FUNC_PPALibInit*)dlsym(_ppaDllHandle, "_InitPpa");
-    _pfuncPpaRelease = (FUNC_PPALibRelease*)dlsym(_ppaDllHandle, "_ReleasePpa");
+    FUNC_PPALibInit* _pfuncPpaInit = (FUNC_PPALibInit*)dlsym(_ppaDllHandle, "InitPpaUtil");
+    _pfuncPpaRelease = (FUNC_PPALibRelease*)dlsym(_ppaDllHandle, "DeletePpa");
 
     if (!_pfuncPpaInit || !_pfuncPpaRelease)
     {
+        printf("PPA: Function bindings failed\n");
         dlclose(_ppaDllHandle);
         return;
     }
@@ -131,6 +139,7 @@ void initializePPA(void)
     ppabase = _pfuncPpaInit(PPACpuAndGroup, PPACpuGroupNums);
     if (!ppabase)
     {
+        printf("PPA: Init failed\n");
         dlclose(_ppaDllHandle);
         return;
     }
