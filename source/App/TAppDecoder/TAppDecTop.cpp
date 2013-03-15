@@ -374,7 +374,7 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   }
   for (std::vector<Int>::iterator it = m_targetDecLayerIdSet.begin(); it != m_targetDecLayerIdSet.end(); it++)
   {
-    if ( nalu->m_reservedZero6Bits == (*it) )
+    if ( nalu->m_reservedZero6Bits == (UInt) (*it) )
     {
       return true;
     }

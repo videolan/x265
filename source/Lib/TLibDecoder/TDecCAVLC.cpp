@@ -800,6 +800,10 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   return;
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4701) // potentially uninitialized local variables
+#endif
+
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
 {
   UInt  uiCode;
