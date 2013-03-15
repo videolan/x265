@@ -12,7 +12,7 @@ if (MSVC_VERSION EQUAL 1600) # VC10
     add_definitions(-DINSTRSET=7 /arch:AVX)
 endif()
 if (MSVC_VERSION EQUAL 1700) # VC11
-    add_definitions(-DINSTRSET=8 /arch:AVX2)
+    add_definitions(-DINSTRSET=7 /arch:AVX)
 endif()
 add_subdirectory(TVectorClass)
 
