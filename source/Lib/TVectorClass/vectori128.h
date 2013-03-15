@@ -288,6 +288,11 @@ static inline bool horizontal_or (Vec128b const & a) {
 *
 *****************************************************************************/
 
+#if _MSC_VER
+#pragma warning(disable: 4244) // type conversion, possible loss of data
+#pragma warning(disable: 4127) // conditional  expression is constant
+#endif
+
 class Vec16c : public Vec128b {
 public:
     // Default constructor:
