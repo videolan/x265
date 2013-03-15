@@ -3050,6 +3050,10 @@ Bool TComDataCU::isSkipped( UInt uiPartIdx )
 // Protected member functions
 // ====================================================================================================================
 
+#if _MSC_VER
+#pragma warning(disable: 4701) // potentially uninitialized local variables
+#endif
+
 Bool TComDataCU::xAddMVPCand( AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir )
 {
   TComDataCU* pcTmpCU = NULL;

@@ -4693,6 +4693,10 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   pcCU->setQPSubParts( qpBest, 0, pcCU->getDepth(0) );
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4701) // potentially uninitialized local variable
+#endif
+
 Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist )
 {
   const UInt uiTrMode = uiDepth - pcCU->getDepth( 0 );
