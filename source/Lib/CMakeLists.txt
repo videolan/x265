@@ -13,6 +13,8 @@ add_library(TLibVideoIO
     TLibVideoIO/TVideoIOYuv.cpp
     TLibVideoIO/TVideoIOYuv.h)
 
+add_subdirectory(TVectorClass)
+
 if(ENABLE_PPA)
     add_subdirectory(PPA)
 endif(ENABLE_PPA)
