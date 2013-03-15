@@ -1,3 +1,9 @@
+if(MSVC)
+    add_definitions(/wd4100) # unreferenced formal parameter
+    add_definitions(/wd4244) # type conversion, possible loss of data
+    add_definitions(/wd4512) # assignment operator could not be generated
+endif(MSVC)
+
 add_executable(encoder encmain.cpp
     TAppEncCfg.cpp TAppEncCfg.h
     TAppEncTop.cpp TAppEncTop.h)

@@ -1,3 +1,8 @@
+if(MSVC)
+    add_definitions(/wd4244) # type conversion, possible loss of data
+    add_definitions(/wd4512) # assignment operator could not be generated
+endif(MSVC)
+
 add_executable(decoder decmain.cpp
     TAppDecCfg.cpp TAppDecCfg.h
     TAppDecTop.cpp TAppDecTop.h)
