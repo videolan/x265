@@ -7,7 +7,7 @@ if(MSVC)
     include_directories(compat/msvc)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wall -Wshadow -Wno-sign-compare -Werror)
+    add_definitions(-Wall -Wextra -Wshadow -Wno-sign-compare -Werror -Wno-error=unused-parameter)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
