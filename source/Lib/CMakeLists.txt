@@ -6,7 +6,7 @@ add_library(TLibVideoIO
     TLibVideoIO/TVideoIOYuv.h)
 
 if (MSVC_VERSION EQUAL 1500) # VC9
-    add_definitions(-DINSTRSET=7 /arch:AVX)
+    add_definitions(-DINSTRSET=6) # SSE4.2
 endif()
 if (MSVC_VERSION EQUAL 1600) # VC10
     add_definitions(-DINSTRSET=7 /arch:AVX)
