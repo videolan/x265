@@ -14,6 +14,9 @@ endif()
 if (MSVC_VERSION EQUAL 1700) # VC11
     add_definitions(-DINSTRSET=7 /arch:AVX)
 endif()
+if(CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions(-DINSTRSET=6 -msse4)
+endif(CMAKE_COMPILER_IS_GNUCXX)
 add_subdirectory(TVectorClass)
 
 if(ENABLE_PPA)
