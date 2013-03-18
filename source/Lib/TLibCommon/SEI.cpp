@@ -38,6 +38,11 @@
 #include "CommonDef.h"
 #include "SEI.h"
 
+#if J0149_TONE_MAPPING_SEI 
+//Table D-7 Meaning of camera iso sensitivity indicator and exposure index rating indicator
+Int  Table_exp_indicator[32] = {0, 10, 12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400, 8000, -1};
+#endif
+
 SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType)
 {
   SEIMessages result;

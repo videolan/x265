@@ -202,6 +202,33 @@ protected:
   Int       m_recoveryPointSEIEnabled;
   Int       m_bufferingPeriodSEIEnabled;
   Int       m_pictureTimingSEIEnabled;
+#if J0149_TONE_MAPPING_SEI
+  Bool      m_toneMappingInfoSEIEnabled;
+  Int       m_toneMapId;
+  Bool      m_toneMapCancelFlag;
+  Bool      m_toneMapPersistenceFlag;
+  Int       m_toneMapCodedDataBitDepth;
+  Int       m_toneMapTargetBitDepth;
+  Int       m_toneMapModelId; 
+  Int       m_toneMapMinValue;
+  Int       m_toneMapMaxValue;
+  Int       m_sigmoidMidpoint;
+  Int       m_sigmoidWidth;
+  Int       m_numPivots;
+  Int       m_cameraIsoSpeedIdc;
+  Int       m_cameraIsoSpeedValue;
+  Int       m_exposureCompensationValueSignFlag;
+  Int       m_exposureCompensationValueNumerator;
+  Int       m_exposureCompensationValueDenomIdc;
+  Int       m_refScreenLuminanceWhite;
+  Int       m_extendedRangeWhiteLevel;
+  Int       m_nominalBlackLevelLumaCodeValue;
+  Int       m_nominalWhiteLevelLumaCodeValue;
+  Int       m_extendedWhiteLevelLumaCodeValue;
+  Int*      m_startOfCodedInterval;
+  Int*      m_codedPivotValue;
+  Int*      m_targetPivotValue;
+#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;

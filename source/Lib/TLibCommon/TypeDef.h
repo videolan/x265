@@ -48,6 +48,7 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
+#define J0149_TONE_MAPPING_SEI        1 ///< J0149: Tone mapping information SEI
 #define L0363_DU_BIT_RATE             1 ///< L0363: add bit_rate_du_value_minus1 to HRD parameters
 #define L0328_SPLICING                1 ///< L0328: splicing support in HRD
 #define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
