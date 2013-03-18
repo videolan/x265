@@ -45,7 +45,7 @@
 
 #include "TComSlice.h"
 #include "TComRdCostWeightPrediction.h"
-#include "vectorclass.h"
+
 //! \ingroup TLibCommon
 //! \{
 
