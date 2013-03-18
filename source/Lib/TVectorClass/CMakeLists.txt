@@ -1,5 +1,4 @@
 add_library(TVectorClass
-	dispatch_example.cpp 
 	instrset.h 
 	instrset_detect.cpp
 	vectorclass.h
@@ -14,3 +13,5 @@ add_library(TVectorClass
 	special/quaternion.h
 	special/vector3d.h
 	special/vectormath.h)
+
+# dispatch_example.cpp 
