@@ -1,3 +1,7 @@
+if (MSVC_VERSION GREATER 1600) # VC10 or VC11
+    add_definitions(/arch:AVX)
+endif()
+
 add_library(TVectorClass
 	instrset.h 
 	instrset_detect.cpp

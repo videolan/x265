@@ -9,10 +9,10 @@ if (MSVC_VERSION EQUAL 1500) # VC9
     add_definitions(-DINSTRSET=6) # SSE4.2
 endif()
 if (MSVC_VERSION EQUAL 1600) # VC10
-    add_definitions(-DINSTRSET=7 /arch:AVX)
+    add_definitions(-DINSTRSET=7)
 endif()
 if (MSVC_VERSION EQUAL 1700) # VC11
-    add_definitions(-DINSTRSET=7 /arch:AVX)
+    add_definitions(-DINSTRSET=7)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-DINSTRSET=6 -msse4)
