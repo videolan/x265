@@ -1,4 +1,4 @@
-if (MSVC_VERSION GREATER 1600) # VC10 or VC11
+if (MSVC_VERSION GREATER 1600) # VC11
     add_definitions(/arch:AVX)
 endif()
 
