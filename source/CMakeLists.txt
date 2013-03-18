@@ -16,6 +16,7 @@ if(ENABLE_PPA)
 endif(ENABLE_PPA)
 
 include_directories(Lib)
+add_subdirectory(encoder)
 add_subdirectory(App/TAppEncoder)
 add_subdirectory(App/TAppDecoder)
 add_subdirectory(Lib)
