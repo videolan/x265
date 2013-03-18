@@ -59,11 +59,11 @@ Thread::~Thread()
 
 #else /* POSIX / pthreads */
 
-static void* Thread::ThreadShim(Thread *instance)
+static void* ThreadShim(void *opaque)
 {
     // defer processing to the virtual function implemented in the derived class
+    Thread *instance = reinterpret_cast<Thread*>(opaque);
     instance->ThreadMain();
-
     return NULL;
 }
 
