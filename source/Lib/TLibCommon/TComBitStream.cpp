@@ -176,11 +176,45 @@ Void   TComOutputBitstream::addSubstream( TComOutputBitstream* pcSubstream )
     write(pcSubstream->getHeldBits()>>(8-(uiNumBits&0x7)), uiNumBits&0x7);
   }
 }
+
 Void TComOutputBitstream::writeByteAlignment()
 {
   write( 1, 1);
   writeAlignZero();
 }
+
+Int TComOutputBitstream::countStartCodeEmulations()
+{
+  UInt cnt = 0;
+  vector<uint8_t>& rbsp   = getFIFO();
+  for (vector<uint8_t>::iterator it = rbsp.begin(); it != rbsp.end();)
+  {
+    vector<uint8_t>::iterator found = it;
+    do
+    {
+      // find the next emulated 00 00 {00,01,02,03}
+      // NB, end()-1, prevents finding a trailing two byte sequence
+      found = search_n(found, rbsp.end()-1, 2, 0);
+      found++;
+      // if not found, found == end, otherwise found = second zero byte
+      if (found == rbsp.end())
+      {
+        break;
+      }
+      if (*(++found) <= 3)
+      {
+        break;
+      }
+    } while (true);
+    it = found;
+    if (found != rbsp.end())
+    {
+      cnt++;
+    }
+  }
+  return cnt;
+}
+
 /**
  * read #uiNumberOfBits# from bitstream without updating the bitstream
  * state, storing the result in #ruiBits#.

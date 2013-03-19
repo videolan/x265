@@ -83,6 +83,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::DECODING_UNIT_INFO:
     fprintf( g_hTrace, "=========== Decoding Unit Information SEI message ===========\n");
     break;
+#if J0149_TONE_MAPPING_SEI
+  case SEI::TONE_MAPPING_INFO:
+    fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
+    break;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
@@ -141,6 +146,11 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
   case SEI::REGION_REFRESH_INFO:
     xWriteSEIGradualDecodingRefreshInfo(*static_cast<const SEIGradualDecodingRefreshInfo*>(&sei));
     break;
+#if J0149_TONE_MAPPING_SEI
+  case SEI::TONE_MAPPING_INFO:
+    xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
+    break;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   case SEI::SOP_DESCRIPTION:
     xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
@@ -471,6 +481,81 @@ Void SEIWriter::xWriteSEIFramePacking(const SEIFramePacking& sei)
 
   xWriteByteAlign();
 }
+
+#if J0149_TONE_MAPPING_SEI
+Void SEIWriter::xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei)
+{
+  Int i;
+  WRITE_UVLC( sei.m_toneMapId,                    "tone_map_id" );
+  WRITE_FLAG( sei.m_toneMapCancelFlag,            "tone_map_cancel_flag" );
+  if( !sei.m_toneMapCancelFlag ) 
+  {
+    WRITE_FLAG( sei.m_toneMapPersistenceFlag,     "tone_map_persistence_flag" );
+    WRITE_CODE( sei.m_codedDataBitDepth,    8,    "coded_data_bit_depth" );
+    WRITE_CODE( sei.m_targetBitDepth,       8,    "target_bit_depth" );
+    WRITE_UVLC( sei.m_modelId,                    "model_id" );
+    switch(sei.m_modelId)
+    {
+    case 0:
+      {
+        WRITE_CODE( sei.m_minValue,  32,        "min_value" );
+        WRITE_CODE( sei.m_maxValue, 32,         "max_value" );
+        break;
+      }
+    case 1:
+      {
+        WRITE_CODE( sei.m_sigmoidMidpoint, 32,  "sigmoid_midpoint" );
+        WRITE_CODE( sei.m_sigmoidWidth,    32,  "sigmoid_width"    );
+        break;
+      }
+    case 2:
+      {
+        UInt num = 1u << sei.m_targetBitDepth;
+        for(i = 0; i < num; i++)
+        {
+          WRITE_CODE( sei.m_startOfCodedInterval[i], (( sei.m_codedDataBitDepth + 7 ) >> 3 ) << 3,  "start_of_coded_interval" );
+        }
+        break;
+      }
+    case 3:
+      {
+        WRITE_CODE( sei.m_numPivots, 16,          "num_pivots" );
+        for(i = 0; i < sei.m_numPivots; i++ )
+        {
+          WRITE_CODE( sei.m_codedPivotValue[i], (( sei.m_codedDataBitDepth + 7 ) >> 3 ) << 3,       "coded_pivot_value" );
+          WRITE_CODE( sei.m_targetPivotValue[i], (( sei.m_targetBitDepth + 7 ) >> 3 ) << 3,         "target_pivot_value");
+        }
+        break;
+      }
+    case 4:
+      {
+        WRITE_CODE( sei.m_cameraIsoSpeedIdc,    8,    "camera_iso_speed_idc" );
+        if( sei.m_cameraIsoSpeedIdc == 255) //Extended_ISO
+        {
+          WRITE_CODE( sei.m_cameraIsoSpeedValue,    32,    "camera_iso_speed_value" );
+        }
+        WRITE_FLAG( sei.m_exposureCompensationValueSignFlag,           "exposure_compensation_value_sign_flag" );
+        WRITE_CODE( sei.m_exposureCompensationValueNumerator,     16,  "exposure_compensation_value_numerator" );
+        WRITE_CODE( sei.m_exposureCompensationValueDenomIdc,      16,  "exposure_compensation_value_denom_idc" );
+        WRITE_CODE( sei.m_refScreenLuminanceWhite,                32,  "ref_screen_luminance_white" );
+        WRITE_CODE( sei.m_extendedRangeWhiteLevel,                32,  "extended_range_white_level" );
+        WRITE_CODE( sei.m_nominalBlackLevelLumaCodeValue,         16,  "nominal_black_level_luma_code_value" );
+        WRITE_CODE( sei.m_nominalWhiteLevelLumaCodeValue,         16,  "nominal_white_level_luma_code_value" );
+        WRITE_CODE( sei.m_extendedWhiteLevelLumaCodeValue,        16,  "extended_white_level_luma_code_value" );
+        break;
+      }
+    default:
+      {
+        assert(!"Undefined SEIToneMapModelId");
+        break;
+      }
+    }//switch m_modelId
+  }//if(!sei.m_toneMapCancelFlag)
+
+  xWriteByteAlign();
+}
+#endif
+
 Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
 {
   WRITE_FLAG( sei.cancelFlag,           "display_orientation_cancel_flag" );

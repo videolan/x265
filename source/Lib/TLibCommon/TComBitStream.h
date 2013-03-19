@@ -153,6 +153,9 @@ public:
 
   Void          addSubstream    ( TComOutputBitstream* pcSubstream );
   Void writeByteAlignment();
+
+  //! returns the number of start code emulations contained in the current buffer
+  Int countStartCodeEmulations();
 };
 
 /**

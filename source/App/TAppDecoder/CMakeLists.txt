@@ -2,6 +2,9 @@ if(MSVC)
     add_definitions(/wd4244) # type conversion, possible loss of data
     add_definitions(/wd4512) # assignment operator could not be generated
 endif(MSVC)
+if(CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions(-Wno-sign-compare)
+endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_executable(decoder decmain.cpp
     TAppDecCfg.cpp TAppDecCfg.h

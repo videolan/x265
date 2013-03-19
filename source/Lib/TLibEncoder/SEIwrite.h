@@ -66,6 +66,9 @@ protected:
   Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
+#if J0149_TONE_MAPPING_SEI
+  Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #endif

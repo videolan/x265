@@ -69,6 +69,9 @@ protected:
   Void xParseSEIDisplayOrientation    (SEIDisplayOrientation &sei, UInt payloadSize);
   Void xParseSEITemporalLevel0Index   (SEITemporalLevel0Index &sei, UInt payloadSize);
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
+#if J0149_TONE_MAPPING_SEI
+  Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #endif

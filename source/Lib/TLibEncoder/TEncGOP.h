@@ -133,7 +133,7 @@ public:
   
   Void  init        ( TEncTop* pcTEncTop );
   Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
-  Void xWriteTileLocationToSliceHeader (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect, TComSlice*& rpcSlice);
+  Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
   
   Int   getGOPSize()          { return  m_iGopSize;  }
@@ -162,6 +162,10 @@ protected:
   SEIActiveParameterSets* xCreateSEIActiveParameterSets (TComSPS *sps);
   SEIFramePacking*        xCreateSEIFramePacking();
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
+
+#if J0149_TONE_MAPPING_SEI
+  SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
+#endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
 #if L0045_NON_NESTED_SEI_RESTRICTIONS
