@@ -186,7 +186,7 @@ public:
 protected:
 
     // do not allow assignments
-    ScopedLock &operator =(const ScopedLock &) { return *this; }
+    ScopedLock &operator =(const ScopedLock &);
 
     Lock &inst;
 };
