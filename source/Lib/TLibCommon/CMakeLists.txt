@@ -32,7 +32,7 @@ add_library(TLibCommon
     TComPicYuv.cpp TComPicYuv.h
     TComPicYuvMD5.cpp
     TComPrediction.cpp TComPrediction.h
-    TComRdCost.cpp TComRdCost.h
+    TComRdCost.cpp ..\..\encoder\TComRdCost_SSE.cpp TComRdCost.h
     TComRdCostWeightPrediction.cpp TComRdCostWeightPrediction.h
     TComRom.cpp TComRom.h
     TComSampleAdaptiveOffset.cpp TComSampleAdaptiveOffset.h

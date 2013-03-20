@@ -43,6 +43,7 @@
 //! \ingroup TLibCommon
 //! \{
 
+
 TComRdCost::TComRdCost()
 {
   init();
@@ -569,6 +570,7 @@ UInt TComRdCost::xGetSAD4( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -603,7 +605,9 @@ UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
+#endif
 
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -646,8 +650,10 @@ UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
+#endif
 
 #if AMP_SAD
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -686,6 +692,7 @@ UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
+#endif
 #endif
 
 UInt TComRdCost::xGetSAD16N( DistParam* pcDtParam )
@@ -730,6 +737,7 @@ UInt TComRdCost::xGetSAD16N( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -788,8 +796,10 @@ UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
+#endif
 
 #if AMP_SAD
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -840,9 +850,10 @@ UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-
+#endif
 #endif
 
+#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -933,6 +944,7 @@ UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
+#endif
 
 #if AMP_SAD
 UInt TComRdCost::xGetSAD48( DistParam* pcDtParam )
