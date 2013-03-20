@@ -26,6 +26,8 @@
 #ifndef _THREADPOOL_H_
 #define _THREADPOOL_H_
 
+#include "stdint.h"
+
 namespace x265
 {
 
@@ -35,22 +37,23 @@ class ThreadPool;
 //< derive from JobProvider and implement FindJob().
 class JobProvider
 {
-private:
-    ThreadPool   &m_pool;
+protected:
+
+    ThreadPool   *m_pool;
 
     JobProvider  *m_nextProvider;
     JobProvider  *m_prevProvider;
 
 public:
-    JobProvider( ThreadPool& p ) m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
+    JobProvider( ThreadPool* p ) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
 
     virtual ~JobProvider();
 
     //< Register this job provider with the thread pool, jpbs are available
-    void ThreadPoolEnqueue();
+    void Enqueue();
 
     //< Remove this job provider from the thread pool, all jobs complete
-    void ThreadPoolDequeue();
+    void Dequeue();
 
     //< Inform the thread pool that a new job is available
     void NewJobAvailable();
@@ -58,6 +61,8 @@ public:
     //< Worker threads will call this method to find a job.  Must return true if
     //< work was completed.  False if no work was available.
     virtual bool FindJob() = 0;
+
+    friend class ThreadPoolImpl;
 };
 
 //< Encoder frame class must derive from this class and implement
@@ -67,18 +72,20 @@ class QueueFrame : public JobProvider
 private:
     //< bitmap of rows queued for processing.  Must use atomic intrinsics to
     //< set and clear bits, for thread safety
-    unsigned int *queuedBitmap;
+    uint64_t volatile *m_queuedBitmap;
+
+    int m_numRows;
 
     //< QueueFrame's internal implementation. Consults queuedBitmap and calls
     //< ProcessRow(row) for lowest numbered queued row or returns false
     bool FindJob();
 
 public:
-    QueueFrame();
+    QueueFrame(ThreadPool* pool) : JobProvider(pool), m_queuedBitmap(0) {}
 
     //< Must be called just once after the frame is allocated.  Returns true on
     //< success.  It it returns false, the frame must encode in series.
-    bool InitJobQueue( ThreadPool& pool, int numRows );
+    bool InitJobQueue( int numRows );
 
     virtual ~QueueFrame();
 
@@ -104,6 +111,12 @@ public:
     //< The pool is reference counted so all calls to AllocThreadPool() should be
     //< followed by a call to Release()
     virtual void Release() = 0;
+
+    virtual void EnqueueJobProvider(JobProvider&) = 0;
+
+    virtual void DequeueJobProvider(JobProvider&) = 0;
+
+    virtual void PokeIdleThread() = 0;
 };
 
 
