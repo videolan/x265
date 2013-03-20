@@ -2,7 +2,7 @@
 /* Added by Mandar */
 #include "vectorclass.h"
 
-UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD8_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
@@ -44,7 +44,7 @@ UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
-UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD16_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
@@ -105,7 +105,7 @@ UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
 }
 
 #if AMP_SAD
-UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD12_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
@@ -162,7 +162,7 @@ UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
 }
 #endif
 
-UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD32_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
@@ -249,7 +249,7 @@ UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
 }
 
 #if AMP_SAD
-UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD24_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
@@ -324,7 +324,7 @@ UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
 
 #endif
 
-UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
+UInt TComRdCost::xGetSAD64_SSE( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
   {
