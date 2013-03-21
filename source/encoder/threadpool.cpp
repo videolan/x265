@@ -27,6 +27,10 @@
 #include "threading.h"
 #include <assert.h>
 
+#ifdef __unix__
+#include <unistd.h>
+#endif
+
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
 #include <limits.h>
@@ -68,12 +72,16 @@ class ThreadPoolImpl;
 class PoolThread : public Thread
 {
 private:
+
     ThreadPoolImpl *m_pool;
-    volatile PoolThread *m_idleNext;
     Event m_awake;
 
 public:
+
+    volatile PoolThread *m_idleNext;
+
     PoolThread() : m_idleNext(NULL) {}
+
     ~PoolThread() {}
 
     void Initialize(ThreadPoolImpl *p) { m_pool = p; m_awake.Trigger(); }
@@ -81,8 +89,6 @@ public:
     void Awaken() { m_awake.Trigger(); }
 
     void ThreadMain();
-
-    friend class ThreadPoolImpl;
 };
 
 class ThreadPoolImpl : public ThreadPool
@@ -92,10 +98,12 @@ private:
     bool         m_ok;
     int          m_referenceCount;
     int          m_numThreads;
-
     PoolThread  *m_threads;
 
     Lock         m_writeLock;
+
+public:
+
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
 
@@ -103,41 +111,11 @@ private:
 
 public:
 
-    ThreadPoolImpl( int numThreads )
-        : m_ok(false)
-        , m_referenceCount(1)
-        , m_firstProvider(NULL)
-        , m_lastProvider(NULL)
-        , m_idleThreadList(NULL)
-    {
-        m_threads = new PoolThread[ numThreads ];
+    ThreadPoolImpl(int numthreads);
 
-        if (m_threads)
-        {
-            m_ok = true;
-            for (int i = 0; i < numThreads; i++)
-                m_ok &= m_threads[i].Start();
-        }
-        if (m_threads)
-        {
-            for (int i = 0; i < numThreads; i++)
-                m_threads[i].Initialize(this);
-        }
-    }
+    ~ThreadPoolImpl();
 
-    ~ThreadPoolImpl()
-    {
-        if (m_ok && m_threads)
-        {
-            m_ok = false;
-            for (int i = 0; i < m_numThreads; i++)
-                m_threads[i].Awaken();
-            // destructors will block for thread completions
-            delete [] m_threads;
-            m_threads = NULL;
-        }
-        // leak threads on program exit if there were resource failures
-    }
+    ThreadPoolImpl *AddReference() { m_referenceCount++; return this; }
 
     void Release() { if (--m_referenceCount == 0) delete this; }
 
@@ -148,9 +126,6 @@ public:
     void DequeueJobProvider(JobProvider&);
 
     void PokeIdleThread();
-
-    friend class ThreadPool;
-    friend class PoolThread;
 };
 
 
@@ -206,19 +181,66 @@ void ThreadPoolImpl::PokeIdleThread()
         worker->Awaken();
 }
 
-
+static int get_cpu_count()
+{
+#if WIN32
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo( &sysinfo );
+    return sysinfo.dwNumberOfProcessors;
+#elif __unix__
+    return sysconf( _SC_NPROCESSORS_ONLN );
+#else
+    return 4;
+#endif
+}
 
 /* static */
-ThreadPool *ThreadPool::AllocThreadPool( int numthreads )
+ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
 {
     static ThreadPoolImpl *_impl;
     if (_impl)
-    {
-        _impl->m_referenceCount++;
-        return _impl;
-    }
-    _impl = new ThreadPoolImpl( numthreads );
+        return _impl->AddReference();
+    _impl = new ThreadPoolImpl(numthreads);
     return _impl;
+}
+
+ThreadPoolImpl::ThreadPoolImpl(int numThreads)
+    : m_ok(false)
+    , m_referenceCount(1)
+    , m_firstProvider(NULL)
+    , m_lastProvider(NULL)
+    , m_idleThreadList(NULL)
+{
+    if (numThreads == 0)
+        numThreads = get_cpu_count();
+
+    m_threads = new PoolThread[ numThreads ];
+
+    if (m_threads)
+    {
+        m_ok = true;
+        for (int i = 0; i < numThreads; i++)
+            m_ok &= m_threads[i].Start();
+    }
+    if (m_ok)
+    {
+        for (int i = 0; i < numThreads; i++)
+            m_threads[i].Initialize(this);
+    }
+}
+
+ThreadPoolImpl::~ThreadPoolImpl()
+{
+    if (m_ok && m_threads)
+    {
+        m_ok = false;
+        for (int i = 0; i < m_numThreads; i++)
+            m_threads[i].Awaken();
+        // destructors will block for thread completions
+        delete [] m_threads;
+        m_threads = NULL;
+    }
+    // leak threads on program exit if there were resource failures
 }
 
 void ThreadPoolImpl::EnqueueJobProvider(JobProvider& p)
