@@ -1,12 +1,14 @@
 @echo off
 
+set buildmode=Release
+if "%4" == "--debug" (
+	SET buildmode=Debug )
+
+
 if "%1" == "" goto usage
 if "%1" == "ALL" Goto ALL
 if "%1" == "-c" Goto Config
 
-set buildmode=Release
-if "%3" == "--debug" (
-	SET buildmode=Debug )
 	
 :ALL
 
@@ -18,8 +20,10 @@ cd VisualStudio11
 cmake -G "Visual Studio 11" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln )
-
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 if %errorlevel% equ 1 (
 echo *********** SOLUTION NOT BUILT *******
 )
@@ -35,7 +39,10 @@ cd VisualStudio11win64
 cmake -G "Visual Studio 11 Win64" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln )
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 
 if %errorlevel% equ 1 (
 echo ******* SOLUTION NOT BUILT ***********
@@ -52,7 +59,10 @@ cd VisualStudio10
 cmake -G "Visual Studio 10" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln)
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 
 if %errorlevel% equ 1 (
 echo *********** SOLUTION NOT BUILT *******
@@ -69,7 +79,10 @@ cd VisualStudio10win64
 cmake -G "Visual Studio 10 Win64" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln )
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 
 if %errorlevel% equ 1 (
 echo ******* SOLUTION NOT BUILT ***********
@@ -86,7 +99,10 @@ cd VisualStudio92008
 cmake -G "Visual Studio 9 2008" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln )
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 
 if %errorlevel% equ 1 (
 echo ******* SOLUTION NOT BUILT ***********
@@ -103,7 +119,10 @@ cd VisualStudio92008win64
 cmake -G "Visual Studio 9 2008 Win64" ../../source
 
 if %errorlevel% equ 0 (
-MSBuild xhevc.sln )
+if "%3" == "--build" (
+MSBuild /property:Configuration="%buildmode%" xhevc.sln
+)
+)
 
 if %errorlevel% equ 1 (
 echo ******* SOLUTION NOT BUILT ***********
@@ -134,6 +153,6 @@ if "%2" =="6" goto :VisualStudio92008win64
   echo 	3        = Generates Visual Studio 10 project files and solution.
   echo 	4      	 = Generates Visual Studio 10 Win64 project files and solution.
   echo 	5        = Generates Visual Studio 9 2008 project files and solution.
-  echo 	6  	     = Generates Visual Studio 9 2008 Win64 project files and solution. 
+  echo 	6  	 = Generates Visual Studio 9 2008 Win64 project files and solution. 
 
 goto eof
