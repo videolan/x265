@@ -1,5 +1,5 @@
-if (MSVC_VERSION GREATER 1600) # VC11
-    add_definitions(/arch:AVX)
+if (MSVC_VERSION GREATER 1500) # VC10 or higher
+    add_definitions(/arch:SSE2)
 endif()
 
 add_library(VectorClass
