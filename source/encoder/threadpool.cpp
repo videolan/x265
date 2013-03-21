@@ -27,20 +27,24 @@
 #include "threading.h"
 #include <assert.h>
 
-#ifdef __GNUC__
+#ifdef __GNUC__                         /* GCCs builtin atomics */
 
 #include <limits.h>
-#define CLZ64(x) __builtin_clzll(x)
-#define ATOMIC_AND(ptr,mask) __sync_and_and_fetch(ptr,mask)
-#define ATOMIC_OR(ptr,mask)  __sync_or_and_fetch(ptr,mask)
 
-#elif defined(_MSC_VER)
+#define CLZ64(x)                        __builtin_clzll(x)
+
+#define ATOMIC_AND(ptr,mask)            __sync_and_and_fetch(ptr,mask)
+#define ATOMIC_OR(ptr,mask)             __sync_or_and_fetch(ptr,mask)
+#define ATOMIC_CAS(ptr,oldval,newval)   __sync_val_compare_and_swap(ptr,oldval,newval)
+
+#elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
 
 #include <intrin.h>
+
 #if _WIN64
-#define CLZ64(x) __lzcnt64(x)
+#define CLZ64(x)                        __lzcnt64(x)
 #else
-#define CLZ64(x) __lzcnt_2x32(x)
+#define CLZ64(x)                        __lzcnt_2x32(x)
 inline int __lzcnt_2x32(uint64_t x64)
 {
     int val = __lzcnt((uint32_t)(x64 >> 32));
@@ -49,27 +53,43 @@ inline int __lzcnt_2x32(uint64_t x64)
     return __lzcnt((uint32_t) x64);
 }
 #endif
-#define ATOMIC_AND(ptr,mask) InterlockedAnd(ptr,mask)
-#define ATOMIC_OR(ptr,mask)  InterlockedOr(ptr,mask)
+
+#define ATOMIC_AND(ptr,mask)           InterlockedAnd(ptr,mask)
+#define ATOMIC_OR(ptr,mask)            InterlockedOr(ptr,mask)
+#define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchangePointer((void**)ptr,(void*)oldval,(void*)newval)
 
 #endif
 
 namespace x265
 {
 
+class ThreadPoolImpl;
+
 class PoolThread : public Thread
 {
+private:
+    ThreadPoolImpl *m_pool;
+    volatile PoolThread *m_idleNext;
+    Event m_awake;
+
 public:
-     PoolThread() {}
+    PoolThread() : m_idleNext(NULL) {}
     ~PoolThread() {}
 
-     void ThreadMain();
+    void Initialize(ThreadPoolImpl *p) { m_pool = p; m_awake.Trigger(); }
+
+    void Awaken() { m_awake.Trigger(); }
+
+    void ThreadMain();
+
+    friend class ThreadPoolImpl;
 };
 
 class ThreadPoolImpl : public ThreadPool
 {
 private:
 
+    bool         m_ok;
     int          m_referenceCount;
     int          m_numThreads;
 
@@ -79,32 +99,49 @@ private:
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
 
+    volatile PoolThread *m_idleThreadList;
+
 public:
 
     ThreadPoolImpl( int numThreads )
-        : m_referenceCount(1)
+        : m_ok(false)
+        , m_referenceCount(1)
         , m_firstProvider(NULL)
         , m_lastProvider(NULL)
+        , m_idleThreadList(NULL)
     {
         m_threads = new PoolThread[ numThreads ];
 
         if (m_threads)
         {
+            m_ok = true;
             for (int i = 0; i < numThreads; i++)
-                m_threads[i].Start();
+                m_ok &= m_threads[i].Start();
+        }
+        if (m_threads)
+        {
+            for (int i = 0; i < numThreads; i++)
+                m_threads[i].Initialize(this);
         }
     }
 
     ~ThreadPoolImpl()
     {
-        if (m_threads)
+        if (m_ok && m_threads)
         {
+            m_ok = false;
+            for (int i = 0; i < m_numThreads; i++)
+                m_threads[i].Awaken();
+            // destructors will block for thread completions
             delete [] m_threads;
             m_threads = NULL;
         }
+        // leak threads on program exit if there were resource failures
     }
 
     void Release() { if (--m_referenceCount == 0) delete this; }
+
+    bool IsValid() const { return m_ok; }
 
     void EnqueueJobProvider(JobProvider&);
 
@@ -113,7 +150,63 @@ public:
     void PokeIdleThread();
 
     friend class ThreadPool;
+    friend class PoolThread;
 };
+
+
+void PoolThread::ThreadMain()
+{
+    // Wait for pool to initialize our state
+    m_awake.Wait();
+
+    while (m_pool->IsValid())
+    {
+        /* Walk list of job providers, looking for work */
+        JobProvider *cur = m_pool->m_firstProvider;
+        while (cur)
+        {
+            // FindJob() may perform actual work and return true.  If
+            // it does we restart the job search
+            if (cur->FindJob() == true)
+                break;
+
+            cur = cur->m_nextProvider;
+        }
+
+        if (cur == NULL)
+        { 
+            // add self to idle list, repeat compare and switch until successful.
+            do {
+                m_idleNext = m_pool->m_idleThreadList;
+            }
+            while (ATOMIC_CAS(&m_pool->m_idleThreadList, m_idleNext, this) != m_idleNext);
+
+            // unemployed, oh bugger
+            m_awake.Wait();
+        }
+    }
+}
+
+void ThreadPoolImpl::PokeIdleThread()
+{
+    PoolThread *worker = NULL;
+    PoolThread *next = NULL;
+
+    // Keep trying to remove the first idle thread, until successful
+    do {
+        worker = const_cast<PoolThread*>(m_idleThreadList);
+        if (worker)
+            next = const_cast<PoolThread*>(worker->m_idleNext);
+        else
+            return;
+    }
+    while (ATOMIC_CAS(&m_idleThreadList, worker, next) != worker);
+
+    if (worker)
+        worker->Awaken();
+}
+
+
 
 /* static */
 ThreadPool *ThreadPool::AllocThreadPool( int numthreads )
@@ -161,11 +254,6 @@ void ThreadPoolImpl::DequeueJobProvider(JobProvider& p)
     p.m_nextProvider = NULL;
     p.m_prevProvider = NULL;
 }
-
-void ThreadPoolImpl::PokeIdleThread()
-{
-}
-
 
 
 JobProvider::~JobProvider()
