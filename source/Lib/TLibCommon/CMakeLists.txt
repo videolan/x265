@@ -6,6 +6,10 @@ if(MSVC)
     add_definitions(/wd4512) # assignment operator could not be generated
     add_definitions(/wd4127) # conditional expression is constant
     add_definitions(/wd4389) # signed/unsigned mismatch
+if (MSVC_VERSION GREATER 1500) # VC10 or higher
+    add_definitions(/arch:SSE2)
+endif()
+
 endif(MSVC)
 
 add_library(TLibCommon
@@ -40,3 +44,5 @@ add_library(TLibCommon
     TComTrQuant.cpp TComTrQuant.h
     TComWeightPrediction.cpp TComWeightPrediction.h
     TComYuv.cpp TComYuv.h)
+
+include_directories(../../VectorClass)
