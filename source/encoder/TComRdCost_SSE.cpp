@@ -24,7 +24,7 @@
 
 #include "TLibCommon\TComRdCost.h"
 
-#include "..\Lib\TVectorClass\vectorclass.h"
+#include "vectorclass.h"
 
 
 #ifdef ENABLE_VECTOR
