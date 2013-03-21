@@ -2,7 +2,7 @@ if (MSVC_VERSION GREATER 1600) # VC11
     add_definitions(/arch:AVX)
 endif()
 
-add_library(TVectorClass
+add_library(VectorClass
     instrset.h
     instrset_detect.cpp
     vectorclass.h

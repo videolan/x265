@@ -63,6 +63,7 @@ public:
     virtual bool FindJob() = 0;
 
     friend class ThreadPoolImpl;
+    friend class PoolThread;
 };
 
 //< Encoder frame class must derive from this class and implement
