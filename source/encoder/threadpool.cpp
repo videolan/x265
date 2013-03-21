@@ -27,7 +27,10 @@
 #include "threading.h"
 #include <assert.h>
 
-#ifdef __unix__
+#if MACOS
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#elif __unix__
 #include <unistd.h>
 #endif
 
@@ -189,8 +192,24 @@ static int get_cpu_count()
     return sysinfo.dwNumberOfProcessors;
 #elif __unix__
     return sysconf( _SC_NPROCESSORS_ONLN );
+#elif MACOS
+    int nm[2];
+    size_t len = 4;
+    uint32_t count;
+
+    nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
+    sysctl(nm, 2, &count, &len, NULL, 0);
+
+    if (count < 1)
+    {
+        nm[1] = HW_NCPU;
+        sysctl(nm, 2, &count, &len, NULL, 0);
+        if (count < 1)
+            count = 1;
+    }
+    return count;
 #else
-    return 4;
+    return 2; // default to 2 threads, everywhere else
 #endif
 }
 
