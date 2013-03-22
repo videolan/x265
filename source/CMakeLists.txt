@@ -16,7 +16,7 @@ if(ENABLE_PPA)
     add_subdirectory(PPA)
 endif(ENABLE_PPA)
 
-include_directories(. Lib VectorClass)
+include_directories(. Lib VectorClass encoder)
 add_subdirectory(Lib)
 add_subdirectory(App/TAppEncoder)
 add_subdirectory(App/TAppDecoder)
@@ -36,3 +36,8 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 add_subdirectory(VectorClass)
 
 add_subdirectory(encoder)
+
+option(ENABLE_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif(ENABLE_TESTS)
