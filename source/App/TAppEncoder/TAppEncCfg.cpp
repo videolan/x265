@@ -39,6 +39,7 @@
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <math.h>
 #include "TLibCommon/TComRom.h"
 #include "TAppEncCfg.h"
 
