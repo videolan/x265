@@ -614,12 +614,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     while(1)
     {
-	  source[0] = 0x0;
-	  while ((source[0] != 0x20) && (source[0] != 0x0a))
-	  {
-	    bytesRead = (Int)fread(source, 1, 1, hFile);
-	    if (bytesRead != 1)
-	    {
+      source[0] = 0x0;
+      while ((source[0] != 0x20) && (source[0] != 0x0a))
+      {
+        bytesRead = (Int)fread(source, 1, 1, hFile);
+        if (bytesRead != 1)
+        {
           break;
         }
       }
@@ -633,109 +633,105 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         //  read parameter identifier
 
-		fread(source + 1, 1, 1, hFile);
-		if (source[1] == 'W')
+        fread(source + 1, 1, 1, hFile);
+        if (source[1] == 'W')
         {
-		  width = 0;
-		  while (true)
-		  {
-		    fread(source, 1, 1, hFile);
-			if (source[0] == 0x20 || source[0] == 0x0a)
-			{
-			  break;
-			}
-			else
-			{
-			  width = width * 10 + (source[0] - '0');
-			}
-		  }
-		  continue;
+          width = 0;
+          while (true)
+          {
+            fread(source, 1, 1, hFile);
+            if (source[0] == 0x20 || source[0] == 0x0a)
+            {
+              break;
+            }
+            else
+            {
+              width = width * 10 + (source[0] - '0');
+            }
+          }
+          continue;
         }
 
         if (source[1] == 'H')
         {
-		  height = 0;
-		  while (true)
-		  {
-			fread(source, 1, 1, hFile);
-			if (source[0] == 0x20 || source[0] == 0x0a)
-			{
-			  break;
-			}
-			else
-			{
-			  height = height * 10 + (source[0] - '0');
-			}
-		  }
-	      continue;
+          height = 0;
+          while (true)
+          {
+            fread(source, 1, 1, hFile);
+            if (source[0] == 0x20 || source[0] == 0x0a)
+            {
+              break;
+            }
+            else
+            {
+              height = height * 10 + (source[0] - '0');
+            }
+          }
+          continue;
         }
 
         if (source[1] == 'F')
         {
-		  rateNumerator = 0;
+          rateNumerator = 0;
           rateDenominator = 0;
           while (true)
-		  {
-        	fread(source, 1, 1, hFile);
-			if (source[0] == '.')
-			{
-			  rateDenominator = 1;
+          {
+            fread(source, 1, 1, hFile);
+            if (source[0] == '.')
+            {
+              rateDenominator = 1;
               while (true)
-			  {
-		        fread(source, 1, 1, hFile);
-			    if (source[0] == 0x20 || source[0] == 0x10)
-				{
-				  break;
-				}
-				else
-				{
-				  rateNumerator = rateNumerator * 10 + (source[0] - '0');
-			      rateDenominator = rateDenominator * 10;
-				}
-			  }
-			  rate = (Double) rateNumerator / rateDenominator;
-			  break;
-			}
-			else if (source[0] ==':')
-			{
-			  while (true)
-			  {
-				fread(source, 1, 1, hFile);
-				if (source[0] == 0x20 || source[0] == 0x0a)
-				{
-				  break;
-				}
-				else
-				  rateDenominator = rateDenominator * 10 + (source[0] - '0');
-			  }
-			  rate = (Double) rateNumerator / rateDenominator;
-			  break;
-			}
-			else
-			{
-			  rateNumerator = rateNumerator * 10 + (source[0] - '0');
-			}					
-		  }
+              {
+                fread(source, 1, 1, hFile);
+                if (source[0] == 0x20 || source[0] == 0x10)
+                {
+                  break;
+                }
+                else
+                {
+                  rateNumerator = rateNumerator * 10 + (source[0] - '0');
+                  rateDenominator = rateDenominator * 10;
+                }
+              }
+              rate = (Double) rateNumerator / rateDenominator;
+              break;
+            }
+            else if (source[0] ==':')
+            {
+              while (true)
+              {
+                fread(source, 1, 1, hFile);
+                if (source[0] == 0x20 || source[0] == 0x0a)
+                {
+                  break;
+                }
+                else
+                  rateDenominator = rateDenominator * 10 + (source[0] - '0');
+              }
+              rate = (Double) rateNumerator / rateDenominator;
+              break;
+            }
+            else
+            {
+              rateNumerator = rateNumerator * 10 + (source[0] - '0');
+            }
+          }
           continue;
         }
-    	break;
+        break;
       }
 
       if (source[0] == 0x0a)
       {
-		break;
-	  }
+        break;
+      }
     }
 
-	m_iSourceWidth = width;
-	m_iSourceHeight = height;
-	m_iFrameRate = ceil(rate);
-	
+    m_iSourceWidth = width;
+    m_iSourceHeight = height;
+    m_iFrameRate = ceil(rate);
   }
-  /***********************************/
-  
-  
-  
+
   Char* pColumnWidth = cfg_ColumnWidth.empty() ? NULL: strdup(cfg_ColumnWidth.c_str());
   Char* pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
   if( m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0 )
