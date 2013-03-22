@@ -612,6 +612,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     Int rateDenominator = 0;
     Double rate = 30.0;
 
+#if defined(_MSC_VER)
+// Allow this warning temporarily until this code is moved into a cleaner location
+#pragma warning(disable: 4127)  // conditional expression is constant
+#endif
     while(1)
     {
       source[0] = 0x0;
