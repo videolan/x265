@@ -16,7 +16,7 @@ if(ENABLE_PPA)
     add_subdirectory(PPA)
 endif(ENABLE_PPA)
 
-include_directories(. Lib)
+include_directories(. Lib VectorClass)
 add_subdirectory(Lib)
 add_subdirectory(App/TAppEncoder)
 add_subdirectory(App/TAppDecoder)

@@ -36,7 +36,7 @@ add_library(TLibCommon
     TComPicYuv.cpp TComPicYuv.h
     TComPicYuvMD5.cpp
     TComPrediction.cpp TComPrediction.h
-    TComRdCost.cpp ../../encoder/TComRdCost_SSE.cpp TComRdCost.h
+    TComRdCost.cpp TComRdCost.h
     TComRdCostWeightPrediction.cpp TComRdCostWeightPrediction.h
     TComRom.cpp TComRom.h
     TComSampleAdaptiveOffset.cpp TComSampleAdaptiveOffset.h
@@ -44,5 +44,3 @@ add_library(TLibCommon
     TComTrQuant.cpp TComTrQuant.h
     TComWeightPrediction.cpp TComWeightPrediction.h
     TComYuv.cpp TComYuv.h)
-
-include_directories(../../VectorClass)
