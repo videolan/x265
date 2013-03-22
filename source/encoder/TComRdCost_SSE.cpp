@@ -22,7 +22,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "TLibCommon\TComRdCost.h"
+#include "TLibCommon/TComRdCost.h"
 
 #include "vectorclass.h"
 
