@@ -104,6 +104,11 @@ public:
 //< it available to their frame structures.
 class ThreadPool
 {
+protected:
+
+    //< Destructor is inaccessable, force the use of reference counted Release()
+    ~ThreadPool() {}
+
 public:
     //< When numthreads == 0, a default thread count is used. A request may grow
     //< an existing pool but it will never shrink.

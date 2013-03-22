@@ -71,5 +71,5 @@ int main(int, char **)
 {
     ThreadPool *pool = ThreadPool::AllocThreadPool(); // default size
 
-    delete pool;
+    pool->Release();
 }
