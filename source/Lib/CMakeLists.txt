@@ -10,7 +10,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_subdirectory(TLibCommon)
-add_subdirectory(TLibDecoder)
 add_subdirectory(TLibEncoder)
 
 if(MSVC)

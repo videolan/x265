@@ -19,7 +19,6 @@ endif(ENABLE_PPA)
 include_directories(. Lib VectorClass encoder)
 add_subdirectory(Lib)
 add_subdirectory(App/TAppEncoder)
-add_subdirectory(App/TAppDecoder)
 
 if (MSVC_VERSION EQUAL 1500) # VC9
     add_definitions(-DINSTRSET=6) # SSE4.2
