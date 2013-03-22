@@ -1,4 +1,4 @@
-add_library(libmd5
+add_library(md5
     libmd5/libmd5.c libmd5/libmd5.h libmd5/MD5.h)
 
 add_library(TLibVideoIO
