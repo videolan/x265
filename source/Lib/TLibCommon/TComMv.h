@@ -146,7 +146,7 @@ public:
   {
     Int mvx = Clip3( -32768, 32767, (iScale * getHor() + 127 + (iScale * getHor() < 0)) >> 8 );
     Int mvy = Clip3( -32768, 32767, (iScale * getVer() + 127 + (iScale * getVer() < 0)) >> 8 );
-    return TComMv( mvx, mvy );
+    return TComMv( (Short)mvx, (Short)mvy );
   }
 };// END CLASS DEFINITION TComMV
 
