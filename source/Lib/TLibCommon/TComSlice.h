@@ -1515,7 +1515,7 @@ public:
   
   Void setTileLocationCount             ( UInt cnt )               { return m_tileByteLocation.resize(cnt);    }
   UInt getTileLocationCount             ()                         { return (UInt) m_tileByteLocation.size();  }
-  Void setTileLocation                  ( Int idx, UInt location ) { assert (idx<m_tileByteLocation.size());
+  Void setTileLocation                  ( Int idx, UInt location ) { assert (idx<(int)m_tileByteLocation.size());
                                                                      m_tileByteLocation[idx] = location;       }
   Void addTileLocation                  ( UInt location )          { m_tileByteLocation.push_back(location);   }
   UInt getTileLocation                  ( Int idx )                { return m_tileByteLocation[idx];           }
