@@ -1,5 +1,6 @@
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wno-unused-parameter)
+    add_definitions(-Wno-unused-variable)
     add_definitions(-Wno-sign-compare)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 if(MSVC)
