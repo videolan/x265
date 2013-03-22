@@ -29,6 +29,9 @@ endif()
 if (MSVC_VERSION EQUAL 1700) # VC11
     add_definitions(-DINSTRSET=7)
 endif()
+if (MSVC_VERSION GREATER 1500) # VC9 or higher
+    add_definitions(/arch:SSE2)
+endif()
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-DINSTRSET=6 -msse4)
 endif(CMAKE_COMPILER_IS_GNUCXX)

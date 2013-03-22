@@ -11,7 +11,7 @@ add_executable(encoder encmain.cpp
     TAppEncCfg.cpp TAppEncCfg.h
     TAppEncTop.cpp TAppEncTop.h)
 
-target_link_libraries(encoder TLibEncoder TAppCommon TLibCommon TLibVideoIO md5 x265)
+target_link_libraries(encoder HM x265)
 if(ENABLE_PPA)
     target_link_libraries(encoder PPA)
     if(UNIX)
