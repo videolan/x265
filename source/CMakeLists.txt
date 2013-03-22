@@ -55,7 +55,7 @@ if(ENABLE_CLI)
     endif(ENABLE_PPA)
 endif(ENABLE_CLI)
 
-# Main CLI application
+# Test applications
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
 if(ENABLE_TESTS)
     add_subdirectory(test)
