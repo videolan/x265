@@ -37,7 +37,7 @@
 
 #include <time.h>
 #include <iostream>
-#include "TAppEncTop.h"
+#include "x265top.h"
 #include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
 

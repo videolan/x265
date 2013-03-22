@@ -18,7 +18,6 @@ endif(ENABLE_PPA)
 
 include_directories(. Lib VectorClass encoder)
 add_subdirectory(Lib)
-add_subdirectory(App/TAppEncoder)
 
 if (MSVC_VERSION EQUAL 1500) # VC9
     add_definitions(-DINSTRSET=6) # SSE4.2
@@ -36,9 +35,33 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-DINSTRSET=6 -msse4)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 add_subdirectory(VectorClass)
-
 add_subdirectory(encoder)
 
+# Main CLI application
+option(ENABLE_CLI "Build standalone CLI application" ON)
+if(ENABLE_CLI)
+    if(MSVC)
+        add_definitions(/wd4100) # unreferenced formal parameter
+        add_definitions(/wd4244) # type conversion, possible loss of data
+        add_definitions(/wd4512) # assignment operator could not be generated
+    endif(MSVC)
+    if(CMAKE_COMPILER_IS_GNUCXX)
+        add_definitions(-Wno-sign-compare)
+        add_definitions(-Wno-unused-parameter)
+    endif(CMAKE_COMPILER_IS_GNUCXX)
+
+    add_executable(x265-cli x265main.cpp x265cfg.cpp x265top.cpp x265cfg.h x265top.h)
+
+    target_link_libraries(x265-cli HM x265)
+    if(ENABLE_PPA)
+        target_link_libraries(x265-cli PPA)
+        if(UNIX)
+            target_link_libraries(x265-cli dl)
+        endif(UNIX)
+    endif(ENABLE_PPA)
+endif(ENABLE_CLI)
+
+# Main CLI application
 option(ENABLE_TESTS "Enable Unit Tests" OFF)
 if(ENABLE_TESTS)
     add_subdirectory(test)

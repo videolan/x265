@@ -41,7 +41,7 @@
 #include <string>
 #include <math.h>
 #include "TLibCommon/TComRom.h"
-#include "TAppEncCfg.h"
+#include "x265top.h"
 
 static istream& operator>>(istream &, Level::Name &);
 static istream& operator>>(istream &, Level::Tier &);

@@ -42,7 +42,7 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include "TAppEncTop.h"
+#include "x265top.h"
 #include "TLibEncoder/AnnexBwrite.h"
 #include "PPA/ppa.h"
 
