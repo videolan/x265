@@ -9,7 +9,7 @@ ELSE()
    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-project (xhevc)
+project (x265)
 cmake_minimum_required (VERSION 2.6)
 
 # Enforce coding standards.  Full warnings and warnings as errors

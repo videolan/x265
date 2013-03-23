@@ -21,7 +21,7 @@ cmake -G "Visual Studio 11" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 if %errorlevel% equ 1 (
@@ -40,7 +40,7 @@ cmake -G "Visual Studio 11 Win64" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 
@@ -60,7 +60,7 @@ cmake -G "Visual Studio 10" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 
@@ -80,7 +80,7 @@ cmake -G "Visual Studio 10 Win64" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 
@@ -100,7 +100,7 @@ cmake -G "Visual Studio 9 2008" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 
@@ -120,7 +120,7 @@ cmake -G "Visual Studio 9 2008 Win64" ../../source
 
 if %errorlevel% equ 0 (
 if "%3" == "--build" (
-MSBuild /property:Configuration="%buildmode%" xhevc.sln
+MSBuild /property:Configuration="%buildmode%" x265.sln
 )
 )
 

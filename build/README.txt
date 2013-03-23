@@ -1,4 +1,4 @@
-To compile xhevc you must first install cmake and then invoke
+To compile x265 you must first install cmake and then invoke
 cmake from here with the location of the root CMakeLists.txt
 file in the source folder.  In other words run:
 
@@ -13,12 +13,12 @@ compiler selection and other configurables.
 
 MSYS example
 
-To build xhevc with GCC on Windows, you must install MinGW and
+To build x265 with GCC on Windows, you must install MinGW and
 select the MSYS developer environment install option.  Open
 an msys shell (MinGW/msys/1.0/msys.bat) and navigate to this
 build folder:
 
-$ cd /c/repos/xhevc/build
+$ cd /c/repos/x265/build
 $ cmake -G "MSYS Makefiles" ../source
 $ make
 

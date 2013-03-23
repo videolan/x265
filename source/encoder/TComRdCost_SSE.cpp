@@ -1,6 +1,5 @@
-
 /*****************************************************************************
- * Copyright (C) 2013 xhevc project
+ * Copyright (C) 2013 x265 project
  *
  * Authors: Mandar Gurav <mandar@multicorewareinc.com>
  *
