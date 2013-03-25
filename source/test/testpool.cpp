@@ -70,7 +70,6 @@ public:
 
     void Encode();
 
-    // called by worker threads
     void ProcessRow( int row );
 };
 
@@ -112,12 +111,23 @@ void MD5Frame::ProcessRow( int rownum )
     {
         int id = rownum * this->numcols + curRow.curCol;
         CUData  &curCTU = this->cu[ id ];
+        MD5 hash;
 
         // * Fake CTU processing *
         PPAStartCpuEventFunc(encode_block)
         memset(curCTU.digest, id, sizeof(curCTU.digest));
-        // MD5 hash
-        // add hashes of all dependent CTUs
+        hash.update(curCTU.digest, sizeof(curCTU.digest));
+        if (curRow.curCol > 0)
+            hash.update(this->cu[id-1].digest, sizeof(curCTU.digest));
+        if (rownum > 0)
+        {
+            if (curRow.curCol > 0)
+                hash.update(this->cu[id-this->numcols-1].digest, sizeof(curCTU.digest));
+            hash.update(this->cu[id-this->numcols].digest, sizeof(curCTU.digest));
+            if (curRow.curCol < this->numcols-1)
+                hash.update(this->cu[id-this->numcols+1].digest, sizeof(curCTU.digest));
+        }
+        hash.finalize(curCTU.digest);
         PPAStopCpuEventFunc(encode_block)
 
         curRow.curCol++;
