@@ -18,6 +18,8 @@ file(GLOB VECTORCLASS ../VectorClass/*.h ../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
 add_library(x265 ${VECTORCLASS}
-    TComRdCost_SSE.cpp 
+    TComTrQuant_SSE.cpp
+    TComRdCost_SSE.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
+
