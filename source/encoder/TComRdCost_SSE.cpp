@@ -490,9 +490,8 @@ UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
 UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
   Int  i, j, k, jj, sad=0;
-  Int  m1[8][8], m2[8][8], m3[8][8];
-  /*__declspec(align(16))*/
-  Short diff[64];
+  __declspec(align(16)) Int  m1[8][8], m2[8][8], m3[8][8];
+  __declspec(align(16)) Short diff[64];
 
   Vec8s diff_v1, piOrg_v, piCur_v;
   Vec4i v1, v2;
@@ -576,10 +575,10 @@ UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   
   for (i = 0; i < 8; i++)
   {
-      v1.load(m2[i]);	  
+      v1.load_a(m2[i]);	  
 	  v1=abs(v1);
 	  sad+=horizontal_add_x(v1);
-	  v1.load(m2[i]+4);
+	  v1.load_a(m2[i]+4);
 	  v1=abs(v1);
 	  sad+=horizontal_add_x(v1);
   }
@@ -591,7 +590,8 @@ UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 
 UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
-	Int k, diff[16], satd = 0, m[16], d[16];
+	Int k, satd = 0;
+	__declspec(align(16)) Int diff[16],m[16],d[16];
 
 	assert( iStep == 1 );
 
@@ -643,13 +643,13 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 	d[14] = m[14] - m[10];
 	d[15] = m[15] - m[11];*/
 
-	v1.load(diff);
-	v2.load(diff+12);
+	v1.load_a(diff);
+	v2.load_a(diff+12);
 	m0=v1+v2;
 	m12=v1-v2;
 
-	v3.load(diff+4);
-	v4.load(diff+8);
+	v3.load_a(diff+4);
+	v4.load_a(diff+8);
 	m4=v3+v4;
 	m8=v3-v4;
 
@@ -658,10 +658,10 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 	v3=m0-m4;
 	v4=m12-m8;
 
-	v1.store(m);
-	v2.store(m+4);
-	v3.store(m+8);
-	v4.store(m+12);
+	v1.store_a(m);
+	v2.store_a(m+4);
+	v3.store_a(m+8);
+	v4.store_a(m+12);
 
 	m[ 0] = d[ 0] + d[ 3];
 	m[ 1] = d[ 1] + d[ 2];
