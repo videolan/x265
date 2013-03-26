@@ -591,22 +591,49 @@ UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
 	Int k, satd = 0;
-	__declspec(align(16)) Int diff[16],m[16],d[16];
+	__declspec(align(16)) Int m[16],d[16];
 
 	assert( iStep == 1 );
 
-	Vec4i v1,v2,v3,v4,m0,m4,m8,m12;
+	Vec8s temp1,temp2;
+	Vec4i v1,v2,v3,v4,m0,m4,m8,m12,diff_v,piOrg_v,piCur_v;
+	Int satd1,satd2,satd3,satd4;
 
-	for( k = 0; k < 16; k+=4 )
-	{
-		diff[k+0] = piOrg[0] - piCur[0];
-		diff[k+1] = piOrg[1] - piCur[1];
-		diff[k+2] = piOrg[2] - piCur[2];
-		diff[k+3] = piOrg[3] - piCur[3];
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piOrg_v=extend_low(temp1);		
+		piCur_v=extend_low(temp2);
+		v1=piOrg_v-piCur_v;
 
 		piCur += iStrideCur;
 		piOrg += iStrideOrg;
-	}
+
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piOrg_v=extend_low(temp1);		
+		piCur_v=extend_low(temp2);
+		
+		v2=piOrg_v-piCur_v;
+
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piOrg_v=extend_low(temp1);
+		piCur_v=extend_low(temp2);
+		
+		v3=piOrg_v-piCur_v;
+	    
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piOrg_v=extend_low(temp1);		
+		piCur_v=extend_low(temp2);
+		
+		v4=piOrg_v-piCur_v;
 
 	/*===== hadamard transform =====*/
 	/*m[ 0] = diff[ 0] + diff[12];
@@ -643,26 +670,22 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 	d[14] = m[14] - m[10];
 	d[15] = m[15] - m[11];*/
 
-	v1.load_a(diff);
-	v2.load_a(diff+12);
-	m0=v1+v2;
-	m12=v1-v2;
+	m4=v2+v3;
+	m8=v2-v3;
 
-	v3.load_a(diff+4);
-	v4.load_a(diff+8);
-	m4=v3+v4;
-	m8=v3-v4;
+	m0=v1+v4;
+	m12=v1-v4;	
 
 	v1=m0+m4;
 	v2=m8+m12;
 	v3=m0-m4;
-	v4=m12-m8;
+	v4=m12-m8;	
 
-	v1.store_a(m);
-	v2.store_a(m+4);
-	v3.store_a(m+8);
-	v4.store_a(m+12);
-
+	v1.store(d);
+	v2.store(d+4);
+	v3.store(d+8);
+	v4.store(d+12);
+	
 	m[ 0] = d[ 0] + d[ 3];
 	m[ 1] = d[ 1] + d[ 2];
 	m[ 2] = d[ 1] - d[ 2];
@@ -680,6 +703,26 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 	m[14] = d[13] - d[14];
 	m[15] = d[12] - d[15];
 
+	/*m0=blend4i<0,1,4,5>(v1,v2);
+	m4=blend4i<3,2,7,6>(v1,v2);
+	v1=m0+m4;
+	v2=m0-m4;
+
+	m8=blend4i<0,1,4,5>(v3,v4);
+	m12=blend4i<3,2,7,6>(v3,v4);
+	v3=m8+m12;
+	v4=m8-m12;
+    */
+	/*m0=blend4i<0,1,5,4>(v1,v2);
+	m0.store(m);
+	m4=blend4i<2,3,7,6>(v1,v2);
+	m4.store(m+4);
+
+	m0=blend4i<0,1,5,4>(v3,v4);
+	m0.store(m+8);
+	m4=blend4i<2,3,7,6>(v3,v4);
+	m4.store(m+12);*/
+
 	d[ 0] = m[ 0] + m[ 1];
 	d[ 1] = m[ 0] - m[ 1];
 	d[ 2] = m[ 2] + m[ 3];
@@ -696,6 +739,22 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 	d[13] = m[12] - m[13];
 	d[14] = m[14] + m[15];
 	d[15] = m[15] - m[14];
+
+	/*m0=blend4i<0,5,2,7>(v1,v2);
+	m4=blend4i<1,4,3,6>(v1,v2);
+	v1=abs(m0+m4);
+	v2=abs(m0-m4);
+	satd1=horizontal_add_x(v1);
+	satd2=horizontal_add_x(v2);
+
+	m8=blend4i<0,5,2,7>(v3,v4);
+	m12=blend4i<1,4,3,6>(v3,v4);
+	v3=abs(m8+m12);
+	v4=abs(m8-m12);
+	satd3=horizontal_add_x(v3);
+	satd4=horizontal_add_x(v4);
+
+	satd=satd1+satd2+satd3+satd4;*/
 
 	for (k=0; k<16; ++k)
 	{
