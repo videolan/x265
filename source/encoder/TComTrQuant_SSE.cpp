@@ -28,48 +28,60 @@
 
 void fastInverseDst (Short *tmp,Short *block,Int shift)  // input tmp, output block
 { 
-  Int i, b[5][4];
   Int rnd_factor = 1<<(shift-1);
  
-  for (i=0; i<4; i++)
-  {  
-    // intermediate variables
-    b[0][i] = tmp[  i] + tmp[ 8+i];
-    b[1][i] = tmp[8+i] + tmp[12+i];
-    b[2][i] = tmp[  i] - tmp[12+i];
-    b[3][i] = 74 * tmp[4+i]; 
-    b[4][i] = (tmp[i] - tmp[8+i] + tmp [12+i]);
-  }
+  Vec8s tmp0, tmp1;
+  tmp0.load (tmp);
+  tmp1.load (tmp + 8);
+  
+  Vec4i c0 = extend_low (tmp0);
+  Vec4i c1 = extend_high (tmp0);
+  Vec4i c2 = extend_low (tmp1);
+  Vec4i c3 = extend_high (tmp1);
 
-  Vec4i c0, c1, c2, c3, c4;
-  c0.load (b[0]);
-  c1.load (b[1]);
-  c2.load (b[2]);
-  c3.load (b[3]);
-  c4.load (b[4]);
+  Vec4i c0_total = c0 + c2;
+  Vec4i c1_total = c2 + c3;
+  Vec4i c2_total = c0 - c3;
+  Vec4i c3_total = 74 * c1;
 
-  Vec4i c0_final = ( 29 * c0 + 55 * c1 + c3 + rnd_factor ) >> shift;
-  Vec4i c1_final = ( 55 * c2 - 29 * c1 + c3 + rnd_factor ) >> shift;
+  Vec4i c4 = (c0 - c2 + c3);
+
+  Vec4i c0_final = ( 29 * c0_total + 55 * c1_total + c3_total + rnd_factor ) >> shift;
+  Vec4i c1_final = ( 55 * c2_total - 29 * c1_total + c3_total + rnd_factor ) >> shift;
   Vec4i c2_final = (74 * c4 + rnd_factor) >> shift;
-  Vec4i c3_final = (55 * c0 + 29 * c2 - c3 + rnd_factor) >> shift;
+  Vec4i c3_final = (55 * c0_total + 29 * c2_total - c3_total + rnd_factor) >> shift;
 
-  block[0] = Clip3( -32768, 32767, (c0_final[0]));
-  block[4] = Clip3( -32768, 32767, (c0_final[1]));
-  block[8] = Clip3( -32768, 32767, (c0_final[2]));
-  block[12] = Clip3( -32768, 32767, (c0_final[3]));
+  Vec4i first_arg (-32768);
+  Vec4i second_arg (32767);
 
-  block[1] = Clip3( -32768, 32767, (c1_final[0]));
-  block[5] = Clip3( -32768, 32767, (c1_final[1]));
-  block[9] = Clip3( -32768, 32767, (c1_final[2]));
-  block[13] = Clip3( -32768, 32767, (c1_final[3]));
+  Vec4i max_number1 = max (first_arg, c0_final);
+  Vec4i mid_number1 = min (max_number1, second_arg);
+  Vec4i max_number2 = max (first_arg, c1_final);
+  Vec4i mid_number2 = min (max_number2, second_arg);
+  Vec8s half = compress (mid_number1, mid_number2);
 
-  block[2] = Clip3( -32768, 32767, (c2_final[0]));
-  block[6] = Clip3( -32768, 32767, (c2_final[1]));
-  block[10] = Clip3( -32768, 32767, (c2_final[2]));
-  block[14] = Clip3( -32768, 32767, (c2_final[3]));
+  block[0] = half[0];
+  block[4] = half[1];
+  block[8] = half[2];
+  block[12] = half[3];
+  block[1] = half[4];
+  block[5] = half[5];
+  block[9] = half[6];
+  block[13] = half[7];
 
-  block[3] = Clip3( -32768, 32767, (c3_final[0]));
-  block[7] = Clip3( -32768, 32767, (c3_final[1]));
-  block[11] = Clip3( -32768, 32767, (c3_final[2]));
-  block[15] = Clip3( -32768, 32767, (c3_final[3])); 
+  max_number1 = max (first_arg, c2_final);
+  mid_number1 = min (max_number1, second_arg);
+  max_number2 = max (first_arg, c3_final);
+  mid_number2 = min (max_number2, second_arg);
+  half = compress (mid_number1, mid_number2);
+
+  block[2] = half[0];
+  block[6] = half[1];
+  block[10] = half[2];
+  block[14] = half[3];
+  block[3] = half[4];
+  block[7] = half[5];
+  block[11] = half[6];
+  block[15] = half[7];
+
 }
