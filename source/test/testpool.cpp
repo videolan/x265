@@ -118,7 +118,7 @@ void MD5Frame::ProcessRow( int rownum )
         MD5 hash;
 
         // * Fake CTU processing *
-        PPAStartCpuEventFunc(encode_block)
+        PPAStartCpuEventFunc(encode_block);
         memset(curCTU.digest, id, sizeof(curCTU.digest));
         hash.update(curCTU.digest, sizeof(curCTU.digest));
         if (curRow.curCol > 0)
@@ -132,7 +132,7 @@ void MD5Frame::ProcessRow( int rownum )
                 hash.update(this->cu[id-this->numcols+1].digest, sizeof(curCTU.digest));
         }
         hash.finalize(curCTU.digest);
-        PPAStopCpuEventFunc(encode_block)
+        PPAStopCpuEventFunc(encode_block);
 
         curRow.curCol++;
         if (curRow.curCol > 2 && rownum < this->numrows-1)
