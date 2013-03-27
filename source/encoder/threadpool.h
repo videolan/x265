@@ -75,6 +75,8 @@ private:
     //< set and clear bits, for thread safety
     uint64_t volatile *m_queuedBitmap;
 
+    int m_numWords;
+
     int m_numRows;
 
     //< QueueFrame's internal implementation. Consults queuedBitmap and calls

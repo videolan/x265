@@ -107,6 +107,8 @@ private:
 
 public:
 
+    static ThreadPoolImpl *instance;
+
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
 
@@ -120,7 +122,7 @@ public:
 
     ThreadPoolImpl *AddReference() { m_referenceCount++; return this; }
 
-    void Release() { if (--m_referenceCount == 0) delete this; }
+    void Release();
 
     bool IsValid() const { return m_ok; }
 
@@ -213,19 +215,31 @@ static int get_cpu_count()
 #endif
 }
 
+ThreadPoolImpl *ThreadPoolImpl::instance;
+
 /* static */
 ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
 {
-    static ThreadPoolImpl *_impl;
-    if (_impl)
-        return _impl->AddReference();
-    _impl = new ThreadPoolImpl(numthreads);
-    return _impl;
+    if (ThreadPoolImpl::instance)
+        return ThreadPoolImpl::instance->AddReference();
+    ThreadPoolImpl::instance = new ThreadPoolImpl(numthreads);
+    return ThreadPoolImpl::instance;
+}
+
+void ThreadPoolImpl::Release()
+{ 
+    if (--m_referenceCount == 0)
+    {
+        assert(this == ThreadPoolImpl::instance);
+        ThreadPoolImpl::instance = NULL;
+        delete this;
+    }
 }
 
 ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     : m_ok(false)
     , m_referenceCount(1)
+    , m_numThreads(numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
     , m_idleThreadList(NULL)
@@ -331,7 +345,9 @@ bool QueueFrame::InitJobQueue( int numRows )
 
     if (m_pool)
     {
-        m_queuedBitmap = new uint64_t[ (numRows + 63) >> 6 ];
+        m_numWords = (numRows + 63) >> 6;
+        m_queuedBitmap = new uint64_t[ m_numWords ];
+        memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
         return m_queuedBitmap != NULL;
     }
 
@@ -357,19 +373,20 @@ void QueueFrame::EnqueueRow( int row )
 
 bool QueueFrame::FindJob()
 { // thread safe
-    for (int w = 0; w < ((m_numRows+63)>>6); w++)
+    for (int w = 0; w < m_numWords; w++)
     {
         while (m_queuedBitmap[w])
         {
             uint64_t word = m_queuedBitmap[w];
             if (word == 0) // race condition
                 break;
-            int bit = 64 - (int) CLZ64(word);
-            uint64_t mask = ~(1LL << bit);
+            int id = 63 - (int) CLZ64(word);
+            uint64_t bit = 1LL << id;
+            uint64_t mask = ~bit;
 
-            if (ATOMIC_AND(&m_queuedBitmap[w], mask) & (1LL << bit))
+            if (ATOMIC_AND(&m_queuedBitmap[w], mask) & bit)
             { // if the bit was actually flipped. process row, else try again
-                ProcessRow( w * 32 + bit );
+                ProcessRow( w * 64 + id );
                 return true;
             }
         }
