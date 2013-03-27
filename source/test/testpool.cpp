@@ -34,6 +34,7 @@ using namespace x265;
 
 struct CUData
 {
+    CUData() { memset(digest, 0, sizeof(digest)); }
     unsigned char digest[16];
 };
 
