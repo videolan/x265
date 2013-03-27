@@ -61,8 +61,8 @@ inline int __lzcnt_2x32(uint64_t x64)
 }
 #endif
 
-#define ATOMIC_AND(ptr,mask)           InterlockedAnd(ptr,mask)
-#define ATOMIC_OR(ptr,mask)            InterlockedOr(ptr,mask)
+#define ATOMIC_AND(ptr,mask)           InterlockedAnd64((volatile LONG64*)ptr,mask)
+#define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
 #define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchangePointer((void**)ptr,(void*)oldval,(void*)newval)
 
 #endif
