@@ -1,2 +1,12 @@
 add_executable(testpool testpool.cpp)
 target_link_libraries(testpool x265 HM)
+
+if(UNIX)
+    target_link_libraries(testpool pthread)
+endif(UNIX)
+if(ENABLE_PPA)
+    target_link_libraries(testpool PPA)
+    if(UNIX)
+        target_link_libraries(testpool dl)
+    endif(UNIX)
+endif(ENABLE_PPA)
