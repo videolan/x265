@@ -102,7 +102,7 @@ void MD5Frame::Encode()
 
     unsigned char *outdigest = this->cu[this->numrows * this->numcols - 1].digest;
 
-    printf("%x %1.3fsec\n", outdigest, (float) (stop-start) / CLOCKS_PER_SEC);
+    printf("%x %1.7fsec\n", outdigest, (float) (stop-start) / CLOCKS_PER_SEC);
 }
 
 void MD5Frame::ProcessRow( int rownum )
