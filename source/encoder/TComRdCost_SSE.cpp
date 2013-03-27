@@ -597,24 +597,24 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 
 	assert( iStep == 1 );
 
-	Vec8s temp1,temp2;
+	Vec8s temp1,temp2,temp3,temp4;
 	Vec4i v1,v2,v3,v4,m0,m4,m8,m12,diff_v,piOrg_v,piCur_v;
 	Int satd1,satd2,satd3,satd4;
 
 	temp1.load(piOrg);
 	temp2.load(piCur);
+	piCur += iStrideCur;
+	piOrg += iStrideOrg;
+
+	temp3.load(piOrg);
+	temp4.load(piCur);
+
 	piOrg_v=extend_low(temp1);		
 	piCur_v=extend_low(temp2);
 	v1=piOrg_v-piCur_v;
 
-	piCur += iStrideCur;
-	piOrg += iStrideOrg;
-
-	temp1.load(piOrg);
-	temp2.load(piCur);
-	piOrg_v=extend_low(temp1);		
-	piCur_v=extend_low(temp2);
-
+	piOrg_v=extend_low(temp3);		
+	piCur_v=extend_low(temp4);
 	v2=piOrg_v-piCur_v;
 
 	piCur += iStrideCur;
@@ -622,19 +622,18 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 
 	temp1.load(piOrg);
 	temp2.load(piCur);
-	piOrg_v=extend_low(temp1);
-	piCur_v=extend_low(temp2);
-
-	v3=piOrg_v-piCur_v;
-
 	piCur += iStrideCur;
 	piOrg += iStrideOrg;
 
-	temp1.load(piOrg);
-	temp2.load(piCur);
-	piOrg_v=extend_low(temp1);		
-	piCur_v=extend_low(temp2);
+	temp3.load(piOrg);
+	temp4.load(piCur);
 
+	piOrg_v=extend_low(temp1);
+	piCur_v=extend_low(temp2);
+	v3=piOrg_v-piCur_v;
+
+	piOrg_v=extend_low(temp3);		
+	piCur_v=extend_low(temp4);
 	v4=piOrg_v-piCur_v;
 
 	m4=v2+v3;
