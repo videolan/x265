@@ -22,10 +22,10 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComTrQuant.h"
-
 #include "vectorclass.h"
 
 
+#ifdef ENABLE_VECTOR
 void fastInverseDst (Short *tmp,Short *block,Int shift)  // input tmp, output block
 { 
   Int rnd_factor = 1<<(shift-1);
@@ -83,5 +83,7 @@ void fastInverseDst (Short *tmp,Short *block,Int shift)  // input tmp, output bl
   block[7] = half[5];
   block[11] = half[6];
   block[15] = half[7];
-
 }
+#endif
+
+
