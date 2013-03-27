@@ -142,7 +142,9 @@ void MD5Frame::ProcessRow( int rownum )
                 this->QueueFrame::EnqueueRow(rownum+1);
             }
         }
-        if (rownum > 0 && row[rownum-1].curCol < curRow.curCol+2)
+        if (rownum > 0 &&
+            curRow.curCol < this->numcols-1 &&
+            this->row[rownum-1].curCol < curRow.curCol+2)
         {   // row is blocked, quit job
             curRow.active = 0;
             return;
