@@ -487,6 +487,9 @@ UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4100)
+#endif
 UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
   Int  i, j, k, jj, sad=0;
