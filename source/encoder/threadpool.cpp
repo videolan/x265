@@ -239,10 +239,10 @@ void ThreadPoolImpl::Release()
 ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     : m_ok(false)
     , m_referenceCount(1)
+    , m_numThreads(numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
     , m_idleThreadList(NULL)
-    , m_numThreads(numThreads)
 {
     if (numThreads == 0)
         numThreads = get_cpu_count();
