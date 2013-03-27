@@ -22,6 +22,16 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -Wextra -Werror -Wshadow)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
+# Add some multithreaded build support
+set(MULTITHREADED_BUILD "${MULTITHREADED_BUILD}" CACHE STRING "Number of threads to use for build")
+if(MULTITHREADED_BUILD)
+    if(CMAKE_COMPILER_IS_GNUCXX)
+        set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j${MULTITHREADED_BUILD}")
+    elseif(MSVC)
+        add_definitions(/MP${MULTITHREADED_BUILD})
+    endif()
+endif()
+
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
