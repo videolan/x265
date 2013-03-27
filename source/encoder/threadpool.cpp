@@ -107,6 +107,8 @@ private:
 
 public:
 
+    static ThreadPoolImpl *instance;
+
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
 
@@ -120,7 +122,7 @@ public:
 
     ThreadPoolImpl *AddReference() { m_referenceCount++; return this; }
 
-    void Release() { if (--m_referenceCount == 0) delete this; }
+    void Release();
 
     bool IsValid() const { return m_ok; }
 
@@ -213,14 +215,25 @@ static int get_cpu_count()
 #endif
 }
 
+ThreadPoolImpl *ThreadPoolImpl::instance;
+
 /* static */
 ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
 {
-    static ThreadPoolImpl *_impl;
-    if (_impl)
-        return _impl->AddReference();
-    _impl = new ThreadPoolImpl(numthreads);
-    return _impl;
+    if (ThreadPoolImpl::instance)
+        return ThreadPoolImpl::instance->AddReference();
+    ThreadPoolImpl::instance = new ThreadPoolImpl(numthreads);
+    return ThreadPoolImpl::instance;
+}
+
+void ThreadPoolImpl::Release()
+{ 
+    if (--m_referenceCount == 0)
+    {
+        assert(this == ThreadPoolImpl::instance);
+        ThreadPoolImpl::instance = NULL;
+        delete this;
+    }
 }
 
 ThreadPoolImpl::ThreadPoolImpl(int numThreads)
