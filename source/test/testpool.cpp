@@ -92,6 +92,8 @@ void MD5Frame::Encode()
 
     this->JobProvider::Enqueue();
 
+    this->QueueFrame::EnqueueRow(0);
+
     this->complete.Wait();
 
     this->JobProvider::Dequeue();
