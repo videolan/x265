@@ -332,6 +332,7 @@ bool QueueFrame::InitJobQueue( int numRows )
     if (m_pool)
     {
         m_queuedBitmap = new uint64_t[ (numRows + 63) >> 6 ];
+        memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * ((numRows + 63) >> 6));
         return m_queuedBitmap != NULL;
     }
 
