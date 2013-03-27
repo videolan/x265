@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
+#include <string.h>
 
 using namespace x265;
 
