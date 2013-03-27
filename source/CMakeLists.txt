@@ -15,6 +15,7 @@ cmake_minimum_required (VERSION 2.6)
 # Enforce coding standards.  Full warnings and warnings as errors
 if(MSVC)
     add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(/Ob2) # always inline
     include_directories(compat/msvc)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
