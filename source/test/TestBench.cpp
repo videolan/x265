@@ -14,13 +14,6 @@
 #define snprintf _snprintf
 using namespace x265;
 
-
-// GCC doesn't align stack variables on ARM, so use .bss
-#if ARCH_ARM
-#undef ALIGNED_16
-#define ALIGNED_16( var ) DECLARE_ALIGNED( static var, 16 )
-#endif
-
 /* buf1, buf2: initialised to random data and shouldn't write into them */
 unsigned int *buf1, *buf2;
 /* buf3, buf4: used to store output */
@@ -64,13 +57,6 @@ int bench_pattern_len = 0;
 const char *bench_pattern = "";
 char func_name[100];
 static bench_func_t benchs[MAX_FUNCS];
-
-static const char *pixel_names[12] = { "16x16", "16x8", "8x16", "8x8", "8x4", "4x8", "4x4", "4x16", "4x2", "2x8", "2x4", "2x2" };
-static const char *intra_predict_16x16_names[7] = { "v", "h", "dc", "p", "dcl", "dct", "dc8" };
-static const char *intra_predict_8x8c_names[7] = { "dc", "h", "v", "p", "dcl", "dct", "dc8" };
-static const char *intra_predict_4x4_names[12] = { "v", "h", "dc", "ddl", "ddr", "vr", "hd", "vl", "hu", "dcl", "dct", "dc8" };
-static const char **intra_predict_8x8_names = intra_predict_4x4_names;
-static const char **intra_predict_8x16c_names = intra_predict_8x8c_names;
 
 #define set_func_name(...) snprintf( func_name, sizeof(func_name), __VA_ARGS__ )
 
@@ -194,31 +180,6 @@ static void print_bench(void)
         }
 }
 
-
-/* detect when callee-saved regs aren't saved
- * needs an explicit asm check because it only sometimes crashes in normal use. */
-
-#if ARCH_X86 || ARCH_X86_64
-int x265_stack_pagealign( int (*func)(), int align );
-intptr_t x265_checkasm_call( intptr_t (*func)(), int *ok, ... );
-#else
-#define x265_stack_pagealign( func, align ) func()
-#endif
-
-#define call_c1(func,...) func(__VA_ARGS__)
-
-#if ARCH_X86_64
-void x265_checkasm_stack_clobber( uint64_t clobber, ... );
-#define call_a1(func,...) ({ \
-    unsigned int r = (rand() & 0xffff) * 0x0001000100010001ULL; \
-    x265_checkasm_stack_clobber( r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r ); /* max_args+6 */ \
-    x265_checkasm_call(( intptr_t(*)())func, &ok, 0, 0, 0, 0, __VA_ARGS__ ); })
-#elif ARCH_X86
-#define call_a1(func,...) x265_checkasm_call( (intptr_t(*)())func, &ok, __VA_ARGS__ )
-#else
-#define call_a1 call_c1
-#endif
-
 #define call_bench(func,cpu,...)\
     if( do_bench && !strncmp(func_name, bench_pattern, bench_pattern_len) )\
     {\
@@ -244,11 +205,6 @@ void x265_checkasm_stack_clobber( uint64_t clobber, ... );
         b->den += tcount;\
         b->pointer = func;\
     }
-
-#define call_a(func,...) ({ call_a2(func,__VA_ARGS__); call_a1(func,__VA_ARGS__); })
-#define call_c(func,...) ({ call_c2(func,__VA_ARGS__); call_c1(func,__VA_ARGS__); })
-#define call_a2(func,...) ({ call_bench(func,cpu_new,__VA_ARGS__); })
-#define call_c2(func,...) ({ call_bench(func,0,__VA_ARGS__); })
 
 //Sample Testing for Bench Marking
 static int check_vector(int cpu_ref, int cpu_new)
@@ -283,6 +239,17 @@ static int check_vector(int cpu_ref, int cpu_new)
 			//Once the Functions for Vector Primitives are ready call those methodes and 
 			//Call Actual Methods for bench marking
 
+			uint8_t *fenc;
+			intptr_t fencstride;
+			uint8_t *fref;
+			intptr_t frefstride;
+            
+			//Example call c Function
+			int *end_a = (int*)(x265::pixelcmp)( fenc, fencstride, fref, frefstride );
+
+			//Example Call asm Functions 
+
+			//Compare the o/p and time taken
 		}
 		
 		//Dump the Repoprt for Log message
@@ -369,7 +336,7 @@ int main(int argc, char *argv[])
 				pbuf3 = (unsigned int*)buf3;
 				pbuf4 = (unsigned int*)buf4;
 
-            ret |= x265_stack_pagealign( check_all_flags, i*16 );
+           // ret |= x265_stack_pagealign( check_all_flags, i*16 );
             buf1 += 16;
             pbuf1 += 16;
             quiet = 1;
