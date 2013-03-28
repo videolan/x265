@@ -24,6 +24,8 @@
 #ifndef X265_PRIMITIVES_H
 #define X265_PRIMITIVES_H
 
+#include <stdint.h>
+
 namespace x265
 {
 

@@ -21,7 +21,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <stdint.h>
 #include <string.h>
 #include "primitives.h"
 
