@@ -21,6 +21,7 @@ endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wno-sign-compare)
     add_definitions(-Wno-unused-parameter)
+    add_definitions(-Wno-unused-variable)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)

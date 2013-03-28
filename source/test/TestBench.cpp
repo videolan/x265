@@ -1,5 +1,4 @@
 #include "UnitTest.h"
-#include "vectorclass.h"
 #include "primitives.h"
 
 #include <ctype.h>
@@ -158,45 +157,6 @@ static void print_bench(void)
             for( k = 0; k < j && benchs[i].vers[k].pointer != b->pointer; k++ );
             if( k < j )
                 continue;
-            //printf( "%s_%s%s: %"PRId64"\n", benchs[i].name,
-#if HAVE_MMX
-                    b->cpu&X264_CPU_AVX2 && b->cpu&X264_CPU_FMA3 ? "avx2_fma3" :
-                    b->cpu&X264_CPU_AVX2 ? "avx2" :
-                    b->cpu&X264_CPU_FMA3 ? "fma3" :
-                    b->cpu&X264_CPU_FMA4 ? "fma4" :
-                    b->cpu&X264_CPU_XOP ? "xop" :
-                    b->cpu&X264_CPU_AVX ? "avx" :
-                    b->cpu&X264_CPU_SSE4 ? "sse4" :
-                    b->cpu&X264_CPU_SSSE3 ? "ssse3" :
-                    b->cpu&X264_CPU_SSE3 ? "sse3" :
-                    /* print sse2slow only if there's also a sse2fast version of the same func */
-                    b->cpu&X264_CPU_SSE2_IS_SLOW && j<MAX_CPUS-1 && b[1].cpu&X264_CPU_SSE2_IS_FAST && !(b[1].cpu&X264_CPU_SSE3) ? "sse2slow" :
-                    b->cpu&X264_CPU_SSE2 ? "sse2" :
-                    b->cpu&X264_CPU_SSE ? "sse" :
-                    b->cpu&X264_CPU_MMX ? "mmx" :
-#elif ARCH_PPC
-                    b->cpu&X264_CPU_ALTIVEC ? "altivec" :
-#elif ARCH_ARM
-                    b->cpu&X264_CPU_NEON ? "neon" :
-                    b->cpu&X264_CPU_ARMV6 ? "armv6" :
-#endif
-                    "c",
-#if HAVE_MMX
-                    b->cpu&X264_CPU_CACHELINE_32 ? "_c32" :
-                    b->cpu&X264_CPU_SLOW_ATOM && b->cpu&X264_CPU_CACHELINE_64 ? "_c64_atom" :
-                    b->cpu&X264_CPU_CACHELINE_64 ? "_c64" :
-                    b->cpu&X264_CPU_SLOW_SHUFFLE ? "_slowshuffle" :
-                    b->cpu&X264_CPU_SSE_MISALIGN ? "_misalign" :
-                    b->cpu&X264_CPU_LZCNT ? "_lzcnt" :
-                    b->cpu&X264_CPU_BMI2 ? "_bmi2" :
-                    b->cpu&X264_CPU_BMI1 ? "_bmi1" :
-                    b->cpu&X264_CPU_SLOW_CTZ ? "_slow_ctz" :
-                    b->cpu&X264_CPU_SLOW_ATOM ? "_atom" :
-#elif ARCH_ARM
-                    b->cpu&X264_CPU_FAST_NEON_MRC ? "_fast_mrc" :
-#endif
-                    "",
-                    ((int)10*b->cycles/b->den - nop_time)/4;
         }
 }
 
@@ -292,7 +252,7 @@ static int check_vector(int cpu_ref, int cpu_new)
 		//Dump the Repoprt for Log message
 		report( "check_vector:" );
 					
-	return 0;
+	return ret;
 }
 
 static int check_all_funcs( int cpu_ref, int cpu_new )
