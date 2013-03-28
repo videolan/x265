@@ -21,5 +21,5 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wno-unused-parameter)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
-add_executable(TestBench TestBench.CPP UnitTest.CPP UnitTest.h)
+add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
