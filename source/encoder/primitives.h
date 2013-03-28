@@ -61,6 +61,8 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 
+void SetupPrimitives( int cpuid = 0 );
+
 }
 
 #endif

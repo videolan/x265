@@ -52,7 +52,7 @@ EncoderPrimitives primitives;
 
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
-void SetupPrimitives( int cpuid = 0 )
+void SetupPrimitives( int cpuid )
 {
 #if ENABLE_PRIMITIVES
     /* .. detect actual CPU type and pick best vector architecture

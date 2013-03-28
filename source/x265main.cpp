@@ -37,6 +37,7 @@
 
 #include <time.h>
 #include <iostream>
+#include "primitives.h"
 #include "x265top.h"
 #include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
@@ -82,6 +83,10 @@ int main(int argc, char* argv[])
     cerr << "Error parsing option \""<< e.arg <<"\" with argument \""<< e.val <<"\"." << endl;
     return 1;
   }
+
+  // TODO: CPUID should be a commandline parameter
+  int cpuid = 0;
+  x265::SetupPrimitives( cpuid );
 
   // starting time
   double dResult;
