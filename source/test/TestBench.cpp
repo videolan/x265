@@ -1,19 +1,21 @@
-#include <ctype.h>
 #include "UnitTest.h"
+#include "vectorclass.h"
+#include "primitives.h"
+
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <tchar.h>
 #include <string.h>
+#include <math.h>
 
-#include "vectorclass.h"
-#include "primitives.h"
-
+#if _MSC_VER
 #define snprintf _snprintf
-using namespace x265;
+#endif
 
+using namespace x265;
 
 // GCC doesn't align stack variables on ARM, so use .bss
 #if ARCH_ARM
@@ -88,9 +90,13 @@ static inline unsigned long read_time(void)
     return a;
 }
 
-static bench_t* get_bench( const char *name, int cpu )
+#if _MSC_VER
+#pragma warning(disable: 4505) // static function unused, has been removed
+#endif
+static bench_t* get_bench( const char *name, unsigned long cpu )
 {
-    int i, j;
+    int i;
+    unsigned long j;
     for( i = 0; benchs[i].name && strcmp(name, benchs[i].name); i++ )
         assert( i < MAX_FUNCS );
     if( !benchs[i].name )
@@ -255,18 +261,16 @@ static int check_vector(int cpu_ref, int cpu_new)
 {
 		int ret = 0, ok = 1, used_asm = 0;
 	    int size = 0x4000;
-		short *Orig = (short *)malloc(size+100);
-        short *Cur = (short *) malloc(size*100);
+		//short *Orig = (short *)malloc(size+100);
+        //short *Cur = (short *) malloc(size*100);
 
 		//Set the Bench Mark Function name 
         set_func_name( "xGetSAD8" );
 				
-		int size1 = 0x4000;
+		//int size1 = 0x4000;
         uint8_t *input = (uint8_t *)malloc(size+100);
         uint8_t *output = (uint8_t *)malloc(size*100);
 
-		EncoderPrimitives primitives;
-		       
 		//Generates the Randome i/p for Benchmark and run the function 100 times for time predictions
 		for( int i = 0; i < 100; i++ )
         {

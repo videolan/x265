@@ -162,8 +162,7 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
 }
 int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
 {
-
-	unsigned int offset =0;
+	//unsigned int offset =0;
 	unsigned int a_size, b_size;
 	unsigned int y_plane_area, u_plane_area, v_plane_area;
 
