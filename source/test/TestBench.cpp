@@ -12,6 +12,7 @@
 
 #if _MSC_VER
 #define snprintf _snprintf
+#define strdup _strdup
 #endif
 
 using namespace x265;
