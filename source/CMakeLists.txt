@@ -32,6 +32,12 @@ if(MULTITHREADED_BUILD)
     endif()
 endif()
 
+# Allow performance primitives to be disabled
+option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
+if(ENABLE_PRIMITIVES)
+    add_definitions(-DENABLE_PRIMITIVES)
+endif(ENABLE_PRIMITIVES)
+
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
