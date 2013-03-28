@@ -31,7 +31,7 @@ namespace x265
  * Depending on your compiler, some of them may be undefined.
  * The #if logic here must match the file lists in vec/CMakeLists.txt */
 
-#if defined (GCC_VERSION) || defined(_MSC_VER)
+#if defined (__GNUC__) || defined(_MSC_VER)
 extern EncoderPrimitives primitives_vectorized_sse42;
 extern EncoderPrimitives primitives_vectorized_sse41;
 extern EncoderPrimitives primitives_vectorized_ssse3;
