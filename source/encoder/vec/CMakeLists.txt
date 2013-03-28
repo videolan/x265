@@ -1,4 +1,4 @@
-if (MSVC_VERSION GREATER 1500) # VC9 or higher
+if (MSVC)
     set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp)
 endif()
 if (MSVC_VERSION EQUAL 1600) # VC10

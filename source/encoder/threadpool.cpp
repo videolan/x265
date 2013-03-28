@@ -26,6 +26,7 @@
 #include "threadpool.h"
 #include "threading.h"
 #include <assert.h>
+#include <string.h>
 
 #if MACOS
 #include <sys/param.h>

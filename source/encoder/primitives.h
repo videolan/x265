@@ -26,6 +26,15 @@
 
 #include <stdint.h>
 
+#if defined (__GNUC__)
+#define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
+#define ALIGN_VAR_16(T, var) T var __attribute__ ((aligned (16)))
+#elif defined(_MSC_VER)
+#define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
+#define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
+#endif
+
+
 namespace x265
 {
 
@@ -43,7 +52,8 @@ enum Partitions {
     NUM_PARTITIONS
 };
 
-typedef int (_cdecl *pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
+extern "C"
+typedef int (*pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -57,22 +67,11 @@ struct EncoderPrimitives
     /* .. Define primitives for more things .. */
 };
 
-/* These function tables are defined by C++ files in encoder/vec
- * Depending on your compiler, some of them may be undefined.
- *
- * These can be used as starting function sets, then change some
- * function pointers to assembly versions as they are available. */
-extern EncoderPrimitives primitives_vectorized_avx2;
-extern EncoderPrimitives primitives_vectorized_avx;
-extern EncoderPrimitives primitives_vectorized_sse42;
-extern EncoderPrimitives primitives_vectorized_sse41;
-extern EncoderPrimitives primitives_vectorized_ssse3;
-extern EncoderPrimitives primitives_vectorized_sse3;
-extern EncoderPrimitives primitives_vectorized_sse2;
-
 /* This copy of the table is what gets used by all by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
+
+void SetupPrimitives( int cpuid = 0 );
 
 }
 

@@ -24,6 +24,7 @@
 
 #include "TLibCommon/TComRdCost.h"
 #include "vectorclass.h"
+#include "primitives.h"
 #include <assert.h>
 
 
@@ -494,8 +495,10 @@ UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
 UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
   Int  i, j, k, jj, sad=0;
-  __declspec(align(16)) Int  m1[8][8], m2[8][8], m3[8][8];
-  __declspec(align(16)) Short diff[64];
+  ALIGN_VAR_16(Int, m1[8][8]);
+  ALIGN_VAR_16(Int, m2[8][8]);
+  ALIGN_VAR_16(Int, m3[8][8]);
+  ALIGN_VAR_16(Short, diff[64]);
 
   Vec8s diff_v1, piOrg_v, piCur_v;
   Vec4i v1, v2;
