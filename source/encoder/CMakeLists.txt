@@ -1,23 +1,12 @@
-if (MSVC_VERSION EQUAL 1500) # VC9
-    add_definitions(-DINSTRSET=6) # SSE4.2
-endif()
-if (MSVC_VERSION EQUAL 1600) # VC10
-    add_definitions(-DINSTRSET=7)
-endif()
-if (MSVC_VERSION EQUAL 1700) # VC11
-    add_definitions(-DINSTRSET=7)
-endif()
-if (MSVC_VERSION GREATER 1500) # VC9 or higher
-    add_definitions(/arch:SSE2)
-endif()
+add_subdirectory(vec)
+
+# TComRdCost_SSE.cpp should go away, and so should this special case
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-DINSTRSET=6 -msse4)
+    set_source_files_properties(TComRdCost_SSE.cpp PROPERTIES COMPILE_FLAGS "-msse4 -Wno-unused-parameter -Wno-attributes")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
-file(GLOB VECTORCLASS ../VectorClass/*.h ../VectorClass/special/*.h)
-source_group(VectorClass FILES ${VECTORCLASS})
-
-add_library(x265 ${VECTORCLASS}
+add_library(x265
     TComRdCost_SSE.cpp 
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
+target_link_libraries(x265 VectorPrimitives)
