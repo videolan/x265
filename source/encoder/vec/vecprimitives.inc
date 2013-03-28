@@ -36,11 +36,11 @@ namespace // place vector functions in anonymous namespace (file static)
 extern "C"
 {
 
-uint16_t NAME(sad_8x8)( uint8_t *piOrg, uint32_t strideOrg, uint8_t *piCur, uint32_t strideCur )
+int NAME(sad_8x8)( uint8_t *piOrg, intptr_t strideOrg, uint8_t *piCur, intptr_t strideCur )
 { // NOTE: This is completely untested, and ignores alignment issues
-    uint16_t uiSum = 0;
+    int uiSum = 0;
 
-    for( uint16_t Row = 0; Row < 8; Row++ )
+    for( int Row = 0; Row < 8; Row++ )
     {
         Vec8s m1, n1;
         m1.load(piOrg);
