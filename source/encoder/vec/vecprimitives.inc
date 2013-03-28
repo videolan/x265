@@ -22,12 +22,16 @@
  *****************************************************************************/
 
 /* This header is included into the per-architecture CPP files.  Each
- * one will define ARCH to a different value
- */
+ * one will define ARCH to a different value. */
+
+#include "primitives.h"
 
 #define PASTER(name,val) name ## _ ## val
 #define EVALUATOR(x,y)   PASTER(x,y)
 #define NAME(fun)        EVALUATOR(fun, ARCH)
+
+namespace // place vector functions in anonymous namespace (file static)
+{
 
 extern "C"
 {
@@ -51,5 +55,33 @@ uint16_t NAME(sad_8x8)( uint8_t *piOrg, uint32_t strideOrg, uint8_t *piCur, uint
 
     return uiSum;
 }
+
+/* .. define more primitive functions here */
+
+}; // end extern "C"
+
+}  // end anonymous namespace
+
+
+namespace x265
+{
+
+/* Instantiate an EncoderPrimitives instance for this vector architecture */
+EncoderPrimitives NAME(primitives_vectorized);
+
+/* Setup() will be called before main().  It should initialize the
+ * function table for this vector architecture.
+ */
+static int Setup()
+{
+    EncoderPrimitives& p = NAME(primitives_vectorized);
+
+    /* .. setup all the other primitives defined in this header */
+    p.sad[PARTITION_8x8] = NAME(sad_8x8);
+
+    return 1;
+}
+
+static int forceinit = Setup();
 
 };
