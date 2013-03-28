@@ -150,7 +150,7 @@ public:
     // Extract a single element. Use store function if extracting more than one element.
     // Operator [] can only read an element, not write.
     bool operator [] (uint32_t index) const {
-        return get_bit(index);
+        return get_bit(index) ? true : false;
     }
     // Member functions to split into two Vec128b:
     Vec128b get_low() const {
@@ -4547,7 +4547,7 @@ static inline Vec8ui & operator /= (Vec8ui & a, Const_int_t<d> b) {
     return a;
 }
 
-
+#ifndef _MSC_VER  // VC11 cannot give the required alignment to 'x'
 // Divide Vec16s by compile-time constant 
 template <int d>
 static inline Vec16s divide_by_i(Vec16s x) {
@@ -4575,6 +4575,7 @@ static inline Vec16s divide_by_i(Vec16s x) {
     const Divisor_s div(mult, shift1, d0 > 0 ? 0 : -1);
     return x / div;
 }
+#endif
 
 // define Vec16s a / const_int(d)
 template <int d>
