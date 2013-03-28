@@ -43,7 +43,8 @@ enum Partitions {
     NUM_PARTITIONS
 };
 
-typedef int (_cdecl *pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
+extern "C"
+typedef int (*pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
