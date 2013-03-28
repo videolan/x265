@@ -27,6 +27,24 @@
 namespace x265
 {
 
+/* These function tables are defined by C++ files in encoder/vec
+ * Depending on your compiler, some of them may be undefined.
+ * The #if logic here must match the file lists in vec/CMakeLists.txt */
+
+#if defined (GCC_VERSION) || defined(_MSC_VER)
+extern EncoderPrimitives primitives_vectorized_sse42;
+extern EncoderPrimitives primitives_vectorized_sse41;
+extern EncoderPrimitives primitives_vectorized_ssse3;
+extern EncoderPrimitives primitives_vectorized_sse3;
+extern EncoderPrimitives primitives_vectorized_sse2;
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+extern EncoderPrimitives primitives_vectorized_avx;
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+extern EncoderPrimitives primitives_vectorized_avx2;
+#endif
+
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 

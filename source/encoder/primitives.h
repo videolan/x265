@@ -57,19 +57,6 @@ struct EncoderPrimitives
     /* .. Define primitives for more things .. */
 };
 
-/* These function tables are defined by C++ files in encoder/vec
- * Depending on your compiler, some of them may be undefined.
- *
- * These can be used as starting function sets, then change some
- * function pointers to assembly versions as they are available. */
-extern EncoderPrimitives primitives_vectorized_avx2;
-extern EncoderPrimitives primitives_vectorized_avx;
-extern EncoderPrimitives primitives_vectorized_sse42;
-extern EncoderPrimitives primitives_vectorized_sse41;
-extern EncoderPrimitives primitives_vectorized_ssse3;
-extern EncoderPrimitives primitives_vectorized_sse3;
-extern EncoderPrimitives primitives_vectorized_sse2;
-
 /* This copy of the table is what gets used by all by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
