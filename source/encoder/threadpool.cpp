@@ -31,12 +31,11 @@
 #if MACOS
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#elif __unix__
-#include <unistd.h>
 #endif
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
+#include <unistd.h>
 #include <limits.h>
 
 #define CLZ64(x)                        __builtin_clzll(x)
