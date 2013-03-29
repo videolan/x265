@@ -27,6 +27,10 @@
 namespace x265
 {
 
+/* C (reference) versions of each primitive, implemented by various
+ * C++ files (pixels.cpp, etc) */
+EncoderPrimitives primitives_c;
+
 /* These function tables are defined by C++ files in encoder/vec
  * Depending on your compiler, some of them may be undefined.
  * The #if logic here must match the file lists in vec/CMakeLists.txt */
@@ -50,18 +54,35 @@ extern EncoderPrimitives primitives_vectorized_avx2;
 EncoderPrimitives primitives;
 #endif
 
+/* Take all primitive functions from p which are non-NULL */
+static void MergeFunctions(const EncoderPrimitives& p)
+{
+    /* too bad this isn't an introspecive language, but we can use macros */
+
+#define TAKE_IF_NOT_NULL(FOO) \
+    primitives.FOO = p.FOO ? p.FOO : primitives.FOO
+#define TAKE_EACH_IF_NOT_NULL(FOO, COUNT) \
+    for (int i = 0; i < COUNT; i++) \
+        primitives.FOO[i] = p.FOO[i] ? p.FOO[i] : primitives.FOO[i]
+
+    TAKE_EACH_IF_NOT_NULL(sad, NUM_PARTITIONS);
+    TAKE_EACH_IF_NOT_NULL(satd, NUM_PARTITIONS);
+}
+
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
 void SetupPrimitives(int cpuid)
 {
 #if ENABLE_PRIMITIVES
+    memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
+
     /* .. detect actual CPU type and pick best vector architecture
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
-    memcpy((void *)&primitives, (void *)&primitives_vectorized_sse2, sizeof(primitives));
+    MergeFunctions(primitives_vectorized_sse2);
 #endif
-    cpuid = cpuid; // prevent compiler warning
 
+    cpuid = cpuid; // prevent compiler warning
 }
 
 }
