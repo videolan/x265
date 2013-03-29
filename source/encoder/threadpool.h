@@ -55,9 +55,6 @@ public:
     //< Remove this job provider from the thread pool, all jobs complete
     void Dequeue();
 
-    //< Inform the thread pool that a new job is available
-    void NewJobAvailable();
-
     //< Worker threads will call this method to find a job.  Must return true if
     //< work was completed.  False if no work was available.
     virtual bool FindJob() = 0;
@@ -124,7 +121,7 @@ public:
 
     virtual void DequeueJobProvider(JobProvider&) = 0;
 
-    virtual void PokeIdleThread() = 0;
+    virtual void PokeIdleThreads() = 0;
 };
 
 
