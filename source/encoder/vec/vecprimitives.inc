@@ -39,121 +39,113 @@
 namespace // place vector functions in anonymous namespace (file static)
 {
 
-extern "C"
+int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
+    // NOTE: This is completely untested, and ignores alignment issues
+    int uiSum = 0;
 
-    int NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+    for (int Row = 0; Row < 8; Row++)
     {
-        // NOTE: This is completely untested, and ignores alignment issues
-        int uiSum = 0;
+        VEC8 m1, n1;
+        m1.load(piOrg);
+        n1.load(piCur);
+        m1 = m1 - n1;
+        m1 = abs(m1);
+        uiSum += horizontal_add_x(m1);
 
-        for (int Row = 0; Row < 8; Row++)
-        {
-            VEC8 m1, n1;
-            m1.load(piOrg);
-            n1.load(piCur);
-            m1 = m1 - n1;
-            m1 = abs(m1);
-            uiSum += horizontal_add_x(m1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
-        return uiSum;
+        piOrg += strideOrg;
+        piCur += strideCur;
     }
 
-    int NAME(satd_4x4)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
-    {
-        int satd = 0;
+    return uiSum;
+}
 
-        /*Assertion istep==1 removed*/
+int CDECL NAME(satd_4x4)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+{
+    int satd = 0;
 
-        Vec8s temp1, temp2, temp3, temp4;
-        Vec4i v1, v2, v3, v4, m0, m4, m8, m12, diff_v, piOrg_v, piCur_v;
-        int satd1, satd2, satd3, satd4;
+    /*Assertion istep==1 removed*/
 
-        temp1.load(piOrg);
-        temp2.load(piCur);
-        piCur += strideCur;
-        piOrg += strideOrg;
+    Vec8s temp1, temp2, temp3, temp4;
+    Vec4i v1, v2, v3, v4, m0, m4, m8, m12, diff_v, piOrg_v, piCur_v;
+    int satd1, satd2, satd3, satd4;
 
-        temp3.load(piOrg);
-        temp4.load(piCur);
+    temp1.load(piOrg);
+    temp2.load(piCur);
+    piCur += strideCur;
+    piOrg += strideOrg;
 
-        piOrg_v = extend_low(temp1);
-        piCur_v = extend_low(temp2);
-        v1 = piOrg_v - piCur_v;
+    temp3.load(piOrg);
+    temp4.load(piCur);
 
-        piOrg_v = extend_low(temp3);
-        piCur_v = extend_low(temp4);
-        v2 = piOrg_v - piCur_v;
+    piOrg_v = extend_low(temp1);
+    piCur_v = extend_low(temp2);
+    v1 = piOrg_v - piCur_v;
 
-        piCur += strideCur;
-        piOrg += strideOrg;
+    piOrg_v = extend_low(temp3);
+    piCur_v = extend_low(temp4);
+    v2 = piOrg_v - piCur_v;
 
-        temp1.load(piOrg);
-        temp2.load(piCur);
-        piCur += strideCur;
-        piOrg += strideOrg;
+    piCur += strideCur;
+    piOrg += strideOrg;
 
-        temp3.load(piOrg);
-        temp4.load(piCur);
+    temp1.load(piOrg);
+    temp2.load(piCur);
+    piCur += strideCur;
+    piOrg += strideOrg;
 
-        piOrg_v = extend_low(temp1);
-        piCur_v = extend_low(temp2);
-        v3 = piOrg_v - piCur_v;
+    temp3.load(piOrg);
+    temp4.load(piCur);
 
-        piOrg_v = extend_low(temp3);
-        piCur_v = extend_low(temp4);
-        v4 = piOrg_v - piCur_v;
+    piOrg_v = extend_low(temp1);
+    piCur_v = extend_low(temp2);
+    v3 = piOrg_v - piCur_v;
 
-        m4 = v2 + v3;
-        m8 = v2 - v3;
+    piOrg_v = extend_low(temp3);
+    piCur_v = extend_low(temp4);
+    v4 = piOrg_v - piCur_v;
 
-        m0 = v1 + v4;
-        m12 = v1 - v4;
+    m4 = v2 + v3;
+    m8 = v2 - v3;
 
-        v1 = m0 + m4;
-        v2 = m8 + m12;
-        v3 = m0 - m4;
-        v4 = m12 - m8;
+    m0 = v1 + v4;
+    m12 = v1 - v4;
 
-        Vec4i tv1(v1[0], v1[1], v2[0], v2[1]);
-        Vec4i tv2(v1[3], v1[2], v2[3], v2[2]);
-        v1 = tv1 + tv2;
-        v2 = tv1 - tv2;
+    v1 = m0 + m4;
+    v2 = m8 + m12;
+    v3 = m0 - m4;
+    v4 = m12 - m8;
 
-        Vec4i tv3(v3[0], v3[1], v4[0], v4[1]);
-        Vec4i tv4(v3[3], v3[2], v4[3], v4[2]);
-        v3 = tv3 + tv4;
-        v4 = tv3 - tv4;
+    Vec4i tv1(v1[0], v1[1], v2[0], v2[1]);
+    Vec4i tv2(v1[3], v1[2], v2[3], v2[2]);
+    v1 = tv1 + tv2;
+    v2 = tv1 - tv2;
 
-        Vec4i tm1(v1[0], v2[1], v1[2], v2[3]);
-        Vec4i tm2(v1[1], v2[0], v1[3], v2[2]);
-        v1 = abs(tm1 + tm2);
-        v2 = abs(tm1 - tm2);
-        satd1 = horizontal_add_x(v1);
-        satd2 = horizontal_add_x(v2);
+    Vec4i tv3(v3[0], v3[1], v4[0], v4[1]);
+    Vec4i tv4(v3[3], v3[2], v4[3], v4[2]);
+    v3 = tv3 + tv4;
+    v4 = tv3 - tv4;
 
-        Vec4i tm3(v3[0], v4[1], v3[2], v4[3]);
-        Vec4i tm4(v3[1], v4[0], v3[3], v4[2]);
-        v3 = abs(tm3 + tm4);
-        v4 = abs(tm3 - tm4);
-        satd3 = horizontal_add_x(v3);
-        satd4 = horizontal_add_x(v4);
+    Vec4i tm1(v1[0], v2[1], v1[2], v2[3]);
+    Vec4i tm2(v1[1], v2[0], v1[3], v2[2]);
+    v1 = abs(tm1 + tm2);
+    v2 = abs(tm1 - tm2);
+    satd1 = horizontal_add_x(v1);
+    satd2 = horizontal_add_x(v2);
 
-        satd = satd1 + satd2 + satd3 + satd4;
+    Vec4i tm3(v3[0], v4[1], v3[2], v4[3]);
+    Vec4i tm4(v3[1], v4[0], v3[3], v4[2]);
+    v3 = abs(tm3 + tm4);
+    v4 = abs(tm3 - tm4);
+    satd3 = horizontal_add_x(v3);
+    satd4 = horizontal_add_x(v4);
 
-        satd = ((satd + 1) >> 1);
+    satd = satd1 + satd2 + satd3 + satd4;
 
-        return satd;
-    }
+    satd = ((satd + 1) >> 1);
 
-
-    /* .. define more primitive functions here */
-
-}; // end extern "C"
+    return satd;
+}
 
 }  // end anonymous namespace
 
