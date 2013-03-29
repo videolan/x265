@@ -59,9 +59,9 @@ void SetupPrimitives( int cpuid )
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
     memcpy( (void*)&primitives, (void*)&primitives_vectorized_sse2, sizeof(primitives));
-
-    cpuid = cpuid; // prevent compiler warning
 #endif
+    cpuid = cpuid; // prevent compiler warning
+
 }
 
 }
