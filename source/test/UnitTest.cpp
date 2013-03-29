@@ -1,4 +1,6 @@
 #include "UnitTest.h"
+#include <string.h>
+#include <math.h>
 
 //Compare the Two given Buffers with Binary Mode
 int UnitTest::CompareBuffer (unsigned char * Buff_one, unsigned char * Buff_two)
@@ -171,7 +173,8 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
 	char plane;
 
 	unsigned int pixel, offs;
-	double pixel_x, pixel_y, frame, macroblock;
+	double pixel_x, pixel_y;
+    int frame, macroblock;
 	
 	a_size = strlen((char *)Buff_old);
 	b_size = strlen((char *)Buff_new);
@@ -216,7 +219,9 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
 				macroblock = (ceil(pixel_x / 8.0), ceil(pixel_y / 8.0));
 			}
 
-			printf("New File Differs from Referance file at frame - %d, macroblock - %f on the %c plane (offset %d)", frame,macroblock, plane, offs);
+			printf("New File Differs from Referance file at frame - %d,"
+                   " macroblock - %d on the %c plane (offset %d)",
+                   frame, macroblock, plane, offs);
 			return NOT_MATCHED;
 		}
 		else
