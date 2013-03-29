@@ -61,7 +61,6 @@ Void initROM()
   }
   g_aucConvertToBit[ i ] = c;
   
-  // g_auiFrameScanXY[ g_aucConvertToBit[ transformSize ] ]: zigzag scan array for transformSize
   c=2;
   for ( i=0; i<MAX_CU_DEPTH; i++ )
   {
@@ -76,9 +75,7 @@ Void initROM()
 
 Void destroyROM()
 {
-  Int i;
-  
-  for ( i=0; i<MAX_CU_DEPTH; i++ )
+  for (Int i=0; i<MAX_CU_DEPTH; i++ )
   {
     delete[] g_auiSigLastScan[0][i];
     delete[] g_auiSigLastScan[1][i];
@@ -363,28 +360,28 @@ Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int i
 
   if( iWidth < 16 )
   {
-  UInt* pBuffTemp = pBuffD;
-  if( iWidth == 8 )
-  {
-    pBuffTemp = g_sigLastScanCG32x32;
-  }
-  for( UInt uiScanLine = 0; uiNextScanPos < uiNumScanPos; uiScanLine++ )
-  {
-    Int    iPrimDim  = Int( uiScanLine );
-    Int    iScndDim  = 0;
-    while( iPrimDim >= iWidth )
+    UInt* pBuffTemp = pBuffD;
+    if( iWidth == 8 )
     {
-      iScndDim++;
-      iPrimDim--;
+      pBuffTemp = g_sigLastScanCG32x32;
     }
-    while( iPrimDim >= 0 && iScndDim < iWidth )
+    for( UInt uiScanLine = 0; uiNextScanPos < uiNumScanPos; uiScanLine++ )
     {
-      pBuffTemp[ uiNextScanPos ] = iPrimDim * iWidth + iScndDim ;
-      uiNextScanPos++;
-      iScndDim++;
-      iPrimDim--;
+      Int    iPrimDim  = Int( uiScanLine );
+      Int    iScndDim  = 0;
+      while( iPrimDim >= iWidth )
+      {
+        iScndDim++;
+        iPrimDim--;
+      }
+      while( iPrimDim >= 0 && iScndDim < iWidth )
+      {
+        pBuffTemp[ uiNextScanPos ] = iPrimDim * iWidth + iScndDim ;
+        uiNextScanPos++;
+        iScndDim++;
+        iPrimDim--;
+      }
     }
-  }
   }
   if( iWidth > 4 )
   {
@@ -423,7 +420,7 @@ Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int i
       }
     }
   }
-  
+
   UInt uiCnt = 0;
   if( iWidth > 2 )
   {
@@ -463,24 +460,24 @@ Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int i
   }
   else
   {
-  for(Int iY=0; iY < iHeight; iY++)
-  {
-    for(Int iX=0; iX < iWidth; iX++)
-    {
-      pBuffH[uiCnt] = iY*iWidth + iX;
-      uiCnt ++;
-    }
-  }
-
-  uiCnt = 0;
-  for(Int iX=0; iX < iWidth; iX++)
-  {
     for(Int iY=0; iY < iHeight; iY++)
     {
-      pBuffV[uiCnt] = iY*iWidth + iX;
-      uiCnt ++;
+      for(Int iX=0; iX < iWidth; iX++)
+      {
+        pBuffH[uiCnt] = iY*iWidth + iX;
+        uiCnt ++;
+      }
     }
-  }    
+
+    uiCnt = 0;
+    for(Int iX=0; iX < iWidth; iX++)
+    {
+      for(Int iY=0; iY < iHeight; iY++)
+      {
+        pBuffV[uiCnt] = iY*iWidth + iX;
+        uiCnt ++;
+      }
+    }    
   }
 }
 

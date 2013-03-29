@@ -599,7 +599,7 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
   {
     WRITE_CODE( sei.m_sopDescVclNaluType[i], 6, "sop_desc_vcl_nalu_type" );
     WRITE_CODE( sei.m_sopDescTemporalId[i],  3, "sop_desc_temporal_id" );
-    if (sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR && sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR_N_LP)
+    if (sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR_W_RADL && sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR_N_LP)
     {
       WRITE_UVLC( sei.m_sopDescStRpsIdx[i],           "sop_desc_st_rps_idx"               );
     }

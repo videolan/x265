@@ -68,11 +68,6 @@ protected:
   TComSlice*    m_pcSlice;
   UInt          m_uiCoeffCost;
 
-  Void  xWritePCMAlignZero    ();
-  Void  xWriteEpExGolomb      ( UInt uiSymbol, UInt uiCount );
-  Void  xWriteExGolombLevel    ( UInt uiSymbol );
-  Void  xWriteUnaryMaxSymbol  ( UInt uiSymbol, UInt uiMaxSymbol );
-
   Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
   Bool findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag );
   

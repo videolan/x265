@@ -284,7 +284,7 @@ SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
 #endif
 Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps)
 {
-  OutputNALUnit nalu(NAL_UNIT_SEI);
+  OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
   if(m_pcCfg->getActiveParameterSetsSEIEnabled())
   {
@@ -305,7 +305,7 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   {
     SEIFramePacking *sei = xCreateSEIFramePacking ();
 
-    nalu = NALUnit(NAL_UNIT_SEI);
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
     writeRBSPTrailingBits(nalu.m_Bitstream);
@@ -316,7 +316,7 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   {
     SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
 
-    nalu = NALUnit(NAL_UNIT_SEI); 
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI); 
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
     writeRBSPTrailingBits(nalu.m_Bitstream);
@@ -328,7 +328,7 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   {
     SEIToneMappingInfo *sei = xCreateSEIToneMappingInfo ();
       
-    nalu = NALUnit(NAL_UNIT_SEI); 
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI); 
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
     writeRBSPTrailingBits(nalu.m_Bitstream);
@@ -440,7 +440,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       continue;
     }
 
-    if( getNalUnitType(pocCurr) == NAL_UNIT_CODED_SLICE_IDR || getNalUnitType(pocCurr) == NAL_UNIT_CODED_SLICE_IDR_N_LP )
+    if( getNalUnitType(pocCurr) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr) == NAL_UNIT_CODED_SLICE_IDR_N_LP )
     {
       m_iLastIDR = pocCurr;
     }        
@@ -530,7 +530,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         else
         {
-          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA);
+          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R);
         }
       }
       else if(pcSlice->isStepwiseTemporalLayerSwitchingPointCandidate(rcListPic))
@@ -1062,7 +1062,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       Int SOPcurrPOC = pocCurr;
 
-      OutputNALUnit nalu(NAL_UNIT_SEI);
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
       m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
@@ -1142,7 +1142,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         ( ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag() ) 
        || ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag() ) ) )
     {
-      OutputNALUnit nalu(NAL_UNIT_SEI);
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
       m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
@@ -1201,7 +1201,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if K0180_SCALABLE_NESTING_SEI
       if (m_pcCfg->getScalableNestingSEIEnabled())
       {
-        OutputNALUnit naluTmp(NAL_UNIT_SEI);
+        OutputNALUnit naluTmp(NAL_UNIT_PREFIX_SEI);
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
         m_pcEntropyCoder->setBitstream(&naluTmp.m_Bitstream);
         scalableNestingSEI.m_nestedSEIs.clear();
@@ -1233,7 +1233,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( m_pcEncTop->getGradualDecodingRefreshInfoEnabled() && !pcSlice->getRapPicFlag() )
       {
         // Gradual decoding refresh SEI 
-        OutputNALUnit nalu(NAL_UNIT_SEI);
+        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
         m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
@@ -1245,7 +1245,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         accessUnit.push_back(new NALUnitEBSP(nalu));
       }
     // Recovery point SEI
-      OutputNALUnit nalu(NAL_UNIT_SEI);
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
       m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
@@ -1528,7 +1528,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
             {
               UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
-              if ((*it)->m_nalUnitType != NAL_UNIT_SEI && (*it)->m_nalUnitType != NAL_UNIT_SEI_SUFFIX)
+              if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
               {
                 numRBSPBytes += numRBSPBytes_nal;
                 numNalus ++;
@@ -1623,7 +1623,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           calcChecksum(*pcPic->getPicYuvRec(), sei_recon_picture_digest.digest);
           digestStr = digestToString(sei_recon_picture_digest.digest, 4);
         }
-        OutputNALUnit nalu(NAL_UNIT_SEI_SUFFIX, pcSlice->getTLayer());
+        OutputNALUnit nalu(NAL_UNIT_SUFFIX_SEI, pcSlice->getTLayer());
 
         /* write the SEI messages */
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
@@ -1647,7 +1647,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         sei_temporal_level0_index.tl0Idx = m_tl0Idx;
         sei_temporal_level0_index.rapIdx = m_rapIdx;
 
-        OutputNALUnit nalu(NAL_UNIT_SEI); 
+        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI); 
 
         /* write the SEI messages */
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
@@ -1788,7 +1788,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         if( m_pcCfg->getPictureTimingSEIEnabled() )
         {
           {
-            OutputNALUnit nalu(NAL_UNIT_SEI, pcSlice->getTLayer());
+            OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
             m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, pictureTimingSEI, pcSlice->getSPS());
             writeRBSPTrailingBits(nalu.m_Bitstream);
@@ -1811,7 +1811,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if K0180_SCALABLE_NESTING_SEI
           if ( m_pcCfg->getScalableNestingSEIEnabled() ) // put picture timing SEI into scalable nesting SEI
           {
-            OutputNALUnit nalu(NAL_UNIT_SEI, pcSlice->getTLayer());
+            OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
             m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
             scalableNestingSEI.m_nestedSEIs.clear();
             scalableNestingSEI.m_nestedSEIs.push_back(&pictureTimingSEI);
@@ -1841,7 +1841,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
           for( Int i = 0; i < ( pictureTimingSEI.m_numDecodingUnitsMinus1 + 1 ); i ++ )
           {
-            OutputNALUnit nalu(NAL_UNIT_SEI, pcSlice->getTLayer());
+            OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
 
             SEIDecodingUnitInfo tempSEI;
             tempSEI.m_decodingUnitIdx = i;
@@ -1889,7 +1889,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
                   accessUnit.insert(it, new NALUnitEBSP(nalu));
                   break;
                 }
-                if ((*it)->m_nalUnitType != NAL_UNIT_SEI && (*it)->m_nalUnitType != NAL_UNIT_SEI_SUFFIX)
+                if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
                 {
                   ctr++;
                 }
@@ -2117,29 +2117,30 @@ static const Char* nalUnitTypeToString(NalUnitType type)
 {
   switch (type)
   {
-    case NAL_UNIT_CODED_SLICE_TRAIL_R: return "TRAIL_R";
-    case NAL_UNIT_CODED_SLICE_TRAIL_N: return "TRAIL_N";
-    case NAL_UNIT_CODED_SLICE_TLA: return "TLA";
-    case NAL_UNIT_CODED_SLICE_TSA_N: return "TSA_N";
-    case NAL_UNIT_CODED_SLICE_STSA_R: return "STSA_R";
-    case NAL_UNIT_CODED_SLICE_STSA_N: return "STSA_N";
-    case NAL_UNIT_CODED_SLICE_BLA: return "BLA";
-    case NAL_UNIT_CODED_SLICE_BLANT: return "BLANT";
-    case NAL_UNIT_CODED_SLICE_BLA_N_LP: return "BLA_N_LP";
-    case NAL_UNIT_CODED_SLICE_IDR: return "IDR";
-    case NAL_UNIT_CODED_SLICE_IDR_N_LP: return "IDR_N_LP";
-    case NAL_UNIT_CODED_SLICE_CRA: return "CRA";
-    case NAL_UNIT_CODED_SLICE_DLP: return "DLP";
-    case NAL_UNIT_CODED_SLICE_TFD: return "TFD";
-    case NAL_UNIT_VPS: return "VPS";
-    case NAL_UNIT_SPS: return "SPS";
-    case NAL_UNIT_PPS: return "PPS";
-    case NAL_UNIT_ACCESS_UNIT_DELIMITER: return "AUD";
-    case NAL_UNIT_EOS: return "EOS";
-    case NAL_UNIT_EOB: return "EOB";
-    case NAL_UNIT_FILLER_DATA: return "FILLER";
-    case NAL_UNIT_SEI: return "SEI";
-    default: return "UNK";
+    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "TRAIL_R";
+    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "TRAIL_N";
+    case NAL_UNIT_CODED_SLICE_TLA_R:      return "TLA_R";
+    case NAL_UNIT_CODED_SLICE_TSA_N:      return "TSA_N";
+    case NAL_UNIT_CODED_SLICE_STSA_R:     return "STSA_R";
+    case NAL_UNIT_CODED_SLICE_STSA_N:     return "STSA_N";
+    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "BLA_W_LP";
+    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
+    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "BLA_N_LP";
+    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
+    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "IDR_N_LP";
+    case NAL_UNIT_CODED_SLICE_CRA:        return "CRA";
+    case NAL_UNIT_CODED_SLICE_RADL_R:     return "RADL_R";
+    case NAL_UNIT_CODED_SLICE_RASL_R:     return "RASL_R";
+    case NAL_UNIT_VPS:                    return "VPS";
+    case NAL_UNIT_SPS:                    return "SPS";
+    case NAL_UNIT_PPS:                    return "PPS";
+    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "AUD";
+    case NAL_UNIT_EOS:                    return "EOS";
+    case NAL_UNIT_EOB:                    return "EOB";
+    case NAL_UNIT_FILLER_DATA:            return "FILLER";
+    case NAL_UNIT_PREFIX_SEI:             return "SEI";
+    case NAL_UNIT_SUFFIX_SEI:             return "SEI";
+    default:                              return "UNK";
   }
 }
 #endif
@@ -2229,7 +2230,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 #if VERBOSE_RATE
     printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString((*it)->m_nalUnitType), numRBSPBytes_nal);
 #endif
-    if ((*it)->m_nalUnitType != NAL_UNIT_SEI && (*it)->m_nalUnitType != NAL_UNIT_SEI_SUFFIX)
+    if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
     {
       numRBSPBytes += numRBSPBytes_nal;
     }
@@ -2297,7 +2298,7 @@ NalUnitType TEncGOP::getNalUnitType(Int pocCurr)
 {
   if (pocCurr == 0)
   {
-    return NAL_UNIT_CODED_SLICE_IDR;
+    return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
   }
   if (pocCurr % m_pcCfg->getIntraPeriod() == 0)
   {
@@ -2307,7 +2308,7 @@ NalUnitType TEncGOP::getNalUnitType(Int pocCurr)
     }
     else if (m_pcCfg->getDecodingRefreshType() == 2)
     {
-      return NAL_UNIT_CODED_SLICE_IDR;
+      return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
   }
   if(m_pocCRA>0)
@@ -2319,7 +2320,7 @@ NalUnitType TEncGOP::getNalUnitType(Int pocCurr)
       // picture can be still decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by 
       // controlling the reference pictures used for encoding that leading picture. Such a leading 
       // picture need not be marked as a TFD picture.
-      return NAL_UNIT_CODED_SLICE_TFD;
+      return NAL_UNIT_CODED_SLICE_RASL_R;
     }
   }
   return NAL_UNIT_CODED_SLICE_TRAIL_R;
