@@ -61,9 +61,15 @@ static int Setup()
     p.sad[PARTITION_8x4]   = sad<8,4>;
     p.sad[PARTITION_4x8]   = sad<4,8>;
     p.sad[PARTITION_8x8]   = sad<8,8>;
+    p.sad[PARTITION_16x4]  = sad<4,16>;
+    p.sad[PARTITION_4x16]  = sad<16,4>;
     p.sad[PARTITION_8x16]  = sad<8,16>;
     p.sad[PARTITION_16x8]  = sad<16,8>;
     p.sad[PARTITION_16x16] = sad<16,16>;
+    p.sad[PARTITION_8x32]  = sad<8,32>;
+    p.sad[PARTITION_32x8]  = sad<32,8>;
+    p.sad[PARTITION_4x32]  = sad<4,32>;
+    p.sad[PARTITION_32x4]  = sad<32,4>;
     p.sad[PARTITION_16x32] = sad<16,32>;
     p.sad[PARTITION_32x16] = sad<32,16>;
     p.sad[PARTITION_32x32] = sad<32,32>;
