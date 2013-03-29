@@ -42,7 +42,7 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
 
     for (int Row = 0; Row < 8; Row++)
     {
-        VEC8 m1, n1;
+        Vec8s m1, n1;
         m1.load(piOrg);
         n1.load(piCur);
         m1 = m1 - n1;
