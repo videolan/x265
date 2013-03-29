@@ -5,7 +5,7 @@
 ::  original file, so use with care
 ::
 ::  This batch file expects to be in the same folder as AStyle.exe and
-::  astyle-config.txt
+::  at the same relative depth as process\c++style.txt
 ::
 
 %~dp0\AStyle.exe --options=%~dp0\astyle-config.txt %*
