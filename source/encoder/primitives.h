@@ -51,7 +51,8 @@ typedef uint32_t pixel4;
 namespace x265
 {
 
-enum Partitions {
+enum Partitions
+{
     PARTITION_4x4,
     PARTITION_8x4,
     PARTITION_4x8,
@@ -66,7 +67,7 @@ enum Partitions {
 };
 
 extern "C"
-typedef int (*pixelcmp)( pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride );
+typedef int (*pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -84,7 +85,7 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 
-void SetupPrimitives( int cpuid = 0 );
+void SetupPrimitives(int cpuid = 0);
 
 }
 

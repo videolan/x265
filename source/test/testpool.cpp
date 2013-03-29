@@ -36,7 +36,10 @@ using namespace x265;
 
 struct CUData
 {
-    CUData() { memset(digest, 0, sizeof(digest)); }
+    CUData()
+    {
+        memset(digest, 0, sizeof(digest));
+    }
     unsigned char digest[16];
 };
 
@@ -66,24 +69,28 @@ private:
 
 public:
 
-    MD5Frame(ThreadPool* pool) : QueueFrame(pool), cu(0), row(0) {}
-    ~MD5Frame() { delete [] this->cu; delete [] this->row; }
+    MD5Frame(ThreadPool *pool) : QueueFrame(pool), cu(0), row(0) {}
+    ~MD5Frame()
+    {
+        delete [] this->cu;
+        delete [] this->row;
+    }
 
-    void Initialize( int cols, int rows );
+    void Initialize(int cols, int rows);
 
     void Encode();
 
-    void ProcessRow( int row );
+    void ProcessRow(int row);
 };
 
-void MD5Frame::Initialize( int cols, int rows )
+void MD5Frame::Initialize(int cols, int rows)
 {
     this->cu = new CUData[ rows * cols ];
     this->row = new RowData[ rows ];
     this->numrows = rows;
     this->numcols = cols;
 
-    if (!this->QueueFrame::InitJobQueue( rows ))
+    if (!this->QueueFrame::InitJobQueue(rows))
     {
         assert(!"Unable to initialize job queue");
     }
@@ -107,11 +114,12 @@ void MD5Frame::Encode()
 
     for (int i = 0 ; i < 4; i++)
         std::cout << std::hex << outdigest[i];
-    std::cout << " " << (float) (stop-start) / CLOCKS_PER_SEC << std::endl;
+    std::cout << " " << (float)(stop - start) / CLOCKS_PER_SEC << std::endl;
 }
 
-void MD5Frame::ProcessRow( int rownum )
-{   // Called by worker thread
+void MD5Frame::ProcessRow(int rownum)
+{
+    // Called by worker thread
     RowData &curRow = this->row[ rownum ];
 
     do
@@ -125,32 +133,34 @@ void MD5Frame::ProcessRow( int rownum )
         memset(curCTU.digest, id, sizeof(curCTU.digest));
         hash.update(curCTU.digest, sizeof(curCTU.digest));
         if (curRow.curCol > 0)
-            hash.update(this->cu[id-1].digest, sizeof(curCTU.digest));
+            hash.update(this->cu[id - 1].digest, sizeof(curCTU.digest));
         if (rownum > 0)
         {
             if (curRow.curCol > 0)
-                hash.update(this->cu[id-this->numcols-1].digest, sizeof(curCTU.digest));
-            hash.update(this->cu[id-this->numcols].digest, sizeof(curCTU.digest));
-            if (curRow.curCol < this->numcols-1)
-                hash.update(this->cu[id-this->numcols+1].digest, sizeof(curCTU.digest));
+                hash.update(this->cu[id - this->numcols - 1].digest, sizeof(curCTU.digest));
+            hash.update(this->cu[id - this->numcols].digest, sizeof(curCTU.digest));
+            if (curRow.curCol < this->numcols - 1)
+                hash.update(this->cu[id - this->numcols + 1].digest, sizeof(curCTU.digest));
         }
         hash.finalize(curCTU.digest);
         PPAStopCpuEventFunc(encode_block);
 
         curRow.curCol++;
-        if (curRow.curCol > 2 && rownum < this->numrows-1)
+        if (curRow.curCol > 2 && rownum < this->numrows - 1)
         {
-            if (this->row[rownum+1].active == 0)
-            {   // set active indicator so row is only enqueued once
+            if (this->row[rownum + 1].active == 0)
+            {
+                // set active indicator so row is only enqueued once
                 // row stays marked active until blocked or done
-                this->row[rownum+1].active = 1;
-                this->QueueFrame::EnqueueRow(rownum+1);
+                this->row[rownum + 1].active = 1;
+                this->QueueFrame::EnqueueRow(rownum + 1);
             }
         }
         if (rownum > 0 &&
-            curRow.curCol < this->numcols-1 &&
-            this->row[rownum-1].curCol < curRow.curCol+2)
-        {   // row is blocked, quit job
+                curRow.curCol < this->numcols - 1 &&
+                this->row[rownum - 1].curCol < curRow.curCol + 2)
+        {
+            // row is blocked, quit job
             curRow.active = 0;
             return;
         }
@@ -159,7 +169,7 @@ void MD5Frame::ProcessRow( int rownum )
 
     // * Row completed *
 
-    if (rownum == this->numrows-1)
+    if (rownum == this->numrows - 1)
         this->complete.Trigger();
 }
 
@@ -170,28 +180,28 @@ int main(int, char **)
     {
         ThreadPool *pool = ThreadPool::AllocThreadPool(1);
         MD5Frame frame(pool);
-        frame.Initialize( 60, 40 );
+        frame.Initialize(60, 40);
         frame.Encode();
         pool->Release();
     }
     {
         ThreadPool *pool = ThreadPool::AllocThreadPool(2);
         MD5Frame frame(pool);
-        frame.Initialize( 60, 40 );
+        frame.Initialize(60, 40);
         frame.Encode();
         pool->Release();
     }
     {
         ThreadPool *pool = ThreadPool::AllocThreadPool(4);
         MD5Frame frame(pool);
-        frame.Initialize( 60, 40 );
+        frame.Initialize(60, 40);
         frame.Encode();
         pool->Release();
     }
     {
         ThreadPool *pool = ThreadPool::AllocThreadPool(8);
         MD5Frame frame(pool);
-        frame.Initialize( 60, 40 );
+        frame.Initialize(60, 40);
         frame.Encode();
         pool->Release();
     }

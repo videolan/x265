@@ -45,7 +45,7 @@ protected:
     JobProvider  *m_prevProvider;
 
 public:
-    JobProvider( ThreadPool* p ) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
+    JobProvider(ThreadPool *p) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
 
     virtual ~JobProvider();
 
@@ -81,21 +81,21 @@ private:
     bool FindJob();
 
 public:
-    QueueFrame(ThreadPool* pool) : JobProvider(pool), m_queuedBitmap(0) {}
+    QueueFrame(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0) {}
 
     //< Must be called just once after the frame is allocated.  Returns true on
     //< success.  It it returns false, the frame must encode in series.
-    bool InitJobQueue( int numRows );
+    bool InitJobQueue(int numRows);
 
     virtual ~QueueFrame();
 
     //< Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
     //< ThreadPoolEnqueue() must be called before EnqueueRow()
-    void EnqueueRow( int row );
+    void EnqueueRow(int row);
 
     //< Start or resume encode processing of this row.  When the bottom row is
     //< finished, ThreadPoolDequeue() must be called.
-    virtual void ProcessRow( int row ) = 0;
+    virtual void ProcessRow(int row) = 0;
 };
 
 //< Abstract interface to ThreadPool.  Each encoder instance should call
@@ -111,15 +111,15 @@ protected:
 public:
     //< When numthreads == 0, a default thread count is used. A request may grow
     //< an existing pool but it will never shrink.
-    static ThreadPool *AllocThreadPool( int numthreads = 0 );
+    static ThreadPool *AllocThreadPool(int numthreads = 0);
 
     //< The pool is reference counted so all calls to AllocThreadPool() should be
     //< followed by a call to Release()
     virtual void Release() = 0;
 
-    virtual void EnqueueJobProvider(JobProvider&) = 0;
+    virtual void EnqueueJobProvider(JobProvider &) = 0;
 
-    virtual void DequeueJobProvider(JobProvider&) = 0;
+    virtual void DequeueJobProvider(JobProvider &) = 0;
 
     virtual void PokeIdleThreads() = 0;
 };

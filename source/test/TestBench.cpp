@@ -81,11 +81,11 @@ static inline unsigned long read_time(void)
 {
     unsigned long a = 0;
 #if HAVE_X86_INLINE_ASM
-    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
+    asm volatile("rdtsc" :"=a"(a) ::"edx");
 #elif ARCH_PPC
-    asm volatile( "mftb %0" : "=r" (a) );
+    asm volatile("mftb %0" : "=r"(a));
 #elif ARCH_ARM     // ARMv7 only
-    asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(a) );
+    asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(a));
 #endif
     return a;
 }
@@ -93,39 +93,39 @@ static inline unsigned long read_time(void)
 #if _MSC_VER
 #pragma warning(disable: 4505) // static function unused, has been removed
 #endif
-static bench_t* get_bench( const char *name, unsigned long cpu )
+static bench_t *get_bench(const char *name, unsigned long cpu)
 {
     int i;
     unsigned long j;
-    for( i = 0; benchs[i].name && strcmp(name, benchs[i].name); i++ )
-        assert( i < MAX_FUNCS );
-    if( !benchs[i].name )
-        benchs[i].name = strdup( name );
-    if( !cpu )
+    for (i = 0; benchs[i].name && strcmp(name, benchs[i].name); i++)
+        assert(i < MAX_FUNCS);
+    if (!benchs[i].name)
+        benchs[i].name = strdup(name);
+    if (!cpu)
         return &benchs[i].vers[0];
-    for( j = 1; benchs[i].vers[j].cpu && benchs[i].vers[j].cpu != cpu; j++ )
-        assert( j < MAX_CPUS );
+    for (j = 1; benchs[i].vers[j].cpu && benchs[i].vers[j].cpu != cpu; j++)
+        assert(j < MAX_CPUS);
     benchs[i].vers[j].cpu = cpu;
     return &benchs[i].vers[j];
 }
 
-static int cmp_nop( const void *a, const void *b )
+static int cmp_nop(const void *a, const void *b)
 {
-    return *(unsigned int*)a - *(unsigned int*)b;
+    return *(unsigned int *)a - *(unsigned int *)b;
 }
 
-static int cmp_bench( const void *a, const void *b )
+static int cmp_bench(const void *a, const void *b)
 {
     // asciibetical sort except preserving numbers
-    const char *sa = ((bench_func_t*)a)->name;
-    const char *sb = ((bench_func_t*)b)->name;
-    for( ;; sa++, sb++ )
+    const char *sa = ((bench_func_t *)a)->name;
+    const char *sb = ((bench_func_t *)b)->name;
+    for (;; sa++, sb++)
     {
-        if( !*sa && !*sb )
+        if (!*sa && !*sb)
             return 0;
-        if( isdigit( *sa ) && isdigit( *sb ) && isdigit( sa[1] ) != isdigit( sb[1] ) )
-            return isdigit( sa[1] ) - isdigit( sb[1] );
-        if( *sa != *sb )
+        if (isdigit(*sa) && isdigit(*sb) && isdigit(sa[1]) != isdigit(sb[1]))
+            return isdigit(sa[1]) - isdigit(sb[1]);
+        if (*sa != *sb)
             return *sa - *sb;
     }
 }
@@ -133,30 +133,30 @@ static int cmp_bench( const void *a, const void *b )
 static void print_bench(void)
 {
     unsigned int nops[10000] = {0};
-    int nfuncs, nop_time=0;
+    int nfuncs, nop_time = 0;
 
-    for( int i = 0; i < 10000; i++ )
+    for (int i = 0; i < 10000; i++)
     {
         int t = read_time();
         nops[i] = read_time() - t;
     }
-    qsort( nops, 10000, sizeof(unsigned int), cmp_nop );
-    for( int i = 500; i < 9500; i++ )
+    qsort(nops, 10000, sizeof(unsigned int), cmp_nop);
+    for (int i = 500; i < 9500; i++)
         nop_time += nops[i];
     nop_time /= 900;
-    printf( "nop: %d\n", nop_time );
+    printf("nop: %d\n", nop_time);
 
-    for( nfuncs = 0; nfuncs < MAX_FUNCS && benchs[nfuncs].name; nfuncs++ );
-    qsort( benchs, nfuncs, sizeof(bench_func_t), cmp_bench );
-    for( int i = 0; i < nfuncs; i++ )
-        for( int j = 0; j < MAX_CPUS && (!j || benchs[i].vers[j].cpu); j++ )
+    for (nfuncs = 0; nfuncs < MAX_FUNCS && benchs[nfuncs].name; nfuncs++);
+    qsort(benchs, nfuncs, sizeof(bench_func_t), cmp_bench);
+    for (int i = 0; i < nfuncs; i++)
+        for (int j = 0; j < MAX_CPUS && (!j || benchs[i].vers[j].cpu); j++)
         {
             int k;
             bench_t *b = &benchs[i].vers[j];
-            if( !b->den )
+            if (!b->den)
                 continue;
-            for( k = 0; k < j && benchs[i].vers[k].pointer != b->pointer; k++ );
-            if( k < j )
+            for (k = 0; k < j && benchs[i].vers[k].pointer != b->pointer; k++);
+            if (k < j)
                 continue;
         }
 }
@@ -166,8 +166,8 @@ static void print_bench(void)
  * needs an explicit asm check because it only sometimes crashes in normal use. */
 
 #if ARCH_X86 || ARCH_X86_64
-int x265_stack_pagealign( int (*func)(), int align );
-intptr_t x265_checkasm_call( intptr_t (*func)(), int *ok, ... );
+int x265_stack_pagealign(int (*func)(), int align);
+intptr_t x265_checkasm_call(intptr_t (*func)(), int *ok, ...);
 #else
 #define x265_stack_pagealign( func, align ) func()
 #endif
@@ -175,7 +175,7 @@ intptr_t x265_checkasm_call( intptr_t (*func)(), int *ok, ... );
 #define call_c1(func,...) func(__VA_ARGS__)
 
 #if ARCH_X86_64
-void x265_checkasm_stack_clobber( uint64_t clobber, ... );
+void x265_checkasm_stack_clobber(uint64_t clobber, ...);
 #define call_a1(func,...) ({ \
     unsigned int r = (rand() & 0xffff) * 0x0001000100010001ULL; \
     x265_checkasm_stack_clobber( r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r ); /* max_args+6 */ \
@@ -220,74 +220,74 @@ void x265_checkasm_stack_clobber( uint64_t clobber, ... );
 //Sample Testing for Bench Marking
 static int check_vector(int cpu_ref, int cpu_new)
 {
-		int ret = 0, ok = 1, used_asm = 0;
-	    int size = 0x4000;
-		//short *Orig = (short *)malloc(size+100);
-        //short *Cur = (short *) malloc(size*100);
+    int ret = 0, ok = 1, used_asm = 0;
+    int size = 0x4000;
+    //short *Orig = (short *)malloc(size+100);
+    //short *Cur = (short *) malloc(size*100);
 
-		//Set the Bench Mark Function name 
-        set_func_name( "xGetSAD8" );
-				
-		//int size1 = 0x4000;
-        uint8_t *input = (uint8_t *)malloc(size+100);
-        uint8_t *output = (uint8_t *)malloc(size*100);
+    //Set the Bench Mark Function name
+    set_func_name("xGetSAD8");
 
-		//Generates the Randome i/p for Benchmark and run the function 100 times for time predictions
-		for( int i = 0; i < 100; i++ )
-        {
-            /* Test corner-case sizes */
-            int test_size = i < 10 ? i+1 : rand() & 0x3fff;
-            /* Test 8 different probability distributions of zeros */
-            for( int j = 0; j < test_size+32; j++ )
-                input[j] = (rand()&((1 << ((i&7)+1)) - 1)) * rand();
+    //int size1 = 0x4000;
+    uint8_t *input = (uint8_t *)malloc(size + 100);
+    uint8_t *output = (uint8_t *)malloc(size * 100);
 
-			for( int j = 0; j < test_size+32; j++ )
-                output[j] = (rand()&((1 << ((i&7)+1)) - 1)) * rand();
+    //Generates the Randome i/p for Benchmark and run the function 100 times for time predictions
+    for (int i = 0; i < 100; i++)
+    {
+        /* Test corner-case sizes */
+        int test_size = i < 10 ? i + 1 : rand() & 0x3fff;
+        /* Test 8 different probability distributions of zeros */
+        for (int j = 0; j < test_size + 32; j++)
+            input[j] = (rand() & ((1 << ((i & 7) + 1)) - 1)) * rand();
 
-			//At this poing Function table is not ready
-			//Once the Functions for Vector Primitives are ready call those methodes and 
-			//Call Actual Methods for bench marking
+        for (int j = 0; j < test_size + 32; j++)
+            output[j] = (rand() & ((1 << ((i & 7) + 1)) - 1)) * rand();
 
-		}
-		
-		//Dump the Repoprt for Log message
-		report( "check_vector:" );
-					
-	return ret;
+        //At this poing Function table is not ready
+        //Once the Functions for Vector Primitives are ready call those methodes and
+        //Call Actual Methods for bench marking
+
+    }
+
+    //Dump the Repoprt for Log message
+    report("check_vector:");
+
+    return ret;
 }
 
-static int check_all_funcs( int cpu_ref, int cpu_new )
+static int check_all_funcs(int cpu_ref, int cpu_new)
 {
-	//The Functions which needs to do Unit Bench
-	//here is the place to check the functions  for bench marking
-    return check_vector( cpu_ref, cpu_new );      
+    //The Functions which needs to do Unit Bench
+    //here is the place to check the functions  for bench marking
+    return check_vector(cpu_ref, cpu_new);
 }
 
-static int add_flags( int *cpu_ref, int *cpu_new, int flags, const char *name )
+static int add_flags(int *cpu_ref, int *cpu_new, int flags, const char *name)
 {
     *cpu_ref = *cpu_new;
     *cpu_new |= flags;
 #if BROKEN_STACK_ALIGNMENT
     *cpu_new |= X264_CPU_STACK_MOD4;
 #endif
-    if( *cpu_new & 0x0200000 )
+    if (*cpu_new & 0x0200000)
         *cpu_new &= ~0x0100000;
-    if( !quiet )
-        fprintf( stderr, "x265: %s\n", name );
-    return check_all_funcs( *cpu_ref, *cpu_new );
+    if (!quiet)
+        fprintf(stderr, "x265: %s\n", name);
+    return check_all_funcs(*cpu_ref, *cpu_new);
 }
 
-static int check_all_flags( void )
+static int check_all_flags(void)
 {
     int ret = 0;
     int cpu0 = 0, cpu1 = 0;
 
-	// Find the CPU Based on the ARC and PASS that into for bench marking
-	//Default it has been initialised for SSE4.2
+    // Find the CPU Based on the ARC and PASS that into for bench marking
+    //Default it has been initialised for SSE4.2
 
-	ret |= add_flags( &cpu0, &cpu1, 0x0000100, "SSE4.2" );
+    ret |= add_flags(&cpu0, &cpu1, 0x0000100, "SSE4.2");
 
-	return ret;
+    return ret;
 }
 
 
@@ -295,61 +295,61 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
 
-    if( argc > 1 && !strncmp( argv[1], "--bench", 7 ) )
+    if (argc > 1 && !strncmp(argv[1], "--bench", 7))
     {
         do_bench = 1;
     }
 
-	struct timeb tb;
-    ftime( &tb );
-     
-    int seed = ( argc > 1 ) ? atoi(argv[1]) : ((unsigned long)tb.time * 1000 + (unsigned long)tb.millitm) * 1000;
-    fprintf( stderr, "x264: using random seed %u\n", seed );
-    srand( seed );
+    struct timeb tb;
+    ftime(&tb);
 
-    buf1 =(unsigned int *) malloc( 0x1e00 + 0x2000*sizeof(unsigned int) + 16*BENCH_ALIGNS );
-    pbuf1 = (unsigned int *) malloc( 0x1e00*sizeof(unsigned int) + 16*BENCH_ALIGNS );
-    if( !buf1 || !pbuf1 )
+    int seed = (argc > 1) ? atoi(argv[1]) : ((unsigned long)tb.time * 1000 + (unsigned long)tb.millitm) * 1000;
+    fprintf(stderr, "x264: using random seed %u\n", seed);
+    srand(seed);
+
+    buf1 = (unsigned int *) malloc(0x1e00 + 0x2000 * sizeof(unsigned int) + 16 * BENCH_ALIGNS);
+    pbuf1 = (unsigned int *) malloc(0x1e00 * sizeof(unsigned int) + 16 * BENCH_ALIGNS);
+    if (!buf1 || !pbuf1)
     {
-        fprintf( stderr, "malloc failed, unable to initiate tests!\n" );
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         return -1;
     }
 
-    for( int i = 0; i < 0x1e00; i++ )
+    for (int i = 0; i < 0x1e00; i++)
     {
         buf1[i] = rand() & 0xFF;
         pbuf1[i] = rand() & PIXEL_MAX;
     }
-    memset( buf1+0x1e00, 0, 0x2000*sizeof(unsigned int) );
+    memset(buf1 + 0x1e00, 0, 0x2000 * sizeof(unsigned int));
 
     /* 16-byte alignment is guaranteed whenever it's useful, but some functions also vary in speed depending on %64 */
-    if( do_bench )
-        for( int i = 0; i < BENCH_ALIGNS && !ret; i++ )
+    if (do_bench)
+        for (int i = 0; i < BENCH_ALIGNS && !ret; i++)
         {
-               //INIT_POINTER_OFFSETS;
-			    buf2 = buf1 + 0xf00;
-				buf3 = buf2 + 0xf00;
-				buf4 = buf3 + 0x1000*sizeof(unsigned int);
-				pbuf2 = pbuf1 + 0xf00;
-				pbuf3 = (unsigned int*)buf3;
-				pbuf4 = (unsigned int*)buf4;
+            //INIT_POINTER_OFFSETS;
+            buf2 = buf1 + 0xf00;
+            buf3 = buf2 + 0xf00;
+            buf4 = buf3 + 0x1000 * sizeof(unsigned int);
+            pbuf2 = pbuf1 + 0xf00;
+            pbuf3 = (unsigned int *)buf3;
+            pbuf4 = (unsigned int *)buf4;
 
-            ret |= x265_stack_pagealign( check_all_flags, i*16 );
+            ret |= x265_stack_pagealign(check_all_flags, i * 16);
             buf1 += 16;
             pbuf1 += 16;
             quiet = 1;
-            fprintf( stderr, "%d/%d\r", i+1, BENCH_ALIGNS );
+            fprintf(stderr, "%d/%d\r", i + 1, BENCH_ALIGNS);
         }
     else
         ret = check_all_flags();
 
-    if( ret )
+    if (ret)
     {
-        fprintf( stderr, "x265: at least one test has failed. Go and fix that Right Now!\n" );
+        fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
         return -1;
     }
-    fprintf( stderr, "x265: All tests passed Yeah :)\n" );
-    if( do_bench )
+    fprintf(stderr, "x265: All tests passed Yeah :)\n");
+    if (do_bench)
         print_bench();
     return 0;
 }

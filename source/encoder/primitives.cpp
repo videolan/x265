@@ -52,13 +52,13 @@ EncoderPrimitives primitives;
 
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
-void SetupPrimitives( int cpuid )
+void SetupPrimitives(int cpuid)
 {
 #if ENABLE_PRIMITIVES
     /* .. detect actual CPU type and pick best vector architecture
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
-    memcpy( (void*)&primitives, (void*)&primitives_vectorized_sse2, sizeof(primitives));
+    memcpy((void *)&primitives, (void *)&primitives_vectorized_sse2, sizeof(primitives));
 #endif
     cpuid = cpuid; // prevent compiler warning
 

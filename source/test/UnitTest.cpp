@@ -3,7 +3,7 @@
 #include <math.h>
 
 //Compare the Two given Buffers with Binary Mode
-int UnitTest::CompareBuffer (unsigned char * Buff_one, unsigned char * Buff_two)
+int UnitTest::CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two)
 {
     int Buff_one_length;
     int Buff_two_length;
@@ -12,16 +12,16 @@ int UnitTest::CompareBuffer (unsigned char * Buff_one, unsigned char * Buff_two)
     Buff_two_length = strlen((char *)Buff_two);
 
     //Check for both the buffer size is same or not
-    if(Buff_one_length != Buff_two_length)
+    if (Buff_one_length != Buff_two_length)
     {
-        cout<<"Both the Buffers are Not Same size"<<endl;
+        cout << "Both the Buffers are Not Same size" << endl;
         return WRONG_SIZE;
     }
 
     //Compare the Buffer
-    while(Buff_one_length)
+    while (Buff_one_length)
     {
-        if(*Buff_one != *Buff_two)
+        if (*Buff_one != *Buff_two)
             return NOT_MATCHED;
 
         Buff_one++;
@@ -43,14 +43,14 @@ int UnitTest::CompareFiles(char *file1, char *file2)
     fstream::pos_type olength, nlength;
 
     oldf.open(file1, ios::in);
-    if(oldf.is_open())
+    if (oldf.is_open())
     {
         oldf.seekg(0, ios::end);
         olength = oldf.tellg();
         oldf.seekg(0, ios::beg);
         oldb = new unsigned char[olength];
         oldf.read((char *)oldb, olength);
-        if(oldf.bad())
+        if (oldf.bad())
             return FILE_READ_ERROR;
 
         oldf.close();
@@ -63,14 +63,14 @@ int UnitTest::CompareFiles(char *file1, char *file2)
 
 
     newf.open(file2, ios::in);
-    if(newf.is_open())
+    if (newf.is_open())
     {
         newf.seekp(0, ios::end);
         nlength = newf.tellg();
         newf.seekg(0, ios::beg);
         newb = new unsigned char[nlength];
         newf.read((char *)newb, nlength);
-        if(newf.bad())
+        if (newf.bad())
             return FILE_READ_ERROR;
 
         newf.close();
@@ -90,15 +90,15 @@ int UnitTest::CompareFiles(char *file1, char *file2)
 int UnitTest::DumpBuffer(unsigned char *Buffer, char *Filename)
 {
     fstream   fhandle;
-    fhandle.open( Filename, ios::binary | ios::app | ios::out );
+    fhandle.open(Filename, ios::binary | ios::app | ios::out);
 
-    if( fhandle.is_open() )
+    if (fhandle.is_open())
     {
-        if(strlen((char *)Buffer) == 0)
+        if (strlen((char *)Buffer) == 0)
             return WRONG_BUFFER;
 
         fhandle.write((char *)Buffer, strlen((char *)Buffer));
-        if(fhandle.bad())
+        if (fhandle.bad())
         {
             fhandle.close();
             return FILEWRITE_ERROR;
@@ -122,14 +122,14 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
     fstream::pos_type olength, nlength;
 
     oldf.open(file1, ios::in);
-    if(oldf.is_open())
+    if (oldf.is_open())
     {
         oldf.seekg(0, ios::end);
         olength = oldf.tellg();
         oldf.seekg(0, ios::beg);
         oldb = new unsigned char[olength];
         oldf.read((char *)oldb, olength);
-        if(oldf.bad())
+        if (oldf.bad())
             return FILE_READ_ERROR;
 
         oldf.close();
@@ -142,14 +142,14 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
 
 
     newf.open(file2, ios::in);
-    if(newf.is_open())
+    if (newf.is_open())
     {
         newf.seekp(0, ios::end);
         nlength = newf.tellg();
         newf.seekg(0, ios::beg);
         newb = new unsigned char[nlength];
         newf.read((char *)newb, nlength);
-        if(newf.bad())
+        if (newf.bad())
             return FILE_READ_ERROR;
 
         newf.close();
@@ -180,13 +180,13 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
     a_size = strlen((char *)Buff_old);
     b_size = strlen((char *)Buff_new);
 
-    if(a_size != b_size)
+    if (a_size != b_size)
         return NOT_MATCHED;
 
     unsigned int i = 0;
-    while(i <= a_size)
+    while (i <= a_size)
     {
-        if(Buff_old[i] != Buff_new[i])
+        if (Buff_old[i] != Buff_new[i])
         {
             offs =  i;
             y_plane_area = width * height;
@@ -196,14 +196,14 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
             pixel = offs % v_plane_area;
             frame = offs / v_plane_area;
 
-            if(pixel < y_plane_area)
+            if (pixel < y_plane_area)
             {
                 plane = 'Y';
                 pixel_x = pixel % width;
                 pixel_y = pixel / width;
                 macroblock = (ceil(pixel_x / 16.0), ceil(pixel_y / 16.0));
             }
-            else if(pixel < u_plane_area)
+            else if (pixel < u_plane_area)
             {
                 plane = 'U';
                 pixel -= y_plane_area;
@@ -221,8 +221,8 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
             }
 
             printf("New File Differs from Referance file at frame - %d,"
-                    " macroblock - %d on the %c plane (offset %d)",
-                    frame, macroblock, plane, offs);
+                   " macroblock - %d on the %c plane (offset %d)",
+                   frame, macroblock, plane, offs);
             return NOT_MATCHED;
         }
         else

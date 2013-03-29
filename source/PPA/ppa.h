@@ -42,8 +42,9 @@
 
 /* declare enum list of users CPU events */
 #define PPA_REGISTER_CPU_EVENT(x) x,
-enum PPACpuEventEnum {
-    #include "ppaCPUEvents.h"
+enum PPACpuEventEnum
+{
+#include "ppaCPUEvents.h"
     PPACpuGroupNums
 };
 #undef PPA_REGISTER_CPU_EVENT
