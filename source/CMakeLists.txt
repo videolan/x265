@@ -19,7 +19,7 @@ if(MSVC)
     include_directories(compat/msvc)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wall -Wextra -Werror -Wshadow)
+    add_definitions(-Wall -Wextra -Werror -Wshadow -march=i686)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Add some multithreaded build support
