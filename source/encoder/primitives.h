@@ -92,10 +92,6 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 
-/* C (reference) versions of each primitive, implemented by various
- * C++ files (pixels.cpp, etc) */
-extern EncoderPrimitives primitives_c;
-
 void SetupPrimitives(int cpuid = 0);
 
 }

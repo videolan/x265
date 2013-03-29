@@ -188,6 +188,9 @@ int CDECL satd32( pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t strid
 namespace x265
 {
 
+extern EncoderPrimitives primitives_c;
+
+
 /* Setup() will be called before main().  It should initialize 
  * primitive_c entries for pixel functions defined in this file.
  */
