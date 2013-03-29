@@ -103,11 +103,11 @@ void MD5Frame::Encode()
 
     clock_t stop = clock();
 
-    unsigned char *outdigest = this->cu[this->numrows * this->numcols - 1].digest;
+    unsigned int *outdigest = (unsigned int *) this->cu[this->numrows * this->numcols - 1].digest;
 
-    for (int i = 0 ; i < 16; i++)
+    for (int i = 0 ; i < 4; i++)
         std::cout << std::hex << outdigest[i];
-    std::cout << (float) (stop-start) / CLOCKS_PER_SEC << std::endl;
+    std::cout << " " << (float) (stop-start) / CLOCKS_PER_SEC << std::endl;
 }
 
 void MD5Frame::ProcessRow( int rownum )
