@@ -10,6 +10,7 @@ endif(MSVC)
 
 add_library(x265
     primitives.h primitives.cpp
+    pixel.cpp
     TComRdCost_SSE.cpp 
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
