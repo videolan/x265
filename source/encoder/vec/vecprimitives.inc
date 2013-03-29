@@ -30,14 +30,10 @@
 #define EVALUATOR(x,y)   PASTER(x,y)
 #define NAME(fun)        EVALUATOR(fun, ARCH)
 
-#if HIGH_BIT_DEPTH
-#define VEC8 Vec8s
-#else
-#define VEC8 Vec16c
-#endif
-
 namespace // place vector functions in anonymous namespace (file static)
 {
+
+#if HIGH_BIT_DEPTH /* 16-bit pixels */
 
 int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
@@ -147,6 +143,10 @@ int CDECL NAME(satd_4x4)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_
     return satd;
 }
 
+#else /* 8-bit pixels */
+
+#endif
+
 }  // end anonymous namespace
 
 
@@ -163,9 +163,12 @@ static int Setup()
 {
     EncoderPrimitives &p = NAME(primitives_vectorized);
 
-    /* .. setup all the other primitives defined in this header */
+#if HIGH_BIT_DEPTH /* 16-bit pixels */
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
     p.satd[PARTITION_4x4] = NAME(satd_4x4);
+#else
+#endif
+
     return 1;
 }
 
