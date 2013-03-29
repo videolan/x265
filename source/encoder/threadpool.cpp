@@ -323,7 +323,6 @@ void JobProvider::Enqueue()
     // Add this provider to the end of the thread pool's job provider list
     assert(!m_nextProvider && !m_prevProvider && m_pool);
     m_pool->EnqueueJobProvider( *this );
-    m_pool->PokeIdleThread(); // Come and get it!
 }
 
 void JobProvider::Dequeue()
