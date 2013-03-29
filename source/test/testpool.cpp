@@ -30,6 +30,7 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <iostream>
 
 using namespace x265;
 
@@ -104,7 +105,9 @@ void MD5Frame::Encode()
 
     unsigned char *outdigest = this->cu[this->numrows * this->numcols - 1].digest;
 
-    printf("%x %1.7fsec\n", outdigest, (float) (stop-start) / CLOCKS_PER_SEC);
+    for (int i = 0 ; i < 16; i++)
+        std::cout << std::hex << outdigest[i];
+    std::cout << (float) (stop-start) / CLOCKS_PER_SEC << std::endl;
 }
 
 void MD5Frame::ProcessRow( int rownum )
