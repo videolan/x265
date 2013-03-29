@@ -30,19 +30,25 @@
 #define EVALUATOR(x,y)   PASTER(x,y)
 #define NAME(fun)        EVALUATOR(fun, ARCH)
 
+#if HIGH_BIT_DEPTH
+#define VEC8 Vec8s
+#else
+#define VEC8 Vec16c
+#endif
+
 namespace // place vector functions in anonymous namespace (file static)
 {
 
 extern "C"
 {
 
-int NAME(sad_8x8)( uint8_t *piOrg, intptr_t strideOrg, uint8_t *piCur, intptr_t strideCur )
+int NAME(sad_8x8)( pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur )
 { // NOTE: This is completely untested, and ignores alignment issues
     int uiSum = 0;
 
     for( int Row = 0; Row < 8; Row++ )
     {
-        Vec8s m1, n1;
+        VEC8 m1, n1;
         m1.load(piOrg);
         n1.load(piCur);
         m1 = m1 - n1;

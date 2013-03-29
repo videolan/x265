@@ -34,6 +34,19 @@
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #endif
 
+#if HIGH_BIT_DEPTH
+typedef uint16_t pixel;
+typedef uint32_t sum_t;
+typedef uint64_t sum2_t;
+typedef uint64_t pixel4;
+#define PIXEL_SPLAT_X4(x) ((x)*0x0001000100010001ULL)
+#else
+typedef uint8_t pixel;
+typedef uint16_t sum_t;
+typedef uint32_t sum2_t;
+typedef uint32_t pixel4;
+#define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
+#endif
 
 namespace x265
 {
@@ -53,7 +66,7 @@ enum Partitions {
 };
 
 extern "C"
-typedef int (*pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
+typedef int (*pixelcmp)( pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride );
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,

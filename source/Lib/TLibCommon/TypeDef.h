@@ -251,7 +251,11 @@ typedef       unsigned long long  UInt64;
 // ====================================================================================================================
 
 typedef       UChar           Pxl;        ///< 8-bit pixel type
+#if HIGH_BIT_DEPTH
 typedef       Short           Pel;        ///< 16-bit pixel type
+#else
+typedef       UChar           Pel;        ///< 8-bit pixel type
+#endif
 typedef       Int             TCoeff;     ///< transform coefficient
 
 /// parameters for adaptive loop filter

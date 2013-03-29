@@ -38,6 +38,11 @@ if(ENABLE_PRIMITIVES)
     add_definitions(-DENABLE_PRIMITIVES)
 endif(ENABLE_PRIMITIVES)
 
+option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
+if(HIGH_BIT_DEPTH)
+    add_definitions(-DHIGH_BIT_DEPTH)
+endif(HIGH_BIT_DEPTH)
+
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
