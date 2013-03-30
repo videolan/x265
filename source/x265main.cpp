@@ -38,7 +38,7 @@
 #include <time.h>
 #include <iostream>
 #include "primitives.h"
-#include "x265top.h"
+#include "encoder.h"
 #include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
 

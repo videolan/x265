@@ -66,7 +66,7 @@ if(ENABLE_CLI)
         add_definitions(-Wno-unused-parameter)
     endif(CMAKE_COMPILER_IS_GNUCXX)
 
-    add_executable(x265-cli x265main.cpp x265cfg.cpp x265top.cpp x265cfg.h x265top.h)
+    add_executable(x265-cli x265main.cpp)
 
     target_link_libraries(x265-cli HM x265)
     if(ENABLE_PPA)

@@ -42,7 +42,7 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include "x265top.h"
+#include "encoder.h"
 #include "TLibEncoder/AnnexBwrite.h"
 #include "PPA/ppa.h"
 
@@ -376,7 +376,7 @@ Void TAppEncTop::xInitLibCfg()
 Void TAppEncTop::xCreateLib()
 {
     // Video I/O
-    m_cTVideoIOYuvInputFile.open(m_pchInputFile,     false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC);    // read  mode
+    m_cTVideoIOYuvInputFile.open(m_pchInputFile, false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC);    // read  mode
     m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1]);
 
     if (m_pchReconFile)
@@ -516,14 +516,12 @@ Void TAppEncTop::xGetBuffer(TComPicYuv*& rpcPicYuvRec)
     if (m_cListPicYuvRec.size() == (UInt)m_iGOPSize)
     {
         rpcPicYuvRec = m_cListPicYuvRec.popFront();
-
     }
     else
     {
         rpcPicYuvRec = new TComPicYuv;
 
         rpcPicYuvRec->create(m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth);
-
     }
     m_cListPicYuvRec.pushBack(rpcPicYuvRec);
 }
@@ -540,7 +538,6 @@ Void TAppEncTop::xDeleteBuffer()
         pcPicYuvRec->destroy();
         delete pcPicYuvRec; pcPicYuvRec = NULL;
     }
-
 }
 
 /** \param iNumEncoded  number of encoded frames
