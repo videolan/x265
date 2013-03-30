@@ -98,11 +98,21 @@ public:
   Void  codeSliceFinish         ();
   
   Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
-  Void codeSAOSign       ( UInt code   ) { printf("Not supported\n"); assert (0); }
-  Void codeSaoMaxUvlc    ( UInt   code, UInt maxSymbol ){printf("Not supported\n"); assert (0);}
-  Void codeSaoMerge  ( UInt uiCode ){printf("Not supported\n"); assert (0);}
+
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4100)
+#endif
+  Void codeSAOSign       ( UInt code) { printf("Not supported\n"); assert (0); }
+  Void codeSaoMaxUvlc    ( UInt code, UInt maxSymbol ){printf("Not supported\n"); assert (0);}
+  Void codeSaoMerge      ( UInt uiCode ){printf("Not supported\n"); assert (0);}
   Void codeSaoTypeIdx    ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-  Void codeSaoUflc       ( UInt uiLength, UInt   uiCode ){ assert(uiCode < 32); printf("Not supported\n"); assert (0);}
+  Void codeSaoUflc       ( UInt uiLength, UInt uiCode ){ assert(uiCode < 32); printf("Not supported\n"); assert (0);}
+  Void updateContextTables ( SliceType eSliceType, Int iQp, Bool bExecuteFinish=true ) { return; }
+  Void updateContextTables ( SliceType eSliceType, Int iQp )                           { return; }
+#if _MSC_VER
+#pragma warning(pop)
+#endif
 
   Void codeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
@@ -136,8 +146,6 @@ public:
   Void estBit               (estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
   
   Void xCodePredWeightTable          ( TComSlice* pcSlice );
-  Void updateContextTables           ( SliceType eSliceType, Int iQp, Bool bExecuteFinish=true ) { return;   }
-  Void updateContextTables           ( SliceType eSliceType, Int iQp  )                          { return;   }
 
   Void codeScalingList  ( TComScalingList* scalingList );
   Void xCodeScalingList ( TComScalingList* scalingList, UInt sizeId, UInt listId);
