@@ -150,10 +150,12 @@ static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height
       xor_mask = (x & 0xff) ^ (y & 0xff) ^ (x >> 8) ^ (y >> 8);
       checksum = (checksum + ((plane[y*stride+x] & 0xff) ^ xor_mask)) & 0xffffffff;
 
+#if HIGH_BIT_DEPTH
       if(bitdepth > 8)
       {
         checksum = (checksum + ((plane[y*stride+x]>>8) ^ xor_mask)) & 0xffffffff;
       }
+#endif
     }
   }
 
