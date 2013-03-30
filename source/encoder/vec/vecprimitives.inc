@@ -145,6 +145,27 @@ int CDECL NAME(satd_4x4)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_
 
 #else /* 8-bit pixels */
 
+int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+{
+    // NOTE: This is completely untested, likely broken, and ignores alignment issues
+    int uiSum = 0;
+
+    for (int Row = 0; Row < 8; Row++)
+    {
+        Vec8s m1, n1;
+        m1.load(piOrg);
+        n1.load(piCur);
+        m1 = m1 - n1;
+        m1 = abs(m1);
+        uiSum += horizontal_add_x(m1);
+
+        piOrg += strideOrg;
+        piCur += strideCur;
+    }
+
+    return uiSum;
+}
+
 #endif
 
 }  // end anonymous namespace
@@ -167,6 +188,7 @@ static int Setup()
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
     p.satd[PARTITION_4x4] = NAME(satd_4x4);
 #else
+    p.sad[PARTITION_8x8] = NAME(sad_8x8);
 #endif
 
     return 1;
