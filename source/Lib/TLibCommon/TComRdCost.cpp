@@ -39,6 +39,7 @@
 #include <assert.h>
 #include "TComRom.h"
 #include "TComRdCost.h"
+#include "primitives.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -446,7 +447,6 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
   }
   
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(bitDepth-8);
-
 }
 
 #if WEIGHTED_CHROMA_DISTORTION
@@ -488,8 +488,18 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
 #if RATE_CONTROL_LAMBDA_DOMAIN
 UInt TComRdCost::getSADPart ( Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height )
 {
-  UInt SAD = 0;
   Int shift = DISTORTION_PRECISION_ADJUSTMENT(bitDepth-8);
+
+#if ENABLE_PRIMITIVES
+  if (shift == 0)
+  {
+      int part = x265::PartitionFromSizes(width, height);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)pelCur, curStride, (pixel*)pelOrg, orgStride);
+  }
+#endif
+
+  UInt SAD = 0;
   for ( Int i=0; i<height; i++ )
   {
     for( Int j=0; j<width; j++ )
@@ -524,6 +534,12 @@ UInt TComRdCost::xGetSAD( DistParam* pcDtParam )
   Int  iStrideCur = pcDtParam->iStrideCur;
   Int  iStrideOrg = pcDtParam->iStrideOrg;
   
+#if ENABLE_PRIMITIVES
+  int part = x265::PartitionFromSizes(iCols, iRows);
+  if (part >= 0)
+      return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+#endif
+  
   UInt uiSum = 0;
   
   for( ; iRows != 0; iRows-- )
@@ -552,6 +568,15 @@ UInt TComRdCost::xGetSAD4( DistParam* pcDtParam )
   Int  iSubStep   = ( 1 << iSubShift );
   Int  iStrideCur = pcDtParam->iStrideCur*iSubStep;
   Int  iStrideOrg = pcDtParam->iStrideOrg*iSubStep;
+
+#if ENABLE_PRIMITIVES
+  if (iSubStep == 1)
+  {
+      int part = x265::PartitionFromSizes(4, iRows);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
   
   UInt uiSum = 0;
   
@@ -570,7 +595,6 @@ UInt TComRdCost::xGetSAD4( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -585,6 +609,15 @@ UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
   Int  iStrideCur = pcDtParam->iStrideCur*iSubStep;
   Int  iStrideOrg = pcDtParam->iStrideOrg*iSubStep;
   
+#if ENABLE_PRIMITIVES
+  if (iSubStep == 1)
+  {
+      int part = x265::PartitionFromSizes(8, iRows);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   UInt uiSum = 0;
   
   for( ; iRows != 0; iRows-=iSubStep )
@@ -605,9 +638,7 @@ UInt TComRdCost::xGetSAD8( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-#endif
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -622,6 +653,15 @@ UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
   Int  iStrideCur = pcDtParam->iStrideCur*iSubStep;
   Int  iStrideOrg = pcDtParam->iStrideOrg*iSubStep;
   
+#if ENABLE_PRIMITIVES
+  if (iSubStep == 1)
+  {
+      int part = x265::PartitionFromSizes(16, iRows);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   UInt uiSum = 0;
   
   for( ; iRows != 0; iRows-=iSubStep )
@@ -650,10 +690,8 @@ UInt TComRdCost::xGetSAD16( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-#endif
 
 #if AMP_SAD
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -693,7 +731,6 @@ UInt TComRdCost::xGetSAD12( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 #endif
-#endif
 
 UInt TComRdCost::xGetSAD16N( DistParam* pcDtParam )
 {
@@ -707,6 +744,15 @@ UInt TComRdCost::xGetSAD16N( DistParam* pcDtParam )
   Int  iStrideOrg = pcDtParam->iStrideOrg*iSubStep;
   
   UInt uiSum = 0;
+
+#if ENABLE_PRIMITIVES
+  if (iSubStep == 1)
+  {
+      int part = x265::PartitionFromSizes(iCols, iRows);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
   
   for( ; iRows != 0; iRows-=iSubStep )
   {
@@ -737,7 +783,6 @@ UInt TComRdCost::xGetSAD16N( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -752,6 +797,15 @@ UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
   Int  iStrideCur = pcDtParam->iStrideCur*iSubStep;
   Int  iStrideOrg = pcDtParam->iStrideOrg*iSubStep;
   
+#if ENABLE_PRIMITIVES
+  if (iSubStep == 1)
+  {
+      int part = x265::PartitionFromSizes(32, iRows);
+      if (part >= 0)
+          return x265::primitives.sad[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   UInt uiSum = 0;
   
   for( ; iRows != 0; iRows-=iSubStep )
@@ -796,10 +850,8 @@ UInt TComRdCost::xGetSAD32( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-#endif
 
 #if AMP_SAD
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -851,9 +903,7 @@ UInt TComRdCost::xGetSAD24( DistParam* pcDtParam )
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
 #endif
-#endif
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
 {
   if ( pcDtParam->bApplyWeight )
@@ -944,7 +994,6 @@ UInt TComRdCost::xGetSAD64( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-#endif
 
 #if AMP_SAD
 UInt TComRdCost::xGetSAD48( DistParam* pcDtParam )
@@ -1021,7 +1070,6 @@ UInt TComRdCost::xGetSAD48( DistParam* pcDtParam )
   uiSum <<= iSubShift;
   return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
 }
-#endif
 
 // --------------------------------------------------------------------------------------------------------------------
 // SSE
@@ -1396,12 +1444,15 @@ UInt TComRdCost::xCalcHADs2x2( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   return satd;
 }
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_4x4]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#else
   Int k, satd = 0, diff[16], m[16], d[16];
   
-  assert( iStep == 1 );
   for( k = 0; k < 16; k+=4 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1489,15 +1540,18 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   satd = ((satd+1)>>1);
   
   return satd;
+#endif
 }
 #endif
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_8x8]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#else
   Int k, i, j, jj, sad=0;
   Int diff[64], m1[8][8], m2[8][8], m3[8][8];
-  assert( iStep == 1 );
   for( k = 0; k < 64; k += 8 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1587,15 +1641,18 @@ UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   sad=((sad+2)>>2);
   
   return sad;
-}
 #endif
+}
 
 #if NS_HAD
 UInt TComRdCost::xCalcHADs16x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_16x4]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#endif
   Int k, i, j, jj, sad=0;
   Int diff[64], m1[4][16], m2[4][16];
-  assert( iStep == 1 );
   for( k = 0; k < 64; k += 16 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1723,9 +1780,12 @@ UInt TComRdCost::xCalcHADs16x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStr
 
 UInt TComRdCost::xCalcHADs4x16( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_4x16]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#endif
   Int k, i, j, jj, sad=0;
   Int diff[64], m1[16][4], m2[16][4], m3[16][4];
-  assert( iStep == 1 );
   for( k = 0; k < 64; k += 4 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1854,6 +1914,15 @@ UInt TComRdCost::xGetHADs4( DistParam* pcDtParam )
   Int  iOffsetOrg = iStrideOrg<<2;
   Int  iOffsetCur = iStrideCur<<2;
   
+#if ENABLE_PRIMITIVES
+  if (iStep == 0)
+  {
+      int part = x265::PartitionFromSizes(4, iRows);
+      if (part >= 0)
+        return x265::primitives.satd[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   UInt uiSum = 0;
   
   for ( y=0; y<iRows; y+= 4 )
@@ -1880,6 +1949,15 @@ UInt TComRdCost::xGetHADs8( DistParam* pcDtParam )
   Int  iStep  = pcDtParam->iStep;
   Int  y;
   
+#if ENABLE_PRIMITIVES
+  if (iStep == 0)
+  {
+      int part = x265::PartitionFromSizes(8, iRows);
+      if (part >= 0)
+        return x265::primitives.satd[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   UInt uiSum = 0;
   
   if ( iRows == 4 )
@@ -1916,6 +1994,15 @@ UInt TComRdCost::xGetHADs( DistParam* pcDtParam )
   Int  iStrideOrg = pcDtParam->iStrideOrg;
   Int  iStep  = pcDtParam->iStep;
   
+#if ENABLE_PRIMITIVES
+  if (iStep == 0)
+  {
+      int part = x265::PartitionFromSizes(iCols, iRows);
+      if (part >= 0)
+        return x265::primitives.satd[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth-8);
+  }
+#endif
+
   Int  x, y;
   
   UInt uiSum = 0;
