@@ -74,6 +74,10 @@ enum Partitions
     NUM_PARTITIONS
 };
 
+// Returns a Partitions enum if the size matches a supported performance primitive,
+// else returns -1 (in which case you should use the slow path)
+int PartitionFromSizes(int Width, int Height);
+
 typedef int (CDECL *pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 
 /* Define a structure containing function pointers to optimized encoder

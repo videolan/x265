@@ -23,9 +23,33 @@
 
 #include <string.h>
 #include "primitives.h"
+#include <assert.h>
+#include <stdint.h>
 
 namespace x265
 {
+
+static int8_t psize[8][8] =
+{   // 4, 8, 12, 16, 20, 24, 28, 32
+    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
+    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32 },
+};
+
+// Returns a Partitions enum if the size matches a supported performance primitive,
+// else returns -1 (in which case you should use the slow path)
+int PartitionFromSizes(int Width, int Height)
+{
+    // If either of these are possible, we must add if() checks for them
+    assert( ((Width | Height) & 3) == 0);
+    assert( Width <= 32 && Height <= 32);
+    return (int) psize[Width>>2][Height>>2];
+}
 
 /* C (reference) versions of each primitive, implemented by various
  * C++ files (pixels.cpp, etc) */
