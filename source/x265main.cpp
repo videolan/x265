@@ -41,6 +41,7 @@
 #include "encoder.h"
 #include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
+#include "encoder/cpu_detection.h"
 
 using namespace std;
 namespace po = df::program_options_lite;
@@ -86,6 +87,7 @@ int main(int argc, char *argv[])
 
     // TODO: CPUID should be a commandline parameter
     int cpuid = 0;
+	cpuid = cpu_id_detect();
     x265::SetupPrimitives(cpuid);
 
     // starting time
