@@ -29,7 +29,7 @@
 #if defined (__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__ ((aligned (16)))
-#define CDECL                __attribute__((cdecl))
+#define CDECL
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
