@@ -48,7 +48,7 @@ int PartitionFromSizes(int Width, int Height)
     // If either of these are possible, we must add if() checks for them
     assert( ((Width | Height) & 3) == 0);
     assert( Width <= 32 && Height <= 32);
-    return (int) psize[Width>>2][Height>>2];
+    return (int) psize[(Width>>2)-1][(Height>>2)-1];
 }
 
 /* C (reference) versions of each primitive, implemented by various
