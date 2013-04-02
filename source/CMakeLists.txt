@@ -24,7 +24,12 @@ if(MSVC)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Werror -Wshadow -march=i686)
+    add_definitions(-Wall -Wextra -Werror -Wshadow)
+    if (X64)
+        add_definitions(-march=x86_64)
+    else()
+        add_definitions(-march=i686)
+    endif()
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Add some multithreaded build support
