@@ -15,8 +15,6 @@ add_library(x265
     primitives.h primitives.cpp
     pixel.cpp
     TComRdCost_SSE.cpp 
-	instrset_detect.cpp instrset.h
-	cpu_detection.cpp cpu_detection.h
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
 target_link_libraries(x265 VectorPrimitives)

@@ -103,45 +103,7 @@ void SetupPrimitives(int cpuid)
     /* .. detect actual CPU type and pick best vector architecture
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
-	if(cpuid == 8) {
-			MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-			MergeFunctions(primitives_vectorized_ssse3);
-			MergeFunctions(primitives_vectorized_sse41);
-			MergeFunctions(primitives_vectorized_sse42);
-			MergeFunctions(primitives_vectorized_avx);
-			MergeFunctions(primitives_vectorized_avx2);
-	} else if (cpuid == 7) {
-			MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-			MergeFunctions(primitives_vectorized_ssse3);
-			MergeFunctions(primitives_vectorized_sse41);
-			MergeFunctions(primitives_vectorized_sse42);
-			MergeFunctions(primitives_vectorized_avx);
-	} else if(cpuid == 6) {
-		    MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-			MergeFunctions(primitives_vectorized_ssse3);
-			MergeFunctions(primitives_vectorized_sse41);
-			MergeFunctions(primitives_vectorized_sse42);
-	} else if(cpuid == 5) {
-			MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-			MergeFunctions(primitives_vectorized_ssse3);
-			MergeFunctions(primitives_vectorized_sse41);
-	} else if(cpuid == 4) {
-			MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-			MergeFunctions(primitives_vectorized_ssse3);
-	} else if(cpuid == 3) {
-			MergeFunctions(primitives_vectorized_sse2);
-			MergeFunctions(primitives_vectorized_sse3);
-	} else if (cpuid == 2) {
-		MergeFunctions(primitives_vectorized_sse2);
-	}
-
-
-
+    MergeFunctions(primitives_vectorized_sse2);
 #endif
 
     cpuid = cpuid; // prevent compiler warning
