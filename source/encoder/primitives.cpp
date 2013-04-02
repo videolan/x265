@@ -55,7 +55,7 @@ int PartitionFromSizes(int Width, int Height)
 }
 
 /* C (reference) versions of each primitive, implemented by various
- * C++ files (pixels.cpp, etc) */
+ * C++ files (pixel.cpp, etc) */
 EncoderPrimitives primitives_c;
 
 /* These function tables are defined by C++ files in encoder/vec
@@ -104,21 +104,26 @@ void SetupPrimitives(int cpuid)
     {
         cpuid = cpuIDDetect();
     }
+
 #if ENABLE_PRIMITIVES
     memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
-    //MergeFunctions(primitives_vectorized_sse2);
 
-    /* .. detect actual CPU type and pick best vector architecture
-     * to use as a baseline.  Then upgrade functions with available
-     * assembly code, as needed. */
+    /* Pick best vector architecture to use as a baseline. */
+#if defined (__GNUC__) || defined(_MSC_VER)
     if (cpuid > 1) MergeFunctions(primitives_vectorized_sse2);
     if (cpuid > 2) MergeFunctions(primitives_vectorized_sse3);
     if (cpuid > 3) MergeFunctions(primitives_vectorized_ssse3);
     if (cpuid > 4) MergeFunctions(primitives_vectorized_sse41);
     if (cpuid > 5) MergeFunctions(primitives_vectorized_sse42);
+#if defined(_MSC_VER) && _MSC_VER >= 1600
     if (cpuid > 6) MergeFunctions(primitives_vectorized_avx);
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
     if (cpuid > 7) MergeFunctions(primitives_vectorized_avx2);
+#endif
+#endif
 
+    /* .. upgrade functions with available assembly code. */
 #endif
 }
 
