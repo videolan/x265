@@ -1,3 +1,5 @@
+#include "vectorclass.h"
+#include "primitives.h"
 #include <ctype.h>
 #include "UnitTest.h"
 #include <sys/types.h>
@@ -8,8 +10,7 @@
 #include <tchar.h>
 #include <string.h>
 
-#include "vectorclass.h"
-#include "primitives.h"
+
 
 #define snprintf _snprintf
 using namespace x265;
@@ -59,6 +60,13 @@ char func_name[100];
 static bench_func_t benchs[MAX_FUNCS];
 
 #define set_func_name(...) snprintf( func_name, sizeof(func_name), __VA_ARGS__ )
+
+/* for most functions, run benchmark and correctness test at the same time.
+ * for those that modify their inputs, run the above macros separately */
+#define call_a(func,...) ({ call_a2(func,__VA_ARGS__); call_a1(func,__VA_ARGS__); })
+#define call_c(func,...) ({ call_c2(func,__VA_ARGS__); call_c1(func,__VA_ARGS__); })
+#define call_a2(func,...) ({ call_bench(func,cpu_new,__VA_ARGS__); })
+#define call_c2(func,...) ({ call_bench(func,0,__VA_ARGS__); })
 
 // Used to get the Time for Doing Bench mark
 static inline unsigned long read_time(void)
@@ -258,6 +266,7 @@ static int check_vector(int cpu_ref, int cpu_new)
 	return 0;
 }
 
+//call bench mark functions pixel, bitstream .... etc
 static int check_all_funcs( int cpu_ref, int cpu_new )
 {
 	//The Functions which needs to do Unit Bench
@@ -265,6 +274,7 @@ static int check_all_funcs( int cpu_ref, int cpu_new )
     return check_vector( cpu_ref, cpu_new );      
 }
 
+//set the cpu Versions
 static int add_flags( int *cpu_ref, int *cpu_new, int flags, const char *name )
 {
     *cpu_ref = *cpu_new;
