@@ -63,7 +63,7 @@ inline int __lzcnt_2x32(uint64_t x64)
 
 #define ATOMIC_AND(ptr,mask)           InterlockedAnd64((volatile LONG64*)ptr,mask)
 #define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
-#define GIVE_UP_TIME()                 Sleep(0);
+#define GIVE_UP_TIME()                 Sleep(0)
 
 #endif
 
