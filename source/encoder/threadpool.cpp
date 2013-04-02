@@ -40,8 +40,8 @@
 
 #define CLZ64(x)                        __builtin_clzll(x)
 
-#define ATOMIC_OR(ptr,mask)             __sync_or_and_fetch(ptr,mask)
-#define ATOMIC_CAS(ptr,oldval,newval)   __sync_val_compare_and_swap(ptr,oldval,newval)
+#define ATOMIC_OR(ptr, mask)            __sync_or_and_fetch(ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval) __sync_val_compare_and_swap(ptr, oldval, newval)
 #define GIVE_UP_TIME()                  usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
@@ -59,16 +59,17 @@ inline int __lzcnt_2x32(uint64_t x64)
         return val + 32;
     return __lzcnt((uint32_t) x64);
 }
-#endif
 
-#define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
-#define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchange(ptr,newval,oldval)
-#define GIVE_UP_TIME()                 Sleep(0)
+#endif // if _WIN64
 
-#endif
+#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval) InterlockedCompareExchange(ptr, newval, oldval)
+#define GIVE_UP_TIME()                  Sleep(0)
 
-namespace x265
-{
+#endif // ifdef __GNUC__
+
+namespace x265 {
+// x265 private namespace
 
 class ThreadPoolImpl;
 

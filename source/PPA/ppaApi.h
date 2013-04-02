@@ -32,8 +32,8 @@
 #ifndef _PPA_API_H_
 #define _PPA_API_H_
 
-namespace ppa
-{
+namespace ppa {
+// PPA private namespace
 
 typedef unsigned short EventID;
 typedef unsigned char GroupID;

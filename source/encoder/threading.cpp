@@ -25,8 +25,8 @@
 
 #include "threading.h"
 
-namespace x265
-{
+namespace x265 {
+// x265 private namespace
 
 #if _WIN32
 

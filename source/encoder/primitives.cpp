@@ -29,8 +29,8 @@
 
 int instrset_detect(void); // from instrset_detect.cpp
 
-namespace x265
-{
+namespace x265 {
+// x265 private namespace
 
 static int8_t psize[8][8] =
 {
