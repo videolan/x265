@@ -62,7 +62,7 @@ inline int __lzcnt_2x32(uint64_t x64)
 #endif
 
 #define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
-#define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchange(ptr,oldval,newval)
+#define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchange(ptr,newval,oldval)
 #define GIVE_UP_TIME()                 Sleep(0)
 
 #endif
