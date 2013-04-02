@@ -25,7 +25,6 @@
 #define X265_PRIMITIVES_H
 
 #include <stdint.h>
-#include "../VectorClass/instrset.h"
 
 #if defined (__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))

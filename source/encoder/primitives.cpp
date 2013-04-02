@@ -21,11 +21,13 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <string.h>
 #include "primitives.h"
 #include <assert.h>
 #include <stdint.h>
-#include "stdio.h"
+#include <string.h>
+#include <stdio.h>
+
+int instrset_detect(void); // from instrset_detect.cpp
 
 namespace x265
 {
@@ -118,8 +120,6 @@ void SetupPrimitives(int cpuid)
     if (cpuid > 7) MergeFunctions(primitives_vectorized_avx2);
 
 #endif
-
-    cpuid = cpuid; // prevent compiler warning
 }
 
 // cpu_detection logic
@@ -131,7 +131,6 @@ int cpuIDDetect(void)
     else cpuid = iset;
 
     return cpuid;
-
 }
 
 }
