@@ -33,7 +33,8 @@ namespace x265
 {
 
 static int8_t psize[8][8] =
-{   // 4, 8, 12, 16, 20, 24, 28, 32
+{
+    // 4, 8, 12, 16, 20, 24, 28, 32
     { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
     { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
     { -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -49,9 +50,9 @@ static int8_t psize[8][8] =
 int PartitionFromSizes(int Width, int Height)
 {
     // If either of these are possible, we must add if() checks for them
-    assert( ((Width | Height) & 3) == 0);
-    assert( Width <= 32 && Height <= 32);
-    return (int) psize[Width>>2][Height>>2];
+    assert(((Width | Height) & 3) == 0);
+    assert(Width <= 32 && Height <= 32);
+    return (int) psize[Width >> 2][Height >> 2];
 }
 
 /* C (reference) versions of each primitive, implemented by various
@@ -82,7 +83,7 @@ EncoderPrimitives primitives;
 #endif
 
 /* Take all primitive functions from p which are non-NULL */
-static void MergeFunctions(const EncoderPrimitives& p)
+static void MergeFunctions(const EncoderPrimitives &p)
 {
     /* too bad this isn't an introspecive language, but we can use macros */
 
@@ -127,13 +128,14 @@ void SetupPrimitives(int cpuid)
 #endif
 }
 
-// cpu_detection logic
 int cpuIDDetect(void)
 {
     int cpuid = 0;
-    int iset = instrset_detect();                          // Detect supported instruction set
-    if (iset < 1) fprintf(stderr, "\nError: Instruction set is not supported on this computer");
-    else cpuid = iset;
+    int iset = instrset_detect(); // Detect supported instruction set
+    if (iset < 1)
+        fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    else
+        cpuid = iset;
 
     return cpuid;
 }
