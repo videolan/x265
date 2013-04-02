@@ -26,24 +26,59 @@
 
 #include <stdint.h>
 
+#if defined (__GNUC__)
+#define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
+#define ALIGN_VAR_16(T, var) T var __attribute__ ((aligned (16)))
+#define CDECL                __attribute__((cdecl))
+#elif defined(_MSC_VER)
+#define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
+#define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
+#define CDECL                _cdecl
+#endif
+
+#if HIGH_BIT_DEPTH
+typedef uint16_t pixel;
+typedef uint32_t sum_t;
+typedef uint64_t sum2_t;
+typedef uint64_t pixel4;
+#define PIXEL_SPLAT_X4(x) ((x)*0x0001000100010001ULL)
+#else
+typedef uint8_t pixel;
+typedef uint16_t sum_t;
+typedef uint32_t sum2_t;
+typedef uint32_t pixel4;
+#define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
+#endif
+
 namespace x265
 {
 
-enum Partitions {
+enum Partitions
+{
     PARTITION_4x4,
     PARTITION_8x4,
     PARTITION_4x8,
     PARTITION_8x8,
+    PARTITION_4x16,
+    PARTITION_16x4,
     PARTITION_8x16,
     PARTITION_16x8,
     PARTITION_16x16,
+    PARTITION_4x32,
+    PARTITION_32x4,
+    PARTITION_8x32,
+    PARTITION_32x8,
     PARTITION_16x32,
     PARTITION_32x16,
     PARTITION_32x32,
     NUM_PARTITIONS
 };
 
-typedef int (_cdecl *pixelcmp)( uint8_t *fenc, intptr_t fencstride, uint8_t *fref, intptr_t frefstride );
+// Returns a Partitions enum if the size matches a supported performance primitive,
+// else returns -1 (in which case you should use the slow path)
+int PartitionFromSizes(int Width, int Height);
+
+typedef int (CDECL *pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -57,22 +92,11 @@ struct EncoderPrimitives
     /* .. Define primitives for more things .. */
 };
 
-/* These function tables are defined by C++ files in encoder/vec
- * Depending on your compiler, some of them may be undefined.
- *
- * These can be used as starting function sets, then change some
- * function pointers to assembly versions as they are available. */
-extern EncoderPrimitives primitives_vectorized_avx2;
-extern EncoderPrimitives primitives_vectorized_avx;
-extern EncoderPrimitives primitives_vectorized_sse42;
-extern EncoderPrimitives primitives_vectorized_sse41;
-extern EncoderPrimitives primitives_vectorized_ssse3;
-extern EncoderPrimitives primitives_vectorized_sse3;
-extern EncoderPrimitives primitives_vectorized_sse2;
-
 /* This copy of the table is what gets used by all by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
+
+void SetupPrimitives(int cpuid = 0);
 
 }
 

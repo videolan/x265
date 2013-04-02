@@ -183,7 +183,7 @@
 #define RDO_WITHOUT_DQP_BITS              0           ///< Disable counting dQP bits in RDO-based mode decision
 
 #define FULL_NBIT 0 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
-#if FULL_NBIT
+#if FULL_NBIT || !defined(HIGH_BIT_DEPTH)
 # define DISTORTION_PRECISION_ADJUSTMENT(x) 0
 #else
 # define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
@@ -251,7 +251,11 @@ typedef       unsigned long long  UInt64;
 // ====================================================================================================================
 
 typedef       UChar           Pxl;        ///< 8-bit pixel type
+#if HIGH_BIT_DEPTH
 typedef       Short           Pel;        ///< 16-bit pixel type
+#else
+typedef       UChar           Pel;        ///< 8-bit pixel type
+#endif
 typedef       Int             TCoeff;     ///< transform coefficient
 
 /// parameters for adaptive loop filter

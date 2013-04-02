@@ -26,17 +26,17 @@ using namespace std;
 class UnitTest
 {
 private:
-  fstream   fhandle;                                      ///< file handle
-  int fSize;
-    
+    fstream   fhandle;                                      ///< file handle
+    int fSize;
+
 public:
-  UnitTest()   {}
- ~UnitTest()   {}
-   
-  static int CompareBuffer (unsigned char * Buff_one, unsigned char * Buff_two);
-  static int CompareFiles(char *file1, char *file2);
-  static int DumpBuffer(unsigned char *Buffer, char *Filename);
-  static int CompareYUVOutputFile(char *file1, char *file2);
-  static int CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new);
-       
+    UnitTest()   {}
+    ~UnitTest()   {}
+
+    static int CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two);
+    static int CompareFiles(char *file1, char *file2);
+    static int DumpBuffer(unsigned char *Buffer, char *Filename);
+    static int CompareYUVOutputFile(char *file1, char *file2);
+    static int CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new);
+
 };

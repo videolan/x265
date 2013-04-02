@@ -66,26 +66,26 @@ struct NALUnit
   {
     return m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA_R
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_R
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_DLP
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TFD;
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R;
   }
 #if L0045_NON_NESTED_SEI_RESTRICTIONS
   Bool isSei()
   {
-    return m_nalUnitType == NAL_UNIT_SEI 
-        || m_nalUnitType == NAL_UNIT_SEI_SUFFIX;
+    return m_nalUnitType == NAL_UNIT_PREFIX_SEI 
+        || m_nalUnitType == NAL_UNIT_SUFFIX_SEI;
   }
 
   Bool isVcl()

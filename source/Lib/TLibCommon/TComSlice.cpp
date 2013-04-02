@@ -47,7 +47,7 @@ TComSlice::TComSlice()
 : m_iPPSId                        ( -1 )
 , m_iPOC                          ( 0 )
 , m_iLastIDR                      ( 0 )
-, m_eNalUnitType                  ( NAL_UNIT_CODED_SLICE_IDR )
+, m_eNalUnitType                  ( NAL_UNIT_CODED_SLICE_IDR_W_RADL )
 , m_eSliceType                    ( I_SLICE )
 , m_iSliceQp                      ( 0 )
 , m_dependentSliceSegmentFlag            ( false )
@@ -122,7 +122,7 @@ TComSlice::TComSlice()
     m_aiRefPOCList  [0][iNumCount] = 0;
     m_aiRefPOCList  [1][iNumCount] = 0;
   }
-  resetWpScaling(m_weightPredTable);
+  resetWpScaling();
   initWpAcDcParam();
   m_saoEnabledFlag = false;
 }
@@ -164,11 +164,11 @@ Void TComSlice::initSlice()
 
 Bool TComSlice::getRapPicFlag()
 {
-  return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR
+  return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLANT
-      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA
+      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
 }
 
@@ -539,7 +539,7 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
       assert(pReferencePictureSet->getPOC(i) >= pocCRA);
     }
   }
-  if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP ) // IDR picture found
+  if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP ) // IDR picture found
   {
     pocCRA = getPOC();
     prevRAPisBLA = false;
@@ -549,8 +549,8 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
     pocCRA = getPOC();
     prevRAPisBLA = false;
   }
-  else if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA
-         || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLANT
+  else if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+         || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
          || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP ) // BLA picture found
   {
     pocCRA = getPOC();
@@ -581,10 +581,10 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
   TComPic*                 rpcPic;
   Int pocCurr = getPOC(); 
 
-  if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA
-    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLANT
+  if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
     || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-    || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
     || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )  // IDR or BLA picture
   {
     // mark all pictures as not used for reference
@@ -596,8 +596,8 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
       if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);
       iterPic++;
     }
-    if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA
-      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLANT
+    if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+      || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP )
     {
       pocCRA = pocCurr;
@@ -858,7 +858,7 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
     //check that pictures of higher temporal layers are not used
     assert(rpcPic->getSlice( 0 )->isReferenced()==0||rpcPic->getUsedByCurr()==0||rpcPic->getTLayer()<=this->getTLayer());
     //check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
-    if(this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
+    if(this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
     {
       assert(rpcPic->getSlice( 0 )->isReferenced()==0||rpcPic->getTLayer()<this->getTLayer());
     }
@@ -1129,7 +1129,7 @@ Void  TComSlice::getWpScaling( RefPicList e, Int iRefIdx, wpScalingParam *&wp )
  * \param wpScalingParam
  * \returns Void
  */
-Void  TComSlice::resetWpScaling(wpScalingParam  wp[2][MAX_NUM_REF][3])
+Void  TComSlice::resetWpScaling()
 {
   for ( Int e=0 ; e<2 ; e++ )
   {
@@ -1137,7 +1137,7 @@ Void  TComSlice::resetWpScaling(wpScalingParam  wp[2][MAX_NUM_REF][3])
     {
       for ( Int yuv=0 ; yuv<3 ; yuv++ )
       {
-        wpScalingParam  *pwp = &(wp[e][i][yuv]);
+        wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
         pwp->bPresentFlag      = false;
         pwp->uiLog2WeightDenom = 0;
         pwp->uiLog2WeightDenom = 0;
@@ -1153,23 +1153,15 @@ Void  TComSlice::resetWpScaling(wpScalingParam  wp[2][MAX_NUM_REF][3])
  */
 Void  TComSlice::initWpScaling()
 {
-  initWpScaling(m_weightPredTable);
-}
-
-/** set WP tables 
- * \param wpScalingParam
- * \returns Void
- */
-Void  TComSlice::initWpScaling(wpScalingParam  wp[2][MAX_NUM_REF][3])
-{
   for ( Int e=0 ; e<2 ; e++ )
   {
     for ( Int i=0 ; i<MAX_NUM_REF ; i++ )
     {
       for ( Int yuv=0 ; yuv<3 ; yuv++ )
       {
-        wpScalingParam  *pwp = &(wp[e][i][yuv]);
-        if ( !pwp->bPresentFlag ) {
+        wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
+        if ( !pwp->bPresentFlag ) 
+        {
           // Inferring values not present :
           pwp->iWeight = (1 << pwp->uiLog2WeightDenom);
           pwp->iOffset = 0;

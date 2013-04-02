@@ -38,7 +38,8 @@ namespace ppa
 typedef unsigned short EventID;
 typedef unsigned char GroupID;
 
-class Base {
+class Base
+{
 public:
     virtual ~Base() {}
 
@@ -46,9 +47,9 @@ public:
     virtual bool configEventById(EventID eventId, bool filtered) const = 0;
     virtual int  configGroupById(GroupID groupId, bool filtered) const = 0;
     virtual void configAllEvents(bool filtered) const = 0;
-    virtual EventID  registerEventByName(const char* pEventName) = 0;
-    virtual GroupID registerGroupByName(const char* pGroupName) = 0;
-    virtual EventID registerEventInGroup(const char* pEventName, GroupID groupId) = 0;
+    virtual EventID  registerEventByName(const char *pEventName) = 0;
+    virtual GroupID registerGroupByName(const char *pGroupName) = 0;
+    virtual EventID registerEventInGroup(const char *pEventName, GroupID groupId) = 0;
     virtual void triggerStartEvent(EventID eventId) = 0;
     virtual void triggerEndEvent(EventID eventId) = 0;
     virtual void triggerTidEvent(EventID eventId, unsigned int data) = 0;
@@ -57,7 +58,7 @@ public:
     virtual EventID getEventId(int index) const = 0;
 
 protected:
-    virtual void init(const char** pNames, int eventCount) = 0;
+    virtual void init(const char **pNames, int eventCount) = 0;
 };
 
 }

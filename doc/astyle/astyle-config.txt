@@ -1,0 +1,12 @@
+# Astyle configuration file which defines the x265 coding style
+
+style=ansi                  # start with astyle's pre-defined `ansi` style
+indent=spaces=4             # insert/save spaces, indent 4 spaces
+lineend=linux               # unix EOLN
+suffix=none                 # no backup files
+align-pointer=name          # move asterisk to `char *foo`
+pad-header                  # add space between `if` and `()`
+pad-oper                    # add space around binary operators
+unpad-paren                 # remove spaces around `()`
+indent-switches             # indent case statements
+keep-one-line-statements    # allow: if (foo) bar();

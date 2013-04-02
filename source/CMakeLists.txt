@@ -12,6 +12,10 @@ ENDIF()
 project (x265)
 cmake_minimum_required (VERSION 2.6)
 
+if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
+    set(X64 1)
+endif()
+
 # Enforce coding standards.  Full warnings and warnings as errors
 if(MSVC)
     add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
@@ -19,18 +23,35 @@ if(MSVC)
     include_directories(compat/msvc)
 endif(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX)
+    set(GCC 1)
     add_definitions(-Wall -Wextra -Werror -Wshadow)
+    if (X64)
+        add_definitions(-march=x86_64)
+    else()
+        add_definitions(-march=i686)
+    endif()
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Add some multithreaded build support
 set(MULTITHREADED_BUILD "${MULTITHREADED_BUILD}" CACHE STRING "Number of threads to use for build")
 if(MULTITHREADED_BUILD)
-    if(CMAKE_COMPILER_IS_GNUCXX)
+    if(GCC)
         set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j${MULTITHREADED_BUILD}")
     elseif(MSVC)
         add_definitions(/MP${MULTITHREADED_BUILD})
     endif()
 endif()
+
+# Allow performance primitives to be disabled
+option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
+if(ENABLE_PRIMITIVES)
+    add_definitions(-DENABLE_PRIMITIVES)
+endif(ENABLE_PRIMITIVES)
+
+option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
+if(HIGH_BIT_DEPTH)
+    add_definitions(-DHIGH_BIT_DEPTH)
+endif(HIGH_BIT_DEPTH)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
@@ -50,12 +71,12 @@ if(ENABLE_CLI)
         add_definitions(/wd4244) # type conversion, possible loss of data
         add_definitions(/wd4512) # assignment operator could not be generated
     endif(MSVC)
-    if(CMAKE_COMPILER_IS_GNUCXX)
+    if(GCC)
         add_definitions(-Wno-sign-compare)
         add_definitions(-Wno-unused-parameter)
-    endif(CMAKE_COMPILER_IS_GNUCXX)
+    endif(GCC)
 
-    add_executable(x265-cli x265main.cpp x265cfg.cpp x265top.cpp x265cfg.h x265top.h)
+    add_executable(x265-cli x265main.cpp)
 
     target_link_libraries(x265-cli HM x265)
     if(ENABLE_PPA)

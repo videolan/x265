@@ -23,21 +23,88 @@
 
 #include <string.h>
 #include "primitives.h"
+#include <assert.h>
+#include <stdint.h>
 
 namespace x265
 {
 
+static int8_t psize[8][8] =
+{   // 4, 8, 12, 16, 20, 24, 28, 32
+    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
+    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32 },
+};
+
+// Returns a Partitions enum if the size matches a supported performance primitive,
+// else returns -1 (in which case you should use the slow path)
+int PartitionFromSizes(int Width, int Height)
+{
+    // If either of these are possible, we must add if() checks for them
+    assert( ((Width | Height) & 3) == 0);
+    assert( Width <= 32 && Height <= 32);
+    return (int) psize[Width>>2][Height>>2];
+}
+
+/* C (reference) versions of each primitive, implemented by various
+ * C++ files (pixels.cpp, etc) */
+EncoderPrimitives primitives_c;
+
+/* These function tables are defined by C++ files in encoder/vec
+ * Depending on your compiler, some of them may be undefined.
+ * The #if logic here must match the file lists in vec/CMakeLists.txt */
+
+#if defined (__GNUC__) || defined(_MSC_VER)
+extern EncoderPrimitives primitives_vectorized_sse42;
+extern EncoderPrimitives primitives_vectorized_sse41;
+extern EncoderPrimitives primitives_vectorized_ssse3;
+extern EncoderPrimitives primitives_vectorized_sse3;
+extern EncoderPrimitives primitives_vectorized_sse2;
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+extern EncoderPrimitives primitives_vectorized_avx;
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+extern EncoderPrimitives primitives_vectorized_avx2;
+#endif
+
 /* the "authoritative" set of encoder primitives */
+#if ENABLE_PRIMITIVES
 EncoderPrimitives primitives;
+#endif
+
+/* Take all primitive functions from p which are non-NULL */
+static void MergeFunctions(const EncoderPrimitives& p)
+{
+    /* too bad this isn't an introspecive language, but we can use macros */
+
+#define TAKE_IF_NOT_NULL(FOO) \
+    primitives.FOO = p.FOO ? p.FOO : primitives.FOO
+#define TAKE_EACH_IF_NOT_NULL(FOO, COUNT) \
+    for (int i = 0; i < COUNT; i++) \
+        primitives.FOO[i] = p.FOO[i] ? p.FOO[i] : primitives.FOO[i]
+
+    TAKE_EACH_IF_NOT_NULL(sad, NUM_PARTITIONS);
+    TAKE_EACH_IF_NOT_NULL(satd, NUM_PARTITIONS);
+}
 
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
-void SetupPrimitives( int cpuid = 0 )
+void SetupPrimitives(int cpuid)
 {
+#if ENABLE_PRIMITIVES
+    memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
+
     /* .. detect actual CPU type and pick best vector architecture
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
-    memcpy( (void*)&primitives, (void*)&primitives_vectorized_sse2, sizeof(primitives));
+    MergeFunctions(primitives_vectorized_sse2);
+#endif
 
     cpuid = cpuid; // prevent compiler warning
 }

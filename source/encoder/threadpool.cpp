@@ -26,23 +26,23 @@
 #include "threadpool.h"
 #include "threading.h"
 #include <assert.h>
+#include <string.h>
 
 #if MACOS
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#elif __unix__
-#include <unistd.h>
 #endif
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
 
+#include <unistd.h>
 #include <limits.h>
 
 #define CLZ64(x)                        __builtin_clzll(x)
 
 #define ATOMIC_AND(ptr,mask)            __sync_and_and_fetch(ptr,mask)
 #define ATOMIC_OR(ptr,mask)             __sync_or_and_fetch(ptr,mask)
-#define ATOMIC_CAS(ptr,oldval,newval)   __sync_val_compare_and_swap(ptr,oldval,newval)
+#define GIVE_UP_TIME()                  usleep(0);
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
 
@@ -63,7 +63,7 @@ inline int __lzcnt_2x32(uint64_t x64)
 
 #define ATOMIC_AND(ptr,mask)           InterlockedAnd64((volatile LONG64*)ptr,mask)
 #define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
-#define ATOMIC_CAS(ptr,oldval,newval)  InterlockedCompareExchangePointer((void**)ptr,(void*)oldval,(void*)newval)
+#define GIVE_UP_TIME()                 Sleep(0);
 
 #endif
 
@@ -87,9 +87,16 @@ public:
 
     ~PoolThread() {}
 
-    void Initialize(ThreadPoolImpl *p) { m_pool = p; m_awake.Trigger(); }
+    void Initialize(ThreadPoolImpl *p)
+    {
+        m_pool = p;
+        m_awake.Trigger();
+    }
 
-    void Awaken() { m_awake.Trigger(); }
+    void Awaken()
+    {
+        m_awake.Trigger();
+    }
 
     void ThreadMain();
 };
@@ -112,25 +119,30 @@ public:
     JobProvider *m_firstProvider;
     JobProvider *m_lastProvider;
 
-    volatile PoolThread *m_idleThreadList;
-
 public:
 
     ThreadPoolImpl(int numthreads);
 
     ~ThreadPoolImpl();
 
-    ThreadPoolImpl *AddReference() { m_referenceCount++; return this; }
+    ThreadPoolImpl *AddReference()
+    {
+        m_referenceCount++;
+        return this;
+    }
 
     void Release();
 
-    bool IsValid() const { return m_ok; }
+    bool IsValid() const
+    {
+        return m_ok;
+    }
 
-    void EnqueueJobProvider(JobProvider&);
+    void EnqueueJobProvider(JobProvider &);
 
-    void DequeueJobProvider(JobProvider&);
+    void DequeueJobProvider(JobProvider &);
 
-    void PokeIdleThread();
+    void PokeIdleThreads();
 };
 
 
@@ -153,47 +165,30 @@ void PoolThread::ThreadMain()
             cur = cur->m_nextProvider;
         }
 
-        if (cur == NULL)
-        { 
-            // add self to idle list, repeat compare and switch until successful.
-            do {
-                m_idleNext = m_pool->m_idleThreadList;
-            }
-            while (ATOMIC_CAS(&m_pool->m_idleThreadList, m_idleNext, this) != m_idleNext);
-
+        // Keep spinning so long as there is at least one job provider
+        if (!m_pool->m_firstProvider)
             // unemployed, oh bugger
             m_awake.Wait();
-        }
+        else if (cur == NULL)
+            // Allow another thread to use this CPU for a bit
+            GIVE_UP_TIME();
     }
 }
 
-void ThreadPoolImpl::PokeIdleThread()
+void ThreadPoolImpl::PokeIdleThreads()
 {
-    PoolThread *worker = NULL;
-    PoolThread *next = NULL;
-
-    // Keep trying to remove the first idle thread, until successful
-    do {
-        worker = const_cast<PoolThread*>(m_idleThreadList);
-        if (worker)
-            next = const_cast<PoolThread*>(worker->m_idleNext);
-        else
-            return;
-    }
-    while (ATOMIC_CAS(&m_idleThreadList, worker, next) != worker);
-
-    if (worker)
-        worker->Awaken();
+    for (int i = 0; i < m_numThreads; i++)
+        m_threads[i].Awaken();
 }
 
 static int get_cpu_count()
 {
 #if WIN32
     SYSTEM_INFO sysinfo;
-    GetSystemInfo( &sysinfo );
+    GetSystemInfo(&sysinfo);
     return sysinfo.dwNumberOfProcessors;
 #elif __unix__
-    return sysconf( _SC_NPROCESSORS_ONLN );
+    return sysconf(_SC_NPROCESSORS_ONLN);
 #elif MACOS
     int nm[2];
     size_t len = 4;
@@ -227,7 +222,7 @@ ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
 }
 
 void ThreadPoolImpl::Release()
-{ 
+{
     if (--m_referenceCount == 0)
     {
         assert(this == ThreadPoolImpl::instance);
@@ -242,7 +237,6 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     , m_numThreads(numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
-    , m_idleThreadList(NULL)
 {
     if (numThreads == 0)
         numThreads = get_cpu_count();
@@ -276,10 +270,11 @@ ThreadPoolImpl::~ThreadPoolImpl()
     // leak threads on program exit if there were resource failures
 }
 
-void ThreadPoolImpl::EnqueueJobProvider(JobProvider& p)
-{ // only one list writer at a time
+void ThreadPoolImpl::EnqueueJobProvider(JobProvider &p)
+{
+    // only one list writer at a time
     ScopedLock l(m_writeLock);
-       
+
     p.m_nextProvider = NULL;
     p.m_prevProvider = m_lastProvider;
     m_lastProvider = &p;
@@ -290,10 +285,11 @@ void ThreadPoolImpl::EnqueueJobProvider(JobProvider& p)
         m_firstProvider = &p;
 }
 
-void ThreadPoolImpl::DequeueJobProvider(JobProvider& p)
-{ // only one list writer at a time
+void ThreadPoolImpl::DequeueJobProvider(JobProvider &p)
+{
+    // only one list writer at a time
     ScopedLock l(m_writeLock);
-    
+
     // update pool entry pointers first
     if (m_firstProvider == &p)
         m_firstProvider = p.m_nextProvider;
@@ -321,25 +317,18 @@ void JobProvider::Enqueue()
 {
     // Add this provider to the end of the thread pool's job provider list
     assert(!m_nextProvider && !m_prevProvider && m_pool);
-    m_pool->EnqueueJobProvider( *this );
-    m_pool->PokeIdleThread(); // Come and get it!
+    m_pool->EnqueueJobProvider(*this);
+    m_pool->PokeIdleThreads();
 }
 
 void JobProvider::Dequeue()
 {
     // Remove this provider from the thread pool's job provider list
-    m_pool->DequeueJobProvider( *this );
-    m_pool->PokeIdleThread(); // in case a workder thread's list walk was broken
-}
-
-void JobProvider::NewJobAvailable()
-{
-    m_pool->PokeIdleThread();
+    m_pool->DequeueJobProvider(*this);
 }
 
 
-
-bool QueueFrame::InitJobQueue( int numRows )
+bool QueueFrame::InitJobQueue(int numRows)
 {
     m_numRows = numRows;
 
@@ -347,7 +336,7 @@ bool QueueFrame::InitJobQueue( int numRows )
     {
         m_numWords = (numRows + 63) >> 6;
         m_queuedBitmap = new uint64_t[ m_numWords ];
-        memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
+        memset((void *)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
         return m_queuedBitmap != NULL;
     }
 
@@ -363,16 +352,17 @@ QueueFrame::~QueueFrame()
     }
 }
 
-void QueueFrame::EnqueueRow( int row )
-{ // thread safe
-    uint64_t bit = 1LL << (row&63);
+void QueueFrame::EnqueueRow(int row)
+{
+    // thread safe
+    uint64_t bit = 1LL << (row & 63);
     assert(row < m_numRows);
-    ATOMIC_OR(&m_queuedBitmap[row>>6], bit);
-    NewJobAvailable();
+    ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
 }
 
 bool QueueFrame::FindJob()
-{ // thread safe
+{
+    // thread safe
     for (int w = 0; w < m_numWords; w++)
     {
         while (m_queuedBitmap[w])
@@ -385,8 +375,9 @@ bool QueueFrame::FindJob()
             uint64_t mask = ~bit;
 
             if (ATOMIC_AND(&m_queuedBitmap[w], mask) & bit)
-            { // if the bit was actually flipped. process row, else try again
-                ProcessRow( w * 64 + id );
+            {
+                // if the bit was actually flipped. process row, else try again
+                ProcessRow(w * 64 + id);
                 return true;
             }
         }

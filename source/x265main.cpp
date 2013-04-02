@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -37,7 +37,8 @@
 
 #include <time.h>
 #include <iostream>
-#include "x265top.h"
+#include "primitives.h"
+#include "encoder.h"
 #include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
 
@@ -51,53 +52,57 @@ namespace po = df::program_options_lite;
 // Main function
 // ====================================================================================================================
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-  TAppEncTop  cTAppEncTop;
+    TAppEncTop  cTAppEncTop;
 
-  // print information
-  fprintf( stdout, "\n" );
-  fprintf( stdout, "HM software: Encoder Version [%s]", NV_VERSION );
-  fprintf( stdout, NVM_ONOS );
-  fprintf( stdout, NVM_COMPILEDBY );
-  fprintf( stdout, NVM_BITS );
-  fprintf( stdout, "\n" );
+    // print information
+    fprintf(stdout, "\n");
+    fprintf(stdout, "HM software: Encoder Version [%s]", NV_VERSION);
+    fprintf(stdout, NVM_ONOS);
+    fprintf(stdout, NVM_COMPILEDBY);
+    fprintf(stdout, NVM_BITS);
+    fprintf(stdout, "\n");
 
-  PPA_INIT();
+    PPA_INIT();
 
-  // create application encoder class
-  cTAppEncTop.create();
+    // create application encoder class
+    cTAppEncTop.create();
 
-  // parse configuration
-  try
-  {
-    if(!cTAppEncTop.parseCfg( argc, argv ))
+    // parse configuration
+    try
     {
-      cTAppEncTop.destroy();
-      return 1;
+        if (!cTAppEncTop.parseCfg(argc, argv))
+        {
+            cTAppEncTop.destroy();
+            return 1;
+        }
     }
-  }
-  catch (po::ParseFailure& e)
-  {
-    cerr << "Error parsing option \""<< e.arg <<"\" with argument \""<< e.val <<"\"." << endl;
-    return 1;
-  }
+    catch (po::ParseFailure &e)
+    {
+        cerr << "Error parsing option \"" << e.arg << "\" with argument \"" << e.val << "\"." << endl;
+        return 1;
+    }
 
-  // starting time
-  double dResult;
-  long lBefore = clock();
+    // TODO: CPUID should be a commandline parameter
+    int cpuid = 0;
+    x265::SetupPrimitives(cpuid);
 
-  // call encoding function
-  cTAppEncTop.encode();
+    // starting time
+    double dResult;
+    long lBefore = clock();
 
-  // ending time
-  dResult = (double)(clock()-lBefore) / CLOCKS_PER_SEC;
-  printf("\n Total Time: %12.3f sec.\n", dResult);
+    // call encoding function
+    cTAppEncTop.encode();
 
-  // destroy application encoder class
-  cTAppEncTop.destroy();
+    // ending time
+    dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
+    printf("\n Total Time: %12.3f sec.\n", dResult);
 
-  return 0;
+    // destroy application encoder class
+    cTAppEncTop.destroy();
+
+    return 0;
 }
 
 //! \}

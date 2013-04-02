@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include "TLibEncoder/TEncTop.h"
 #include "TLibVideoIO/TVideoIOYuv.h"
 #include "TLibCommon/AccessUnit.h"
-#include "x265cfg.h"
+#include "config.h"
 
 //! \ingroup TAppEncoder
 //! \{
@@ -57,41 +57,44 @@
 class TAppEncTop : public TAppEncCfg
 {
 private:
-  // class interface
-  TEncTop                    m_cTEncTop;                    ///< encoder class
-  TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
-  TVideoIOYuv                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
-  
-  TComList<TComPicYuv*>      m_cListPicYuvRec;              ///< list of reconstruction YUV files
-  
-  Int                        m_iFrameRcvd;                  ///< number of received frames
-  
-  UInt m_essentialBytes;
-  UInt m_totalBytes;
+    // class interface
+    TEncTop                    m_cTEncTop;                    ///< encoder class
+    TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
+    TVideoIOYuv                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
+
+    TComList<TComPicYuv *>      m_cListPicYuvRec;             ///< list of reconstruction YUV files
+
+    Int                        m_iFrameRcvd;                  ///< number of received frames
+
+    UInt m_essentialBytes;
+    UInt m_totalBytes;
 protected:
-  // initialization
-  Void  xCreateLib        ();                               ///< create files & encoder class
-  Void  xInitLibCfg       ();                               ///< initialize internal variables
-  Void  xInitLib          ();                               ///< initialize encoder class
-  Void  xDestroyLib       ();                               ///< destroy encoder class
-  
-  /// obtain required buffers
-  Void xGetBuffer(TComPicYuv*& rpcPicYuvRec);
-  
-  /// delete allocated buffers
-  Void  xDeleteBuffer     ();
-  
-  // file I/O
-  Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
-  void rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& stats);
-  void printRateSummary();
-  
+    // initialization
+    Void  xCreateLib();                                       ///< create files & encoder class
+    Void  xInitLibCfg();                                      ///< initialize internal variables
+    Void  xInitLib();                                         ///< initialize encoder class
+    Void  xDestroyLib();                                      ///< destroy encoder class
+
+    /// obtain required buffers
+    Void xGetBuffer(TComPicYuv*& rpcPicYuvRec);
+
+    /// delete allocated buffers
+    Void  xDeleteBuffer();
+
+    // file I/O
+    Void xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
+    void rateStatsAccum(const AccessUnit &au, const std::vector<UInt>& stats);
+    void printRateSummary();
+
 public:
-  TAppEncTop();
-  virtual ~TAppEncTop();
-  
-  Void        encode      ();                               ///< main encoding function
-  TEncTop&    getTEncTop  ()   { return  m_cTEncTop; }      ///< return encoder class pointer reference
+    TAppEncTop();
+    virtual ~TAppEncTop();
+
+    Void        encode();                                     ///< main encoding function
+    TEncTop    &getTEncTop()
+    {
+        return  m_cTEncTop;    ///< return encoder class pointer reference
+    }
 };// END CLASS DEFINITION TAppEncTop
 
 //! \}

@@ -1,8 +1,8 @@
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(GCC)
     add_definitions(-Wno-unused-parameter)
     add_definitions(-Wno-unused-variable)
     add_definitions(-Wno-sign-compare)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif(GCC)
 if(MSVC)
     # ignore these warnings from HM source
     add_definitions(/wd4100) # unreferenced formal parameter
@@ -25,4 +25,6 @@ source_group(TAppCommon  FILES ${APPCOMMON})
 source_group(TLibCommon  FILES ${LIBCOMMON})
 source_group(TLibEncoder FILES ${LIBENCODER})
 
-add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON} ${LIBVIDEOIO} ${MD5})
+add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON} ${LIBVIDEOIO} ${MD5}
+            encoder.cpp encoder.h
+            config.cpp config.h)
