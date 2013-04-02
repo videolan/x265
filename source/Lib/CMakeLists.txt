@@ -1,8 +1,8 @@
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(GCC)
     add_definitions(-Wno-unused-parameter)
     add_definitions(-Wno-unused-variable)
     add_definitions(-Wno-sign-compare)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif(GCC)
 if(MSVC)
     # ignore these warnings from HM source
     add_definitions(/wd4100) # unreferenced formal parameter

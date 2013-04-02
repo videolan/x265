@@ -18,14 +18,14 @@ if(MSVC)
     # these below should eventually go away
     add_definitions(/wd4100) # unreferenced formal parameter
 endif(MSVC)
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(GCC)
     add_definitions(-Wno-sign-compare)
     # these below should eventually go away
     add_definitions(-Wno-unused-parameter)
     add_definitions(-Wno-unused-variable)
     add_definitions(-Wno-unused-function)
     add_definitions(-Wno-unused-value)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif(GCC)
 
 add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
