@@ -49,9 +49,10 @@ static int8_t psize[8][8] =
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-    // If either of these are possible, we must add if() checks for them
-    assert(((Width | Height) & 3) == 0);
-    assert(Width <= 32 && Height <= 32);
+    if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
+        return -1;
+    if (Width > 32 || Height > 32)
+        return -1;
     return (int) psize[Width >> 2][Height >> 2];
 }
 
@@ -85,7 +86,7 @@ EncoderPrimitives primitives;
 /* Take all primitive functions from p which are non-NULL */
 static void MergeFunctions(const EncoderPrimitives &p)
 {
-    /* too bad this isn't an introspecive language, but we can use macros */
+    /* too bad this isn't an introspective language, but we can use macros */
 
 #define TAKE_IF_NOT_NULL(FOO) \
     primitives.FOO = p.FOO ? p.FOO : primitives.FOO
