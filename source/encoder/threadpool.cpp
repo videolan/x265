@@ -42,7 +42,7 @@
 
 #define ATOMIC_OR(ptr,mask)             __sync_or_and_fetch(ptr,mask)
 #define ATOMIC_CAS(ptr,oldval,newval)   __sync_val_compare_and_swap(ptr,oldval,newval)
-#define GIVE_UP_TIME()                  usleep(0);
+#define GIVE_UP_TIME()                  usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
 
