@@ -73,9 +73,7 @@ typedef struct
 // Function decleration
 // ====================================================================================================================
 
-#if defined ENABLE_VECTOR
   void  fastInverseDst(Short *tmp,Short *block,Int shift);
-#endif 
 
 // ====================================================================================================================
 // Class definition
