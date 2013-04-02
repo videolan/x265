@@ -25,6 +25,7 @@
 #define X265_PRIMITIVES_H
 
 #include <stdint.h>
+#include "../VectorClass/instrset.h"
 
 #if defined (__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
@@ -97,6 +98,7 @@ struct EncoderPrimitives
 extern EncoderPrimitives primitives;
 
 void SetupPrimitives(int cpuid = 0);
+int cpuIDDetect(void);
 
 }
 

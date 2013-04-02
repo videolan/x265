@@ -25,6 +25,7 @@
 #include "primitives.h"
 #include <assert.h>
 #include <stdint.h>
+#include "stdio.h"
 
 namespace x265
 {
@@ -97,16 +98,40 @@ static void MergeFunctions(const EncoderPrimitives& p)
  * cpuid != 0 - force CPU type */
 void SetupPrimitives(int cpuid)
 {
+    if (cpuid == 0)
+    {
+        cpuid = cpuIDDetect();
+    }
 #if ENABLE_PRIMITIVES
     memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
+    //MergeFunctions(primitives_vectorized_sse2);
 
     /* .. detect actual CPU type and pick best vector architecture
      * to use as a baseline.  Then upgrade functions with available
      * assembly code, as needed. */
-    MergeFunctions(primitives_vectorized_sse2);
+    if (cpuid > 1) MergeFunctions(primitives_vectorized_sse2);
+    if (cpuid > 2) MergeFunctions(primitives_vectorized_sse3);
+    if (cpuid > 3) MergeFunctions(primitives_vectorized_ssse3);
+    if (cpuid > 4) MergeFunctions(primitives_vectorized_sse41);
+    if (cpuid > 5) MergeFunctions(primitives_vectorized_sse42);
+    if (cpuid > 6) MergeFunctions(primitives_vectorized_avx);
+    if (cpuid > 7) MergeFunctions(primitives_vectorized_avx2);
+
 #endif
 
     cpuid = cpuid; // prevent compiler warning
+}
+
+// cpu_detection logic
+int cpuIDDetect(void)
+{
+    int cpuid = 0;
+    int iset = instrset_detect();                          // Detect supported instruction set
+    if (iset < 1) fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    else cpuid = iset;
+
+    return cpuid;
+
 }
 
 }
