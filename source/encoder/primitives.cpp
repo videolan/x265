@@ -22,12 +22,11 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include "instrset.h"
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-
-int instrset_detect(void); // from instrset_detect.cpp
 
 namespace x265 {
 // x265 private namespace
@@ -56,27 +55,6 @@ int PartitionFromSizes(int Width, int Height)
     return (int) psize[(Width>>2)-1][(Height>>2)-1];
 }
 
-
-void Setup_C_Primitives(EncoderPrimitives &p);
-
-/* These functions are defined by C++ files in encoder/vec. Depending on your
- * compiler, some of them may be undefined.  The #if logic here must match the
- * file lists in vec/CMakeLists.txt */
-
-#if defined (__GNUC__) || defined(_MSC_VER)
-extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1600
-extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
-#endif
-
 /* the "authoritative" set of encoder primitives */
 #if ENABLE_PRIMITIVES
 EncoderPrimitives primitives;
@@ -88,7 +66,7 @@ void SetupPrimitives(int cpuid)
 {
     if (cpuid == 0)
     {
-        cpuid = cpuIDDetect();
+        cpuid = CpuIDDetect();
     }
 
 #if ENABLE_PRIMITIVES
@@ -102,7 +80,7 @@ void SetupPrimitives(int cpuid)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
     if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
 #endif
-#if defined(_MSC_VER) && _MSC_VER >= 1600
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
@@ -113,7 +91,7 @@ void SetupPrimitives(int cpuid)
 #endif
 }
 
-int cpuIDDetect(void)
+int CpuIDDetect(void)
 {
     int cpuid = 0;
     int iset = instrset_detect(); // Detect supported instruction set

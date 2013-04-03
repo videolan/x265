@@ -95,9 +95,27 @@ struct EncoderPrimitives
 /* This copy of the table is what gets used by all by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
-
 void SetupPrimitives(int cpuid = 0);
-int cpuIDDetect(void);
+int CpuIDDetect(void);
+
+void Setup_C_Primitives(EncoderPrimitives &p);
+
+/* These functions are defined by C++ files in encoder/vec. Depending on your
+ * compiler, some of them may be undefined.  The #if logic here must match the
+ * file lists in vec/CMakeLists.txt */
+#if defined (__GNUC__) || defined(_MSC_VER)
+extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
+#endif
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
+extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
+#endif
 
 }
 
