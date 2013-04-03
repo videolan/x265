@@ -189,7 +189,7 @@ namespace x265 {
 // x265 private namespace
 
 /* It should initialize entries for pixel functions defined in this file. */
-void Setup_C_Primitives(EncoderPrimitives &p)
+void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
     p.sad[PARTITION_4x4]   = sad<4,4>;
     p.sad[PARTITION_8x4]   = sad<8,4>;
