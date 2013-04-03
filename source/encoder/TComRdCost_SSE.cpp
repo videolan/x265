@@ -28,7 +28,7 @@
 #include <assert.h>
 
 
-#ifdef ENABLE_VECTOR
+#if 0
 UInt TComRdCost::xGetSAD8(DistParam *pcDtParam)
 {
     if (pcDtParam->bApplyWeight)
