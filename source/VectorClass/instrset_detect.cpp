@@ -61,7 +61,7 @@ static inline int64_t xgetbv (int ctr) {
 
 #elif defined (_WIN64)
 
-   return 0;
+   return 0 & ctr;
 
 #else // other compiler. try inline assembly with masm/intel/MS syntax
 
