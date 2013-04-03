@@ -77,8 +77,6 @@ Thread::~Thread()
     if (this->thread)
     {
         pthread_join(this->thread, NULL);
-
-        pthread_exit(NULL);
     }
 }
 
