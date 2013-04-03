@@ -39,6 +39,7 @@
 #include <assert.h>
 #include "TComRom.h"
 #include "TComRdCost.h"
+#include "primitives.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -1396,12 +1397,15 @@ UInt TComRdCost::xCalcHADs2x2( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   return satd;
 }
 
-#ifndef ENABLE_VECTOR
 UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_4x4]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#else
   Int k, satd = 0, diff[16], m[16], d[16];
   
-  assert( iStep == 1 );
   for( k = 0; k < 16; k+=4 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1489,15 +1493,19 @@ UInt TComRdCost::xCalcHADs4x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   satd = ((satd+1)>>1);
   
   return satd;
-}
 #endif
+}
 
-#ifndef ENABLE_VECTOR
+
 UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
 {
+  assert( iStep == 1 );
+#if ENABLE_PRIMITIVES
+  return x265::primitives.satd[x265::PARTITION_8x8]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+  
+#else
   Int k, i, j, jj, sad=0;
   Int diff[64], m1[8][8], m2[8][8], m3[8][8];
-  assert( iStep == 1 );
   for( k = 0; k < 64; k += 8 )
   {
     diff[k+0] = piOrg[0] - piCur[0];
@@ -1587,8 +1595,8 @@ UInt TComRdCost::xCalcHADs8x8( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
   sad=((sad+2)>>2);
   
   return sad;
-}
 #endif
+}
 
 #if NS_HAD
 UInt TComRdCost::xCalcHADs16x4( Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep )
