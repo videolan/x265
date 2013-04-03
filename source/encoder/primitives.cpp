@@ -80,7 +80,7 @@ void SetupPrimitives(int cpuid)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
     if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
 #endif
-#if defined(_MSC_VER) && _MSC_VER >= 1600
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700

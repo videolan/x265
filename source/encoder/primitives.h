@@ -108,7 +108,7 @@ extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
 #endif
-#if defined(_MSC_VER) && _MSC_VER >= 1600
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
 extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
