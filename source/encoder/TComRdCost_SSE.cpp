@@ -498,25 +498,24 @@ UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 
     ALIGN_VAR_16(Short, m2[8][8]);
 
-    Vec8s diff_v1, diff_v2, piOrg_v1, piOrg_v2, piCur_v1,piCur_v2;
+    Vec8s diff_v1, diff_v2, piOrg_v, piCur_v;
     Vec8s v1, v2, t1, t2;
 
     assert(iStep == 1);
 
     for (j = 0; j < 8; j += 2)
     {
-        piOrg_v1.load(piOrg);
-        piCur_v1.load(piCur);        
+        piOrg_v.load(piOrg);
+        piCur_v.load(piCur);
+        diff_v1 = piOrg_v - piCur_v;
         piCur += iStrideCur;
         piOrg += iStrideOrg;
 
-        piOrg_v2.load(piOrg);
-        piCur_v2.load(piCur);
+        piOrg_v.load(piOrg);
+        piCur_v.load(piCur);
+        diff_v2 = piOrg_v - piCur_v;
         piCur += iStrideCur;
         piOrg += iStrideOrg;
-
-        diff_v1 = piOrg_v1 - piCur_v1;
-        diff_v2 = piOrg_v2 - piCur_v2;        
 
         v1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(diff_v1, diff_v2);
         v2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(diff_v1, diff_v2);
