@@ -30,8 +30,8 @@
 #define EVALUATOR(x,y)   PASTER(x,y)
 #define NAME(fun)        EVALUATOR(fun, ARCH)
 
-namespace // place vector functions in anonymous namespace (file static)
-{
+namespace {
+// place vector functions in anonymous namespace (file static)
 
 #if HIGH_BIT_DEPTH /* 16-bit pixels */
 
@@ -170,11 +170,9 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
 
 }  // end anonymous namespace
 
+namespace x265 {
+// Instantiate an EncoderPrimitives instance for this vector architecture
 
-namespace x265
-{
-
-/* Instantiate an EncoderPrimitives instance for this vector architecture */
 EncoderPrimitives NAME(primitives_vectorized);
 
 /* Setup() will be called before main().  It should initialize the

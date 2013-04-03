@@ -24,8 +24,8 @@
 #include "primitives.h"
 #include <stdlib.h> // abs()
 
-namespace // place functions in anonymous namespace (file static)
-{
+namespace {
+// place functions in anonymous namespace (file static)
 
 template<int lx, int ly>
 int CDECL sad( pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2 )

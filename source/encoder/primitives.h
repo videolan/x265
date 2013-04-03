@@ -50,8 +50,8 @@ typedef uint32_t pixel4;
 #define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
 #endif
 
-namespace x265
-{
+namespace x265 {
+// x265 private namespace
 
 enum Partitions
 {
