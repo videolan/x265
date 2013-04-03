@@ -11,7 +11,6 @@ endif(MSVC)
 add_library(x265
     primitives.h primitives.cpp
     TComRdCost_SSE.cpp
-	TComTrQuant_SSE.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
 
