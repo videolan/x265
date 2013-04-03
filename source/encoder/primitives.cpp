@@ -21,16 +21,20 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <string.h>
 #include "primitives.h"
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 
-namespace x265
-{
+int instrset_detect(void); // from instrset_detect.cpp
+
+namespace x265 {
+// x265 private namespace
 
 static int8_t psize[8][8] =
-{   // 4, 8, 12, 16, 20, 24, 28, 32
+{
+    // 4, 8, 12, 16, 20, 24, 28, 32
     { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
     { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
     { -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -45,34 +49,32 @@ static int8_t psize[8][8] =
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-    // If either of these are possible, we must add if() checks for them
-    assert( ((Width | Height) & 3) == 0);
-    assert( Width <= 64 && Height <= 64);
-    if ((Width >=32) || (Height >= 32))
+    if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
+        return -1;
+    if (Width > 32 || Height > 32)
         return -1;
     return (int) psize[(Width>>2)-1][(Height>>2)-1];
 }
 
-/* C (reference) versions of each primitive, implemented by various
- * C++ files (pixels.cpp, etc) */
-EncoderPrimitives primitives_c;
 
-/* These function tables are defined by C++ files in encoder/vec
- * Depending on your compiler, some of them may be undefined.
- * The #if logic here must match the file lists in vec/CMakeLists.txt */
+void Setup_C_Primitives(EncoderPrimitives &p);
+
+/* These functions are defined by C++ files in encoder/vec. Depending on your
+ * compiler, some of them may be undefined.  The #if logic here must match the
+ * file lists in vec/CMakeLists.txt */
 
 #if defined (__GNUC__) || defined(_MSC_VER)
-extern EncoderPrimitives primitives_vectorized_sse42;
-extern EncoderPrimitives primitives_vectorized_sse41;
-extern EncoderPrimitives primitives_vectorized_ssse3;
-extern EncoderPrimitives primitives_vectorized_sse3;
-extern EncoderPrimitives primitives_vectorized_sse2;
+extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1600
-extern EncoderPrimitives primitives_vectorized_avx;
+extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
-extern EncoderPrimitives primitives_vectorized_avx2;
+extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 #endif
 
 /* the "authoritative" set of encoder primitives */
@@ -84,16 +86,43 @@ EncoderPrimitives primitives;
  * cpuid != 0 - force CPU type */
 void SetupPrimitives(int cpuid)
 {
-#if ENABLE_PRIMITIVES
-    Setup_C_Primitives(&primitives_c);
-	
-    memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
+    if (cpuid == 0)
+    {
+        cpuid = cpuIDDetect();
+    }
 
-    /* Depending on the cpuid, call the appropriate setup_vec_primitive_arch */
-    
-    //NAME(Setup_Vec_Primitives)(&primitives);
+#if ENABLE_PRIMITIVES
+    Setup_C_Primitives(primitives);
+
+    /* Pick best vector architecture to use as a baseline. */
+#if defined (__GNUC__) || defined(_MSC_VER)
+    if (cpuid > 1) Setup_Vec_Primitives_sse2(primitives);
+    if (cpuid > 2) Setup_Vec_Primitives_sse3(primitives);
+    if (cpuid > 3) Setup_Vec_Primitives_ssse3(primitives);
+    if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
+    if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
 #endif
-    cpuid = cpuid; // prevent compiler warning
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+    if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+    if (cpuid > 7) Setup_Vec_Primitives_avx2(primitives);
+#endif
+    
+    /* .. upgrade functions with available assembly code. */
+#endif
+}
+
+int cpuIDDetect(void)
+{
+    int cpuid = 0;
+    int iset = instrset_detect(); // Detect supported instruction set
+    if (iset < 1)
+        fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    else
+        cpuid = iset;
+
+    return cpuid;
 }
 
 }

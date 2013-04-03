@@ -24,8 +24,8 @@
 #include "primitives.h"
 #include <stdlib.h> // abs()
 
-namespace // place functions in anonymous namespace (file static)
-{
+namespace {
+// place functions in anonymous namespace (file static)
 
 template<int lx, int ly>
 int CDECL sad( pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2 )
@@ -185,18 +185,12 @@ int CDECL satd32( pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t strid
 }  // end anonymous namespace
 
 
-namespace x265
+namespace x265 {
+// x265 private namespace
+
+/* It should initialize entries for pixel functions defined in this file. */
+void Setup_C_Primitives(EncoderPrimitives &p)
 {
-
-extern EncoderPrimitives primitives_c;
-
-
-/* It should initialize 
- * primitive_c entries for pixel functions defined in this file.
- */
-int Setup_C_Primitives(EncoderPrimitives* p_ref)
-{
-    EncoderPrimitives &p = *p_ref;
     p.sad[PARTITION_4x4]   = sad<4,4>;
     p.sad[PARTITION_8x4]   = sad<8,4>;
     p.sad[PARTITION_4x8]   = sad<4,8>;
@@ -230,8 +224,6 @@ int Setup_C_Primitives(EncoderPrimitives* p_ref)
     p.satd[PARTITION_16x32] = satd32<16,32>;
     p.satd[PARTITION_32x16] = satd32<32,16>;
     p.satd[PARTITION_32x32] = satd32<32,32>;
-
-    return 1;
 }
 
 };

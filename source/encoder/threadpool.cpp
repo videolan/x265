@@ -40,9 +40,9 @@
 
 #define CLZ64(x)                        __builtin_clzll(x)
 
-#define ATOMIC_AND(ptr,mask)            __sync_and_and_fetch(ptr,mask)
-#define ATOMIC_OR(ptr,mask)             __sync_or_and_fetch(ptr,mask)
-#define GIVE_UP_TIME()                  usleep(0);
+#define ATOMIC_OR(ptr, mask)            __sync_or_and_fetch(ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval) __sync_val_compare_and_swap(ptr, oldval, newval)
+#define GIVE_UP_TIME()                  usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
 
@@ -59,16 +59,17 @@ inline int __lzcnt_2x32(uint64_t x64)
         return val + 32;
     return __lzcnt((uint32_t) x64);
 }
-#endif
 
-#define ATOMIC_AND(ptr,mask)           InterlockedAnd64((volatile LONG64*)ptr,mask)
-#define ATOMIC_OR(ptr,mask)            InterlockedOr64((volatile LONG64*)ptr,mask)
-#define GIVE_UP_TIME()                 Sleep(0);
+#endif // if _WIN64
 
-#endif
+#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval) InterlockedCompareExchange(ptr, newval, oldval)
+#define GIVE_UP_TIME()                  Sleep(0)
 
-namespace x265
-{
+#endif // ifdef __GNUC__
+
+namespace x265 {
+// x265 private namespace
 
 class ThreadPoolImpl;
 
@@ -367,16 +368,15 @@ bool QueueFrame::FindJob()
     {
         while (m_queuedBitmap[w])
         {
-            uint64_t word = m_queuedBitmap[w];
-            if (word == 0) // race condition
+            uint64_t oldval = m_queuedBitmap[w];
+            if (oldval == 0) // race condition
                 break;
-            int id = 63 - (int) CLZ64(word);
-            uint64_t bit = 1LL << id;
-            uint64_t mask = ~bit;
+            int id = 63 - (int) CLZ64(oldval);
+            uint64_t newval = oldval & ~(1LL << id);
 
-            if (ATOMIC_AND(&m_queuedBitmap[w], mask) & bit)
+            if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
             {
-                // if the bit was actually flipped. process row, else try again
+                // if the bit was actually flipped, process row, else try again
                 ProcessRow(w * 64 + id);
                 return true;
             }
