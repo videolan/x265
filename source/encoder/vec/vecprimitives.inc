@@ -38,7 +38,7 @@ namespace {
 int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
     // NOTE: This is completely untested, and ignores alignment issues
-	int uiSum = 0;
+    int uiSum = 0;
 
     for (int Row = 0; Row < 8; Row++)
     {
@@ -58,9 +58,9 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
 
 int CDECL NAME(satd_4x4)(pixel *piCur, intptr_t iStrideCur, pixel *piOrg, intptr_t iStrideOrg)
 {
-        
-	int satd = 0;
-	
+
+    int satd = 0;
+
     Vec8s v1, v2, m1, m2;
     {
         Vec8s temp1, temp2, temp3, temp4 , piOrg_v, piCur_v;;
@@ -91,7 +91,7 @@ int CDECL NAME(satd_4x4)(pixel *piCur, intptr_t iStrideCur, pixel *piOrg, intptr
 
         piOrg_v = blend2q<0, 2>((Vec2q)temp3, (Vec2q)temp1);
         piCur_v = blend2q<0, 2>((Vec2q)temp4, (Vec2q)temp2);
-        v2 = piOrg_v - piCur_v;	//diff
+        v2 = piOrg_v - piCur_v; //diff
     }
 
     for (int i = 0; i < 2; i++)
@@ -121,7 +121,7 @@ int CDECL NAME(satd_4x4)(pixel *piCur, intptr_t iStrideCur, pixel *piOrg, intptr
 
     satd = ((satd + 1) >> 1);
 
-    return satd; 
+    return satd;
 }
 
 #else /* 8-bit pixels */
