@@ -47,6 +47,8 @@ static inline void cpuid (int output[4], int functionnumber) {
 
 // Define interface to xgetbv instruction
 static inline int64_t xgetbv (int ctr) {	
+
+// MSVC 2010 SP1 or later
 #if (defined (_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined (__INTEL_COMPILER) && __INTEL_COMPILER >= 1200) // Microsoft or Intel compiler supporting _xgetbv intrinsic
 
     return _xgetbv(ctr);                                   // intrinsic function for XGETBV
@@ -57,7 +59,11 @@ static inline int64_t xgetbv (int ctr) {
    __asm("xgetbv" : "=a"(a),"=d"(d) : "c"(ctr) : );
    return a | (uint64_t(d) << 32);
 
-#else  // #elif defined (_WIN32)                           // other compiler. try inline assembly with masm/intel/MS syntax
+#elif defined (_WIN64)
+
+   return 0;
+
+#else // other compiler. try inline assembly with masm/intel/MS syntax
 
    uint32_t a, d;
     __asm {
