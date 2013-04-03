@@ -195,8 +195,8 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     p.sad[PARTITION_8x4]   = sad<8,4>;
     p.sad[PARTITION_4x8]   = sad<4,8>;
     p.sad[PARTITION_8x8]   = sad<8,8>;
-    p.sad[PARTITION_16x4]  = sad<4,16>;
-    p.sad[PARTITION_4x16]  = sad<16,4>;
+    p.sad[PARTITION_16x4]  = sad<16,4>;
+    p.sad[PARTITION_4x16]  = sad<4,16>;
     p.sad[PARTITION_8x16]  = sad<8,16>;
     p.sad[PARTITION_16x8]  = sad<16,8>;
     p.sad[PARTITION_16x16] = sad<16,16>;
@@ -212,8 +212,8 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     p.satd[PARTITION_8x4]   = satd_8x4;
     p.satd[PARTITION_4x8]   = satd<4,8, satd_4x4>;
     p.satd[PARTITION_8x8]   = satd<8,8, satd_8x4>;
-    p.satd[PARTITION_16x4]  = satd<4,16, satd_8x4>;
-    p.satd[PARTITION_4x16]  = satd<16,4, satd_4x4>;
+    p.satd[PARTITION_16x4]  = satd<16,4, satd_8x4>;
+    p.satd[PARTITION_4x16]  = satd<4,16, satd_4x4>;
     p.satd[PARTITION_8x16]  = satd<8,16, satd_8x4>;
     p.satd[PARTITION_16x8]  = satd<16,8, satd_8x4>;
     p.satd[PARTITION_16x16] = satd<16,16, satd_8x4>;
