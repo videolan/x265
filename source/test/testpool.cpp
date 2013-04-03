@@ -70,10 +70,12 @@ private:
 public:
 
     MD5Frame(ThreadPool *pool) : QueueFrame(pool), cu(0), row(0) {}
-    ~MD5Frame()
+    virtual ~MD5Frame()
     {
-        delete [] this->cu;
-        delete [] this->row;
+        if (this->cu)
+            delete [] this->cu;
+        if (this->row)
+            delete [] this->row;
     }
 
     void Initialize(int cols, int rows);
@@ -122,7 +124,10 @@ void MD5Frame::ProcessRow(int rownum)
     // Called by worker thread
     RowData &curRow = this->row[ rownum ];
 
-    do
+    assert(rownum < this->numrows);
+    assert(curRow.curCol < this->numcols);
+
+    while (curRow.curCol < this->numcols)
     {
         int id = rownum * this->numcols + curRow.curCol;
         CUData  &curCTU = this->cu[ id ];
@@ -165,7 +170,6 @@ void MD5Frame::ProcessRow(int rownum)
             return;
         }
     }
-    while (curRow.curCol < this->numcols);
 
     // * Row completed *
 

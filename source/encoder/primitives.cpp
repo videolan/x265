@@ -21,16 +21,20 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <string.h>
 #include "primitives.h"
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 
-namespace x265
-{
+int instrset_detect(void); // from instrset_detect.cpp
+
+namespace x265 {
+// x265 private namespace
 
 static int8_t psize[8][8] =
-{   // 4, 8, 12, 16, 20, 24, 28, 32
+{
+    // 4, 8, 12, 16, 20, 24, 28, 32
     { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
     { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
     { -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -45,14 +49,15 @@ static int8_t psize[8][8] =
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-    // If either of these are possible, we must add if() checks for them
-    assert( ((Width | Height) & 3) == 0);
-    assert( Width <= 32 && Height <= 32);
-    return (int) psize[Width>>2][Height>>2];
+    if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
+        return -1;
+    if (Width > 32 || Height > 32)
+        return -1;
+    return (int) psize[Width >> 2][Height >> 2];
 }
 
 /* C (reference) versions of each primitive, implemented by various
- * C++ files (pixels.cpp, etc) */
+ * C++ files (pixel.cpp, etc) */
 EncoderPrimitives primitives_c;
 
 /* These function tables are defined by C++ files in encoder/vec
@@ -79,9 +84,9 @@ EncoderPrimitives primitives;
 #endif
 
 /* Take all primitive functions from p which are non-NULL */
-static void MergeFunctions(const EncoderPrimitives& p)
+static void MergeFunctions(const EncoderPrimitives &p)
 {
-    /* too bad this isn't an introspecive language, but we can use macros */
+    /* too bad this isn't an introspective language, but we can use macros */
 
 #define TAKE_IF_NOT_NULL(FOO) \
     primitives.FOO = p.FOO ? p.FOO : primitives.FOO
@@ -97,16 +102,43 @@ static void MergeFunctions(const EncoderPrimitives& p)
  * cpuid != 0 - force CPU type */
 void SetupPrimitives(int cpuid)
 {
+    if (cpuid == 0)
+    {
+        cpuid = cpuIDDetect();
+    }
+
 #if ENABLE_PRIMITIVES
     memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
 
-    /* .. detect actual CPU type and pick best vector architecture
-     * to use as a baseline.  Then upgrade functions with available
-     * assembly code, as needed. */
-    MergeFunctions(primitives_vectorized_sse2);
+    /* Pick best vector architecture to use as a baseline. */
+#if defined (__GNUC__) || defined(_MSC_VER)
+    if (cpuid > 1) MergeFunctions(primitives_vectorized_sse2);
+    if (cpuid > 2) MergeFunctions(primitives_vectorized_sse3);
+    if (cpuid > 3) MergeFunctions(primitives_vectorized_ssse3);
+    if (cpuid > 4) MergeFunctions(primitives_vectorized_sse41);
+    if (cpuid > 5) MergeFunctions(primitives_vectorized_sse42);
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+    if (cpuid > 6) MergeFunctions(primitives_vectorized_avx);
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+    if (cpuid > 7) MergeFunctions(primitives_vectorized_avx2);
+#endif
 #endif
 
-    cpuid = cpuid; // prevent compiler warning
+    /* .. upgrade functions with available assembly code. */
+#endif
+}
+
+int cpuIDDetect(void)
+{
+    int cpuid = 0;
+    int iset = instrset_detect(); // Detect supported instruction set
+    if (iset < 1)
+        fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    else
+        cpuid = iset;
+
+    return cpuid;
 }
 
 }

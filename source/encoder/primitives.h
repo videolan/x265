@@ -29,7 +29,7 @@
 #if defined (__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__ ((aligned (16)))
-#define CDECL                __attribute__((cdecl))
+#define CDECL
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
@@ -50,8 +50,8 @@ typedef uint32_t pixel4;
 #define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
 #endif
 
-namespace x265
-{
+namespace x265 {
+// x265 private namespace
 
 enum Partitions
 {
@@ -97,6 +97,7 @@ struct EncoderPrimitives
 extern EncoderPrimitives primitives;
 
 void SetupPrimitives(int cpuid = 0);
+int cpuIDDetect(void);
 
 }
 
