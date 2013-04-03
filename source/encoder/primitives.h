@@ -50,6 +50,10 @@ typedef uint32_t pixel4;
 #define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
 #endif
 
+#define PASTER(name,val) name ## _ ## val
+#define EVALUATOR(x,y)   PASTER(x,y)
+#define NAME(fun)        EVALUATOR(fun, ARCH)
+
 namespace x265
 {
 
@@ -97,6 +101,8 @@ struct EncoderPrimitives
 extern EncoderPrimitives primitives;
 
 void SetupPrimitives(int cpuid = 0);
+int Setup_C_Primitives(EncoderPrimitives *p);
+int NAME(Setup_Vec_Primitives) (EncoderPrimitives *p);
 
 }
 

@@ -47,7 +47,9 @@ int PartitionFromSizes(int Width, int Height)
 {
     // If either of these are possible, we must add if() checks for them
     assert( ((Width | Height) & 3) == 0);
-    assert( Width <= 32 && Height <= 32);
+    assert( Width <= 64 && Height <= 64);
+    if ((Width >=32) || (Height >= 32))
+        return -1;
     return (int) psize[(Width>>2)-1][(Height>>2)-1];
 }
 
@@ -78,34 +80,19 @@ extern EncoderPrimitives primitives_vectorized_avx2;
 EncoderPrimitives primitives;
 #endif
 
-/* Take all primitive functions from p which are non-NULL */
-static void MergeFunctions(const EncoderPrimitives& p)
-{
-    /* too bad this isn't an introspecive language, but we can use macros */
-
-#define TAKE_IF_NOT_NULL(FOO) \
-    primitives.FOO = p.FOO ? p.FOO : primitives.FOO
-#define TAKE_EACH_IF_NOT_NULL(FOO, COUNT) \
-    for (int i = 0; i < COUNT; i++) \
-        primitives.FOO[i] = p.FOO[i] ? p.FOO[i] : primitives.FOO[i]
-
-    TAKE_EACH_IF_NOT_NULL(sad, NUM_PARTITIONS);
-    TAKE_EACH_IF_NOT_NULL(satd, NUM_PARTITIONS);
-}
-
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
 void SetupPrimitives(int cpuid)
 {
 #if ENABLE_PRIMITIVES
+    Setup_C_Primitives(&primitives_c);
+	
     memcpy((void *)&primitives, (void *)&primitives_c, sizeof(primitives));
 
-    /* .. detect actual CPU type and pick best vector architecture
-     * to use as a baseline.  Then upgrade functions with available
-     * assembly code, as needed. */
-    MergeFunctions(primitives_vectorized_sse2);
+    /* Depending on the cpuid, call the appropriate setup_vec_primitive_arch */
+    
+    //NAME(Setup_Vec_Primitives)(&primitives);
 #endif
-
     cpuid = cpuid; // prevent compiler warning
 }
 

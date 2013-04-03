@@ -26,10 +26,6 @@
 
 #include "primitives.h"
 
-#define PASTER(name,val) name ## _ ## val
-#define EVALUATOR(x,y)   PASTER(x,y)
-#define NAME(fun)        EVALUATOR(fun, ARCH)
-
 namespace // place vector functions in anonymous namespace (file static)
 {
 
@@ -176,14 +172,13 @@ namespace x265
 
 /* Instantiate an EncoderPrimitives instance for this vector architecture */
 EncoderPrimitives NAME(primitives_vectorized);
-
-/* Setup() will be called before main().  It should initialize the
+/* It should initialize the
  * function table for this vector architecture.
  */
-static int Setup()
-{
-    EncoderPrimitives &p = NAME(primitives_vectorized);
 
+int NAME(Setup_Vec_Primitives)(EncoderPrimitives* p_vec)
+{
+    EncoderPrimitives& p = *p_vec;
 #if HIGH_BIT_DEPTH /* 16-bit pixels */
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
     p.satd[PARTITION_4x4] = NAME(satd_4x4);
@@ -194,6 +189,6 @@ static int Setup()
     return 1;
 }
 
-static int forceinit = Setup();
+//static int forceinit = Setup();
 
 };

@@ -191,13 +191,12 @@ namespace x265
 extern EncoderPrimitives primitives_c;
 
 
-/* Setup() will be called before main().  It should initialize 
+/* It should initialize 
  * primitive_c entries for pixel functions defined in this file.
  */
-static int Setup()
+int Setup_C_Primitives(EncoderPrimitives* p_ref)
 {
-    EncoderPrimitives &p = primitives_c;
-
+    EncoderPrimitives &p = *p_ref;
     p.sad[PARTITION_4x4]   = sad<4,4>;
     p.sad[PARTITION_8x4]   = sad<8,4>;
     p.sad[PARTITION_4x8]   = sad<4,8>;
@@ -234,7 +233,5 @@ static int Setup()
 
     return 1;
 }
-
-static int forceinit = Setup();
 
 };
