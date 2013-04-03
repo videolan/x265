@@ -66,7 +66,7 @@ void SetupPrimitives(int cpuid)
 {
     if (cpuid == 0)
     {
-        cpuid = cpuIDDetect();
+        cpuid = CpuIDDetect();
     }
 
 #if ENABLE_PRIMITIVES
@@ -91,7 +91,7 @@ void SetupPrimitives(int cpuid)
 #endif
 }
 
-int cpuIDDetect(void)
+int CpuIDDetect(void)
 {
     int cpuid = 0;
     int iset = instrset_detect(); // Detect supported instruction set

@@ -96,6 +96,8 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 void SetupPrimitives(int cpuid = 0);
+int CpuIDDetect(void);
+
 void Setup_C_Primitives(EncoderPrimitives &p);
 
 /* These functions are defined by C++ files in encoder/vec. Depending on your
@@ -114,7 +116,6 @@ extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #if defined(_MSC_VER) && _MSC_VER >= 1700
 extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 #endif
-int cpuIDDetect(void);
 
 }
 
