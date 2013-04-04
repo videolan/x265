@@ -59,40 +59,11 @@ uint16_t cpuid = 0;
 #endif
 
 //Sample Testing for satdx*x
-static int check_pixelprimitives(void)
+static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint32_t ret = 0;
     uint32_t j = 0, i = 0;
     uint32_t var_v[100], var_c[100];
-    EncoderPrimitives cprimitives;
-    EncoderPrimitives vectorprimitives;
-
-    cpuid = CpuIDDetect();
-    memset(&vectorprimitives, 0, sizeof(vectorprimitives));
-
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(vectorprimitives);
-
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(vectorprimitives);
-
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vectorprimitives);
-
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(vectorprimitives);
-
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(vectorprimitives);
-
-#endif // if defined(__GNUC__) || defined(_MSC_VER)
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(vectorprimitives);
-
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(vectorprimitives);
-
-#endif
-
-    //Initialize the default c_Primitives
-    Setup_C_PixelPrimitives(cprimitives);
 
     //Do the bench for 16 - Number of Partitions
     while (numofprim < NUM_PARTITIONS)
@@ -131,7 +102,7 @@ static int check_pixelprimitives(void)
 
             numofprim++;
         }
-        else //if there is no vectorised function for satd then need not to do testbench
+        else //if there is no vectorized function for satd then need not to do testbench
             numofprim++;
 
         if (do_singleprimitivecheck == 1)
@@ -141,9 +112,9 @@ static int check_pixelprimitives(void)
     return ret;
 }
 
-static int check_all_funcs()
+static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
-    return check_pixelprimitives();
+    return check_pixelprimitives(cprimitives, vectorprimitives);
 }
 
 int main(int argc, char *argv[])
@@ -176,7 +147,35 @@ int main(int argc, char *argv[])
         pbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    ret = check_all_funcs(); //do the output validation for c and vector primitives
+    EncoderPrimitives cprimitives;
+    EncoderPrimitives vectorprimitives;
+
+    cpuid = CpuIDDetect();
+    memset(&vectorprimitives, 0, sizeof(vectorprimitives));
+
+#if defined(__GNUC__) || defined(_MSC_VER)
+    if (cpuid > 1) Setup_Vec_Primitives_sse2(vectorprimitives);
+
+    if (cpuid > 2) Setup_Vec_Primitives_sse3(vectorprimitives);
+
+    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vectorprimitives);
+
+    if (cpuid > 4) Setup_Vec_Primitives_sse41(vectorprimitives);
+
+    if (cpuid > 5) Setup_Vec_Primitives_sse42(vectorprimitives);
+
+#endif // if defined(__GNUC__) || defined(_MSC_VER)
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
+    if (cpuid > 6) Setup_Vec_Primitives_avx(vectorprimitives);
+#endif
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+    if (cpuid > 7) Setup_Vec_Primitives_avx2(vectorprimitives);
+#endif
+
+    //Initialize the default c_Primitives
+    Setup_C_Primitives(cprimitives);
+
+    ret = check_all_funcs(cprimitives, vectorprimitives); //do the output validation for c and vector primitives
     if (ret)
     {
         fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
