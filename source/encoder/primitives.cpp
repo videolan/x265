@@ -62,8 +62,6 @@ int PartitionFromSizes(int Width, int Height)
 EncoderPrimitives primitives;
 #endif
 
-extern void Setup_C_PixelPrimitives(EncoderPrimitives &p);
-
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p); // pixel.cpp
