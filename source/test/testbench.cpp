@@ -75,28 +75,13 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
             for (i = 0; i <= 100; i++)
             {
                 var_v[i] = vectorprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
-                j += 16;
-            }
-
-            //run the c primitives 100 times and store the output
-            j = 0;
-            for (i = 0; i <= 100; i++)
-            {
                 var_c[i] = cprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
-                j += 16;
-            }
-
-            //compare both the output
-            i = 0;
-            while (i != 100)
-            {
                 if (var_c[i] != var_v[i])
                 {
                     printf("FAILED COMPARISON for Primitives - %d \n", numofprim);
                     return -1;
                 }
-
-                i++;
+                j += 16;
             }
 
             numofprim++;
