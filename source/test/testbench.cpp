@@ -68,13 +68,13 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
     while (numofprim < NUM_PARTITIONS)
     {
         //if the satd is not available for vector no need to testbench
-        if (vectorprimitives.satd[tprimitives[numofprim]])
+        if (vectorprimitives.satd[numofprim])
         {
-            //run the Vectorised primitives 100 times and store the output
+            //run the Vectorized primitives 100 times and store the output
             j = 0;
             for (i = 0; i <= 100; i++)
             {
-                var_v[i] = vectorprimitives.satd[tprimitives[numofprim]](pbuf1 + j, 16, pbuf2, 16);
+                var_v[i] = vectorprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
                 j += 16;
             }
 
@@ -82,7 +82,7 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
             j = 0;
             for (i = 0; i <= 100; i++)
             {
-                var_c[i] = cprimitives.satd[tprimitives[numofprim]](pbuf1 + j, 16, pbuf2, 16);
+                var_c[i] = cprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
                 j += 16;
             }
 

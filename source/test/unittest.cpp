@@ -24,6 +24,16 @@
 #include "unittest.h"
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <iostream>
+#include <cstdlib>
+#include <fcntl.h>
+#include <assert.h>
+#include <sys/stat.h>
+
+using namespace x265;
+using namespace std;
+
 //Compare the Two given Buffers with Binary Mode
 int UnitTest::CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two)
 {
