@@ -20,4 +20,5 @@ endif(GCC)
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
-add_library(VectorPrimitives ${PRIMITIVES} ${VECTORCLASS} vecprimitives.inc)
+add_library(VectorPrimitives ${PRIMITIVES} ${VECTORCLASS}
+            vecprimitives.inc pixel.inc macroblock.inc)
