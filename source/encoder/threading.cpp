@@ -42,7 +42,7 @@ bool Thread::Start()
 {
     DWORD threadId;
 
-    this->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) ThreadShim, this, 0, &threadId);
+    this->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadShim, this, 0, &threadId);
 
     return threadId > 0;
 }
@@ -63,6 +63,7 @@ static void *ThreadShim(void *opaque)
 {
     // defer processing to the virtual function implemented in the derived class
     Thread *instance = reinterpret_cast<Thread *>(opaque);
+
     instance->ThreadMain();
     return NULL;
 }
@@ -80,11 +81,10 @@ Thread::~Thread()
     }
 }
 
-#endif
+#endif // if _WIN32
 
 Thread::Thread()
 {
     this->thread = 0;
 }
-
 }

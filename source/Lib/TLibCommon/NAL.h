@@ -44,55 +44,56 @@ class TComOutputBitstream;
  */
 struct NALUnit
 {
-  NalUnitType m_nalUnitType; ///< nal_unit_type
-  UInt        m_temporalId;  ///< temporal_id
-  UInt        m_reservedZero6Bits; ///< reserved_zero_6bits
+    NalUnitType m_nalUnitType; ///< nal_unit_type
+    UInt        m_temporalId; ///< temporal_id
+    UInt        m_reservedZero6Bits; ///< reserved_zero_6bits
 
-  /** construct an NALunit structure with given header values. */
-  NALUnit(
-    NalUnitType nalUnitType,
-    Int         temporalId = 0,
-    Int         reservedZero6Bits = 0)
-    :m_nalUnitType (nalUnitType)
-    ,m_temporalId  (temporalId)
-    ,m_reservedZero6Bits(reservedZero6Bits)
-  {}
+    /** construct an NALunit structure with given header values. */
+    NALUnit(NalUnitType nalUnitType,
+            Int         temporalId = 0,
+            Int         reservedZero6Bits = 0)
+        : m_nalUnitType(nalUnitType)
+        , m_temporalId(temporalId)
+        , m_reservedZero6Bits(reservedZero6Bits)
+    {}
 
-  /** default constructor - no initialization; must be perfomed by user */
-  NALUnit() {}
+    /** default constructor - no initialization; must be perfomed by user */
+    NALUnit() {}
 
-  /** returns true if the NALunit is a slice NALunit */
-  Bool isSlice()
-  {
-    return m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA_R
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_R
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R;
-  }
+    /** returns true if the NALunit is a slice NALunit */
+    Bool isSlice()
+    {
+        return m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA_R
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_R
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
+               || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R;
+    }
+
 #if L0045_NON_NESTED_SEI_RESTRICTIONS
-  Bool isSei()
-  {
-    return m_nalUnitType == NAL_UNIT_PREFIX_SEI 
-        || m_nalUnitType == NAL_UNIT_SUFFIX_SEI;
-  }
+    Bool isSei()
+    {
+        return m_nalUnitType == NAL_UNIT_PREFIX_SEI
+               || m_nalUnitType == NAL_UNIT_SUFFIX_SEI;
+    }
 
-  Bool isVcl()
-  {
-    return ( (UInt)m_nalUnitType < 32 );
-  }
-#endif
+    Bool isVcl()
+    {
+        return (UInt)m_nalUnitType < 32;
+    }
+
+#endif // if L0045_NON_NESTED_SEI_RESTRICTIONS
 };
 
 struct OutputNALUnit;
@@ -102,14 +103,15 @@ struct OutputNALUnit;
  */
 struct NALUnitEBSP : public NALUnit
 {
-  std::ostringstream m_nalUnitData;
+    std::ostringstream m_nalUnitData;
 
-  /**
-   * convert the OutputNALUnit #nalu# into EBSP format by writing out
-   * the NALUnit header, then the rbsp_bytes including any
-   * emulation_prevention_three_byte symbols.
-   */
-  NALUnitEBSP(OutputNALUnit& nalu);
+    /**
+     * convert the OutputNALUnit #nalu# into EBSP format by writing out
+     * the NALUnit header, then the rbsp_bytes including any
+     * emulation_prevention_three_byte symbols.
+     */
+    NALUnitEBSP(OutputNALUnit& nalu);
 };
+
 //! \}
 //! \}

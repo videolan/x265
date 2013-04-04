@@ -40,42 +40,45 @@ class TComBitIf;
 
 //! \ingroup TLibEncoder
 //! \{
-class SEIWriter:public SyntaxElementWriter
+class SEIWriter : public SyntaxElementWriter
 {
 public:
-  SEIWriter() {};
-  virtual ~SEIWriter() {};
 
-  void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+    SEIWriter() {}
+
+    virtual ~SEIWriter() {}
+
+    void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 
 protected:
+
 #if K0180_SCALABLE_NESTING_SEI
-  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+    Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 #else
-  Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
+    Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
 #endif
-  Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
-  Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
-  Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
-  Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
-  Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps);
-  Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
-  TComSPS *m_pSPS;
-  Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
-  Void xWriteSEIFramePacking(const SEIFramePacking& sei);
-  Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
-  Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
-  Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
+    Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
+    Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
+    Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
+    Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
+    Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps);
+    Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
+    TComSPS *m_pSPS;
+    Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
+    Void xWriteSEIFramePacking(const SEIFramePacking& sei);
+    Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
+    Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
+    Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
 #if J0149_TONE_MAPPING_SEI
-  Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+    Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
 #endif
 #if L0208_SOP_DESCRIPTION_SEI
-  Void xWriteSEISOPDescription(const SEISOPDescription& sei);
+    Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #endif
 #if K0180_SCALABLE_NESTING_SEI
-  Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
+    Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
 #endif
-  Void xWriteByteAlign();
+    Void xWriteByteAlign();
 };
 
 //! \}

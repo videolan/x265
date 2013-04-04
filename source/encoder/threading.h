@@ -98,7 +98,6 @@ protected:
     HANDLE handle;
 };
 
-
 #else /* POSIX / pthreads */
 
 typedef pthread_t ThreadHandle;
@@ -168,11 +167,12 @@ protected:
     pthread_cond_t  condition;
 };
 
-#endif
+#endif // ifdef _WIN32
 
 class ScopedLock
 {
 public:
+
     ScopedLock(Lock &instance) : inst(instance)
     {
         this->inst.Acquire();
@@ -210,7 +210,6 @@ public:
     //< Returns true if thread was successfully created
     bool Start();
 };
-
 } // end namespace x265
 
-#endif
+#endif // ifndef _THREADING_H_

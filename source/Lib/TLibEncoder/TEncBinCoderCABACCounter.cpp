@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -43,24 +43,21 @@
 //! \ingroup TLibEncoder
 //! \{
 
-
 TEncBinCABACCounter::TEncBinCABACCounter()
-{
-}
+{}
 
 TEncBinCABACCounter::~TEncBinCABACCounter()
-{
-}
+{}
 
 Void TEncBinCABACCounter::finish()
 {
-  m_pcTComBitIf->write(0, UInt(m_fracBits >> 15) );
-  m_fracBits &= 32767;
+    m_pcTComBitIf->write(0, UInt(m_fracBits >> 15));
+    m_fracBits &= 32767;
 }
 
 UInt TEncBinCABACCounter::getNumWrittenBits()
 {
-  return m_pcTComBitIf->getNumberOfWrittenBits() + UInt( m_fracBits >> 15 );
+    return m_pcTComBitIf->getNumberOfWrittenBits() + UInt(m_fracBits >> 15);
 }
 
 /**
@@ -69,12 +66,12 @@ UInt TEncBinCABACCounter::getNumWrittenBits()
  * \param binValue   bin value
  * \param rcCtxModel context model
  */
-Void TEncBinCABACCounter::encodeBin( UInt binValue, ContextModel &rcCtxModel )
+Void TEncBinCABACCounter::encodeBin(UInt binValue, ContextModel &rcCtxModel)
 {
-  m_uiBinsCoded += m_binCountIncrement;
-  
-  m_fracBits += rcCtxModel.getEntropyBits( binValue );
-  rcCtxModel.update( binValue );
+    m_uiBinsCoded += m_binCountIncrement;
+
+    m_fracBits += rcCtxModel.getEntropyBits(binValue);
+    rcCtxModel.update(binValue);
 }
 
 /**
@@ -82,10 +79,10 @@ Void TEncBinCABACCounter::encodeBin( UInt binValue, ContextModel &rcCtxModel )
  *
  * \param binValue bin value
  */
-Void TEncBinCABACCounter::encodeBinEP( UInt binValue )
+Void TEncBinCABACCounter::encodeBinEP(UInt binValue)
 {
-  m_uiBinsCoded += m_binCountIncrement;
-  m_fracBits += 32768;
+    m_uiBinsCoded += m_binCountIncrement;
+    m_fracBits += 32768;
 }
 
 /**
@@ -94,10 +91,10 @@ Void TEncBinCABACCounter::encodeBinEP( UInt binValue )
  * \param binValues bin values
  * \param numBins number of bins
  */
-Void TEncBinCABACCounter::encodeBinsEP( UInt binValues, Int numBins )
+Void TEncBinCABACCounter::encodeBinsEP(UInt binValues, Int numBins)
 {
-  m_uiBinsCoded += numBins & -m_binCountIncrement;
-  m_fracBits += 32768 * numBins;
+    m_uiBinsCoded += numBins & - m_binCountIncrement;
+    m_fracBits += 32768 * numBins;
 }
 
 /**
@@ -105,12 +102,11 @@ Void TEncBinCABACCounter::encodeBinsEP( UInt binValues, Int numBins )
  *
  * \param binValue bin value
  */
-Void TEncBinCABACCounter::encodeBinTrm( UInt binValue )
+Void TEncBinCABACCounter::encodeBinTrm(UInt binValue)
 {
-  m_uiBinsCoded += m_binCountIncrement;
-  m_fracBits += ContextModel::getEntropyBitsTrm( binValue );
+    m_uiBinsCoded += m_binCountIncrement;
+    m_fracBits += ContextModel::getEntropyBitsTrm(binValue);
 }
 
 //! \}
-#endif
-
+#endif // if FAST_BIT_EST

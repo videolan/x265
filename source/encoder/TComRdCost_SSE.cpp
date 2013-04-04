@@ -34,6 +34,7 @@ UInt TComRdCost::xGetSAD8(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg      = pcDtParam->pOrg;
     Pel *piCur      = pcDtParam->pCur;
     Int  iRows      = pcDtParam->iRows;
@@ -67,6 +68,7 @@ UInt TComRdCost::xGetSAD16(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg   = pcDtParam->pOrg;
     Pel *piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -111,6 +113,7 @@ UInt TComRdCost::xGetSAD12(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg   = pcDtParam->pOrg;
     Pel *piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -147,7 +150,8 @@ UInt TComRdCost::xGetSAD12(DistParam *pcDtParam)
     uiSum <<= iSubShift;
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
-#endif
+
+#endif // if AMP_SAD
 
 UInt TComRdCost::xGetSAD32(DistParam *pcDtParam)
 {
@@ -155,6 +159,7 @@ UInt TComRdCost::xGetSAD32(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg   = pcDtParam->pOrg;
     Pel *piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -209,6 +214,7 @@ UInt TComRdCost::xGetSAD24(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg   = pcDtParam->pOrg;
     Pel *piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -251,7 +257,7 @@ UInt TComRdCost::xGetSAD24(DistParam *pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
-#endif
+#endif // if AMP_SAD
 
 UInt TComRdCost::xGetSAD64(DistParam *pcDtParam)
 {
@@ -259,6 +265,7 @@ UInt TComRdCost::xGetSAD64(DistParam *pcDtParam)
     {
         return xGetSADw(pcDtParam);
     }
+
     Pel *piOrg   = pcDtParam->pOrg;
     Pel *piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -326,4 +333,4 @@ UInt TComRdCost::xGetSAD64(DistParam *pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
-#endif
+#endif // if 0

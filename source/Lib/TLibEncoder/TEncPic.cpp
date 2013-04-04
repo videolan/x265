@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -43,33 +43,30 @@
 /** Constructor
  */
 TEncQPAdaptationUnit::TEncQPAdaptationUnit()
-: m_dActivity(0.0)
-{
-}
+    : m_dActivity(0.0)
+{}
 
 /** Destructor
  */
 TEncQPAdaptationUnit::~TEncQPAdaptationUnit()
-{
-}
+{}
 
 /** Constructor
  */
 TEncPicQPAdaptationLayer::TEncPicQPAdaptationLayer()
-: m_uiAQPartWidth(0)
-, m_uiAQPartHeight(0)
-, m_uiNumAQPartInWidth(0)
-, m_uiNumAQPartInHeight(0)
-, m_acTEncAQU(NULL)
-, m_dAvgActivity(0.0)
-{
-}
+    : m_uiAQPartWidth(0)
+    , m_uiAQPartHeight(0)
+    , m_uiNumAQPartInWidth(0)
+    , m_uiNumAQPartInHeight(0)
+    , m_acTEncAQU(NULL)
+    , m_dAvgActivity(0.0)
+{}
 
 /** Destructor
  */
 TEncPicQPAdaptationLayer::~TEncPicQPAdaptationLayer()
 {
-  destroy();
+    destroy();
 }
 
 /** Initialize member variables
@@ -79,13 +76,13 @@ TEncPicQPAdaptationLayer::~TEncPicQPAdaptationLayer()
  * \param uiAQPartHeight Height of unit block for analyzing local image characteristics
  * \return Void
  */
-Void TEncPicQPAdaptationLayer::create( Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight )
+Void TEncPicQPAdaptationLayer::create(Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight)
 {
-  m_uiAQPartWidth = uiAQPartWidth;
-  m_uiAQPartHeight = uiAQPartHeight;
-  m_uiNumAQPartInWidth = (iWidth + m_uiAQPartWidth-1) / m_uiAQPartWidth;
-  m_uiNumAQPartInHeight = (iHeight + m_uiAQPartHeight-1) / m_uiAQPartHeight;
-  m_acTEncAQU = new TEncQPAdaptationUnit[ m_uiNumAQPartInWidth * m_uiNumAQPartInHeight ];
+    m_uiAQPartWidth = uiAQPartWidth;
+    m_uiAQPartHeight = uiAQPartHeight;
+    m_uiNumAQPartInWidth = (iWidth + m_uiAQPartWidth - 1) / m_uiAQPartWidth;
+    m_uiNumAQPartInHeight = (iHeight + m_uiAQPartHeight - 1) / m_uiAQPartHeight;
+    m_acTEncAQU = new TEncQPAdaptationUnit[m_uiNumAQPartInWidth * m_uiNumAQPartInHeight];
 }
 
 /** Clean up
@@ -93,26 +90,25 @@ Void TEncPicQPAdaptationLayer::create( Int iWidth, Int iHeight, UInt uiAQPartWid
  */
 Void TEncPicQPAdaptationLayer::destroy()
 {
-  if (m_acTEncAQU)
-  {
-    delete[] m_acTEncAQU;
-    m_acTEncAQU = NULL;
-  }
+    if (m_acTEncAQU)
+    {
+        delete[] m_acTEncAQU;
+        m_acTEncAQU = NULL;
+    }
 }
 
 /** Constructor
  */
 TEncPic::TEncPic()
-: m_acAQLayer(NULL)
-, m_uiMaxAQDepth(0)
-{
-}
+    : m_acAQLayer(NULL)
+    , m_uiMaxAQDepth(0)
+{}
 
 /** Destructor
  */
 TEncPic::~TEncPic()
 {
-  destroy();
+    destroy();
 }
 
 /** Initialize member variables
@@ -125,20 +121,20 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  * \return Void
  */
-Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
-                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual )
+Void TEncPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
+                     Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual)
 {
-  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
-                   conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual );
-  m_uiMaxAQDepth = uiMaxAQDepth;
-  if ( uiMaxAQDepth > 0 )
-  {
-    m_acAQLayer = new TEncPicQPAdaptationLayer[ m_uiMaxAQDepth ]; 
-    for (UInt d = 0; d < m_uiMaxAQDepth; d++)
+    TComPic::create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,
+                    conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual);
+    m_uiMaxAQDepth = uiMaxAQDepth;
+    if (uiMaxAQDepth > 0)
     {
-      m_acAQLayer[d].create( iWidth, iHeight, uiMaxWidth>>d, uiMaxHeight>>d );
+        m_acAQLayer = new TEncPicQPAdaptationLayer[m_uiMaxAQDepth];
+        for (UInt d = 0; d < m_uiMaxAQDepth; d++)
+        {
+            m_acAQLayer[d].create(iWidth, iHeight, uiMaxWidth >> d, uiMaxHeight >> d);
+        }
     }
-  }
 }
 
 /** Clean up
@@ -146,12 +142,13 @@ Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
  */
 Void TEncPic::destroy()
 {
-  if (m_acAQLayer)
-  {
-    delete[] m_acAQLayer;
-    m_acAQLayer = NULL;
-  }
-  TComPic::destroy();
-}
-//! \}
+    if (m_acAQLayer)
+    {
+        delete[] m_acAQLayer;
+        m_acAQLayer = NULL;
+    }
 
+    TComPic::destroy();
+}
+
+//! \}

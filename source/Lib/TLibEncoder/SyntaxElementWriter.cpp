@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -43,90 +43,90 @@
 
 #if ENC_DEC_TRACE
 
-Void  SyntaxElementWriter::xWriteCodeTr (UInt value, UInt  length, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName)
 {
-  xWriteCode (value,length);
-  if( g_HLSTraceEnable )
-  {
-    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    if( length<10 )
+    xWriteCode(value, length);
+    if (g_HLSTraceEnable)
     {
-      fprintf( g_hTrace, "%-50s u(%d)  : %d\n", pSymbolName, length, value ); 
+        fprintf(g_hTrace, "%8lld  ", g_nSymbolCounter++);
+        if (length < 10)
+        {
+            fprintf(g_hTrace, "%-50s u(%d)  : %d\n", pSymbolName, length, value);
+        }
+        else
+        {
+            fprintf(g_hTrace, "%-50s u(%d) : %d\n", pSymbolName, length, value);
+        }
     }
-    else
-    {
-      fprintf( g_hTrace, "%-50s u(%d) : %d\n", pSymbolName, length, value ); 
-    }
-  }
 }
 
-Void  SyntaxElementWriter::xWriteUvlcTr (UInt value, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteUvlcTr(UInt value, const Char *pSymbolName)
 {
-  xWriteUvlc (value);
-  if( g_HLSTraceEnable )
-  {
-    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s ue(v) : %d\n", pSymbolName, value ); 
-  }
+    xWriteUvlc(value);
+    if (g_HLSTraceEnable)
+    {
+        fprintf(g_hTrace, "%8lld  ", g_nSymbolCounter++);
+        fprintf(g_hTrace, "%-50s ue(v) : %d\n", pSymbolName, value);
+    }
 }
 
-Void  SyntaxElementWriter::xWriteSvlcTr (Int value, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteSvlcTr(Int value, const Char *pSymbolName)
 {
-  xWriteSvlc(value);
-  if( g_HLSTraceEnable )
-  {
-    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s se(v) : %d\n", pSymbolName, value ); 
-  }
+    xWriteSvlc(value);
+    if (g_HLSTraceEnable)
+    {
+        fprintf(g_hTrace, "%8lld  ", g_nSymbolCounter++);
+        fprintf(g_hTrace, "%-50s se(v) : %d\n", pSymbolName, value);
+    }
 }
 
 Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
 {
-  xWriteFlag(value);
-  if( g_HLSTraceEnable )
-  {
-    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s u(1)  : %d\n", pSymbolName, value ); 
-  }
+    xWriteFlag(value);
+    if (g_HLSTraceEnable)
+    {
+        fprintf(g_hTrace, "%8lld  ", g_nSymbolCounter++);
+        fprintf(g_hTrace, "%-50s u(1)  : %d\n", pSymbolName, value);
+    }
 }
 
-#endif
+#endif // if ENC_DEC_TRACE
 
-
-Void SyntaxElementWriter::xWriteCode     ( UInt uiCode, UInt uiLength )
+Void SyntaxElementWriter::xWriteCode(UInt uiCode, UInt uiLength)
 {
-  assert ( uiLength > 0 );
-  m_pcBitIf->write( uiCode, uiLength );
+    assert(uiLength > 0);
+    m_pcBitIf->write(uiCode, uiLength);
 }
 
-Void SyntaxElementWriter::xWriteUvlc     ( UInt uiCode )
+Void SyntaxElementWriter::xWriteUvlc(UInt uiCode)
 {
-  UInt uiLength = 1;
-  UInt uiTemp = ++uiCode;
-  
-  assert ( uiTemp );
-  
-  while( 1 != uiTemp )
-  {
-    uiTemp >>= 1;
-    uiLength += 2;
-  }
-  // Take care of cases where uiLength > 32
-  m_pcBitIf->write( 0, uiLength >> 1);
-  m_pcBitIf->write( uiCode, (uiLength+1) >> 1);
+    UInt uiLength = 1;
+    UInt uiTemp = ++uiCode;
+
+    assert(uiTemp);
+
+    while (1 != uiTemp)
+    {
+        uiTemp >>= 1;
+        uiLength += 2;
+    }
+
+    // Take care of cases where uiLength > 32
+    m_pcBitIf->write(0, uiLength >> 1);
+    m_pcBitIf->write(uiCode, (uiLength + 1) >> 1);
 }
 
-Void SyntaxElementWriter::xWriteSvlc     ( Int iCode )
+Void SyntaxElementWriter::xWriteSvlc(Int iCode)
 {
-  UInt uiCode;
-  
-  uiCode = xConvertToUInt( iCode );
-  xWriteUvlc( uiCode );
+    UInt uiCode;
+
+    uiCode = xConvertToUInt(iCode);
+    xWriteUvlc(uiCode);
 }
 
-Void SyntaxElementWriter::xWriteFlag( UInt uiCode )
+Void SyntaxElementWriter::xWriteFlag(UInt uiCode)
 {
-  m_pcBitIf->write( uiCode, 1 );
+    m_pcBitIf->write(uiCode, 1);
 }
 
 //! \}

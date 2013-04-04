@@ -50,9 +50,11 @@ int PartitionFromSizes(int Width, int Height)
 {
     if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
         return -1;
+
     if (Width > 32 || Height > 32)
         return -1;
-    return (int) psize[(Width>>2)-1][(Height>>2)-1];
+
+    return (int)psize[(Width >> 2) - 1][(Height >> 2) - 1];
 }
 
 /* the "authoritative" set of encoder primitives */
@@ -81,28 +83,36 @@ void SetupPrimitives(int cpuid)
     Setup_C_Primitives(primitives);
 
     /* Pick best vector architecture to use as a baseline. */
-#if defined (__GNUC__) || defined(_MSC_VER)
+#if defined(__GNUC__) || defined(_MSC_VER)
     if (cpuid > 1) Setup_Vec_Primitives_sse2(primitives);
+
     if (cpuid > 2) Setup_Vec_Primitives_sse3(primitives);
+
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(primitives);
+
     if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
+
     if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
-#endif
+
+#endif // if defined(__GNUC__) || defined(_MSC_VER)
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
+
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
     if (cpuid > 7) Setup_Vec_Primitives_avx2(primitives);
+
 #endif
-    
+
     /* .. upgrade functions with available assembly code. */
-#endif
+#endif // if ENABLE_PRIMITIVES
 }
 
 int CpuIDDetect(void)
 {
     int cpuid = 0;
     int iset = instrset_detect(); // Detect supported instruction set
+
     if (iset < 1)
         fprintf(stderr, "\nError: Instruction set is not supported on this computer");
     else
@@ -110,5 +120,4 @@ int CpuIDDetect(void)
 
     return cpuid;
 }
-
 }

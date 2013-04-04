@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -85,24 +85,24 @@
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
 #define MAX_NUM_LAYER_IDS                64
 
-#define COEF_REMAIN_BIN_REDUCTION        3 ///< indicates the level at which the VLC 
+#define COEF_REMAIN_BIN_REDUCTION        3 ///< indicates the level at which the VLC
                                            ///< transitions from Golomb-Rice to TU+EG(k)
 
 #define CU_DQP_TU_CMAX 5                   ///< max number bins for truncated unary
 #define CU_DQP_EG_k 0                      ///< expgolomb order
 
 #define SBH_THRESHOLD                    4  ///< I0156: value of the fixed SBH controlling threshold
-  
+
 #define SEQUENCE_LEVEL_LOSSLESS           0  ///< H0530: used only for sequence or frame-level lossless coding
 
 #define DISABLING_CLIP_FOR_BIPREDME         1  ///< Ticket #175
-  
+
 #define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
-#define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5 
+#define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
 
 #define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3 1  ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
 
-#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now) 
+#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now)
 
 #define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
 #if SAO_ENCODING_CHOICE
@@ -116,8 +116,6 @@
 #define MAX_NUM_VPS                16
 #define MAX_NUM_SPS                16
 #define MAX_NUM_PPS                64
-
-
 
 #define WEIGHTED_CHROMA_DISTORTION  1   ///< F386: weighting of chroma for RDO
 #define RDOQ_CHROMA_LAMBDA          1   ///< F386: weighting of chroma for RDOQ
@@ -152,7 +150,7 @@
 #define SCAN_SET_SIZE                     16
 #define LOG2_SCAN_SET_SIZE                4
 
-#define FAST_UDI_MAX_RDMODE_NUM               35          ///< maximum number of RD comparison in fast-UDI estimation loop 
+#define FAST_UDI_MAX_RDMODE_NUM               35          ///< maximum number of RD comparison in fast-UDI estimation loop
 
 #define ZERO_MVD_EST                          0           ///< Zero Mvd Estimation in normal mode
 
@@ -176,7 +174,6 @@
 #define DC_IDX                 1                     // index for intra DC mode
 #define NUM_CHROMA_MODE        5                     // total number of chroma modes
 #define DM_CHROMA_IDX          36                    // chroma mode index for derived from luma intra mode
-
 
 #define FAST_UDI_USE_MPM 1
 
@@ -242,7 +239,7 @@ typedef       unsigned __int64    UInt64;
 typedef       long long           Int64;
 typedef       unsigned long long  UInt64;
 
-#endif
+#endif // ifdef _MSC_VER
 
 // ====================================================================================================================
 // Type definition
@@ -262,90 +259,90 @@ class TComPicSym;
 // Slice / Slice segment encoding modes
 enum SliceConstraint
 {
-  NO_SLICES              = 0,          ///< don't use slices / slice segments
-  FIXED_NUMBER_OF_LCU    = 1,          ///< Limit maximum number of largest coding tree blocks in a slice / slice segments
-  FIXED_NUMBER_OF_BYTES  = 2,          ///< Limit maximum number of bytes in a slice / slice segment
-  FIXED_NUMBER_OF_TILES  = 3,          ///< slices / slice segments span an integer number of tiles
+    NO_SLICES              = 0,        ///< don't use slices / slice segments
+    FIXED_NUMBER_OF_LCU    = 1,        ///< Limit maximum number of largest coding tree blocks in a slice / slice segments
+    FIXED_NUMBER_OF_BYTES  = 2,        ///< Limit maximum number of bytes in a slice / slice segment
+    FIXED_NUMBER_OF_TILES  = 3,        ///< slices / slice segments span an integer number of tiles
 };
 
 #define NUM_DOWN_PART 4
 
 enum SAOTypeLen
 {
-  SAO_EO_LEN    = 4, 
-  SAO_BO_LEN    = 4,
-  SAO_MAX_BO_CLASSES = 32
+    SAO_EO_LEN    = 4,
+    SAO_BO_LEN    = 4,
+    SAO_MAX_BO_CLASSES = 32
 };
 
 enum SAOType
 {
-  SAO_EO_0 = 0, 
-  SAO_EO_1,
-  SAO_EO_2, 
-  SAO_EO_3,
-  SAO_BO,
-  MAX_NUM_SAO_TYPE
+    SAO_EO_0 = 0,
+    SAO_EO_1,
+    SAO_EO_2,
+    SAO_EO_3,
+    SAO_BO,
+    MAX_NUM_SAO_TYPE
 };
 
 typedef struct _SaoQTPart
 {
-  Int         iBestType;
-  Int         iLength;
-  Int         subTypeIdx ;                 ///< indicates EO class or BO band position
-  Int         iOffset[4];
-  Int         StartCUX;
-  Int         StartCUY;
-  Int         EndCUX;
-  Int         EndCUY;
+    Int         iBestType;
+    Int         iLength;
+    Int         subTypeIdx;                ///< indicates EO class or BO band position
+    Int         iOffset[4];
+    Int         StartCUX;
+    Int         StartCUY;
+    Int         EndCUX;
+    Int         EndCUY;
 
-  Int         PartIdx;
-  Int         PartLevel;
-  Int         PartCol;
-  Int         PartRow;
+    Int         PartIdx;
+    Int         PartLevel;
+    Int         PartCol;
+    Int         PartRow;
 
-  Int         DownPartsIdx[NUM_DOWN_PART];
-  Int         UpPartIdx;
+    Int         DownPartsIdx[NUM_DOWN_PART];
+    Int         UpPartIdx;
 
-  Bool        bSplit;
+    Bool        bSplit;
 
-  //---- encoder only start -----//
-  Bool        bProcessed;
-  Double      dMinCost;
-  Int64       iMinDist;
-  Int         iMinRate;
-  //---- encoder only end -----//
+    //---- encoder only start -----//
+    Bool        bProcessed;
+    Double      dMinCost;
+    Int64       iMinDist;
+    Int         iMinRate;
+    //---- encoder only end -----//
 } SAOQTPart;
 
 typedef struct _SaoLcuParam
 {
-  Bool       mergeUpFlag;
-  Bool       mergeLeftFlag;
-  Int        typeIdx;
-  Int        subTypeIdx;                  ///< indicates EO class or BO band position
-  Int        offset[4];
-  Int        partIdx;
-  Int        partIdxTmp;
-  Int        length;
+    Bool       mergeUpFlag;
+    Bool       mergeLeftFlag;
+    Int        typeIdx;
+    Int        subTypeIdx;                ///< indicates EO class or BO band position
+    Int        offset[4];
+    Int        partIdx;
+    Int        partIdxTmp;
+    Int        length;
 } SaoLcuParam;
 
 struct SAOParam
 {
-  Bool       bSaoFlag[2];
-  SAOQTPart* psSaoPart[3];
-  Int        iMaxSplitLevel;
-  Bool         oneUnitFlag[3];
-  SaoLcuParam* saoLcuParam[3];
-  Int          numCuInHeight;
-  Int          numCuInWidth;
-  ~SAOParam();
+    Bool       bSaoFlag[2];
+    SAOQTPart* psSaoPart[3];
+    Int        iMaxSplitLevel;
+    Bool         oneUnitFlag[3];
+    SaoLcuParam* saoLcuParam[3];
+    Int          numCuInHeight;
+    Int          numCuInWidth;
+    ~SAOParam();
 };
 
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {
-  Bool bInternalEdge;                     ///< indicates internal edge
-  Bool bLeftEdge;                         ///< indicates left edge
-  Bool bTopEdge;                          ///< indicates top edge
+    Bool bInternalEdge;                   ///< indicates internal edge
+    Bool bLeftEdge;                       ///< indicates left edge
+    Bool bTopEdge;                        ///< indicates top edge
 } LFCUParam;
 
 // ====================================================================================================================
@@ -355,164 +352,162 @@ typedef struct _LFCUParam
 /// supported slice type
 enum SliceType
 {
-  B_SLICE,
-  P_SLICE,
-  I_SLICE
+    B_SLICE,
+    P_SLICE,
+    I_SLICE
 };
 
 /// chroma formats (according to semantics of chroma_format_idc)
 enum ChromaFormat
 {
-  CHROMA_400  = 0,
-  CHROMA_420  = 1,
-  CHROMA_422  = 2,
-  CHROMA_444  = 3
+    CHROMA_400  = 0,
+    CHROMA_420  = 1,
+    CHROMA_422  = 2,
+    CHROMA_444  = 3
 };
 
 /// supported partition shape
 enum PartSize
 {
-  SIZE_2Nx2N,           ///< symmetric motion partition,  2Nx2N
-  SIZE_2NxN,            ///< symmetric motion partition,  2Nx N
-  SIZE_Nx2N,            ///< symmetric motion partition,   Nx2N
-  SIZE_NxN,             ///< symmetric motion partition,   Nx N
-  SIZE_2NxnU,           ///< asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
-  SIZE_2NxnD,           ///< asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
-  SIZE_nLx2N,           ///< asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
-  SIZE_nRx2N,           ///< asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
-  SIZE_NONE = 15
+    SIZE_2Nx2N,         ///< symmetric motion partition,  2Nx2N
+    SIZE_2NxN,          ///< symmetric motion partition,  2Nx N
+    SIZE_Nx2N,          ///< symmetric motion partition,   Nx2N
+    SIZE_NxN,           ///< symmetric motion partition,   Nx N
+    SIZE_2NxnU,         ///< asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
+    SIZE_2NxnD,         ///< asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
+    SIZE_nLx2N,         ///< asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
+    SIZE_nRx2N,         ///< asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
+    SIZE_NONE = 15
 };
 
 /// supported prediction type
 enum PredMode
 {
-  MODE_INTER,           ///< inter-prediction mode
-  MODE_INTRA,           ///< intra-prediction mode
-  MODE_NONE = 15
+    MODE_INTER,         ///< inter-prediction mode
+    MODE_INTRA,         ///< intra-prediction mode
+    MODE_NONE = 15
 };
 
 /// texture component type
 enum TextType
 {
-  TEXT_LUMA,            ///< luma
-  TEXT_CHROMA,          ///< chroma (U+V)
-  TEXT_CHROMA_U,        ///< chroma U
-  TEXT_CHROMA_V,        ///< chroma V
-  TEXT_ALL,             ///< Y+U+V
-  TEXT_NONE = 15
+    TEXT_LUMA,          ///< luma
+    TEXT_CHROMA,        ///< chroma (U+V)
+    TEXT_CHROMA_U,      ///< chroma U
+    TEXT_CHROMA_V,      ///< chroma V
+    TEXT_ALL,           ///< Y+U+V
+    TEXT_NONE = 15
 };
 
 /// reference list index
 enum RefPicList
 {
-  REF_PIC_LIST_0 = 0,   ///< reference list 0
-  REF_PIC_LIST_1 = 1,   ///< reference list 1
-  REF_PIC_LIST_C = 2,   ///< combined reference list for uni-prediction in B-Slices
-  REF_PIC_LIST_X = 100  ///< special mark
+    REF_PIC_LIST_0 = 0, ///< reference list 0
+    REF_PIC_LIST_1 = 1, ///< reference list 1
+    REF_PIC_LIST_C = 2, ///< combined reference list for uni-prediction in B-Slices
+    REF_PIC_LIST_X = 100 ///< special mark
 };
 
 /// distortion function index
 enum DFunc
 {
-  DF_DEFAULT  = 0,
-  DF_SSE      = 1,      ///< general size SSE
-  DF_SSE4     = 2,      ///<   4xM SSE
-  DF_SSE8     = 3,      ///<   8xM SSE
-  DF_SSE16    = 4,      ///<  16xM SSE
-  DF_SSE32    = 5,      ///<  32xM SSE
-  DF_SSE64    = 6,      ///<  64xM SSE
-  DF_SSE16N   = 7,      ///< 16NxM SSE
-  
-  DF_SAD      = 8,      ///< general size SAD
-  DF_SAD4     = 9,      ///<   4xM SAD
-  DF_SAD8     = 10,     ///<   8xM SAD
-  DF_SAD16    = 11,     ///<  16xM SAD
-  DF_SAD32    = 12,     ///<  32xM SAD
-  DF_SAD64    = 13,     ///<  64xM SAD
-  DF_SAD16N   = 14,     ///< 16NxM SAD
-  
-  DF_SADS     = 15,     ///< general size SAD with step
-  DF_SADS4    = 16,     ///<   4xM SAD with step
-  DF_SADS8    = 17,     ///<   8xM SAD with step
-  DF_SADS16   = 18,     ///<  16xM SAD with step
-  DF_SADS32   = 19,     ///<  32xM SAD with step
-  DF_SADS64   = 20,     ///<  64xM SAD with step
-  DF_SADS16N  = 21,     ///< 16NxM SAD with step
-  
-  DF_HADS     = 22,     ///< general size Hadamard with step
-  DF_HADS4    = 23,     ///<   4xM HAD with step
-  DF_HADS8    = 24,     ///<   8xM HAD with step
-  DF_HADS16   = 25,     ///<  16xM HAD with step
-  DF_HADS32   = 26,     ///<  32xM HAD with step
-  DF_HADS64   = 27,     ///<  64xM HAD with step
-  DF_HADS16N  = 28,     ///< 16NxM HAD with step
-  
+    DF_DEFAULT  = 0,
+    DF_SSE      = 1,    ///< general size SSE
+    DF_SSE4     = 2,    ///<   4xM SSE
+    DF_SSE8     = 3,    ///<   8xM SSE
+    DF_SSE16    = 4,    ///<  16xM SSE
+    DF_SSE32    = 5,    ///<  32xM SSE
+    DF_SSE64    = 6,    ///<  64xM SSE
+    DF_SSE16N   = 7,    ///< 16NxM SSE
+
+    DF_SAD      = 8,    ///< general size SAD
+    DF_SAD4     = 9,    ///<   4xM SAD
+    DF_SAD8     = 10,   ///<   8xM SAD
+    DF_SAD16    = 11,   ///<  16xM SAD
+    DF_SAD32    = 12,   ///<  32xM SAD
+    DF_SAD64    = 13,   ///<  64xM SAD
+    DF_SAD16N   = 14,   ///< 16NxM SAD
+
+    DF_SADS     = 15,   ///< general size SAD with step
+    DF_SADS4    = 16,   ///<   4xM SAD with step
+    DF_SADS8    = 17,   ///<   8xM SAD with step
+    DF_SADS16   = 18,   ///<  16xM SAD with step
+    DF_SADS32   = 19,   ///<  32xM SAD with step
+    DF_SADS64   = 20,   ///<  64xM SAD with step
+    DF_SADS16N  = 21,   ///< 16NxM SAD with step
+
+    DF_HADS     = 22,   ///< general size Hadamard with step
+    DF_HADS4    = 23,   ///<   4xM HAD with step
+    DF_HADS8    = 24,   ///<   8xM HAD with step
+    DF_HADS16   = 25,   ///<  16xM HAD with step
+    DF_HADS32   = 26,   ///<  32xM HAD with step
+    DF_HADS64   = 27,   ///<  64xM HAD with step
+    DF_HADS16N  = 28,   ///< 16NxM HAD with step
+
 #if AMP_SAD
-  DF_SAD12    = 43,
-  DF_SAD24    = 44,
-  DF_SAD48    = 45,
+    DF_SAD12    = 43,
+    DF_SAD24    = 44,
+    DF_SAD48    = 45,
 
-  DF_SADS12   = 46,
-  DF_SADS24   = 47,
-  DF_SADS48   = 48,
+    DF_SADS12   = 46,
+    DF_SADS24   = 47,
+    DF_SADS48   = 48,
 
-  DF_SSE_FRAME = 50     ///< Frame-based SSE
+    DF_SSE_FRAME = 50   ///< Frame-based SSE
 #else
-  DF_SSE_FRAME = 33     ///< Frame-based SSE
-#endif
+    DF_SSE_FRAME = 33   ///< Frame-based SSE
+#endif // if AMP_SAD
 };
 
 /// index for SBAC based RD optimization
 enum CI_IDX
 {
-  CI_CURR_BEST = 0,     ///< best mode index
-  CI_NEXT_BEST,         ///< next best index
-  CI_TEMP_BEST,         ///< temporal index
-  CI_CHROMA_INTRA,      ///< chroma intra index
-  CI_QT_TRAFO_TEST,
-  CI_QT_TRAFO_ROOT,
-  CI_NUM,               ///< total number
+    CI_CURR_BEST = 0,   ///< best mode index
+    CI_NEXT_BEST,       ///< next best index
+    CI_TEMP_BEST,       ///< temporal index
+    CI_CHROMA_INTRA,    ///< chroma intra index
+    CI_QT_TRAFO_TEST,
+    CI_QT_TRAFO_ROOT,
+    CI_NUM,             ///< total number
 };
 
 /// motion vector predictor direction used in AMVP
 enum MVP_DIR
 {
-  MD_LEFT = 0,          ///< MVP of left block
-  MD_ABOVE,             ///< MVP of above block
-  MD_ABOVE_RIGHT,       ///< MVP of above right block
-  MD_BELOW_LEFT,        ///< MVP of below left block
-  MD_ABOVE_LEFT         ///< MVP of above left block
+    MD_LEFT = 0,        ///< MVP of left block
+    MD_ABOVE,           ///< MVP of above block
+    MD_ABOVE_RIGHT,     ///< MVP of above right block
+    MD_BELOW_LEFT,      ///< MVP of below left block
+    MD_ABOVE_LEFT       ///< MVP of above left block
 };
 
 /// coefficient scanning type used in ACS
 enum COEFF_SCAN_TYPE
 {
-  SCAN_DIAG = 0,         ///< up-right diagonal scan
-  SCAN_HOR,              ///< horizontal first scan
-  SCAN_VER               ///< vertical first scan
+    SCAN_DIAG = 0,       ///< up-right diagonal scan
+    SCAN_HOR,            ///< horizontal first scan
+    SCAN_VER             ///< vertical first scan
 };
 
-namespace Profile
+namespace Profile {
+enum Name
 {
-  enum Name
-  {
     NONE = 0,
     MAIN = 1,
     MAIN10 = 2,
     MAINSTILLPICTURE = 3,
-  };
+};
 }
 
-namespace Level
+namespace Level {
+enum Tier
 {
-  enum Tier
-  {
     MAIN = 0,
     HIGH = 1,
-  };
+};
 
-  enum Name
-  {
+enum Name
+{
     NONE     = 0,
     LEVEL1   = 30,
     LEVEL2   = 60,
@@ -527,8 +522,8 @@ namespace Level
     LEVEL6   = 180,
     LEVEL6_1 = 183,
     LEVEL6_2 = 186,
-  };
+};
 }
 //! \}
 
-#endif
+#endif // ifndef _TYPEDEF__

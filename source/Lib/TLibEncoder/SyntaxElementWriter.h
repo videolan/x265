@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -51,47 +51,48 @@
 
 #if ENC_DEC_TRACE
 
-#define WRITE_CODE( value, length, name)    xWriteCodeTr ( value, length, name )
-#define WRITE_UVLC( value,         name)    xWriteUvlcTr ( value,         name )
-#define WRITE_SVLC( value,         name)    xWriteSvlcTr ( value,         name )
-#define WRITE_FLAG( value,         name)    xWriteFlagTr ( value,         name )
+#define WRITE_CODE(value, length, name)    xWriteCodeTr(value, length, name)
+#define WRITE_UVLC(value,         name)    xWriteUvlcTr(value,         name)
+#define WRITE_SVLC(value,         name)    xWriteSvlcTr(value,         name)
+#define WRITE_FLAG(value,         name)    xWriteFlagTr(value,         name)
 
 #else
 
-#define WRITE_CODE( value, length, name)     xWriteCode ( value, length )
-#define WRITE_UVLC( value,         name)     xWriteUvlc ( value )
-#define WRITE_SVLC( value,         name)     xWriteSvlc ( value )
-#define WRITE_FLAG( value,         name)     xWriteFlag ( value )
+#define WRITE_CODE(value, length, name)     xWriteCode(value, length)
+#define WRITE_UVLC(value,         name)     xWriteUvlc(value)
+#define WRITE_SVLC(value,         name)     xWriteSvlc(value)
+#define WRITE_FLAG(value,         name)     xWriteFlag(value)
 
-#endif
+#endif // if ENC_DEC_TRACE
 
 class SyntaxElementWriter
 {
 protected:
-  TComBitIf*    m_pcBitIf;
 
-  SyntaxElementWriter()
-  :m_pcBitIf(NULL)
-  {};
-  virtual ~SyntaxElementWriter() {};
+    TComBitIf*    m_pcBitIf;
 
-  Void  setBitstream          ( TComBitIf* p )  { m_pcBitIf = p;  }
+    SyntaxElementWriter()
+        : m_pcBitIf(NULL)
+    {}
 
-  Void  xWriteCode            ( UInt uiCode, UInt uiLength );
-  Void  xWriteUvlc            ( UInt uiCode );
-  Void  xWriteSvlc            ( Int  iCode   );
-  Void  xWriteFlag            ( UInt uiCode );
+    virtual ~SyntaxElementWriter() {}
+
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;}
+
+    Void  xWriteCode(UInt uiCode, UInt uiLength);
+    Void  xWriteUvlc(UInt uiCode);
+    Void  xWriteSvlc(Int iCode);
+    Void  xWriteFlag(UInt uiCode);
 #if ENC_DEC_TRACE
-  Void  xWriteCodeTr          ( UInt value, UInt  length, const Char *pSymbolName);
-  Void  xWriteUvlcTr          ( UInt value,               const Char *pSymbolName);
-  Void  xWriteSvlcTr          ( Int  value,               const Char *pSymbolName);
-  Void  xWriteFlagTr          ( UInt value,               const Char *pSymbolName);
+    Void  xWriteCodeTr(UInt value, UInt  length, const Char *pSymbolName);
+    Void  xWriteUvlcTr(UInt value,               const Char *pSymbolName);
+    Void  xWriteSvlcTr(Int value,               const Char *pSymbolName);
+    Void  xWriteFlagTr(UInt value,               const Char *pSymbolName);
 #endif
 
-  UInt  xConvertToUInt        ( Int iValue ) {  return ( iValue <= 0) ? -iValue<<1 : (iValue<<1)-1; }
+    UInt  xConvertToUInt(Int iValue) {  return (iValue <= 0) ? -iValue << 1 : (iValue << 1) - 1;}
 };
 
 //! \}
 
 #endif // !defined(__SYNTAXELEMENTWRITER__)
-

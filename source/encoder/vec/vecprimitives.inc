@@ -26,8 +26,8 @@
 
 #include "primitives.h"
 
-#define PASTER(name,val) name ## _ ## val
-#define EVALUATOR(x,y)   PASTER(x,y)
+#define PASTER(name, val) name ## _ ## val
+#define EVALUATOR(x, y)   PASTER(x, y)
 #define NAME(fun)        EVALUATOR(fun, ARCH)
 
 namespace {
@@ -35,7 +35,7 @@ namespace {
 
 #if HIGH_BIT_DEPTH /* 16-bit pixels */
 
-int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+int CDECL NAME(sad_8x8) (pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     // NOTE: This is completely untested, and ignores alignment issues
     int uiSum = 0;
@@ -56,14 +56,14 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
     return uiSum;
 }
 
-int CDECL NAME(satd_4x4)(pixel *piCur, intptr_t iStrideCur, pixel *piOrg, intptr_t iStrideOrg)
+int CDECL NAME(satd_4x4) (pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t iStrideOrg)
 {
-
     int satd = 0;
 
     Vec8s v1, v2, m1, m2;
+
     {
-        Vec8s temp1, temp2, temp3, temp4 , piOrg_v, piCur_v;;
+        Vec8s temp1, temp2, temp3, temp4, piOrg_v, piCur_v;
         temp1.load(piOrg);
         temp2.load(piCur);
         piCur += iStrideCur;
@@ -126,7 +126,7 @@ int CDECL NAME(satd_4x4)(pixel *piCur, intptr_t iStrideCur, pixel *piOrg, intptr
 
 #else /* 8-bit pixels */
 
-int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+int CDECL NAME(sad_8x8) (pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     // NOTE: This is completely untested, likely broken, and ignores alignment issues
     int uiSum = 0;
@@ -147,15 +147,14 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
     return uiSum;
 }
 
-#endif
-
+#endif /* if HIGH_BIT_DEPTH */
 }  // end anonymous namespace
 
 namespace x265 {
 // private x265 namespace
 
 /* It should initialize the function table for this vector architecture.  */
-void NAME(Setup_Vec_Primitives)(EncoderPrimitives& p)
+void NAME(Setup_Vec_Primitives) (EncoderPrimitives & p)
 {
 #if HIGH_BIT_DEPTH /* 16-bit pixels */
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
@@ -164,5 +163,4 @@ void NAME(Setup_Vec_Primitives)(EncoderPrimitives& p)
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
 #endif
 }
-
 };

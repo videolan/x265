@@ -47,6 +47,7 @@ enum PPACpuEventEnum
 #include "ppaCPUEvents.h"
     PPACpuGroupNums
 };
+
 #undef PPA_REGISTER_CPU_EVENT
 
 #define PPA_INIT()               initializePPA()
@@ -58,6 +59,6 @@ enum PPACpuEventEnum
 void initializePPA();
 extern ppa::Base *ppabase;
 
-#endif
+#endif // if !defined(ENABLE_PPA)
 
 #endif /* _PPA_H_ */

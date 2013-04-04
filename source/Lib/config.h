@@ -53,11 +53,12 @@
 class TAppEncCfg
 {
 protected:
+
     // file I/O
     Char     *m_pchInputFile;                                   ///< source file name
     Char     *m_pchBitstreamFile;                               ///< output bitstream file
     Char     *m_pchReconFile;                                   ///< output reconstruction file
-    Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
+    Double    m_adLambdaModifier[MAX_TLAYER];                 ///< Lambda modifier array for each temporal layer
     // source specification
     Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
     UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
@@ -228,7 +229,7 @@ protected:
     Int      *m_startOfCodedInterval;
     Int      *m_codedPivotValue;
     Int      *m_targetPivotValue;
-#endif
+#endif // if J0149_TONE_MAPPING_SEI
     Int       m_framePackingSEIEnabled;
     Int       m_framePackingSEIType;
     Int       m_framePackingSEIId;
@@ -265,7 +266,7 @@ protected:
     Bool      m_enableRateCtrl;                                   ///< Flag for using rate control algorithm
     Int       m_targetBitrate;                                 ///< target bitrate
     Int       m_numLCUInUnit;                                  ///< Total number of LCUs in a frame should be completely divided by the NumLCUInUnit
-#endif
+#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Int       m_useScalingListId;                               ///< using quantization matrix
     Char     *m_scalingListFile;                                ///< quantization matrix file name
 
@@ -326,18 +327,19 @@ protected:
     Int      *m_constantPicRateIdc;                                ///< Indicates constant picture rate idc for various sub-layers
 #endif
 #
+
 public:
+
     TAppEncCfg();
     virtual ~TAppEncCfg();
 
 public:
+
     Void  create();                                             ///< create option handling class
     Void  destroy();                                            ///< destroy option handling class
-    Bool  parseCfg(Int argc, Char *argv[]);                     ///< parse configuration file to fill member variables
-
-};// END CLASS DEFINITION TAppEncCfg
+    Bool  parseCfg(Int argc, Char * argv[]);                     ///< parse configuration file to fill member variables
+}; // END CLASS DEFINITION TAppEncCfg
 
 //! \}
 
 #endif // __TAPPENCCFG__
-

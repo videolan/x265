@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -49,32 +49,32 @@ class TEncBinCABAC;
 class TEncBinIf
 {
 public:
-  virtual Void  init              ( TComBitIf* pcTComBitIf )                  = 0;
-  virtual Void  uninit            ()                                          = 0;
 
-  virtual Void  start             ()                                          = 0;
-  virtual Void  finish            ()                                          = 0;
-  virtual Void  copyState         ( TEncBinIf* pcTEncBinIf )                  = 0;
-  virtual Void  flush            ()                                           = 0;
+    virtual Void  init(TComBitIf* pcTComBitIf)                  = 0;
+    virtual Void  uninit()                                          = 0;
 
-  virtual Void  resetBac          ()                                          = 0;
-  virtual Void  encodePCMAlignBits()                                          = 0;
-  virtual Void  xWritePCMCode     ( UInt uiCode, UInt uiLength )              = 0;
+    virtual Void  start()                                          = 0;
+    virtual Void  finish()                                          = 0;
+    virtual Void  copyState(TEncBinIf* pcTEncBinIf)                  = 0;
+    virtual Void  flush()                                           = 0;
 
-  virtual Void  resetBits         ()                                          = 0;
-  virtual UInt  getNumWrittenBits ()                                          = 0;
+    virtual Void  resetBac()                                          = 0;
+    virtual Void  encodePCMAlignBits()                                          = 0;
+    virtual Void  xWritePCMCode(UInt uiCode, UInt uiLength)              = 0;
 
-  virtual Void  encodeBin         ( UInt  uiBin,  ContextModel& rcCtxModel )  = 0;
-  virtual Void  encodeBinEP       ( UInt  uiBin                            )  = 0;
-  virtual Void  encodeBinsEP      ( UInt  uiBins, Int numBins              )  = 0;
-  virtual Void  encodeBinTrm      ( UInt  uiBin                            )  = 0;
+    virtual Void  resetBits()                                          = 0;
+    virtual UInt  getNumWrittenBits()                                          = 0;
 
-  virtual TEncBinCABAC*   getTEncBinCABAC   ()  { return 0; }
-  
-  virtual ~TEncBinIf() {}
+    virtual Void  encodeBin(UInt uiBin,  ContextModel& rcCtxModel)  = 0;
+    virtual Void  encodeBinEP(UInt uiBin)  = 0;
+    virtual Void  encodeBinsEP(UInt uiBins, Int numBins)  = 0;
+    virtual Void  encodeBinTrm(UInt uiBin)  = 0;
+
+    virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0;}
+
+    virtual ~TEncBinIf() {}
 };
 
 //! \}
 
-#endif
-
+#endif // ifndef __TENC_BIN_CODER__

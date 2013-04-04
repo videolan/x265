@@ -26,9 +26,9 @@
 
 #include <stdint.h>
 
-#if defined (__GNUC__)
-#define ALIGN_VAR_8(T, var)  T var __attribute__ ((aligned (8)))
-#define ALIGN_VAR_16(T, var) T var __attribute__ ((aligned (16)))
+#if defined(__GNUC__)
+#define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
+#define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
 #define CDECL
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
@@ -41,14 +41,14 @@ typedef uint16_t pixel;
 typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
-#define PIXEL_SPLAT_X4(x) ((x)*0x0001000100010001ULL)
+#define PIXEL_SPLAT_X4(x) ((x) * 0x0001000100010001ULL)
 #else
 typedef uint8_t pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
-#define PIXEL_SPLAT_X4(x) ((x)*0x01010101U)
-#endif
+#define PIXEL_SPLAT_X4(x) ((x) * 0x01010101U)
+#endif // if HIGH_BIT_DEPTH
 
 namespace x265 {
 // x265 private namespace
@@ -78,7 +78,7 @@ enum Partitions
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
 
-typedef int (CDECL *pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -103,7 +103,7 @@ void Setup_C_Primitives(EncoderPrimitives &p);
 /* These functions are defined by C++ files in encoder/vec. Depending on your
  * compiler, some of them may be undefined.  The #if logic here must match the
  * file lists in vec/CMakeLists.txt */
-#if defined (__GNUC__) || defined(_MSC_VER)
+#if defined(__GNUC__) || defined(_MSC_VER)
 extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
@@ -116,7 +116,6 @@ extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #if defined(_MSC_VER) && _MSC_VER >= 1700
 extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 #endif
-
 }
 
-#endif
+#endif // ifndef X265_PRIMITIVES_H

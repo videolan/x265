@@ -57,6 +57,7 @@
 class TAppEncTop : public TAppEncCfg
 {
 private:
+
     // class interface
     TEncTop                    m_cTEncTop;                    ///< encoder class
     TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
@@ -68,7 +69,9 @@ private:
 
     UInt m_essentialBytes;
     UInt m_totalBytes;
+
 protected:
+
     // initialization
     Void  xCreateLib();                                       ///< create files & encoder class
     Void  xInitLibCfg();                                      ///< initialize internal variables
@@ -87,17 +90,17 @@ protected:
     void printRateSummary();
 
 public:
+
     TAppEncTop();
     virtual ~TAppEncTop();
 
     Void        encode();                                     ///< main encoding function
     TEncTop    &getTEncTop()
     {
-        return  m_cTEncTop;    ///< return encoder class pointer reference
+        return m_cTEncTop;    ///< return encoder class pointer reference
     }
-};// END CLASS DEFINITION TAppEncTop
+}; // END CLASS DEFINITION TAppEncTop
 
 //! \}
 
 #endif // __TAPPENCTOP__
-

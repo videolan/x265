@@ -55,9 +55,11 @@
 inline int __lzcnt_2x32(uint64_t x64)
 {
     int val = __lzcnt((uint32_t)(x64 >> 32));
+
     if (val)
         return val + 32;
-    return __lzcnt((uint32_t) x64);
+
+    return __lzcnt((uint32_t)x64);
 }
 
 #endif // if _WIN64
@@ -146,7 +148,6 @@ public:
     void PokeIdleThreads();
 };
 
-
 void PoolThread::ThreadMain()
 {
     // Wait for pool to initialize our state
@@ -179,7 +180,9 @@ void PoolThread::ThreadMain()
 void ThreadPoolImpl::PokeIdleThreads()
 {
     for (int i = 0; i < m_numThreads; i++)
+    {
         m_threads[i].Awaken();
+    }
 }
 
 static int get_cpu_count()
@@ -195,7 +198,8 @@ static int get_cpu_count()
     size_t len = 4;
     uint32_t count;
 
-    nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
+    nm[0] = CTL_HW;
+    nm[1] = HW_AVAILCPU;
     sysctl(nm, 2, &count, &len, NULL, 0);
 
     if (count < 1)
@@ -205,10 +209,11 @@ static int get_cpu_count()
         if (count < 1)
             count = 1;
     }
+
     return count;
-#else
+#else // if WIN32
     return 2; // default to 2 threads, everywhere else
-#endif
+#endif // if WIN32
 }
 
 ThreadPoolImpl *ThreadPoolImpl::instance;
@@ -218,6 +223,7 @@ ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
 {
     if (ThreadPoolImpl::instance)
         return ThreadPoolImpl::instance->AddReference();
+
     ThreadPoolImpl::instance = new ThreadPoolImpl(numthreads);
     return ThreadPoolImpl::instance;
 }
@@ -242,18 +248,23 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     if (numThreads == 0)
         numThreads = get_cpu_count();
 
-    m_threads = new PoolThread[ numThreads ];
+    m_threads = new PoolThread[numThreads];
 
     if (m_threads)
     {
         m_ok = true;
         for (int i = 0; i < numThreads; i++)
+        {
             m_ok &= m_threads[i].Start();
+        }
     }
+
     if (m_ok)
     {
         for (int i = 0; i < numThreads; i++)
+        {
             m_threads[i].Initialize(this);
+        }
     }
 }
 
@@ -263,11 +274,15 @@ ThreadPoolImpl::~ThreadPoolImpl()
     {
         m_ok = false;
         for (int i = 0; i < m_numThreads; i++)
+        {
             m_threads[i].Awaken();
+        }
+
         // destructors will block for thread completions
-        delete [] m_threads;
+        delete[] m_threads;
         m_threads = NULL;
     }
+
     // leak threads on program exit if there were resource failures
 }
 
@@ -294,19 +309,20 @@ void ThreadPoolImpl::DequeueJobProvider(JobProvider &p)
     // update pool entry pointers first
     if (m_firstProvider == &p)
         m_firstProvider = p.m_nextProvider;
+
     if (m_lastProvider == &p)
         m_lastProvider = p.m_prevProvider;
 
     // extract self from doubly linked lists
     if (p.m_nextProvider)
         p.m_nextProvider->m_prevProvider = p.m_prevProvider;
+
     if (p.m_prevProvider)
         p.m_prevProvider->m_nextProvider = p.m_nextProvider;
 
     p.m_nextProvider = NULL;
     p.m_prevProvider = NULL;
 }
-
 
 JobProvider::~JobProvider()
 {
@@ -328,7 +344,6 @@ void JobProvider::Dequeue()
     m_pool->DequeueJobProvider(*this);
 }
 
-
 bool QueueFrame::InitJobQueue(int numRows)
 {
     m_numRows = numRows;
@@ -336,8 +351,8 @@ bool QueueFrame::InitJobQueue(int numRows)
     if (m_pool)
     {
         m_numWords = (numRows + 63) >> 6;
-        m_queuedBitmap = new uint64_t[ m_numWords ];
-        memset((void *)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
+        m_queuedBitmap = new uint64_t[m_numWords];
+        memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
         return m_queuedBitmap != NULL;
     }
 
@@ -348,7 +363,7 @@ QueueFrame::~QueueFrame()
 {
     if (m_queuedBitmap)
     {
-        delete [] m_queuedBitmap;
+        delete[] m_queuedBitmap;
         m_queuedBitmap = NULL;
     }
 }
@@ -357,6 +372,7 @@ void QueueFrame::EnqueueRow(int row)
 {
     // thread safe
     uint64_t bit = 1LL << (row & 63);
+
     assert(row < m_numRows);
     ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
 }
@@ -371,7 +387,8 @@ bool QueueFrame::FindJob()
             uint64_t oldval = m_queuedBitmap[w];
             if (oldval == 0) // race condition
                 break;
-            int id = 63 - (int) CLZ64(oldval);
+
+            int id = 63 - (int)CLZ64(oldval);
             uint64_t newval = oldval & ~(1LL << id);
 
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
@@ -386,6 +403,4 @@ bool QueueFrame::FindJob()
     // made it through the bitmap without finding any enqueued rows
     return false;
 }
-
-
 } // end namespace x265

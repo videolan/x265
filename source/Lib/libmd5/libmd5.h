@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -36,13 +36,14 @@
 //! \ingroup libMD5
 //! \{
 
-typedef struct _context_md5_t {
-  uint32_t buf[4];
-  uint32_t bits[2];
-  union {
-    unsigned char b8[64];
-    uint32_t b32[16];
-  } in;
+typedef struct _context_md5_t
+{
+    uint32_t buf[4];
+    uint32_t bits[2];
+    union {
+        unsigned char b8[64];
+        uint32_t b32[16];
+    } in;
 } context_md5_t;
 
 #ifdef __cplusplus
@@ -50,7 +51,7 @@ extern "C" {
 #endif
 void MD5Init(context_md5_t *ctx);
 void MD5Update(context_md5_t *ctx, unsigned char *buf, unsigned len);
-void MD5Final(unsigned char digest[16], context_md5_t *ctx);
+void MD5Final(unsigned char digest[16], context_md5_t * ctx);
 #ifdef __cplusplus
 }
 #endif
