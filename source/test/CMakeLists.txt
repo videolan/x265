@@ -27,5 +27,5 @@ if(GCC)
     add_definitions(-Wno-unused-value)
 endif(GCC)
 
-add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)
+add_executable(TestBench testbench.cpp unittest.cpp unittest.h)
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
