@@ -42,7 +42,6 @@ using namespace x265;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
-uint16_t do_bench = 0;
 uint16_t do_singleprimitivecheck = 0;
 uint16_t numofprim = 0;
 uint16_t cpuid = 0;
@@ -120,11 +119,6 @@ static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPr
 int main(int argc, char *argv[])
 {
     int ret = 0;
-
-    if (argc > 1 && !strncmp(argv[1], "--bench", 7))
-    {
-        do_bench = 1;
-    }
 
     if (argc > 1 && !strncmp(argv[1], "--primitive", 11))
     {
