@@ -8,8 +8,8 @@ if(ENABLE_PPA)
     endif(UNIX)
 endif(ENABLE_PPA)
 
-add_executable(testpool testpool.cpp)
-target_link_libraries(testpool x265 HM ${PLATFORM_LIBS})
+add_executable(PoolTest testpool.cpp)
+target_link_libraries(PoolTest x265 HM ${PLATFORM_LIBS})
 
 if(MSVC)
     add_definitions(/wd4244) # type conversion, possible loss of data
@@ -27,5 +27,5 @@ if(GCC)
     add_definitions(-Wno-unused-value)
 endif(GCC)
 
-add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)
+add_executable(TestBench testbench.cpp unittest.cpp unittest.h)
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})

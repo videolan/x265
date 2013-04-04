@@ -1,7 +1,6 @@
-#include "UnitTest.h"
+#include "unittest.h"
 #include <string.h>
 #include <math.h>
-
 //Compare the Two given Buffers with Binary Mode
 int UnitTest::CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two)
 {
