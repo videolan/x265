@@ -73,7 +73,7 @@ void x265_checkasm_stack_clobber(uint64_t clobber, ...);
 static int check_satd(int cpu_ref, int cpu_new)
 {
  	int ret = 0, ok = 1, used_asm = 0;
-   
+
     //Set the Bench Mark Function name
 	printf("satd_*x* Functons");
 	unsigned long int sse2 = 0, vector = 2;
@@ -83,21 +83,21 @@ static int check_satd(int cpu_ref, int cpu_new)
 	int primitives = 0;
 	struct timeb tb;
 
-	//Do the bench for 16 - Number of Partions 
+	//Do the bench for 16 - Number of Partions
 	while(primitives < NUM_PARTITIONS)
 	{
 		//if the satd is not available for vector no need to test bench
 		if(primitives_vectorized_sse2.satd[primitives] != NULL)
-		{	
+		{
 			//run the Vectorised functions 100 times with random pixel and store the output
 			j = 0;
 			for(i = 0; i<=100; i++)
-			{ 
+			{
 
-				var_v[i] = primitives_vectorized_sse2.satd[primitives](pbuf1+j, 16, pbuf2, 16);		
+				var_v[i] = primitives_vectorized_sse2.satd[primitives](pbuf1+j, 16, pbuf2, 16);
 				j += 16;
 			}
-					
+
 			//run the c primitives 100 times and store the output with randome pixel
 			j = 0;
 			for(i = 0; i<= 100; i++)
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         return -1;
     }
-		
+
     //INIT_POINTER_OFFSETS;
     for( int i = 0; i < 0x1e00; i++ )
     {
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
         pbuf1[i] = rand() & PIXEL_MAX;
 		pbuf2[i] = rand() & PIXEL_MAX;
     }
-	
+
     /* 16-byte alignment is guaranteed whenever it's useful, but some functions also vary in speed depending on %64 */
     if (do_bench)
         for (int i = 0; i < BENCH_ALIGNS && !ret; i++)
