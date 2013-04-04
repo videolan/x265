@@ -26,8 +26,27 @@
 namespace {
 // anonymous file-static namespace
 
-// .. define C/C++ macroblock primitives
+void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
+{
+    int i, c[4];
+    int rnd_factor = 1 << (shift - 1);
 
+    for (i = 0; i < 4; i++)
+    {
+        // Intermediate Variables
+        c[0] = tmp[i] + tmp[8 + i];
+        c[1] = tmp[8 + i] + tmp[12 + i];
+        c[2] = tmp[i] - tmp[12 + i];
+        c[3] = 74 * tmp[4 + i];
+
+        block[4 * i + 0] = DstClip::Clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 1] = DstClip::Clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 2] = DstClip::Clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
+        block[4 * i + 3] = DstClip::Clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
+    }
+}
+
+// .. define C/C++ macroblock primitives
 }
 
 namespace x265 {
@@ -36,6 +55,6 @@ namespace x265 {
 void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.satd[0] = p.satd[0]; // just to prevent warnings, delete me
+    p.inversedst = inversedst;
 }
-
 }
