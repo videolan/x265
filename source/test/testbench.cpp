@@ -57,7 +57,7 @@ uint16_t cpuid = 0;
 #pragma warning(disable: 4505)
 #endif
 
-//Sample Testing for satdx*x
+// test all implemented pixel comparison primitives
 static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint32_t j = 0, i = 0;
@@ -80,9 +80,55 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
                 j += 16;
             }
         }
+        // if the satd is not available for vector no need to test
+        if (vectorprimitives.sad[curpar])
+        {
+            j = 0;
+            for (i = 0; i <= 100; i++)
+            {
+                int vres = vectorprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
+                int cres = cprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
+                if (vres != cres)
+                {
+                    printf("FAILED COMPARISON for SATD partition - %d \n", curpar);
+                    return -1;
+                }
+                j += 16;
+            }
+        }
 
         if (do_singleprimitivecheck == 1)
-            break;
+            return 0;
+    }
+    if (vectorprimitives.sa8d_8x8)
+    {
+        j = 0;
+        for (i = 0; i <= 100; i++)
+        {
+            int vres = vectorprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
+            int cres = cprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
+            if (vres != cres)
+            {
+                printf("FAILED COMPARISON for sa8d_8x8\n");
+                return -1;
+            }
+            j += 16;
+        }
+    }
+    if (vectorprimitives.sa8d_16x16)
+    {
+        j = 0;
+        for (i = 0; i <= 100; i++)
+        {
+            int vres = vectorprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
+            int cres = cprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
+            if (vres != cres)
+            {
+                printf("FAILED COMPARISON for sa8d_8x8\n");
+                return -1;
+            }
+            j += 16;
+        }
     }
 
     return 0;
