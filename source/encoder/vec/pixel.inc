@@ -164,7 +164,7 @@ int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
 
     //vertical
     {
-        Vec8s v0, v1, v2, v3, v4, v5, v6, v7, t1, t2;
+        Vec8s v0, v3, v4, v5, v6, v7;
 
         v0.load_a(m2[0]);
         v4.load_a(m2[4]);
