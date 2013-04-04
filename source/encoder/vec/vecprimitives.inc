@@ -56,110 +56,6 @@ int CDECL NAME(sad_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t
     return uiSum;
 }
 
-int CDECL NAME(satd_8x8)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
-{
-	int  i, j, k, jj, sad = 0;
-    ALIGN_VAR_16(int, m1[8][8]);
-    ALIGN_VAR_16(int, m2[8][8]);
-    ALIGN_VAR_16(int, m3[8][8]);
-    ALIGN_VAR_16(short, diff[64]);
-
-    Vec8s diff_v1, piOrg_v, piCur_v;
-    Vec4i v1, v2;
-
-    //assert(iStep == 1);
-
-	for (k = 0; k < 64; k += 8)
-    {
-        piOrg_v.load(piOrg);
-        piCur_v.load(piCur);
-        diff_v1 = piOrg_v - piCur_v;
-
-        diff_v1.store_a(diff + k);
-
-        piCur += strideCur;
-        piOrg += strideOrg;
-    }
-	//horizontal
-    for (j = 0; j < 8; j++)
-    {
-        jj = j << 3;
-        m2[j][0] = diff[jj  ] + diff[jj + 4];
-        m2[j][1] = diff[jj + 1] + diff[jj + 5];
-        m2[j][2] = diff[jj + 2] + diff[jj + 6];
-        m2[j][3] = diff[jj + 3] + diff[jj + 7];
-        m2[j][4] = diff[jj  ] - diff[jj + 4];
-        m2[j][5] = diff[jj + 1] - diff[jj + 5];
-        m2[j][6] = diff[jj + 2] - diff[jj + 6];
-        m2[j][7] = diff[jj + 3] - diff[jj + 7];
-
-        m1[j][0] = m2[j][0] + m2[j][2];
-        m1[j][1] = m2[j][1] + m2[j][3];
-        m1[j][2] = m2[j][0] - m2[j][2];
-        m1[j][3] = m2[j][1] - m2[j][3];
-        m1[j][4] = m2[j][4] + m2[j][6];
-        m1[j][5] = m2[j][5] + m2[j][7];
-        m1[j][6] = m2[j][4] - m2[j][6];
-        m1[j][7] = m2[j][5] - m2[j][7];
-
-		m2[j][0] = m1[j][0] + m1[j][1];
-        m2[j][1] = m1[j][0] - m1[j][1];
-        m2[j][2] = m1[j][2] + m1[j][3];
-        m2[j][3] = m1[j][2] - m1[j][3];
-        m2[j][4] = m1[j][4] + m1[j][5];
-        m2[j][5] = m1[j][4] - m1[j][5];
-        m2[j][6] = m1[j][6] + m1[j][7];
-        m2[j][7] = m1[j][6] - m1[j][7];
-
-    }
-
-	//vertical
-    for (i = 0; i < 8; i++)
-    {
-        m3[0][i] = m2[0][i] + m2[4][i];
-        m3[1][i] = m2[1][i] + m2[5][i];
-        m3[2][i] = m2[2][i] + m2[6][i];
-        m3[3][i] = m2[3][i] + m2[7][i];
-        m3[4][i] = m2[0][i] - m2[4][i];
-        m3[5][i] = m2[1][i] - m2[5][i];
-        m3[6][i] = m2[2][i] - m2[6][i];
-        m3[7][i] = m2[3][i] - m2[7][i];
-
-        m1[0][i] = m3[0][i] + m3[2][i];
-        m1[1][i] = m3[1][i] + m3[3][i];
-        m1[2][i] = m3[0][i] - m3[2][i];
-        m1[3][i] = m3[1][i] - m3[3][i];
-        m1[4][i] = m3[4][i] + m3[6][i];
-        m1[5][i] = m3[5][i] + m3[7][i];
-        m1[6][i] = m3[4][i] - m3[6][i];
-        m1[7][i] = m3[5][i] - m3[7][i];
-
-		m2[0][i] = m1[0][i] + m1[1][i];
-        m2[1][i] = m1[0][i] - m1[1][i];
-        m2[2][i] = m1[2][i] + m1[3][i];
-        m2[3][i] = m1[2][i] - m1[3][i];
-        m2[4][i] = m1[4][i] + m1[5][i];
-        m2[5][i] = m1[4][i] - m1[5][i];
-        m2[6][i] = m1[6][i] + m1[7][i];
-        m2[7][i] = m1[6][i] - m1[7][i];
-    }
-
-	for (i = 0; i < 8; i++)
-    {
-        v1.load_a(m2[i]);
-        v1 = abs(v1);
-        sad += horizontal_add_x(v1);
-        v1.load_a(m2[i] + 4);
-        v1 = abs(v1);
-        sad += horizontal_add_x(v1);
-    }
-
-    sad = ((sad + 2) >> 2);
-
-    return sad;
-}
-
-
 int CDECL NAME(satd_4x4)(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
     int satd = 0;
@@ -289,7 +185,6 @@ static int Setup()
 #if HIGH_BIT_DEPTH /* 16-bit pixels */
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
     p.satd[PARTITION_4x4] = NAME(satd_4x4);
-	p.satd[PARTITION_8x8] = NAME(satd_8x8);
 #else
     p.sad[PARTITION_8x8] = NAME(sad_8x8);
 #endif

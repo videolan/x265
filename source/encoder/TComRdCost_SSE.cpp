@@ -492,7 +492,6 @@ UInt TComRdCost::xGetSAD64(DistParam *pcDtParam)
 #if _MSC_VER
 #pragma warning(disable: 4100)
 #endif
-#if 0
 UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
     Int  i, j, k, jj, sad = 0;
@@ -595,8 +594,7 @@ UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 
     return sad;
 }
-#endif
-#if 0
+
 UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
 	Int satd = 0;
@@ -664,5 +662,4 @@ UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 
 	return satd;
 }
-#endif
 #endif
