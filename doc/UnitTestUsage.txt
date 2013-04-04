@@ -8,7 +8,8 @@ Testbench draft version :-
     usage - ./testbench --bench   -> this will do the bench marking for all the primitive functions 
             ./testbench  -> Do the output comparision for vectorised vs non vectorised primitives
             
-            single primitive check
+    single primitive check
+    
             ./testbench --primitive 1
             
                 sample -

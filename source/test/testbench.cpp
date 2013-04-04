@@ -49,13 +49,10 @@ static int do_bench_mark()
 //Sample Testing for satdx*x
 static int check_pixelprimitives(void)
 {
-    uint32_t ret = 0, ok = 1, used_asm = 0;
-    uint32_t sse2 = 0, vector = 2;
-    pixel strt = 0, end = 0, func = 0, vecf = 0;
+    uint32_t ret = 0;
     uint32_t j = 0, i = 0;
     uint32_t var_v[100], var_c[1000];
-    struct timeb tb;
-
+    
     x265::EncoderPrimitives cprimitives;
     x265::EncoderPrimitives vectorprimitives;
 
@@ -118,7 +115,7 @@ static int check_pixelprimitives(void)
             {
                 if (var_c[i] != var_v[i])
                 {
-                    printf("FAILED COMPARISON for Primitives - %d \n", tprimitives);
+                    printf("FAILED COMPARISON for Primitives - %d \n", numofprim);
                     return -1;
                 }
 
