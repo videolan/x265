@@ -1790,7 +1790,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                                 uiSplitDistC,
                                 bCheckFirst,
                                 dSplitCost);
-#else
+#else // if HHI_RQT_INTRA_SPEEDUP
             xRecurIntraCodingQT(pcCU,
                                 uiTrDepth + 1,
                                 uiAbsPartIdxSub,
@@ -1801,7 +1801,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                                 uiSplitDistY,
                                 uiSplitDistC,
                                 dSplitCost);
-#endif
+#endif // if HHI_RQT_INTRA_SPEEDUP
 
             uiSplitCbfY |= pcCU->getCbf(uiAbsPartIdxSub, TEXT_LUMA, uiTrDepth + 1);
             if (!bLumaOnly)
@@ -2830,7 +2830,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                                 uiPUDistC,
                                 true,
                                 dPUCost);
-#else
+#else // if HHI_RQT_INTRA_SPEEDUP
             xRecurIntraCodingQT(pcCU,
                                 uiInitTrDepth,
                                 uiPartOffset,
@@ -2841,7 +2841,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                                 uiPUDistY,
                                 uiPUDistC,
                                 dPUCost);
-#endif
+#endif // if HHI_RQT_INTRA_SPEEDUP
 
             // check r-d cost
             if (dPUCost < dBestPUCost)
@@ -3470,7 +3470,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU,
                                  TComYuv*&   rpcResiYuv,
                                  TComYuv*&   rpcRecoYuv,
                                  Bool        bUseRes)
-#endif
+#endif // if AMP_MRG
 {
     m_acYuvPred[0].clear();
     m_acYuvPred[1].clear();
@@ -3608,7 +3608,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU,
                                     cMvPred[iRefList][iRefIdxTemp],
                                     false,
                                     &biPDistTemp);
-#endif
+#endif // if ZERO_MVD_EST
                 aaiMvpIdx[iRefList][iRefIdxTemp] = pcCU->getMVPIdx(eRefPicList, uiPartAddr);
                 aaiMvpNum[iRefList][iRefIdxTemp] = pcCU->getMVPNum(eRefPicList, uiPartAddr);
 
@@ -4275,7 +4275,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU,
                                      TComMv&     rcMvPred,
                                      Bool        bFilled,
                                      UInt*       puiDistBiP)
-#endif
+#endif // if ZERO_MVD_EST
 {
     AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
 
@@ -4322,7 +4322,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU,
                                              iRoiWidth,
                                              iRoiHeight,
                                              uiDist);
-#else
+#else // if ZERO_MVD_EST
             (*puiDistBiP) = xGetTemplateCost(pcCU,
                                              uiPartIdx,
                                              uiPartAddr,
@@ -4335,7 +4335,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU,
                                              iRefIdx,
                                              iRoiWidth,
                                              iRoiHeight);
-#endif
+#endif // if ZERO_MVD_EST
         }
 
         return;
@@ -4371,7 +4371,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU,
                                      iRoiWidth,
                                      iRoiHeight,
                                      uiDist);
-#else
+#else // if ZERO_MVD_EST
         uiTmpCost = xGetTemplateCost(pcCU,
                                      uiPartIdx,
                                      uiPartAddr,
@@ -4384,7 +4384,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU,
                                      iRefIdx,
                                      iRoiWidth,
                                      iRoiHeight);
-#endif
+#endif // if ZERO_MVD_EST
         if (uiBestCost > uiTmpCost)
         {
             uiBestCost = uiTmpCost;
@@ -5096,7 +5096,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU,
                                       pcYuvOrg->getCbAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1)
             + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCrAddr(),   rpcYuvRec->getCStride(),
                                       pcYuvOrg->getCrAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1);
-#endif
+#endif // if WEIGHTED_CHROMA_DISTORTION
 
         if (m_bUseSBACRD)
             m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
@@ -5312,7 +5312,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU,
                                   pcYuvOrg->getCbAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1)
         + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCrAddr(),   rpcYuvRec->getCStride(),
                                   pcYuvOrg->getCrAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1);
-#endif
+#endif // if WEIGHTED_CHROMA_DISTORTION
     dCostBest = m_pcRdCost->calcRdCost(uiBitsBest, uiDistortionBest);
 
     pcCU->getTotalBits()       = uiBitsBest;

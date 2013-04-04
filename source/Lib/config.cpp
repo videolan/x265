@@ -930,7 +930,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
                    "bit rate info. present flag");
     readIntString(cfg_avgPicRate,             m_bitRatePicRateMaxTLayers, m_avgPicRate,             "avg. pic rate");
     readIntString(cfg_constantPicRateIdc,     m_bitRatePicRateMaxTLayers, m_constantPicRateIdc,     "constant pic rate Idc");
-#endif
+#endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
     m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
     /* rules for input, output and internal bitdepths as per help text */

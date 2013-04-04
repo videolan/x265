@@ -388,12 +388,12 @@ public:
     Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx] = uh;}
 
     Void          clearCbf(UInt uiIdx, TextType eType, UInt uiNumParts);
-    UChar         getQtRootCbf(UInt uiIdx)                      { return getCbf(uiIdx, TEXT_LUMA, 0) || getCbf(uiIdx,
-                                                                                                               TEXT_CHROMA_U,
-                                                                                                               0) || getCbf(
-                                                                             uiIdx,
-                                                                             TEXT_CHROMA_V,
-                                                                             0);}
+    UChar         getQtRootCbf(UInt uiIdx)
+    {
+        return getCbf(uiIdx, TEXT_LUMA, 0) ||
+               getCbf(uiIdx, TEXT_CHROMA_U, 0) ||
+               getCbf( uiIdx, TEXT_CHROMA_V, 0);
+    }
 
     Void          setCbfSubParts(UInt uiCbfY, UInt uiCbfU, UInt uiCbfV, UInt uiAbsPartIdx, UInt uiDepth);
     Void          setCbfSubParts(UInt uiCbf, TextType eTType, UInt uiAbsPartIdx, UInt uiDepth);

@@ -361,11 +361,14 @@ public:
 
     Window   &getConformanceWindow()                           { return m_conformanceWindow;}
 
-    Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(
-                                                                                                   confLeft,
-                                                                                                   confRight,
-                                                                                                   confTop,
-                                                                                                   confBottom);}
+    Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom)
+    {
+        m_conformanceWindow.setWindow(
+            confLeft,
+            confRight,
+            confTop,
+            confBottom);
+    }
 
     Void      setFramesToBeEncoded(Int i)      { m_framesToBeEncoded = i;}
 
@@ -1059,10 +1062,13 @@ public:
     Window   &getDefaultDisplayWindow()                     { return m_defaultDisplayWindow;}
 
     Void      setDefaultDisplayWindow(Int offsetLeft, Int offsetRight, Int offsetTop,
-                                      Int offsetBottom) { m_defaultDisplayWindow.setWindow(offsetLeft,
-                                                                                           offsetRight,
-                                                                                           offsetTop,
-                                                                                           offsetBottom);}
+                                      Int offsetBottom)
+    {
+        m_defaultDisplayWindow.setWindow(offsetLeft,
+                                         offsetRight,
+                                         offsetTop,
+                                         offsetBottom);
+    }
 
     Bool      getFrameFieldInfoPresentFlag()                { return m_frameFieldInfoPresentFlag;}
 

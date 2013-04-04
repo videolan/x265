@@ -384,7 +384,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
     }
 
 #else // if AMP_MRG
-    //! Utilizing the partition size of parent PU
+      //! Utilizing the partition size of parent PU
     if (eParentPartSize >= SIZE_2NxnU && eParentPartSize <= SIZE_nRx2N)
     {
         bTestAMP_Hor = true;
@@ -1024,7 +1024,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                     }
 
                     rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion());
-#endif
+#endif // if !RDO_WITHOUT_DQP_BITS
 
                     Bool foundNonZeroCbf = false;
                     rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
@@ -1488,7 +1488,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
                                     m_ppcPredYuvTemp[uhDepth],
                                     m_ppcResiYuvTemp[uhDepth],
                                     m_ppcRecoYuvTemp[uhDepth]);
-#endif
+#endif // if AMP_MRG
 
 #if AMP_MRG
     if (!rpcTempCU->getMergeAMP())
@@ -1696,7 +1696,7 @@ Void TEncCu::xCheckDQP(TComDataCU* pcCU)
             }
 
             pcCU->getTotalCost() = m_pcRdCost->calcRdCost(pcCU->getTotalBits(), pcCU->getTotalDistortion());
-#endif
+#endif // if !RDO_WITHOUT_DQP_BITS
         }
         else
         {

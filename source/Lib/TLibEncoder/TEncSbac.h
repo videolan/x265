@@ -120,11 +120,19 @@ private:
     Void  xCopyFrom(TEncSbac* pSrc);
     Void  xCopyContextsFrom(TEncSbac* pSrc);
 
-    Void codeDFFlag(UInt /*uiCode*/, const Char* /*pSymbolName*/)       { printf("Not supported in codeDFFlag()\n");assert(0);
-                                                                          exit(1);}
+    Void codeDFFlag(UInt /*uiCode*/, const Char* /*pSymbolName*/)
+    {
+        printf("Not supported in codeDFFlag()\n");
+        assert(0);
+        exit(1);
+    }
 
-    Void codeDFSvlc(Int /*iCode*/, const Char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n");assert(0);
-                                                                          exit(1);}
+    Void codeDFSvlc(Int /*iCode*/, const Char* /*pSymbolName*/)
+    {
+        printf("Not supported in codeDFSvlc()\n");
+        assert(0);
+        exit(1);
+    }
 
 protected:
 

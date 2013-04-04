@@ -346,7 +346,7 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey,
                               Int          iStep,
                               DistParam&   rcDistParam,
                               Bool         bHADME)
-#endif
+#endif // if NS_HAD
 {
     // set Original & Curr Pointer / Stride
     rcDistParam.pOrg = pcPatternKey->getROIY();
@@ -415,7 +415,7 @@ TComRdCost::setDistParam(DistParam & rcDP,
                          Int iWidth,
                          Int iHeight,
                          Bool bHadamard)
-#endif
+#endif // if NS_HAD
 {
     rcDP.pOrg       = p1;
     rcDP.pCur       = p2;
@@ -499,7 +499,7 @@ UInt TComRdCost::getDistPart(Int   bitDepth,
                              UInt  uiBlkWidth,
                              UInt  uiBlkHeight,
                              DFunc eDFunc)
-#endif
+#endif // if WEIGHTED_CHROMA_DISTORTION
 {
     DistParam cDtParam;
 

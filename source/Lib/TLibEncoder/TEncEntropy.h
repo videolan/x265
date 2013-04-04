@@ -190,15 +190,21 @@ public:
     Void encodeQtRootCbfZero(TComDataCU* pcCU);
     Void encodeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx);
     Void encodeQP(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(
-                                                                                         eSliceType,
-                                                                                         iQp,
-                                                                                         bExecuteFinish);}
+    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)
+    {
+        m_pcEntropyCoderIf->updateContextTables(
+            eSliceType,
+            iQp,
+            bExecuteFinish);
+    }
 
-    Void updateContextTables(SliceType eSliceType, Int iQp)                        { m_pcEntropyCoderIf->updateContextTables(
-                                                                                         eSliceType,
-                                                                                         iQp,
-                                                                                         true);}
+    Void updateContextTables(SliceType eSliceType, Int iQp)
+    {
+        m_pcEntropyCoderIf->updateContextTables(
+            eSliceType,
+            iQp,
+            true);
+    }
 
     Void encodeScalingList(TComScalingList* scalingList);
 

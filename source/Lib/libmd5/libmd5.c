@@ -74,7 +74,7 @@ void MD5Update(context_md5_t *ctx, unsigned char *buf, unsigned len)
 
     t = ctx->bits[0];
     if ((ctx->bits[0] = t + ((uint32_t)len << 3)) < t)
-        ctx->bits[1]++;    /* Carry from low to high */
+        ctx->bits[1]++; /* Carry from low to high */
 
     ctx->bits[1] += len >> 29;
 

@@ -141,28 +141,34 @@ public:
 
     Int* getBitRatio()                    { return m_bitsRatio;}
 
-    Int  getBitRatio(Int idx)           { assert(idx < m_GOPSize);return m_bitsRatio[idx];}
+    Int  getBitRatio(Int idx)             { assert(idx < m_GOPSize);return m_bitsRatio[idx];}
 
     Int* getGOPID2Level()                 { return m_GOPID2Level;}
 
-    Int  getGOPID2Level(Int ID)         { assert(ID < m_GOPSize);return m_GOPID2Level[ID];}
+    Int  getGOPID2Level(Int ID)           { assert(ID < m_GOPSize);return m_GOPID2Level[ID];}
 
-    TRCParameter*  getPicPara()                                   { return m_picPara;}
+    TRCParameter*  getPicPara()           { return m_picPara;}
 
-    TRCParameter   getPicPara(Int level)                        { assert(level < m_numberOfLevel);return m_picPara[level];}
+    TRCParameter   getPicPara(Int level)  { assert(level < m_numberOfLevel);return m_picPara[level];}
 
-    Void           setPicPara(Int level, TRCParameter para)     { assert(level < m_numberOfLevel);m_picPara[level] = para;}
+    Void           setPicPara(Int level, TRCParameter para) { assert(level < m_numberOfLevel);m_picPara[level] = para;}
 
-    TRCParameter** getLCUPara()                                   { return m_LCUPara;}
+    TRCParameter** getLCUPara()           { return m_LCUPara;}
 
-    TRCParameter*  getLCUPara(Int level)                        { assert(level < m_numberOfLevel);return m_LCUPara[level];}
+    TRCParameter*  getLCUPara(Int level)  { assert(level < m_numberOfLevel);return m_LCUPara[level];}
 
-    TRCParameter   getLCUPara(Int level, Int LCUIdx)            { assert(LCUIdx  < m_numberOfLCU);
-                                                                  return getLCUPara(level)[LCUIdx];}
+    TRCParameter   getLCUPara(Int level, Int LCUIdx)
+    {
+        assert(LCUIdx  < m_numberOfLCU);
+        return getLCUPara(level)[LCUIdx];
+    }
 
-    Void           setLCUPara(Int level, Int LCUIdx, TRCParameter para) { assert(level < m_numberOfLevel);assert(
-                                                                              LCUIdx  <
-                                                                              m_numberOfLCU);m_LCUPara[level][LCUIdx] = para;}
+    Void           setLCUPara(Int level, Int LCUIdx, TRCParameter para)
+    {
+        assert(level < m_numberOfLevel);
+        assert( LCUIdx < m_numberOfLCU);
+        m_LCUPara[level][LCUIdx] = para;
+    }
 
     Int  getFramesLeft()                  { return m_framesLeft;}
 
@@ -232,7 +238,7 @@ public:
 
     Int  getBitsLeft()              { return m_bitsLeft;}
 
-    Int  getTargetBitInGOP(Int i) { return m_picTargetBitInGOP[i];}
+    Int  getTargetBitInGOP(Int i)   { return m_picTargetBitInGOP[i];}
 
 private:
 
@@ -293,7 +299,7 @@ public:
 
     Int  getTargetBits()                                    { return m_targetBits;}
 
-    Void setTargetBits(Int bits)                          { m_targetBits = bits;}
+    Void setTargetBits(Int bits)                            { m_targetBits = bits;}
 
     Int  getEstHeaderBits()                                 { return m_estHeaderBits;}
 
@@ -309,13 +315,13 @@ public:
 
     TRCLCU* getLCU()                                        { return m_LCUs;}
 
-    TRCLCU& getLCU(Int LCUIdx)                            { return m_LCUs[LCUIdx];}
+    TRCLCU& getLCU(Int LCUIdx)                              { return m_LCUs[LCUIdx];}
 
     Int  getPicActualHeaderBits()                           { return m_picActualHeaderBits;}
 
     Double getTotalMAD()                                    { return m_totalMAD;}
 
-    Void   setTotalMAD(Double MAD)                        { m_totalMAD = MAD;}
+    Void   setTotalMAD(Double MAD)                          { m_totalMAD = MAD;}
 
     Int  getPicActualBits()                                 { return m_picActualBits;}
 
@@ -325,11 +331,11 @@ public:
 
     Int  getPicEstQP()                                      { return m_estPicQP;}
 
-    Void setPicEstQP(Int QP)                              { m_estPicQP = QP;}
+    Void setPicEstQP(Int QP)                                { m_estPicQP = QP;}
 
     Double getPicEstLambda()                                { return m_estPicLambda;}
 
-    Void setPicEstLambda(Double lambda)                   { m_picLambda = lambda;}
+    Void setPicEstLambda(Double lambda)                     { m_picLambda = lambda;}
 
 private:
 

@@ -823,10 +823,10 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
         UInt uiExternalAddress = pcPic->getPicSym()->getNumberOfCUsInFrame() - 1;
         UInt uiPosX =
             (uiExternalAddress %
-        pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+             pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
         UInt uiPosY =
             (uiExternalAddress /
-        pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+             pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
         UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
         UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
         while (uiPosX >= uiWidth || uiPosY >= uiHeight)
@@ -834,10 +834,10 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
             uiInternalAddress--;
             uiPosX =
                 (uiExternalAddress %
-            pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+                 pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
             uiPosY =
                 (uiExternalAddress /
-            pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+                 pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
         }
 
         uiInternalAddress++;
@@ -1418,10 +1418,10 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                     pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
                 uiPosX =
                     (uiExternalAddress %
-                    pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+                     pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
                 uiPosY =
                     (uiExternalAddress /
-                    pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+                     pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
                 uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
                 uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
                 while (uiPosX >= uiWidth || uiPosY >= uiHeight)
@@ -1429,10 +1429,10 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                     uiInternalAddress--;
                     uiPosX =
                         (uiExternalAddress %
-                        pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+                         pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
                     uiPosY =
                         (uiExternalAddress /
-                        pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+                         pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
                 }
 
                 uiInternalAddress++;
@@ -1881,7 +1881,7 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                                            1]  -
                                accumBitsDU[i]) *
                               (vui->getTimingInfo()->getTimeScale() /
-                        vui->getTimingInfo()->getNumUnitsInTick()) *
+                               vui->getTimingInfo()->getNumUnitsInTick()) *
                               (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
 #else
                         ui64Tmp =
@@ -1889,8 +1889,8 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                                            1]  -
                                accumBitsDU[i]) *
                               (hrd->getTimeScale() /
-                        hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#endif
+                               hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
+#endif // if L0043_TIMING_INFO
                         if ((UInt)ui64Tmp > maxDiff)
                         {
                             tmp++;
@@ -1909,7 +1909,7 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                                            1]  -
                                accumBitsDU[i]) *
                               (vui->getTimingInfo()->getTimeScale() /
-                        vui->getTimingInfo()->getNumUnitsInTick()) *
+                               vui->getTimingInfo()->getNumUnitsInTick()) *
                               (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
 #else
                         ui64Tmp =
@@ -1917,8 +1917,8 @@ Void TEncGOP::compressGOP(Int                    iPOCLast,
                                            1]  -
                                accumBitsDU[i]) *
                               (hrd->getTimeScale() /
-                        hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#endif
+                               hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
+#endif // if L0043_TIMING_INFO
 
                         if ((UInt)ui64Tmp > maxDiff)
                         {

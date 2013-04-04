@@ -499,8 +499,10 @@ public:
 
     UInt getBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl];}
 
-    Void setCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] =
-                                                                                      value;}
+    Void setCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value)
+    {
+        m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value;
+    }
 
     UInt getCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl];}
 
@@ -701,8 +703,11 @@ public:
 
     Bool          getWindowEnabledFlag() const      { return m_enabledFlag;}
 
-    Void          resetWindow()                     { m_enabledFlag = false;m_winLeftOffset = m_winRightOffset = m_winTopOffset =
-                                                                  m_winBottomOffset = 0;}
+    Void          resetWindow()
+    {
+        m_enabledFlag = false;
+        m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;
+    }
 
     Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0;}
 
@@ -1047,11 +1052,17 @@ public:
 
     Void setChromaFormatIdc(Int i)    { m_chromaFormatIdc = i;}
 
-    static Int getWinUnitX(Int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC);
-                                                  return m_winUnitX[chromaFormatIdc];}
+    static Int getWinUnitX(Int chromaFormatIdc)
+    {
+        assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC);
+        return m_winUnitX[chromaFormatIdc];
+    }
 
-    static Int getWinUnitY(Int chromaFormatIdc) { assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC);
-                                                  return m_winUnitY[chromaFormatIdc];}
+    static Int getWinUnitY(Int chromaFormatIdc)
+    {
+        assert(chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC);
+        return m_winUnitY[chromaFormatIdc];
+    }
 
     // structure
     Void setPicWidthInLumaSamples(UInt u) { m_picWidthInLumaSamples = u;}
@@ -1805,8 +1816,11 @@ public:
     NalUnitType getNalUnitType() const                        { return m_eNalUnitType;}
 
     Bool      getRapPicFlag();
-    Bool      getIdrPicFlag()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-                                                                    getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP;}
+    Bool      getIdrPicFlag()
+    {
+        return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+               getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP;
+    }
 
     Bool      isIRAP() const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23);}
 
@@ -1972,16 +1986,20 @@ public:
 
     Bool getFinalized()                  { return m_bFinalized;}
 
-    Void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable,
-                                                                      wp,
-                                                                      sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3);}
+    Void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3])
+    {
+        memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3);
+    }
 
     Void  getWpScaling(RefPicList e, Int iRefIdx, wpScalingParam *&wp);
 
     Void  resetWpScaling();
     Void  initWpScaling();
-    inline Bool applyWP() { return (m_eSliceType == P_SLICE &&
-                                    m_pcPPS->getUseWP()) || (m_eSliceType == B_SLICE && m_pcPPS->getWPBiPred());}
+    inline Bool applyWP()
+    {
+        return (m_eSliceType == P_SLICE &&
+                m_pcPPS->getUseWP()) || (m_eSliceType == B_SLICE && m_pcPPS->getWPBiPred());
+    }
 
     Void  setWpAcDcParam(wpACDCParam wp[3]) { memcpy(m_weightACDCParam, wp, sizeof(wpACDCParam) * 3);}
 

@@ -404,7 +404,7 @@ Void TAppEncTop::xCreateLib()
                                      m_outputBitDepthY,
                                      m_outputBitDepthC,
                                      m_internalBitDepthY,
-                                     m_internalBitDepthC);                                                                                   // write mode
+                                     m_internalBitDepthC); // write mode
 
     // Neo Decoder
     m_cTEncTop.create();

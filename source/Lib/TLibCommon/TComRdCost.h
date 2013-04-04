@@ -197,7 +197,7 @@ public:
                          Int        iHeight,
                          Bool       bHadamard = false,
                          Bool       bUseNSHAD = false);
-#else
+#else // if NS_HAD
     Void    setDistParam(TComPattern* pcPatternKey,
                          Pel*         piRefY,
                          Int          iRefStride,
@@ -213,7 +213,7 @@ public:
                          Int        iWidth,
                          Int        iHeight,
                          Bool       bHadamard = false);
-#endif
+#endif // if NS_HAD
 
     UInt    calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight);
 
@@ -315,7 +315,7 @@ public:
                        UInt  uiBlkWidth,
                        UInt  uiBlkHeight,
                        DFunc eDFunc = DF_SSE);
-#endif
+#endif // if WEIGHTED_CHROMA_DISTORTION
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
     UInt   getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height);

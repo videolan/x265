@@ -184,7 +184,7 @@ protected:
 #else
     Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver);
 #endif
-#endif
+#endif // if AMP_ENC_SPEEDUP
 
     Void  xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv);
 };
