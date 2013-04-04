@@ -40,9 +40,8 @@
 
 using namespace x265;
 
-/* pbuf1, pbuf2: initialised to random pixel data and shouldn't write into them. */
+/* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
-uint16_t quiet = 0;
 uint16_t do_bench = 0;
 uint16_t do_singleprimitivecheck = 0;
 uint16_t numofprim = 0;
@@ -92,10 +91,10 @@ static int check_pixelprimitives(void)
 
 #endif
 
-    //Initialise the default c_Primitives
+    //Initialize the default c_Primitives
     Setup_C_PixelPrimitives(cprimitives);
 
-    //Do the bench for 16 - Number of Partions
+    //Do the bench for 16 - Number of Partitions
     while (numofprim < NUM_PARTITIONS)
     {
         //if the satd is not available for vector no need to testbench
