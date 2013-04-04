@@ -14,6 +14,7 @@ endif(MSVC)
 add_library(x265
     primitives.h primitives.cpp
     pixel.cpp
+    macroblock.cpp
     TComRdCost_SSE.cpp 
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
