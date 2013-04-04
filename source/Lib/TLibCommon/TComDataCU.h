@@ -392,7 +392,7 @@ public:
     {
         return getCbf(uiIdx, TEXT_LUMA, 0) ||
                getCbf(uiIdx, TEXT_CHROMA_U, 0) ||
-               getCbf( uiIdx, TEXT_CHROMA_V, 0);
+               getCbf(uiIdx, TEXT_CHROMA_V, 0);
     }
 
     Void          setCbfSubParts(UInt uiCbfY, UInt uiCbfU, UInt uiCbfV, UInt uiAbsPartIdx, UInt uiDepth);

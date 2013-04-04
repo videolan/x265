@@ -166,7 +166,7 @@ public:
     Void           setLCUPara(Int level, Int LCUIdx, TRCParameter para)
     {
         assert(level < m_numberOfLevel);
-        assert( LCUIdx < m_numberOfLCU);
+        assert(LCUIdx < m_numberOfLCU);
         m_LCUPara[level][LCUIdx] = para;
     }
 
