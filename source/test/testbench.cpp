@@ -43,7 +43,7 @@ using namespace x265;
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 uint16_t do_singleprimitivecheck = 0;
-uint16_t numofprim = 0;
+uint16_t curpar = 0;
 uint16_t cpuid = 0;
 
 #define BENCH_ALIGNS 16
@@ -60,40 +60,32 @@ uint16_t cpuid = 0;
 //Sample Testing for satdx*x
 static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
-    uint32_t ret = 0;
     uint32_t j = 0, i = 0;
-    uint32_t var_v[100], var_c[100];
 
-    //Do the bench for 16 - Number of Partitions
-    while (numofprim < NUM_PARTITIONS)
+    for (; curpar < NUM_PARTITIONS; curpar++)
     {
-        //if the satd is not available for vector no need to testbench
-        if (vectorprimitives.satd[numofprim])
+        // if the satd is not available for vector no need to test
+        if (vectorprimitives.satd[curpar])
         {
-            //run the Vectorized primitives 100 times and store the output
             j = 0;
             for (i = 0; i <= 100; i++)
             {
-                var_v[i] = vectorprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
-                var_c[i] = cprimitives.satd[numofprim](pbuf1 + j, 16, pbuf2, 16);
-                if (var_c[i] != var_v[i])
+                int vres = vectorprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
+                int cres = cprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
+                if (vres != cres)
                 {
-                    printf("FAILED COMPARISON for Primitives - %d \n", numofprim);
+                    printf("FAILED COMPARISON for SATD partition - %d \n", curpar);
                     return -1;
                 }
                 j += 16;
             }
-
-            numofprim++;
         }
-        else //if there is no vectorized function for satd then need not to do testbench
-            numofprim++;
 
         if (do_singleprimitivecheck == 1)
             break;
     }
 
-    return ret;
+    return 0;
 }
 
 static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
@@ -110,7 +102,7 @@ int main(int argc, char *argv[])
         if (!strcmp(argv[i], "--primitive"))
         {
             do_singleprimitivecheck = 1;
-            numofprim = atoi(argv[i+1]);
+            curpar = atoi(argv[i+1]);
         }
         else if (!strcmp(argv[i], "--cpuid"))
         {
