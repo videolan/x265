@@ -201,6 +201,7 @@
 #define AMP_MRG                               1           ///< encoder only force merge for AMP partition (no motion search for AMP)
 #endif
 
+//#define ENABLE_VECTOR
 #define SCALING_LIST_OUTPUT_RESULT    0 //JCTVC-G880/JCTVC-G1016 quantization matrices
 
 #define CABAC_INIT_PRESENT_FLAG     1
