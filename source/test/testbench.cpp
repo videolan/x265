@@ -1,3 +1,26 @@
+/*****************************************************************************
+ * Copyright (C) 2013 x265 project
+ *
+ * Authors: Gopu Govindaswamy <gopu@govindaswamy.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+ *
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at licensing@multicorewareinc.com.
+ *****************************************************************************/
+
 #include "unittest.h"
 #include "primitives.h"
 
@@ -23,42 +46,29 @@ uint16_t quiet = 0;
 uint16_t do_bench = 0;
 uint16_t do_singleprimitivecheck = 0;
 uint16_t numofprim = 0;
+uint16_t cpuid = 0;
 
-#define PIXEL_MAX ((1 << 8) - 1)
 #define BENCH_ALIGNS 16
+#if HIGH_BIT_DEPTH
+#define PIXEL_MAX ((1 << 10) - 1)
+#else
+#define PIXEL_MAX ((1 << 8) - 1)
+#endif
 
 #if _MSC_VER
 #pragma warning(disable: 4505)
 #endif
-
-/* detect when callee-saved regs aren't saved
- * needs an explicit asm check because it only sometimes crashes in normal use. */
-
-#if ARCH_X86 || ARCH_X86_64
-int x265_stack_pagealign(int (*func)(), int align);
-intptr_t x265_checkasm_call(intptr_t (*func)(), int *ok, ...);
-#else
-#define x265_stack_pagealign(func, align) func()
-#endif
-
-static int do_bench_mark()
-{
-    return 0;
-}
 
 //Sample Testing for satdx*x
 static int check_pixelprimitives(void)
 {
     uint32_t ret = 0;
     uint32_t j = 0, i = 0;
-    uint32_t var_v[100], var_c[1000];
-    
-    x265::EncoderPrimitives cprimitives;
-    x265::EncoderPrimitives vectorprimitives;
+    uint32_t var_v[100], var_c[100];
+    EncoderPrimitives cprimitives;
+    EncoderPrimitives vectorprimitives;
 
-    int cpuid;
-
-    cpuid = x265::CpuIDDetect();
+    cpuid = CpuIDDetect();
     memset(&vectorprimitives, 0, sizeof(vectorprimitives));
 
 #if defined(__GNUC__) || defined(_MSC_VER)
@@ -83,17 +93,15 @@ static int check_pixelprimitives(void)
 #endif
 
     //Initialise the default c_Primitives
-    x265::Setup_C_PixelPrimitives(cprimitives);
-
-    //option to check for any single primitives
+    Setup_C_PixelPrimitives(cprimitives);
 
     //Do the bench for 16 - Number of Partions
-    while (numofprim < x265::NUM_PARTITIONS)
+    while (numofprim < NUM_PARTITIONS)
     {
-        //if the satd is not available for vector no need to test bench
+        //if the satd is not available for vector no need to testbench
         if (vectorprimitives.satd[tprimitives[numofprim]])
         {
-            //run the Vectorised functions 100 times with random pixel and store the output
+            //run the Vectorised primitives 100 times and store the output
             j = 0;
             for (i = 0; i <= 100; i++)
             {
@@ -101,7 +109,7 @@ static int check_pixelprimitives(void)
                 j += 16;
             }
 
-            //run the c primitives 100 times and store the output with randome pixel
+            //run the c primitives 100 times and store the output
             j = 0;
             for (i = 0; i <= 100; i++)
             {
@@ -124,7 +132,7 @@ static int check_pixelprimitives(void)
 
             numofprim++;
         }
-        else //if there is no vectorised function for satd then need not to do test bench
+        else //if there is no vectorised function for satd then need not to do testbench
             numofprim++;
 
         if (do_singleprimitivecheck == 1)
@@ -136,8 +144,6 @@ static int check_pixelprimitives(void)
 
 static int check_all_funcs()
 {
-    //The Functions which needs to do Unit Bench
-    //here is the place to check the functions  for bench marking
     return check_pixelprimitives();
 }
 
@@ -156,8 +162,8 @@ int main(int argc, char *argv[])
         numofprim = atoi(argv[2]);
     }
 
-    pbuf1 = (unsigned short*)malloc(0x1e00 * sizeof(unsigned short) + 16 * BENCH_ALIGNS);
-    pbuf2 = (unsigned short*)malloc(0x1e00 * sizeof(unsigned short) + 16 * BENCH_ALIGNS);
+    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -166,17 +172,12 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < 0x1e00; i++)
     {
-        //Generate the Randome Buffer for Testing
+        //Generate the Random Buffer for Testing
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    /* 16-byte alignment is guaranteed whenever it's useful, but some functions also vary in speed depending on %64 */
-    if (do_bench)
-        ret = do_bench_mark(); //Do the bench marking for all the primitives
-    else
-        ret = check_all_funcs(); //do the output validation for c and vector primitives
-
+    ret = check_all_funcs(); //do the output validation for c and vector primitives
     if (ret)
     {
         fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
