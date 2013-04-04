@@ -17,6 +17,8 @@ if(MSVC)
     add_definitions(/wd4512) # assignment operator could not be generated
     # these below should eventually go away
     add_definitions(/wd4100) # unreferenced formal parameter
+    add_definitions(/wd4189) 
+    add_definitions(/wd4101) 
 endif(MSVC)
 if(GCC)
     add_definitions(-Wno-sign-compare)
@@ -27,5 +29,5 @@ if(GCC)
     add_definitions(-Wno-unused-value)
 endif(GCC)
 
-add_executable(TestBench TestBench.cpp UnitTest.cpp UnitTest.h)
-target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
+add_executable(testbench testbench.cpp unittest.cpp unittest.h)
+target_link_libraries(testbench VectorPrimitives x265 HM ${PLATFORM_LIBS})
