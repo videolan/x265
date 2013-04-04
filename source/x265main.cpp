@@ -1,68 +1,39 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
+/*****************************************************************************
+ * Copyright (C) 2013 x265 project
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
+ * Authors: Steve Borho <steve@borho.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/** \file     encmain.cpp
-    \brief    Encoder application main
-*/
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+ *
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at licensing@multicorewareinc.com.
+ *****************************************************************************/
 
 #include <time.h>
 #include <iostream>
+#include "TAppCommon/program_options_lite.h"
 #include "primitives.h"
 #include "encoder.h"
-#include "TAppCommon/program_options_lite.h"
 #include "PPA/ppa.h"
 
 using namespace std;
 namespace po = df::program_options_lite;
 
-//! \ingroup TAppEncoder
-//! \{
-
-// ====================================================================================================================
-// Main function
-// ====================================================================================================================
-
 int main(int argc, char *argv[])
 {
     TAppEncTop  cTAppEncTop;
-
-    // print information
-    fprintf(stdout, "\n");
-    fprintf(stdout, "HM software: Encoder Version [%s]", NV_VERSION);
-    fprintf(stdout, NVM_ONOS);
-    fprintf(stdout, NVM_COMPILEDBY);
-    fprintf(stdout, NVM_BITS);
-    fprintf(stdout, "\n");
 
     PPA_INIT();
 
@@ -84,19 +55,33 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // TODO: CPUID should be a commandline parameter
+    // TODO: CPUID should be a command line parameter
     int cpuid = 0;
-    x265::SetupPrimitives(cpuid);
+    cpuid = x265::SetupPrimitives(cpuid);
+
+    fprintf(stdout, "x265: build info ");
+    fprintf(stdout, NVM_ONOS);
+    fprintf(stdout, NVM_COMPILEDBY);
+    fprintf(stdout, NVM_BITS);
+    fprintf(stdout, "\n");
+
+#if HIGH_BIT_DEPTH
+    fprintf(stdout, "x265: high bit depth support enabled\n");
+#else
+    fprintf(stdout, "x265: 8bpp only\n");
+#endif
+#if ENABLE_PRIMITIVES
+    fprintf(stdout, "x265: performance primitives enabled\n");
+#endif
 
     // starting time
-    double dResult;
     long lBefore = clock();
 
     // call encoding function
     cTAppEncTop.encode();
 
     // ending time
-    dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
+    double dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
     printf("\n Total Time: %12.3f sec.\n", dResult);
 
     // destroy application encoder class
@@ -104,5 +89,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-//! \}

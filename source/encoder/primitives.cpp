@@ -106,16 +106,36 @@ void SetupPrimitives(int cpuid)
 #endif // if ENABLE_PRIMITIVES
 }
 
+static const char *CpuType[] = {
+    "auto-detect (80386)",
+    "SSE XMM",
+    "SSE2",
+    "SSE3",
+    "SSSE3",
+    "SSE4.1",
+    "SSE4.2",
+    "AVX",
+    "AVX2",
+    0
+};
+
 int CpuIDDetect(void)
 {
-    int cpuid = 0;
     int iset = instrset_detect(); // Detect supported instruction set
 
     if (iset < 1)
-        fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    {
+        fprintf(stderr, "\nError: Instruction set detect is not supported on this computer");
+        return 0;
+    }
     else
-        cpuid = iset;
-
-    return cpuid;
+    {
+        fprintf(stdout, "x265: detected SIMD architectures ");
+        for (int i = 1; i <= iset; i++ )
+            fprintf(stdout, "%s ", CpuType[i]);
+        fprintf(stdout, "\n");
+        return iset;
+    }
 }
+
 }
