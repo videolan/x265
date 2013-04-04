@@ -489,4 +489,180 @@ UInt TComRdCost::xGetSAD64(DistParam *pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4100)
+#endif
+#if 0
+UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
+{
+    Int  i, j, k, jj, sad = 0;
+    ALIGN_VAR_16(Int, m1[8][8]);
+    ALIGN_VAR_16(Int, m2[8][8]);
+    ALIGN_VAR_16(Int, m3[8][8]);
+    ALIGN_VAR_16(Short, diff[64]);
+
+    Vec8s diff_v1, piOrg_v, piCur_v;
+    Vec4i v1, v2;
+
+    assert(iStep == 1);
+
+    for (k = 0; k < 64; k += 8)
+    {
+        piOrg_v.load(piOrg);
+        piCur_v.load(piCur);
+        diff_v1 = piOrg_v - piCur_v;
+
+        diff_v1.store_a(diff + k);
+
+        piCur += iStrideCur;
+        piOrg += iStrideOrg;
+    }
+    //horizontal
+    for (j = 0; j < 8; j++)
+    {
+        jj = j << 3;
+        m2[j][0] = diff[jj  ] + diff[jj + 4];
+        m2[j][1] = diff[jj + 1] + diff[jj + 5];
+        m2[j][2] = diff[jj + 2] + diff[jj + 6];
+        m2[j][3] = diff[jj + 3] + diff[jj + 7];
+        m2[j][4] = diff[jj  ] - diff[jj + 4];
+        m2[j][5] = diff[jj + 1] - diff[jj + 5];
+        m2[j][6] = diff[jj + 2] - diff[jj + 6];
+        m2[j][7] = diff[jj + 3] - diff[jj + 7];
+
+        m1[j][0] = m2[j][0] + m2[j][2];
+        m1[j][1] = m2[j][1] + m2[j][3];
+        m1[j][2] = m2[j][0] - m2[j][2];
+        m1[j][3] = m2[j][1] - m2[j][3];
+        m1[j][4] = m2[j][4] + m2[j][6];
+        m1[j][5] = m2[j][5] + m2[j][7];
+        m1[j][6] = m2[j][4] - m2[j][6];
+        m1[j][7] = m2[j][5] - m2[j][7];
+
+        m2[j][0] = m1[j][0] + m1[j][1];
+        m2[j][1] = m1[j][0] - m1[j][1];
+        m2[j][2] = m1[j][2] + m1[j][3];
+        m2[j][3] = m1[j][2] - m1[j][3];
+        m2[j][4] = m1[j][4] + m1[j][5];
+        m2[j][5] = m1[j][4] - m1[j][5];
+        m2[j][6] = m1[j][6] + m1[j][7];
+        m2[j][7] = m1[j][6] - m1[j][7];
+
+    }
+
+    //vertical
+    for (i = 0; i < 8; i++)
+    {
+        m3[0][i] = m2[0][i] + m2[4][i];
+        m3[1][i] = m2[1][i] + m2[5][i];
+        m3[2][i] = m2[2][i] + m2[6][i];
+        m3[3][i] = m2[3][i] + m2[7][i];
+        m3[4][i] = m2[0][i] - m2[4][i];
+        m3[5][i] = m2[1][i] - m2[5][i];
+        m3[6][i] = m2[2][i] - m2[6][i];
+        m3[7][i] = m2[3][i] - m2[7][i];
+
+        m1[0][i] = m3[0][i] + m3[2][i];
+        m1[1][i] = m3[1][i] + m3[3][i];
+        m1[2][i] = m3[0][i] - m3[2][i];
+        m1[3][i] = m3[1][i] - m3[3][i];
+        m1[4][i] = m3[4][i] + m3[6][i];
+        m1[5][i] = m3[5][i] + m3[7][i];
+        m1[6][i] = m3[4][i] - m3[6][i];
+        m1[7][i] = m3[5][i] - m3[7][i];
+
+        m2[0][i] = m1[0][i] + m1[1][i];
+        m2[1][i] = m1[0][i] - m1[1][i];
+        m2[2][i] = m1[2][i] + m1[3][i];
+        m2[3][i] = m1[2][i] - m1[3][i];
+        m2[4][i] = m1[4][i] + m1[5][i];
+        m2[5][i] = m1[4][i] - m1[5][i];
+        m2[6][i] = m1[6][i] + m1[7][i];
+        m2[7][i] = m1[6][i] - m1[7][i];
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        v1.load_a(m2[i]);
+        v1 = abs(v1);
+        sad += horizontal_add_x(v1);
+        v1.load_a(m2[i] + 4);
+        v1 = abs(v1);
+        sad += horizontal_add_x(v1);
+    }
+
+    sad = ((sad + 2) >> 2);
+
+    return sad;
+}
+#endif
+#if 0
+UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
+{
+	Int satd = 0;
+
+	assert(iStep == 1);
+
+	Vec8s v1, v2, m1, m2;
+	{
+		Vec8s temp1, temp2, temp3, temp4 , piOrg_v, piCur_v;;
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		temp3.load(piOrg);
+		temp4.load(piCur); 
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		piOrg_v = blend2q<0,2>((Vec2q)temp1,(Vec2q)temp3);
+		piCur_v = blend2q<0,2>((Vec2q)temp2,(Vec2q)temp4);
+		v1=piOrg_v - piCur_v; //diff
+
+		temp1.load(piOrg);
+		temp2.load(piCur);
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		temp3.load(piOrg);
+		temp4.load(piCur); 
+		piCur += iStrideCur;
+		piOrg += iStrideOrg;
+
+		piOrg_v = blend2q<0,2>((Vec2q)temp3,(Vec2q)temp1);
+		piCur_v = blend2q<0,2>((Vec2q)temp4,(Vec2q)temp2);
+		v2=piOrg_v - piCur_v;	//diff
+	}
+
+	for(int i=0;i<2;i++)
+	{
+		m1=v1 + v2;
+		m2=v1 - v2;
+
+		v1 = blend8s<0,8,1,9,2,10,3,11>(m1,m2);
+		v2 = blend8s<4,12,5,13,6,14,7,15>(m1,m2);		
+	}
+
+	v2 = permute2q<1,0>((Vec2q)v2);
+
+	m1=v1 + v2;
+	m2=v1 - v2;
+
+	v1 = blend8s<0,8,1,9,2,10,3,11>(m1,m2);
+	v2 = blend8s<4,12,5,13,6,14,7,15>(m1,m2);
+
+	m1 = v1 + v2;
+	m2 = v1 - v2;
+
+	v1 = abs(m1);
+	v2 = abs(m2);
+	v1 = v1 + v2; 
+	satd = horizontal_add_x(v1);
+
+	satd = ((satd + 1) >> 1);
+
+	return satd;
+}
+#endif
 #endif
