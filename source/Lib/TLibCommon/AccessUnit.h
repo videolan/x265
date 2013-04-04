@@ -31,7 +31,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** 
+/**
  \file     AccessUnit.h
  \brief    Access Unit class (header)
  */
@@ -58,14 +58,13 @@
  */
 class AccessUnit : public std::list<NALUnitEBSP*>
 {
-public:
-  ~AccessUnit()
-  {
-    for (AccessUnit::iterator it = this->begin(); it != this->end(); it++)
+public: ~AccessUnit()
     {
-      delete *it;
+        for (AccessUnit::iterator it = this->begin(); it != this->end(); it++)
+        {
+            delete *it;
+        }
     }
-  }
 };
 
 //! \}

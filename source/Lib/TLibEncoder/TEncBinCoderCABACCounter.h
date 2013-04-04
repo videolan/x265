@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -38,7 +38,6 @@
 #ifndef __TENC_BIN_CODER_CABAC_COUNTER__
 #define __TENC_BIN_CODER_CABAC_COUNTER__
 
-
 #include "TEncBinCoderCABAC.h"
 
 #if FAST_BIT_EST
@@ -46,27 +45,26 @@
 //! \ingroup TLibEncoder
 //! \{
 
-
 class TEncBinCABACCounter : public TEncBinCABAC
 {
 public:
-  TEncBinCABACCounter ();
-  virtual ~TEncBinCABACCounter();
-  
-  Void  finish            ();
-  UInt  getNumWrittenBits ();
 
-  Void  encodeBin         ( UInt  binValue,  ContextModel& rcCtxModel );
-  Void  encodeBinEP       ( UInt  binValue                            );
-  Void  encodeBinsEP      ( UInt  binValues, Int numBins              );
-  Void  encodeBinTrm      ( UInt  binValue                            );
-  
+    TEncBinCABACCounter();
+    virtual ~TEncBinCABACCounter();
+
+    Void  finish();
+    UInt  getNumWrittenBits();
+
+    Void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
+    Void  encodeBinEP(UInt binValue);
+    Void  encodeBinsEP(UInt binValues, Int numBins);
+    Void  encodeBinTrm(UInt binValue);
+
 private:
 };
 
 //! \}
 
-#endif
+#endif // if FAST_BIT_EST
 
-#endif
-
+#endif // ifndef __TENC_BIN_CODER_CABAC_COUNTER__

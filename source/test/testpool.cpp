@@ -40,6 +40,7 @@ struct CUData
     {
         memset(digest, 0, sizeof(digest));
     }
+
     unsigned char digest[16];
 };
 
@@ -61,6 +62,7 @@ struct RowData
 class MD5Frame : public QueueFrame
 {
 private:
+
     CUData  *cu;
     RowData *row;
     int      numrows;
@@ -70,12 +72,14 @@ private:
 public:
 
     MD5Frame(ThreadPool *pool) : QueueFrame(pool), cu(0), row(0) {}
+
     virtual ~MD5Frame()
     {
         if (this->cu)
-            delete [] this->cu;
+            delete[] this->cu;
+
         if (this->row)
-            delete [] this->row;
+            delete[] this->row;
     }
 
     void Initialize(int cols, int rows);
@@ -87,8 +91,8 @@ public:
 
 void MD5Frame::Initialize(int cols, int rows)
 {
-    this->cu = new CUData[ rows * cols ];
-    this->row = new RowData[ rows ];
+    this->cu = new CUData[rows * cols];
+    this->row = new RowData[rows];
     this->numrows = rows;
     this->numcols = cols;
 
@@ -112,17 +116,20 @@ void MD5Frame::Encode()
 
     clock_t stop = clock();
 
-    unsigned int *outdigest = (unsigned int *) this->cu[this->numrows * this->numcols - 1].digest;
+    unsigned int *outdigest = (unsigned int*)this->cu[this->numrows * this->numcols - 1].digest;
 
-    for (int i = 0 ; i < 4; i++)
+    for (int i = 0; i < 4; i++)
+    {
         std::cout << std::hex << outdigest[i];
+    }
+
     std::cout << " " << (float)(stop - start) / CLOCKS_PER_SEC << std::endl;
 }
 
 void MD5Frame::ProcessRow(int rownum)
 {
     // Called by worker thread
-    RowData &curRow = this->row[ rownum ];
+    RowData &curRow = this->row[rownum];
 
     assert(rownum < this->numrows);
     assert(curRow.curCol < this->numcols);
@@ -130,7 +137,7 @@ void MD5Frame::ProcessRow(int rownum)
     while (curRow.curCol < this->numcols)
     {
         int id = rownum * this->numcols + curRow.curCol;
-        CUData  &curCTU = this->cu[ id ];
+        CUData  &curCTU = this->cu[id];
         MD5 hash;
 
         // * Fake CTU processing *
@@ -139,14 +146,17 @@ void MD5Frame::ProcessRow(int rownum)
         hash.update(curCTU.digest, sizeof(curCTU.digest));
         if (curRow.curCol > 0)
             hash.update(this->cu[id - 1].digest, sizeof(curCTU.digest));
+
         if (rownum > 0)
         {
             if (curRow.curCol > 0)
                 hash.update(this->cu[id - this->numcols - 1].digest, sizeof(curCTU.digest));
+
             hash.update(this->cu[id - this->numcols].digest, sizeof(curCTU.digest));
             if (curRow.curCol < this->numcols - 1)
                 hash.update(this->cu[id - this->numcols + 1].digest, sizeof(curCTU.digest));
         }
+
         hash.finalize(curCTU.digest);
         PPAStopCpuEventFunc(encode_block);
 
@@ -161,9 +171,10 @@ void MD5Frame::ProcessRow(int rownum)
                 this->QueueFrame::EnqueueRow(rownum + 1);
             }
         }
+
         if (rownum > 0 &&
-                curRow.curCol < this->numcols - 1 &&
-                this->row[rownum - 1].curCol < curRow.curCol + 2)
+            curRow.curCol < this->numcols - 1 &&
+            this->row[rownum - 1].curCol < curRow.curCol + 2)
         {
             // row is blocked, quit job
             curRow.active = 0;

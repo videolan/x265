@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -71,141 +71,158 @@ class TEncTop;
 class TEncGOP
 {
 private:
-  //  Data
-  Bool                    m_bLongtermTestPictureHasBeenCoded;
-  Bool                    m_bLongtermTestPictureHasBeenCoded2;
-  UInt            m_numLongTermRefPicSPS;
-  UInt            m_ltRefPicPocLsbSps[33];
-  Bool            m_ltRefPicUsedByCurrPicFlag[33];
-  Int                     m_iLastIDR;
-  Int                     m_iGopSize;
-  Int                     m_iNumPicCoded;
-  Bool                    m_bFirst;
-  
-  //  Access channel
-  TEncTop*                m_pcEncTop;
-  TEncCfg*                m_pcCfg;
-  TEncSlice*              m_pcSliceEncoder;
-  TComList<TComPic*>*     m_pcListPic;
-  
-  TEncEntropy*            m_pcEntropyCoder;
-  TEncCavlc*              m_pcCavlcCoder;
-  TEncSbac*               m_pcSbacCoder;
-  TEncBinCABAC*           m_pcBinCABAC;
-  TComLoopFilter*         m_pcLoopFilter;
 
-  SEIWriter               m_seiWriter;
-  
-  //--Adaptive Loop filter
-  TEncSampleAdaptiveOffset*  m_pcSAO;
-  TComBitCounter*         m_pcBitCounter;
-  TEncRateCtrl*           m_pcRateCtrl;
-  // indicate sequence first
-  Bool                    m_bSeqFirst;
-  
-  // clean decoding refresh
-  Bool                    m_bRefreshPending;
-  Int                     m_pocCRA;
-  std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
-  std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
+    //  Data
+    Bool                    m_bLongtermTestPictureHasBeenCoded;
+    Bool                    m_bLongtermTestPictureHasBeenCoded2;
+    UInt            m_numLongTermRefPicSPS;
+    UInt            m_ltRefPicPocLsbSps[33];
+    Bool            m_ltRefPicUsedByCurrPicFlag[33];
+    Int                     m_iLastIDR;
+    Int                     m_iGopSize;
+    Int                     m_iNumPicCoded;
+    Bool                    m_bFirst;
 
-  std::vector<Int> m_vRVM_RP;
-  UInt                    m_lastBPSEI;
-  UInt                    m_totalCoded;
-  UInt                    m_cpbRemovalDelay;
-  UInt                    m_tl0Idx;
-  UInt                    m_rapIdx;
+    //  Access channel
+    TEncTop*                m_pcEncTop;
+    TEncCfg*                m_pcCfg;
+    TEncSlice*              m_pcSliceEncoder;
+    TComList<TComPic*>*     m_pcListPic;
+
+    TEncEntropy*            m_pcEntropyCoder;
+    TEncCavlc*              m_pcCavlcCoder;
+    TEncSbac*               m_pcSbacCoder;
+    TEncBinCABAC*           m_pcBinCABAC;
+    TComLoopFilter*         m_pcLoopFilter;
+
+    SEIWriter               m_seiWriter;
+
+    //--Adaptive Loop filter
+    TEncSampleAdaptiveOffset*  m_pcSAO;
+    TComBitCounter*         m_pcBitCounter;
+    TEncRateCtrl*           m_pcRateCtrl;
+    // indicate sequence first
+    Bool                    m_bSeqFirst;
+
+    // clean decoding refresh
+    Bool                    m_bRefreshPending;
+    Int                     m_pocCRA;
+    std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
+    std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
+
+    std::vector<Int> m_vRVM_RP;
+    UInt                    m_lastBPSEI;
+    UInt                    m_totalCoded;
+    UInt                    m_cpbRemovalDelay;
+    UInt                    m_tl0Idx;
+    UInt                    m_rapIdx;
 #if L0045_NON_NESTED_SEI_RESTRICTIONS
-  Bool                    m_activeParameterSetSEIPresentInAU;
-  Bool                    m_bufferingPeriodSEIPresentInAU;
-  Bool                    m_pictureTimingSEIPresentInAU;
+    Bool                    m_activeParameterSetSEIPresentInAU;
+    Bool                    m_bufferingPeriodSEIPresentInAU;
+    Bool                    m_pictureTimingSEIPresentInAU;
 #if K0180_SCALABLE_NESTING_SEI
-  Bool                    m_nestedBufferingPeriodSEIPresentInAU;
-  Bool                    m_nestedPictureTimingSEIPresentInAU;
+    Bool                    m_nestedBufferingPeriodSEIPresentInAU;
+    Bool                    m_nestedPictureTimingSEIPresentInAU;
 #endif
 #endif
+
 public:
-  TEncGOP();
-  virtual ~TEncGOP();
-  
-  Void  create      ();
-  Void  destroy     ();
-  
-  Void  init        ( TEncTop* pcTEncTop );
-  Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
-  Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
-  
-  Int   getGOPSize()          { return  m_iGopSize;  }
-  
-  TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
-  
-  Void  printOutSummary      ( UInt uiNumAllPicCoded );
-  Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits );
-  
-  TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
-  NalUnitType getNalUnitType( Int pocCurr );
-  Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>& );
+    TEncGOP();
+    virtual ~TEncGOP();
+
+    Void  create();
+    Void  destroy();
+
+    Void  init(TEncTop* pcTEncTop);
+    Void  compressGOP(Int                    iPOCLast,
+                      Int                    iNumPicRcvd,
+                      TComList<TComPic*>&    rcListPic,
+                      TComList<TComPicYuv*>& rcListPicYuvRec,
+                      std::list<AccessUnit>& accessUnitsInGOP);
+    Void  xAttachSliceDataToNalUnit(OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
+
+    Int   getGOPSize()          { return m_iGopSize;}
+
+    TComList<TComPic*>*   getListPic()      { return m_pcListPic;}
+
+    Void  printOutSummary(UInt uiNumAllPicCoded);
+    Void  preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits);
+
+    TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder;}
+
+    NalUnitType getNalUnitType(Int pocCurr);
+    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
+
 protected:
-  TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
+
+    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;}
 
 protected:
-  Void  xInitGOP          ( Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut );
-  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr );
-  
-  Void  xCalculateAddPSNR ( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime );
-  
-  UInt64 xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1);
 
-  Double xCalculateRVM();
+    Void  xInitGOP(Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut);
+    Void  xGetBuffer(TComList<TComPic*>&    rcListPic,
+                     TComList<TComPicYuv*>& rcListPicYuvRecOut,
+                     Int                    iNumPicRcvd,
+                     Int                    iTimeOffset,
+                     TComPic*&              rpcPic,
+                     TComPicYuv*&           rpcPicYuvRecOut,
+                     Int                    pocCurr);
 
-  SEIActiveParameterSets* xCreateSEIActiveParameterSets (TComSPS *sps);
-  SEIFramePacking*        xCreateSEIFramePacking();
-  SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
+    Void  xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime);
+
+    UInt64 xFindDistortionFrame(TComPicYuv* pcPic0, TComPicYuv* pcPic1);
+
+    Double xCalculateRVM();
+
+    SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
+    SEIFramePacking*        xCreateSEIFramePacking();
+    SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
 #if J0149_TONE_MAPPING_SEI
-  SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
+    SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
 #endif
 
-  Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
+    Void xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
 #if L0045_NON_NESTED_SEI_RESTRICTIONS
-  Int xGetFirstSeiLocation (AccessUnit &accessUnit);
-  Void xResetNonNestedSEIPresentFlags()
-  {
-    m_activeParameterSetSEIPresentInAU = false;
-    m_bufferingPeriodSEIPresentInAU    = false;
-    m_pictureTimingSEIPresentInAU      = false;
-  }
+    Int xGetFirstSeiLocation(AccessUnit &accessUnit);
+    Void xResetNonNestedSEIPresentFlags()
+    {
+        m_activeParameterSetSEIPresentInAU = false;
+        m_bufferingPeriodSEIPresentInAU    = false;
+        m_pictureTimingSEIPresentInAU      = false;
+    }
+
 #if K0180_SCALABLE_NESTING_SEI
-  Void xResetNestedSEIPresentFlags()
-  {
-    m_nestedBufferingPeriodSEIPresentInAU    = false;
-    m_nestedPictureTimingSEIPresentInAU      = false;
-  }
+    Void xResetNestedSEIPresentFlags()
+    {
+        m_nestedBufferingPeriodSEIPresentInAU    = false;
+        m_nestedPictureTimingSEIPresentInAU      = false;
+    }
+
 #endif
-#endif
+#endif // if L0045_NON_NESTED_SEI_RESTRICTIONS
 #if L0386_DB_METRIC
-  Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
+    Void dblMetric(TComPic* pcPic, UInt uiNumSlices);
 #endif
-};// END CLASS DEFINITION TEncGOP
+}; // END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================
 // Enumeration
 // ====================================================================================================================
 enum PROCESSING_STATE
 {
-  EXECUTE_INLOOPFILTER,
-  ENCODE_SLICE
+    EXECUTE_INLOOPFILTER,
+    ENCODE_SLICE
 };
 
 enum SCALING_LIST_PARAMETER
 {
-  SCALING_LIST_OFF,
-  SCALING_LIST_DEFAULT,
-  SCALING_LIST_FILE_READ
+    SCALING_LIST_OFF,
+    SCALING_LIST_DEFAULT,
+    SCALING_LIST_FILE_READ
 };
 
 //! \}
 
 #endif // __TENCGOP__
-

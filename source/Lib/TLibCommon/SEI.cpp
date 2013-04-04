@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -38,51 +38,60 @@
 #include "CommonDef.h"
 #include "SEI.h"
 
-#if J0149_TONE_MAPPING_SEI 
+#if J0149_TONE_MAPPING_SEI
 //Table D-7 Meaning of camera iso sensitivity indicator and exposure index rating indicator
-Int  Table_exp_indicator[32] = {0, 10, 12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400, 8000, -1};
+Int  Table_exp_indicator[32] =
+{
+    0, 10, 12, 16, 20, 25, 32, 40, 50, 64,
+    80, 100, 125, 160, 200, 250, 320, 400,
+    500, 640, 800, 1000, 1250, 1600, 2000,
+    2500, 3200, 4000, 5000, 6400, 8000, -1
+};
 #endif
 
 SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType)
 {
-  SEIMessages result;
+    SEIMessages result;
 
-  for (SEIMessages::iterator it=seiList.begin(); it!=seiList.end(); it++)
-  {
-    if ((*it)->payloadType() == seiType)
+    for (SEIMessages::iterator it = seiList.begin(); it != seiList.end(); it++)
     {
-      result.push_back(*it);
+        if ((*it)->payloadType() == seiType)
+        {
+            result.push_back(*it);
+        }
     }
-  }
-  return result;
+
+    return result;
 }
 
 SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType)
 {
-  SEIMessages result;
+    SEIMessages result;
 
-  SEIMessages::iterator it=seiList.begin(); 
-  while ( it!=seiList.end() ) 
-  {
-    if ((*it)->payloadType() == seiType)
+    SEIMessages::iterator it = seiList.begin();
+
+    while (it != seiList.end())
     {
-      result.push_back(*it);
-      it = seiList.erase(it);
+        if ((*it)->payloadType() == seiType)
+        {
+            result.push_back(*it);
+            it = seiList.erase(it);
+        }
+        else
+        {
+            it++;
+        }
     }
-    else
-    {
-      it++;
-    }
-  }
-  return result;
+
+    return result;
 }
 
-
-Void deleteSEIs (SEIMessages &seiList)
+Void deleteSEIs(SEIMessages &seiList)
 {
-  for (SEIMessages::iterator it=seiList.begin(); it!=seiList.end(); it++)
-  {
-    delete (*it);
-  }
-  seiList.clear();
+    for (SEIMessages::iterator it = seiList.begin(); it != seiList.end(); it++)
+    {
+        delete (*it);
+    }
+
+    seiList.clear();
 }

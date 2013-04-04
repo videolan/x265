@@ -44,86 +44,93 @@ using namespace std;
 //! \ingroup TLibEncoder
 //! \{
 
-static const Char emulation_prevention_three_byte[] = {3};
+static const Char emulation_prevention_three_byte[] = {
+3
+};
 
 Void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
 {
-TComOutputBitstream bsNALUHeader;
+    TComOutputBitstream bsNALUHeader;
 
-  bsNALUHeader.write(0,1);                    // forbidden_zero_bit
-  bsNALUHeader.write(nalu.m_nalUnitType, 6);  // nal_unit_type
-  bsNALUHeader.write(nalu.m_reservedZero6Bits, 6);                   // nuh_reserved_zero_6bits
-  bsNALUHeader.write(nalu.m_temporalId+1, 3); // nuh_temporal_id_plus1
+    bsNALUHeader.write(0, 1);                 // forbidden_zero_bit
+    bsNALUHeader.write(nalu.m_nalUnitType, 6); // nal_unit_type
+    bsNALUHeader.write(nalu.m_reservedZero6Bits, 6);                 // nuh_reserved_zero_6bits
+    bsNALUHeader.write(nalu.m_temporalId + 1, 3); // nuh_temporal_id_plus1
 
-  out.write(bsNALUHeader.getByteStream(), bsNALUHeader.getByteStreamLength());
+    out.write(bsNALUHeader.getByteStream(), bsNALUHeader.getByteStreamLength());
 }
+
 /**
  * write nalu to bytestream out, performing RBSP anti startcode
  * emulation as required.  nalu.m_RBSPayload must be byte aligned.
  */
 void write(ostream& out, OutputNALUnit& nalu)
 {
-  writeNalUnitHeader(out, nalu);
-  /* write out rsbp_byte's, inserting any required
-   * emulation_prevention_three_byte's */
-  /* 7.4.1 ...
-   * emulation_prevention_three_byte is a byte equal to 0x03. When an
-   * emulation_prevention_three_byte is present in the NAL unit, it shall be
-   * discarded by the decoding process.
-   * The last byte of the NAL unit shall not be equal to 0x00.
-   * Within the NAL unit, the following three-byte sequences shall not occur at
-   * any byte-aligned position:
-   *  - 0x000000
-   *  - 0x000001
-   *  - 0x000002
-   * Within the NAL unit, any four-byte sequence that starts with 0x000003
-   * other than the following sequences shall not occur at any byte-aligned
-   * position:
-   *  - 0x00000300
-   *  - 0x00000301
-   *  - 0x00000302
-   *  - 0x00000303
-   */
-  vector<uint8_t>& rbsp   = nalu.m_Bitstream.getFIFO();
+    writeNalUnitHeader(out, nalu);
 
-  for (vector<uint8_t>::iterator it = rbsp.begin(); it != rbsp.end();)
-  {
-    /* 1) find the next emulated 00 00 {00,01,02,03}
-     * 2a) if not found, write all remaining bytes out, stop.
-     * 2b) otherwise, write all non-emulated bytes out
-     * 3) insert emulation_prevention_three_byte
+    /* write out rsbp_byte's, inserting any required
+     * emulation_prevention_three_byte's */
+
+    /* 7.4.1 ...
+     * emulation_prevention_three_byte is a byte equal to 0x03. When an
+     * emulation_prevention_three_byte is present in the NAL unit, it shall be
+     * discarded by the decoding process.
+     * The last byte of the NAL unit shall not be equal to 0x00.
+     * Within the NAL unit, the following three-byte sequences shall not occur at
+     * any byte-aligned position:
+     *  - 0x000000
+     *  - 0x000001
+     *  - 0x000002
+     * Within the NAL unit, any four-byte sequence that starts with 0x000003
+     * other than the following sequences shall not occur at any byte-aligned
+     * position:
+     *  - 0x00000300
+     *  - 0x00000301
+     *  - 0x00000302
+     *  - 0x00000303
      */
-    vector<uint8_t>::iterator found = it;
-    do
-    {
-      /* NB, end()-1, prevents finding a trailing two byte sequence */
-      found = search_n(found, rbsp.end()-1, 2, 0);
-      found++;
-      /* if not found, found == end, otherwise found = second zero byte */
-      if (found == rbsp.end())
-        break;
-      if (*(++found) <= 3)
-        break;
-    } while (true);
+    vector<uint8_t>& rbsp   = nalu.m_Bitstream.getFIFO();
 
-    it = found;
-    if (found != rbsp.end())
+    for (vector<uint8_t>::iterator it = rbsp.begin(); it != rbsp.end(); )
     {
-      it = rbsp.insert(found, emulation_prevention_three_byte[0]);
+        /* 1) find the next emulated 00 00 {00,01,02,03}
+         * 2a) if not found, write all remaining bytes out, stop.
+         * 2b) otherwise, write all non-emulated bytes out
+         * 3) insert emulation_prevention_three_byte
+         */
+        vector<uint8_t>::iterator found = it;
+        do
+        {
+            /* NB, end()-1, prevents finding a trailing two byte sequence */
+            found = search_n(found, rbsp.end() - 1, 2, 0);
+            found++;
+            /* if not found, found == end, otherwise found = second zero byte */
+            if (found == rbsp.end())
+                break;
+
+            if (*(++found) <= 3)
+                break;
+        }
+        while (true);
+
+        it = found;
+        if (found != rbsp.end())
+        {
+            it = rbsp.insert(found, emulation_prevention_three_byte[0]);
+        }
     }
-  }
 
-  out.write((Char*)&(*rbsp.begin()), rbsp.end() - rbsp.begin());
+    out.write((Char*)&(*rbsp.begin()), rbsp.end() - rbsp.begin());
 
-  /* 7.4.1.1
-   * ... when the last byte of the RBSP data is equal to 0x00 (which can
-   * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
-   * to 0x03 is appended to the end of the data.
-   */
-  if (rbsp.back() == 0x00)
-  {
-    out.write(emulation_prevention_three_byte, 1);
-  }
+    /* 7.4.1.1
+     * ... when the last byte of the RBSP data is equal to 0x00 (which can
+     * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
+     * to 0x03 is appended to the end of the data.
+     */
+    if (rbsp.back() == 0x00)
+    {
+        out.write(emulation_prevention_three_byte, 1);
+    }
 }
 
 /**
@@ -131,8 +138,8 @@ void write(ostream& out, OutputNALUnit& nalu)
  */
 void writeRBSPTrailingBits(TComOutputBitstream& bs)
 {
-  bs.write( 1, 1 );
-  bs.writeAlignZero();
+    bs.write(1, 1);
+    bs.writeAlignZero();
 }
 
 /**
@@ -140,10 +147,10 @@ void writeRBSPTrailingBits(TComOutputBitstream& bs)
  */
 void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc)
 {
-  naluDest.m_nalUnitType = naluSrc.m_nalUnitType;
-  naluDest.m_reservedZero6Bits  = naluSrc.m_reservedZero6Bits;
-  naluDest.m_temporalId  = naluSrc.m_temporalId;
-  naluDest.m_Bitstream   = naluSrc.m_Bitstream;
+    naluDest.m_nalUnitType = naluSrc.m_nalUnitType;
+    naluDest.m_reservedZero6Bits  = naluSrc.m_reservedZero6Bits;
+    naluDest.m_temporalId  = naluSrc.m_temporalId;
+    naluDest.m_Bitstream   = naluSrc.m_Bitstream;
 }
 
 //! \}

@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -57,59 +57,63 @@ using namespace std;
 // ====================================================================================================================
 
 /// list template
-template< class C >
-class TComList : public std::list< C >
+template<class C>
+class TComList : public std::list<C>
 {
 public:
-  typedef typename std::list<C>::iterator TComIterator;
-  
-  TComList& operator += ( const TComList& rcTComList)
-  {
-    if( ! rcTComList.empty() )
+
+    typedef typename std::list<C>::iterator TComIterator;
+
+    TComList& operator +=(const TComList& rcTComList)
     {
-      insert( this->end(), rcTComList.begin(), rcTComList.end());
-    }
-    return *this;
-  } // leszek
-  
-  C popBack()
-  {
-    C cT = this->back();
-    this->pop_back();
-    return cT;
-  }
-  
-  C popFront()
-  {
-    C cT = this->front();
-    this->pop_front();
-    return cT;
-  }
-  
-  Void pushBack( const C& rcT )
-  {
-    /*assert( sizeof(C) == 4);*/
-    if( rcT != NULL )
+        if (!rcTComList.empty())
+        {
+            insert(this->end(), rcTComList.begin(), rcTComList.end());
+        }
+
+        return *this;
+    } // leszek
+
+    C popBack()
     {
-      this->push_back( rcT);
+        C cT = this->back();
+
+        this->pop_back();
+        return cT;
     }
-  }
-  
-  Void pushFront( const C& rcT )
-  {
-    /*assert( sizeof(C) == 4);*/
-    if( rcT != NULL )
+
+    C popFront()
     {
-      this->push_front( rcT);
+        C cT = this->front();
+
+        this->pop_front();
+        return cT;
     }
-  }
-  
-  TComIterator find( const C& rcT ) // leszek
-  {
-    return find( this->begin(), this->end(), rcT );
-  }
+
+    Void pushBack(const C& rcT)
+    {
+        /*assert( sizeof(C) == 4);*/
+        if (rcT != NULL)
+        {
+            this->push_back(rcT);
+        }
+    }
+
+    Void pushFront(const C& rcT)
+    {
+        /*assert( sizeof(C) == 4);*/
+        if (rcT != NULL)
+        {
+            this->push_front(rcT);
+        }
+    }
+
+    TComIterator find(const C& rcT) // leszek
+    {
+        return find(this->begin(), this->end(), rcT);
+    }
 };
 
 //! \}
 
-#endif
+#endif // ifndef _TCOMLIST_

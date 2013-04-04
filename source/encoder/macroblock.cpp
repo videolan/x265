@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Steve Borho <steve@borho.org>
+ * Authors:
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,33 +21,21 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-/* This header is included into the per-architecture CPP files.  Each
- * one will define ARCH to a different value. */
-
 #include "primitives.h"
 
-using namespace x265;
-
 namespace {
-// each of these headers implements a portion of the performance
-// primitives and declares a Setup_Vec_FOOPrimitves() method.
-#include "pixel.inc"
-#include "macroblock.inc"
+// anonymous file-static namespace
+
+// .. define C/C++ macroblock primitives
+
 }
 
-#define PASTER(name, val) name ## _ ## val
-#define EVALUATOR(x, y)   PASTER(x, y)
-#define NAME(func)        EVALUATOR(func, ARCH)
-
 namespace x265 {
-// private x265 namespace
+// x265 private namespace
 
-/* initialize function table with functions compiled for this vector
- * architecture.  This is the only symbol exported from each file. */
-void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
+void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
-    Setup_Vec_PixelPrimitives(p);
-    Setup_Vec_MacroblockPrimitives(p);
+    p.satd[0] = p.satd[0]; // just to prevent warnings, delete me
 }
 
 }

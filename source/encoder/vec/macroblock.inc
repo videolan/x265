@@ -21,33 +21,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-/* This header is included into the per-architecture CPP files.  Each
- * one will define ARCH to a different value. */
+// Vector class versions of macroblock performance primitives
 
-#include "primitives.h"
-
-using namespace x265;
-
-namespace {
-// each of these headers implements a portion of the performance
-// primitives and declares a Setup_Vec_FOOPrimitves() method.
-#include "pixel.inc"
-#include "macroblock.inc"
-}
-
-#define PASTER(name, val) name ## _ ## val
-#define EVALUATOR(x, y)   PASTER(x, y)
-#define NAME(func)        EVALUATOR(func, ARCH)
-
-namespace x265 {
-// private x265 namespace
-
-/* initialize function table with functions compiled for this vector
- * architecture.  This is the only symbol exported from each file. */
-void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
+void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &)
 {
-    Setup_Vec_PixelPrimitives(p);
-    Setup_Vec_MacroblockPrimitives(p);
-}
-
 }

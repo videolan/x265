@@ -41,6 +41,7 @@ typedef unsigned char GroupID;
 class Base
 {
 public:
+
     virtual ~Base() {}
 
     virtual bool isEventFiltered(EventID eventId) const = 0;
@@ -58,9 +59,9 @@ public:
     virtual EventID getEventId(int index) const = 0;
 
 protected:
+
     virtual void init(const char **pNames, int eventCount) = 0;
 };
-
 }
 
 #endif //_PPA_API_H_

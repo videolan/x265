@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -50,11 +50,11 @@
 class TComCABACTables
 {
 public:
-  const static UChar  sm_aucLPSTable[64][4];
-  const static UChar  sm_aucRenormTable[32];
-};
 
+    const static UChar  sm_aucLPSTable[64][4];
+    const static UChar  sm_aucRenormTable[32];
+};
 
 //! \}
 
-#endif
+#endif // ifndef __TCOM_CABAC_TABLES__

@@ -11,11 +11,14 @@ if (MSVC_VERSION EQUAL 1700) # VC11
     set_source_files_properties(avx.cpp avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
 endif()
 if(GCC)
-    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp)
-    add_definitions(-msse4)
+    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp)
+    set_source_files_properties(sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+                                PROPERTIES COMPILE_FLAGS -msse4)
+    set_source_files_properties(avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
 endif(GCC)
 
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
-add_library(VectorPrimitives ${PRIMITIVES} ${VECTORCLASS} vecprimitives.inc)
+add_library(VectorPrimitives ${PRIMITIVES} ${VECTORCLASS}
+            vecprimitives.inc pixel.inc macroblock.inc)

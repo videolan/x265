@@ -45,6 +45,7 @@ protected:
     JobProvider  *m_prevProvider;
 
 public:
+
     JobProvider(ThreadPool *p) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
 
     virtual ~JobProvider();
@@ -68,6 +69,7 @@ public:
 class QueueFrame : public JobProvider
 {
 private:
+
     //< bitmap of rows queued for processing.  Must use atomic intrinsics to
     //< set and clear bits, for thread safety
     uint64_t volatile *m_queuedBitmap;
@@ -81,6 +83,7 @@ private:
     bool FindJob();
 
 public:
+
     QueueFrame(ThreadPool *pool) : JobProvider(pool), m_queuedBitmap(0) {}
 
     //< Must be called just once after the frame is allocated.  Returns true on
@@ -109,6 +112,7 @@ protected:
     ~ThreadPool() {}
 
 public:
+
     //< When numthreads == 0, a default thread count is used. A request may grow
     //< an existing pool but it will never shrink.
     static ThreadPool *AllocThreadPool(int numthreads = 0);
@@ -123,8 +127,6 @@ public:
 
     virtual void PokeIdleThreads() = 0;
 };
-
-
 } // end namespace x265
 
-#endif
+#endif // ifndef _THREADPOOL_H_

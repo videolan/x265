@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -39,58 +39,61 @@
 class MD5
 {
 public:
-  /**
-   * initialize digest state
-   */
-  MD5()
-  {
-    MD5Init(&m_state);
-  }
 
-  /**
-   * compute digest over buf of length len.
-   * multiple calls may extend the digest over more data.
-   */
-  void update(unsigned char *buf, unsigned len)
-  {
-    MD5Update(&m_state, buf, len);
-  }
+    /**
+     * initialize digest state
+     */
+    MD5()
+    {
+        MD5Init(&m_state);
+    }
 
-  /**
-   * flush any outstanding MD5 data, write the digest into digest.
-   */
-  void finalize(unsigned char digest[16])
-  {
-    MD5Final(digest, &m_state);
-  }
+    /**
+     * compute digest over buf of length len.
+     * multiple calls may extend the digest over more data.
+     */
+    void update(unsigned char *buf, unsigned len)
+    {
+        MD5Update(&m_state, buf, len);
+    }
+
+    /**
+     * flush any outstanding MD5 data, write the digest into digest.
+     */
+    void finalize(unsigned char digest[16])
+    {
+        MD5Final(digest, &m_state);
+    }
 
 private:
-  context_md5_t m_state;
-};
 
+    context_md5_t m_state;
+};
 
 /**
  * Produce an ascii(hex) representation of picture digest.
  *
  * Returns: a statically allocated null-terminated string.  DO NOT FREE.
  */
-inline const char*
-digestToString(const unsigned char digest[3][16], int numChar)
+inline const char*digestToString(const unsigned char digest[3][16], int numChar)
 {
-  const char* hex = "0123456789abcdef";
-  static char string[99];
-  int cnt=0;
-  for(int yuvIdx=0; yuvIdx<3; yuvIdx++)
-  {
-    for (int i = 0; i < numChar; i++)
-    {
-      string[cnt++] = hex[digest[yuvIdx][i] >> 4];
-      string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
-    }
-    string[cnt++] = ',';
-  }
+    const char* hex = "0123456789abcdef";
+    static char string[99];
+    int cnt = 0;
 
-  string[cnt-1] = '\0';
-  return string;
+    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    {
+        for (int i = 0; i < numChar; i++)
+        {
+            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
+            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
+        }
+
+        string[cnt++] = ',';
+    }
+
+    string[cnt - 1] = '\0';
+    return string;
 }
+
 //! \}

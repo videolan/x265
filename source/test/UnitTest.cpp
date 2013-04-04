@@ -8,8 +8,8 @@ int UnitTest::CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two)
     int Buff_one_length;
     int Buff_two_length;
 
-    Buff_one_length = strlen((char *)Buff_one);
-    Buff_two_length = strlen((char *)Buff_two);
+    Buff_one_length = strlen((char*)Buff_one);
+    Buff_two_length = strlen((char*)Buff_two);
 
     //Check for both the buffer size is same or not
     if (Buff_one_length != Buff_two_length)
@@ -30,7 +30,6 @@ int UnitTest::CompareBuffer(unsigned char *Buff_one, unsigned char *Buff_two)
     }
 
     return MATCHED;
-
 }
 
 //Compare the Two given Files with Binary Mode
@@ -49,7 +48,7 @@ int UnitTest::CompareFiles(char *file1, char *file2)
         olength = oldf.tellg();
         oldf.seekg(0, ios::beg);
         oldb = new unsigned char[olength];
-        oldf.read((char *)oldb, olength);
+        oldf.read((char*)oldb, olength);
         if (oldf.bad())
             return FILE_READ_ERROR;
 
@@ -61,7 +60,6 @@ int UnitTest::CompareFiles(char *file1, char *file2)
         return FILE_OPEN_ERROR;
     }
 
-
     newf.open(file2, ios::in);
     if (newf.is_open())
     {
@@ -69,7 +67,7 @@ int UnitTest::CompareFiles(char *file1, char *file2)
         nlength = newf.tellg();
         newf.seekg(0, ios::beg);
         newb = new unsigned char[nlength];
-        newf.read((char *)newb, nlength);
+        newf.read((char*)newb, nlength);
         if (newf.bad())
             return FILE_READ_ERROR;
 
@@ -83,33 +81,33 @@ int UnitTest::CompareFiles(char *file1, char *file2)
 
     //Compare the Two files output
     return CompareBuffer(oldb, newb);
-
 }
 
 //Write the Buffer To File with Append Mode
 int UnitTest::DumpBuffer(unsigned char *Buffer, char *Filename)
 {
     fstream   fhandle;
+
     fhandle.open(Filename, ios::binary | ios::app | ios::out);
 
     if (fhandle.is_open())
     {
-        if (strlen((char *)Buffer) == 0)
+        if (strlen((char*)Buffer) == 0)
             return WRONG_BUFFER;
 
-        fhandle.write((char *)Buffer, strlen((char *)Buffer));
+        fhandle.write((char*)Buffer, strlen((char*)Buffer));
         if (fhandle.bad())
         {
             fhandle.close();
             return FILEWRITE_ERROR;
         }
+
         fhandle.close();
     }
     else
         return FILE_OPEN_ERROR;
 
     return 0;
-
 }
 
 //Compare two YUV Output Files
@@ -128,7 +126,7 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
         olength = oldf.tellg();
         oldf.seekg(0, ios::beg);
         oldb = new unsigned char[olength];
-        oldf.read((char *)oldb, olength);
+        oldf.read((char*)oldb, olength);
         if (oldf.bad())
             return FILE_READ_ERROR;
 
@@ -140,7 +138,6 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
         return FILE_OPEN_ERROR;
     }
 
-
     newf.open(file2, ios::in);
     if (newf.is_open())
     {
@@ -148,7 +145,7 @@ int UnitTest::CompareYUVOutputFile(char *file1, char *file2)
         nlength = newf.tellg();
         newf.seekg(0, ios::beg);
         newb = new unsigned char[nlength];
-        newf.read((char *)newb, nlength);
+        newf.read((char*)newb, nlength);
         if (newf.bad())
             return FILE_READ_ERROR;
 
@@ -177,8 +174,8 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
     double pixel_x, pixel_y;
     int frame, macroblock;
 
-    a_size = strlen((char *)Buff_old);
-    b_size = strlen((char *)Buff_new);
+    a_size = strlen((char*)Buff_old);
+    b_size = strlen((char*)Buff_new);
 
     if (a_size != b_size)
         return NOT_MATCHED;

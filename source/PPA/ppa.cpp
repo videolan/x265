@@ -34,8 +34,8 @@
 #include "ppa.h"
 #include <stdlib.h>
 
-#define PPA_REGISTER_CPU_EVENT2GROUP(x,y) #x,#y,
-#define PPA_REGISTER_CPU_EVENT(x) PPA_REGISTER_CPU_EVENT2GROUP(x,NoGroup)
+#define PPA_REGISTER_CPU_EVENT2GROUP(x, y) # x, # y,
+#define PPA_REGISTER_CPU_EVENT(x) PPA_REGISTER_CPU_EVENT2GROUP(x, NoGroup)
 const char *PPACpuAndGroup[] =
 {
 #include "ppaCPUEvents.h"
@@ -45,8 +45,8 @@ const char *PPACpuAndGroup[] =
 #undef PPA_REGISTER_CPU_EVENT2GROUP
 
 extern "C" {
-    typedef ppa::Base *(FUNC_PPALibInit)(const char **, int);
-    typedef void (FUNC_PPALibRelease)(ppa::Base* &);
+typedef ppa::Base *(FUNC_PPALibInit)(const char **, int);
+typedef void (FUNC_PPALibRelease)(ppa::Base* &);
 }
 
 static FUNC_PPALibRelease *_pfuncPpaRelease;
@@ -72,7 +72,7 @@ static void _ppaReleaseAtExit()
 # else
 # define PPA_DLL_NAME "ppa.dll"
 # endif
-#endif
+#endif // if defined(_M_X64) || defined(__x86_64__) || defined(__amd64__)
 
 void initializePPA(void)
 {
@@ -83,8 +83,8 @@ void initializePPA(void)
     if (!_ppaLibHandle)
         return;
 
-    FUNC_PPALibInit *_pfuncPpaInit = (FUNC_PPALibInit *) GetProcAddress(_ppaLibHandle, "InitPpaUtil");
-    _pfuncPpaRelease  = (FUNC_PPALibRelease *) GetProcAddress(_ppaLibHandle, "DeletePpa");
+    FUNC_PPALibInit *_pfuncPpaInit = (FUNC_PPALibInit*)GetProcAddress(_ppaLibHandle, "InitPpaUtil");
+    _pfuncPpaRelease  = (FUNC_PPALibRelease*)GetProcAddress(_ppaLibHandle, "DeletePpa");
 
     if (!_pfuncPpaInit || !_pfuncPpaRelease)
     {
@@ -127,8 +127,8 @@ void initializePPA(void)
         return;
     }
 
-    FUNC_PPALibInit *_pfuncPpaInit = (FUNC_PPALibInit *)dlsym(_ppaDllHandle, "InitPpaUtil");
-    _pfuncPpaRelease = (FUNC_PPALibRelease *)dlsym(_ppaDllHandle, "DeletePpa");
+    FUNC_PPALibInit *_pfuncPpaInit = (FUNC_PPALibInit*)dlsym(_ppaDllHandle, "InitPpaUtil");
+    _pfuncPpaRelease = (FUNC_PPALibRelease*)dlsym(_ppaDllHandle, "DeletePpa");
 
     if (!_pfuncPpaInit || !_pfuncPpaRelease)
     {
@@ -147,6 +147,7 @@ void initializePPA(void)
 
     atexit(_ppaReleaseAtExit);
 }
+
 #endif /* !_WIN32 */
 
 #endif /* defined(ENABLE_PPA) */

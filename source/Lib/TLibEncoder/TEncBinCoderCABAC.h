@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -47,58 +47,65 @@
 class TEncBinCABAC : public TEncBinIf
 {
 public:
-  TEncBinCABAC ();
-  virtual ~TEncBinCABAC();
-  
-  Void  init              ( TComBitIf* pcTComBitIf );
-  Void  uninit            ();
-  
-  Void  start             ();
-  Void  finish            ();
-  Void  copyState         ( TEncBinIf* pcTEncBinIf );
-  Void  flush            ();
 
-  Void  resetBac          ();
-  Void  encodePCMAlignBits();
-  Void  xWritePCMCode     ( UInt uiCode, UInt uiLength );
-  
-  Void  resetBits         ();
-  UInt  getNumWrittenBits ();
-  
-  Void  encodeBin         ( UInt  binValue,  ContextModel& rcCtxModel );
-  Void  encodeBinEP       ( UInt  binValue                            );
-  Void  encodeBinsEP      ( UInt  binValues, Int numBins              );
-  Void  encodeBinTrm      ( UInt  binValue                            );
-  
-  TEncBinCABAC* getTEncBinCABAC()  { return this; }
-  
-  Void  setBinsCoded              ( UInt uiVal )  { m_uiBinsCoded = uiVal;               }
-  UInt  getBinsCoded              ()              { return m_uiBinsCoded;                }
-  Void  setBinCountingEnableFlag  ( Bool bFlag )  { m_binCountIncrement = bFlag ? 1 : 0; }
-  Bool  getBinCountingEnableFlag  ()              { return m_binCountIncrement != 0;     }
-  
+    TEncBinCABAC();
+    virtual ~TEncBinCABAC();
+
+    Void  init(TComBitIf* pcTComBitIf);
+    Void  uninit();
+
+    Void  start();
+    Void  finish();
+    Void  copyState(TEncBinIf* pcTEncBinIf);
+    Void  flush();
+
+    Void  resetBac();
+    Void  encodePCMAlignBits();
+    Void  xWritePCMCode(UInt uiCode, UInt uiLength);
+
+    Void  resetBits();
+    UInt  getNumWrittenBits();
+
+    Void  encodeBin(UInt binValue,  ContextModel& rcCtxModel);
+    Void  encodeBinEP(UInt binValue);
+    Void  encodeBinsEP(UInt binValues, Int numBins);
+    Void  encodeBinTrm(UInt binValue);
+
+    TEncBinCABAC* getTEncBinCABAC()  { return this;}
+
+    Void  setBinsCoded(UInt uiVal)  { m_uiBinsCoded = uiVal;}
+
+    UInt  getBinsCoded()              { return m_uiBinsCoded;}
+
+    Void  setBinCountingEnableFlag(Bool bFlag)  { m_binCountIncrement = bFlag ? 1 : 0;}
+
+    Bool  getBinCountingEnableFlag()              { return m_binCountIncrement != 0;}
+
 #if FAST_BIT_EST
+
 protected:
+
 #else
+
 private:
+
 #endif
-  Void testAndWriteOut();
-  Void writeOut();
-  
-  TComBitIf*          m_pcTComBitIf;
-  UInt                m_uiLow;
-  UInt                m_uiRange;
-  UInt                m_bufferedByte;
-  Int                 m_numBufferedBytes;
-  Int                 m_bitsLeft;
-  UInt                m_uiBinsCoded;
-  Int                 m_binCountIncrement;
+    Void testAndWriteOut();
+    Void writeOut();
+
+    TComBitIf*          m_pcTComBitIf;
+    UInt                m_uiLow;
+    UInt                m_uiRange;
+    UInt                m_bufferedByte;
+    Int                 m_numBufferedBytes;
+    Int                 m_bitsLeft;
+    UInt                m_uiBinsCoded;
+    Int                 m_binCountIncrement;
 #if FAST_BIT_EST
-  UInt64 m_fracBits;
+    UInt64 m_fracBits;
 #endif
 };
 
 //! \}
 
-#endif
-
+#endif // ifndef __TENC_BIN_CODER_CABAC__
