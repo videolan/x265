@@ -132,6 +132,11 @@ int main(int argc, char *argv[])
         numofprim = atoi(argv[2]);
     }
 
+    if (argc > 1 && !strncmp(argv[1], "--cpuid", 7))
+    {
+        cpuid = atoi(argv[2]);
+    }
+
     pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     if (!pbuf1 || !pbuf2)
@@ -147,35 +152,34 @@ int main(int argc, char *argv[])
         pbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    EncoderPrimitives cprimitives;
-    EncoderPrimitives vectorprimitives;
+    EncoderPrimitives cprim;
+    Setup_C_Primitives(cprim);
 
-    cpuid = CpuIDDetect();
-    memset(&vectorprimitives, 0, sizeof(vectorprimitives));
+    EncoderPrimitives vecprim;
+    memset(&vecprim, 0, sizeof(vecprim));
+    if (cpuid == 0)
+        cpuid = CpuIDDetect();
 
 #if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(vectorprimitives);
+    if (cpuid > 1) Setup_Vec_Primitives_sse2(vecprim);
 
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(vectorprimitives);
+    if (cpuid > 2) Setup_Vec_Primitives_sse3(vecprim);
 
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vectorprimitives);
+    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vecprim);
 
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(vectorprimitives);
+    if (cpuid > 4) Setup_Vec_Primitives_sse41(vecprim);
 
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(vectorprimitives);
+    if (cpuid > 5) Setup_Vec_Primitives_sse42(vecprim);
 
 #endif // if defined(__GNUC__) || defined(_MSC_VER)
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(vectorprimitives);
+    if (cpuid > 6) Setup_Vec_Primitives_avx(vecprim);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(vectorprimitives);
+    if (cpuid > 7) Setup_Vec_Primitives_avx2(vecprim);
 #endif
 
-    //Initialize the default c_Primitives
-    Setup_C_Primitives(cprimitives);
-
-    ret = check_all_funcs(cprimitives, vectorprimitives); //do the output validation for c and vector primitives
+    ret = check_all_funcs(cprim, vecprim); //do the output validation for c and vector primitives
     if (ret)
     {
         fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
