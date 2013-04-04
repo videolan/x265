@@ -79,6 +79,7 @@ enum Partitions
 int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef int (CDECL * dst)(short *block, short *coeff, int shift);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -88,6 +89,9 @@ struct EncoderPrimitives
     /* All pixel comparison functions take the same arguments */
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
+
+   /* primitive for fastInverseDst function */
+	dst inversedst;
 
     /* .. Define primitives for more things .. */
 };
