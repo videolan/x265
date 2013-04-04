@@ -120,15 +120,17 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
 
-    if (argc > 1 && !strncmp(argv[1], "--primitive", 11))
+    for (int i = 1; i < argc-1; i+=2)
     {
-        do_singleprimitivecheck = 1;
-        numofprim = atoi(argv[2]);
-    }
-
-    if (argc > 1 && !strncmp(argv[1], "--cpuid", 7))
-    {
-        cpuid = atoi(argv[2]);
+        if (!strcmp(argv[i], "--primitive"))
+        {
+            do_singleprimitivecheck = 1;
+            numofprim = atoi(argv[i+1]);
+        }
+        else if (!strcmp(argv[i], "--cpuid"))
+        {
+            cpuid = atoi(argv[i+1]);
+        }
     }
 
     pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
