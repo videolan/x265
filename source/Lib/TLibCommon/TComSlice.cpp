@@ -1717,7 +1717,7 @@ Void TComReferencePictureSet::sortDeltaPOC()
 
     // flip the negative values to largest first
     Int numNegPics = getNumberOfNegativePictures();
-    for (Int j = 0, k = numNegPics - 1; j<numNegPics> > 1; j++, k--)
+    for (Int j = 0, k = numNegPics - 1; j < (numNegPics >> 1); j++, k--)
     {
         Int deltaPOC = getDeltaPOC(j);
         Bool used = getUsed(j);

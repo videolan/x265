@@ -314,9 +314,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
     shift = g_bitDepthC - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
-    for (y = 0; y<m_iPicHeight> > 1; y++)
+    for (y = 0; y < (m_iPicHeight >> 1); y++)
     {
-        for (x = 0; x<m_iPicWidth> > 1; x++)
+        for (x = 0; x < (m_iPicWidth >> 1); x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (piCb[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -325,9 +325,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         piCb += getCStride();
     }
 
-    for (y = 0; y<m_iPicHeight> > 1; y++)
+    for (y = 0; y < (m_iPicHeight >> 1); y++)
     {
-        for (x = 0; x<m_iPicWidth> > 1; x++)
+        for (x = 0; x < (m_iPicWidth >> 1); x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (piCr[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);

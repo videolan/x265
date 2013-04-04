@@ -86,10 +86,10 @@ Void TEncPreanalyzer::xPreanalyze(TEncPic* pcEPic)
                 UInt64 uiSumSq[4] = { 0, 0, 0, 0 };
                 UInt uiNumPixInAQPart = 0;
                 UInt by = 0;
-                for (; by<uiCurrAQPartHeight> > 1; by++)
+                for (; by < (uiCurrAQPartHeight >> 1); by++)
                 {
                     UInt bx = 0;
-                    for (; bx<uiCurrAQPartWidth> > 1; bx++, uiNumPixInAQPart++)
+                    for (; bx < (uiCurrAQPartWidth >> 1); bx++, uiNumPixInAQPart++)
                     {
                         uiSum[0] += pBlkY[bx];
                         uiSumSq[0] += pBlkY[bx] * pBlkY[bx];
@@ -107,7 +107,7 @@ Void TEncPreanalyzer::xPreanalyze(TEncPic* pcEPic)
                 for (; by < uiCurrAQPartHeight; by++)
                 {
                     UInt bx = 0;
-                    for (; bx<uiCurrAQPartWidth> > 1; bx++, uiNumPixInAQPart++)
+                    for (; bx < (uiCurrAQPartWidth >> 1); bx++, uiNumPixInAQPart++)
                     {
                         uiSum[2] += pBlkY[bx];
                         uiSumSq[2] += pBlkY[bx] * pBlkY[bx];
