@@ -20,3 +20,22 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
+
+#include "primitives.h"
+
+namespace {
+// anonymous file-static namespace
+
+// .. define C/C++ macroblock primitives
+
+}
+
+namespace x265 {
+// x265 private namespace
+
+void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
+{
+    p.satd[0] = p.satd[0]; // just to prevent warnings, delete me
+}
+
+}

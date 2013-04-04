@@ -64,8 +64,8 @@ EncoderPrimitives primitives;
 
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
-    Setup_C_PixelPrimitives(p); // pixel.cpp
-    // .. add C primitives from other files
+    Setup_C_PixelPrimitives(p);      // pixel.cpp
+    Setup_C_MacroblockPrimitives(p); // macroblock.cpp
 }
 
 /* cpuid == 0 - auto-detect CPU type, else

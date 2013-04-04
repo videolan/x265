@@ -100,6 +100,7 @@ int CpuIDDetect(void);
 
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
+void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 
 /* These functions are defined by C++ files in encoder/vec. Depending on your
  * compiler, some of them may be undefined.  The #if logic here must match the
