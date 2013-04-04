@@ -443,7 +443,6 @@ void fastForwardDst(Short *block,Short *coeff,Int shift)  // input block, output
   }
 }
 
-#ifndef ENABLE_VECTOR
 void fastInverseDst(Short *tmp,Short *block,Int shift)  // input tmp, output block
 {
   Int i, c[4];
@@ -462,7 +461,6 @@ void fastInverseDst(Short *tmp,Short *block,Int shift)  // input tmp, output blo
     block[4*i+3] = Clip3( -32768, 32767, ( 55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor ) >> shift );
   }
 }
-#endif    // ENABLE_VECTOR
 
 void partialButterflyInverse4(Short *src,Short *dst,Int shift, Int line)
 {
