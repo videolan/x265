@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Steve Borho <steve@borho.org>
+ * Authors: Praveen Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,13 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-// Vector class versions of macroblock performance primitives
+#include "TLibCommon/TComTrQuant.h"
+#include "vectorclass.h"
 
-void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
-{
-  int rnd_factor = 1<<(shift-1);
+#ifdef ENABLE_VECTOR
+void fastInverseDst (Short *tmp,Short *block,Int shift)  // input tmp, output block
+{ 
+  Int rnd_factor = 1<<(shift-1);
  
   Vec8s tmp0, tmp1;
   tmp0.load (tmp);
@@ -80,10 +82,5 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
   block[7] = half[5];
   block[11] = half[6];
   block[15] = half[7];
-  
 }
-
-void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
-{
-  p.inversedst = inversedst;
-}
+#endif  // ENABLE_VECTOR
