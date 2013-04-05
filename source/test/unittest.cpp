@@ -202,7 +202,7 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
     unsigned int height = 240;
     char plane;
 
-    unsigned int pixel, offs;
+    unsigned int pix, offs;
     double pixel_x, pixel_y;
     int frame, macroblock;
 
@@ -222,30 +222,30 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
             u_plane_area = y_plane_area + y_plane_area * 0.25;
             v_plane_area = u_plane_area + y_plane_area * 0.25;
 
-            pixel = offs % v_plane_area;
+            pix = offs % v_plane_area;
             frame = offs / v_plane_area;
 
-            if (pixel < y_plane_area)
+            if (pix < y_plane_area)
             {
                 plane = 'Y';
-                pixel_x = pixel % width;
-                pixel_y = pixel / width;
+                pixel_x = pix % width;
+                pixel_y = pix / width;
                 macroblock = (ceil(pixel_x / 16.0), ceil(pixel_y / 16.0));
             }
-            else if (pixel < u_plane_area)
+            else if (pix < u_plane_area)
             {
                 plane = 'U';
-                pixel -= y_plane_area;
-                pixel_x = pixel % width;
-                pixel_y = pixel / width;
+                pix -= y_plane_area;
+                pixel_x = pix % width;
+                pixel_y = pix / width;
                 macroblock = (ceil(pixel_x / 8.0), ceil(pixel_y / 8.0));
             }
             else
             {
                 plane = 'V';
-                pixel -= u_plane_area;
-                pixel_x = pixel % width;
-                pixel_y = pixel / width;
+                pix -= u_plane_area;
+                pixel_x = pix % width;
+                pixel_y = pix / width;
                 macroblock = (ceil(pixel_x / 8.0), ceil(pixel_y / 8.0));
             }
 
