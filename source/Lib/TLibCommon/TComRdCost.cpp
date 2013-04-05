@@ -1772,7 +1772,7 @@ UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 {
     assert(iStep == 1);
 #if ENABLE_PRIMITIVES
-    return x265::primitives.satd[x265::PARTITION_8x8]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+    return x265::primitives.sa8d_8x8((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
 #else
     Int k, i, j, jj, sad = 0;
     Int diff[64], m1[8][8], m2[8][8], m3[8][8];
@@ -1872,9 +1872,6 @@ UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 UInt TComRdCost::xCalcHADs16x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
     assert(iStep == 1);
-#if ENABLE_PRIMITIVES
-    return x265::primitives.satd[x265::PARTITION_16x4]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
-#endif
     Int k, i, j, jj, sad = 0;
     Int diff[64], m1[4][16], m2[4][16];
     for (k = 0; k < 64; k += 16)
@@ -2005,9 +2002,6 @@ UInt TComRdCost::xCalcHADs16x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStri
 UInt TComRdCost::xCalcHADs4x16(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
     assert(iStep == 1);
-#if ENABLE_PRIMITIVES
-    return x265::primitives.satd[x265::PARTITION_4x16]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
-#endif
     Int k, i, j, jj, sad = 0;
     Int diff[64], m1[16][4], m2[16][4], m3[16][4];
     for (k = 0; k < 64; k += 4)

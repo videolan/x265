@@ -199,6 +199,60 @@ int CDECL satd32(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride
 
     return sum;
 }
+
+int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    sum2_t tmp[8][4];
+    sum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
+    sum2_t sum = 0;
+
+    for (int i = 0; i < 8; i++, pix1 += i_pix1, pix2 += i_pix2)
+    {
+        a0 = pix1[0] - pix2[0];
+        a1 = pix1[1] - pix2[1];
+        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
+        a2 = pix1[2] - pix2[2];
+        a3 = pix1[3] - pix2[3];
+        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
+        a4 = pix1[4] - pix2[4];
+        a5 = pix1[5] - pix2[5];
+        b2 = (a4 + a5) + ((a4 - a5) << BITS_PER_SUM);
+        a6 = pix1[6] - pix2[6];
+        a7 = pix1[7] - pix2[7];
+        b3 = (a6 + a7) + ((a6 - a7) << BITS_PER_SUM);
+        HADAMARD4(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3], b0, b1, b2, b3);
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
+        HADAMARD4(a4, a5, a6, a7, tmp[4][i], tmp[5][i], tmp[6][i], tmp[7][i]);
+        b0  = abs2(a0 + a4) + abs2(a0 - a4);
+        b0 += abs2(a1 + a5) + abs2(a1 - a5);
+        b0 += abs2(a2 + a6) + abs2(a2 - a6);
+        b0 += abs2(a3 + a7) + abs2(a3 - a7);
+        sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
+    }
+
+    return (int) sum;
+}
+
+int CDECL pixel_sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    int sum = sa8d_8x8(pix1, i_pix1, pix2, i_pix2);
+
+    return (sum + 2) >> 2;
+}
+
+int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    int sum = sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
+        + sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
+        + sa8d_8x8(pix1 + 8 * i_pix1, i_pix1, pix2 + 8 * i_pix2, i_pix2)
+        + sa8d_8x8(pix1 + 8 + 8 * i_pix1, i_pix1, pix2 + 8 + 8 * i_pix2, i_pix2);
+
+    return (sum + 2) >> 2;
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -240,5 +294,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_16x32] = satd32<16, 32>;
     p.satd[PARTITION_32x16] = satd32<32, 16>;
     p.satd[PARTITION_32x32] = satd32<32, 32>;
+
+    p.sa8d_8x8 = pixel_sa8d_8x8;
+    p.sa8d_16x16 = pixel_sa8d_16x16;
 }
 };

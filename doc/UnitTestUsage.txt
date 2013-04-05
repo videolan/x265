@@ -1,0 +1,31 @@
+
+Testbench draft version :- 
+
+    the tools is used to validate the output for all the vectorised vs non vectorised primitives 
+    and the additional features are also implemented to identify the bench marking for the vectorised vs non vectorised primitives
+    this will give the total time taken for all the vectorised vs non vectorised primitives
+    
+    usage - ./testbench --bench   -> this will do the bench marking for all the primitive functions 
+            ./testbench  -> Do the output comparision for vectorised vs non vectorised primitives
+            
+    single primitive check
+    
+            ./testbench --primitive 1
+            
+                sample -
+            	PARTITION_4x4	1,
+	    	PARTITION_8x4	2,
+	        PARTITION_4x8	3,
+	        PARTITION_8x8	4,
+	        PARTITION_4x16	5,
+	        PARTITION_16x4	6,
+	        PARTITION_8x16	7,
+	        PARTITION_16x8	8,
+	        PARTITION_16x16	9,
+	        PARTITION_4x32	10,
+	        PARTITION_32x4	11,
+	        PARTITION_8x32	12,
+	        PARTITION_32x8	13,
+	        PARTITION_16x32	14,
+	        PARTITION_32x16	15,
+    

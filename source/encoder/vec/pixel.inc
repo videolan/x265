@@ -112,19 +112,19 @@ int CDECL satd_4x4(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
     return satd;
 }
 
-int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t iStrideOrg)
+int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t iStrideOrg)
 {
-    int  j, satd = 0;
-
     ALIGN_VAR_16(short, m2[8][8]);
 
     Vec8s diff_v1, diff_v2, piOrg_v1, piOrg_v2, piCur_v1, piCur_v2;
     Vec8s v1, v2, t1, t2;
-	
+
+    int  j, satd = 0;
+
     for (j = 0; j < 8; j += 2)
     {
         piOrg_v1.load(piOrg);
-        piCur_v1.load(piCur);        
+        piCur_v1.load(piCur);
         piCur += iStrideCur;
         piOrg += iStrideOrg;
 
@@ -134,7 +134,7 @@ int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         piOrg += iStrideOrg;
 
         diff_v1 = piOrg_v1 - piCur_v1;
-        diff_v2 = piOrg_v2 - piCur_v2;        
+        diff_v2 = piOrg_v2 - piCur_v2;
 
         v1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(diff_v1, diff_v2);
         v2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(diff_v1, diff_v2);
@@ -154,12 +154,11 @@ int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         t1 = v1 + v2; //m2
         t2 = v1 - v2;
 
-        v1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(t1, t2);		//m2[j][0...7]
-        v2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(t1, t2);	//m2[j+1][0..7]
+        v1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(t1, t2);   //m2[j][0...7]
+        v2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(t1, t2); //m2[j+1][0..7]
 
         v1.store_a(m2[j]);
         v2.store_a(m2[j + 1]);
-
     }
 
     //vertical
@@ -227,7 +226,6 @@ int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         v4 = t1;
         v6 = t2;
 
-
         t1 = v5 + v7;
         t2 = v5 - v7;
         v5 = t1;
@@ -249,17 +247,14 @@ int CDECL satd_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         v0 = v0 + v4;
 
         satd = horizontal_add_x(v0);
-
     }
 
-    satd = ((satd + 2) >> 2);
-
-    return satd;
+    return (satd + 2) >> 2;
 }
 
 void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
     p.sad[PARTITION_8x8] = sad_8x8;
     p.satd[PARTITION_4x4] = satd_4x4;
-    p.satd[PARTITION_8x8] = satd_8x8;
+    p.sa8d_8x8 = sa8d_8x8;
 }
