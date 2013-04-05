@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
     // TODO: CPUID should be a command line parameter
     int cpuid = 0;
-    cpuid = x265::SetupPrimitives(cpuid);
+    x265::SetupPrimitives(cpuid);
 
     fprintf(stdout, "x265: build info ");
     fprintf(stdout, NVM_ONOS);
