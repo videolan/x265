@@ -51,7 +51,7 @@ typedef uint32_t pixel4;
 #define PIXEL_SPLAT_X4(x) ((x) * 0x01010101U)
 #endif // if HIGH_BIT_DEPTH
 
-namespace Clip
+namespace DstClip
 {
 /** clip a, such that minVal <= a <= maxVal */
 template<typename Type>
