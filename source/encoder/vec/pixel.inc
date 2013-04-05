@@ -23,19 +23,23 @@
 
 // Vector class versions of pixel comparison performance primitives
 
-int CDECL sad_8x8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+template<int lx, int ly>
+int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     // NOTE: This is completely untested, and ignores alignment issues
     int uiSum = 0;
 
-    for (int Row = 0; Row < 8; Row++)
+    for (int Row = 0; Row < ly; Row++)
     {
-        Vec8s m1, n1;
-        m1.load(piOrg);
-        n1.load(piCur);
-        m1 = m1 - n1;
-        m1 = abs(m1);
-        uiSum += horizontal_add_x(m1);
+        for (int col = 0; col < lx; col += 8)
+        {
+            Vec8s m1, n1;
+            m1.load(piOrg + col);
+            n1.load(piCur + col);
+            m1 = m1 - n1;
+            m1 = abs(m1);
+            uiSum += horizontal_add_x(m1);
+        }
 
         piOrg += strideOrg;
         piCur += strideCur;
@@ -295,7 +299,9 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
 
 void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
-    p.sad[PARTITION_8x8] = sad_8x8;
+    p.sad[PARTITION_8x8] = sad_8<8, 8>;
+    p.sad[PARTITION_16x16] = sad_8<16, 16>;
+    p.sad[PARTITION_32x32] = sad_8<32, 32>;
     p.satd[PARTITION_4x4] = satd_4x4;
     p.sa8d_8x8 = sa8d_8x8;
 }
