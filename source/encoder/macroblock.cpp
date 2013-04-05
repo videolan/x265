@@ -25,8 +25,8 @@
 #include <algorithm>
 
 /** clip a, such that minVal <= a <= maxVal */
-template<typename Type>
-inline Type Clip3(Type minVal, Type maxVal, Type a) { return std::min<Type>(std::max<Type>(minVal, a), maxVal);}                             ///< general min/max clip
+template<typename Type> ///< general min/max clip
+inline Type Clip3(Type minVal, Type maxVal, Type a) { return std::min<Type>(std::max<Type>(minVal, a), maxVal);}
 
 namespace {
 // anonymous file-static namespace
@@ -50,7 +50,6 @@ void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output
     }
 }
 
-// .. define C/C++ macroblock primitives
 }
 
 namespace x265 {
