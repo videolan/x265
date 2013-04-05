@@ -52,7 +52,7 @@ int PartitionFromSizes(int Width, int Height)
     if ((Width | Height) & ~(4 | 8 | 16 | 32 | 64)) // Check for bits in the wrong places
         return -1;
 
-    if (Width > 32 || Height > 32)
+    if (Width > 64 || Height > 64)
         return -1;
 
     return (int)psize[(Width >> 2) - 1][(Height >> 2) - 1];
