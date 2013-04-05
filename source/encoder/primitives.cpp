@@ -31,24 +31,25 @@
 namespace x265 {
 // x265 private namespace
 
-static int8_t psize[8][8] =
+static int8_t psize[9][9] =
 {
     // 4, 8, 12, 16, 20, 24, 28, 32
-    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
-    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32 },
+    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32, PARTITION_4x64 },
+    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32, PARTITION_8x64 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 , -1},
+    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32, PARTITION_16x64 },
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32, PARTITION_32x64 },
+    { PARTITION_64x4, PARTITION_64x8, -1, PARTITION_64x16, -1, -1, -1, PARTITION_64x32, PARTITION_64x64}
 };
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-    if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
+    if ((Width | Height) & ~(4 | 8 | 16 | 32 | 64)) // Check for bits in the wrong places
         return -1;
 
     if (Width > 32 || Height > 32)
