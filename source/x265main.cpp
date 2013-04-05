@@ -31,9 +31,14 @@
 using namespace std;
 namespace po = df::program_options_lite;
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
 int main(int argc, char *argv[])
 {
     TAppEncTop  cTAppEncTop;
+
+    fprintf(stdout, "x265 HEVC encoder version %s\n", XSTR(X265_VERSION));
 
     PPA_INIT();
 

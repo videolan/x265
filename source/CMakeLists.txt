@@ -12,6 +12,53 @@ ENDIF()
 project (x265)
 cmake_minimum_required (VERSION 2.6)
 
+if(EXISTS ${PROJECT_SOURCE_DIR}/cmake/version.cmake)
+    include(${PROJECT_SOURCE_DIR}/cmake/version.cmake)
+elseif(DEFINED ENV{X265_VERSION})
+    set(X265_VERSION $ENV{X265_VERSION} CACHE STRING "x265 version string.")
+else()
+    execute_process(COMMAND
+        hg log -r. --template "{latesttag}"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE HG_REVISION_TAG
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    execute_process(COMMAND
+        hg log -r. --template "{latesttagdistance}"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE HG_REVISION_DIST
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    execute_process(
+        COMMAND
+        hg log -r. --template "{node|short}"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE HG_REVISION_ID
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+    if(HG_REVISION_TAG STREQUAL "")
+        set(HG_REVISION_ID "hg-tip")
+    else()
+        if(HG_REVISION_TAG STREQUAL "null")
+            SET(HG_REVISION_TAG "trunk")
+        elseif(HG_REVISION_TAG MATCHES "^r")
+            STRING(SUBSTRING ${HG_REVISION_TAG} 1 -1 HG_REVISION_TAG)
+        ENDIF()
+        if(HG_REVISION_DIST STREQUAL "0")
+            SET(HG_REVISION ${HG_REVISION_TAG})
+        else()
+            SET(HG_REVISION
+                "${HG_REVISION_TAG}+${HG_REVISION_DIST}-${HG_REVISION_ID}")
+        ENDIF()
+    ENDIF()
+
+    SET(X265_VERSION ${HG_REVISION} CACHE STRING "x265 version string.")
+ENDIF()
+
 if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     set(X64 1)
 endif()
@@ -70,6 +117,7 @@ if(ENABLE_CLI)
         add_definitions(-Wno-sign-compare)
         add_definitions(-Wno-unused-parameter)
     endif(GCC)
+    set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
     add_executable(x265-cli x265main.cpp)
 
