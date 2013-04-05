@@ -31,7 +31,7 @@
 namespace x265 {
 // x265 private namespace
 
-static int8_t psize[9][9] =
+static int8_t psize[8][8] =
 {
     // 4, 8, 12, 16, 20, 24, 28, 32
     { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32},
