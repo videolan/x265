@@ -640,7 +640,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu,
     else
     {
         Int tmpStride = m_filteredBlockTmp[0].getStride();
-        Short *tmp    = m_filteredBlockTmp[0].getLumaAddr();
+        Pel *tmp    = m_filteredBlockTmp[0].getLumaAddr();
 
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);

@@ -173,7 +173,7 @@ Void TComInterpolationFilter::filterCopy(Int        bitDepth,
  */
 template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
 Void TComInterpolationFilter::filter(Int          bitDepth,
-                                     Short const *src,
+                                     Pel const *src,
                                      Int          srcStride,
                                      Short *      dst,
                                      Int          dstStride,
