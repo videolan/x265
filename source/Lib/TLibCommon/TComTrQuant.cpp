@@ -42,7 +42,6 @@
 #include "TComPic.h"
 #include "ContextTables.h"
 
-
 typedef struct
 {
     Int    iNNZbeforePos0;

@@ -104,7 +104,6 @@ void SetupPrimitives(int cpuid)
 
     /* .. upgrade functions with available assembly code. */
 #endif // if ENABLE_PRIMITIVES
-
 }
 
 int CpuIDDetect(void)

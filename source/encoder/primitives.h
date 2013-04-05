@@ -25,7 +25,6 @@
 #define X265_PRIMITIVES_H
 
 #include <stdint.h>
-#include <algorithm>
 
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
@@ -50,14 +49,6 @@ typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
 #define PIXEL_SPLAT_X4(x) ((x) * 0x01010101U)
 #endif // if HIGH_BIT_DEPTH
-
-namespace DstClip
-{
-/** clip a, such that minVal <= a <= maxVal */
-template<typename Type>
-inline Type Clip3(Type minVal, Type maxVal, Type a) { return std::min<Type>(std::max<Type>(minVal, a), maxVal);}                             ///< general min/max clip
-}
-
 
 namespace x265 {
 // x265 private namespace
@@ -88,7 +79,7 @@ enum Partitions
 int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
-typedef void (CDECL * dst)(short *block, short *coeff, int shift);
+typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -101,8 +92,7 @@ struct EncoderPrimitives
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
 
-   /* primitive for fastInverseDst function */
-	dst inversedst;
+    mbdst inversedst;
 
     /* .. Define primitives for more things .. */
 };
