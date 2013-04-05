@@ -275,8 +275,8 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         s0 = (s0 + s1) + (s2 + s3) + (s4 + s5) + (s6 + s7);
 
         satd = horizontal_add_x(s0);
-        
-#else
+
+#else /* if HIGH_BIT_DEPTH */
         v0 = v0 + v1;
         v2 = v2 + v3;
         v0 = v0 + v2;
@@ -288,7 +288,7 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         v0 = v0 + v4;
 
         satd = horizontal_add_x(v0);
-#endif
+#endif /* if HIGH_BIT_DEPTH */
     }
 
     return (satd + 2) >> 2;
