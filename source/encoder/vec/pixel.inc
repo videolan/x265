@@ -209,15 +209,11 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         t2 = v0 - v1;
         v0 = abs(t1);
         v1 = abs(t2);
-        v0 = v0 + v1;
 
         t1 = v2 + v3;
         t2 = v2 - v3;
         v2 = abs(t1);
         v3 = abs(t2);
-        v2 = v2 + v3;
-
-        v0 = v0 + v2;
 
         //Calculate m2[4][] - m2[7][]
 
@@ -235,18 +231,64 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
         t2 = v4 - v5;
         v4 = abs(t1);
         v5 = abs(t2);
-        v4 = v4 + v5;
 
         t1 = v6 + v7;
         t2 = v6 - v7;
         v6 = abs(t1);
         v7 = abs(t2);
-        v6 = v6 + v7;
 
+#if HIGH_BIT_DEPTH
+
+        Vec4i s0, s1, s2, s3, s4, s5, s6, s7, s8;
+        s0 = extend_low(v0);
+        s1 = extend_high(v0);
+        s0 = s0 + s1;
+
+        s1 = extend_low(v1);
+        s2 = extend_high(v1);
+        s1 = s1 + s2;
+
+        s2 = extend_low(v2);
+        s3 = extend_high(v2);
+        s2 = s2 + s3;
+
+        s3 = extend_low(v3);
+        s4 = extend_high(v3);
+        s3 = s3 + s4;
+
+        s4 = extend_low(v4);
+        s5 = extend_high(v4);
+        s4 = s4 + s5;
+
+        s5 = extend_low(v5);
+        s6 = extend_high(v5);
+        s5 = s5 + s6;
+
+        s6 = extend_low(v6);
+        s7 = extend_high(v6);
+        s6 = s6 + s7;
+
+        s7 = extend_low(v7);
+        s8 = extend_high(v7);
+        s7 = s7 + s8;
+
+        s0 = (s0 + s1) + (s2 + s3) + (s4 + s5) + (s6 + s7);
+
+        satd = horizontal_add_x(s0);
+        
+#else
+        v0 = v0 + v1;
+        v2 = v2 + v3;
+        v0 = v0 + v2;
+
+        v4 = v4 + v5;
+        v6 = v6 + v7;
         v4 = v4 + v6;
+
         v0 = v0 + v4;
 
         satd = horizontal_add_x(v0);
+#endif
     }
 
     return (satd + 2) >> 2;
