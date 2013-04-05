@@ -112,6 +112,7 @@ if(ENABLE_CLI)
         add_definitions(/wd4100) # unreferenced formal parameter
         add_definitions(/wd4244) # type conversion, possible loss of data
         add_definitions(/wd4512) # assignment operator could not be generated
+        SET(EXTRAS compat/msvc/getopt.c compat/msvc/getopt.h)
     endif(MSVC)
     if(GCC)
         add_definitions(-Wno-sign-compare)
@@ -119,7 +120,7 @@ if(ENABLE_CLI)
     endif(GCC)
     set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
-    add_executable(x265-cli x265main.cpp)
+    add_executable(x265-cli x265main.cpp ${EXTRAS})
 
     target_link_libraries(x265-cli HM x265)
     if(ENABLE_PPA)
