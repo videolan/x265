@@ -1,13 +1,8 @@
-#
-# If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition
-# and dump it in the cache along with proper documentation, otherwise set CMAKE_BUILD_TYPE
-# to Release prior to calling PROJECT()
-#
-IF(DEFINED CMAKE_BUILD_TYPE)
-   SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
-ELSE()
-   SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
-ENDIF()
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
+        "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
+        FORCE)
+endif()
 
 project (x265)
 cmake_minimum_required (VERSION 2.6)
@@ -68,21 +63,17 @@ if(MSVC)
     add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
     add_definitions(/Ob2) # always inline
     include_directories(compat/msvc)
+    # Add some multithreaded build support
+    option(MULTITHREADED_BUILD "Number of threads to use for build" ON)
+    if(MULTITHREADED_BUILD)
+        add_definitions(/MP)
+    endif()
 endif(MSVC)
+
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(GCC 1)
     add_definitions(-Wall -Wextra -Werror -Wshadow)
 endif(CMAKE_COMPILER_IS_GNUCXX)
-
-# Add some multithreaded build support
-set(MULTITHREADED_BUILD "${MULTITHREADED_BUILD}" CACHE STRING "Number of threads to use for build")
-if(MULTITHREADED_BUILD)
-    if(GCC)
-        set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM} -j${MULTITHREADED_BUILD}")
-    elseif(MSVC)
-        add_definitions(/MP${MULTITHREADED_BUILD})
-    endif()
-endif()
 
 # Allow performance primitives to be disabled
 option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
