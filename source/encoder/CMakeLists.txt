@@ -11,7 +11,7 @@ if(MSVC)
     set_source_files_properties(TComRdCost_SSE.cpp PROPERTIES COMPILE_FLAGS /DINSTRSET=4)
 endif(MSVC)
 
-add_library(x265
+add_library(x265 ../../COPYING
     primitives.h primitives.cpp
     pixel.cpp
     macroblock.cpp
@@ -19,4 +19,5 @@ add_library(x265
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
+
 target_link_libraries(x265 VectorPrimitives)
