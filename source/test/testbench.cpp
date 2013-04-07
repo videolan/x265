@@ -133,6 +133,7 @@ static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPr
 int main(int argc, char *argv[])
 {
     int ret = 0;
+    int cpuid = CpuIDDetect();
 
     for (int i = 1; i < argc-1; i+=2)
     {
@@ -167,31 +168,28 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives vecprim;
     memset(&vecprim, 0, sizeof(vecprim));
-    if (cpuid == 0)
-        cpuid = CpuIDDetect();
+    EncoderPrimitives asmprim;
+    memset(&vecprim, 0, sizeof(asmprim));
 
 #if ENABLE_VECTOR_PRIMITIVES
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(vecprim);
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(vecprim);
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vecprim);
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(vecprim);
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(vecprim);
-#endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(vecprim);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(vecprim);
-#endif
-#endif
-
+    Setup_Vector_Primitives(vecprim, cpuid);
     ret = check_all_funcs(cprim, vecprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least vector primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
+#endif
+
+#if ENABLE_ASM_PRIMITIVES
+    Setup_Vector_Primitives(asmprim, cpuid);
+    ret = check_all_funcs(cprim, asmprim);
+    if (ret)
+    {
+        fprintf(stderr, "x265: at least assembly primitive has failed. Go and fix that Right Now!\n");
+        return -1;
+    }
+#endif
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 

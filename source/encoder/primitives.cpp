@@ -77,13 +77,16 @@ int PartitionFromSizes(int Width, int Height)
 /* the "authoritative" set of encoder primitives */
 #if ENABLE_PRIMITIVES
 EncoderPrimitives primitives;
-#endif
+
+void Setup_C_PixelPrimitives(EncoderPrimitives &p);
+void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_MacroblockPrimitives(p); // macroblock.cpp
 }
+#endif
 
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
@@ -98,24 +101,11 @@ void SetupPrimitives(int cpuid)
     Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
-    /* Pick best vector architecture to use as a baseline. */
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(primitives);
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(primitives);
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(primitives);
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
+    Setup_Vector_Primitives(primitives, cpuid);
 #endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(primitives);
-#endif
-#endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
-    /* .. upgrade functions with available assembly code. */
+    Setup_Assembly_Primitives(primitives, cpuid);
 #endif
 #endif // if ENABLE_PRIMITIVES
 }

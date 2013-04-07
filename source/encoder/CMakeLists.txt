@@ -19,6 +19,6 @@ if(ENABLE_PRIMITIVES)
 
     if(ENABLE_ASM_PRIMITIVES)
         add_subdirectory(x86)
-        target_link_libraries(x265 x86-asm)
+        target_link_libraries(x265 AsmPrimitives)
     endif(ENABLE_ASM_PRIMITIVES)
 endif(ENABLE_PRIMITIVES)
