@@ -39,7 +39,6 @@ using namespace x265;
 pixel *pbuf1, *pbuf2;
 uint16_t do_singleprimitivecheck = 0;
 uint16_t curpar = 0;
-uint16_t cpuid = 0;
 
 #define BENCH_ALIGNS 16
 #if HIGH_BIT_DEPTH
@@ -169,7 +168,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives vecprim;
     memset(&vecprim, 0, sizeof(vecprim));
     EncoderPrimitives asmprim;
-    memset(&vecprim, 0, sizeof(asmprim));
+    memset(&asmprim, 0, sizeof(asmprim));
 
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(vecprim, cpuid);
