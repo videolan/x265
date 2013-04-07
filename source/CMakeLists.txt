@@ -7,7 +7,8 @@ endif()
 project (x265)
 cmake_minimum_required (VERSION 2.6)
 
-find_package(Hg)
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
+find_package(hg)
 
 # TODO: Need to be able to extract version from .hgarchive file
 if(DEFINED ENV{X265_VERSION})
@@ -93,7 +94,7 @@ if(ENABLE_PRIMITIVES)
         add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
     endif(ENABLE_VEC_PRIMITIVES)
 
-    # find_package(Yasm)
+    find_package(Yasm)
     if(YASM_FOUND)
         option(ENABLE_ASM_PRIMITIVES "Enable use of assembly coded primitives" ON)
         if(ENABLE_ASM_PRIMITIVES)
