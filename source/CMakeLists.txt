@@ -8,6 +8,7 @@ project (x265)
 cmake_minimum_required (VERSION 2.6)
 
 find_package(Hg)
+
 # TODO: Need to be able to extract version from .hgarchive file
 if(DEFINED ENV{X265_VERSION})
     set(X265_VERSION $ENV{X265_VERSION} CACHE STRING "x265 version string.")
@@ -77,16 +78,29 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -Wextra -Werror -Wshadow)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
-# Allow performance primitives to be disabled
+option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
+if(HIGH_BIT_DEPTH)
+    add_definitions(-DHIGH_BIT_DEPTH=1)
+endif(HIGH_BIT_DEPTH)
+
 option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
 if(ENABLE_PRIMITIVES)
     add_definitions(-DENABLE_PRIMITIVES)
-endif(ENABLE_PRIMITIVES)
+    set(CPRIMITIVES pixel.cpp macroblock.cpp)
 
-option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
-if(HIGH_BIT_DEPTH)
-    add_definitions(-DHIGH_BIT_DEPTH)
-endif(HIGH_BIT_DEPTH)
+    option(ENABLE_VEC_PRIMITIVES "Enable use of SIMD vector class primitives" ON)
+    if(ENABLE_VEC_PRIMITIVES)
+        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
+    endif(ENABLE_VEC_PRIMITIVES)
+
+    # find_package(Yasm)
+    if(YASM_FOUND)
+        option(ENABLE_ASM_PRIMITIVES "Enable use of assembly coded primitives" ON)
+        if(ENABLE_ASM_PRIMITIVES)
+            add_definitions(-DENABLE_ASM_PRIMITIVES=1)
+        endif(ENABLE_ASM_PRIMITIVES)
+    endif(YASM_FOUND)
+endif(ENABLE_PRIMITIVES)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)

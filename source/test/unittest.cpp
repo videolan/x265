@@ -230,7 +230,7 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
                 plane = 'Y';
                 pixel_x = pix % width;
                 pixel_y = pix / width;
-                macroblock = (ceil(pixel_x / 16.0), ceil(pixel_y / 16.0));
+                macroblock = ceil(pixel_x / 16.0) + ceil(pixel_y / 16.0) * 16;
             }
             else if (pix < u_plane_area)
             {
@@ -238,7 +238,7 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
                 pix -= y_plane_area;
                 pixel_x = pix % width;
                 pixel_y = pix / width;
-                macroblock = (ceil(pixel_x / 8.0), ceil(pixel_y / 8.0));
+                macroblock = ceil(pixel_x / 8.0) + ceil(pixel_y / 8.0) * 8;
             }
             else
             {
@@ -246,7 +246,7 @@ int UnitTest::CompareYUVBuffer(unsigned char *Buff_old, unsigned char *Buff_new)
                 pix -= u_plane_area;
                 pixel_x = pix % width;
                 pixel_y = pix / width;
-                macroblock = (ceil(pixel_x / 8.0), ceil(pixel_y / 8.0));
+                macroblock = ceil(pixel_x / 8.0) + ceil(pixel_y / 8.0) * 8;
             }
 
             printf("New File Differs from Referance file at frame - %d,"

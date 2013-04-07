@@ -61,6 +61,7 @@ static int8_t psize[16][16] =
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
+#if ENABLE_PRIMITIVES
     if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
         return -1;
 
@@ -68,6 +69,9 @@ int PartitionFromSizes(int Width, int Height)
         return -1;
 
     return (int)psize[(Width >> 2) - 1][(Height >> 2) - 1];
+#else
+    return Width || Height ? -1 : -1;
+#endif
 }
 
 /* the "authoritative" set of encoder primitives */
@@ -93,29 +97,26 @@ void SetupPrimitives(int cpuid)
 #if ENABLE_PRIMITIVES
     Setup_C_Primitives(primitives);
 
+#if ENABLE_VECTOR_PRIMITIVES
     /* Pick best vector architecture to use as a baseline. */
 #if defined(__GNUC__) || defined(_MSC_VER)
     if (cpuid > 1) Setup_Vec_Primitives_sse2(primitives);
-
     if (cpuid > 2) Setup_Vec_Primitives_sse3(primitives);
-
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(primitives);
-
     if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
-
     if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
-
-#endif // if defined(__GNUC__) || defined(_MSC_VER)
+#endif
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
-
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
     if (cpuid > 7) Setup_Vec_Primitives_avx2(primitives);
-
 #endif
+#endif // if ENABLE_VECTOR_PRIMITIVES
 
+#if ENABLE_ASM_PRIMITIVES
     /* .. upgrade functions with available assembly code. */
+#endif
 #endif // if ENABLE_PRIMITIVES
 }
 
