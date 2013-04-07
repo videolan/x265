@@ -12,13 +12,13 @@ add_library(x265 ../../COPYING
     threadpool.cpp threadpool.h)
 
 if(ENABLE_PRIMITIVES)
-    if(ENABLE_VEC_PRIMITIVES)
+    if(ENABLE_PRIMITIVES_VEC)
         add_subdirectory(vec)
         target_link_libraries(x265 VectorPrimitives)
-    endif(ENABLE_VEC_PRIMITIVES)
+    endif(ENABLE_PRIMITIVES_VEC)
 
-    if(ENABLE_ASM_PRIMITIVES)
+    if(ENABLE_PRIMITIVES_ASM)
         add_subdirectory(x86)
         target_link_libraries(x265 AsmPrimitives)
-    endif(ENABLE_ASM_PRIMITIVES)
+    endif(ENABLE_PRIMITIVES_ASM)
 endif(ENABLE_PRIMITIVES)
