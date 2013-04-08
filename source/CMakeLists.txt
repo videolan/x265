@@ -48,12 +48,13 @@ if(ENABLE_PRIMITIVES)
     endif(ENABLE_PRIMITIVES_VEC)
 
     find_package(Yasm)
-    if(YASM_FOUND)
+    # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
+    if(YASM_FOUND AND GCC)
         option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" ON)
         if(ENABLE_PRIMITIVES_ASM)
             add_definitions(-DENABLE_ASM_PRIMITIVES=1)
         endif(ENABLE_PRIMITIVES_ASM)
-    endif(YASM_FOUND)
+    endif(YASM_FOUND AND GCC)
 endif(ENABLE_PRIMITIVES)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
