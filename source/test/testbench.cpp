@@ -91,7 +91,7 @@ uint16_t do_singleprimitivecheck = 0;
 uint16_t curpar = 0, cycletest = 0, cycletest_primitive = 0;
 #define BENCH_ALIGNS 16
 
-//Initialise the Func Names for all the Pixel Comp
+// Initialize the Func Names for all the Pixel Comp
 static const char *FuncNames[NUM_PARTITIONS] = {
 "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16", "4x32", "32x4", "8x32",
 "32x8", "16x32", "32x16", "32x32", "4x64", "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
@@ -103,7 +103,7 @@ static const char *FuncNames[NUM_PARTITIONS] = {
 #define PIXEL_MAX ((1 << 8) - 1)
 #endif
 
-double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
+static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 {
     double msec;
 
@@ -112,78 +112,65 @@ double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
     return msec;
 }
 
-void check_cycle_count(pixelcmp cprimitive, pixelcmp vectorprimitive)
+static void check_cycle_count(pixelcmp cprimitive, pixelcmp vectorprimitive)
 {
-    uint32_t j = 0;
-    uint32_t res;
     struct timeval ts, te;
+    const int num_iterations = 100000;
+
+    // prime the cache
+    vectorprimitive(pbuf1, 16, pbuf2, 16);
 
     gettimeofday(&ts, NULL);
-    for (j = 0; j < 100000; j++)
-    {
-        res = vectorprimitive(pbuf1, 16, pbuf2, 16);
-    }
-
+    for (int j = 0; j < num_iterations; j++)
+        vectorprimitive(pbuf1, 16, pbuf2, 16);
     gettimeofday(&te, NULL);
-    printf("Vectorised Primitive Time taken : %f MilliSeconds for %d Iterations\n",  timevaldiff(&ts, &te), j);
+    printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
 
     gettimeofday(&ts, NULL);
-    for (j = 0; j < 100000; j++)
-    {
-        res = cprimitive(pbuf1, 16, pbuf2, 16);
-    }
-
+    for (int j = 0; j < num_iterations; j++)
+        cprimitive(pbuf1, 16, pbuf2, 16);
     gettimeofday(&te, NULL);
-    printf("C Primitive Time taken : %f MilliSeconds  for %d Iterations \n", timevaldiff(&ts, &te), j);
+    printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
+}
+
+static int check_pixelprimitive(pixelcmp ref, pixelcmp opt)
+{
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        int vres = opt(pbuf1 + j, 16, pbuf2, 16);
+        int cres = ref(pbuf1 + j, 16, pbuf2, 16);
+        if (vres != cres)
+            return -1;
+
+        j += 16;
+    }
+    return 0;
 }
 
 // test all implemented pixel comparison primitives
 static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
-    uint32_t j = 0, i = 0;
-
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
-        // if the satd is not available for vector no need to test
         if (vectorprimitives.satd[curpar])
         {
-            j = 0;
-            for (i = 0; i <= 100; i++)
+            if (check_pixelprimitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
             {
-                int vres = vectorprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
-                int cres = cprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
-
-                if (vres != cres)
-                {
-                    printf("Test Failed : satd[%s] Partition \n", FuncNames[curpar]);
-                    return -1;
-                }
-
-                j += 16;
+                printf("satd[%s]: failed!\n", FuncNames[curpar]);
+                return -1;
             }
-
-            printf("Test Passed : satd[%s] Partition \n", FuncNames[curpar]);
+            printf("satd[%s]: passed ", FuncNames[curpar]);
             check_cycle_count(cprimitives.satd[curpar], vectorprimitives.satd[curpar]);
         }
-
-        // if the satd is not available for vector no need to test
         if (vectorprimitives.sad[curpar])
         {
-            j = 0;
-            for (i = 0; i <= 100; i++)
+            if (check_pixelprimitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
             {
-                int vres = vectorprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
-                int cres = cprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
-                if (vres != cres)
-                {
-                    printf("Test Failed : sad[%s] Partition \n", FuncNames[curpar]);
-                    return -1;
-                }
-
-                j += 16;
+                printf("sad[%s]: failed!\n", FuncNames[curpar]);
+                return -1;
             }
-
-            printf("Test Passed : sad[%s] Partition \n", FuncNames[curpar]);
+            printf("sad[%s]: passed ", FuncNames[curpar]);
             check_cycle_count(cprimitives.sad[curpar], vectorprimitives.sad[curpar]);
         }
 
@@ -193,41 +180,23 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
     if (vectorprimitives.sa8d_8x8)
     {
-        j = 0;
-        for (i = 0; i <= 100; i++)
+        if (check_pixelprimitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
         {
-            int vres = vectorprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
-            int cres = cprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
-            if (vres != cres)
-            {
-                printf("Test Failed : sa8d_8x8\n");
-                return -1;
-            }
-
-            j += 16;
+            printf("sa8d_8x8: failed!\n");
+            return -1;
         }
-
-        printf("Test Passed : sa8d \n");
+        printf("sa8d_8x8: passed ");
         check_cycle_count(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8);
     }
 
     if (vectorprimitives.sa8d_16x16)
     {
-        j = 0;
-        for (i = 0; i <= 100; i++)
+        if (check_pixelprimitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
         {
-            int vres = vectorprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
-            int cres = cprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
-            if (vres != cres)
-            {
-                printf("Test Failed : sa8d_8x8\n");
-                return -1;
-            }
-
-            j += 16;
+            printf("sa8d_16x16: failed!\n");
+            return -1;
         }
-
-        printf("Test Passed : sa8d_8x8 \n");
+        printf("sa8d_16x16: passed ");
         check_cycle_count(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16);
     }
 
