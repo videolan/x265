@@ -71,6 +71,15 @@ enum Partitions
     PARTITION_16x32,
     PARTITION_32x16,
     PARTITION_32x32,
+    PARTITION_4x64,
+    PARTITION_64x4,
+    PARTITION_8x64,
+    PARTITION_64x8,
+    PARTITION_16x64,
+    PARTITION_64x16,
+    PARTITION_32x64,
+    PARTITION_64x32,
+    PARTITION_64x64,
     NUM_PARTITIONS
 };
 
@@ -79,6 +88,7 @@ enum Partitions
 int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -91,7 +101,7 @@ struct EncoderPrimitives
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
 
-    /* .. Define primitives for more things .. */
+    mbdst inversedst;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
@@ -101,25 +111,9 @@ void SetupPrimitives(int cpuid = 0);
 int CpuIDDetect(void);
 
 void Setup_C_Primitives(EncoderPrimitives &p);
-void Setup_C_PixelPrimitives(EncoderPrimitives &p);
-void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
+void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid);
+void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid);
 
-/* These functions are defined by C++ files in encoder/vec. Depending on your
- * compiler, some of them may be undefined.  The #if logic here must match the
- * file lists in vec/CMakeLists.txt */
-#if defined(__GNUC__) || defined(_MSC_VER)
-extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
-#endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
-#endif
 }
 
 #endif // ifndef X265_PRIMITIVES_H

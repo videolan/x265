@@ -31,23 +31,37 @@
 namespace x265 {
 // x265 private namespace
 
-static int8_t psize[8][8] =
+static int8_t psize[16][16] =
 {
     // 4, 8, 12, 16, 20, 24, 28, 32
-    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32 },
-    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32 },
+    { PARTITION_4x4, PARTITION_4x8, -1, PARTITION_4x16, -1, -1, -1, PARTITION_4x32
+      -1, -1, -1, -1, -1, -1, -1, PARTITION_4x64},
+    { PARTITION_8x4, PARTITION_8x8, -1, PARTITION_8x16, -1, -1, -1, PARTITION_8x32,
+      -1, -1, -1, -1, -1, -1, -1, PARTITION_8x64},
+    { -1, -1, -1, -1, -1, -1, -1, -1 , -1},
+    { PARTITION_16x4, PARTITION_16x8, -1, PARTITION_16x16, -1, -1, -1, PARTITION_16x32,
+      -1, -1, -1, -1, -1, -1, -1, PARTITION_16x64},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { PARTITION_32x4, PARTITION_32x8, -1, PARTITION_32x16, -1, -1, -1, PARTITION_32x32,
+      -1, -1, -1, -1, -1, -1, -1, PARTITION_32x64},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+    { PARTITION_64x4, PARTITION_64x8, -1, PARTITION_64x16, -1, -1, -1, PARTITION_64x32,
+      -1, -1, -1, -1, -1, -1, -1, PARTITION_64x64}
 };
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
+#if ENABLE_PRIMITIVES
     if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
         return -1;
 
@@ -55,18 +69,24 @@ int PartitionFromSizes(int Width, int Height)
         return -1;
 
     return (int)psize[(Width >> 2) - 1][(Height >> 2) - 1];
+#else
+    return Width || Height ? -1 : -1;
+#endif
 }
 
 /* the "authoritative" set of encoder primitives */
 #if ENABLE_PRIMITIVES
 EncoderPrimitives primitives;
-#endif
+
+void Setup_C_PixelPrimitives(EncoderPrimitives &p);
+void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_MacroblockPrimitives(p); // macroblock.cpp
 }
+#endif
 
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid != 0 - force CPU type */
@@ -80,42 +100,46 @@ void SetupPrimitives(int cpuid)
 #if ENABLE_PRIMITIVES
     Setup_C_Primitives(primitives);
 
-    /* Pick best vector architecture to use as a baseline. */
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(primitives);
-
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(primitives);
-
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(primitives);
-
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(primitives);
-
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(primitives);
-
-#endif // if defined(__GNUC__) || defined(_MSC_VER)
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(primitives);
-
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(primitives);
-
+#if ENABLE_VECTOR_PRIMITIVES
+    Setup_Vector_Primitives(primitives, cpuid);
 #endif
 
-    /* .. upgrade functions with available assembly code. */
+#if ENABLE_ASM_PRIMITIVES
+    Setup_Assembly_Primitives(primitives, cpuid);
+#endif
 #endif // if ENABLE_PRIMITIVES
 }
 
+static const char *CpuType[] = {
+    "auto-detect (80386)",
+    "SSE XMM",
+    "SSE2",
+    "SSE3",
+    "SSSE3",
+    "SSE4.1",
+    "SSE4.2",
+    "AVX",
+    "AVX2",
+    0
+};
+
 int CpuIDDetect(void)
 {
-    int cpuid = 0;
     int iset = instrset_detect(); // Detect supported instruction set
 
     if (iset < 1)
-        fprintf(stderr, "\nError: Instruction set is not supported on this computer");
+    {
+        fprintf(stderr, "\nError: Instruction set detect is not supported on this computer");
+        return 0;
+    }
     else
-        cpuid = iset;
-
-    return cpuid;
+    {
+        fprintf(stdout, "x265: detected SIMD architectures ");
+        for (int i = 1; i <= iset; i++ )
+            fprintf(stdout, "%s ", CpuType[i]);
+        fprintf(stdout, "\n");
+        return iset;
+    }
 }
+
 }

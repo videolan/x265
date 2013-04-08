@@ -22,11 +22,33 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include <algorithm>
+
+/** clip a, such that minVal <= a <= maxVal */
+template<typename Type> ///< general min/max clip
+inline Type Clip3(Type minVal, Type maxVal, Type a) { return std::min<Type>(std::max<Type>(minVal, a), maxVal);}
 
 namespace {
 // anonymous file-static namespace
 
-// .. define C/C++ macroblock primitives
+void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output block
+{
+    int i, c[4];
+    int rnd_factor = 1 << (shift - 1);
+
+    for (i = 0; i < 4; i++)
+    {
+        // Intermediate Variables
+        c[0] = tmp[i] + tmp[8 + i];
+        c[1] = tmp[8 + i] + tmp[12 + i];
+        c[2] = tmp[i] - tmp[12 + i];
+        c[3] = 74 * tmp[4 + i];
+
+        block[4 * i + 0] = (pixel) Clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 1] = (pixel) Clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 2] = (pixel) Clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
+    }
+}
 
 }
 
@@ -35,7 +57,6 @@ namespace x265 {
 
 void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
-    p.satd[0] = p.satd[0]; // just to prevent warnings, delete me
+    p.inversedst = inversedst;
 }
-
 }

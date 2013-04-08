@@ -33,28 +33,18 @@
 #include <string.h>
 #include <math.h>
 
-#if _MSC_VER
-#define snprintf _snprintf
-#define strdup _strdup
-#endif
-
 using namespace x265;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 uint16_t do_singleprimitivecheck = 0;
 uint16_t curpar = 0;
-uint16_t cpuid = 0;
 
 #define BENCH_ALIGNS 16
 #if HIGH_BIT_DEPTH
 #define PIXEL_MAX ((1 << 10) - 1)
 #else
 #define PIXEL_MAX ((1 << 8) - 1)
-#endif
-
-#if _MSC_VER
-#pragma warning(disable: 4505)
 #endif
 
 // test all implemented pixel comparison primitives
@@ -142,6 +132,7 @@ static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPr
 int main(int argc, char *argv[])
 {
     int ret = 0;
+    int cpuid = CpuIDDetect();
 
     for (int i = 1; i < argc-1; i+=2)
     {
@@ -176,34 +167,28 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives vecprim;
     memset(&vecprim, 0, sizeof(vecprim));
-    if (cpuid == 0)
-        cpuid = CpuIDDetect();
+    EncoderPrimitives asmprim;
+    memset(&asmprim, 0, sizeof(asmprim));
 
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(vecprim);
-
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(vecprim);
-
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vecprim);
-
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(vecprim);
-
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(vecprim);
-
-#endif // if defined(__GNUC__) || defined(_MSC_VER)
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(vecprim);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(vecprim);
-#endif
-
-    ret = check_all_funcs(cprim, vecprim); //do the output validation for c and vector primitives
+#if ENABLE_VECTOR_PRIMITIVES
+    Setup_Vector_Primitives(vecprim, cpuid);
+    ret = check_all_funcs(cprim, vecprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least vector primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
+#endif
+
+#if ENABLE_ASM_PRIMITIVES
+    Setup_Vector_Primitives(asmprim, cpuid);
+    ret = check_all_funcs(cprim, asmprim);
+    if (ret)
+    {
+        fprintf(stderr, "x265: at least assembly primitive has failed. Go and fix that Right Now!\n");
+        return -1;
+    }
+#endif
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 

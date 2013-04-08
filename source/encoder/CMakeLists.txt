@@ -1,22 +1,24 @@
-add_subdirectory(vec)
-
-# TComRdCost_SSE.cpp should go away, and so should this special case
 if(GCC)
-    set_source_files_properties(TComRdCost_SSE.cpp PROPERTIES COMPILE_FLAGS "-DINSTRSET=4 -msse4 -Wno-unused-parameter")
     if (NOT X64)
         set_source_files_properties(threadpool.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
 endif(GCC)
-if(MSVC)
-    set_source_files_properties(TComRdCost_SSE.cpp PROPERTIES COMPILE_FLAGS /DINSTRSET=4)
-endif(MSVC)
 
-add_library(x265
-    primitives.h primitives.cpp
-    pixel.cpp
-    macroblock.cpp
-    TComRdCost_SSE.cpp 
+add_library(x265 ../../COPYING
+    ${CPRIMITIVES}
+    primitives.cpp primitives.h
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h)
-target_link_libraries(x265 VectorPrimitives)
+
+if(ENABLE_PRIMITIVES)
+    if(ENABLE_PRIMITIVES_VEC)
+        add_subdirectory(vec)
+        target_link_libraries(x265 VectorPrimitives)
+    endif(ENABLE_PRIMITIVES_VEC)
+
+    if(ENABLE_PRIMITIVES_ASM)
+        add_subdirectory(x86)
+        target_link_libraries(x265 AsmPrimitives)
+    endif(ENABLE_PRIMITIVES_ASM)
+endif(ENABLE_PRIMITIVES)
