@@ -34,6 +34,9 @@
 #include <string.h>
 #include <math.h>
 
+// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html begins
+// this part is windows implementation of Gettimeoffday() function
+
 #ifndef _TIMEVAL_H
 #define _TIMEVAL_H
 
@@ -77,6 +80,8 @@ __inline int gettimeofday(struct timeval *tv,  struct timezone *tz)
 #endif /* _WIN32 */
 
 #endif /* _TIMEVAL_H */
+
+// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html ends
 
 using namespace x265;
 
