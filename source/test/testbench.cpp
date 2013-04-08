@@ -56,7 +56,6 @@ __inline int gettimeofday(struct timeval *tv,  struct timezone *tz)
     FILETIME        ft;
     LARGE_INTEGER   li;
     __int64         t;
-    static int      tzflag;
 
     if (tv)
     {
@@ -112,17 +111,17 @@ static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
     return msec;
 }
 
-static void check_cycle_count(pixelcmp cprimitive, pixelcmp vectorprimitive)
+static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 {
     struct timeval ts, te;
     const int num_iterations = 100000;
 
     // prime the cache
-    vectorprimitive(pbuf1, 16, pbuf2, 16);
+    opt(pbuf1, 16, pbuf2, 16);
 
     gettimeofday(&ts, NULL);
     for (int j = 0; j < num_iterations; j++)
-        vectorprimitive(pbuf1, 16, pbuf2, 16);
+        opt(pbuf1, 16, pbuf2, 16);
     gettimeofday(&te, NULL);
     printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
 
@@ -251,8 +250,8 @@ int main(int argc, char *argv[])
 
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(vecprim, cpuid);
+    printf("Testing vector class primitives\n");
     ret = check_all_funcs(cprim, vecprim);
-
     if (ret)
     {
         fprintf(stderr, "x265: at least vector primitive has failed. Go and fix that Right Now!\n");
@@ -263,6 +262,7 @@ int main(int argc, char *argv[])
 
 #if ENABLE_ASM_PRIMITIVES
     Setup_Vector_Primitives(asmprim, cpuid);
+    printf("Testing assembly primitives\n");
     ret = check_all_funcs(cprim, asmprim);
     if (ret)
     {
