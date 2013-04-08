@@ -245,8 +245,6 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives vecprim;
     memset(&vecprim, 0, sizeof(vecprim));
-    EncoderPrimitives asmprim;
-    memset(&asmprim, 0, sizeof(asmprim));
 
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(vecprim, cpuid);
@@ -261,7 +259,9 @@ int main(int argc, char *argv[])
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Vector_Primitives(asmprim, cpuid);
+    EncoderPrimitives asmprim;
+    memset(&asmprim, 0, sizeof(asmprim));
+    Setup_Assembly_Primitives(asmprim, cpuid);
     printf("Testing assembly primitives\n");
     ret = check_all_funcs(cprim, asmprim);
     if (ret)
