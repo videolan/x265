@@ -1,4 +1,4 @@
-find_package(hg)
+find_package(Hg)
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     # read the lines of the archive summary file to extract the version
