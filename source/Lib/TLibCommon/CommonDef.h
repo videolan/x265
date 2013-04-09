@@ -61,7 +61,7 @@
 // Platform information
 // ====================================================================================================================
 
-#ifdef __GNUC__ && !defined(__INTEL_COMPILER)
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
 #define NVM_COMPILEDBY  "[GCC %d.%d.%d]", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__
 #ifdef __IA64__
 #define NVM_ONARCH    "[on 64-bit] "

@@ -17,8 +17,9 @@
 // output: eax = output[0], ebx = output[1], ecx = output[2], edx = output[3]
 static inline void cpuid(int output[4], int functionnumber)
 {
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER) // Microsoft or Intel compiler, intrin.h included
+#if defined(_MSC_VER) || (_WIN32 && defined(__INTEL_COMPILER))
 
+    // Microsoft or Intel compiler, intrin.h included
     __cpuidex(output, functionnumber, 0);          // intrinsic function for CPUID
 
 #elif defined(__GNUC__)                            // use inline assembly, Gnu/AT&T syntax
