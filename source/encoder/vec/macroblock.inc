@@ -98,10 +98,6 @@ void CDECL filter_8_nonvertical(pixel *coeff,
     int row, col;
     Vec8s vec_c, vec_src;
 
-    //short *dst_s = (short *)dst;		    // Typecast back to short from unsigned short
-    //short *src_s = (short *)src;		    // Typecast back to short from unsigned short
-    //short *coeff_s = (short *)coeff;		// Typecast back to short from unsigned short
-
     vec_c.load(coeff);
 
     for (row = 0; row < block_height; row++)

@@ -287,12 +287,9 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
 }
 
 /* To-Do tasks : Move buffer initializations to a separate function
-                 Check for all possible values of stride/shift etc as inputs
-				 Consistent method of calling primitives and measuring cycle count.
-Developers should be able to add unit tests for their primitives. 
-*/
-
-
+ *               Check for all possible values of stride/shift etc as inputs
+ *               Consistent method of calling primitives and measuring cycle count.
+ * Developers should be able to add unit tests for their primitives.  */
 
 int main(int argc, char *argv[])
 {
