@@ -191,7 +191,7 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
     opt(mbuf1, mbuf2, 16);
 
     gettimeofday(&ts, NULL);
-    for (int j = 0; j < num_iterations; j++)
+    for (j = 0; j < num_iterations; j++)
     {
         opt(mbuf1, mbuf2, 16);
     }
@@ -200,7 +200,7 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
     printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
 
     gettimeofday(&ts, NULL);
-    for (int j = 0; j < num_iterations; j++)
+    for (j = 0; j < num_iterations; j++)
     {
         ref(mbuf1, mbuf3, 16);
     }
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
     memset(&asmprim, 0, sizeof(asmprim));
     Setup_Assembly_Primitives(asmprim, cpuid);
     printf("Testing assembly primitives\n");
-    ret = check_all_funcs(cprim, asmprim);
+    ret = check_all_primitives(cprim, asmprim);
     if (ret)
     {
         fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
