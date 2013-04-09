@@ -358,5 +358,7 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 
+    free(pbuf1);
+    free(pbuf2);
     return 0;
 }
