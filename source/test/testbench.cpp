@@ -141,7 +141,7 @@ static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
     printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
 }
 
-static int check_pixelprimitive(pixelcmp ref, pixelcmp opt)
+static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 {
     int j = 0;
 
@@ -159,7 +159,7 @@ static int check_pixelprimitive(pixelcmp ref, pixelcmp opt)
 }
 
 //Find the Output Comp and Cycle count
-static int check_MacroblockPrimitive(mbdst ref, mbdst opt)
+static int check_mbdst_primitive(mbdst ref, mbdst opt)
 {
     int j = 0;
     const int  t_size = 16;
@@ -215,14 +215,14 @@ static int check_MacroblockPrimitive(mbdst ref, mbdst opt)
     return 0;
 }
 
-// test all implemented pixel comparison primitives
-static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
+// test all implemented primitives
+static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
         {
-            if (check_pixelprimitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
+            if (check_pixel_primitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
             {
                 printf("satd[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
@@ -234,7 +234,7 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
         if (vectorprimitives.sad[curpar])
         {
-            if (check_pixelprimitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
+            if (check_pixel_primitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
@@ -250,7 +250,7 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
     if (vectorprimitives.sa8d_8x8)
     {
-        if (check_pixelprimitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
+        if (check_pixel_primitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
         {
             printf("sa8d_8x8: failed!\n");
             return -1;
@@ -262,7 +262,7 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
     if (vectorprimitives.sa8d_16x16)
     {
-        if (check_pixelprimitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
+        if (check_pixel_primitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
         {
             printf("sa8d_16x16: failed!\n");
             return -1;
@@ -274,7 +274,7 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
     if (vectorprimitives.inversedst)
     {
-        if (check_MacroblockPrimitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
+        if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
         {
             printf("Inversedst: Failed!\n");
             return -1;
@@ -290,7 +290,7 @@ static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPr
 {
     uint16_t rc = 0;
 
-    rc = check_pixelprimitives(cprimitives, vectorprimitives);
+    rc = check_all_primitives(cprimitives, vectorprimitives);
     return rc;
 }
 
