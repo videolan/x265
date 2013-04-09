@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
     ret = check_all_funcs(cprim, vecprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least vector primitive has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
 
@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
     ret = check_all_funcs(cprim, asmprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least assembly primitive has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
 
