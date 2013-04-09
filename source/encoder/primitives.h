@@ -89,6 +89,8 @@ int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
+typedef void (CDECL * IPFilter)(pixel *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
+                                int block_height, short maxVal, int shift, int offset, bool isLast);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -100,7 +102,7 @@ struct EncoderPrimitives
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
-
+    IPFilter filter_8_nonvertical;
     mbdst inversedst;
 };
 
@@ -113,7 +115,6 @@ int CpuIDDetect(void);
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid);
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid);
-
 }
 
 #endif // ifndef X265_PRIMITIVES_H

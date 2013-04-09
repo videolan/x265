@@ -43,10 +43,9 @@
 #include "TComRom.h"
 #include "TComInterpolationFilter.h"
 #include <assert.h>
-
+#include "primitives.h"
 //! \ingroup TLibCommon
 //! \{
-
 // ====================================================================================================================
 // Tables
 // ====================================================================================================================
@@ -173,7 +172,7 @@ Void TComInterpolationFilter::filterCopy(Int        bitDepth,
  */
 template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
 Void TComInterpolationFilter::filter(Int          bitDepth,
-                                     Pel const *src,
+                                     Pel const *  src,
                                      Int          srcStride,
                                      Short *      dst,
                                      Int          dstStride,
@@ -181,8 +180,6 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
                                      Int          height,
                                      Short const *coeff)
 {
-    Int row, col;
-
     Short c[8];
 
     c[0] = coeff[0];
@@ -226,6 +223,27 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
         maxVal = 0;
     }
 
+    if ((N == 8) && (isVertical == 0))
+    {
+#if ENABLE_PRIMITIVES
+
+        x265::primitives.filter_8_nonvertical((pixel*)coeff,
+                                              (pixel*)src,
+                                              srcStride,
+                                              (pixel*)dst,
+                                              dstStride,
+                                              width,
+                                              height,
+                                              maxVal,
+                                              shift,
+                                              offset,
+                                              isLast);
+        return;
+
+#endif     // if ENABLE_PRIMITIVES
+    }
+
+    Int row, col;
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width; col++)
