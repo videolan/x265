@@ -286,14 +286,6 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
     return 0;
 }
 
-static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
-{
-    uint16_t rc = 0;
-
-    rc = check_all_primitives(cprimitives, vectorprimitives);
-    return rc;
-}
-
 int main(int argc, char *argv[])
 {
     int ret = 0;
@@ -336,7 +328,7 @@ int main(int argc, char *argv[])
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(vecprim, cpuid);
     printf("Testing vector class primitives\n");
-    ret = check_all_funcs(cprim, vecprim);
+    ret = check_all_primitives(cprim, vecprim);
     if (ret)
     {
         fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
