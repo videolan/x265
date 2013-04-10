@@ -86,7 +86,9 @@ using namespace x265;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
+pixel *mbuf1, *mbuf2, *mbuf3;
 uint16_t do_singleprimitivecheck = 0;
+uint16_t do_macroblockcheck = 0;
 uint16_t curpar = 0, cycletest = 0, cycletest_primitive = 0;
 #define BENCH_ALIGNS 16
 
@@ -114,6 +116,7 @@ static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 {
     struct timeval ts, te;
+
     const int num_iterations = 100000;
 
     // prime the cache
@@ -121,20 +124,27 @@ static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 
     gettimeofday(&ts, NULL);
     for (int j = 0; j < num_iterations; j++)
+    {
         opt(pbuf1, 16, pbuf2, 16);
+    }
+
     gettimeofday(&te, NULL);
     printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
 
     gettimeofday(&ts, NULL);
     for (int j = 0; j < num_iterations; j++)
+    {
         cprimitive(pbuf1, 16, pbuf2, 16);
+    }
+
     gettimeofday(&te, NULL);
     printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
 }
 
-static int check_pixelprimitive(pixelcmp ref, pixelcmp opt)
+static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 {
     int j = 0;
+
     for (int i = 0; i <= 100; i++)
     {
         int vres = opt(pbuf1 + j, 16, pbuf2, 16);
@@ -144,31 +154,92 @@ static int check_pixelprimitive(pixelcmp ref, pixelcmp opt)
 
         j += 16;
     }
+
     return 0;
 }
 
-// test all implemented pixel comparison primitives
-static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
+//Find the Output Comp and Cycle count
+static int check_mbdst_primitive(mbdst ref, mbdst opt)
+{
+    int j = 0;
+    const int  t_size = 16;
+    const int num_iterations = 100000;
+    struct timeval ts, te;
+
+    mbuf1 = (pixel*)malloc(t_size);
+    mbuf2 = (pixel*)malloc(t_size);
+    mbuf3 = (pixel*)malloc(t_size);
+
+    memset(mbuf2, 0, t_size);
+    memset(mbuf3, 0, t_size);
+
+    for (int i = 0; i <= 100; i++)
+    {
+        memcpy(mbuf1, pbuf1 + j,  t_size);
+        opt(mbuf1, mbuf2, 16);
+        ref(mbuf1, mbuf3, 16);
+
+        if (memcmp(mbuf2, mbuf3, 16))
+            return -1;
+
+        j += 16;
+        memset(mbuf2, 0, t_size);
+        memset(mbuf3, 0, t_size);
+    }
+
+    // prime the cache
+    opt(mbuf1, mbuf2, 16);
+
+    gettimeofday(&ts, NULL);
+    for (j = 0; j < num_iterations; j++)
+    {
+        opt(mbuf1, mbuf2, 16);
+    }
+
+    gettimeofday(&te, NULL);
+    printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
+
+    gettimeofday(&ts, NULL);
+    for (j = 0; j < num_iterations; j++)
+    {
+        ref(mbuf1, mbuf3, 16);
+    }
+
+    gettimeofday(&te, NULL);
+    printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
+
+    delete mbuf1;
+    delete mbuf2;
+    delete mbuf3;
+
+    return 0;
+}
+
+// test all implemented primitives
+static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
         {
-            if (check_pixelprimitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
+            if (check_pixel_primitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
             {
                 printf("satd[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
             }
+
             printf("satd[%s]: passed ", FuncNames[curpar]);
             check_cycle_count(cprimitives.satd[curpar], vectorprimitives.satd[curpar]);
         }
+
         if (vectorprimitives.sad[curpar])
         {
-            if (check_pixelprimitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
+            if (check_pixel_primitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
             }
+
             printf("sad[%s]: passed ", FuncNames[curpar]);
             check_cycle_count(cprimitives.sad[curpar], vectorprimitives.sad[curpar]);
         }
@@ -179,33 +250,46 @@ static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const Enc
 
     if (vectorprimitives.sa8d_8x8)
     {
-        if (check_pixelprimitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
+        if (check_pixel_primitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
         {
             printf("sa8d_8x8: failed!\n");
             return -1;
         }
+
         printf("sa8d_8x8: passed ");
         check_cycle_count(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8);
     }
 
     if (vectorprimitives.sa8d_16x16)
     {
-        if (check_pixelprimitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
+        if (check_pixel_primitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
         {
             printf("sa8d_16x16: failed!\n");
             return -1;
         }
+
         printf("sa8d_16x16: passed ");
         check_cycle_count(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16);
+    }
+
+    if (vectorprimitives.inversedst)
+    {
+        if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
+        {
+            printf("Inversedst: Failed!\n");
+            return -1;
+        }
+
+        printf("Inversedst: passed ");
     }
 
     return 0;
 }
 
-static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
-{
-    return check_pixelprimitives(cprimitives, vectorprimitives);
-}
+/* To-Do tasks : Move buffer initializations to a separate function
+ *               Check for all possible values of stride/shift etc as inputs
+ *               Consistent method of calling primitives and measuring cycle count.
+ * Developers should be able to add unit tests for their primitives.  */
 
 int main(int argc, char *argv[])
 {
@@ -249,10 +333,10 @@ int main(int argc, char *argv[])
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(vecprim, cpuid);
     printf("Testing vector class primitives\n");
-    ret = check_all_funcs(cprim, vecprim);
+    ret = check_all_primitives(cprim, vecprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least vector primitive has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
 
@@ -263,16 +347,18 @@ int main(int argc, char *argv[])
     memset(&asmprim, 0, sizeof(asmprim));
     Setup_Assembly_Primitives(asmprim, cpuid);
     printf("Testing assembly primitives\n");
-    ret = check_all_funcs(cprim, asmprim);
+    ret = check_all_primitives(cprim, asmprim);
     if (ret)
     {
-        fprintf(stderr, "x265: at least assembly primitive has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
         return -1;
     }
 
-#endif
+#endif // if ENABLE_ASM_PRIMITIVES
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 
+    free(pbuf1);
+    free(pbuf2);
     return 0;
 }

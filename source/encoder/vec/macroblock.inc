@@ -83,7 +83,48 @@ void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output
     block[15] = half[7];
 }
 
+void CDECL filter_8_nonvertical(pixel *coeff,
+                                pixel *src,
+                                int    srcStride,
+                                pixel *dst,
+                                int    dstStride,
+                                int    block_width,
+                                int    block_height,
+                                short  maxVal,
+                                int    shift,
+                                int    offset,
+                                bool   isLast)
+{
+    int row, col;
+    Vec8s vec_c, vec_src;
+
+    vec_c.load(coeff);
+
+    for (row = 0; row < block_height; row++)
+    {
+        for (col = 0; col < block_width; col++)
+        {
+            int sum;
+            vec_src.load(src + col);
+            vec_src = vec_src * vec_c;
+            sum = horizontal_add_x(vec_src);
+            short val = (sum + offset) >> shift;
+            if (isLast)
+            {
+                val = (val < 0) ? 0 : val;
+                val = (val > maxVal) ? maxVal : val;
+            }
+
+            dst[col] = val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
+    p.filter_8_nonvertical = filter_8_nonvertical;
 }
