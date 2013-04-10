@@ -83,17 +83,29 @@ enum Partitions
     NUM_PARTITIONS
 };
 
-enum Butterflies
+enum FilterConf
 {
-    BUTTERFLY_4,
-    BUTTERFLY_INVERSE_4,
-    BUTTERFLY_8,
-    BUTTERFLY_INVERSE_8,
-    BUTTERFLY_16,
-    BUTTERFLY_INVERSE_16,
-    BUTTERFLY_32,
-    BUTTERFLY_INVERSE_32,
-    NUM_BUTTERFLIES
+    //Naming convention used is - FILTER_isVertical_N_isFirst_isLast
+    FILTER_H_4_0_0,
+    FILTER_H_4_0_1,
+    FILTER_H_4_1_0,
+    FILTER_H_4_1_1,
+
+    FILTER_H_8_0_0,
+    FILTER_H_8_0_1,
+    FILTER_H_8_1_0,
+    FILTER_H_8_1_1,
+
+    FILTER_V_4_0_0,
+    FILTER_V_4_0_1,
+    FILTER_V_4_1_0,
+    FILTER_V_4_1_1,
+
+    FILTER_V_8_0_0,
+    FILTER_V_8_0_1,
+    FILTER_V_8_1_0,
+    FILTER_V_8_1_1,
+    NUM_FILTER
 };
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
@@ -103,8 +115,7 @@ int PartitionFromSizes(int Width, int Height);
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
 typedef void (CDECL * IPFilter)(pixel *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
-                                int block_height, short maxVal, int shift, int offset, bool isLast);
-typedef void (CDECL * butterfly)(pixel *src, pixel *dst, int shift, int line);
+                                int block_height, int bitDepth);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -116,9 +127,8 @@ struct EncoderPrimitives
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
-    IPFilter filter_8_nonvertical;
+    IPFilter filter[NUM_FILTER];
     mbdst inversedst;
-    butterfly partial_butterfly[NUM_BUTTERFLIES];
 };
 
 /* This copy of the table is what gets used by all by the encoder.
