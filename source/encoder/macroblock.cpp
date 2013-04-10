@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include "butterfly.h"
 #include <algorithm>
 
 /** clip a, such that minVal <= a <= maxVal */
@@ -102,6 +103,61 @@ void CDECL filter_8_nonvertical(pixel *coeff,
         dst += dstStride;
     }
 }
+
+void CDECL PartialButterfly16(pixel *src, pixel *dst, int shift, int line)
+{
+    int j, k;
+    int E[8], O[8];
+    int EE[4], EO[4];
+    int EEE[2], EEO[2];
+    int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* E and O */
+        for (k = 0; k < 8; k++)
+        {
+            E[k] = src[k] + src[15 - k];
+            O[k] = src[k] - src[15 - k];
+        }
+
+        /* EE and EO */
+        for (k = 0; k < 4; k++)
+        {
+            EE[k] = E[k] + E[7 - k];
+            EO[k] = E[k] - E[7 - k];
+        }
+
+        /* EEE and EEO */
+        EEE[0] = EE[0] + EE[3];
+        EEO[0] = EE[0] - EE[3];
+        EEE[1] = EE[1] + EE[2];
+        EEO[1] = EE[1] - EE[2];
+
+        dst[0] = (pixel)(g_aiT16[0][0] * EEE[0] + g_aiT16[0][1] * EEE[1] + add) >> shift;
+        dst[8 * line] = (pixel)(g_aiT16[8][0] * EEE[0] + g_aiT16[8][1] * EEE[1] + add) >> shift;
+        dst[4 * line] = (pixel)(g_aiT16[4][0] * EEO[0] + g_aiT16[4][1] * EEO[1] + add) >> shift;
+        dst[12 * line] = (pixel)(g_aiT16[12][0] * EEO[0] + g_aiT16[12][1] * EEO[1] + add) >> shift;
+
+        for (k = 2; k < 16; k += 4)
+        {
+            dst[k *
+                line] =
+                (pixel)(g_aiT16[k][0] * EO[0] + g_aiT16[k][1] * EO[1] + g_aiT16[k][2] * EO[2] + g_aiT16[k][3] * EO[3] +
+                        add) >> shift;
+        }
+
+        for (k = 1; k < 16; k += 2)
+        {
+            dst[k * line] = (pixel)(g_aiT16[k][0] * O[0] + g_aiT16[k][1] * O[1] + g_aiT16[k][2] * O[2] + g_aiT16[k][3] * O[3] +
+                                    g_aiT16[k][4] * O[4] + g_aiT16[k][5] * O[5] + g_aiT16[k][6] * O[6] + g_aiT16[k][7] * O[7] +
+                                    add) >> shift;
+        }
+
+        src += 16;
+        dst++;
+    }
+}
 }
 
 namespace x265 {
@@ -111,5 +167,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
     p.filter_8_nonvertical = filter_8_nonvertical;
+    p.partial_butterfly[BUTTERFLY_16] = PartialButterfly16;
 }
 }

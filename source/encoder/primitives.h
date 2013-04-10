@@ -83,6 +83,19 @@ enum Partitions
     NUM_PARTITIONS
 };
 
+enum Butterflies
+{
+    BUTTERFLY_4,
+    BUTTERFLY_INVERSE_4,
+    BUTTERFLY_8,
+    BUTTERFLY_INVERSE_8,
+    BUTTERFLY_16,
+    BUTTERFLY_INVERSE_16,
+    BUTTERFLY_32,
+    BUTTERFLY_INVERSE_32,
+    NUM_BUTTERFLIES
+};
+
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
@@ -91,6 +104,7 @@ typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, in
 typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
 typedef void (CDECL * IPFilter)(pixel *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
                                 int block_height, short maxVal, int shift, int offset, bool isLast);
+typedef void (CDECL * butterfly)(pixel *src, pixel *dst, int shift, int line);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -104,6 +118,7 @@ struct EncoderPrimitives
     pixelcmp sa8d_16x16;
     IPFilter filter_8_nonvertical;
     mbdst inversedst;
+    butterfly partial_butterfly[NUM_BUTTERFLIES];
 };
 
 /* This copy of the table is what gets used by all by the encoder.
