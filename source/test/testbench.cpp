@@ -295,6 +295,11 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
     int cpuid = CpuIDDetect();
+#if HIGH_BIT_DEPTH
+    printf("Compiled for 10bit pixels (High bit depth)\n");
+#else
+    printf("Compiled for 8bit pixels (High performance)\n");
+#endif
 
     for (int i = 1; i < argc - 1; i += 2)
     {
