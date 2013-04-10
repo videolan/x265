@@ -87,7 +87,6 @@ using namespace x265;
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 pixel *mbuf1, *mbuf2, *mbuf3;
-uint16_t do_macroblockcheck = 0;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
