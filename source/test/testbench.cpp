@@ -196,7 +196,8 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             cprim.inversedst(mbuf1, mbuf2, 16);
         gettimeofday(&te, NULL);
         printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-    }       
+    }  
+    /* Add logic here for testing performance of your new primitive*/    
 }
 
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
@@ -292,7 +293,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
 {
     uint16_t curpar = 0;
     
-    /****************** Run pixelcmp primitives **************************/
+    /****************** Initialise and run pixelcmp primitives **************************/
     
     if(init_pixelcmp_buffers() < 0)
 	    return -1;
@@ -344,7 +345,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
         printf("\nsa8d_16x16: passed ");        
     }
     
-    /********** Run mbdst Primitives *******************/
+    /********** Initialise and run mbdst Primitives *******************/
     
     if(init_mbdst_buffers() < 0)
         return -1;
@@ -359,6 +360,9 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
 
         printf("Inversedst: passed ");
     }
+    
+    /* Initialise and check your primitives here **********/ 
+        
         
     /******************* Cycle count for all primitives **********************/
     check_cycle_count(cprimitives, vectorprimitives);
