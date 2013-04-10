@@ -292,11 +292,11 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
 {
     uint16_t curpar = 0;
     
+    /****************** Run pixelcmp primitives **************************/
+    
     if(init_pixelcmp_buffers() < 0)
 	    return -1;
         
-    /****************** Run pixelcmp primitives **************************/
-    
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
@@ -348,6 +348,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
     
     if(init_mbdst_buffers() < 0)
         return -1;
+    
     if (vectorprimitives.inversedst)
     {
         if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
