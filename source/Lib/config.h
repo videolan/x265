@@ -41,6 +41,9 @@
 #include "TLibCommon/CommonDef.h"
 
 #include "TLibEncoder/TEncCfg.h"
+#include "TLibVideoIO/TVideoIO.h"
+#include "TLibVideoIO/TVideoIOYuv.h"
+#include "TLibVideoIO/TVideoIOY4m.h"
 #include <sstream>
 //! \ingroup TAppEncoder
 //! \{
@@ -71,6 +74,12 @@ protected:
     Int       m_confBottom;
     Int       m_framesToBeEncoded;                              ///< number of encoded frames
     Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
+    //Input source file handlers
+    TVideoIO*     m_cTVideoIOInputFile;     ///< input  file
+    TVideoIO*     m_cTVideoIOReconFile;       ///< output reconstruction file
+    hnd_t*      handler_input;
+    hnd_t*      handler_recon;
+    video_info_t  video_info;
 
     // profile/level
     Profile::Name m_profile;
