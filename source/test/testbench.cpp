@@ -208,9 +208,9 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
     gettimeofday(&te, NULL);
     printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
 
-    delete mbuf1;
-    delete mbuf2;
-    delete mbuf3;
+    free(mbuf1);
+    free(mbuf2);
+    free(mbuf3);
 
     return 0;
 }
