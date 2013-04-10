@@ -100,7 +100,7 @@ static const char *FuncNames[NUM_PARTITIONS] = {
 #else
 #define PIXEL_MAX ((1 << 8) - 1)
 #endif
-
+#if 0
 static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 {
     double msec;
@@ -110,9 +110,8 @@ static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
     return msec;
 }
 
-static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
+static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimitives& vecprim)
 {
-
     struct timeval ts, te;
 
     const int num_iterations = 100000;
@@ -137,9 +136,26 @@ static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 
     gettimeofday(&te, NULL);
     printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
+    
+        gettimeofday(&ts, NULL);
+    for (j = 0; j < num_iterations; j++)
+    {
+        opt(mbuf1, mbuf2, 16);
+    }
 
+    gettimeofday(&te, NULL);
+    printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
+
+    gettimeofday(&ts, NULL);
+    for (j = 0; j < num_iterations; j++)
+    {
+        ref(mbuf1, mbuf3, 16);
+    }
+
+    gettimeofday(&te, NULL);
+    printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
 }
-
+#endif
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 {
     int j = 0;
@@ -160,24 +176,13 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 //Find the Output Comp and Cycle count
 static int check_mbdst_primitive(mbdst ref, mbdst opt)
 {
-
     int j = 0;
-    const int  t_size = 16;
-    const int num_iterations = 100000;
-    struct timeval ts, te;
-
-    mbuf1 = (pixel*)malloc(t_size);
-    mbuf2 = (pixel*)malloc(t_size);
-    mbuf3 = (pixel*)malloc(t_size);
-
-    memset(mbuf2, 0, t_size);
-    memset(mbuf3, 0, t_size);
+    int t_size = 16;
 
     for (int i = 0; i <= 100; i++)
     {
-        memcpy(mbuf1, pbuf1 + j,  t_size);
-        opt(mbuf1, mbuf2, 16);
-        ref(mbuf1, mbuf3, 16);
+        opt(mbuf1 + j, mbuf2, 16);
+        ref(mbuf1 + j, mbuf3, 16);
 
         if (memcmp(mbuf2, mbuf3, 16))
             return -1;
@@ -186,34 +191,7 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
         memset(mbuf2, 0, t_size);
         memset(mbuf3, 0, t_size);
     }
-
-    // prime the cache
-    opt(mbuf1, mbuf2, 16);
-
-    gettimeofday(&ts, NULL);
-    for (j = 0; j < num_iterations; j++)
-    {
-        opt(mbuf1, mbuf2, 16);
-    }
-
-    gettimeofday(&te, NULL);
-    printf("\tvectorized: (%1.4f ms) ", timevaldiff(&ts, &te));
-
-    gettimeofday(&ts, NULL);
-    for (j = 0; j < num_iterations; j++)
-    {
-        ref(mbuf1, mbuf3, 16);
-    }
-
-    gettimeofday(&te, NULL);
-    printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
-
-    free(mbuf1);
-    free(mbuf2);
-    free(mbuf3);
-
     return 0;
-
 }
 
 int init_pixelcmp_buffers(){
@@ -240,6 +218,31 @@ int clean_pixelcmp_buffers(){
     return 0;
 }
 
+int init_mbdst_buffers(){
+
+    int t_size = 16;
+    mbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    mbuf2 = (pixel*)malloc(t_size);
+    mbuf3 = (pixel*)malloc(t_size);
+    if (!mbuf1 || !mbuf2 || !mbuf3)
+    {
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
+        return -1;
+    }
+    memcpy(mbuf1, pbuf1, 16*100);
+    memset(mbuf2, 0, t_size);
+    memset(mbuf3, 0, t_size);
+    return 0;
+}
+
+int clean_mbdst_buffers(){
+
+    free(mbuf1);
+    free(mbuf2);
+    free(mbuf3);
+    return 0;
+}
+
 // test all implemented primitives
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
@@ -247,6 +250,9 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
     
     if(init_pixelcmp_buffers() < 0)
 	    return -1;
+        
+    /****************** Run pixelcmp primitives **************************/
+    
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
@@ -257,8 +263,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 return -1;
             }
 
-            printf("satd[%s]: passed ", FuncNames[curpar]);
-            check_cycle_count(cprimitives.satd[curpar], vectorprimitives.satd[curpar]);
+            printf("\nsatd[%s]: passed ", FuncNames[curpar]);            
         }
 
         if (vectorprimitives.sad[curpar])
@@ -269,8 +274,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 return -1;
             }
 
-            printf("sad[%s]: passed ", FuncNames[curpar]);
-            check_cycle_count(cprimitives.sad[curpar], vectorprimitives.sad[curpar]);
+            printf("\nsad[%s]: passed ", FuncNames[curpar]);            
         }
     }
 
@@ -282,8 +286,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             return -1;
         }
 
-        printf("sa8d_8x8: passed ");
-        check_cycle_count(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8);
+        printf("\nsa8d_8x8: passed ");        
     }
 
     if (vectorprimitives.sa8d_16x16)
@@ -294,11 +297,15 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             return -1;
         }
 
-        printf("sa8d_16x16: passed ");
-        check_cycle_count(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16);
+        printf("\nsa8d_16x16: passed ");        
     }
 
     clean_pixelcmp_buffers();
+    
+    /********** Run mbdst Primitives *******************/
+    
+    if(init_mbdst_buffers() < 0)
+        return -1;
     if (vectorprimitives.inversedst)
     {
         if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
@@ -309,14 +316,12 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
 
         printf("Inversedst: passed ");
     }
-
+    clean_mbdst_buffers();
+    /******************* Cycle count for all primitives **********************/
+    
+    //check_cycle_count(cprimitives, vectorprimitives);
     return 0;
 }
-
-/* To-Do tasks : Move buffer initializations to a separate function
- *               Check for all possible values of stride/shift etc as inputs
- *               Consistent method of calling primitives and measuring cycle count.
- * Developers should be able to add unit tests for their primitives.  */
 
 int main(int argc, char *argv[])
 {
