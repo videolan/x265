@@ -44,6 +44,7 @@
 #include "TComInterpolationFilter.h"
 #include <assert.h>
 #include "primitives.h"
+
 //! \ingroup TLibCommon
 //! \{
 // ====================================================================================================================
@@ -180,6 +181,91 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
                                      Int          height,
                                      Short const *coeff)
 {
+#if ENABLE_PRIMITIVES
+    if (!isVertical)
+    {
+        if (N == 8 && !isFirst && !isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_8_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 8 && !isFirst && isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_8_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 8 && isFirst && !isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_8_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 8 && isFirst && isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_8_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 4 && !isFirst && !isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_4_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 4 && !isFirst && isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_4_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 4 && isFirst && !isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_4_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+
+        if (N == 4 && isFirst && isLast)
+        {
+            x265::primitives.filter[x265::FILTER_H_4_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+                                                          height, bitDepth);
+            return;
+        }
+    }
+
+    //Following will be uncommented when vertical filter is added to primitives
+
+    /* if(isVertical)
+     {
+         if(N==8 && !isFirst && !isLast)
+         {     x265::primitives.filter[x265::FILTER_V_8_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==8 && !isFirst && isLast)
+         {     x265::primitives.filter[x265::FILTER_V_8_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==8 && isFirst && !isLast)
+        {      x265::primitives.filter[x265::FILTER_V_8_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==8 && isFirst && isLast)
+          {    x265::primitives.filter[x265::FILTER_V_8_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+
+         if(N==4 && !isFirst && !isLast)
+           {   x265::primitives.filter[x265::FILTER_V_4_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==4 && !isFirst && isLast)
+           {   x265::primitives.filter[x265::FILTER_V_4_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==4 && isFirst && !isLast)
+           {   x265::primitives.filter[x265::FILTER_V_4_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth); return; }
+         if(N==4 && isFirst && isLast)
+           {   x265::primitives.filter[x265::FILTER_V_4_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);   return; }
+     }  */
+
+#endif     // if ENABLE_PRIMITIVES
+
     Short c[8];
 
     c[0] = coeff[0];
@@ -221,26 +307,6 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
         shift -= (isFirst) ? headRoom : 0;
         offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
         maxVal = 0;
-    }
-
-    if ((N == 8) && (isVertical == 0))
-    {
-#if ENABLE_PRIMITIVES
-
-        x265::primitives.filter_8_nonvertical((pixel*)coeff,
-                                              (pixel*)src,
-                                              srcStride,
-                                              (pixel*)dst,
-                                              dstStride,
-                                              width,
-                                              height,
-                                              maxVal,
-                                              shift,
-                                              offset,
-                                              isLast);
-        return;
-
-#endif     // if ENABLE_PRIMITIVES
     }
 
     Int row, col;

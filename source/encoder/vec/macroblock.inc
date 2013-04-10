@@ -126,5 +126,4 @@ void CDECL filter_8_nonvertical(pixel *coeff,
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
-    p.filter_8_nonvertical = filter_8_nonvertical;
 }
