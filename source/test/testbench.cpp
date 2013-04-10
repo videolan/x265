@@ -112,6 +112,7 @@ static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 
 static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 {
+
     struct timeval ts, te;
 
     const int num_iterations = 100000;
@@ -136,6 +137,7 @@ static void check_cycle_count(pixelcmp cprimitive, pixelcmp opt)
 
     gettimeofday(&te, NULL);
     printf("\tC: (%1.4f ms) %d iterations\n", timevaldiff(&ts, &te), num_iterations);
+
 }
 
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
@@ -158,6 +160,7 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 //Find the Output Comp and Cycle count
 static int check_mbdst_primitive(mbdst ref, mbdst opt)
 {
+
     int j = 0;
     const int  t_size = 16;
     const int num_iterations = 100000;
@@ -210,12 +213,40 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
     free(mbuf3);
 
     return 0;
+
+}
+
+int init_pixelcmp_buffers(){
+    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    if (!pbuf1 || !pbuf2)
+    {
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
+        return -1;
+    }
+
+    for (int i = 0; i < 0x1e00; i++)
+    {
+        //Generate the Random Buffer for Testing
+        pbuf1[i] = rand() & PIXEL_MAX;
+        pbuf2[i] = rand() & PIXEL_MAX;
+    }
+    return 0;
+}
+
+int clean_pixelcmp_buffers(){
+    free(pbuf1);
+    free(pbuf2);
+    return 0;
 }
 
 // test all implemented primitives
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint16_t curpar = 0;
+    
+    if(init_pixelcmp_buffers() < 0)
+	    return -1;
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
@@ -267,6 +298,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
         check_cycle_count(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16);
     }
 
+    clean_pixelcmp_buffers();
     if (vectorprimitives.inversedst)
     {
         if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
@@ -304,21 +336,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    if (!pbuf1 || !pbuf2)
-    {
-        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
-        return -1;
-    }
-
-    for (int i = 0; i < 0x1e00; i++)
-    {
-        //Generate the Random Buffer for Testing
-        pbuf1[i] = rand() & PIXEL_MAX;
-        pbuf2[i] = rand() & PIXEL_MAX;
-    }
-
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);
 
@@ -353,7 +370,5 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 
-    free(pbuf1);
-    free(pbuf2);
     return 0;
 }
