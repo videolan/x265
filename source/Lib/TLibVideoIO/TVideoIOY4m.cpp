@@ -43,7 +43,7 @@
 #include <iostream>
 
 #include "TLibCommon/TComRom.h"
-#include "TVideoIOYuv.h"
+#include "TVideoIOY4m.h"
 
 using namespace std;
 
@@ -153,7 +153,7 @@ static void scalePlane(Pel* img, UInt stride, UInt width, UInt height,
  * \param internalBitDepthY bit-depth to scale image data to/from when reading/writing (luma component).
  * \param internalBitDepthC bit-depth to scale image data to/from when reading/writing (chroma components).
  */
-Void TVideoIOYuv::open(Char*        pchFile,
+Void TVideoIOY4m::open(Char*        pchFile,
                        Bool         bWriteMode,
                        Int          internalBitDepthY,
                        Int          fileBitDepthY,
@@ -163,60 +163,211 @@ Void TVideoIOYuv::open(Char*        pchFile,
                        video_info_t video_info,
                        Int          aiPad[2])
 {
-    yuv_hnd_t* yuv_handler = new yuv_hnd_t();
+    y4m_hnd_t* y4m_handler = NULL;
 
-    //yuv_hnd_t *yuv_handler = malloc( sizeof(yuv_hnd_t) );
-    yuv_handler->bitDepthShiftY = internalBitDepthY - fileBitDepthY;
-    yuv_handler->bitDepthShiftC = internalBitDepthC - fileBitDepthC;
-    yuv_handler->fileBitDepthY = fileBitDepthY;
-    yuv_handler->fileBitDepthC = fileBitDepthC;
-    yuv_handler->aiPad[0] = aiPad[0];
-    yuv_handler->aiPad[1] = aiPad[1];
-    if (bWriteMode)
+    if ((y4m_hnd_t*)handler == NULL)
     {
-        yuv_handler->m_cHandle.open(pchFile, ios::binary | ios::out);
+        y4m_handler = new y4m_hnd_t();
+        //yuv_hnd_t *yuv_handler = malloc( sizeof(yuv_hnd_t) );
 
-        if (yuv_handler->m_cHandle.fail())
+        if (bWriteMode)
         {
-            printf("\nfailed to write reconstructed YUV file\n");
-            exit(0);
+            y4m_handler->m_cHandle.open(pchFile, ios::binary | ios::out);
+
+            if (y4m_handler->m_cHandle.fail())
+            {
+                printf("\nfailed to write reconstructed YUV file\n");
+                exit(0);
+            }
+        }
+        else
+        {
+            y4m_handler->m_cHandle.open(pchFile, ios::binary | ios::in);
+
+            if (y4m_handler->m_cHandle.fail())
+            {
+                printf("\nfailed to open Input YUV file\n");
+                exit(0);
+            }
         }
     }
     else
     {
-        yuv_handler->m_cHandle.open(pchFile, ios::binary | ios::in);
+        y4m_handler = (y4m_hnd_t*)handler;
+        y4m_handler->bitDepthShiftY = internalBitDepthY - fileBitDepthY;
+        y4m_handler->bitDepthShiftC = internalBitDepthC - fileBitDepthC;
+        y4m_handler->fileBitDepthY = fileBitDepthY;
+        y4m_handler->fileBitDepthC = fileBitDepthC;
+        y4m_handler->aiPad[0] = aiPad[0];
+        y4m_handler->aiPad[1] = aiPad[1];
+        y4m_handler->m_cHandle.seekg(y4m_handler->headerLength);
+    }
 
-        if (yuv_handler->m_cHandle.fail())
+    handler =  (hnd_t*)y4m_handler;
+}
+
+Void  TVideoIOY4m::getVideoInfo(video_info_t &video_info, hnd_t* &handler)
+{
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
+    /*stripping off the plaintext, quasi-freeform header */
+    Char source[5];
+    Int width = 0;
+    Int height = 0;
+    Int rateNumerator = 0;
+    Int rateDenominator = 0;
+    //Int headerLength = 0 ;
+    Double rate = 30.0;
+
+    while (1)
+    {
+        source[0] = 0x0;
+
+        while ((source[0] != 0x20) && (source[0] != 0x0a))
         {
-            printf("\nfailed to open Input YUV file\n");
-            exit(0);
+            y4m_handler->m_cHandle.read(source, 1);
+            //headerLength++;
+            if (y4m_handler->m_cHandle.eof() || y4m_handler->m_cHandle.fail())
+            {
+                break;
+            }
+        }
+
+        if (source[0] == 0x00)
+        {
+            break;
+        }
+
+        while (source[0] == 0x20)
+        {
+            //  read parameter identifier
+
+            y4m_handler->m_cHandle.read(source + 1, 1);
+            //headerLength++;
+            if (source[1] == 'W')
+            {
+                width = 0;
+                while (true)
+                {
+                    y4m_handler->m_cHandle.read(source, 1);
+
+                    if (source[0] == 0x20 || source[0] == 0x0a)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        width = width * 10 + (source[0] - '0');
+                    }
+                }
+
+                continue;
+            }
+
+            if (source[1] == 'H')
+            {
+                height = 0;
+                while (true)
+                {
+                    y4m_handler->m_cHandle.read(source, 1);
+                    if (source[0] == 0x20 || source[0] == 0x0a)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        height = height * 10 + (source[0] - '0');
+                    }
+                }
+
+                continue;
+            }
+
+            if (source[1] == 'F')
+            {
+                rateNumerator = 0;
+                rateDenominator = 0;
+                while (true)
+                {
+                    y4m_handler->m_cHandle.read(source, 1);
+                    if (source[0] == '.')
+                    {
+                        rateDenominator = 1;
+                        while (true)
+                        {
+                            y4m_handler->m_cHandle.read(source, 1);
+                            if (source[0] == 0x20 || source[0] == 0x10)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                rateNumerator = rateNumerator * 10 + (source[0] - '0');
+                                rateDenominator = rateDenominator * 10;
+                            }
+                        }
+
+                        rate = (Double)rateNumerator / rateDenominator;
+                        break;
+                    }
+                    else if (source[0] == ':')
+                    {
+                        while (true)
+                        {
+                            y4m_handler->m_cHandle.read(source, 1);
+                            if (source[0] == 0x20 || source[0] == 0x0a)
+                            {
+                                break;
+                            }
+                            else
+                                rateDenominator = rateDenominator * 10 + (source[0] - '0');
+                        }
+
+                        rate = (Double)rateNumerator / rateDenominator;
+                        break;
+                    }
+                    else
+                    {
+                        rateNumerator = rateNumerator * 10 + (source[0] - '0');
+                    }
+                }
+
+                continue;
+            }
+
+            break;
+        }
+
+        if (source[0] == 0x0a)
+        {
+            break;
         }
     }
 
-    handler =  (hnd_t*)yuv_handler;
+    y4m_handler->headerLength = y4m_handler->m_cHandle.tellg();
+    video_info.width = width;
+    video_info.height = height;
+    video_info.FrameRate = ceil(rate);
 }
 
-Void TVideoIOYuv::getVideoInfo(video_info_t &video_info, hnd_t* &handler) {}
-
-Void TVideoIOYuv::close(hnd_t* &handler)
+Void TVideoIOY4m::close(hnd_t* &handler)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
 
-    yuv_handler->m_cHandle.close();
+    y4m_handler->m_cHandle.close();
 }
 
-Bool TVideoIOYuv::isEof(hnd_t* &handler)
+Bool TVideoIOY4m::isEof(hnd_t* &handler)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
 
-    return yuv_handler->m_cHandle.eof();
+    return y4m_handler->m_cHandle.eof();
 }
 
-Bool TVideoIOYuv::isFail(hnd_t* &handler)
+Bool TVideoIOY4m::isFail(hnd_t* &handler)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
 
-    return yuv_handler->m_cHandle.fail();
+    return y4m_handler->m_cHandle.fail();
 }
 
 /**
@@ -225,32 +376,32 @@ Bool TVideoIOYuv::isFail(hnd_t* &handler)
  * This function correctly handles cases where the input file is not
  * seekable, by consuming bytes.
  */
-void TVideoIOYuv::skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler)
+void TVideoIOY4m::skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
 
     if (!numFrames)
         return;
 
-    const UInt wordsize = (yuv_handler->fileBitDepthY > 8 || yuv_handler->fileBitDepthC > 8) ? 2 : 1;
+    const UInt wordsize = (y4m_handler->fileBitDepthY > 8 || y4m_handler->fileBitDepthC > 8) ? 2 : 1;
     const streamoff framesize = wordsize * width * height * 3 / 2;
     const streamoff offset = framesize * numFrames;
 
     /* attempt to seek */
-    if (!!yuv_handler->m_cHandle.seekg(offset, ios::cur))
+    if (!!y4m_handler->m_cHandle.seekg(offset, ios::cur))
         return; /* success */
 
-    yuv_handler->m_cHandle.clear();
+    y4m_handler->m_cHandle.clear();
 
     /* fall back to consuming the input */
     Char buf[512];
     const UInt offset_mod_bufsize = offset % sizeof(buf);
     for (streamoff i = 0; i < offset - offset_mod_bufsize; i += sizeof(buf))
     {
-        yuv_handler->m_cHandle.read(buf, sizeof(buf));
+        y4m_handler->m_cHandle.read(buf, sizeof(buf));
     }
 
-    yuv_handler->m_cHandle.read(buf, offset_mod_bufsize);
+    y4m_handler->m_cHandle.read(buf, offset_mod_bufsize);
 }
 
 /**
@@ -385,9 +536,9 @@ static Bool writePlane(ostream& fd, Pel* src, Bool is16bit,
  * @param aiPad        source padding size, aiPad[0] = horizontal, aiPad[1] = vertical
  * @return true for success, false in case of error
  */
-Bool TVideoIOYuv::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
+Bool TVideoIOY4m::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
 
     // check end-of-file
     if (isEof(handler)) return false;
@@ -395,29 +546,29 @@ Bool TVideoIOYuv::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
     Int   iStride = pPicYuv->getStride();
 
     // compute actual YUV width & height excluding padding size
-    UInt pad_h = yuv_handler->aiPad[0];
-    UInt pad_v = yuv_handler->aiPad[1];
+    UInt pad_h = y4m_handler->aiPad[0];
+    UInt pad_v = y4m_handler->aiPad[1];
     UInt width_full = pPicYuv->getWidth();
     UInt height_full = pPicYuv->getHeight();
     UInt width  = width_full - pad_h;
     UInt height = height_full - pad_v;
-    Bool is16bit = yuv_handler->fileBitDepthY > 8 || yuv_handler->fileBitDepthC > 8;
+    Bool is16bit = y4m_handler->fileBitDepthY > 8 || y4m_handler->fileBitDepthC > 8;
 
-    Int desired_bitdepthY = yuv_handler->fileBitDepthY + yuv_handler->bitDepthShiftY;
-    Int desired_bitdepthC = yuv_handler->fileBitDepthC + yuv_handler->bitDepthShiftC;
+    Int desired_bitdepthY = y4m_handler->fileBitDepthY + y4m_handler->bitDepthShiftY;
+    Int desired_bitdepthC = y4m_handler->fileBitDepthC + y4m_handler->bitDepthShiftC;
     Pel minvalY = 0;
     Pel minvalC = 0;
     Pel maxvalY = (1 << desired_bitdepthY) - 1;
     Pel maxvalC = (1 << desired_bitdepthC) - 1;
 #if CLIP_TO_709_RANGE
-    if (yuv_handler->bitdepthShiftY < 0 && desired_bitdepthY >= 8)
+    if (y4m_handler->bitdepthShiftY < 0 && desired_bitdepthY >= 8)
     {
         /* ITU-R BT.709 compliant clipping for converting say 10b to 8b */
         minvalY = 1 << (desired_bitdepthY - 8);
         maxvalY = (0xff << (desired_bitdepthY - 8)) - 1;
     }
 
-    if (yuv_handler->bitdepthShiftC < 0 && desired_bitdepthC >= 8)
+    if (y4m_handler->bitdepthShiftC < 0 && desired_bitdepthC >= 8)
     {
         /* ITU-R BT.709 compliant clipping for converting say 10b to 8b */
         minvalC = 1 << (desired_bitdepthC - 8);
@@ -426,10 +577,49 @@ Bool TVideoIOYuv::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
 
 #endif // if CLIP_TO_709_RANGE
 
-    if (!readPlane(pPicYuv->getLumaAddr(), yuv_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
+    /*stripe off the FRAME header */
+    char byte[1];
+    Int cur_pointer = y4m_handler->m_cHandle.tellg();
+    cur_pointer += Y4M_FRAME_MAGIC;
+    y4m_handler->m_cHandle.seekg(cur_pointer);
+    while (1)
+    {
+        byte[0] = 0;
+        y4m_handler->m_cHandle.read(byte, 1);
+        if (y4m_handler->m_cHandle.eof() || y4m_handler->m_cHandle.fail())
+        {
+            break;
+        }
+
+        //if(*byte==0x0a){
+        //	break;
+        //}
+label:
+        while (*byte != 0x0a)
+        {
+            y4m_handler->m_cHandle.read(byte, 1);
+        }
+
+        y4m_handler->m_cHandle.read(byte, 1);
+        if (*(byte) == 0x20)
+        {
+            goto label;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    cur_pointer = y4m_handler->m_cHandle.tellg();
+    y4m_handler->m_cHandle.seekg(cur_pointer - 1);
+    cur_pointer = y4m_handler->m_cHandle.tellg();
+
+    if (!readPlane(pPicYuv->getLumaAddr(), y4m_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
         return false;
 
-    scalePlane(pPicYuv->getLumaAddr(), iStride, width_full, height_full, yuv_handler->bitDepthShiftY, minvalY, maxvalY);
+    cur_pointer = y4m_handler->m_cHandle.tellg();
+    scalePlane(pPicYuv->getLumaAddr(), iStride, width_full, height_full, y4m_handler->bitDepthShiftY, minvalY, maxvalY);
 
     iStride >>= 1;
     width_full >>= 1;
@@ -439,16 +629,18 @@ Bool TVideoIOYuv::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
     pad_h >>= 1;
     pad_v >>= 1;
 
-    if (!readPlane(pPicYuv->getCbAddr(), yuv_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
+    if (!readPlane(pPicYuv->getCbAddr(), y4m_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
         return false;
 
-    scalePlane(pPicYuv->getCbAddr(), iStride, width_full, height_full, yuv_handler->bitDepthShiftC, minvalC, maxvalC);
+    cur_pointer = y4m_handler->m_cHandle.tellg();
+    scalePlane(pPicYuv->getCbAddr(), iStride, width_full, height_full, y4m_handler->bitDepthShiftC, minvalC, maxvalC);
 
-    if (!readPlane(pPicYuv->getCrAddr(), yuv_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
+    if (!readPlane(pPicYuv->getCrAddr(), y4m_handler->m_cHandle, is16bit, iStride, width, height, pad_h, pad_v))
         return false;
 
-    scalePlane(pPicYuv->getCrAddr(), iStride, width_full, height_full, yuv_handler->bitDepthShiftC, minvalC, maxvalC);
-
+    cur_pointer = y4m_handler->m_cHandle.tellg();
+    scalePlane(pPicYuv->getCrAddr(), iStride, width_full, height_full, y4m_handler->bitDepthShiftC, minvalC, maxvalC);
+    cur_pointer = y4m_handler->m_cHandle.tellg();
     return true;
 }
 
@@ -460,18 +652,18 @@ Bool TVideoIOYuv::read(TComPicYuv* pPicYuv,  hnd_t* &handler)
  * @param aiPad       source padding size, aiPad[0] = horizontal, aiPad[1] = vertical
  * @return true for success, false in case of error
  */
-Bool TVideoIOYuv::write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft, Int confRight, Int confTop, Int confBottom)
+Bool TVideoIOY4m::write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft, Int confRight, Int confTop, Int confBottom)
 {
-    yuv_hnd_t* yuv_handler = (yuv_hnd_t*)handler;
+    y4m_hnd_t* y4m_handler = (y4m_hnd_t*)handler;
     // compute actual YUV frame size excluding padding size
     Int   iStride = pPicYuv->getStride();
     UInt  width  = pPicYuv->getWidth()  - confLeft - confRight;
     UInt  height = pPicYuv->getHeight() - confTop  - confBottom;
-    Bool is16bit = yuv_handler->fileBitDepthY > 8 || yuv_handler->fileBitDepthC > 8;
+    Bool is16bit = y4m_handler->fileBitDepthY > 8 || y4m_handler->fileBitDepthC > 8;
     TComPicYuv *dstPicYuv = NULL;
     Bool retval = true;
 
-    if (yuv_handler->bitDepthShiftY != 0 || yuv_handler->bitDepthShiftC != 0)
+    if (y4m_handler->bitDepthShiftY != 0 || y4m_handler->bitDepthShiftC != 0)
     {
         dstPicYuv = new TComPicYuv;
         dstPicYuv->create(pPicYuv->getWidth(), pPicYuv->getHeight(), 1, 1, 0);
@@ -479,30 +671,30 @@ Bool TVideoIOYuv::write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft, Int 
 
         Pel minvalY = 0;
         Pel minvalC = 0;
-        Pel maxvalY = (1 << yuv_handler->fileBitDepthY) - 1;
-        Pel maxvalC = (1 << yuv_handler->fileBitDepthC) - 1;
+        Pel maxvalY = (1 << y4m_handler->fileBitDepthY) - 1;
+        Pel maxvalC = (1 << y4m_handler->fileBitDepthC) - 1;
 #if CLIP_TO_709_RANGE
-        if (-yuv_handler->bitDepthShiftY < 0 && yuv_handler->fileBitDepthY >= 8)
+        if (-y4m_handler->bitDepthShiftY < 0 && y4m_handler->fileBitDepthY >= 8)
         {
             /* ITU-R BT.709 compliant clipping for converting say 10b to 8b */
-            minvalY = 1 << (yuv_handler->fileBitDepthY - 8);
-            maxvalY = (0xff << (yuv_handler->fileBitDepthY - 8)) - 1;
+            minvalY = 1 << (y4m_handler->fileBitDepthY - 8);
+            maxvalY = (0xff << (y4m_handler->fileBitDepthY - 8)) - 1;
         }
 
-        if (-yuv_handler->bitDepthShiftC < 0 && yuv_handler->fileBitDepthC >= 8)
+        if (-y4m_handler->bitDepthShiftC < 0 && y4m_handler->fileBitDepthC >= 8)
         {
             /* ITU-R BT.709 compliant clipping for converting say 10b to 8b */
-            minvalC = 1 << (yuv_handler->fileBitDepthC - 8);
-            maxvalC = (0xff << (yuv_handler->fileBitDepthC - 8)) - 1;
+            minvalC = 1 << (y4m_handler->fileBitDepthC - 8);
+            maxvalC = (0xff << (y4m_handler->fileBitDepthC - 8)) - 1;
         }
 
 #endif // if CLIP_TO_709_RANGE
         scalePlane(dstPicYuv->getLumaAddr(), dstPicYuv->getStride(), dstPicYuv->getWidth(),
-                   dstPicYuv->getHeight(), -yuv_handler->bitDepthShiftY, minvalY, maxvalY);
+                   dstPicYuv->getHeight(), -y4m_handler->bitDepthShiftY, minvalY, maxvalY);
         scalePlane(dstPicYuv->getCbAddr(), dstPicYuv->getCStride(), dstPicYuv->getWidth() >> 1,
-                   dstPicYuv->getHeight() >> 1, -yuv_handler->bitDepthShiftC, minvalC, maxvalC);
+                   dstPicYuv->getHeight() >> 1, -y4m_handler->bitDepthShiftC, minvalC, maxvalC);
         scalePlane(dstPicYuv->getCrAddr(), dstPicYuv->getCStride(), dstPicYuv->getWidth() >> 1,
-                   dstPicYuv->getHeight() >> 1, -yuv_handler->bitDepthShiftC, minvalC, maxvalC);
+                   dstPicYuv->getHeight() >> 1, -y4m_handler->bitDepthShiftC, minvalC, maxvalC);
     }
     else
     {
@@ -512,7 +704,7 @@ Bool TVideoIOYuv::write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft, Int 
     // location of upper left pel in a plane
     Int planeOffset = confLeft + confTop * iStride;
 
-    if (!writePlane(yuv_handler->m_cHandle, dstPicYuv->getLumaAddr() + planeOffset, is16bit, iStride, width, height))
+    if (!writePlane(y4m_handler->m_cHandle, dstPicYuv->getLumaAddr() + planeOffset, is16bit, iStride, width, height))
     {
         retval = false;
         goto exit;
@@ -528,20 +720,20 @@ Bool TVideoIOYuv::write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft, Int 
 
     planeOffset = confLeft + confTop * iStride;
 
-    if (!writePlane(yuv_handler->m_cHandle, dstPicYuv->getCbAddr() + planeOffset, is16bit, iStride, width, height))
+    if (!writePlane(y4m_handler->m_cHandle, dstPicYuv->getCbAddr() + planeOffset, is16bit, iStride, width, height))
     {
         retval = false;
         goto exit;
     }
 
-    if (!writePlane(yuv_handler->m_cHandle, dstPicYuv->getCrAddr() + planeOffset, is16bit, iStride, width, height))
+    if (!writePlane(y4m_handler->m_cHandle, dstPicYuv->getCrAddr() + planeOffset, is16bit, iStride, width, height))
     {
         retval = false;
         goto exit;
     }
 
 exit:
-    if (yuv_handler->bitDepthShiftY != 0 || yuv_handler->bitDepthShiftC != 0)
+    if (y4m_handler->bitDepthShiftY != 0 || y4m_handler->bitDepthShiftC != 0)
     {
         dstPicYuv->destroy();
         delete dstPicYuv;

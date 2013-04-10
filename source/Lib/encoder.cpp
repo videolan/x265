@@ -390,21 +390,27 @@ Void TAppEncTop::xInitLibCfg()
 Void TAppEncTop::xCreateLib()
 {
     // Video I/O
-    m_cTVideoIOYuvInputFile.open(m_pchInputFile,
-                                 false,
-                                 m_inputBitDepthY,
-                                 m_inputBitDepthC,
-                                 m_internalBitDepthY,
-                                 m_internalBitDepthC);                                                                                    // read  mode
-    m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1]);
+    m_cTVideoIOInputFile->open(m_pchInputFile,
+                               false,
+                               m_inputBitDepthY,
+                               m_inputBitDepthC,
+                               m_internalBitDepthY,
+                               m_internalBitDepthC,
+                               handler_input,
+                               video_info,
+                               m_aiPad);                                                                      // read  mode
+    m_cTVideoIOInputFile->skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1], handler_input);
 
     if (m_pchReconFile)
-        m_cTVideoIOYuvReconFile.open(m_pchReconFile,
-                                     true,
-                                     m_outputBitDepthY,
-                                     m_outputBitDepthC,
-                                     m_internalBitDepthY,
-                                     m_internalBitDepthC); // write mode
+        m_cTVideoIOReconFile->open(m_pchReconFile,
+                                   true,
+                                   m_outputBitDepthY,
+                                   m_outputBitDepthC,
+                                   m_internalBitDepthY,
+                                   m_internalBitDepthC,
+                                   handler_recon,
+                                   video_info,
+                                   m_aiPad); // write mode
 
     // Neo Decoder
     m_cTEncTop.create();
@@ -413,8 +419,8 @@ Void TAppEncTop::xCreateLib()
 Void TAppEncTop::xDestroyLib()
 {
     // Video I/O
-    m_cTVideoIOYuvInputFile.close();
-    m_cTVideoIOYuvReconFile.close();
+    m_cTVideoIOInputFile->close(handler_input);
+    m_cTVideoIOReconFile->close(handler_recon);
 
     // Neo Decoder
     m_cTEncTop.destroy();
@@ -471,7 +477,7 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         PPAStartCpuEventFunc(read_yuv);
-        m_cTVideoIOYuvInputFile.read(pcPicYuvOrg, m_aiPad);
+        m_cTVideoIOInputFile->read(pcPicYuvOrg, handler_input);
         PPAStopCpuEventFunc(read_yuv);
 
         // increase number of received frames
@@ -481,7 +487,7 @@ Void TAppEncTop::encode()
 
         Bool flush = 0;
         // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
-        if (m_cTVideoIOYuvInputFile.isEof())
+        if (m_cTVideoIOInputFile->isEof(handler_input))
         {
             flush = true;
             bEos = true;
@@ -584,7 +590,7 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
         TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
         if (m_pchReconFile)
         {
-            m_cTVideoIOYuvReconFile.write(pcPicYuvRec, m_confLeft, m_confRight, m_confTop, m_confBottom);
+            m_cTVideoIOReconFile->write(pcPicYuvRec, handler_recon, m_confLeft, m_confRight, m_confTop, m_confBottom);
         }
 
         const AccessUnit &au = *(iterBitstream++);
