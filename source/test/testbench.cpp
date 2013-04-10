@@ -87,9 +87,7 @@ using namespace x265;
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 pixel *mbuf1, *mbuf2, *mbuf3;
-uint16_t do_singleprimitivecheck = 0;
 uint16_t do_macroblockcheck = 0;
-uint16_t curpar = 0, cycletest = 0, cycletest_primitive = 0;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
@@ -218,6 +216,7 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
 // test all implemented primitives
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
+    uint16_t curpar = 0;
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
@@ -243,9 +242,6 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             printf("sad[%s]: passed ", FuncNames[curpar]);
             check_cycle_count(cprimitives.sad[curpar], vectorprimitives.sad[curpar]);
         }
-
-        if (do_singleprimitivecheck == 1)
-            return 0;
     }
 
     if (vectorprimitives.sa8d_8x8)
@@ -303,12 +299,7 @@ int main(int argc, char *argv[])
 
     for (int i = 1; i < argc - 1; i += 2)
     {
-        if (!strcmp(argv[i], "--primitive"))
-        {
-            do_singleprimitivecheck = 1;
-            curpar = atoi(argv[i + 1]);
-        }
-        else if (!strcmp(argv[i], "--cpuid"))
+       if (!strcmp(argv[i], "--cpuid"))
         {
             cpuid = atoi(argv[i + 1]);
         }
