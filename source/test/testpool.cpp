@@ -48,6 +48,7 @@ struct RowData
 {
     RowData() : active(false), curCol(0) {}
 
+    Lock          lock;
     volatile bool active;
     volatile int  curCol;
 };
@@ -161,23 +162,28 @@ void MD5Frame::ProcessRow(int rownum)
         PPAStopCpuEventFunc(encode_block);
 
         curRow.curCol++;
-        if (curRow.curCol > 2 && rownum < this->numrows - 1)
+
+        if (curRow.curCol >= 2 && rownum < this->numrows - 1)
         {
-            if (this->row[rownum + 1].active == 0)
+            ScopedLock below(this->row[rownum + 1].lock);
+
+            if (this->row[rownum + 1].active == false)
             {
                 // set active indicator so row is only enqueued once
                 // row stays marked active until blocked or done
-                this->row[rownum + 1].active = 1;
+                this->row[rownum + 1].active = true;
                 this->QueueFrame::EnqueueRow(rownum + 1);
             }
         }
+
+        ScopedLock self(curRow.lock);
 
         if (rownum > 0 &&
             curRow.curCol < this->numcols - 1 &&
             this->row[rownum - 1].curCol < curRow.curCol + 2)
         {
             // row is blocked, quit job
-            curRow.active = 0;
+            curRow.active = false;
             return;
         }
     }

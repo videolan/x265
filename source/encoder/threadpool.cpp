@@ -27,6 +27,7 @@
 #include "threading.h"
 #include <assert.h>
 #include <string.h>
+#include <new>
 
 #if MACOS
 #include <sys/param.h>
@@ -40,6 +41,8 @@
 
 #define CLZ64(x)                        __builtin_clzll(x)
 
+#define ATOMIC_INC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, 1)
+#define ATOMIC_DEC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, -1)
 #define ATOMIC_OR(ptr, mask)            __sync_or_and_fetch(ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval) __sync_val_compare_and_swap(ptr, oldval, newval)
 #define GIVE_UP_TIME()                  usleep(0)
@@ -64,6 +67,8 @@ inline int __lzcnt_2x32(uint64_t x64)
 
 #endif // if _WIN64
 
+#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile unsigned int*)ptr)
+#define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile unsigned int*)ptr)
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define GIVE_UP_TIME()                  Sleep(0)
@@ -79,30 +84,25 @@ class PoolThread : public Thread
 {
 private:
 
-    ThreadPoolImpl *m_pool;
-    Event m_awake;
+    ThreadPoolImpl &m_pool;
+
+    PoolThread& operator=(const PoolThread&);
 
 public:
 
-    volatile PoolThread *m_idleNext;
+    PoolThread(ThreadPoolImpl& pool) : m_pool(pool) {}
 
-    PoolThread() : m_idleNext(NULL) {}
-
-    ~PoolThread() {}
-
-    void Initialize(ThreadPoolImpl *p)
-    {
-        m_pool = p;
-        m_awake.Trigger();
-    }
-
-    void Awaken()
-    {
-        m_awake.Trigger();
-    }
+    virtual ~PoolThread() {}
 
     void ThreadMain();
+
+    volatile static int   s_sleepCount;
+             static Event s_wakeEvent;
 };
+
+volatile int PoolThread::s_sleepCount = 0;
+
+Event PoolThread::s_wakeEvent;
 
 class ThreadPoolImpl : public ThreadPool
 {
@@ -113,6 +113,10 @@ private:
     int          m_numThreads;
     PoolThread  *m_threads;
 
+    /* Lock for write access to the provider lists.  Threads are
+     * always allowed to read m_firstProvider and follow the
+     * linked list.  Providers must zero their m_nextProvider
+     * pointers before removing themselves from this list */
     Lock         m_writeLock;
 
 public:
@@ -126,11 +130,12 @@ public:
 
     ThreadPoolImpl(int numthreads);
 
-    ~ThreadPoolImpl();
+    virtual ~ThreadPoolImpl();
 
     ThreadPoolImpl *AddReference()
     {
         m_referenceCount++;
+
         return this;
     }
 
@@ -150,13 +155,10 @@ public:
 
 void PoolThread::ThreadMain()
 {
-    // Wait for pool to initialize our state
-    m_awake.Wait();
-
-    while (m_pool->IsValid())
+    while (m_pool.IsValid())
     {
         /* Walk list of job providers, looking for work */
-        JobProvider *cur = m_pool->m_firstProvider;
+        JobProvider *cur = m_pool.m_firstProvider;
         while (cur)
         {
             // FindJob() may perform actual work and return true.  If
@@ -166,23 +168,20 @@ void PoolThread::ThreadMain()
 
             cur = cur->m_nextProvider;
         }
-
-        // Keep spinning so long as there is at least one job provider
-        if (!m_pool->m_firstProvider)
-            // unemployed, oh bugger
-            m_awake.Wait();
-        else if (cur == NULL)
-            // Allow another thread to use this CPU for a bit
-            GIVE_UP_TIME();
+        if (cur == NULL)
+        {
+            ATOMIC_INC(&s_sleepCount);
+            s_wakeEvent.Wait();
+            ATOMIC_DEC(&s_sleepCount);
+        }
     }
 }
 
 void ThreadPoolImpl::PokeIdleThreads()
 {
-    for (int i = 0; i < m_numThreads; i++)
-    {
-        m_threads[i].Awaken();
-    }
+    int initialCount = PoolThread::s_sleepCount;
+    for (int i = 0; i < initialCount; i++)
+        PoolThread::s_wakeEvent.Trigger();
 }
 
 static int get_cpu_count()
@@ -248,22 +247,17 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     if (numThreads == 0)
         numThreads = get_cpu_count();
 
-    m_threads = new PoolThread[numThreads];
+    char *buffer = new char[sizeof(PoolThread) * numThreads];
+    m_threads = reinterpret_cast<PoolThread*>(buffer);
 
     if (m_threads)
     {
         m_ok = true;
         for (int i = 0; i < numThreads; i++)
         {
+            new (buffer) PoolThread(*this);
+            buffer += sizeof(PoolThread);
             m_ok &= m_threads[i].Start();
-        }
-    }
-
-    if (m_ok)
-    {
-        for (int i = 0; i < numThreads; i++)
-        {
-            m_threads[i].Initialize(this);
         }
     }
 }
@@ -273,14 +267,13 @@ ThreadPoolImpl::~ThreadPoolImpl()
     if (m_ok && m_threads)
     {
         m_ok = false;
-        for (int i = 0; i < m_numThreads; i++)
-        {
-            m_threads[i].Awaken();
-        }
+        PokeIdleThreads();
 
         // destructors will block for thread completions
-        delete[] m_threads;
-        m_threads = NULL;
+        for (int i = 0; i < m_numThreads; i++)
+            m_threads[i].~PoolThread();
+
+        delete reinterpret_cast<char*>(m_threads);
     }
 
     // leak threads on program exit if there were resource failures
@@ -375,6 +368,7 @@ void QueueFrame::EnqueueRow(int row)
 
     assert(row < m_numRows);
     ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
+    m_pool->PokeIdleThreads();
 }
 
 bool QueueFrame::FindJob()

@@ -137,34 +137,28 @@ public:
 
     Event()
     {
-        pthread_cond_init(&this->condition, NULL);
-        pthread_mutex_init(&this->lock, NULL);
+        sem_init(&this->semaphore, 0, 0);
     }
 
     ~Event()
     {
-        pthread_mutex_destroy(&this->lock);
-        pthread_cond_destroy(&this->condition);
+        sem_destroy(&this->semaphore);
     }
 
     void Wait()
     {
-        pthread_mutex_lock(&this->lock);
-        pthread_cond_wait(&this->condition, &this->lock);
-        pthread_mutex_unlock(&this->lock);
+        sem_wait(&this->semaphore);
     }
 
     void Trigger()
     {
-        pthread_mutex_lock(&this->lock);
-        pthread_cond_broadcast(&this->condition);
-        pthread_mutex_unlock(&this->lock);
+        sem_post(&this->semaphore);
     }
 
 protected:
 
-    pthread_mutex_t lock;
-    pthread_cond_t  condition;
+    /* the POSIX version uses a counting semaphore */
+    sem_t semaphore;
 };
 
 #endif // ifdef _WIN32
