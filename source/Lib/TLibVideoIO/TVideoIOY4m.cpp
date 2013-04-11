@@ -35,6 +35,7 @@
     \brief    YUV file I/O class
 */
 
+#include <cmath>
 #include <cstdlib>
 #include <fcntl.h>
 #include <assert.h>
