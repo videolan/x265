@@ -106,7 +106,7 @@ static const char *FuncNames[NUM_PARTITIONS] = {
  */
 
 #define MILSECS_IN_SEC 1000     // Number of milliseconds in a second
-#define NUM_ITERATIONS_CYCLE 100000    // Number of iterations for cycle count
+#define NUM_ITERATIONS_CYCLE 10000000    // Number of iterations for cycle count
 #define INCR 16     // Number of bytes the input window shifts across the total buffer
 #define STRIDE 16   // Stride value used while calling primitives
 
