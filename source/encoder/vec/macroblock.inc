@@ -83,7 +83,7 @@ void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output
     block[15] = half[7];
 }
 
-void CDECL filter_8_nonvertical(pixel *coeff,
+void CDECL filter_8_nonvertical(const short *coeff,
                                 pixel *src,
                                 int    srcStride,
                                 pixel *dst,

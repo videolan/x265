@@ -186,56 +186,56 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
     {
         if (N == 8 && !isFirst && !isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_8_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_8_0_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 8 && !isFirst && isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_8_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_8_0_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && !isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_8_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_8_1_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_8_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_8_1_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 4 && !isFirst && !isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_4_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_4_0_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 4 && !isFirst && isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_4_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_4_0_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 4 && isFirst && !isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_4_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_4_1_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }
 
         if (N == 4 && isFirst && isLast)
         {
-            x265::primitives.filter[x265::FILTER_H_4_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
+            x265::primitives.filter[x265::FILTER_H_4_1_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width,
                                                           height, bitDepth);
             return;
         }

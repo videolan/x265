@@ -49,6 +49,7 @@ static istream &operator >>(istream &, Profile::Name &);
 
 #include "TAppCommon/program_options_lite.h"
 #include "TLibEncoder/TEncRateCtrl.h"
+
 #ifdef WIN32
 #define strdup _strdup
 #endif
@@ -263,6 +264,7 @@ Void readIntString(const string inpString, const Int numEntries, Int* &memberArr
     \retval             true when success
  */
 Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
+
 {
     Bool do_help = false;
 
@@ -713,7 +715,36 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
     m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 
     /* parse the width, height, frame rate from the y4m files if it is not given in the configuration file */
+    char * s = strrchr(m_pchInputFile, '.');
+    handler_input = NULL;
+    handler_recon = NULL;
 
+    if ((!strcmp(s + 1, "y4m")))
+    {
+        m_cTVideoIOInputFile = new TVideoIOY4m();
+        m_cTVideoIOReconFile = new TVideoIOY4m();
+		/* get the video information like width,height,framerate */
+        m_cTVideoIOInputFile->open(m_pchInputFile,
+                                   false,
+                                   m_inputBitDepthY,
+                                   m_inputBitDepthC,
+                                   m_internalBitDepthY,
+                                   m_internalBitDepthC,
+                                   handler_input,
+                                   video_info,
+                                   m_aiPad);
+        m_cTVideoIOInputFile->getVideoInfo(video_info, handler_input);
+        m_iSourceWidth = video_info.width;
+        m_iSourceHeight = video_info.height;
+        m_iFrameRate = video_info.FrameRate;
+    }
+    else if ((!strcmp(s + 1, "yuv")))
+    {
+        m_cTVideoIOInputFile = new TVideoIOYuv();
+        m_cTVideoIOReconFile = new TVideoIOYuv();
+    }
+
+#if 0
     if ((m_iSourceWidth == 0) && (m_iSourceHeight == 0))
     {
         FILE *hFile = fopen(m_pchInputFile, "rb");
@@ -729,132 +760,13 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
 // Allow this warning temporarily until this code is moved into a cleaner location
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
-        while (1)
-        {
-            source[0] = 0x0;
-            while ((source[0] != 0x20) && (source[0] != 0x0a))
-            {
-                bytesRead = (Int)fread(source, 1, 1, hFile);
-                if (bytesRead != 1)
-                {
-                    break;
-                }
-            }
-
-            if (source[0] == 0x00)
-            {
-                break;
-            }
-
-            while (source[0] == 0x20)
-            {
-                //  read parameter identifier
-
-                fread(source + 1, 1, 1, hFile);
-                if (source[1] == 'W')
-                {
-                    width = 0;
-                    while (true)
-                    {
-                        fread(source, 1, 1, hFile);
-                        if (source[0] == 0x20 || source[0] == 0x0a)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            width = width * 10 + (source[0] - '0');
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (source[1] == 'H')
-                {
-                    height = 0;
-                    while (true)
-                    {
-                        fread(source, 1, 1, hFile);
-                        if (source[0] == 0x20 || source[0] == 0x0a)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            height = height * 10 + (source[0] - '0');
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (source[1] == 'F')
-                {
-                    rateNumerator = 0;
-                    rateDenominator = 0;
-                    while (true)
-                    {
-                        fread(source, 1, 1, hFile);
-                        if (source[0] == '.')
-                        {
-                            rateDenominator = 1;
-                            while (true)
-                            {
-                                fread(source, 1, 1, hFile);
-                                if (source[0] == 0x20 || source[0] == 0x10)
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    rateNumerator = rateNumerator * 10 + (source[0] - '0');
-                                    rateDenominator = rateDenominator * 10;
-                                }
-                            }
-
-                            rate = (Double)rateNumerator / rateDenominator;
-                            break;
-                        }
-                        else if (source[0] == ':')
-                        {
-                            while (true)
-                            {
-                                fread(source, 1, 1, hFile);
-                                if (source[0] == 0x20 || source[0] == 0x0a)
-                                {
-                                    break;
-                                }
-                                else
-                                    rateDenominator = rateDenominator * 10 + (source[0] - '0');
-                            }
-
-                            rate = (Double)rateNumerator / rateDenominator;
-                            break;
-                        }
-                        else
-                        {
-                            rateNumerator = rateNumerator * 10 + (source[0] - '0');
-                        }
-                    }
-
-                    continue;
-                }
-
-                break;
-            }
-
-            if (source[0] == 0x0a)
-            {
-                break;
-            }
-        }
 
         m_iSourceWidth = width;
         m_iSourceHeight = height;
         m_iFrameRate = ceil(rate);
     }
 
+#endif // if 0
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
     Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
     if (m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0)

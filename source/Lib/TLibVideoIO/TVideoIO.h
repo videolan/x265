@@ -31,64 +31,68 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TVideoIOYuv.h
+/** \file     TVideoIO.h
     \brief    YUV file I/O class (header)
 */
 
-#ifndef __TVIDEOIOYUV__
-#define __TVIDEOIOYUV__
+#ifndef __TVIDEOIO__
+#define __TVIDEOIO__
 
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
-#include "TVideoIO.h"
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPicYuv.h"
 
 using namespace std;
 
+typedef void *hnd_t;
+
 typedef struct
 {
-    fstream   m_cHandle;                                  ///< file handle
-    Int fileBitDepthY; ///< bitdepth of input/output video file luma component
-    Int fileBitDepthC; ///< bitdepth of input/output video file chroma component
-    Int bitDepthShiftY; ///< number of bits to increase or decrease luma by before/after write/read
-    Int bitDepthShiftC; ///< number of bits to increase or decrease chroma by before/after write/read
-    Int aiPad[2];
-}yuv_hnd_t;
+    Int width;
+    Int height;
+    Int FrameRate;
+    Int interlaced;
+} video_info_t;
 
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
 
 /// YUV file I/O class
-class TVideoIOYuv :  virtual public TVideoIO
+class TVideoIO
 {
 public:
 
-    TVideoIOYuv()           {}
+    TVideoIO()           {}
 
-    virtual ~TVideoIOYuv()  {}
+    virtual ~TVideoIO()  {}
 
-    Void  open(Char * pchFile,
-               Bool bWriteMode,
-               Int internalBitDepthY,
-               Int fileBitDepthY,
-               Int internalBitDepthC,
-               Int fileBitDepthC,
-               hnd_t * &handler,
-               video_info_t video_info,
-               Int aiPad[2]);                                                                                                                                                                 ///< open or create file
-    Void  close(hnd_t* &handler);                                          ///< close file
+    virtual Void  open(Char * pchFile,
+                       Bool bWriteMode,
+                       Int internalBitDepthY,
+                       Int fileBitDepthY,
+                       Int internalBitDepthC,
+                       Int fileBitDepthC,
+                       hnd_t * &handler,
+                       video_info_t video_info,
+                       Int aiPad[2]) = 0;                                                                                                                                                               ///< open or create file
+    virtual  Void  close(hnd_t* &handler) = 0;                                          ///< close file
 
-    Void skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler);
+    virtual void skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler) = 0;
 
-    Bool  read(TComPicYuv * pPicYuv, hnd_t* &handler);        ///< read  one YUV frame with padding parameter
-    Bool  write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft = 0, Int confRight = 0, Int confTop = 0, Int confBottom = 0);
+    virtual Bool  read(TComPicYuv * pPicYuv, hnd_t* &handler) = 0;      ///< read  one YUV frame with padding parameter
+    virtual Bool  write(TComPicYuv* pPicYuv,
+                        hnd_t* &    handler,
+                        Int         confLeft = 0,
+                        Int         confRight = 0,
+                        Int         confTop = 0,
+                        Int         confBottom = 0) = 0;
 
-    Bool  isEof(hnd_t* &handler);                                          ///< check for end-of-file
-    Bool  isFail(hnd_t* &handler);                                         ///< check for failure
-    Void  getVideoInfo(video_info_t &video_info, hnd_t* &handler);
+    virtual Bool  isEof(hnd_t* &handler) = 0;                                          ///< check for end-of-file
+    virtual Bool  isFail(hnd_t* &handler) = 0;                                         ///< check for failure
+    virtual Void  getVideoInfo(video_info_t &video_info, hnd_t* &handler) = 0;
 };
 
-#endif // __TVIDEOIOYUV__
+#endif // __TVIDEOIO__

@@ -114,7 +114,7 @@ int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(pixel *block, pixel *coeff, int shift);
-typedef void (CDECL * IPFilter)(pixel *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
+typedef void (CDECL * IPFilter)(const short *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
                                 int block_height, int bitDepth);
 
 /* Define a structure containing function pointers to optimized encoder
