@@ -101,103 +101,137 @@ static const char *FuncNames[NUM_PARTITIONS] = {
 #define PIXEL_MAX ((1 << 8) - 1)
 #endif
 
-/* To-do List: Clean up all buffer sizes/iterations etc into macros
- *             
+/* To-do List: Generate the stride values at run time in each run
+ *
  */
 
+#define MILSECS_IN_SEC 1000     // Number of milliseconds in a second
+#define NUM_ITERATIONS_CYCLE 100000    // Number of iterations for cycle count
+#define INCR 16     // Number of bytes the input window shifts across the total buffer
+#define STRIDE 16   // Stride value used while calling primitives
 
 static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 {
     double msec;
 
-    msec =  (finishtime->tv_sec - starttime->tv_sec) * 1000;
-    msec += (double)(finishtime->tv_usec - starttime->tv_usec) / 1000;
+    msec =  (finishtime->tv_sec - starttime->tv_sec) * MILSECS_IN_SEC;
+    msec += (double)(finishtime->tv_usec - starttime->tv_usec) / MILSECS_IN_SEC;
     return msec;
 }
 
 static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimitives& vecprim)
 {
     struct timeval ts, te;
-    const int num_iterations = 100000;
 
-    for (int curpar=0; curpar < NUM_PARTITIONS; curpar++)
+    for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vecprim.satd[curpar])
         {
             gettimeofday(&ts, NULL);
-            for(int j=0; j < num_iterations; j++)
-                vecprim.satd[curpar](pbuf1, 16, pbuf2, 16);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                vecprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             gettimeofday(&te, NULL);
-            printf("\nsatd[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar],timevaldiff(&ts, &te)); 
-            
+            printf("\nsatd[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+
             gettimeofday(&ts, NULL);
-            for(int j=0; j < num_iterations; j++)
-                cprim.satd[curpar](pbuf1, 16, pbuf2, 16);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                cprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             gettimeofday(&te, NULL);
-            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-            
+            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
         }
+
         if (vecprim.sad[curpar])
         {
             gettimeofday(&ts, NULL);
-            for(int j=0; j < num_iterations; j++)
-                vecprim.sad[curpar](pbuf1, 16, pbuf2, 16);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                vecprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             gettimeofday(&te, NULL);
-            printf("\nsad[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar],timevaldiff(&ts, &te)); 
-            
+            printf("\nsad[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+
             gettimeofday(&ts, NULL);
-            for(int j=0; j < num_iterations; j++)
-                cprim.sad[curpar](pbuf1, 16, pbuf2, 16);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                cprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             gettimeofday(&te, NULL);
-            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-            
+            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
         }
-    }    
+    }
+
     if (vecprim.sa8d_8x8)
     {
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
-            vecprim.sa8d_8x8(pbuf1, 16, pbuf2, 16);
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
+            vecprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\nsa8d_8x8 vectorized primitive: (%1.4f ms) ",timevaldiff(&ts, &te)); 
-        
+        printf("\nsa8d_8x8 vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
-            cprim.sa8d_8x8(pbuf1, 16, pbuf2, 16);
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
+            cprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
+        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
     }
-    
+
     if (vecprim.sa8d_16x16)
     {
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
-            vecprim.sa8d_16x16(pbuf1, 16, pbuf2, 16);
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
+            vecprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\nsa8d_16x16 vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-        
+        printf("\nsa8d_16x16 vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
-            cprim.sa8d_16x16(pbuf1, 16, pbuf2, 16);
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
+            cprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
+        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
     }
-    
+
     if (vecprim.inversedst)
     {
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
             vecprim.inversedst(mbuf1, mbuf2, 16);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\nInversedst vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-        
+        printf("\nInversedst vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+
         gettimeofday(&ts, NULL);
-        for(int j=0; j < num_iterations; j++)
+        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        {
             cprim.inversedst(mbuf1, mbuf2, 16);
+        }
+
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te)); 
-    }  
-    /* Add logic here for testing performance of your new primitive*/    
+        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+    }
+
+    /* Add logic here for testing performance of your new primitive*/
 }
 
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
@@ -206,12 +240,12 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        int vres = opt(pbuf1 + j, 16, pbuf2, 16);
-        int cres = ref(pbuf1 + j, 16, pbuf2, 16);
+        int vres = opt(pbuf1 + j, STRIDE, pbuf2, STRIDE);
+        int cres = ref(pbuf1 + j, STRIDE, pbuf2, STRIDE);
         if (vres != cres)
             return -1;
 
-        j += 16;
+        j += INCR;
     }
 
     return 0;
@@ -221,25 +255,26 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 static int check_mbdst_primitive(mbdst ref, mbdst opt)
 {
     int j = 0;
-    int t_size = 16;
+    int t_size = 32;
 
     for (int i = 0; i <= 100; i++)
     {
         opt(mbuf1 + j, mbuf2, 16);
         ref(mbuf1 + j, mbuf3, 16);
 
-        if (memcmp(mbuf2, mbuf3, 16))
+        if (memcmp(mbuf2, mbuf3, 32))
             return -1;
 
-        j += 16;
+        j += INCR;
         memset(mbuf2, 0, t_size);
         memset(mbuf3, 0, t_size);
     }
+
     return 0;
 }
 
-int init_pixelcmp_buffers(){
-  
+int init_pixelcmp_buffers()
+{
     pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     if (!pbuf1 || !pbuf2)
@@ -254,18 +289,21 @@ int init_pixelcmp_buffers(){
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
     }
+
     return 0;
 }
 
-int clean_pixelcmp_buffers(){
+int clean_pixelcmp_buffers()
+{
     free(pbuf1);
     free(pbuf2);
     return 0;
 }
 
-int init_mbdst_buffers(){
+int init_mbdst_buffers()
+{
+    int t_size = 32;
 
-    int t_size = 16;
     mbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
     mbuf2 = (pixel*)malloc(t_size);
     mbuf3 = (pixel*)malloc(t_size);
@@ -274,14 +312,15 @@ int init_mbdst_buffers(){
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         return -1;
     }
-    memcpy(mbuf1, pbuf1, 16*100);
+
+    memcpy(mbuf1, pbuf1, 64 * 100);
     memset(mbuf2, 0, t_size);
     memset(mbuf3, 0, t_size);
     return 0;
 }
 
-int clean_mbdst_buffers(){
-
+int clean_mbdst_buffers()
+{
     free(mbuf1);
     free(mbuf2);
     free(mbuf3);
@@ -292,12 +331,12 @@ int clean_mbdst_buffers(){
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint16_t curpar = 0;
-    
+
     /****************** Initialise and run pixelcmp primitives **************************/
-    
-    if(init_pixelcmp_buffers() < 0)
-	    return -1;
-        
+
+    if (init_pixelcmp_buffers() < 0)
+        return -1;
+
     for (; curpar < NUM_PARTITIONS; curpar++)
     {
         if (vectorprimitives.satd[curpar])
@@ -308,7 +347,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 return -1;
             }
 
-            printf("\nsatd[%s]: passed ", FuncNames[curpar]);            
+            printf("\nsatd[%s]: passed ", FuncNames[curpar]);
         }
 
         if (vectorprimitives.sad[curpar])
@@ -319,7 +358,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 return -1;
             }
 
-            printf("\nsad[%s]: passed ", FuncNames[curpar]);            
+            printf("\nsad[%s]: passed ", FuncNames[curpar]);
         }
     }
 
@@ -331,7 +370,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             return -1;
         }
 
-        printf("\nsa8d_8x8: passed ");        
+        printf("\nsa8d_8x8: passed ");
     }
 
     if (vectorprimitives.sa8d_16x16)
@@ -342,14 +381,14 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             return -1;
         }
 
-        printf("\nsa8d_16x16: passed ");        
+        printf("\nsa8d_16x16: passed ");
     }
-    
+
     /********** Initialise and run mbdst Primitives *******************/
-    
-    if(init_mbdst_buffers() < 0)
+
+    if (init_mbdst_buffers() < 0)
         return -1;
-    
+
     if (vectorprimitives.inversedst)
     {
         if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
@@ -358,19 +397,18 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             return -1;
         }
 
-        printf("Inversedst: passed ");
+        printf("\nInversedst: passed ");
     }
-    
-    /* Initialise and check your primitives here **********/ 
-        
-        
+
+    /* Initialise and check your primitives here **********/
+
     /******************* Cycle count for all primitives **********************/
     check_cycle_count(cprimitives, vectorprimitives);
-    
+
     /********************* Clean all buffers *****************************/
     clean_pixelcmp_buffers();
     clean_mbdst_buffers();
-        
+
     return 0;
 }
 
@@ -378,15 +416,10 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
     int cpuid = CpuIDDetect();
-#if HIGH_BIT_DEPTH
-    printf("Compiled for 10bit pixels (High bit depth)\n");
-#else
-    printf("Compiled for 8bit pixels (High performance)\n");
-#endif
 
     for (int i = 1; i < argc - 1; i += 2)
     {
-       if (!strcmp(argv[i], "--cpuid"))
+        if (!strcmp(argv[i], "--cpuid"))
         {
             cpuid = atoi(argv[i + 1]);
         }
