@@ -32,6 +32,7 @@
 #define FILEWRITE_ERROR -5
 #define NOT_MATCHED      1
 #define MATCHED          0
+#define NTAPS_LUMA       8 ///< Number of taps for luma
 
 // ====================================================================================================================
 // Class definition

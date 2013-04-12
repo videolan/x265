@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 // Vector class versions of macroblock performance primitives
-
+#include "macroblock.h"
 void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
@@ -83,47 +83,75 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     block[15] = half[7];
 }
 
-void CDECL filter_8_nonvertical(const short *coeff,
-                                pixel *src,
-                                int    srcStride,
-                                pixel *dst,
-                                int    dstStride,
-                                int    block_width,
-                                int    block_height,
-                                short  maxVal,
-                                int    shift,
-                                int    offset,
-                                bool   isLast)
+template<bool isFirst, bool isLast>
+void CDECL filter_Horizontal_8(const short *coeff,
+                               pixel *      src,
+                               int          srcStride,
+                               pixel *      dst,
+                               int          dstStride,
+                               int          block_width,
+                               int          block_height,
+                               int          bitDepth)
 {
     int row, col;
-    Vec8s vec_c, vec_src;
+    short *src_s = (short*)src;
+    short *dst_s = (short*)dst;
 
+    src_s -= (8 / 2 - 1);     // Here N = 8 and cStride = 1
+    int offset;
+    short maxVal;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+    if (isLast)
+    {
+        shift += (isFirst) ? 0 : headRoom;
+        offset = 1 << (shift - 1);
+        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
+        maxVal = (1 << bitDepth) - 1;
+    }
+    else
+    {
+        shift -= (isFirst) ? headRoom : 0;
+        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
+        maxVal = 0;
+    }
+
+    Vec8s vec_c, vec_src1;
     vec_c.load(coeff);
-
+    int sum = 0;
     for (row = 0; row < block_height; row++)
     {
         for (col = 0; col < block_width; col++)
         {
-            int sum;
-            vec_src.load(src + col);
-            vec_src = vec_src * vec_c;
-            sum = horizontal_add_x(vec_src);
-            short val = (sum + offset) >> shift;
+            vec_src1.load(src_s + col);
+            vec_src1 = vec_src1 * vec_c;            // Assuming that there is no overflow
+            sum = horizontal_add_x(vec_src1);
+            short val = (short)(sum + offset) >> shift;
             if (isLast)
             {
                 val = (val < 0) ? 0 : val;
                 val = (val > maxVal) ? maxVal : val;
             }
 
-            dst[col] = val;
+            dst_s[col] = val;
         }
 
-        src += srcStride;
-        dst += dstStride;
+        src_s += srcStride;
+        dst_s += dstStride;
     }
 }
 
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
+
+    /*p.filter[FILTER_H_4_0_0] = filter_Horizontal_4< 0, 0>;
+      p.filter[FILTER_H_4_0_1] = filter_Horizontal_4< 0, 1>;
+      p.filter[FILTER_H_4_1_0] = filter_Horizontal_4< 1, 0>;
+      p.filter[FILTER_H_4_1_1] = filter_Horizontal_4< 1, 1>;*/
+
+    p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
+    p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
+    p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
+    p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 }

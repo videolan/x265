@@ -83,6 +83,13 @@ __inline int gettimeofday(struct timeval *tv,  struct timezone *tz)
 // Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html ends
 
 using namespace x265;
+const short m_lumaFilter[4][NTAPS_LUMA] =
+{
+	{ 0, 0,   0, 64,  0,   0, 0,  0	},
+	{ -1, 4, -10, 58, 17,  -5, 1,  0 },
+	{ -1, 4, -11, 40, 40, -11, 4, -1 },
+	{ 0, 1,  -5, 17, 58, -10, 4, -1 }
+};
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
@@ -232,6 +239,31 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
     }
 
     /* Add logic here for testing performance of your new primitive*/
+	for (int value = 4; value < 8; value++)
+    {
+        short rand_val;
+        rand_val = rand() % 24;
+        if (vecprim.filter[value])
+        {
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pbuf1, 0, pbuf2, 0, 17, 17, 8);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\nfilter[%d] vectorized primitive: (%1.4f ms) ", value, timevaldiff(&ts, &te));
+
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pbuf1, 0, pbuf2, 0, 17, 17, 8);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        }
+    }
 }
 
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
@@ -270,6 +302,33 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
         memset(mbuf3, 0, t_size);
     }
 
+    return 0;
+}
+
+static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
+{
+    int t_size = 17 * 17;
+    short rand_val;
+    short *IPF_buff1 = (short*)malloc(t_size * sizeof(short));
+    short *IPF_buff2 = (short*)malloc(t_size * sizeof(short));
+    for (int i = 0; i <= 100; i++)
+    {
+        memset(IPF_buff1, 0, t_size);
+        memset(IPF_buff2, 0, t_size);
+        rand_val = rand() % 24;
+
+        opt((short*)(m_lumaFilter + rand_val), pbuf1, 0, (pixel*)IPF_buff1, 0, 17, 17, 8);
+        ref((short*)(m_lumaFilter + rand_val), pbuf1, 0, (pixel*)IPF_buff2, 0, 17, 17, 8);
+
+        if (memcmp(IPF_buff1, IPF_buff2, t_size))
+        {
+            free(IPF_buff1);
+            free(IPF_buff2);
+            return -1;
+        }
+    }
+    free(IPF_buff1);
+    free(IPF_buff2);
     return 0;
 }
 
@@ -382,6 +441,21 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
         }
 
         printf("\nsa8d_16x16: passed ");
+    }
+
+	/********** Run Filter Primitives *******************/
+    for (int value = 4; value < 8; value++)
+    {
+        if (vectorprimitives.filter[value])
+        {
+            if (check_IPFilter_primitive(cprimitives.filter[value], vectorprimitives.filter[value]) < 0)
+            {
+                printf("\nfilter: Failed!\n");
+                return -1;
+            }
+
+            printf("\nFilter[%d]: passed ", value);
+        }
     }
 
     /********** Initialise and run mbdst Primitives *******************/
