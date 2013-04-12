@@ -204,7 +204,7 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("1 ");
+        printf("1 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -212,7 +212,7 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("2 ");
+        printf("2 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -220,7 +220,7 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("4 ");
+        printf("4 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -228,7 +228,7 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("8 ");
+        printf("8 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
