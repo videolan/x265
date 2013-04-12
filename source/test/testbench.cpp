@@ -86,7 +86,7 @@ using namespace x265;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
-pixel *mbuf1, *mbuf2, *mbuf3;
+short *mbuf1, *mbuf2, *mbuf3;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
@@ -304,9 +304,9 @@ int init_mbdst_buffers()
 {
     int t_size = 32;
 
-    mbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    mbuf2 = (pixel*)malloc(t_size);
-    mbuf3 = (pixel*)malloc(t_size);
+    mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    mbuf2 = (short*)malloc(t_size);
+    mbuf3 = (short*)malloc(t_size);
     if (!mbuf1 || !mbuf2 || !mbuf3)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
