@@ -202,6 +202,7 @@ int main(int, char **)
         ThreadPool *pool = ThreadPool::AllocThreadPool(1);
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
+        printf("1 ");
         frame.Encode();
         pool->Release();
     }
@@ -209,6 +210,7 @@ int main(int, char **)
         ThreadPool *pool = ThreadPool::AllocThreadPool(2);
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
+        printf("2 ");
         frame.Encode();
         pool->Release();
     }
@@ -216,6 +218,7 @@ int main(int, char **)
         ThreadPool *pool = ThreadPool::AllocThreadPool(4);
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
+        printf("4 ");
         frame.Encode();
         pool->Release();
     }
@@ -223,6 +226,7 @@ int main(int, char **)
         ThreadPool *pool = ThreadPool::AllocThreadPool(8);
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
+        printf("8 ");
         frame.Encode();
         pool->Release();
     }
