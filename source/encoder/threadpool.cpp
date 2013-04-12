@@ -67,8 +67,8 @@ inline int __lzcnt_2x32(uint64_t x64)
 
 #endif // if _WIN64
 
-#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile unsigned int*)ptr)
-#define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile unsigned int*)ptr)
+#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
+#define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile LONG*)ptr)
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define GIVE_UP_TIME()                  Sleep(0)
