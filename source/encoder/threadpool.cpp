@@ -276,7 +276,7 @@ ThreadPoolImpl::~ThreadPoolImpl()
         for (int i = 0; i < m_numThreads; i++)
             m_threads[i].~PoolThread();
 
-        delete reinterpret_cast<char*>(m_threads);
+        delete[] reinterpret_cast<char*>(m_threads);
     }
 
     // leak threads on program exit if there were resource failures
