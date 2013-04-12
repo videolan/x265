@@ -41,6 +41,7 @@
 #include "TComTrQuant.h"
 #include "TComPic.h"
 #include "ContextTables.h"
+#include "primitives.h"
 
 typedef struct
 {
@@ -889,8 +890,13 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     {
         if (uiMode != REG_DCT)
         {
+#ifdef ENABLE_PRIMITIVES
+			x265::primitives.inversedst(coeff, tmp, shift_1st);
+			x265::primitives.inversedst(tmp, block, shift_2nd);
+#else
             fastInverseDst(coeff, tmp, shift_1st); // Inverse DST by FAST Algorithm, coeff input, tmp output
             fastInverseDst(tmp, block, shift_2nd); // Inverse DST by FAST Algorithm, tmp input, coeff output
+#endif
         }
         else
         {
@@ -1521,7 +1527,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
         }
 
         xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
-        {
+		{
             for (j = 0; j < iHeight; j++)
             {
                 memcpy(pResidual + j * uiStride, block + j * iWidth, iWidth * sizeof(Short));

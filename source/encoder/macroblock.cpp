@@ -33,7 +33,7 @@
 namespace {
 // anonymous file-static namespace
 
-void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output block
+void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int i, c[4];
     int rnd_factor = 1 << (shift - 1);

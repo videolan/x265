@@ -23,7 +23,7 @@
 
 // Vector class versions of macroblock performance primitives
 
-void CDECL inversedst(pixel *tmp, pixel *block, int shift)  // input tmp, output block
+void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
 
