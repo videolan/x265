@@ -266,6 +266,9 @@ ThreadPoolImpl::~ThreadPoolImpl()
 {
     if (m_ok && m_threads)
     {
+        while (PoolThread::s_sleepCount < m_numThreads)
+            GIVE_UP_TIME();
+
         m_ok = false;
         PokeIdleThreads();
 
