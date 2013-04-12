@@ -257,7 +257,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
         {
             new (buffer) PoolThread(*this);
             buffer += sizeof(PoolThread);
-            m_ok &= m_threads[i].Start();
+            m_ok = m_ok && m_threads[i].Start();
         }
     }
 }
