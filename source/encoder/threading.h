@@ -30,6 +30,7 @@
 #include "Windows.h"
 #else
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdlib.h>
 #endif
 

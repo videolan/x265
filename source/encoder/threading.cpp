@@ -70,7 +70,13 @@ static void *ThreadShim(void *opaque)
 
 bool Thread::Start()
 {
-    return pthread_create(&this->thread, NULL, ThreadShim, this) == 0;
+    if (pthread_create(&this->thread, NULL, ThreadShim, this))
+    {
+        this->thread = 0;
+        return false;
+    }
+
+    return true;
 }
 
 Thread::~Thread()
