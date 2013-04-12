@@ -2113,19 +2113,16 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
     Int  iOffsetOrg = iStrideOrg << 2;
     Int  iOffsetCur = iStrideCur << 2;
 
-#if 0//ENABLE_PRIMITIVES
-    assert(iStep == 1);
-    int part = x265::PartitionFromSizes(4, iRows);
-    if (part >= 0)
-        return x265::primitives.satd[part]((pixel*)piCur, iStrideCur, (pixel*)piOrg,
-                iStrideOrg) >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
-#endif
-
     UInt uiSum = 0;
 
     for (y = 0; y < iRows; y += 4)
     {
+#ifdef ENABLE_PRIMITIVES
+		assert(iStep==1);
+		uiSum += x265::primitives.satd[x265::PARTITION_4x4]((pixel*)piCur, iStrideCur, (pixel*)piOrg, iStrideOrg);
+#else
         uiSum += xCalcHADs4x4(piOrg, piCur, iStrideOrg, iStrideCur, iStep);
+#endif
         piOrg += iOffsetOrg;
         piCur += iOffsetCur;
     }
