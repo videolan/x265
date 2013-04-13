@@ -67,8 +67,8 @@ inline int __lzcnt_2x32(uint64_t x64)
 
 #endif // if _WIN64
 
-#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile unsigned int*)ptr)
-#define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile unsigned int*)ptr)
+#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
+#define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile LONG*)ptr)
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define GIVE_UP_TIME()                  Sleep(0)
@@ -257,7 +257,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
         {
             new (buffer) PoolThread(*this);
             buffer += sizeof(PoolThread);
-            m_ok &= m_threads[i].Start();
+            m_ok = m_ok && m_threads[i].Start();
         }
     }
 }
@@ -276,7 +276,7 @@ ThreadPoolImpl::~ThreadPoolImpl()
         for (int i = 0; i < m_numThreads; i++)
             m_threads[i].~PoolThread();
 
-        delete reinterpret_cast<char*>(m_threads);
+        delete[] reinterpret_cast<char*>(m_threads);
     }
 
     // leak threads on program exit if there were resource failures
