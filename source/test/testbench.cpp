@@ -120,10 +120,12 @@ static const char *FuncNames[NUM_PARTITIONS] =
 };
 
 #if HIGH_BIT_DEPTH
-#define PIXEL_MAX ((1 << 10) - 1)
+#define BIT_DEPTH 10
 #else
-#define PIXEL_MAX ((1 << 8) - 1)
+#define BIT_DEPTH 8
 #endif
+
+#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
 
 /* To-do List: Generate the stride values at run time in each run
  *
@@ -276,7 +278,7 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
                 vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
-                                      rand_dstStride, rand_height, rand_width);
+                                      rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
             gettimeofday(&te, NULL);
@@ -286,7 +288,7 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
                 cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
-                                    rand_dstStride, rand_height, rand_width);
+                                    rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
             gettimeofday(&te, NULL);
@@ -371,14 +373,16 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
             (pixel*)IPF_buff1,
             rand_dstStride,
             rand_height,
-            rand_width);
+            rand_width,
+            BIT_DEPTH);
         ref((short*)(m_lumaFilter + rand_val),
             pixel_buff,
             rand_srcStride,
             (pixel*)IPF_buff2,
             rand_dstStride,
             rand_height,
-            rand_width);
+            rand_width,
+            BIT_DEPTH);
 
         if (memcmp(IPF_buff1, IPF_buff2, t_size))
         {

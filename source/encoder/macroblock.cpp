@@ -33,12 +33,6 @@
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH   10
-#else
-#define BIT_DEPTH   8
-#endif
-
 namespace {
 // anonymous file-static namespace
 
@@ -64,12 +58,13 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
 
 template<int N, bool isFirst, bool isLast>
 void CDECL filter_8_nonvertical(const short *coeff,
-                                pixel *      src,
-                                int          srcStride,
-                                pixel *      dst,
-                                int          dstStride,
-                                int          block_width,
-                                int          block_height)
+                                pixel *src,
+                                int    srcStride,
+                                pixel *dst,
+                                int    dstStride,
+                                int    block_width,
+                                int    block_height,
+                                int    bitDepth)
 {
     int row, col;
     short c[8];
@@ -78,7 +73,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
 
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - BIT_DEPTH;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
 
 #if _MSC_VER
@@ -89,7 +84,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
         shift += (isFirst) ? 0 : headRoom;
         offset = 1 << (shift - 1);
         offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << BIT_DEPTH) - 1;
+        maxVal = (1 << bitDepth) - 1;
     }
     else
     {
@@ -169,10 +164,12 @@ namespace x265 {
 void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
+
     p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
     p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
     p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
     p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
+
     p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
     p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
