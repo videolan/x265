@@ -2,6 +2,8 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Gopu Govindaswamy <gopu@govindaswamy.org>
+ *          Mandar Gurav <mandar@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,12 +85,26 @@ __inline int gettimeofday(struct timeval *tv,  struct timezone *tz)
 // Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html ends
 
 using namespace x265;
+
+/* Used for filter */
+#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
+#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
+#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
+#define NTAPS_LUMA       8 ///< Number of taps for luma
 const short m_lumaFilter[4][NTAPS_LUMA] =
 {
-	{ 0, 0,   0, 64,  0,   0, 0,  0	},
-	{ -1, 4, -10, 58, 17,  -5, 1,  0 },
-	{ -1, 4, -11, 40, 40, -11, 4, -1 },
-	{ 0, 1,  -5, 17, 58, -10, 4, -1 }
+{
+    0, 0,   0, 64,  0,   0, 0,  0
+},
+{
+    -1, 4, -10, 58, 17,  -5, 1,  0
+},
+{
+    -1, 4, -11, 40, 40, -11, 4, -1
+},
+{
+    0, 1,  -5, 17, 58, -10, 4, -1
+}
 };
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
@@ -97,9 +113,10 @@ short *mbuf1, *mbuf2, *mbuf3;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
-static const char *FuncNames[NUM_PARTITIONS] = {
-"4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16", "4x32", "32x4", "8x32",
-"32x8", "16x32", "32x16", "32x32", "4x64", "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
+static const char *FuncNames[NUM_PARTITIONS] =
+{
+    "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16", "4x32", "32x4", "8x32",
+    "32x8", "16x32", "32x16", "32x32", "4x64", "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
 };
 
 #if HIGH_BIT_DEPTH
@@ -239,16 +256,27 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
     }
 
     /* Add logic here for testing performance of your new primitive*/
-	for (int value = 4; value < 8; value++)
+    int rand_height = rand() % 100;                 // Randomly generated Height
+    int rand_width = rand() % 100;                  // Randomly generated Width
+    int t_size = 200 * 200;
+    short rand_val, rand_srcStride, rand_dstStride;
+    pixel *pixel_buff = (pixel*)malloc(t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    short *IPF_buff1 = (short*)malloc(t_size * sizeof(short));      // Output Buffer1
+    short *IPF_buff2 = (short*)malloc(t_size * sizeof(short));      // Output Buffer2
+
+    rand_val = rand() % 24;                     // Random offset in the filter
+    rand_srcStride = rand() % 100;              // Randomly generated srcStride
+    rand_dstStride = rand() % 100;              // Randomly generated dstStride
+
+    for (int value = 4; value < 8; value++)
     {
-        short rand_val;
-        rand_val = rand() % 24;
         if (vecprim.filter[value])
         {
             gettimeofday(&ts, NULL);
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
-                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pbuf1, 0, pbuf2, 0, 17, 17, 8);
+                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
+                                      rand_dstStride, rand_height, rand_width);
             }
 
             gettimeofday(&te, NULL);
@@ -257,13 +285,18 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             gettimeofday(&ts, NULL);
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
-                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pbuf1, 0, pbuf2, 0, 17, 17, 8);
+                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
+                                    rand_dstStride, rand_height, rand_width);
             }
 
             gettimeofday(&te, NULL);
             printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
         }
     }
+
+    free(IPF_buff1);
+    free(IPF_buff2);
+    free(pixel_buff);
 }
 
 static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
@@ -307,29 +340,57 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
 
 static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 {
-    int t_size = 17 * 17;
-    short rand_val;
-    short *IPF_buff1 = (short*)malloc(t_size * sizeof(short));
-    short *IPF_buff2 = (short*)malloc(t_size * sizeof(short));
+    int rand_height = rand() & 100;                 // Randomly generated Height
+    int rand_width = rand() & 100;                  // Randomly generated Width
+    int t_size = 200 * 200;
+    int flag = 0;                                   // Return value
+    short rand_val, rand_srcStride, rand_dstStride;
+    pixel *pixel_buff = (pixel*)malloc(t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    short *IPF_buff1 = (short*)malloc(t_size * sizeof(short));      // Output Buffer1
+    short *IPF_buff2 = (short*)malloc(t_size * sizeof(short));      // Output Buffer2
+
+    for (int i = 0; i < t_size; i++)                                    // Initialize input buffer
+    {
+        int isPositive = rand() & 1;                                    // To randomly generate Positive and Negative values
+        isPositive = (isPositive) ? 1 : -1;
+        pixel_buff[i] = isPositive * (rand() & PIXEL_MAX);
+    }
+
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_buff1, 0, t_size);
-        memset(IPF_buff2, 0, t_size);
-        rand_val = rand() % 24;
+        memset(IPF_buff1, 0, t_size);               // Initialize output buffer to zero
+        memset(IPF_buff2, 0, t_size);               // Initialize output buffer to zero
 
-        opt((short*)(m_lumaFilter + rand_val), pbuf1, 0, (pixel*)IPF_buff1, 0, 17, 17, 8);
-        ref((short*)(m_lumaFilter + rand_val), pbuf1, 0, (pixel*)IPF_buff2, 0, 17, 17, 8);
+        rand_val = rand() & 24;                     // Random offset in the filter
+        rand_srcStride = rand() & 100;              // Randomly generated srcStride
+        rand_dstStride = rand() & 100;              // Randomly generated dstStride
+
+        opt((short*)(m_lumaFilter + rand_val),
+            pixel_buff,
+            rand_srcStride,
+            (pixel*)IPF_buff1,
+            rand_dstStride,
+            rand_height,
+            rand_width);
+        ref((short*)(m_lumaFilter + rand_val),
+            pixel_buff,
+            rand_srcStride,
+            (pixel*)IPF_buff2,
+            rand_dstStride,
+            rand_height,
+            rand_width);
 
         if (memcmp(IPF_buff1, IPF_buff2, t_size))
         {
-            free(IPF_buff1);
-            free(IPF_buff2);
-            return -1;
+            flag = -1;                                          // Test Failed
+            break;
         }
     }
+
     free(IPF_buff1);
     free(IPF_buff2);
-    return 0;
+    free(pixel_buff);
+    return flag;
 }
 
 int init_pixelcmp_buffers()
@@ -443,7 +504,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
         printf("\nsa8d_16x16: passed ");
     }
 
-	/********** Run Filter Primitives *******************/
+    /********** Run Filter Primitives *******************/
     for (int value = 4; value < 8; value++)
     {
         if (vectorprimitives.filter[value])

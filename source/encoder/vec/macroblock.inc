@@ -2,6 +2,10 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Mandar Gurav <mandar@multicorewareinc.com>
+ *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +26,18 @@
  *****************************************************************************/
 
 // Vector class versions of macroblock performance primitives
-#include "macroblock.h"
+
+/* Used for filter */
+#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
+#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
+#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
+
+#if HIGH_BIT_DEPTH
+#define BIT_DEPTH   10
+#else
+#define BIT_DEPTH   8
+#endif
+
 void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
@@ -90,8 +105,7 @@ void CDECL filter_Horizontal_8(const short *coeff,
                                pixel *      dst,
                                int          dstStride,
                                int          block_width,
-                               int          block_height,
-                               int          bitDepth)
+                               int          block_height)
 {
     int row, col;
     short *src_s = (short*)src;
@@ -100,14 +114,14 @@ void CDECL filter_Horizontal_8(const short *coeff,
     src_s -= (8 / 2 - 1);     // Here N = 8 and cStride = 1
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int headRoom = IF_INTERNAL_PREC - BIT_DEPTH;
     int shift = IF_FILTER_PREC;
     if (isLast)
     {
         shift += (isFirst) ? 0 : headRoom;
         offset = 1 << (shift - 1);
         offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << bitDepth) - 1;
+        maxVal = (1 << BIT_DEPTH) - 1;
     }
     else
     {
@@ -149,7 +163,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
       p.filter[FILTER_H_4_0_1] = filter_Horizontal_4< 0, 1>;
       p.filter[FILTER_H_4_1_0] = filter_Horizontal_4< 1, 0>;
       p.filter[FILTER_H_4_1_1] = filter_Horizontal_4< 1, 1>;*/
-
     p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
     p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
