@@ -33,7 +33,7 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
         for (int col = 0; col < lx; col += 4)
         {
             Vec8s m1, n1;
-            m1.load_partial(4, piOrg + col);
+            m1.load_a(piOrg + col); m1.cutoff(4);
             n1.load_partial(4, piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
@@ -57,7 +57,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
         for (int col = 0; col < lx; col += 8)
         {
             Vec8s m1, n1;
-            m1.load(piOrg + col);
+            m1.load_a(piOrg + col);
             n1.load(piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
@@ -81,7 +81,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
         for (int col = 0; col < lx; col += 16)
         {
             Vec16s m1, n1;
-            m1.load(piOrg + col);
+            m1.load_a(piOrg + col);
             n1.load(piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
@@ -347,18 +347,23 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
 
 void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
+    p.sad[PARTITION_4x4] = sad_4<4, 4>;
+    p.sad[PARTITION_4x8] = sad_4<4, 8>;
     p.sad[PARTITION_8x4] = sad_8<8, 4>;
     p.sad[PARTITION_8x8] = sad_8<8, 8>;
     p.sad[PARTITION_16x4] = sad_16<16, 4>;
+    p.sad[PARTITION_4x16] = sad_4<4, 16>;
     p.sad[PARTITION_16x8] = sad_16<16, 8>;
     p.sad[PARTITION_8x16] = sad_8<8, 16>;
     p.sad[PARTITION_16x16] = sad_16<16, 16>;
+    p.sad[PARTITION_4x32] = sad_4<4, 32>;
     p.sad[PARTITION_32x4] = sad_16<32, 4>;
     p.sad[PARTITION_8x32] = sad_8<8, 32>;
     p.sad[PARTITION_32x8] = sad_16<32, 8>;
     p.sad[PARTITION_16x32] = sad_16<16, 32>;
     p.sad[PARTITION_32x16] = sad_16<32, 16>;
     p.sad[PARTITION_32x32] = sad_16<32, 32>;
+    p.sad[PARTITION_4x64] = sad_4<4, 64>;
     p.sad[PARTITION_64x4] = sad_16<64, 4>;
     p.sad[PARTITION_64x8] = sad_16<64, 8>;
     p.sad[PARTITION_8x64] = sad_8<8, 64>;

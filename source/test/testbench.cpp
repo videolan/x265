@@ -307,8 +307,8 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        int vres = opt(pbuf1 + j, STRIDE, pbuf2, STRIDE);
-        int cres = ref(pbuf1 + j, STRIDE, pbuf2, STRIDE);
+        int vres = opt(pbuf1, STRIDE, pbuf2 + j, STRIDE);
+        int cres = ref(pbuf1, STRIDE, pbuf2 + j, STRIDE);
         if (vres != cres)
             return -1;
 
