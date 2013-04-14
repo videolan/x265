@@ -277,6 +277,15 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_16x32] = sad<16, 32>;
     p.sad[PARTITION_32x16] = sad<32, 16>;
     p.sad[PARTITION_32x32] = sad<32, 32>;
+    p.sad[PARTITION_64x4] = sad<64, 4>;
+    p.sad[PARTITION_4x64] = sad<4, 64>;
+    p.sad[PARTITION_64x8] = sad<64, 8>;
+    p.sad[PARTITION_8x64] = sad<8, 64>;
+    p.sad[PARTITION_16x64] = sad<16, 64>;
+    p.sad[PARTITION_64x16] = sad<64, 16>;
+    p.sad[PARTITION_32x64] = sad<32, 64>;
+    p.sad[PARTITION_64x32] = sad<64, 32>;
+    p.sad[PARTITION_64x64] = sad<64, 64>;
 
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_8x4]   = satd_8x4;
