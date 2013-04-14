@@ -24,6 +24,30 @@
 // Vector class versions of pixel comparison performance primitives
 
 template<int lx, int ly>
+int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    int uiSum = 0;  // This is slower than the C primitve, so I'm not using it
+
+    for (int Row = 0; Row < ly; Row++)
+    {
+        for (int col = 0; col < lx; col += 4)
+        {
+            Vec8s m1, n1;
+            m1.load_partial(4, piOrg + col);
+            n1.load_partial(4, piCur + col);
+            m1 = m1 - n1;
+            m1 = abs(m1);
+            uiSum += horizontal_add_x(m1);
+        }
+
+        piOrg += strideOrg;
+        piCur += strideCur;
+    }
+
+    return uiSum;
+}
+
+template<int lx, int ly>
 int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int uiSum = 0;
