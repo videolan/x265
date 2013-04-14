@@ -683,14 +683,12 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
 #endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
     ;
 
-#if 0
     for (Int i = 1; i < MAX_GOP + 1; i++)
     {
         std::ostringstream cOSS;
         cOSS << "Frame" << i;
         opts.addOptions() (cOSS.str(), m_GOPList[i - 1], GOPEntry());
     }
-#endif
 
     po::setDefaults(opts);
     const list<const Char *>& argv_unhandled = po::scanArgv(opts, argc, (const Char**)argv);
@@ -747,29 +745,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
         m_cTVideoIOReconFile = new TVideoIOYuv();
     }
 
-#if 0
-    if ((m_iSourceWidth == 0) && (m_iSourceHeight == 0))
-    {
-        FILE *hFile = fopen(m_pchInputFile, "rb");
-        Char source[5];
-        Int bytesRead;
-        Int width = 0;
-        Int height = 0;
-        Int rateNumerator = 0;
-        Int rateDenominator = 0;
-        Double rate = 30.0;
-
-#if defined(_MSC_VER)
-// Allow this warning temporarily until this code is moved into a cleaner location
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
-
-        m_iSourceWidth = width;
-        m_iSourceHeight = height;
-        m_iFrameRate = ceil(rate);
-    }
-
-#endif // if 0
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
     Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
     if (m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0)
