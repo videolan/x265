@@ -683,12 +683,14 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
 #endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
     ;
 
+#if 0
     for (Int i = 1; i < MAX_GOP + 1; i++)
     {
         std::ostringstream cOSS;
         cOSS << "Frame" << i;
         opts.addOptions() (cOSS.str(), m_GOPList[i - 1], GOPEntry());
     }
+#endif
 
     po::setDefaults(opts);
     const list<const Char *>& argv_unhandled = po::scanArgv(opts, argc, (const Char**)argv);
@@ -708,6 +710,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
     /*
      * Set any derived parameters
      */
+
     /* convert std::string to c string for compatability */
     m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
     m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
@@ -723,7 +726,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char *argv[])
     {
         m_cTVideoIOInputFile = new TVideoIOY4m();
         m_cTVideoIOReconFile = new TVideoIOY4m();
-		/* get the video information like width,height,framerate */
+        /* get the video information like width,height,framerate */
         m_cTVideoIOInputFile->open(m_pchInputFile,
                                    false,
                                    m_inputBitDepthY,
