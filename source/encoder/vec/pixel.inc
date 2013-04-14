@@ -96,7 +96,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 
-int CDECL satd_4x4(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t iStrideOrg)
+int CDECL satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {
     int satd = 0;
 
@@ -164,7 +164,27 @@ int CDECL satd_4x4(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
     return satd;
 }
 
-int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t iStrideOrg)
+template<int lx, int ly>
+int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    int uiSum = 0;
+
+    for (int Row = 0; Row < ly; Row += 4)
+    {
+        for (int col = 0; col < lx; col += 4)
+        {
+            uiSum += satd_4x4( piOrg + col, strideOrg, piCur + col, strideCur );
+        }
+
+        piOrg += 4 * strideOrg;
+        piCur += 4 * strideCur;
+    }
+
+    return uiSum;
+}
+
+
+int CDECL sa8d_8x8(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {
     ALIGN_VAR_16(short, m2[8][8]);
 
@@ -175,12 +195,12 @@ int CDECL sa8d_8x8(pixel * piCur, intptr_t iStrideCur, pixel * piOrg, intptr_t i
 
     for (j = 0; j < 8; j += 2)
     {
-        piOrg_v1.load(piOrg);
+        piOrg_v1.load_a(piOrg);
         piCur_v1.load(piCur);
         piCur += iStrideCur;
         piOrg += iStrideOrg;
 
-        piOrg_v2.load(piOrg);
+        piOrg_v2.load_a(piOrg);
         piCur_v2.load(piCur);
         piCur += iStrideCur;
         piOrg += iStrideOrg;
@@ -374,5 +394,8 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_64x64] = sad_16<64, 64>;
 
     p.satd[PARTITION_4x4] = satd_4x4;
+    p.satd[PARTITION_4x8] = satd<4, 8>;
+    // p.satd[PARTITION_8x4] = satd<8, 4>;  // slower than SWAR C version
+
     p.sa8d_8x8 = sa8d_8x8;
 }
