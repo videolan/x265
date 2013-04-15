@@ -33,7 +33,7 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
         for (int col = 0; col < lx; col += 4)
         {
             Vec8s m1, n1;
-            m1.load_a(piOrg + col); m1.cutoff(4);
+            m1.load_partial(4, piOrg + col);
             n1.load_partial(4, piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
@@ -57,7 +57,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
         for (int col = 0; col < lx; col += 8)
         {
             Vec8s m1, n1;
-            m1.load_a(piOrg + col);
+            m1.load(piOrg + col);
             n1.load(piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
@@ -81,7 +81,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
         for (int col = 0; col < lx; col += 16)
         {
             Vec16s m1, n1;
-            m1.load_a(piOrg + col);
+            m1.load(piOrg + col);
             n1.load(piCur + col);
             m1 = m1 - n1;
             m1 = abs(m1);
