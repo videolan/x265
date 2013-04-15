@@ -865,8 +865,8 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     else if (iWidth == 16 && iHeight == 16)
     {
 #ifdef ENABLE_PRIMITIVES
-		x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, iHeight);
-		x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, iWidth);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, iHeight);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, iWidth);
 #else 
         partialButterfly16(block, tmp, shift_1st, iHeight);
         partialButterfly16(tmp, coeff, shift_2nd, iWidth);
