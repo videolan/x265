@@ -478,7 +478,7 @@ int init_mbdst_buffers()
 {
     int t_size = 32;
 
-	mbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
+    mbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
     mbuf2 = (short*)malloc(t_size);
     mbuf3 = (short*)malloc(t_size);
     if (!mbuf1 || !mbuf2 || !mbuf3)
@@ -505,7 +505,7 @@ int init_butterfly_buffers()
 {
     int t_size = 255;
 
-	bbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
+    bbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
     bbuf2 = (short*)malloc(t_size);
     bbuf3 = (short*)malloc(t_size);
     if (!bbuf1 || !bbuf2 || !bbuf3)
@@ -533,7 +533,7 @@ int clean_butterfly_buffers()
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint16_t curpar = 0;
-	uint16_t bpar = 0;
+    uint16_t bpar = 0;
 
     /****************** Initialise and run pixelcmp primitives **************************/
 

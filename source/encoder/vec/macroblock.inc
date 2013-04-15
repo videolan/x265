@@ -31,7 +31,7 @@
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
- 
+
 void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
@@ -217,7 +217,7 @@ void partialButterfly16(short *src, short *dst, int shift, int line)
         dst[0] = dst_shift_result[0];
         dst[8 * line] = dst_shift_result[1];
         dst[4 * line] = dst_shift_result[2];
-        dst[12 * line] = dst_shift_result[3]; 
+        dst[12 * line] = dst_shift_result[3];
 
         Vec4i dst_tmp2 = g_aiT_two_row * EO;
         Vec4i dst_tmp6 = g_aiT_six_row * EO;
@@ -236,7 +236,7 @@ void partialButterfly16(short *src, short *dst, int shift, int line)
         dst[2 * line] = dst_2_6_10_14[0];
         dst[6 * line] = dst_2_6_10_14[1];
         dst[10 * line] = dst_2_6_10_14[2];
-        dst[14 * line] = dst_2_6_10_14[3]; 
+        dst[14 * line] = dst_2_6_10_14[3];
 
         Vec8i dst_tmp1 = g_aiT_one_row * O;
         Vec8i dst_tmp3 = g_aiT_three_row * O;
@@ -287,5 +287,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
-	p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
+    p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }
+

@@ -125,7 +125,6 @@ enum Butterflies
     NUM_BUTTERFLIES
 };
 
-
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
