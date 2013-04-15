@@ -52,7 +52,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 {
     Vec8s sum(0);
 
-    for (int Row = 0; Row < ly; Row++)
+    for (int row = 0; row < ly; row++)
     {
         for (int col = 0; col < lx; col += 8)
         {
@@ -74,7 +74,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 {
     Vec8i sum(0);
 
-    for (int Row = 0; Row < ly; Row++)
+    for (int row = 0; row < ly; row++)
     {
         for (int col = 0; col < lx; col += 16)
         {
