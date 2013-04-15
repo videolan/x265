@@ -110,6 +110,7 @@ const short m_lumaFilter[4][NTAPS_LUMA] =
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 short *mbuf1, *mbuf2, *mbuf3;
+short *bbuf1, *bbuf2, *bbuf3;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
@@ -117,6 +118,10 @@ static const char *FuncNames[NUM_PARTITIONS] =
 {
     "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16", "4x32", "32x4", "8x32",
     "32x8", "16x32", "32x16", "32x32", "4x64", "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
+};
+
+static const char *ButterfliesFuncNames[NUM_BUTTERFLIES] = {
+"4","Inverse4", "8","Inverse8","16", "Inverse16","32", "Inverse32"
 };
 
 #if HIGH_BIT_DEPTH
@@ -257,6 +262,30 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
         printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
     }
 
+	for (int curpar = 0; curpar < NUM_BUTTERFLIES; curpar++)
+    {
+		if (vecprim.partial_butterfly[curpar])
+        {
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+				vecprim.partial_butterfly[curpar](bbuf1, bbuf2, 3, 10);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\npartialbutterfly[%s] vectorized primitive: (%1.4f ms) ",ButterfliesFuncNames[curpar], timevaldiff(&ts, &te));
+
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            {
+				cprim.partial_butterfly[curpar](bbuf1, bbuf2, 3, 10);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        }
+   }
+
     /* Add logic here for testing performance of your new primitive*/
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
@@ -334,7 +363,7 @@ static int check_mbdst_primitive(mbdst ref, mbdst opt)
 
         j += INCR;
         memset(mbuf2, 0, t_size);
-        memset(mbuf3, 0, t_size);
+        memset(mbuf3, 0, t_size);    
     }
 
     return 0;
@@ -397,6 +426,27 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
     return flag;
 }
 
+static int check_butterfly_primitive(butterfly ref, butterfly opt)
+{
+    int j = 0;
+    int t_size = 255;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(bbuf1 + j, bbuf2, 3, 10);
+        ref(bbuf1 + j, bbuf3, 3, 10);
+
+        if (memcmp(bbuf2, bbuf3, 160))
+            return -1;
+
+        j += INCR;
+        memset(bbuf2, 0, t_size);
+        memset(bbuf3, 0, t_size);    
+    }
+
+    return 0;
+}
+
 int init_pixelcmp_buffers()
 {
     pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
@@ -428,7 +478,7 @@ int init_mbdst_buffers()
 {
     int t_size = 32;
 
-    mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+	mbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
     mbuf2 = (short*)malloc(t_size);
     mbuf3 = (short*)malloc(t_size);
     if (!mbuf1 || !mbuf2 || !mbuf3)
@@ -451,10 +501,39 @@ int clean_mbdst_buffers()
     return 0;
 }
 
+int init_butterfly_buffers()
+{
+    int t_size = 255;
+
+	bbuf1 = (short*)malloc(0x1e00 * sizeof(short) + 16 * BENCH_ALIGNS);
+    bbuf2 = (short*)malloc(t_size);
+    bbuf3 = (short*)malloc(t_size);
+    if (!bbuf1 || !bbuf2 || !bbuf3)
+    {
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
+        return -1;
+    }
+
+    memcpy(bbuf1, pbuf1, 64 * 100);
+    memset(bbuf2, 0, t_size);
+    memset(bbuf3, 0, t_size);
+    return 0;
+}
+
+int clean_butterfly_buffers()
+{
+    free(bbuf1);
+    free(bbuf2);
+    free(bbuf3);
+    return 0;
+}
+
+
 // test all implemented primitives
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
     uint16_t curpar = 0;
+	uint16_t bpar = 0;
 
     /****************** Initialise and run pixelcmp primitives **************************/
 
@@ -539,8 +618,27 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
         printf("\nInversedst: passed ");
     }
 
-    /* Initialise and check your primitives here **********/
+    /********** Initialise and run butterfly Primitives *******************/
 
+    if (init_butterfly_buffers() < 0)
+        return -1;
+
+	for (; bpar < NUM_BUTTERFLIES; bpar++)
+    {
+		if (vectorprimitives.partial_butterfly[bpar])
+        {
+            if (check_butterfly_primitive(cprimitives.partial_butterfly[bpar], vectorprimitives.partial_butterfly[bpar]) < 0)
+            {
+				printf("\npartialButterfly[%s]: failed!\n", ButterfliesFuncNames[bpar]);
+                return -1;
+            }
+
+            printf("\npartialButterfly[%s]: passed ", FuncNames[bpar]);
+        }
+	}
+
+    /* Initialise and check your primitives here **********/ 
+        
     /******************* Cycle count for all primitives **********************/
     check_cycle_count(cprimitives, vectorprimitives);
 
