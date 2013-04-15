@@ -106,6 +106,29 @@ const short m_lumaFilter[4][NTAPS_LUMA] =
     0, 1,  -5, 17, 58, -10, 4, -1
 }
 };
+char FilterConf_names[16][40] = 
+{
+    //Naming convention used is - isVertical_N_isFirst_isLast
+    "Hor_N=4_isFirst=0_isLast=0",
+    "Hor_N=4_isFirst=0_isLast=1",
+    "Hor_N=4_isFirst=1_isLast=0",
+    "Hor_N=4_isFirst=1_isLast=1",
+
+    "Hor_N=8_isFirst=0_isLast=0",
+    "Hor_N=8_isFirst=0_isLast=1",
+    "Hor_N=8_isFirst=1_isLast=0",
+    "Hor_N=8_isFirst=1_isLast=1",
+
+    "Ver_N=4_isFirst=0_isLast=0",
+    "Ver_N=4_isFirst=0_isLast=1",
+    "Ver_N=4_isFirst=1_isLast=0",
+    "Ver_N=4_isFirst=1_isLast=1",
+
+    "Ver_N=8_isFirst=0_isLast=0",
+    "Ver_N=8_isFirst=0_isLast=1",
+    "Ver_N=8_isFirst=1_isLast=0",
+    "Ver_N=8_isFirst=1_isLast=1"
+};
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
@@ -282,7 +305,7 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             }
 
             gettimeofday(&te, NULL);
-            printf("\nfilter[%d] vectorized primitive: (%1.4f ms) ", value, timevaldiff(&ts, &te));
+            printf("\nfilter[%s] vectorized primitive: (%1.4f ms) ", FilterConf_names[value], timevaldiff(&ts, &te));
 
             gettimeofday(&ts, NULL);
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
@@ -519,7 +542,7 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 return -1;
             }
 
-            printf("\nFilter[%d]: passed ", value);
+            printf("\nFilter[%s]: passed ", FilterConf_names[value]);
         }
     }
 
