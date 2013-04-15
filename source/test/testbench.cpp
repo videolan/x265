@@ -130,7 +130,7 @@ char FilterConf_names[16][40] =
     "Ver_N=8_isFirst=1_isLast=1"
 };
 pixel *pixel_buff;
-short *IPF_buff1, *IPF_buff2;
+short *IPF_vec_output, *IPF_C_output;
 int t_size;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
@@ -294,14 +294,14 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
 
     for (int value = 4; value < 8; value++)
     {
-        memset(IPF_buff1, 0, t_size);               // Initialize output buffer to zero
-        memset(IPF_buff2, 0, t_size);               // Initialize output buffer to zero
+        memset(IPF_vec_output, 0, t_size);      // Initialize output buffer to zero
+        memset(IPF_C_output, 0, t_size);        // Initialize output buffer to zero
         if (vecprim.filter[value])
         {
             gettimeofday(&ts, NULL);
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
-                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
+                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
                                       rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
@@ -311,7 +311,7 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
             gettimeofday(&ts, NULL);
             for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
             {
-                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_buff1,
+                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
                                     rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
@@ -369,8 +369,8 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_buff1, 0, t_size);               // Initialize output buffer to zero
-        memset(IPF_buff2, 0, t_size);               // Initialize output buffer to zero
+        memset(IPF_vec_output, 0, t_size);          // Initialize output buffer to zero
+        memset(IPF_C_output, 0, t_size);            // Initialize output buffer to zero
 
         rand_val = rand() & 24;                     // Random offset in the filter
         rand_srcStride = rand() & 100;              // Randomly generated srcStride
@@ -379,7 +379,7 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
         opt((short*)(m_lumaFilter + rand_val),
             pixel_buff,
             rand_srcStride,
-            (pixel*)IPF_buff1,
+            (pixel*)IPF_vec_output,
             rand_dstStride,
             rand_height,
             rand_width,
@@ -387,13 +387,13 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
         ref((short*)(m_lumaFilter + rand_val),
             pixel_buff,
             rand_srcStride,
-            (pixel*)IPF_buff2,
+            (pixel*)IPF_C_output,
             rand_dstStride,
             rand_height,
             rand_width,
             BIT_DEPTH);
 
-        if (memcmp(IPF_buff1, IPF_buff2, t_size))
+        if (memcmp(IPF_vec_output, IPF_C_output, t_size))
         {
             flag = -1;                                          // Test Failed
             break;
@@ -427,10 +427,10 @@ int init_IPFilter_buffers()
 {
     t_size = 200 * 200;
     pixel_buff = (pixel*)malloc(t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    IPF_buff1 = (short*)malloc(t_size * sizeof(short));      // Output Buffer1
-    IPF_buff2 = (short*)malloc(t_size * sizeof(short));      // Output Buffer2
+    IPF_vec_output = (short*)malloc(t_size * sizeof(short));      // Output Buffer1
+    IPF_C_output = (short*)malloc(t_size * sizeof(short));      // Output Buffer2
 
-    if (!pixel_buff || !IPF_buff1 || !IPF_buff2)
+    if (!pixel_buff || !IPF_vec_output || !IPF_C_output)
     {
         fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
         return -1;
@@ -455,8 +455,8 @@ int clean_pixelcmp_buffers()
 
 int clean_IPFilter_buffers()
 {
-    free(IPF_buff1);
-    free(IPF_buff2);
+    free(IPF_vec_output);
+    free(IPF_C_output);
     free(pixel_buff);
     return 0;
 }
