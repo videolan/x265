@@ -604,6 +604,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    int seed = (int)time(NULL);
+    printf("Using random seed %X\n", seed);
+    srand(seed);
+
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);
 
