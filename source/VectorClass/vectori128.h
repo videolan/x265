@@ -3697,6 +3697,9 @@ static inline Vec16uc blend16uc(Vec16uc const & a, Vec16uc const & b) {
     return Vec16uc( blend16c<i0,i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15> (a,b));
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4700)
+#endif
 
 template <int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
 static inline Vec8s blend8s(Vec8s const & a, Vec8s const & b) {

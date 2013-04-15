@@ -31,7 +31,7 @@
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
- 
+
 void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
@@ -58,38 +58,10 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     Vec4i c2_final = (74 * c4 + rnd_factor) >> shift;
     Vec4i c3_final = (55 * c0_total + 29 * c2_total - c3_total + rnd_factor) >> shift;
 
-    Vec4i first_arg(-32768);
-    Vec4i second_arg(32767);
-
-    Vec4i max_number1 = max(first_arg, c0_final);
-    Vec4i mid_number1 = min(max_number1, second_arg);
-    Vec4i max_number2 = max(first_arg, c1_final);
-    Vec4i mid_number2 = min(max_number2, second_arg);
-    Vec8s half = compress(mid_number1, mid_number2);
-
-    block[0] = half[0];
-    block[4] = half[1];
-    block[8] = half[2];
-    block[12] = half[3];
-    block[1] = half[4];
-    block[5] = half[5];
-    block[9] = half[6];
-    block[13] = half[7];
-
-    max_number1 = max(first_arg, c2_final);
-    mid_number1 = min(max_number1, second_arg);
-    max_number2 = max(first_arg, c3_final);
-    mid_number2 = min(max_number2, second_arg);
-    half = compress(mid_number1, mid_number2);
-
-    block[2] = half[0];
-    block[6] = half[1];
-    block[10] = half[2];
-    block[14] = half[3];
-    block[3] = half[4];
-    block[7] = half[5];
-    block[11] = half[6];
-    block[15] = half[7];
+    Vec8s half0 = compress(min(max(-32768, c0_final), 32767), min(max(-32768, c1_final), 32767));
+    Vec8s half1 = compress(min(max(-32768, c2_final), 32767), min(max(-32768, c3_final), 32767));
+    blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store(block);
+    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store(block+8);
 }
 
 template<bool isFirst, bool isLast>
