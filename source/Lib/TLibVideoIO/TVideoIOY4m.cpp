@@ -195,15 +195,15 @@ Void TVideoIOY4m::open(Char*        pchFile,
     else
     {
         y4m_handler = (y4m_hnd_t*)handler;
-        y4m_handler->bitDepthShiftY = internalBitDepthY - fileBitDepthY;
-        y4m_handler->bitDepthShiftC = internalBitDepthC - fileBitDepthC;
-        y4m_handler->fileBitDepthY = fileBitDepthY;
-        y4m_handler->fileBitDepthC = fileBitDepthC;
-        y4m_handler->aiPad[0] = aiPad[0];
-        y4m_handler->aiPad[1] = aiPad[1];
         y4m_handler->m_cHandle.seekg(y4m_handler->headerLength);
     }
 
+    y4m_handler->bitDepthShiftY = internalBitDepthY - fileBitDepthY;
+    y4m_handler->bitDepthShiftC = internalBitDepthC - fileBitDepthC;
+    y4m_handler->fileBitDepthY = fileBitDepthY;
+    y4m_handler->fileBitDepthC = fileBitDepthC;
+    y4m_handler->aiPad[0] = aiPad[0];
+    y4m_handler->aiPad[1] = aiPad[1];
     handler =  (hnd_t*)y4m_handler;
 }
 
