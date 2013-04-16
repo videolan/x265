@@ -491,15 +491,10 @@ int clean_mbdst_buffers()
 // test all implemented primitives
 static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
 {
-    uint16_t curpar = 0;
+   /****************** Initialise and run pixelcmp primitives **************************/
 
-    /****************** Initialise and run pixelcmp primitives **************************/
-
-    if (init_pixelcmp_buffers() < 0)
-        return -1;
-
-    for (; curpar < NUM_PARTITIONS; curpar++)
-    {
+   for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
+   {
         if (vectorprimitives.satd[curpar])
         {
             if (check_pixel_primitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
@@ -507,8 +502,6 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 printf("satd[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
             }
-
-            printf("\nsatd[%s]: passed ", FuncNames[curpar]);
         }
 
         if (vectorprimitives.sad[curpar])
@@ -518,8 +511,6 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
                 return -1;
             }
-
-            printf("\nsad[%s]: passed ", FuncNames[curpar]);
         }
     }
 
@@ -530,8 +521,6 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             printf("sa8d_8x8: failed!\n");
             return -1;
         }
-
-        printf("\nsa8d_8x8: passed ");
     }
 
     if (vectorprimitives.sa8d_16x16)
@@ -541,13 +530,9 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             printf("sa8d_16x16: failed!\n");
             return -1;
         }
-
-        printf("\nsa8d_16x16: passed ");
     }
 
     /********** Run Filter Primitives *******************/
-    if (init_IPFilter_buffers() < 0)
-        return -1;
 
     for (int value = 4; value < 8; value++)
     {
@@ -558,15 +543,10 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
                 printf("\nfilter: Failed!\n");
                 return -1;
             }
-
-            printf("\nFilter[%s]: passed ", FilterConf_names[value]);
         }
     }
 
     /********** Initialise and run mbdst Primitives *******************/
-
-    if (init_mbdst_buffers() < 0)
-        return -1;
 
     if (vectorprimitives.inversedst)
     {
@@ -575,19 +555,10 @@ static int check_all_primitives(const EncoderPrimitives& cprimitives, const Enco
             printf("Inversedst: Failed!\n");
             return -1;
         }
-
-        printf("\nInversedst: passed ");
     }
 
     /* Initialise and check your primitives here **********/
 
-    /******************* Cycle count for all primitives **********************/
-    check_cycle_count(cprimitives, vectorprimitives);
-
-    /********************* Clean all buffers *****************************/
-    clean_pixelcmp_buffers();
-    clean_mbdst_buffers();
-    clean_IPFilter_buffers();
     return 0;
 }
 
@@ -608,37 +579,65 @@ int main(int argc, char *argv[])
     printf("Using random seed %X\n", seed);
     srand(seed);
 
+    if (init_pixelcmp_buffers() < 0)
+        return -1;
+
+    if (init_IPFilter_buffers() < 0)
+        return -1;
+
+    if (init_mbdst_buffers() < 0)
+        return -1;
+
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);
 
-    EncoderPrimitives vecprim;
-    memset(&vecprim, 0, sizeof(vecprim));
-
-#if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(vecprim, cpuid);
-    printf("Testing vector class primitives\n");
-    ret = check_all_primitives(cprim, vecprim);
-    if (ret)
+    for (int i = 1; i < cpuid; i++)
     {
-        fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
-        return -1;
-    }
-
+#if ENABLE_VECTOR_PRIMITIVES
+        EncoderPrimitives vecprim;
+        memset(&vecprim, 0, sizeof(vecprim));
+        Setup_Vector_Primitives(vecprim, i);
+        printf("Testing vector class primitives: CPUID %d\n", i);
+        ret = check_all_primitives(cprim, vecprim);
+        if (ret)
+        {
+            fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
+            return -1;
+        }
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
-    EncoderPrimitives asmprim;
-    memset(&asmprim, 0, sizeof(asmprim));
-    Setup_Assembly_Primitives(asmprim, cpuid);
-    printf("Testing assembly primitives\n");
-    ret = check_all_primitives(cprim, asmprim);
-    if (ret)
-    {
-        fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
-        return -1;
+        EncoderPrimitives asmprim;
+        memset(&asmprim, 0, sizeof(asmprim));
+        Setup_Assembly_Primitives(asmprim, i);
+        printf("Testing assembly primitives: CPUID %d\n", i);
+        ret = check_all_primitives(cprim, asmprim);
+        if (ret)
+        {
+            fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
+            return -1;
+        }
+#endif // if ENABLE_ASM_PRIMITIVES
     }
 
-#endif // if ENABLE_ASM_PRIMITIVES
+    /******************* Cycle count for all primitives **********************/
+
+    EncoderPrimitives optprim;
+    memset(&optprim, 0, sizeof(optprim));
+#if ENABLE_VECTOR_PRIMITIVES
+    Setup_Vector_Primitives(optprim, cpuid);
+#endif
+#if ENABLE_ASM_PRIMITIVES
+    Setup_Assembly_Primitives(optprim, i);
+#endif
+
+    check_cycle_count(cprim, optprim);
+
+    /********************* Clean all buffers *****************************/
+
+    clean_pixelcmp_buffers();
+    clean_mbdst_buffers();
+    clean_IPFilter_buffers();
 
     fprintf(stderr, "x265: All tests passed Yeah :)\n");
 
