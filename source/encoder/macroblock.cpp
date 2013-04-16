@@ -118,7 +118,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
     {
         for (col = 0; col < block_width; col++)
         {
-            int sum;
+            short sum;
             sum  = src[col + 0] * c[0];
             sum += src[col + 1] * c[1];
             if (N >= 4)
@@ -219,14 +219,14 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
-    p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
-    p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
+    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 1, 1>;
+    p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 1, 1>;
+    p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 1>;
     p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
 
-    p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
-    p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
-    p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
+    p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 1, 1>;
+    p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 1, 1>;
+    p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 1>;
     p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
