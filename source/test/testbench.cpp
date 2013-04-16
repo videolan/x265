@@ -27,6 +27,7 @@
 #include "pixelharness.h"
 #include "filterharness.h"
 #include "mbdstharness.h"
+#include "butterflyharness.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,12 +55,14 @@ int main(int argc, char *argv[])
     PixelHarness  HPixel;
     FilterHarness HFilter;
     MBDstHarness  HMBDist;
+    ButterflyHarness HButterfly;
 
     // To disable classes of tests, simply comment them out in this list
     TestHarness *harness[] = {
         &HPixel,
         &HFilter,
-        &HMBDist
+        &HMBDist,
+        &HButterfly
     };
 
     EncoderPrimitives cprim;
