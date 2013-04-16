@@ -2,6 +2,8 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Gopu Govindaswamy <gopu@govindaswamy.org>
+ *          Mandar Gurav <mandar@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +25,8 @@
 
 #include "unittest.h"
 #include "primitives.h"
-
+#include <time.h>
+#include <iostream>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -33,131 +36,376 @@
 #include <string.h>
 #include <math.h>
 
-#if _MSC_VER
-#define snprintf _snprintf
-#define strdup _strdup
-#endif
+// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html begins
+// this part is windows implementation of Gettimeoffday() function
 
-using namespace x265;
+#ifndef _TIMEVAL_H
+#define _TIMEVAL_H
 
-/* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
-pixel *pbuf1, *pbuf2;
-uint16_t do_singleprimitivecheck = 0;
-uint16_t curpar = 0;
-uint16_t cpuid = 0;
+#ifdef _WIN32
 
-#define BENCH_ALIGNS 16
-#if HIGH_BIT_DEPTH
-#define PIXEL_MAX ((1 << 10) - 1)
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <time.h>
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#define EPOCHFILETIME (116444736000000000i64)
 #else
-#define PIXEL_MAX ((1 << 8) - 1)
+#define EPOCHFILETIME (116444736000000000LL)
 #endif
-
-#if _MSC_VER
-#pragma warning(disable: 4505)
-#endif
-
-// test all implemented pixel comparison primitives
-static int check_pixelprimitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
+__inline int gettimeofday(struct timeval *tv,  struct timezone *tz)
 {
-    uint32_t j = 0, i = 0;
+    FILETIME        ft;
+    LARGE_INTEGER   li;
+    __int64         t;
 
-    for (; curpar < NUM_PARTITIONS; curpar++)
+    if (tv)
     {
-        // if the satd is not available for vector no need to test
-        if (vectorprimitives.satd[curpar])
-        {
-            j = 0;
-            for (i = 0; i <= 100; i++)
-            {
-                int vres = vectorprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
-                int cres = cprimitives.satd[curpar](pbuf1 + j, 16, pbuf2, 16);
-                if (vres != cres)
-                {
-                    printf("FAILED COMPARISON for SATD partition - %d \n", curpar);
-                    return -1;
-                }
-                j += 16;
-            }
-        }
-        // if the satd is not available for vector no need to test
-        if (vectorprimitives.sad[curpar])
-        {
-            j = 0;
-            for (i = 0; i <= 100; i++)
-            {
-                int vres = vectorprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
-                int cres = cprimitives.sad[curpar](pbuf1 + j, 16, pbuf2, 16);
-                if (vres != cres)
-                {
-                    printf("FAILED COMPARISON for SATD partition - %d \n", curpar);
-                    return -1;
-                }
-                j += 16;
-            }
-        }
-
-        if (do_singleprimitivecheck == 1)
-            return 0;
-    }
-    if (vectorprimitives.sa8d_8x8)
-    {
-        j = 0;
-        for (i = 0; i <= 100; i++)
-        {
-            int vres = vectorprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
-            int cres = cprimitives.sa8d_8x8(pbuf1 + j, 16, pbuf2, 16);
-            if (vres != cres)
-            {
-                printf("FAILED COMPARISON for sa8d_8x8\n");
-                return -1;
-            }
-            j += 16;
-        }
-    }
-    if (vectorprimitives.sa8d_16x16)
-    {
-        j = 0;
-        for (i = 0; i <= 100; i++)
-        {
-            int vres = vectorprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
-            int cres = cprimitives.sa8d_16x16(pbuf1 + j, 16, pbuf2, 16);
-            if (vres != cres)
-            {
-                printf("FAILED COMPARISON for sa8d_8x8\n");
-                return -1;
-            }
-            j += 16;
-        }
+        GetSystemTimeAsFileTime(&ft);
+        li.LowPart  = ft.dwLowDateTime;
+        li.HighPart = ft.dwHighDateTime;
+        t  = li.QuadPart;       /* In 100-nanosecond intervals */
+        t -= EPOCHFILETIME;     /* Offset to the Epoch time */
+        t /= 10;                /* In microseconds */
+        tv->tv_sec  = (long)(t / 1000000);
+        tv->tv_usec = (long)(t % 1000000);
     }
 
     return 0;
 }
 
-static int check_all_funcs(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
+#else  /* _WIN32 */
+
+#include <sys/time.h>
+
+#endif /* _WIN32 */
+
+#endif /* _TIMEVAL_H */
+
+// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html ends
+
+using namespace x265;
+
+/* Used for filter */
+const short m_lumaFilter[4][8] =
 {
-    return check_pixelprimitives(cprimitives, vectorprimitives);
+{
+    0, 0,   0, 64,  0,   0, 0,  0
+},
+{
+    -1, 4, -10, 58, 17,  -5, 1,  0
+},
+{
+    -1, 4, -11, 40, 40, -11, 4, -1
+},
+{
+    0, 1,  -5, 17, 58, -10, 4, -1
+}
+};
+char FilterConf_names[16][40] =
+{
+    //Naming convention used is - isVertical_N_isFirst_isLast
+    "Hor_N=4_isFirst=0_isLast=0",
+    "Hor_N=4_isFirst=0_isLast=1",
+    "Hor_N=4_isFirst=1_isLast=0",
+    "Hor_N=4_isFirst=1_isLast=1",
+
+    "Hor_N=8_isFirst=0_isLast=0",
+    "Hor_N=8_isFirst=0_isLast=1",
+    "Hor_N=8_isFirst=1_isLast=0",
+    "Hor_N=8_isFirst=1_isLast=1",
+
+    "Ver_N=4_isFirst=0_isLast=0",
+    "Ver_N=4_isFirst=0_isLast=1",
+    "Ver_N=4_isFirst=1_isLast=0",
+    "Ver_N=4_isFirst=1_isLast=1",
+
+    "Ver_N=8_isFirst=0_isLast=0",
+    "Ver_N=8_isFirst=0_isLast=1",
+    "Ver_N=8_isFirst=1_isLast=0",
+    "Ver_N=8_isFirst=1_isLast=1"
+};
+pixel *pixel_buff;
+short *IPF_vec_output, *IPF_C_output;
+int ipf_t_size;
+
+/* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
+pixel *pbuf1, *pbuf2;
+short *mbuf1, *mbuf2, *mbuf3;
+int mb_t_size;
+
+// Initialize the Func Names for all the Pixel Comp
+static const char *FuncNames[NUM_PARTITIONS] =
+{
+    "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16", "4x32", "32x4", "8x32",
+    "32x8", "16x32", "32x16", "32x32", "4x64", "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
+};
+
+#if HIGH_BIT_DEPTH
+#define BIT_DEPTH 10
+#else
+#define BIT_DEPTH 8
+#endif
+
+#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+
+/* To-do List: Generate the stride values at run time in each run
+ *
+ */
+
+#define MILSECS_IN_SEC 1000     // Number of milliseconds in a second
+#define INCR 16     // Number of bytes the input window shifts across the total buffer
+#define STRIDE 16   // Stride value used while calling primitives
+
+// Number of iterations for cycle count
+#define PIXELCMP_ITERATIONS 2000000
+#define MBDST_ITERATIONS    4000000
+#define FILTER_ITERATIONS   100000
+
+static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
+{
+    double msec;
+
+    msec =  (finishtime->tv_sec - starttime->tv_sec) * MILSECS_IN_SEC;
+    msec += (double)(finishtime->tv_usec - starttime->tv_usec) / MILSECS_IN_SEC;
+    return msec;
 }
 
-int main(int argc, char *argv[])
+static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimitives& vecprim)
 {
-    int ret = 0;
+    struct timeval ts, te;
 
-    for (int i = 1; i < argc-1; i+=2)
+    for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
     {
-        if (!strcmp(argv[i], "--primitive"))
+        if (vecprim.satd[curpar])
         {
-            do_singleprimitivecheck = 1;
-            curpar = atoi(argv[i+1]);
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
+                vecprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\nsatd[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
+                cprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
         }
-        else if (!strcmp(argv[i], "--cpuid"))
+
+        if (vecprim.sad[curpar])
         {
-            cpuid = atoi(argv[i+1]);
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
+                vecprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\nsad[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
+                cprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
         }
     }
 
-    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    if (vecprim.sa8d_8x8)
+    {
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
+            vecprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\nsa8d_8x8\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
+
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
+            cprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
+    }
+
+    if (vecprim.sa8d_16x16)
+    {
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
+            vecprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\nsa8d_16x16\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
+
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
+            cprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
+    }
+
+    if (vecprim.inversedst)
+    {
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < MBDST_ITERATIONS; j++)
+        {
+            vecprim.inversedst(mbuf1, mbuf2, 16);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\nInverseDST\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
+
+        gettimeofday(&ts, NULL);
+        for (int j = 0; j < MBDST_ITERATIONS; j++)
+        {
+            cprim.inversedst(mbuf1, mbuf2, 16);
+        }
+
+        gettimeofday(&te, NULL);
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
+    }
+
+    /* Add logic here for testing performance of your new primitive*/
+    int rand_height = rand() % 100;                 // Randomly generated Height
+    int rand_width = rand() % 100;                  // Randomly generated Width
+    short rand_val, rand_srcStride, rand_dstStride;
+
+    rand_val = rand() % 24;                     // Random offset in the filter
+    rand_srcStride = rand() % 100;              // Randomly generated srcStride
+    rand_dstStride = rand() % 100;              // Randomly generated dstStride
+
+    for (int value = 4; value < 8; value++)
+    {
+        memset(IPF_vec_output, 0, ipf_t_size);      // Initialize output buffer to zero
+        memset(IPF_C_output, 0, ipf_t_size);        // Initialize output buffer to zero
+        if (vecprim.filter[value])
+        {
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < FILTER_ITERATIONS; j++)
+            {
+                vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
+                                      rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], timevaldiff(&ts, &te));
+
+            gettimeofday(&ts, NULL);
+            for (int j = 0; j < FILTER_ITERATIONS; j++)
+            {
+                cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
+                                    rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            }
+
+            gettimeofday(&te, NULL);
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
+        }
+    }
+}
+
+static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        int vres = opt(pbuf1, STRIDE, pbuf2 + j, STRIDE);
+        int cres = ref(pbuf1, STRIDE, pbuf2 + j, STRIDE);
+        if (vres != cres)
+            return -1;
+
+        j += INCR;
+    }
+
+    return 0;
+}
+
+//Find the Output Comp and Cycle count
+static int check_mbdst_primitive(mbdst ref, mbdst opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(mbuf1 + j, mbuf2, 16);
+        ref(mbuf1 + j, mbuf3, 16);
+
+        if (memcmp(mbuf2, mbuf3, mb_t_size))
+            return -1;
+
+        j += INCR;
+        memset(mbuf2, 0, mb_t_size);
+        memset(mbuf3, 0, mb_t_size);
+    }
+
+    return 0;
+}
+
+static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
+{
+    int rand_height = rand() & 100;                 // Randomly generated Height
+    int rand_width = rand() & 100;                  // Randomly generated Width
+    int flag = 0;                                   // Return value
+    short rand_val, rand_srcStride, rand_dstStride;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        memset(IPF_vec_output, 0, ipf_t_size);          // Initialize output buffer to zero
+        memset(IPF_C_output, 0, ipf_t_size);            // Initialize output buffer to zero
+
+        rand_val = rand() & 24;                     // Random offset in the filter
+        rand_srcStride = rand() & 100;              // Randomly generated srcStride
+        rand_dstStride = rand() & 100;              // Randomly generated dstStride
+
+        opt((short*)(m_lumaFilter + rand_val),
+            pixel_buff,
+            rand_srcStride,
+            (pixel*)IPF_vec_output,
+            rand_dstStride,
+            rand_height,
+            rand_width,
+            BIT_DEPTH);
+        ref((short*)(m_lumaFilter + rand_val),
+            pixel_buff,
+            rand_srcStride,
+            (pixel*)IPF_C_output,
+            rand_dstStride,
+            rand_height,
+            rand_width,
+            BIT_DEPTH);
+
+        if (memcmp(IPF_vec_output, IPF_C_output, ipf_t_size))
+        {
+            flag = -1;                                          // Test Failed
+            break;
+        }
+    }
+
+    return flag;
+}
+
+int init_pixelcmp_buffers()
+{
+    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel));
+    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel));
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -171,41 +419,227 @@ int main(int argc, char *argv[])
         pbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    EncoderPrimitives cprim;
-    Setup_C_Primitives(cprim);
+    return 0;
+}
 
-    EncoderPrimitives vecprim;
-    memset(&vecprim, 0, sizeof(vecprim));
-    if (cpuid == 0)
-        cpuid = CpuIDDetect();
+int init_IPFilter_buffers()
+{
+    ipf_t_size = 200 * 200;
+    pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    IPF_vec_output = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
+    IPF_C_output = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
 
-#if defined(__GNUC__) || defined(_MSC_VER)
-    if (cpuid > 1) Setup_Vec_Primitives_sse2(vecprim);
-
-    if (cpuid > 2) Setup_Vec_Primitives_sse3(vecprim);
-
-    if (cpuid > 3) Setup_Vec_Primitives_ssse3(vecprim);
-
-    if (cpuid > 4) Setup_Vec_Primitives_sse41(vecprim);
-
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(vecprim);
-
-#endif // if defined(__GNUC__) || defined(_MSC_VER)
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(vecprim);
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-    if (cpuid > 7) Setup_Vec_Primitives_avx2(vecprim);
-#endif
-
-    ret = check_all_funcs(cprim, vecprim); //do the output validation for c and vector primitives
-    if (ret)
+    if (!pixel_buff || !IPF_vec_output || !IPF_C_output)
     {
-        fprintf(stderr, "x265: at least one test has failed. Go and fix that Right Now!\n");
+        fprintf(stderr, "init_IPFilter_buffers: malloc failed, unable to initiate tests!\n");
         return -1;
     }
 
-    fprintf(stderr, "x265: All tests passed Yeah :)\n");
+    for (int i = 0; i < ipf_t_size; i++)                         // Initialize input buffer
+    {
+        int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
+        isPositive = (isPositive) ? 1 : -1;
+        pixel_buff[i] = isPositive * (rand() & PIXEL_MAX);
+    }
+
+    return 0;
+}
+
+int clean_pixelcmp_buffers()
+{
+    free(pbuf1);
+    free(pbuf2);
+    return 0;
+}
+
+int clean_IPFilter_buffers()
+{
+    free(IPF_vec_output);
+    free(IPF_C_output);
+    free(pixel_buff);
+    return 0;
+}
+
+int init_mbdst_buffers()
+{
+    mb_t_size = 32;
+
+    mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel));
+    mbuf2 = (short*)malloc(mb_t_size);
+    mbuf3 = (short*)malloc(mb_t_size);
+    if (!mbuf1 || !mbuf2 || !mbuf3)
+    {
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
+        return -1;
+    }
+
+    memcpy(mbuf1, pbuf1, 64 * 100);
+    memset(mbuf2, 0, mb_t_size);
+    memset(mbuf3, 0, mb_t_size);
+    return 0;
+}
+
+int clean_mbdst_buffers()
+{
+    free(mbuf1);
+    free(mbuf2);
+    free(mbuf3);
+    return 0;
+}
+
+// test all implemented primitives
+static int check_all_primitives(const EncoderPrimitives& cprimitives, const EncoderPrimitives& vectorprimitives)
+{
+   /****************** Initialise and run pixelcmp primitives **************************/
+
+   for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
+   {
+        if (vectorprimitives.satd[curpar])
+        {
+            if (check_pixel_primitive(cprimitives.satd[curpar], vectorprimitives.satd[curpar]) < 0)
+            {
+                printf("satd[%s]: failed!\n", FuncNames[curpar]);
+                return -1;
+            }
+        }
+
+        if (vectorprimitives.sad[curpar])
+        {
+            if (check_pixel_primitive(cprimitives.sad[curpar], vectorprimitives.sad[curpar]) < 0)
+            {
+                printf("sad[%s]: failed!\n", FuncNames[curpar]);
+                return -1;
+            }
+        }
+    }
+
+    if (vectorprimitives.sa8d_8x8)
+    {
+        if (check_pixel_primitive(cprimitives.sa8d_8x8, vectorprimitives.sa8d_8x8) < 0)
+        {
+            printf("sa8d_8x8: failed!\n");
+            return -1;
+        }
+    }
+
+    if (vectorprimitives.sa8d_16x16)
+    {
+        if (check_pixel_primitive(cprimitives.sa8d_16x16, vectorprimitives.sa8d_16x16) < 0)
+        {
+            printf("sa8d_16x16: failed!\n");
+            return -1;
+        }
+    }
+
+    /********** Run Filter Primitives *******************/
+
+    for (int value = 4; value < 8; value++)
+    {
+        if (vectorprimitives.filter[value])
+        {
+            if (check_IPFilter_primitive(cprimitives.filter[value], vectorprimitives.filter[value]) < 0)
+            {
+                printf("\nfilter: Failed!\n");
+                return -1;
+            }
+        }
+    }
+
+    /********** Initialise and run mbdst Primitives *******************/
+
+    if (vectorprimitives.inversedst)
+    {
+        if (check_mbdst_primitive(cprimitives.inversedst, vectorprimitives.inversedst) < 0)
+        {
+            printf("Inversedst: Failed!\n");
+            return -1;
+        }
+    }
+
+    /* Initialise and check your primitives here **********/
+
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    int ret = 0;
+    int cpuid = CpuIDDetect();
+
+    for (int i = 1; i < argc - 1; i += 2)
+    {
+        if (!strcmp(argv[i], "--cpuid"))
+        {
+            cpuid = atoi(argv[i + 1]);
+        }
+    }
+
+    int seed = (int)time(NULL);
+    printf("Using random seed %X\n", seed);
+    srand(seed);
+
+    if (init_pixelcmp_buffers() < 0)
+        return -1;
+
+    if (init_IPFilter_buffers() < 0)
+        return -1;
+
+    if (init_mbdst_buffers() < 0)
+        return -1;
+
+    EncoderPrimitives cprim;
+    Setup_C_Primitives(cprim);
+
+    for (int i = 1; i <= cpuid; i++)
+    {
+#if ENABLE_VECTOR_PRIMITIVES
+        EncoderPrimitives vecprim;
+        memset(&vecprim, 0, sizeof(vecprim));
+        Setup_Vector_Primitives(vecprim, i);
+        printf("Testing vector class primitives: CPUID %d\n", i);
+        ret = check_all_primitives(cprim, vecprim);
+        if (ret)
+        {
+            fprintf(stderr, "\nx265: at least one vector primitive has failed. Go and fix that Right Now!\n");
+            return -1;
+        }
+#endif
+
+#if ENABLE_ASM_PRIMITIVES
+        EncoderPrimitives asmprim;
+        memset(&asmprim, 0, sizeof(asmprim));
+        Setup_Assembly_Primitives(asmprim, i);
+        printf("Testing assembly primitives: CPUID %d\n", i);
+        ret = check_all_primitives(cprim, asmprim);
+        if (ret)
+        {
+            fprintf(stderr, "\nx265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
+            return -1;
+        }
+#endif // if ENABLE_ASM_PRIMITIVES
+    }
+    fprintf(stderr, "\nx265: All tests passed Yeah :)\n");
+
+    /******************* Cycle count for all primitives **********************/
+
+    EncoderPrimitives optprim;
+    memset(&optprim, 0, sizeof(optprim));
+#if ENABLE_VECTOR_PRIMITIVES
+    Setup_Vector_Primitives(optprim, cpuid);
+#endif
+#if ENABLE_ASM_PRIMITIVES
+    Setup_Assembly_Primitives(optprim, cpuid);
+#endif
+
+    check_cycle_count(cprim, optprim);
+
+    printf("\n");
+
+    /********************* Clean all buffers *****************************/
+
+    clean_pixelcmp_buffers();
+    clean_mbdst_buffers();
+    clean_IPFilter_buffers();
 
     return 0;
 }
