@@ -25,6 +25,7 @@
 #include "primitives.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <malloc.h>
 
 using namespace x265;
 
@@ -51,8 +52,8 @@ static const char *FuncNames[NUM_PARTITIONS] =
 
 PixelHarness::PixelHarness()
 {
-    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel));
-    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel));
+    pbuf1 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 16);
+    pbuf2 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 16);
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -69,8 +70,8 @@ PixelHarness::PixelHarness()
 
 PixelHarness::~PixelHarness()
 {
-    free(pbuf1);
-    free(pbuf2);
+    _aligned_free(pbuf1);
+    _aligned_free(pbuf2);
 }
 
 bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
