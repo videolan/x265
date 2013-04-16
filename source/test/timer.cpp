@@ -23,57 +23,39 @@
 
 #include "testharness.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/timeb.h>
+#if _WIN32
 
-// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html begins
-// this part is windows implementation of Gettimeoffday() function
+#include <Windows.h>
 
-#ifndef _TIMEVAL_H
-#ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-
-#if defined(_MSC_VER)
-#define EPOCHFILETIME (116444736000000000i64)
-#else
-#define EPOCHFILETIME (116444736000000000LL)
-#endif
-
-int gettimeofday(struct timeval *tv, struct timezone *tz)
+class TimerImpl : public Timer
 {
-    FILETIME        ft;
-    LARGE_INTEGER   li;
-    __int64         t;
+protected:
 
-    if (tv)
+    LARGE_INTEGER freq;
+
+    LARGE_INTEGER start, finish;
+
+public:
+
+    TimerImpl()         { QueryPerformanceFrequency(&freq); }
+
+    void Start()        { QueryPerformanceCounter(&start); }
+
+    void Stop()         { QueryPerformanceCounter(&finish); }
+
+    float ElapsedMS()
     {
-        GetSystemTimeAsFileTime(&ft);
-        li.LowPart  = ft.dwLowDateTime;
-        li.HighPart = ft.dwHighDateTime;
-        t  = li.QuadPart;       /* In 100-nanosecond intervals */
-        t -= EPOCHFILETIME;     /* Offset to the Epoch time */
-        t /= 10;                /* In microseconds */
-        tv->tv_sec  = (long)(t / 1000000);
-        tv->tv_usec = (long)(t % 1000000);
+        return ((float)(finish.QuadPart - start.QuadPart) / freq.QuadPart) * 1000.0f;
     }
 
-    return 0;
-}
+    void Release()      { delete this; }
+};
 
-#else  /* _WIN32 */
+#else
 
+#include <sys/types.h>
+#include <sys/timeb.h>
 #include <sys/time.h>
-
-#endif /* _WIN32 */
-#endif /* _TIMEVAL_H */
-
-// Code snippet from http://www.winehq.org/pipermail/wine-devel/2003-June/018082.html ends
-
 
 class TimerImpl : public Timer
 {
@@ -83,33 +65,22 @@ protected:
 
 public:
 
-    void Start();
+    void Start()        { gettimeofday(&start, NULL); }
 
-    void Stop();
+    void Stop()         { gettimeofday(&finish, NULL); }
 
-    float ElapsedMS();
+    float ElapsedMS()
+    {
+        return (finish.tv_sec - start.tv_sec) * 1000 +
+        (float)(finish.tv_usec - start.tv_usec) / 1000;
+    }
 
     void Release()      { delete this; }
 };
 
+#endif /* _WIN32 */
+
 Timer *Timer::CreateTimer()
 {
     return new TimerImpl();
-}
-
-void TimerImpl::Start()
-{
-    gettimeofday(&start, NULL);
-}
-
-void TimerImpl::Stop()
-{
-    gettimeofday(&finish, NULL);
-}
-
-float TimerImpl::ElapsedMS()
-{
-    float msec = (finish.tv_sec - start.tv_sec) * 1000;
-    msec += (float)(finish.tv_usec - start.tv_usec) / 1000;
-    return msec;
 }
