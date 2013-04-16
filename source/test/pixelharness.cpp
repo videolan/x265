@@ -23,9 +23,14 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <malloc.h>
+
+#ifdef __MINGW32__ 
+#define _aligned_malloc __mingw_aligned_malloc 
+#define _aligned_free  __mingw_aligned_free 
+#endif
 
 using namespace x265;
 
@@ -44,11 +49,6 @@ static const char *FuncNames[NUM_PARTITIONS] =
 #endif
 
 #define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
-
-#define PIXELCMP_ITERATIONS 2000000
-
-#define INCR 16
-#define STRIDE 16
 
 PixelHarness::PixelHarness()
 {
@@ -83,6 +83,9 @@ PixelHarness::~PixelHarness()
     free(pbuf2);
 #endif
 }
+
+#define INCR 16
+#define STRIDE 16
 
 bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 {
@@ -144,6 +147,8 @@ bool PixelHarness::testCorrectness( const EncoderPrimitives& ref, const EncoderP
 
     return true;
 }
+
+#define PIXELCMP_ITERATIONS 2000000
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
