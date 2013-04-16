@@ -195,10 +195,8 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
 
         for (k = 2; k < 16; k += 4)
         {
-            dst[k *
-                line] =
-                (short)((g_aiT16[k][0] * EO[0] + g_aiT16[k][1] * EO[1] + g_aiT16[k][2] * EO[2] + g_aiT16[k][3] * EO[3] +
-                         add) >> shift);
+            dst[k * line] = (short)((g_aiT16[k][0] * EO[0] + g_aiT16[k][1] * EO[1] + g_aiT16[k][2] * EO[2] +
+                                     g_aiT16[k][3] * EO[3] + add) >> shift);
         }
 
         for (k = 1; k < 16; k += 2)
@@ -209,81 +207,6 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
         }
 
         src += 16;
-        dst++;
-    }
-}
-
-void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
-{
-    Int j, k;
-    Int E[16], O[16];
-    Int EE[8], EO[8];
-    Int EEE[4], EEO[4];
-    Int EEEE[2], EEEO[2];
-    Int add = 1 << (shift - 1);
-
-    for (j = 0; j < line; j++)
-    {
-        /* E and O*/
-        for (k = 0; k < 16; k++)
-        {
-            E[k] = src[k] + src[31 - k];
-            O[k] = src[k] - src[31 - k];
-        }
-
-        /* EE and EO */
-        for (k = 0; k < 8; k++)
-        {
-            EE[k] = E[k] + E[15 - k];
-            EO[k] = E[k] - E[15 - k];
-        }
-
-        /* EEE and EEO */
-        for (k = 0; k < 4; k++)
-        {
-            EEE[k] = EE[k] + EE[7 - k];
-            EEO[k] = EE[k] - EE[7 - k];
-        }
-
-        /* EEEE and EEEO */
-        EEEE[0] = EEE[0] + EEE[3];
-        EEEO[0] = EEE[0] - EEE[3];
-        EEEE[1] = EEE[1] + EEE[2];
-        EEEO[1] = EEE[1] - EEE[2];
-
-        dst[0] = (short)(g_aiT32[0][0] * EEEE[0] + g_aiT32[0][1] * EEEE[1] + add) >> shift;
-        dst[16 * line] = (short)(g_aiT32[16][0] * EEEE[0] + g_aiT32[16][1] * EEEE[1] + add) >> shift;
-        dst[8 * line] = (short)(g_aiT32[8][0] * EEEO[0] + g_aiT32[8][1] * EEEO[1] + add) >> shift;
-        dst[24 * line] = (short)(g_aiT32[24][0] * EEEO[0] + g_aiT32[24][1] * EEEO[1] + add) >> shift;
-        for (k = 4; k < 32; k += 8)
-        {
-            dst[k *
-                line] =
-                (short)(g_aiT32[k][0] * EEO[0] + g_aiT32[k][1] * EEO[1] + g_aiT32[k][2] * EEO[2] + g_aiT32[k][3] * EEO[3] +
-                        add) >> shift;
-        }
-
-        for (k = 2; k < 32; k += 4)
-        {
-            dst[k *
-                line] = (short)(g_aiT32[k][0] * EO[0] + g_aiT32[k][1] * EO[1] + g_aiT32[k][2] * EO[2] + g_aiT32[k][3] * EO[3] +
-                                g_aiT32[k][4] * EO[4] + g_aiT32[k][5] * EO[5] + g_aiT32[k][6] * EO[6] + g_aiT32[k][7] *
-                                EO[7] +
-                                add) >> shift;
-        }
-
-        for (k = 1; k < 32; k += 2)
-        {
-            dst[k * line] = (short)(g_aiT32[k][0] * O[0] + g_aiT32[k][1] * O[1] + g_aiT32[k][2] * O[2] + g_aiT32[k][3] * O[3] +
-                                    g_aiT32[k][4] * O[4] + g_aiT32[k][5] * O[5] + g_aiT32[k][6] * O[6] + g_aiT32[k][7] * O[7] +
-                                    g_aiT32[k][8] * O[8] + g_aiT32[k][9] * O[9] + g_aiT32[k][10] * O[10] + g_aiT32[k][11] *
-                                    O[11] +
-                                    g_aiT32[k][12] * O[12] + g_aiT32[k][13] * O[13] + g_aiT32[k][14] * O[14] + g_aiT32[k][15] *
-                                    O[15] +
-                                    add) >> shift;
-        }
-
-        src += 32;
         dst++;
     }
 }
@@ -307,6 +230,5 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
-    p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
 }
 }

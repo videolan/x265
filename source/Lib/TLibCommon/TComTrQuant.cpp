@@ -873,13 +873,8 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     }
     else if (iWidth == 32 && iHeight == 32)
     {
-#ifdef ENABLE_PRIMITIVES
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, iHeight);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, iWidth);
-#else
         partialButterfly32(block, tmp, shift_1st, iHeight);
         partialButterfly32(tmp, coeff, shift_2nd, iWidth);
-#endif
     }
 }
 

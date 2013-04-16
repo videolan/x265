@@ -246,16 +246,6 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
-{
-//Just to avoide the warring message.
-src;
-dst;
-shift;
-line;
-// To be filled soon
-}
-
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -270,6 +260,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
-    p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
 }
 
