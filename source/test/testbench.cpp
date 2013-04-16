@@ -131,11 +131,12 @@ char FilterConf_names[16][40] =
 };
 pixel *pixel_buff;
 short *IPF_vec_output, *IPF_C_output;
-int t_size;
+int ipf_t_size;
 
 /* pbuf1, pbuf2: initialized to random pixel data and shouldn't write into them. */
 pixel *pbuf1, *pbuf2;
 short *mbuf1, *mbuf2, *mbuf3;
+int mb_t_size;
 #define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
@@ -294,8 +295,8 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
 
     for (int value = 4; value < 8; value++)
     {
-        memset(IPF_vec_output, 0, t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output, 0, t_size);        // Initialize output buffer to zero
+        memset(IPF_vec_output, 0, ipf_t_size);      // Initialize output buffer to zero
+        memset(IPF_C_output, 0, ipf_t_size);        // Initialize output buffer to zero
         if (vecprim.filter[value])
         {
             gettimeofday(&ts, NULL);
@@ -342,19 +343,18 @@ static int check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 static int check_mbdst_primitive(mbdst ref, mbdst opt)
 {
     int j = 0;
-    int t_size = 32;
 
     for (int i = 0; i <= 100; i++)
     {
         opt(mbuf1 + j, mbuf2, 16);
         ref(mbuf1 + j, mbuf3, 16);
 
-        if (memcmp(mbuf2, mbuf3, 32))
+        if (memcmp(mbuf2, mbuf3, mb_t_size))
             return -1;
 
         j += INCR;
-        memset(mbuf2, 0, t_size);
-        memset(mbuf3, 0, t_size);
+        memset(mbuf2, 0, mb_t_size);
+        memset(mbuf3, 0, mb_t_size);
     }
 
     return 0;
@@ -369,8 +369,8 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_vec_output, 0, t_size);          // Initialize output buffer to zero
-        memset(IPF_C_output, 0, t_size);            // Initialize output buffer to zero
+        memset(IPF_vec_output, 0, ipf_t_size);          // Initialize output buffer to zero
+        memset(IPF_C_output, 0, ipf_t_size);            // Initialize output buffer to zero
 
         rand_val = rand() & 24;                     // Random offset in the filter
         rand_srcStride = rand() & 100;              // Randomly generated srcStride
@@ -393,7 +393,7 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
             rand_width,
             BIT_DEPTH);
 
-        if (memcmp(IPF_vec_output, IPF_C_output, t_size))
+        if (memcmp(IPF_vec_output, IPF_C_output, ipf_t_size))
         {
             flag = -1;                                          // Test Failed
             break;
@@ -425,10 +425,10 @@ int init_pixelcmp_buffers()
 
 int init_IPFilter_buffers()
 {
-    t_size = 200 * 200;
-    pixel_buff = (pixel*)malloc(t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    IPF_vec_output = (short*)malloc(t_size * sizeof(short));      // Output Buffer1
-    IPF_C_output = (short*)malloc(t_size * sizeof(short));      // Output Buffer2
+    ipf_t_size = 200 * 200;
+    pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    IPF_vec_output = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
+    IPF_C_output = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
 
     if (!pixel_buff || !IPF_vec_output || !IPF_C_output)
     {
@@ -436,9 +436,9 @@ int init_IPFilter_buffers()
         return -1;
     }
 
-    for (int i = 0; i < t_size; i++)                                    // Initialize input buffer
+    for (int i = 0; i < ipf_t_size; i++)                         // Initialize input buffer
     {
-        int isPositive = rand() & 1;                                    // To randomly generate Positive and Negative values
+        int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
         pixel_buff[i] = isPositive * (rand() & PIXEL_MAX);
     }
@@ -463,11 +463,11 @@ int clean_IPFilter_buffers()
 
 int init_mbdst_buffers()
 {
-    int t_size = 32;
+    mb_t_size = 32;
 
     mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    mbuf2 = (short*)malloc(t_size);
-    mbuf3 = (short*)malloc(t_size);
+    mbuf2 = (short*)malloc(mb_t_size);
+    mbuf3 = (short*)malloc(mb_t_size);
     if (!mbuf1 || !mbuf2 || !mbuf3)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -475,8 +475,8 @@ int init_mbdst_buffers()
     }
 
     memcpy(mbuf1, pbuf1, 64 * 100);
-    memset(mbuf2, 0, t_size);
-    memset(mbuf3, 0, t_size);
+    memset(mbuf2, 0, mb_t_size);
+    memset(mbuf3, 0, mb_t_size);
     return 0;
 }
 
@@ -628,7 +628,7 @@ int main(int argc, char *argv[])
     Setup_Vector_Primitives(optprim, cpuid);
 #endif
 #if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(optprim, i);
+    Setup_Assembly_Primitives(optprim, cpuid);
 #endif
 
     check_cycle_count(cprim, optprim);
