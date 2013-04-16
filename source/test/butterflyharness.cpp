@@ -31,19 +31,19 @@ using namespace x265;
 
 const char *ButterflyConf_names[] =
 {
-"_4",
-"Inverse_4",
-"_8",
-"Inverse_8",
-"_16",
-"Inverse_16",
-"_32",
-"Inverse_32"
+"4",
+"Inverse4",
+"8",
+"Inverse8",
+"16",
+"Inverse16",
+"32",
+"Inverse32"
 };
 
 ButterflyHarness::ButterflyHarness()
 {
-    bb_t_size = 320; // 2*16*10 -> sizeof(short)*number of elements*number of lines
+    bb_t_size = 6400;
 
     bbuf1 = (short*)malloc(0x1e00 * sizeof(short));
     bbuf2 = (short*)malloc(bb_t_size);
@@ -73,18 +73,19 @@ ButterflyHarness::~ButterflyHarness()
 bool ButterflyHarness::check_butterfly16_primitive(butterfly ref, butterfly opt)
 {
     int j = 0;
+    int mem_cmp_size = 320; // 2*16*10 -> sizeof(short)*number of elements*number of lines
 
     for (int i = 0; i <= 100; i++)
     {
         opt(bbuf1 + j, bbuf2, 3, 10);
         ref(bbuf1 + j, bbuf3, 3, 10);
 
-        if (memcmp(bbuf2, bbuf3, bb_t_size))
+        if (memcmp(bbuf2, bbuf3, mem_cmp_size))
             return false;
 
         j += 16;
-        memset(bbuf2, 0, bb_t_size);
-        memset(bbuf3, 0, bb_t_size);
+        memset(bbuf2, 0, mem_cmp_size);
+        memset(bbuf3, 0, mem_cmp_size);
     }
 
     return true;
