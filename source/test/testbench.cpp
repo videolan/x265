@@ -54,7 +54,13 @@ int main(int argc, char *argv[])
     PixelHarness  HPixel;
     FilterHarness HFilter;
     MBDstHarness  HMBDist;
-    TestHarness *harness[] = { &HPixel, &HFilter, &HMBDist };
+
+    // To disable classes of tests, simply comment them out in this list
+    TestHarness *harness[] = {
+        &HPixel,
+        &HFilter,
+        &HMBDist
+    };
 
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);
