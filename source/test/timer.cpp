@@ -65,9 +65,9 @@ protected:
 
 public:
 
-    void Start()        { gettimeofday(&start, NULL); }
+    void Start()        { gettimeofday(&start, 0); }
 
-    void Stop()         { gettimeofday(&finish, NULL); }
+    void Stop()         { gettimeofday(&finish, 0); }
 
     float ElapsedMS()
     {
