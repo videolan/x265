@@ -23,7 +23,7 @@
 
 /* this file instantiates SSE2 versions of the vectorized primitives */
 
-#define INSTRSET 3
+#define INSTRSET 2
 #include "vectorclass.h"
 
 #define ARCH sse2

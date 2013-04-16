@@ -21,5 +21,9 @@ if(GCC)
     add_definitions(-Wno-sign-compare)
 endif(GCC)
 
-add_executable(TestBench testbench.cpp unittest.cpp unittest.h)
+add_executable(TestBench testbench.cpp testharness.h timer.cpp
+    pixelharness.cpp pixelharness.h
+    filterharness.cpp filterharness.h
+    mbdstharness.cpp mbdstharness.h)
+
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})

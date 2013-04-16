@@ -23,7 +23,7 @@
 
 /* this file instantiates SSSE3 versions of the vectorized primitives */
 
-#define INSTRSET 5
+#define INSTRSET 4
 #include "vectorclass.h"
 
 #define ARCH ssse3
