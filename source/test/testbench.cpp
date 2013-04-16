@@ -137,7 +137,6 @@ int ipf_t_size;
 pixel *pbuf1, *pbuf2;
 short *mbuf1, *mbuf2, *mbuf3;
 int mb_t_size;
-#define BENCH_ALIGNS 16
 
 // Initialize the Func Names for all the Pixel Comp
 static const char *FuncNames[NUM_PARTITIONS] =
@@ -409,8 +408,8 @@ static int check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 
 int init_pixelcmp_buffers()
 {
-    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
-    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel));
+    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel));
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -469,7 +468,7 @@ int init_mbdst_buffers()
 {
     mb_t_size = 32;
 
-    mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel) + 16 * BENCH_ALIGNS);
+    mbuf1 = (short*)malloc(0x1e00 * sizeof(pixel));
     mbuf2 = (short*)malloc(mb_t_size);
     mbuf3 = (short*)malloc(mb_t_size);
     if (!mbuf1 || !mbuf2 || !mbuf3)
