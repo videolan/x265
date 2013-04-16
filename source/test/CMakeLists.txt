@@ -8,8 +8,11 @@ if(ENABLE_PPA)
     endif(UNIX)
 endif(ENABLE_PPA)
 
-add_executable(PoolTest testpool.cpp)
-target_link_libraries(PoolTest x265 HM ${PLATFORM_LIBS})
+option(ENABLE_TEST_THREADPOOL "Enable thread pool unit test" OFF)
+if(ENABLE_TEST_THREADPOOL)
+    add_executable(PoolTest testpool.cpp)
+    target_link_libraries(PoolTest x265 HM ${PLATFORM_LIBS})
+endif()
 
 if(MSVC)
     # these should be cleaned up so the test bench compiles clean for
