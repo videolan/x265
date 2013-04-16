@@ -51,10 +51,10 @@ int main(int argc, char *argv[])
     printf("Using random seed %X\n", seed);
     srand(seed);
 
-    PixelHarness  pixel;
-    FilterHarness filter;
-    MBDstHarness  mbdst;
-    TestHarness *harness[] = { &pixel, &filter, &mbdst };
+    PixelHarness  HPixel;
+    FilterHarness HFilter;
+    MBDstHarness  HMBDist;
+    TestHarness *harness[] = { &HPixel, &HFilter, &HMBDist };
 
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);

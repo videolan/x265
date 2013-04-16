@@ -36,7 +36,7 @@ const short m_lumaFilter[4][8] =
     { 0, 1,  -5, 17, 58, -10, 4, -1 }
 };
 
-char *FilterConf_names[] =
+const char *FilterConf_names[] =
 {
     // Naming convention used is - isVertical_N_isFirst_isLast
     "Hor_N=4_isFirst=0_isLast=0",
