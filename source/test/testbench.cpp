@@ -159,9 +159,13 @@ static const char *FuncNames[NUM_PARTITIONS] =
  */
 
 #define MILSECS_IN_SEC 1000     // Number of milliseconds in a second
-#define NUM_ITERATIONS_CYCLE 10000000    // Number of iterations for cycle count
 #define INCR 16     // Number of bytes the input window shifts across the total buffer
 #define STRIDE 16   // Stride value used while calling primitives
+
+// Number of iterations for cycle count
+#define PIXELCMP_ITERATIONS 2000000
+#define MBDST_ITERATIONS    4000000
+#define FILTER_ITERATIONS   100000
 
 static double timevaldiff(struct timeval *starttime, struct timeval *finishtime)
 {
@@ -181,107 +185,107 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
         if (vecprim.satd[curpar])
         {
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
             {
                 vecprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             }
 
             gettimeofday(&te, NULL);
-            printf("\nsatd[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+            printf("\nsatd[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
 
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
             {
                 cprim.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             }
 
             gettimeofday(&te, NULL);
-            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
         }
 
         if (vecprim.sad[curpar])
         {
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
             {
                 vecprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             }
 
             gettimeofday(&te, NULL);
-            printf("\nsad[%s] vectorized primitive: (%1.4f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
+            printf("\nsad[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], timevaldiff(&ts, &te));
 
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
             {
                 cprim.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             }
 
             gettimeofday(&te, NULL);
-            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
         }
     }
 
     if (vecprim.sa8d_8x8)
     {
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
         {
             vecprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
         }
 
         gettimeofday(&te, NULL);
-        printf("\nsa8d_8x8 vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\nsa8d_8x8\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
 
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
         {
             cprim.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
         }
 
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
     }
 
     if (vecprim.sa8d_16x16)
     {
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
         {
             vecprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
         }
 
         gettimeofday(&te, NULL);
-        printf("\nsa8d_16x16 vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\nsa8d_16x16\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
 
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
         {
             cprim.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
         }
 
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
     }
 
     if (vecprim.inversedst)
     {
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < MBDST_ITERATIONS; j++)
         {
             vecprim.inversedst(mbuf1, mbuf2, 16);
         }
 
         gettimeofday(&te, NULL);
-        printf("\nInversedst vectorized primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\nInverseDST\tVec: (%1.2f ms) ", timevaldiff(&ts, &te));
 
         gettimeofday(&ts, NULL);
-        for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+        for (int j = 0; j < MBDST_ITERATIONS; j++)
         {
             cprim.inversedst(mbuf1, mbuf2, 16);
         }
 
         gettimeofday(&te, NULL);
-        printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+        printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
     }
 
     /* Add logic here for testing performance of your new primitive*/
@@ -300,24 +304,24 @@ static void check_cycle_count(const EncoderPrimitives& cprim, const EncoderPrimi
         if (vecprim.filter[value])
         {
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < FILTER_ITERATIONS; j++)
             {
                 vecprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
                                       rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
             gettimeofday(&te, NULL);
-            printf("\nfilter[%s] vectorized primitive: (%1.4f ms) ", FilterConf_names[value], timevaldiff(&ts, &te));
+            printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], timevaldiff(&ts, &te));
 
             gettimeofday(&ts, NULL);
-            for (int j = 0; j < NUM_ITERATIONS_CYCLE; j++)
+            for (int j = 0; j < FILTER_ITERATIONS; j++)
             {
                 cprim.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
                                     rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
             gettimeofday(&te, NULL);
-            printf("\tC primitive: (%1.4f ms) ", timevaldiff(&ts, &te));
+            printf("\tC: (%1.2f ms) ", timevaldiff(&ts, &te));
         }
     }
 }
@@ -601,7 +605,7 @@ int main(int argc, char *argv[])
         ret = check_all_primitives(cprim, vecprim);
         if (ret)
         {
-            fprintf(stderr, "x265: at least one vector primitive has failed. Go and fix that Right Now!\n");
+            fprintf(stderr, "\nx265: at least one vector primitive has failed. Go and fix that Right Now!\n");
             return -1;
         }
 #endif
@@ -614,11 +618,12 @@ int main(int argc, char *argv[])
         ret = check_all_primitives(cprim, asmprim);
         if (ret)
         {
-            fprintf(stderr, "x265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
+            fprintf(stderr, "\nx265: at least one assembly primitive has failed. Go and fix that Right Now!\n");
             return -1;
         }
 #endif // if ENABLE_ASM_PRIMITIVES
     }
+    fprintf(stderr, "\nx265: All tests passed Yeah :)\n");
 
     /******************* Cycle count for all primitives **********************/
 
@@ -633,13 +638,13 @@ int main(int argc, char *argv[])
 
     check_cycle_count(cprim, optprim);
 
+    printf("\n");
+
     /********************* Clean all buffers *****************************/
 
     clean_pixelcmp_buffers();
     clean_mbdst_buffers();
     clean_IPFilter_buffers();
-
-    fprintf(stderr, "x265: All tests passed Yeah :)\n");
 
     return 0;
 }
