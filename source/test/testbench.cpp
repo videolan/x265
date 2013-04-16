@@ -594,7 +594,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives cprim;
     Setup_C_Primitives(cprim);
 
-    for (int i = 1; i < cpuid; i++)
+    for (int i = 1; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
