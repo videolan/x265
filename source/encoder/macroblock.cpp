@@ -60,6 +60,7 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
+
 template<int N, bool isFirst, bool isLast>
 void CDECL filter_8_nonvertical(const short *coeff,
                                 pixel *      src,
@@ -171,8 +172,7 @@ void CDECL filter_Vertical(const short *coeff,
     src -= (N / 2 - 1) * cStride;
 
     int offset;
-    short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    short maxVal;   
     int shift = IF_FILTER_PREC;
     offset = 1 << (shift - 1);
     maxVal = (1 << bitDepth) - 1;
@@ -203,12 +203,10 @@ void CDECL filter_Vertical(const short *coeff,
             }
 
             short val = (short)(sum + offset) >> shift;
-            if (isLast)
-            {
+            
                 val = (val < 0) ? 0 : val;
                 val = (val > maxVal) ? maxVal : val;
-            }
-
+            
             dst[col] = val;
         }
 
@@ -220,6 +218,7 @@ void CDECL filter_Vertical(const short *coeff,
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant
 #endif
+
 void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
 {
     int j, k;
