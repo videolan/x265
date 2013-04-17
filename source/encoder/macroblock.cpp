@@ -56,17 +56,42 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     }
 }
 
+template<int N, bool isFirst, bool isLast>
+void CDECL filter_8_nonvertical(const short *coeff,
+                                pixel *src,
+                                int    srcStride,
+                                pixel *dst,
+                                int    dstStride,
+                                int    block_width,
+                                int    block_height,
+                                int    bitDepth)
+{
+    int row, col;
+    short c[8];
+
+    src -= (N / 2 - 1);
+
+    int offset;
+    short maxVal;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
-
-template<int N, bool isVertical, bool isFirst, bool isLast>
-void CDECL filter(const short *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
-                  int block_height, int bitDepth)
-{
-    short c[8];
-    short* src_short = (short*)src;
-    short* dst_short = (short*)dst;
+    if (isLast)
+    {
+        shift += (isFirst) ? 0 : headRoom;
+        offset = 1 << (shift - 1);
+        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
+        maxVal = (1 << bitDepth) - 1;
+    }
+    else
+    {
+        shift -= (isFirst) ? headRoom : 0;
+        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
+        maxVal = 0;
+    }
 
     c[0] = coeff[0];
     c[1] = coeff[1];
@@ -88,73 +113,49 @@ void CDECL filter(const short *coeff, pixel *src, int srcStride, pixel *dst, int
         c[7] = coeff[7];
     }
 
-    int cStride = (isVertical) ? srcStride : 1;
-    src_short -= (N / 2 - 1) * cStride;
-
-    int offset;
-    short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
-    int shift = IF_FILTER_PREC;
-    if (isLast)
-    {
-        shift += (isFirst) ? 0 : headRoom;
-        offset = 1 << (shift - 1);
-        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << bitDepth) - 1;
-    }
-    else
-    {
-        shift -= (isFirst) ? headRoom : 0;
-        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
-        maxVal = 0;
-    }
-
-    int row, col;
     for (row = 0; row < block_height; row++)
     {
         for (col = 0; col < block_width; col++)
         {
             int sum;
-
-            sum  = src_short[col + 0 * cStride] * c[0];
-            sum += src_short[col + 1 * cStride] * c[1];
+            sum  = src[col + 0] * c[0];
+            sum += src[col + 1] * c[1];
             if (N >= 4)
             {
-                sum += src_short[col + 2 * cStride] * c[2];
-                sum += src_short[col + 3 * cStride] * c[3];
+                sum += src[col + 2] * c[2];
+                sum += src[col + 3] * c[3];
             }
 
             if (N >= 6)
             {
-                sum += src_short[col + 4 * cStride] * c[4];
-                sum += src_short[col + 5 * cStride] * c[5];
+                sum += src[col + 4] * c[4];
+                sum += src[col + 5] * c[5];
             }
 
             if (N == 8)
             {
-                sum += src_short[col + 6 * cStride] * c[6];
-                sum += src_short[col + 7 * cStride] * c[7];
+                sum += src[col + 6] * c[6];
+                sum += src[col + 7] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
-
+            short val = (short)(sum + offset) >> shift;
             if (isLast)
             {
                 val = (val < 0) ? 0 : val;
                 val = (val > maxVal) ? maxVal : val;
             }
 
-            dst_short[col] = val;
+            dst[col] = val;
         }
 
-        src_short += srcStride;
-        dst_short += dstStride;
+        src += srcStride;
+        dst += dstStride;
     }
-}
 
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant
 #endif
+}
 }
 
 namespace x265 {
@@ -164,24 +165,14 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    p.filter[FILTER_H_4_0_0] = filter<4, 0, false, false>;
-    p.filter[FILTER_H_4_0_1] = filter<4, 0, false, true>;
-    p.filter[FILTER_H_4_1_0] = filter<4, 0, true, false>;
-    p.filter[FILTER_H_4_1_1] = filter<4, 0, true, true>;
+    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
+    p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
+    p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
+    p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
 
-    p.filter[FILTER_H_8_0_0] = filter<8, 0, false, false>;
-    p.filter[FILTER_H_8_0_1] = filter<8, 0, false, true>;
-    p.filter[FILTER_H_8_1_0] = filter<8, 0, true, false>;
-    p.filter[FILTER_H_8_1_1] = filter<8, 0, true, true>;
-
-    p.filter[FILTER_V_4_0_0] = filter<4, 1, false, false>;
-    p.filter[FILTER_V_4_0_1] = filter<4, 1, false, true>;
-    p.filter[FILTER_V_4_1_0] = filter<4, 1, true, false>;
-    p.filter[FILTER_V_4_1_1] = filter<4, 1, true, true>;
-
-    p.filter[FILTER_V_8_0_0] = filter<8, 1, false, false>;
-    p.filter[FILTER_V_8_0_1] = filter<8, 1, false, true>;
-    p.filter[FILTER_V_8_1_0] = filter<8, 1, true, false>;
-    p.filter[FILTER_V_8_1_1] = filter<8, 1, true, true>;
+    p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
+    p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
+    p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
+    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
 }
 }
