@@ -61,7 +61,7 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     Vec8s half0 = compress_saturated(c0_final, c1_final);
     Vec8s half1 = compress_saturated(c2_final, c3_final);
     blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store_a(block);
-    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block+8);
+    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block + 8);
 }
 
 template<bool isFirst, bool isLast>
@@ -119,6 +119,127 @@ void CDECL filter_Horizontal_8(const short *coeff,
 
         src_s += srcStride;
         dst_s += dstStride;
+    }
+}
+
+template<int N>
+void cdecl filter_Vertical(const short *coeff, pixel *src, int srcStride, pixel *dst, int dststride, int block_width,
+                           int block_height, int bitDepth)
+{
+    int row, col;
+
+    int cStride = srcStride;
+    pixel *src_short = src - (N / 2 - 1) * srcStride;
+
+    int offset;
+    short maxVal;
+    int shift = IF_FILTER_PREC;
+
+    offset = 1 << (shift - 1);
+    maxVal = (1 << bitDepth) - 1;
+
+    Vec8s c0(coeff[0]), c1(coeff[1]), c2(coeff[2]), c3(coeff[3]), c4(coeff[4]), c5(coeff[5]), c6(coeff[6]), c7(coeff[7]);    //vectors for coeff[i]
+    for (row = 0; row < block_height; row++)
+    {
+        for (col = 0; col < block_width - 7; col += 8)
+        {
+            Vec8s row0, row1, row2, row3, row4, row5, row6, row7, sum;
+
+            row0.load(&src_short[col]);
+            row1.load(&src_short[col + cStride]);
+
+            row2.load(&src_short[col + 2 * cStride]);
+            row3.load(&src_short[col + 3 * cStride]);
+
+            row0 = row0 * c0;
+            row1 = row1 * c1;
+
+            sum = add_saturated(row0, row1);
+
+            row2 = row2 * c2;
+            row3 = row3 * c3;
+
+            sum = add_saturated(sum, add_saturated(row2, row3));
+
+            if (N == 8)
+            {
+                row4.load(&src_short[col + 4 * cStride]);
+                row5.load(&src_short[col + 5 * cStride]);
+
+                row6.load(&src_short[col + 6 * cStride]);
+                row7.load(&src_short[col + 7 * cStride]);
+
+                row4 = row4 * c4;
+                row5 = row5 * c5;
+
+                sum = add_saturated(sum, add_saturated(row4, row5));
+
+                row6 = row6 * c6;
+                row7 = row7 * c7;
+
+                sum = add_saturated(sum, add_saturated(row6, row7));
+            }
+
+            sum = add_saturated(sum, offset) >> shift;
+
+            sum = max(sum, 0);
+            Vec8s maxVal_v(maxVal);
+            sum = min(sum, maxVal_v);
+
+            sum.store(dst + col);
+        }
+
+        //Handle the case when block_width is not a multiple of 8
+        if (col < block_width)
+        {
+            Vec8s row0, row1, row2, row3, row4, row5, row6, row7, sum;
+
+            row0.load(&src_short[col]);
+            row1.load(&src_short[col + cStride]);
+
+            row2.load(&src_short[col + 2 * cStride]);
+            row3.load(&src_short[col + 3 * cStride]);
+
+            row0 = row0 * c0;
+            row1 = row1 * c1;
+
+            sum = add_saturated(row0, row1);
+
+            row2 = row2 * c2;
+            row3 = row3 * c3;
+
+            sum = add_saturated(sum, add_saturated(row2, row3));
+
+            if (N == 8)
+            {
+                row4.load(&src_short[col + 4 * cStride]);
+                row5.load(&src_short[col + 5 * cStride]);
+
+                row6.load(&src_short[col + 6 * cStride]);
+                row7.load(&src_short[col + 7 * cStride]);
+
+                row4 = row4 * c4;
+                row5 = row5 * c5;
+
+                sum = add_saturated(sum, add_saturated(row4, row5));
+
+                row6 = row6 * c6;
+                row7 = row7 * c7;
+
+                sum = add_saturated(sum, add_saturated(row6, row7));
+            }
+
+            sum = add_saturated(sum, offset) >> shift;
+
+            sum = max(sum, 0);
+            Vec8s maxVal_v(maxVal);
+            sum = min(sum, maxVal_v);
+
+            sum.store_partial(block_width - col, dst + col);
+        }
+
+        src_short += srcStride;
+        dst += dststride;
     }
 }
 
@@ -284,6 +405,15 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
+    p.filter[FILTER_V_4_0_0] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_0_1] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_1_0] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_1_1] = filter_Vertical<4>;
+
+    p.filter[FILTER_V_8_0_0] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_0_1] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_1_0] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_1_1] = filter_Vertical<8>;
+
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }
-
