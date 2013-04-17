@@ -58,8 +58,8 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     Vec4i c2_final = (74 * c4 + rnd_factor) >> shift;
     Vec4i c3_final = (55 * c0_total + 29 * c2_total - c3_total + rnd_factor) >> shift;
 
-    Vec8s half0 = compress(min(max(-32768, c0_final), 32767), min(max(-32768, c1_final), 32767));
-    Vec8s half1 = compress(min(max(-32768, c2_final), 32767), min(max(-32768, c3_final), 32767));
+    Vec8s half0 = compress_saturated(c0_final, c1_final);
+    Vec8s half1 = compress_saturated(c2_final, c3_final);
     blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store(block);
     blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store(block+8);
 }
