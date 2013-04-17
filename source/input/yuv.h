@@ -21,32 +21,63 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _MBDSTHARNESS_H_1
-#define _MBDSTHARNESS_H_1 1
+#ifndef _YUV_H_
+#define _YUV_H_
 
-#include "testharness.h"
-#include "primitives.h"
+#include "input.h"
+#include <stdio.h>
 
-class MBDstHarness : public TestHarness
+namespace x265 {
+
+class YUVInput : public Input
 {
 protected:
 
-    short *mbuf1, *mbuf2, *mbuf3;
+    int rateNum;
 
-    int mb_t_size;
+    int rateDenom;
 
-    bool check_mbdst_primitive(x265::mbdst ref, x265::mbdst opt);
-    bool check_butterfly16_primitive(x265::butterfly ref, x265::butterfly opt);
+    int width;
+
+    int height;
+
+    int depth;
+
+    FILE *fp;
+
+    bool eof;
 
 public:
 
-    MBDstHarness();
+    YUVInput(const char *filename);
 
-    virtual ~MBDstHarness();
+    virtual ~YUVInput();
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void setDimensions(int w, int h)              { width = w; height = h; }
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void setRate(int numerator, int denominator)  { rateNum = numerator; rateDenom = denominator; }
+
+    void setBitDepth(int bitDepth)                { depth = bitDepth; }
+
+    float getRate() const                         { return ((float) rateNum)/rateDenom; }
+
+    int getWidth() const                          { return width; }
+
+    int getHeight() const                         { return height; }
+
+    bool isEof() const                            { return eof; }
+
+    bool isFail() const                           { return !!fp; }
+
+    void release()                                { if (fp) fclose(fp); delete this; }
+
+    int  guessFrameCount() const;
+
+    void skipFrames(int numFrames);
+
+    bool readPicture(Picture&);
 };
 
-#endif // ifndef _MBDSTHARNESS_H_1
+}
+
+#endif // _YUV_H_

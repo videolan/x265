@@ -21,46 +21,36 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _TESTHARNESS_H_
-#define _TESTHARNESS_H_ 1
+#include <fcntl.h>
+#include <assert.h>
+#include <sys/stat.h>
 
-#include "primitives.h"
+#include "input.h"
+#include "yuv.h"
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+using namespace x265;
 
-class TestHarness
+YUVInput::YUVInput(const char *filename)
 {
-public:
-    TestHarness() {}
+    fp = fopen(filename, "rb");
+}
 
-    virtual ~TestHarness() {}
-
-    virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
-
-    virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
-};
-
-class Timer
+YUVInput::~YUVInput()
 {
-public:
-    Timer() {}
+    if (fp) fclose(fp); 
+}
 
-    virtual ~Timer() {}
+int  YUVInput::guessFrameCount() const
+{
+    return 0;
+}
 
-    static Timer *CreateTimer();
+void YUVInput::skipFrames(int numFrames)
+{
 
-    virtual void Start() = 0;
+}
 
-    virtual void Stop() = 0;
-
-    virtual float ElapsedMS() = 0;
-
-    virtual void Release() = 0;
-};
-
-#endif
+bool YUVInput::readPicture(Picture& pic)
+{
+    return false;
+}

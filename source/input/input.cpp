@@ -21,46 +21,18 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _TESTHARNESS_H_
-#define _TESTHARNESS_H_ 1
+#include "input.h"
+#include "yuv.h"
+#include "y4m.h"
+#include <string.h>
 
-#include "primitives.h"
+using namespace x265;
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
-
-class TestHarness
+Input* Input::Open(const char *filename)
 {
-public:
-    TestHarness() {}
-
-    virtual ~TestHarness() {}
-
-    virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
-
-    virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
-};
-
-class Timer
-{
-public:
-    Timer() {}
-
-    virtual ~Timer() {}
-
-    static Timer *CreateTimer();
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
-
-    virtual float ElapsedMS() = 0;
-
-    virtual void Release() = 0;
-};
-
-#endif
+    const char * s = strrchr(filename, '.');
+    if (s && !strcmp(s, ".y4m"))
+        return new Y4MInput(filename);
+    else
+        return new YUVInput(filename);
+}

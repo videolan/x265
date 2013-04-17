@@ -23,8 +23,14 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <malloc.h>
+
+#ifdef __MINGW32__ 
+#define _aligned_malloc __mingw_aligned_malloc 
+#define _aligned_free  __mingw_aligned_free 
+#endif
 
 using namespace x265;
 
@@ -44,15 +50,15 @@ static const char *FuncNames[NUM_PARTITIONS] =
 
 #define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
 
-#define PIXELCMP_ITERATIONS 2000000
-
-#define INCR 16
-#define STRIDE 16
-
 PixelHarness::PixelHarness()
 {
-    pbuf1 = (pixel*)malloc(0x1e00 * sizeof(pixel));
-    pbuf2 = (pixel*)malloc(0x1e00 * sizeof(pixel));
+#if _WIN32
+    pbuf1 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
+    pbuf2 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
+#else
+    posix_memalign((void**)&pbuf1, 32, 0x1e00 * sizeof(pixel));
+    posix_memalign((void**)&pbuf2, 32, 0x1e00 * sizeof(pixel));
+#endif
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -69,9 +75,17 @@ PixelHarness::PixelHarness()
 
 PixelHarness::~PixelHarness()
 {
+#if _WIN32
+    _aligned_free(pbuf1);
+    _aligned_free(pbuf2);
+#else
     free(pbuf1);
     free(pbuf2);
+#endif
 }
+
+#define INCR 16
+#define STRIDE 16
 
 bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 {
@@ -133,6 +147,8 @@ bool PixelHarness::testCorrectness( const EncoderPrimitives& ref, const EncoderP
 
     return true;
 }
+
+#define PIXELCMP_ITERATIONS 2000000
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {

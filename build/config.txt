@@ -1,6 +1,4 @@
-workingdir=RegressionTesting
+workingdir=E:\\
 testdir=TestEncoder
 repository=https://ggopu@bitbucket.org/multicoreware/xhevc
-password=
-configfile=initialcache.txt
-logpath=E:\\hevc_log.txt
+
