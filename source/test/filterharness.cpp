@@ -159,8 +159,8 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
     Timer *t = Timer::CreateTimer();
 
     /* Add logic here for testing performance of your new primitive*/
-    int rand_height = rand() % 20 + 60;             // Randomly generated Height
-    int rand_width =  rand() % 20 + 60;              // Randomly generated Width
+    int rand_height = rand() % 100;             // Randomly generated Height
+    int rand_width = rand() % 100;              // Randomly generated Width
     short rand_val, rand_srcStride, rand_dstStride;
 
     rand_val = rand() % 24;                     // Random offset in the filter
