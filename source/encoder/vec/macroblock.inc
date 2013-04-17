@@ -256,6 +256,7 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
       p.filter[FILTER_H_4_1_1] = filter_Horizontal_4< 1, 1>;*/
 
     p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
+    p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
