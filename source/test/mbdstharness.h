@@ -36,8 +36,10 @@ protected:
     int mb_t_size;
 
     bool check_mbdst_primitive(x265::mbdst ref, x265::mbdst opt);
+    bool check_butterfly16_primitive(x265::butterfly ref, x265::butterfly opt);
 
 public:
+
     MBDstHarness();
 
     virtual ~MBDstHarness();
@@ -47,4 +49,4 @@ public:
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 };
 
-#endif
+#endif // ifndef _MBDSTHARNESS_H_1

@@ -27,7 +27,6 @@
 #include "pixelharness.h"
 #include "filterharness.h"
 #include "mbdstharness.h"
-#include "butterflyharness.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,14 +54,13 @@ int main(int argc, char *argv[])
     PixelHarness  HPixel;
     FilterHarness HFilter;
     MBDstHarness  HMBDist;
-    ButterflyHarness HButterfly;
 
     // To disable classes of tests, simply comment them out in this list
-    TestHarness *harness[] = {
+    TestHarness *harness[] =
+    {
         &HPixel,
         &HFilter,
-        &HMBDist,
-        &HButterfly
+        &HMBDist
     };
 
     EncoderPrimitives cprim;
@@ -75,7 +73,7 @@ int main(int argc, char *argv[])
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, i);
         printf("Testing vector class primitives: CPUID %d\n", i);
-        for (int h = 0; h < sizeof(harness)/sizeof(TestHarness*); h++)
+        for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
@@ -83,14 +81,15 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-#endif
+
+#endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, i);
         printf("Testing assembly primitives: CPUID %d\n", i);
-        for (int h = 0; h < sizeof(harness)/sizeof(TestHarness*); h++)
+        for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
@@ -98,10 +97,11 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
+
 #endif // if ENABLE_ASM_PRIMITIVES
     }
-    fprintf(stderr, "\nx265: All tests passed Yeah :)\n");
 
+    fprintf(stderr, "\nx265: All tests passed Yeah :)\n");
 
     /******************* Cycle count for all primitives **********************/
 
@@ -114,8 +114,10 @@ int main(int argc, char *argv[])
     Setup_Assembly_Primitives(optprim, cpuid);
 #endif
 
-    for (int h = 0; h < sizeof(harness)/sizeof(TestHarness*); h++)
+    for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
+    {
         harness[h]->measureSpeed(cprim, optprim);
+    }
 
     printf("\n");
 

@@ -27,7 +27,6 @@ endif(GCC)
 add_executable(TestBench testbench.cpp testharness.h timer.cpp
     pixelharness.cpp pixelharness.h
     filterharness.cpp filterharness.h
-    mbdstharness.cpp mbdstharness.h
-    butterflyharness.cpp butterflyharness.h)
+    mbdstharness.cpp mbdstharness.h)
 
 target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
