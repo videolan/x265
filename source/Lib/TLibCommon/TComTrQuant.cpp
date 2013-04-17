@@ -889,7 +889,11 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     Int shift_1st = SHIFT_INV_1ST;
     Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
 #ifdef _WIN32
+#ifdef __MINGW32__
+    Short tmp[64 * 64] __attribute__((aligned(32)));
+#else
     __declspec(align(32))Short tmp[64 * 64];
+#endif
 #else
     Short tmp[64 * 64] __attribute__((aligned(32)));
 #endif
@@ -1528,8 +1532,13 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
     Int j;
     {
 #ifdef _WIN32
+#ifdef __MINGW32__
+        Short block[64 * 64] __attribute__((aligned(32)));
+        Short coeff[64 * 64] __attribute__((aligned(32)));
+#else
         __declspec(align(32)) Short block[64 * 64];
         __declspec(align(32)) Short coeff[64 * 64];
+#endif
 #else
         Short block[64 * 64] __attribute__((aligned(32)));
         Short coeff[64 * 64] __attribute__((aligned(32)));
