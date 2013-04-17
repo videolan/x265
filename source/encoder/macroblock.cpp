@@ -172,7 +172,7 @@ void CDECL filter_Vertical(const short *coeff,
     src -= (N / 2 - 1) * cStride;
 
     int offset;
-    short maxVal;   
+    short maxVal;
     int shift = IF_FILTER_PREC;
     offset = 1 << (shift - 1);
     maxVal = (1 << bitDepth) - 1;
@@ -203,10 +203,10 @@ void CDECL filter_Vertical(const short *coeff,
             }
 
             short val = (short)(sum + offset) >> shift;
-            
-                val = (val < 0) ? 0 : val;
-                val = (val > maxVal) ? maxVal : val;
-            
+
+            val = (val < 0) ? 0 : val;
+            val = (val > maxVal) ? maxVal : val;
+
             dst[col] = val;
         }
 
