@@ -57,6 +57,9 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     }
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
 template<int N, bool isFirst, bool isLast>
 void CDECL filter_8_nonvertical(const short *coeff,
                                 pixel *      src,
@@ -77,9 +80,6 @@ void CDECL filter_8_nonvertical(const short *coeff,
     int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
     if (isLast)
     {
         shift += (isFirst) ? 0 : headRoom;
@@ -152,12 +152,74 @@ void CDECL filter_8_nonvertical(const short *coeff,
         src += srcStride;
         dst += dstStride;
     }
+}
+
+template<int N>
+void CDECL filter_Vertical(const short *coeff,
+                           pixel *      src,
+                           int          srcStride,
+                           pixel *      dst,
+                           int          dstStride,
+                           int          block_width,
+                           int          block_height,
+                           int          bitDepth)
+{
+    int row, col;
+
+    int cStride = srcStride;
+
+    src -= (N / 2 - 1) * cStride;
+
+    int offset;
+    short maxVal;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+    offset = 1 << (shift - 1);
+    maxVal = (1 << bitDepth) - 1;
+
+    for (row = 0; row < block_height; row++)
+    {
+        for (col = 0; col < block_width; col++)
+        {
+            short sum;
+            sum  = src[col + 0] * coeff[0];
+            sum += src[col + 1 * cStride] * coeff[1];
+            if (N >= 4)
+            {
+                sum += src[col + 2 * cStride] * coeff[2];
+                sum += src[col + 3 * cStride] * coeff[3];
+            }
+
+            if (N >= 6)
+            {
+                sum += src[col + 4 * cStride] * coeff[4];
+                sum += src[col + 5 * cStride] * coeff[5];
+            }
+
+            if (N == 8)
+            {
+                sum += src[col + 6 * cStride] * coeff[6];
+                sum += src[col + 7 * cStride] * coeff[7];
+            }
+
+            short val = (short)(sum + offset) >> shift;
+            if (isLast)
+            {
+                val = (val < 0) ? 0 : val;
+                val = (val > maxVal) ? maxVal : val;
+            }
+
+            dst[col] = val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
 
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant
 #endif
-}
-
 void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
 {
     int j, k;
@@ -228,6 +290,16 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
+
+    p.filter[FILTER_V_4_0_0] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_0_1] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_1_0] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_1_1] = filter_Vertical<4>;
+
+    p.filter[FILTER_V_8_0_0] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_0_1] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_1_0] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_1_1] = filter_Vertical<8>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }
