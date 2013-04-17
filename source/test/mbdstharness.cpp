@@ -26,6 +26,12 @@
 #include <string.h>
 #include <stdio.h>
 
+
+#ifdef __MINGW32__ 
+#define _aligned_malloc __mingw_aligned_malloc 
+#define _aligned_free  __mingw_aligned_free 
+#endif
+
 using namespace x265;
 
 const char *ButterflyConf_names[] =
@@ -56,10 +62,15 @@ enum Butterflies
 MBDstHarness::MBDstHarness()
 {
     mb_t_size = 6400;
-
-    mbuf1 = (short*)malloc(0x1e00 * sizeof(short));
-    mbuf2 = (short*)malloc(mb_t_size);
-    mbuf3 = (short*)malloc(mb_t_size);
+#if _WIN32
+    mbuf1 = (short*)_aligned_malloc(0x1e00 * sizeof(short), 32);
+    mbuf2 = (short*)_aligned_malloc(mb_t_size, 32);
+    mbuf3 = (short*)_aligned_malloc(mb_t_size, 32);
+#else
+    posix_memalign((void **)&mbuf1, 32, 0x1e00 * sizeof(short));
+    posix_memalign((void **)&mbuf2, 32, mb_t_size);
+    posix_memalign((void **)&mbuf3, 32, mb_t_size);
+#endif
     if (!mbuf1 || !mbuf2 || !mbuf3)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -77,9 +88,15 @@ MBDstHarness::MBDstHarness()
 
 MBDstHarness::~MBDstHarness()
 {
+#if _WIN32
+    _aligned_free(mbuf1);
+    _aligned_free(mbuf2);
+    _aligned_free(mbuf3);
+#else
     free(mbuf1);
     free(mbuf2);
     free(mbuf3);
+#endif
 }
 
 bool MBDstHarness::check_mbdst_primitive(mbdst ref, mbdst opt)
