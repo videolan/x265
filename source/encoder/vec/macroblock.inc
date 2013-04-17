@@ -61,10 +61,10 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     Vec8s half0 = compress(min(max(-32768, c0_final), 32767), min(max(-32768, c1_final), 32767));
     Vec8s half1 = compress(min(max(-32768, c2_final), 32767), min(max(-32768, c3_final), 32767));
     blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store(block);
-    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store(block+8);
+    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store(block + 8);
 }
 
-template<bool isFirst, bool isLast>
+template<bool isLast>
 void CDECL filter_Horizontal_8(const short *coeff,
                                pixel *      src,
                                int          srcStride,
@@ -72,32 +72,15 @@ void CDECL filter_Horizontal_8(const short *coeff,
                                int          dstStride,
                                int          block_width,
                                int          block_height,
-                               int          bitDepth)
+                               short        maxVal,
+                               int          offset,
+                               int          shift)
 {
     int row, col;
     short *src_s = (short*)src;
     short *dst_s = (short*)dst;
-
-    src_s -= (8 / 2 - 1);     // Here N = 8 and cStride = 1
-    int offset;
-    short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
-    int shift = IF_FILTER_PREC;
-    if (isLast)
-    {
-        shift += (isFirst) ? 0 : headRoom;
-        offset = 1 << (shift - 1);
-        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << bitDepth) - 1;
-    }
-    else
-    {
-        shift -= (isFirst) ? headRoom : 0;
-        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
-        maxVal = 0;
-    }
-
     Vec8s vec_c, vec_src1;
+
     vec_c.load(coeff);
     int sum = 0;
     for (row = 0; row < block_height; row++)
@@ -126,13 +109,8 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
 
-    /*p.filter[FILTER_H_4_0_0] = filter_Horizontal_4< 0, 0>;
-      p.filter[FILTER_H_4_0_1] = filter_Horizontal_4< 0, 1>;
-      p.filter[FILTER_H_4_1_0] = filter_Horizontal_4< 1, 0>;
-      p.filter[FILTER_H_4_1_1] = filter_Horizontal_4< 1, 1>;*/
-
-    p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
-    p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
-    p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
-    p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
+    /*p.filter[FILTER_H_4_0] = filter_Horizontal_4<0>;
+      p.filter[FILTER_H_4_1] = filter_Horizontal_4<1>;*/
+    p.filter[FILTER_H_8_0] = filter_Horizontal_8<0>;
+    p.filter[FILTER_H_8_1] = filter_Horizontal_8<1>;
 }

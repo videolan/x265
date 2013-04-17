@@ -49,52 +49,33 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
         c[2] = tmp[i] - tmp[12 + i];
         c[3] = 74 * tmp[4 + i];
 
-        block[4 * i + 0] = (short) Clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
-        block[4 * i + 1] = (short) Clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
-        block[4 * i + 2] = (short) Clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
-        block[4 * i + 3] = (short) Clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
+        block[4 * i + 0] = (short)Clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 1] = (short)Clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 2] = (short)Clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
+        block[4 * i + 3] = (short)Clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
     }
 }
 
-template<int N, bool isFirst, bool isLast>
-void CDECL filter_8_nonvertical(const short *coeff,
-                                pixel *src,
-                                int    srcStride,
-                                pixel *dst,
-                                int    dstStride,
-                                int    block_width,
-                                int    block_height,
-                                int    bitDepth)
+template<int N, bool isLast>
+void CDECL filter_nonvertical(const short *coeff,
+                              pixel *      src,
+                              int          srcStride,
+                              pixel *      dst,
+                              int          dstStride,
+                              int          block_width,
+                              int          block_height,
+                              short        maxVal,
+                              int          offset,
+                              int          shift)
 {
     int row, col;
     short c[8];
 
-    src -= (N / 2 - 1);
-
-    int offset;
-    short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
-    int shift = IF_FILTER_PREC;
-
+    c[0] = coeff[0];
+    c[1] = coeff[1];
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
-    if (isLast)
-    {
-        shift += (isFirst) ? 0 : headRoom;
-        offset = 1 << (shift - 1);
-        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << bitDepth) - 1;
-    }
-    else
-    {
-        shift -= (isFirst) ? headRoom : 0;
-        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
-        maxVal = 0;
-    }
-
-    c[0] = coeff[0];
-    c[1] = coeff[1];
     if (N >= 4)
     {
         c[2] = coeff[2];
@@ -165,14 +146,10 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 1, 1>;
-    p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 1, 1>;
-    p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 1>;
-    p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
+    p.filter[FILTER_H_4_0] = filter_nonvertical<4, 0>;
+    p.filter[FILTER_H_4_1] = filter_nonvertical<4, 1>;
 
-    p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 1, 1>;
-    p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 1, 1>;
-    p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 1>;
-    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
+    p.filter[FILTER_H_8_0] = filter_nonvertical<8, 0>;
+    p.filter[FILTER_H_8_1] = filter_nonvertical<8, 1>;
 }
 }
