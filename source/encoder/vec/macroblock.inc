@@ -122,6 +122,154 @@ void CDECL filter_Horizontal_8(const short *coeff,
     }
 }
 
+void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
+{
+    int j;
+    int add = 1 << (shift - 1);
+
+    Vec4i g_aiT_zero_row(64, 64, 0, 0);
+    Vec4i g_aiT_four_row(83, 36, 0, 0);
+    Vec4i g_aiT_eight_row(64, -64, 0, 0);
+    Vec4i g_aiT_twelve_row(36, -83, 0, 0);
+
+    Vec4i g_aiT_two_row(89, 75, 50, 18);
+    Vec4i g_aiT_six_row(75, -18, -89, -50);
+    Vec4i g_aiT_ten_row(50, -89, 18, 75);
+    Vec4i g_aiT_fourteen_row(18, -50, 75, -89);
+
+    Vec4i g_aiT_one_row_first_half(90, 87, 80, 70);
+    Vec4i g_aiT_one_row_second_half(57, 43, 25,  9);
+    Vec4i g_aiT_three_row_first_half(87, 57,  9, -43);
+    Vec4i g_aiT_three_row_second_half(-80, -90, -70, -25);
+    Vec4i g_aiT_five_row_first_half(80,  9, -70, -87);
+    Vec4i g_aiT_five_row_second_half(-25, 57, 90, 43);
+    Vec4i g_aiT_seven_row_first_half(70, -43, -87,  9);
+    Vec4i g_aiT_seven_row_second_half(90, 25, -80, -57);
+    Vec4i g_aiT_nine_row_first_half(57, -80, -25, 90);
+    Vec4i g_aiT_nine_row_second_half(-9, -87, 43, 70);
+    Vec4i g_aiT_eleven_row_first_half(43, -90, 57, 25);
+    Vec4i g_aiT_eleven_row_second_half(-87, 70,  9, -80);
+    Vec4i g_aiT_thirteen_row_first_half(25, -70, 90, -80);
+    Vec4i g_aiT_thirteen_row_second_half(43,  9, -57, 87);
+    Vec4i g_aiT_fifteen_row_first_half(9, -25, 43, -57);
+    Vec4i g_aiT_fifteen_row_second_half(70, -80, 87, -90);
+
+    for (j = 0; j < line; j++)
+    {
+        Vec8s tmp1, tmp2;
+        tmp1.load(src);
+        Vec4i tmp1_first_half = extend_low(tmp1);
+        Vec4i tmp1_second_half = extend_high(tmp1);
+
+        tmp2.load(src + 8);
+        Vec4i tmp2_first_half_tmp = extend_low(tmp2);
+        Vec4i tmp2_second_half_tmp = extend_high(tmp2);
+        Vec4i tmp2_first_half = permute4i<3, 2, 1, 0>(tmp2_second_half_tmp);
+        Vec4i tmp2_second_half = permute4i<3, 2, 1, 0>(tmp2_first_half_tmp);
+
+        Vec4i E_first_half = tmp1_first_half + tmp2_first_half;
+        Vec4i E_second_half_tmp = tmp1_second_half + tmp2_second_half;
+        Vec4i O_first_half = tmp1_first_half - tmp2_first_half;
+        Vec4i O_second_half = tmp1_second_half - tmp2_second_half;
+
+        Vec4i E_second_half = permute4i<3, 2, 1, 0>(E_second_half_tmp);
+
+        Vec4i EE = E_first_half + E_second_half;
+        Vec4i EO = E_first_half - E_second_half;
+
+        Vec4i EE_first_half = permute4i<0, 1, -1, -1>(EE);
+        Vec4i EE_second_half = permute4i<3, 2, -1, -1>(EE);
+
+        Vec4i EEE = EE_first_half + EE_second_half;
+        Vec4i EEO = EE_first_half - EE_second_half;
+
+        Vec4i dst_tmp0 = g_aiT_zero_row * EEE;
+        Vec4i dst_tmp4 = g_aiT_four_row * EEO;
+        Vec4i dst_tmp8 = g_aiT_eight_row * EEE;
+        Vec4i dst_tmp12 = g_aiT_twelve_row * EEO;
+
+        int dst_zero = horizontal_add(dst_tmp0);
+        int dst_four = horizontal_add(dst_tmp4);
+        int dst_eight = horizontal_add(dst_tmp8);
+        int dst_twelve = horizontal_add(dst_tmp12);
+
+        Vec4i dst_0_8_4_12(dst_zero, dst_eight, dst_four, dst_twelve);
+
+        Vec4i dst_result = dst_0_8_4_12 + add;
+        Vec4i dst_shift_result = dst_result >> shift;
+
+        dst[0] = dst_shift_result[0];
+        dst[8 * line] = dst_shift_result[1];
+        dst[4 * line] = dst_shift_result[2];
+        dst[12 * line] = dst_shift_result[3];
+
+        Vec4i dst_tmp2 = g_aiT_two_row * EO;
+        Vec4i dst_tmp6 = g_aiT_six_row * EO;
+        Vec4i dst_tmp10 = g_aiT_ten_row * EO;
+        Vec4i dst_tmp14 = g_aiT_fourteen_row * EO;
+
+        int dst_two = horizontal_add(dst_tmp2);
+        int dst_six = horizontal_add(dst_tmp6);
+        int dst_ten = horizontal_add(dst_tmp10);
+        int dst_fourteen = horizontal_add(dst_tmp14);
+
+        Vec4i dst_2_6_10_14(dst_two, dst_six, dst_ten, dst_fourteen);
+        dst_2_6_10_14 = dst_2_6_10_14 + add;
+        dst_2_6_10_14 = dst_2_6_10_14 >> shift;
+
+        dst[2 * line] = dst_2_6_10_14[0];
+        dst[6 * line] = dst_2_6_10_14[1];
+        dst[10 * line] = dst_2_6_10_14[2];
+        dst[14 * line] = dst_2_6_10_14[3];
+
+        Vec4i dst_tmp1_first_half = g_aiT_one_row_first_half * O_first_half;
+        Vec4i dst_tmp1_second_half = g_aiT_one_row_second_half * O_second_half;
+        Vec4i dst_tmp3_first_half = g_aiT_three_row_first_half * O_first_half;
+        Vec4i dst_tmp3_second_half = g_aiT_three_row_second_half * O_second_half;
+        Vec4i dst_tmp5_first_half = g_aiT_five_row_first_half * O_first_half;
+        Vec4i dst_tmp5_second_half = g_aiT_five_row_second_half * O_second_half;
+        Vec4i dst_tmp7_first_half = g_aiT_seven_row_first_half * O_first_half;
+        Vec4i dst_tmp7_second_half = g_aiT_seven_row_second_half * O_second_half;
+        Vec4i dst_tmp9_first_half = g_aiT_nine_row_first_half * O_first_half;
+        Vec4i dst_tmp9_second_half = g_aiT_nine_row_second_half * O_second_half;
+        Vec4i dst_tmp11_first_half = g_aiT_eleven_row_first_half * O_first_half;
+        Vec4i dst_tmp11_second_half = g_aiT_eleven_row_second_half * O_second_half;
+        Vec4i dst_tmp13_first_half = g_aiT_thirteen_row_first_half * O_first_half;
+        Vec4i dst_tmp13_second_half = g_aiT_thirteen_row_second_half * O_second_half;
+        Vec4i dst_tmp15_first_half = g_aiT_fifteen_row_first_half * O_first_half;
+        Vec4i dst_tmp15_second_half = g_aiT_fifteen_row_second_half * O_second_half;
+
+        int dst_one = horizontal_add(dst_tmp1_first_half) + horizontal_add(dst_tmp1_second_half);
+        int dst_three = horizontal_add(dst_tmp3_first_half) + horizontal_add(dst_tmp3_second_half);
+        int dst_five = horizontal_add(dst_tmp5_first_half) + horizontal_add(dst_tmp5_second_half);
+        int dst_seven = horizontal_add(dst_tmp7_first_half) + horizontal_add(dst_tmp7_second_half);
+        int dst_nine = horizontal_add(dst_tmp9_first_half) + horizontal_add(dst_tmp9_second_half);
+        int dst_eleven = horizontal_add(dst_tmp11_first_half) + horizontal_add(dst_tmp11_second_half);
+        int dst_thirteen = horizontal_add(dst_tmp13_first_half) + horizontal_add(dst_tmp13_second_half);
+        int dst_fifteen = horizontal_add(dst_tmp15_first_half) + horizontal_add(dst_tmp15_second_half);
+
+        Vec4i dst_1_3_5_7(dst_one, dst_three, dst_five, dst_seven);
+        dst_1_3_5_7 = dst_1_3_5_7 + add;
+        dst_1_3_5_7 = dst_1_3_5_7 >> shift;
+
+        Vec4i dst_9_11_13_15(dst_nine, dst_eleven, dst_thirteen, dst_fifteen);
+        dst_9_11_13_15 = dst_9_11_13_15 + add;
+        dst_9_11_13_15 = dst_9_11_13_15 >> shift;
+
+        dst[1 * line] = dst_1_3_5_7[0];
+        dst[3 * line] = dst_1_3_5_7[1];
+        dst[5 * line] = dst_1_3_5_7[2];
+        dst[7 * line] = dst_1_3_5_7[3];
+        dst[9 * line] = dst_9_11_13_15[0];
+        dst[11 * line] = dst_9_11_13_15[1];
+        dst[13 * line] = dst_9_11_13_15[2];
+        dst[15 * line] = dst_9_11_13_15[3];
+
+        src += 16;
+        dst++;
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -136,5 +284,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
+    p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }
 
