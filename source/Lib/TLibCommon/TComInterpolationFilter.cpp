@@ -55,10 +55,18 @@ using namespace x265;
 
 const Short TComInterpolationFilter::m_lumaFilter[4][NTAPS_LUMA] =
 {
-    {  0, 0,   0, 64,  0,   0, 0,  0 },
-    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-    { -1, 4, -11, 40, 40, -11, 4, -1 },
-    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+{
+    0, 0,   0, 64,  0,   0, 0,  0
+},
+{
+    -1, 4, -10, 58, 17,  -5, 1,  0
+},
+{
+    -1, 4, -11, 40, 40, -11, 4, -1
+},
+{
+    0, 1,  -5, 17, 58, -10, 4, -1
+}
 };
 
 const Short TComInterpolationFilter::m_chromaFilter[8][NTAPS_CHROMA] =
@@ -183,108 +191,83 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
                                      Int          height,
                                      Short const *coeff)
 {
+    Int cStride = (isVertical) ? srcStride : 1;
+    src -= (N / 2 - 1) * cStride;
+    Int offset;
+    Short maxVal;
+    Int headRoom = IF_INTERNAL_PREC - bitDepth;
+    Int shift = IF_FILTER_PREC;
+    if (isLast)
+    {
+        shift += (isFirst) ? 0 : headRoom;
+        offset = 1 << (shift - 1);
+        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
+        maxVal = (1 << bitDepth) - 1;
+    }
+    else
+    {
+        shift -= (isFirst) ? headRoom : 0;
+        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
+        maxVal = 0;
+    }
 #if ENABLE_PRIMITIVES
     if (!isVertical)
     {
-        if (N == 8 && !isFirst && !isLast)
+        if (N == 8 && !isLast)
         {
-            primitives.filter[FILTER_H_8_0_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_H_8_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height,
+                                            maxVal, offset, shift);
             return;
         }
 
-        if (N == 8 && !isFirst && isLast)
+        if (N == 8 && isLast)
         {
-            primitives.filter[FILTER_H_8_0_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 8 && isFirst && !isLast)
-        {
-            primitives.filter[FILTER_H_8_1_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 8 && isFirst && isLast)
-        {
-            primitives.filter[FILTER_H_8_1_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_H_8_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height,
+                                            maxVal, offset, shift);
             return;
         }
 
 /*
-        if (N == 4 && !isFirst && !isLast)
+        if (N == 4 && !isLast)
         {
-            primitives.filter[FILTER_H_4_0_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_H_4_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }
 
-        if (N == 4 && !isFirst && isLast)
+        if (N == 4 && isLast)
         {
-            primitives.filter[FILTER_H_4_0_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && isFirst && !isLast)
-        {
-            primitives.filter[FILTER_H_4_1_0]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && isFirst && isLast)
-        {
-            primitives.filter[FILTER_H_4_1_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_H_4_1]((const short*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }*/
     }
 
     //Following will be uncommented when vertical filter is added to primitives
+
 /*
     if (isVertical)
     {
-        if (N == 8 && !isFirst && !isLast)
+
+        if (N == 8 && !isLast)
         {
-            primitives.filter[FILTER_V_8_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_8_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }
 
-        if (N == 8 && !isFirst && isLast)
+        if (N == 8 && isLast)
         {
-            primitives.filter[FILTER_V_8_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_8_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }
 
-        if (N == 8 && isFirst && !isLast)
+        if (N == 4 && !isLast)
         {
-            primitives.filter[FILTER_V_8_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_4_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }
 
-        if (N == 8 && isFirst && isLast)
+        if (N == 4 && isLast)
         {
-            primitives.filter[FILTER_V_8_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && !isFirst && !isLast)
-        {
-            primitives.filter[FILTER_V_4_0_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && !isFirst && isLast)
-        {
-            primitives.filter[FILTER_V_4_0_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && isFirst && !isLast)
-        {
-            primitives.filter[FILTER_V_4_1_0]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
-            return;
-        }
-
-        if (N == 4 && isFirst && isLast)
-        {
-            primitives.filter[FILTER_V_4_1_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_4_1]((pixel*)coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, maxVal, offset, shift);
             return;
         }
     }*/
@@ -311,27 +294,6 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
     {
         c[6] = coeff[6];
         c[7] = coeff[7];
-    }
-
-    Int cStride = (isVertical) ? srcStride : 1;
-    src -= (N / 2 - 1) * cStride;
-
-    Int offset;
-    Short maxVal;
-    Int headRoom = IF_INTERNAL_PREC - bitDepth;
-    Int shift = IF_FILTER_PREC;
-    if (isLast)
-    {
-        shift += (isFirst) ? 0 : headRoom;
-        offset = 1 << (shift - 1);
-        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
-        maxVal = (1 << bitDepth) - 1;
-    }
-    else
-    {
-        shift -= (isFirst) ? headRoom : 0;
-        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
-        maxVal = 0;
     }
 
     Int row, col;
