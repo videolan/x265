@@ -14,11 +14,11 @@ add_library(x265 ../../COPYING
 if(ENABLE_PRIMITIVES)
     if(ENABLE_PRIMITIVES_VEC)
         add_subdirectory(vec)
-        target_link_libraries(x265 VectorPrimitives)
+        target_link_libraries(x265 PrimitivesVec)
     endif(ENABLE_PRIMITIVES_VEC)
 
     if(ENABLE_PRIMITIVES_ASM)
         add_subdirectory(x86)
-        target_link_libraries(x265 AsmPrimitives)
+        target_link_libraries(x265 PrimitivesASM)
     endif(ENABLE_PRIMITIVES_ASM)
 endif(ENABLE_PRIMITIVES)
