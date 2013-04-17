@@ -21,46 +21,62 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _TESTHARNESS_H_
-#define _TESTHARNESS_H_ 1
+#ifndef _INPUT_H_
+#define _INPUT_H_
 
-#include "primitives.h"
+#include <stdint.h>
+#include <TLibCommon/TypeDef.h>
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+namespace x265 {
 
-class TestHarness
+struct Picture
 {
-public:
-    TestHarness() {}
+    void *planes[3];
 
-    virtual ~TestHarness() {}
+    int   stride[3];
 
-    virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    int   bitDepth;
 
-    virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    ChromaFormat csp;
 };
 
-class Timer
+class Input
 {
+protected:
+
+    virtual ~Input()  {}
+
 public:
-    Timer() {}
 
-    virtual ~Timer() {}
+    Input()           {}
 
-    static Timer *CreateTimer();
+    static Input* Open(const char *filename);
 
-    virtual void Start() = 0;
+    virtual void setDimensions(int width, int height) = 0;
 
-    virtual void Stop() = 0;
+    virtual void setRate(int numerator, int denominator) = 0;
 
-    virtual float ElapsedMS() = 0;
+    virtual void setBitDepth(int bitDepth) = 0;
 
-    virtual void Release() = 0;
+    virtual float getRate() const = 0;
+
+    virtual int getWidth() const = 0;
+
+    virtual int getHeight() const = 0;
+
+    virtual void release() = 0;
+
+    virtual void skipFrames(int numFrames) = 0;
+
+    virtual bool readPicture(Picture& pic) = 0;
+
+    virtual bool isEof() const = 0;
+
+    virtual bool isFail() const = 0;
+
+    virtual int  guessFrameCount() const = 0;
 };
 
-#endif
+}
+
+#endif // _INPUT_H_

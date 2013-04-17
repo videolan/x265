@@ -21,33 +21,63 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _FILTERHARNESS_H_1
-#define _FILTERHARNESS_H_1 1
+#ifndef _YUV_H_
+#define _YUV_H_
 
-#include "testharness.h"
-#include "primitives.h"
+#include "input.h"
+#include <stdio.h>
 
-class FilterHarness : public TestHarness
+namespace x265 {
+
+class YUVInput : public Input
 {
 protected:
 
-    pixel *pixel_buff;
+    int rateNum;
 
-    short *IPF_vec_output, *IPF_C_output;
+    int rateDenom;
 
-    int ipf_t_size;
+    int width;
 
-    bool check_IPFilter_primitive(x265::IPFilter ref, x265::IPFilter opt);
+    int height;
+
+    int depth;
+
+    FILE *fp;
+
+    bool eof;
 
 public:
 
-    FilterHarness();
+    YUVInput(const char *filename);
 
-    virtual ~FilterHarness();
+    virtual ~YUVInput();
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void setDimensions(int w, int h)              { width = w; height = h; }
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void setRate(int numerator, int denominator)  { rateNum = numerator; rateDenom = denominator; }
+
+    void setBitDepth(int bitDepth)                { depth = bitDepth; }
+
+    float getRate() const                         { return ((float) rateNum)/rateDenom; }
+
+    int getWidth() const                          { return width; }
+
+    int getHeight() const                         { return height; }
+
+    bool isEof() const                            { return eof; }
+
+    bool isFail() const                           { return !!fp; }
+
+    void release()                                { if (fp) fclose(fp); delete this; }
+
+    int  guessFrameCount() const;
+
+    void skipFrames(int numFrames);
+
+    bool readPicture(Picture&);
 };
 
-#endif
+}
+
+#endif // _YUV_H_

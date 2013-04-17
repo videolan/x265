@@ -167,7 +167,8 @@ void MD5Frame::ProcessRow(int rownum)
         {
             ScopedLock below(this->row[rownum + 1].lock);
 
-            if (this->row[rownum + 1].active == false)
+            if (this->row[rownum + 1].active == false &&
+                this->row[rownum + 1].curCol + 2 <= curRow.curCol)
             {
                 // set active indicator so row is only enqueued once
                 // row stays marked active until blocked or done
