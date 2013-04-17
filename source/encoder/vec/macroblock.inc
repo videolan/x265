@@ -61,7 +61,7 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     Vec8s half0 = compress_saturated(c0_final, c1_final);
     Vec8s half1 = compress_saturated(c2_final, c3_final);
     blend8s<0, 4, 8, 12, 1, 5, 9, 13>(half0, half1).store_a(block);
-    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block+8);
+    blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store(block + 8);
 }
 
 template<bool isFirst, bool isLast>
