@@ -123,7 +123,7 @@ void CDECL filter_Horizontal_8(const short *coeff,
 }
 
 template<int N>
-void cdecl filter_Vertical(const short *coeff, pixel *src, int srcStride, pixel *dst, int dststride, int block_width,
+void CDECL filter_Vertical(const short *coeff, pixel *src, int srcStride, pixel *dst, int dststride, int block_width,
                            int block_height, int bitDepth)
 {
     int row, col;
