@@ -8,7 +8,7 @@ if(MSVC)
     # this is horrible. ugly, and hacky, and it reproduces logic found
     # in the yasm CMake modules, but this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
-    set(ASMS pixel-a)
+    set(ASMS pixel-a const-a)
     if (X64)
         set(FLAGS -f win64 -m amd64 -DARCH_X86_64=1 -DHAVE_ALIGNED_STACK=0)
     else()
@@ -30,7 +30,7 @@ if(MSVC)
     add_library(PrimitivesASM asm-primitives.cpp ${OBJS})
 else()
     enable_language(ASM_YASM)
-    set(ASMS pixel-a.asm)
+    set(ASMS pixel-a.asm const-a.asm)
     if (NOT X64)
         set(ASMS ${ASMS} pixel-32.asm)
     endif()
