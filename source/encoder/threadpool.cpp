@@ -275,6 +275,10 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
             buffer += sizeof(PoolThread);
             m_ok = m_ok && m_threads[i].Start();
         }
+
+        // Wait for threads to spin up and idle
+        while (PoolThread::s_sleepCount < m_numThreads)
+            GIVE_UP_TIME();
     }
 }
 
