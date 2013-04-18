@@ -75,9 +75,6 @@ int main(int argc, char *argv[])
 #else
     fprintf(stdout, "x265: 8bpp only\n");
 #endif
-#if ENABLE_PRIMITIVES
-    fprintf(stdout, "x265: performance primitives enabled\n");
-#endif
 
     // starting time
     long lBefore = clock();

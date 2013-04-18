@@ -95,17 +95,26 @@ void SetupPrimitives(int cpuid)
         cpuid = CpuIDDetect();
     }
 
+    fprintf(stdout, "x265: performance primitives:");
+
 #if ENABLE_PRIMITIVES
     Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
     Setup_Vector_Primitives(primitives, cpuid);
+    fprintf(stdout, " vector");
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
     Setup_Assembly_Primitives(primitives, cpuid);
+    fprintf(stdout, " assembly");
 #endif
+
+#else
+    fprintf(stdout," disabled!");
 #endif // if ENABLE_PRIMITIVES
+
+    fprintf(stdout, "\n");
 }
 
 static const char *CpuType[] = {
