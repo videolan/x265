@@ -360,7 +360,7 @@ void ThreadPoolImpl::FlushProviderList()
     while(i < m_numThreads);
 }
 
-JobProvider::~JobProvider()
+void JobProvider::Flush()
 {
     if (m_nextProvider || m_prevProvider)
         Dequeue();

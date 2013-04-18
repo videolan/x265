@@ -48,7 +48,7 @@ public:
 
     JobProvider(ThreadPool *p) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
 
-    virtual ~JobProvider();
+    virtual ~JobProvider() {}
 
     //< Register this job provider with the thread pool, jpbs are available
     void Enqueue();
@@ -59,6 +59,11 @@ public:
     //< Worker threads will call this method to find a job.  Must return true if
     //< work was completed.  False if no work was available.
     virtual bool FindJob() = 0;
+
+    //< All derived objects that call Enqueue *MUST* call flush before allowing
+    //< their object to be destroyed, otherwise you will see random crashes involving
+    //< partially freed vtables and you will be unhappy
+    void Flush();
 
     friend class ThreadPoolImpl;
     friend class PoolThread;

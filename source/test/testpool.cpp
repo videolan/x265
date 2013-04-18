@@ -76,6 +76,10 @@ public:
 
     virtual ~MD5Frame()
     {
+        // ensure no threads are lingering on FindJob() before allowing
+        // this object's vtable to be destroyed
+        JobProvider::Flush();
+
         if (this->cu)
             delete[] this->cu;
 
