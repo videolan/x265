@@ -31,6 +31,7 @@
 namespace x265 {
 // x265 private namespace
 
+#if ENABLE_PRIMITIVES
 static int8_t psize[16][16] =
 {
     // 4, 8, 12, 16, 20, 24, 28, 32
@@ -61,7 +62,6 @@ static int8_t psize[16][16] =
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-#if ENABLE_PRIMITIVES
     if ((Width | Height) & ~(4 | 8 | 16 | 32)) // Check for bits in the wrong places
         return -1;
 
@@ -69,13 +69,9 @@ int PartitionFromSizes(int Width, int Height)
         return -1;
 
     return (int)psize[(Width >> 2) - 1][(Height >> 2) - 1];
-#else
-    return Width || Height ? -1 : -1;
-#endif
 }
 
 /* the "authoritative" set of encoder primitives */
-#if ENABLE_PRIMITIVES
 EncoderPrimitives primitives;
 
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
@@ -86,6 +82,8 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_MacroblockPrimitives(p); // macroblock.cpp
 }
+#else
+int PartitionFromSizes(int, int) { return -1; }
 #endif
 
 /* cpuid == 0 - auto-detect CPU type, else
