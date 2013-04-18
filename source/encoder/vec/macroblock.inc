@@ -405,15 +405,8 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
-    p.filter[FILTER_V_4_0_0] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_0_1] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_1_0] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_1_1] = filter_Vertical<4>;
-
-    p.filter[FILTER_V_8_0_0] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_0_1] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_1_0] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_1_1] = filter_Vertical<8>;
+    p.filter[FILTER_V_4] = filter_Vertical<4>;
+    p.filter[FILTER_V_8] = filter_Vertical<8>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }

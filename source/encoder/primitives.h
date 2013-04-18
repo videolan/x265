@@ -100,15 +100,8 @@ enum FilterConf
     FILTER_H_8_1_0,
     FILTER_H_8_1_1,
 
-    FILTER_V_4_0_0,
-    FILTER_V_4_0_1,
-    FILTER_V_4_1_0,
-    FILTER_V_4_1_1,
-
-    FILTER_V_8_0_0,
-    FILTER_V_8_0_1,
-    FILTER_V_8_1_0,
-    FILTER_V_8_1_1,
+    FILTER_V_4,
+    FILTER_V_8,
     NUM_FILTER
 };
 
