@@ -37,6 +37,7 @@ using namespace x265;
 
 int main(int argc, char *argv[])
 {
+#if ENABLE_PRIMITIVES
     int cpuid = CpuIDDetect();
 
     for (int i = 1; i < argc - 1; i += 2)
@@ -120,6 +121,8 @@ int main(int argc, char *argv[])
     }
 
     printf("\n");
-
+#else
+    printf("x265 is configured without performance primitives, nothing to test\n");
+#endif
     return 0;
 }
