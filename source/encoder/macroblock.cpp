@@ -155,7 +155,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
     }
 }
 
-template<int N>
+template<int N, int isFirst, int isLast>
 void CDECL filter_Vertical(const short *coeff,
                            pixel *      src,
                            int          srcStride,
@@ -173,9 +173,22 @@ void CDECL filter_Vertical(const short *coeff,
 
     int offset;
     short maxVal;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
-    offset = 1 << (shift - 1);
-    maxVal = (1 << bitDepth) - 1;
+
+    if (isLast)
+    {
+        shift += (isFirst) ? 0 : headRoom;
+        offset = 1 << (shift - 1);
+        offset += (isFirst) ? 0 : IF_INTERNAL_OFFS << IF_FILTER_PREC;
+        maxVal = (1 << bitDepth) - 1;
+    }
+    else
+    {
+        shift -= (isFirst) ? headRoom : 0;
+        offset = (isFirst) ? -IF_INTERNAL_OFFS << shift : 0;
+        maxVal = 0;
+    }
 
     for (row = 0; row < block_height; row++)
     {
@@ -202,10 +215,12 @@ void CDECL filter_Vertical(const short *coeff,
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)(sum + offset) >> shift;
-
-            val = (val < 0) ? 0 : val;
-            val = (val > maxVal) ? maxVal : val;
+            short val = (short) (sum + offset) >> shift;
+            if(isLast)
+            {
+                val = (val < 0) ? 0 : val;
+                val = (val > maxVal) ? maxVal : val;
+            }
 
             dst[col] = val;
         }
@@ -280,7 +295,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
+    /*p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
     p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
     p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
     p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
@@ -288,17 +303,17 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
     p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
-    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
+    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;*/
 
-    p.filter[FILTER_V_4_0_0] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_0_1] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_1_0] = filter_Vertical<4>;
-    p.filter[FILTER_V_4_1_1] = filter_Vertical<4>;
+    p.filter[FILTER_V_4_0_0] = filter_Vertical<4,0,0>;
+    p.filter[FILTER_V_4_0_1] = filter_Vertical<4,0,1>;
+    p.filter[FILTER_V_4_1_0] = filter_Vertical<4,1,0>;
+    p.filter[FILTER_V_4_1_1] = filter_Vertical<4,1,1>;
 
-    p.filter[FILTER_V_8_0_0] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_0_1] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_1_0] = filter_Vertical<8>;
-    p.filter[FILTER_V_8_1_1] = filter_Vertical<8>;
+    p.filter[FILTER_V_8_0_0] = filter_Vertical<8,0,0>;
+    p.filter[FILTER_V_8_0_1] = filter_Vertical<8,0,1>;
+    p.filter[FILTER_V_8_1_0] = filter_Vertical<8,1,0>;
+    p.filter[FILTER_V_8_1_1] = filter_Vertical<8,1,1>;
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
 }
