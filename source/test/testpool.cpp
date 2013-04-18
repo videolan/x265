@@ -26,10 +26,10 @@
 #include "libmd5/MD5.h"
 #include "PPA/ppa.h"
 
-#include <stdio.h>
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <sstream>
 #include <iostream>
 
 using namespace x265;
@@ -76,6 +76,10 @@ public:
 
     virtual ~MD5Frame()
     {
+        // ensure no threads are lingering on FindJob() before allowing
+        // this object's vtable to be destroyed
+        JobProvider::Flush();
+
         if (this->cu)
             delete[] this->cu;
 
@@ -105,8 +109,6 @@ void MD5Frame::Initialize(int cols, int rows)
 
 void MD5Frame::Encode()
 {
-    clock_t start = clock();
-
     this->JobProvider::Enqueue();
 
     this->QueueFrame::EnqueueRow(0);
@@ -115,16 +117,15 @@ void MD5Frame::Encode()
 
     this->JobProvider::Dequeue();
 
-    clock_t stop = clock();
-
     unsigned int *outdigest = (unsigned int*)this->cu[this->numrows * this->numcols - 1].digest;
 
-    for (int i = 0; i < 4; i++)
-    {
-        std::cout << std::hex << outdigest[i];
-    }
+    std::stringstream ss;
 
-    std::cout << " " << (float)(stop - start) / CLOCKS_PER_SEC << std::endl;
+    for (int i = 0; i < 4; i++)
+        ss << std::hex << outdigest[i];
+
+    if (ss.str().compare("da667b741a7a9d0ee862158da2dd1882"))
+        std::cout << "Bad hash: " << ss.str() << std::endl;
 }
 
 void MD5Frame::ProcessRow(int rownum)
@@ -205,7 +206,6 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("1 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -213,7 +213,6 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("2 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -221,7 +220,6 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("4 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();
@@ -229,7 +227,6 @@ int main(int, char **)
     {
         MD5Frame frame(pool);
         frame.Initialize(60, 40);
-        printf("8 "); fflush(stdout);
         frame.Encode();
     }
     pool->Release();

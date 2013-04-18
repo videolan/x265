@@ -30,10 +30,18 @@ using namespace x265;
 
 const short m_lumaFilter[4][8] =
 {
-    { 0, 0,   0, 64,  0,   0, 0,  0 },
-    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-    { -1, 4, -11, 40, 40, -11, 4, -1 },
-    { 0, 1,  -5, 17, 58, -10, 4, -1 }
+{
+    0, 0,   0, 64,  0,   0, 0,  0
+},
+{
+    -1, 4, -10, 58, 17,  -5, 1,  0
+},
+{
+    -1, 4, -11, 40, 40, -11, 4, -1
+},
+{
+    0, 1,  -5, 17, 58, -10, 4, -1
+}
 };
 
 const char *FilterConf_names[] =
@@ -77,7 +85,7 @@ FilterHarness::FilterHarness()
     {
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
-        pixel_buff[i] = isPositive * (rand() & PIXEL_MAX);
+        pixel_buff[i] = isPositive * (rand() & ((1 << 8) - 1));
     }
 }
 
@@ -99,20 +107,20 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
         memset(IPF_vec_output, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output, 0, ipf_t_size);        // Initialize output buffer to zero
 
-        rand_val = rand() & 24;                     // Random offset in the filter
-        rand_srcStride = rand() & 100;              // Randomly generated srcStride
-        rand_dstStride = rand() & 100;              // Randomly generated dstStride
+        rand_val = rand() % 4;                     // Random offset in the filter
+        rand_srcStride = rand() % 100;              // Randomly generated srcStride
+        rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt((short*)(m_lumaFilter + rand_val),
-            pixel_buff,
+        opt((short*)(m_lumaFilter[rand_val]),
+            pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             (pixel*)IPF_vec_output,
             rand_dstStride,
             rand_height,
             rand_width,
             BIT_DEPTH);
-        ref((short*)(m_lumaFilter + rand_val),
-            pixel_buff,
+        ref((short*)(m_lumaFilter[rand_val]),
+            pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             (pixel*)IPF_C_output,
             rand_dstStride,
@@ -127,9 +135,9 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
     return true;
 }
 
-bool FilterHarness::testCorrectness( const EncoderPrimitives& ref, const EncoderPrimitives& opt )
+bool FilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 4; value < 8; value++)
+    for (int value = 4; value < 16; value++)
     {
         if (opt.filter[value])
         {
@@ -146,7 +154,7 @@ bool FilterHarness::testCorrectness( const EncoderPrimitives& ref, const Encoder
 
 #define FILTER_ITERATIONS   100000
 
-void FilterHarness::measureSpeed( const EncoderPrimitives& ref, const EncoderPrimitives& opt )
+void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     Timer *t = Timer::CreateTimer();
 
@@ -159,7 +167,7 @@ void FilterHarness::measureSpeed( const EncoderPrimitives& ref, const EncoderPri
     rand_srcStride = rand() % 100;              // Randomly generated srcStride
     rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-    for (int value = 4; value < 8; value++)
+    for (int value = 4; value < 16; value++)
     {
         memset(IPF_vec_output, 0, ipf_t_size);  // Initialize output buffer to zero
         memset(IPF_C_output, 0, ipf_t_size);    // Initialize output buffer to zero
@@ -167,15 +175,23 @@ void FilterHarness::measureSpeed( const EncoderPrimitives& ref, const EncoderPri
         {
             t->Start();
             for (int j = 0; j < FILTER_ITERATIONS; j++)
-                opt.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
-                                      rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            {
+                opt.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
+                                  (pixel*)IPF_vec_output,
+                                  rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            }
+
             t->Stop();
             printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], t->ElapsedMS());
 
             t->Start();
             for (int j = 0; j < FILTER_ITERATIONS; j++)
-                ref.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff, rand_srcStride, (pixel*)IPF_vec_output,
-                                    rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            {
+                ref.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
+                                  (pixel*)IPF_vec_output,
+                                  rand_dstStride, rand_height, rand_width, BIT_DEPTH);
+            }
+
             t->Stop();
             printf("\tC: (%1.2f ms) ", t->ElapsedMS());
         }
