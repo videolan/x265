@@ -88,9 +88,19 @@ private:
 
     PoolThread& operator=(const PoolThread&);
 
+    bool           m_dirty;
+
+    bool           m_idle;
+
 public:
 
-    PoolThread(ThreadPoolImpl& pool) : m_pool(pool) {}
+    PoolThread(ThreadPoolImpl& pool) : m_pool(pool), m_dirty(false), m_idle(false) {}
+
+    //< query if thread is still potentially walking provider list
+    bool isDirty() const { return !m_idle && m_dirty; }
+
+    //< set m_dirty if the thread might be walking provider list
+    void markDirty()     { m_dirty = !m_idle; }
 
     virtual ~PoolThread() {}
 
@@ -150,6 +160,8 @@ public:
 
     void DequeueJobProvider(JobProvider &);
 
+    void FlushProviderList();
+
     void PokeIdleThreads();
 };
 
@@ -168,11 +180,15 @@ void PoolThread::ThreadMain()
 
             cur = cur->m_nextProvider;
         }
+
+        m_dirty = false;
         if (cur == NULL)
         {
+            m_idle = true;
             ATOMIC_INC(&s_sleepCount);
             s_wakeEvent.Wait();
             ATOMIC_DEC(&s_sleepCount);
+            m_idle = false;
         }
     }
 }
@@ -270,11 +286,13 @@ ThreadPoolImpl::~ThreadPoolImpl()
             GIVE_UP_TIME();
 
         m_ok = false;
-        PokeIdleThreads();
 
         // destructors will block for thread completions
         for (int i = 0; i < m_numThreads; i++)
+        {
+            PokeIdleThreads();
             m_threads[i].~PoolThread();
+        }
 
         delete[] reinterpret_cast<char*>(m_threads);
     }
@@ -320,10 +338,33 @@ void ThreadPoolImpl::DequeueJobProvider(JobProvider &p)
     p.m_prevProvider = NULL;
 }
 
+/* Ensure all threads are either idle, or have made a full
+ * pass through the provider list, ensuring dequeued providers
+ * are safe for deletion. */
+void ThreadPoolImpl::FlushProviderList()
+{
+    for (int i = 0; i < m_numThreads; i++)
+        m_threads[i].markDirty();
+
+    int i;
+    do {
+        for (i = 0; i < m_numThreads; i++)
+        {
+            if (m_threads[i].isDirty())
+            {
+                GIVE_UP_TIME();
+                break;
+            }
+        }
+    }
+    while(i < m_numThreads);
+}
+
 JobProvider::~JobProvider()
 {
     if (m_nextProvider || m_prevProvider)
         Dequeue();
+    dynamic_cast<ThreadPoolImpl*>(m_pool)->FlushProviderList();
 }
 
 void JobProvider::Enqueue()
