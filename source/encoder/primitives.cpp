@@ -82,8 +82,6 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_MacroblockPrimitives(p); // macroblock.cpp
 }
-#else
-int PartitionFromSizes(int, int) { return -1; }
 #endif
 
 /* cpuid == 0 - auto-detect CPU type, else
