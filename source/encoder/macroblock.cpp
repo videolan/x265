@@ -34,6 +34,10 @@
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
+#endif
+
 namespace {
 // anonymous file-static namespace
 
@@ -56,10 +60,6 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
         block[4 * i + 3] = (short)Clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
     }
 }
-
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
 
 template<int N, bool isFirst, bool isLast>
 void CDECL filter_8_nonvertical(const short *coeff,
@@ -230,10 +230,6 @@ void CDECL filter_Vertical(const short *coeff,
         dstShort += dstStride;
     }
 }
-
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant
-#endif
 
 void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
 {
