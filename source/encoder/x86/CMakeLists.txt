@@ -4,7 +4,7 @@ else()
     add_definitions(-DHAVE_ALIGNED_STACK=0)
 endif()
 
-set(ASMS pixel-a.asm const-a.asm cpu-a.asm)
+set(ASMS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm)
 if (NOT X64)
     set(ASMS ${ASMS} pixel-32.asm)
 endif()
