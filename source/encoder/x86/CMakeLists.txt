@@ -5,7 +5,10 @@ else()
 endif()
 
 set(ASMS pixel-a.asm const-a.asm cpu-a.asm sad-a.asm)
-if (NOT X64)
+if (X64)
+    add_definitions(-DARCH_X86_64=1)
+else()
+    add_definitions(-DARCH_X86_64=0)
     set(ASMS ${ASMS} pixel-32.asm)
 endif()
 
