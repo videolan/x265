@@ -23,6 +23,7 @@
 
 #include "y4m.h"
 #include <stdio.h>
+#include <string.h>
 
 using namespace x265;
 
