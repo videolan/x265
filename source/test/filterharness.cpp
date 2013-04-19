@@ -85,7 +85,7 @@ FilterHarness::FilterHarness()
     {
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
-        pixel_buff[i] = isPositive * (rand() & ((1 << 8) - 1));
+        pixel_buff[i] = isPositive * (rand() &  PIXEL_MAX);
     }
 }
 
