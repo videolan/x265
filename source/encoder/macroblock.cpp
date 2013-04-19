@@ -119,7 +119,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
     {
         for (col = 0; col < block_width; col++)
         {
-            short sum;
+            int sum;
             sum  = src[col + 0] * c[0];
             sum += src[col + 1] * c[1];
             if (N >= 4)
@@ -140,7 +140,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
                 sum += src[col + 7] * c[7];
             }
 
-            short val = (short)(sum + offset) >> shift;
+            short val = (short)((sum + offset) >> shift);
             if (isLast)
             {
                 val = (val < 0) ? 0 : val;
@@ -165,17 +165,16 @@ void CDECL filter_Vertical(const short *coeff,
                            int          block_height,
                            int          bitDepth)
 {
-    int row, col;
-
+    short * srcShort = (short*) src;
+    short * dstShort = (short*) dst;
+    
     int cStride = srcStride;
-
-    src -= (N / 2 - 1) * cStride;
+    srcShort -= (N / 2 - 1) * cStride;
 
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
-
     if (isLast)
     {
         shift += (isFirst) ? 0 : headRoom;
@@ -190,43 +189,45 @@ void CDECL filter_Vertical(const short *coeff,
         maxVal = 0;
     }
 
+    int row, col;
     for (row = 0; row < block_height; row++)
     {
         for (col = 0; col < block_width; col++)
         {
-            short sum;
-            sum  = src[col + 0] * coeff[0];
-            sum += src[col + 1 * cStride] * coeff[1];
+            int sum;
+
+            sum  = srcShort[col + 0 * cStride] * coeff[0];
+            sum += srcShort[col + 1 * cStride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * coeff[2];
-                sum += src[col + 3 * cStride] * coeff[3];
+                sum += srcShort[col + 2 * cStride] * coeff[2];
+                sum += srcShort[col + 3 * cStride] * coeff[3];
             }
 
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * coeff[4];
-                sum += src[col + 5 * cStride] * coeff[5];
+                sum += srcShort[col + 4 * cStride] * coeff[4];
+                sum += srcShort[col + 5 * cStride] * coeff[5];
             }
 
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * coeff[6];
-                sum += src[col + 7 * cStride] * coeff[7];
+                sum += srcShort[col + 6 * cStride] * coeff[6];
+                sum += srcShort[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short) (sum + offset) >> shift;
-            if(isLast)
+            Short val = (short)((sum + offset) >> shift);
+            if (isLast)
             {
                 val = (val < 0) ? 0 : val;
                 val = (val > maxVal) ? maxVal : val;
             }
 
-            dst[col] = val;
+            dstShort[col] = val;
         }
 
-        src += srcStride;
-        dst += dstStride;
+        srcShort += srcStride;
+        dstShort += dstStride;
     }
 }
 
@@ -295,7 +296,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    /*p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
+    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
     p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
     p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
     p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
@@ -303,7 +304,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
     p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
     p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
-    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;*/
+    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
 
     p.filter[FILTER_V_4_0_0] = filter_Vertical<4,0,0>;
     p.filter[FILTER_V_4_0_1] = filter_Vertical<4,0,1>;
