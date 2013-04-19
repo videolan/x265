@@ -1,5 +1,6 @@
 if(GCC)
     if (NOT X64)
+        # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
 endif(GCC)
