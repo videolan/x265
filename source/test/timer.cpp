@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "testharness.h"
+#include <emmintrin.h>
 
 #if _WIN32
 
@@ -45,6 +46,7 @@ public:
 
     float ElapsedMS()
     {
+        //_mm_empty(); // emms
         return ((float)(finish.QuadPart - start.QuadPart) / freq.QuadPart) * 1000.0f;
     }
 
@@ -71,6 +73,7 @@ public:
 
     float ElapsedMS()
     {
+        _mm_empty(); // emms
         return (finish.tv_sec - start.tv_sec) * 1000 +
         (float)(finish.tv_usec - start.tv_usec) / 1000;
     }
