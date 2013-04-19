@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "testharness.h"
-#include <emmintrin.h>
+#include "primitives.h"
 
 #if _WIN32
 
@@ -46,7 +46,7 @@ public:
 
     float ElapsedMS()
     {
-        //_mm_empty(); // emms
+        x264_cpu_emms();
         return ((float)(finish.QuadPart - start.QuadPart) / freq.QuadPart) * 1000.0f;
     }
 
@@ -73,7 +73,7 @@ public:
 
     float ElapsedMS()
     {
-        _mm_empty(); // emms
+        x264_cpu_emms();
         return (finish.tv_sec - start.tv_sec) * 1000 +
         (float)(finish.tv_usec - start.tv_usec) / 1000;
     }

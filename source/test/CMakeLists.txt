@@ -22,8 +22,6 @@ if(MSVC)
 endif(MSVC)
 if(GCC)
     add_definitions(-Wno-sign-compare)
-	# force gcc to generate code for sync primitives
-	set_source_files_properties(timer.cpp PROPERTIES COMPILE_FLAGS -msse2)
 endif(GCC)
 
 add_executable(TestBench testbench.cpp testharness.h timer.cpp

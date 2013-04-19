@@ -30,6 +30,12 @@
 
 #include <stdint.h>
 
+#if ENABLE_ASM_PRIMITIVES && !defined(_MSC_VER)
+extern "C" void x264_cpu_emms( void );
+#else
+#define x264_cpu_emms()
+#endif
+
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))

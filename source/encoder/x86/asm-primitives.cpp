@@ -23,7 +23,8 @@
 
 #include "primitives.h"
 extern "C" {
-    #include "pixel.h"
+#include "pixel.h"
+void x264_intel_cpu_indicator_init( void ) {}
 }
 
 namespace x265 {
@@ -36,7 +37,7 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if HIGH_BIT_DEPTH && defined(_MSC_VER)
+#if defined(_MSC_VER)
     // This is not linking properly yet
     if (cpuid > 0)
         p.sa8d_16x16 = p.sa8d_16x16; // placeholder to prevent warnings
