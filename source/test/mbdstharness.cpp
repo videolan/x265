@@ -26,10 +26,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <malloc.h>
-
-#ifdef __MINGW32__ 
-#define _aligned_malloc __mingw_aligned_malloc 
-#define _aligned_free  __mingw_aligned_free 
+#ifdef __MINGW32__
+#define _aligned_malloc __mingw_aligned_malloc
+#define _aligned_free  __mingw_aligned_free
 #endif
 
 using namespace x265;
@@ -67,9 +66,9 @@ MBDstHarness::MBDstHarness()
     mbuf2 = (short*)_aligned_malloc(mb_t_size, 32);
     mbuf3 = (short*)_aligned_malloc(mb_t_size, 32);
 #else
-    posix_memalign((void **)&mbuf1, 32, 0x1e00 * sizeof(short));
-    posix_memalign((void **)&mbuf2, 32, mb_t_size);
-    posix_memalign((void **)&mbuf3, 32, mb_t_size);
+    posix_memalign((void**)&mbuf1, 32, 0x1e00 * sizeof(short));
+    posix_memalign((void**)&mbuf2, 32, mb_t_size);
+    posix_memalign((void**)&mbuf3, 32, mb_t_size);
 #endif
     if (!mbuf1 || !mbuf2 || !mbuf3)
     {
@@ -141,6 +140,27 @@ bool MBDstHarness::check_butterfly16_primitive(butterfly ref, butterfly opt)
     return true;
 }
 
+bool MBDstHarness::check_butterfly32_primitive(butterfly ref, butterfly opt)
+{
+    int j = 0;
+    int mem_cmp_size = 640; // 2*32*10 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(mbuf1 + j, mbuf2, 3, 10);
+        ref(mbuf1 + j, mbuf3, 3, 10);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0, mem_cmp_size);
+        memset(mbuf3, 0, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.inversedst)
@@ -157,6 +177,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_butterfly16_primitive(ref.partial_butterfly[butterfly_16], opt.partial_butterfly[butterfly_16]))
         {
             printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_16]);
+            return false;
+        }
+    }
+
+    if (opt.partial_butterfly[butterfly_32])
+    {
+        if (!check_butterfly32_primitive(ref.partial_butterfly[butterfly_32], opt.partial_butterfly[butterfly_32]))
+        {
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_32]);
             return false;
         }
     }
