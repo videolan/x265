@@ -79,6 +79,7 @@ namespace x265 {
 // x265 private namespace
 
 class ThreadPoolImpl;
+static int get_cpu_count();
 
 class PoolThread : public Thread
 {
@@ -151,6 +152,8 @@ public:
 
     void Release();
 
+    void Stop();
+
     bool IsValid() const
     {
         return m_ok;
@@ -195,40 +198,7 @@ void PoolThread::ThreadMain()
 
 void ThreadPoolImpl::PokeIdleThreads()
 {
-    int initialCount = PoolThread::s_sleepCount;
-    for (int i = 0; i < initialCount; i++)
-        PoolThread::s_wakeEvent.Trigger();
-}
-
-static int get_cpu_count()
-{
-#if WIN32
-    SYSTEM_INFO sysinfo;
-    GetSystemInfo(&sysinfo);
-    return sysinfo.dwNumberOfProcessors;
-#elif __unix__
-    return sysconf(_SC_NPROCESSORS_ONLN);
-#elif MACOS
-    int nm[2];
-    size_t len = 4;
-    uint32_t count;
-
-    nm[0] = CTL_HW;
-    nm[1] = HW_AVAILCPU;
-    sysctl(nm, 2, &count, &len, NULL, 0);
-
-    if (count < 1)
-    {
-        nm[1] = HW_NCPU;
-        sysctl(nm, 2, &count, &len, NULL, 0);
-        if (count < 1)
-            count = 1;
-    }
-
-    return count;
-#else // if WIN32
-    return 2; // default to 2 threads, everywhere else
-#endif // if WIN32
+    PoolThread::s_wakeEvent.Trigger();
 }
 
 ThreadPoolImpl *ThreadPoolImpl::instance;
@@ -249,6 +219,7 @@ void ThreadPoolImpl::Release()
     {
         assert(this == ThreadPoolImpl::instance);
         ThreadPoolImpl::instance = NULL;
+        this->Stop();
         delete this;
     }
 }
@@ -282,26 +253,34 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     }
 }
 
-ThreadPoolImpl::~ThreadPoolImpl()
+void ThreadPoolImpl::Stop()
 {
-    if (m_ok && m_threads)
+    if (m_ok)
     {
+        // wait for all threads to idle
         while (PoolThread::s_sleepCount < m_numThreads)
             GIVE_UP_TIME();
 
+        // set invalid flag, then wake them up so they exit their main func
         m_ok = false;
-
-        // destructors will block for thread completions
         for (int i = 0; i < m_numThreads; i++)
-        {
             PokeIdleThreads();
-            m_threads[i].~PoolThread();
-        }
 
+        // wait for each thread to exit
+        for (int i = 0; i < m_numThreads; i++)
+            m_threads[i].Stop();
+    }
+}
+
+ThreadPoolImpl::~ThreadPoolImpl()
+{
+    if (m_threads)
+    {
+        // cleanup thread handles
+        for (int i = 0; i < m_numThreads; i++)
+            m_threads[i].~PoolThread();
         delete[] reinterpret_cast<char*>(m_threads);
     }
-
-    // leak threads on program exit if there were resource failures
 }
 
 void ThreadPoolImpl::EnqueueJobProvider(JobProvider &p)
@@ -445,4 +424,36 @@ bool QueueFrame::FindJob()
     // made it through the bitmap without finding any enqueued rows
     return false;
 }
+
+static int get_cpu_count()
+{
+#if WIN32
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    return sysinfo.dwNumberOfProcessors;
+#elif __unix__
+    return sysconf(_SC_NPROCESSORS_ONLN);
+#elif MACOS
+    int nm[2];
+    size_t len = 4;
+    uint32_t count;
+
+    nm[0] = CTL_HW;
+    nm[1] = HW_AVAILCPU;
+    sysctl(nm, 2, &count, &len, NULL, 0);
+
+    if (count < 1)
+    {
+        nm[1] = HW_NCPU;
+        sysctl(nm, 2, &count, &len, NULL, 0);
+        if (count < 1)
+            count = 1;
+    }
+
+    return count;
+#else // if WIN32
+    return 2; // default to 2 threads, everywhere else
+#endif // if WIN32
+}
+
 } // end namespace x265

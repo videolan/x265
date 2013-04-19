@@ -47,12 +47,18 @@ bool Thread::Start()
     return threadId > 0;
 }
 
-Thread::~Thread()
+void Thread::Stop()
 {
     if (this->thread)
     {
         WaitForSingleObject(this->thread, INFINITE);
+    }
+}
 
+Thread::~Thread()
+{
+    if (this->thread)
+    {
         CloseHandle(this->thread);
     }
 }
@@ -65,6 +71,7 @@ static void *ThreadShim(void *opaque)
     Thread *instance = reinterpret_cast<Thread *>(opaque);
 
     instance->ThreadMain();
+
     return NULL;
 }
 
@@ -73,18 +80,23 @@ bool Thread::Start()
     if (pthread_create(&this->thread, NULL, ThreadShim, this))
     {
         this->thread = 0;
+
         return false;
     }
 
     return true;
 }
 
-Thread::~Thread()
+void Thread::Stop()
 {
     if (this->thread)
     {
         pthread_join(this->thread, NULL);
     }
+}
+
+Thread::~Thread()
+{
 }
 
 #endif // if _WIN32

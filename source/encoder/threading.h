@@ -204,6 +204,8 @@ public:
 
     //< Returns true if thread was successfully created
     bool Start();
+
+    void Stop();
 };
 } // end namespace x265
 
