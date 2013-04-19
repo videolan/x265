@@ -158,32 +158,36 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.satd[curpar])
         {
+            printf("\nsatd[%s]\topt: ", FuncNames[curpar]);
+
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
                 opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             t->Stop();
-            printf("\nsatd[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], t->ElapsedMS());
+            printf("(%1.2f ms)\t", t->ElapsedMS());
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
                 ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             t->Stop();
-            printf("\tC: (%1.2f ms) ", t->ElapsedMS());
+            printf("C: (%1.2f ms)", t->ElapsedMS());
         }
 
         if (opt.sad[curpar])
         {
+            printf("\nsad[%s]\topt: ", FuncNames[curpar]);
+
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
                 opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             t->Stop();
-            printf("\nsad[%s]\tVec: (%1.2f ms) ", FuncNames[curpar], t->ElapsedMS());
+            printf("(%1.2f ms)\t", t->ElapsedMS());
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
                 ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
             t->Stop();
-            printf("\tC: (%1.2f ms) ", t->ElapsedMS());
+            printf("C: (%1.2f ms) ", t->ElapsedMS());
         }
     }
 
