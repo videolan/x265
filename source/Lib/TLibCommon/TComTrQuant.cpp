@@ -1552,7 +1552,9 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
         {
             for (j = 0; j < iHeight; j++)
             {
-                memcpy(pResidual + j * uiStride, block + j * iWidth, iWidth * sizeof(Short));
+                for(int i = 0; i < iWidth; i++)
+                    pResidual[j*uiStride + i] = (Pel) block[j*iWidth + i];      
+
             }
         }
         return;
