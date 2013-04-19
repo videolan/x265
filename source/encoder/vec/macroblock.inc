@@ -124,6 +124,7 @@ void CDECL filter_Horizontal_8(const short *coeff,
 
 /*
     Vertical Filter using 16-bit operations. It requires that input contains only 8 bit values. Very good performance but with less precision.
+    This assumes isFirst=isLast=1.
 */
 template<int N>
 void CDECL filter_Vertical_16bit(const short *coeff, pixel *src, int srcStride, pixel *dst, int dststride, int block_width,
