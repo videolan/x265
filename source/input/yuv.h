@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 namespace x265 {
-
 class YUVInput : public Input
 {
 protected:
@@ -43,6 +42,10 @@ protected:
 
     int depth;
 
+    int LumaMarginX;
+
+    Pel* buf;
+
     FILE *fp;
 
     bool eof;
@@ -53,23 +56,43 @@ public:
 
     virtual ~YUVInput();
 
-    void setDimensions(int w, int h)              { width = w; height = h; }
+    void setDimensions(int w, int h)              { width = w;height = h;}
 
-    void setRate(int numerator, int denominator)  { rateNum = numerator; rateDenom = denominator; }
+    void setRate(int numerator, int denominator)  { rateNum = numerator;rateDenom = denominator;}
 
-    void setBitDepth(int bitDepth)                { depth = bitDepth; }
+    void setBitDepth(int bitDepth)                { depth = bitDepth;}
 
-    float getRate() const                         { return ((float) rateNum)/rateDenom; }
+    void setLumaMarginX(int lumamarginX)          { LumaMarginX = lumamarginX;}
 
-    int getWidth() const                          { return width; }
+    float getRate() const                         { return ((float)rateNum) / rateDenom;}
 
-    int getHeight() const                         { return height; }
+    int getWidth() const                          { return width;}
 
-    bool isEof() const                            { return eof; }
+    int getHeight() const                         { return height;}
 
-    bool isFail() const                           { return !!fp; }
+    int getBitDepth() const                       { return depth;}
 
-    void release()                                { if (fp) fclose(fp); delete this; }
+    virtual Pel* getBuf() const                  { return buf;}
+
+    void allocBuf();              // set the char buffer to store raw data from file.
+
+    bool isEof() const
+    {
+        if (feof(fp))
+            return true;
+
+        return false;
+    }
+
+    bool isFail() const                           { return !!fp;}
+
+    void release()
+    {
+        if (fp)
+            fclose(fp);
+
+        delete this;
+    }
 
     int  guessFrameCount() const;
 
@@ -77,7 +100,6 @@ public:
 
     bool readPicture(Picture&);
 };
-
 }
 
 #endif // _YUV_H_

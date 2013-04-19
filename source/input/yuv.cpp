@@ -21,7 +21,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <fcntl.h>
 #include <assert.h>
 #include <sys/stat.h>
 
@@ -33,11 +32,12 @@ using namespace x265;
 YUVInput::YUVInput(const char *filename)
 {
     fp = fopen(filename, "rb");
+    width = height = 0;
 }
 
 YUVInput::~YUVInput()
 {
-    if (fp) fclose(fp); 
+    if (fp) fclose(fp);
 }
 
 int  YUVInput::guessFrameCount() const
@@ -47,10 +47,102 @@ int  YUVInput::guessFrameCount() const
 
 void YUVInput::skipFrames(int numFrames)
 {
+    int fileBitDepthY, fileBitDepthC;
 
+    if (!numFrames)
+        return;
+
+    //TODO : Assuming fileBitDepthY = fileBitDepthC
+    fileBitDepthY = fileBitDepthC = depth;
+    const UInt wordsize = (fileBitDepthY > 8 || fileBitDepthC > 8) ? 2 : 1;
+    const std::streamoff framesize = wordsize * width * height * 3 / 2;
+    const std::streamoff offset = framesize * numFrames;
+
+    /* attempt to seek */
+    if (!!fseek(fp, offset, SEEK_CUR))
+        return; /* success */
+
+    //TODO : clear file pointer
+    //yuv_handler->m_cHandle.clear();
+
+    /* fall back to consuming the input */
+    Char buf[512];
+    const UInt offset_mod_bufsize = offset % sizeof(buf);
+    for (std::streamoff i = 0; i < offset - offset_mod_bufsize; i += sizeof(buf))
+    {
+        fread(buf, sizeof(buf), 1, fp);
+    }
+
+    fread(buf, offset_mod_bufsize, 1, fp);
+}
+
+static bool readPlane(Pel* dst, FILE* fp, int width, int height, Bool is16bit)
+{
+    Int b_error = 0;
+    Int read_len = width * (is16bit ? 2 : 1);
+    UChar *buf = new UChar[read_len];
+
+    for (Int y = 0; y < height; y++)
+    {
+        b_error = fread(reinterpret_cast<Char*>(buf), 1, read_len, fp);
+
+        if (feof(fp))
+        {
+            delete[] buf;
+            return false;
+        }
+
+        if (!is16bit)
+        {
+            for (Int x = 0; x < width; x++)
+            {
+                dst[y * width + x] = buf[x];
+            }
+        }
+        else
+        {
+            for (Int x = 0; x < width; x++)
+            {
+                dst[y * width + x] = (buf[2 * x + 1] << 8) | buf[2 * x];
+            }
+        }
+    }
+
+    delete[] buf;
+    return true;
 }
 
 bool YUVInput::readPicture(Picture& pic)
 {
-    return false;
+    Bool is16bit = depth > 8;
+
+    pic.planes[0] = buf;
+
+    pic.planes[1] = buf + (width * height);
+
+    pic.planes[2] = buf + ((width * height) + ((width >> 1) * (height >> 1)));
+
+    pic.bitDepth = getBitDepth();
+
+    //TODO : need to cahnge stride based on conformance  mode
+
+    pic.stride[0] = width + (LumaMarginX << 1);
+
+    pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
+
+    if (!readPlane((Pel*)pic.planes[0], fp, width, height, is16bit))
+        return false;
+
+    if (!readPlane((Pel*)pic.planes[1], fp, width >> 1, height >> 1, is16bit))
+        return false;
+
+    if (!readPlane((Pel*)pic.planes[2], fp, width >> 1, height >> 1, is16bit))
+        return false;
+
+    return true;
+}
+
+void YUVInput::allocBuf()
+{
+    buf = new Pel[2 * width * height];
 }

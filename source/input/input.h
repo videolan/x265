@@ -25,10 +25,10 @@
 #define _INPUT_H_
 
 #include <stdint.h>
+#include <iostream>
 #include <TLibCommon/TypeDef.h>
 
 namespace x265 {
-
 struct Picture
 {
     void *planes[3];
@@ -58,11 +58,19 @@ public:
 
     virtual void setBitDepth(int bitDepth) = 0;
 
+    virtual void setLumaMarginX(int lumamarginX) = 0;
+
+    virtual void allocBuf()  = 0;
+
     virtual float getRate() const = 0;
 
     virtual int getWidth() const = 0;
 
     virtual int getHeight() const = 0;
+
+    virtual int getBitDepth() const = 0;
+
+    virtual Pel* getBuf() const = 0;
 
     virtual void release() = 0;
 
@@ -76,7 +84,6 @@ public:
 
     virtual int  guessFrameCount() const = 0;
 };
-
 }
 
 #endif // _INPUT_H_
