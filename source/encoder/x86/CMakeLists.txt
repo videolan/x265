@@ -24,10 +24,10 @@ if(MSVC)
         set(FLAGS ${FLAGS} -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8)
     endif()
     foreach(ASM ${ASMS})
-        set(OBJS ${OBJS} ${ASM}.o)
+        set(OBJS ${OBJS} ${ASM}.lib)
         add_custom_command(
-            OUTPUT ${ASM}.o
-            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${ASM} -o ${ASM}.o
+            OUTPUT ${ASM}.lib
+            COMMAND ${YASM_EXECUTABLE} ARGS ${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${ASM} -o ${ASM}.lib
             DEPENDS ${ASM})
     endforeach()
     add_library(PrimitivesASM asm-primitives.cpp ${OBJS})

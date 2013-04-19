@@ -37,11 +37,6 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if defined(_MSC_VER)
-    // This is not linking properly yet
-    if (cpuid > 0)
-        p.sa8d_16x16 = p.sa8d_16x16; // placeholder to prevent warnings
-#else
     if (cpuid > 0)
     {
         p.satd[PARTITION_4x4] = x264_pixel_satd_4x4_mmx2;
@@ -49,7 +44,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_8x4] = x264_pixel_satd_8x4_mmx2;
         p.satd[PARTITION_8x8] = x264_pixel_satd_8x8_mmx2;
     }
-#endif
 }
 
 }
