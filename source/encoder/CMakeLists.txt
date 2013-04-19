@@ -5,6 +5,10 @@ if(GCC)
     endif()
 endif(GCC)
 
+if(ENABLE_PRIMITIVES)
+    set(CPRIMITIVES pixel.cpp macroblock.cpp)
+endif(ENABLE_PRIMITIVES)
+
 add_library(x265 ../../COPYING
     ${CPRIMITIVES}
     primitives.cpp primitives.h

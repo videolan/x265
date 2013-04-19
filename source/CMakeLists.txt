@@ -43,7 +43,6 @@ endif(HIGH_BIT_DEPTH)
 option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
 if(ENABLE_PRIMITIVES)
     add_definitions(-DENABLE_PRIMITIVES)
-    set(CPRIMITIVES pixel.cpp macroblock.cpp)
 
     option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
     if(ENABLE_PRIMITIVES_VEC)
