@@ -1497,12 +1497,24 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
 #else
     Int j;
     {
-        Short block[64 * 64];
-        Short coeff[64 * 64];
+#ifdef _WIN32
+#ifdef __MINGW32__
+        Short block[64 * 64] __attribute__((aligned(32)));
+        Short coeff[64 * 64] __attribute__((aligned(32)));
+#else
+        __declspec(align(32)) Short block[64 * 64];
+        __declspec(align(32)) Short coeff[64 * 64];
+#endif
+#else
+        Short block[64 * 64] __attribute__((aligned(32)));
+        Short coeff[64 * 64] __attribute__((aligned(32)));
+#endif
         {
             for (j = 0; j < iHeight; j++)
             {
-                memcpy(block + j * iWidth, piBlkResi + j * uiStride, iWidth * sizeof(Short));
+                for(int i = 0; i < iWidth; i++)
+                    block [j*iWidth + i] = (Short) piBlkResi [j*uiStride + i];                
+
             }
         }
         xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
