@@ -55,18 +55,10 @@ using namespace x265;
 
 const Short TComInterpolationFilter::m_lumaFilter[4][NTAPS_LUMA] =
 {
-{
-    0, 0,   0, 64,  0,   0, 0,  0
-},
-{
-    -1, 4, -10, 58, 17,  -5, 1,  0
-},
-{
-    -1, 4, -11, 40, 40, -11, 4, -1
-},
-{
-    0, 1,  -5, 17, 58, -10, 4, -1
-}
+    {  0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    {  0, 1,  -5, 17, 58, -10, 4, -1 }
 };
 
 const Short TComInterpolationFilter::m_chromaFilter[8][NTAPS_CHROMA] =
@@ -252,13 +244,13 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
     {
         if (N == 8) //Set isFirst = isLast = true always
         {
-            primitives.filter[FILTER_V_8](coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_8_1_1](coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 4)  //Set isFirst = isLast = true always
         {
-            primitives.filter[FILTER_V_4](coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
+            primitives.filter[FILTER_V_4_1_1](coeff, (pixel*)src, srcStride, (pixel*)dst, dstStride, width, height, bitDepth);
             return;
         }
     }

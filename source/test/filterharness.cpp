@@ -137,7 +137,7 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 
 bool FilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 0; value < NUM_FILTER; value++)
+    for (int value = 4; value < 16; value++)
     {
         if (opt.filter[value])
         {
@@ -160,14 +160,14 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
 
     /* Add logic here for testing performance of your new primitive*/
     int rand_height = rand() % 100;             // Randomly generated Height
-    int rand_width =  rand() % 100;              // Randomly generated Width
+    int rand_width = rand() % 100;              // Randomly generated Width
     short rand_val, rand_srcStride, rand_dstStride;
 
     rand_val = rand() % 24;                     // Random offset in the filter
     rand_srcStride = rand() % 100;              // Randomly generated srcStride
     rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-    for (int value = 0; value < NUM_FILTER; value++)
+    for (int value = 4; value < 16; value++)
     {
         memset(IPF_vec_output, 0, ipf_t_size);  // Initialize output buffer to zero
         memset(IPF_C_output, 0, ipf_t_size);    // Initialize output buffer to zero
