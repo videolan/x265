@@ -121,83 +121,26 @@ int CDECL satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stri
     return (((sum_t)sum) + (sum >> BITS_PER_SUM)) >> 1;
 }
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant (yes, deliberately)
-#endif
-// handles all partitions up to 16x16
-template<int w, int h, x265::pixelcmp sub>
-int CDECL satd(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    int sum = sub(pix1, stride_pix1, pix2, stride_pix2)
-        + sub(pix1 + 4 * stride_pix1, stride_pix1, pix2 + 4 * stride_pix2, stride_pix2);
-
-    if (w == 16)
-        sum += sub(pix1 + 8, stride_pix1, pix2 + 8, stride_pix2)
-            + sub(pix1 + 8 + 4 * stride_pix1, stride_pix1, pix2 + 8 + 4 * stride_pix2, stride_pix2);
-
-    if (h == 16)
-        sum += sub(pix1 + 8 * stride_pix1, stride_pix1, pix2 + 8 * stride_pix2, stride_pix2)
-            + sub(pix1 + 12 * stride_pix1, stride_pix1, pix2 + 12 * stride_pix2, stride_pix2);
-
-    if (w == 16 && h == 16)
-        sum += sub(pix1 + 8 + 8 * stride_pix1, stride_pix1, pix2 + 8 + 8 * stride_pix2, stride_pix2)
-            + sub(pix1 + 8 + 12 * stride_pix1, stride_pix1, pix2 + 8 + 12 * stride_pix2, stride_pix2);
-
-    return sum;
-}
-
-int CDECL satd_4x32(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    return satd_4x4(pix1, stride_pix1, pix2, stride_pix2) +
-           satd_4x4(pix1 + 4 * stride_pix1, stride_pix1, pix2 + 4 * stride_pix2, stride_pix2) +
-           satd_4x4(pix1 + 8 * stride_pix1, stride_pix1, pix2 + 8 * stride_pix2, stride_pix2) +
-           satd_4x4(pix1 + 12 * stride_pix1, stride_pix1, pix2 + 12 * stride_pix2, stride_pix2) +
-           satd_4x4(pix1 + 16 * stride_pix1, stride_pix1, pix2 + 16 * stride_pix2, stride_pix2) +
-           satd_4x4(pix1 + 24 * stride_pix1, stride_pix1, pix2 + 24 * stride_pix2, stride_pix2) +
-           satd_4x4(pix1 + 28 * stride_pix1, stride_pix1, pix2 + 28 * stride_pix2, stride_pix2);
-}
-
-int CDECL satd_32x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    return satd_8x4(pix1, stride_pix1, pix2, stride_pix2) +
-           satd_8x4(pix1 + 8, stride_pix1, pix2 + 8, stride_pix2) +
-           satd_8x4(pix1 + 16, stride_pix1, pix2 + 16, stride_pix2) +
-           satd_8x4(pix1 + 24, stride_pix1, pix2 + 24, stride_pix2);
-}
-
-int CDECL satd_32x8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    return satd_32x4(pix1, stride_pix1, pix2, stride_pix2) +
-           satd_32x4(pix1 + 4 * stride_pix1, stride_pix1, pix2 + 4 * stride_pix2, stride_pix2);
-}
-
-int CDECL satd_8x32(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    return satd_8x4(pix1, stride_pix1, pix2, stride_pix2) +
-           satd_8x4(pix1 + 4 * stride_pix1, stride_pix1, pix2 + 4 * stride_pix2, stride_pix2) +
-           satd_8x4(pix1 + 8 * stride_pix1, stride_pix1, pix2 + 8 * stride_pix2, stride_pix2) +
-           satd_8x4(pix1 + 12 * stride_pix1, stride_pix1, pix2 + 12 * stride_pix2, stride_pix2) +
-           satd_8x4(pix1 + 16 * stride_pix1, stride_pix1, pix2 + 16 * stride_pix2, stride_pix2) +
-           satd_8x4(pix1 + 24 * stride_pix1, stride_pix1, pix2 + 24 * stride_pix2, stride_pix2) +
-           satd_8x4(pix1 + 28 * stride_pix1, stride_pix1, pix2 + 28 * stride_pix2, stride_pix2);
-}
-
-// Handles partitions that are multiples of 16x16
 template<int w, int h>
-int CDECL satd32(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
-    int sum = satd<16, 16, satd_8x4>(pix1, stride_pix1, pix2, stride_pix2);
+    int satd = 0;
+    for (int row = 0; row < h; row += 4)
+        for (int col = 0; col < w; col += 4)
+            satd += satd_4x4(pix1 + row * stride_pix1 + col, stride_pix1,
+                             pix2 + row * stride_pix2 + col, stride_pix2);
+    return satd;
+}
 
-    if (w == 32)
-        sum += satd<16, 16, satd_8x4>(pix1 + 16, stride_pix1, pix2 + 16, stride_pix2);
-
-    if (h == 32)
-        sum += satd<16, 16, satd_8x4>(pix1 + 16 * stride_pix1, stride_pix1, pix2 + 16 * stride_pix2, stride_pix2);
-
-    if (w == 32 && h == 32)
-        sum += satd<16, 16, satd_8x4>(pix1 + 16 + 16 * stride_pix1, stride_pix1, pix2 + 16 + 16 * stride_pix2, stride_pix2);
-
-    return sum;
+template<int w, int h>
+int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+{
+    int satd = 0;
+    for (int row = 0; row < h; row += 4)
+        for (int col = 0; col < w; col += 8)
+            satd += satd_8x4(pix1 + row * stride_pix1 + col, stride_pix1,
+                             pix2 + row * stride_pix2 + col, stride_pix2);
+    return satd;
 }
 
 int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
@@ -277,10 +220,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_16x32] = sad<16, 32>;
     p.sad[PARTITION_32x16] = sad<32, 16>;
     p.sad[PARTITION_32x32] = sad<32, 32>;
-    p.sad[PARTITION_64x4] = sad<64, 4>;
-    p.sad[PARTITION_4x64] = sad<4, 64>;
-    p.sad[PARTITION_64x8] = sad<64, 8>;
-    p.sad[PARTITION_8x64] = sad<8, 64>;
+    p.sad[PARTITION_64x4]  = sad<64, 4>;
+    p.sad[PARTITION_4x64]  = sad<4, 64>;
+    p.sad[PARTITION_64x8]  = sad<64, 8>;
+    p.sad[PARTITION_8x64]  = sad<8, 64>;
     p.sad[PARTITION_16x64] = sad<16, 64>;
     p.sad[PARTITION_64x16] = sad<64, 16>;
     p.sad[PARTITION_32x64] = sad<32, 64>;
@@ -289,20 +232,20 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_8x4]   = satd_8x4;
-    p.satd[PARTITION_4x8]   = satd<4, 8, satd_4x4>;
-    p.satd[PARTITION_8x8]   = satd<8, 8, satd_8x4>;
-    p.satd[PARTITION_16x4]  = satd<16, 4, satd_8x4>;
-    p.satd[PARTITION_4x16]  = satd<4, 16, satd_4x4>;
-    p.satd[PARTITION_8x16]  = satd<8, 16, satd_8x4>;
-    p.satd[PARTITION_16x8]  = satd<16, 8, satd_8x4>;
-    p.satd[PARTITION_16x16] = satd<16, 16, satd_8x4>;
-    p.satd[PARTITION_4x32]  = satd_4x32;
-    p.satd[PARTITION_32x4]  = satd_32x4;
-    p.satd[PARTITION_8x32]  = satd_8x32;
-    p.satd[PARTITION_32x8]  = satd_32x8;
-    p.satd[PARTITION_16x32] = satd32<16, 32>;
-    p.satd[PARTITION_32x16] = satd32<32, 16>;
-    p.satd[PARTITION_32x32] = satd32<32, 32>;
+    p.satd[PARTITION_4x8]   = satd4<4, 8>;
+    p.satd[PARTITION_8x8]   = satd8<8, 8>;
+    p.satd[PARTITION_16x4]  = satd8<16, 4>;
+    p.satd[PARTITION_4x16]  = satd4<4, 16>;
+    p.satd[PARTITION_8x16]  = satd8<8, 16>;
+    p.satd[PARTITION_16x8]  = satd8<16, 8>;
+    p.satd[PARTITION_16x16] = satd8<16, 16>;
+    p.satd[PARTITION_4x32]  = satd4<4, 32>;
+    p.satd[PARTITION_32x4]  = satd8<32, 4>;
+    p.satd[PARTITION_8x32]  = satd8<8, 32>;
+    p.satd[PARTITION_32x8]  = satd8<32, 8>;
+    p.satd[PARTITION_16x32] = satd8<16, 32>;
+    p.satd[PARTITION_32x16] = satd8<32, 16>;
+    p.satd[PARTITION_32x32] = satd8<32, 32>;
 
     p.sa8d_8x8 = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;
