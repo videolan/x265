@@ -36,7 +36,7 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if HIGH_BIT_DEPTH && defined(_WIN32)
+#if HIGH_BIT_DEPTH && defined(_MSC_VER)
     // This is not linking properly yet
     if (cpuid > 0)
         p.sa8d_16x16 = p.sa8d_16x16; // placeholder to prevent warnings

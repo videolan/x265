@@ -11,7 +11,7 @@ else()
     if(X64)
         set(CMAKE_ASM${ASM_DIALECT}_COMPILER_ARG1 "-f win64 -DARCH_X86_64=1 -m amd64")
     else()
-        set(CMAKE_ASM${ASM_DIALECT}_COMPILER_ARG1 "-f win32 -DARCH_X86_64=0")
+        set(CMAKE_ASM${ASM_DIALECT}_COMPILER_ARG1 "-f win32 -DARCH_X86_64=0 -DPREFIX")
     endif()
 endif()
 
