@@ -26,18 +26,20 @@
 
 using namespace x265;
 
+#define Y4M_FRAME_MAGIC 5 // "FRAME"
+
 Y4MInput::Y4MInput(const char *filename)
 {
     fp = fopen(filename, "rb");
-    allocBuf();
-
     if (fp)
         parseHeader();
+    buf = new uint8_t[3 * width * height / 2];
 }
 
 Y4MInput::~Y4MInput()
 {
     if (fp) fclose(fp);
+    if (buf) delete[] buf;
 }
 
 #if _MSC_VER
@@ -50,7 +52,6 @@ void Y4MInput::parseHeader()
     Int t_height = 0;
     Int t_rateNumerator = 0;
     Int t_rateDenominator = 0;
-    size_t b_error;
 
     while (1)
     {
@@ -58,9 +59,7 @@ void Y4MInput::parseHeader()
 
         while ((source[0] != 0x20) && (source[0] != 0x0a))
         {
-            b_error = fread(&source[0], 1, 1, fp);
-            //headerLength++;
-            if (b_error)
+            if (fread(&source[0], 1, 1, fp) == 0)
             {
                 break;
             }
@@ -73,10 +72,8 @@ void Y4MInput::parseHeader()
 
         while (source[0] == 0x20)
         {
-            //  read parameter identifier
-
+            // read parameter identifier
             fread(&source[1], 1, 1, fp);
-            //headerLength++;
             if (source[1] == 'W')
             {
                 t_width = 0;
@@ -185,87 +182,42 @@ void Y4MInput::parseHeader()
 
 int  Y4MInput::guessFrameCount() const
 {
+    /* TODO: Get file size, subtract file header, divide by (framesize+frameheader) */
     return 0;
 }
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    if (!numFrames)
-        return;
-
-    //TODO : Assuming fileBitDepthY = fileBitDepthC
-
-    const std::streamoff framesize = 1 * width * height * 3 / 2;
-    const std::streamoff offset = framesize * numFrames;
-
-    /* attempt to seek */
-    if (!!fseek(fp, offset, SEEK_CUR))
-        return; /* success */
-
-    //TODO : clear file pointer
-    //yuv_handler->m_cHandle.clear();
-
-    /* fall back to consuming the input */
-    Char buf[512];
-    const UInt offset_mod_bufsize = offset % sizeof(buf);
-    for (std::streamoff i = 0; i < offset - offset_mod_bufsize; i += sizeof(buf))
-    {
-        fread(buf, sizeof(buf), 1, fp);
-    }
-
-    fread(buf, offset_mod_bufsize, 1, fp);
-}
-
-static bool readPlane(Pel* dst, FILE* fp, int width, int height)
-{
-    Int read_len = width;
-
-    UChar *buf = new UChar[read_len];
-
-    for (Int y = 0; y < height; y++)
-    {
-        fread(reinterpret_cast<Char*>(buf), read_len, 1, fp);
-        if (feof(fp))
-        {
-            delete[] buf;
-            return false;
-        }
-
-        for (Int x = 0; x < width; x++)
-        {
-            dst[y * width + x] = buf[x];
-        }
-    }
-
-    delete[] buf;
-    return true;
+    Picture pic;
+    for (int i = 0; i < numFrames; i++)
+        readPicture(pic);
 }
 
 bool Y4MInput::readPicture(Picture& pic)
 {
-    /*stripe off the FRAME header */
-    char byte[1];
-    Int cur_pointer = ftell(fp);
-
-    cur_pointer += Y4M_FRAME_MAGIC;
-    fseek(fp, cur_pointer, SEEK_SET);
-
-    while (1)
+    /* strip off the FRAME header */
+    char header[Y4M_FRAME_MAGIC];
+    if (fread(&header, 1, sizeof(header), fp) < sizeof(header))
+        return false;
+    if (!strncmp(header, "FRAME", Y4M_FRAME_MAGIC))
     {
-        byte[0] = 0;
-        fread(byte, sizeof(char), 1, fp);
-        if (isEof() || isFail())
-        {
-            break;
-        }
-
-        while (*byte != 0x0a)
-        {
-            fread(byte, sizeof(char), 1, fp);
-        }
-
-        break;
+        fprintf(stderr, "Y4M frame header missing\n");
+        return false;
     }
+
+    /* consume bytes up to line feed */
+    char byte;
+    do
+    {
+        if (fread(&byte, 1, 1, fp) == 0)
+        {
+            fprintf(stderr, "Y4M frame header incomplete\n");
+            return false;
+        }
+    }
+    while (byte != '\n');
+
+    const size_t count = width * height * 3 / 2;
 
     pic.planes[0] = buf;
 
@@ -273,25 +225,9 @@ bool Y4MInput::readPicture(Picture& pic)
 
     pic.planes[2] = buf + ((width * height) + ((width >> 1) * (height >> 1)));
 
-    //TODO : need to cahnge stride based on conformance  mode
-
-    pic.stride[0] = width + (LumaMarginX << 1);
+    pic.stride[0] = width;
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    if (!readPlane((Pel*)pic.planes[0], fp, width, height))
-        return false;
-
-    if (!readPlane((Pel*)pic.planes[1], fp, width >> 1, height >> 1))
-        return false;
-
-    if (!readPlane((Pel*)pic.planes[2], fp, width >> 1, height >> 1))
-        return false;
-
-    return true;
-}
-
-void Y4MInput::allocBuf()
-{
-    buf = new Pel[2 * width * height];
+    return fread(buf, 1, count, fp) == count;
 }

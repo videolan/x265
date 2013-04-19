@@ -58,19 +58,11 @@ public:
 
     virtual void setBitDepth(int bitDepth) = 0;
 
-    virtual void setLumaMarginX(int lumamarginX) = 0;
-
-    virtual void allocBuf()  = 0;
-
     virtual float getRate() const = 0;
 
     virtual int getWidth() const = 0;
 
     virtual int getHeight() const = 0;
-
-    virtual int getBitDepth() const = 0;
-
-    virtual Pel* getBuf() const = 0;
 
     virtual void release() = 0;
 

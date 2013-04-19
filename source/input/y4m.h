@@ -26,9 +26,9 @@
 
 #include "input.h"
 #include <stdio.h>
+#include <stdint.h>
 
 namespace x265 {
-#define Y4M_FRAME_MAGIC 5 //"FRAME"
 
 class Y4MInput : public Input
 {
@@ -42,9 +42,7 @@ protected:
 
     int height;
 
-    int LumaMarginX;
-
-    Pel* buf;
+    uint8_t* buf;
 
     FILE* fp;
 
@@ -64,8 +62,6 @@ public:
 
     void setBitDepth(int bitDepth)                { /* ignore, warn */ }
 
-    void setLumaMarginX(int lumamarginX)          { LumaMarginX = lumamarginX;}
-
     float getRate() const                         { return ((float)rateNum) / rateDenom;}
 
     int getWidth() const                          { return width;}
@@ -74,17 +70,7 @@ public:
 
     int getBitDepth() const                       { return 8;}
 
-    virtual Pel* getBuf() const                   { return buf;}
-
-    void allocBuf();                // set the char buffer to store raw data from file.
-
-    bool isEof() const
-    {
-        if (feof(fp))
-            return true;
-
-        return false;
-    }
+    bool isEof() const                            { return !!feof(fp);}
 
     bool isFail() const                           { return !!fp;}
 
