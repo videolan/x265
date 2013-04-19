@@ -40,6 +40,9 @@ Y4MInput::~Y4MInput()
     if (fp) fclose(fp);
 }
 
+#if _MSC_VER
+#pragma warning(disable: 4127)
+#endif
 void Y4MInput::parseHeader()
 {
     Char source[5];
@@ -47,7 +50,6 @@ void Y4MInput::parseHeader()
     Int t_height = 0;
     Int t_rateNumerator = 0;
     Int t_rateDenominator = 0;
-    //Int headerLength = 0 ;
     size_t b_error;
 
     while (1)

@@ -78,13 +78,13 @@ void YUVInput::skipFrames(int numFrames)
 
 static bool readPlane(Pel* dst, FILE* fp, int width, int height, Bool is16bit)
 {
-    Int b_error = 0;
+    size_t numread;
     Int read_len = width * (is16bit ? 2 : 1);
     UChar *buf = new UChar[read_len];
 
     for (Int y = 0; y < height; y++)
     {
-        b_error = fread(reinterpret_cast<Char*>(buf), 1, read_len, fp);
+        numread = fread(reinterpret_cast<Char*>(buf), 1, read_len, fp);
 
         if (feof(fp))
         {
