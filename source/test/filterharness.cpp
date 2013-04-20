@@ -71,7 +71,7 @@ const char *FilterConf_names[] =
 FilterHarness::FilterHarness()
 {
     ipf_t_size = 200 * 200;
-    pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    pixel_buff = (short*)malloc(ipf_t_size * sizeof(short));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
     IPF_vec_output = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
     IPF_C_output = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
 
@@ -114,7 +114,7 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
         opt((short*)(m_lumaFilter[rand_val]),
             pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
-            (pixel*)IPF_vec_output,
+            IPF_vec_output,
             rand_dstStride,
             rand_height,
             rand_width,
@@ -122,7 +122,7 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
         ref((short*)(m_lumaFilter[rand_val]),
             pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
-            (pixel*)IPF_C_output,
+            IPF_C_output,
             rand_dstStride,
             rand_height,
             rand_width,
@@ -177,7 +177,7 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
             for (int j = 0; j < FILTER_ITERATIONS; j++)
             {
                 opt.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
-                                  (pixel*)IPF_vec_output,
+                                  IPF_vec_output,
                                   rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 
@@ -188,7 +188,7 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
             for (int j = 0; j < FILTER_ITERATIONS; j++)
             {
                 ref.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
-                                  (pixel*)IPF_vec_output,
+                                  IPF_vec_output,
                                   rand_dstStride, rand_height, rand_width, BIT_DEPTH);
             }
 

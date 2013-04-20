@@ -63,9 +63,9 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
 
 template<int N, bool isFirst, bool isLast>
 void CDECL filter_8_nonvertical(const short *coeff,
-                                pixel *      src,
+                                short *      src,
                                 int          srcStride,
-                                pixel *      dst,
+                                short *      dst,
                                 int          dstStride,
                                 int          block_width,
                                 int          block_height,
@@ -157,9 +157,9 @@ void CDECL filter_8_nonvertical(const short *coeff,
 
 template<int N, int isFirst, int isLast>
 void CDECL filter_Vertical(const short *coeff,
-                           pixel *      src,
+                           short *      src,
                            int          srcStride,
-                           pixel *      dst,
+                           short *      dst,
                            int          dstStride,
                            int          block_width,
                            int          block_height,
