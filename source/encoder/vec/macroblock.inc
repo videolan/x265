@@ -78,7 +78,7 @@ void CDECL filter_Horizontal_8(const short *coeff,
     short *src_s = (short*)src;
     short *dst_s = (short*)dst;
 
-    src_s -= (8 / 2 - 1);     // Here N = 8 and cStride = 1
+    src_s -= (8 / 2 - 1);                                   // Here N = 8 and cStride = 1
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
@@ -97,16 +97,78 @@ void CDECL filter_Horizontal_8(const short *coeff,
         maxVal = 0;
     }
 
-    Vec8s vec_c, vec_src1;
+    Vec4i vec_sum_low, vec_sum_high;
+    Vec8s vec_src0, vec_sum, vec_c;
     vec_c.load(coeff);
-    int sum = 0;
+    Vec8s vec_c0(coeff[0]), vec_c1(coeff[1]), vec_c2(coeff[2]), vec_c3(coeff[3]), vec_c4(coeff[4]), vec_c5(coeff[5]), vec_c6(
+        coeff[6]), vec_c7(coeff[7]);
+    Vec4i vec_offset(offset);
+    Vec8s vec_maxVal(maxVal);
     for (row = 0; row < block_height; row++)
     {
-        for (col = 0; col < block_width; col++)
+        col = 0;
+        for (; col < (block_width - 7); col += 8)                   // Iterations multiple of 8
         {
-            vec_src1.load(src_s + col);
-            vec_src1 = vec_src1 * vec_c;            // Assuming that there is no overflow
-            sum = horizontal_add_x(vec_src1);
+            vec_src0.load(src_s + col);                         // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c0;                       // Multiply by c[0]
+            vec_sum_low = extend_low(vec_src0);                 // Convert to integer lower bits
+            vec_sum_high = extend_high(vec_src0);               // Convert to integer higher bits
+
+            vec_src0.load(src_s + col + 1);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c1;                       // Multiply by c[1]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 2);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c2;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 3);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c3;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 4);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c4;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 5);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c5;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 6);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c6;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_src0.load(src_s + col + 7);                     // Load the 8 elements
+            vec_src0 = vec_src0 * vec_c7;                       // Multiply by c[2]
+            vec_sum_low += extend_low(vec_src0);                // Add integer lower bits to sum_low bits
+            vec_sum_high += extend_high(vec_src0);              // Add integer higer bits to sum_high bits
+
+            vec_sum_low = (vec_sum_low + vec_offset);           // Add offset(value copied into all integer vector elements) to sum_low
+            vec_sum_high = (vec_sum_high + vec_offset);         // Add offset(value copied into all integer vector elements) to sum_high
+
+            vec_sum = compress(vec_sum_low, vec_sum_high);       // Save two integer vectors(Vec4i) to single short vector(Vec8s)
+            vec_sum = vec_sum >> shift;                         // This shift must be done after saving integer(two vec4i) data to short(Vec8s)
+
+            if (isLast)
+            {
+                vec_sum = max(vec_sum, 0);                      // (val < 0) ? 0 : val;
+                vec_sum = min(vec_sum, vec_maxVal);             // (val > maxVal) ? maxVal : val;
+            }
+
+            vec_sum.store(dst_s + col);                           // Store vector
+        }
+
+        for (; col < block_width; col++)                           // Remaining iterations
+        {
+            vec_src0.load(src_s + col);
+            vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
+            int sum = horizontal_add(vec_src0);
             short val = (short)(sum + offset) >> shift;
             if (isLast)
             {
@@ -897,10 +959,10 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
       p.filter[FILTER_H_4_1_0] = filter_Horizontal_4< 1, 0>;
       p.filter[FILTER_H_4_1_1] = filter_Horizontal_4< 1, 1>;*/
 
-    /* p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
-     p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
-     p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
-     p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;*/
+    p.filter[FILTER_H_8_0_0] = filter_Horizontal_8<0, 0>;
+    p.filter[FILTER_H_8_0_1] = filter_Horizontal_8<0, 1>;
+    p.filter[FILTER_H_8_1_0] = filter_Horizontal_8<1, 0>;
+    p.filter[FILTER_H_8_1_1] = filter_Horizontal_8<1, 1>;
 
     p.filter[FILTER_V_4_0_0] = filter_Vertical<4, 0, 0>;
     p.filter[FILTER_V_4_0_1] = filter_Vertical<4, 0, 1>;

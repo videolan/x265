@@ -140,7 +140,7 @@ void CDECL filter_8_nonvertical(const short *coeff,
                 sum += src[col + 7] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            short val = (short)(sum + offset) >> shift;
             if (isLast)
             {
                 val = (val < 0) ? 0 : val;
@@ -165,10 +165,11 @@ void CDECL filter_Vertical(const short *coeff,
                            int          block_height,
                            int          bitDepth)
 {
-    short * srcShort = (short*) src;
-    short * dstShort = (short*) dst;
-    
+    short * srcShort = (short*)src;
+    short * dstShort = (short*)dst;
+
     int cStride = srcStride;
+
     srcShort -= (N / 2 - 1) * cStride;
 
     int offset;
@@ -361,10 +362,10 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
+    /*p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
     p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
     p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
-    p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;
+    p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;*/
 
     p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
     p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
