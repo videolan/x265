@@ -59,7 +59,7 @@ class TComInterpolationFilter
     static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
     static Void filterCopy(Int        bitDepth,
-                           const Short *src,
+                           Short *    src,
                            Int        srcStride,
                            Short *    dst,
                            Int        dstStride,
@@ -70,7 +70,7 @@ class TComInterpolationFilter
 
     template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
     static Void filter(Int          bitDepth,
-                       Short const *  src,
+                       Short *      src,
                        Int          srcStride,
                        Short *      dst,
                        Int          dstStride,

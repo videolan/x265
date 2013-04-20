@@ -66,9 +66,9 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
 
 template<bool isFirst, bool isLast>
 void CDECL filter_Horizontal_8(const short *coeff,
-                               pixel *      src,
+                               short *      src,
                                int          srcStride,
-                               pixel *      dst,
+                               short *      dst,
                                int          dstStride,
                                int          block_width,
                                int          block_height,
@@ -127,7 +127,7 @@ void CDECL filter_Horizontal_8(const short *coeff,
     This assumes isFirst=isLast=1.
 */
 template<int N>
-void CDECL filter_Vertical_16bit(const short *coeff, pixel *src, int srcStride, pixel *dst, int dststride, int block_width,
+void CDECL filter_Vertical_16bit(const short *coeff, short *src, int srcStride, short *dst, int dststride, int block_width,
                                  int block_height, int bitDepth)
 {
     int row, col;
@@ -248,7 +248,7 @@ void CDECL filter_Vertical_16bit(const short *coeff, pixel *src, int srcStride, 
 }
 
 template<int N, bool isFirst, bool isLast>
-void cdecl filter_Vertical(const short *coeff, pixel *src, int srcstride, pixel *dst, int dststride, int block_width,
+void cdecl filter_Vertical(const short *coeff, short *src, int srcstride, short *dst, int dststride, int block_width,
                            int block_height, int bitdepth)
 {
     int row, col;

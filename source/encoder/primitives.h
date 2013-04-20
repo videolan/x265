@@ -131,7 +131,7 @@ int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
-typedef void (CDECL * IPFilter)(const short *coeff, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width,
+typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width,
                                 int block_height, int bitDepth);
 typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
 
