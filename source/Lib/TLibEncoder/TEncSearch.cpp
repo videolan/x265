@@ -39,6 +39,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TEncSearch.h"
+#include "primitives.h"
 #include <math.h>
 
 //! \ingroup TLibEncoder
@@ -341,6 +342,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern*       pcPatternKey,
     // distortion
     m_cDistParam.bitDepth = g_bitDepthY;
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+    x264_cpu_emms();
 
     // motion cost
     uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
@@ -806,6 +808,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
         m_cDistParam.pCur = piRefPos;
         m_cDistParam.bitDepth = g_bitDepthY;
         uiDist = m_cDistParam.DistFunc(&m_cDistParam);
+        x264_cpu_emms();
         uiDist += m_pcRdCost->getCost(cMvTest.getHor(), cMvTest.getVer());
 
         if (uiDist < uiDistBest)
@@ -3329,6 +3332,7 @@ Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, I
                              iWidth, iHeight, m_pcEncCfg->getUseHADME());
 #endif
     ruiErr = cDistParam.DistFunc(&cDistParam);
+    x264_cpu_emms();
 }
 
 /** estimation of best merge coding
@@ -4592,6 +4596,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
                              iSizeX, iSizeY, m_pcEncCfg->getUseHADME());
 #endif
     ruiDist = cDistParam.DistFunc(&cDistParam);
+    x264_cpu_emms();
     uiCost = ruiDist + m_pcRdCost->getCost(m_auiMVPIdxCost[iMVPIdx][iMVPNum]);
 #else // if ZERO_MVD_EST
 #if WEIGHTED_CHROMA_DISTORTION
@@ -4770,6 +4775,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey,
 
             m_cDistParam.bitDepth = g_bitDepthY;
             uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+            x264_cpu_emms();
 
             // motion cost
             uiSad += m_pcRdCost->getCost(x, y);
