@@ -639,12 +639,12 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu,
     }
     else
     {
-        Int tmpStride = m_filteredBlockTmp[0].getStride();
-        Pel *tmp    = m_filteredBlockTmp[0].getLumaAddr();
-
+        Int tmpStride = width; 
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
-
+        
+        Short *tmp    = (Short *) malloc(width * (height + filterSize - 1) * sizeof(Short));
+        
         m_if.filterHorLuma(ref - (halfFilterSize - 1) * refStride,
                            refStride,
                            tmp,
@@ -662,6 +662,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu,
                            yFrac,
                            false,
                            !bi);
+        free(tmp);
     }
 }
 
@@ -702,13 +703,12 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu,
     UInt    cxWidth  = width  >> 1;
     UInt    cxHeight = height >> 1;
 
-    Int     extStride = m_filteredBlockTmp[0].getStride();
-    Short*  extY      = m_filteredBlockTmp[0].getLumaAddr();
-
     Int filterSize = NTAPS_CHROMA;
-
     Int halfFilterSize = (filterSize >> 1);
 
+    Int     extStride = cxWidth; 
+    Short*  extY      = (Short *) malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
+    
     if (yFrac == 0)
     {
         m_if.filterHorChroma(refCb, refStride, dstCb,  dstStride, cxWidth, cxHeight, xFrac, !bi);
@@ -757,6 +757,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu,
                              false,
                              !bi);
     }
+    free(extY);
 }
 
 Void TComPrediction::xWeightedAverage(TComYuv*  pcYuvSrc0,
