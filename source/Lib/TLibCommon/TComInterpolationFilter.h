@@ -59,7 +59,7 @@ class TComInterpolationFilter
     static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
     static Void filterCopy(Int        bitDepth,
-                           const Pel *src,
+                           const Short *src,
                            Int        srcStride,
                            Short *    dst,
                            Int        dstStride,
@@ -70,7 +70,7 @@ class TComInterpolationFilter
 
     template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
     static Void filter(Int          bitDepth,
-                       Pel const *  src,
+                       Short const *  src,
                        Int          srcStride,
                        Short *      dst,
                        Int          dstStride,
@@ -80,7 +80,7 @@ class TComInterpolationFilter
 
     template<Int N>
     static Void filterHor(Int          bitDepth,
-                          Pel *        src,
+                          Short *        src,
                           Int          srcStride,
                           Short *      dst,
                           Int          dstStride,
@@ -90,7 +90,7 @@ class TComInterpolationFilter
                           Short const *coeff);
     template<Int N>
     static Void filterVer(Int          bitDepth,
-                          Pel *        src,
+                          Short *        src,
                           Int          srcStride,
                           Short *      dst,
                           Int          dstStride,
@@ -106,7 +106,7 @@ public:
 
     ~TComInterpolationFilter() {}
 
-    Void filterHorLuma(Pel *  src,
+    Void filterHorLuma(Short *  src,
                        Int    srcStride,
                        Short *dst,
                        Int    dstStride,
@@ -114,7 +114,7 @@ public:
                        Int    height,
                        Int    frac,
                        Bool   isLast);
-    Void filterVerLuma(Pel *  src,
+    Void filterVerLuma(Short *  src,
                        Int    srcStride,
                        Short *dst,
                        Int    dstStride,
@@ -123,7 +123,7 @@ public:
                        Int    frac,
                        Bool   isFirst,
                        Bool   isLast);
-    Void filterHorChroma(Pel *  src,
+    Void filterHorChroma(Short *  src,
                          Int    srcStride,
                          Short *dst,
                          Int    dstStride,
@@ -131,7 +131,7 @@ public:
                          Int    height,
                          Int    frac,
                          Bool   isLast);
-    Void filterVerChroma(Pel *  src,
+    Void filterVerChroma(Short *  src,
                          Int    srcStride,
                          Short *dst,
                          Int    dstStride,
