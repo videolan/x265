@@ -329,19 +329,15 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
         dst[24 * line] = (short)((g_aiT32[24][0] * EEEO[0] + g_aiT32[24][1] * EEEO[1] + add) >> shift);
         for (k = 4; k < 32; k += 8)
         {
-            dst[k *
-                line] =
-                (short)((g_aiT32[k][0] * EEO[0] + g_aiT32[k][1] * EEO[1] + g_aiT32[k][2] * EEO[2] + g_aiT32[k][3] * EEO[3] +
-                         add) >> shift);
+            dst[k * line] = (short)((g_aiT32[k][0] * EEO[0] + g_aiT32[k][1] * EEO[1] + g_aiT32[k][2] * EEO[2] +
+                                     g_aiT32[k][3] * EEO[3] + add) >> shift);
         }
 
         for (k = 2; k < 32; k += 4)
         {
-            dst[k *
-                line] = (short)((g_aiT32[k][0] * EO[0] + g_aiT32[k][1] * EO[1] + g_aiT32[k][2] * EO[2] + g_aiT32[k][3] * EO[3] +
-                                 g_aiT32[k][4] * EO[4] + g_aiT32[k][5] * EO[5] + g_aiT32[k][6] * EO[6] + g_aiT32[k][7] *
-                                 EO[7] +
-                                 add) >> shift);
+            dst[k * line] = (short)((g_aiT32[k][0] * EO[0] + g_aiT32[k][1] * EO[1] + g_aiT32[k][2] * EO[2] +
+                                     g_aiT32[k][3] * EO[3] + g_aiT32[k][4] * EO[4] + g_aiT32[k][5] * EO[5] +
+                                     g_aiT32[k][6] * EO[6] + g_aiT32[k][7] * EO[7] + add) >> shift);
         }
 
         for (k = 1; k < 32; k += 2)
