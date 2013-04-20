@@ -95,7 +95,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid >= 2)
     {
         p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_sse2;
-        p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse2;
+        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse2;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_sse2;
         p.sad[PARTITION_16x16] = x264_pixel_sad_16x16_sse2;
         p.sad[PARTITION_16x8]  = x264_pixel_sad_16x8_sse2;
@@ -109,13 +109,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 3)
     {
-        p.sa8d_8x8 = x264_pixel_sa8d_8x8_ssse3;
+        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_ssse3;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_ssse3;
     }
     if (cpuid >= 4)
     {
         p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_sse4;
-        p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse4;
+        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse4;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_sse4;
     }
     if (cpuid == 7)
