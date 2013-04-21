@@ -65,7 +65,7 @@ public:
     virtual Void        writeAlignZero() {}
 
     virtual Void        write(UInt uiBits, UInt uiNumberOfBits)  = 0;
-    virtual Void        resetBits()                                    = 0;
+    virtual Void        resetBits() = 0;
     virtual UInt getNumberOfWrittenBits() const = 0;
     virtual ~TComBitIf() {}
 };
@@ -156,7 +156,7 @@ public:
     /** Return a reference to the internal fifo */
     std::vector<uint8_t>& getFIFO() const { return *m_fifo; }
 
-    Void          addSubstream(TComOutputBitstream* pcSubstream);
+    Void          addSubstream    (TComOutputBitstream* pcSubstream);
     Void writeByteAlignment();
 
     //! returns the number of start code emulations contained in the current buffer
@@ -191,15 +191,15 @@ public:
     ~TComInputBitstream();
 
     // interface for decoding
-    Void        pseudoRead(UInt uiNumberOfBits, UInt& ruiBits);
-    Void        read(UInt uiNumberOfBits, UInt& ruiBits);
+    Void        pseudoRead      (UInt uiNumberOfBits, UInt& ruiBits);
+    Void        read            (UInt uiNumberOfBits, UInt& ruiBits);
     Void        readByte(UInt &ruiBits)
     {
         assert(m_fifo_idx < m_fifo->size());
         ruiBits = (*m_fifo)[m_fifo_idx++];
     }
 
-    Void        readOutTrailingBits();
+    Void        readOutTrailingBits ();
     UChar getHeldBits()          { return m_held_bits; }
 
     TComOutputBitstream& operator =(const TComOutputBitstream& src);
@@ -223,17 +223,17 @@ public:
 
     Void readByteAlignment();
 
-    Void      pushEmulationPreventionByteLocation(UInt pos)                  { m_emulationPreventionByteLocation.push_back(pos); }
+    Void      pushEmulationPreventionByteLocation(UInt pos)                { m_emulationPreventionByteLocation.push_back(pos); }
 
-    UInt      numEmulationPreventionBytesRead()                            { return (UInt)m_emulationPreventionByteLocation.size(); }
+    UInt      numEmulationPreventionBytesRead()                            { return (UInt)m_emulationPreventionByteLocation.size();    }
 
-    std::vector<UInt>  getEmulationPreventionByteLocation()                   { return m_emulationPreventionByteLocation; }
+    std::vector<UInt>  getEmulationPreventionByteLocation()                { return m_emulationPreventionByteLocation;           }
 
-    UInt      getEmulationPreventionByteLocation(UInt idx)                  { return m_emulationPreventionByteLocation[idx]; }
+    UInt      getEmulationPreventionByteLocation(UInt idx)                 { return m_emulationPreventionByteLocation[idx];    }
 
-    Void      clearEmulationPreventionByteLocation()                            { m_emulationPreventionByteLocation.clear(); }
+    Void      clearEmulationPreventionByteLocation()                       { m_emulationPreventionByteLocation.clear();          }
 
-    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec)     { m_emulationPreventionByteLocation = vec; }
+    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec)    { m_emulationPreventionByteLocation = vec;            }
 };
 
 //! \}

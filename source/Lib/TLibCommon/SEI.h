@@ -217,7 +217,6 @@ public:
         {
             delete m_numNalusInDuMinus1;
         }
-
         if (m_duCpbRemovalDelayMinus1  != NULL)
         {
             delete m_duCpbRemovalDelayMinus1;
@@ -451,7 +450,7 @@ SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
 /// delete list of SEI messages (freeing the referenced objects)
-Void deleteSEIs(SEIMessages &seiList);
+Void deleteSEIs (SEIMessages &seiList);
 
 #if K0180_SCALABLE_NESTING_SEI
 class SEIScalableNesting : public SEI

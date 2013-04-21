@@ -52,7 +52,6 @@ struct ParseFailure : public std::exception
     ~ParseFailure() throw() {}
 
     std::string arg;
-
     std::string val;
 
     const char* what() const throw() { return "Option Parse Failure"; }

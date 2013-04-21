@@ -60,13 +60,13 @@ public:
 
     ~ContextModel()                        {}
 
-    UChar getState()                { return m_ucState >> 1; }                         ///< get current state
+    UChar getState()                { return m_ucState >> 1;  }                       ///< get current state
 
-    UChar getMps()                { return m_ucState  & 1; }                           ///< get curret MPS
+    UChar getMps()                { return m_ucState  & 1;  }                         ///< get curret MPS
 
     Void  setStateAndMps(UChar ucState, UChar ucMPS) { m_ucState = (ucState << 1) + ucMPS; } ///< set state and MPS
 
-    Void init(Int qp, Int initValue);    ///< initialize state with initial probability
+    Void init (Int qp, Int initValue);   ///< initialize state with initial probability
 
     Void updateLPS()
     {
@@ -90,9 +90,9 @@ public:
     static Int getEntropyBitsTrm(Int val) { return m_entropyBits[126 ^ val]; }
 
 #endif
-    Void setBinsCoded(UInt val)   { m_binsCoded = val; }
+    Void setBinsCoded(UInt val)   { m_binsCoded = val;  }
 
-    UInt getBinsCoded()           { return m_binsCoded; }
+    UInt getBinsCoded()           { return m_binsCoded;   }
 
 private:
 

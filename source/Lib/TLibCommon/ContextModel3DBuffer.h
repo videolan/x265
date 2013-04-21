@@ -62,8 +62,6 @@ protected:
     const UInt    m_sizeXY;     ///< X times Y size of 3D buffer
     const UInt    m_sizeXYZ;    ///< total size of 3D buffer
 
-    ContextModel3DBuffer operator =(const ContextModel3DBuffer&);
-
 public:
 
     ContextModel3DBuffer(UInt uiSizeZ, UInt uiSizeY, UInt uiSizeX, ContextModel *basePtr, Int &count);
