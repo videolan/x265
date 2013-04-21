@@ -103,6 +103,21 @@ public:
         ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
         ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
     }
+    
+    Short*    getLumaAddr()    { return YBuf;}
+
+    Short*    getCbAddr()    { return CbBuf;}
+
+    Short*    getCrAddr()    { return CrBuf;}
+    
+    unsigned int    getHeight()    { return height;}
+
+    unsigned int    getWidth()    { return width;}
+
+    unsigned int    getCHeight()    { return Cheight;}
+
+    unsigned int    getCWidth()    { return Cwidth;}
+
 };
 
 
