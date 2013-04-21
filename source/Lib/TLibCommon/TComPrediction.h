@@ -132,9 +132,10 @@ protected:
 
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
-    TComYuv m_filteredBlock[4][4];
-    
-    TShortYUV filteredBlockTmp[4];
+    /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
+    TComYuv m_filteredBlock[4][4]; 
+    /*This holds intermediate values for filtering operations which need to maintain Short precision*/
+    TShortYUV filteredBlockTmp[4];//This 
 
     TComInterpolationFilter m_if;
 
