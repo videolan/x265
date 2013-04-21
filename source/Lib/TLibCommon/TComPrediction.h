@@ -53,6 +53,74 @@
 // Class definition
 // ====================================================================================================================
 
+//Defining a class with Short YUV storage for filtering operations
+class TShortYUV
+{
+private: 
+    short* YBuf;
+    short* CbBuf;
+    short* CrBuf;
+    
+    unsigned int width;
+    unsigned int height;
+    unsigned int Cwidth;
+    unsigned int Cheight;
+
+public:
+    TShortYUV()
+    {
+        YBuf = NULL;
+        CbBuf = NULL;
+        CrBuf = NULL;
+    }
+    
+    void create(unsigned int Width, unsigned int Height)
+    {
+        YBuf  = (short *)xMalloc(short, Width * Height);
+        CbBuf  = (short *)xMalloc(short, Width * Height >> 2);
+        CrBuf  = (short *)xMalloc(short, Width * Height >> 2);
+
+        // set width and height
+        width   = Width;
+        height  = Height;
+        Cwidth  = Width  >> 1;
+        Cheight = Height >> 1;
+    }
+
+    void destroy()
+    {
+        xFree(YBuf);
+        YBuf = NULL;
+        xFree(CbBuf);
+        CbBuf = NULL;
+        xFree(CrBuf);
+        CrBuf = NULL;
+    }
+
+    void clear()
+    {
+        ::memset(YBuf, 0, (width  * height) * sizeof(short));
+        ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
+        ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
+    }
+    
+    Short*    getLumaAddr()    { return YBuf;}
+
+    Short*    getCbAddr()    { return CbBuf;}
+
+    Short*    getCrAddr()    { return CrBuf;}
+    
+    unsigned int    getHeight()    { return height;}
+
+    unsigned int    getWidth()    { return width;}
+
+    unsigned int    getCHeight()    { return Cheight;}
+
+    unsigned int    getCWidth()    { return Cwidth;}
+
+};
+
+
 /// prediction class
 class TComPrediction : public TComWeightPrediction
 {
@@ -65,7 +133,8 @@ protected:
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
     TComYuv m_filteredBlock[4][4];
-    TComYuv m_filteredBlockTmp[4];
+    
+    TShortYUV filteredBlockTmp[4];
 
     TComInterpolationFilter m_if;
 
