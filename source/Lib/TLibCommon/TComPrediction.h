@@ -87,7 +87,7 @@ public:
         Cheight = height >> 1;
     }
 
-    void Destroy()
+    void destroy()
     {
         xFree(YBuf);
         YBuf = NULL;
@@ -119,6 +119,8 @@ protected:
     TComYuv   m_cYuvPredTemp;
     TComYuv m_filteredBlock[4][4];
     TComYuv m_filteredBlockTmp[4];
+    
+    TShortYUV filteredBlockTmp[4];
 
     TComInterpolationFilter m_if;
 

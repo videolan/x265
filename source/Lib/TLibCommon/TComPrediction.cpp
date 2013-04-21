@@ -75,6 +75,7 @@ TComPrediction::~TComPrediction()
         }
 
         m_filteredBlockTmp[i].destroy();
+        filteredBlockTmp[i].destroy();
     }
 }
 
@@ -88,6 +89,7 @@ Void TComPrediction::initTempBuff()
         for (i = 0; i < 4; i++)
         {
             m_filteredBlockTmp[i].create(extWidth, extHeight + 7);
+            filteredBlockTmp[i].create(extWidth, extHeight + 7);
             for (j = 0; j < 4; j++)
             {
                 m_filteredBlock[i][j].create(extWidth, extHeight);
