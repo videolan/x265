@@ -53,6 +53,59 @@
 // Class definition
 // ====================================================================================================================
 
+//Defining a class with Short YUV storage for filtering operations
+class TShortYUV
+{
+private: 
+    short* YBuf;
+    short* CbBuf;
+    short* CrBuf;
+    
+    unsigned int width;
+    unsigned int height;
+    unsigned int Cwidth;
+    unsigned int Cheight;
+
+public:
+    TShortYUV()
+    {
+        YBuf = NULL;
+        CbBuf = NULL;
+        CrBuf = NULL;
+    }
+    
+    void create(unsigned int width, unsigned int height)
+    {
+        YBuf  = (short *)xMalloc(short, width * height);
+        CbBuf  = (short *)xMalloc(short, width * height >> 2);
+        CrBuf  = (short *)xMalloc(short, width * height >> 2);
+
+        // set width and height
+        width   = width;
+        height  = height;
+        Cwidth  = width  >> 1;
+        Cheight = height >> 1;
+    }
+
+    void Destroy()
+    {
+        xFree(YBuf);
+        YBuf = NULL;
+        xFree(CbBuf);
+        CbBuf = NULL;
+        xFree(CrBuf);
+        CrBuf = NULL;
+    }
+
+    void clear()
+    {
+        ::memset(YBuf, 0, (width  * height) * sizeof(short));
+        ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
+        ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
+    }
+};
+
+
 /// prediction class
 class TComPrediction : public TComWeightPrediction
 {
