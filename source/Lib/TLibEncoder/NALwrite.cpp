@@ -44,9 +44,7 @@ using namespace std;
 //! \ingroup TLibEncoder
 //! \{
 
-static const Char emulation_prevention_three_byte[] = {
-3
-};
+static const Char emulation_prevention_three_byte[] = { 3 };
 
 Void writeNalUnitHeader(ostream& out, OutputNALUnit& nalu)       // nal_unit_header()
 {

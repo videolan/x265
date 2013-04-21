@@ -67,7 +67,7 @@ public:
     Int   m_iPatternStride;
 
     /// return starting position of buffer
-    Pel*  getPatternOrigin()        { return m_piPatternOrigin;}
+    Pel*  getPatternOrigin()        { return m_piPatternOrigin; }
 
     /// return starting position of ROI (ROI = &pattern[AboveOffset][LeftOffset])
     __inline Pel*  getROIOrigin()
@@ -107,13 +107,13 @@ private:
 public:
 
     // ROI & pattern information, (ROI = &pattern[AboveOffset][LeftOffset])
-    Pel*  getROIY()                 { return m_cPatternY.getROIOrigin();}
+    Pel*  getROIY()                 { return m_cPatternY.getROIOrigin(); }
 
-    Int   getROIYWidth()            { return m_cPatternY.m_iROIWidth;}
+    Int   getROIYWidth()            { return m_cPatternY.m_iROIWidth; }
 
-    Int   getROIYHeight()           { return m_cPatternY.m_iROIHeight;}
+    Int   getROIYHeight()           { return m_cPatternY.m_iROIHeight; }
 
-    Int   getPatternLStride()       { return m_cPatternY.m_iPatternStride;}
+    Int   getPatternLStride()       { return m_cPatternY.m_iPatternStride; }
 
     // access functions of ADI buffers
     Int*  getAdiOrgBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf);

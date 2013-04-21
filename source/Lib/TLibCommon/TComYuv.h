@@ -157,38 +157,38 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Access starting position of YUV buffer
-    Pel*    getLumaAddr()    { return m_apiBufY;}
+    Pel*    getLumaAddr()    { return m_apiBufY; }
 
-    Pel*    getCbAddr()    { return m_apiBufU;}
+    Pel*    getCbAddr()    { return m_apiBufU; }
 
-    Pel*    getCrAddr()    { return m_apiBufV;}
+    Pel*    getCrAddr()    { return m_apiBufV; }
 
     //  Access starting position of YUV partition unit buffer
-    Pel* getLumaAddr(UInt iPartUnitIdx) { return m_apiBufY +   getAddrOffset(iPartUnitIdx, m_iWidth);}
+    Pel* getLumaAddr(UInt iPartUnitIdx) { return m_apiBufY +   getAddrOffset(iPartUnitIdx, m_iWidth); }
 
-    Pel* getCbAddr(UInt iPartUnitIdx) { return m_apiBufU + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1);}
+    Pel* getCbAddr(UInt iPartUnitIdx) { return m_apiBufU + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1); }
 
-    Pel* getCrAddr(UInt iPartUnitIdx) { return m_apiBufV + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1);}
+    Pel* getCrAddr(UInt iPartUnitIdx) { return m_apiBufV + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
-    Pel* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_iWidth);}
+    Pel* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_iWidth); }
 
-    Pel* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufU + getAddrOffset(iTransUnitIdx, iBlkSize, m_iCWidth);}
+    Pel* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufU + getAddrOffset(iTransUnitIdx, iBlkSize, m_iCWidth); }
 
-    Pel* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_iCWidth);}
+    Pel* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_iCWidth); }
 
     //  Get stride value of YUV buffer
-    UInt    getStride()    { return m_iWidth;}
+    UInt    getStride()    { return m_iWidth; }
 
-    UInt    getCStride()    { return m_iCWidth;}
+    UInt    getCStride()    { return m_iCWidth; }
 
-    UInt    getHeight()    { return m_iHeight;}
+    UInt    getHeight()    { return m_iHeight; }
 
-    UInt    getWidth()    { return m_iWidth;}
+    UInt    getWidth()    { return m_iWidth; }
 
-    UInt    getCHeight()    { return m_iCHeight;}
+    UInt    getCHeight()    { return m_iCHeight; }
 
-    UInt    getCWidth()    { return m_iCWidth;}
+    UInt    getCWidth()    { return m_iCWidth; }
 }; // END CLASS DEFINITION TComYuv
 
 //! \}

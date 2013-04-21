@@ -159,18 +159,18 @@ public:
     Double  calcRdCost64(UInt64 uiBits, UInt64 uiDistortion, Bool bFlag = false, DFunc eDFunc = DF_DEFAULT);
 
 #if WEIGHTED_CHROMA_DISTORTION
-    Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = cbDistortionWeight;}
+    Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = cbDistortionWeight; }
 
-    Void    setCrDistortionWeight(Double crDistortionWeight) { m_crDistortionWeight = crDistortionWeight;}
+    Void    setCrDistortionWeight(Double crDistortionWeight) { m_crDistortionWeight = crDistortionWeight; }
 
 #endif
     Void    setLambda(Double dLambda);
-    Void    setFrameLambda(Double dLambda) { m_dFrameLambda = dLambda;}
+    Void    setFrameLambda(Double dLambda) { m_dFrameLambda = dLambda; }
 
-    Double  getSqrtLambda()   { return m_sqrtLambda;}
+    Double  getSqrtLambda()   { return m_sqrtLambda; }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
-    Double  getLambda() { return m_dLambda;}
+    Double  getLambda() { return m_dLambda; }
 
 #endif
 
@@ -223,7 +223,7 @@ public:
     Void    xUninit();
 #endif
     UInt    xGetComponentBits(Int iVal);
-    Void    getMotionCost(Bool bSad, Int iAdd) { m_uiCost = (bSad ? m_uiLambdaMotionSAD + iAdd : m_uiLambdaMotionSSE + iAdd);}
+    Void    getMotionCost(Bool bSad, Int iAdd) { m_uiCost = (bSad ? m_uiLambdaMotionSAD + iAdd : m_uiLambdaMotionSSE + iAdd); }
 
     Void    setPredictor(TComMv& rcMv)
     {
@@ -235,7 +235,7 @@ public:
 #endif
     }
 
-    Void    setCostScale(Int iCostScale)    { m_iCostScale = iCostScale;}
+    Void    setCostScale(Int iCostScale)    { m_iCostScale = iCostScale; }
 
     __inline UInt getCost(Int x, Int y)
     {
@@ -246,7 +246,7 @@ public:
 #endif
     }
 
-    UInt    getCost(UInt b)                 { return (m_uiCost * b) >> 16;}
+    UInt    getCost(UInt b)                 { return (m_uiCost * b) >> 16; }
 
     UInt    getBits(Int x, Int y)
     {

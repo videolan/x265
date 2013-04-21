@@ -142,21 +142,21 @@ public:
                       std::list<AccessUnit>& accessUnitsInGOP);
     Void  xAttachSliceDataToNalUnit(OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
-    Int   getGOPSize()          { return m_iGopSize;}
+    Int   getGOPSize()          { return m_iGopSize; }
 
-    TComList<TComPic*>*   getListPic()      { return m_pcListPic;}
+    TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
 
     Void  printOutSummary(UInt uiNumAllPicCoded);
     Void  preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits);
 
-    TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder;}
+    TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
 
     NalUnitType getNalUnitType(Int pocCurr);
     Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
 
 protected:
 
-    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;}
+    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl; }
 
 protected:
 

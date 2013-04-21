@@ -53,7 +53,7 @@ public:
     void Release()      { delete this; }
 };
 
-#else
+#else // if _WIN32
 
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -75,7 +75,7 @@ public:
     {
         x264_cpu_emms();
         return (finish.tv_sec - start.tv_sec) * 1000 +
-        (float)(finish.tv_usec - start.tv_usec) / 1000;
+               (float)(finish.tv_usec - start.tv_usec) / 1000;
     }
 
     void Release()      { delete this; }

@@ -154,13 +154,13 @@ public:
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
     Void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
     Void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
-    Void setSaoLcuBoundary(Bool bVal)  { m_saoLcuBoundary = bVal;}
+    Void setSaoLcuBoundary(Bool bVal)  { m_saoLcuBoundary = bVal; }
 
-    Bool getSaoLcuBoundary()           { return m_saoLcuBoundary;}
+    Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
 
-    Void setSaoLcuBasedOptimization(Bool bVal)  { m_saoLcuBasedOptimization = bVal;}
+    Void setSaoLcuBasedOptimization(Bool bVal)  { m_saoLcuBasedOptimization = bVal; }
 
-    Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization;}
+    Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
     Void resetSaoUnit(SaoLcuParam* saoUnit);
     Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);

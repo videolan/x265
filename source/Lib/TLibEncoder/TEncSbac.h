@@ -70,29 +70,29 @@ public:
     TEncSbac();
     virtual ~TEncSbac();
 
-    Void  init(TEncBinIf* p)  { m_pcBinIf = p;}
+    Void  init(TEncBinIf* p)  { m_pcBinIf = p; }
 
-    Void  uninit()                { m_pcBinIf = 0;}
+    Void  uninit()                { m_pcBinIf = 0; }
 
     //  Virtual list
     Void  resetEntropy();
     Void  determineCabacInitIdx();
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;m_pcBinIf->init(p);}
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p; m_pcBinIf->init(p); }
 
-    Void  setSlice(TComSlice* p)  { m_pcSlice = p;}
+    Void  setSlice(TComSlice* p)  { m_pcSlice = p; }
 
     // SBAC RD
-    Void  resetCoeffCost()                { m_uiCoeffCost = 0;}
+    Void  resetCoeffCost()                { m_uiCoeffCost = 0; }
 
-    UInt  getCoeffCost()                { return m_uiCoeffCost;}
+    UInt  getCoeffCost()                { return m_uiCoeffCost; }
 
     Void  load(TEncSbac* pScr);
     Void  loadIntraDirModeLuma(TEncSbac* pScr);
     Void  store(TEncSbac* pDest);
     Void  loadContexts(TEncSbac* pScr);
-    Void  resetBits()                { m_pcBinIf->resetBits();m_pcBitIf->resetBits();}
+    Void  resetBits()                { m_pcBinIf->resetBits(); m_pcBitIf->resetBits(); }
 
-    UInt  getNumberOfWrittenBits()                { return m_pcBinIf->getNumWrittenBits();}
+    UInt  getNumberOfWrittenBits()                { return m_pcBinIf->getNumWrittenBits(); }
 
     //--SBAC RD
 
@@ -108,7 +108,7 @@ public:
     Void  codeSaoTypeIdx(UInt uiCode);
     Void  codeSaoUflc(UInt uiLength, UInt  uiCode);
     Void  codeSAOSign(UInt uiCode);         //<! code SAO offset sign
-    Void  codeScalingList(TComScalingList* /*scalingList*/) { assert(0);}
+    Void  codeScalingList(TComScalingList* /*scalingList*/) { assert(0); }
 
 private:
 
@@ -191,9 +191,9 @@ public:
     Void estSignificantCoefficientsBit(estBitsSbacStruct* pcEstBitsSbac, TextType eTType);
 
     Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish = true);
-    Void updateContextTables(SliceType eSliceType, Int iQp) { this->updateContextTables(eSliceType, iQp, true);}
+    Void updateContextTables(SliceType eSliceType, Int iQp) { this->updateContextTables(eSliceType, iQp, true); }
 
-    TEncBinIf* getEncBinIf()  { return m_pcBinIf;}
+    TEncBinIf* getEncBinIf()  { return m_pcBinIf; }
 
 private:
 

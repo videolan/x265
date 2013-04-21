@@ -56,29 +56,31 @@
 //Defining a class with Short YUV storage for filtering operations
 class TShortYUV
 {
-private: 
+private:
+
     short* YBuf;
     short* CbBuf;
     short* CrBuf;
-    
+
     unsigned int width;
     unsigned int height;
     unsigned int Cwidth;
     unsigned int Cheight;
 
 public:
+
     TShortYUV()
     {
         YBuf = NULL;
         CbBuf = NULL;
         CrBuf = NULL;
     }
-    
+
     void create(unsigned int Width, unsigned int Height)
     {
-        YBuf  = (short *)xMalloc(short, Width * Height);
-        CbBuf  = (short *)xMalloc(short, Width * Height >> 2);
-        CrBuf  = (short *)xMalloc(short, Width * Height >> 2);
+        YBuf  = (short*)xMalloc(short, Width * Height);
+        CbBuf  = (short*)xMalloc(short, Width * Height >> 2);
+        CrBuf  = (short*)xMalloc(short, Width * Height >> 2);
 
         // set width and height
         width   = Width;
@@ -103,23 +105,21 @@ public:
         ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
         ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
     }
-    
-    Short*    getLumaAddr()    { return YBuf;}
 
-    Short*    getCbAddr()    { return CbBuf;}
+    Short*    getLumaAddr()    { return YBuf; }
 
-    Short*    getCrAddr()    { return CrBuf;}
-    
-    unsigned int    getHeight()    { return height;}
+    Short*    getCbAddr()    { return CbBuf; }
 
-    unsigned int    getWidth()    { return width;}
+    Short*    getCrAddr()    { return CrBuf; }
 
-    unsigned int    getCHeight()    { return Cheight;}
+    unsigned int    getHeight()    { return height; }
 
-    unsigned int    getCWidth()    { return Cwidth;}
+    unsigned int    getWidth()    { return width; }
 
+    unsigned int    getCHeight()    { return Cheight; }
+
+    unsigned int    getCWidth()    { return Cwidth; }
 };
-
 
 /// prediction class
 class TComPrediction : public TComWeightPrediction
@@ -133,7 +133,7 @@ protected:
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
     TComYuv m_filteredBlock[4][4];
-    
+
     TShortYUV filteredBlockTmp[4];
 
     TComInterpolationFilter m_if;
@@ -237,11 +237,11 @@ public:
 
     Pel  predIntraGetPredValDC(Int* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft);
 
-    Int* getPredicBuf()             { return m_piYuvExt;}
+    Int* getPredicBuf()             { return m_piYuvExt; }
 
-    Int  getPredicBufWidth()        { return m_iYuvExtStride;}
+    Int  getPredicBufWidth()        { return m_iYuvExtStride; }
 
-    Int  getPredicBufHeight()       { return m_iYuvExtHeight;}
+    Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
 };
 
 //! \}

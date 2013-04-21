@@ -121,10 +121,10 @@ public:
     /// CU encoding function
     Void  encodeCU(TComDataCU* pcCU);
 
-    Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter;}
+    Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter; }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
-    UInt getLCUPredictionSAD() { return m_LCUPredictionSAD;}
+    UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
 
 #endif
 
@@ -163,9 +163,9 @@ protected:
                        UInt        uiTPelY);
     Void  xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt uiDepth);
 
-    Bool getdQPFlag()                        { return m_bEncodeDQP;}
+    Bool getdQPFlag()                        { return m_bEncodeDQP; }
 
-    Void setdQPFlag(Bool b)                { m_bEncodeDQP = b;}
+    Void setdQPFlag(Bool b)                { m_bEncodeDQP = b; }
 
 #if ADAPTIVE_QP_SELECTION
     // Adaptive reconstruction level (ARL) statistics collection functions

@@ -131,11 +131,11 @@ Void TComPicYuv::destroy()
     m_piPicOrgU       = NULL;
     m_piPicOrgV       = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY);m_apiPicBufY = NULL;}
+    if (m_apiPicBufY) { xFree(m_apiPicBufY); m_apiPicBufY = NULL; }
 
-    if (m_apiPicBufU) { xFree(m_apiPicBufU);m_apiPicBufU = NULL;}
+    if (m_apiPicBufU) { xFree(m_apiPicBufU); m_apiPicBufU = NULL; }
 
-    if (m_apiPicBufV) { xFree(m_apiPicBufV);m_apiPicBufV = NULL;}
+    if (m_apiPicBufV) { xFree(m_apiPicBufV); m_apiPicBufV = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_cuOffsetC;
@@ -189,7 +189,7 @@ Void TComPicYuv::destroyLuma()
 {
     m_piPicOrgY       = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY);m_apiPicBufY = NULL;}
+    if (m_apiPicBufY) { xFree(m_apiPicBufY); m_apiPicBufY = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_buOffsetY;

@@ -55,18 +55,10 @@ using namespace x265;
 
 const Short TComInterpolationFilter::m_lumaFilter[4][NTAPS_LUMA] =
 {
-{
-    0, 0,   0, 64,  0,   0, 0,  0
-},
-{
-    -1, 4, -10, 58, 17,  -5, 1,  0
-},
-{
-    -1, 4, -11, 40, 40, -11, 4, -1
-},
-{
-    0, 1,  -5, 17, 58, -10, 4, -1
-}
+    {  0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    {  0, 1,  -5, 17, 58, -10, 4, -1 }
 };
 
 const Short TComInterpolationFilter::m_chromaFilter[8][NTAPS_CHROMA] =
@@ -196,29 +188,25 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
     {
         if (N == 8 && !isFirst && !isLast)
         {
-            primitives.filter[FILTER_H_8_0_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_H_8_0_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && !isFirst && isLast)
         {
-            primitives.filter[FILTER_H_8_0_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_H_8_0_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && !isLast)
         {
-            primitives.filter[FILTER_H_8_1_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_H_8_1_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && isLast)
         {
-            primitives.filter[FILTER_H_8_1_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_H_8_1_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
@@ -251,29 +239,25 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
     {
         if (N == 8 && !isFirst && !isLast)
         {
-            primitives.filter[FILTER_V_8_0_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_V_8_0_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && !isFirst && isLast)
         {
-            primitives.filter[FILTER_V_8_0_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_V_8_0_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && !isLast)
         {
-            primitives.filter[FILTER_V_8_1_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_V_8_1_0]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 
         if (N == 8 && isFirst && isLast)
         {
-            primitives.filter[FILTER_V_8_1_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height,
-                                              bitDepth);
+            primitives.filter[FILTER_V_8_1_1]((const short*)coeff, src, srcStride, dst, dstStride, width, height, bitDepth);
             return;
         }
 

@@ -49,5 +49,4 @@ void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
     Setup_Vec_PixelPrimitives(p);
     Setup_Vec_MacroblockPrimitives(p);
 }
-
 }

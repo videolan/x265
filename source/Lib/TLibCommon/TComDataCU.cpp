@@ -239,51 +239,51 @@ Void TComDataCU::destroy()
     // encoder-side buffer free
     if (!m_bDecSubCu)
     {
-        if (m_phQP) { xFree(m_phQP);m_phQP              = NULL;}
+        if (m_phQP) { xFree(m_phQP); m_phQP              = NULL; }
 
-        if (m_puhDepth) { xFree(m_puhDepth);m_puhDepth          = NULL;}
+        if (m_puhDepth) { xFree(m_puhDepth); m_puhDepth          = NULL; }
 
-        if (m_puhWidth) { xFree(m_puhWidth);m_puhWidth          = NULL;}
+        if (m_puhWidth) { xFree(m_puhWidth); m_puhWidth          = NULL; }
 
-        if (m_puhHeight) { xFree(m_puhHeight);m_puhHeight         = NULL;}
+        if (m_puhHeight) { xFree(m_puhHeight); m_puhHeight         = NULL; }
 
-        if (m_skipFlag) { delete[] m_skipFlag;m_skipFlag          = NULL;}
+        if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag          = NULL; }
 
-        if (m_pePartSize) { delete[] m_pePartSize;m_pePartSize        = NULL;}
+        if (m_pePartSize) { delete[] m_pePartSize; m_pePartSize        = NULL; }
 
-        if (m_pePredMode) { delete[] m_pePredMode;m_pePredMode        = NULL;}
+        if (m_pePredMode) { delete[] m_pePredMode; m_pePredMode        = NULL; }
 
-        if (m_CUTransquantBypass) { delete[] m_CUTransquantBypass;m_CUTransquantBypass = NULL;}
+        if (m_CUTransquantBypass) { delete[] m_CUTransquantBypass; m_CUTransquantBypass = NULL; }
 
-        if (m_puhCbf[0]) { xFree(m_puhCbf[0]);m_puhCbf[0]         = NULL;}
+        if (m_puhCbf[0]) { xFree(m_puhCbf[0]); m_puhCbf[0]         = NULL; }
 
-        if (m_puhCbf[1]) { xFree(m_puhCbf[1]);m_puhCbf[1]         = NULL;}
+        if (m_puhCbf[1]) { xFree(m_puhCbf[1]); m_puhCbf[1]         = NULL; }
 
-        if (m_puhCbf[2]) { xFree(m_puhCbf[2]);m_puhCbf[2]         = NULL;}
+        if (m_puhCbf[2]) { xFree(m_puhCbf[2]); m_puhCbf[2]         = NULL; }
 
-        if (m_puhInterDir) { xFree(m_puhInterDir);m_puhInterDir       = NULL;}
+        if (m_puhInterDir) { xFree(m_puhInterDir); m_puhInterDir       = NULL; }
 
-        if (m_pbMergeFlag) { xFree(m_pbMergeFlag);m_pbMergeFlag       = NULL;}
+        if (m_pbMergeFlag) { xFree(m_pbMergeFlag); m_pbMergeFlag       = NULL; }
 
-        if (m_puhMergeIndex) { xFree(m_puhMergeIndex);m_puhMergeIndex     = NULL;}
+        if (m_puhMergeIndex) { xFree(m_puhMergeIndex); m_puhMergeIndex     = NULL; }
 
-        if (m_puhLumaIntraDir) { xFree(m_puhLumaIntraDir);m_puhLumaIntraDir   = NULL;}
+        if (m_puhLumaIntraDir) { xFree(m_puhLumaIntraDir); m_puhLumaIntraDir   = NULL; }
 
-        if (m_puhChromaIntraDir) { xFree(m_puhChromaIntraDir);m_puhChromaIntraDir = NULL;}
+        if (m_puhChromaIntraDir) { xFree(m_puhChromaIntraDir); m_puhChromaIntraDir = NULL; }
 
-        if (m_puhTrIdx) { xFree(m_puhTrIdx);m_puhTrIdx          = NULL;}
+        if (m_puhTrIdx) { xFree(m_puhTrIdx); m_puhTrIdx          = NULL; }
 
-        if (m_puhTransformSkip[0]) { xFree(m_puhTransformSkip[0]);m_puhTransformSkip[0] = NULL;}
+        if (m_puhTransformSkip[0]) { xFree(m_puhTransformSkip[0]); m_puhTransformSkip[0] = NULL; }
 
-        if (m_puhTransformSkip[1]) { xFree(m_puhTransformSkip[1]);m_puhTransformSkip[1] = NULL;}
+        if (m_puhTransformSkip[1]) { xFree(m_puhTransformSkip[1]); m_puhTransformSkip[1] = NULL; }
 
-        if (m_puhTransformSkip[2]) { xFree(m_puhTransformSkip[2]);m_puhTransformSkip[2] = NULL;}
+        if (m_puhTransformSkip[2]) { xFree(m_puhTransformSkip[2]); m_puhTransformSkip[2] = NULL; }
 
-        if (m_pcTrCoeffY) { xFree(m_pcTrCoeffY);m_pcTrCoeffY        = NULL;}
+        if (m_pcTrCoeffY) { xFree(m_pcTrCoeffY); m_pcTrCoeffY        = NULL; }
 
-        if (m_pcTrCoeffCb) { xFree(m_pcTrCoeffCb);m_pcTrCoeffCb       = NULL;}
+        if (m_pcTrCoeffCb) { xFree(m_pcTrCoeffCb); m_pcTrCoeffCb       = NULL; }
 
-        if (m_pcTrCoeffCr) { xFree(m_pcTrCoeffCr);m_pcTrCoeffCr       = NULL;}
+        if (m_pcTrCoeffCr) { xFree(m_pcTrCoeffCr); m_pcTrCoeffCr       = NULL; }
 
 #if ADAPTIVE_QP_SELECTION
         if (!m_ArlCoeffIsAliasedAllocation)
@@ -296,28 +296,28 @@ Void TComDataCU::destroy()
             m_pcArlCoeffCr = 0;
         }
 
-        if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY);m_pcGlbArlCoeffY    = NULL;}
+        if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY); m_pcGlbArlCoeffY    = NULL; }
 
-        if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb);m_pcGlbArlCoeffCb   = NULL;}
+        if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb); m_pcGlbArlCoeffCb   = NULL; }
 
-        if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr);m_pcGlbArlCoeffCr   = NULL;}
+        if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr); m_pcGlbArlCoeffCr   = NULL; }
 
 #endif // if ADAPTIVE_QP_SELECTION
-        if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag);m_pbIPCMFlag        = NULL;}
+        if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag); m_pbIPCMFlag        = NULL; }
 
-        if (m_pcIPCMSampleY) { xFree(m_pcIPCMSampleY);m_pcIPCMSampleY     = NULL;}
+        if (m_pcIPCMSampleY) { xFree(m_pcIPCMSampleY); m_pcIPCMSampleY     = NULL; }
 
-        if (m_pcIPCMSampleCb) { xFree(m_pcIPCMSampleCb);m_pcIPCMSampleCb    = NULL;}
+        if (m_pcIPCMSampleCb) { xFree(m_pcIPCMSampleCb); m_pcIPCMSampleCb    = NULL; }
 
-        if (m_pcIPCMSampleCr) { xFree(m_pcIPCMSampleCr);m_pcIPCMSampleCr    = NULL;}
+        if (m_pcIPCMSampleCr) { xFree(m_pcIPCMSampleCr); m_pcIPCMSampleCr    = NULL; }
 
-        if (m_apiMVPIdx[0]) { delete[] m_apiMVPIdx[0];m_apiMVPIdx[0]      = NULL;}
+        if (m_apiMVPIdx[0]) { delete[] m_apiMVPIdx[0]; m_apiMVPIdx[0]      = NULL; }
 
-        if (m_apiMVPIdx[1]) { delete[] m_apiMVPIdx[1];m_apiMVPIdx[1]      = NULL;}
+        if (m_apiMVPIdx[1]) { delete[] m_apiMVPIdx[1]; m_apiMVPIdx[1]      = NULL; }
 
-        if (m_apiMVPNum[0]) { delete[] m_apiMVPNum[0];m_apiMVPNum[0]      = NULL;}
+        if (m_apiMVPNum[0]) { delete[] m_apiMVPNum[0]; m_apiMVPNum[0]      = NULL; }
 
-        if (m_apiMVPNum[1]) { delete[] m_apiMVPNum[1];m_apiMVPNum[1]      = NULL;}
+        if (m_apiMVPNum[1]) { delete[] m_apiMVPNum[1]; m_apiMVPNum[1]      = NULL; }
 
         m_acCUMvField[0].destroy();
         m_acCUMvField[1].destroy();

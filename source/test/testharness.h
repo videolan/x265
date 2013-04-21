@@ -36,6 +36,7 @@
 class TestHarness
 {
 public:
+
     TestHarness() {}
 
     virtual ~TestHarness() {}
@@ -48,6 +49,7 @@ public:
 class Timer
 {
 public:
+
     Timer() {}
 
     virtual ~Timer() {}
@@ -63,4 +65,4 @@ public:
     virtual void Release() = 0;
 };
 
-#endif
+#endif // ifndef _TESTHARNESS_H_

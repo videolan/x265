@@ -78,17 +78,17 @@ public:
     Void  resetEntropy();
     Void  determineCabacInitIdx() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;}
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p; }
 
-    Void  setSlice(TComSlice* p)  { m_pcSlice = p;}
+    Void  setSlice(TComSlice* p)  { m_pcSlice = p; }
 
-    Void  resetBits()                { m_pcBitIf->resetBits();}
+    Void  resetBits()                { m_pcBitIf->resetBits(); }
 
-    Void  resetCoeffCost()                { m_uiCoeffCost = 0;}
+    Void  resetCoeffCost()                { m_uiCoeffCost = 0; }
 
-    UInt  getNumberOfWrittenBits()                { return m_pcBitIf->getNumberOfWrittenBits();}
+    UInt  getNumberOfWrittenBits()                { return m_pcBitIf->getNumberOfWrittenBits(); }
 
-    UInt  getCoeffCost()                { return m_uiCoeffCost;}
+    UInt  getCoeffCost()                { return m_uiCoeffCost; }
 
     Void  codeVPS(TComVPS* pcVPS);
     Void  codeVUI(TComVUI *pcVUI, TComSPS* pcSPS);
@@ -111,15 +111,15 @@ public:
 #pragma warning(push)
 #pragma warning(disable: 4100)
 #endif
-    Void codeSAOSign(UInt code) { printf("Not supported\n");assert(0);}
+    Void codeSAOSign(UInt code) { printf("Not supported\n"); assert(0); }
 
-    Void codeSaoMaxUvlc(UInt code, UInt maxSymbol) { printf("Not supported\n");assert(0);}
+    Void codeSaoMaxUvlc(UInt code, UInt maxSymbol) { printf("Not supported\n"); assert(0); }
 
-    Void codeSaoMerge(UInt uiCode) { printf("Not supported\n");assert(0);}
+    Void codeSaoMerge(UInt uiCode) { printf("Not supported\n"); assert(0); }
 
-    Void codeSaoTypeIdx(UInt uiCode) { printf("Not supported\n");assert(0);}
+    Void codeSaoTypeIdx(UInt uiCode) { printf("Not supported\n"); assert(0); }
 
-    Void codeSaoUflc(UInt uiLength, UInt uiCode) { assert(uiCode < 32);printf("Not supported\n");assert(0);}
+    Void codeSaoUflc(UInt uiLength, UInt uiCode) { assert(uiCode < 32); printf("Not supported\n"); assert(0); }
 
     Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish = true) {}
 

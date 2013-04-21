@@ -167,6 +167,7 @@ Void   TComOutputBitstream::addSubstream(TComOutputBitstream* pcSubstream)
     UInt uiNumBits = pcSubstream->getNumberOfWrittenBits();
 
     const vector<uint8_t>& rbsp = pcSubstream->getFIFO();
+
     for (vector<uint8_t>::const_iterator it = rbsp.begin(); it != rbsp.end(); )
     {
         write(*it++, 8);
@@ -355,6 +356,7 @@ TComInputBitstream *TComInputBitstream::extractSubstream(UInt uiNumBits)
 
     std::vector<uint8_t>* buf = new std::vector<uint8_t>;
     UInt uiByte;
+
     for (UInt ui = 0; ui < uiNumBytes; ui++)
     {
         read(8, uiByte);

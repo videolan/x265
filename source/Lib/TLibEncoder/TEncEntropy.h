@@ -140,19 +140,19 @@ private:
 public:
 
     Void    setEntropyCoder(TEncEntropyIf* e, TComSlice* pcSlice);
-    Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p);}
+    Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p); }
 
-    Void    resetBits()                        { m_pcEntropyCoderIf->resetBits();}
+    Void    resetBits()                        { m_pcEntropyCoderIf->resetBits(); }
 
-    Void    resetCoeffCost()                        { m_pcEntropyCoderIf->resetCoeffCost();}
+    Void    resetCoeffCost()                        { m_pcEntropyCoderIf->resetCoeffCost(); }
 
-    UInt    getNumberOfWrittenBits()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits();}
+    UInt    getNumberOfWrittenBits()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
 
-    UInt    getCoeffCost()                        { return m_pcEntropyCoderIf->getCoeffCost();}
+    UInt    getCoeffCost()                        { return m_pcEntropyCoderIf->getCoeffCost(); }
 
-    Void    resetEntropy()                        { m_pcEntropyCoderIf->resetEntropy();}
+    Void    resetEntropy()                        { m_pcEntropyCoderIf->resetEntropy(); }
 
-    Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx();}
+    Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx(); }
 
     Void    encodeSliceHeader(TComSlice* pcSlice);
     Void    encodeTilesWPPEntryPoint(TComSlice* pSlice);

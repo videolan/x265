@@ -173,9 +173,9 @@ public:
                                 Double  lambda,
                                 Int *   currentDistortionTableBo,
                                 Double *currentRdCostTableBo);
-    Void setMaxNumOffsetsPerPic(Int iVal) { m_maxNumOffsetsPerPic = iVal;}
+    Void setMaxNumOffsetsPerPic(Int iVal) { m_maxNumOffsetsPerPic = iVal; }
 
-    Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic;}
+    Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 };
 
 //! \}

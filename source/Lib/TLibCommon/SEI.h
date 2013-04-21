@@ -85,7 +85,7 @@ class SEIuserDataUnregistered : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return USER_DATA_UNREGISTERED;}
+    PayloadType payloadType() const { return USER_DATA_UNREGISTERED; }
 
     SEIuserDataUnregistered()
         : userData(0)
@@ -105,7 +105,7 @@ class SEIDecodedPictureHash : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return DECODED_PICTURE_HASH;}
+    PayloadType payloadType() const { return DECODED_PICTURE_HASH; }
 
     SEIDecodedPictureHash() {}
 
@@ -126,7 +126,7 @@ class SEIActiveParameterSets : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS;}
+    PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
     SEIActiveParameterSets()
 #if !L0047_APS_FLAGS
@@ -154,7 +154,7 @@ class SEIBufferingPeriod : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return BUFFERING_PERIOD;}
+    PayloadType payloadType() const { return BUFFERING_PERIOD; }
 
     SEIBufferingPeriod()
 #if L0044_CPB_DPB_DELAY_OFFSET
@@ -194,7 +194,7 @@ class SEIPictureTiming : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return PICTURE_TIMING;}
+    PayloadType payloadType() const { return PICTURE_TIMING; }
 
     SEIPictureTiming()
         : m_picStruct(0)
@@ -248,7 +248,7 @@ class SEIDecodingUnitInfo : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return DECODING_UNIT_INFO;}
+    PayloadType payloadType() const { return DECODING_UNIT_INFO; }
 
     SEIDecodingUnitInfo()
         : m_decodingUnitIdx(0)
@@ -273,7 +273,7 @@ class SEIRecoveryPoint : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return RECOVERY_POINT;}
+    PayloadType payloadType() const { return RECOVERY_POINT; }
 
     SEIRecoveryPoint() {}
 
@@ -288,7 +288,7 @@ class SEIFramePacking : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return FRAME_PACKING;}
+    PayloadType payloadType() const { return FRAME_PACKING; }
 
     SEIFramePacking() {}
 
@@ -322,7 +322,7 @@ class SEIDisplayOrientation : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return DISPLAY_ORIENTATION;}
+    PayloadType payloadType() const { return DISPLAY_ORIENTATION; }
 
     SEIDisplayOrientation()
         : cancelFlag(true)
@@ -353,7 +353,7 @@ class SEITemporalLevel0Index : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return TEMPORAL_LEVEL0_INDEX;}
+    PayloadType payloadType() const { return TEMPORAL_LEVEL0_INDEX; }
 
     SEITemporalLevel0Index()
         : tl0Idx(0)
@@ -370,7 +370,7 @@ class SEIGradualDecodingRefreshInfo : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return REGION_REFRESH_INFO;}
+    PayloadType payloadType() const { return REGION_REFRESH_INFO; }
 
     SEIGradualDecodingRefreshInfo()
         : m_gdrForegroundFlag(0)
@@ -386,7 +386,7 @@ class SEISOPDescription : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return SOP_DESCRIPTION;}
+    PayloadType payloadType() const { return SOP_DESCRIPTION; }
 
     SEISOPDescription() {}
 
@@ -408,7 +408,7 @@ class SEIToneMappingInfo : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return TONE_MAPPING_INFO;}
+    PayloadType payloadType() const { return TONE_MAPPING_INFO; }
 
     SEIToneMappingInfo() {}
 
@@ -458,7 +458,7 @@ class SEIScalableNesting : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return SCALABLE_NESTING;}
+    PayloadType payloadType() const { return SCALABLE_NESTING; }
 
     SEIScalableNesting() {}
 

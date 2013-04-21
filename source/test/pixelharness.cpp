@@ -27,9 +27,9 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-#ifdef __MINGW32__ 
-#define _aligned_malloc __mingw_aligned_malloc 
-#define _aligned_free  __mingw_aligned_free 
+#ifdef __MINGW32__
+#define _aligned_malloc __mingw_aligned_malloc
+#define _aligned_free  __mingw_aligned_free
 #endif
 
 using namespace x265;
@@ -104,10 +104,10 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
     return true;
 }
 
-bool PixelHarness::testCorrectness( const EncoderPrimitives& ref, const EncoderPrimitives& opt )
+bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-   for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
-   {
+    for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
+    {
         if (opt.satd[curpar])
         {
             if (!check_pixel_primitive(ref.satd[curpar], opt.satd[curpar]))
@@ -162,13 +162,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
                 opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             t->Stop();
             printf("(%1.2f ms)\t", t->ElapsedMS());
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
                 ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             t->Stop();
             printf("C: (%1.2f ms)", t->ElapsedMS());
         }
@@ -179,13 +185,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
                 opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             t->Stop();
             printf("(%1.2f ms)\t", t->ElapsedMS());
 
             t->Start();
             for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+            {
                 ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
+            }
+
             t->Stop();
             printf("C: (%1.2f ms) ", t->ElapsedMS());
         }
@@ -195,13 +207,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         t->Start();
         for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
             opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         t->Stop();
         printf("\nsa8d_8x8\tVec: (%1.2f ms) ", t->ElapsedMS());
 
         t->Start();
         for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
             ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         t->Stop();
         printf("\tC: (%1.2f ms) ", t->ElapsedMS());
     }
@@ -210,13 +228,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         t->Start();
         for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
             opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         t->Stop();
         printf("\nsa8d_16x16\tVec: (%1.2f ms) ", t->ElapsedMS());
 
         t->Start();
         for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
+        {
             ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
         t->Stop();
         printf("\tC: (%1.2f ms) ", t->ElapsedMS());
     }

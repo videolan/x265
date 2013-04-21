@@ -29,6 +29,8 @@
 #include <stdint.h>
 
 namespace x265 {
+// private x265 namespace
+
 class YUVInput : public Input
 {
 protected:
@@ -57,23 +59,23 @@ public:
 
     virtual ~YUVInput();
 
-    void setDimensions(int w, int h)              { width = w; height = h;}
+    void setDimensions(int w, int h)              { width = w; height = h; }
 
-    void setRate(int numerator, int denominator)  { rateNum = numerator; rateDenom = denominator;}
+    void setRate(int numerator, int denominator)  { rateNum = numerator; rateDenom = denominator; }
 
-    void setBitDepth(int bitDepth)                { depth = bitDepth;}
+    void setBitDepth(int bitDepth)                { depth = bitDepth; }
 
-    float getRate() const                         { return ((float)rateNum) / rateDenom;}
+    float getRate() const                         { return ((float)rateNum) / rateDenom; }
 
-    int getWidth() const                          { return width;}
+    int getWidth() const                          { return width; }
 
-    int getHeight() const                         { return height;}
+    int getHeight() const                         { return height; }
 
-    int getBitDepth() const                       { return depth;}
+    int getBitDepth() const                       { return depth; }
 
-    bool isEof() const                            { return !!feof(fp);}
+    bool isEof() const                            { return !!feof(fp); }
 
-    bool isFail() const                           { return !!fp;}
+    bool isFail() const                           { return !!fp; }
 
     void release()
     {

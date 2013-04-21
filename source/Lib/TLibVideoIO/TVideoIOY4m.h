@@ -47,18 +47,18 @@
 
 using namespace std;
 
-typedef struct 
+typedef struct
 {
-	fstream   m_cHandle;                                    ///< file handle
+    fstream   m_cHandle;                                  ///< file handle
     Int fileBitDepthY; ///< bitdepth of input/output video file luma component
     Int fileBitDepthC; ///< bitdepth of input/output video file chroma component
     Int bitDepthShiftY; ///< number of bits to increase or decrease luma by before/after write/read
     Int bitDepthShiftC; ///< number of bits to increase or decrease chroma by before/after write/read
-	Int width;
-	Int height;
-	Int FrameRate;
-	Int aiPad[2];
-	Int headerLength;	
+    Int width;
+    Int height;
+    Int FrameRate;
+    Int aiPad[2];
+    Int headerLength;
 }y4m_hnd_t;
 #define Y4M_FRAME_MAGIC 5 //"FRAME"
 
@@ -69,25 +69,23 @@ typedef struct
 /// YUV file I/O class
 class TVideoIOY4m :  virtual public TVideoIO
 {
-
 public:
 
     TVideoIOY4m()           {}
 
     virtual ~TVideoIOY4m()  {}
-	
 
-    Void  open(Char* pchFile, Bool bWriteMode, Int internalBitDepthY, Int fileBitDepthY, Int internalBitDepthC, Int fileBitDepthC, hnd_t* &handler, video_info_t video_info, Int aiPad[2]);   ///< open or create file
+    Void  open(Char * pchFile, Bool bWriteMode, Int internalBitDepthY, Int fileBitDepthY, Int internalBitDepthC, Int fileBitDepthC, hnd_t * &handler, video_info_t video_info, Int aiPad[2]);   ///< open or create file
     Void  close(hnd_t* &handler);                                          ///< close file
 
-	Void skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler);
+    Void skipFrames(UInt numFrames, UInt width, UInt height, hnd_t* &handler);
 
-    Bool  read(TComPicYuv *   pPicYuv, hnd_t* &handler);      ///< read  one YUV frame with padding parameter
-	Bool  write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft = 0, Int confRight = 0, Int confTop = 0, Int confBottom = 0);
+    Bool  read(TComPicYuv * pPicYuv, hnd_t* &handler);        ///< read  one YUV frame with padding parameter
+    Bool  write(TComPicYuv* pPicYuv, hnd_t* &handler, Int confLeft = 0, Int confRight = 0, Int confTop = 0, Int confBottom = 0);
 
     Bool  isEof(hnd_t* &handler);                                          ///< check for end-of-file
     Bool  isFail(hnd_t* &handler);                                         ///< check for failure
-	Void  getVideoInfo(video_info_t &video_info, hnd_t* &handler );
+    Void  getVideoInfo(video_info_t &video_info, hnd_t* &handler);
 };
 
 #endif // __TVIDEOIOY4M__

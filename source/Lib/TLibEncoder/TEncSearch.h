@@ -232,7 +232,7 @@ public:
                                    Bool        bSkipRes);
 
     /// set ME search range
-    Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange;}
+    Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange; }
 
     Void xEncPCM(TComDataCU* pcCU,
                  UInt        uiAbsPartIdx,
@@ -510,7 +510,7 @@ protected:
                              TComYuv*&   rpcYuvResi);
 
     Void  setWpScalingDistParam(TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur);
-    inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp;}
+    inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp; }
 }; // END CLASS DEFINITION TEncSearch
 
 //! \}

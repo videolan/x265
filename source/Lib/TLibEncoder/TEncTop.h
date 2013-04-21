@@ -147,61 +147,61 @@ public:
     // member access functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComList<TComPic*>*     getListPic() { return &m_cListPic;}
+    TComList<TComPic*>*     getListPic() { return &m_cListPic; }
 
-    TEncSearch*             getPredSearch() { return &m_cSearch;}
+    TEncSearch*             getPredSearch() { return &m_cSearch; }
 
-    TComTrQuant*            getTrQuant() { return &m_cTrQuant;}
+    TComTrQuant*            getTrQuant() { return &m_cTrQuant; }
 
-    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter;}
+    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
 
-    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO;}
+    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
 
-    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder;}
+    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
 
-    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder;}
+    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
 
-    TEncCu*                 getCuEncoder() { return &m_cCuEncoder;}
+    TEncCu*                 getCuEncoder() { return &m_cCuEncoder; }
 
-    TEncEntropy*            getEntropyCoder() { return &m_cEntropyCoder;}
+    TEncEntropy*            getEntropyCoder() { return &m_cEntropyCoder; }
 
-    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder;}
+    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
 
-    TEncSbac*               getSbacCoder() { return &m_cSbacCoder;}
+    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
 
-    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC;}
+    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
 
-    TEncSbac*               getSbacCoders() { return m_pcSbacCoders;}
+    TEncSbac*               getSbacCoders() { return m_pcSbacCoders; }
 
-    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs;}
+    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs; }
 
-    TComBitCounter*         getBitCounter() { return &m_cBitCounter;}
+    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
 
-    TComRdCost*             getRdCost() { return &m_cRdCost;}
+    TComRdCost*             getRdCost() { return &m_cRdCost; }
 
-    TEncSbac***             getRDSbacCoder() { return m_pppcRDSbacCoder;}
+    TEncSbac***             getRDSbacCoder() { return m_pppcRDSbacCoder; }
 
-    TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder;}
+    TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder; }
 
-    TComBitCounter*         getBitCounters() { return m_pcBitCounters;}
+    TComBitCounter*         getBitCounters() { return m_pcBitCounters; }
 
-    TComRdCost*             getRdCosts() { return m_pcRdCosts;}
+    TComRdCost*             getRdCosts() { return m_pcRdCosts; }
 
-    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders;}
+    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders; }
 
-    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders;}
+    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders; }
 
-    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl;}
+    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
 
-    TComSPS*                getSPS() { return &m_cSPS;}
+    TComSPS*                getSPS() { return &m_cSPS; }
 
-    TComPPS*                getPPS() { return &m_cPPS;}
+    TComPPS*                getPPS() { return &m_cPPS; }
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 #if L0208_SOP_DESCRIPTION_SEI
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
 #endif
-    TComScalingList*        getScalingList() { return &m_scalingList;}
+    TComScalingList*        getScalingList() { return &m_scalingList; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function
@@ -211,7 +211,7 @@ public:
     Void encode(Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
                 std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded);
 
-    void printSummary() { m_cGOPEncoder.printOutSummary(m_uiNumAllPicCoded);}
+    void printSummary() { m_cGOPEncoder.printOutSummary(m_uiNumAllPicCoded); }
 };
 
 //! \}

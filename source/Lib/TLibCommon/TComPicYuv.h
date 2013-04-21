@@ -110,42 +110,42 @@ public:
     //  Get information of picture
     // ------------------------------------------------------------------------------------------------
 
-    Int   getWidth()     { return m_iPicWidth;}
+    Int   getWidth()     { return m_iPicWidth; }
 
-    Int   getHeight()     { return m_iPicHeight;}
+    Int   getHeight()     { return m_iPicHeight; }
 
-    Int   getStride()     { return (m_iPicWidth) + (m_iLumaMarginX << 1);}
+    Int   getStride()     { return (m_iPicWidth) + (m_iLumaMarginX << 1); }
 
-    Int   getCStride()     { return (m_iPicWidth >> 1) + (m_iChromaMarginX << 1);}
+    Int   getCStride()     { return (m_iPicWidth >> 1) + (m_iChromaMarginX << 1); }
 
-    Int   getLumaMargin() { return m_iLumaMarginX;}
+    Int   getLumaMargin() { return m_iLumaMarginX; }
 
-    Int   getChromaMargin() { return m_iChromaMarginX;}
+    Int   getChromaMargin() { return m_iChromaMarginX; }
 
     // ------------------------------------------------------------------------------------------------
     //  Access function for picture buffer
     // ------------------------------------------------------------------------------------------------
 
     //  Access starting position of picture buffer with margin
-    Pel*  getBufY()     { return m_apiPicBufY;}
+    Pel*  getBufY()     { return m_apiPicBufY; }
 
-    Pel*  getBufU()     { return m_apiPicBufU;}
+    Pel*  getBufU()     { return m_apiPicBufU; }
 
-    Pel*  getBufV()     { return m_apiPicBufV;}
+    Pel*  getBufV()     { return m_apiPicBufV; }
 
     //  Access starting position of original picture
-    Pel*  getLumaAddr()     { return m_piPicOrgY;}
+    Pel*  getLumaAddr()     { return m_piPicOrgY; }
 
-    Pel*  getCbAddr()     { return m_piPicOrgU;}
+    Pel*  getCbAddr()     { return m_piPicOrgU; }
 
-    Pel*  getCrAddr()     { return m_piPicOrgV;}
+    Pel*  getCrAddr()     { return m_piPicOrgV; }
 
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
-    Pel*  getLumaAddr(Int iCuAddr) { return m_piPicOrgY + m_cuOffsetY[iCuAddr];}
+    Pel*  getLumaAddr(Int iCuAddr) { return m_piPicOrgY + m_cuOffsetY[iCuAddr]; }
 
-    Pel*  getCbAddr(Int iCuAddr) { return m_piPicOrgU + m_cuOffsetC[iCuAddr];}
+    Pel*  getCbAddr(Int iCuAddr) { return m_piPicOrgU + m_cuOffsetC[iCuAddr]; }
 
-    Pel*  getCrAddr(Int iCuAddr) { return m_piPicOrgV + m_cuOffsetC[iCuAddr];}
+    Pel*  getCrAddr(Int iCuAddr) { return m_piPicOrgV + m_cuOffsetC[iCuAddr]; }
 
     Pel*  getLumaAddr(Int iCuAddr, Int uiAbsZorderIdx)
     {
@@ -182,7 +182,7 @@ public:
     Void  dump(Char* pFileName, Bool bAdd = false);
 
     // Set border extension flag
-    Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b;}
+    Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
 }; // END CLASS DEFINITION TComPicYuv
 
 void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);

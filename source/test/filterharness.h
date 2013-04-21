@@ -50,4 +50,4 @@ public:
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 };
 
-#endif
+#endif // ifndef _FILTERHARNESS_H_1

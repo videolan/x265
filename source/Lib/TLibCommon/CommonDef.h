@@ -129,14 +129,14 @@ extern Int g_bitDepthC;
 
 /** clip x, such that 0 <= x <= #g_maxLumaVal */
 template<typename T>
-inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x));}
+inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x)); }
 
 template<typename T>
-inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(T(0), x));}
+inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(T(0), x)); }
 
 /** clip a, such that minVal <= a <= maxVal */
 template<typename T>
-inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal);}                             ///< general min/max clip
+inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); }                             ///< general min/max clip
 
 #define DATA_ALIGN                  1                                                                 ///< use 32-bit aligned malloc/free
 #if     DATA_ALIGN && _WIN32 && (_MSC_VER > 1300)

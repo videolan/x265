@@ -518,7 +518,7 @@ void parseConfigFile(Options& opts, const string& filename)
 
     scanFile(opts, cfgstream);
 }
-};
-};
+}
+}
 
 //! \}

@@ -190,14 +190,18 @@ int  Y4MInput::guessFrameCount() const
 void Y4MInput::skipFrames(int numFrames)
 {
     Picture pic;
+
     for (int i = 0; i < numFrames; i++)
+    {
         readPicture(pic);
+    }
 }
 
 bool Y4MInput::readPicture(Picture& pic)
 {
     /* strip off the FRAME header */
     char header[Y4M_FRAME_MAGIC];
+
     if (fread(&header, 1, sizeof(header), fp) < sizeof(header))
         return false;
     if (!strncmp(header, "FRAME", Y4M_FRAME_MAGIC))

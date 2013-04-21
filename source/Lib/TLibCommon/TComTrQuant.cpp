@@ -893,11 +893,12 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
 {
     Int shift_1st = SHIFT_INV_1ST;
     Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
+
 #ifdef _WIN32
 #ifdef __MINGW32__
     Short tmp[64 * 64] __attribute__((aligned(32)));
 #else
-    __declspec(align(32))Short tmp[64 * 64];
+    __declspec(align(32)) Short tmp[64 * 64];
 #endif
 #else
     Short tmp[64 * 64] __attribute__((aligned(32)));
@@ -1517,9 +1518,10 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
         {
             for (j = 0; j < iHeight; j++)
             {
-                for(int i = 0; i < iWidth; i++)
-                    block [j*iWidth + i] = (Short) piBlkResi [j*uiStride + i];                
-
+                for (int i = 0; i < iWidth; i++)
+                {
+                    block[j * iWidth + i] = (Short)piBlkResi[j * uiStride + i];
+                }
             }
         }
         xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
@@ -1569,9 +1571,10 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
         {
             for (j = 0; j < iHeight; j++)
             {
-                for(int i = 0; i < iWidth; i++)
-                    pResidual[j*uiStride + i] = (Pel) block[j*iWidth + i];      
-
+                for (int i = 0; i < iWidth; i++)
+                {
+                    pResidual[j * uiStride + i] = (Pel)block[j * iWidth + i];
+                }
             }
         }
         return;

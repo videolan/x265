@@ -420,8 +420,8 @@ Void TAppEncTop::xDestroyLib()
 {
     // Video I/O
     m_cTVideoIOInputFile->close(handler_input);
-	if (m_pchReconFile)
-		m_cTVideoIOReconFile->close(handler_recon);
+    if (m_pchReconFile)
+        m_cTVideoIOReconFile->close(handler_recon);
 
     // Neo Decoder
     m_cTEncTop.destroy();

@@ -103,92 +103,92 @@ public:
 
     virtual Void  destroy();
 
-    UInt          getTLayer()                { return m_uiTLayer;}
+    UInt          getTLayer()                { return m_uiTLayer; }
 
-    Void          setTLayer(UInt uiTLayer) { m_uiTLayer = uiTLayer;}
+    Void          setTLayer(UInt uiTLayer) { m_uiTLayer = uiTLayer; }
 
-    Bool          getUsedByCurr()             { return m_bUsedByCurr;}
+    Bool          getUsedByCurr()             { return m_bUsedByCurr; }
 
-    Void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed;}
+    Void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed; }
 
-    Bool          getIsLongTerm()             { return m_bIsLongTerm;}
+    Bool          getIsLongTerm()             { return m_bIsLongTerm; }
 
-    Void          setIsLongTerm(Bool lt) { m_bIsLongTerm = lt;}
+    Void          setIsLongTerm(Bool lt) { m_bIsLongTerm = lt; }
 
-    Void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b;}
+    Void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
 
-    Bool          getCheckLTMSBPresent() { return m_bCheckLTMSB;}
+    Bool          getCheckLTMSBPresent() { return m_bCheckLTMSB; }
 
-    TComPicSym*   getPicSym()           { return m_apcPicSym;}
+    TComPicSym*   getPicSym()           { return m_apcPicSym; }
 
-    TComSlice*    getSlice(Int i)       { return m_apcPicSym->getSlice(i);}
+    TComSlice*    getSlice(Int i)       { return m_apcPicSym->getSlice(i); }
 
-    Int           getPOC()              { return m_apcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC();}
+    Int           getPOC()              { return m_apcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
 
-    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcPicSym->getCU(uiCUAddr);}
+    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcPicSym->getCU(uiCUAddr); }
 
-    TComPicYuv*   getPicYuvOrg()        { return m_apcPicYuv[0];}
+    TComPicYuv*   getPicYuvOrg()        { return m_apcPicYuv[0]; }
 
-    TComPicYuv*   getPicYuvRec()        { return m_apcPicYuv[1];}
+    TComPicYuv*   getPicYuvRec()        { return m_apcPicYuv[1]; }
 
-    TComPicYuv*   getPicYuvPred()       { return m_pcPicYuvPred;}
+    TComPicYuv*   getPicYuvPred()       { return m_pcPicYuvPred; }
 
-    TComPicYuv*   getPicYuvResi()       { return m_pcPicYuvResi;}
+    TComPicYuv*   getPicYuvResi()       { return m_pcPicYuvResi; }
 
-    Void          setPicYuvPred(TComPicYuv* pcPicYuv)       { m_pcPicYuvPred = pcPicYuv;}
+    Void          setPicYuvPred(TComPicYuv* pcPicYuv)       { m_pcPicYuvPred = pcPicYuv; }
 
-    Void          setPicYuvResi(TComPicYuv* pcPicYuv)       { m_pcPicYuvResi = pcPicYuv;}
+    Void          setPicYuvResi(TComPicYuv* pcPicYuv)       { m_pcPicYuvResi = pcPicYuv; }
 
-    UInt          getNumCUsInFrame()      { return m_apcPicSym->getNumberOfCUsInFrame();}
+    UInt          getNumCUsInFrame()      { return m_apcPicSym->getNumberOfCUsInFrame(); }
 
-    UInt          getNumPartInWidth()     { return m_apcPicSym->getNumPartInWidth();}
+    UInt          getNumPartInWidth()     { return m_apcPicSym->getNumPartInWidth(); }
 
-    UInt          getNumPartInHeight()    { return m_apcPicSym->getNumPartInHeight();}
+    UInt          getNumPartInHeight()    { return m_apcPicSym->getNumPartInHeight(); }
 
-    UInt          getNumPartInCU()        { return m_apcPicSym->getNumPartition();}
+    UInt          getNumPartInCU()        { return m_apcPicSym->getNumPartition(); }
 
-    UInt          getFrameWidthInCU()     { return m_apcPicSym->getFrameWidthInCU();}
+    UInt          getFrameWidthInCU()     { return m_apcPicSym->getFrameWidthInCU(); }
 
-    UInt          getFrameHeightInCU()    { return m_apcPicSym->getFrameHeightInCU();}
+    UInt          getFrameHeightInCU()    { return m_apcPicSym->getFrameHeightInCU(); }
 
-    UInt          getMinCUWidth()         { return m_apcPicSym->getMinCUWidth();}
+    UInt          getMinCUWidth()         { return m_apcPicSym->getMinCUWidth(); }
 
-    UInt          getMinCUHeight()        { return m_apcPicSym->getMinCUHeight();}
+    UInt          getMinCUHeight()        { return m_apcPicSym->getMinCUHeight(); }
 
-    UInt          getParPelX(UChar uhPartIdx) { return getParPelX(uhPartIdx);}
+    UInt          getParPelX(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
 
-    UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx);}
+    UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
 
-    Int           getStride()           { return m_apcPicYuv[1]->getStride();}
+    Int           getStride()           { return m_apcPicYuv[1]->getStride(); }
 
-    Int           getCStride()          { return m_apcPicYuv[1]->getCStride();}
+    Int           getCStride()          { return m_apcPicYuv[1]->getCStride(); }
 
-    Void          setReconMark(Bool b) { m_bReconstructed = b;}
+    Void          setReconMark(Bool b) { m_bReconstructed = b; }
 
-    Bool          getReconMark()       { return m_bReconstructed;}
+    Bool          getReconMark()       { return m_bReconstructed; }
 
-    Void          setOutputMark(Bool b) { m_bNeededForOutput = b;}
+    Void          setOutputMark(Bool b) { m_bNeededForOutput = b; }
 
-    Bool          getOutputMark()       { return m_bNeededForOutput;}
+    Bool          getOutputMark()       { return m_bNeededForOutput; }
 
-    Void          setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i;}
+    Void          setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
 
-    Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer];}
+    Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer]; }
 
     Void          compressMotion();
-    UInt          getCurrSliceIdx()            { return m_uiCurrSliceIdx;}
+    UInt          getCurrSliceIdx()            { return m_uiCurrSliceIdx; }
 
-    Void          setCurrSliceIdx(UInt i)      { m_uiCurrSliceIdx = i;}
+    Void          setCurrSliceIdx(UInt i)      { m_uiCurrSliceIdx = i; }
 
-    UInt          getNumAllocatedSlice()       { return m_apcPicSym->getNumAllocatedSlice();}
+    UInt          getNumAllocatedSlice()       { return m_apcPicSym->getNumAllocatedSlice(); }
 
-    Void          allocateNewSlice()           { m_apcPicSym->allocateNewSlice();}
+    Void          allocateNewSlice()           { m_apcPicSym->allocateNewSlice(); }
 
-    Void          clearSliceBuffer()           { m_apcPicSym->clearSliceBuffer();}
+    Void          clearSliceBuffer()           { m_apcPicSym->clearSliceBuffer(); }
 
-    Window&       getConformanceWindow()  { return m_conformanceWindow;}
+    Window&       getConformanceWindow()  { return m_conformanceWindow; }
 
-    Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow;}
+    Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
     Void          createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int sliceGranularityDepth
                                         , std::vector<Bool>* LFCrossSliceBoundary
@@ -204,28 +204,28 @@ public:
                                            UInt        picHeight);
     Void          destroyNonDBFilterInfo();
 
-    Bool          getValidSlice(Int sliceID)  { return m_pbValidSlice[sliceID];}
+    Bool          getValidSlice(Int sliceID)  { return m_pbValidSlice[sliceID]; }
 
-    Bool          getIndependentSliceBoundaryForNDBFilter()             { return m_bIndependentSliceBoundaryForNDBFilter;}
+    Bool          getIndependentSliceBoundaryForNDBFilter()             { return m_bIndependentSliceBoundaryForNDBFilter; }
 
-    Bool          getIndependentTileBoundaryForNDBFilter()             { return m_bIndependentTileBoundaryForNDBFilter;}
+    Bool          getIndependentTileBoundaryForNDBFilter()             { return m_bIndependentTileBoundaryForNDBFilter; }
 
-    TComPicYuv*   getYuvPicBufferForIndependentBoundaryProcessing()             { return m_pNDBFilterYuvTmp;}
+    TComPicYuv*   getYuvPicBufferForIndependentBoundaryProcessing()             { return m_pNDBFilterYuvTmp; }
 
-    std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter(Int sliceID) { return m_vSliceCUDataLink[sliceID];}
+    std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter(Int sliceID) { return m_vSliceCUDataLink[sliceID]; }
 
     /** transfer ownership of seis to this picture */
-    void setSEIs(SEIMessages& seis) { m_SEIs = seis;}
+    void setSEIs(SEIMessages& seis) { m_SEIs = seis; }
 
     /**
      * return the current list of SEI messages associated with this picture.
      * Pointer is valid until this->destroy() is called */
-    SEIMessages& getSEIs() { return m_SEIs;}
+    SEIMessages& getSEIs() { return m_SEIs; }
 
     /**
      * return the current list of SEI messages associated with this picture.
      * Pointer is valid until this->destroy() is called */
-    const SEIMessages& getSEIs() const { return m_SEIs;}
+    const SEIMessages& getSEIs() const { return m_SEIs; }
 }; // END CLASS DEFINITION TComPic
 
 //! \}

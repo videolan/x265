@@ -250,26 +250,26 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      getPic()                        { return m_pcPic;}
+    TComPic*      getPic()                        { return m_pcPic; }
 
-    TComSlice*    getSlice()                        { return m_pcSlice;}
+    TComSlice*    getSlice()                        { return m_pcSlice; }
 
-    UInt&         getAddr()                        { return m_uiCUAddr;}
+    UInt&         getAddr()                        { return m_uiCUAddr; }
 
-    UInt&         getZorderIdxInCU()                        { return m_uiAbsIdxInLCU;}
+    UInt&         getZorderIdxInCU()                        { return m_uiAbsIdxInLCU; }
 
     UInt          getSCUAddr();
-    UInt          getCUPelX()                        { return m_uiCUPelX;}
+    UInt          getCUPelX()                        { return m_uiCUPelX; }
 
-    UInt          getCUPelY()                        { return m_uiCUPelY;}
+    UInt          getCUPelY()                        { return m_uiCUPelY; }
 
-    TComPattern*  getPattern()                        { return m_pcPattern;}
+    TComPattern*  getPattern()                        { return m_pcPattern; }
 
-    UChar*        getDepth()                        { return m_puhDepth;}
+    UChar*        getDepth()                        { return m_puhDepth; }
 
-    UChar         getDepth(UInt uiIdx)            { return m_puhDepth[uiIdx];}
+    UChar         getDepth(UInt uiIdx)            { return m_puhDepth[uiIdx]; }
 
-    Void          setDepth(UInt uiIdx, UChar  uh) { m_puhDepth[uiIdx] = uh;}
+    Void          setDepth(UInt uiIdx, UChar  uh) { m_puhDepth[uiIdx] = uh; }
 
     Void          setDepthSubParts(UInt uiDepth, UInt uiAbsPartIdx);
 
@@ -277,75 +277,75 @@ public:
     // member functions for CU data
     // -------------------------------------------------------------------------------------------------------------------
 
-    Char*         getPartitionSize()                        { return m_pePartSize;}
+    Char*         getPartitionSize()                        { return m_pePartSize; }
 
-    PartSize      getPartitionSize(UInt uiIdx)            { return static_cast<PartSize>(m_pePartSize[uiIdx]);}
+    PartSize      getPartitionSize(UInt uiIdx)            { return static_cast<PartSize>(m_pePartSize[uiIdx]); }
 
-    Void          setPartitionSize(UInt uiIdx, PartSize uh) { m_pePartSize[uiIdx] = (Char)uh;}
+    Void          setPartitionSize(UInt uiIdx, PartSize uh) { m_pePartSize[uiIdx] = (Char)uh; }
 
     Void          setPartSizeSubParts(PartSize eMode, UInt uiAbsPartIdx, UInt uiDepth);
     Void          setCUTransquantBypassSubParts(Bool flag, UInt uiAbsPartIdx, UInt uiDepth);
 
-    Bool*        getSkipFlag()                        { return m_skipFlag;}
+    Bool*        getSkipFlag()                        { return m_skipFlag; }
 
-    Bool         getSkipFlag(UInt idx)                { return m_skipFlag[idx];}
+    Bool         getSkipFlag(UInt idx)                { return m_skipFlag[idx]; }
 
-    Void         setSkipFlag(UInt idx, Bool skip)     { m_skipFlag[idx] = skip;}
+    Void         setSkipFlag(UInt idx, Bool skip)     { m_skipFlag[idx] = skip; }
 
     Void         setSkipFlagSubParts(Bool skip, UInt absPartIdx, UInt depth);
 
-    Char*         getPredictionMode()                        { return m_pePredMode;}
+    Char*         getPredictionMode()                        { return m_pePredMode; }
 
-    PredMode      getPredictionMode(UInt uiIdx)            { return static_cast<PredMode>(m_pePredMode[uiIdx]);}
+    PredMode      getPredictionMode(UInt uiIdx)            { return static_cast<PredMode>(m_pePredMode[uiIdx]); }
 
-    Bool*         getCUTransquantBypass()                        { return m_CUTransquantBypass;}
+    Bool*         getCUTransquantBypass()                        { return m_CUTransquantBypass; }
 
-    Bool          getCUTransquantBypass(UInt uiIdx)             { return m_CUTransquantBypass[uiIdx];}
+    Bool          getCUTransquantBypass(UInt uiIdx)             { return m_CUTransquantBypass[uiIdx]; }
 
-    Void          setPredictionMode(UInt uiIdx, PredMode uh) { m_pePredMode[uiIdx] = (Char)uh;}
+    Void          setPredictionMode(UInt uiIdx, PredMode uh) { m_pePredMode[uiIdx] = (Char)uh; }
 
     Void          setPredModeSubParts(PredMode eMode, UInt uiAbsPartIdx, UInt uiDepth);
 
-    UChar*        getWidth()                        { return m_puhWidth;}
+    UChar*        getWidth()                        { return m_puhWidth; }
 
-    UChar         getWidth(UInt uiIdx)            { return m_puhWidth[uiIdx];}
+    UChar         getWidth(UInt uiIdx)            { return m_puhWidth[uiIdx]; }
 
-    Void          setWidth(UInt uiIdx, UChar  uh) { m_puhWidth[uiIdx] = uh;}
+    Void          setWidth(UInt uiIdx, UChar  uh) { m_puhWidth[uiIdx] = uh; }
 
-    UChar*        getHeight()                        { return m_puhHeight;}
+    UChar*        getHeight()                        { return m_puhHeight; }
 
-    UChar         getHeight(UInt uiIdx)            { return m_puhHeight[uiIdx];}
+    UChar         getHeight(UInt uiIdx)            { return m_puhHeight[uiIdx]; }
 
-    Void          setHeight(UInt uiIdx, UChar  uh) { m_puhHeight[uiIdx] = uh;}
+    Void          setHeight(UInt uiIdx, UChar  uh) { m_puhHeight[uiIdx] = uh; }
 
     Void          setSizeSubParts(UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, UInt uiDepth);
 
-    Char*         getQP()                        { return m_phQP;}
+    Char*         getQP()                        { return m_phQP; }
 
-    Char          getQP(UInt uiIdx)            { return m_phQP[uiIdx];}
+    Char          getQP(UInt uiIdx)            { return m_phQP[uiIdx]; }
 
-    Void          setQP(UInt uiIdx, Char value) { m_phQP[uiIdx] =  value;}
+    Void          setQP(UInt uiIdx, Char value) { m_phQP[uiIdx] =  value; }
 
     Void          setQPSubParts(Int qp,   UInt uiAbsPartIdx, UInt uiDepth);
     Int           getLastValidPartIdx(Int iAbsPartIdx);
     Char          getLastCodedQP(UInt uiAbsPartIdx);
     Void          setQPSubCUs(Int qp, TComDataCU* pcCU, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
-    Void          setCodedQP(Char qp)               { m_codedQP = qp;}
+    Void          setCodedQP(Char qp)               { m_codedQP = qp; }
 
-    Char          getCodedQP()                        { return m_codedQP;}
+    Char          getCodedQP()                        { return m_codedQP; }
 
     Bool          isLosslessCoded(UInt absPartIdx);
 
-    UChar*        getTransformIdx()                        { return m_puhTrIdx;}
+    UChar*        getTransformIdx()                        { return m_puhTrIdx; }
 
-    UChar         getTransformIdx(UInt uiIdx)            { return m_puhTrIdx[uiIdx];}
+    UChar         getTransformIdx(UInt uiIdx)            { return m_puhTrIdx[uiIdx]; }
 
     Void          setTrIdxSubParts(UInt uiTrIdx, UInt uiAbsPartIdx, UInt uiDepth);
 
-    UChar*        getTransformSkip(TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]];}
+    UChar*        getTransformSkip(TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]]; }
 
     UChar         getTransformSkip(UInt     uiIdx,
-                                   TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]][uiIdx];}
+                                   TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
 
     Void          setTransformSkipSubParts(UInt useTransformSkip, TextType eType, UInt uiAbsPartIdx, UInt uiDepth);
     Void          setTransformSkipSubParts(UInt useTransformSkipY,
@@ -356,36 +356,36 @@ public:
 
     UInt          getQuadtreeTULog2MinSizeInCU(UInt absPartIdx);
 
-    TComCUMvField* getCUMvField(RefPicList e)          { return &m_acCUMvField[e];}
+    TComCUMvField* getCUMvField(RefPicList e)          { return &m_acCUMvField[e]; }
 
-    TCoeff*&      getCoeffY()                        { return m_pcTrCoeffY;}
+    TCoeff*&      getCoeffY()                        { return m_pcTrCoeffY; }
 
-    TCoeff*&      getCoeffCb()                        { return m_pcTrCoeffCb;}
+    TCoeff*&      getCoeffCb()                        { return m_pcTrCoeffCb; }
 
-    TCoeff*&      getCoeffCr()                        { return m_pcTrCoeffCr;}
+    TCoeff*&      getCoeffCr()                        { return m_pcTrCoeffCr; }
 
 #if ADAPTIVE_QP_SELECTION
-    Int*&         getArlCoeffY()                        { return m_pcArlCoeffY;}
+    Int*&         getArlCoeffY()                        { return m_pcArlCoeffY; }
 
-    Int*&         getArlCoeffCb()                        { return m_pcArlCoeffCb;}
+    Int*&         getArlCoeffCb()                        { return m_pcArlCoeffCb; }
 
-    Int*&         getArlCoeffCr()                        { return m_pcArlCoeffCr;}
+    Int*&         getArlCoeffCr()                        { return m_pcArlCoeffCr; }
 
 #endif
 
-    Pel*&         getPCMSampleY()                        { return m_pcIPCMSampleY;}
+    Pel*&         getPCMSampleY()                        { return m_pcIPCMSampleY; }
 
-    Pel*&         getPCMSampleCb()                        { return m_pcIPCMSampleCb;}
+    Pel*&         getPCMSampleCb()                        { return m_pcIPCMSampleCb; }
 
-    Pel*&         getPCMSampleCr()                        { return m_pcIPCMSampleCr;}
+    Pel*&         getPCMSampleCr()                        { return m_pcIPCMSampleCr; }
 
-    UChar         getCbf(UInt uiIdx, TextType eType)                  { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx];}
+    UChar         getCbf(UInt uiIdx, TextType eType)                  { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
 
-    UChar*        getCbf(TextType eType)                              { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]];}
+    UChar*        getCbf(TextType eType)                              { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]]; }
 
-    UChar         getCbf(UInt uiIdx, TextType eType, UInt uiTrDepth)  { return (getCbf(uiIdx, eType) >> uiTrDepth) & 0x1;}
+    UChar         getCbf(UInt uiIdx, TextType eType, UInt uiTrDepth)  { return (getCbf(uiIdx, eType) >> uiTrDepth) & 0x1; }
 
-    Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx] = uh;}
+    Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx] = uh; }
 
     Void          clearCbf(UInt uiIdx, TextType eType, UInt uiNumParts);
     UChar         getQtRootCbf(UInt uiIdx)
@@ -403,72 +403,72 @@ public:
     // member functions for coding tool information
     // -------------------------------------------------------------------------------------------------------------------
 
-    Bool*         getMergeFlag()                        { return m_pbMergeFlag;}
+    Bool*         getMergeFlag()                        { return m_pbMergeFlag; }
 
-    Bool          getMergeFlag(UInt uiIdx)            { return m_pbMergeFlag[uiIdx];}
+    Bool          getMergeFlag(UInt uiIdx)            { return m_pbMergeFlag[uiIdx]; }
 
-    Void          setMergeFlag(UInt uiIdx, Bool b)    { m_pbMergeFlag[uiIdx] = b;}
+    Void          setMergeFlag(UInt uiIdx, Bool b)    { m_pbMergeFlag[uiIdx] = b; }
 
     Void          setMergeFlagSubParts(Bool bMergeFlag, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
 
-    UChar*        getMergeIndex()                        { return m_puhMergeIndex;}
+    UChar*        getMergeIndex()                        { return m_puhMergeIndex; }
 
-    UChar         getMergeIndex(UInt uiIdx)            { return m_puhMergeIndex[uiIdx];}
+    UChar         getMergeIndex(UInt uiIdx)            { return m_puhMergeIndex[uiIdx]; }
 
-    Void          setMergeIndex(UInt uiIdx, UInt uiMergeIndex) { m_puhMergeIndex[uiIdx] = (UChar)uiMergeIndex;}
+    Void          setMergeIndex(UInt uiIdx, UInt uiMergeIndex) { m_puhMergeIndex[uiIdx] = (UChar)uiMergeIndex; }
 
     Void          setMergeIndexSubParts(UInt uiMergeIndex, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
     template<typename T>
     Void          setSubPart(T bParameter, T* pbBaseLCU, UInt uiCUAddr, UInt uiCUDepth, UInt uiPUIdx);
 
 #if AMP_MRG
-    Void          setMergeAMP(Bool b)      { m_bIsMergeAMP = b;}
+    Void          setMergeAMP(Bool b)      { m_bIsMergeAMP = b; }
 
-    Bool          getMergeAMP()             { return m_bIsMergeAMP;}
+    Bool          getMergeAMP()             { return m_bIsMergeAMP; }
 
 #endif
 
-    UChar*        getLumaIntraDir()                        { return m_puhLumaIntraDir;}
+    UChar*        getLumaIntraDir()                        { return m_puhLumaIntraDir; }
 
-    UChar         getLumaIntraDir(UInt uiIdx)            { return m_puhLumaIntraDir[uiIdx];}
+    UChar         getLumaIntraDir(UInt uiIdx)            { return m_puhLumaIntraDir[uiIdx]; }
 
-    Void          setLumaIntraDir(UInt uiIdx, UChar  uh) { m_puhLumaIntraDir[uiIdx] = uh;}
+    Void          setLumaIntraDir(UInt uiIdx, UChar  uh) { m_puhLumaIntraDir[uiIdx] = uh; }
 
     Void          setLumaIntraDirSubParts(UInt uiDir,  UInt uiAbsPartIdx, UInt uiDepth);
 
-    UChar*        getChromaIntraDir()                        { return m_puhChromaIntraDir;}
+    UChar*        getChromaIntraDir()                        { return m_puhChromaIntraDir; }
 
-    UChar         getChromaIntraDir(UInt uiIdx)            { return m_puhChromaIntraDir[uiIdx];}
+    UChar         getChromaIntraDir(UInt uiIdx)            { return m_puhChromaIntraDir[uiIdx]; }
 
-    Void          setChromaIntraDir(UInt uiIdx, UChar  uh) { m_puhChromaIntraDir[uiIdx] = uh;}
+    Void          setChromaIntraDir(UInt uiIdx, UChar  uh) { m_puhChromaIntraDir[uiIdx] = uh; }
 
     Void          setChromIntraDirSubParts(UInt uiDir,  UInt uiAbsPartIdx, UInt uiDepth);
 
-    UChar*        getInterDir()                        { return m_puhInterDir;}
+    UChar*        getInterDir()                        { return m_puhInterDir; }
 
-    UChar         getInterDir(UInt uiIdx)            { return m_puhInterDir[uiIdx];}
+    UChar         getInterDir(UInt uiIdx)            { return m_puhInterDir[uiIdx]; }
 
-    Void          setInterDir(UInt uiIdx, UChar  uh) { m_puhInterDir[uiIdx] = uh;}
+    Void          setInterDir(UInt uiIdx, UChar  uh) { m_puhInterDir[uiIdx] = uh; }
 
     Void          setInterDirSubParts(UInt uiDir,  UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
-    Bool*         getIPCMFlag()                        { return m_pbIPCMFlag;}
+    Bool*         getIPCMFlag()                        { return m_pbIPCMFlag; }
 
-    Bool          getIPCMFlag(UInt uiIdx)             { return m_pbIPCMFlag[uiIdx];}
+    Bool          getIPCMFlag(UInt uiIdx)             { return m_pbIPCMFlag[uiIdx]; }
 
-    Void          setIPCMFlag(UInt uiIdx, Bool b)     { m_pbIPCMFlag[uiIdx] = b;}
+    Void          setIPCMFlag(UInt uiIdx, Bool b)     { m_pbIPCMFlag[uiIdx] = b; }
 
     Void          setIPCMFlagSubParts(Bool bIpcmFlag, UInt uiAbsPartIdx, UInt uiDepth);
 
     /// get slice ID for SU
-    Int           getSUSliceID(UInt uiIdx)              { return m_piSliceSUMap[uiIdx];}
+    Int           getSUSliceID(UInt uiIdx)              { return m_piSliceSUMap[uiIdx]; }
 
     /// get the pointer of slice ID map
-    Int*          getSliceSUMap()                        { return m_piSliceSUMap;}
+    Int*          getSliceSUMap()                        { return m_piSliceSUMap; }
 
     /// set the pointer of slice ID map
-    Void          setSliceSUMap(Int *pi)                 { m_piSliceSUMap = pi;}
+    Void          setSliceSUMap(Int *pi)                 { m_piSliceSUMap = pi; }
 
-    std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock;}
+    std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock; }
 
     Void setNDBFilterBlockBorderAvailability(UInt               numLCUInPicWidth,
                                              UInt               numLCUInPicHeight,
@@ -502,27 +502,27 @@ public:
     Void          fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, Int iRefIdx, AMVPInfo* pInfo);
     Bool          isDiffMER(Int xN, Int yN, Int xP, Int yP);
     Void          getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int& nPSH);
-    Void          setMVPIdx(RefPicList eRefPicList, UInt uiIdx, Int iMVPIdx)  { m_apiMVPIdx[eRefPicList][uiIdx] = (Char)iMVPIdx;}
+    Void          setMVPIdx(RefPicList eRefPicList, UInt uiIdx, Int iMVPIdx)  { m_apiMVPIdx[eRefPicList][uiIdx] = (Char)iMVPIdx; }
 
-    Int           getMVPIdx(RefPicList eRefPicList, UInt uiIdx)               { return m_apiMVPIdx[eRefPicList][uiIdx];}
+    Int           getMVPIdx(RefPicList eRefPicList, UInt uiIdx)               { return m_apiMVPIdx[eRefPicList][uiIdx]; }
 
-    Char*         getMVPIdx(RefPicList eRefPicList)                          { return m_apiMVPIdx[eRefPicList];}
+    Char*         getMVPIdx(RefPicList eRefPicList)                          { return m_apiMVPIdx[eRefPicList]; }
 
-    Void          setMVPNum(RefPicList eRefPicList, UInt uiIdx, Int iMVPNum) { m_apiMVPNum[eRefPicList][uiIdx] = (Char)iMVPNum;}
+    Void          setMVPNum(RefPicList eRefPicList, UInt uiIdx, Int iMVPNum) { m_apiMVPNum[eRefPicList][uiIdx] = (Char)iMVPNum; }
 
-    Int           getMVPNum(RefPicList eRefPicList, UInt uiIdx)              { return m_apiMVPNum[eRefPicList][uiIdx];}
+    Int           getMVPNum(RefPicList eRefPicList, UInt uiIdx)              { return m_apiMVPNum[eRefPicList][uiIdx]; }
 
-    Char*         getMVPNum(RefPicList eRefPicList)                          { return m_apiMVPNum[eRefPicList];}
+    Char*         getMVPNum(RefPicList eRefPicList)                          { return m_apiMVPNum[eRefPicList]; }
 
     Void          setMVPIdxSubParts(Int iMVPIdx, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
     Void          setMVPNumSubParts(Int iMVPNum, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
 
     Void          clipMv(TComMv& rcMv);
-    Void          getMvPredLeft(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldA.getMv();}
+    Void          getMvPredLeft(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldA.getMv(); }
 
-    Void          getMvPredAbove(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldB.getMv();}
+    Void          getMvPredAbove(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldB.getMv(); }
 
-    Void          getMvPredAboveRight(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldC.getMv();}
+    Void          getMvPredAboveRight(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldC.getMv(); }
 
     Void          compressMV();
 
@@ -530,15 +530,15 @@ public:
     // utility functions for neighbouring information
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComDataCU*   getCULeft() { return m_pcCULeft;}
+    TComDataCU*   getCULeft() { return m_pcCULeft; }
 
-    TComDataCU*   getCUAbove() { return m_pcCUAbove;}
+    TComDataCU*   getCUAbove() { return m_pcCUAbove; }
 
-    TComDataCU*   getCUAboveLeft() { return m_pcCUAboveLeft;}
+    TComDataCU*   getCUAboveLeft() { return m_pcCUAboveLeft; }
 
-    TComDataCU*   getCUAboveRight() { return m_pcCUAboveRight;}
+    TComDataCU*   getCUAboveRight() { return m_pcCUAboveRight; }
 
-    TComDataCU*   getCUColocated(RefPicList eRefPicList) { return m_apcCUColocated[eRefPicList];}
+    TComDataCU*   getCUColocated(RefPicList eRefPicList) { return m_apcCUColocated[eRefPicList]; }
 
     TComDataCU*   getPULeft(UInt& uiLPartUnitIdx,
                             UInt  uiCurrPartUnitIdx,
@@ -586,7 +586,7 @@ public:
     // member functions for modes
     // -------------------------------------------------------------------------------------------------------------------
 
-    Bool          isIntra(UInt uiPartIdx)  { return m_pePredMode[uiPartIdx] == MODE_INTRA;}
+    Bool          isIntra(UInt uiPartIdx)  { return m_pePredMode[uiPartIdx] == MODE_INTRA; }
 
     Bool          isSkipped(UInt uiPartIdx);                                                      ///< SKIP (no residual)
     Bool          isBipredRestriction(UInt puIdx);
@@ -610,23 +610,23 @@ public:
     UInt          getCtxSkipFlag(UInt uiAbsPartIdx);
     UInt          getCtxInterDir(UInt uiAbsPartIdx);
 
-    UInt          getSliceStartCU(UInt pos)                  { return m_sliceStartCU[pos - m_uiAbsIdxInLCU];}
+    UInt          getSliceStartCU(UInt pos)                  { return m_sliceStartCU[pos - m_uiAbsIdxInLCU]; }
 
-    UInt          getSliceSegmentStartCU(UInt pos)                  { return m_sliceSegmentStartCU[pos - m_uiAbsIdxInLCU];}
+    UInt          getSliceSegmentStartCU(UInt pos)                  { return m_sliceSegmentStartCU[pos - m_uiAbsIdxInLCU]; }
 
-    UInt&         getTotalBins()                            { return m_uiTotalBins;}
+    UInt&         getTotalBins()                            { return m_uiTotalBins; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    Double&       getTotalCost()                  { return m_dTotalCost;}
+    Double&       getTotalCost()                  { return m_dTotalCost; }
 
-    UInt&         getTotalDistortion()            { return m_uiTotalDistortion;}
+    UInt&         getTotalDistortion()            { return m_uiTotalDistortion; }
 
-    UInt&         getTotalBits()                  { return m_uiTotalBits;}
+    UInt&         getTotalBits()                  { return m_uiTotalBits; }
 
-    UInt&         getTotalNumPart()               { return m_uiNumPartition;}
+    UInt&         getTotalNumPart()               { return m_uiNumPartition; }
 
     UInt          getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, Bool bIsIntra);
 };
@@ -712,7 +712,7 @@ static inline Bool lessThanRow(Int addr, Int val, Int numUnitsPerRow)
     // addr / numUnitsPerRow < val
     return addr < val * numUnitsPerRow;
 }
-};
+}
 
 //! \}
 

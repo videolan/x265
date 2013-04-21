@@ -35,14 +35,14 @@ using namespace x265;
 
 const char *ButterflyConf_names[] =
 {
-"4",
-"Inverse4",
-"8",
-"Inverse8",
-"16",
-"Inverse16",
-"32",
-"Inverse32"
+    "4",
+    "Inverse4",
+    "8",
+    "Inverse8",
+    "16",
+    "Inverse16",
+    "32",
+    "Inverse32"
 };
 
 enum Butterflies

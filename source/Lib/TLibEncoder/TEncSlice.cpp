@@ -115,11 +115,11 @@ Void TEncSlice::destroy()
     }
 
     // free lambda and QP arrays
-    if (m_pdRdPicLambda) { xFree(m_pdRdPicLambda);m_pdRdPicLambda = NULL;}
+    if (m_pdRdPicLambda) { xFree(m_pdRdPicLambda); m_pdRdPicLambda = NULL; }
 
-    if (m_pdRdPicQp) { xFree(m_pdRdPicQp);m_pdRdPicQp     = NULL;}
+    if (m_pdRdPicQp) { xFree(m_pdRdPicQp); m_pdRdPicQp     = NULL; }
 
-    if (m_piRdPicQp) { xFree(m_piRdPicQp);m_piRdPicQp     = NULL;}
+    if (m_piRdPicQp) { xFree(m_piRdPicQp); m_piRdPicQp     = NULL; }
 
     if (m_pcBufferSbacCoders)
     {

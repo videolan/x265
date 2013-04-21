@@ -310,9 +310,9 @@ Void TEncTop::init()
                     m_useRDOQTS,
                     true
                     , m_useTransformSkipFast
-#if ADAPTIVE_QP_SELECTION
+        #if ADAPTIVE_QP_SELECTION
                     , m_bUseAdaptQpSelect
-#endif
+        #endif
                     );
 
     // initialize encoder search class

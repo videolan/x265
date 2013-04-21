@@ -109,53 +109,53 @@ public:
 
 public:
 
-    Int  getTotalFrames()                 { return m_totalFrames;}
+    Int  getTotalFrames()                 { return m_totalFrames; }
 
-    Int  getTargetRate()                  { return m_targetRate;}
+    Int  getTargetRate()                  { return m_targetRate; }
 
-    Int  getFrameRate()                   { return m_frameRate;}
+    Int  getFrameRate()                   { return m_frameRate; }
 
-    Int  getGOPSize()                     { return m_GOPSize;}
+    Int  getGOPSize()                     { return m_GOPSize; }
 
-    Int  getPicWidth()                    { return m_picWidth;}
+    Int  getPicWidth()                    { return m_picWidth; }
 
-    Int  getPicHeight()                   { return m_picHeight;}
+    Int  getPicHeight()                   { return m_picHeight; }
 
-    Int  getLCUWidth()                    { return m_LCUWidth;}
+    Int  getLCUWidth()                    { return m_LCUWidth; }
 
-    Int  getLCUHeight()                   { return m_LCUHeight;}
+    Int  getLCUHeight()                   { return m_LCUHeight; }
 
-    Int  getNumberOfLevel()               { return m_numberOfLevel;}
+    Int  getNumberOfLevel()               { return m_numberOfLevel; }
 
-    Int  getAverageBits()                 { return m_averageBits;}
+    Int  getAverageBits()                 { return m_averageBits; }
 
-    Int  getLeftAverageBits()             { assert(m_framesLeft > 0);return (Int)(m_bitsLeft / m_framesLeft);}
+    Int  getLeftAverageBits()             { assert(m_framesLeft > 0); return (Int)(m_bitsLeft / m_framesLeft); }
 
-    Bool getUseLCUSeparateModel()         { return m_useLCUSeparateModel;}
+    Bool getUseLCUSeparateModel()         { return m_useLCUSeparateModel; }
 
-    Int  getNumPixel()                    { return m_numberOfPixel;}
+    Int  getNumPixel()                    { return m_numberOfPixel; }
 
-    Int64  getTargetBits()                { return m_targetBits;}
+    Int64  getTargetBits()                { return m_targetBits; }
 
-    Int  getNumberOfLCU()                 { return m_numberOfLCU;}
+    Int  getNumberOfLCU()                 { return m_numberOfLCU; }
 
-    Int* getBitRatio()                    { return m_bitsRatio;}
+    Int* getBitRatio()                    { return m_bitsRatio; }
 
-    Int  getBitRatio(Int idx)             { assert(idx < m_GOPSize);return m_bitsRatio[idx];}
+    Int  getBitRatio(Int idx)             { assert(idx < m_GOPSize); return m_bitsRatio[idx]; }
 
-    Int* getGOPID2Level()                 { return m_GOPID2Level;}
+    Int* getGOPID2Level()                 { return m_GOPID2Level; }
 
-    Int  getGOPID2Level(Int ID)           { assert(ID < m_GOPSize);return m_GOPID2Level[ID];}
+    Int  getGOPID2Level(Int ID)           { assert(ID < m_GOPSize); return m_GOPID2Level[ID]; }
 
-    TRCParameter*  getPicPara()           { return m_picPara;}
+    TRCParameter*  getPicPara()           { return m_picPara; }
 
-    TRCParameter   getPicPara(Int level)  { assert(level < m_numberOfLevel);return m_picPara[level];}
+    TRCParameter   getPicPara(Int level)  { assert(level < m_numberOfLevel); return m_picPara[level]; }
 
-    Void           setPicPara(Int level, TRCParameter para) { assert(level < m_numberOfLevel);m_picPara[level] = para;}
+    Void           setPicPara(Int level, TRCParameter para) { assert(level < m_numberOfLevel); m_picPara[level] = para; }
 
-    TRCParameter** getLCUPara()           { return m_LCUPara;}
+    TRCParameter** getLCUPara()           { return m_LCUPara; }
 
-    TRCParameter*  getLCUPara(Int level)  { assert(level < m_numberOfLevel);return m_LCUPara[level];}
+    TRCParameter*  getLCUPara(Int level)  { assert(level < m_numberOfLevel); return m_LCUPara[level]; }
 
     TRCParameter   getLCUPara(Int level, Int LCUIdx)
     {
@@ -170,15 +170,15 @@ public:
         m_LCUPara[level][LCUIdx] = para;
     }
 
-    Int  getFramesLeft()                  { return m_framesLeft;}
+    Int  getFramesLeft()                  { return m_framesLeft; }
 
-    Int64  getBitsLeft()                  { return m_bitsLeft;}
+    Int64  getBitsLeft()                  { return m_bitsLeft; }
 
-    Double getSeqBpp()                    { return m_seqTargetBpp;}
+    Double getSeqBpp()                    { return m_seqTargetBpp; }
 
-    Double getAlphaUpdate()               { return m_alphaUpdate;}
+    Double getAlphaUpdate()               { return m_alphaUpdate; }
 
-    Double getBetaUpdate()                { return m_betaUpdate;}
+    Double getBetaUpdate()                { return m_betaUpdate; }
 
 private:
 
@@ -228,17 +228,17 @@ private:
 
 public:
 
-    TEncRCSeq* getEncRCSeq()        { return m_encRCSeq;}
+    TEncRCSeq* getEncRCSeq()        { return m_encRCSeq; }
 
-    Int  getNumPic()                { return m_numPic;}
+    Int  getNumPic()                { return m_numPic; }
 
-    Int  getTargetBits()            { return m_targetBits;}
+    Int  getTargetBits()            { return m_targetBits; }
 
-    Int  getPicLeft()               { return m_picLeft;}
+    Int  getPicLeft()               { return m_picLeft; }
 
-    Int  getBitsLeft()              { return m_bitsLeft;}
+    Int  getBitsLeft()              { return m_bitsLeft; }
 
-    Int  getTargetBitInGOP(Int i)   { return m_picTargetBitInGOP[i];}
+    Int  getTargetBitInGOP(Int i)   { return m_picTargetBitInGOP[i]; }
 
 private:
 
@@ -287,55 +287,55 @@ private:
 
 public:
 
-    TEncRCSeq*      getRCSequence()                         { return m_encRCSeq;}
+    TEncRCSeq*      getRCSequence()                         { return m_encRCSeq; }
 
-    TEncRCGOP*      getRCGOP()                              { return m_encRCGOP;}
+    TEncRCGOP*      getRCGOP()                              { return m_encRCGOP; }
 
-    Int  getFrameLevel()                                    { return m_frameLevel;}
+    Int  getFrameLevel()                                    { return m_frameLevel; }
 
-    Int  getNumberOfPixel()                                 { return m_numberOfPixel;}
+    Int  getNumberOfPixel()                                 { return m_numberOfPixel; }
 
-    Int  getNumberOfLCU()                                   { return m_numberOfLCU;}
+    Int  getNumberOfLCU()                                   { return m_numberOfLCU; }
 
-    Int  getTargetBits()                                    { return m_targetBits;}
+    Int  getTargetBits()                                    { return m_targetBits; }
 
-    Void setTargetBits(Int bits)                            { m_targetBits = bits;}
+    Void setTargetBits(Int bits)                            { m_targetBits = bits; }
 
-    Int  getEstHeaderBits()                                 { return m_estHeaderBits;}
+    Int  getEstHeaderBits()                                 { return m_estHeaderBits; }
 
-    Int  getLCULeft()                                       { return m_LCULeft;}
+    Int  getLCULeft()                                       { return m_LCULeft; }
 
-    Int  getBitsLeft()                                      { return m_bitsLeft;}
+    Int  getBitsLeft()                                      { return m_bitsLeft; }
 
-    Int  getPixelsLeft()                                    { return m_pixelsLeft;}
+    Int  getPixelsLeft()                                    { return m_pixelsLeft; }
 
-    Int  getBitsCoded()                                     { return m_targetBits - m_estHeaderBits - m_bitsLeft;}
+    Int  getBitsCoded()                                     { return m_targetBits - m_estHeaderBits - m_bitsLeft; }
 
-    Int  getLCUCoded()                                      { return m_numberOfLCU - m_LCULeft;}
+    Int  getLCUCoded()                                      { return m_numberOfLCU - m_LCULeft; }
 
-    TRCLCU* getLCU()                                        { return m_LCUs;}
+    TRCLCU* getLCU()                                        { return m_LCUs; }
 
-    TRCLCU& getLCU(Int LCUIdx)                              { return m_LCUs[LCUIdx];}
+    TRCLCU& getLCU(Int LCUIdx)                              { return m_LCUs[LCUIdx]; }
 
-    Int  getPicActualHeaderBits()                           { return m_picActualHeaderBits;}
+    Int  getPicActualHeaderBits()                           { return m_picActualHeaderBits; }
 
-    Double getTotalMAD()                                    { return m_totalMAD;}
+    Double getTotalMAD()                                    { return m_totalMAD; }
 
-    Void   setTotalMAD(Double MAD)                          { m_totalMAD = MAD;}
+    Void   setTotalMAD(Double MAD)                          { m_totalMAD = MAD; }
 
-    Int  getPicActualBits()                                 { return m_picActualBits;}
+    Int  getPicActualBits()                                 { return m_picActualBits; }
 
-    Int  getPicActualQP()                                   { return m_picQP;}
+    Int  getPicActualQP()                                   { return m_picQP; }
 
-    Double getPicActualLambda()                             { return m_picLambda;}
+    Double getPicActualLambda()                             { return m_picLambda; }
 
-    Int  getPicEstQP()                                      { return m_estPicQP;}
+    Int  getPicEstQP()                                      { return m_estPicQP; }
 
-    Void setPicEstQP(Int QP)                                { m_estPicQP = QP;}
+    Void setPicEstQP(Int QP)                                { m_estPicQP = QP; }
 
-    Double getPicEstLambda()                                { return m_estPicLambda;}
+    Double getPicEstLambda()                                { return m_estPicLambda; }
 
-    Void setPicEstLambda(Double lambda)                     { m_picLambda = lambda;}
+    Void setPicEstLambda(Double lambda)                     { m_picLambda = lambda; }
 
 private:
 
@@ -390,17 +390,17 @@ public:
 
 public:
 
-    Void       setRCQP(Int QP) { m_RCQP = QP;}
+    Void       setRCQP(Int QP) { m_RCQP = QP; }
 
-    Int        getRCQP()         { return m_RCQP;}
+    Int        getRCQP()         { return m_RCQP; }
 
-    TEncRCSeq* getRCSeq()          { assert(m_encRCSeq != NULL);return m_encRCSeq;}
+    TEncRCSeq* getRCSeq()          { assert(m_encRCSeq != NULL); return m_encRCSeq; }
 
-    TEncRCGOP* getRCGOP()          { assert(m_encRCGOP != NULL);return m_encRCGOP;}
+    TEncRCGOP* getRCGOP()          { assert(m_encRCGOP != NULL); return m_encRCGOP; }
 
-    TEncRCPic* getRCPic()          { assert(m_encRCPic != NULL);return m_encRCPic;}
+    TEncRCPic* getRCPic()          { assert(m_encRCPic != NULL); return m_encRCPic; }
 
-    list<TEncRCPic*>& getPicList() { return m_listRCPictures;}
+    list<TEncRCPic*>& getPicList() { return m_listRCPictures; }
 
 private:
 
@@ -456,7 +456,7 @@ public:
     Double  getMAD();
     Void    updateMADLiearModel();
     Void    updateMADHistory(Double costMAD);
-    Bool    IsUpdateAvailable()              { return m_activeOn;}
+    Bool    IsUpdateAvailable()              { return m_activeOn; }
 };
 
 class PixelBaseURQQuadraticModel
@@ -547,7 +547,7 @@ public:
     Void          initUnitData(Int qp = 0);
     Int           getFrameQP(Bool isReferenced, Int POC);
     Bool          calculateUnitQP();
-    Int           getUnitQP()                                          { return m_pcLCUData[m_indexLCU].m_qp;}
+    Int           getUnitQP()                                          { return m_pcLCUData[m_indexLCU].m_qp; }
 
     Void          updateRCGOPStatus();
     Void          updataRCFrameStatus(Int frameBits, SliceType eSliceType);
@@ -555,7 +555,7 @@ public:
     Void          updateLCUData(TComDataCU* pcCU, UInt64 actualLCUBits, Int qp);
     Void          updateFrameData(UInt64 actualFrameBits);
     Double        xAdjustmentBits(Int& reductionBits, Int& compensationBits);
-    Int           getGOPId()                                          { return m_indexFrame;}
+    Int           getGOPId()                                          { return m_indexFrame; }
 };
 
 #endif // if RATE_CONTROL_LAMBDA_DOMAIN
