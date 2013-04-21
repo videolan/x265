@@ -141,65 +141,17 @@ protected:
     Pel*   m_pLumaRecBuffer;     ///< array for downsampled reconstructed luma sample
     Int    m_iLumaRecStride;     ///< stride of #m_pLumaRecBuffer array
 
-    Void xPredIntraAng(Int   bitDepth,
-                       Int*  pSrc,
-                       Int   srcStride,
-                       Pel*& rpDst,
-                       Int   dstStride,
-                       UInt  width,
-                       UInt  height,
-                       UInt  dirMode,
-                       Bool  blkAboveAvailable,
-                       Bool  blkLeftAvailable,
-                       Bool  bFilter);
+    Void xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, UInt dirMode, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter);
     Void xPredIntraPlanar(Int* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height);
 
     // motion compensation functions
-    Void xPredInterUni(TComDataCU* pcCU,
-                       UInt        uiPartAddr,
-                       Int         iWidth,
-                       Int         iHeight,
-                       RefPicList  eRefPicList,
-                       TComYuv*&   rpcYuvPred,
-                       Bool        bi = false);
-    Void xPredInterBi(TComDataCU* pcCU,
-                      UInt        uiPartAddr,
-                      Int         iWidth,
-                      Int         iHeight,
-                      TComYuv*&   rpcYuvPred);
-    Void xPredInterLumaBlk(TComDataCU *cu,
-                           TComPicYuv *refPic,
-                           UInt        partAddr,
-                           TComMv *    mv,
-                           Int         width,
-                           Int         height,
-                           TComYuv *&  dstPic,
-                           Bool        bi);
-    Void xPredInterChromaBlk(TComDataCU *cu,
-                             TComPicYuv *refPic,
-                             UInt        partAddr,
-                             TComMv *    mv,
-                             Int         width,
-                             Int         height,
-                             TComYuv *&  dstPic,
-                             Bool        bi);
-    Void xWeightedAverage(TComYuv*  pcYuvSrc0,
-                          TComYuv*  pcYuvSrc1,
-                          Int       iRefIdx0,
-                          Int       iRefIdx1,
-                          UInt      uiPartAddr,
-                          Int       iWidth,
-                          Int       iHeight,
-                          TComYuv*& rpcYuvDst);
+    Void xPredInterUni(TComDataCU* pcCU,                          UInt uiPartAddr,               Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Bool bi = false);
+    Void xPredInterBi(TComDataCU* pcCU,                          UInt uiPartAddr,               Int iWidth, Int iHeight,                         TComYuv*& rpcYuvPred);
+    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
+    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
+    Void xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartAddr, Int iWidth, Int iHeight, TComYuv*& rpcYuvDst);
 
-    Void xGetLLSPrediction(TComPattern* pcPattern,
-                           Int*         pSrc0,
-                           Int          iSrcStride,
-                           Pel*         pDst0,
-                           Int          iDstStride,
-                           UInt         uiWidth,
-                           UInt         uiHeight,
-                           UInt         uiExt0);
+    Void xGetLLSPrediction(TComPattern* pcPattern, Int* pSrc0, Int iSrcStride, Pel* pDst0, Int iDstStride, UInt uiWidth, UInt uiHeight, UInt uiExt0);
 
     Void xDCPredFiltering(Int* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
     Bool xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr);
@@ -218,22 +170,8 @@ public:
     Void getMvPredAMVP(TComDataCU* pcCU, UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, TComMv& rcMvPred);
 
     // Angular Intra
-    Void predIntraLumaAng(TComPattern* pcTComPattern,
-                          UInt         uiDirMode,
-                          Pel*         piPred,
-                          UInt         uiStride,
-                          Int          iWidth,
-                          Int          iHeight,
-                          Bool         bAbove,
-                          Bool         bLeft);
-    Void predIntraChromaAng(Int* piSrc,
-                            UInt uiDirMode,
-                            Pel* piPred,
-                            UInt uiStride,
-                            Int  iWidth,
-                            Int  iHeight,
-                            Bool bAbove,
-                            Bool bLeft);
+    Void predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
+    Void predIntraChromaAng(Int* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
 
     Pel  predIntraGetPredValDC(Int* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft);
 

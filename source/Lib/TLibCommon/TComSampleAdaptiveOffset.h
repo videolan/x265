@@ -120,16 +120,7 @@ public:
 
     Int  convertLevelRowCol2Idx(Int level, Int row, Int col);
 
-    Void initSAOParam(SAOParam *pcSaoParam,
-                      Int       iPartLevel,
-                      Int       iPartRow,
-                      Int       iPartCol,
-                      Int       iParentPartIdx,
-                      Int       StartCUX,
-                      Int       EndCUX,
-                      Int       StartCUY,
-                      Int       EndCUY,
-                      Int       iYCbCr);
+    Void initSAOParam(SAOParam *pcSaoParam, Int iPartLevel, Int iPartRow, Int iPartCol, Int iParentPartIdx, Int StartCUX, Int EndCUX, Int StartCUY, Int EndCUY, Int iYCbCr);
     Void allocSaoParam(SAOParam* pcSaoParam);
     Void resetSAOParam(SAOParam *pcSaoParam);
     static Void freeSaoParam(SAOParam *pcSaoParam);
@@ -141,14 +132,7 @@ public:
     Void processSaoCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pcPic);
     Void destroyPicSaoInfo();
-    Void processSaoBlock(Pel*  pDec,
-                         Pel*  pRest,
-                         Int   stride,
-                         Int   iSaoType,
-                         UInt  width,
-                         UInt  height,
-                         Bool* pbBorderAvail,
-                         Int   iYCbCr);
+    Void processSaoBlock(Pel* pDec, Pel* pRest, Int stride, Int iSaoType, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
 
     Void resetLcuPart(SaoLcuParam* saoLcuParam);
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);

@@ -58,7 +58,7 @@ class TComPattern;
 // ====================================================================================================================
 
 // for function pointer
-typedef UInt (*FpDistFunc)(DistParam*);
+typedef UInt (*FpDistFunc) (DistParam*);
 
 // ====================================================================================================================
 // Class definition
@@ -180,40 +180,12 @@ public:
     Void    setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam);
     Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
 #if NS_HAD
-    Void    setDistParam(TComPattern* pcPatternKey,
-                         Pel*         piRefY,
-                         Int          iRefStride,
-                         Int          iStep,
-                         DistParam&   rcDistParam,
-                         Bool         bHADME = false,
-                         Bool         bUseNSHAD = false);
-    Void    setDistParam(DistParam& rcDP,
-                         Int        bitDepth,
-                         Pel*       p1,
-                         Int        iStride1,
-                         Pel*       p2,
-                         Int        iStride2,
-                         Int        iWidth,
-                         Int        iHeight,
-                         Bool       bHadamard = false,
-                         Bool       bUseNSHAD = false);
-#else // if NS_HAD
-    Void    setDistParam(TComPattern* pcPatternKey,
-                         Pel*         piRefY,
-                         Int          iRefStride,
-                         Int          iStep,
-                         DistParam&   rcDistParam,
-                         Bool         bHADME = false);
-    Void    setDistParam(DistParam& rcDP,
-                         Int        bitDepth,
-                         Pel*       p1,
-                         Int        iStride1,
-                         Pel*       p2,
-                         Int        iStride2,
-                         Int        iWidth,
-                         Int        iHeight,
-                         Bool       bHadamard = false);
-#endif // if NS_HAD
+    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false, Bool bUseNSHAD = false);
+    Void    setDistParam(DistParam& rcDP, Int bitDepth, Pel* p1, Int iStride1, Pel* p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard = false, Bool bUseNSHAD = false);
+#else
+    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
+    Void    setDistParam(DistParam& rcDP, Int bitDepth, Pel* p1, Int iStride1, Pel* p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard = false);
+#endif
 
     UInt    calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight);
 
@@ -297,25 +269,10 @@ private:
 public:
 
 #if WEIGHTED_CHROMA_DISTORTION
-    UInt   getDistPart(Int      bitDepth,
-                       Pel*     piCur,
-                       Int      iCurStride,
-                       Pel*     piOrg,
-                       Int      iOrgStride,
-                       UInt     uiBlkWidth,
-                       UInt     uiBlkHeight,
-                       TextType eText = TEXT_LUMA,
-                       DFunc    eDFunc = DF_SSE);
+    UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA, DFunc eDFunc = DF_SSE);
 #else
-    UInt   getDistPart(Int   bitDepth,
-                       Pel*  piCur,
-                       Int   iCurStride,
-                       Pel*  piOrg,
-                       Int   iOrgStride,
-                       UInt  uiBlkWidth,
-                       UInt  uiBlkHeight,
-                       DFunc eDFunc = DF_SSE);
-#endif // if WEIGHTED_CHROMA_DISTORTION
+    UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc = DF_SSE);
+#endif
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
     UInt   getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height);

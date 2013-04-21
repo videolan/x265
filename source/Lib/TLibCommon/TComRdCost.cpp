@@ -261,7 +261,7 @@ Void TComRdCost::xUninit()
 {
     if (NULL != m_puiComponentCostOriginP)
     {
-        delete[] m_puiComponentCostOriginP;
+        delete [] m_puiComponentCostOriginP;
         m_puiComponentCostOriginP = NULL;
     }
 }
@@ -323,7 +323,6 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     {
         rcDistParam.DistFunc = m_afpDistortFunc[45];
     }
-
 #endif // if AMP_SAD
 
     // initialize
@@ -332,21 +331,10 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
 
 // Setting the Distortion Parameter for Inter (subpel ME with step)
 #if NS_HAD
-Void TComRdCost::setDistParam(TComPattern* pcPatternKey,
-                              Pel*         piRefY,
-                              Int          iRefStride,
-                              Int          iStep,
-                              DistParam&   rcDistParam,
-                              Bool         bHADME,
-                              Bool         bUseNSHAD)
+Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME, Bool bUseNSHAD)
 #else
-Void TComRdCost::setDistParam(TComPattern* pcPatternKey,
-                              Pel*         piRefY,
-                              Int          iRefStride,
-                              Int          iStep,
-                              DistParam&   rcDistParam,
-                              Bool         bHADME)
-#endif // if NS_HAD
+Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME)
+#endif
 {
     // set Original & Curr Pointer / Stride
     rcDistParam.pOrg = pcPatternKey->getROIY();
@@ -396,26 +384,10 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey,
 
 Void
 #if NS_HAD
-TComRdCost::setDistParam(DistParam& rcDP,
-                         Pel*       p1,
-                         Int        iStride1,
-                         Pel*       p2,
-                         Int        iStride2,
-                         Int        iWidth,
-                         Int        iHeight,
-                         Bool       bHadamard,
-                         Bool       bUseNSHAD)
+TComRdCost::setDistParam(DistParam& rcDP, Pel* p1, Int iStride1, Pel* p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard, Bool bUseNSHAD)
 #else
-TComRdCost::setDistParam(DistParam & rcDP,
-                         Int bitDepth,
-                         Pel * p1,
-                         Int iStride1,
-                         Pel * p2,
-                         Int iStride2,
-                         Int iWidth,
-                         Int iHeight,
-                         Bool bHadamard)
-#endif // if NS_HAD
+TComRdCost::setDistParam(DistParam & rcDP, Int bitDepth, Pel * p1, Int iStride1, Pel * p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard)
+#endif
 {
     rcDP.pOrg       = p1;
     rcDP.pCur       = p2;
@@ -481,25 +453,10 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
 }
 
 #if WEIGHTED_CHROMA_DISTORTION
-UInt TComRdCost::getDistPart(Int      bitDepth,
-                             Pel*     piCur,
-                             Int      iCurStride,
-                             Pel*     piOrg,
-                             Int      iOrgStride,
-                             UInt     uiBlkWidth,
-                             UInt     uiBlkHeight,
-                             TextType eText,
-                             DFunc    eDFunc)
+UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
 #else
-UInt TComRdCost::getDistPart(Int   bitDepth,
-                             Pel*  piCur,
-                             Int   iCurStride,
-                             Pel*  piOrg,
-                             Int   iOrgStride,
-                             UInt  uiBlkWidth,
-                             UInt  uiBlkHeight,
-                             DFunc eDFunc)
-#endif // if WEIGHTED_CHROMA_DISTORTION
+UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc)
+#endif
 {
     DistParam cDtParam;
 
@@ -1258,7 +1215,6 @@ UInt TComRdCost::xGetSSE16(DistParam* pcDtParam)
         assert(pcDtParam->iCols == 16);
         return xGetSSEw(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -1318,7 +1274,6 @@ UInt TComRdCost::xGetSSE16N(DistParam* pcDtParam)
     {
         return xGetSSEw(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -1382,7 +1337,6 @@ UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
         assert(pcDtParam->iCols == 32);
         return xGetSSEw(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -1474,7 +1428,6 @@ UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
         assert(pcDtParam->iCols == 64);
         return xGetSSEw(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -2110,7 +2063,6 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
     {
         return xGetHADs4w(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -2145,7 +2097,6 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
     {
         return xGetHADs8w(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -2194,7 +2145,6 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
     {
         return xGetHADsw(pcDtParam);
     }
-
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
@@ -2207,8 +2157,7 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
     UInt uiSum = 0;
 
 #if NS_HAD
-    if (((iRows % 8 == 0) && (iCols % 8 == 0) &&
-         (iRows == iCols)) || ((iRows % 8 == 0) && (iCols % 8 == 0) && !pcDtParam->bUseNSHAD))
+    if (((iRows % 8 == 0) && (iCols % 8 == 0) && (iRows == iCols)) || ((iRows % 8 == 0) && (iCols % 8 == 0) && !pcDtParam->bUseNSHAD))
 #else
     if ((iRows % 8 == 0) && (iCols % 8 == 0))
 #endif
@@ -2232,7 +2181,6 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
             piCur += iOffsetCur;
         }
     }
-
 #if NS_HAD
     else if ((iCols > 8) && (iCols > iRows) && pcDtParam->bUseNSHAD)
     {
