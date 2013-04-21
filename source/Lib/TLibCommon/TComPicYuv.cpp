@@ -84,12 +84,9 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
     m_iChromaMarginX  = m_iLumaMarginX >> 1;
     m_iChromaMarginY  = m_iLumaMarginY >> 1;
 
-    m_apiPicBufY      =
-        (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-    m_apiPicBufU      =
-        (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
-    m_apiPicBufV      =
-        (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    m_apiPicBufY      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+    m_apiPicBufU      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    m_apiPicBufV      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
 
     m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
     m_piPicOrgU       = m_apiPicBufU + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
@@ -114,13 +111,8 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
     {
         for (Int buCol = 0; buCol < (1 << uiMaxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow <<
-                         uiMaxCUDepth) +
-                        buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
-            m_buOffsetC[(buRow <<
-                         uiMaxCUDepth) +
-                        buCol] = getCStride() * buRow *
-                (uiMaxCUHeight / 2 >> uiMaxCUDepth) + buCol * (uiMaxCUWidth / 2 >> uiMaxCUDepth);
+            m_buOffsetY[(buRow << uiMaxCUDepth) + buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
+            m_buOffsetC[(buRow << uiMaxCUDepth) + buCol] = getCStride() * buRow * (uiMaxCUHeight / 2 >> uiMaxCUDepth) + buCol * (uiMaxCUWidth / 2 >> uiMaxCUDepth);
         }
     }
 }
@@ -131,11 +123,9 @@ Void TComPicYuv::destroy()
     m_piPicOrgU       = NULL;
     m_piPicOrgV       = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY); m_apiPicBufY = NULL; }
-
-    if (m_apiPicBufU) { xFree(m_apiPicBufU); m_apiPicBufU = NULL; }
-
-    if (m_apiPicBufV) { xFree(m_apiPicBufV); m_apiPicBufV = NULL; }
+    if (m_apiPicBufY) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
+    if (m_apiPicBufU) { xFree(m_apiPicBufU);    m_apiPicBufU = NULL; }
+    if (m_apiPicBufV) { xFree(m_apiPicBufV);    m_apiPicBufV = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_cuOffsetC;
@@ -158,8 +148,7 @@ Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UI
     m_iLumaMarginX    = g_uiMaxCUWidth  + 16; // for 16-byte alignment
     m_iLumaMarginY    = g_uiMaxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
-    m_apiPicBufY      =
-        (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+    m_apiPicBufY      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
     m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
 
     m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
@@ -178,9 +167,7 @@ Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UI
     {
         for (Int buCol = 0; buCol < (1 << uiMaxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow <<
-                         uiMaxCUDepth) +
-                        buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
+            m_buOffsetY[(buRow << uiMaxCUDepth) + buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
         }
     }
 }
@@ -189,7 +176,7 @@ Void TComPicYuv::destroyLuma()
 {
     m_piPicOrgY       = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY); m_apiPicBufY = NULL; }
+    if (m_apiPicBufY) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_buOffsetY;
@@ -200,12 +187,9 @@ Void  TComPicYuv::copyToPic(TComPicYuv* pcPicYuvDst)
     assert(m_iPicWidth  == pcPicYuvDst->getWidth());
     assert(m_iPicHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) *
-             (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) *
-             ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) *
-             ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) * (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst)
@@ -213,8 +197,7 @@ Void  TComPicYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst)
     assert(m_iPicWidth  == pcPicYuvDst->getWidth());
     assert(m_iPicHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) *
-             (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) * (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicCb(TComPicYuv* pcPicYuvDst)
@@ -222,8 +205,7 @@ Void  TComPicYuv::copyToPicCb(TComPicYuv* pcPicYuvDst)
     assert(m_iPicWidth  == pcPicYuvDst->getWidth());
     assert(m_iPicHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) *
-             ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
@@ -231,8 +213,7 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
     assert(m_iPicWidth  == pcPicYuvDst->getWidth());
     assert(m_iPicHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) *
-             ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
 }
 
 Void TComPicYuv::extendPicBorder()
@@ -314,9 +295,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
     shift = g_bitDepthC - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
-    for (y = 0; y < (m_iPicHeight >> 1); y++)
+    for (y = 0; y < m_iPicHeight >> 1; y++)
     {
-        for (x = 0; x < (m_iPicWidth >> 1); x++)
+        for (x = 0; x < m_iPicWidth >> 1; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (piCb[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -325,9 +306,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         piCb += getCStride();
     }
 
-    for (y = 0; y < (m_iPicHeight >> 1); y++)
+    for (y = 0; y < m_iPicHeight >> 1; y++)
     {
-        for (x = 0; x < (m_iPicWidth >> 1); x++)
+        for (x = 0; x < m_iPicWidth >> 1; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (piCr[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);

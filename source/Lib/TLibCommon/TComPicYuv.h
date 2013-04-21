@@ -147,23 +147,11 @@ public:
 
     Pel*  getCrAddr(Int iCuAddr) { return m_piPicOrgV + m_cuOffsetC[iCuAddr]; }
 
-    Pel*  getLumaAddr(Int iCuAddr, Int uiAbsZorderIdx)
-    {
-        return m_piPicOrgY + m_cuOffsetY[iCuAddr] +
-               m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]];
-    }
+    Pel*  getLumaAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgY + m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
-    Pel*  getCbAddr(Int iCuAddr, Int uiAbsZorderIdx)
-    {
-        return m_piPicOrgU + m_cuOffsetC[iCuAddr] +
-               m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]];
-    }
+    Pel*  getCbAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgU + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
-    Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx)
-    {
-        return m_piPicOrgV + m_cuOffsetC[iCuAddr] +
-               m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]];
-    }
+    Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous

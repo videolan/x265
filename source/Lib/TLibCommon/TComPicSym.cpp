@@ -98,9 +98,8 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
             delete m_apcTComSlice[i];
         }
 
-        delete[] m_apcTComSlice;
+        delete [] m_apcTComSlice;
     }
-
     m_apcTComSlice      = new TComSlice*[m_uiNumCUsInFrame * m_uiNumPartitions];
     m_apcTComSlice[0]   = new TComSlice;
     m_uiNumAllocatedSlice = 1;
@@ -136,9 +135,8 @@ Void TComPicSym::destroy()
             delete m_apcTComSlice[i];
         }
 
-        delete[] m_apcTComSlice;
+        delete [] m_apcTComSlice;
     }
-
     m_apcTComSlice = NULL;
 
     for (Int i = 0; i < m_uiNumCUsInFrame; i++)
@@ -148,7 +146,7 @@ Void TComPicSym::destroy()
         m_apcTComDataCU[i] = NULL;
     }
 
-    delete[] m_apcTComDataCU;
+    delete [] m_apcTComDataCU;
     m_apcTComDataCU = NULL;
 
     for (Int i = 0; i < (m_iNumColumnsMinus1 + 1) * (m_iNumRowsMinus1 + 1); i++)
@@ -156,17 +154,17 @@ Void TComPicSym::destroy()
         delete m_apcTComTile[i];
     }
 
-    delete[] m_apcTComTile;
+    delete [] m_apcTComTile;
 
     m_apcTComTile = NULL;
 
-    delete[] m_puiCUOrderMap;
+    delete [] m_puiCUOrderMap;
     m_puiCUOrderMap = NULL;
 
-    delete[] m_puiTileIdxMap;
+    delete [] m_puiTileIdxMap;
     m_puiTileIdxMap = NULL;
 
-    delete[] m_puiInverseCUOrderMap;
+    delete [] m_puiInverseCUOrderMap;
     m_puiInverseCUOrderMap = NULL;
 
     if (m_saoParam)
@@ -253,10 +251,8 @@ Void TComPicSym::xInitTiles()
             this->getTComTile(uiTileIdx)->setBottomEdgePosInCU(uiBottomEdgePosInCU - 1);
 
             //initialize the FirstCUAddr for each tile
-            this->getTComTile(uiTileIdx)->setFirstCUAddr((this->getTComTile(uiTileIdx)->getBottomEdgePosInCU() -
-                                                          this->getTComTile(uiTileIdx)->getTileHeight() + 1) * m_uiWidthInCU +
-                                                         this->getTComTile(uiTileIdx)->getRightEdgePosInCU() -
-                                                         this->getTComTile(uiTileIdx)->getTileWidth() + 1);
+            this->getTComTile(uiTileIdx)->setFirstCUAddr((this->getTComTile(uiTileIdx)->getBottomEdgePosInCU() - this->getTComTile(uiTileIdx)->getTileHeight() + 1) * m_uiWidthInCU +
+                                                         this->getTComTile(uiTileIdx)->getRightEdgePosInCU() - this->getTComTile(uiTileIdx)->getTileWidth() + 1);
         }
     }
 
@@ -294,8 +290,7 @@ UInt TComPicSym::xCalculateNxtCUAddr(UInt uiCurrCUAddr)
     uiTileIdx = this->getTileIdxMap(uiCurrCUAddr);
 
     //get the raster scan address for the next LCU
-    if (uiCurrCUAddr % m_uiWidthInCU == this->getTComTile(uiTileIdx)->getRightEdgePosInCU() && uiCurrCUAddr / m_uiWidthInCU ==
-        this->getTComTile(uiTileIdx)->getBottomEdgePosInCU())
+    if (uiCurrCUAddr % m_uiWidthInCU == this->getTComTile(uiTileIdx)->getRightEdgePosInCU() && uiCurrCUAddr / m_uiWidthInCU == this->getTComTile(uiTileIdx)->getBottomEdgePosInCU())
     //the current LCU is the last LCU of the tile
     {
         if (uiTileIdx == (m_iNumColumnsMinus1 + 1) * (m_iNumRowsMinus1 + 1) - 1)
