@@ -156,7 +156,7 @@ public:
     /** Return a reference to the internal fifo */
     std::vector<uint8_t>& getFIFO() const { return *m_fifo; }
 
-    Void          addSubstream    (TComOutputBitstream* pcSubstream);
+    Void          addSubstream(TComOutputBitstream* pcSubstream);
     Void writeByteAlignment();
 
     //! returns the number of start code emulations contained in the current buffer
@@ -191,15 +191,15 @@ public:
     ~TComInputBitstream();
 
     // interface for decoding
-    Void        pseudoRead      (UInt uiNumberOfBits, UInt& ruiBits);
-    Void        read            (UInt uiNumberOfBits, UInt& ruiBits);
+    Void        pseudoRead(UInt uiNumberOfBits, UInt& ruiBits);
+    Void        read(UInt uiNumberOfBits, UInt& ruiBits);
     Void        readByte(UInt &ruiBits)
     {
         assert(m_fifo_idx < m_fifo->size());
         ruiBits = (*m_fifo)[m_fifo_idx++];
     }
 
-    Void        readOutTrailingBits ();
+    Void        readOutTrailingBits();
     UChar getHeldBits()          { return m_held_bits; }
 
     TComOutputBitstream& operator =(const TComOutputBitstream& src);

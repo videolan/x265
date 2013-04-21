@@ -66,7 +66,7 @@ public:
 
     Void  setStateAndMps(UChar ucState, UChar ucMPS) { m_ucState = (ucState << 1) + ucMPS; } ///< set state and MPS
 
-    Void init (Int qp, Int initValue);   ///< initialize state with initial probability
+    Void init(Int qp, Int initValue);   ///< initialize state with initial probability
 
     Void updateLPS()
     {
