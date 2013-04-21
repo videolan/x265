@@ -161,9 +161,6 @@ public:
     Void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
 
     Void xCodePredWeightTable(TComSlice* pcSlice);
-    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish = true) {}
-
-    Void updateContextTables(SliceType eSliceType, Int iQp)                          {}
 
     Void codeScalingList(TComScalingList* scalingList);
     Void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);
