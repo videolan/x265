@@ -145,27 +145,9 @@ public:
                       UInt        uiAbsPartIdx,
                       Bool        useTransformSkip = false);
 
-    Void invtransformNxN(Bool     transQuantBypass,
-                         TextType eText,
-                         UInt     uiMode,
-                         Pel*     rpcResidual,
-                         UInt     uiStride,
-                         TCoeff*  pcCoeff,
-                         UInt     uiWidth,
-                         UInt     uiHeight,
-                         Int      scalingListType,
-                         Bool     useTransformSkip = false);
-    Void invRecurTransformNxN(TComDataCU* pcCU,
-                              UInt        uiAbsPartIdx,
-                              TextType    eTxt,
-                              Pel*        rpcResidual,
-                              UInt        uiAddr,
-                              UInt        uiStride,
-                              UInt        uiWidth,
-                              UInt        uiHeight,
-                              UInt        uiMaxTrMode,
-                              UInt        uiTrMode,
-                              TCoeff*     rpcCoeff);
+    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Pel* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
+    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Pel* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
+                              UInt uiMaxTrMode,  UInt uiTrMode, TCoeff* rpcCoeff);
 
     // Misc functions
     Void setQPforQuant(Int qpy, TextType eTxtType, Int qpBdOffset, Int chromaQPOffset);
@@ -198,11 +180,11 @@ public:
     Void initScalingList();
     Void destroyScalingList();
     Void setErrScaleCoeff(UInt list, UInt size, UInt qp);
-    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }    //!< get Error Scale Coefficent
+    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
 
-    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }         //!< get Quant Coefficent
+    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
 
-    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }     //!< get DeQuant Coefficent
+    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
     Void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
 
@@ -214,22 +196,8 @@ public:
     Void xSetScalingListDec(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
     Void setScalingList(TComScalingList *scalingList);
     Void setScalingListDec(TComScalingList *scalingList);
-    Void processScalingListEnc(Int *coeff,
-                               Int *quantcoeff,
-                               Int  quantScales,
-                               UInt height,
-                               UInt width,
-                               UInt ratio,
-                               Int  sizuNum,
-                               UInt dc);
-    Void processScalingListDec(Int *coeff,
-                               Int *dequantcoeff,
-                               Int  invQuantScales,
-                               UInt height,
-                               UInt width,
-                               UInt ratio,
-                               Int  sizuNum,
-                               UInt dc);
+    Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
+    Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
 #if ADAPTIVE_QP_SELECTION
     Void    initSliceQpDelta();
     Void    storeSliceQpNext(TComSlice* pcSlice);

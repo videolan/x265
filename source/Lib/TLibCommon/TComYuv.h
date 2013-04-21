@@ -178,17 +178,17 @@ public:
     Pel* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufV + getAddrOffset(iTransUnitIdx, iBlkSize, m_iCWidth); }
 
     //  Get stride value of YUV buffer
-    UInt    getStride()    { return m_iWidth; }
+    UInt    getStride()    { return m_iWidth;   }
 
-    UInt    getCStride()    { return m_iCWidth; }
+    UInt    getCStride()    { return m_iCWidth;  }
 
-    UInt    getHeight()    { return m_iHeight; }
+    UInt    getHeight()    { return m_iHeight;  }
 
-    UInt    getWidth()    { return m_iWidth; }
+    UInt    getWidth()    { return m_iWidth;   }
 
     UInt    getCHeight()    { return m_iCHeight; }
 
-    UInt    getCWidth()    { return m_iCWidth; }
+    UInt    getCWidth()    { return m_iCWidth;  }
 }; // END CLASS DEFINITION TComYuv
 
 //! \}

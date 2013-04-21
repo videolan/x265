@@ -103,13 +103,11 @@ Void TEncTop::create()
         m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_cEncSAO.createEncBuffer();
     }
-
 #if ADAPTIVE_QP_SELECTION
     if (m_bUseAdaptQpSelect)
     {
         m_cTrQuant.initSliceQpDelta();
     }
-
 #endif
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
@@ -119,10 +117,8 @@ Void TEncTop::create()
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
-
 #else
-    m_cRateCtrl.create(getIntraPeriod(), getGOPSize(), getFrameRate(), getTargetBitrate(), getQP(),
-                       getNumLCUInUnit(), getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
+    m_cRateCtrl.create(getIntraPeriod(), getGOPSize(), getFrameRate(), getTargetBitrate(), getQP(), getNumLCUInUnit(), getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
 #endif
     // if SBAC-based RD optimization is used
     if (m_bUseSBACRD)
@@ -219,7 +215,6 @@ Void TEncTop::destroy()
         m_cEncSAO.destroy();
         m_cEncSAO.destroyEncBuffer();
     }
-
     m_cLoopFilter.destroy();
     m_cRateCtrl.destroy();
     // SBAC RD
@@ -237,12 +232,12 @@ Void TEncTop::destroy()
 
         for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
-            delete[] m_pppcRDSbacCoder[iDepth];
-            delete[] m_pppcBinCoderCABAC[iDepth];
+            delete [] m_pppcRDSbacCoder[iDepth];
+            delete [] m_pppcBinCoderCABAC[iDepth];
         }
 
-        delete[] m_pppcRDSbacCoder;
-        delete[] m_pppcBinCoderCABAC;
+        delete [] m_pppcRDSbacCoder;
+        delete [] m_pppcBinCoderCABAC;
 
         for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
         {
@@ -257,8 +252,8 @@ Void TEncTop::destroy()
 
             for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
             {
-                delete[] m_ppppcRDSbacCoders[ui][iDepth];
-                delete[] m_ppppcBinCodersCABAC[ui][iDepth];
+                delete [] m_ppppcRDSbacCoders[ui][iDepth];
+                delete [] m_ppppcBinCodersCABAC[ui][iDepth];
             }
 
             delete[] m_ppppcRDSbacCoders[ui];
@@ -268,7 +263,6 @@ Void TEncTop::destroy()
         delete[] m_ppppcRDSbacCoders;
         delete[] m_ppppcBinCodersCABAC;
     }
-
     delete[] m_pcSbacCoders;
     delete[] m_pcBinCoderCABACs;
     delete[] m_pcRDGoOnSbacCoders;
@@ -316,16 +310,7 @@ Void TEncTop::init()
                     );
 
     // initialize encoder search class
-    m_cSearch.init(this,
-                   &m_cTrQuant,
-                   m_iSearchRange,
-                   m_bipredSearchRange,
-                   m_iFastSearch,
-                   0,
-                   &m_cEntropyCoder,
-                   &m_cRdCost,
-                   getRDSbacCoder(),
-                   getRDGoOnSbacCoder());
+    m_cSearch.init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, 0, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder());
 
     m_iMaxRefPicNum = 0;
 }
@@ -360,11 +345,7 @@ Void TEncTop::deletePicBuffer()
  \retval  rcListBitstreamOut  list of output bitstreams
  \retval  iNumEncoded         number of encoded pictures
  */
-Void TEncTop::encode(Bool                   flush,
-                     TComPicYuv*            pcPicYuvOrg,
-                     TComList<TComPicYuv*>& rcListPicYuvRecOut,
-                     std::list<AccessUnit>& accessUnitsOut,
-                     Int&                   iNumEncoded)
+Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded)
 {
     if (pcPicYuvOrg)
     {
@@ -391,7 +372,6 @@ Void TEncTop::encode(Bool                   flush,
     {
         m_cRateCtrl.initRCGOP(m_iNumPicRcvd);
     }
-
 #endif
 
     // compress GOP
@@ -402,7 +382,6 @@ Void TEncTop::encode(Bool                   flush,
     {
         m_cRateCtrl.destroyRCGOP();
     }
-
 #endif
 
     iNumEncoded         = m_iNumPicRcvd;
@@ -443,15 +422,8 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
         if (getUseAdaptiveQP())
         {
             TEncPic* pcEPic = new TEncPic;
-            pcEPic->create(m_iSourceWidth,
-                           m_iSourceHeight,
-                           g_uiMaxCUWidth,
-                           g_uiMaxCUHeight,
-                           g_uiMaxCUDepth,
-                           m_cPPS.getMaxCuDQPDepth() + 1,
-                           m_conformanceWindow,
-                           m_defaultDisplayWindow,
-                           m_numReorderPics);
+            pcEPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth() + 1,
+                           m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
             rpcPic = pcEPic;
         }
         else
@@ -461,15 +433,12 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
             rpcPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
                            m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
         }
-
         if (getUseSAO())
         {
             rpcPic->getPicSym()->allocSaoParam(&m_cEncSAO);
         }
-
         m_cListPic.pushBack(rpcPic);
     }
-
     rpcPic->setReconMark(false);
 
     m_iPOCLast++;
@@ -500,13 +469,11 @@ Void TEncTop::xInitSPS()
         /* The above constraint is equal to Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN, 1);
     }
-
     if (m_profile == Profile::MAIN)
     {
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN10, 1);
     }
-
     /* XXX: should Main be marked as compatible with still picture? */
 
     /* XXX: may be a good idea to refactor the above into a function
@@ -543,8 +510,9 @@ Void TEncTop::xInitSPS()
     m_cSPS.setUseLossless(m_useLossless);
 
     m_cSPS.setMaxTrSize(1 << m_uiQuadtreeTULog2MaxSize);
-
+#if !L0034_COMBINED_LIST_CLEANUP
     m_cSPS.setUseLComb(m_bUseLComb);
+#endif
 
     Int i;
 
@@ -677,7 +645,6 @@ Void TEncTop::xInitPPS()
         m_cPPS.setMaxCuDQPDepth(0);
         m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
     }
-
 #endif
 
     m_cPPS.setChromaCbQpOffset(m_chromaCbQpOffset);
@@ -703,7 +670,6 @@ Void TEncTop::xInitPPS()
     {
         m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
     }
-
 #else // if L0386_DB_METRIC
     m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
 #endif // if L0386_DB_METRIC
@@ -744,7 +710,6 @@ Void TEncTop::xInitPPS()
     {
         m_cPPS.setDependentSliceSegmentsEnabledFlag(true);
     }
-
     if (m_cPPS.getDependentSliceSegmentsEnabledFlag())
     {
         Int NumCtx = m_cPPS.getEntropyCodingSyncEnabledFlag() ? 2 : 1;
@@ -823,8 +788,7 @@ Void TEncTop::xInitRPS()
 
             if (count != rps->getNumberOfPictures())
             {
-                printf(
-                    "Warning: Unable fully predict all delta POCs using the reference RPS index given in the config file.  Setting Inter RPS to false for this RPS.\n");
+                printf("Warning: Unable fully predict all delta POCs using the reference RPS index given in the config file.  Setting Inter RPS to false for this RPS.\n");
                 rps->setInterRPSPrediction(0);
             }
         }
@@ -864,20 +828,16 @@ Void TEncTop::xInitRPS()
 
             if (numNeg != rps->getNumberOfNegativePictures())
             {
-                printf(
-                    "Warning: number of negative pictures in RPS is different between intra and inter RPS specified in the config file.\n");
+                printf("Warning: number of negative pictures in RPS is different between intra and inter RPS specified in the config file.\n");
                 rps->setNumberOfNegativePictures(numNeg);
                 rps->setNumberOfPositivePictures(numNeg + numPos);
             }
-
             if (numPos != rps->getNumberOfPositivePictures())
             {
-                printf(
-                    "Warning: number of positive pictures in RPS is different between intra and inter RPS specified in the config file.\n");
+                printf("Warning: number of positive pictures in RPS is different between intra and inter RPS specified in the config file.\n");
                 rps->setNumberOfPositivePictures(numPos);
                 rps->setNumberOfPositivePictures(numNeg + numPos);
             }
-
             RPSTemp.setNumberOfPictures(numNeg + numPos);
             RPSTemp.setNumberOfNegativePictures(numNeg);
             RPSTemp.sortDeltaPOC(); // sort the created delta POC before comparing
@@ -890,18 +850,15 @@ Void TEncTop::xInitRPS()
                     printf("Warning: delta POC is different between intra RPS and inter RPS specified in the config file.\n");
                     rps->setDeltaPOC(j, RPSTemp.getDeltaPOC(j));
                 }
-
                 if (RPSTemp.getUsed(j) != rps->getUsed(j))
                 {
-                    printf(
-                        "Warning: Used by Current in RPS is different between intra and inter RPS specified in the config file.\n");
+                    printf("Warning: Used by Current in RPS is different between intra and inter RPS specified in the config file.\n");
                     rps->setUsed(j, RPSTemp.getUsed(j));
                 }
             }
 
 #endif // if WRITE_BACK
         }
-
 #else // if AUTO_INTER_RPS
         rps->setInterRPSPrediction(ge.m_interRPSPrediction);
         if (ge.m_interRPSPrediction)
@@ -944,7 +901,6 @@ Void TEncTop::xInitRPS()
             rps->sortDeltaPOC();
 #endif // if WRITE_BACK
         }
-
 #endif //INTER_RPS_AUTO
     }
 }
@@ -965,7 +921,6 @@ Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
             {
                 POCIndex = m_uiIntraPeriod;
             }
-
             if (POCIndex == m_GOPList[extraNum].m_POC)
             {
                 slice->setRPSidx(extraNum);
@@ -981,8 +936,7 @@ Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
     }
 
     slice->setRPS(getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
-    slice->getRPS()->setNumberOfPictures(
-        slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
+    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
 }
 
 #if L0208_SOP_DESCRIPTION_SEI
@@ -999,7 +953,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
             {
                 POCIndex = m_uiIntraPeriod;
             }
-
             if (POCIndex == m_GOPList[extraNum].m_POC)
             {
                 rpsIdx = extraNum;
@@ -1029,7 +982,6 @@ Void  TEncTop::xInitPPSforTiles()
         m_cPPS.setColumnWidth(m_puiColumnWidth);
         m_cPPS.setRowHeight(m_puiRowHeight);
     }
-
     m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 
     // # substreams is "per tile" when tiles are independent.
@@ -1043,8 +995,7 @@ Void  TEncTop::xInitPPSforTiles()
 Void  TEncCfg::xCheckGSParameters()
 {
     Int   iWidthInCU = (m_iSourceWidth % g_uiMaxCUWidth) ? m_iSourceWidth / g_uiMaxCUWidth + 1 : m_iSourceWidth / g_uiMaxCUWidth;
-    Int   iHeightInCU =
-        (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
+    Int   iHeightInCU = (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
     UInt  uiCummulativeColumnWidth = 0;
     UInt  uiCummulativeRowHeight = 0;
 

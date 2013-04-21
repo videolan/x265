@@ -68,7 +68,7 @@ private:
 
 public:
 
-    TEncAnalyze() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0; }
+    TEncAnalyze() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
 
     virtual ~TEncAnalyze()  {}
 
@@ -82,19 +82,19 @@ public:
         m_uiNumPic++;
     }
 
-    Double  getPsnrY()  { return m_dPSNRSumY; }
+    Double  getPsnrY()  { return m_dPSNRSumY;  }
 
-    Double  getPsnrU()  { return m_dPSNRSumU; }
+    Double  getPsnrU()  { return m_dPSNRSumU;  }
 
-    Double  getPsnrV()  { return m_dPSNRSumV; }
+    Double  getPsnrV()  { return m_dPSNRSumV;  }
 
-    Double  getBits()   { return m_dAddBits; }
+    Double  getBits()   { return m_dAddBits;   }
 
-    UInt    getNumPic() { return m_uiNumPic; }
+    UInt    getNumPic() { return m_uiNumPic;   }
 
-    Void    setFrmRate(Double dFrameRate) { m_dFrmRate = dFrameRate; }  //--CFG_KDY
+    Void    setFrmRate(Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
 
-    Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0; }
+    Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
 
     Void    printOut(Char cDelim)
     {

@@ -75,7 +75,6 @@ static std::vector<UInt> writeAnnexB(std::ostream& out, const AccessUnit& au)
             out.write(start_code_prefix + 1, 3);
             size += 3;
         }
-
         out << nalu.m_nalUnitData.str();
         size += UInt(nalu.m_nalUnitData.str().size());
 

@@ -148,7 +148,6 @@ Void TEncPic::destroy()
         delete[] m_acAQLayer;
         m_acAQLayer = NULL;
     }
-
     TComPic::destroy();
 }
 

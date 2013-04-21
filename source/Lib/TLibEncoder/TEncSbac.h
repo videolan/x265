@@ -79,12 +79,12 @@ public:
     Void  determineCabacInitIdx();
     Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p; m_pcBinIf->init(p); }
 
-    Void  setSlice(TComSlice* p)  { m_pcSlice = p; }
+    Void  setSlice(TComSlice* p)  { m_pcSlice = p;                       }
 
     // SBAC RD
-    Void  resetCoeffCost()                { m_uiCoeffCost = 0; }
+    Void  resetCoeffCost()                { m_uiCoeffCost = 0;  }
 
-    UInt  getCoeffCost()                { return m_uiCoeffCost; }
+    UInt  getCoeffCost()                { return m_uiCoeffCost;  }
 
     Void  load(TEncSbac* pScr);
     Void  loadIntraDirModeLuma(TEncSbac* pScr);
@@ -108,7 +108,7 @@ public:
     Void  codeSaoTypeIdx(UInt uiCode);
     Void  codeSaoUflc(UInt uiLength, UInt  uiCode);
     Void  codeSAOSign(UInt uiCode);         //<! code SAO offset sign
-    Void  codeScalingList(TComScalingList* /*scalingList*/) { assert(0); }
+    Void  codeScalingList(TComScalingList* /*scalingList*/) { assert(0);         }
 
 private:
 
@@ -120,19 +120,9 @@ private:
     Void  xCopyFrom(TEncSbac* pSrc);
     Void  xCopyContextsFrom(TEncSbac* pSrc);
 
-    Void codeDFFlag(UInt /*uiCode*/, const Char* /*pSymbolName*/)
-    {
-        printf("Not supported in codeDFFlag()\n");
-        assert(0);
-        exit(1);
-    }
+    Void codeDFFlag(UInt /*uiCode*/, const Char* /*pSymbolName*/)       { printf("Not supported in codeDFFlag()\n"); assert(0); exit(1); }
 
-    Void codeDFSvlc(Int /*iCode*/, const Char* /*pSymbolName*/)
-    {
-        printf("Not supported in codeDFSvlc()\n");
-        assert(0);
-        exit(1);
-    }
+    Void codeDFSvlc(Int /*iCode*/, const Char* /*pSymbolName*/)         { printf("Not supported in codeDFSvlc()\n"); assert(0); exit(1); }
 
 protected:
 
@@ -171,13 +161,7 @@ public:
     Void codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx);
 
     Void codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int height, TextType eTType, UInt uiScanIdx);
-    Void codeCoeffNxN(TComDataCU* pcCU,
-                      TCoeff*     pcCoef,
-                      UInt        uiAbsPartIdx,
-                      UInt        uiWidth,
-                      UInt        uiHeight,
-                      UInt        uiDepth,
-                      TextType    eTType);
+    Void codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType);
     void codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType);
 
     // -------------------------------------------------------------------------------------------------------------------

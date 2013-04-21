@@ -73,13 +73,13 @@ public:
 
     TEncBinCABAC* getTEncBinCABAC()  { return this; }
 
-    Void  setBinsCoded(UInt uiVal)  { m_uiBinsCoded = uiVal; }
+    Void  setBinsCoded(UInt uiVal)  { m_uiBinsCoded = uiVal;               }
 
-    UInt  getBinsCoded()              { return m_uiBinsCoded; }
+    UInt  getBinsCoded()              { return m_uiBinsCoded;                }
 
     Void  setBinCountingEnableFlag(Bool bFlag)  { m_binCountIncrement = bFlag ? 1 : 0; }
 
-    Bool  getBinCountingEnableFlag()              { return m_binCountIncrement != 0; }
+    Bool  getBinCountingEnableFlag()              { return m_binCountIncrement != 0;     }
 
 #if FAST_BIT_EST
 

@@ -354,7 +354,6 @@ Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidt
         {
             return;
         }
-
         UInt   iSrcStride = getCStride();
         UInt   iDstStride = pcYuvDst->getCStride();
         for (UInt y = iHeight; y != 0; y--)
@@ -372,7 +371,6 @@ Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidt
         {
             return;
         }
-
         UInt   iSrcStride = getCStride();
         UInt   iDstStride = pcYuvDst->getCStride();
         for (UInt y = iHeight; y != 0; y--)
@@ -395,7 +393,6 @@ Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidt
             //th best would be to fix the caller
             return;
         }
-
         UInt   iSrcStride = getCStride();
         UInt   iDstStride = pcYuvDst->getCStride();
         for (UInt y = iHeight; y != 0; y--)

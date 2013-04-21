@@ -186,7 +186,9 @@ protected:
     Bool      m_bUseSBACRD;
     Bool      m_bUseASR;
     Bool      m_bUseHADME;
+#if !L0034_COMBINED_LIST_CLEANUP
     Bool      m_bUseLComb;
+#endif
     Bool      m_useRDOQ;
     Bool      m_useRDOQTS;
 #if L0232_RD_PENALTY
@@ -361,14 +363,7 @@ public:
 
     Window   &getConformanceWindow()                           { return m_conformanceWindow; }
 
-    Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom)
-    {
-        m_conformanceWindow.setWindow(
-            confLeft,
-            confRight,
-            confTop,
-            confBottom);
-    }
+    Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
 
     Void      setFramesToBeEncoded(Int i)      { m_framesToBeEncoded = i; }
 
@@ -385,21 +380,21 @@ public:
 
     GOPEntry  getGOPEntry(Int i)      { return m_GOPList[i]; }
 
-    Void      setMaxDecPicBuffering(UInt u, UInt tlayer) { m_maxDecPicBuffering[tlayer] = u; }
+    Void      setMaxDecPicBuffering(UInt u, UInt tlayer) { m_maxDecPicBuffering[tlayer] = u;    }
 
-    Void      setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
+    Void      setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i;    }
 
     Void      setQP(Int i)      { m_iQP = i; }
 
     Void      setPad(Int* iPad)      { for (Int i = 0; i < 2; i++) { m_aiPad[i] = iPad[i]; } }
 
-    Int       getMaxRefPicNum()                              { return m_iMaxRefPicNum; }
+    Int       getMaxRefPicNum()                              { return m_iMaxRefPicNum;           }
 
-    Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_iMaxRefPicNum = iMaxRefPicNum; }
+    Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_iMaxRefPicNum = iMaxRefPicNum;  }
 
-    Bool      getMaxTempLayer()                              { return m_maxTempLayer; }
+    Bool      getMaxTempLayer()                              { return m_maxTempLayer;              }
 
-    Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer; }
+    Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer;      }
 
     //======== Transform =============
     Void      setQuadtreeTULog2MaxSize(UInt u)      { m_uiQuadtreeTULog2MaxSize = u; }
@@ -456,7 +451,7 @@ public:
     Void      setQPAdaptationRange(Int i)      { m_iQPAdaptationRange = i; }
 
     //====== Lossless ========
-    Void      setUseLossless(Bool b)        { m_useLossless = b; }
+    Void      setUseLossless(Bool b)        { m_useLossless = b;  }
 
     //====== Sequence ========
     Int       getFrameRate()      { return m_iFrameRate; }
@@ -486,7 +481,7 @@ public:
 
     Int       getQP()      { return m_iQP; }
 
-    Int       getPad(Int i)      { assert(i < 2); return m_aiPad[i]; }
+    Int       getPad(Int i)      { assert(i < 2);                      return m_aiPad[i]; }
 
     //======== Transform =============
     UInt      getQuadtreeTULog2MaxSize()      const { return m_uiQuadtreeTULog2MaxSize; }
@@ -498,7 +493,7 @@ public:
     UInt      getQuadtreeTUMaxDepthIntra()      const { return m_uiQuadtreeTUMaxDepthIntra; }
 
     //==== Loop/Deblock Filter ========
-    Bool      getLoopFilterDisable()      { return m_bLoopFilterDisable; }
+    Bool      getLoopFilterDisable()      { return m_bLoopFilterDisable;       }
 
     Bool      getLoopFilterOffsetInPPS()      { return m_loopFilterOffsetInPPS; }
 
@@ -528,7 +523,7 @@ public:
     Int       getQPAdaptationRange()      { return m_iQPAdaptationRange; }
 
     //====== Lossless ========
-    Bool      getUseLossless()      { return m_useLossless; }
+    Bool      getUseLossless()      { return m_useLossless;  }
 
     //==== Tool list ========
     Void      setUseSBACRD(Bool b)     { m_bUseSBACRD  = b; }
@@ -537,8 +532,10 @@ public:
 
     Void      setUseHADME(Bool b)     { m_bUseHADME   = b; }
 
+#if !L0034_COMBINED_LIST_CLEANUP
     Void      setUseLComb(Bool b)     { m_bUseLComb   = b; }
 
+#endif
     Void      setUseRDOQ(Bool b)     { m_useRDOQ    = b; }
 
     Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
@@ -563,30 +560,32 @@ public:
 
     Void      setPCMFilterDisableFlag(Bool b)     {  m_bPCMFilterDisableFlag = b; }
 
-    Void      setUsePCM(Bool b)     {  m_usePCM = b; }
+    Void      setUsePCM(Bool b)     {  m_usePCM = b;               }
 
-    Void      setPCMLog2MaxSize(UInt u)      { m_pcmLog2MaxSize = u; }
+    Void      setPCMLog2MaxSize(UInt u)      { m_pcmLog2MaxSize = u;      }
 
-    Void      setPCMLog2MinSize(UInt u)     { m_uiPCMLog2MinSize = u; }
+    Void      setPCMLog2MinSize(UInt u)     { m_uiPCMLog2MinSize = u;      }
 
     Void      setdQPs(Int* p)     { m_aidQP       = p; }
 
     Void      setDeltaQpRD(UInt u)     { m_uiDeltaQpRD  = u; }
 
-    Bool      getUseSBACRD()      { return m_bUseSBACRD; }
+    Bool      getUseSBACRD()      { return m_bUseSBACRD;  }
 
-    Bool      getUseASR()      { return m_bUseASR; }
+    Bool      getUseASR()      { return m_bUseASR;     }
 
-    Bool      getUseHADME()      { return m_bUseHADME; }
+    Bool      getUseHADME()      { return m_bUseHADME;   }
 
-    Bool      getUseLComb()      { return m_bUseLComb; }
+#if !L0034_COMBINED_LIST_CLEANUP
+    Bool      getUseLComb()      { return m_bUseLComb;   }
 
-    Bool      getUseRDOQ()      { return m_useRDOQ; }
+#endif
+    Bool      getUseRDOQ()      { return m_useRDOQ;    }
 
-    Bool      getUseRDOQTS()      { return m_useRDOQTS; }
+    Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
 
 #if L0232_RD_PENALTY
-    Int      getRDpenalty()      { return m_rdPenalty; }
+    Int      getRDpenalty()      { return m_rdPenalty;  }
 
 #endif
     Bool      getUseFastEnc()      { return m_bUseFastEnc; }
@@ -601,49 +600,49 @@ public:
 
     Bool      getUseConstrainedIntraPred()      { return m_bUseConstrainedIntraPred; }
 
-    Bool      getPCMInputBitDepthFlag()      { return m_bPCMInputBitDepthFlag; }
+    Bool      getPCMInputBitDepthFlag()      { return m_bPCMInputBitDepthFlag;   }
 
-    Bool      getPCMFilterDisableFlag()      { return m_bPCMFilterDisableFlag; }
+    Bool      getPCMFilterDisableFlag()      { return m_bPCMFilterDisableFlag;   }
 
-    Bool      getUsePCM()      { return m_usePCM; }
+    Bool      getUsePCM()      { return m_usePCM;                 }
 
-    UInt      getPCMLog2MaxSize()      { return m_pcmLog2MaxSize; }
+    UInt      getPCMLog2MaxSize()      { return m_pcmLog2MaxSize;  }
 
-    UInt      getPCMLog2MinSize()      { return m_uiPCMLog2MinSize; }
+    UInt      getPCMLog2MinSize()      { return m_uiPCMLog2MinSize;  }
 
-    Bool getUseTransformSkip()      { return m_useTransformSkip; }
+    Bool getUseTransformSkip()      { return m_useTransformSkip;        }
 
-    Void setUseTransformSkip(Bool b) { m_useTransformSkip  = b; }
+    Void setUseTransformSkip(Bool b) { m_useTransformSkip  = b;       }
 
-    Bool getUseTransformSkipFast()      { return m_useTransformSkipFast; }
+    Bool getUseTransformSkipFast()      { return m_useTransformSkipFast;    }
 
-    Void setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b; }
+    Void setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
 
-    Int*      getdQPs()      { return m_aidQP; }
+    Int*      getdQPs()      { return m_aidQP;       }
 
     UInt      getDeltaQpRD()      { return m_uiDeltaQpRD; }
 
     //====== Slice ========
-    Void  setSliceMode(Int i)       { m_sliceMode = i; }
+    Void  setSliceMode(Int i)       { m_sliceMode = i;              }
 
-    Void  setSliceArgument(Int i)       { m_sliceArgument = i; }
+    Void  setSliceArgument(Int i)       { m_sliceArgument = i;          }
 
-    Int   getSliceMode()              { return m_sliceMode; }
+    Int   getSliceMode()              { return m_sliceMode;           }
 
-    Int   getSliceArgument()              { return m_sliceArgument; }
+    Int   getSliceArgument()              { return m_sliceArgument;       }
 
     //====== Dependent Slice ========
-    Void  setSliceSegmentMode(Int i)      { m_sliceSegmentMode = i; }
+    Void  setSliceSegmentMode(Int i)      { m_sliceSegmentMode = i;       }
 
-    Void  setSliceSegmentArgument(Int i)      { m_sliceSegmentArgument = i; }
+    Void  setSliceSegmentArgument(Int i)      { m_sliceSegmentArgument = i;   }
 
-    Int   getSliceSegmentMode()              { return m_sliceSegmentMode; }
+    Int   getSliceSegmentMode()              { return m_sliceSegmentMode;    }
 
     Int   getSliceSegmentArgument()              { return m_sliceSegmentArgument; }
 
     Void      setLFCrossSliceBoundaryFlag(Bool bValue)    { m_bLFCrossSliceBoundaryFlag = bValue; }
 
-    Bool      getLFCrossSliceBoundaryFlag()                    { return m_bLFCrossSliceBoundaryFlag; }
+    Bool      getLFCrossSliceBoundaryFlag()                    { return m_bLFCrossSliceBoundaryFlag;   }
 
     Void      setUseSAO(Bool bVal)     { m_bUseSAO = bVal; }
 
@@ -663,7 +662,7 @@ public:
 
     Void  setLFCrossTileBoundaryFlag(Bool val)       { m_loopFilterAcrossTilesEnabledFlag = val; }
 
-    Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag; }
+    Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
 
     Void  setUniformSpacingIdr(Int i)           { m_iUniformSpacingIdr = i; }
 
@@ -677,8 +676,7 @@ public:
     {
         if (m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0)
         {
-            Int  m_iWidthInCU =
-                (m_iSourceWidth % g_uiMaxCUWidth) ? m_iSourceWidth / g_uiMaxCUWidth + 1 : m_iSourceWidth / g_uiMaxCUWidth;
+            Int  m_iWidthInCU = (m_iSourceWidth % g_uiMaxCUWidth) ? m_iSourceWidth / g_uiMaxCUWidth + 1 : m_iSourceWidth / g_uiMaxCUWidth;
             m_puiColumnWidth = new UInt[m_iNumColumnsMinus1];
 
             for (Int i = 0; i < m_iNumColumnsMinus1; i++)
@@ -699,8 +697,7 @@ public:
     {
         if (m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0)
         {
-            Int  m_iHeightInCU =
-                (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
+            Int  m_iHeightInCU = (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
             m_puiRowHeight = new UInt[m_iNumRowsMinus1];
 
             for (Int i = 0; i < m_iNumRowsMinus1; i++)
@@ -739,105 +736,105 @@ public:
     Int   getRecoveryPointSEIEnabled()                     { return m_recoveryPointSEIEnabled; }
 
 #if J0149_TONE_MAPPING_SEI
-    Void  setToneMappingInfoSEIEnabled(Bool b)                 {  m_toneMappingInfoSEIEnabled = b; }
+    Void  setToneMappingInfoSEIEnabled(Bool b)                 {  m_toneMappingInfoSEIEnabled = b;  }
 
-    Bool  getToneMappingInfoSEIEnabled()                       {  return m_toneMappingInfoSEIEnabled; }
+    Bool  getToneMappingInfoSEIEnabled()                       {  return m_toneMappingInfoSEIEnabled;  }
 
-    Void  setTMISEIToneMapId(Int b)                            {  m_toneMapId = b; }
+    Void  setTMISEIToneMapId(Int b)                            {  m_toneMapId = b;  }
 
-    Int   getTMISEIToneMapId()                                 {  return m_toneMapId; }
+    Int   getTMISEIToneMapId()                                 {  return m_toneMapId;  }
 
-    Void  setTMISEIToneMapCancelFlag(Bool b)                   {  m_toneMapCancelFlag = b; }
+    Void  setTMISEIToneMapCancelFlag(Bool b)                   {  m_toneMapCancelFlag = b;  }
 
-    Bool  getTMISEIToneMapCancelFlag()                         {  return m_toneMapCancelFlag; }
+    Bool  getTMISEIToneMapCancelFlag()                         {  return m_toneMapCancelFlag;  }
 
-    Void  setTMISEIToneMapPersistenceFlag(Bool b)              {  m_toneMapPersistenceFlag = b; }
+    Void  setTMISEIToneMapPersistenceFlag(Bool b)              {  m_toneMapPersistenceFlag = b;  }
 
-    Bool   getTMISEIToneMapPersistenceFlag()                   {  return m_toneMapPersistenceFlag; }
+    Bool   getTMISEIToneMapPersistenceFlag()                   {  return m_toneMapPersistenceFlag;  }
 
-    Void  setTMISEICodedDataBitDepth(Int b)                    {  m_codedDataBitDepth = b; }
+    Void  setTMISEICodedDataBitDepth(Int b)                    {  m_codedDataBitDepth = b;  }
 
-    Int   getTMISEICodedDataBitDepth()                         {  return m_codedDataBitDepth; }
+    Int   getTMISEICodedDataBitDepth()                         {  return m_codedDataBitDepth;  }
 
-    Void  setTMISEITargetBitDepth(Int b)                       {  m_targetBitDepth = b; }
+    Void  setTMISEITargetBitDepth(Int b)                       {  m_targetBitDepth = b;  }
 
-    Int   getTMISEITargetBitDepth()                            {  return m_targetBitDepth; }
+    Int   getTMISEITargetBitDepth()                            {  return m_targetBitDepth;  }
 
-    Void  setTMISEIModelID(Int b)                              {  m_modelId = b; }
+    Void  setTMISEIModelID(Int b)                              {  m_modelId = b;  }
 
-    Int   getTMISEIModelID()                                   {  return m_modelId; }
+    Int   getTMISEIModelID()                                   {  return m_modelId;  }
 
-    Void  setTMISEIMinValue(Int b)                             {  m_minValue = b; }
+    Void  setTMISEIMinValue(Int b)                             {  m_minValue = b;  }
 
-    Int   getTMISEIMinValue()                                  {  return m_minValue; }
+    Int   getTMISEIMinValue()                                  {  return m_minValue;  }
 
-    Void  setTMISEIMaxValue(Int b)                             {  m_maxValue = b; }
+    Void  setTMISEIMaxValue(Int b)                             {  m_maxValue = b;  }
 
-    Int   getTMISEIMaxValue()                                  {  return m_maxValue; }
+    Int   getTMISEIMaxValue()                                  {  return m_maxValue;  }
 
-    Void  setTMISEISigmoidMidpoint(Int b)                      {  m_sigmoidMidpoint = b; }
+    Void  setTMISEISigmoidMidpoint(Int b)                      {  m_sigmoidMidpoint = b;  }
 
-    Int   getTMISEISigmoidMidpoint()                           {  return m_sigmoidMidpoint; }
+    Int   getTMISEISigmoidMidpoint()                           {  return m_sigmoidMidpoint;  }
 
-    Void  setTMISEISigmoidWidth(Int b)                         {  m_sigmoidWidth = b; }
+    Void  setTMISEISigmoidWidth(Int b)                         {  m_sigmoidWidth = b;  }
 
-    Int   getTMISEISigmoidWidth()                              {  return m_sigmoidWidth; }
+    Int   getTMISEISigmoidWidth()                              {  return m_sigmoidWidth;  }
 
-    Void  setTMISEIStartOfCodedInterva(Int* p)              {  m_startOfCodedInterval = p; }
+    Void  setTMISEIStartOfCodedInterva(Int* p)              {  m_startOfCodedInterval = p;  }
 
-    Int*  getTMISEIStartOfCodedInterva()                       {  return m_startOfCodedInterval; }
+    Int*  getTMISEIStartOfCodedInterva()                       {  return m_startOfCodedInterval;  }
 
-    Void  setTMISEINumPivots(Int b)                            {  m_numPivots = b; }
+    Void  setTMISEINumPivots(Int b)                            {  m_numPivots = b;  }
 
-    Int   getTMISEINumPivots()                                 {  return m_numPivots; }
+    Int   getTMISEINumPivots()                                 {  return m_numPivots;  }
 
-    Void  setTMISEICodedPivotValue(Int* p)                  {  m_codedPivotValue = p; }
+    Void  setTMISEICodedPivotValue(Int* p)                  {  m_codedPivotValue = p;  }
 
-    Int*  getTMISEICodedPivotValue()                           {  return m_codedPivotValue; }
+    Int*  getTMISEICodedPivotValue()                           {  return m_codedPivotValue;  }
 
-    Void  setTMISEITargetPivotValue(Int* p)                 {  m_targetPivotValue = p; }
+    Void  setTMISEITargetPivotValue(Int* p)                 {  m_targetPivotValue = p;  }
 
-    Int*  getTMISEITargetPivotValue()                          {  return m_targetPivotValue; }
+    Int*  getTMISEITargetPivotValue()                          {  return m_targetPivotValue;  }
 
-    Void  setTMISEICameraIsoSpeedIdc(Int b)                    {  m_cameraIsoSpeedIdc = b; }
+    Void  setTMISEICameraIsoSpeedIdc(Int b)                    {  m_cameraIsoSpeedIdc = b;  }
 
-    Int   getTMISEICameraIsoSpeedIdc()                         {  return m_cameraIsoSpeedIdc; }
+    Int   getTMISEICameraIsoSpeedIdc()                         {  return m_cameraIsoSpeedIdc;  }
 
-    Void  setTMISEICameraIsoSpeedValue(Int b)                  {  m_cameraIsoSpeedValue = b; }
+    Void  setTMISEICameraIsoSpeedValue(Int b)                  {  m_cameraIsoSpeedValue = b;  }
 
-    Int   getTMISEICameraIsoSpeedValue()                       {  return m_cameraIsoSpeedValue; }
+    Int   getTMISEICameraIsoSpeedValue()                       {  return m_cameraIsoSpeedValue;  }
 
-    Void  setTMISEIExposureCompensationValueSignFlag(Int b)    {  m_exposureCompensationValueSignFlag = b; }
+    Void  setTMISEIExposureCompensationValueSignFlag(Int b)    {  m_exposureCompensationValueSignFlag = b;  }
 
-    Int   getTMISEIExposureCompensationValueSignFlag()         {  return m_exposureCompensationValueSignFlag; }
+    Int   getTMISEIExposureCompensationValueSignFlag()         {  return m_exposureCompensationValueSignFlag;  }
 
-    Void  setTMISEIExposureCompensationValueNumerator(Int b)   {  m_exposureCompensationValueNumerator = b; }
+    Void  setTMISEIExposureCompensationValueNumerator(Int b)   {  m_exposureCompensationValueNumerator = b;  }
 
-    Int   getTMISEIExposureCompensationValueNumerator()        {  return m_exposureCompensationValueNumerator; }
+    Int   getTMISEIExposureCompensationValueNumerator()        {  return m_exposureCompensationValueNumerator;  }
 
-    Void  setTMISEIExposureCompensationValueDenomIdc(Int b)    {  m_exposureCompensationValueDenomIdc = b; }
+    Void  setTMISEIExposureCompensationValueDenomIdc(Int b)    {  m_exposureCompensationValueDenomIdc = b;  }
 
-    Int   getTMISEIExposureCompensationValueDenomIdc()         {  return m_exposureCompensationValueDenomIdc; }
+    Int   getTMISEIExposureCompensationValueDenomIdc()         {  return m_exposureCompensationValueDenomIdc;  }
 
-    Void  setTMISEIRefScreenLuminanceWhite(Int b)              {  m_refScreenLuminanceWhite = b; }
+    Void  setTMISEIRefScreenLuminanceWhite(Int b)              {  m_refScreenLuminanceWhite = b;  }
 
-    Int   getTMISEIRefScreenLuminanceWhite()                   {  return m_refScreenLuminanceWhite; }
+    Int   getTMISEIRefScreenLuminanceWhite()                   {  return m_refScreenLuminanceWhite;  }
 
-    Void  setTMISEIExtendedRangeWhiteLevel(Int b)              {  m_extendedRangeWhiteLevel = b; }
+    Void  setTMISEIExtendedRangeWhiteLevel(Int b)              {  m_extendedRangeWhiteLevel = b;  }
 
-    Int   getTMISEIExtendedRangeWhiteLevel()                   {  return m_extendedRangeWhiteLevel; }
+    Int   getTMISEIExtendedRangeWhiteLevel()                   {  return m_extendedRangeWhiteLevel;  }
 
-    Void  setTMISEINominalBlackLevelLumaCodeValue(Int b)       {  m_nominalBlackLevelLumaCodeValue = b; }
+    Void  setTMISEINominalBlackLevelLumaCodeValue(Int b)       {  m_nominalBlackLevelLumaCodeValue = b;  }
 
-    Int   getTMISEINominalBlackLevelLumaCodeValue()            {  return m_nominalBlackLevelLumaCodeValue; }
+    Int   getTMISEINominalBlackLevelLumaCodeValue()            {  return m_nominalBlackLevelLumaCodeValue;  }
 
-    Void  setTMISEINominalWhiteLevelLumaCodeValue(Int b)       {  m_nominalWhiteLevelLumaCodeValue = b; }
+    Void  setTMISEINominalWhiteLevelLumaCodeValue(Int b)       {  m_nominalWhiteLevelLumaCodeValue = b;  }
 
-    Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue; }
+    Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue;  }
 
-    Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue = b; }
+    Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue = b;  }
 
-    Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue; }
+    Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue;  }
 
 #endif // if J0149_TONE_MAPPING_SEI
     Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
@@ -868,11 +865,11 @@ public:
 
     Int   getTemporalLevel0IndexSEIEnabled()               { return m_temporalLevel0IndexSEIEnabled; }
 
-    Void  setGradualDecodingRefreshInfoEnabled(Int b)      { m_gradualDecodingRefreshInfoEnabled = b; }
+    Void  setGradualDecodingRefreshInfoEnabled(Int b)      { m_gradualDecodingRefreshInfoEnabled = b;    }
 
     Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
 
-    Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b; }
+    Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b;    }
 
     Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
 
@@ -888,31 +885,31 @@ public:
     Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
 
 #endif
-    Void      setUseWP(Bool b)    { m_useWeightedPred   = b; }
+    Void      setUseWP(Bool b)    { m_useWeightedPred   = b;    }
 
-    Void      setWPBiPred(Bool b)    { m_useWeightedBiPred = b; }
+    Void      setWPBiPred(Bool b)    { m_useWeightedBiPred = b;    }
 
-    Bool      getUseWP()            { return m_useWeightedPred; }
+    Bool      getUseWP()            { return m_useWeightedPred;   }
 
     Bool      getWPBiPred()            { return m_useWeightedBiPred; }
 
-    Void      setLog2ParallelMergeLevelMinus2(UInt u)    { m_log2ParallelMergeLevelMinus2       = u; }
+    Void      setLog2ParallelMergeLevelMinus2(UInt u)    { m_log2ParallelMergeLevelMinus2       = u;    }
 
-    UInt      getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2; }
+    UInt      getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2;       }
 
-    Void      setMaxNumMergeCand(UInt u)    { m_maxNumMergeCand = u; }
+    Void      setMaxNumMergeCand(UInt u)    { m_maxNumMergeCand = u;      }
 
-    UInt      getMaxNumMergeCand()            { return m_maxNumMergeCand; }
+    UInt      getMaxNumMergeCand()            { return m_maxNumMergeCand;   }
 
-    Void      setUseScalingListId(Int u)    { m_useScalingListId       = u; }
+    Void      setUseScalingListId(Int u)    { m_useScalingListId       = u;   }
 
-    Int       getUseScalingListId()            { return m_useScalingListId; }
+    Int       getUseScalingListId()            { return m_useScalingListId;      }
 
     Void      setScalingListFile(Char* pch) { m_scalingListFile     = pch; }
 
-    Char*     getScalingListFile()            { return m_scalingListFile; }
+    Char*     getScalingListFile()            { return m_scalingListFile;    }
 
-    Void      setTMVPModeId(Int u) { m_TMVPModeId = u; }
+    Void      setTMVPModeId(Int u) { m_TMVPModeId = u;    }
 
     Int       getTMVPModeId()         { return m_TMVPModeId; }
 
@@ -921,17 +918,17 @@ public:
     Int       getSignHideFlag()                    { return m_signHideFlag; }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
-    Bool      getUseRateCtrl()              { return m_RCEnableRateControl; }
+    Bool      getUseRateCtrl()              { return m_RCEnableRateControl;   }
 
-    Void      setUseRateCtrl(Bool b)      { m_RCEnableRateControl = b; }
+    Void      setUseRateCtrl(Bool b)      { m_RCEnableRateControl = b;      }
 
-    Int       getTargetBitrate()              { return m_RCTargetBitrate; }
+    Int       getTargetBitrate()              { return m_RCTargetBitrate;       }
 
-    Void      setTargetBitrate(Int bitrate) { m_RCTargetBitrate  = bitrate; }
+    Void      setTargetBitrate(Int bitrate) { m_RCTargetBitrate  = bitrate;   }
 
     Bool      getKeepHierBit()              { return m_RCKeepHierarchicalBit; }
 
-    Void      setKeepHierBit(Bool b)      { m_RCKeepHierarchicalBit = b; }
+    Void      setKeepHierBit(Bool b)      { m_RCKeepHierarchicalBit = b;    }
 
     Bool      getLCULevelRC()              { return m_RCLCULevelRC; }
 
@@ -939,26 +936,26 @@ public:
 
     Bool      getUseLCUSeparateModel()              { return m_RCUseLCUSeparateModel; }
 
-    Void      setUseLCUSeparateModel(Bool b)      { m_RCUseLCUSeparateModel = b; }
+    Void      setUseLCUSeparateModel(Bool b)      { m_RCUseLCUSeparateModel = b;    }
 
-    Int       getInitialQP()              { return m_RCInitialQP; }
+    Int       getInitialQP()              { return m_RCInitialQP;           }
 
-    Void      setInitialQP(Int QP)      { m_RCInitialQP = QP; }
+    Void      setInitialQP(Int QP)      { m_RCInitialQP = QP;             }
 
-    Bool      getForceIntraQP()              { return m_RCForceIntraQP; }
+    Bool      getForceIntraQP()              { return m_RCForceIntraQP;        }
 
-    Void      setForceIntraQP(Bool b)      { m_RCForceIntraQP = b; }
+    Void      setForceIntraQP(Bool b)      { m_RCForceIntraQP = b;           }
 
 #else // if RATE_CONTROL_LAMBDA_DOMAIN
-    Bool      getUseRateCtrl()                { return m_enableRateCtrl; }
+    Bool      getUseRateCtrl()                { return m_enableRateCtrl;    }
 
-    Void      setUseRateCtrl(Bool flag)       { m_enableRateCtrl = flag; }
+    Void      setUseRateCtrl(Bool flag)       { m_enableRateCtrl = flag;    }
 
-    Int       getTargetBitrate()                { return m_targetBitrate; }
+    Int       getTargetBitrate()                { return m_targetBitrate;     }
 
-    Void      setTargetBitrate(Int target)      { m_targetBitrate  = target; }
+    Void      setTargetBitrate(Int target)      { m_targetBitrate  = target;  }
 
-    Int       getNumLCUInUnit()                { return m_numLCUInUnit; }
+    Int       getNumLCUInUnit()                { return m_numLCUInUnit;      }
 
     Void      setNumLCUInUnit(Int numLCUs)     { m_numLCUInUnit   = numLCUs; }
 
@@ -975,11 +972,11 @@ public:
 
     TComVPS *getVPS() { return &m_cVPS; }
 
-    Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b; }
+    Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b;    }
 
     Bool      getUseRecalculateQPAccordingToLambda()         { return m_recalculateQPAccordingToLambda; }
 
-    Void      setUseStrongIntraSmoothing(Bool b) { m_useStrongIntraSmoothing = b; }
+    Void      setUseStrongIntraSmoothing(Bool b) { m_useStrongIntraSmoothing = b;    }
 
     Bool      getUseStrongIntraSmoothing()         { return m_useStrongIntraSmoothing; }
 
@@ -1061,14 +1058,7 @@ public:
 
     Window   &getDefaultDisplayWindow()                     { return m_defaultDisplayWindow; }
 
-    Void      setDefaultDisplayWindow(Int offsetLeft, Int offsetRight, Int offsetTop,
-                                      Int offsetBottom)
-    {
-        m_defaultDisplayWindow.setWindow(offsetLeft,
-                                         offsetRight,
-                                         offsetTop,
-                                         offsetBottom);
-    }
+    Void      setDefaultDisplayWindow(Int offsetLeft, Int offsetRight, Int offsetTop, Int offsetBottom) { m_defaultDisplayWindow.setWindow(offsetLeft, offsetRight, offsetTop, offsetBottom); }
 
     Bool      getFrameFieldInfoPresentFlag()                { return m_frameFieldInfoPresentFlag; }
 
@@ -1076,11 +1066,11 @@ public:
 
     Bool      getPocProportionalToTimingFlag()              { return m_pocProportionalToTimingFlag; }
 
-    Void      setPocProportionalToTimingFlag(Bool x)        { m_pocProportionalToTimingFlag = x; }
+    Void      setPocProportionalToTimingFlag(Bool x)        { m_pocProportionalToTimingFlag = x;    }
 
-    Int       getNumTicksPocDiffOneMinus1()                 { return m_numTicksPocDiffOneMinus1; }
+    Int       getNumTicksPocDiffOneMinus1()                 { return m_numTicksPocDiffOneMinus1;    }
 
-    Void      setNumTicksPocDiffOneMinus1(Int x)            { m_numTicksPocDiffOneMinus1 = x; }
+    Void      setNumTicksPocDiffOneMinus1(Int x)            { m_numTicksPocDiffOneMinus1 = x;       }
 
     Bool      getBitstreamRestrictionFlag()                 { return m_bitstreamRestrictionFlag; }
 

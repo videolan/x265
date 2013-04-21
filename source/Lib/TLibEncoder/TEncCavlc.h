@@ -78,17 +78,17 @@ public:
     Void  resetEntropy();
     Void  determineCabacInitIdx() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p; }
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;  }
 
-    Void  setSlice(TComSlice* p)  { m_pcSlice = p; }
+    Void  setSlice(TComSlice* p)  { m_pcSlice = p;  }
 
     Void  resetBits()                { m_pcBitIf->resetBits(); }
 
-    Void  resetCoeffCost()                { m_uiCoeffCost = 0; }
+    Void  resetCoeffCost()                { m_uiCoeffCost = 0;  }
 
-    UInt  getNumberOfWrittenBits()                { return m_pcBitIf->getNumberOfWrittenBits(); }
+    UInt  getNumberOfWrittenBits()                { return m_pcBitIf->getNumberOfWrittenBits();  }
 
-    UInt  getCoeffCost()                { return m_uiCoeffCost; }
+    UInt  getCoeffCost()                { return m_uiCoeffCost;  }
 
     Void  codeVPS(TComVPS* pcVPS);
     Void  codeVUI(TComVUI *pcVUI, TComSPS* pcSPS);
@@ -155,18 +155,15 @@ public:
 
     Void codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx);
 
-    Void codeCoeffNxN(TComDataCU* pcCU,
-                      TCoeff*     pcCoef,
-                      UInt        uiAbsPartIdx,
-                      UInt        uiWidth,
-                      UInt        uiHeight,
-                      UInt        uiDepth,
-                      TextType    eTType);
+    Void codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType);
     Void codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType);
 
     Void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
 
     Void xCodePredWeightTable(TComSlice* pcSlice);
+    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish = true) {}
+
+    Void updateContextTables(SliceType eSliceType, Int iQp)                          {}
 
     Void codeScalingList(TComScalingList* scalingList);
     Void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);

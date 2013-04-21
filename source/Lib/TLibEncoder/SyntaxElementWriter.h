@@ -77,7 +77,7 @@ protected:
 
     virtual ~SyntaxElementWriter() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p; }
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;  }
 
     Void  xWriteCode(UInt uiCode, UInt uiLength);
     Void  xWriteUvlc(UInt uiCode);

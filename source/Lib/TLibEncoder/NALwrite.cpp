@@ -105,7 +105,6 @@ void write(ostream& out, OutputNALUnit& nalu)
             /* if not found, found == end, otherwise found = second zero byte */
             if (found == rbsp.end())
                 break;
-
             if (*(++found) <= 3)
                 break;
         }

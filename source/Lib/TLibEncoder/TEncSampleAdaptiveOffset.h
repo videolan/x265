@@ -57,9 +57,6 @@ class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
 
-    Double            m_dLambdaLuma;
-    Double            m_dLambdaChroma;
-
     TEncEntropy*      m_pcEntropyCoder;
     TEncSbac***       m_pppcRDSbacCoder;            ///< for CABAC
     TEncSbac*         m_pcRDGoOnSbacCoder;
@@ -115,15 +112,7 @@ public:
     Void disablePartTree(SAOQTPart *psQTPart, Int iPartIdx);
     Void getSaoStats(SAOQTPart *psQTPart, Int iYCbCr);
     Void calcSaoStatsCu(Int iAddr, Int iPartIdx, Int iYCbCr);
-    Void calcSaoStatsBlock(Pel*    pRecStart,
-                           Pel*    pOrgStart,
-                           Int     stride,
-                           Int64** ppStats,
-                           Int64** ppCount,
-                           UInt    width,
-                           UInt    height,
-                           Bool*   pbBorderAvail,
-                           Int     iYCbCr);
+    Void calcSaoStatsBlock(Pel* pRecStart, Pel* pOrgStart, Int stride, Int64** ppStats, Int64** ppCount, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
     Void calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr);
     Void calcSaoStatsCu_BeforeDblk(TComPic* pcPic);
     Void destroyEncBuffer();
@@ -135,44 +124,11 @@ public:
 #else
     Void rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma);
 #endif
-    Void saoComponentParamDist(Int          allowMergeLeft,
-                               Int          allowMergeUp,
-                               SAOParam *   saoParam,
-                               Int          addr,
-                               Int          addrUp,
-                               Int          addrLeft,
-                               Int          yCbCr,
-                               Double       lambda,
-                               SaoLcuParam *compSaoParam,
-                               Double *     distortion);
-    Void sao2ChromaParamDist(Int          allowMergeLeft,
-                             Int          allowMergeUp,
-                             SAOParam *   saoParam,
-                             Int          addr,
-                             Int          addrUp,
-                             Int          addrLeft,
-                             Double       lambda,
-                             SaoLcuParam *crSaoParam,
-                             SaoLcuParam *cbSaoParam,
-                             Double *     distortion);
+    Void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
+    Void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
     inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, Int shift);
-    inline Int64 estIterOffset(Int     typeIdx,
-                               Int     classIdx,
-                               Double  lambda,
-                               Int64   offsetInput,
-                               Int64   count,
-                               Int64   offsetOrg,
-                               Int     shift,
-                               Int     bitIncrease,
-                               Int *   currentDistortionTableBo,
-                               Double *currentRdCostTableBo,
-                               Int     offsetTh);
-    inline Int64 estSaoTypeDist(Int     compIdx,
-                                Int     typeIdx,
-                                Int     shift,
-                                Double  lambda,
-                                Int *   currentDistortionTableBo,
-                                Double *currentRdCostTableBo);
+    inline Int64 estIterOffset(Int typeIdx, Int classIdx, Double lambda, Int64 offsetInput, Int64 count, Int64 offsetOrg, Int shift, Int bitIncrease, Int *currentDistortionTableBo, Double *currentRdCostTableBo, Int offsetTh);
+    inline Int64 estSaoTypeDist(Int compIdx, Int typeIdx, Int shift, Double lambda, Int *currentDistortionTableBo, Double *currentRdCostTableBo);
     Void setMaxNumOffsetsPerPic(Int iVal) { m_maxNumOffsetsPerPic = iVal; }
 
     Int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }

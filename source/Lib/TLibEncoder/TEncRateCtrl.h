@@ -89,16 +89,7 @@ public:
 
 public:
 
-    Void create(Int  totalFrames,
-                Int  targetBitrate,
-                Int  frameRate,
-                Int  GOPSize,
-                Int  picWidth,
-                Int  picHeight,
-                Int  LCUWidth,
-                Int  LCUHeight,
-                Int  numberOfLevel,
-                Bool useLCUSeparateModel);
+    Void create(Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel);
     Void destroy();
     Void initBitsRatio(Int bitsRatio[]);
     Void initGOPID2Level(Int GOPID2Level[]);
@@ -141,34 +132,25 @@ public:
 
     Int* getBitRatio()                    { return m_bitsRatio; }
 
-    Int  getBitRatio(Int idx)             { assert(idx < m_GOPSize); return m_bitsRatio[idx]; }
+    Int  getBitRatio(Int idx)           { assert(idx < m_GOPSize); return m_bitsRatio[idx]; }
 
     Int* getGOPID2Level()                 { return m_GOPID2Level; }
 
-    Int  getGOPID2Level(Int ID)           { assert(ID < m_GOPSize); return m_GOPID2Level[ID]; }
+    Int  getGOPID2Level(Int ID)         { assert(ID < m_GOPSize); return m_GOPID2Level[ID]; }
 
-    TRCParameter*  getPicPara()           { return m_picPara; }
+    TRCParameter*  getPicPara()                                   { return m_picPara; }
 
-    TRCParameter   getPicPara(Int level)  { assert(level < m_numberOfLevel); return m_picPara[level]; }
+    TRCParameter   getPicPara(Int level)                        { assert(level < m_numberOfLevel); return m_picPara[level]; }
 
-    Void           setPicPara(Int level, TRCParameter para) { assert(level < m_numberOfLevel); m_picPara[level] = para; }
+    Void           setPicPara(Int level, TRCParameter para)     { assert(level < m_numberOfLevel); m_picPara[level] = para; }
 
-    TRCParameter** getLCUPara()           { return m_LCUPara; }
+    TRCParameter** getLCUPara()                                   { return m_LCUPara; }
 
-    TRCParameter*  getLCUPara(Int level)  { assert(level < m_numberOfLevel); return m_LCUPara[level]; }
+    TRCParameter*  getLCUPara(Int level)                        { assert(level < m_numberOfLevel); return m_LCUPara[level]; }
 
-    TRCParameter   getLCUPara(Int level, Int LCUIdx)
-    {
-        assert(LCUIdx  < m_numberOfLCU);
-        return getLCUPara(level)[LCUIdx];
-    }
+    TRCParameter   getLCUPara(Int level, Int LCUIdx)            { assert(LCUIdx  < m_numberOfLCU); return getLCUPara(level)[LCUIdx]; }
 
-    Void           setLCUPara(Int level, Int LCUIdx, TRCParameter para)
-    {
-        assert(level < m_numberOfLevel);
-        assert(LCUIdx < m_numberOfLCU);
-        m_LCUPara[level][LCUIdx] = para;
-    }
+    Void           setLCUPara(Int level, Int LCUIdx, TRCParameter para) { assert(level < m_numberOfLevel); assert(LCUIdx  < m_numberOfLCU); m_LCUPara[level][LCUIdx] = para; }
 
     Int  getFramesLeft()                  { return m_framesLeft; }
 
@@ -238,7 +220,7 @@ public:
 
     Int  getBitsLeft()              { return m_bitsLeft; }
 
-    Int  getTargetBitInGOP(Int i)   { return m_picTargetBitInGOP[i]; }
+    Int  getTargetBitInGOP(Int i) { return m_picTargetBitInGOP[i]; }
 
 private:
 
@@ -269,11 +251,7 @@ public:
     Int    getLCUEstQP(Double lambda, Int clipPicQP);
 
     Void updateAfterLCU(Int LCUIdx, Int bits, Int QP, Double lambda, Bool updateLCUParameter = true);
-    Void updateAfterPicture(Int    actualHeaderBits,
-                            Int    actualTotalBits,
-                            Double averageQP,
-                            Double averageLambda,
-                            Double effectivePercentage);
+    Void updateAfterPicture(Int actualHeaderBits, Int actualTotalBits, Double averageQP, Double averageLambda, Double effectivePercentage);
 
     Void addToPictureLsit(list<TEncRCPic*>& listPreviousPictures);
     Double getEffectivePercentage();
@@ -299,7 +277,7 @@ public:
 
     Int  getTargetBits()                                    { return m_targetBits; }
 
-    Void setTargetBits(Int bits)                            { m_targetBits = bits; }
+    Void setTargetBits(Int bits)                          { m_targetBits = bits; }
 
     Int  getEstHeaderBits()                                 { return m_estHeaderBits; }
 
@@ -315,13 +293,13 @@ public:
 
     TRCLCU* getLCU()                                        { return m_LCUs; }
 
-    TRCLCU& getLCU(Int LCUIdx)                              { return m_LCUs[LCUIdx]; }
+    TRCLCU& getLCU(Int LCUIdx)                            { return m_LCUs[LCUIdx]; }
 
     Int  getPicActualHeaderBits()                           { return m_picActualHeaderBits; }
 
     Double getTotalMAD()                                    { return m_totalMAD; }
 
-    Void   setTotalMAD(Double MAD)                          { m_totalMAD = MAD; }
+    Void   setTotalMAD(Double MAD)                        { m_totalMAD = MAD; }
 
     Int  getPicActualBits()                                 { return m_picActualBits; }
 
@@ -331,11 +309,11 @@ public:
 
     Int  getPicEstQP()                                      { return m_estPicQP; }
 
-    Void setPicEstQP(Int QP)                                { m_estPicQP = QP; }
+    Void setPicEstQP(Int QP)                              { m_estPicQP = QP; }
 
     Double getPicEstLambda()                                { return m_estPicLambda; }
 
-    Void setPicEstLambda(Double lambda)                     { m_picLambda = lambda; }
+    Void setPicEstLambda(Double lambda)                   { m_picLambda = lambda; }
 
 private:
 
@@ -372,17 +350,7 @@ public:
 
 public:
 
-    Void init(Int totalFrames,
-              Int targetBitrate,
-              Int frameRate,
-              Int GOPSize,
-              Int picWidth,
-              Int picHeight,
-              Int LCUWidth,
-              Int LCUHeight,
-              Bool keepHierBits,
-              Bool useLCUSeparateModel,
-              GOPEntry GOPList[MAX_GOP]);
+    Void init(Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Bool keepHierBits, Bool useLCUSeparateModel, GOPEntry GOPList[MAX_GOP]);
     Void destroy();
     Void initRCPic(Int frameLevel);
     Void initRCGOP(Int numberOfPictures);
@@ -390,7 +358,7 @@ public:
 
 public:
 
-    Void       setRCQP(Int QP) { m_RCQP = QP; }
+    Void       setRCQP(Int QP) { m_RCQP = QP;   }
 
     Int        getRCQP()         { return m_RCQP; }
 
@@ -531,23 +499,14 @@ public:
 
     virtual ~TEncRateCtrl() {}
 
-    Void          create(Int sizeIntraPeriod,
-                         Int sizeGOP,
-                         Int frameRate,
-                         Int targetKbps,
-                         Int qp,
-                         Int numLCUInBasicUnit,
-                         Int sourceWidth,
-                         Int sourceHeight,
-                         Int maxCUWidth,
-                         Int maxCUHeight);
+    Void          create(Int sizeIntraPeriod, Int sizeGOP, Int frameRate, Int targetKbps, Int qp, Int numLCUInBasicUnit, Int sourceWidth, Int sourceHeight, Int maxCUWidth, Int maxCUHeight);
     Void          destroy();
 
     Void          initFrameData(Int qp = 0);
     Void          initUnitData(Int qp = 0);
     Int           getFrameQP(Bool isReferenced, Int POC);
     Bool          calculateUnitQP();
-    Int           getUnitQP()                                          { return m_pcLCUData[m_indexLCU].m_qp; }
+    Int           getUnitQP()                                          { return m_pcLCUData[m_indexLCU].m_qp;  }
 
     Void          updateRCGOPStatus();
     Void          updataRCFrameStatus(Int frameBits, SliceType eSliceType);

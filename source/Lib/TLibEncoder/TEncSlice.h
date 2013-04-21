@@ -130,12 +130,12 @@ public:
     Void    setSearchRange(TComSlice* pcSlice);                                         ///< set ME range adaptively
     UInt64  getTotalBits()  { return m_uiPicTotalBits; }
 
-    TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                       ///< CU encoder
+    TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                      ///< CU encoder
 
     Void    xDetermineStartAndBoundingCUAddr(UInt& uiStartCUAddr, UInt& uiBoundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice);
-    UInt    getSliceIdx()         { return m_uiSliceIdx; }
+    UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
 
-    Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i; }
+    Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
 
     Void      initCtxMem(UInt i);
     Void      setCtxMem(TEncSbac* sb, Int b)   { CTXMem[b] = sb; }

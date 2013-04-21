@@ -135,14 +135,10 @@ public:
     Void  destroy();
 
     Void  init(TEncTop* pcTEncTop);
-    Void  compressGOP(Int                    iPOCLast,
-                      Int                    iNumPicRcvd,
-                      TComList<TComPic*>&    rcListPic,
-                      TComList<TComPicYuv*>& rcListPicYuvRec,
-                      std::list<AccessUnit>& accessUnitsInGOP);
+    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP);
     Void  xAttachSliceDataToNalUnit(OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
-    Int   getGOPSize()          { return m_iGopSize; }
+    Int   getGOPSize()          { return m_iGopSize;  }
 
     TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
 
@@ -151,23 +147,17 @@ public:
 
     TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
 
-    NalUnitType getNalUnitType(Int pocCurr);
+    NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
     Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
 
 protected:
 
-    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl; }
+    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
 
 protected:
 
     Void  xInitGOP(Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut);
-    Void  xGetBuffer(TComList<TComPic*>&    rcListPic,
-                     TComList<TComPicYuv*>& rcListPicYuvRecOut,
-                     Int                    iNumPicRcvd,
-                     Int                    iTimeOffset,
-                     TComPic*&              rpcPic,
-                     TComPicYuv*&           rpcPicYuvRecOut,
-                     Int                    pocCurr);
+    Void  xGetBuffer(TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr);
 
     Void  xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime);
 

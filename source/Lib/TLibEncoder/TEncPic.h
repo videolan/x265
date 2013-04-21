@@ -85,19 +85,19 @@ public:
     Void  create(Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight);
     Void  destroy();
 
-    UInt                   getAQPartWidth()        { return m_uiAQPartWidth; }
+    UInt                   getAQPartWidth()        { return m_uiAQPartWidth;       }
 
-    UInt                   getAQPartHeight()       { return m_uiAQPartHeight; }
+    UInt                   getAQPartHeight()       { return m_uiAQPartHeight;      }
 
-    UInt                   getNumAQPartInWidth()   { return m_uiNumAQPartInWidth; }
+    UInt                   getNumAQPartInWidth()   { return m_uiNumAQPartInWidth;  }
 
     UInt                   getNumAQPartInHeight()  { return m_uiNumAQPartInHeight; }
 
-    UInt                   getAQPartStride()       { return m_uiNumAQPartInWidth; }
+    UInt                   getAQPartStride()       { return m_uiNumAQPartInWidth;  }
 
-    TEncQPAdaptationUnit*  getQPAdaptationUnit()   { return m_acTEncAQU; }
+    TEncQPAdaptationUnit*  getQPAdaptationUnit()   { return m_acTEncAQU;           }
 
-    Double                 getAvgActivity()        { return m_dAvgActivity; }
+    Double                 getAvgActivity()        { return m_dAvgActivity;        }
 
     Void                   setAvgActivity(Double d)  { m_dAvgActivity = d; }
 };
@@ -121,7 +121,7 @@ public:
 
     TEncPicQPAdaptationLayer* getAQLayer(UInt uiDepth)  { return &m_acAQLayer[uiDepth]; }
 
-    UInt                      getMaxAQDepth()             { return m_uiMaxAQDepth; }
+    UInt                      getMaxAQDepth()             { return m_uiMaxAQDepth;        }
 };
 
 //! \}
