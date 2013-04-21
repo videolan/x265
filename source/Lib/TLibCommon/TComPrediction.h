@@ -74,17 +74,17 @@ public:
         CrBuf = NULL;
     }
     
-    void create(unsigned int width, unsigned int height)
+    void create(unsigned int Width, unsigned int Height)
     {
-        YBuf  = (short *)xMalloc(short, width * height);
-        CbBuf  = (short *)xMalloc(short, width * height >> 2);
-        CrBuf  = (short *)xMalloc(short, width * height >> 2);
+        YBuf  = (short *)xMalloc(short, Width * Height);
+        CbBuf  = (short *)xMalloc(short, Width * Height >> 2);
+        CrBuf  = (short *)xMalloc(short, Width * Height >> 2);
 
         // set width and height
-        width   = width;
-        height  = height;
-        Cwidth  = width  >> 1;
-        Cheight = height >> 1;
+        width   = Width;
+        height  = Height;
+        Cwidth  = Width  >> 1;
+        Cheight = Height >> 1;
     }
 
     void destroy()
@@ -133,7 +133,6 @@ protected:
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
     TComYuv m_filteredBlock[4][4];
-    TComYuv m_filteredBlockTmp[4];
     
     TShortYUV filteredBlockTmp[4];
 

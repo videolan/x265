@@ -74,7 +74,6 @@ TComPrediction::~TComPrediction()
             m_filteredBlock[i][j].destroy();
         }
 
-        m_filteredBlockTmp[i].destroy();
         filteredBlockTmp[i].destroy();
     }
 }
@@ -88,7 +87,6 @@ Void TComPrediction::initTempBuff()
         Int i, j;
         for (i = 0; i < 4; i++)
         {
-            m_filteredBlockTmp[i].create(extWidth, extHeight + 7);
             filteredBlockTmp[i].create(extWidth, extHeight + 7);
             for (j = 0; j < 4; j++)
             {
