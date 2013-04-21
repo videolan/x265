@@ -85,7 +85,7 @@ public:
 
     TComMv       & getMv()       { return m_acMv; }
 
-    Int getRefIdx() const { return m_iRefIdx; }
+    Int getRefIdx() const { return m_iRefIdx;       }
 
     Int getHor() const { return m_acMv.getHor(); }
 

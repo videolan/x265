@@ -344,15 +344,10 @@ public:
 
     UChar*        getTransformSkip(TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]]; }
 
-    UChar         getTransformSkip(UInt     uiIdx,
-                                   TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
+    UChar         getTransformSkip(UInt uiIdx, TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
 
     Void          setTransformSkipSubParts(UInt useTransformSkip, TextType eType, UInt uiAbsPartIdx, UInt uiDepth);
-    Void          setTransformSkipSubParts(UInt useTransformSkipY,
-                                           UInt useTransformSkipU,
-                                           UInt useTransformSkipV,
-                                           UInt uiAbsPartIdx,
-                                           UInt uiDepth);
+    Void          setTransformSkipSubParts(UInt useTransformSkipY, UInt useTransformSkipU, UInt useTransformSkipV, UInt uiAbsPartIdx, UInt uiDepth);
 
     UInt          getQuadtreeTULog2MinSizeInCU(UInt absPartIdx);
 
@@ -388,12 +383,7 @@ public:
     Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx] = uh; }
 
     Void          clearCbf(UInt uiIdx, TextType eType, UInt uiNumParts);
-    UChar         getQtRootCbf(UInt uiIdx)
-    {
-        return getCbf(uiIdx, TEXT_LUMA, 0) ||
-               getCbf(uiIdx, TEXT_CHROMA_U, 0) ||
-               getCbf(uiIdx, TEXT_CHROMA_V, 0);
-    }
+    UChar         getQtRootCbf(UInt uiIdx)                      { return getCbf(uiIdx, TEXT_LUMA, 0) || getCbf(uiIdx, TEXT_CHROMA_U, 0) || getCbf(uiIdx, TEXT_CHROMA_V, 0); }
 
     Void          setCbfSubParts(UInt uiCbfY, UInt uiCbfU, UInt uiCbfV, UInt uiAbsPartIdx, UInt uiDepth);
     Void          setCbfSubParts(UInt uiCbf, TextType eTType, UInt uiAbsPartIdx, UInt uiDepth);
@@ -470,21 +460,10 @@ public:
 
     std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock; }
 
-    Void setNDBFilterBlockBorderAvailability(UInt               numLCUInPicWidth,
-                                             UInt               numLCUInPicHeight,
-                                             UInt               numSUInLCUWidth,
-                                             UInt               numSUInLCUHeight,
-                                             UInt               picWidth,
-                                             UInt               picHeight
-                                             ,
-                                             std::vector<Bool>& LFCrossSliceBoundary
-                                             ,
-                                             Bool               bTopTileBoundary,
-                                             Bool               bDownTileBoundary,
-                                             Bool               bLeftTileBoundary,
-                                             Bool               bRightTileBoundary
-                                             ,
-                                             Bool               bIndependentTileBoundaryEnabled);
+    Void setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt numLCUInPicHeight, UInt numSUInLCUWidth, UInt numSUInLCUHeight, UInt picWidth, UInt picHeight
+                                             , std::vector<Bool>& LFCrossSliceBoundary
+                                             , Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary, Bool bRightTileBoundary
+                                             , Bool bIndependentTileBoundaryEnabled);
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for accessing partition information
     // -------------------------------------------------------------------------------------------------------------------
@@ -557,14 +536,8 @@ public:
     TComDataCU*   getQpMinCuAbove(UInt& aPartUnitIdx, UInt currAbsIdxInLCU);
     Char          getRefQP(UInt uiCurrAbsIdxInLCU);
 
-    TComDataCU*   getPUAboveRightAdi(UInt& uiARPartUnitIdx,
-                                     UInt  uiCurrPartUnitIdx,
-                                     UInt  uiPartUnitOffset = 1,
-                                     Bool  bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeftAdi(UInt& uiBLPartUnitIdx,
-                                    UInt  uiCurrPartUnitIdx,
-                                    UInt  uiPartUnitOffset = 1,
-                                    Bool  bEnforceSliceRestriction = true);
+    TComDataCU*   getPUAboveRightAdi(UInt& uiARPartUnitIdx, UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset = 1, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUBelowLeftAdi(UInt& uiBLPartUnitIdx, UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset = 1, Bool bEnforceSliceRestriction = true);
 
     Void          deriveLeftRightTopIdx(UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT);
     Void          deriveLeftBottomIdx(UInt uiPartIdx, UInt& ruiPartIdxLB);
@@ -573,12 +546,7 @@ public:
     Void          deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt  uiPartOffset, UInt uiPartDepth);
 
     Bool          hasEqualMotion(UInt uiAbsPartIdx, TComDataCU* pcCandCU, UInt uiCandAbsPartIdx);
-    Void          getInterMergeCandidates(UInt         uiAbsPartIdx,
-                                          UInt         uiPUIdx,
-                                          TComMvField* pcMFieldNeighbours,
-                                          UChar*       puhInterDirNeighbours,
-                                          Int&         numValidMergeCand,
-                                          Int          mrgCandIdx = -1);
+    Void          getInterMergeCandidates(UInt uiAbsPartIdx, UInt uiPUIdx, TComMvField* pcMFieldNeighbours, UChar* puhInterDirNeighbours, Int& numValidMergeCand, Int mrgCandIdx = -1);
     Void          deriveLeftRightTopIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT);
     Void          deriveLeftBottomIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLB);
 

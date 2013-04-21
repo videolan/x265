@@ -197,7 +197,6 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr,
                 pT[i] = val;
             }
         }
-
         break;
     }
     case SIZE_2NxnD:
@@ -227,7 +226,6 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr,
                 pT2[i] = val;
             }
         }
-
         break;
     }
     case SIZE_nLx2N:
@@ -266,7 +264,6 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr,
                 pT2[i] = val;
             }
         }
-
         break;
     }
     case SIZE_nRx2N:
@@ -304,7 +301,6 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr,
                 pT4[i] = val;
             }
         }
-
         break;
     }
     default:

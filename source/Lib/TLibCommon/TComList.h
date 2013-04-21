@@ -70,7 +70,6 @@ public:
         {
             insert(this->end(), rcTComList.begin(), rcTComList.end());
         }
-
         return *this;
     } // leszek
 

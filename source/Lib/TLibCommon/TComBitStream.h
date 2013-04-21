@@ -65,7 +65,7 @@ public:
     virtual Void        writeAlignZero() {}
 
     virtual Void        write(UInt uiBits, UInt uiNumberOfBits)  = 0;
-    virtual Void        resetBits() = 0;
+    virtual Void        resetBits()                              = 0;
     virtual UInt getNumberOfWrittenBits() const = 0;
     virtual ~TComBitIf() {}
 };
@@ -203,7 +203,7 @@ public:
     UChar getHeldBits()          { return m_held_bits; }
 
     TComOutputBitstream& operator =(const TComOutputBitstream& src);
-    UInt  getByteLocation()                     { return m_fifo_idx; }
+    UInt  getByteLocation()      { return m_fifo_idx; }
 
     // Peek at bits in word-storage. Used in determining if we have completed reading of current bitstream and therefore slice in LCEC.
     UInt        peekBits(UInt uiBits) { UInt tmp; pseudoRead(uiBits, tmp); return tmp; }
@@ -223,17 +223,17 @@ public:
 
     Void readByteAlignment();
 
-    Void      pushEmulationPreventionByteLocation(UInt pos)                { m_emulationPreventionByteLocation.push_back(pos); }
+    Void      pushEmulationPreventionByteLocation(UInt pos)             { m_emulationPreventionByteLocation.push_back(pos); }
 
-    UInt      numEmulationPreventionBytesRead()                            { return (UInt)m_emulationPreventionByteLocation.size();    }
+    UInt      numEmulationPreventionBytesRead()                         { return (UInt)m_emulationPreventionByteLocation.size();    }
 
-    std::vector<UInt>  getEmulationPreventionByteLocation()                { return m_emulationPreventionByteLocation;           }
+    std::vector<UInt>  getEmulationPreventionByteLocation()             { return m_emulationPreventionByteLocation;           }
 
-    UInt      getEmulationPreventionByteLocation(UInt idx)                 { return m_emulationPreventionByteLocation[idx];    }
+    UInt      getEmulationPreventionByteLocation(UInt idx)              { return m_emulationPreventionByteLocation[idx];    }
 
-    Void      clearEmulationPreventionByteLocation()                       { m_emulationPreventionByteLocation.clear();          }
+    Void      clearEmulationPreventionByteLocation()                    { m_emulationPreventionByteLocation.clear();          }
 
-    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec)    { m_emulationPreventionByteLocation = vec;            }
+    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec) { m_emulationPreventionByteLocation = vec;            }
 };
 
 //! \}

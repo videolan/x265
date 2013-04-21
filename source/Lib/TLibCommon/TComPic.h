@@ -91,15 +91,8 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int     iWidth,
-                         Int     iHeight,
-                         UInt    uiMaxWidth,
-                         UInt    uiMaxHeight,
-                         UInt    uiMaxDepth,
-                         Window &conformanceWindow,
-                         Window &defaultDisplayWindow,
-                         Int *   numReorderPics,
-                         Bool    bIsVirtual = false);
+    Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+                         Int *numReorderPics, Bool bIsVirtual = false);
 
     virtual Void  destroy();
 
@@ -194,14 +187,7 @@ public:
                                         , std::vector<Bool>* LFCrossSliceBoundary
                                         , Int  numTiles = 1
                                         , Bool bNDBFilterCrossTileBoundary = true);
-    Void          createNonDBFilterInfoLCU(Int         tileID,
-                                           Int         sliceID,
-                                           TComDataCU* pcCU,
-                                           UInt        startSU,
-                                           UInt        endSU,
-                                           Int         sliceGranularyDepth,
-                                           UInt        picWidth,
-                                           UInt        picHeight);
+    Void          createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
 
     Bool          getValidSlice(Int sliceID)  { return m_pbValidSlice[sliceID]; }

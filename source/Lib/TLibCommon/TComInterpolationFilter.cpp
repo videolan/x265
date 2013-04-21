@@ -49,6 +49,7 @@ using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{
+
 // ====================================================================================================================
 // Tables
 // ====================================================================================================================
@@ -90,15 +91,7 @@ const Short TComInterpolationFilter::m_chromaFilter[8][NTAPS_CHROMA] =
  * \param isFirst    Flag indicating whether it is the first filtering operation
  * \param isLast     Flag indicating whether it is the last filtering operation
  */
-Void TComInterpolationFilter::filterCopy(Int     bitDepth,
-                                         Short * src,
-                                         Int     srcStride,
-                                         Short * dst,
-                                         Int     dstStride,
-                                         Int     width,
-                                         Int     height,
-                                         Bool    isFirst,
-                                         Bool    isLast)
+Void TComInterpolationFilter::filterCopy(Int bitDepth, const Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast)
 {
     Int row, col;
 
@@ -145,9 +138,7 @@ Void TComInterpolationFilter::filterCopy(Int     bitDepth,
                 Short val = src[col];
                 val = (val + offset) >> shift;
                 if (val < minVal) val = minVal;
-
                 if (val > maxVal) val = maxVal;
-
                 dst[col] = val;
             }
 
@@ -174,14 +165,7 @@ Void TComInterpolationFilter::filterCopy(Int     bitDepth,
  * \param  coeff      Pointer to filter taps
  */
 template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
-Void TComInterpolationFilter::filter(Int          bitDepth,
-                                     Short *      src,
-                                     Int          srcStride,
-                                     Short *      dst,
-                                     Int          dstStride,
-                                     Int          width,
-                                     Int          height,
-                                     Short const *coeff)
+Void TComInterpolationFilter::filter(Int bitDepth, Short const *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Short const *coeff)
 {
 #if ENABLE_PRIMITIVES
     if (!isVertical)
@@ -297,13 +281,11 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
         c[2] = coeff[2];
         c[3] = coeff[3];
     }
-
     if (N >= 6)
     {
         c[4] = coeff[4];
         c[5] = coeff[5];
     }
-
     if (N == 8)
     {
         c[6] = coeff[6];
@@ -345,13 +327,11 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
                 sum += src[col + 2 * cStride] * c[2];
                 sum += src[col + 3 * cStride] * c[3];
             }
-
             if (N >= 6)
             {
                 sum += src[col + 4 * cStride] * c[4];
                 sum += src[col + 5 * cStride] * c[5];
             }
-
             if (N == 8)
             {
                 sum += src[col + 6 * cStride] * c[6];
@@ -364,7 +344,6 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
                 val = (val < 0) ? 0 : val;
                 val = (val > maxVal) ? maxVal : val;
             }
-
             dst[col] = val;
         }
 
@@ -388,15 +367,7 @@ Void TComInterpolationFilter::filter(Int          bitDepth,
  * \param  coeff      Pointer to filter taps
  */
 template<Int N>
-Void TComInterpolationFilter::filterHor(Int          bitDepth,
-                                        Short *      src,
-                                        Int          srcStride,
-                                        Short *      dst,
-                                        Int          dstStride,
-                                        Int          width,
-                                        Int          height,
-                                        Bool         isLast,
-                                        Short const *coeff)
+Void TComInterpolationFilter::filterHor(Int bitDepth, Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isLast, Short const *coeff)
 {
     if (isLast)
     {
@@ -424,16 +395,7 @@ Void TComInterpolationFilter::filterHor(Int          bitDepth,
  * \param  coeff      Pointer to filter taps
  */
 template<Int N>
-Void TComInterpolationFilter::filterVer(Int          bitDepth,
-                                        Short *      src,
-                                        Int          srcStride,
-                                        Short *      dst,
-                                        Int          dstStride,
-                                        Int          width,
-                                        Int          height,
-                                        Bool         isFirst,
-                                        Bool         isLast,
-                                        Short const *coeff)
+Void TComInterpolationFilter::filterVer(Int bitDepth, Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast, Short const *coeff)
 {
     if (isFirst && isLast)
     {
@@ -469,14 +431,7 @@ Void TComInterpolationFilter::filterVer(Int          bitDepth,
  * \param  frac       Fractional sample offset
  * \param  isLast     Flag indicating whether it is the last filtering operation
  */
-Void TComInterpolationFilter::filterHorLuma(Short * src,
-                                            Int     srcStride,
-                                            Short * dst,
-                                            Int     dstStride,
-                                            Int     width,
-                                            Int     height,
-                                            Int     frac,
-                                            Bool    isLast)
+Void TComInterpolationFilter::filterHorLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isLast)
 {
     assert(frac >= 0 && frac < 4);
 
@@ -503,15 +458,7 @@ Void TComInterpolationFilter::filterHorLuma(Short * src,
  * \param  isFirst    Flag indicating whether it is the first filtering operation
  * \param  isLast     Flag indicating whether it is the last filtering operation
  */
-Void TComInterpolationFilter::filterVerLuma(Short * src,
-                                            Int     srcStride,
-                                            Short * dst,
-                                            Int     dstStride,
-                                            Int     width,
-                                            Int     height,
-                                            Int     frac,
-                                            Bool    isFirst,
-                                            Bool    isLast)
+Void TComInterpolationFilter::filterVerLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast)
 {
     assert(frac >= 0 && frac < 4);
 
@@ -537,14 +484,7 @@ Void TComInterpolationFilter::filterVerLuma(Short * src,
  * \param  frac       Fractional sample offset
  * \param  isLast     Flag indicating whether it is the last filtering operation
  */
-Void TComInterpolationFilter::filterHorChroma(Short * src,
-                                              Int     srcStride,
-                                              Short * dst,
-                                              Int     dstStride,
-                                              Int     width,
-                                              Int     height,
-                                              Int     frac,
-                                              Bool    isLast)
+Void TComInterpolationFilter::filterHorChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isLast)
 {
     assert(frac >= 0 && frac < 8);
 
@@ -571,15 +511,7 @@ Void TComInterpolationFilter::filterHorChroma(Short * src,
  * \param  isFirst    Flag indicating whether it is the first filtering operation
  * \param  isLast     Flag indicating whether it is the last filtering operation
  */
-Void TComInterpolationFilter::filterVerChroma(Short * src,
-                                              Int     srcStride,
-                                              Short * dst,
-                                              Int     dstStride,
-                                              Int     width,
-                                              Int     height,
-                                              Int     frac,
-                                              Bool    isFirst,
-                                              Bool    isLast)
+Void TComInterpolationFilter::filterVerChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast)
 {
     assert(frac >= 0 && frac < 8);
 
