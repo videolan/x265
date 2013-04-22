@@ -962,6 +962,63 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
+void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
+{
+    int j;
+    int add = 1 << (shift - 1);
+
+    Vec4i g_aiT8_zero_row(64, 64, 0, 0);
+    Vec4i g_aiT8_four_row(64, -64, 0, 0);
+    Vec4i g_aiT8_two_row(83, 36, 0, 0);
+    Vec4i g_aiT8_six_row(36, -83, 0, 0);
+
+    Vec4i g_aiT8_one_row(89, 75, 50, 18);
+    Vec4i g_aiT8_three_row(75, -18, -89, -50);
+    Vec4i g_aiT8_five_row(50, -89, 18, 75);
+    Vec4i g_aiT8_seven_row(18, -50, 75, -89);
+
+    for (j = 0; j < line; j++)
+    {
+        Vec8s tmp;
+        tmp.load(src);
+
+        Vec4i E_first_half = extend_low(tmp);
+        Vec4i E_second_half = extend_high(tmp);
+        E_second_half = permute4i<3, 2, 1, 0>(E_second_half);
+
+        Vec4i E = E_first_half + E_second_half;
+        Vec4i O = E_first_half - E_second_half;
+
+        Vec4i EE_first_half = permute4i<0, 1, -1, -1>(E);
+        Vec4i EE_second_half = permute4i<3, 2, -1, -1>(E);
+        Vec4i EE = EE_first_half + EE_second_half;
+        Vec4i EO = EE_first_half - EE_second_half;
+
+        int dst0 = ((horizontal_add(g_aiT8_zero_row * EE)) + add) >> shift;
+        int dst4 = ((horizontal_add(g_aiT8_four_row * EE)) + add) >> shift;
+        int dst2 = ((horizontal_add(g_aiT8_two_row * EO)) + add) >> shift;
+        int dst6 = ((horizontal_add(g_aiT8_six_row * EO)) + add) >> shift;
+
+        dst[0] = dst0;
+        dst[4 * line] = dst4;
+        dst[2 * line] = dst2;
+        dst[6 * line] = dst6;
+
+        int dst1 = ((horizontal_add(g_aiT8_one_row * O)) + add) >> shift;
+        int dst3 = ((horizontal_add(g_aiT8_three_row * O)) + add) >> shift;
+        int dst5 = ((horizontal_add(g_aiT8_five_row * O)) + add) >> shift;
+        int dst7 = ((horizontal_add(g_aiT8_seven_row * O)) + add) >> shift;
+
+        dst[line] = dst1;
+        dst[3 * line] = dst3;
+        dst[5 * line] = dst5;
+        dst[7 * line] = dst7;
+
+        src += 8;
+        dst++;
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -988,4 +1045,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
+    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
 }

@@ -353,7 +353,44 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
         dst++;
     }
 }
-}  // name closing braces
+
+void CDECL partialButterfly8(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j, k;
+    Int E[4], O[4];
+    Int EE[2], EO[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* E and O*/
+        for (k = 0; k < 4; k++)
+        {
+            E[k] = src[k] + src[7 - k];
+            O[k] = src[k] - src[7 - k];
+        }
+
+        /* EE and EO */
+        EE[0] = E[0] + E[3];
+        EO[0] = E[0] - E[3];
+        EE[1] = E[1] + E[2];
+        EO[1] = E[1] - E[2];
+
+        dst[0] = (short)((g_aiT8[0][0] * EE[0] + g_aiT8[0][1] * EE[1] + add) >> shift);
+        dst[4 * line] = (short)((g_aiT8[4][0] * EE[0] + g_aiT8[4][1] * EE[1] + add) >> shift);
+        dst[2 * line] = (short)((g_aiT8[2][0] * EO[0] + g_aiT8[2][1] * EO[1] + add) >> shift);
+        dst[6 * line] = (short)((g_aiT8[6][0] * EO[0] + g_aiT8[6][1] * EO[1] + add) >> shift);
+
+        dst[line] = (short)((g_aiT8[1][0] * O[0] + g_aiT8[1][1] * O[1] + g_aiT8[1][2] * O[2] + g_aiT8[1][3] * O[3] + add) >> shift);
+        dst[3 * line] = (short)((g_aiT8[3][0] * O[0] + g_aiT8[3][1] * O[1] + g_aiT8[3][2] * O[2] + g_aiT8[3][3] * O[3] + add) >> shift);
+        dst[5 * line] = (short)((g_aiT8[5][0] * O[0] + g_aiT8[5][1] * O[1] + g_aiT8[5][2] * O[2] + g_aiT8[5][3] * O[3] + add) >> shift);
+        dst[7 * line] = (short)((g_aiT8[7][0] * O[0] + g_aiT8[7][1] * O[1] + g_aiT8[7][2] * O[2] + g_aiT8[7][3] * O[3] + add) >> shift);
+
+        src += 8;
+        dst++;
+    }
+}
+}  // closing - anonymous file-static namespace
 
 namespace x265 {
 // x265 private namespace
@@ -384,5 +421,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
+    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
 }
 }
