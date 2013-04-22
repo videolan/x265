@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         return 1;
     }
  
-    long lBefore = clock();
+    clock_t lBefore = clock();
 
     cTAppEncTop.encode();
 
