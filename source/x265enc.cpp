@@ -474,10 +474,8 @@ Void TAppEncTop::encode()
         xGetBuffer(pcPicYuvRec);
 
         // read input YUV file
-        PPAStartCpuEventFunc(read_yuv);
         x265_picture pic;
         m_input->readPicture(pic);
-        PPAStopCpuEventFunc(read_yuv);
 
         // increase number of received frames
         m_iFrameRcvd++;

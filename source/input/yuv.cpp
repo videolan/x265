@@ -21,8 +21,10 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "input.h"
 #include "yuv.h"
+#include "PPA/ppa.h"
+#include <stdio.h>
+#include <string.h>
 
 using namespace x265;
 
@@ -58,6 +60,8 @@ void YUVInput::skipFrames(int numFrames)
 // TODO: only supports 4:2:0 chroma sampling
 bool YUVInput::readPicture(x265_picture& pic)
 {
+    PPAStartCpuEventFunc(read_yuv);
+
     int pixelbytes = depth > 8 ? 2 : 1;
 
     int bufsize = (width * height * 3 / 2) * pixelbytes;
@@ -79,5 +83,8 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    return fread(buf, 1, bufsize, fp) == (size_t)bufsize;
+    size_t bytes = fread(buf, 1, bufsize, fp);
+    PPAStopCpuEventFunc(read_yuv);
+
+    return bytes == (size_t)bufsize;
 }

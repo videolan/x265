@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "y4m.h"
+#include "PPA/ppa.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -199,6 +200,8 @@ void Y4MInput::skipFrames(int numFrames)
 
 bool Y4MInput::readPicture(x265_picture& pic)
 {
+    PPAStartCpuEventFunc(read_yuv);
+
     /* strip off the FRAME header */
     char header[Y4M_FRAME_MAGIC];
 
@@ -234,5 +237,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    return fread(buf, 1, count, fp) == count;
+    size_t bytes = fread(buf, 1, count, fp);
+    PPAStopCpuEventFunc(read_yuv);
+
+    return bytes == count;
 }
