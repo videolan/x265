@@ -39,6 +39,8 @@ protected:
     bool check_butterfly16_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_butterfly32_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_butterfly8_primitive(x265::butterfly ref, x265::butterfly opt);
+    bool check_butterfly4_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
+    bool check_butterfly8_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
 
 public:
 

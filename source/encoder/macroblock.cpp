@@ -353,7 +353,105 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
         dst++;
     }
 }
-}  // name closing braces
+
+void CDECL partialButterfly8(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j, k;
+    Int E[4], O[4];
+    Int EE[2], EO[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* E and O*/
+        for (k = 0; k < 4; k++)
+        {
+            E[k] = src[k] + src[7 - k];
+            O[k] = src[k] - src[7 - k];
+        }
+
+        /* EE and EO */
+        EE[0] = E[0] + E[3];
+        EO[0] = E[0] - E[3];
+        EE[1] = E[1] + E[2];
+        EO[1] = E[1] - E[2];
+
+        dst[0] = (short)((g_aiT8[0][0] * EE[0] + g_aiT8[0][1] * EE[1] + add) >> shift);
+        dst[4 * line] = (short)((g_aiT8[4][0] * EE[0] + g_aiT8[4][1] * EE[1] + add) >> shift);
+        dst[2 * line] = (short)((g_aiT8[2][0] * EO[0] + g_aiT8[2][1] * EO[1] + add) >> shift);
+        dst[6 * line] = (short)((g_aiT8[6][0] * EO[0] + g_aiT8[6][1] * EO[1] + add) >> shift);
+
+        dst[line] = (short)((g_aiT8[1][0] * O[0] + g_aiT8[1][1] * O[1] + g_aiT8[1][2] * O[2] + g_aiT8[1][3] * O[3] + add) >> shift);
+        dst[3 * line] = (short)((g_aiT8[3][0] * O[0] + g_aiT8[3][1] * O[1] + g_aiT8[3][2] * O[2] + g_aiT8[3][3] * O[3] + add) >> shift);
+        dst[5 * line] = (short)((g_aiT8[5][0] * O[0] + g_aiT8[5][1] * O[1] + g_aiT8[5][2] * O[2] + g_aiT8[5][3] * O[3] + add) >> shift);
+        dst[7 * line] = (short)((g_aiT8[7][0] * O[0] + g_aiT8[7][1] * O[1] + g_aiT8[7][2] * O[2] + g_aiT8[7][3] * O[3] + add) >> shift);
+
+        src += 8;
+        dst++;
+    }
+}
+
+void CDECL partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j;
+    Int E[2], O[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
+        O[0] = g_aiT4[1][0] * src[line] + g_aiT4[3][0] * src[3 * line];
+        O[1] = g_aiT4[1][1] * src[line] + g_aiT4[3][1] * src[3 * line];
+        E[0] = g_aiT4[0][0] * src[0] + g_aiT4[2][0] * src[2 * line];
+        E[1] = g_aiT4[0][1] * src[0] + g_aiT4[2][1] * src[2 * line];
+
+        /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
+        dst[0] = (short)(Clip3(-32768, 32767, (E[0] + O[0] + add) >> shift));
+        dst[1] = (short)(Clip3(-32768, 32767, (E[1] + O[1] + add) >> shift));
+        dst[2] = (short)(Clip3(-32768, 32767, (E[1] - O[1] + add) >> shift));
+        dst[3] = (short)(Clip3(-32768, 32767, (E[0] - O[0] + add) >> shift));
+
+        src++;
+        dst += 4;
+    }
+}
+
+void CDECL partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j, k;
+    Int E[4], O[4];
+    Int EE[2], EO[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
+        for (k = 0; k < 4; k++)
+        {
+            O[k] = g_aiT8[1][k] * src[line] + g_aiT8[3][k] * src[3 * line] + g_aiT8[5][k] * src[5 * line] + g_aiT8[7][k] * src[7 * line];
+        }
+
+        EO[0] = g_aiT8[2][0] * src[2 * line] + g_aiT8[6][0] * src[6 * line];
+        EO[1] = g_aiT8[2][1] * src[2 * line] + g_aiT8[6][1] * src[6 * line];
+        EE[0] = g_aiT8[0][0] * src[0] + g_aiT8[4][0] * src[4 * line];
+        EE[1] = g_aiT8[0][1] * src[0] + g_aiT8[4][1] * src[4 * line];
+
+        /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
+        E[0] = EE[0] + EO[0];
+        E[3] = EE[0] - EO[0];
+        E[1] = EE[1] + EO[1];
+        E[2] = EE[1] - EO[1];
+        for (k = 0; k < 4; k++)
+        {
+            dst[k] = (short)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 4] = (short)Clip3(-32768, 32767, (E[3 - k] - O[3 - k] + add) >> shift);
+        }
+
+        src++;
+        dst += 8;
+    }
+}
+}  // closing - anonymous file-static namespace
 
 namespace x265 {
 // x265 private namespace
@@ -384,5 +482,8 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
+    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
+    p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
+    p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
 }
 }
