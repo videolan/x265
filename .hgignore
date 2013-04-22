@@ -2,3 +2,5 @@ syntax: glob
 build/
 **.rej
 **.orig
+**.hevc
+**.yuv
