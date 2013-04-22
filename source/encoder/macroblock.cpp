@@ -390,6 +390,31 @@ void CDECL partialButterfly8(Short *src, Short *dst, Int shift, Int line)
         dst++;
     }
 }
+
+void CDECL partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j;
+    Int E[2], O[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
+        O[0] = g_aiT4[1][0] * src[line] + g_aiT4[3][0] * src[3 * line];
+        O[1] = g_aiT4[1][1] * src[line] + g_aiT4[3][1] * src[3 * line];
+        E[0] = g_aiT4[0][0] * src[0] + g_aiT4[2][0] * src[2 * line];
+        E[1] = g_aiT4[0][1] * src[0] + g_aiT4[2][1] * src[2 * line];
+
+        /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
+        dst[0] = (short)(Clip3(-32768, 32767, (E[0] + O[0] + add) >> shift));
+        dst[1] = (short)(Clip3(-32768, 32767, (E[1] + O[1] + add) >> shift));
+        dst[2] = (short)(Clip3(-32768, 32767, (E[1] - O[1] + add) >> shift));
+        dst[3] = (short)(Clip3(-32768, 32767, (E[0] - O[0] + add) >> shift));
+
+        src++;
+        dst += 4;
+    }
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -422,5 +447,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
     p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
+    p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
 }
 }

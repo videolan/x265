@@ -1019,6 +1019,41 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
+void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line) // Debuging needed
+{
+    int j;
+    int E[2], O[2];
+    int add = 1 << (shift - 1);
+
+    Vec4i dst_second(32767);
+
+    for (j = 0; j < line; j++)
+    {
+        int O_first_value = O[0] = 83 * src[line] + 36 * src[3 * line];
+        int O_second_value =  O[1] = 36 * src[line] + ((-83) * src[3 * line]);
+        int E_first_value = E[0] = 64 * src[0] + 64 * src[2 * line];
+        int E_second_value = E[1] = 64 * src[0] + ((-64) * src[2 * line]);
+
+        int first_value = E_first_value + O_first_value;
+        int second_value = E_second_value + O_second_value;
+        int third_value = E_second_value - O_second_value;
+        int fourth_value = E_first_value - O_first_value;
+
+        Vec4i dst_third(first_value, second_value, third_value, fourth_value);
+        dst_third = dst_third + add;
+        dst_third = dst_third >> shift;
+
+        Vec4i value;
+        value = min(dst_third, dst_second);
+
+        Vec4i all_zero(0);
+        Vec8s final_value = compress(value, all_zero);
+        final_value.store_partial(4, dst);
+        src++;
+        dst += 4;
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -1046,4 +1081,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
     p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
+    p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
 }

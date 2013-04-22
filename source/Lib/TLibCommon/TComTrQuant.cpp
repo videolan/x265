@@ -893,8 +893,13 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
         }
         else
         {
+#ifdef ENABLE_PRIMITIVES
+            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](coeff, tmp, shift_1st, iWidth);
+            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](tmp, block, shift_2nd, iHeight);
+#else
             partialButterflyInverse4(coeff, tmp, shift_1st, iWidth);
             partialButterflyInverse4(tmp, block, shift_2nd, iHeight);
+#endif
         }
     }
     else if (iWidth == 8 && iHeight == 8)
