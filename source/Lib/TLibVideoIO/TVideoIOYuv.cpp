@@ -351,11 +351,13 @@ static Bool writePlane(ostream& fd, Pel* src, Bool is16bit,
         }
         else
         {
+#ifdef HIGH_BIT_DEPTH
             for (Int x = 0; x < width; x++)
             {
                 buf[2 * x] = src[x] & 0xff;
                 buf[2 * x + 1] = (src[x] >> 8) & 0xff;
             }
+#endif
         }
 
         fd.write(reinterpret_cast<Char*>(buf), write_len);
