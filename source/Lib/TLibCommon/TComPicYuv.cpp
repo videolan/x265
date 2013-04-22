@@ -321,3 +321,73 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
 }
 
 //! \}
+
+#include <stdint.h>
+
+/* Copy pixels from an input picture (C structure) into internal TComPicYuv instance
+ * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
+ * This new routine is GPL
+ */
+Void TComPicYuv::copyFromPicture(const x265_picture& pic)
+{
+    Pel *Y = getLumaAddr();
+    Pel *U = getCbAddr();
+    Pel *V = getCrAddr();
+
+    uint8_t *y = (uint8_t*)pic.planes[0];
+    uint8_t *u = (uint8_t*)pic.planes[1];
+    uint8_t *v = (uint8_t*)pic.planes[2];
+
+#if HIGH_BIT_DEPTH
+    if (sizeof(Pel) * 8 > pic.bitDepth)
+    {
+        assert(pic.bitDepth == 8);
+
+        // Manually copy pixels to up-size them
+        for (int r = 0; r < m_iPicHeight; r++)
+        {
+            for (int c = 0; c < m_iPicWidth; c++)
+                Y[c] = (Pel) y[c];
+
+            Y += getStride();
+            y += pic.stride[0];
+        }
+        for (int r = 0; r < m_iPicHeight >> 1; r++)
+        {
+            for (int c = 0; c < m_iPicWidth >> 1; c++)
+            {
+                U[c] = (Pel) u[c];
+                V[c] = (Pel) v[c];
+            }
+
+            U += getCStride();
+            V += getCStride();
+            u += pic.stride[1];
+            v += pic.stride[2];
+        }
+    }
+    else
+#endif
+    {
+        int width = m_iPicWidth * (pic.bitDepth > 8 ? 2 : 1);
+
+        // copy pixels by row into encoder's buffer
+        for (int r = 0; r < m_iPicHeight; r++)
+        {
+            memcpy(Y, y, width);
+
+            Y += getStride();
+            y += pic.stride[0];
+        }
+        for (int r = 0; r < m_iPicHeight >> 1; r++)
+        {
+            memcpy(U, u, width >> 1);
+            memcpy(V, v, width >> 1);
+
+            U += getCStride();
+            V += getCStride();
+            u += pic.stride[1];
+            v += pic.stride[2];
+        }
+    }
+}

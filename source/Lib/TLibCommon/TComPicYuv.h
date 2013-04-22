@@ -39,6 +39,7 @@
 #define __TCOMPICYUV__
 
 #include <stdio.h>
+#include "x265.h"
 #include "CommonDef.h"
 #include "TComRom.h"
 
@@ -162,6 +163,7 @@ public:
     Void  copyToPicLuma(TComPicYuv* pcPicYuvDst);
     Void  copyToPicCb(TComPicYuv* pcPicYuvDst);
     Void  copyToPicCr(TComPicYuv* pcPicYuvDst);
+    Void  copyFromPicture(const x265_picture&);
 
     //  Extend function of picture buffer
     Void  extendPicBorder();

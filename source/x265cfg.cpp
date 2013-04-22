@@ -74,6 +74,7 @@ TAppEncCfg::TAppEncCfg()
     , m_scalingListFile()
 {
     m_aidQP = NULL;
+    handler_recon = NULL;
 #if J0149_TONE_MAPPING_SEI
     m_startOfCodedInterval = NULL;
     m_codedPivotValue = NULL;
@@ -611,34 +612,33 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 
     /* parse the width, height, frame rate from the y4m files if it is not given in the configuration file */
-    char * s = strrchr(m_pchInputFile, '.');
-    handler_input = NULL;
-    handler_recon = NULL;
+    m_input = x265::Input::Open(m_pchInputFile);
 
-    if ((!strcmp(s + 1, "y4m")))
+    if (!m_input || m_input->isFail())
     {
-        m_cTVideoIOInputFile = new TVideoIOY4m();
-        m_cTVideoIOReconFile = new TVideoIOY4m();
-        /* get the video information like width,height,framerate */
-        m_cTVideoIOInputFile->open(m_pchInputFile,
-                                   false,
-                                   m_inputBitDepthY,
-                                   m_inputBitDepthC,
-                                   m_internalBitDepthY,
-                                   m_internalBitDepthC,
-                                   handler_input,
-                                   video_info,
-                                   m_aiPad);
-        m_cTVideoIOInputFile->getVideoInfo(video_info, handler_input);
-        m_iSourceWidth = video_info.width;
-        m_iSourceHeight = video_info.height;
-        m_iFrameRate = video_info.FrameRate;
+        printf("Unable to open source file\n");
+        return 1;
     }
-    else if ((!strcmp(s + 1, "yuv")))
+
+    if (m_input->getWidth())
     {
-        m_cTVideoIOInputFile = new TVideoIOYuv();
-        m_cTVideoIOReconFile = new TVideoIOYuv();
+        m_iSourceWidth = m_input->getWidth();
+        m_iSourceHeight = m_input->getHeight();
+        m_iFrameRate = (int)m_input->getRate();
+        m_inputBitDepthC = m_inputBitDepthY = 8;
     }
+    else
+    {
+        m_input->setDimensions(m_iSourceWidth, m_iSourceHeight);
+        m_input->setBitDepth(m_inputBitDepthY);
+    }
+
+    /* rules for input, output and internal bitdepths as per help text */
+    if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
+    if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
+    if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
+    if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
+    if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
     Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
@@ -708,13 +708,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     readIntString(cfg_constantPicRateIdc,     m_bitRatePicRateMaxTLayers, m_constantPicRateIdc,     "constant pic rate Idc");
 #endif
     m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-
-    /* rules for input, output and internal bitdepths as per help text */
-    if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
-    if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
-    if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
-    if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
-    if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
 
     // TODO:ChromaFmt assumes 4:2:0 below
     switch (m_conformanceMode)

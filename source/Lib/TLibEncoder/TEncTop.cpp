@@ -345,14 +345,14 @@ Void TEncTop::deletePicBuffer()
  \retval  rcListBitstreamOut  list of output bitstreams
  \retval  iNumEncoded         number of encoded pictures
  */
-Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded)
+Void TEncTop::encode(Bool flush, const x265_picture* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded)
 {
-    if (pcPicYuvOrg)
+    if (pic)
     {
         // get original YUV
         TComPic* pcPicCurr = NULL;
         xGetNewPicBuffer(pcPicCurr);
-        pcPicYuvOrg->copyToPic(pcPicCurr->getPicYuvOrg());
+        pcPicCurr->getPicYuvOrg()->copyFromPicture(*pic);
 
         // compute image characteristics
         if (getUseAdaptiveQP())

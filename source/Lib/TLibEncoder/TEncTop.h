@@ -38,6 +38,8 @@
 #ifndef __TENCTOP__
 #define __TENCTOP__
 
+#include "x265.h"
+
 // Include files
 #include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPrediction.h"
@@ -208,7 +210,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// encode several number of pictures until end-of-sequence
-    Void encode(Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+    Void encode(Bool bEos, const x265_picture* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut,
                 std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded);
 
     void printSummary() { m_cGOPEncoder.printOutSummary(m_uiNumAllPicCoded); }
