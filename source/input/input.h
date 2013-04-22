@@ -45,8 +45,6 @@ public:
 
     virtual void setDimensions(int width, int height) = 0;
 
-    virtual void setRate(int numerator, int denominator) = 0;
-
     virtual void setBitDepth(int bitDepth) = 0;
 
     virtual float getRate() const = 0;

@@ -59,8 +59,6 @@ public:
 
     void setDimensions(int w, int h)              { /* ignore, warn */ }
 
-    void setRate(int numerator, int denominator)  { /* ignore, warn */ }
-
     void setBitDepth(int bitDepth)                { /* ignore, warn */ }
 
     float getRate() const                         { return ((float)rateNum) / rateDenom; }
@@ -68,8 +66,6 @@ public:
     int getWidth() const                          { return width; }
 
     int getHeight() const                         { return height; }
-
-    int getBitDepth() const                       { return 8; }
 
     bool isEof() const                            { return !!feof(fp); }
 
