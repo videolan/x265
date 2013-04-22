@@ -415,6 +415,42 @@ void CDECL partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
         dst += 4;
     }
 }
+
+void CDECL partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j, k;
+    Int E[4], O[4];
+    Int EE[2], EO[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
+        for (k = 0; k < 4; k++)
+        {
+            O[k] = g_aiT8[1][k] * src[line] + g_aiT8[3][k] * src[3 * line] + g_aiT8[5][k] * src[5 * line] + g_aiT8[7][k] * src[7 * line];
+        }
+
+        EO[0] = g_aiT8[2][0] * src[2 * line] + g_aiT8[6][0] * src[6 * line];
+        EO[1] = g_aiT8[2][1] * src[2 * line] + g_aiT8[6][1] * src[6 * line];
+        EE[0] = g_aiT8[0][0] * src[0] + g_aiT8[4][0] * src[4 * line];
+        EE[1] = g_aiT8[0][1] * src[0] + g_aiT8[4][1] * src[4 * line];
+
+        /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
+        E[0] = EE[0] + EO[0];
+        E[3] = EE[0] - EO[0];
+        E[1] = EE[1] + EO[1];
+        E[2] = EE[1] - EO[1];
+        for (k = 0; k < 4; k++)
+        {
+            dst[k] = (short)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 4] = (short)Clip3(-32768, 32767, (E[3 - k] - O[3 - k] + add) >> shift);
+        }
+
+        src++;
+        dst += 8;
+    }
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -448,5 +484,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
     p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
     p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
+    p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
 }
 }
