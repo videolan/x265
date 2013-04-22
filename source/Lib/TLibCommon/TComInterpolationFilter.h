@@ -74,10 +74,10 @@ public:
 
     ~TComInterpolationFilter() {}
 
-    Void filterHorLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
-    Void filterVerLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
-    Void filterHorChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
-    Void filterVerChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
+    Void filterHorLuma(Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
+    Void filterVerLuma(Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
+    Void filterHorChroma(Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
+    Void filterVerChroma(Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
 };
 
 //! \}

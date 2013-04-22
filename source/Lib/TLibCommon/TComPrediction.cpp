@@ -560,10 +560,10 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 {
     Int refStride = refPic->getStride();
     Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
-    Pel *ref      = refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Short *ref      = (Short *) refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     Int dstStride = dstPic->getStride();
-    Pel *dst      = dstPic->getLumaAddr(partAddr);
+    Short *dst      = (Short *) dstPic->getLumaAddr(partAddr);
 
     Int xFrac = mv->getHor() & 0x3;
     Int yFrac = mv->getVer() & 0x3;
@@ -624,11 +624,11 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     Int     refOffset  = (mv->getHor() >> 3) + (mv->getVer() >> 3) * refStride;
 
-    Pel*    refCb     = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Pel*    refCr     = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Short*    refCb     = (Short *) refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Short*    refCr     = (Short *) refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Pel* dstCb = dstPic->getCbAddr(partAddr);
-    Pel* dstCr = dstPic->getCrAddr(partAddr);
+    Short* dstCb = (Short *) dstPic->getCbAddr(partAddr);
+    Short* dstCr = (Short *) dstPic->getCrAddr(partAddr);
 
     Int     xFrac  = mv->getHor() & 0x7;
     Int     yFrac  = mv->getVer() & 0x7;
