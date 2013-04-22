@@ -21,52 +21,19 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#ifndef _X265_H_
+#define _X265_H_
 
-#include "x265.h"
-#include <stdint.h>
-#include <iostream>
+/* Public C interface to x265 encoder */
 
-namespace x265 {
-// private x265 namespace
-
-class Input
+typedef struct
 {
-protected:
+    void *planes[3];
 
-    virtual ~Input()  {}
+    int   stride[3];
 
-public:
-
-    Input()           {}
-
-    static Input* Open(const char *filename);
-
-    virtual void setDimensions(int width, int height) = 0;
-
-    virtual void setRate(int numerator, int denominator) = 0;
-
-    virtual void setBitDepth(int bitDepth) = 0;
-
-    virtual float getRate() const = 0;
-
-    virtual int getWidth() const = 0;
-
-    virtual int getHeight() const = 0;
-
-    virtual void release() = 0;
-
-    virtual void skipFrames(int numFrames) = 0;
-
-    virtual bool readPicture(x265_picture& pic) = 0;
-
-    virtual bool isEof() const = 0;
-
-    virtual bool isFail() const = 0;
-
-    virtual int  guessFrameCount() const = 0;
-};
+    int   bitDepth;
 }
+x265_picture;
 
-#endif // _INPUT_H_
+#endif // _X265_H_

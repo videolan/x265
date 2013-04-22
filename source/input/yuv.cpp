@@ -56,7 +56,7 @@ void YUVInput::skipFrames(int numFrames)
 }
 
 // TODO: only supports 4:2:0 chroma sampling
-bool YUVInput::readPicture(Picture& pic)
+bool YUVInput::readPicture(x265_picture& pic)
 {
     int pixelbytes = depth > 8 ? 2 : 1;
 

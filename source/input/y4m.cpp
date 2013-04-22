@@ -189,7 +189,7 @@ int  Y4MInput::guessFrameCount() const
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    Picture pic;
+    x265_picture pic;
 
     for (int i = 0; i < numFrames; i++)
     {
@@ -197,7 +197,7 @@ void Y4MInput::skipFrames(int numFrames)
     }
 }
 
-bool Y4MInput::readPicture(Picture& pic)
+bool Y4MInput::readPicture(x265_picture& pic)
 {
     /* strip off the FRAME header */
     char header[Y4M_FRAME_MAGIC];
