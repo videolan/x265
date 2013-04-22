@@ -5,7 +5,7 @@ import subprocess
 import shutil
 
 EXTENSIONS = ['.h', '.cpp', '.inc', '.c']
-EXCLUDES = ['VectorClass']
+EXCLUDES = ['VectorClass', 'compat', 'x86']
 
 candidates = []
 for (dirpath, dirnames, filenames) in os.walk('../../source'):

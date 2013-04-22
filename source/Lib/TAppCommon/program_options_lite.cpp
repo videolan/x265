@@ -71,7 +71,6 @@ void Options::addOption(OptionBase *opt)
             opt_start++;
             force_short = 1;
         }
-
         string opt_name = opt_string.substr(opt_start, opt_end - opt_start);
         if (force_short || opt_name.size() == 1)
         {
@@ -83,7 +82,6 @@ void Options::addOption(OptionBase *opt)
             names->opt_long.push_back(opt_name);
             opt_long_map[opt_name].push_back(names);
         }
-
         opt_start += opt_end + 1;
     }
 
@@ -124,7 +122,6 @@ static void doHelpOpt(ostream& out, const Options::Names& entry, unsigned pad_sh
         {
             out << ", ";
         }
-
         out << &(spaces[40 - pad]);
     }
     else
@@ -174,7 +171,6 @@ void doHelp(ostream& out, Options& opts, unsigned columns)
             cout << line.str() << endl;
             continue;
         }
-
         size_t currlength = size_t(line.tellp());
         if (currlength > opt_width)
         {
@@ -199,14 +195,12 @@ void doHelp(ostream& out, Options& opts, unsigned columns)
                 cur_pos = newline_pos;
                 continue;
             }
-
             if (cur_pos + desc_width > opt_desc.size())
             {
                 /* no need to wrap text, remainder is less than avaliable width */
                 line << opt_desc.substr(cur_pos);
                 break;
             }
-
             /* find a suitable point to split text (avoid spliting in middle of word) */
             size_t split_pos = opt_desc.find_last_of(' ', cur_pos + desc_width);
             if (split_pos != string::npos)
@@ -221,7 +215,6 @@ void doHelp(ostream& out, Options& opts, unsigned columns)
             {
                 split_pos = cur_pos + desc_width;
             }
-
             line << opt_desc.substr(cur_pos, split_pos - cur_pos);
 
             /* eat up any space for the start of the next line */
@@ -229,14 +222,12 @@ void doHelp(ostream& out, Options& opts, unsigned columns)
             {
                 split_pos = opt_desc.find_first_not_of(' ', split_pos);
             }
-
             cur_pos = newline_pos = split_pos;
 
             if (cur_pos >= opt_desc.size())
             {
                 break;
             }
-
             line << endl;
         }
 
@@ -312,7 +303,6 @@ unsigned parseGNU(Options& opts, unsigned argc, const char* argv[])
         * booleans */
         if (argc == 1)
             return 0; /* run out of argv for argument */
-
         extra_argc_consumed = 1;
 #endif
         if (!storePair(opts, true, false, option, "1"))
@@ -350,13 +340,13 @@ unsigned parseSHORT(Options& opts, unsigned argc, const char* argv[])
         cerr << "Not processing option without argument `" << option << "'" << endl;
         return 0; /* run out of argv for argument */
     }
-
     storePair(opts, false, true, option, string(argv[1]));
 
     return 1;
 }
 
-list<const char*> scanArgv(Options& opts, unsigned argc, const char* argv[])
+list<const char*>
+scanArgv(Options& opts, unsigned argc, const char* argv[])
 {
     /* a list for anything that didn't get handled as an option */
     list<const char*> non_option_arguments;
@@ -415,13 +405,11 @@ void scanLine(Options& opts, string& line)
         /* blank line */
         return;
     }
-
     if (line[start] == '#')
     {
         /* comment line */
         return;
     }
-
     /* look for first whitespace or ':' after the option end */
     size_t option_end = line.find_first_of(": \t\n\r", start);
     string option = line.substr(start, option_end - start);
@@ -433,7 +421,6 @@ void scanLine(Options& opts, string& line)
         /* error: badly formatted line */
         return;
     }
-
     if (line[start] != ':')
     {
         /* error: badly formatted line */
@@ -459,7 +446,6 @@ void scanLine(Options& opts, string& line)
             value_end--;
             break;
         }
-
         value_end = line.find_first_of(" \t\n\r", value_end);
 
         /* consume any white space, incase there is another word.
@@ -515,10 +501,9 @@ void parseConfigFile(Options& opts, const string& filename)
         cerr << "Failed to open config file: `" << filename << "'" << endl;
         exit(EXIT_FAILURE);
     }
-
     scanFile(opts, cfgstream);
 }
-};
-};
+}
+}
 
 //! \}

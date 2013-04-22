@@ -95,9 +95,7 @@ void Thread::Stop()
     }
 }
 
-Thread::~Thread()
-{
-}
+Thread::~Thread() {}
 
 #endif // if _WIN32
 

@@ -87,7 +87,7 @@ private:
 
     ThreadPoolImpl &m_pool;
 
-    PoolThread& operator=(const PoolThread&);
+    PoolThread& operator =(const PoolThread&);
 
     bool           m_dirty;
 
@@ -108,7 +108,7 @@ public:
     void ThreadMain();
 
     volatile static int   s_sleepCount;
-             static Event s_wakeEvent;
+    static Event s_wakeEvent;
 };
 
 volatile int PoolThread::s_sleepCount = 0;
@@ -242,14 +242,16 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
         m_ok = true;
         for (int i = 0; i < numThreads; i++)
         {
-            new (buffer) PoolThread(*this);
+            new (buffer)PoolThread(*this);
             buffer += sizeof(PoolThread);
             m_ok = m_ok && m_threads[i].Start();
         }
 
         // Wait for threads to spin up and idle
         while (PoolThread::s_sleepCount < m_numThreads)
+        {
             GIVE_UP_TIME();
+        }
     }
 }
 
@@ -259,16 +261,22 @@ void ThreadPoolImpl::Stop()
     {
         // wait for all threads to idle
         while (PoolThread::s_sleepCount < m_numThreads)
+        {
             GIVE_UP_TIME();
+        }
 
         // set invalid flag, then wake them up so they exit their main func
         m_ok = false;
         for (int i = 0; i < m_numThreads; i++)
+        {
             PokeIdleThreads();
+        }
 
         // wait for each thread to exit
         for (int i = 0; i < m_numThreads; i++)
+        {
             m_threads[i].Stop();
+        }
     }
 }
 
@@ -278,7 +286,10 @@ ThreadPoolImpl::~ThreadPoolImpl()
     {
         // cleanup thread handles
         for (int i = 0; i < m_numThreads; i++)
+        {
             m_threads[i].~PoolThread();
+        }
+
         delete[] reinterpret_cast<char*>(m_threads);
     }
 }
@@ -327,10 +338,13 @@ void ThreadPoolImpl::DequeueJobProvider(JobProvider &p)
 void ThreadPoolImpl::FlushProviderList()
 {
     for (int i = 0; i < m_numThreads; i++)
+    {
         m_threads[i].markDirty();
+    }
 
     int i;
-    do {
+    do
+    {
         for (i = 0; i < m_numThreads; i++)
         {
             if (m_threads[i].isDirty())
@@ -340,7 +354,7 @@ void ThreadPoolImpl::FlushProviderList()
             }
         }
     }
-    while(i < m_numThreads);
+    while (i < m_numThreads);
 }
 
 void JobProvider::Flush()
@@ -455,5 +469,4 @@ static int get_cpu_count()
     return 2; // default to 2 threads, everywhere else
 #endif // if WIN32
 }
-
 } // end namespace x265

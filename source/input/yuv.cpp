@@ -79,5 +79,5 @@ bool YUVInput::readPicture(Picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    return fread(buf, 1, bufsize, fp) == (size_t) bufsize;
+    return fread(buf, 1, bufsize, fp) == (size_t)bufsize;
 }

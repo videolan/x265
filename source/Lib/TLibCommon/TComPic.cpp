@@ -71,15 +71,8 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-Void TComPic::create(Int     iWidth,
-                     Int     iHeight,
-                     UInt    uiMaxWidth,
-                     UInt    uiMaxHeight,
-                     UInt    uiMaxDepth,
-                     Window &conformanceWindow,
-                     Window &defaultDisplayWindow,
-                     Int *   numReorderPics,
-                     Bool    bIsVirtual)
+Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+                     Int *numReorderPics, Bool bIsVirtual)
 
 {
     m_apcPicSym     = new TComPicSym;
@@ -89,7 +82,6 @@ Void TComPic::create(Int     iWidth,
         m_apcPicYuv[0]  = new TComPicYuv;
         m_apcPicYuv[0]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     }
-
     m_apcPicYuv[1]  = new TComPicYuv;
     m_apcPicYuv[1]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
@@ -98,7 +90,6 @@ Void TComPic::create(Int     iWidth,
     {
         deleteSEIs(m_SEIs);
     }
-
     m_bUsedByCurr = false;
 
     /* store conformance window parameters with picture */
@@ -182,7 +173,6 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
             }
         }
     }
-
     m_sliceGranularityForNDBFilter = sliceGranularityDepth;
     m_bIndependentTileBoundaryForNDBFilter  = (bNDBFilterCrossTileBoundary) ? (false) : ((numTiles > 1) ? (true) : (false));
 
@@ -279,7 +269,6 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
                 firstCUInStartLCU = 0;
                 assert(startLCU < getNumCUsInFrame());
             }
-
             assert(startLCU * maxNumSUInLCU + firstCUInStartLCU < endAddr);
         }
 
@@ -316,7 +305,6 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
             {
                 continue;
             }
-
             Int iTileID = m_apcPicSym->getTileIdxMap(uiAddr);
             Bool bTopTileBoundary = false, bDownTileBoundary = false, bLeftTileBoundary = false, bRightTileBoundary = false;
 
@@ -327,19 +315,16 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
                 {
                     bLeftTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr - 1) != iTileID) ? true : false;
                 }
-
                 //right
                 if ((uiAddr % numLCUsInPicWidth) != (numLCUsInPicWidth - 1))
                 {
                     bRightTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr + 1) != iTileID) ? true : false;
                 }
-
                 //top
                 if (uiAddr >= numLCUsInPicWidth)
                 {
                     bTopTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr - numLCUsInPicWidth) !=  iTileID) ? true : false;
                 }
-
                 //down
                 if (uiAddr + numLCUsInPicWidth < numLCUInPic)
                 {
@@ -347,21 +332,10 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
                 }
             }
 
-            pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth,
-                                                      numLCUsInPicHeight,
-                                                      maxNumSUInLCUWidth,
-                                                      maxNumSUInLCUHeight,
-                                                      picWidth,
-                                                      picHeight
-                                                      ,
-                                                      *LFCrossSliceBoundary
-                                                      ,
-                                                      bTopTileBoundary,
-                                                      bDownTileBoundary,
-                                                      bLeftTileBoundary,
-                                                      bRightTileBoundary
-                                                      ,
-                                                      m_bIndependentTileBoundaryForNDBFilter);
+            pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight
+                                                      , *LFCrossSliceBoundary
+                                                      , bTopTileBoundary, bDownTileBoundary, bLeftTileBoundary, bRightTileBoundary
+                                                      , m_bIndependentTileBoundaryForNDBFilter);
         }
     }
 
@@ -382,14 +356,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
  * \param picWidth picture width
  * \param picHeight picture height
  */
-Void TComPic::createNonDBFilterInfoLCU(Int         tileID,
-                                       Int         sliceID,
-                                       TComDataCU* pcCU,
-                                       UInt        startSU,
-                                       UInt        endSU,
-                                       Int         sliceGranularyDepth,
-                                       UInt        picWidth,
-                                       UInt        picHeight)
+Void TComPic::createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
 {
     UInt LCUX          = pcCU->getCUPelX();
     UInt LCUY          = pcCU->getCUPelY();
@@ -414,7 +381,6 @@ Void TComPic::createNonDBFilterInfoLCU(Int         tileID,
             {
                 break;
             }
-
             LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
             TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
         }
@@ -440,14 +406,12 @@ Void TComPic::createNonDBFilterInfoLCU(Int         tileID,
             {
                 break;
             }
-
             uiLPelX_su   = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[uiIdx]];
             uiTPelY_su   = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[uiIdx]];
             if (!(uiLPelX_su < picWidth) || !(uiTPelY_su < picHeight))
             {
                 continue;
             }
-
             pCUSliceMap[uiIdx] = sliceID;
             uiLastValidSU = uiIdx;
         }
@@ -482,7 +446,6 @@ Void TComPic::destroyNonDBFilterInfo()
         delete[] m_pSliceSUMap;
         m_pSliceSUMap = NULL;
     }
-
     for (UInt CUAddr = 0; CUAddr < getNumCUsInFrame(); CUAddr++)
     {
         TComDataCU* pcCU = getCU(CUAddr);

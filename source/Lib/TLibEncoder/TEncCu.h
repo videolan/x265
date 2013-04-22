@@ -121,10 +121,10 @@ public:
     /// CU encoding function
     Void  encodeCU(TComDataCU* pcCU);
 
-    Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter;}
+    Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter; }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
-    UInt getLCUPredictionSAD() { return m_LCUPredictionSAD;}
+    UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
 
 #endif
 
@@ -153,19 +153,12 @@ protected:
 
     Void  xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
     Void  xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst);
-    Void  xCopyYuv2Pic(TComPic*    rpcPic,
-                       UInt        uiCUAddr,
-                       UInt        uiAbsPartIdx,
-                       UInt        uiDepth,
-                       UInt        uiSrcDepth,
-                       TComDataCU* pcCU,
-                       UInt        uiLPelX,
-                       UInt        uiTPelY);
+    Void  xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UInt uiDepth, UInt uiSrcDepth, TComDataCU* pcCU, UInt uiLPelX, UInt uiTPelY);
     Void  xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt uiDepth);
 
-    Bool getdQPFlag()                        { return m_bEncodeDQP;}
+    Bool getdQPFlag()                        { return m_bEncodeDQP;        }
 
-    Void setdQPFlag(Bool b)                { m_bEncodeDQP = b;}
+    Void setdQPFlag(Bool b)                { m_bEncodeDQP = b;           }
 
 #if ADAPTIVE_QP_SELECTION
     // Adaptive reconstruction level (ARL) statistics collection functions
@@ -175,16 +168,11 @@ protected:
 
 #if AMP_ENC_SPEEDUP
 #if AMP_MRG
-    Void deriveTestModeAMP(TComDataCU *&rpcBestCU,
-                           PartSize     eParentPartSize,
-                           Bool &       bTestAMP_Hor,
-                           Bool &       bTestAMP_Ver,
-                           Bool &       bTestMergeAMP_Hor,
-                           Bool &       bTestMergeAMP_Ver);
+    Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver, Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
 #else
     Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver);
 #endif
-#endif // if AMP_ENC_SPEEDUP
+#endif
 
     Void  xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv);
 };

@@ -60,9 +60,9 @@ public:
     TEncQPAdaptationUnit();
     ~TEncQPAdaptationUnit();
 
-    Void   setActivity(Double d) { m_dActivity = d;}
+    Void   setActivity(Double d) { m_dActivity = d; }
 
-    Double getActivity()           { return m_dActivity;}
+    Double getActivity()           { return m_dActivity; }
 };
 
 /// Local image characteristics for CUs on a specific depth
@@ -85,21 +85,21 @@ public:
     Void  create(Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight);
     Void  destroy();
 
-    UInt                   getAQPartWidth()        { return m_uiAQPartWidth;}
+    UInt                   getAQPartWidth()        { return m_uiAQPartWidth;       }
 
-    UInt                   getAQPartHeight()       { return m_uiAQPartHeight;}
+    UInt                   getAQPartHeight()       { return m_uiAQPartHeight;      }
 
-    UInt                   getNumAQPartInWidth()   { return m_uiNumAQPartInWidth;}
+    UInt                   getNumAQPartInWidth()   { return m_uiNumAQPartInWidth;  }
 
-    UInt                   getNumAQPartInHeight()  { return m_uiNumAQPartInHeight;}
+    UInt                   getNumAQPartInHeight()  { return m_uiNumAQPartInHeight; }
 
-    UInt                   getAQPartStride()       { return m_uiNumAQPartInWidth;}
+    UInt                   getAQPartStride()       { return m_uiNumAQPartInWidth;  }
 
-    TEncQPAdaptationUnit*  getQPAdaptationUnit()   { return m_acTEncAQU;}
+    TEncQPAdaptationUnit*  getQPAdaptationUnit()   { return m_acTEncAQU;           }
 
-    Double                 getAvgActivity()        { return m_dAvgActivity;}
+    Double                 getAvgActivity()        { return m_dAvgActivity;        }
 
-    Void                   setAvgActivity(Double d)  { m_dAvgActivity = d;}
+    Void                   setAvgActivity(Double d)  { m_dAvgActivity = d; }
 };
 
 /// Picture class including local image characteristics information for QP adaptation
@@ -119,9 +119,9 @@ public:
                          Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false);
     virtual Void  destroy();
 
-    TEncPicQPAdaptationLayer* getAQLayer(UInt uiDepth)  { return &m_acAQLayer[uiDepth];}
+    TEncPicQPAdaptationLayer* getAQLayer(UInt uiDepth)  { return &m_acAQLayer[uiDepth]; }
 
-    UInt                      getMaxAQDepth()             { return m_uiMaxAQDepth;}
+    UInt                      getMaxAQDepth()             { return m_uiMaxAQDepth;        }
 };
 
 //! \}

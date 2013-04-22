@@ -65,7 +65,7 @@ public:
     virtual Void        writeAlignZero() {}
 
     virtual Void        write(UInt uiBits, UInt uiNumberOfBits)  = 0;
-    virtual Void        resetBits()                                    = 0;
+    virtual Void        resetBits()                              = 0;
     virtual UInt getNumberOfWrittenBits() const = 0;
     virtual ~TComBitIf() {}
 };
@@ -110,7 +110,7 @@ public:
     Void        writeAlignZero();
 
     /** this function should never be called */
-    void resetBits() { assert(0);}
+    void resetBits() { assert(0); }
 
     // utility functions
 
@@ -136,25 +136,25 @@ public:
      * returns the number of bits that need to be written to
      * achieve byte alignment.
      */
-    Int getNumBitsUntilByteAligned() { return (8 - m_num_held_bits) & 0x7;}
+    Int getNumBitsUntilByteAligned() { return (8 - m_num_held_bits) & 0x7; }
 
     /**
      * Return the number of bits that have been written since the last clear()
      */
-    UInt getNumberOfWrittenBits() const { return UInt(m_fifo->size()) * 8 + m_num_held_bits;}
+    UInt getNumberOfWrittenBits() const { return UInt(m_fifo->size()) * 8 + m_num_held_bits; }
 
     void insertAt(const TComOutputBitstream& src, UInt pos);
 
     /**
      * Return a reference to the internal fifo
      */
-    std::vector<uint8_t>& getFIFO() { return *m_fifo;}
+    std::vector<uint8_t>& getFIFO() { return *m_fifo; }
 
-    UChar getHeldBits()          { return m_held_bits;}
+    UChar getHeldBits()          { return m_held_bits; }
 
     TComOutputBitstream& operator =(const TComOutputBitstream& src);
     /** Return a reference to the internal fifo */
-    std::vector<uint8_t>& getFIFO() const { return *m_fifo;}
+    std::vector<uint8_t>& getFIFO() const { return *m_fifo; }
 
     Void          addSubstream(TComOutputBitstream* pcSubstream);
     Void writeByteAlignment();
@@ -200,40 +200,40 @@ public:
     }
 
     Void        readOutTrailingBits();
-    UChar getHeldBits()          { return m_held_bits;}
+    UChar getHeldBits()          { return m_held_bits; }
 
     TComOutputBitstream& operator =(const TComOutputBitstream& src);
-    UInt  getByteLocation()                     { return m_fifo_idx;}
+    UInt  getByteLocation()      { return m_fifo_idx; }
 
     // Peek at bits in word-storage. Used in determining if we have completed reading of current bitstream and therefore slice in LCEC.
-    UInt        peekBits(UInt uiBits) { UInt tmp;pseudoRead(uiBits, tmp);return tmp;}
+    UInt        peekBits(UInt uiBits) { UInt tmp; pseudoRead(uiBits, tmp); return tmp; }
 
     // utility functions
-    UInt read(UInt numberOfBits) { UInt tmp;read(numberOfBits, tmp);return tmp;}
+    UInt read(UInt numberOfBits) { UInt tmp; read(numberOfBits, tmp); return tmp; }
 
-    UInt     readByte() { UInt tmp;readByte(tmp);return tmp;}
+    UInt     readByte() { UInt tmp; readByte(tmp); return tmp; }
 
-    UInt getNumBitsUntilByteAligned() { return m_num_held_bits & (0x7);}
+    UInt getNumBitsUntilByteAligned() { return m_num_held_bits & (0x7); }
 
-    UInt getNumBitsLeft() { return 8 * ((UInt)m_fifo->size() - m_fifo_idx) + m_num_held_bits;}
+    UInt getNumBitsLeft() { return 8 * ((UInt)m_fifo->size() - m_fifo_idx) + m_num_held_bits; }
 
     TComInputBitstream *extractSubstream(UInt uiNumBits); // Read the nominated number of bits, and return as a bitstream.
     Void                deleteFifo(); // Delete internal fifo of bitstream.
-    UInt  getNumBitsRead() { return m_numBitsRead;}
+    UInt  getNumBitsRead() { return m_numBitsRead; }
 
     Void readByteAlignment();
 
-    Void      pushEmulationPreventionByteLocation(UInt pos)                  { m_emulationPreventionByteLocation.push_back(pos);}
+    Void      pushEmulationPreventionByteLocation(UInt pos)             { m_emulationPreventionByteLocation.push_back(pos); }
 
-    UInt      numEmulationPreventionBytesRead()                            { return (UInt)m_emulationPreventionByteLocation.size();}
+    UInt      numEmulationPreventionBytesRead()                         { return (UInt)m_emulationPreventionByteLocation.size();    }
 
-    std::vector<UInt>  getEmulationPreventionByteLocation()                   { return m_emulationPreventionByteLocation;}
+    std::vector<UInt>  getEmulationPreventionByteLocation()             { return m_emulationPreventionByteLocation;           }
 
-    UInt      getEmulationPreventionByteLocation(UInt idx)                  { return m_emulationPreventionByteLocation[idx];}
+    UInt      getEmulationPreventionByteLocation(UInt idx)              { return m_emulationPreventionByteLocation[idx];    }
 
-    Void      clearEmulationPreventionByteLocation()                            { m_emulationPreventionByteLocation.clear();}
+    Void      clearEmulationPreventionByteLocation()                    { m_emulationPreventionByteLocation.clear();          }
 
-    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec)     { m_emulationPreventionByteLocation = vec;}
+    Void      setEmulationPreventionByteLocation(std::vector<UInt> vec) { m_emulationPreventionByteLocation = vec;            }
 };
 
 //! \}

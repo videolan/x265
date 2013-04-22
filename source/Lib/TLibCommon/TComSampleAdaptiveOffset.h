@@ -120,16 +120,7 @@ public:
 
     Int  convertLevelRowCol2Idx(Int level, Int row, Int col);
 
-    Void initSAOParam(SAOParam *pcSaoParam,
-                      Int       iPartLevel,
-                      Int       iPartRow,
-                      Int       iPartCol,
-                      Int       iParentPartIdx,
-                      Int       StartCUX,
-                      Int       EndCUX,
-                      Int       StartCUY,
-                      Int       EndCUY,
-                      Int       iYCbCr);
+    Void initSAOParam(SAOParam *pcSaoParam, Int iPartLevel, Int iPartRow, Int iPartCol, Int iParentPartIdx, Int StartCUX, Int EndCUX, Int StartCUY, Int EndCUY, Int iYCbCr);
     Void allocSaoParam(SAOParam* pcSaoParam);
     Void resetSAOParam(SAOParam *pcSaoParam);
     static Void freeSaoParam(SAOParam *pcSaoParam);
@@ -141,26 +132,19 @@ public:
     Void processSaoCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pcPic);
     Void destroyPicSaoInfo();
-    Void processSaoBlock(Pel*  pDec,
-                         Pel*  pRest,
-                         Int   stride,
-                         Int   iSaoType,
-                         UInt  width,
-                         UInt  height,
-                         Bool* pbBorderAvail,
-                         Int   iYCbCr);
+    Void processSaoBlock(Pel* pDec, Pel* pRest, Int stride, Int iSaoType, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
 
     Void resetLcuPart(SaoLcuParam* saoLcuParam);
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
     Void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
     Void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
-    Void setSaoLcuBoundary(Bool bVal)  { m_saoLcuBoundary = bVal;}
+    Void setSaoLcuBoundary(Bool bVal)  { m_saoLcuBoundary = bVal; }
 
-    Bool getSaoLcuBoundary()           { return m_saoLcuBoundary;}
+    Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
 
-    Void setSaoLcuBasedOptimization(Bool bVal)  { m_saoLcuBasedOptimization = bVal;}
+    Void setSaoLcuBasedOptimization(Bool bVal)  { m_saoLcuBasedOptimization = bVal; }
 
-    Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization;}
+    Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
     Void resetSaoUnit(SaoLcuParam* saoUnit);
     Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);

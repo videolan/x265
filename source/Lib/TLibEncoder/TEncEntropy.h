@@ -104,13 +104,7 @@ public:
     virtual Void codeRefFrmIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
     virtual Void codeMvd(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
     virtual Void codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeCoeffNxN(TComDataCU* pcCU,
-                              TCoeff*     pcCoef,
-                              UInt        uiAbsPartIdx,
-                              UInt        uiWidth,
-                              UInt        uiHeight,
-                              UInt        uiDepth,
-                              TextType    eTType) = 0;
+    virtual Void codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType) = 0;
     virtual Void codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType) = 0;
     virtual Void codeSAOSign(UInt code) = 0;
     virtual Void codeSaoMaxUvlc(UInt code, UInt maxSymbol) = 0;
@@ -140,19 +134,19 @@ private:
 public:
 
     Void    setEntropyCoder(TEncEntropyIf* e, TComSlice* pcSlice);
-    Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p);}
+    Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p);  }
 
-    Void    resetBits()                        { m_pcEntropyCoderIf->resetBits();}
+    Void    resetBits()                        { m_pcEntropyCoderIf->resetBits();      }
 
-    Void    resetCoeffCost()                        { m_pcEntropyCoderIf->resetCoeffCost();}
+    Void    resetCoeffCost()                        { m_pcEntropyCoderIf->resetCoeffCost(); }
 
-    UInt    getNumberOfWrittenBits()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits();}
+    UInt    getNumberOfWrittenBits()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
 
-    UInt    getCoeffCost()                        { return m_pcEntropyCoderIf->getCoeffCost();}
+    UInt    getCoeffCost()                        { return m_pcEntropyCoderIf->getCoeffCost(); }
 
-    Void    resetEntropy()                        { m_pcEntropyCoderIf->resetEntropy();}
+    Void    resetEntropy()                        { m_pcEntropyCoderIf->resetEntropy();  }
 
-    Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx();}
+    Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx(); }
 
     Void    encodeSliceHeader(TComSlice* pcSlice);
     Void    encodeTilesWPPEntryPoint(TComSlice* pSlice);
@@ -190,64 +184,25 @@ public:
     Void encodeQtRootCbfZero(TComDataCU* pcCU);
     Void encodeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx);
     Void encodeQP(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)
-    {
-        m_pcEntropyCoderIf->updateContextTables(
-            eSliceType,
-            iQp,
-            bExecuteFinish);
-    }
+    Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
 
-    Void updateContextTables(SliceType eSliceType, Int iQp)
-    {
-        m_pcEntropyCoderIf->updateContextTables(
-            eSliceType,
-            iQp,
-            true);
-    }
+    Void updateContextTables(SliceType eSliceType, Int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
 
     Void encodeScalingList(TComScalingList* scalingList);
 
 private:
 
-    Void xEncodeTransform(TComDataCU* pcCU,
-                          UInt        offsetLumaOffset,
-                          UInt        offsetChroma,
-                          UInt        uiAbsPartIdx,
-                          UInt        uiDepth,
-                          UInt        width,
-                          UInt        height,
-                          UInt        uiTrIdx,
-                          Bool&       bCodeDQP);
+    Void xEncodeTransform(TComDataCU* pcCU, UInt offsetLumaOffset, UInt offsetChroma, UInt uiAbsPartIdx, UInt uiDepth, UInt width, UInt height, UInt uiTrIdx, Bool& bCodeDQP);
 
 public:
 
-    Void encodeCoeff(TComDataCU* pcCU,
-                     UInt        uiAbsPartIdx,
-                     UInt        uiDepth,
-                     UInt        uiWidth,
-                     UInt        uiHeight,
-                     Bool&       bCodeDQP);
+    Void encodeCoeff(TComDataCU* pcCU,                 UInt uiAbsPartIdx, UInt uiDepth, UInt uiWidth, UInt uiHeight, Bool& bCodeDQP);
 
-    Void encodeCoeffNxN(TComDataCU* pcCU,
-                        TCoeff*     pcCoeff,
-                        UInt        uiAbsPartIdx,
-                        UInt        uiTrWidth,
-                        UInt        uiTrHeight,
-                        UInt        uiDepth,
-                        TextType    eType);
+    Void encodeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoeff, UInt uiAbsPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt uiDepth, TextType eType);
 
     Void estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
     Void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
-    Void    encodeSaoUnitInterleaving(Int          compIdx,
-                                      Bool         saoFlag,
-                                      Int          rx,
-                                      Int          ry,
-                                      SaoLcuParam* saoLcuParam,
-                                      Int          cuAddrInSlice,
-                                      Int          cuAddrUpInSlice,
-                                      Int          allowMergeLeft,
-                                      Int          allowMergeUp);
+    Void    encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, Int ry, SaoLcuParam* saoLcuParam, Int cuAddrInSlice, Int cuAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp);
     static Int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 

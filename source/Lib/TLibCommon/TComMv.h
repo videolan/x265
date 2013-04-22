@@ -75,25 +75,25 @@ public:
     // set
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void  set(Short iHor, Short iVer)     { m_iHor = iHor;m_iVer = iVer;}
+    Void  set(Short iHor, Short iVer)     { m_iHor = iHor;  m_iVer = iVer;            }
 
-    Void  setHor(Short i)                   { m_iHor = i;}
+    Void  setHor(Short i)                   { m_iHor = i;                               }
 
-    Void  setVer(Short i)                   { m_iVer = i;}
+    Void  setVer(Short i)                   { m_iVer = i;                               }
 
-    Void  setZero()                            { m_iHor = m_iVer = 0;}
+    Void  setZero()                            { m_iHor = m_iVer = 0;  }
 
     // ------------------------------------------------------------------------------------------------------------------
     // get
     // ------------------------------------------------------------------------------------------------------------------
 
-    Int   getHor() const { return m_iHor;}
+    Int   getHor() const { return m_iHor;          }
 
-    Int   getVer() const { return m_iVer;}
+    Int   getVer() const { return m_iVer;          }
 
-    Int   getAbsHor() const { return abs(m_iHor);}
+    Int   getAbsHor() const { return abs(m_iHor);   }
 
-    Int   getAbsVer() const { return abs(m_iVer);}
+    Int   getAbsVer() const { return abs(m_iVer);   }
 
     // ------------------------------------------------------------------------------------------------------------------
     // operations

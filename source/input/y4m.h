@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 namespace x265 {
+// x265 private namespace
 
 class Y4MInput : public Input
 {
@@ -62,19 +63,19 @@ public:
 
     void setBitDepth(int bitDepth)                { /* ignore, warn */ }
 
-    float getRate() const                         { return ((float)rateNum) / rateDenom;}
+    float getRate() const                         { return ((float)rateNum) / rateDenom; }
 
-    int getWidth() const                          { return width;}
+    int getWidth() const                          { return width; }
 
-    int getHeight() const                         { return height;}
+    int getHeight() const                         { return height; }
 
-    int getBitDepth() const                       { return 8;}
+    int getBitDepth() const                       { return 8; }
 
-    bool isEof() const                            { return !!feof(fp);}
+    bool isEof() const                            { return !!feof(fp); }
 
-    bool isFail() const                           { return !!fp;}
+    bool isFail() const                           { return !!fp; }
 
-    void release()                                { delete this;}
+    void release()                                { delete this; }
 
     int  guessFrameCount() const;
 

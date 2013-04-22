@@ -62,14 +62,14 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
 }
 
 template<int N, bool isFirst, bool isLast>
-void CDECL filter_8_nonvertical(const short *coeff,
-                                short *      src,
-                                int          srcStride,
-                                short *      dst,
-                                int          dstStride,
-                                int          block_width,
-                                int          block_height,
-                                int          bitDepth)
+void CDECL filter_Horizontal(const short *coeff,
+                             short *      src,
+                             int          srcStride,
+                             short *      dst,
+                             int          dstStride,
+                             int          block_width,
+                             int          block_height,
+                             int          bitDepth)
 {
     int row, col;
     short c[8];
@@ -329,15 +329,15 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
         dst[24 * line] = (short)((g_aiT32[24][0] * EEEO[0] + g_aiT32[24][1] * EEEO[1] + add) >> shift);
         for (k = 4; k < 32; k += 8)
         {
-            dst[k * line] = (short)((g_aiT32[k][0] * EEO[0] + g_aiT32[k][1] * EEO[1] + g_aiT32[k][2] * EEO[2] + g_aiT32[k][3] * EEO[3] +
-                                     add) >> shift);
+            dst[k * line] = (short)((g_aiT32[k][0] * EEO[0] + g_aiT32[k][1] * EEO[1] + g_aiT32[k][2] * EEO[2] +
+                                     g_aiT32[k][3] * EEO[3] + add) >> shift);
         }
 
         for (k = 2; k < 32; k += 4)
         {
-            dst[k * line] = (short)((g_aiT32[k][0] * EO[0] + g_aiT32[k][1] * EO[1] + g_aiT32[k][2] * EO[2] + g_aiT32[k][3] * EO[3] +
-                                     g_aiT32[k][4] * EO[4] + g_aiT32[k][5] * EO[5] + g_aiT32[k][6] * EO[6] + g_aiT32[k][7] * EO[7] + 
-                                     add) >> shift);
+            dst[k * line] = (short)((g_aiT32[k][0] * EO[0] + g_aiT32[k][1] * EO[1] + g_aiT32[k][2] * EO[2] +
+                                     g_aiT32[k][3] * EO[3] + g_aiT32[k][4] * EO[4] + g_aiT32[k][5] * EO[5] +
+                                     g_aiT32[k][6] * EO[6] + g_aiT32[k][7] * EO[7] + add) >> shift);
         }
 
         for (k = 1; k < 32; k += 2)
@@ -362,15 +362,15 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
-    /*p.filter[FILTER_H_4_0_0] = filter_8_nonvertical<4, 0, 0>;
-    p.filter[FILTER_H_4_0_1] = filter_8_nonvertical<4, 0, 1>;
-    p.filter[FILTER_H_4_1_0] = filter_8_nonvertical<4, 1, 0>;
-    p.filter[FILTER_H_4_1_1] = filter_8_nonvertical<4, 1, 1>;*/
+    p.filter[FILTER_H_4_0_0] = filter_Horizontal<4, 0, 0>;
+    p.filter[FILTER_H_4_0_1] = filter_Horizontal<4, 0, 1>;
+    p.filter[FILTER_H_4_1_0] = filter_Horizontal<4, 1, 0>;
+    p.filter[FILTER_H_4_1_1] = filter_Horizontal<4, 1, 1>;
 
-    p.filter[FILTER_H_8_0_0] = filter_8_nonvertical<8, 0, 0>;
-    p.filter[FILTER_H_8_0_1] = filter_8_nonvertical<8, 0, 1>;
-    p.filter[FILTER_H_8_1_0] = filter_8_nonvertical<8, 1, 0>;
-    p.filter[FILTER_H_8_1_1] = filter_8_nonvertical<8, 1, 1>;
+    p.filter[FILTER_H_8_0_0] = filter_Horizontal<8, 0, 0>;
+    p.filter[FILTER_H_8_0_1] = filter_Horizontal<8, 0, 1>;
+    p.filter[FILTER_H_8_1_0] = filter_Horizontal<8, 1, 0>;
+    p.filter[FILTER_H_8_1_1] = filter_Horizontal<8, 1, 1>;
 
     p.filter[FILTER_V_4_0_0] = filter_Vertical<4, 0, 0>;
     p.filter[FILTER_V_4_0_1] = filter_Vertical<4, 0, 1>;

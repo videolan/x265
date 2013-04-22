@@ -60,5 +60,4 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 #endif
 }
-
 }

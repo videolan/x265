@@ -70,7 +70,7 @@ public:
     virtual Void  encodeBinsEP(UInt uiBins, Int numBins)  = 0;
     virtual Void  encodeBinTrm(UInt uiBin)  = 0;
 
-    virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0;}
+    virtual TEncBinCABAC*   getTEncBinCABAC()  { return 0; }
 
     virtual ~TEncBinIf() {}
 };

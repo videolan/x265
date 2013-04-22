@@ -77,7 +77,7 @@ protected:
 
     virtual ~SyntaxElementWriter() {}
 
-    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;}
+    Void  setBitstream(TComBitIf* p)  { m_pcBitIf = p;  }
 
     Void  xWriteCode(UInt uiCode, UInt uiLength);
     Void  xWriteUvlc(UInt uiCode);
@@ -90,7 +90,7 @@ protected:
     Void  xWriteFlagTr(UInt value,               const Char *pSymbolName);
 #endif
 
-    UInt  xConvertToUInt(Int iValue) {  return (iValue <= 0) ? -iValue << 1 : (iValue << 1) - 1;}
+    UInt  xConvertToUInt(Int iValue) {  return (iValue <= 0) ? -iValue << 1 : (iValue << 1) - 1; }
 };
 
 //! \}

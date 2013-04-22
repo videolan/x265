@@ -88,27 +88,12 @@ protected:
         }
     }
 
-    Void xSetEdgefilterMultiple(TComDataCU* pcCU,
-                                UInt        uiAbsZorderIdx,
-                                UInt        uiDepth,
-                                Int         iDir,
-                                Int         iEdgeIdx,
-                                Bool        bValue,
-                                UInt        uiWidthInBaseUnits = 0,
-                                UInt        uiHeightInBaseUnits = 0);
+    Void xSetEdgefilterMultiple(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdgeIdx, Bool bValue, UInt uiWidthInBaseUnits = 0, UInt uiHeightInBaseUnits = 0);
 
     Void xEdgeFilterLuma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdge);
     Void xEdgeFilterChroma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdge);
 
-    __inline Void xPelFilterLuma(Pel* piSrc,
-                                 Int  iOffset,
-                                 Int  tc,
-                                 Bool sw,
-                                 Bool bPartPNoFilter,
-                                 Bool bPartQNoFilter,
-                                 Int  iThrCut,
-                                 Bool bFilterSecondP,
-                                 Bool bFilterSecondQ);
+    __inline Void xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ);
     __inline Void xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter);
 
     __inline Bool xUseStrongFiltering(Int offset, Int d, Int beta, Int tc, Pel* piSrc);

@@ -164,30 +164,10 @@ protected:
     } IntTZSearchStruct;
 
     // sub-functions for ME
-    __inline Void xTZSearchHelp(TComPattern*       pcPatternKey,
-                                IntTZSearchStruct& rcStruct,
-                                const Int          iSearchX,
-                                const Int          iSearchY,
-                                const UChar        ucPointNr,
-                                const UInt         uiDistance);
-    __inline Void xTZ2PointSearch(TComPattern*       pcPatternKey,
-                                  IntTZSearchStruct& rcStrukt,
-                                  TComMv*            pcMvSrchRngLT,
-                                  TComMv*            pcMvSrchRngRB);
-    __inline Void xTZ8PointSquareSearch(TComPattern*       pcPatternKey,
-                                        IntTZSearchStruct& rcStrukt,
-                                        TComMv*            pcMvSrchRngLT,
-                                        TComMv*            pcMvSrchRngRB,
-                                        const Int          iStartX,
-                                        const Int          iStartY,
-                                        const Int          iDist);
-    __inline Void xTZ8PointDiamondSearch(TComPattern*       pcPatternKey,
-                                         IntTZSearchStruct& rcStrukt,
-                                         TComMv*            pcMvSrchRngLT,
-                                         TComMv*            pcMvSrchRngRB,
-                                         const Int          iStartX,
-                                         const Int          iStartY,
-                                         const Int          iDist);
+    __inline Void xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance);
+    __inline Void xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB);
+    __inline Void xTZ8PointSquareSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist);
+    __inline Void xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist);
 
     Void xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, UInt& ruiSAD, Bool Hadamard);
 
@@ -232,19 +212,9 @@ public:
                                    Bool        bSkipRes);
 
     /// set ME search range
-    Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange;}
+    Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange; }
 
-    Void xEncPCM(TComDataCU* pcCU,
-                 UInt        uiAbsPartIdx,
-                 Pel*        piOrg,
-                 Pel*        piPCM,
-                 Pel*        piPred,
-                 Pel*        piResi,
-                 Pel*        piReco,
-                 UInt        uiStride,
-                 UInt        uiWidth,
-                 UInt        uiHeight,
-                 TextType    eText);
+    Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Pel* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
     Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv);
 
 protected:
@@ -476,23 +446,8 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     Void xEncodeResidualQT(TComDataCU* pcCU, UInt uiAbsPartIdx, const UInt uiDepth, Bool bSubdivAndCbf, TextType eType);
-    Void xEstimateResidualQT(TComDataCU* pcCU,
-                             UInt        uiQuadrant,
-                             UInt        uiAbsPartIdx,
-                             UInt        absTUPartIdx,
-                             TComYuv*    pcResi,
-                             const UInt  uiDepth,
-                             Double &    rdCost,
-                             UInt &      ruiBits,
-                             UInt &      ruiDist,
-                             UInt *      puiZeroDist);
-    Void xSetResidualQTData(TComDataCU* pcCU,
-                            UInt        uiQuadrant,
-                            UInt        uiAbsPartIdx,
-                            UInt        absTUPartIdx,
-                            TComYuv*    pcResi,
-                            UInt        uiDepth,
-                            Bool        bSpatial);
+    Void xEstimateResidualQT(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist);
+    Void xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, UInt uiDepth, Bool bSpatial);
 
     UInt  xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
     UInt  xUpdateCandList(UInt uiMode, Double uiCost, UInt uiFastCandNum, UInt * CandModeList, Double * CandCostList);
@@ -510,7 +465,7 @@ protected:
                              TComYuv*&   rpcYuvResi);
 
     Void  setWpScalingDistParam(TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur);
-    inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp;}
+    inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp; }
 }; // END CLASS DEFINITION TEncSearch
 
 //! \}

@@ -66,25 +66,25 @@ public:
     TComTile();
     virtual ~TComTile();
 
-    Void      setTileWidth(UInt i)            { m_uiTileWidth = i;}
+    Void      setTileWidth(UInt i)            { m_uiTileWidth = i; }
 
-    UInt      getTileWidth()                  { return m_uiTileWidth;}
+    UInt      getTileWidth()                  { return m_uiTileWidth; }
 
-    Void      setTileHeight(UInt i)           { m_uiTileHeight = i;}
+    Void      setTileHeight(UInt i)           { m_uiTileHeight = i; }
 
-    UInt      getTileHeight()                 { return m_uiTileHeight;}
+    UInt      getTileHeight()                 { return m_uiTileHeight; }
 
-    Void      setRightEdgePosInCU(UInt i)     { m_uiRightEdgePosInCU = i;}
+    Void      setRightEdgePosInCU(UInt i)     { m_uiRightEdgePosInCU = i; }
 
-    UInt      getRightEdgePosInCU()           { return m_uiRightEdgePosInCU;}
+    UInt      getRightEdgePosInCU()           { return m_uiRightEdgePosInCU; }
 
-    Void      setBottomEdgePosInCU(UInt i)    { m_uiBottomEdgePosInCU = i;}
+    Void      setBottomEdgePosInCU(UInt i)    { m_uiBottomEdgePosInCU = i; }
 
-    UInt      getBottomEdgePosInCU()          { return m_uiBottomEdgePosInCU;}
+    UInt      getBottomEdgePosInCU()          { return m_uiBottomEdgePosInCU; }
 
-    Void      setFirstCUAddr(UInt i)          { m_uiFirstCUAddr = i;}
+    Void      setFirstCUAddr(UInt i)          { m_uiFirstCUAddr = i; }
 
-    UInt      getFirstCUAddr()                { return m_uiFirstCUAddr;}
+    UInt      getFirstCUAddr()                { return m_uiFirstCUAddr; }
 };
 
 /// picture symbol class
@@ -126,59 +126,53 @@ public:
     Void        destroy();
 
     TComPicSym();
-    TComSlice*  getSlice(UInt i)          { return m_apcTComSlice[i];}
+    TComSlice*  getSlice(UInt i)          { return m_apcTComSlice[i]; }
 
-    UInt        getFrameWidthInCU()       { return m_uiWidthInCU;}
+    UInt        getFrameWidthInCU()       { return m_uiWidthInCU; }
 
-    UInt        getFrameHeightInCU()      { return m_uiHeightInCU;}
+    UInt        getFrameHeightInCU()      { return m_uiHeightInCU; }
 
-    UInt        getMinCUWidth()           { return m_uiMinCUWidth;}
+    UInt        getMinCUWidth()           { return m_uiMinCUWidth; }
 
-    UInt        getMinCUHeight()          { return m_uiMinCUHeight;}
+    UInt        getMinCUHeight()          { return m_uiMinCUHeight; }
 
-    UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame;}
+    UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame; }
 
-    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcTComDataCU[uiCUAddr];}
+    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcTComDataCU[uiCUAddr]; }
 
-    Void        setSlice(TComSlice* p, UInt i) { m_apcTComSlice[i] = p;}
+    Void        setSlice(TComSlice* p, UInt i) { m_apcTComSlice[i] = p; }
 
-    UInt        getNumAllocatedSlice()    { return m_uiNumAllocatedSlice;}
+    UInt        getNumAllocatedSlice()    { return m_uiNumAllocatedSlice; }
 
     Void        allocateNewSlice();
     Void        clearSliceBuffer();
-    UInt        getNumPartition()         { return m_uiNumPartitions;}
+    UInt        getNumPartition()         { return m_uiNumPartitions; }
 
-    UInt        getNumPartInWidth()       { return m_uiNumPartInWidth;}
+    UInt        getNumPartInWidth()       { return m_uiNumPartInWidth; }
 
-    UInt        getNumPartInHeight()      { return m_uiNumPartInHeight;}
+    UInt        getNumPartInHeight()      { return m_uiNumPartInHeight; }
 
-    Void         setNumColumnsMinus1(Int i)                { m_iNumColumnsMinus1 = i;}
+    Void         setNumColumnsMinus1(Int i)                          { m_iNumColumnsMinus1 = i; }
 
-    Int          getNumColumnsMinus1()                     { return m_iNumColumnsMinus1;}
+    Int          getNumColumnsMinus1()                                 { return m_iNumColumnsMinus1; }
 
-    Void         setNumRowsMinus1(Int i)                   { m_iNumRowsMinus1 = i;}
+    Void         setNumRowsMinus1(Int i)                             { m_iNumRowsMinus1 = i; }
 
-    Int          getNumRowsMinus1()                        { return m_iNumRowsMinus1;}
+    Int          getNumRowsMinus1()                                    { return m_iNumRowsMinus1; }
 
-    Int          getNumTiles()                             { return (m_iNumRowsMinus1 + 1) * (m_iNumColumnsMinus1 + 1);}
+    Int          getNumTiles()                                         { return (m_iNumRowsMinus1 + 1) * (m_iNumColumnsMinus1 + 1); }
 
-    TComTile*    getTComTile(UInt tileIdx)                 { return *(m_apcTComTile + tileIdx);}
+    TComTile*    getTComTile(UInt tileIdx)                         { return *(m_apcTComTile + tileIdx); }
 
-    Void         setCUOrderMap(Int encCUOrder, Int cuAddr) { *(m_puiCUOrderMap + encCUOrder) = cuAddr;}
+    Void         setCUOrderMap(Int encCUOrder, Int cuAddr)           { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
 
-    UInt         getCUOrderMap(Int encCUOrder)
-    {
-        return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder));
-    }
+    UInt         getCUOrderMap(Int encCUOrder)                       { return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
 
-    UInt         getTileIdxMap(Int i)                                { return *(m_puiTileIdxMap + i);}
+    UInt         getTileIdxMap(Int i)                                { return *(m_puiTileIdxMap + i); }
 
-    Void         setInverseCUOrderMap(Int cuAddr, Int encCUOrder)    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder;}
+    Void         setInverseCUOrderMap(Int cuAddr, Int encCUOrder)    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
 
-    UInt         getInverseCUOrderMap(Int cuAddr)
-    {
-        return *(m_puiInverseCUOrderMap + (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr));
-    }
+    UInt         getInverseCUOrderMap(Int cuAddr)                    { return *(m_puiInverseCUOrderMap + (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
 
     UInt         getPicSCUEncOrder(UInt SCUAddr);
     UInt         getPicSCUAddr(UInt SCUEncOrder);
@@ -186,7 +180,7 @@ public:
     Void         xInitTiles();
     UInt         xCalculateNxtCUAddr(UInt uiCurrCUAddr);
     Void allocSaoParam(TComSampleAdaptiveOffset *sao);
-    SAOParam *getSaoParam() { return m_saoParam;}
+    SAOParam *getSaoParam() { return m_saoParam; }
 }; // END CLASS DEFINITION TComPicSym
 
 //! \}

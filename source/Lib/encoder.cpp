@@ -169,7 +169,9 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseASR(m_bUseASR);
     m_cTEncTop.setUseHADME(m_bUseHADME);
     m_cTEncTop.setUseLossless(m_useLossless);
+#if !L0034_COMBINED_LIST_CLEANUP
     m_cTEncTop.setUseLComb(m_bUseLComb);
+#endif
     m_cTEncTop.setdQPs(m_aidQP);
     m_cTEncTop.setUseRDOQ(m_useRDOQ);
     m_cTEncTop.setUseRDOQTS(m_useRDOQTS);
@@ -420,8 +422,8 @@ Void TAppEncTop::xDestroyLib()
 {
     // Video I/O
     m_cTVideoIOInputFile->close(handler_input);
-	if (m_pchReconFile)
-		m_cTVideoIOReconFile->close(handler_recon);
+    if (m_pchReconFile)
+        m_cTVideoIOReconFile->close(handler_recon);
 
     // Neo Decoder
     m_cTEncTop.destroy();

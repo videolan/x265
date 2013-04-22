@@ -104,13 +104,13 @@ public:
         m_iBits = 0;
     }
 
-    Int per()   const { return m_iPer;}
+    Int per()   const { return m_iPer; }
 
-    Int rem()   const { return m_iRem;}
+    Int rem()   const { return m_iRem; }
 
-    Int bits()  const { return m_iBits;}
+    Int bits()  const { return m_iBits; }
 
-    Int qp() { return m_iQP;}
+    Int qp() { return m_iQP; }
 }; // END CLASS DEFINITION QpParam
 
 /// transform and quantization class
@@ -145,41 +145,23 @@ public:
                       UInt        uiAbsPartIdx,
                       Bool        useTransformSkip = false);
 
-    Void invtransformNxN(Bool     transQuantBypass,
-                         TextType eText,
-                         UInt     uiMode,
-                         Pel*     rpcResidual,
-                         UInt     uiStride,
-                         TCoeff*  pcCoeff,
-                         UInt     uiWidth,
-                         UInt     uiHeight,
-                         Int      scalingListType,
-                         Bool     useTransformSkip = false);
-    Void invRecurTransformNxN(TComDataCU* pcCU,
-                              UInt        uiAbsPartIdx,
-                              TextType    eTxt,
-                              Pel*        rpcResidual,
-                              UInt        uiAddr,
-                              UInt        uiStride,
-                              UInt        uiWidth,
-                              UInt        uiHeight,
-                              UInt        uiMaxTrMode,
-                              UInt        uiTrMode,
-                              TCoeff*     rpcCoeff);
+    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Pel* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
+    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Pel* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
+                              UInt uiMaxTrMode,  UInt uiTrMode, TCoeff* rpcCoeff);
 
     // Misc functions
     Void setQPforQuant(Int qpy, TextType eTxtType, Int qpBdOffset, Int chromaQPOffset);
 
 #if RDOQ_CHROMA_LAMBDA
-    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_dLambdaLuma = dLambdaLuma;m_dLambdaChroma = dLambdaChroma;}
+    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_dLambdaLuma = dLambdaLuma; m_dLambdaChroma = dLambdaChroma; }
 
-    Void selectLambda(TextType eTType) { m_dLambda = (eTType == TEXT_LUMA) ? m_dLambdaLuma : m_dLambdaChroma;}
+    Void selectLambda(TextType eTType) { m_dLambda = (eTType == TEXT_LUMA) ? m_dLambdaLuma : m_dLambdaChroma; }
 
 #else
-    Void setLambda(Double dLambda) { m_dLambda = dLambda;}
+    Void setLambda(Double dLambda) { m_dLambda = dLambda; }
 
 #endif
-    Void setRDOQOffset(UInt uiRDOQOffset) { m_uiRDOQOffset = uiRDOQOffset;}
+    Void setRDOQOffset(UInt uiRDOQOffset) { m_uiRDOQOffset = uiRDOQOffset; }
 
     estBitsSbacStruct* m_pcEstBitsSbac;
 
@@ -198,15 +180,15 @@ public:
     Void initScalingList();
     Void destroyScalingList();
     Void setErrScaleCoeff(UInt list, UInt size, UInt qp);
-    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp];}    //!< get Error Scale Coefficent
+    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
 
-    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp];}         //!< get Quant Coefficent
+    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
 
-    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp];}     //!< get DeQuant Coefficent
+    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
-    Void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList;}
+    Void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
 
-    Bool getUseScalingList() { return m_scalingListEnabledFlag;}
+    Bool getUseScalingList() { return m_scalingListEnabledFlag; }
 
     Void setFlatScalingList();
     Void xsetFlatScalingList(UInt list, UInt size, UInt qp);
@@ -214,31 +196,17 @@ public:
     Void xSetScalingListDec(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
     Void setScalingList(TComScalingList *scalingList);
     Void setScalingListDec(TComScalingList *scalingList);
-    Void processScalingListEnc(Int *coeff,
-                               Int *quantcoeff,
-                               Int  quantScales,
-                               UInt height,
-                               UInt width,
-                               UInt ratio,
-                               Int  sizuNum,
-                               UInt dc);
-    Void processScalingListDec(Int *coeff,
-                               Int *dequantcoeff,
-                               Int  invQuantScales,
-                               UInt height,
-                               UInt width,
-                               UInt ratio,
-                               Int  sizuNum,
-                               UInt dc);
+    Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
+    Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
 #if ADAPTIVE_QP_SELECTION
     Void    initSliceQpDelta();
     Void    storeSliceQpNext(TComSlice* pcSlice);
     Void    clearSliceARLCnt();
-    Int     getQpDelta(Int qp) { return m_qpDelta[qp];}
+    Int     getQpDelta(Int qp) { return m_qpDelta[qp]; }
 
-    Int*    getSliceNSamples() { return m_sliceNsamples;}
+    Int*    getSliceNSamples() { return m_sliceNsamples; }
 
-    Double* getSliceSumC()    { return m_sliceSumC;}
+    Double* getSliceSumC()    { return m_sliceSumC; }
 
 #endif
 

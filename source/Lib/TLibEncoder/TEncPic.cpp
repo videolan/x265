@@ -126,6 +126,7 @@ Void TEncPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight,
 {
     TComPic::create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,
                     conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual);
+
     m_uiMaxAQDepth = uiMaxAQDepth;
     if (uiMaxAQDepth > 0)
     {
@@ -147,7 +148,6 @@ Void TEncPic::destroy()
         delete[] m_acAQLayer;
         m_acAQLayer = NULL;
     }
-
     TComPic::destroy();
 }
 

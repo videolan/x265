@@ -67,3 +67,5 @@ elseif(HG_FOUND)
 else()
     set(X265_VERSION "unknown" CACHE STRING "x265 version string.")
 endif()
+
+message("xhevc version ${X265_VERSION}")

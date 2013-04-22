@@ -75,10 +75,9 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if HIGH_BIT_DEPTH
     if (cpuid >= 1)
     {
-        INIT7( sad, _mmx2 );
+//        INIT7( sad, _mmx2 );
         INIT8( satd, _mmx2 );
 
         // Intra predictions max out at 32x32 (but subpel refine can use larger blocks)
@@ -87,11 +86,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_32x32] = cmp<32, 32, 16, 16, x264_pixel_satd_16x16_mmx2>;
 
         // For large CU motion search
-        p.sad[PARTITION_32x32]  = cmp<32, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
-        p.sad[PARTITION_64x32]  = cmp<64, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
-        p.sad[PARTITION_32x64]  = cmp<32, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
-        p.sad[PARTITION_64x64]  = cmp<64, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
+//        p.sad[PARTITION_32x32]  = cmp<32, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
+//        p.sad[PARTITION_64x32]  = cmp<64, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
+//        p.sad[PARTITION_32x64]  = cmp<32, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
+//        p.sad[PARTITION_64x64]  = cmp<64, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
     }
+#if 0
     if (cpuid >= 2)
     {
         p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_sse2;
@@ -126,7 +126,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     {
         // our x264 assembly is too old for AVX2 (not for long)
     }
-#else
 #endif
 }
 

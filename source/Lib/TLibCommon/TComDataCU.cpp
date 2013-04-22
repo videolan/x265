@@ -179,7 +179,6 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
                 m_pcGlbArlCoeffCb  = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
                 m_pcGlbArlCoeffCr  = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
             }
-
             m_pcArlCoeffY        = m_pcGlbArlCoeffY;
             m_pcArlCoeffCb       = m_pcGlbArlCoeffCb;
             m_pcArlCoeffCr       = m_pcGlbArlCoeffCr;
@@ -191,7 +190,6 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
             m_pcArlCoeffCb       = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
             m_pcArlCoeffCr       = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
         }
-
 #endif // if ADAPTIVE_QP_SELECTION
 
         m_pbIPCMFlag         = (Bool*)xMalloc(Bool, uiNumPartition);
@@ -239,52 +237,31 @@ Void TComDataCU::destroy()
     // encoder-side buffer free
     if (!m_bDecSubCu)
     {
-        if (m_phQP) { xFree(m_phQP);m_phQP              = NULL;}
+        if (m_phQP) { xFree(m_phQP); m_phQP = NULL; }
+        if (m_puhDepth) { xFree(m_puhDepth); m_puhDepth = NULL; }
+        if (m_puhWidth) { xFree(m_puhWidth); m_puhWidth = NULL; }
+        if (m_puhHeight) { xFree(m_puhHeight); m_puhHeight = NULL; }
 
-        if (m_puhDepth) { xFree(m_puhDepth);m_puhDepth          = NULL;}
+        if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag = NULL; }
 
-        if (m_puhWidth) { xFree(m_puhWidth);m_puhWidth          = NULL;}
-
-        if (m_puhHeight) { xFree(m_puhHeight);m_puhHeight         = NULL;}
-
-        if (m_skipFlag) { delete[] m_skipFlag;m_skipFlag          = NULL;}
-
-        if (m_pePartSize) { delete[] m_pePartSize;m_pePartSize        = NULL;}
-
-        if (m_pePredMode) { delete[] m_pePredMode;m_pePredMode        = NULL;}
-
-        if (m_CUTransquantBypass) { delete[] m_CUTransquantBypass;m_CUTransquantBypass = NULL;}
-
-        if (m_puhCbf[0]) { xFree(m_puhCbf[0]);m_puhCbf[0]         = NULL;}
-
-        if (m_puhCbf[1]) { xFree(m_puhCbf[1]);m_puhCbf[1]         = NULL;}
-
-        if (m_puhCbf[2]) { xFree(m_puhCbf[2]);m_puhCbf[2]         = NULL;}
-
-        if (m_puhInterDir) { xFree(m_puhInterDir);m_puhInterDir       = NULL;}
-
-        if (m_pbMergeFlag) { xFree(m_pbMergeFlag);m_pbMergeFlag       = NULL;}
-
-        if (m_puhMergeIndex) { xFree(m_puhMergeIndex);m_puhMergeIndex     = NULL;}
-
-        if (m_puhLumaIntraDir) { xFree(m_puhLumaIntraDir);m_puhLumaIntraDir   = NULL;}
-
-        if (m_puhChromaIntraDir) { xFree(m_puhChromaIntraDir);m_puhChromaIntraDir = NULL;}
-
-        if (m_puhTrIdx) { xFree(m_puhTrIdx);m_puhTrIdx          = NULL;}
-
-        if (m_puhTransformSkip[0]) { xFree(m_puhTransformSkip[0]);m_puhTransformSkip[0] = NULL;}
-
-        if (m_puhTransformSkip[1]) { xFree(m_puhTransformSkip[1]);m_puhTransformSkip[1] = NULL;}
-
-        if (m_puhTransformSkip[2]) { xFree(m_puhTransformSkip[2]);m_puhTransformSkip[2] = NULL;}
-
-        if (m_pcTrCoeffY) { xFree(m_pcTrCoeffY);m_pcTrCoeffY        = NULL;}
-
-        if (m_pcTrCoeffCb) { xFree(m_pcTrCoeffCb);m_pcTrCoeffCb       = NULL;}
-
-        if (m_pcTrCoeffCr) { xFree(m_pcTrCoeffCr);m_pcTrCoeffCr       = NULL;}
-
+        if (m_pePartSize) { delete[] m_pePartSize; m_pePartSize = NULL; }
+        if (m_pePredMode) { delete[] m_pePredMode; m_pePredMode = NULL; }
+        if (m_CUTransquantBypass) { delete[] m_CUTransquantBypass; m_CUTransquantBypass = NULL; }
+        if (m_puhCbf[0]) { xFree(m_puhCbf[0]); m_puhCbf[0] = NULL; }
+        if (m_puhCbf[1]) { xFree(m_puhCbf[1]); m_puhCbf[1] = NULL; }
+        if (m_puhCbf[2]) { xFree(m_puhCbf[2]); m_puhCbf[2] = NULL; }
+        if (m_puhInterDir) { xFree(m_puhInterDir); m_puhInterDir = NULL; }
+        if (m_pbMergeFlag) { xFree(m_pbMergeFlag); m_pbMergeFlag = NULL; }
+        if (m_puhMergeIndex) { xFree(m_puhMergeIndex); m_puhMergeIndex = NULL; }
+        if (m_puhLumaIntraDir) { xFree(m_puhLumaIntraDir); m_puhLumaIntraDir = NULL; }
+        if (m_puhChromaIntraDir) { xFree(m_puhChromaIntraDir); m_puhChromaIntraDir = NULL; }
+        if (m_puhTrIdx) { xFree(m_puhTrIdx); m_puhTrIdx = NULL; }
+        if (m_puhTransformSkip[0]) { xFree(m_puhTransformSkip[0]); m_puhTransformSkip[0] = NULL; }
+        if (m_puhTransformSkip[1]) { xFree(m_puhTransformSkip[1]); m_puhTransformSkip[1] = NULL; }
+        if (m_puhTransformSkip[2]) { xFree(m_puhTransformSkip[2]); m_puhTransformSkip[2] = NULL; }
+        if (m_pcTrCoeffY) { xFree(m_pcTrCoeffY); m_pcTrCoeffY = NULL; }
+        if (m_pcTrCoeffCb) { xFree(m_pcTrCoeffCb); m_pcTrCoeffCb = NULL; }
+        if (m_pcTrCoeffCr) { xFree(m_pcTrCoeffCr); m_pcTrCoeffCr = NULL; }
 #if ADAPTIVE_QP_SELECTION
         if (!m_ArlCoeffIsAliasedAllocation)
         {
@@ -295,29 +272,18 @@ Void TComDataCU::destroy()
             xFree(m_pcArlCoeffCr);
             m_pcArlCoeffCr = 0;
         }
-
-        if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY);m_pcGlbArlCoeffY    = NULL;}
-
-        if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb);m_pcGlbArlCoeffCb   = NULL;}
-
-        if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr);m_pcGlbArlCoeffCr   = NULL;}
-
+        if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY); m_pcGlbArlCoeffY = NULL; }
+        if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb); m_pcGlbArlCoeffCb = NULL; }
+        if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr); m_pcGlbArlCoeffCr = NULL; }
 #endif // if ADAPTIVE_QP_SELECTION
-        if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag);m_pbIPCMFlag        = NULL;}
-
-        if (m_pcIPCMSampleY) { xFree(m_pcIPCMSampleY);m_pcIPCMSampleY     = NULL;}
-
-        if (m_pcIPCMSampleCb) { xFree(m_pcIPCMSampleCb);m_pcIPCMSampleCb    = NULL;}
-
-        if (m_pcIPCMSampleCr) { xFree(m_pcIPCMSampleCr);m_pcIPCMSampleCr    = NULL;}
-
-        if (m_apiMVPIdx[0]) { delete[] m_apiMVPIdx[0];m_apiMVPIdx[0]      = NULL;}
-
-        if (m_apiMVPIdx[1]) { delete[] m_apiMVPIdx[1];m_apiMVPIdx[1]      = NULL;}
-
-        if (m_apiMVPNum[0]) { delete[] m_apiMVPNum[0];m_apiMVPNum[0]      = NULL;}
-
-        if (m_apiMVPNum[1]) { delete[] m_apiMVPNum[1];m_apiMVPNum[1]      = NULL;}
+        if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag); m_pbIPCMFlag = NULL; }
+        if (m_pcIPCMSampleY) { xFree(m_pcIPCMSampleY); m_pcIPCMSampleY = NULL; }
+        if (m_pcIPCMSampleCb) { xFree(m_pcIPCMSampleCb); m_pcIPCMSampleCb = NULL; }
+        if (m_pcIPCMSampleCr) { xFree(m_pcIPCMSampleCr); m_pcIPCMSampleCr = NULL; }
+        if (m_apiMVPIdx[0]) { delete[] m_apiMVPIdx[0]; m_apiMVPIdx[0] = NULL; }
+        if (m_apiMVPIdx[1]) { delete[] m_apiMVPIdx[1]; m_apiMVPIdx[1] = NULL; }
+        if (m_apiMVPNum[0]) { delete[] m_apiMVPNum[0]; m_apiMVPNum[0] = NULL; }
+        if (m_apiMVPNum[1]) { delete[] m_apiMVPNum[1]; m_apiMVPNum[1] = NULL; }
 
         m_acCUMvField[0].destroy();
         m_acCUMvField[1].destroy();
@@ -336,7 +302,6 @@ Void TComDataCU::destroy()
         xFree(m_sliceStartCU);
         m_sliceStartCU = NULL;
     }
-
     if (m_sliceSegmentStartCU)
     {
         xFree(m_sliceSegmentStartCU);
@@ -406,8 +371,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
 
     for (Int i = 0; i < pcPic->getNumPartInCU(); i++)
     {
-        if (pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU() + i >=
-            getSlice()->getSliceSegmentCurStartCUAddr())
+        if (pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU() + i >= getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_sliceSegmentStartCU[i] = getSlice()->getSliceSegmentCurStartCUAddr();
         }
@@ -417,8 +381,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
         }
     }
 
-    Int partStartIdx = getSlice()->getSliceSegmentCurStartCUAddr() - pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) *
-        pcPic->getNumPartInCU();
+    Int partStartIdx = getSlice()->getSliceSegmentCurStartCUAddr() - pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU();
 
     Int numElements = min<Int>(partStartIdx, m_uiNumPartition);
     for (Int ui = 0; ui < numElements; ui++)
@@ -460,7 +423,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
 
         memset(m_pePartSize        + firstElement, SIZE_NONE,                numElements * sizeof(*m_pePartSize));
         memset(m_pePredMode        + firstElement, MODE_NONE,                numElements * sizeof(*m_pePredMode));
-        memset(m_CUTransquantBypass + firstElement, false,                    numElements * sizeof(*m_CUTransquantBypass));
+        memset(m_CUTransquantBypass + firstElement, false,                   numElements * sizeof(*m_CUTransquantBypass));
         memset(m_puhDepth          + firstElement, 0,                        numElements * sizeof(*m_puhDepth));
         memset(m_puhTrIdx          + firstElement, 0,                        numElements * sizeof(*m_puhTrIdx));
         memset(m_puhTransformSkip[0] + firstElement, 0,                      numElements * sizeof(*m_puhTransformSkip[0]));
@@ -591,8 +554,7 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 
     for (UInt ui = 0; ui < m_uiNumPartition; ui++)
     {
-        if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui >=
-            getSlice()->getSliceSegmentCurStartCUAddr())
+        if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui >= getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_apiMVPIdx[0][ui] = -1;
             m_apiMVPIdx[1][ui] = -1;
@@ -624,8 +586,7 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 
     UInt uiTmp = uhWidth * uhHeight;
 
-    if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU >=
-        getSlice()->getSliceSegmentCurStartCUAddr())
+    if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU >= getSlice()->getSliceSegmentCurStartCUAddr())
     {
         m_acCUMvField[0].clearMvField();
         m_acCUMvField[1].clearMvField();
@@ -705,8 +666,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
         m_apiMVPIdx[1][ui] = -1;
         m_apiMVPNum[0][ui] = -1;
         m_apiMVPNum[1][ui] = -1;
-        if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui <
-            getSlice()->getSliceSegmentCurStartCUAddr())
+        if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui < getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_apiMVPIdx[0][ui] = pcCU->m_apiMVPIdx[0][uiPartOffset + ui];
             m_apiMVPIdx[1][ui] = pcCU->m_apiMVPIdx[1][uiPartOffset + ui];
@@ -754,8 +714,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
     m_acCUMvField[0].clearMvField();
     m_acCUMvField[1].clearMvField();
 
-    if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU <
-        getSlice()->getSliceSegmentCurStartCUAddr())
+    if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU < getSlice()->getSliceSegmentCurStartCUAddr())
     {
         // Part of this CU contains data from an older slice. Now copy in that data.
         UInt uiMaxCuWidth = pcCU->getSlice()->getSPS()->getMaxCUWidth();
@@ -1049,8 +1008,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
 
     memcpy(rpcCU->getPartitionSize()  + m_uiAbsIdxInLCU, m_pePartSize, sizeof(*m_pePartSize) * m_uiNumPartition);
     memcpy(rpcCU->getPredictionMode() + m_uiAbsIdxInLCU, m_pePredMode, sizeof(*m_pePredMode) * m_uiNumPartition);
-    memcpy(
-        rpcCU->getCUTransquantBypass() + m_uiAbsIdxInLCU, m_CUTransquantBypass, sizeof(*m_CUTransquantBypass) * m_uiNumPartition);
+    memcpy(rpcCU->getCUTransquantBypass() + m_uiAbsIdxInLCU, m_CUTransquantBypass, sizeof(*m_CUTransquantBypass) * m_uiNumPartition);
     memcpy(rpcCU->getMergeFlag()         + m_uiAbsIdxInLCU, m_pbMergeFlag,         iSizeInBool);
     memcpy(rpcCU->getMergeIndex()        + m_uiAbsIdxInLCU, m_puhMergeIndex,       iSizeInUchar);
     memcpy(rpcCU->getLumaIntraDir()      + m_uiAbsIdxInLCU, m_puhLumaIntraDir,     iSizeInUchar);
@@ -1204,18 +1162,13 @@ TComDataCU* TComDataCU::getPULeft(UInt& uiLPartUnitIdx,
 
     uiLPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdx + uiNumPartInCUWidth - 1];
 
-    if ((bEnforceSliceRestriction &&
-         (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL || m_pcCULeft->getSCUAddr() + uiLPartUnitIdx <
-          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)))
+    if ((bEnforceSliceRestriction && (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL || m_pcCULeft->getSCUAddr() + uiLPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)))
         ||
-        (bEnforceTileRestriction &&
-         (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL ||
-          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))))
+        (bEnforceTileRestriction && (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL || (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))))
         )
     {
         return NULL;
     }
-
     return m_pcCULeft;
 }
 
@@ -1250,18 +1203,13 @@ TComDataCU* TComDataCU::getPUAbove(UInt& uiAPartUnitIdx,
 
     uiAPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdx + m_pcPic->getNumPartInCU() - uiNumPartInCUWidth];
 
-    if ((bEnforceSliceRestriction &&
-         (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL || m_pcCUAbove->getSCUAddr() + uiAPartUnitIdx <
-          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)))
+    if ((bEnforceSliceRestriction && (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL || m_pcCUAbove->getSCUAddr() + uiAPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)))
         ||
-        (bEnforceTileRestriction &&
-         (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL ||
-          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))))
+        (bEnforceTileRestriction && (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL || (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))))
         )
     {
         return NULL;
     }
-
     return m_pcCUAbove;
 }
 
@@ -1286,19 +1234,15 @@ TComDataCU* TComDataCU::getPUAboveLeft(UInt& uiALPartUnitIdx, UInt uiCurrPartUni
                 return this;
             }
         }
-
         uiALPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdx + getPic()->getNumPartInCU() - uiNumPartInCUWidth - 1];
         if ((bEnforceSliceRestriction && (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL ||
-                                          m_pcCUAbove->getSCUAddr() + uiALPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCUAbove->getSCUAddr() + uiALPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCUAbove;
     }
 
@@ -1306,31 +1250,25 @@ TComDataCU* TComDataCU::getPUAboveLeft(UInt& uiALPartUnitIdx, UInt uiCurrPartUni
     {
         uiALPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdx - 1];
         if ((bEnforceSliceRestriction && (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL ||
-                                          m_pcCULeft->getSCUAddr() + uiALPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCULeft->getSCUAddr() + uiALPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCULeft;
     }
 
     uiALPartUnitIdx = g_auiRasterToZscan[m_pcPic->getNumPartInCU() - 1];
     if ((bEnforceSliceRestriction && (m_pcCUAboveLeft == NULL || m_pcCUAboveLeft->getSlice() == NULL ||
-                                      m_pcCUAboveLeft->getSCUAddr() + uiALPartUnitIdx <
-                                      m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveLeft->getAddr()) !=
-                                       m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                      m_pcCUAboveLeft->getSCUAddr() + uiALPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveLeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                       ))
         )
     {
         return NULL;
     }
-
     return m_pcCUAboveLeft;
 }
 
@@ -1340,8 +1278,7 @@ TComDataCU* TComDataCU::getPUAboveRight(UInt& uiARPartUnitIdx, UInt uiCurrPartUn
     UInt uiAbsZorderCUIdx   = g_auiZscanToRaster[m_uiAbsIdxInLCU] + m_puhWidth[0] / m_pcPic->getMinCUWidth() - 1;
     UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
 
-    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxRT] + m_pcPic->getMinCUWidth()) >=
-        m_pcSlice->getSPS()->getPicWidthInLumaSamples())
+    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxRT] + m_pcPic->getMinCUWidth()) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())
     {
         uiARPartUnitIdx = MAX_UINT;
         return NULL;
@@ -1364,23 +1301,18 @@ TComDataCU* TComDataCU::getPUAboveRight(UInt& uiARPartUnitIdx, UInt uiCurrPartUn
                     return this;
                 }
             }
-
             uiARPartUnitIdx = MAX_UINT;
             return NULL;
         }
-
         uiARPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdxRT + m_pcPic->getNumPartInCU() - uiNumPartInCUWidth + 1];
         if ((bEnforceSliceRestriction && (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL ||
-                                          m_pcCUAbove->getSCUAddr() + uiARPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCUAbove->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCUAbove;
     }
 
@@ -1392,30 +1324,24 @@ TComDataCU* TComDataCU::getPUAboveRight(UInt& uiARPartUnitIdx, UInt uiCurrPartUn
 
     uiARPartUnitIdx = g_auiRasterToZscan[m_pcPic->getNumPartInCU() - uiNumPartInCUWidth];
     if ((bEnforceSliceRestriction && (m_pcCUAboveRight == NULL || m_pcCUAboveRight->getSlice() == NULL ||
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) >
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
-                                      m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx <
-                                      m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveRight->getAddr()) !=
-                                       m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) > m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
+                                      m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveRight->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                       ))
         )
     {
         return NULL;
     }
-
     return m_pcCUAboveRight;
 }
 
 TComDataCU* TComDataCU::getPUBelowLeft(UInt& uiBLPartUnitIdx, UInt uiCurrPartUnitIdx, Bool bEnforceSliceRestriction)
 {
     UInt uiAbsPartIdxLB     = g_auiZscanToRaster[uiCurrPartUnitIdx];
-    UInt uiAbsZorderCUIdxLB = g_auiZscanToRaster[m_uiAbsIdxInLCU] +
-        (m_puhHeight[0] / m_pcPic->getMinCUHeight() - 1) * m_pcPic->getNumPartInWidth();
+    UInt uiAbsZorderCUIdxLB = g_auiZscanToRaster[m_uiAbsIdxInLCU] + (m_puhHeight[0] / m_pcPic->getMinCUHeight() - 1) * m_pcPic->getNumPartInWidth();
     UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
 
-    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxLB] + m_pcPic->getMinCUHeight()) >=
-        m_pcSlice->getSPS()->getPicHeightInLumaSamples())
+    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxLB] + m_pcPic->getMinCUHeight()) >= m_pcSlice->getSPS()->getPicHeightInLumaSamples())
     {
         uiBLPartUnitIdx = MAX_UINT;
         return NULL;
@@ -1438,23 +1364,18 @@ TComDataCU* TComDataCU::getPUBelowLeft(UInt& uiBLPartUnitIdx, UInt uiCurrPartUni
                     return this;
                 }
             }
-
             uiBLPartUnitIdx = MAX_UINT;
             return NULL;
         }
-
         uiBLPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdxLB + uiNumPartInCUWidth * 2 - 1];
         if ((bEnforceSliceRestriction && (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL ||
-                                          m_pcCULeft->getSCUAddr() + uiBLPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCULeft->getSCUAddr() + uiBLPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCULeft;
     }
 
@@ -1462,18 +1383,13 @@ TComDataCU* TComDataCU::getPUBelowLeft(UInt& uiBLPartUnitIdx, UInt uiCurrPartUni
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& uiBLPartUnitIdx,
-                                          UInt  uiCurrPartUnitIdx,
-                                          UInt  uiPartUnitOffset,
-                                          Bool  bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& uiBLPartUnitIdx,  UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset, Bool bEnforceSliceRestriction)
 {
     UInt uiAbsPartIdxLB     = g_auiZscanToRaster[uiCurrPartUnitIdx];
-    UInt uiAbsZorderCUIdxLB = g_auiZscanToRaster[m_uiAbsIdxInLCU] +
-        ((m_puhHeight[0] / m_pcPic->getMinCUHeight()) - 1) * m_pcPic->getNumPartInWidth();
+    UInt uiAbsZorderCUIdxLB = g_auiZscanToRaster[m_uiAbsIdxInLCU] + ((m_puhHeight[0] / m_pcPic->getMinCUHeight()) - 1) * m_pcPic->getNumPartInWidth();
     UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
 
-    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxLB] +
-         (m_pcPic->getPicSym()->getMinCUHeight() * uiPartUnitOffset)) >= m_pcSlice->getSPS()->getPicHeightInLumaSamples())
+    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxLB] + (m_pcPic->getPicSym()->getMinCUHeight() * uiPartUnitOffset)) >= m_pcSlice->getSPS()->getPicHeightInLumaSamples())
     {
         uiBLPartUnitIdx = MAX_UINT;
         return NULL;
@@ -1496,23 +1412,18 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& uiBLPartUnitIdx,
                     return this;
                 }
             }
-
             uiBLPartUnitIdx = MAX_UINT;
             return NULL;
         }
-
         uiBLPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdxLB + (1 + uiPartUnitOffset) * uiNumPartInCUWidth - 1];
         if ((bEnforceSliceRestriction && (m_pcCULeft == NULL || m_pcCULeft->getSlice() == NULL ||
-                                          m_pcCULeft->getSCUAddr() + uiBLPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCULeft->getSCUAddr() + uiBLPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCULeft->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCULeft;
     }
 
@@ -1520,17 +1431,13 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(UInt& uiBLPartUnitIdx,
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx,
-                                           UInt  uiCurrPartUnitIdx,
-                                           UInt  uiPartUnitOffset,
-                                           Bool  bEnforceSliceRestriction)
+TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx, UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset, Bool bEnforceSliceRestriction)
 {
     UInt uiAbsPartIdxRT     = g_auiZscanToRaster[uiCurrPartUnitIdx];
     UInt uiAbsZorderCUIdx   = g_auiZscanToRaster[m_uiAbsIdxInLCU] + (m_puhWidth[0] / m_pcPic->getMinCUWidth()) - 1;
     UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
 
-    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxRT] +
-         (m_pcPic->getPicSym()->getMinCUHeight() * uiPartUnitOffset)) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())
+    if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxRT] + (m_pcPic->getPicSym()->getMinCUHeight() * uiPartUnitOffset)) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())
     {
         uiARPartUnitIdx = MAX_UINT;
         return NULL;
@@ -1553,23 +1460,18 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx,
                     return this;
                 }
             }
-
             uiARPartUnitIdx = MAX_UINT;
             return NULL;
         }
-
         uiARPartUnitIdx = g_auiRasterToZscan[uiAbsPartIdxRT + m_pcPic->getNumPartInCU() - uiNumPartInCUWidth + uiPartUnitOffset];
         if ((bEnforceSliceRestriction && (m_pcCUAbove == NULL || m_pcCUAbove->getSlice() == NULL ||
-                                          m_pcCUAbove->getSCUAddr() + uiARPartUnitIdx <
-                                          m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) !=
-                                           m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                          m_pcCUAbove->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                          (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAbove->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                           ))
             )
         {
             return NULL;
         }
-
         return m_pcCUAbove;
     }
 
@@ -1581,18 +1483,14 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx,
 
     uiARPartUnitIdx = g_auiRasterToZscan[m_pcPic->getNumPartInCU() - uiNumPartInCUWidth + uiPartUnitOffset - 1];
     if ((bEnforceSliceRestriction && (m_pcCUAboveRight == NULL || m_pcCUAboveRight->getSlice() == NULL ||
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) >
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
-                                      m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx <
-                                      m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
-                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveRight->getAddr()) !=
-                                       m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
+                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) > m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
+                                      m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx) ||
+                                      (m_pcPic->getPicSym()->getTileIdxMap(m_pcCUAboveRight->getAddr()) != m_pcPic->getPicSym()->getTileIdxMap(getAddr()))
                                       ))
         )
     {
         return NULL;
     }
-
     return m_pcCUAboveRight;
 }
 
@@ -1604,10 +1502,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx,
 TComDataCU* TComDataCU::getQpMinCuLeft(UInt& uiLPartUnitIdx, UInt uiCurrAbsIdxInLCU)
 {
     UInt numPartInCUWidth = m_pcPic->getNumPartInWidth();
-    UInt absZorderQpMinCUIdx =
-        (uiCurrAbsIdxInLCU >>
-         ((g_uiMaxCUDepth -
-           getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) << ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+    UInt absZorderQpMinCUIdx = (uiCurrAbsIdxInLCU >> ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) << ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
     UInt absRorderQpMinCUIdx = g_auiZscanToRaster[absZorderQpMinCUIdx];
 
     // check for left LCU boundary
@@ -1631,10 +1526,7 @@ TComDataCU* TComDataCU::getQpMinCuLeft(UInt& uiLPartUnitIdx, UInt uiCurrAbsIdxIn
 TComDataCU* TComDataCU::getQpMinCuAbove(UInt& aPartUnitIdx, UInt currAbsIdxInLCU)
 {
     UInt numPartInCUWidth = m_pcPic->getNumPartInWidth();
-    UInt absZorderQpMinCUIdx =
-        (currAbsIdxInLCU >>
-         ((g_uiMaxCUDepth -
-           getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) << ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+    UInt absZorderQpMinCUIdx = (currAbsIdxInLCU >> ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) << ((g_uiMaxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
     UInt absRorderQpMinCUIdx = g_auiZscanToRaster[absZorderQpMinCUIdx];
 
     // check for top LCU boundary
@@ -1660,8 +1552,7 @@ Char TComDataCU::getRefQP(UInt uiCurrAbsIdxInLCU)
     TComDataCU* cULeft  = getQpMinCuLeft(lPartIdx, m_uiAbsIdxInLCU + uiCurrAbsIdxInLCU);
     TComDataCU* cUAbove = getQpMinCuAbove(aPartIdx, m_uiAbsIdxInLCU + uiCurrAbsIdxInLCU);
 
-    return ((cULeft ? cULeft->getQP(lPartIdx) : getLastCodedQP(uiCurrAbsIdxInLCU)) +
-            (cUAbove ? cUAbove->getQP(aPartIdx) : getLastCodedQP(uiCurrAbsIdxInLCU)) + 1) >> 1;
+    return ((cULeft ? cULeft->getQP(lPartIdx) : getLastCodedQP(uiCurrAbsIdxInLCU)) + (cUAbove ? cUAbove->getQP(aPartIdx) : getLastCodedQP(uiCurrAbsIdxInLCU)) + 1) >> 1;
 }
 
 Int TComDataCU::getLastValidPartIdx(Int iAbsPartIdx)
@@ -1699,14 +1590,10 @@ Char TComDataCU::getLastCodedQP(UInt uiAbsPartIdx)
             return getPic()->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
         }
         else if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) > 0
-                 && getPic()->getPicSym()->getTileIdxMap(getAddr()) ==
-                 getPic()->getPicSym()->getTileIdxMap(getPic()->getPicSym()->getCUOrderMap(getPic()->getPicSym()->
-                                                                                           getInverseCUOrderMap(
-                                                                                               getAddr()) - 1))
+                 && getPic()->getPicSym()->getTileIdxMap(getAddr()) == getPic()->getPicSym()->getTileIdxMap(getPic()->getPicSym()->getCUOrderMap(getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) - 1))
                  && !(getSlice()->getPPS()->getEntropyCodingSyncEnabledFlag() && getAddr() % getPic()->getFrameWidthInCU() == 0))
         {
-            return getPic()->getCU(getPic()->getPicSym()->getCUOrderMap(getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) -
-                                                                        1))->getLastCodedQP(getPic()->getNumPartInCU());
+            return getPic()->getCU(getPic()->getPicSym()->getCUOrderMap(getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) - 1))->getLastCodedQP(getPic()->getNumPartInCU());
         }
         else
         {
@@ -1800,7 +1687,6 @@ Int TComDataCU::getIntraDirLumaPredictor(UInt uiAbsPartIdx, Int* uiIntraDirPred,
         {
             *piMode = 2;
         }
-
         uiIntraDirPred[0] = iLeftIntraDir;
         uiIntraDirPred[1] = iAboveIntraDir;
 
@@ -1851,8 +1737,7 @@ UInt TComDataCU::getQuadtreeTULog2MinSizeInCU(UInt absPartIdx)
 {
     UInt log2CbSize = g_aucConvertToBit[getWidth(absPartIdx)] + 2;
     PartSize  partSize  = getPartitionSize(absPartIdx);
-    UInt quadtreeTUMaxDepth = getPredictionMode(absPartIdx) ==
-        MODE_INTRA ? m_pcSlice->getSPS()->getQuadtreeTUMaxDepthIntra() : m_pcSlice->getSPS()->getQuadtreeTUMaxDepthInter();
+    UInt quadtreeTUMaxDepth = getPredictionMode(absPartIdx) == MODE_INTRA ? m_pcSlice->getSPS()->getQuadtreeTUMaxDepthIntra() : m_pcSlice->getSPS()->getQuadtreeTUMaxDepthInter();
     Int intraSplitFlag = (getPredictionMode(absPartIdx) == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
     Int interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(absPartIdx) == MODE_INTER) && (partSize != SIZE_2Nx2N));
 
@@ -1873,7 +1758,6 @@ UInt TComDataCU::getQuadtreeTULog2MinSizeInCU(UInt absPartIdx)
             log2MinTUSizeInCU = m_pcSlice->getSPS()->getQuadtreeTULog2MaxSize();
         }
     }
-
     return log2MinTUSizeInCU;
 }
 
@@ -1981,8 +1865,7 @@ Void TComDataCU::setQPSubCUs(Int qp, TComDataCU* pcCU, UInt absPartIdx, UInt dep
         }
         else
         {
-            if (pcCU->getCbf(absPartIdx,
-                             TEXT_LUMA) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_U) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_V))
+            if (pcCU->getCbf(absPartIdx, TEXT_LUMA) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_U) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_V))
             {
                 foundNonZeroCbf = true;
             }
@@ -2001,8 +1884,7 @@ Void TComDataCU::setQPSubParts(Int qp, UInt uiAbsPartIdx, UInt uiDepth)
 
     for (UInt uiSCUIdx = uiAbsPartIdx; uiSCUIdx < uiAbsPartIdx + uiCurrPartNumb; uiSCUIdx++)
     {
-        if (m_pcPic->getCU(getAddr())->getSliceSegmentStartCU(uiSCUIdx + getZorderIdxInCU()) ==
-            pcSlice->getSliceSegmentCurStartCUAddr())
+        if (m_pcPic->getCU(getAddr())->getSliceSegmentStartCU(uiSCUIdx + getZorderIdxInCU()) == pcSlice->getSliceSegmentCurStartCUAddr())
         {
             m_phQP[uiSCUIdx] = qp;
         }
@@ -2052,7 +1934,6 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
         {
             assert(0);
         }
-
         break;
     case SIZE_2NxnD:
         if (uiPUIdx == 0)
@@ -2069,7 +1950,6 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
         {
             assert(0);
         }
-
         break;
     case SIZE_nLx2N:
         if (uiPUIdx == 0)
@@ -2084,14 +1964,12 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
             memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 2));
             memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
             memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter,
-                   (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
+            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
         }
         else
         {
             assert(0);
         }
-
         break;
     case SIZE_nRx2N:
         if (uiPUIdx == 0)
@@ -2099,8 +1977,7 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
             memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
             memset(puhBaseLCU + uiCUAddr + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
             memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter,
-                   (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
         }
         else if (uiPUIdx == 1)
         {
@@ -2113,7 +1990,6 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
         {
             assert(0);
         }
-
         break;
     default:
         assert(0);
@@ -2159,11 +2035,7 @@ Void TComDataCU::setTrIdxSubParts(UInt uiTrIdx, UInt uiAbsPartIdx, UInt uiDepth)
     memset(m_puhTrIdx + uiAbsPartIdx, uiTrIdx, sizeof(UChar) * uiCurrPartNumb);
 }
 
-Void TComDataCU::setTransformSkipSubParts(UInt useTransformSkipY,
-                                          UInt useTransformSkipU,
-                                          UInt useTransformSkipV,
-                                          UInt uiAbsPartIdx,
-                                          UInt uiDepth)
+Void TComDataCU::setTransformSkipSubParts(UInt useTransformSkipY, UInt useTransformSkipU, UInt useTransformSkipV, UInt uiAbsPartIdx, UInt uiDepth)
 {
     UInt uiCurrPartNumb = m_pcPic->getNumPartInCU() >> (uiDepth << 1);
 
@@ -2309,7 +2181,6 @@ Void TComDataCU::deriveLeftRightTopIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx,
         {
             assert(0);
         }
-
         break;
     case SIZE_nRx2N:
         if (uiPartIdx == 0)
@@ -2324,7 +2195,6 @@ Void TComDataCU::deriveLeftRightTopIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx,
         {
             assert(0);
         }
-
         break;
     default:
         assert(0);
@@ -2361,7 +2231,6 @@ Void TComDataCU::deriveLeftBottomIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx, U
         {
             assert(0);
         }
-
         break;
     case SIZE_2NxnD:
         if (uiPartIdx == 0)
@@ -2376,7 +2245,6 @@ Void TComDataCU::deriveLeftBottomIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx, U
         {
             assert(0);
         }
-
         break;
     case SIZE_nLx2N: uiPUHeight = m_puhHeight[uiAbsPartIdx];
         break;
@@ -2387,10 +2255,7 @@ Void TComDataCU::deriveLeftBottomIdxGeneral(UInt uiAbsPartIdx, UInt uiPartIdx, U
         break;
     }
 
-    ruiPartIdxLB      =
-        g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU +
-                                              uiAbsPartIdx] +
-                           ((uiPUHeight / m_pcPic->getMinCUHeight()) - 1) * m_pcPic->getNumPartInWidth()];
+    ruiPartIdxLB      = g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU + uiAbsPartIdx] + ((uiPUHeight / m_pcPic->getMinCUHeight()) - 1) * m_pcPic->getNumPartInWidth()];
 }
 
 Void TComDataCU::deriveLeftRightTopIdx(UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT)
@@ -2400,8 +2265,7 @@ Void TComDataCU::deriveLeftRightTopIdx(UInt uiPartIdx, UInt& ruiPartIdxLT, UInt&
 
     switch (m_pePartSize[0])
     {
-    case SIZE_2Nx2N:
-        break;
+    case SIZE_2Nx2N:                                                                                                                                break;
     case SIZE_2NxN:
         ruiPartIdxLT += (uiPartIdx == 0) ? 0 : m_uiNumPartition >> 1;
         ruiPartIdxRT += (uiPartIdx == 0) ? 0 : m_uiNumPartition >> 1;
@@ -2438,9 +2302,7 @@ Void TComDataCU::deriveLeftRightTopIdx(UInt uiPartIdx, UInt& ruiPartIdxLT, UInt&
 
 Void TComDataCU::deriveLeftBottomIdx(UInt uiPartIdx,      UInt&      ruiPartIdxLB)
 {
-    ruiPartIdxLB      =
-        g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU] +
-                           (((m_puhHeight[0] / m_pcPic->getMinCUHeight()) >> 1) - 1) * m_pcPic->getNumPartInWidth()];
+    ruiPartIdxLB      = g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU] + (((m_puhHeight[0] / m_pcPic->getMinCUHeight()) >> 1) - 1) * m_pcPic->getNumPartInWidth()];
 
     switch (m_pePartSize[0])
     {
@@ -2466,8 +2328,7 @@ Void TComDataCU::deriveLeftBottomIdx(UInt uiPartIdx,      UInt&      ruiPartIdxL
         ruiPartIdxLB += (uiPartIdx == 0) ? m_uiNumPartition >> 1 : (m_uiNumPartition >> 1) + (m_uiNumPartition >> 4);
         break;
     case SIZE_nRx2N:
-        ruiPartIdxLB +=
-            (uiPartIdx == 0) ? m_uiNumPartition >> 1 : (m_uiNumPartition >> 1) + (m_uiNumPartition >> 2) + (m_uiNumPartition >> 4);
+        ruiPartIdxLB += (uiPartIdx == 0) ? m_uiNumPartition >> 1 : (m_uiNumPartition >> 1) + (m_uiNumPartition >> 2) + (m_uiNumPartition >> 4);
         break;
     default:
         assert(0);
@@ -2482,11 +2343,7 @@ Void TComDataCU::deriveLeftBottomIdx(UInt uiPartIdx,      UInt&      ruiPartIdxL
  */
 Void TComDataCU::deriveRightBottomIdx(UInt uiPartIdx,      UInt&      ruiPartIdxRB)
 {
-    ruiPartIdxRB      =
-        g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU] +
-                           (((m_puhHeight[0] /
-                              m_pcPic->getMinCUHeight()) >>
-                             1) - 1) * m_pcPic->getNumPartInWidth() +  m_puhWidth[0] / m_pcPic->getMinCUWidth() - 1];
+    ruiPartIdxRB      = g_auiRasterToZscan[g_auiZscanToRaster[m_uiAbsIdxInLCU] + (((m_puhHeight[0] / m_pcPic->getMinCUHeight()) >> 1) - 1) * m_pcPic->getNumPartInWidth() +  m_puhWidth[0] / m_pcPic->getMinCUWidth() - 1];
 
     switch (m_pePartSize[0])
     {
@@ -2512,9 +2369,7 @@ Void TComDataCU::deriveRightBottomIdx(UInt uiPartIdx,      UInt&      ruiPartIdx
         ruiPartIdxRB += (uiPartIdx == 0) ? (m_uiNumPartition >> 3) + (m_uiNumPartition >> 4) : m_uiNumPartition >> 1;
         break;
     case SIZE_nRx2N:
-        ruiPartIdxRB +=
-            (uiPartIdx == 0) ? (m_uiNumPartition >>
-                                2) + (m_uiNumPartition >> 3) + (m_uiNumPartition >> 4) : m_uiNumPartition >> 1;
+        ruiPartIdxRB += (uiPartIdx == 0) ? (m_uiNumPartition >> 2) + (m_uiNumPartition >> 3) + (m_uiNumPartition >> 4) : m_uiNumPartition >> 1;
         break;
     default:
         assert(0);
@@ -2553,10 +2408,8 @@ Bool TComDataCU::hasEqualMotion(UInt uiAbsPartIdx, TComDataCU* pcCandCU, UInt ui
     {
         if (getInterDir(uiAbsPartIdx) & (1 << uiRefListIdx))
         {
-            if (getCUMvField(RefPicList(uiRefListIdx))->getMv(uiAbsPartIdx)     !=
-                pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getMv(uiCandAbsPartIdx) ||
-                getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(uiAbsPartIdx) !=
-                pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(uiCandAbsPartIdx))
+            if (getCUMvField(RefPicList(uiRefListIdx))->getMv(uiAbsPartIdx)     != pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getMv(uiCandAbsPartIdx) ||
+                getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(uiAbsPartIdx) != pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(uiCandAbsPartIdx))
             {
                 return false;
             }
@@ -2574,12 +2427,7 @@ Bool TComDataCU::hasEqualMotion(UInt uiAbsPartIdx, TComDataCU* pcCandCU, UInt ui
  * \param puhInterDirNeighbours
  * \param numValidMergeCand
  */
-Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
-                                         UInt         uiPUIdx,
-                                         TComMvField* pcMvFieldNeighbours,
-                                         UChar*       puhInterDirNeighbours,
-                                         Int&         numValidMergeCand,
-                                         Int          mrgCandIdx)
+Void TComDataCU::getInterMergeCandidates(UInt uiAbsPartIdx, UInt uiPUIdx, TComMvField* pcMvFieldNeighbours, UChar* puhInterDirNeighbours, Int& numValidMergeCand, Int mrgCandIdx)
 {
     UInt uiAbsPartAddr = m_uiAbsIdxInLCU + uiAbsPartIdx;
     Bool abCandIsInter[MRG_MAX_NUM_CANDS];
@@ -2622,12 +2470,10 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         {
             pcCULeft->getMvField(pcCULeft, uiLeftPartIdx, REF_PIC_LIST_1, pcMvFieldNeighbours[(iCount << 1) + 1]);
         }
-
         if (mrgCandIdx == iCount)
         {
             return;
         }
-
         iCount++;
     }
 
@@ -2636,7 +2482,6 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
     {
         return;
     }
-
     // above
     UInt uiAbovePartIdx = 0;
     TComDataCU* pcCUAbove = 0;
@@ -2656,15 +2501,12 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         {
             pcCUAbove->getMvField(pcCUAbove, uiAbovePartIdx, REF_PIC_LIST_1, pcMvFieldNeighbours[(iCount << 1) + 1]);
         }
-
         if (mrgCandIdx == iCount)
         {
             return;
         }
-
         iCount++;
     }
-
     // early termination
     if (iCount == getSlice()->getMaxNumMergeCand())
     {
@@ -2687,20 +2529,14 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         pcCUAboveRight->getMvField(pcCUAboveRight, uiAboveRightPartIdx, REF_PIC_LIST_0, pcMvFieldNeighbours[iCount << 1]);
         if (getSlice()->isInterB())
         {
-            pcCUAboveRight->getMvField(pcCUAboveRight,
-                                       uiAboveRightPartIdx,
-                                       REF_PIC_LIST_1,
-                                       pcMvFieldNeighbours[(iCount << 1) + 1]);
+            pcCUAboveRight->getMvField(pcCUAboveRight, uiAboveRightPartIdx, REF_PIC_LIST_1, pcMvFieldNeighbours[(iCount << 1) + 1]);
         }
-
         if (mrgCandIdx == iCount)
         {
             return;
         }
-
         iCount++;
     }
-
     // early termination
     if (iCount == getSlice()->getMaxNumMergeCand())
     {
@@ -2723,26 +2559,19 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         pcCULeftBottom->getMvField(pcCULeftBottom, uiLeftBottomPartIdx, REF_PIC_LIST_0, pcMvFieldNeighbours[iCount << 1]);
         if (getSlice()->isInterB())
         {
-            pcCULeftBottom->getMvField(pcCULeftBottom,
-                                       uiLeftBottomPartIdx,
-                                       REF_PIC_LIST_1,
-                                       pcMvFieldNeighbours[(iCount << 1) + 1]);
+            pcCULeftBottom->getMvField(pcCULeftBottom, uiLeftBottomPartIdx, REF_PIC_LIST_1, pcMvFieldNeighbours[(iCount << 1) + 1]);
         }
-
         if (mrgCandIdx == iCount)
         {
             return;
         }
-
         iCount++;
     }
-
     // early termination
     if (iCount == getSlice()->getMaxNumMergeCand())
     {
         return;
     }
-
     // above left
     if (iCount < 4)
     {
@@ -2762,25 +2591,20 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
             pcCUAboveLeft->getMvField(pcCUAboveLeft, uiAboveLeftPartIdx, REF_PIC_LIST_0, pcMvFieldNeighbours[iCount << 1]);
             if (getSlice()->isInterB())
             {
-                pcCUAboveLeft->getMvField(pcCUAboveLeft, uiAboveLeftPartIdx, REF_PIC_LIST_1,
-                                          pcMvFieldNeighbours[(iCount << 1) + 1]);
+                pcCUAboveLeft->getMvField(pcCUAboveLeft, uiAboveLeftPartIdx, REF_PIC_LIST_1, pcMvFieldNeighbours[(iCount << 1) + 1]);
             }
-
             if (mrgCandIdx == iCount)
             {
                 return;
             }
-
             iCount++;
         }
     }
-
     // early termination
     if (iCount == getSlice()->getMaxNumMergeCand())
     {
         return;
     }
-
     if (getSlice()->getEnableTMVPFlag())
     {
         //>> MTK colocated-RightBottom
@@ -2795,13 +2619,11 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         TComMv cColMv;
         Int iRefIdx;
 
-        if      ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxTmp] + m_pcPic->getMinCUWidth()) >=
-                 m_pcSlice->getSPS()->getPicWidthInLumaSamples())                                                                                                               // image boundary check
+        if      ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxTmp] + m_pcPic->getMinCUWidth()) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
         {
             uiLCUIdx = -1;
         }
-        else if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxTmp] + m_pcPic->getMinCUHeight()) >=
-                 m_pcSlice->getSPS()->getPicHeightInLumaSamples())
+        else if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdxTmp] + m_pcPic->getMinCUHeight()) >= m_pcSlice->getSPS()->getPicHeightInLumaSamples())
         {
             uiLCUIdx = -1;
         }
@@ -2842,7 +2664,6 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
         {
             bExistMV = xGetColMVP(REF_PIC_LIST_0, uiCurLCUIdx, uiPartIdxCenter, cColMv, iRefIdx);
         }
-
         if (bExistMV)
         {
             dir |= 1;
@@ -2856,7 +2677,6 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
             {
                 bExistMV = xGetColMVP(REF_PIC_LIST_1, uiCurLCUIdx, uiPartIdxCenter, cColMv, iRefIdx);
             }
-
             if (bExistMV)
             {
                 dir |= 2;
@@ -2873,17 +2693,14 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
             {
                 return;
             }
-
             iCount++;
         }
     }
-
     // early termination
     if (iCount == getSlice()->getMaxNumMergeCand())
     {
         return;
     }
-
     UInt uiArrayAddr = iCount;
     UInt uiCutoff = uiArrayAddr;
 
@@ -2902,15 +2719,12 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
                 puhInterDirNeighbours[uiArrayAddr] = 3;
 
                 // get Mv from cand[i] and cand[j]
-                pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(
-                    pcMvFieldNeighbours[i << 1].getMv(), pcMvFieldNeighbours[i << 1].getRefIdx());
-                pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(
-                    pcMvFieldNeighbours[(j << 1) + 1].getMv(), pcMvFieldNeighbours[(j << 1) + 1].getRefIdx());
+                pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(pcMvFieldNeighbours[i << 1].getMv(), pcMvFieldNeighbours[i << 1].getRefIdx());
+                pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(pcMvFieldNeighbours[(j << 1) + 1].getMv(), pcMvFieldNeighbours[(j << 1) + 1].getRefIdx());
 
                 Int iRefPOCL0 = m_pcSlice->getRefPOC(REF_PIC_LIST_0, pcMvFieldNeighbours[(uiArrayAddr << 1)].getRefIdx());
                 Int iRefPOCL1 = m_pcSlice->getRefPOC(REF_PIC_LIST_1, pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].getRefIdx());
-                if (iRefPOCL0 == iRefPOCL1 && pcMvFieldNeighbours[(uiArrayAddr << 1)].getMv() ==
-                    pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].getMv())
+                if (iRefPOCL0 == iRefPOCL1 && pcMvFieldNeighbours[(uiArrayAddr << 1)].getMv() == pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].getMv())
                 {
                     abCandIsInter[uiArrayAddr] = false;
                 }
@@ -2921,16 +2735,12 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
             }
         }
     }
-
     // early termination
     if (uiArrayAddr == getSlice()->getMaxNumMergeCand())
     {
         return;
     }
-
-    Int iNumRefIdx =
-        (getSlice()->isInterB()) ? min(m_pcSlice->getNumRefIdx(REF_PIC_LIST_0),
-                                       m_pcSlice->getNumRefIdx(REF_PIC_LIST_1)) : m_pcSlice->getNumRefIdx(REF_PIC_LIST_0);
+    Int iNumRefIdx = (getSlice()->isInterB()) ? min(m_pcSlice->getNumRefIdx(REF_PIC_LIST_0), m_pcSlice->getNumRefIdx(REF_PIC_LIST_1)) : m_pcSlice->getNumRefIdx(REF_PIC_LIST_0);
     Int r = 0;
     Int refcnt = 0;
     while (uiArrayAddr < getSlice()->getMaxNumMergeCand())
@@ -2944,7 +2754,6 @@ Void TComDataCU::getInterMergeCandidates(UInt         uiAbsPartIdx,
             puhInterDirNeighbours[uiArrayAddr] = 3;
             pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(TComMv(0, 0), r);
         }
-
         uiArrayAddr++;
         if (refcnt == iNumRefIdx - 1)
         {
@@ -2973,12 +2782,10 @@ Bool TComDataCU::isDiffMER(Int xN, Int yN, Int xP, Int yP)
     {
         return true;
     }
-
     if ((yN >> plevel) != (yP >> plevel))
     {
         return true;
     }
-
     return false;
 }
 
@@ -3101,7 +2908,6 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
             bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxLB, MD_LEFT);
         }
     }
-
     // Above predictor search
     bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
 
@@ -3114,7 +2920,6 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
     {
         bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxLT, MD_ABOVE_LEFT);
     }
-
     bAdded = bAddedSmvp;
     if (pInfo->iN == 2) bAdded = true;
 
@@ -3155,13 +2960,11 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
 
         //----  co-located RightBottom Temporal Predictor (H) ---//
         uiAbsPartIdx = g_auiZscanToRaster[uiPartIdxRB];
-        if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdx] + m_pcPic->getMinCUWidth()) >=
-            m_pcSlice->getSPS()->getPicWidthInLumaSamples())                                                                                                            // image boundary check
+        if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdx] + m_pcPic->getMinCUWidth()) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
         {
             uiLCUIdx = -1;
         }
-        else if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdx] + m_pcPic->getMinCUHeight()) >=
-                 m_pcSlice->getSPS()->getPicHeightInLumaSamples())
+        else if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelY() + g_auiRasterToPelY[uiAbsPartIdx] + m_pcPic->getMinCUHeight()) >= m_pcSlice->getSPS()->getPicHeightInLumaSamples())
         {
             uiLCUIdx = -1;
         }
@@ -3189,7 +2992,6 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
                 uiLCUIdx      = -1;
             }
         }
-
         if (uiLCUIdx >= 0 && xGetColMVP(eRefPicList, uiLCUIdx, uiAbsPartAddr, cColMv, iRefIdx_Col))
         {
             pInfo->m_acMvCand[pInfo->iN++] = cColMv;
@@ -3204,7 +3006,6 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
                 pInfo->m_acMvCand[pInfo->iN++] = cColMv;
             }
         }
-
         //----  co-located RightBottom Temporal Predictor  ---//
     }
 
@@ -3212,7 +3013,6 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
     {
         pInfo->iN = AMVP_MAX_NUM_CANDS;
     }
-
     while (pInfo->iN < AMVP_MAX_NUM_CANDS)
     {
         pInfo->m_acMvCand[pInfo->iN].set(0, 0);
@@ -3231,7 +3031,6 @@ Bool TComDataCU::isBipredRestriction(UInt puIdx)
     {
         return true;
     }
-
     return false;
 }
 
@@ -3251,9 +3050,7 @@ Void TComDataCU::clipMv(TComMv& rcMv)
 
 UInt TComDataCU::getIntraSizeIdx(UInt uiAbsPartIdx)
 {
-    UInt uiShift =
-        ((m_puhTrIdx[uiAbsPartIdx] == 0) &&
-         (m_pePartSize[uiAbsPartIdx] == SIZE_NxN)) ? m_puhTrIdx[uiAbsPartIdx] + 1 : m_puhTrIdx[uiAbsPartIdx];
+    UInt uiShift = ((m_puhTrIdx[uiAbsPartIdx] == 0) && (m_pePartSize[uiAbsPartIdx] == SIZE_NxN)) ? m_puhTrIdx[uiAbsPartIdx] + 1 : m_puhTrIdx[uiAbsPartIdx];
 
     uiShift = (m_pePartSize[uiAbsPartIdx] == SIZE_NxN ? 1 : 0);
 
@@ -3348,10 +3145,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
     }
 
 #if L0363_MVP_POC
-    if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0 &&
-        m_pcSlice->getRefPic(eRefPicList,
-                             iRefIdx)->getPOC() ==
-        pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx)))
+    if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0 && m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC() == pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx)))
 #else
     if (m_pcSlice->isEqualRef(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx), iRefIdx))
 #endif
@@ -3385,7 +3179,6 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
             return true;
         }
     }
-
     return false;
 }
 
@@ -3464,8 +3257,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
         TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
         TComMv rcMv;
 
-        bIsNeibRefLongTerm =
-            pcTmpCU->getSlice()->getRefPic(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx))->getIsLongTerm();
+        bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
         {
             if (bIsCurrRefLongTerm || bIsNeibRefLongTerm)
@@ -3484,12 +3276,10 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
                     rcMv = cMvPred.scaleMv(iScale);
                 }
             }
-
             pInfo->m_acMvCand[pInfo->iN++] = rcMv;
             return true;
         }
     }
-
     //---------------------- V2(END) --------------------//
     if (pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx) >= 0)
     {
@@ -3497,9 +3287,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
         TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
         TComMv rcMv;
 
-        bIsNeibRefLongTerm =
-            pcTmpCU->getSlice()->getRefPic(eRefPicList2nd,
-                                           pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx))->getIsLongTerm();
+        bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(eRefPicList2nd, pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
         {
             if (bIsCurrRefLongTerm || bIsNeibRefLongTerm)
@@ -3518,12 +3306,10 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
                     rcMv = cMvPred.scaleMv(iScale);
                 }
             }
-
             pInfo->m_acMvCand[pInfo->iN++] = rcMv;
             return true;
         }
     }
-
     //---------------------- V3(END) --------------------//
     return false;
 }
@@ -3544,16 +3330,13 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
     TComMv cColMv;
 
     // use coldir.
-    TComPic *pColPic = getSlice()->getRefPic(RefPicList(
-                                                 getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0),
-                                             getSlice()->getColRefIdx());
+    TComPic *pColPic = getSlice()->getRefPic(RefPicList(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0), getSlice()->getColRefIdx());
     TComDataCU *pColCU = pColPic->getCU(uiCUAddr);
 
     if (pColCU->getPic() == 0 || pColCU->getPartitionSize(uiPartUnitIdx) == SIZE_NONE)
     {
         return false;
     }
-
     iCurrPOC = m_pcSlice->getPOC();
     iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, riRefIdx)->getPOC();
     iColPOC = pColCU->getSlice()->getPOC();
@@ -3562,7 +3345,6 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
     {
         return false;
     }
-
     eColRefPicList = getSlice()->getCheckLDC() ? eRefPicList : RefPicList(getSlice()->getColFromL0Flag());
 
     Int iColRefIdx = pColCU->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(uiAbsPartAddr);
@@ -3607,7 +3389,6 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
             rcMv = cColMv.scaleMv(iScale);
         }
     }
-
     return true;
 }
 
@@ -3733,7 +3514,6 @@ UInt TComDataCU::getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, B
             // get luma mode from upper-left corner of current CU
             uiDirMode = getLumaIntraDir((uiAbsPartIdx / numParts) * numParts);
         }
-
         uiScanIdx = SCAN_DIAG;
         if (uiCTXIdx > 4 && uiCTXIdx < 7) //if multiple scans supported for transform size
         {
@@ -3746,8 +3526,7 @@ UInt TComDataCU::getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, B
 
 UInt TComDataCU::getSCUAddr()
 {
-    return getPic()->getPicSym()->getInverseCUOrderMap(m_uiCUAddr) *
-           (1 << (m_pcSlice->getSPS()->getMaxCUDepth() << 1)) + m_uiAbsIdxInLCU;
+    return getPic()->getPicSym()->getInverseCUOrderMap(m_uiCUAddr) * (1 << (m_pcSlice->getSPS()->getMaxCUDepth() << 1)) + m_uiAbsIdxInLCU;
 }
 
 /** Set neighboring blocks availabilities for non-deblocked filtering
@@ -3764,21 +3543,10 @@ UInt TComDataCU::getSCUAddr()
  * \param bRightTileBoundary true means that right boundary coincides tile boundary
  * \param bIndependentTileBoundaryEnabled true for independent tile boundary enabled
  */
-Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUInPicWidth,
-                                                     UInt /*numLCUInPicHeight*/,
-                                                     UInt               numSUInLCUWidth,
-                                                     UInt               numSUInLCUHeight,
-                                                     UInt               picWidth,
-                                                     UInt               picHeight
-                                                     ,
-                                                     std::vector<Bool>& LFCrossSliceBoundary
-                                                     ,
-                                                     Bool               bTopTileBoundary,
-                                                     Bool               bDownTileBoundary,
-                                                     Bool               bLeftTileBoundary,
-                                                     Bool               bRightTileBoundary
-                                                     ,
-                                                     Bool               bIndependentTileBoundaryEnabled)
+Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt /*numLCUInPicHeight*/, UInt numSUInLCUWidth, UInt numSUInLCUHeight, UInt picWidth, UInt picHeight
+                                                     , std::vector<Bool>& LFCrossSliceBoundary
+                                                     , Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary, Bool bRightTileBoundary
+                                                     , Bool bIndependentTileBoundaryEnabled)
 {
     UInt numSUInLCU = numSUInLCUWidth * numSUInLCUHeight;
     Int* pSliceIDMapLCU = m_piSliceSUMap;
@@ -3851,11 +3619,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU   = g_auiRasterToZscan[rTLSU - 1];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_R
@@ -3882,11 +3647,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU + widthSU];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_T
@@ -3913,11 +3675,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU - numSUInLCUWidth];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_B
@@ -3944,11 +3703,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU + (heightSU * numSUInLCUWidth)];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_TL
@@ -3983,11 +3739,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU - numSUInLCUWidth - 1];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_TR
@@ -4022,11 +3775,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU - numSUInLCUWidth + widthSU];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_BL
@@ -4061,11 +3811,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU       = g_auiRasterToZscan[rTLSU + heightSU * numSUInLCUWidth - 1];
                 pRefMapLCU  = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         //       SGU_BR
@@ -4100,11 +3847,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 zRefSU      = g_auiRasterToZscan[rTLSU + (heightSU * numSUInLCUWidth) + widthSU];
                 pRefMapLCU = pSliceIDMapLCU;
             }
-
             pRefID = pRefMapLCU + zRefSU;
-            *pbAvail =
-                (*pRefID ==
-                 sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
+            *pbAvail = (*pRefID == sliceID) ? (true) : ((*pRefID > sliceID) ? (LFCrossSliceBoundary[*pRefID]) : (LFCrossSliceBoundary[sliceID]));
         }
 
         if (bIndependentTileBoundaryEnabled)
@@ -4117,7 +3861,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                     pbAvailBorder[SGU_L] = pbAvailBorder[SGU_TL] = pbAvailBorder[SGU_BL] = false;
                 }
             }
-
             //right LCU boundary
             if (!bPicRBoundary && bLCURBoundary)
             {
@@ -4126,7 +3869,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                     pbAvailBorder[SGU_R] = pbAvailBorder[SGU_TR] = pbAvailBorder[SGU_BR] = false;
                 }
             }
-
             //top LCU boundary
             if (!bPicTBoundary && bLCUTBoundary)
             {
@@ -4135,7 +3877,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                     pbAvailBorder[SGU_T] = pbAvailBorder[SGU_TL] = pbAvailBorder[SGU_TR] = false;
                 }
             }
-
             //down LCU boundary
             if (!bPicBBoundary && bLCUBBoundary)
             {
@@ -4145,7 +3886,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt               numLCUIn
                 }
             }
         }
-
         rSGU.allBordersAvailable = true;
         for (Int b = 0; b < NUM_SGU_BORDER; b++)
         {

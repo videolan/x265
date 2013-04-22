@@ -30,18 +30,10 @@ using namespace x265;
 
 const short m_lumaFilter[4][8] =
 {
-{
-    0, 0,   0, 64,  0,   0, 0,  0
-},
-{
-    -1, 4, -10, 58, 17,  -5, 1,  0
-},
-{
-    -1, 4, -11, 40, 40, -11, 4, -1
-},
-{
-    0, 1,  -5, 17, 58, -10, 4, -1
-}
+    { 0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    { 0, 1,  -5, 17, 58, -10, 4, -1 }
 };
 
 const char *FilterConf_names[] =
@@ -137,7 +129,7 @@ bool FilterHarness::check_IPFilter_primitive(IPFilter ref, IPFilter opt)
 
 bool FilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 4; value < 16; value++)
+    for (int value = 0; value < 16; value++)
     {
         if (opt.filter[value])
         {
@@ -167,7 +159,7 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
     rand_srcStride = rand() % 100;              // Randomly generated srcStride
     rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-    for (int value = 4; value < 16; value++)
+    for (int value = 0; value < 16; value++)
     {
         memset(IPF_vec_output, 0, ipf_t_size);  // Initialize output buffer to zero
         memset(IPF_C_output, 0, ipf_t_size);    // Initialize output buffer to zero
@@ -182,7 +174,8 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
             }
 
             t->Stop();
-            printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], t->ElapsedMS());
+            float opt_time = t->ElapsedMS();
+            printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], opt_time);
 
             t->Start();
             for (int j = 0; j < FILTER_ITERATIONS; j++)
@@ -193,7 +186,8 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
             }
 
             t->Stop();
-            printf("\tC: (%1.2f ms) ", t->ElapsedMS());
+            float ref_time = t->ElapsedMS();
+            printf("\tC: (%1.2f ms) \t speedup = %1.2f", ref_time, ref_time / opt_time);
         }
     }
 

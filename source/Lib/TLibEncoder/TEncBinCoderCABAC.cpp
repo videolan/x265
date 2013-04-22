@@ -92,14 +92,12 @@ Void TEncBinCABAC::finish()
         {
             m_pcTComBitIf->write(m_bufferedByte, 8);
         }
-
         while (m_numBufferedBytes > 1)
         {
             m_pcTComBitIf->write(0xff, 8);
             m_numBufferedBytes--;
         }
     }
-
     m_pcTComBitIf->write(m_uiLow >> 8, 24 - m_bitsLeft);
 }
 
@@ -165,7 +163,6 @@ Void TEncBinCABAC::resetBits()
     {
         m_uiBinsCoded = 0;
     }
-
 #if FAST_BIT_EST
     m_fracBits &= 32767;
 #endif
@@ -242,7 +239,6 @@ Void TEncBinCABAC::encodeBinEP(UInt binValue)
     {
         m_uiLow += m_uiRange;
     }
-
     m_bitsLeft--;
 
     testAndWriteOut();

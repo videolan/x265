@@ -96,9 +96,13 @@ int CDECL sad_16x16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t s
     int sum = 0;
 
     for (int row = 0; row < ly; row += 16)
+    {
         for (int col = 0; col < lx; col += 16)
-            sum += sad_16<16,16>(piOrg + row * strideOrg + col, strideOrg,
-                                 piCur + row * strideCur + col, strideCur);
+        {
+            sum += sad_16<16, 16>(piOrg + row * strideOrg + col, strideOrg,
+                                  piCur + row * strideCur + col, strideCur);
+        }
+    }
 
     return sum;
 }
@@ -175,13 +179,18 @@ template<int lx, int ly>
 int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int uiSum = 0;
+
     for (int row = 0; row < ly; row += 4)
+    {
         for (int col = 0; col < lx; col += 4)
-            uiSum += satd_4x4( piOrg + strideOrg * row + col, strideOrg,
-                               piCur + strideCur * row + col, strideCur );
+        {
+            uiSum += satd_4x4(piOrg + strideOrg * row + col, strideOrg,
+                              piCur + strideCur * row + col, strideCur);
+        }
+    }
+
     return uiSum;
 }
-
 
 int CDECL sa8d_8x8(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {

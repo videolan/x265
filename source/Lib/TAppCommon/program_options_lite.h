@@ -52,10 +52,9 @@ struct ParseFailure : public std::exception
     ~ParseFailure() throw() {}
 
     std::string arg;
-
     std::string val;
 
-    const char* what() const throw() { return "Option Parse Failure";}
+    const char* what() const throw() { return "Option Parse Failure"; }
 };
 
 void doHelp(std::ostream& out, Options& opts, unsigned columns = 80);
@@ -224,7 +223,7 @@ private:
 
     Options& parent;
 };
-};   /* namespace: program_options_lite */
-}; /* namespace: df */
+}    /* namespace: program_options_lite */
+}  /* namespace: df */
 
 //! \}

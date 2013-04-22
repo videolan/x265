@@ -31,7 +31,7 @@
 #include <stdint.h>
 
 #if ENABLE_ASM_PRIMITIVES
-extern "C" void x264_cpu_emms( void );
+extern "C" void x264_cpu_emms(void);
 #else
 #define x264_cpu_emms()
 #endif

@@ -79,17 +79,17 @@ public:
         m_iRefIdx = iRefIdx;
     }
 
-    Void setRefIdx(Int refIdx) { m_iRefIdx = refIdx;}
+    Void setRefIdx(Int refIdx) { m_iRefIdx = refIdx; }
 
-    TComMv const & getMv() const { return m_acMv;}
+    TComMv const & getMv() const { return m_acMv; }
 
-    TComMv       & getMv()       { return m_acMv;}
+    TComMv       & getMv()       { return m_acMv; }
 
-    Int getRefIdx() const { return m_iRefIdx;}
+    Int getRefIdx() const { return m_iRefIdx;       }
 
-    Int getHor() const { return m_acMv.getHor();}
+    Int getHor() const { return m_acMv.getHor(); }
 
-    Int getVer() const { return m_acMv.getVer();}
+    Int getVer() const { return m_acMv.getVer(); }
 };
 
 /// class for motion information in one CU
@@ -133,13 +133,13 @@ public:
     // get
     // ------------------------------------------------------------------------------------------------------------------
 
-    TComMv const & getMv(Int iIdx) const { return m_pcMv[iIdx];}
+    TComMv const & getMv(Int iIdx) const { return m_pcMv[iIdx]; }
 
-    TComMv const & getMvd(Int iIdx) const { return m_pcMvd[iIdx];}
+    TComMv const & getMvd(Int iIdx) const { return m_pcMvd[iIdx]; }
 
-    Int            getRefIdx(Int iIdx) const { return m_piRefIdx[iIdx];}
+    Int            getRefIdx(Int iIdx) const { return m_piRefIdx[iIdx]; }
 
-    AMVPInfo* getAMVPInfo() { return &m_cAMVPInfo;}
+    AMVPInfo* getAMVPInfo() { return &m_cAMVPInfo; }
 
     // ------------------------------------------------------------------------------------------------------------------
     // set

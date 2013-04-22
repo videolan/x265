@@ -31,6 +31,7 @@ using namespace x265;
 Input* Input::Open(const char *filename)
 {
     const char * s = strrchr(filename, '.');
+
     if (s && !strcmp(s, ".y4m"))
         return new Y4MInput(filename);
     else

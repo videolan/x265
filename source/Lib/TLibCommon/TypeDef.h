@@ -41,6 +41,8 @@
 //! \ingroup TLibCommon
 //! \{
 
+#define FIX1071 1 ///< Temporary fix for issue #1071
+
 #define L0208_SOP_DESCRIPTION_SEI     1 ///< L0208: add SOP descrioption SEI
 #define MAX_NUM_PICS_IN_SOP           1024
 
@@ -74,6 +76,9 @@
 #define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
 #define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
 #define L0386_DB_METRIC            1  ///< L0386: non-normative blockiness metric (automatically configures deblocking parameters in bitstream)
+#define L0323_DPB                     1 ///< L0323: Specification of active reference indices and decoded picture buffer
+
+#define L0034_COMBINED_LIST_CLEANUP 1
 
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
@@ -404,7 +409,9 @@ enum RefPicList
 {
     REF_PIC_LIST_0 = 0, ///< reference list 0
     REF_PIC_LIST_1 = 1, ///< reference list 1
+#if !L0034_COMBINED_LIST_CLEANUP
     REF_PIC_LIST_C = 2, ///< combined reference list for uni-prediction in B-Slices
+#endif
     REF_PIC_LIST_X = 100 ///< special mark
 };
 

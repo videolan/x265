@@ -122,7 +122,9 @@ void MD5Frame::Encode()
     std::stringstream ss;
 
     for (int i = 0; i < 4; i++)
+    {
         ss << std::hex << outdigest[i];
+    }
 
     if (ss.str().compare("da667b741a7a9d0ee862158da2dd1882"))
         std::cout << "Bad hash: " << ss.str() << std::endl;

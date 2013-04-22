@@ -125,10 +125,16 @@ template<int w, int h>
 int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
+
     for (int row = 0; row < h; row += 4)
+    {
         for (int col = 0; col < w; col += 4)
+        {
             satd += satd_4x4(pix1 + row * stride_pix1 + col, stride_pix1,
                              pix2 + row * stride_pix2 + col, stride_pix2);
+        }
+    }
+
     return satd;
 }
 
@@ -136,10 +142,16 @@ template<int w, int h>
 int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
+
     for (int row = 0; row < h; row += 4)
+    {
         for (int col = 0; col < w; col += 8)
+        {
             satd += satd_8x4(pix1 + row * stride_pix1 + col, stride_pix1,
                              pix2 + row * stride_pix2 + col, stride_pix2);
+        }
+    }
+
     return satd;
 }
 
@@ -177,7 +189,7 @@ int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
         sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
     }
 
-    return (int) sum;
+    return (int)sum;
 }
 
 int CDECL pixel_sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
@@ -250,4 +262,4 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d_8x8 = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;
 }
-};
+}

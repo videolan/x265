@@ -151,7 +151,6 @@ Void TComOutputBitstream::writeAlignZero()
     {
         return;
     }
-
     m_fifo->push_back(m_held_bits);
     m_held_bits = 0;
     m_num_held_bits = 0;
@@ -167,6 +166,7 @@ Void   TComOutputBitstream::addSubstream(TComOutputBitstream* pcSubstream)
     UInt uiNumBits = pcSubstream->getNumberOfWrittenBits();
 
     const vector<uint8_t>& rbsp = pcSubstream->getFIFO();
+
     for (vector<uint8_t>::const_iterator it = rbsp.begin(); it != rbsp.end(); )
     {
         write(*it++, 8);
@@ -203,7 +203,6 @@ Int TComOutputBitstream::countStartCodeEmulations()
             {
                 break;
             }
-
             if (*(++found) <= 3)
             {
                 break;
@@ -352,9 +351,9 @@ TComOutputBitstream& TComOutputBitstream::operator =(const TComOutputBitstream& 
 TComInputBitstream *TComInputBitstream::extractSubstream(UInt uiNumBits)
 {
     UInt uiNumBytes = uiNumBits / 8;
-
     std::vector<uint8_t>* buf = new std::vector<uint8_t>;
     UInt uiByte;
+
     for (UInt ui = 0; ui < uiNumBytes; ui++)
     {
         read(8, uiByte);
@@ -368,7 +367,6 @@ TComInputBitstream *TComInputBitstream::extractSubstream(UInt uiNumBits)
         uiByte <<= 8 - (uiNumBits & 0x7);
         buf->push_back(uiByte);
     }
-
     return new TComInputBitstream(buf);
 }
 

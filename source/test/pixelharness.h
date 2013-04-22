@@ -36,13 +36,14 @@ protected:
     bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
 
 public:
+
     PixelHarness();
 
     virtual ~PixelHarness();
 
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt );
+    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 };
 
-#endif
+#endif // ifndef _PIXELHARNESS_H_1

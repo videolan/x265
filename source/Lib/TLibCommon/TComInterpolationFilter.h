@@ -58,47 +58,15 @@ class TComInterpolationFilter
     static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
     static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
-    static Void filterCopy(Int        bitDepth,
-                           Short *    src,
-                           Int        srcStride,
-                           Short *    dst,
-                           Int        dstStride,
-                           Int        width,
-                           Int        height,
-                           Bool       isFirst,
-                           Bool       isLast);
+    static Void filterCopy(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast);
 
     template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
-    static Void filter(Int          bitDepth,
-                       Short *      src,
-                       Int          srcStride,
-                       Short *      dst,
-                       Int          dstStride,
-                       Int          width,
-                       Int          height,
-                       Short const *coeff);
+    static Void filter(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Short const *coeff);
 
     template<Int N>
-    static Void filterHor(Int          bitDepth,
-                          Short *        src,
-                          Int          srcStride,
-                          Short *      dst,
-                          Int          dstStride,
-                          Int          width,
-                          Int          height,
-                          Bool         isLast,
-                          Short const *coeff);
+    static Void filterHor(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height,               Bool isLast, Short const *coeff);
     template<Int N>
-    static Void filterVer(Int          bitDepth,
-                          Short *        src,
-                          Int          srcStride,
-                          Short *      dst,
-                          Int          dstStride,
-                          Int          width,
-                          Int          height,
-                          Bool         isFirst,
-                          Bool         isLast,
-                          Short const *coeff);
+    static Void filterVer(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast, Short const *coeff);
 
 public:
 
@@ -106,40 +74,10 @@ public:
 
     ~TComInterpolationFilter() {}
 
-    Void filterHorLuma(Short *  src,
-                       Int    srcStride,
-                       Short *dst,
-                       Int    dstStride,
-                       Int    width,
-                       Int    height,
-                       Int    frac,
-                       Bool   isLast);
-    Void filterVerLuma(Short *  src,
-                       Int    srcStride,
-                       Short *dst,
-                       Int    dstStride,
-                       Int    width,
-                       Int    height,
-                       Int    frac,
-                       Bool   isFirst,
-                       Bool   isLast);
-    Void filterHorChroma(Short *  src,
-                         Int    srcStride,
-                         Short *dst,
-                         Int    dstStride,
-                         Int    width,
-                         Int    height,
-                         Int    frac,
-                         Bool   isLast);
-    Void filterVerChroma(Short *  src,
-                         Int    srcStride,
-                         Short *dst,
-                         Int    dstStride,
-                         Int    width,
-                         Int    height,
-                         Int    frac,
-                         Bool   isFirst,
-                         Bool   isLast);
+    Void filterHorLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
+    Void filterVerLuma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
+    Void filterHorChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac,               Bool isLast);
+    Void filterVerChroma(Pel *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Int frac, Bool isFirst, Bool isLast);
 };
 
 //! \}
