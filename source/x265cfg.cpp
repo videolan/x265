@@ -961,23 +961,18 @@ Void readIntString(const string inpString, const Int numEntries, Int* &memberArr
 }
 
 #endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
-// ====================================================================================================================
-// Private member functions
-// ====================================================================================================================
 
-Bool confirmPara(Bool bflag, const Char* message);
+static inline Bool confirmPara(Bool bflag, const Char* message)
+{
+    if (!bflag)
+        return false;
+
+    printf("Error: %s\n", message);
+    return true;
+}
 
 Void TAppEncCfg::xCheckParameter()
 {
-    if (!m_decodedPictureHashSEIEnabled)
-    {
-        fprintf(stderr, "******************************************************************\n");
-        fprintf(stderr, "** WARNING: --SEIDecodedPictureHash is now disabled by default. **\n");
-        fprintf(stderr, "**          Automatic verification of decoded pictures by a     **\n");
-        fprintf(stderr, "**          decoder requires this option to be enabled.         **\n");
-        fprintf(stderr, "******************************************************************\n");
-    }
-
     Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a, b) check_failed |= confirmPara(a, b)
     // check range of parameters
@@ -1709,15 +1704,6 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n\n");
 
     fflush(stdout);
-}
-
-Bool confirmPara(Bool bflag, const Char* message)
-{
-    if (!bflag)
-        return false;
-
-    printf("Error: %s\n", message);
-    return true;
 }
 
 //! \}
