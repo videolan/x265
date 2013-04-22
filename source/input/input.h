@@ -29,6 +29,8 @@
 #include <TLibCommon/TypeDef.h>
 
 namespace x265 {
+// private x265 namespace
+
 struct Picture
 {
     void *planes[3];

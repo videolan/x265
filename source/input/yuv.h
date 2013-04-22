@@ -75,7 +75,7 @@ public:
 
     bool isEof() const                            { return !!feof(fp); }
 
-    bool isFail() const                           { return !!fp; }
+    bool isFail() const                           { return !fp; }
 
     void release()
     {
