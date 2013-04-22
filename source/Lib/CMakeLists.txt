@@ -25,5 +25,4 @@ source_group(TAppCommon  FILES ${APPCOMMON})
 source_group(TLibCommon  FILES ${LIBCOMMON})
 source_group(TLibEncoder FILES ${LIBENCODER})
 
-add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON} ${LIBVIDEOIO} ${MD5}
-            encoder.cpp encoder.h)
+add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON} ${LIBVIDEOIO} ${MD5})

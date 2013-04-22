@@ -25,7 +25,7 @@
 #include <iostream>
 #include "TAppCommon/program_options_lite.h"
 #include "primitives.h"
-#include "encoder.h"
+#include "x265enc.h"
 #include "PPA/ppa.h"
 
 using namespace std;

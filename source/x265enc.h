@@ -60,10 +60,8 @@ private:
 
     // class interface
     TEncTop                    m_cTEncTop;                    ///< encoder class
-    //TVideoIO                m_cTVideoIOYuvInputFile;       ///< input YUV file
-    //TVideoIO                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
 
-    TComList<TComPicYuv *>      m_cListPicYuvRec;             ///< list of reconstruction YUV files
+    TComList<TComPicYuv *>     m_cListPicYuvRec;              ///< list of reconstruction YUV files
 
     Int                        m_iFrameRcvd;                  ///< number of received frames
 

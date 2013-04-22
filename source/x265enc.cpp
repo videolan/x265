@@ -42,7 +42,7 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#include "encoder.h"
+#include "x265enc.h"
 #include "TLibEncoder/AnnexBwrite.h"
 #include "PPA/ppa.h"
 
