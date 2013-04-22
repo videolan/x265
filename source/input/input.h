@@ -26,7 +26,6 @@
 
 #include <stdint.h>
 #include <iostream>
-#include <TLibCommon/TypeDef.h>
 
 namespace x265 {
 // private x265 namespace
@@ -38,8 +37,6 @@ struct Picture
     int   stride[3];
 
     int   bitDepth;
-
-    ChromaFormat csp;
 };
 
 class Input

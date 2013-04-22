@@ -48,11 +48,11 @@ Y4MInput::~Y4MInput()
 #endif
 void Y4MInput::parseHeader()
 {
-    Char source[5];
-    Int t_width = 0;
-    Int t_height = 0;
-    Int t_rateNumerator = 0;
-    Int t_rateDenominator = 0;
+    char source[5];
+    int t_width = 0;
+    int t_height = 0;
+    int t_rateNumerator = 0;
+    int t_rateDenominator = 0;
 
     while (1)
     {
