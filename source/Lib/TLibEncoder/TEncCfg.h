@@ -140,7 +140,8 @@ protected:
                                                  // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
-    Bool m_useAMP;
+    Bool      m_useAMP;
+
     //======= Transform =============
     UInt      m_uiQuadtreeTULog2MaxSize;
     UInt      m_uiQuadtreeTULog2MinSize;
@@ -163,6 +164,7 @@ protected:
 
     //====== Lossless ========
     Bool      m_useLossless;
+
     //====== Motion search ========
     Int       m_iFastSearch;                    //  0:Full search  1:Diamond  2:PMVFAST
     Int       m_iSearchRange;                   //  0:Full frame
@@ -300,7 +302,7 @@ protected:
 #endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    TComVPS                    m_cVPS;
+    TComVPS   m_cVPS;
     Bool      m_recalculateQPAccordingToLambda;               ///< recalculate QP value according to the lambda value
     Int       m_activeParameterSetsSEIEnabled;                ///< enable active parameter set SEI message
     Bool      m_vuiParametersPresentFlag;                     ///< enable generation of VUI parameters
@@ -349,9 +351,9 @@ public:
         delete[] m_puiRowHeight;
     }
 
-    Void setProfile(Profile::Name profile) { m_profile = profile; }
+    Void      setProfile(Profile::Name profile) { m_profile = profile; }
 
-    Void setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
+    Void      setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
 
     Void      setFrameRate(Int i)      { m_iFrameRate = i; }
 
@@ -464,9 +466,9 @@ public:
 
     Int       getFramesToBeEncoded()      { return m_framesToBeEncoded; }
 
-    void setLambdaModifier(UInt uiIndex, Double dValue) { m_adLambdaModifier[uiIndex] = dValue; }
+    void      setLambdaModifier(UInt uiIndex, Double dValue) { m_adLambdaModifier[uiIndex] = dValue; }
 
-    Double getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
+    Double    getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
     UInt      getIntraPeriod()      { return m_uiIntraPeriod; }
@@ -578,16 +580,16 @@ public:
 
 #if !L0034_COMBINED_LIST_CLEANUP
     Bool      getUseLComb()      { return m_bUseLComb;   }
-
 #endif
-    Bool      getUseRDOQ()      { return m_useRDOQ;    }
+
+    Bool      getUseRDOQ()       { return m_useRDOQ;    }
 
     Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
 
 #if L0232_RD_PENALTY
-    Int      getRDpenalty()      { return m_rdPenalty;  }
-
+    Int       getRDpenalty()      { return m_rdPenalty;  }
 #endif
+
     Bool      getUseFastEnc()      { return m_bUseFastEnc; }
 
     Bool      getUseEarlyCU()      { return m_bUseEarlyCU; }
@@ -610,13 +612,13 @@ public:
 
     UInt      getPCMLog2MinSize()      { return m_uiPCMLog2MinSize;  }
 
-    Bool getUseTransformSkip()      { return m_useTransformSkip;        }
+    Bool      getUseTransformSkip()      { return m_useTransformSkip;        }
 
-    Void setUseTransformSkip(Bool b) { m_useTransformSkip  = b;       }
+    Void      setUseTransformSkip(Bool b) { m_useTransformSkip  = b;       }
 
-    Bool getUseTransformSkipFast()      { return m_useTransformSkipFast;    }
+    Bool      getUseTransformSkipFast()      { return m_useTransformSkipFast;    }
 
-    Void setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
+    Void      setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
 
     Int*      getdQPs()      { return m_aidQP;       }
 
