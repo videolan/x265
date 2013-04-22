@@ -40,19 +40,15 @@
 #include <cstring>
 #include <string>
 #include <math.h>
+#include "TAppCommon/program_options_lite.h"
 #include "TLibCommon/TComRom.h"
+#include "TLibEncoder/TEncRateCtrl.h"
+#include "primitives.h"
 #include "x265cfg.h"
 
 static istream& operator >>(istream &, Level::Name &);
 static istream& operator >>(istream &, Level::Tier &);
 static istream& operator >>(istream &, Profile::Name &);
-
-#include "TAppCommon/program_options_lite.h"
-#include "TLibEncoder/TEncRateCtrl.h"
-
-#ifdef WIN32
-#define strdup _strdup
-#endif
 
 using namespace std;
 namespace po = df::program_options_lite;
@@ -260,6 +256,8 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 {
     Bool do_help = false;
 
+    int cpuid;
+
     string cfg_InputFile;
     string cfg_BitstreamFile;
     string cfg_ReconFile;
@@ -286,7 +284,9 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("help", do_help, false, "this help text")
         ("c", po::parseConfigFile, "configuration file name")
 
-    // File, I/O and source parameters
+        ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
+
+        // File, I/O and source parameters
         ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
         ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
         ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -394,7 +394,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         false)
 #endif
 
-    // Coding tools
+        // Coding tools
         ("AMP",                      m_enableAMP,                 true,  "Enable asymmetric motion partitions")
         ("TransformSkip",            m_useTransformSkip,          false, "Intra transform skipping")
         ("TransformSkipFast",        m_useTransformSkipFast,      false, "Fast intra transform skipping")
@@ -588,11 +588,20 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     }
 
     po::setDefaults(opts);
-    const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**)argv);
 
-    for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
+    try
     {
-        fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
+        const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**)argv);
+
+        for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
+        {
+            fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
+        }
+    }
+    catch (po::ParseFailure &e)
+    {
+        cerr << "Error parsing option \"" << e.arg << "\" with argument \"" << e.val << "\"." << endl;
+        return false;
     }
 
     if (argc == 1 || do_help)
@@ -601,6 +610,8 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         po::doHelp(cout, opts);
         return false;
     }
+
+    x265::SetupPrimitives(cpuid);
 
     /*
      * Set any derived parameters

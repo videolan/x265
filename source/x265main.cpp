@@ -23,13 +23,10 @@
 
 #include <time.h>
 #include <iostream>
-#include "TAppCommon/program_options_lite.h"
-#include "primitives.h"
 #include "x265enc.h"
 #include "PPA/ppa.h"
 
 using namespace std;
-namespace po = df::program_options_lite;
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
@@ -38,55 +35,35 @@ int main(int argc, char *argv[])
 {
     TAppEncTop  cTAppEncTop;
 
-    fprintf(stdout, "x265 HEVC encoder version %s\n", XSTR(X265_VERSION));
-
     PPA_INIT();
 
-    // create application encoder class
-    cTAppEncTop.create();
-
-    // parse configuration
-    try
-    {
-        if (!cTAppEncTop.parseCfg(argc, argv))
-        {
-            cTAppEncTop.destroy();
-            return 1;
-        }
-    }
-    catch (po::ParseFailure &e)
-    {
-        cerr << "Error parsing option \"" << e.arg << "\" with argument \"" << e.val << "\"." << endl;
-        return 1;
-    }
-
-    // TODO: CPUID should be a command line parameter
-    int cpuid = 0;
-    x265::SetupPrimitives(cpuid);
-
+    fprintf(stdout, "x265 HEVC encoder version %s\n", XSTR(X265_VERSION));
     fprintf(stdout, "x265: build info ");
     fprintf(stdout, NVM_ONOS);
     fprintf(stdout, NVM_COMPILEDBY);
     fprintf(stdout, NVM_BITS);
+#if HIGH_BIT_DEPTH
+    fprintf(stdout, " 16bpp");
+#else
+    fprintf(stdout, " 8bpp");
+#endif
     fprintf(stdout, "\n");
 
-#if HIGH_BIT_DEPTH
-    fprintf(stdout, "x265: high bit depth support enabled\n");
-#else
-    fprintf(stdout, "x265: 8bpp only\n");
-#endif
+    cTAppEncTop.create();
 
-    // starting time
+    if (!cTAppEncTop.parseCfg(argc, argv))
+    {
+        cTAppEncTop.destroy();
+        return 1;
+    }
+ 
     long lBefore = clock();
 
-    // call encoding function
     cTAppEncTop.encode();
 
-    // ending time
     double dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
     printf("\n Total Time: %12.3f sec.\n", dResult);
 
-    // destroy application encoder class
     cTAppEncTop.destroy();
 
     return 0;
