@@ -97,7 +97,10 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setFrameSkip(m_FrameSkip);
     m_cTEncTop.setSourceWidth(m_iSourceWidth);
     m_cTEncTop.setSourceHeight(m_iSourceHeight);
+    m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
     m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
+    int nullpad[2] = { 0, 0 };
+    m_cTEncTop.setPad(nullpad);
 
     //====== Coding Structure ========
     m_cTEncTop.setIntraPeriod(m_iIntraPeriod);
