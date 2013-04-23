@@ -25,8 +25,6 @@
 #define _INPUT_H_
 
 #include "x265.h"
-#include <stdint.h>
-#include <iostream>
 
 namespace x265 {
 // private x265 namespace

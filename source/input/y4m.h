@@ -26,7 +26,6 @@
 
 #include "input.h"
 #include <fstream>
-#include <stdint.h>
 
 namespace x265 {
 // x265 private namespace
