@@ -248,7 +248,7 @@ void CDECL filter_Vertical_16bit(const short *coeff, pixel *src, int srcStride, 
 }
 
 template<int N, bool isFirst, bool isLast>
-void CDECL filter_Vertical(const short *coeff, pixel *src, int srcstride, pixel *dst, int dststride, int block_width,
+void CDECL filter_Vertical(const short *coeff, short *src, int srcstride, short *dst, int dststride, int block_width,
                            int block_height, int bitdepth)
 {
     int row, col;
