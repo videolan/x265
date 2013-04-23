@@ -1153,7 +1153,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
             {
-                pReco[uiX] = ClipY(pPred[uiX] + pResi[uiX]);
+                pReco[uiX] = ClipY(static_cast<Int>(pPred[uiX]) + pResi[uiX]);
                 pRecQt[uiX] = pReco[uiX];
                 pRecIPred[uiX] = pReco[uiX];
             }
