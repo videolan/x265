@@ -25,6 +25,7 @@
 #define _YUV_H_
 
 #include "output.h"
+#include <fstream>
 #include <stdio.h>
 
 namespace x265 {
@@ -42,7 +43,7 @@ protected:
 
     char *buf;
 
-    FILE *fp;
+    std::ofstream ofs;
 
 public:
 
