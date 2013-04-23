@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "PPA/ppa.h"
 #include "output.h"
 #include "yuv.h"
 
@@ -44,6 +45,7 @@ YUVOutput::~YUVOutput()
 
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
+    PPAStartCpuEventFunc(write_yuv);
     int pixelbytes = (depth > 8) ? 2 : 1;
 
     if (pic.bitDepth > 8 && depth == 8)
@@ -96,5 +98,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             V += pic.stride[2] * pixelbytes;
         }
     }
+
+    PPAStopCpuEventFunc(write_yuv);
     return true;
 }

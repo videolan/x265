@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "PPA/ppa.h"
 #include "output.h"
 #include "y4m.h"
 
@@ -45,9 +46,9 @@ Y4MOutput::~Y4MOutput()
     if (buf) delete [] buf;
 }
 
-
 bool Y4MOutput::writePicture(const x265_picture& pic)
 {
+    PPAStartCpuEventFunc(write_yuv);
     ofs << "FRAME\n";
 
     if (pic.bitDepth > 8)
@@ -100,5 +101,6 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         }
     }
 
+    PPAStopCpuEventFunc(write_yuv);
     return true;
 }
