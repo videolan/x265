@@ -5885,15 +5885,15 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
     Short *srcPtr = (Short*)pattern->getROIY() - halfFilterSize * srcStride - 1;
 
     filterCopy(srcPtr + halfFilterSize * srcStride + 1, srcStride, m_filteredBlock[0][0].getLumaAddr(), dstStride, width, height);
-    filterVertical_pel_pel<NTAPS_LUMA>(8, (Pel*)srcPtr + (halfFilterSize - 1) * srcStride + 1, srcStride, (Pel*)m_filteredBlock[2][0].getLumaAddr(),
+    filterVertical_pel_pel<NTAPS_LUMA>(8, srcPtr + (halfFilterSize - 1) * srcStride + 1, srcStride, m_filteredBlock[2][0].getLumaAddr(),
                                        dstStride, width, height + 1, m_lumaFilter[2]);
 
-    filterHorizontal_pel_pel<NTAPS_LUMA>(8, (Pel*)srcPtr + (halfFilterSize) * srcStride, srcStride, (Pel*)m_filteredBlock[0][2].getLumaAddr(),
+    filterHorizontal_pel_pel<NTAPS_LUMA>(8, srcPtr + (halfFilterSize) * srcStride, srcStride, m_filteredBlock[0][2].getLumaAddr(),
                                          dstStride, width + 1, height + 0, m_lumaFilter[2]);
     filterHorizontal_pel_short<NTAPS_LUMA>(8, srcPtr, srcStride, filteredBlockTmp[2].getLumaAddr(), intStride, width + 1,
                                            height + filterSize,  m_lumaFilter[2]);
     intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
-    dstPtr = (Pel*)m_filteredBlock[2][2].getLumaAddr();
+    dstPtr = m_filteredBlock[2][2].getLumaAddr();
     filterVertical_short_pel<NTAPS_LUMA>(8, intPtr, intStride, dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
 }
 
@@ -5922,7 +5922,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     Int extHeight = (halfPelRef.getVer() == 0) ? height + filterSize : height + filterSize - 1;
 
     // Horizontal filter 1/4
-    srcPtr = (Short*)pattern->getROIY() - halfFilterSize * srcStride - 1;
+    srcPtr = pattern->getROIY() - halfFilterSize * srcStride - 1;
     intPtr = filteredBlockTmp[1].getLumaAddr();
     if (halfPelRef.getVer() > 0)
     {
@@ -5935,7 +5935,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     filterHorizontal_pel_short<NTAPS_LUMA>(8, srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[1]);
 
     // Horizontal filter 3/4
-    srcPtr = (Short*)pattern->getROIY() - halfFilterSize * srcStride - 1;
+    srcPtr = pattern->getROIY() - halfFilterSize * srcStride - 1;
     intPtr = filteredBlockTmp[3].getLumaAddr();
     if (halfPelRef.getVer() > 0)
     {
@@ -5949,7 +5949,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
     // Generate @ 1,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
-    dstPtr = (Short*)m_filteredBlock[1][1].getLumaAddr();
+    dstPtr = m_filteredBlock[1][1].getLumaAddr();
     if (halfPelRef.getVer() == 0)
     {
         intPtr += intStride;
@@ -5958,14 +5958,14 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
     // Generate @ 3,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
-    dstPtr = (Short*)m_filteredBlock[3][1].getLumaAddr();
+    dstPtr = m_filteredBlock[3][1].getLumaAddr();
     filterVertical_short_pel<NTAPS_LUMA>(8, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
 
     if (halfPelRef.getVer() != 0)
     {
         // Generate @ 2,1
         intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
-        dstPtr = (Short*)m_filteredBlock[2][1].getLumaAddr();
+        dstPtr = m_filteredBlock[2][1].getLumaAddr();
         if (halfPelRef.getVer() == 0)
         {
             intPtr += intStride;
@@ -5974,7 +5974,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
         // Generate @ 2,3
         intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
-        dstPtr = (Short*)m_filteredBlock[2][3].getLumaAddr();
+        dstPtr = m_filteredBlock[2][3].getLumaAddr();
         if (halfPelRef.getVer() == 0)
         {
             intPtr += intStride;
@@ -5985,12 +5985,12 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         // Generate @ 0,1
         intPtr = filteredBlockTmp[1].getLumaAddr() + halfFilterSize * intStride;
-        dstPtr = (Short*)m_filteredBlock[0][1].getLumaAddr();
+        dstPtr = m_filteredBlock[0][1].getLumaAddr();
         filterConvert(8, intPtr, intStride, dstPtr, dstStride, width, height);
 
         // Generate @ 0,3
         intPtr = filteredBlockTmp[3].getLumaAddr() + halfFilterSize * intStride;
-        dstPtr = (Short*)m_filteredBlock[0][3].getLumaAddr();
+        dstPtr = m_filteredBlock[0][3].getLumaAddr();
         filterConvert(8, intPtr, intStride, dstPtr, dstStride, width, height);
     }
 
@@ -5998,7 +5998,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         // Generate @ 1,2
         intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
-        dstPtr = (Short*)m_filteredBlock[1][2].getLumaAddr();
+        dstPtr = m_filteredBlock[1][2].getLumaAddr();
         if (halfPelRef.getHor() > 0)
         {
             intPtr += 1;
@@ -6011,7 +6011,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
         // Generate @ 3,2
         intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
-        dstPtr = (Short*)m_filteredBlock[3][2].getLumaAddr();
+        dstPtr = m_filteredBlock[3][2].getLumaAddr();
         if (halfPelRef.getHor() > 0)
         {
             intPtr += 1;
@@ -6025,8 +6025,8 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     else
     {
         // Generate @ 1,0
-        intPtr = (Short*)pattern->getROIY()  - srcStride;
-        dstPtr = (Short*)m_filteredBlock[1][0].getLumaAddr();
+        intPtr = pattern->getROIY()  - srcStride;
+        dstPtr = m_filteredBlock[1][0].getLumaAddr();
         if (halfPelRef.getVer() >= 0)
         {
             intPtr += srcStride;
@@ -6045,7 +6045,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
     // Generate @ 1,3
     intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
-    dstPtr = (Short*)m_filteredBlock[1][3].getLumaAddr();
+    dstPtr = m_filteredBlock[1][3].getLumaAddr();
     if (halfPelRef.getVer() == 0)
     {
         intPtr += intStride;
@@ -6054,7 +6054,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 
     // Generate @ 3,3
     intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
-    dstPtr = (Short*)m_filteredBlock[3][3].getLumaAddr();
+    dstPtr = m_filteredBlock[3][3].getLumaAddr();
     filterVertical_short_pel<NTAPS_LUMA>(8, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
 }
 
