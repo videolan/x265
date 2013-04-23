@@ -44,6 +44,8 @@ static void byteReverse(uint8_t_t *buf, unsigned int nSize)
 }
 #endif
 
+void MD5Transform(uint32_t *buf, uint32_t *in);
+
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
