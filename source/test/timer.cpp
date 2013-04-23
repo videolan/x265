@@ -57,25 +57,24 @@ class TimerImpl : public Timer
 {
 protected:
 
-    timespec ts;
+    timespec start, finish;
 
 public:
 
     void Start()
     {
-        ts.tv_sec = 0;
-        ts.tv_nsec = 0;
-        clock_settime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     }
 
     void Stop()
     {
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
     }
 
     uint64_t Elapsed()
     {
-        return (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
+        return (uint64_t)(finish.tv_sec - start.tv_sec) * 1000000000 + 
+               (finish.tv_nsec - start.tv_nsec);
     }
 
     void Release()      { delete this; }
