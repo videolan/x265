@@ -135,7 +135,7 @@ void MD5Frame::ProcessRow(int rownum)
     // Called by worker thread
     RowData &curRow = this->row[rownum];
 
-    assert(rownum < this->numrows);
+    assert(rownum < this->numrows && rownum >= 0);
     assert(curRow.curCol < this->numcols);
 
     while (curRow.curCol < this->numcols)
