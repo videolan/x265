@@ -661,7 +661,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     if (!cfg_ReconFile.empty())
     {
         printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
-        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceWidth, m_outputBitDepthY);
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepthY);
     }
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());

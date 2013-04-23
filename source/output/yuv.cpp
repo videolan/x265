@@ -32,33 +32,68 @@ YUVOutput::YUVOutput(const char *filename, int t_width, int t_height, int t_bitd
     width = t_width;
     height = t_height;
     depth = t_bitdepth;
+    buf = new char[width];
 }
 
 YUVOutput::~YUVOutput()
 {
     if (fp) fclose(fp);
+    if (buf) delete [] buf;
 }
 
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
     char *Y = (char*)pic.planes[0];
     int pixelbytes = (depth > 8) ? 2 : 1;
-    for (int i = 0; i < height; i++)
+
+    if (pic.bitDepth > 8 && depth == 8)
     {
-        fwrite(Y, sizeof(char), width * pixelbytes, fp);
-        Y += pic.stride[0];
+        // encoder gave us short pixels, downscale, then write
+        short *Y = (short*)pic.planes[0];
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+                buf[j] = (char) Y[j];
+            fwrite(buf, sizeof(char), width, fp);
+            Y += pic.stride[0];
+        }
+        short *U = (short*)pic.planes[1];
+        for (int i = 0; i < height >> 1; i++)
+        {
+            for (int j = 0; j < width >> 1; j++)
+                buf[j] = (char) U[j];
+            fwrite(buf, sizeof(char), width >> 1, fp);
+            U += pic.stride[1];
+        }
+        short *V = (short*)pic.planes[2];
+        for (int i = 0; i < height >> 1; i++)
+        {
+            for (int j = 0; j < width >> 1; j++)
+                buf[j] = (char) V[j];
+            fwrite(buf, sizeof(char), width >> 1, fp);
+            V += pic.stride[2];
+        }
     }
-    char *U = (char*)pic.planes[1];
-    for (int i = 0; i < height >> 1; i++)
+    else
     {
-        fwrite(U, sizeof(char), (width>>1) * pixelbytes, fp);
-        U += pic.stride[1];
-    }
-    char *V = (char*)pic.planes[2];
-    for (int i = 0; i < height >> 1; i++)
-    {
-        fwrite(V, sizeof(uint8_t), (width>>1) * pixelbytes, fp);
-        V += pic.stride[2];
+        // encoder gave us byte pixels, write them directly
+        for (int i = 0; i < height; i++)
+        {
+            fwrite(Y, sizeof(char), width * pixelbytes, fp);
+            Y += pic.stride[0];
+        }
+        char *U = (char*)pic.planes[1];
+        for (int i = 0; i < height >> 1; i++)
+        {
+            fwrite(U, sizeof(char), (width>>1) * pixelbytes, fp);
+            U += pic.stride[1];
+        }
+        char *V = (char*)pic.planes[2];
+        for (int i = 0; i < height >> 1; i++)
+        {
+            fwrite(V, sizeof(char), (width>>1) * pixelbytes, fp);
+            V += pic.stride[2];
+        }
     }
     return true;
 }

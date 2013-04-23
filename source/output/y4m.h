@@ -40,6 +40,8 @@ protected:
 
     FILE* fp;
 
+    char *buf;
+
     void writeHeader();
 
 public:

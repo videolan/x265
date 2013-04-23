@@ -40,6 +40,8 @@ protected:
 
     int depth;
 
+    char *buf;
+
     FILE *fp;
 
 public:
