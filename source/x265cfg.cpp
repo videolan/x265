@@ -61,16 +61,15 @@ namespace po = df::program_options_lite;
 // ====================================================================================================================
 
 TAppEncCfg::TAppEncCfg()
-    : m_pchInputFile()
-    , m_pchBitstreamFile()
-    , m_pchReconFile()
+    : m_pchBitstreamFile()
     , m_pchdQPFile()
     , m_pColumnWidth()
     , m_pRowHeight()
     , m_scalingListFile()
 {
     m_aidQP = NULL;
-    handler_recon = NULL;
+    m_input = NULL;
+    m_recon = NULL;
 #if J0149_TONE_MAPPING_SEI
     m_startOfCodedInterval = NULL;
     m_codedPivotValue = NULL;
@@ -80,6 +79,14 @@ TAppEncCfg::TAppEncCfg()
 
 TAppEncCfg::~TAppEncCfg()
 {
+    if (m_input)
+    {
+        m_input->release();
+    }
+    if (m_recon)
+    {
+        m_recon->release();
+    }
     if (m_aidQP)
     {
         delete[] m_aidQP;
@@ -101,9 +108,7 @@ TAppEncCfg::~TAppEncCfg()
         m_targetPivotValue = NULL;
     }
 #endif // if J0149_TONE_MAPPING_SEI
-    free(m_pchInputFile);
     free(m_pchBitstreamFile);
-    free(m_pchReconFile);
     free(m_pchdQPFile);
     free(m_pColumnWidth);
     free(m_pRowHeight);
@@ -259,8 +264,8 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     int cpuid;
 
     string cfg_InputFile;
-    string cfg_BitstreamFile;
     string cfg_ReconFile;
+    string cfg_BitstreamFile;
     string cfg_dQPFile;
     string cfg_ColumnWidth;
     string cfg_RowHeight;
@@ -617,19 +622,17 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
      * Set any derived parameters
      */
     /* convert std::string to c string for compatability */
-    m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
     m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
-    m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
     m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 
     /* parse the width, height, frame rate from the y4m files if it is not given in the configuration file */
-    m_input = x265::Input::Open(m_pchInputFile);
-
+    m_input = x265::Input::Open(cfg_InputFile.c_str());
     if (!m_input || m_input->isFail())
     {
         printf("Unable to open source file\n");
         return 1;
     }
+    printf("Input          File          : %s\n", cfg_InputFile.c_str());
 
     if (m_input->getWidth())
     {
@@ -650,6 +653,16 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
     if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
     if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
+
+    if (m_FrameSkip && m_input)
+    {
+        m_input->skipFrames(m_FrameSkip);
+    }
+    if (!cfg_ReconFile.empty())
+    {
+        printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceWidth, m_outputBitDepthY);
+    }
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
     Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
@@ -880,10 +893,11 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         }
     }
 #endif // if J0149_TONE_MAPPING_SEI
+
     // check validity of input parameters
     xCheckParameter();
 
-    // set global varibles
+    // set global variables
     xSetGlobal();
 
     // print-out parameters
@@ -1604,9 +1618,7 @@ Void TAppEncCfg::xSetGlobal()
 Void TAppEncCfg::xPrintParameter()
 {
     printf("\n");
-    printf("Input          File          : %s\n", m_pchInputFile);
     printf("Bitstream      File          : %s\n", m_pchBitstreamFile);
-    printf("Reconstruction File          : %s\n", m_pchReconFile);
     printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate);
     printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate);
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);

@@ -710,7 +710,7 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
 
 #if FIX1071
             // Deal with bitstream restriction stating that:
-            // – If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+            // - If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
             // Ideally this process should not be repeated for each slice in a picture
             TComReferencePictureSet altRps;
             Bool useAltRps = false;

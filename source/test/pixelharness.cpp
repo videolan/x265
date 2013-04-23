@@ -148,101 +148,48 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     return true;
 }
 
-#define PIXELCMP_ITERATIONS 2000000
-
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     Timer *t = Timer::CreateTimer();
+
+    int iters = 2000000;
 
     for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
     {
         if (opt.satd[curpar])
         {
-            printf("\nsatd[%s]\topt: ", FuncNames[curpar]);
-
-            t->Start();
-            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-            {
-                opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
-            }
-
-            t->Stop();
-            printf("(%1.2f ms)\t", t->ElapsedMS());
-
-            t->Start();
-            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-            {
-                ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
-            }
-
-            t->Stop();
-            printf("C: (%1.2f ms)", t->ElapsedMS());
+            printf("satd[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(iters,
+                           opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
+                           ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
         }
 
         if (opt.sad[curpar])
         {
-            printf("\nsad[%s]\topt: ", FuncNames[curpar]);
-
-            t->Start();
-            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-            {
-                opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
-            }
-
-            t->Stop();
-            printf("(%1.2f ms)\t", t->ElapsedMS());
-
-            t->Start();
-            for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-            {
-                ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE);
-            }
-
-            t->Stop();
-            printf("C: (%1.2f ms) ", t->ElapsedMS());
+            printf("sad[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(iters,
+                opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
+                ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
         }
+
+        // adaptive iteration count, reduce as partition size increases
+        if ((curpar & 7) == 7) iters >>= 1;
     }
 
     if (opt.sa8d_8x8)
     {
-        t->Start();
-        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-        {
-            opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
-        }
-
-        t->Stop();
-        printf("\nsa8d_8x8\tVec: (%1.2f ms) ", t->ElapsedMS());
-
-        t->Start();
-        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-        {
-            ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE);
-        }
-
-        t->Stop();
-        printf("\tC: (%1.2f ms) ", t->ElapsedMS());
+        printf("sa8d_8x8");
+        REPORT_SPEEDUP(iters,
+            opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE),
+            ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
     if (opt.sa8d_16x16)
     {
-        t->Start();
-        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-        {
-            opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
-        }
-
-        t->Stop();
-        printf("\nsa8d_16x16\tVec: (%1.2f ms) ", t->ElapsedMS());
-
-        t->Start();
-        for (int j = 0; j < PIXELCMP_ITERATIONS; j++)
-        {
-            ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE);
-        }
-
-        t->Stop();
-        printf("\tC: (%1.2f ms) ", t->ElapsedMS());
+        printf("sa8d_16x16");
+        REPORT_SPEEDUP(iters,
+            opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE),
+            ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
     t->Release();

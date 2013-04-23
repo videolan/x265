@@ -21,58 +21,32 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _TESTHARNESS_H_
-#define _TESTHARNESS_H_ 1
+#ifndef _OUTPUT_H_
+#define _OUTPUT_H_
 
-#include "primitives.h"
+#include "x265.h"
 #include <stdint.h>
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+namespace x265 {
+// private x265 namespace
 
-class TestHarness
+class Output
 {
+
+protected:
+
+    virtual ~Output()  {}
+
 public:
 
-    TestHarness() {}
+    Output()           {}
 
-    virtual ~TestHarness() {}
+    static  Output* Open(const char *fname, int width, int height, int bitdepth);
 
-    virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    virtual void release() = 0;
 
-    virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+    virtual bool writePicture(const x265_picture& pic) = 0;
 };
-
-class Timer
-{
-public:
-
-    Timer() {}
-
-    virtual ~Timer() {}
-
-    static Timer *CreateTimer();
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
-
-    virtual uint64_t Elapsed() = 0;
-
-    virtual void Release() = 0;
-};
-
-#define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
-{ \
-    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNOPT; } t->Stop(); \
-    uint64_t optelapsed = t->Elapsed(); \
-    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNREF; } t->Stop(); \
-    uint64_t refelapsed = t->Elapsed(); \
-    printf("\t%3.2fx\n", (double)refelapsed/optelapsed); \
 }
 
-#endif // ifndef _TESTHARNESS_H_
+#endif // _OUTPUT_H_
