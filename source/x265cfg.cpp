@@ -625,7 +625,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         printf("Unable to open source file\n");
         return 1;
     }
-    printf("Input          File          : %s\n", cfg_InputFile.c_str());
 
     if (m_input->getWidth())
     {
@@ -656,6 +655,13 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     {
         m_input->skipFrames(m_FrameSkip);
     }
+
+    int numRemainingFrames = m_input->guessFrameCount();
+
+    m_framesToBeEncoded = m_framesToBeEncoded ? min(m_framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+
+    printf("Input          File          : %s (%d frames)\n", cfg_InputFile.c_str(), numRemainingFrames);
+
     if (!cfg_ReconFile.empty())
     {
         printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
