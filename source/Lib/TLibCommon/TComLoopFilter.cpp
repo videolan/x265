@@ -870,12 +870,12 @@ __inline Bool TComLoopFilter::xUseStrongFiltering(Int offset, Int d, Int beta, I
 
 __inline Int TComLoopFilter::xCalcDP(Pel* piSrc, Int iOffset)
 {
-    return abs(piSrc[-iOffset * 3] - 2 * piSrc[-iOffset * 2] + piSrc[-iOffset]);
+    return abs(static_cast<Int>(piSrc[-iOffset * 3]) - 2 * piSrc[-iOffset * 2] + piSrc[-iOffset]);
 }
 
 __inline Int TComLoopFilter::xCalcDQ(Pel* piSrc, Int iOffset)
 {
-    return abs(piSrc[0] - 2 * piSrc[iOffset] + piSrc[iOffset * 2]);
+    return abs(static_cast<Int> (piSrc[0]) - 2 * piSrc[iOffset] + piSrc[iOffset * 2]);
 }
 
 //! \}
