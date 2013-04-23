@@ -224,6 +224,27 @@ bool MBDstHarness::check_butterfly8_inverse_primitive(butterfly ref, butterfly o
     return true;
 }
 
+bool MBDstHarness::check_butterfly16_inverse_primitive(butterfly ref, butterfly opt)
+{
+    int j = 0;
+    int mem_cmp_size = 320; // 2*16*10 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 5; i++)
+    {
+        opt(mbuf1 + j, mbuf2, 3, 10);
+        ref(mbuf1 + j, mbuf3, 3, 10);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0, mem_cmp_size);
+        memset(mbuf3, 0, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.inversedst)
@@ -280,6 +301,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.partial_butterfly[butterfly_inverse_16])
+    {
+        if (!check_butterfly16_inverse_primitive(ref.partial_butterfly[butterfly_inverse_16], opt.partial_butterfly[butterfly_inverse_16]))
+        {
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_16]);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -293,8 +323,8 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("InverseDST");
         REPORT_SPEEDUP(MBDST_ITERATIONS,
-            opt.inversedst(mbuf1, mbuf2, 16),
-            ref.inversedst(mbuf1, mbuf2, 16));
+                       opt.inversedst(mbuf1, mbuf2, 16),
+                       ref.inversedst(mbuf1, mbuf2, 16));
     }
 
     for (int value = 0; value < 8; value++)
@@ -305,8 +335,8 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("partialButterfly%s", ButterflyConf_names[value]);
             REPORT_SPEEDUP(MBDST_ITERATIONS,
-                opt.partial_butterfly[value](mbuf1, mbuf2, 3, 10),
-                ref.partial_butterfly[value](mbuf1, mbuf2, 3, 10));
+                           opt.partial_butterfly[value](mbuf1, mbuf2, 3, 10),
+                           ref.partial_butterfly[value](mbuf1, mbuf2, 3, 10));
         }
     }
 

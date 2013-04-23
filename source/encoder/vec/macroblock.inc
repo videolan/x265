@@ -1062,6 +1062,7 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
     int add = 1 << (shift - 1);
 
     Vec4i dst_second(32767);
+    Vec4i dst_first(-32768);
 
     for (j = 0; j < line; j++)
     {
@@ -1098,10 +1099,12 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
         E_O_diff = permute4i<3, 2, 1, 0>(E_O_diff);
 
         Vec4i first_four_min_value;
-        first_four_min_value = min(dst_second, E_O_sum);
+        first_four_min_value = max(dst_first, E_O_sum);
+        first_four_min_value = min(first_four_min_value, dst_second);
 
         Vec4i second_four_min_value;
-        second_four_min_value = min(dst_second, E_O_diff);
+        second_four_min_value = max(dst_first, E_O_diff);
+        second_four_min_value = min(second_four_min_value, dst_second);
 
         Vec4i all_zero(0);
         Vec8s first_four_final_value = compress(first_four_min_value, all_zero);
@@ -1112,6 +1115,89 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
 
         src++;
         dst += 8;
+    }
+}
+
+void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line)
+{
+    int j;
+
+    Vec4i dst_second(32767);
+    Vec4i dst_first(-32768);
+    int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        int O_first = 90 * src[line] + 87 * src[3 * line] + 80 * src[5 * line] + 70 * src[7 * line] + 57 * src[9 * line] + 43 * src[11 * line] +  25 * src[13 * line] + 9 * src[15 * line];
+        int O_second = 87 * src[line] + 57 * src[3 * line] + 9 * src[5 * line] + (-43) * src[7 * line] + (-80) * src[9 * line] + (-90) * src[11 * line] +  (-70) * src[13 * line] + (-25) * src[15 * line];
+        int O_third = 80 * src[line] + 9 * src[3 * line] + (-70) * src[5 * line] + (-87) * src[7 * line] + (-25) * src[9 * line] + (57) * src[11 * line] +  (90) * src[13 * line] + (43) * src[15 * line];
+        int O_fourth = 70 * src[line] +  (-43) * src[3 * line] + (-87) * src[5 * line] + (9) * src[7 * line] + (90) * src[9 * line] + (25) * src[11 * line] +  (-80) * src[13 * line] + (-57) * src[15 * line];
+        int O_fifth = 57 * src[line] +  (-80) * src[3 * line] + (-25) * src[5 * line] + (90) * src[7 * line] + (-9) * src[9 * line] + (-87) * src[11 * line] +  (43) * src[13 * line] + (70) * src[15 * line];
+        int O_sixth = 43 * src[line] +  (-90) * src[3 * line] + (57) * src[5 * line] + (25) * src[7 * line] + (-87) * src[9 * line] + (70) * src[11 * line] +  (9) * src[13 * line] + (-80) * src[15 * line];
+        int O_seventh = 25 * src[line] +  (-70) * src[3 * line] + (90) * src[5 * line] + (-80) * src[7 * line] + (43) * src[9 * line] + (9) * src[11 * line] +  (-57) * src[13 * line] + (87) * src[15 * line];
+        int O_eight = 9 * src[line] +  (-25) * src[3 * line] + (43) * src[5 * line] + (-57) * src[7 * line] + (70) * src[9 * line] + (-80) * src[11 * line] +  (87) * src[13 * line] + (-90) * src[15 * line];
+
+        Vec4i O_first_half(O_first, O_second, O_third, O_fourth);
+        Vec4i O_second_half(O_fifth, O_sixth, O_seventh, O_eight);
+
+        int EO_zero = 89 * src[2 * line] + 75 * src[6 * line] + 50 * src[10 * line] + 18 * src[14 * line];
+        int EO_one = 75 * src[2 * line] + (-18) * src[6 * line] + -89 * src[10 * line] + (-50) * src[14 * line];
+        int EO_two = 50 * src[2 * line] + -89 * src[6 * line] + 18 * src[10 * line] + 75 * src[14 * line];
+        int EO_three = 18 * src[2 * line] + -50 * src[6 * line] + 75 * src[10 * line] + -89 * src[14 * line];
+
+        Vec4i EO(EO_zero, EO_one, EO_two, EO_three);
+
+        int EEO_zero = 83 * src[4 * line] + 36 * src[12 * line];
+        int EEE_zero = 64 * src[0] + 64 * src[8 * line];
+        int EEO_one  = 36 * src[4 * line] + -83 * src[12 * line];
+        int EEE_one  = 64 * src[0] +  -64 * src[8 * line];
+
+        int EE_zero = EEE_zero + EEO_zero;
+        int EE_one = EEE_one + EEO_one;
+        int EE_two = EEE_one - EEO_one;
+        int EE_three = EEE_zero - EEO_zero;
+
+        Vec4i EE(EE_zero, EE_one, EE_two, EE_three);
+        Vec4i E_first_half = EE + EO;
+        Vec4i E_second_half = EE - EO;
+        E_second_half = permute4i<3, 2, 1, 0>(E_second_half);
+
+        Vec4i first_four_min_value;
+        Vec4i second_four_min_value;
+        Vec4i dst_third_first_four = (E_first_half + O_first_half + add);
+        dst_third_first_four = dst_third_first_four >> shift;
+        Vec4i dst_third_second_four = (E_second_half + O_second_half + add);
+        dst_third_second_four = dst_third_second_four >> shift;
+
+        first_four_min_value = max(dst_first, dst_third_first_four);
+        first_four_min_value = min(first_four_min_value, dst_second);
+        second_four_min_value = max(dst_first, dst_third_second_four);
+        second_four_min_value = min(second_four_min_value, dst_second);
+
+        Vec8s first_eight_final_value = compress(first_four_min_value, second_four_min_value);
+        first_eight_final_value.store(dst);
+
+        Vec4i dst_third_third_four = E_second_half - O_second_half;
+        dst_third_third_four = (dst_third_third_four + add);
+        dst_third_third_four = dst_third_third_four  >> shift;
+        dst_third_third_four = permute4i<3, 2, 1, 0>(dst_third_third_four);
+
+        Vec4i dst_third_four_four = E_first_half - O_first_half;
+        dst_third_four_four = (dst_third_four_four + add);
+        dst_third_four_four = dst_third_four_four >> shift;
+        dst_third_four_four = permute4i<3, 2, 1, 0>(dst_third_four_four);
+
+        Vec4i third_four_min_value;
+        Vec4i four_four_min_value;
+        third_four_min_value = max(dst_first, dst_third_third_four);
+        third_four_min_value = min(third_four_min_value, dst_second);
+        four_four_min_value = max(dst_first, dst_third_four_four);
+        four_four_min_value = min(four_four_min_value, dst_second);
+
+        Vec8s second_eight_final_value = compress(third_four_min_value, four_four_min_value);
+        second_eight_final_value.store(dst + 8);
+        src++;
+        dst += 16;
     }
 }
 
@@ -1144,4 +1230,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
     p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
+    p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
 }
