@@ -670,6 +670,12 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 #else
         m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, 8, m_iFrameRate);
 #endif
+        if (m_recon->isFail())
+        {
+            printf("Unable to write reconstruction file\n");
+            m_recon->release();
+            m_recon = 0;
+        }
     }
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());

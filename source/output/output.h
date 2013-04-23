@@ -42,6 +42,8 @@ public:
 
     static Output* Open(const char *fname, int width, int height, int bitdepth, int rate);
 
+    virtual bool isFail() const = 0;
+
     virtual void release() = 0;
 
     virtual bool writePicture(const x265_picture& pic) = 0;

@@ -50,6 +50,8 @@ public:
 
     virtual ~Y4MOutput();
 
+    bool isFail() const                           { return ofs.fail(); }
+
     void release()                                { delete this; }
 
     bool writePicture(const x265_picture& pic);
