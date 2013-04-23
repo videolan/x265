@@ -25,7 +25,7 @@
 #define _Y4M_H_
 
 #include "input.h"
-#include <stdio.h>
+#include <fstream>
 #include <stdint.h>
 
 namespace x265 {
@@ -43,11 +43,9 @@ protected:
 
     int height;
 
-    uint8_t* buf;
+    char* buf;
 
-    FILE* fp;
-
-    bool eof;
+    std::ifstream ifs;
 
     void parseHeader();
 
@@ -67,13 +65,13 @@ public:
 
     int getHeight() const                         { return height; }
 
-    bool isEof() const                            { return !!feof(fp); }
+    bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail() const                           { return !fp; }
+    bool isFail() const                           { return !ifs.is_open(); }
 
     void release()                                { delete this; }
 
-    int  guessFrameCount() const;
+    int  guessFrameCount();
 
     void skipFrames(int numFrames);
 

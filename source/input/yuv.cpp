@@ -27,10 +27,11 @@
 #include <string.h>
 
 using namespace x265;
+using namespace std;
 
 YUVInput::YUVInput(const char *filename)
 {
-    fp = fopen(filename, "rb");
+    ifs.open(filename, ios::binary | ios::in);
     width = height = 0;
     depth = 8;
     buf = NULL;
@@ -38,14 +39,19 @@ YUVInput::YUVInput(const char *filename)
 
 YUVInput::~YUVInput()
 {
-    if (fp) fclose(fp);
+    ifs.close();
     if (buf) delete[] buf;
 }
 
-int  YUVInput::guessFrameCount() const
+int YUVInput::guessFrameCount()
 {
-    /* TODO: Get file size, divide by bufsize */
-    return 0;
+    long cur = ifs.tellg();
+    ifs.seekg (0, ios::end);
+    long size = ifs.tellg();
+    ifs.seekg (cur, ios::beg);
+    int pixelbytes = depth > 8 ? 2 : 1;
+
+    return (size - cur) / (width * height * pixelbytes * 3 / 2);
 }
 
 void YUVInput::skipFrames(int numFrames)
@@ -54,7 +60,7 @@ void YUVInput::skipFrames(int numFrames)
 
     int framesize = (width * height * 3 / 2) * pixelbytes;
 
-    fseek(fp, framesize * numFrames, SEEK_CUR);
+    ifs.seekg(framesize * numFrames, ios::cur);
 }
 
 // TODO: only supports 4:2:0 chroma sampling
@@ -68,7 +74,7 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     if (!buf)
     {
-        buf = new uint8_t[bufsize];
+        buf = new char[bufsize];
     }
 
     pic.planes[0] = buf;
@@ -83,8 +89,8 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    size_t bytes = fread(buf, 1, bufsize, fp);
+    ifs.read(buf, bufsize);
     PPAStopCpuEventFunc(read_yuv);
 
-    return bytes == (size_t)bufsize;
+    return ifs.good();
 }

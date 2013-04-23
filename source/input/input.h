@@ -63,7 +63,7 @@ public:
 
     virtual bool isFail() const = 0;
 
-    virtual int  guessFrameCount() const = 0;
+    virtual int  guessFrameCount() = 0;
 };
 }
 
