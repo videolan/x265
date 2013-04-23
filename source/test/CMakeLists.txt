@@ -11,7 +11,7 @@ endif(ENABLE_PPA)
 option(ENABLE_TEST_THREADPOOL "Enable thread pool unit test" OFF)
 if(ENABLE_TEST_THREADPOOL)
     add_executable(PoolTest testpool.cpp)
-    target_link_libraries(PoolTest x265 HM ${PLATFORM_LIBS})
+    target_link_libraries(PoolTest x265 ${PLATFORM_LIBS})
 endif()
 
 if(MSVC)
@@ -24,9 +24,11 @@ if(GCC)
     add_definitions(-Wno-sign-compare)
 endif(GCC)
 
-add_executable(TestBench testbench.cpp testharness.h timer.cpp
+add_executable(TestBench
+    testbench.cpp 
+    timer.cpp testharness.h
     pixelharness.cpp pixelharness.h
     filterharness.cpp filterharness.h
     mbdstharness.cpp mbdstharness.h)
 
-target_link_libraries(TestBench x265 HM ${PLATFORM_LIBS})
+target_link_libraries(TestBench x265 ${PLATFORM_LIBS})
