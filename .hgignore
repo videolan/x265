@@ -4,3 +4,4 @@ build/
 **.orig
 **.hevc
 **.yuv
+**.y4m

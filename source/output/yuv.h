@@ -21,37 +21,39 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _MBDSTHARNESS_H_1
-#define _MBDSTHARNESS_H_1 1
+#ifndef _YUV_H_
+#define _YUV_H_
 
-#include "testharness.h"
-#include "primitives.h"
+#include "output.h"
+#include <stdio.h>
 
-class MBDstHarness : public TestHarness
+namespace x265 {
+// private x265 namespace
+
+class YUVOutput : public Output
 {
 protected:
 
-    short *mbuf1, *mbuf2, *mbuf3;
+    int width;
 
-    int mb_t_size;
+    int height;
 
-    bool check_mbdst_primitive(x265::mbdst ref, x265::mbdst opt);
-    bool check_butterfly16_primitive(x265::butterfly ref, x265::butterfly opt);
-    bool check_butterfly32_primitive(x265::butterfly ref, x265::butterfly opt);
-    bool check_butterfly8_primitive(x265::butterfly ref, x265::butterfly opt);
-    bool check_butterfly4_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
-    bool check_butterfly8_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
-    bool check_butterfly16_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
+    int depth;
+
+    char *buf;
+
+    FILE *fp;
 
 public:
 
-    MBDstHarness();
+    YUVOutput(const char *filename , int width, int height, int bitdepth);
 
-    virtual ~MBDstHarness();
+    virtual ~YUVOutput();
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void release()                                { delete this; }
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    bool writePicture(const x265_picture& pic);
 };
+}
 
-#endif // ifndef _MBDSTHARNESS_H_1
+#endif // _YUV_H_

@@ -391,36 +391,11 @@ Void TAppEncTop::xInitLibCfg()
 
 Void TAppEncTop::xCreateLib()
 {
-    if (m_FrameSkip && m_input)
-        m_input->skipFrames(m_FrameSkip);
-
-    if (m_pchReconFile)
-    {
-        m_cTVideoIOReconFile = new TVideoIOYuv();
-        m_cTVideoIOReconFile->open(m_pchReconFile,
-                                   true,
-                                   m_outputBitDepthY,
-                                   m_outputBitDepthC,
-                                   m_internalBitDepthY,
-                                   m_internalBitDepthC,
-                                   handler_recon,
-                                   video_info,
-                                   m_aiPad); // write mode
-    }
-
-    // Neo Decoder
     m_cTEncTop.create();
 }
 
 Void TAppEncTop::xDestroyLib()
 {
-    // Video I/O
-    if (m_input)
-        m_input->release();
-    if (m_pchReconFile)
-        m_cTVideoIOReconFile->close(handler_recon);
-
-    // Neo Decoder
     m_cTEncTop.destroy();
 }
 
@@ -582,12 +557,17 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
         --iterPicYuvRec;
     }
 
+    x265_picture pic;
     for (i = 0; i < iNumEncoded; i++)
     {
-        TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
-        if (m_pchReconFile)
+        if (m_recon)
         {
-            m_cTVideoIOReconFile->write(pcPicYuvRec, handler_recon, m_confLeft, m_confRight, m_confTop, m_confBottom);
+            TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
+            pic.planes[0] = pcPicYuvRec->getLumaAddr(); pic.stride[0] = pcPicYuvRec->getStride();
+            pic.planes[1] = pcPicYuvRec->getCbAddr();   pic.stride[1] = pcPicYuvRec->getCStride();
+            pic.planes[2] = pcPicYuvRec->getCrAddr();   pic.stride[2] = pcPicYuvRec->getCStride();
+            pic.bitDepth = sizeof(Pel) == 8 ? 8 : 16;
+            m_recon->writePicture(pic);
         }
 
         const AccessUnit &au = *(iterBitstream++);

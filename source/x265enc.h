@@ -42,7 +42,6 @@
 #include <ostream>
 
 #include "TLibEncoder/TEncTop.h"
-#include "TLibVideoIO/TVideoIOYuv.h"
 #include "TLibCommon/AccessUnit.h"
 #include "x265cfg.h"
 
