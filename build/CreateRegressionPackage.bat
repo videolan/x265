@@ -1,19 +1,20 @@
 @echo off
 
-for /f "tokens=1,2,3 delims==" %%a in (config.txt) do (
+for /f "tokens=1,2,3,4,5,6 delims==" %%a in (config.txt) do (
 if %%a==workingdir set workingdir=%%b
 if %%a==testdir set testdir=%%b
 if %%a==repository set repository=%%b
+if %%a==video set video=%%b
 )
 
 set HG=hg
-set currentworkingdir="%workingdir%"RegressionTest
+set currentworkingdir=%workingdir%RegressionTest
 set Buildbat="BuildEncoderApplications.bat"
 
 if exist "%currentworkingdir%" rd /s /q %currentworkingdir%
 
 mkdir "%currentworkingdir%"
-cd "%currentworkingdir%"
+cd  /d "%currentworkingdir%"
 
 set LOG="%currentworkingdir%"\RegressionTester.log
 
@@ -44,13 +45,19 @@ if  not "%VS110COMNTOOLS%" == "" (
 	set makefile="Visual Studio 11 Win64"
 	set vcvars="%VS110COMNTOOLS%\..\..\VC\vcvarsall.bat"
 	call "%workingdir%BuildEncoderApplications.bat"
+	call "%workingdir%RunEncoderApplications.bat"
 
 	set builddir="%currentworkingdir%"\build\vc11-x86   
 	set makefile="Visual Studio 11"
 	call "%workingdir%BuildEncoderApplications.bat"     
+	call "%workingdir%RunEncoderApplications.bat"
 )
 
 ::Build the solution and applications for VS 10
+
+set builddir=""
+set makefile=""
+set vcvars=""
 
 if  not "%VS100COMNTOOLS%" == "" ( 
 	echo Regression Test	-	VS 10 Compiler found >> "%LOG%"
@@ -58,26 +65,31 @@ if  not "%VS100COMNTOOLS%" == "" (
 	set makefile="Visual Studio 10 Win64"
 	set vcvars="%VS100COMNTOOLS%\..\..\VC\vcvarsall.bat"
 	call "%workingdir%BuildEncoderApplications.bat"
+	call "%workingdir%RunEncoderApplications.bat"
 
 	set builddir="%currentworkingdir%"\build\vc10-x86        
 	set makefile="Visual Studio 10"
 	call "%workingdir%BuildEncoderApplications.bat"
+	call "%workingdir%RunEncoderApplications.bat"
 )
 
 ::Build the solution and applications foe VS 09
 
+set builddir=""
+set makefile=""
+set vcvars=""
+
 if  not "%%VS90COMNTOOLS%" == "" ( 
 	echo Regression Test	-	VS 09 Compiler found >> "%LOG%"
 	set builddir="%currentworkingdir%"\build\vc9-x86_64
-	set makefile="Visual Studio 9 2008"
+	set makefile="Visual Studio 9 2008 Win64"
 	set vcvars="%%VS90COMNTOOLS%%\..\..\VC\vcvarsall.bat"
 	call "%workingdir%BuildEncoderApplications.bat"
+	call "%workingdir%RunEncoderApplications.bat"
 
 	set builddir="%currentworkingdir%"\build\vc9-x86        
-	set makefile="Visual Studio 10"
+	set makefile="Visual Studio 9 2008"
 	call "%workingdir%BuildEncoderApplications.bat"
+	call "%workingdir%RunEncoderApplications.bat"
 )
 
-
-:: To do list 
-:: Running the test bench and Encoder Application for all the build version

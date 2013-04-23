@@ -1,4 +1,6 @@
-workingdir=E:\\
+workingdir=D:\\
 testdir=TestEncoder
 repository=https://ggopu@bitbucket.org/multicoreware/xhevc
-
+video=D:\\Videos\BasketballDrive_1920x1080_50\BasketballDrive_1920x1080_50.yuv
+WD=/d
+VIDEO=Videos/BasketballDrive_1920x1080_50/BasketballDrive_1920x1080_50.yuv
