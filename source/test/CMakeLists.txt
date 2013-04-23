@@ -1,5 +1,5 @@
 if(UNIX)
-    SET(PLATFORM_LIBS pthread)
+    SET(PLATFORM_LIBS pthread rt)
 endif(UNIX)
 if(ENABLE_PPA)
     SET(PLATFORM_LIBS ${PLATFORM_LIBS} PPA)

@@ -51,7 +51,7 @@ public:
 
 #else // if _WIN32
 
-#include <sys/time.h>
+#include <time.h>
 
 class TimerImpl : public Timer
 {
