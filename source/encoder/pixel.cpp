@@ -47,6 +47,26 @@ int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pi
     return sum;
 }
 
+template<int lx, int ly>
+int CDECL x265_sad(char *pix1, intptr_t stride_pix1, char *pix2, intptr_t stride_pix2)
+{
+    // TODO: we could use SWAR here fairly easily.  Would it help?
+    int sum = 0;
+
+    for (int y = 0; y < ly; y++)
+    {
+        for (int x = 0; x < lx; x++)
+        {
+            sum += abs(pix1[x] - pix2[x]);
+        }
+
+        pix1 += stride_pix1;
+        pix2 += stride_pix2;
+    }
+
+    return sum;
+}
+
 #define BITS_PER_SUM (8 * sizeof(sum_t))
 
 #define HADAMARD4(d0, d1, d2, d3, s0, s1, s2, s3) { \
@@ -241,6 +261,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_32x64] = sad<32, 64>;
     p.sad[PARTITION_64x32] = sad<64, 32>;
     p.sad[PARTITION_64x64] = sad<64, 64>;
+
+    p.x265_sad[PARTITION_16x64] = x265_sad<16, 64>;
+    p.x265_sad[PARTITION_64x16] = x265_sad<64, 16>;
+    p.x265_sad[PARTITION_32x64] = x265_sad<32, 64>;
+    p.x265_sad[PARTITION_64x32] = x265_sad<64, 32>;
+    p.x265_sad[PARTITION_64x64] = x265_sad<64, 64>;
 
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_8x4]   = satd_8x4;

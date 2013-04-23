@@ -37,9 +37,9 @@ using namespace x265;
 // Initialize the Func Names for all the Pixel Comp
 static const char *FuncNames[NUM_PARTITIONS] =
 {
-    "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16",
-    "4x32", "32x4", "8x32", "32x8", "16x32", "32x16", "32x32", "4x64",
-    "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
+"4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16",
+"4x32", "32x4", "8x32", "32x8", "16x32", "32x16", "32x32", "4x64",
+"64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
 };
 
 #if HIGH_BIT_DEPTH
@@ -55,6 +55,8 @@ PixelHarness::PixelHarness()
 #if _WIN32
     pbuf1 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
     pbuf2 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
+    pbuf1_c = (char*)_aligned_malloc(0x1e00 * sizeof(char), 32);
+    pbuf2_c = (char*)_aligned_malloc(0x1e00 * sizeof(char), 32);
 #else
     posix_memalign((void**)&pbuf1, 32, 0x1e00 * sizeof(pixel));
     posix_memalign((void**)&pbuf2, 32, 0x1e00 * sizeof(pixel));
@@ -70,6 +72,9 @@ PixelHarness::PixelHarness()
         //Generate the Random Buffer for Testing
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
+
+        pbuf1_c[i] = rand() & 127;
+        pbuf2_c[i] = rand() & 127;
     }
 }
 
@@ -78,6 +83,8 @@ PixelHarness::~PixelHarness()
 #if _WIN32
     _aligned_free(pbuf1);
     _aligned_free(pbuf2);
+    _aligned_free(pbuf1_c);
+    _aligned_free(pbuf2_c);
 #else
     free(pbuf1);
     free(pbuf2);
@@ -95,6 +102,23 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
     {
         int vres = opt(pbuf1, STRIDE, pbuf2 + j, STRIDE);
         int cres = ref(pbuf1, STRIDE, pbuf2 + j, STRIDE);
+        if (vres != cres)
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_pixel_primitive_char(pixelcmp_char ref, pixelcmp_char opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        int vres = opt(pbuf1_c, STRIDE, pbuf2_c + j, STRIDE);
+        int cres = ref(pbuf1_c, STRIDE, pbuf2_c + j, STRIDE);
         if (vres != cres)
             return false;
 
@@ -122,6 +146,18 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_pixel_primitive(ref.sad[curpar], opt.sad[curpar]))
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+    }
+
+    for (uint16_t curpar = 20; curpar < NUM_PARTITIONS; curpar++)
+    {
+        if (opt.x265_sad[curpar])
+        {
+            if (!check_pixel_primitive_char(ref.x265_sad[curpar], opt.x265_sad[curpar]))
+            {
+                printf("x265_sad[%s]: failed!\n", FuncNames[curpar]);
                 return false;
             }
         }
@@ -168,28 +204,39 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("sad[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
-                opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
-                ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
+                           opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
+                           ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
         }
 
         // adaptive iteration count, reduce as partition size increases
         if ((curpar & 7) == 7) iters >>= 1;
     }
 
+    for (int curpar = 20; curpar < NUM_PARTITIONS; curpar++)
+    {
+        if (opt.x265_sad[curpar])
+        {
+            printf("x265_sad[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(iters,
+                           opt.x265_sad[curpar](pbuf1_c, STRIDE, pbuf2_c, STRIDE),
+                           ref.x265_sad[curpar](pbuf1_c, STRIDE, pbuf2_c, STRIDE));
+        }
+    }
+
     if (opt.sa8d_8x8)
     {
         printf("sa8d_8x8");
         REPORT_SPEEDUP(iters,
-            opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE));
+                       opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE),
+                       ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
     if (opt.sa8d_16x16)
     {
         printf("sa8d_16x16");
         REPORT_SPEEDUP(iters,
-            opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
+                       opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE),
+                       ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
     t->Release();

@@ -136,6 +136,7 @@ enum Butterflies
 int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef int (CDECL * pixelcmp_char)(char *fenc, intptr_t fencstride, char *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
 typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width,
                                 int block_height, int bitDepth);
@@ -147,6 +148,7 @@ typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
 struct EncoderPrimitives
 {
     /* All pixel comparison functions take the same arguments */
+    pixelcmp_char x265_sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
