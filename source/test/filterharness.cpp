@@ -144,20 +144,17 @@ bool FilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderP
     return true;
 }
 
-#define FILTER_ITERATIONS   100000
+#define FILTER_ITERATIONS   50000
 
 void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     Timer *t = Timer::CreateTimer();
 
-    /* Add logic here for testing performance of your new primitive*/
-    int rand_height = rand() % 100;             // Randomly generated Height
-    int rand_width = rand() % 100;              // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
-
-    rand_val = rand() % 24;                     // Random offset in the filter
-    rand_srcStride = rand() % 100;              // Randomly generated srcStride
-    rand_dstStride = rand() % 100;              // Randomly generated dstStride
+    int height = 64;
+    int width = 64;
+    short val = 0;
+    short srcStride = 96;
+    short dstStride = 96;
 
     for (int value = 0; value < 16; value++)
     {
@@ -165,29 +162,12 @@ void FilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrim
         memset(IPF_C_output, 0, ipf_t_size);    // Initialize output buffer to zero
         if (opt.filter[value])
         {
-            t->Start();
-            for (int j = 0; j < FILTER_ITERATIONS; j++)
-            {
-                opt.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
-                                  IPF_vec_output,
-                                  rand_dstStride, rand_height, rand_width, BIT_DEPTH);
-            }
-
-            t->Stop();
-            float opt_time = t->ElapsedMS();
-            printf("\nfilter[%s]\tVec: (%1.2f ms) ", FilterConf_names[value], opt_time);
-
-            t->Start();
-            for (int j = 0; j < FILTER_ITERATIONS; j++)
-            {
-                ref.filter[value]((short*)(m_lumaFilter + rand_val), pixel_buff + 3 * rand_srcStride, rand_srcStride,
-                                  IPF_vec_output,
-                                  rand_dstStride, rand_height, rand_width, BIT_DEPTH);
-            }
-
-            t->Stop();
-            float ref_time = t->ElapsedMS();
-            printf("\tC: (%1.2f ms) \t speedup = %1.2f", ref_time, ref_time / opt_time);
+            printf("filter[%s]", FilterConf_names[value]);
+            REPORT_SPEEDUP(FILTER_ITERATIONS,
+                opt.filter[value]((short*)(m_lumaFilter + val), pixel_buff + 3 * srcStride, srcStride,
+                                  IPF_vec_output, dstStride, height, width, BIT_DEPTH),
+                ref.filter[value]((short*)(m_lumaFilter + val), pixel_buff + 3 * srcStride, srcStride,
+                                  IPF_vec_output, dstStride, height, width, BIT_DEPTH));
         }
     }
 

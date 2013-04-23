@@ -25,6 +25,7 @@
 #define _TESTHARNESS_H_ 1
 
 #include "primitives.h"
+#include <stdint.h>
 
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
@@ -60,9 +61,18 @@ public:
 
     virtual void Stop() = 0;
 
-    virtual float ElapsedMS() = 0;
+    virtual uint64_t Elapsed() = 0;
 
     virtual void Release() = 0;
 };
+
+#define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
+{ \
+    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNOPT; } t->Stop(); \
+    uint64_t optelapsed = t->Elapsed(); \
+    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNREF; } t->Stop(); \
+    uint64_t refelapsed = t->Elapsed(); \
+    printf("\t%3.2fx\n", (double)refelapsed/optelapsed); \
+}
 
 #endif // ifndef _TESTHARNESS_H_
