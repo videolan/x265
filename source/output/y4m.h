@@ -25,7 +25,7 @@
 #define _Y4M_H_
 
 #include "output.h"
-#include <stdio.h>
+#include <fstream>
 
 namespace x265 {
 // private x265 namespace
@@ -38,7 +38,7 @@ protected:
 
     int height;
 
-    FILE* fp;
+    std::ofstream ofs;
 
     char *buf;
 
