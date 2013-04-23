@@ -72,6 +72,7 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
+
 #if L0046_CONSTRAINT_FLAGS
     Bool m_progressiveSourceFlag;
     Bool m_interlacedSourceFlag;
@@ -116,7 +117,7 @@ protected:
     Bool      m_bUseAdaptiveQP;                               ///< Flag for enabling QP adaptation based on a psycho-visual model
     Int       m_iQPAdaptationRange;                           ///< dQP range by QP adaptation
 
-    Int       m_maxTempLayer;                                ///< Max temporal layer
+    Int       m_maxTempLayer;                                 ///< Max temporal layer
 
     // coding unit (CU) definition
     UInt      m_uiMaxCUWidth;                                 ///< max. CU width in pixel
@@ -148,9 +149,9 @@ protected:
     Bool      m_saoLcuBasedOptimization;                      ///< SAO LCU-based optimization
     // coding tools (loop filter)
     Bool      m_bLoopFilterDisable;                           ///< flag for using deblocking filter
-    Bool      m_loopFilterOffsetInPPS;                       ///< offset for deblocking filter in 0 = slice header, 1 = PPS
-    Int       m_loopFilterBetaOffsetDiv2;                   ///< beta offset for deblocking filter
-    Int       m_loopFilterTcOffsetDiv2;                     ///< tc offset for deblocking filter
+    Bool      m_loopFilterOffsetInPPS;                        ///< offset for deblocking filter in 0 = slice header, 1 = PPS
+    Int       m_loopFilterBetaOffsetDiv2;                     ///< beta offset for deblocking filter
+    Int       m_loopFilterTcOffsetDiv2;                       ///< tc offset for deblocking filter
     Bool      m_DeblockingFilterControlPresent;               ///< deblocking filter control present flag in PPS
 #if L0386_DB_METRIC
     Bool      m_DeblockingFilterMetric;                       ///< blockiness metric in encoder
