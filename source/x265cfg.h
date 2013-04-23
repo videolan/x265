@@ -66,13 +66,7 @@ protected:
     UInt      m_FrameSkip;                                    ///< number of skipped frames from the beginning
     Int       m_iSourceWidth;                                 ///< source width in pixel
     Int       m_iSourceHeight;                                ///< source height in pixel
-    Int       m_conformanceMode;
-    Int       m_confLeft;
-    Int       m_confRight;
-    Int       m_confTop;
-    Int       m_confBottom;
     Int       m_framesToBeEncoded;                            ///< number of encoded frames
-    Int       m_aiPad[2];                                     ///< number of padded pixels for width and height
 
     // profile/level
     Profile::Name m_profile;
@@ -136,13 +130,12 @@ protected:
     UInt      m_uiQuadtreeTUMaxDepthInter;
     UInt      m_uiQuadtreeTUMaxDepthIntra;
 
+#if HIGH_BIT_DEPTH
     // coding tools (bit-depth)
-    Int       m_inputBitDepthY;                             ///< bit-depth of input file (luma component)
-    Int       m_inputBitDepthC;                             ///< bit-depth of input file (chroma component)
-    Int       m_outputBitDepthY;                            ///< bit-depth of output file (luma component)
-    Int       m_outputBitDepthC;                            ///< bit-depth of output file (chroma component)
-    Int       m_internalBitDepthY;                          ///< bit-depth codec operates at in luma (input/output files will be converted)
-    Int       m_internalBitDepthC;                          ///< bit-depth codec operates at in chroma (input/output files will be converted)
+    Int       m_inputBitDepth;                               ///< bit-depth of input file (luma component)
+    Int       m_outputBitDepth;                              ///< bit-depth of output file (luma component)
+    Int       m_internalBitDepth;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
+#endif
 
     // coding tools (PCM bit-depth)
     Bool      m_bPCMInputBitDepthFlag;                        ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.

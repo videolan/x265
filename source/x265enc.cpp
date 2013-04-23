@@ -97,7 +97,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setFrameSkip(m_FrameSkip);
     m_cTEncTop.setSourceWidth(m_iSourceWidth);
     m_cTEncTop.setSourceHeight(m_iSourceHeight);
-    m_cTEncTop.setConformanceWindow(m_confLeft, m_confRight, m_confTop, m_confBottom);
     m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
 
     //====== Coding Structure ========
@@ -118,8 +117,6 @@ Void TAppEncTop::xInitLibCfg()
     }
 
     m_cTEncTop.setQP(m_iQP);
-
-    m_cTEncTop.setPad(m_aiPad);
 
     m_cTEncTop.setMaxTempLayer(m_maxTempLayer);
     m_cTEncTop.setUseAMP(m_enableAMP);

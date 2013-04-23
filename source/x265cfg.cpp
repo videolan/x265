@@ -297,23 +297,16 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
         ("SourceWidth,-wdt",      m_iSourceWidth,      0, "Source picture width")
         ("SourceHeight,-hgt",     m_iSourceHeight,     0, "Source picture height")
-        ("InputBitDepth",         m_inputBitDepthY,    8, "Bit-depth of input file")
-        ("OutputBitDepth",        m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
-        ("InternalBitDepth",      m_internalBitDepthY, 0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-        "If different to InputBitDepth, source data will be converted")
-        ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
-        ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
-        ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-        ("ConformanceMode",       m_conformanceMode,   0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
-        ("HorizontalPadding,-pdx", m_aiPad[0],         0, "Horizontal source padding for conformance window mode 2")
-        ("VerticalPadding,-pdy",  m_aiPad[1],          0, "Vertical source padding for conformance window mode 2")
-        ("ConfLeft",              m_confLeft,          0, "Left offset for window conformance mode 3")
-        ("ConfRight",             m_confRight,         0, "Right offset for window conformance mode 3")
-        ("ConfTop",               m_confTop,           0, "Top offset for window conformance mode 3")
-        ("ConfBottom",            m_confBottom,        0, "Bottom offset for window conformance mode 3")
         ("FrameRate,-fr",         m_iFrameRate,        0, "Frame rate")
         ("FrameSkip,-fs",         m_FrameSkip,         0u, "Number of frames to skip at start of input YUV")
         ("FramesToBeEncoded,f",   m_framesToBeEncoded, 0, "Number of frames to be encoded (default=all)")
+
+#if HIGH_BIT_DEPTH
+        ("InputBitDepth",         m_inputBitDepth,     8, "Bit-depth of input file")
+        ("OutputBitDepth",        m_outputBitDepth,    0, "Bit-depth of output file (default:InternalBitDepth)")
+        ("InternalBitDepth",      m_internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+         "If different to InputBitDepth, source data will be converted")
+#endif
 
         // Profile and level
         ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
@@ -639,20 +632,25 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         m_iSourceWidth = m_input->getWidth();
         m_iSourceHeight = m_input->getHeight();
         m_iFrameRate = (int)m_input->getRate();
-        m_inputBitDepthC = m_inputBitDepthY = 8;
+#if HIGH_BIT_DEPTH
+        m_inputBitDepth = 8;
+#endif
     }
     else
     {
         m_input->setDimensions(m_iSourceWidth, m_iSourceHeight);
-        m_input->setBitDepth(m_inputBitDepthY);
+#if HIGH_BIT_DEPTH
+        m_input->setBitDepth(m_inputBitDepth);
+#else
+        m_input->setBitDepth(8);
+#endif
     }
 
+#if HIGH_BIT_DEPTH
     /* rules for input, output and internal bitdepths as per help text */
-    if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
-    if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
-    if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
-    if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
-    if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
+    if (!m_internalBitDepth) { m_internalBitDepth = m_inputBitDepth; }
+    if (!m_outputBitDepth) { m_outputBitDepth = m_internalBitDepth; }
+#endif
 
     if (m_FrameSkip && m_input)
     {
@@ -661,7 +659,11 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     if (!cfg_ReconFile.empty())
     {
         printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
-        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepthY);
+#if HIGH_BIT_DEPTH
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepth);
+#else
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, 8);
+#endif
     }
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
@@ -732,67 +734,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     readIntString(cfg_constantPicRateIdc,     m_bitRatePicRateMaxTLayers, m_constantPicRateIdc,     "constant pic rate Idc");
 #endif
     m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-
-    // TODO:ChromaFmt assumes 4:2:0 below
-    switch (m_conformanceMode)
-    {
-    case 0:
-    {
-        // no conformance or padding
-        m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
-        m_aiPad[1] = m_aiPad[0] = 0;
-        break;
-    }
-    case 1:
-    {
-        // automatic padding to minimum CU size
-        Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
-        if (m_iSourceWidth % minCuSize)
-        {
-            m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
-            m_iSourceWidth  += m_confRight;
-        }
-        if (m_iSourceHeight % minCuSize)
-        {
-            m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
-            m_iSourceHeight += m_confBottom;
-        }
-        if (m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0)
-        {
-            fprintf(stderr, "Error: picture width is not an integer multiple of the specified chroma subsampling\n");
-            exit(EXIT_FAILURE);
-        }
-        if (m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0)
-        {
-            fprintf(stderr, "Error: picture height is not an integer multiple of the specified chroma subsampling\n");
-            exit(EXIT_FAILURE);
-        }
-        break;
-    }
-    case 2:
-    {
-        //padding
-        m_iSourceWidth  += m_aiPad[0];
-        m_iSourceHeight += m_aiPad[1];
-        m_confRight  = m_aiPad[0];
-        m_confBottom = m_aiPad[1];
-        break;
-    }
-    case 3:
-    {
-        // conformance
-        if ((m_confLeft == 0) && (m_confRight == 0) && (m_confTop == 0) && (m_confBottom == 0))
-        {
-            fprintf(stderr, "Warning: Conformance window enabled, but all conformance window parameters set to zero\n");
-        }
-        if ((m_aiPad[1] != 0) || (m_aiPad[0] != 0))
-        {
-            fprintf(stderr, "Warning: Conformance window enabled, padding parameters will be ignored\n");
-        }
-        m_aiPad[1] = m_aiPad[0] = 0;
-        break;
-    }
-    }
 
     // allocate slice-based dQP values
     m_aidQP = new Int[m_framesToBeEncoded + m_iGOPSize + 1];
@@ -990,15 +931,20 @@ Void TAppEncCfg::xCheckParameter()
     Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a, b) check_failed |= confirmPara(a, b)
     // check range of parameters
-    xConfirmPara(m_inputBitDepthY < 8,                                                     "InputBitDepth must be at least 8");
-    xConfirmPara(m_inputBitDepthC < 8,                                                     "InputBitDepthC must be at least 8");
+#if HIGH_BIT_DEPTH
+    xConfirmPara(m_inputBitDepth < 8,                                                      "InputBitDepth must be at least 8");
+    xConfirmPara(m_inputBitDepth < 8,                                                      "InputBitDepth must be at least 8");
+    xConfirmPara(m_outputBitDepth > m_internalBitDepth,                                    "OutputBitDepth must be less than or equal to InternalBitDepth");
+    xConfirmPara(m_iQP <  -6 * (m_internalBitDepth - 8) || m_iQP > 51,                     "QP exceeds supported range (-QpBDOffsety to 51)");
+#else
+    xConfirmPara(m_iQP < 0 || m_iQP > 51,                                                  "QP exceeds supported range (-QpBDOffsety to 51)");
+#endif
     xConfirmPara(m_iFrameRate <= 0,                                                        "Frame rate must be more than 1");
     xConfirmPara(m_framesToBeEncoded <= 0,                                                 "Total Number Of Frames encoded must be more than 0");
     xConfirmPara(m_iGOPSize < 1,                                                           "GOP Size must be greater or equal to 1");
     xConfirmPara(m_iGOPSize > 1 &&  m_iGOPSize % 2,                                        "GOP Size must be a multiple of 2, if GOP Size is greater than 1");
     xConfirmPara((m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0");
     xConfirmPara(m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                 "Decoding Refresh Type must be equal to 0, 1 or 2");
-    xConfirmPara(m_iQP <  -6 * (m_internalBitDepthY - 8) || m_iQP > 51,                    "QP exceeds supported range (-QpBDOffsety to 51)");
     xConfirmPara(m_loopFilterBetaOffsetDiv2 < -13 || m_loopFilterBetaOffsetDiv2 > 13,      "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
     xConfirmPara(m_loopFilterTcOffsetDiv2 < -13 || m_loopFilterTcOffsetDiv2 > 13,          "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
     xConfirmPara(m_iFastSearch < 0 || m_iFastSearch > 2,                                   "Fast Search Mode is not supported value (0:Full search  1:Diamond  2:PMVFAST)");
@@ -1071,14 +1017,6 @@ Void TAppEncCfg::xCheckParameter()
     //TODO:ChromaFmt assumes 4:2:0 below
     xConfirmPara(m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
     xConfirmPara(m_iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
-
-    xConfirmPara(m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
-    xConfirmPara(m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
-
-    xConfirmPara(m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
-    xConfirmPara(m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
-    xConfirmPara(m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
-    xConfirmPara(m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
 
     // max CU width and height should be power of 2
     UInt ui = m_uiMaxCUWidth;
@@ -1608,19 +1546,18 @@ Void TAppEncCfg::xSetGlobal()
     g_uiMaxCUDepth = m_uiMaxCUDepth;
 
     // set internal bit-depth and constants
-    g_bitDepthY = m_internalBitDepthY;
-    g_bitDepthC = m_internalBitDepthC;
+    g_bitDepthY = m_internalBitDepth;
+    g_bitDepthC = m_internalBitDepth;
 
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepthY : m_internalBitDepthY;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepthC : m_internalBitDepthC;
+    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : m_internalBitDepth;
+    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : m_internalBitDepth;
 }
 
 Void TAppEncCfg::xPrintParameter()
 {
     printf("\n");
     printf("Bitstream      File          : %s\n", m_pchBitstreamFile);
-    printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate);
-    printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate);
+    printf("Format                       : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate);
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
     printf("CU size / depth              : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth);
     printf("RQT trans. size (min / max)  : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize);
@@ -1638,7 +1575,9 @@ Void TAppEncCfg::xPrintParameter()
 
     printf("QP adaptation                : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0));
     printf("GOP size                     : %d\n", m_iGOPSize);
-    printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC);
+#if HIGH_BIT_DEPTH
+    printf("Internal bit depth           : %d\n", m_internalBitDepth);
+#endif
     printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
 #if RATE_CONTROL_LAMBDA_DOMAIN
     printf("RateControl                  : %d\n", m_RCEnableRateControl);
@@ -1663,7 +1602,9 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n");
 
     printf("TOOL CFG: ");
-    printf("IBD:%d ", g_bitDepthY > m_inputBitDepthY || g_bitDepthC > m_inputBitDepthC);
+#if HIGH_BIT_DEPTH
+    printf("IBD:%d ", g_bitDepthY > m_inputBitDepth || g_bitDepthC > m_inputBitDepth);
+#endif
     printf("HAD:%d ", m_bUseHADME);
     printf("SRD:%d ", m_bUseSBACRD);
     printf("RDQ:%d ", m_useRDOQ);
