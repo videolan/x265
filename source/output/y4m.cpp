@@ -51,8 +51,7 @@ Y4MOutput::~Y4MOutput()
 
 bool Y4MOutput::writePicture(const x265_picture& pic)
 {
-    const char* frameHeader = "FRAME\n";
-    fwrite(frameHeader, sizeof(char), 6, fp);
+    fprintf(fp, "FRAME\n");
 
     if (pic.bitDepth > 8)
     {
