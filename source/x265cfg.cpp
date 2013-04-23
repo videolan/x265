@@ -1558,11 +1558,16 @@ Void TAppEncCfg::xSetGlobal()
     g_uiMaxCUDepth = m_uiMaxCUDepth;
 
     // set internal bit-depth and constants
+#if HIGH_BIT_DEPTH
     g_bitDepthY = m_internalBitDepth;
     g_bitDepthC = m_internalBitDepth;
 
     g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : m_internalBitDepth;
     g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : m_internalBitDepth;
+#else
+    g_bitDepthY = g_bitDepthC = 8;
+    g_uiPCMBitDepthLuma = g_uiPCMBitDepthChroma = 8;
+#endif
 }
 
 Void TAppEncCfg::xPrintParameter()
