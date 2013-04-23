@@ -758,23 +758,23 @@ __inline Void TComLoopFilter::xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bo
 {
     Int delta;
 
-    Pel m4  = piSrc[0];
-    Pel m3  = piSrc[-iOffset];
-    Pel m5  = piSrc[iOffset];
-    Pel m2  = piSrc[-iOffset * 2];
-    Pel m6  = piSrc[iOffset * 2];
-    Pel m1  = piSrc[-iOffset * 3];
-    Pel m7  = piSrc[iOffset * 3];
-    Pel m0  = piSrc[-iOffset * 4];
+    Short m4  = (Short) piSrc[0];
+    Short m3  = (Short) piSrc[-iOffset];
+    Short m5  = (Short) piSrc[iOffset];
+    Short m2  = (Short) piSrc[-iOffset * 2];
+    Short m6  = (Short) piSrc[iOffset * 2];
+    Short m1  = (Short) piSrc[-iOffset * 3];
+    Short m7  = (Short) piSrc[iOffset * 3];
+    Short m0  = (Short) piSrc[-iOffset * 4];
 
     if (sw)
     {
-        piSrc[-iOffset]   = Clip3(m3 - 2 * tc, m3 + 2 * tc, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3));
-        piSrc[0]          = Clip3(m4 - 2 * tc, m4 + 2 * tc, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3));
-        piSrc[-iOffset * 2] = Clip3(m2 - 2 * tc, m2 + 2 * tc, ((m1 + m2 + m3 + m4 + 2) >> 2));
-        piSrc[iOffset]   = Clip3(m5 - 2 * tc, m5 + 2 * tc, ((m3 + m4 + m5 + m6 + 2) >> 2));
-        piSrc[-iOffset * 3] = Clip3(m1 - 2 * tc, m1 + 2 * tc, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3));
-        piSrc[iOffset * 2] = Clip3(m6 - 2 * tc, m6 + 2 * tc, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3));
+        piSrc[-iOffset]   = (Pel) Clip3(m3 - 2 * tc, m3 + 2 * tc, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3));
+        piSrc[0]          = (Pel) Clip3(m4 - 2 * tc, m4 + 2 * tc, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3));
+        piSrc[-iOffset * 2] = (Pel) Clip3(m2 - 2 * tc, m2 + 2 * tc, ((m1 + m2 + m3 + m4 + 2) >> 2));
+        piSrc[iOffset]   = (Pel) Clip3(m5 - 2 * tc, m5 + 2 * tc, ((m3 + m4 + m5 + m6 + 2) >> 2));
+        piSrc[-iOffset * 3] = (Pel) Clip3(m1 - 2 * tc, m1 + 2 * tc, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3));
+        piSrc[iOffset * 2] = (Pel) Clip3(m6 - 2 * tc, m6 + 2 * tc, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3));
     }
     else
     {
@@ -784,34 +784,34 @@ __inline Void TComLoopFilter::xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bo
         if (abs(delta) < iThrCut)
         {
             delta = Clip3(-tc, tc, delta);
-            piSrc[-iOffset] = ClipY((m3 + delta));
-            piSrc[0] = ClipY((m4 - delta));
+            piSrc[-iOffset] = (Pel) ClipY((m3 + delta));
+            piSrc[0] = (Pel) ClipY((m4 - delta));
 
             Int tc2 = tc >> 1;
             if (bFilterSecondP)
             {
                 Int delta1 = Clip3(-tc2, tc2, ((((m1 + m3 + 1) >> 1) - m2 + delta) >> 1));
-                piSrc[-iOffset * 2] = ClipY((m2 + delta1));
+                piSrc[-iOffset * 2] = (Pel) ClipY((m2 + delta1));
             }
             if (bFilterSecondQ)
             {
                 Int delta2 = Clip3(-tc2, tc2, ((((m6 + m4 + 1) >> 1) - m5 - delta) >> 1));
-                piSrc[iOffset] = ClipY((m5 + delta2));
+                piSrc[iOffset] = (Pel) ClipY((m5 + delta2));
             }
         }
     }
 
     if (bPartPNoFilter)
     {
-        piSrc[-iOffset] = m3;
-        piSrc[-iOffset * 2] = m2;
-        piSrc[-iOffset * 3] = m1;
+        piSrc[-iOffset] = (Pel) m3;
+        piSrc[-iOffset * 2] = (Pel) m2;
+        piSrc[-iOffset * 3] = (Pel) m1;
     }
     if (bPartQNoFilter)
     {
-        piSrc[0] = m4;
-        piSrc[iOffset] = m5;
-        piSrc[iOffset * 2] = m6;
+        piSrc[0] = (Pel) m4;
+        piSrc[iOffset] = (Pel) m5;
+        piSrc[iOffset * 2] = (Pel) m6;
     }
 }
 
@@ -828,22 +828,22 @@ __inline Void TComLoopFilter::xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, 
 {
     Int delta;
 
-    Pel m4  = piSrc[0];
-    Pel m3  = piSrc[-iOffset];
-    Pel m5  = piSrc[iOffset];
-    Pel m2  = piSrc[-iOffset * 2];
+    Short m4  = (Short) piSrc[0];
+    Short m3  = (Short) piSrc[-iOffset];
+    Short m5  = (Short) piSrc[iOffset];
+    Short m2  = (Short) piSrc[-iOffset * 2];
 
     delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
-    piSrc[-iOffset] = ClipC(m3 + delta);
-    piSrc[0] = ClipC(m4 - delta);
+    piSrc[-iOffset] = (Pel) ClipC(m3 + delta);
+    piSrc[0] = (Pel) ClipC(m4 - delta);
 
     if (bPartPNoFilter)
     {
-        piSrc[-iOffset] = m3;
+        piSrc[-iOffset] = (Pel) m3;
     }
     if (bPartQNoFilter)
     {
-        piSrc[0] = m4;
+        piSrc[0] = (Pel) m4;
     }
 }
 
@@ -858,10 +858,10 @@ __inline Void TComLoopFilter::xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, 
  */
 __inline Bool TComLoopFilter::xUseStrongFiltering(Int offset, Int d, Int beta, Int tc, Pel* piSrc)
 {
-    Pel m4  = piSrc[0];
-    Pel m3  = piSrc[-offset];
-    Pel m7  = piSrc[offset * 3];
-    Pel m0  = piSrc[-offset * 4];
+    Short m4  = (Short) piSrc[0];
+    Short m3  = (Short) piSrc[-offset];
+    Short m7  = (Short) piSrc[offset * 3];
+    Short m0  = (Short) piSrc[-offset * 4];
 
     Int d_strong = abs(m0 - m3) + abs(m7 - m4);
 
