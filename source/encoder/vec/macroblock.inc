@@ -1062,6 +1062,7 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
     int add = 1 << (shift - 1);
 
     Vec4i dst_second(32767);
+    Vec4i dst_first(-32768);
 
     for (j = 0; j < line; j++)
     {
@@ -1098,10 +1099,12 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
         E_O_diff = permute4i<3, 2, 1, 0>(E_O_diff);
 
         Vec4i first_four_min_value;
-        first_four_min_value = min(dst_second, E_O_sum);
+        first_four_min_value = max(dst_first, E_O_sum);
+        first_four_min_value = min(first_four_min_value, dst_second);
 
         Vec4i second_four_min_value;
-        second_four_min_value = min(dst_second, E_O_diff);
+        second_four_min_value = max(dst_first, E_O_diff);
+        second_four_min_value = min(second_four_min_value, dst_second);
 
         Vec4i all_zero(0);
         Vec8s first_four_final_value = compress(first_four_min_value, all_zero);

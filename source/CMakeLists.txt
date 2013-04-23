@@ -86,12 +86,14 @@ if(ENABLE_CLI)
     set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
     add_subdirectory(input)
+    add_subdirectory(output)
+
     add_executable(x265-cli
         x265main.cpp ${EXTRAS}
         x265cfg.cpp x265cfg.h
         x265enc.cpp x265enc.h)
 
-    target_link_libraries(x265-cli HM x265 InputFiles)
+    target_link_libraries(x265-cli HM x265 InputFiles OutputFiles)
     if(ENABLE_PPA)
         target_link_libraries(x265-cli PPA)
         if(UNIX)

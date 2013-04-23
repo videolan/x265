@@ -16,11 +16,9 @@ endif(MSVC)
 file(GLOB APPCOMMON  TAppCommon/*.h TAppCommon/*.cpp)
 file(GLOB LIBCOMMON  TLibCommon/*.h TLibCommon/*.cpp)
 file(GLOB LIBENCODER TLibEncoder/*.h TLibEncoder/*.cpp)
-file(GLOB LIBVIDEOIO TLibVideoIO/*.h TLibVideoIO/*.cpp)
 
-source_group(TLibVideoIO FILES ${LIBVIDEOIO})
 source_group(TAppCommon  FILES ${APPCOMMON})
 source_group(TLibCommon  FILES ${LIBCOMMON})
 source_group(TLibEncoder FILES ${LIBENCODER})
 
-add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON} ${LIBVIDEOIO})
+add_library(HM ${LIBCOMMON} ${LIBENCODER} ${APPCOMMON})
