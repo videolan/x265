@@ -43,7 +43,6 @@ YUVOutput::~YUVOutput()
 
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
-    char *Y = (char*)pic.planes[0];
     int pixelbytes = (depth > 8) ? 2 : 1;
 
     if (pic.bitDepth > 8 && depth == 8)
@@ -77,22 +76,23 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     else
     {
         // encoder gave us byte pixels, write them directly
+        char *Y = (char*)pic.planes[0];
         for (int i = 0; i < height; i++)
         {
             fwrite(Y, sizeof(char), width * pixelbytes, fp);
-            Y += pic.stride[0];
+            Y += pic.stride[0] * pixelbytes;
         }
         char *U = (char*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
             fwrite(U, sizeof(char), (width>>1) * pixelbytes, fp);
-            U += pic.stride[1];
+            U += pic.stride[1] * pixelbytes;
         }
         char *V = (char*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
             fwrite(V, sizeof(char), (width>>1) * pixelbytes, fp);
-            V += pic.stride[2];
+            V += pic.stride[2] * pixelbytes;
         }
     }
     return true;
