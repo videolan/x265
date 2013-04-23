@@ -25,7 +25,6 @@
 #define _OUTPUT_H_
 
 #include "x265.h"
-#include <stdint.h>
 
 namespace x265 {
 // private x265 namespace
@@ -41,7 +40,7 @@ public:
 
     Output()           {}
 
-    static  Output* Open(const char *fname, int width, int height, int bitdepth);
+    static Output* Open(const char *fname, int width, int height, int bitdepth, int rate);
 
     virtual void release() = 0;
 

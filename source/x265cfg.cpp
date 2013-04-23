@@ -666,9 +666,9 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     {
         printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
 #if HIGH_BIT_DEPTH
-        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepth);
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepth, m_iFrameRate);
 #else
-        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, 8);
+        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, 8, m_iFrameRate);
 #endif
     }
 

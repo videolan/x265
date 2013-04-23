@@ -28,7 +28,7 @@
 
 using namespace x265;
 
-Y4MOutput::Y4MOutput(const char *filename, int t_width, int t_height, int bitdepth)
+Y4MOutput::Y4MOutput(const char *filename, int t_width, int t_height, int rate)
 {
     fp = fopen(filename, "wb");
     width = t_width;
@@ -37,8 +37,7 @@ Y4MOutput::Y4MOutput(const char *filename, int t_width, int t_height, int bitdep
     buf = new char[width];
     if (fp)
     {
-        // TODO: need to get frame rate
-        fprintf(fp, "YUV4MPEG2 W%d H%d F30:1 Ip C420\n", width, height);
+        fprintf(fp, "YUV4MPEG2 W%d H%d F%d:1 Ip C420\n", width, height, rate);
     }
 }
 
