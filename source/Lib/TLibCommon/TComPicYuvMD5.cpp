@@ -32,7 +32,9 @@
  */
 
 #include "TComPicYuv.h"
-#include "libmd5/MD5.h"
+#include "md5.h"
+
+using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{

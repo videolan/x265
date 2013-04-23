@@ -23,7 +23,7 @@
 
 #include "threadpool.h"
 #include "threading.h"
-#include "libmd5/MD5.h"
+#include "md5.h"
 #include "PPA/ppa.h"
 
 #include <time.h>

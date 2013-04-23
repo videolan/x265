@@ -42,12 +42,37 @@
 #include "TEncTop.h"
 #include "TEncGOP.h"
 #include "TEncAnalyze.h"
-#include "libmd5/MD5.h"
 #include "TLibCommon/SEI.h"
 #include "TLibCommon/NAL.h"
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
+
+/**
+ * Produce an ascii(hex) representation of picture digest.
+ *
+ * Returns: a statically allocated null-terminated string.  DO NOT FREE.
+ */
+inline const char*digestToString(const unsigned char digest[3][16], int numChar)
+{
+    const char* hex = "0123456789abcdef";
+    static char string[99];
+    int cnt = 0;
+
+    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    {
+        for (int i = 0; i < numChar; i++)
+        {
+            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
+            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
+        }
+
+        string[cnt++] = ',';
+    }
+
+    string[cnt - 1] = '\0';
+    return string;
+}
 
 using namespace std;
 //! \ingroup TLibEncoder
