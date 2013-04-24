@@ -1153,7 +1153,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
             {
-                pReco[uiX] = ClipY(pPred[uiX] + pResi[uiX]);
+                pReco[uiX] = ClipY(static_cast<Short>(pPred[uiX]) + pResi[uiX]);
                 pRecQt[uiX] = pReco[uiX];
                 pRecIPred[uiX] = pReco[uiX];
             }
@@ -1352,7 +1352,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
             {
-                pReco[uiX] = ClipC(pPred[uiX] + pResi[uiX]);
+                pReco[uiX] = ClipC(static_cast<Short> (pPred[uiX]) + pResi[uiX]);
                 pRecQt[uiX] = pReco[uiX];
                 pRecIPred[uiX] = pReco[uiX];
             }

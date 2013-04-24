@@ -198,7 +198,7 @@ Void TComSampleAdaptiveOffset::create(UInt uiSourceWidth, UInt uiSourceHeight, U
     m_iUpBuff1++;
     m_iUpBuff2++;
     m_iUpBufft++;
-    Pel i;
+    Short i;
 
     UInt uiMaxY  = (1 << g_bitDepthY) - 1;
     UInt uiMinY  = 0;
