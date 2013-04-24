@@ -450,20 +450,16 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         x265_picture pic;
-        m_input->readPicture(pic);
-
-        // increase number of received frames
-        m_iFrameRcvd++;
-
-        bEos = (m_iFrameRcvd == m_framesToBeEncoded);
-
-        Bool flush = 0;
-        // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
-        if (m_input->isEof())
+        Bool flush = false;
+        if (m_input->readPicture(pic))
+        {
+            m_iFrameRcvd++;
+            bEos = (m_iFrameRcvd == m_framesToBeEncoded);
+        }
+        else
         {
             flush = true;
             bEos = true;
-            m_iFrameRcvd--;
             m_cTEncTop.setFramesToBeEncoded(m_iFrameRcvd);
         }
 
