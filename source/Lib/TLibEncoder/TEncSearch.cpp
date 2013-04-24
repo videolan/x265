@@ -5878,20 +5878,31 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
 
     Int intStride = filteredBlockTmp[0].getWidth();
     Int dstStride = m_filteredBlock[0][0].getStride();
-    Short *intPtr;
-    Short *dstPtr;
+
+    Pel *srcPtr;    //Contains raw pixels
+    Short *intPtr;  // Intermediate results in short
+    Pel *dstPtr;    // Final filtered blocks in Pel
+
     Int filterSize = NTAPS_LUMA;
     Int halfFilterSize = (filterSize >> 1);
-    Short *srcPtr = (Short*)pattern->getROIY() - halfFilterSize * srcStride - 1;
 
-    filterCopy(srcPtr + halfFilterSize * srcStride + 1, srcStride, m_filteredBlock[0][0].getLumaAddr(), dstStride, width, height);
-    filterVertical_pel_pel<NTAPS_LUMA>(8, srcPtr + (halfFilterSize - 1) * srcStride + 1, srcStride, m_filteredBlock[2][0].getLumaAddr(),
+    srcPtr = (Short*)pattern->getROIY() - halfFilterSize * srcStride - 1;
+
+    dstPtr = m_filteredBlock[0][0].getLumaAddr();
+    filterCopy(srcPtr + halfFilterSize * srcStride + 1, srcStride, dstPtr, dstStride, width, height);
+
+    dstPtr = m_filteredBlock[2][0].getLumaAddr();
+    filterVertical_pel_pel<NTAPS_LUMA>(8, srcPtr + (halfFilterSize - 1) * srcStride + 1, srcStride, dstPtr,
                                        dstStride, width, height + 1, m_lumaFilter[2]);
 
-    filterHorizontal_pel_pel<NTAPS_LUMA>(8, srcPtr + (halfFilterSize) * srcStride, srcStride, m_filteredBlock[0][2].getLumaAddr(),
-                                         dstStride, width + 1, height + 0, m_lumaFilter[2]);
-    filterHorizontal_pel_short<NTAPS_LUMA>(8, srcPtr, srcStride, filteredBlockTmp[2].getLumaAddr(), intStride, width + 1,
+    intPtr = filteredBlockTmp[2].getLumaAddr();
+    filterHorizontal_pel_short<NTAPS_LUMA>(8, srcPtr, srcStride, intPtr, intStride, width + 1,
                                            height + filterSize,  m_lumaFilter[2]);
+
+    intPtr = filteredBlockTmp[2].getLumaAddr() + halfFilterSize * intStride;
+    dstPtr = m_filteredBlock[0][2].getLumaAddr();
+    filterConvert(8, intPtr, intStride, dstPtr, dstStride, width + 1, height + 0);
+
     intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[2][2].getLumaAddr();
     filterVertical_short_pel<NTAPS_LUMA>(8, intPtr, intStride, dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
@@ -5910,11 +5921,13 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     Int height     = pattern->getROIYHeight();
     Int srcStride  = pattern->getPatternLStride();
 
-    Short *srcPtr;
     Int intStride = filteredBlockTmp[0].getWidth();
     Int dstStride = m_filteredBlock[0][0].getStride();
-    Short *intPtr;
-    Short *dstPtr;
+
+    Pel *srcPtr;    //Contains raw pixels
+    Short *intPtr;  // Intermediate results in short
+    Pel *dstPtr;    // Final filtered blocks in Pel
+
     Int filterSize = NTAPS_LUMA;
 
     Int halfFilterSize = (filterSize >> 1);
@@ -6025,22 +6038,22 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     else
     {
         // Generate @ 1,0
-        intPtr = pattern->getROIY()  - srcStride;
+        srcPtr = pattern->getROIY()  - srcStride;
         dstPtr = m_filteredBlock[1][0].getLumaAddr();
         if (halfPelRef.getVer() >= 0)
         {
-            intPtr += srcStride;
+            srcPtr += srcStride;
         }
-        filterVertical_pel_pel<NTAPS_LUMA>(8, intPtr, srcStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
+        filterVertical_pel_pel<NTAPS_LUMA>(8, srcPtr, srcStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
 
         // Generate @ 3,0
-        intPtr = (Short*)pattern->getROIY() - srcStride;
+        srcPtr = (Short*)pattern->getROIY() - srcStride;
         dstPtr = (Short*)m_filteredBlock[3][0].getLumaAddr();
         if (halfPelRef.getVer() > 0)
         {
-            intPtr += srcStride;
+            srcPtr += srcStride;
         }
-        filterVertical_pel_pel<NTAPS_LUMA>(8, intPtr, srcStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
+        filterVertical_pel_pel<NTAPS_LUMA>(8, srcPtr, srcStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
     }
 
     // Generate @ 1,3
