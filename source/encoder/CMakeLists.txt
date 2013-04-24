@@ -15,7 +15,8 @@ add_library(x265 ../../COPYING
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
-    md5.cpp md5.h)
+    md5.cpp md5.h
+    InterpolationFilter.h)
 
 if(ENABLE_PRIMITIVES)
     if(ENABLE_PRIMITIVES_VEC)

@@ -429,7 +429,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitI
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDst[x] = ClipY(pSrc0[x] + pSrc1[x]);
+            pDst[x] = ClipY(static_cast<Short> (pSrc0[x]) + pSrc1[x]);
         }
 
         pSrc0 += iSrc0Stride;
@@ -457,8 +457,8 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUni
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDstU[x] = ClipC(pSrcU0[x] + pSrcU1[x]);
-            pDstV[x] = ClipC(pSrcV0[x] + pSrcV1[x]);
+            pDstU[x] = ClipC(static_cast<Short> (pSrcU0[x]) + pSrcU1[x]);
+            pDstV[x] = ClipC(static_cast<Short> (pSrcV0[x]) + pSrcV1[x]);
         }
 
         pSrcU0 += iSrc0Stride;
