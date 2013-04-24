@@ -56,6 +56,8 @@ const short m_chromaFilter[8][4] =
 template<int N>
 void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
 template<int N>
+void filterVertical_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
+template<int N>
 void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
 template<int N>
 void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
