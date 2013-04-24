@@ -245,6 +245,27 @@ bool MBDstHarness::check_butterfly16_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
+bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly opt)
+{
+    int j = 0;
+    int mem_cmp_size = 640; // 2*16*10 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 5; i++)
+    {
+        opt(mbuf1 + j, mbuf2, 3, 10);
+        ref(mbuf1 + j, mbuf3, 3, 10);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0, mem_cmp_size);
+        memset(mbuf3, 0, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.inversedst)
@@ -306,6 +327,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_butterfly16_inverse_primitive(ref.partial_butterfly[butterfly_inverse_16], opt.partial_butterfly[butterfly_inverse_16]))
         {
             printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_16]);
+            return false;
+        }
+    }
+
+    if (opt.partial_butterfly[butterfly_inverse_32])
+    {
+        if (!check_butterfly32_inverse_primitive(ref.partial_butterfly[butterfly_inverse_32], opt.partial_butterfly[butterfly_inverse_32]))
+        {
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_32]);
             return false;
         }
     }
