@@ -56,29 +56,10 @@ const short m_chromaFilter[8][4] =
 template<int N>
 void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    short c[8];
-
     int bitDepth = 8;   //assuming bitDepth = 8
 
-    c[0] = coeff[0];
-    c[1] = coeff[1];
-    if (N >= 4)
-    {
-        c[2] = coeff[2];
-        c[3] = coeff[3];
-    }
-    if (N >= 6)
-    {
-        c[4] = coeff[4];
-        c[5] = coeff[5];
-    }
-    if (N == 8)
-    {
-        c[6] = coeff[6];
-        c[7] = coeff[7];
-    }
-
     int cStride = srcStride;
+
     src -= (N / 2 - 1) * cStride;
 
     int offset;
@@ -98,22 +79,22 @@ void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * cStride] * coeff[0];
+            sum += src[col + 1 * cStride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * cStride] * coeff[2];
+                sum += src[col + 3 * cStride] * coeff[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * cStride] * coeff[4];
+                sum += src[col + 5 * cStride] * coeff[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * cStride] * coeff[6];
+                sum += src[col + 7 * cStride] * coeff[7];
             }
 
             short val = (sum + offset) >> shift;
@@ -132,29 +113,9 @@ void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst
 template<int N>
 void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    short c[8];
-
     int bitDepth = 8;
-
-    c[0] = coeff[0];
-    c[1] = coeff[1];
-    if (N >= 4)
-    {
-        c[2] = coeff[2];
-        c[3] = coeff[3];
-    }
-    if (N >= 6)
-    {
-        c[4] = coeff[4];
-        c[5] = coeff[5];
-    }
-    if (N == 8)
-    {
-        c[6] = coeff[6];
-        c[7] = coeff[7];
-    }
-
     int cStride = 1;
+
     src -= (N / 2 - 1) * cStride;
 
     int offset;
@@ -170,22 +131,22 @@ void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, 
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * cStride] * coeff[0];
+            sum += src[col + 1 * cStride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * cStride] * coeff[2];
+                sum += src[col + 3 * cStride] * coeff[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * cStride] * coeff[4];
+                sum += src[col + 5 * cStride] * coeff[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * cStride] * coeff[6];
+                sum += src[col + 7 * cStride] * coeff[7];
             }
 
             short val = (sum + offset) >> headRoom;
@@ -203,28 +164,10 @@ void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, 
 template<int N>
 void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
-    short c[8];
     int bitDepth = 8; //assuming bitdepth = 8
 
-    c[0] = coeff[0];
-    c[1] = coeff[1];
-    if (N >= 4)
-    {
-        c[2] = coeff[2];
-        c[3] = coeff[3];
-    }
-    if (N >= 6)
-    {
-        c[4] = coeff[4];
-        c[5] = coeff[5];
-    }
-    if (N == 8)
-    {
-        c[6] = coeff[6];
-        c[7] = coeff[7];
-    }
-
     int cStride = 1;
+
     src -= (N / 2 - 1) * cStride;
 
     int offset;
@@ -243,22 +186,22 @@ void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *d
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * cStride] * coeff[0];
+            sum += src[col + 1 * cStride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * cStride] * coeff[2];
+                sum += src[col + 3 * cStride] * coeff[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * cStride] * coeff[4];
+                sum += src[col + 5 * cStride] * coeff[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * cStride] * coeff[6];
+                sum += src[col + 7 * cStride] * coeff[7];
             }
 
             short val = (sum + offset) >> shift;
