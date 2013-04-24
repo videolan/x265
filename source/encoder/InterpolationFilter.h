@@ -307,13 +307,11 @@ void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *ds
     src -= (N / 2 - 1) * cStride;
 
     int offset;
-    short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
 
     shift -= headRoom;
     offset = -IF_INTERNAL_OFFS << shift;
-    maxVal = 0;
 
     int row, col;
     for (row = 0; row < height; row++)
