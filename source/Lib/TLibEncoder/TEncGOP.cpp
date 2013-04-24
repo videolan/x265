@@ -674,6 +674,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
             pcSlice->setCheckLDC(bLowDelay);
         }
+        else
+        {
+            pcSlice->setCheckLDC(true);
+        }
 
         uiColDir = 1 - uiColDir;
 

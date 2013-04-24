@@ -27,148 +27,134 @@
 #include <string.h>
 
 using namespace x265;
-
-#define Y4M_FRAME_MAGIC 5 // "FRAME"
+using namespace std;
 
 Y4MInput::Y4MInput(const char *filename)
 {
-    fp = fopen(filename, "rb");
-    if (fp)
+    ifs.open(filename, ios::binary | ios::in);
+    if (!ifs.fail())
         parseHeader();
-    buf = new uint8_t[3 * width * height / 2];
+    buf = new char[3 * width * height / 2];
 }
 
 Y4MInput::~Y4MInput()
 {
-    if (fp) fclose(fp);
+    ifs.close();
     if (buf) delete[] buf;
 }
 
-#if _MSC_VER
-#pragma warning(disable: 4127)
-#endif
 void Y4MInput::parseHeader()
 {
-    char source[5];
     int t_width = 0;
     int t_height = 0;
     int t_rateNumerator = 0;
     int t_rateDenominator = 0;
 
-    while (1)
+    while (ifs)
     {
-        source[0] = 0x0;
+        // Skip Y4MPEG string
+        char byte = ifs.get();
+        while (!ifs.eof() && (byte != ' ') && (byte != '\n'))
+            byte = ifs.get();
 
-        while ((source[0] != 0x20) && (source[0] != 0x0a))
-        {
-            if (fread(&source[0], 1, 1, fp) == 0)
-            {
-                break;
-            }
-        }
-
-        if (source[0] == 0x00)
-        {
-            break;
-        }
-
-        while (source[0] == 0x20)
+        while (byte == ' ' && ifs)
         {
             // read parameter identifier
-            fread(&source[1], 1, 1, fp);
-            if (source[1] == 'W')
+            switch (ifs.get())
             {
+            case 'W':
                 t_width = 0;
-                while (true)
+                while (ifs)
                 {
-                    fread(&source[0], 1, 1, fp);
+                    byte = ifs.get();
 
-                    if (source[0] == 0x20 || source[0] == 0x0a)
+                    if (byte == ' ' || byte == '\n')
                     {
                         break;
                     }
                     else
                     {
-                        t_width = t_width * 10 + (source[0] - '0');
+                        t_width = t_width * 10 + (byte - '0');
                     }
                 }
+                break;
 
-                continue;
-            }
-
-            if (source[1] == 'H')
-            {
+            case 'H':
                 t_height = 0;
-                while (true)
+                while (ifs)
                 {
-                    fread(&source[0], 1, 1, fp);
-                    if (source[0] == 0x20 || source[0] == 0x0a)
+                    byte = ifs.get();
+                    if (byte == ' ' || byte == '\n')
                     {
                         break;
                     }
                     else
                     {
-                        t_height = t_height * 10 + (source[0] - '0');
+                        t_height = t_height * 10 + (byte - '0');
                     }
                 }
+                break;
 
-                continue;
-            }
-
-            if (source[1] == 'F')
-            {
+            case 'F':
                 t_rateNumerator = 0;
                 t_rateDenominator = 0;
-                while (true)
+                while (ifs)
                 {
-                    fread(&source[0], 1, 1, fp);
-                    if (source[0] == '.')
+                    byte = ifs.get();
+                    if (byte == '.')
                     {
                         t_rateDenominator = 1;
-                        while (true)
+                        while (ifs)
                         {
-                            fread(&source[0], 1, 1, fp);
-                            if (source[0] == 0x20 || source[0] == 0x10)
+                            byte = ifs.get();
+                            if (byte == ' ' || byte == '\n')
                             {
                                 break;
                             }
                             else
                             {
-                                t_rateNumerator = t_rateNumerator * 10 + (source[0] - '0');
+                                t_rateNumerator = t_rateNumerator * 10 + (byte - '0');
                                 t_rateDenominator = t_rateDenominator * 10;
                             }
                         }
 
                         break;
                     }
-                    else if (source[0] == ':')
+                    else if (byte == ':')
                     {
-                        while (true)
+                        while (ifs)
                         {
-                            fread(&source[0], 1, 1, fp);
-                            if (source[0] == 0x20 || source[0] == 0x0a)
+                            byte = ifs.get();
+                            if (byte == ' ' || byte == '\n')
                             {
                                 break;
                             }
                             else
-                                t_rateDenominator = t_rateDenominator * 10 + (source[0] - '0');
+                                t_rateDenominator = t_rateDenominator * 10 + (byte - '0');
                         }
 
                         break;
                     }
                     else
                     {
-                        t_rateNumerator = t_rateNumerator * 10 + (source[0] - '0');
+                        t_rateNumerator = t_rateNumerator * 10 + (byte - '0');
                     }
                 }
+                break;
 
-                continue;
+            default:
+                while (ifs)
+                {
+                    // consume this unsupported configuration word
+                    byte = ifs.get();
+                    if (byte == ' ' || byte == '\n')
+                        break;
+                }
+                break;
             }
-
-            break;
         }
 
-        if (source[0] == 0x0a)
+        if (byte == '\n')
         {
             break;
         }
@@ -182,10 +168,16 @@ void Y4MInput::parseHeader()
     rateDenom = t_rateDenominator;
 }
 
-int  Y4MInput::guessFrameCount() const
+static const char header[] = "FRAME";
+
+int Y4MInput::guessFrameCount()
 {
-    /* TODO: Get file size, subtract file header, divide by (framesize+frameheader) */
-    return 0;
+    long cur = ifs.tellg();
+    ifs.seekg (0, ios::end);
+    long size = ifs.tellg();
+    ifs.seekg (cur, ios::beg);
+
+    return (int) ((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
 }
 
 void Y4MInput::skipFrames(int numFrames)
@@ -203,42 +195,33 @@ bool Y4MInput::readPicture(x265_picture& pic)
     PPAStartCpuEventFunc(read_yuv);
 
     /* strip off the FRAME header */
-    char header[Y4M_FRAME_MAGIC];
-
-    if (fread(&header, 1, sizeof(header), fp) < sizeof(header))
-        return false;
-    if (!strncmp(header, "FRAME", Y4M_FRAME_MAGIC))
+    char hbuf[sizeof(header)];
+    ifs.read(hbuf, strlen(header));
+    if (!ifs || strncmp(hbuf, header, strlen(header)))
     {
         fprintf(stderr, "Y4M frame header missing\n");
         return false;
     }
 
     /* consume bytes up to line feed */
-    char byte;
-    do
-    {
-        if (fread(&byte, 1, 1, fp) == 0)
-        {
-            fprintf(stderr, "Y4M frame header incomplete\n");
-            return false;
-        }
-    }
-    while (byte != '\n');
+    char byte = ifs.get();
+    while (byte != '\n' && !ifs)
+        byte = ifs.get();
 
     const size_t count = width * height * 3 / 2;
 
     pic.planes[0] = buf;
 
-    pic.planes[1] = buf + (width * height);
+    pic.planes[1] = buf + width * height;
 
-    pic.planes[2] = buf + ((width * height) + ((width >> 1) * (height >> 1)));
+    pic.planes[2] = buf + width * height + ((width * height) >> 2);
 
     pic.stride[0] = width;
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
 
-    size_t bytes = fread(buf, 1, count, fp);
+    ifs.read(buf, count);
     PPAStopCpuEventFunc(read_yuv);
 
-    return bytes == count;
+    return ifs.good();
 }

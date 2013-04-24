@@ -97,8 +97,10 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setFrameSkip(m_FrameSkip);
     m_cTEncTop.setSourceWidth(m_iSourceWidth);
     m_cTEncTop.setSourceHeight(m_iSourceHeight);
-    m_cTEncTop.setConformanceWindow(m_confLeft, m_confRight, m_confTop, m_confBottom);
+    m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
     m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
+    int nullpad[2] = { 0, 0 };
+    m_cTEncTop.setPad(nullpad);
 
     //====== Coding Structure ========
     m_cTEncTop.setIntraPeriod(m_iIntraPeriod);
@@ -118,8 +120,6 @@ Void TAppEncTop::xInitLibCfg()
     }
 
     m_cTEncTop.setQP(m_iQP);
-
-    m_cTEncTop.setPad(m_aiPad);
 
     m_cTEncTop.setMaxTempLayer(m_maxTempLayer);
     m_cTEncTop.setUseAMP(m_enableAMP);
@@ -450,20 +450,16 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         x265_picture pic;
-        m_input->readPicture(pic);
-
-        // increase number of received frames
-        m_iFrameRcvd++;
-
-        bEos = (m_iFrameRcvd == m_framesToBeEncoded);
-
-        Bool flush = 0;
-        // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
-        if (m_input->isEof())
+        Bool flush = false;
+        if (m_input->readPicture(pic))
+        {
+            m_iFrameRcvd++;
+            bEos = (m_iFrameRcvd == m_framesToBeEncoded);
+        }
+        else
         {
             flush = true;
             bEos = true;
-            m_iFrameRcvd--;
             m_cTEncTop.setFramesToBeEncoded(m_iFrameRcvd);
         }
 

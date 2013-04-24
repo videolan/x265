@@ -21,37 +21,35 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "PPA/ppa.h"
 #include "output.h"
 #include "y4m.h"
-#include <stdio.h>
-#include <assert.h>
 
 using namespace x265;
+using namespace std;
 
-Y4MOutput::Y4MOutput(const char *filename, int t_width, int t_height, int bitdepth)
+Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate)
+    : width(w)
+    , height(h)
 {
-    fp = fopen(filename, "wb");
-    width = t_width;
-    height = t_height;
-    assert(bitdepth == 8);
+    ofs.open(filename, ios::binary | ios::out);
     buf = new char[width];
-    if (fp)
+    if (ofs)
     {
-        // TODO: need to get frame rate
-        fprintf(fp, "YUV4MPEG2 W%d H%d F30:1 Ip C420\n", width, height);
+        ofs << "YUV4MPEG2 W" << width << " H" << height << " F" << rate << ":1 Ip C420\n";
     }
 }
 
 Y4MOutput::~Y4MOutput()
 {
-    if (fp) fclose(fp);
+    ofs.close();
     if (buf) delete [] buf;
 }
 
-
 bool Y4MOutput::writePicture(const x265_picture& pic)
 {
-    fprintf(fp, "FRAME\n");
+    PPAStartCpuEventFunc(write_yuv);
+    ofs << "FRAME\n";
 
     if (pic.bitDepth > 8)
     {
@@ -61,7 +59,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width; j++)
                 buf[j] = (char) Y[j];
-            fwrite(buf, sizeof(char), width, fp);
+            ofs.write(buf, width);
             Y += pic.stride[0];
         }
         short *U = (short*)pic.planes[1];
@@ -69,7 +67,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
                 buf[j] = (char) U[j];
-            fwrite(buf, sizeof(char), width >> 1, fp);
+            ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
         short *V = (short*)pic.planes[2];
@@ -77,7 +75,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
                 buf[j] = (char) V[j];
-            fwrite(buf, sizeof(char), width >> 1, fp);
+            ofs.write(buf, width >> 1);
             V += pic.stride[2];
         }
     }
@@ -86,22 +84,23 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         char *Y = (char*)pic.planes[0];
         for (int i = 0; i < height; i++)
         {
-            fwrite(Y, sizeof(char), width, fp);
+            ofs.write(Y, width);
             Y += pic.stride[0];
         }
         char *U = (char*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
-            fwrite(U, sizeof(char), width >> 1, fp);
+            ofs.write(U, width >> 1);
             U += pic.stride[1];
         }
         char *V = (char*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
-            fwrite(V, sizeof(char), width >> 1, fp);
+            ofs.write(V, width >> 1);
             V += pic.stride[2];
         }
     }
 
+    PPAStopCpuEventFunc(write_yuv);
     return true;
 }

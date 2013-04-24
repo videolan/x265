@@ -302,6 +302,10 @@ public:
     Vec16c(int i) {
         xmm = _mm_set1_epi8(i);
     }
+    // MCW Added - assign lowest 4 byte values from uint32_t
+    void fromUint32(uint32_t i) {
+        xmm = _mm_cvtsi32_si128(i);
+    }
     // Constructor to build from all elements:
     Vec16c(int8_t i0, int8_t i1, int8_t i2, int8_t i3, int8_t i4, int8_t i5, int8_t i6, int8_t i7,
         int8_t i8, int8_t i9, int8_t i10, int8_t i11, int8_t i12, int8_t i13, int8_t i14, int8_t i15) {
@@ -319,6 +323,10 @@ public:
     // Type cast operator to convert to __m128i used in intrinsics
     operator __m128i() const {
         return xmm;
+    }
+    // MCW Added - PSADBW
+    Vec16c sad(__m128i const & x) {
+        return _mm_sad_epu8(xmm, x);
     }
     // Member function to load from array (unaligned)
     Vec16c & load(void const * p) {
