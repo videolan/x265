@@ -29,7 +29,6 @@
 
 #include "TLibCommon\TypeDef.h"
 
-
 const short m_lumaFilter[4][8] =
 {
     {  0, 0,   0, 64,  0,   0, 0,  0 },
@@ -58,8 +57,6 @@ template<int N>
 void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
-
-    // int N=8;
 
     c[0] = coeff[0];
     c[1] = coeff[1];
@@ -94,30 +91,35 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
 
     int row, col;
 
+    int sumCoeffs = c[0] + c[1] + c[2] + c[3];
+    if (N == 8)
+        sumCoeffs += c[4] + c[5] + c[6] + c[7];
+
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width; col++)
         {
             int sum;
 
-            sum  = (((short)src[col + 0 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[0];
-            sum += (((short)src[col + 1 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[1];
+            sum  = (((short)src[col + 0 * cStride] << headRoom)) * c[0];
+            sum += (((short)src[col + 1 * cStride] << headRoom)) * c[1];
             if (N >= 4)
             {
-                sum += (((short)src[col + 2 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[2];
-                sum += (((short)src[col + 3 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[3];
+                sum += (((short)src[col + 2 * cStride] << headRoom)) * c[2];
+                sum += (((short)src[col + 3 * cStride] << headRoom)) * c[3];
             }
             if (N >= 6)
             {
-                sum += (((short)src[col + 4 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[4];
-                sum += (((short)src[col + 5 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[5];
+                sum += (((short)src[col + 4 * cStride] << headRoom)) * c[4];
+                sum += (((short)src[col + 5 * cStride] << headRoom)) * c[5];
             }
             if (N == 8)
             {
-                sum += (((short)src[col + 6 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[6];
-                sum += (((short)src[col + 7 * cStride] << headRoom) - (short)IF_INTERNAL_OFFS) * c[7];
+                sum += (((short)src[col + 6 * cStride] << headRoom)) * c[6];
+                sum += (((short)src[col + 7 * cStride] << headRoom)) * c[7];
             }
 
+            sum -= sumCoeffs * IF_INTERNAL_OFFS;
             short val = (short)((sum + offset) >> shift);
 
             val = (val < 0) ? 0 : val;
@@ -233,7 +235,7 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
 
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int headRoom = IF_INTERNAL_PREC - 8;    //assuming bitDepth is 8.
     int shift = IF_FILTER_PREC;
 
     shift -= headRoom;
@@ -268,8 +270,8 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
             }
 
             short val = (sum + offset) >> shift;
-
             val = (val + offsetPost) >> headRoom;
+
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
             dst[col] = val;
@@ -365,7 +367,7 @@ void filterCopy(Pel *src, int srcStride, Pel *dst, int dstStride, int width, int
     }
 }
 
-void filterConvert(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
@@ -390,7 +392,7 @@ void filterConvert(int bitDepth, short *src, int srcStride, Pel *dst, int dstStr
     }
 }
 
-void filterConvertPS(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - bitDepth;
     int row, col;
