@@ -27,7 +27,7 @@
 #ifndef X265_INTERPOLATIONFILTER_H
 #define X265_INTERPOLATIONFILTER_H
 
-#include "TLibCommon\TypeDef.h"
+#include "TLibCommon/TypeDef.h"
 
 
 const short m_lumaFilter[4][8] =
