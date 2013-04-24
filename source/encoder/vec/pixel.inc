@@ -93,44 +93,22 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 template<int lx, int ly>
 int CDECL x265_sad_16(char * piOrg, intptr_t strideOrg, char * piCur, intptr_t strideCur)
 {
-    __m128i sum = _mm_set1_epi32(0);                    //Vec4i
-
+    Vec4i sum = _mm_set1_epi32(0); 
     for (int row = 0; row < ly; row++)
     {
-        __m128i vec_sum = _mm_set1_epi16(0);            //Vec8s
+        Vec8s vec_sum(0);            
         for (int col = 0; col < lx; col += 16)
         {
-            __m128i m1, n1;
-            m1 = _mm_loadu_si128((__m128i const*)(piOrg + col));            // Unaligned Load
-            n1 = _mm_loadu_si128((__m128i const*)(piCur + col));            // Unaligned Load
-            vec_sum  = _mm_add_epi16(vec_sum, _mm_sad_epu8(m1, n1));         // Extend_low_to_short + Extend_high_to_short
+            Vec16c m1, n1;
+            m1.load(piOrg + col);                   
+            n1.load(piCur + col);                   
+            vec_sum  += (Vec8s)x265_sad16(m1, n1);         
         }
-
-        sum =
-            _mm_add_epi32(sum,
-                          _mm_add_epi32(_mm_unpacklo_epi16(vec_sum,
-                                                           _mm_setzero_si128()), _mm_unpackhi_epi16(vec_sum, _mm_setzero_si128())));                    // Extend_low_to_int + Extend_high_to_int
+        sum += (extend_low(vec_sum) + extend_high(vec_sum));
         piOrg += strideOrg;
         piCur += strideCur;
     }
-
-    // Horizontal Add for "sum"
-#ifdef __XOP__       // AMD XOP instruction set
-    __m128i sum1  = _mm_haddq_epi32(sum);
-    __m128i sum2  = _mm_shuffle_epi32(sum1, 0x0E);          // high element
-    __m128i sum3  = _mm_add_epi32(sum1, sum2);              // sum
-    return _mm_cvtsi128_si32(sum3);               // truncate to 32 bits
-#elif  INSTRSET >= 4  // SSSE3
-    __m128i sum1  = _mm_hadd_epi32(sum, sum);                   // horizontally add 4 elements in 2 steps
-    __m128i sum2  = _mm_hadd_epi32(sum1, sum1);
-    return _mm_cvtsi128_si32(sum2);               // 32 bit sum
-#else                 // SSE2
-    __m128i sum1  = _mm_shuffle_epi32(sum, 0x0E);             // 2 high elements
-    __m128i sum2  = _mm_add_epi32(sum, sum1);                 // 2 sums
-    __m128i sum3  = _mm_shuffle_epi32(sum2, 0x01);          // 1 high element
-    __m128i sum4  = _mm_add_epi32(sum2, sum3);              // 2 sums
-    return _mm_cvtsi128_si32(sum4);               // 32 bit sum
-#endif /* ifdef __XOP__ */
+    return horizontal_add(sum);
 }
 
 template<int lx, int ly>
