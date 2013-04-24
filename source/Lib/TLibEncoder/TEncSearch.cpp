@@ -40,7 +40,7 @@
 #include "TLibCommon/TComMotionInfo.h"
 #include "TEncSearch.h"
 #include "primitives.h"
-#include "interpolationFilter.h"
+#include "InterpolationFilter.h"
 #include <math.h>
 
 //! \ingroup TLibEncoder
