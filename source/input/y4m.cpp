@@ -143,6 +143,13 @@ void Y4MInput::parseHeader()
                 break;
 
             default:
+                while (ifs)
+                {
+                    // consume this unsupported configuration word
+                    byte = ifs.get();
+                    if (byte == ' ' || byte == '\n')
+                        break;
+                }
                 break;
             }
         }
@@ -189,8 +196,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     /* strip off the FRAME header */
     char hbuf[sizeof(header)];
-    ifs.read(hbuf, sizeof(header));
-    if (!ifs || !strncmp(hbuf, header, sizeof(header)))
+    ifs.read(hbuf, strlen(header));
+    if (!ifs || strncmp(hbuf, header, strlen(header)))
     {
         fprintf(stderr, "Y4M frame header missing\n");
         return false;
@@ -205,9 +212,9 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     pic.planes[0] = buf;
 
-    pic.planes[1] = buf + (width * height);
+    pic.planes[1] = buf + width * height;
 
-    pic.planes[2] = buf + ((width * height) + ((width >> 1) * (height >> 1)));
+    pic.planes[2] = buf + width * height + ((width * height) >> 2);
 
     pic.stride[0] = width;
 
