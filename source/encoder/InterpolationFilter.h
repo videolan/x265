@@ -54,9 +54,11 @@ const short m_chromaFilter[8][4] =
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
+
+    int bitDepth = 8;   //assuming bitDepth = 8
 
     c[0] = coeff[0];
     c[1] = coeff[1];
@@ -128,9 +130,11 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst,
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
+
+    int bitDepth = 8;
 
     c[0] = coeff[0];
     c[1] = coeff[1];
@@ -155,14 +159,9 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
 
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - 8;    //assuming bitDepth is 8.
-    int shift = IF_FILTER_PREC;
-
-    shift -= headRoom;
-    offset = -IF_INTERNAL_OFFS << shift;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    offset =  (1 << (headRoom - 1));
     maxVal = (1 << bitDepth) - 1;
-    short offsetPost = IF_INTERNAL_OFFS;
-    offsetPost += headRoom ? (1 << (headRoom - 1)) : 0;
 
     int row, col;
     for (row = 0; row < height; row++)
@@ -189,8 +188,7 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
                 sum += src[col + 7 * cStride] * c[7];
             }
 
-            short val = (sum + offset) >> shift;
-            val = (val + offsetPost) >> headRoom;
+            short val = (sum + offset) >> headRoom;
 
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
@@ -203,9 +201,10 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
+    int bitDepth = 8; //assuming bitdepth = 8
 
     c[0] = coeff[0];
     c[1] = coeff[1];
