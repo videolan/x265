@@ -1,4 +1,5 @@
 PPA_REGISTER_CPU_EVENT(encode_block)
 PPA_REGISTER_CPU_EVENT(read_yuv)
+PPA_REGISTER_CPU_EVENT(write_yuv)
 PPA_REGISTER_CPU_EVENT(encode_frame)
 PPA_REGISTER_CPU_EVENT(bitstream_write)

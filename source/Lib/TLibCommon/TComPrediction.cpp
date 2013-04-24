@@ -279,7 +279,7 @@ Void TComPrediction::xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*&
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, pDst[k * dstStride] + ((refSide[k + 1] - refSide[0]) >> 1));
+                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, static_cast<Int> (pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
                 }
             }
         }

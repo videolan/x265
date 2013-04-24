@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
     }
 
     int seed = (int)time(NULL);
-    printf("Using random seed %X\n", seed);
+    const char *bpp[] = { "8bpp", "16bpp" };
+    printf("Using random seed %X %s\n", seed, bpp[HIGH_BIT_DEPTH]);
     srand(seed);
 
     PixelHarness  HPixel;

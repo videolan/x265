@@ -21,48 +21,33 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#ifndef _OUTPUT_H_
+#define _OUTPUT_H_
 
 #include "x265.h"
 
 namespace x265 {
 // private x265 namespace
 
-class Input
+class Output
 {
+
 protected:
 
-    virtual ~Input()  {}
+    virtual ~Output()  {}
 
 public:
 
-    Input()           {}
+    Output()           {}
 
-    static Input* Open(const char *filename);
-
-    virtual void setDimensions(int width, int height) = 0;
-
-    virtual void setBitDepth(int bitDepth) = 0;
-
-    virtual float getRate() const = 0;
-
-    virtual int getWidth() const = 0;
-
-    virtual int getHeight() const = 0;
-
-    virtual void release() = 0;
-
-    virtual void skipFrames(int numFrames) = 0;
-
-    virtual bool readPicture(x265_picture& pic) = 0;
-
-    virtual bool isEof() const = 0;
+    static Output* Open(const char *fname, int width, int height, int bitdepth, int rate);
 
     virtual bool isFail() const = 0;
 
-    virtual int  guessFrameCount() = 0;
+    virtual void release() = 0;
+
+    virtual bool writePicture(const x265_picture& pic) = 0;
 };
 }
 
-#endif // _INPUT_H_
+#endif // _OUTPUT_H_

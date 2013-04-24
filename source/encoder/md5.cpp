@@ -44,6 +44,8 @@ static void byteReverse(uint8_t_t *buf, unsigned int nSize)
 }
 #endif
 
+void MD5Transform(uint32_t *buf, uint32_t *in);
+
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
@@ -152,7 +154,7 @@ void MD5Final(MD5Context *ctx, uint8_t *digest)
     byteReverse((uint8_t *) ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
 
-    memset(ctx, 0, sizeof(ctx));        /* In case it's sensitive */
+    memset(ctx, 0, sizeof(*ctx));        /* In case it's sensitive */
 }
 
 /* The four core functions - F1 is optimized somewhat */

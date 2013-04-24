@@ -97,8 +97,10 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setFrameSkip(m_FrameSkip);
     m_cTEncTop.setSourceWidth(m_iSourceWidth);
     m_cTEncTop.setSourceHeight(m_iSourceHeight);
-    m_cTEncTop.setConformanceWindow(m_confLeft, m_confRight, m_confTop, m_confBottom);
+    m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
     m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
+    int nullpad[2] = { 0, 0 };
+    m_cTEncTop.setPad(nullpad);
 
     //====== Coding Structure ========
     m_cTEncTop.setIntraPeriod(m_iIntraPeriod);
@@ -118,8 +120,6 @@ Void TAppEncTop::xInitLibCfg()
     }
 
     m_cTEncTop.setQP(m_iQP);
-
-    m_cTEncTop.setPad(m_aiPad);
 
     m_cTEncTop.setMaxTempLayer(m_maxTempLayer);
     m_cTEncTop.setUseAMP(m_enableAMP);
@@ -391,36 +391,11 @@ Void TAppEncTop::xInitLibCfg()
 
 Void TAppEncTop::xCreateLib()
 {
-    if (m_FrameSkip && m_input)
-        m_input->skipFrames(m_FrameSkip);
-
-    if (m_pchReconFile)
-    {
-        m_cTVideoIOReconFile = new TVideoIOYuv();
-        m_cTVideoIOReconFile->open(m_pchReconFile,
-                                   true,
-                                   m_outputBitDepthY,
-                                   m_outputBitDepthC,
-                                   m_internalBitDepthY,
-                                   m_internalBitDepthC,
-                                   handler_recon,
-                                   video_info,
-                                   m_aiPad); // write mode
-    }
-
-    // Neo Decoder
     m_cTEncTop.create();
 }
 
 Void TAppEncTop::xDestroyLib()
 {
-    // Video I/O
-    if (m_input)
-        m_input->release();
-    if (m_pchReconFile)
-        m_cTVideoIOReconFile->close(handler_recon);
-
-    // Neo Decoder
     m_cTEncTop.destroy();
 }
 
@@ -475,20 +450,16 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         x265_picture pic;
-        m_input->readPicture(pic);
-
-        // increase number of received frames
-        m_iFrameRcvd++;
-
-        bEos = (m_iFrameRcvd == m_framesToBeEncoded);
-
-        Bool flush = 0;
-        // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
-        if (m_input->isEof())
+        Bool flush = false;
+        if (m_input->readPicture(pic))
+        {
+            m_iFrameRcvd++;
+            bEos = (m_iFrameRcvd == m_framesToBeEncoded);
+        }
+        else
         {
             flush = true;
             bEos = true;
-            m_iFrameRcvd--;
             m_cTEncTop.setFramesToBeEncoded(m_iFrameRcvd);
         }
 
@@ -582,12 +553,17 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
         --iterPicYuvRec;
     }
 
+    x265_picture pic;
     for (i = 0; i < iNumEncoded; i++)
     {
-        TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
-        if (m_pchReconFile)
+        if (m_recon)
         {
-            m_cTVideoIOReconFile->write(pcPicYuvRec, handler_recon, m_confLeft, m_confRight, m_confTop, m_confBottom);
+            TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
+            pic.planes[0] = pcPicYuvRec->getLumaAddr(); pic.stride[0] = pcPicYuvRec->getStride();
+            pic.planes[1] = pcPicYuvRec->getCbAddr();   pic.stride[1] = pcPicYuvRec->getCStride();
+            pic.planes[2] = pcPicYuvRec->getCrAddr();   pic.stride[2] = pcPicYuvRec->getCStride();
+            pic.bitDepth = sizeof(Pel) == 8 ? 8 : 16;
+            m_recon->writePicture(pic);
         }
 
         const AccessUnit &au = *(iterBitstream++);

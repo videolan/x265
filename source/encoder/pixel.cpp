@@ -30,7 +30,6 @@ namespace {
 template<int lx, int ly>
 int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
-    // TODO: we could use SWAR here fairly easily.  Would it help?
     int sum = 0;
 
     for (int y = 0; y < ly; y++)

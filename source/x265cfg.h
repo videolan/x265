@@ -39,10 +39,8 @@
 #define __TAPPENCCFG__
 
 #include "TLibCommon/CommonDef.h"
-
-#include "TLibEncoder/TEncCfg.h"
-#include "TLibVideoIO/TVideoIO.h"
 #include "input/input.h"
+#include "output/output.h"
 #include <sstream>
 
 //! \ingroup TAppEncoder
@@ -56,35 +54,25 @@
 class TAppEncCfg
 {
 protected:
+    x265::Input*  m_input;
+    x265::Output* m_recon;
 
     // file I/O
-    Char*     m_pchInputFile;                                 ///< source file name
     Char*     m_pchBitstreamFile;                             ///< output bitstream file
-    Char*     m_pchReconFile;                                 ///< output reconstruction file
     Double    m_adLambdaModifier[MAX_TLAYER];                 ///< Lambda modifier array for each temporal layer
+
     // source specification
     Int       m_iFrameRate;                                   ///< source frame-rates (Hz)
     UInt      m_FrameSkip;                                    ///< number of skipped frames from the beginning
     Int       m_iSourceWidth;                                 ///< source width in pixel
     Int       m_iSourceHeight;                                ///< source height in pixel
-    Int       m_conformanceMode;
-    Int       m_confLeft;
-    Int       m_confRight;
-    Int       m_confTop;
-    Int       m_confBottom;
     Int       m_framesToBeEncoded;                            ///< number of encoded frames
-    Int       m_aiPad[2];                                     ///< number of padded pixels for width and height
-
-    //Input source file handlers
-    x265::Input* m_input;
-    TVideoIO* m_cTVideoIOReconFile;     ///< output reconstruction file
-    hnd_t*    handler_recon;
-    video_info_t  video_info;
 
     // profile/level
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
+
 #if L0046_CONSTRAINT_FLAGS
     Bool m_progressiveSourceFlag;
     Bool m_interlacedSourceFlag;
@@ -129,7 +117,7 @@ protected:
     Bool      m_bUseAdaptiveQP;                               ///< Flag for enabling QP adaptation based on a psycho-visual model
     Int       m_iQPAdaptationRange;                           ///< dQP range by QP adaptation
 
-    Int       m_maxTempLayer;                                ///< Max temporal layer
+    Int       m_maxTempLayer;                                 ///< Max temporal layer
 
     // coding unit (CU) definition
     UInt      m_uiMaxCUWidth;                                 ///< max. CU width in pixel
@@ -143,13 +131,12 @@ protected:
     UInt      m_uiQuadtreeTUMaxDepthInter;
     UInt      m_uiQuadtreeTUMaxDepthIntra;
 
+#if HIGH_BIT_DEPTH
     // coding tools (bit-depth)
-    Int       m_inputBitDepthY;                             ///< bit-depth of input file (luma component)
-    Int       m_inputBitDepthC;                             ///< bit-depth of input file (chroma component)
-    Int       m_outputBitDepthY;                            ///< bit-depth of output file (luma component)
-    Int       m_outputBitDepthC;                            ///< bit-depth of output file (chroma component)
-    Int       m_internalBitDepthY;                          ///< bit-depth codec operates at in luma (input/output files will be converted)
-    Int       m_internalBitDepthC;                          ///< bit-depth codec operates at in chroma (input/output files will be converted)
+    Int       m_inputBitDepth;                               ///< bit-depth of input file (luma component)
+    Int       m_outputBitDepth;                              ///< bit-depth of output file (luma component)
+    Int       m_internalBitDepth;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
+#endif
 
     // coding tools (PCM bit-depth)
     Bool      m_bPCMInputBitDepthFlag;                        ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
@@ -162,9 +149,9 @@ protected:
     Bool      m_saoLcuBasedOptimization;                      ///< SAO LCU-based optimization
     // coding tools (loop filter)
     Bool      m_bLoopFilterDisable;                           ///< flag for using deblocking filter
-    Bool      m_loopFilterOffsetInPPS;                       ///< offset for deblocking filter in 0 = slice header, 1 = PPS
-    Int       m_loopFilterBetaOffsetDiv2;                   ///< beta offset for deblocking filter
-    Int       m_loopFilterTcOffsetDiv2;                     ///< tc offset for deblocking filter
+    Bool      m_loopFilterOffsetInPPS;                        ///< offset for deblocking filter in 0 = slice header, 1 = PPS
+    Int       m_loopFilterBetaOffsetDiv2;                     ///< beta offset for deblocking filter
+    Int       m_loopFilterTcOffsetDiv2;                       ///< tc offset for deblocking filter
     Bool      m_DeblockingFilterControlPresent;               ///< deblocking filter control present flag in PPS
 #if L0386_DB_METRIC
     Bool      m_DeblockingFilterMetric;                       ///< blockiness metric in encoder

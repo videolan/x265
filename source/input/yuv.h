@@ -25,8 +25,7 @@
 #define _YUV_H_
 
 #include "input.h"
-#include <stdio.h>
-#include <stdint.h>
+#include <fstream>
 
 namespace x265 {
 // private x265 namespace
@@ -41,11 +40,9 @@ protected:
 
     int depth;
 
-    uint8_t* buf;
+    char* buf;
 
-    FILE *fp;
-
-    bool eof;
+    std::ifstream ifs;
 
 public:
 
@@ -63,19 +60,13 @@ public:
 
     int getHeight() const                         { return height; }
 
-    bool isEof() const                            { return !!feof(fp); }
+    bool isEof() const                            { return ifs.eof(); }
 
-    bool isFail() const                           { return !fp; }
+    bool isFail() const                           { return !ifs.is_open(); }
 
-    void release()
-    {
-        if (fp)
-            fclose(fp);
+    void release()                                { delete this; }
 
-        delete this;
-    }
-
-    int  guessFrameCount() const;
+    int  guessFrameCount();
 
     void skipFrames(int numFrames);
 
