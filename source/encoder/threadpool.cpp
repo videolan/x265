@@ -57,12 +57,12 @@
 #define CLZ64(x)                        __lzcnt_2x32(x)
 inline int __lzcnt_2x32(uint64_t x64)
 {
-    int val = __lzcnt((uint32_t)(x64 >> 32));
-
-    if (val)
-        return val + 32;
-
-    return __lzcnt((uint32_t)x64);
+    uint32_t high32 = (uint32_t)(x64 >> 32);
+    uint32_t low32 = (uint32_t)x64;
+    if (high32)
+        return __lzcnt(high32);
+    else
+        return __lzcnt(low32) + 32;
 }
 
 #endif // if _WIN64

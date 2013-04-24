@@ -21,28 +21,31 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "PPA/ppa.h"
 #include "output.h"
 #include "yuv.h"
 
 using namespace x265;
+using namespace std;
 
-YUVOutput::YUVOutput(const char *filename, int t_width, int t_height, int t_bitdepth)
+YUVOutput::YUVOutput(const char *filename, int w, int h, int d)
+    : width(w)
+    , height(h)
+    , depth(d)
 {
-    fp = fopen(filename, "wb");
-    width = t_width;
-    height = t_height;
-    depth = t_bitdepth;
+    ofs.open(filename, ios::binary | ios::out);
     buf = new char[width];
 }
 
 YUVOutput::~YUVOutput()
 {
-    if (fp) fclose(fp);
+    ofs.close();
     if (buf) delete [] buf;
 }
 
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
+    PPAStartCpuEventFunc(write_yuv);
     int pixelbytes = (depth > 8) ? 2 : 1;
 
     if (pic.bitDepth > 8 && depth == 8)
@@ -53,7 +56,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width; j++)
                 buf[j] = (char) Y[j];
-            fwrite(buf, sizeof(char), width, fp);
+            ofs.write(buf, width);
             Y += pic.stride[0];
         }
         short *U = (short*)pic.planes[1];
@@ -61,7 +64,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
                 buf[j] = (char) U[j];
-            fwrite(buf, sizeof(char), width >> 1, fp);
+            ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
         short *V = (short*)pic.planes[2];
@@ -69,31 +72,33 @@ bool YUVOutput::writePicture(const x265_picture& pic)
         {
             for (int j = 0; j < width >> 1; j++)
                 buf[j] = (char) V[j];
-            fwrite(buf, sizeof(char), width >> 1, fp);
+            ofs.write(buf, width >> 1);
             V += pic.stride[2];
         }
     }
     else
     {
-        // encoder gave us byte pixels, write them directly
+        // encoder pixels same size as output pixels, write them directly
         char *Y = (char*)pic.planes[0];
         for (int i = 0; i < height; i++)
         {
-            fwrite(Y, sizeof(char), width * pixelbytes, fp);
+            ofs.write(Y, width * pixelbytes);
             Y += pic.stride[0] * pixelbytes;
         }
         char *U = (char*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
-            fwrite(U, sizeof(char), (width>>1) * pixelbytes, fp);
+            ofs.write(U, (width >> 1) * pixelbytes);
             U += pic.stride[1] * pixelbytes;
         }
         char *V = (char*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
-            fwrite(V, sizeof(char), (width>>1) * pixelbytes, fp);
+            ofs.write(V, (width >> 1) * pixelbytes);
             V += pic.stride[2] * pixelbytes;
         }
     }
+
+    PPAStopCpuEventFunc(write_yuv);
     return true;
 }

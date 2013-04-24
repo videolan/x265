@@ -39,7 +39,6 @@ typedef struct MD5Context {
 void MD5Init(MD5Context *context);
 void MD5Update(MD5Context *context, unsigned char *buf, uint32_t len);
 void MD5Final(MD5Context *ctx, uint8_t *digest);
-void MD5Transform(uint32_t *buf, uint32_t *in);
 
 class MD5
 {

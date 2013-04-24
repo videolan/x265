@@ -77,7 +77,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
     if (cpuid >= 1)
     {
-//        INIT7( sad, _mmx2 );
+#if 0
+        INIT7( sad, _mmx2 );
+#endif
         INIT8( satd, _mmx2 );
 
         // Intra predictions max out at 32x32 (but subpel refine can use larger blocks)
@@ -85,17 +87,19 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_32x8]  = cmp<32, 8, 16, 8, x264_pixel_satd_16x8_mmx2>;
         p.satd[PARTITION_32x32] = cmp<32, 32, 16, 16, x264_pixel_satd_16x16_mmx2>;
 
+#if 0
         // For large CU motion search
-//        p.sad[PARTITION_32x32]  = cmp<32, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
-//        p.sad[PARTITION_64x32]  = cmp<64, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
-//        p.sad[PARTITION_32x64]  = cmp<32, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
-//        p.sad[PARTITION_64x64]  = cmp<64, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
+        p.sad[PARTITION_32x32]  = cmp<32, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
+        p.sad[PARTITION_64x32]  = cmp<64, 32, 16, 16, x264_pixel_sad_16x16_mmx2>;
+        p.sad[PARTITION_32x64]  = cmp<32, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
+        p.sad[PARTITION_64x64]  = cmp<64, 64, 16, 16, x264_pixel_sad_16x16_mmx2>;
+#endif
     }
 #if 0
     if (cpuid >= 2)
     {
         p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_sse2;
-        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse2;
+        p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse2;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_sse2;
         p.sad[PARTITION_16x16] = x264_pixel_sad_16x16_sse2;
         p.sad[PARTITION_16x8]  = x264_pixel_sad_16x8_sse2;
@@ -109,13 +113,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 3)
     {
-        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_ssse3;
+        p.sa8d_8x8 = x264_pixel_sa8d_8x8_ssse3;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_ssse3;
     }
     if (cpuid >= 4)
     {
         p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_sse4;
-        //p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse4;
+        p.sa8d_8x8 = x264_pixel_sa8d_8x8_sse4;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_sse4;
     }
     if (cpuid == 7)

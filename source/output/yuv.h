@@ -25,6 +25,7 @@
 #define _YUV_H_
 
 #include "output.h"
+#include <fstream>
 #include <stdio.h>
 
 namespace x265 {
@@ -42,13 +43,15 @@ protected:
 
     char *buf;
 
-    FILE *fp;
+    std::ofstream ofs;
 
 public:
 
     YUVOutput(const char *filename , int width, int height, int bitdepth);
 
     virtual ~YUVOutput();
+
+    bool isFail() const                           { return ofs.fail(); }
 
     void release()                                { delete this; }
 
