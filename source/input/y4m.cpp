@@ -161,7 +161,7 @@ void Y4MInput::parseHeader()
     rateDenom = t_rateDenominator;
 }
 
-static const char *header = "FRAME";
+static const char header[] = "FRAME";
 
 int Y4MInput::guessFrameCount()
 {
