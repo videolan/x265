@@ -592,6 +592,11 @@ static inline Vec16c select (Vec16c const & s, Vec16c const & a, Vec16c const & 
     return selectb(s,a,b);
 }
 
+static inline Vec16c x265_sad16(Vec16c m, Vec16c n) {
+    __m128i sum = _mm_sad_epu8(m,n); 
+    return (sum);
+  }
+
 // Horizontal add: Calculates the sum of all vector elements.
 // Overflow will wrap around
 static inline int32_t horizontal_add (Vec16c const & a) {
