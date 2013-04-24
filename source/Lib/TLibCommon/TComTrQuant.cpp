@@ -924,8 +924,13 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     }
     else if (iWidth == 32 && iHeight == 32)
     {
+#ifdef ENABLE_PRIMITIVES
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](coeff, tmp, shift_1st, iWidth);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](tmp, block, shift_2nd, iHeight);
+#else
         partialButterflyInverse32(coeff, tmp, shift_1st, iWidth);
         partialButterflyInverse32(tmp, block, shift_2nd, iHeight);
+#endif
     }
 }
 
