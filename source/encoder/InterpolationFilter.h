@@ -58,6 +58,8 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
 {
     short c[8];
 
+    \
+
     c[0] = coeff[0];
     c[1] = coeff[1];
     if (N >= 4)
@@ -353,14 +355,11 @@ void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *ds
 
 void filterCopy(Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height)
 {
-    int row, col;
+    int row;
 
     for (row = 0; row < height; row++)
     {
-        for (col = 0; col < width; col++)
-        {
-            dst[col] = src[col];
-        }
+        memcpy(dst, src, sizeof(Pel) * width);
 
         src += srcStride;
         dst += dstStride;
