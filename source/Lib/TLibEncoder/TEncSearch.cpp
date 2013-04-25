@@ -316,6 +316,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
 {
     UInt  uiSad = 0;
     Pel*  piRefSrch;
+
     piRefSrch = rcStruct.piRefY + iSearchY * rcStruct.iYStride + iSearchX;
     //Initialise the DistParam for HM Primitives and Optimized Primitives
     m_cDistParam.pOrg = pcPatternKey->getROIY();
@@ -343,7 +344,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     m_cDistParam.bitDepth = g_bitDepthY;
 
     // Call the sad Primitive function if not HM sad Functions
-
     Pel* piOrg   = m_cDistParam.pOrg;
     Pel* piCur   = m_cDistParam.pCur;
     Int  iRows   = m_cDistParam.iRows;
@@ -352,23 +352,24 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     Int  iStrideCur = m_cDistParam.iStrideCur * iSubStep;
     Int  iStrideOrg = m_cDistParam.iStrideOrg * iSubStep;
 
-#if ENABLE_PRIMITIVES 
+#if ENABLE_PRIMITIVES
     int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
 
-    //Call the Vector or C Primitives 
+    //Call the Vector or C Primitives
     if (part >= 0)
     {
         uiSad =  (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
             DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
 
-		x264_cpu_emms();
+        x264_cpu_emms();
     }
     else      // if None of C and Vector Primitives are available while Primitives are Enabled then call the HM Sad Functions
-#endif
+#endif // if ENABLE_PRIMITIVES
     {
         FpDistFunc  *m_afpDistortFunc;
         m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
         m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
+
 #if AMP_SAD
 
         if (m_cDistParam.iCols == 12)
@@ -386,7 +387,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
 #endif     // if AMP_SAD
         uiSad = m_cDistParam.DistFunc(&m_cDistParam);
     }
- 
+
     // motion cost
     uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
 
