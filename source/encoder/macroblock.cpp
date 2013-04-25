@@ -502,6 +502,70 @@ void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line
         dst += 16;
     }
 }
+
+void CDECL partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
+{
+    int j, k;
+    int E[16], O[16];
+    int EE[8], EO[8];
+    int EEE[4], EEO[4];
+    int EEEE[2], EEEO[2];
+    int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
+        for (k = 0; k < 16; k++)
+        {
+            O[k] = g_aiT32[1][k] * src[line] + g_aiT32[3][k] * src[3 * line] + g_aiT32[5][k] * src[5 * line] + g_aiT32[7][k] * src[7 * line] +
+                g_aiT32[9][k] * src[9 * line] + g_aiT32[11][k] * src[11 * line] + g_aiT32[13][k] * src[13 * line] + g_aiT32[15][k] * src[15 * line] +
+                g_aiT32[17][k] * src[17 * line] + g_aiT32[19][k] * src[19 * line] + g_aiT32[21][k] * src[21 * line] + g_aiT32[23][k] * src[23 * line] +
+                g_aiT32[25][k] * src[25 * line] + g_aiT32[27][k] * src[27 * line] + g_aiT32[29][k] * src[29 * line] + g_aiT32[31][k] * src[31 * line];
+        }
+
+        for (k = 0; k < 8; k++)
+        {
+            EO[k] = g_aiT32[2][k] * src[2 * line] + g_aiT32[6][k] * src[6 * line] + g_aiT32[10][k] * src[10 * line] + g_aiT32[14][k] * src[14 * line] +
+                g_aiT32[18][k] * src[18 * line] + g_aiT32[22][k] * src[22 * line] + g_aiT32[26][k] * src[26 * line] + g_aiT32[30][k] * src[30 * line];
+        }
+
+        for (k = 0; k < 4; k++)
+        {
+            EEO[k] = g_aiT32[4][k] * src[4 * line] + g_aiT32[12][k] * src[12 * line] + g_aiT32[20][k] * src[20 * line] + g_aiT32[28][k] * src[28 * line];
+        }
+
+        EEEO[0] = g_aiT32[8][0] * src[8 * line] + g_aiT32[24][0] * src[24 * line];
+        EEEO[1] = g_aiT32[8][1] * src[8 * line] + g_aiT32[24][1] * src[24 * line];
+        EEEE[0] = g_aiT32[0][0] * src[0] + g_aiT32[16][0] * src[16 * line];
+        EEEE[1] = g_aiT32[0][1] * src[0] + g_aiT32[16][1] * src[16 * line];
+
+        /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
+        EEE[0] = EEEE[0] + EEEO[0];
+        EEE[3] = EEEE[0] - EEEO[0];
+        EEE[1] = EEEE[1] + EEEO[1];
+        EEE[2] = EEEE[1] - EEEO[1];
+        for (k = 0; k < 4; k++)
+        {
+            EE[k] = EEE[k] + EEO[k];
+            EE[k + 4] = EEE[3 - k] - EEO[3 - k];
+        }
+
+        for (k = 0; k < 8; k++)
+        {
+            E[k] = EE[k] + EO[k];
+            E[k + 8] = EE[7 - k] - EO[7 - k];
+        }
+
+        for (k = 0; k < 16; k++)
+        {
+            dst[k] = (short)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 16] = (short)Clip3(-32768, 32767, (E[15 - k] - O[15 - k] + add) >> shift);
+        }
+
+        src++;
+        dst += 32;
+    }
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -537,5 +601,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
+    p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 }
 }

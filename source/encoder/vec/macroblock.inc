@@ -1201,6 +1201,204 @@ void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line
     }
 }
 
+void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line)
+{
+    int j;
+
+    Vec4i dst_first(-32768);
+    Vec4i dst_second(32767);
+    int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        int O_zero = 90 * src[line] + 90 * src[3 * line] + 88 * src[5 * line] + 85 * src[7 * line] +
+            82 * src[9 * line] + 78 * src[11 * line] + 73 * src[13 * line] + 67 * src[15 * line] +
+            61 * src[17 * line] + 54 * src[19 * line] + 46 * src[21 * line] + 38 * src[23 * line] +
+            31 * src[25 * line] + 22 * src[27 * line] + 13 * src[29 * line] + 4 * src[31 * line];
+
+        int O_one = 90 * src[line] + 82 * src[3 * line] + 67 * src[5 * line] + 46 * src[7 * line] +
+            22 * src[9 * line] + (-4) * src[11 * line] + (-31) * src[13 * line] + (-54) * src[15 * line] +
+            (-73) * src[17 * line] + (-85) * src[19 * line] + (-90) * src[21 * line] + (-88) * src[23 * line] +
+            (-78) * src[25 * line] + (-61) * src[27 * line] + (-38) * src[29 * line] + (-13) * src[31 * line];
+
+        int O_two = 88 * src[line] + 67 * src[3 * line] + 31 * src[5 * line] + (-13) * src[7 * line] +
+            (-54) * src[9 * line] + (-82) * src[11 * line] + (-90) * src[13 * line] + (-78) * src[15 * line] +
+            (-46) * src[17 * line] + (-4) * src[19 * line] + (38) * src[21 * line] + (73) * src[23 * line] +
+            (90) * src[25 * line] + (85) * src[27 * line] + (61) * src[29 * line] + (22) * src[31 * line];
+
+        int O_three = 85 * src[line] + 46 * src[3 * line] + (-13) * src[5 * line] + (-67) * src[7 * line] +
+            (-90) * src[9 * line] + (-73) * src[11 * line] + (-22) * src[13 * line] + (38) * src[15 * line] +
+            (82) * src[17 * line] + (88) * src[19 * line] + (54) * src[21 * line] + (-4) * src[23 * line] +
+            (-61) * src[25 * line] + (-90) * src[27 * line] + (-78) * src[29 * line] + (-31) * src[31 * line];
+
+        int O_four = 82 * src[line] + 22 * src[3 * line] + (-54) * src[5 * line] + (-90) * src[7 * line] +
+            (-61) * src[9 * line] + (13) * src[11 * line] + (78) * src[13 * line] + (85) * src[15 * line] +
+            (31) * src[17 * line] + (-46) * src[19 * line] + (-90) * src[21 * line] + (-67) * src[23 * line] +
+            (4) * src[25 * line] + (73) * src[27 * line] + (88) * src[29 * line] + (38) * src[31 * line];
+
+        int O_five = 78 * src[line] + (-4) * src[3 * line] + (-82) * src[5 * line] + (-73) * src[7 * line] +
+            (13) * src[9 * line] + (85) * src[11 * line] + (67) * src[13 * line] + (-22) * src[15 * line] +
+            (-88) * src[17 * line] + (-61) * src[19 * line] + (31) * src[21 * line] + (90) * src[23 * line] +
+            (54) * src[25 * line] + (-38) * src[27 * line] + (-90) * src[29 * line] + (-46) * src[31 * line];
+
+        int O_six = 73 * src[line] + (-31) * src[3 * line] + (-90) * src[5 * line] + (-22) * src[7 * line] +
+            (78) * src[9 * line] + (67) * src[11 * line] + (-38) * src[13 * line] + (-90) * src[15 * line] +
+            (-13) * src[17 * line] + (82) * src[19 * line] + (61) * src[21 * line] + (-46) * src[23 * line] +
+            (-88) * src[25 * line] + (-4) * src[27 * line] + (85) * src[29 * line] + (54) * src[31 * line];
+
+        int O_seven = 67 * src[line] + (-54) * src[3 * line] + (-78) * src[5 * line] + (38) * src[7 * line] +
+            (85) * src[9 * line] + (-22) * src[11 * line] + (-90) * src[13 * line] + (4) * src[15 * line] +
+            (90) * src[17 * line] + (13) * src[19 * line] + (-88) * src[21 * line] + (-31) * src[23 * line] +
+            (82) * src[25 * line] + (46) * src[27 * line] + (-73) * src[29 * line] + (-61) * src[31 * line];
+
+        int O_eight = 61 * src[line] + (-73) * src[3 * line] + (-46) * src[5 * line] + (82) * src[7 * line] +
+            (31) * src[9 * line] + (-88) * src[11 * line] + (-13) * src[13 * line] + (90) * src[15 * line] +
+            (-4) * src[17 * line] + (-90) * src[19 * line] + (22) * src[21 * line] + (85) * src[23 * line] +
+            (-38) * src[25 * line] + (-78) * src[27 * line] + (54) * src[29 * line] + (67) * src[31 * line];
+
+        int O_nine = 54 * src[line] + (-85) * src[3 * line] + (-4) * src[5 * line] + (88) * src[7 * line] +
+            (-46) * src[9 * line] + (-61) * src[11 * line] + (82) * src[13 * line] + (13) * src[15 * line] +
+            (-90) * src[17 * line] + (38) * src[19 * line] + (67) * src[21 * line] + (-78) * src[23 * line] +
+            (-22) * src[25 * line] + (90) * src[27 * line] + (-31) * src[29 * line] + (-73) * src[31 * line];
+
+        int O_ten = 46 * src[line] + (-90) * src[3 * line] + (38) * src[5 * line] + (54) * src[7 * line] +
+            (-90) * src[9 * line] + (31) * src[11 * line] + (61) * src[13 * line] + (-88) * src[15 * line] +
+            (22) * src[17 * line] + (67) * src[19 * line] + (-85) * src[21 * line] + (13) * src[23 * line] +
+            (73) * src[25 * line] + (-82) * src[27 * line] + (4) * src[29 * line] + (78) * src[31 * line];
+
+        int O_eleven = 38 * src[line] + (-88) * src[3 * line] + (73) * src[5 * line] + (-4) * src[7 * line] +
+            (-67) * src[9 * line] + (90) * src[11 * line] + (-46) * src[13 * line] + (-31) * src[15 * line] +
+            (85) * src[17 * line] + (-78) * src[19 * line] + (13) * src[21 * line] + (61) * src[23 * line] +
+            (-90) * src[25 * line] + (54) * src[27 * line] + (22) * src[29 * line] + (-82) * src[31 * line];
+
+        int O_twelve = 31 * src[line] + (-78) * src[3 * line] + (90) * src[5 * line] + (-61) * src[7 * line] +
+            (4) * src[9 * line] + (54) * src[11 * line] + (-88) * src[13 * line] + (82) * src[15 * line] +
+            (-38) * src[17 * line] + (-22) * src[19 * line] + (73) * src[21 * line] + (-90) * src[23 * line] +
+            (67) * src[25 * line] + (-13) * src[27 * line] + (-46) * src[29 * line] + (85) * src[31 * line];
+
+        int O_thirteen = 22 * src[line] + (-61) * src[3 * line] + (85) * src[5 * line] + (-90) * src[7 * line] +
+            (73) * src[9 * line] + (-38) * src[11 * line] + (-4) * src[13 * line] + (46) * src[15 * line] +
+            (-78) * src[17 * line] + (90) * src[19 * line] + (-82) * src[21 * line] + (54) * src[23 * line] +
+            (-13) * src[25 * line] + (-31) * src[27 * line] + (67) * src[29 * line] + (-88) * src[31 * line];
+
+        int O_fourteen = 13 * src[line] + (-38) * src[3 * line] + (61) * src[5 * line] + (-78) * src[7 * line] +
+            (88) * src[9 * line] + (-90) * src[11 * line] + (85) * src[13 * line] + (-73) * src[15 * line] +
+            (54) * src[17 * line] + (-31) * src[19 * line] + (4) * src[21 * line] + (22) * src[23 * line] +
+            (-46) * src[25 * line] + (67) * src[27 * line] + (-82) * src[29 * line] + (90) * src[31 * line];
+
+        int O_fifteen = 4 * src[line] + (-13) * src[3 * line] + (22) * src[5 * line] + (-31) * src[7 * line] +
+            (38) * src[9 * line] + (-46) * src[11 * line] + (54) * src[13 * line] + (-61) * src[15 * line] +
+            (67) * src[17 * line] + (-73) * src[19 * line] + (78) * src[21 * line] + (-82) * src[23 * line] +
+            (85) * src[25 * line] + (-88) * src[27 * line] + (90) * src[29 * line] + (-90) * src[31 * line];
+
+        Vec4i O_first_four(O_zero, O_one, O_two, O_three);
+        Vec4i O_second_four(O_four, O_five, O_six, O_seven);
+        Vec4i O_third_four(O_eight, O_nine, O_ten, O_eleven);
+        Vec4i O_four_four(O_twelve, O_thirteen, O_fourteen, O_fifteen);
+
+        int EO_zero = 90 * src[2 * line] + 87 * src[6 * line] + 80 * src[10 * line] + 70 * src[14 * line] +
+            57 * src[18 * line] + 43 * src[22 * line] + 25 * src[26 * line] + 9 * src[30 * line];
+
+        int EO_one = 87 * src[2 * line] + 57 * src[6 * line] + 9 * src[10 * line] + (-43) * src[14 * line] +
+            (-80) * src[18 * line] + (-90) * src[22 * line] + (-70) * src[26 * line] + (-25) * src[30 * line];
+
+        int EO_two = 80 * src[2 * line] + 9 * src[6 * line] + (-70) * src[10 * line] + (-87) * src[14 * line] +
+            (-25) * src[18 * line] + (57) * src[22 * line] + (90) * src[26 * line] + (43) * src[30 * line];
+
+        int EO_three = 70 * src[2 * line] + (-43) * src[6 * line] + (-87) * src[10 * line] + (9) * src[14 * line] +
+            (90) * src[18 * line] + (25) * src[22 * line] + (-80) * src[26 * line] + (-57) * src[30 * line];
+
+        int EO_four = 57 * src[2 * line] + (-80) * src[6 * line] + (-25) * src[10 * line] + (90) * src[14 * line] +
+            (-9) * src[18 * line] + (-87) * src[22 * line] + (43) * src[26 * line] + (70) * src[30 * line];
+
+        int EO_five = 43 * src[2 * line] + (-90) * src[6 * line] + (57) * src[10 * line] + (25) * src[14 * line] +
+            (-87) * src[18 * line] + (70) * src[22 * line] + (9) * src[26 * line] + (-80) * src[30 * line];
+
+        int EO_six = 25 * src[2 * line] + (-70) * src[6 * line] + (90) * src[10 * line] + (-80) * src[14 * line] +
+            (43) * src[18 * line] + (9) * src[22 * line] + (-57) * src[26 * line] + (87) * src[30 * line];
+
+        int EO_seven = 9 * src[2 * line] + (-25) * src[6 * line] + (43) * src[10 * line] + (-57) * src[14 * line] +
+            (70) * src[18 * line] + (-80) * src[22 * line] + (87) * src[26 * line] + (-90) * src[30 * line];
+
+        Vec4i EO_first_half(EO_zero, EO_one, EO_two, EO_three);
+        Vec4i EO_second_half(EO_four, EO_five, EO_six, EO_seven);
+
+        int EEO_zero = 89 * src[4 * line] + 75 * src[12 * line] + 50 * src[20 * line] + 18 * src[28 * line];
+        int EEO_one = 75 * src[4 * line] + (-18) * src[12 * line] + (-89) * src[20 * line] + (-50) * src[28 * line];
+        int EEO_two = 50 * src[4 * line] + (-89) * src[12 * line] + 18 * src[20 * line] + 75 * src[28 * line];
+        int EEO_three = 18 * src[4 * line] + (-50) * src[12 * line] + 75 * src[20 * line] + (-89) * src[28 * line];
+
+        Vec4i EEO(EEO_zero, EEO_one, EEO_two, EEO_three);
+
+        int EEEO_zero = 83 * src[8 * line] + 36 * src[24 * line];
+        int EEEO_one = 36 * src[8 * line] + (-83) * src[24 * line];
+        int EEEE_zero = 64 * src[0] + 64 * src[16 * line];
+        int  EEEE_one = 64 * src[0] + (-64) * src[16 * line];
+
+        int EEE_zero = EEEE_zero + EEEO_zero;
+        int EEE_three = EEEE_zero - EEEO_zero;
+        int EEE_one = EEEE_one + EEEO_one;
+        int EEE_two = EEEE_one - EEEO_one;
+
+        Vec4i EEE(EEE_zero, EEE_one, EEE_two, EEE_three);
+        Vec4i EE_first_half = EEE + EEO;
+        Vec4i EE_second_half = EEE - EEO;
+        EE_second_half = permute4i<3, 2, 1, 0>(EE_second_half);
+
+        Vec4i E_first_four = EE_first_half + EO_first_half;
+        Vec4i E_second_four = EE_second_half + EO_second_half;
+        Vec4i E_third_four = EE_second_half - EO_second_half;
+        E_third_four = permute4i<3, 2, 1, 0>(E_third_four);
+        Vec4i E_four_four = EE_first_half - EO_first_half;
+        E_four_four = permute4i<3, 2, 1, 0>(E_four_four);
+
+        Vec4i dst_third_first_four =  (E_first_four + O_first_four + add) >> shift;
+        Vec4i dst_third_second_four =  (E_second_four + O_second_four + add) >> shift;
+        Vec4i dst_third_third_four =  (E_third_four + O_third_four + add) >> shift;
+        Vec4i dst_third_four_four =  (E_four_four + O_four_four + add) >> shift;
+
+        Vec4i first_four_min_value = max(dst_first, dst_third_first_four);
+        first_four_min_value = min(first_four_min_value, dst_second);
+        Vec4i second_four_min_value = max(dst_first, dst_third_second_four);
+        second_four_min_value = min(second_four_min_value, dst_second);
+        Vec4i third_four_min_value = max(dst_first, dst_third_third_four);
+        third_four_min_value = min(third_four_min_value, dst_second);
+        Vec4i four_four_min_value = max(dst_first, dst_third_four_four);
+        four_four_min_value = min(four_four_min_value, dst_second);
+
+        Vec8s first_eight_min_value = compress(first_four_min_value, second_four_min_value);
+        first_eight_min_value.store(dst);
+        Vec8s second_eight_min_value = compress(third_four_min_value, four_four_min_value);
+        second_eight_min_value.store(dst + 8);
+
+        Vec4i dst_third_five_four =  (E_four_four - O_four_four + add) >> shift;
+        dst_third_five_four = permute4i<3, 2, 1, 0>(dst_third_five_four);
+        Vec4i dst_third_six_four =  (E_third_four - O_third_four + add) >> shift;
+        dst_third_six_four = permute4i<3, 2, 1, 0>(dst_third_six_four);
+        Vec4i dst_third_seven_four =  (E_second_four - O_second_four + add) >> shift;
+        dst_third_seven_four = permute4i<3, 2, 1, 0>(dst_third_seven_four);
+        Vec4i dst_third_eight_four =  (E_first_four - O_first_four + add) >> shift;
+        dst_third_eight_four = permute4i<3, 2, 1, 0>(dst_third_eight_four);
+
+        Vec4i five_four_min_value = max(dst_first, dst_third_five_four);
+        five_four_min_value = min(five_four_min_value, dst_second);
+        Vec4i six_four_min_value = max(dst_first, dst_third_six_four);
+        six_four_min_value = min(six_four_min_value, dst_second);
+        Vec4i seven_four_min_value = max(dst_first, dst_third_seven_four);
+        seven_four_min_value = min(seven_four_min_value, dst_second);
+        Vec4i eight_four_min_value = max(dst_first, dst_third_eight_four);
+        eight_four_min_value = min(eight_four_min_value, dst_second);
+
+        Vec8s third_eight_min_value = compress(five_four_min_value, six_four_min_value);
+        third_eight_min_value.store(dst + 16);
+        Vec8s four_eight_min_value = compress(seven_four_min_value, eight_four_min_value);
+        four_eight_min_value.store(dst + 24);
+
+        src++;
+        dst += 32;
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -1231,4 +1429,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
+    p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 }
