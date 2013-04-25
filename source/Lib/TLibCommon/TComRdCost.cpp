@@ -831,7 +831,6 @@ UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->iStrideOrg * iSubStep;
-
     UInt uiSum = 0;
 
     for (; iRows != 0; iRows -= iSubStep)
