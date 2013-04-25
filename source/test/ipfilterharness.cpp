@@ -58,7 +58,7 @@ IPFilterHarness::IPFilterHarness()
     {
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
-        pixel_buff[i] = (rand() &  PIXEL_MAX);
+        pixel_buff[i] = (pixel)(rand() &  PIXEL_MAX);
         short_buff[i] = (isPositive) * (rand() &  SHRT_MAX);
     }
 }
@@ -188,14 +188,13 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
         memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
-
-        rand_val = rand() % 4;                     // Random offset in the filter
+                             
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
@@ -223,14 +222,13 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x2
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
-    short rand_val, rand_srcStride, rand_dstStride;
+    short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
     {
         memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
 
-        rand_val = rand() % 4;                     // Random offset in the filter
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 

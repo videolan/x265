@@ -22,7 +22,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "InterpolationFilter.h"
+#include "primitives.h"
 #include <cstring>
 #include <assert.h>
 
@@ -31,8 +31,14 @@
 #pragma warning(disable: 4100) // unreferenced formal parameter
 #endif
 
+#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
+#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
+#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
+
+namespace {
+
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     assert(bitDepth == 8);   //assuming bitDepth = 8
 
@@ -89,7 +95,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst,
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     assert(bitDepth == 8);
 
@@ -141,7 +147,7 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     assert(bitDepth == 8); //assuming bitdepth = 8
 
@@ -190,20 +196,7 @@ void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *ds
     }
 }
 
-void filterCopy(Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height)
-{
-    int row;
-
-    for (row = 0; row < height; row++)
-    {
-        memcpy(dst, src, sizeof(Pel) * width);
-
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
-void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height)
+void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
     assert(bitDepth == 8);
 
@@ -230,7 +223,7 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, 
     }
 }
 
-void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
     assert(bitDepth == 8);
 
@@ -249,15 +242,26 @@ void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, 
         dst += dstStride;
     }
 }
-
-template
-void filterVertical_short_pel<8>(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_pel<8>(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_short<8>(int bit_Depth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-
+}
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(default: 4100)
 #endif
+
+namespace x265 {
+// x265 private namespace
+
+void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
+{
+   
+    p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
+    p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
+    p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
+    p.ipfilterConvert_p_s = filterConvertPelToShort;
+    p.ipfilterConvert_s_p = filterConvertShortToPel;
+    p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
+    p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
+    p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
+        
+}
+}
