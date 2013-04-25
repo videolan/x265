@@ -36,12 +36,9 @@
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 namespace {
-
 template<int N>
 void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    assert(bitDepth == 8);   //assuming bitDepth = 8
-
     int cStride = srcStride;
 
     src -= (N / 2 - 1) * cStride;
@@ -97,8 +94,6 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
 template<int N>
 void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    assert(bitDepth == 8);
-
     int cStride = 1;
 
     src -= (N / 2 - 1) * cStride;
@@ -149,8 +144,6 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
 template<int N>
 void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
-    assert(bitDepth == 8); //assuming bitdepth = 8
-
     int cStride = 1;
 
     src -= (N / 2 - 1) * cStride;
@@ -198,8 +191,6 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
 
 void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
-    assert(bitDepth == 8);
-
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
 
@@ -225,8 +216,6 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
 
 void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
-    assert(bitDepth == 8);
-
     int shift = IF_INTERNAL_PREC - bitDepth;
     int row, col;
 
@@ -253,7 +242,6 @@ namespace x265 {
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
-   
     p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
     p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
     p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
@@ -262,6 +250,5 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
     p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
     p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
-        
 }
 }
