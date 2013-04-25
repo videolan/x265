@@ -39,10 +39,12 @@ extern "C" void x264_cpu_emms(void);
 #if defined(__GNUC__)
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
+#define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
 #define CDECL
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
+#define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #define CDECL                _cdecl
 #endif
 
