@@ -76,11 +76,13 @@ EncoderPrimitives primitives;
 
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
 void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
+void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
 
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_MacroblockPrimitives(p); // macroblock.cpp
+    Setup_C_IPFilterPrimitives(p);
 }
 
 #endif // if ENABLE_PRIMITIVES
