@@ -83,7 +83,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 
-            dst[col] = val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -133,7 +133,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
 
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
-            dst[col] = val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -206,7 +206,7 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
             val = (val + offset) >> shift;
             if (val < minVal) val = minVal;
             if (val > maxVal) val = maxVal;
-            dst[col] = val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
