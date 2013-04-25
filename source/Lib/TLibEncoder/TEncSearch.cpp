@@ -363,7 +363,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     //Call the Vector or C Primitives
     if (part >= 0)
     {
-        uiSad =  (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
+        uiSad = (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
             DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
 
         x264_cpu_emms();
