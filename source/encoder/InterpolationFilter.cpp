@@ -24,6 +24,7 @@
 
 #include "InterpolationFilter.h"
 #include <cstring>
+#include <assert.h>
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -31,9 +32,9 @@
 #endif
 
 template<int N>
-void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    int bitDepth = 8;   //assuming bitDepth = 8
+    assert(bitDepth == 8);   //assuming bitDepth = 8
 
     int cStride = srcStride;
 
@@ -88,9 +89,10 @@ void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    int bitDepth = 8;
+    assert(bitDepth == 8);
+
     int cStride = 1;
 
     src -= (N / 2 - 1) * cStride;
@@ -139,9 +141,9 @@ void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, 
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
-    int bitDepth = 8; //assuming bitdepth = 8
+    assert(bitDepth == 8); //assuming bitdepth = 8
 
     int cStride = 1;
 
@@ -203,6 +205,8 @@ void filterCopy(Pel *src, int srcStride, Pel *dst, int dstStride, int width, int
 
 void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height)
 {
+    assert(bitDepth == 8);
+
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
 
@@ -228,6 +232,8 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, 
 
 void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
+    assert(bitDepth == 8);
+
     int shift = IF_INTERNAL_PREC - bitDepth;
     int row, col;
 
