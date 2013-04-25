@@ -333,7 +333,11 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     // fast encoder decision: use subsampled SAD when rows > 8 for integer ME
     if (m_pcEncCfg->getUseFastEnc())
     {
-        if (m_cDistParam.iRows > 8)
+        if (m_cDistParam.iRows > 8
+#if ENABLE_PRIMITIVES
+            && x265::FastHeight(m_cDistParam.iRows >> 1)
+#endif
+            )
         {
             m_cDistParam.iSubShift = 1;
         }
