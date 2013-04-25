@@ -314,15 +314,23 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
 
 __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance)
 {
-    UInt  uiSad;
-
+	UInt  uiSad = 0;
     Pel*  piRefSrch;
-
+	
     piRefSrch = rcStruct.piRefY + iSearchY * rcStruct.iYStride + iSearchX;
 
-    //-- jclee for using the SAD function pointer
-    m_pcRdCost->setDistParam(pcPatternKey, piRefSrch, rcStruct.iYStride,  m_cDistParam);
+	//Initialise the DistParam for HM Primitives and Optimized Primitives 
 
+	m_cDistParam.pOrg = pcPatternKey->getROIY();
+    m_cDistParam.pCur = piRefSrch;
+    m_cDistParam.iStrideOrg = pcPatternKey->getPatternLStride();
+    m_cDistParam.iStrideCur = rcStruct.iYStride;
+    m_cDistParam.iCols    = pcPatternKey->getROIYWidth();
+    m_cDistParam.iRows    = pcPatternKey->getROIYHeight();   
+    m_cDistParam.iStrideOrg = pcPatternKey->getPatternLStride();
+    m_cDistParam.iStrideCur = rcStruct.iYStride;
+	m_cDistParam.iSubShift = 0;
+		
     // fast encoder decision: use subsampled SAD when rows > 8 for integer ME
     if (m_pcEncCfg->getUseFastEnc())
     {
@@ -331,16 +339,83 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
             m_cDistParam.iSubShift = 1;
         }
     }
-
-    setDistParamComp(0); // Y component
+	//setDistParamComp(0); // Y component
+	m_cDistParam.uiComp = 0;
 
     // distortion
     m_cDistParam.bitDepth = g_bitDepthY;
-    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+    
+	// Call the sad Primitive function if not HM sad Functions 
+
+#if ENABLE_PRIMITIVES 
+
+      Pel* piOrg   = m_cDistParam.pOrg;
+      Pel* piCur   = m_cDistParam.pCur;
+      Int  iRows   = m_cDistParam.iRows;
+      Int  iSubShift  = m_cDistParam.iSubShift;
+      Int  iSubStep   = (1 << iSubShift);
+      Int  iStrideCur = m_cDistParam.iStrideCur * iSubStep;
+      Int  iStrideOrg = m_cDistParam.iStrideOrg * iSubStep;
+	  
+	  int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
+	   
+	  //Call the Vector or C Primitives and if bApplyWeight is set to true the always call HM Sad Functions
+	  if (part >= 0 && !m_cDistParam.bApplyWeight )
+	   {		   
+		   uiSad =  (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
+               DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
+
+	   } else { // if None of C and Vector Primitives are available while Primitives are Enabled then call the HM Sad Functions 
+
+		FpDistFunc  *m_afpDistortFunc;
+	    m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
+	    m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
+
+		#if AMP_SAD
+		if (m_cDistParam.iCols == 12)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[43];
+		}
+		else if (m_cDistParam.iCols == 24)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[44];
+		}
+			else if (m_cDistParam.iCols == 48)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[45];
+		}
+		#endif // if AMP_SAD
+	      uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+	   }
+#else
+	    //Call the HM Primitives if Enable Primitives are Disabled 
+	  	FpDistFunc  *m_afpDistortFunc;
+	    m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
+	    m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
+
+		#if AMP_SAD
+		if (m_cDistParam.iCols == 12)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[43];
+		}
+		else if (m_cDistParam.iCols == 24)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[44];
+		}
+			else if (m_cDistParam.iCols == 48)
+		{
+			m_cDistParam.DistFunc = m_afpDistortFunc[45];
+		}
+		#endif // if AMP_SAD
+	      uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+	   }
+	      uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+#endif
+	 
     x264_cpu_emms();
 
     // motion cost
-    uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
+    uiSad += m_pcRdCost->getCost(iSearchX, iSearchY); 
 
     if (uiSad < rcStruct.uiBestSad)
     {

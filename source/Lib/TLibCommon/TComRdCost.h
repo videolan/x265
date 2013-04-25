@@ -230,6 +230,11 @@ public:
 #endif
     }
 
+	__inline FpDistFunc * GetsadFunctions()
+	{
+		return m_afpDistortFunc;
+	}
+
 private:
 
     static UInt xGetSSE(DistParam* pcDtParam);
