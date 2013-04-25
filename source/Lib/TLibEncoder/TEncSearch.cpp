@@ -5898,17 +5898,17 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
     intPtr = filteredBlockTmp[0].getLumaAddr();
 #if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr,
-                            intStride, width + 1, height + filterSize);    
+                                   intStride, width + 1, height + filterSize);
 #else
     filterConvertPelToShort(g_bitDepthY, srcPtr, srcStride, intPtr,
                             intStride, width + 1, height + filterSize);
 #endif
+
     intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
     dstPtr = m_filteredBlock[2][0].getLumaAddr();
-
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride,(pixel*) dstPtr,
-                                         dstStride, width, height + 1, m_lumaFilter[2]);  //
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr,
+                                            dstStride, width, height + 1, m_lumaFilter[2]);
 #else
     filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr,
                                          dstStride, width, height + 1, m_lumaFilter[2]);
@@ -5916,8 +5916,7 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
 
     intPtr = filteredBlockTmp[2].getLumaAddr();
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + 1,
-                                           height + filterSize,  m_lumaFilter[2]); //
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + 1, height + filterSize,  m_lumaFilter[2]);
 #else
     filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + 1,
                                            height + filterSize,  m_lumaFilter[2]);
@@ -5926,15 +5925,15 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
     intPtr = filteredBlockTmp[2].getLumaAddr() + halfFilterSize * intStride;
     dstPtr = m_filteredBlock[0][2].getLumaAddr();
 #if ENABLE_PRIMITIVES
-    primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride,(pixel*) dstPtr, dstStride, width + 1, height + 0);
+    primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + 1, height + 0);
 #else
-    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 0);//
+    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 0);
 #endif
 
     intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[2][2].getLumaAddr();
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride,(pixel*) dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]); //
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
 #else
     filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
 #endif
