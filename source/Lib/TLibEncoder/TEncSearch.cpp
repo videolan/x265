@@ -6131,7 +6131,11 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[3]);
+#else
         filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
+#endif
     }
 
     // Generate @ 1,3
