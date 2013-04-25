@@ -216,47 +216,64 @@ namespace x265 {
 void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
     p.sad[PARTITION_4x4]   = sad<4, 4>;
-    p.sad[PARTITION_8x4]   = sad<8, 4>;
     p.sad[PARTITION_4x8]   = sad<4, 8>;
-    p.sad[PARTITION_8x8]   = sad<8, 8>;
-    p.sad[PARTITION_16x4]  = sad<16, 4>;
     p.sad[PARTITION_4x16]  = sad<4, 16>;
+    p.sad[PARTITION_4x32]  = sad<4, 32>;
+    p.sad[PARTITION_4x64]  = sad<4, 64>;
+
+    p.sad[PARTITION_8x4]   = sad<8, 4>;
+    p.sad[PARTITION_8x8]   = sad<8, 8>;
     p.sad[PARTITION_8x16]  = sad<8, 16>;
+    p.sad[PARTITION_8x32]  = sad<8, 32>;
+    p.sad[PARTITION_8x64]  = sad<8, 64>;
+
+    p.sad[PARTITION_16x4]  = sad<16, 4>;
     p.sad[PARTITION_16x8]  = sad<16, 8>;
     p.sad[PARTITION_16x16] = sad<16, 16>;
-    p.sad[PARTITION_8x32]  = sad<8, 32>;
-    p.sad[PARTITION_32x8]  = sad<32, 8>;
-    p.sad[PARTITION_4x32]  = sad<4, 32>;
-    p.sad[PARTITION_32x4]  = sad<32, 4>;
     p.sad[PARTITION_16x32] = sad<16, 32>;
+    p.sad[PARTITION_16x64] = sad<16, 64>;
+
+    p.sad[PARTITION_32x4]  = sad<32, 4>;
+    p.sad[PARTITION_32x8]  = sad<32, 8>;
     p.sad[PARTITION_32x16] = sad<32, 16>;
     p.sad[PARTITION_32x32] = sad<32, 32>;
-    p.sad[PARTITION_64x4]  = sad<64, 4>;
-    p.sad[PARTITION_4x64]  = sad<4, 64>;
-    p.sad[PARTITION_64x8]  = sad<64, 8>;
-    p.sad[PARTITION_8x64]  = sad<8, 64>;
-    p.sad[PARTITION_16x64] = sad<16, 64>;
-    p.sad[PARTITION_64x16] = sad<64, 16>;
     p.sad[PARTITION_32x64] = sad<32, 64>;
+
+    p.sad[PARTITION_64x4]  = sad<64, 4>;
+    p.sad[PARTITION_64x8]  = sad<64, 8>;
+    p.sad[PARTITION_64x16] = sad<64, 16>;
     p.sad[PARTITION_64x32] = sad<64, 32>;
     p.sad[PARTITION_64x64] = sad<64, 64>;
 
     p.satd[PARTITION_4x4]   = satd_4x4;
-    p.satd[PARTITION_8x4]   = satd_8x4;
     p.satd[PARTITION_4x8]   = satd4<4, 8>;
-    p.satd[PARTITION_8x8]   = satd8<8, 8>;
-    p.satd[PARTITION_16x4]  = satd8<16, 4>;
     p.satd[PARTITION_4x16]  = satd4<4, 16>;
+    p.satd[PARTITION_4x32]  = satd4<4, 32>;
+    p.satd[PARTITION_4x64]  = satd4<4, 64>;
+
+    p.satd[PARTITION_8x4]   = satd_8x4;
+    p.satd[PARTITION_8x8]   = satd8<8, 8>;
     p.satd[PARTITION_8x16]  = satd8<8, 16>;
+    p.satd[PARTITION_8x32]  = satd8<8, 32>;
+    p.satd[PARTITION_8x64]  = satd8<8, 64>;
+
+    p.satd[PARTITION_16x4]  = satd8<16, 4>;
     p.satd[PARTITION_16x8]  = satd8<16, 8>;
     p.satd[PARTITION_16x16] = satd8<16, 16>;
-    p.satd[PARTITION_4x32]  = satd4<4, 32>;
-    p.satd[PARTITION_32x4]  = satd8<32, 4>;
-    p.satd[PARTITION_8x32]  = satd8<8, 32>;
-    p.satd[PARTITION_32x8]  = satd8<32, 8>;
     p.satd[PARTITION_16x32] = satd8<16, 32>;
+    p.satd[PARTITION_16x64] = satd8<16, 64>;
+
+    p.satd[PARTITION_32x4]  = satd8<32, 4>;
+    p.satd[PARTITION_32x8]  = satd8<32, 8>;
     p.satd[PARTITION_32x16] = satd8<32, 16>;
     p.satd[PARTITION_32x32] = satd8<32, 32>;
+    p.satd[PARTITION_32x64] = satd8<32, 64>;
+
+    p.satd[PARTITION_64x4]  = satd8<64, 4>;
+    p.satd[PARTITION_64x8]  = satd8<64, 8>;
+    p.satd[PARTITION_64x16] = satd8<64, 16>;
+    p.satd[PARTITION_64x32] = satd8<64, 32>;
+    p.satd[PARTITION_64x64] = satd8<64, 64>;
 
     p.sa8d_8x8 = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;
