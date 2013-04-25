@@ -194,7 +194,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
     {
         memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
-                             
+
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
@@ -260,7 +260,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipFilter_p_p[value], opt.ipFilter_p_p[value]))
             {
-                printf("\nfilter_H_P_P_%d failed\n", 8 / (value + 1));
+                printf("\nfilterHorizontal_pel_pel_%d_%d failed\n", 8 / (value + 1));
                 return false;
             }
         }
@@ -272,7 +272,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipFilter_p_s[value], opt.ipFilter_p_s[value]))
             {
-                printf("\nfilter_H_P_S_%d failed\n", 8 / (value + 1));
+                printf("\nfilterHorizontal_pel_short_%d failed\n", 8 / (value + 1));
                 return false;
             }
         }
@@ -284,7 +284,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipFilter_s_p[value], opt.ipFilter_s_p[value]))
             {
-                printf("\nfilter_H_S_P_%d failed\n", 8 / (value + 1));
+                printf("\nfilterVertical_short_pel_%d failed\n", 8 / (value + 1));
                 return false;
             }
         }
@@ -323,26 +323,11 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     short srcStride = 96;
     short dstStride = 96;
 
-    //for (int value = 0; value < 16; value++)
-    //{
-    //    memset(IPF_vec_output, 0, ipf_t_size);  // Initialize output buffer to zero
-    //    memset(IPF_C_output, 0, ipf_t_size);    // Initialize output buffer to zero
-    //    if (opt.filter[value])
-    //    {
-    //        printf("filter[%s]", FilterConf_names[value]);
-    //        REPORT_SPEEDUP(FILTER_ITERATIONS,
-    //                       opt.filter[value]((short*)(m_lumaFilter + val), pixel_buff + 3 * srcStride, srcStride,
-    //                                         IPF_vec_output, dstStride, height, width, BIT_DEPTH),
-    //                       ref.filter[value]((short*)(m_lumaFilter + val), pixel_buff + 3 * srcStride, srcStride,
-    //                                         IPF_vec_output, dstStride, height, width, BIT_DEPTH));
-    //    }
-    //}
-
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
     {
         if (opt.ipFilter_p_p[value])
         {
-            printf("filter_H_P_P_%d", 8 / (value + 1));
+            printf("filterHorizontal_pel_pel_%d", 8 / (value + 1));
             REPORT_SPEEDUP(FILTER_ITERATIONS,
                            opt.ipFilter_p_p[value](8, pixel_buff + 3 * srcStride,
                                                    srcStride,
@@ -365,7 +350,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipFilter_p_s[value])
         {
-            printf("filter_H_P_S_%d", 8 / (value + 1));
+            printf("filterHorizontal_pel_short_%d", 8 / (value + 1));
             REPORT_SPEEDUP(FILTER_ITERATIONS,
                            opt.ipFilter_p_s[value](8, pixel_buff + 3 * srcStride,
                                                    srcStride,
@@ -388,7 +373,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipFilter_s_p[value])
         {
-            printf("filter_H_S_P_%d", 8 / (value + 1));
+            printf("filterVertical_short_pel_%d", 8 / (value + 1));
             REPORT_SPEEDUP(FILTER_ITERATIONS,
                            opt.ipFilter_s_p[value](8, short_buff + 3 * srcStride,
                                                    srcStride,

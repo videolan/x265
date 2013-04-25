@@ -33,6 +33,7 @@ namespace {
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
 #include "pixel.inc"
 #include "macroblock.inc"
+#include "interpolationfilter.inc"
 }
 
 #define PASTER(name, val) name ## _ ## val
@@ -48,5 +49,6 @@ void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
 {
     Setup_Vec_PixelPrimitives(p);
     Setup_Vec_MacroblockPrimitives(p);
+    Setup_Vec_IPFilterPrimitives(p);
 }
 }
