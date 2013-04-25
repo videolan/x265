@@ -113,7 +113,6 @@ int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     }
     return horizontal_add_x(extend_low(sum)) +
            horizontal_add_x(extend_high(sum));
-
 }
 
 int CDECL satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
@@ -462,6 +461,36 @@ int CDECL sad_16x16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t s
 }
 
 template<int lx, int ly>
+int CDECL sad_32x8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    int sum = 0;
+    for (int row = 0; row < ly; row += 8)
+    {
+        for (int col = 0; col < lx; col += 32)
+        {
+            sum += sad_32<32, 8>(piOrg + row * strideOrg + col, strideOrg,
+                                 piCur + row * strideCur + col, strideCur);
+        }
+    }
+    return sum;
+}
+
+template<int lx, int ly>
+int CDECL sad_24(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    int sum = 0;
+    for (int row = 0; row < ly; row += 4)
+    {
+        for (int col = 0; col < lx; col += 8)
+        {
+            sum += sad_8<4>(piOrg + row * strideOrg + col, strideOrg,
+                            piCur + row * strideCur + col, strideCur);
+        }
+    }
+    return sum;
+}
+
+template<int lx, int ly>
 int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int uiSum = 0;
@@ -482,27 +511,36 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
     p.sad[PARTITION_4x4] = sad_4<4>;
     p.sad[PARTITION_4x8] = sad_4<8>;
+    p.sad[PARTITION_4x16] = sad_4<16>;
+    p.sad[PARTITION_4x24] = sad_4<24>;
+    p.sad[PARTITION_4x32] = sad_4<32>;
+    p.sad[PARTITION_4x64] = sad_4<64>;
+
     p.sad[PARTITION_8x4] = sad_8<4>;
     p.sad[PARTITION_8x8] = sad_8<8>;
-    p.sad[PARTITION_16x4] = sad_16<4>;
-    p.sad[PARTITION_4x16] = sad_4<16>;
-    p.sad[PARTITION_16x8] = sad_16<8>;
     p.sad[PARTITION_8x16] = sad_8<16>;
-    p.sad[PARTITION_16x16] = sad_16<16>;
-    p.sad[PARTITION_4x32] = sad_4<32>;
-    p.sad[PARTITION_32x4] = sad_32<32, 4>;
+    p.sad[PARTITION_8x24] = sad_8<24>;
     p.sad[PARTITION_8x32] = sad_8x16<32>;
-    p.sad[PARTITION_32x8] = sad_32<32, 8>;
-    p.sad[PARTITION_16x32] = sad_16x16<16, 32>;
-    p.sad[PARTITION_32x16] = sad_16x16<32, 16>;
-    p.sad[PARTITION_32x32] = sad_16x16<32, 32>;
-    p.sad[PARTITION_4x64] = sad_4<64>;
-    p.sad[PARTITION_64x4] = sad_32<64, 4>;
-    p.sad[PARTITION_64x8] = sad_32<64, 8>;
     p.sad[PARTITION_8x64] = sad_8x16<64>;
+
+    p.sad[PARTITION_16x4] = sad_16<4>;
+    p.sad[PARTITION_16x8] = sad_16<8>;
+    p.sad[PARTITION_16x16] = sad_16<16>;
+    p.sad[PARTITION_16x24] = sad_16<24>;
+    p.sad[PARTITION_16x32] = sad_16x16<16, 32>;
     p.sad[PARTITION_16x64] = sad_16x16<16, 64>;
-    p.sad[PARTITION_64x16] = sad_16x16<64, 16>;
+
+    p.sad[PARTITION_32x4] = sad_32<32, 4>;
+    p.sad[PARTITION_32x8] = sad_32x8<32, 8>;
+    p.sad[PARTITION_32x16] = sad_16x16<32, 16>;
+    p.sad[PARTITION_32x24] = sad_32x8<32, 24>;
+    p.sad[PARTITION_32x32] = sad_16x16<32, 32>;
     p.sad[PARTITION_32x64] = sad_16x16<32, 64>;
+
+    p.sad[PARTITION_64x4] = sad_32<64, 4>;
+    p.sad[PARTITION_64x8] = sad_32x8<64, 8>;
+    p.sad[PARTITION_64x16] = sad_16x16<64, 16>;
+    p.sad[PARTITION_64x24] = sad_32x8<64, 24>;
     p.sad[PARTITION_64x32] = sad_16x16<64, 32>;
     p.sad[PARTITION_64x64] = sad_16x16<64, 64>;
 
