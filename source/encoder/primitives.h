@@ -161,6 +161,8 @@ enum IPFilterConf_S_P
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
+// Returns true if the given height could support an optimized primitive
+bool FastHeight(int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
