@@ -88,58 +88,6 @@ void filterVertical_short_pel(int bit_Depth, short *src, int srcStride, Pel *dst
 }
 
 template<int N>
-void filterVertical_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
-{
-    int bitDepth = 8;
-
-    int cStride = srcStride;
-
-    src -= (N / 2 - 1) * cStride;
-
-    int offset;
-    short maxVal;
-    int shift = IF_FILTER_PREC;
-    offset = 1 << (shift - 1);
-    maxVal = (1 << bitDepth) - 1;
-
-    int row, col;
-    for (row = 0; row < height; row++)
-    {
-        for (col = 0; col < width; col++)
-        {
-            int sum;
-
-            sum  = src[col + 0 * cStride] * coeff[0];
-            sum += src[col + 1 * cStride] * coeff[1];
-            if (N >= 4)
-            {
-                sum += src[col + 2 * cStride] * coeff[2];
-                sum += src[col + 3 * cStride] * coeff[3];
-            }
-            if (N >= 6)
-            {
-                sum += src[col + 4 * cStride] * coeff[4];
-                sum += src[col + 5 * cStride] * coeff[5];
-            }
-            if (N == 8)
-            {
-                sum += src[col + 6 * cStride] * coeff[6];
-                sum += src[col + 7 * cStride] * coeff[7];
-            }
-
-            short val = (short)((sum + offset) >> shift);
-
-            val = (val < 0) ? 0 : val;
-            val = (val > maxVal) ? maxVal : val;
-            dst[col] = val;
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
-template<int N>
 void filterHorizontal_pel_pel(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int bitDepth = 8;
@@ -200,13 +148,11 @@ void filterHorizontal_pel_short(int bit_Depth, Pel *src, int srcStride, short *d
     src -= (N / 2 - 1) * cStride;
 
     int offset;
-    short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
 
     shift -= headRoom;
     offset = -IF_INTERNAL_OFFS << shift;
-    maxVal = 0;
 
     int row, col;
     for (row = 0; row < height; row++)
@@ -300,8 +246,6 @@ void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, 
 
 template
 void filterVertical_short_pel<8>(int bit_Depth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterVertical_pel_pel<8>(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
 template
 void filterHorizontal_pel_pel<8>(int bit_Depth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
 template
