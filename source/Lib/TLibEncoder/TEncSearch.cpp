@@ -369,8 +369,8 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
         FpDistFunc  *m_afpDistortFunc;
         m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
         m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
-
 #if AMP_SAD
+
         if (m_cDistParam.iCols == 12)
         {
             m_cDistParam.DistFunc = m_afpDistortFunc[43];
