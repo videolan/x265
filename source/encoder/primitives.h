@@ -131,6 +131,27 @@ enum Butterflies
     NUM_BUTTERFLIES
 };
 
+enum IPFilterConf_P_P
+{
+    FILTER_H_P_P_8,
+    FILTER_H_P_P_4,
+    NUM_IPFILTER_P_P
+};
+
+enum IPFilterConf_P_S
+{
+    FILTER_H_P_S_8,
+    FILTER_H_P_S_4,
+    NUM_IPFILTER_P_S
+};
+
+enum IPFilterConf_S_P
+{
+    FILTER_V_S_P_8,
+    FILTER_V_S_P_4,
+    NUM_IPFILTER_S_P
+};
+
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
@@ -140,6 +161,11 @@ typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
 typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width,
                                 int block_height, int bitDepth);
 typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
+typedef void (CDECL * IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (CDECL * IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (CDECL * IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (CDECL * IPFilterConvert_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
+typedef void (CDECL * IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -154,6 +180,11 @@ struct EncoderPrimitives
     IPFilter filter[NUM_FILTER];
     mbdst inversedst;
     butterfly partial_butterfly[NUM_BUTTERFLIES];
+    IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
+    IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];
+    IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];
+    IPFilterConvert_p_s ipfilterConvert_p_s;
+    IPFilterConvert_s_p ipfilterConvert_s_p;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
