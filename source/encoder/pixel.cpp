@@ -154,6 +154,22 @@ int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_
     return satd;
 }
 
+template<int h>
+int CDECL satd12(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+{
+    int satd = 0;
+
+    for (int row = 0; row < h; row += 4)
+    {
+        satd += satd_8x4(pix1 + row * stride_pix1, stride_pix1,
+                         pix2 + row * stride_pix2, stride_pix2);
+        satd += satd_4x4(pix1 + row * stride_pix1 + 8, stride_pix1,
+                         pix2 + row * stride_pix2 + 8, stride_pix2);
+    }
+
+    return satd;
+}
+
 int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     sum2_t tmp[8][4];
@@ -217,6 +233,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
     p.sad[PARTITION_4x4]   = sad<4, 4>;
     p.sad[PARTITION_4x8]   = sad<4, 8>;
+    p.sad[PARTITION_4x12]  = sad<4, 12>;
     p.sad[PARTITION_4x16]  = sad<4, 16>;
     p.sad[PARTITION_4x24]  = sad<4, 24>;
     p.sad[PARTITION_4x32]  = sad<4, 32>;
@@ -224,13 +241,23 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.sad[PARTITION_8x4]   = sad<8, 4>;
     p.sad[PARTITION_8x8]   = sad<8, 8>;
+    p.sad[PARTITION_8x12]  = sad<8, 12>;
     p.sad[PARTITION_8x16]  = sad<8, 16>;
     p.sad[PARTITION_8x24]  = sad<8, 24>;
     p.sad[PARTITION_8x32]  = sad<8, 32>;
     p.sad[PARTITION_8x64]  = sad<8, 64>;
 
+    p.sad[PARTITION_12x4]  = sad<12, 4>;
+    p.sad[PARTITION_12x8]  = sad<12, 8>;
+    p.sad[PARTITION_12x12] = sad<12, 12>;
+    p.sad[PARTITION_12x16] = sad<12, 16>;
+    p.sad[PARTITION_12x24] = sad<12, 24>;
+    p.sad[PARTITION_12x32] = sad<12, 32>;
+    p.sad[PARTITION_12x64] = sad<12, 64>;
+
     p.sad[PARTITION_16x4]  = sad<16, 4>;
     p.sad[PARTITION_16x8]  = sad<16, 8>;
+    p.sad[PARTITION_16x12] = sad<16, 12>;
     p.sad[PARTITION_16x16] = sad<16, 16>;
     p.sad[PARTITION_16x24] = sad<16, 24>;
     p.sad[PARTITION_16x32] = sad<16, 32>;
@@ -238,6 +265,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.sad[PARTITION_24x4]  = sad<24, 4>;
     p.sad[PARTITION_24x8]  = sad<24, 8>;
+    p.sad[PARTITION_24x12] = sad<24, 12>;
     p.sad[PARTITION_24x16] = sad<24, 16>;
     p.sad[PARTITION_24x24] = sad<24, 24>;
     p.sad[PARTITION_24x32] = sad<24, 32>;
@@ -245,6 +273,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.sad[PARTITION_32x4]  = sad<32, 4>;
     p.sad[PARTITION_32x8]  = sad<32, 8>;
+    p.sad[PARTITION_32x12] = sad<32, 12>;
     p.sad[PARTITION_32x16] = sad<32, 16>;
     p.sad[PARTITION_32x24] = sad<32, 24>;
     p.sad[PARTITION_32x32] = sad<32, 32>;
@@ -252,6 +281,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.sad[PARTITION_64x4]  = sad<64, 4>;
     p.sad[PARTITION_64x8]  = sad<64, 8>;
+    p.sad[PARTITION_64x12] = sad<64, 12>;
     p.sad[PARTITION_64x16] = sad<64, 16>;
     p.sad[PARTITION_64x24] = sad<64, 24>;
     p.sad[PARTITION_64x32] = sad<64, 32>;
@@ -259,6 +289,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_4x8]   = satd4<4, 8>;
+    p.satd[PARTITION_4x12]  = satd4<4, 12>;
     p.satd[PARTITION_4x16]  = satd4<4, 16>;
     p.satd[PARTITION_4x24]  = satd4<4, 24>;
     p.satd[PARTITION_4x32]  = satd4<4, 32>;
@@ -266,13 +297,23 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_8x4]   = satd_8x4;
     p.satd[PARTITION_8x8]   = satd8<8, 8>;
+    p.satd[PARTITION_8x12]  = satd8<8, 12>;
     p.satd[PARTITION_8x16]  = satd8<8, 16>;
     p.satd[PARTITION_8x24]  = satd8<8, 24>;
     p.satd[PARTITION_8x32]  = satd8<8, 32>;
     p.satd[PARTITION_8x64]  = satd8<8, 64>;
 
+    p.satd[PARTITION_12x4]  = satd12<4>;
+    p.satd[PARTITION_12x8]  = satd12<8>;
+    p.satd[PARTITION_12x12] = satd12<12>;
+    p.satd[PARTITION_12x16] = satd12<16>;
+    p.satd[PARTITION_12x24] = satd12<24>;
+    p.satd[PARTITION_12x32] = satd12<32>;
+    p.satd[PARTITION_12x64] = satd12<64>;
+
     p.satd[PARTITION_16x4]  = satd8<16, 4>;
     p.satd[PARTITION_16x8]  = satd8<16, 8>;
+    p.satd[PARTITION_16x12] = satd8<16, 12>;
     p.satd[PARTITION_16x16] = satd8<16, 16>;
     p.satd[PARTITION_16x24] = satd8<16, 24>;
     p.satd[PARTITION_16x32] = satd8<16, 32>;
@@ -280,6 +321,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_24x4]  = satd8<24, 4>;
     p.satd[PARTITION_24x8]  = satd8<24, 8>;
+    p.satd[PARTITION_24x12] = satd8<24, 12>;
     p.satd[PARTITION_24x16] = satd8<24, 16>;
     p.satd[PARTITION_24x24] = satd8<24, 24>;
     p.satd[PARTITION_24x32] = satd8<24, 32>;
@@ -287,6 +329,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_32x4]  = satd8<32, 4>;
     p.satd[PARTITION_32x8]  = satd8<32, 8>;
+    p.satd[PARTITION_32x12] = satd8<32, 12>;
     p.satd[PARTITION_32x16] = satd8<32, 16>;
     p.satd[PARTITION_32x24] = satd8<32, 24>;
     p.satd[PARTITION_32x32] = satd8<32, 32>;
@@ -294,6 +337,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.satd[PARTITION_64x4]  = satd8<64, 4>;
     p.satd[PARTITION_64x8]  = satd8<64, 8>;
+    p.satd[PARTITION_64x12] = satd8<64, 12>;
     p.satd[PARTITION_64x16] = satd8<64, 16>;
     p.satd[PARTITION_64x24] = satd8<64, 24>;
     p.satd[PARTITION_64x32] = satd8<64, 32>;
