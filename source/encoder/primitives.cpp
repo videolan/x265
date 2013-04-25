@@ -32,9 +32,9 @@ namespace x265 {
 // x265 private namespace
 
 #if ENABLE_PRIMITIVES
-                        //  4   8      16             32 / 64
-static int8_t psize[16] = { 0,  1, -1,  2, -1, -1, -1, 3, 
-                           -1, -1, -1, -1, -1, -1, -1, 4 };
+                        //  4   8      16      24     32 / 64
+static int8_t psize[16] = { 0,  1, -1,  2, -1,  3, -1, 4, 
+                           -1, -1, -1, -1, -1, -1, -1, 5 };
 
 // Returns true if the given height could support an optimized primitive
 bool FastHeight(int Height)
@@ -55,8 +55,8 @@ int PartitionFromSizes(int Width, int Height)
     if ((w | h) < 0)
         return -1;
 
-    // there are currently five height partitions per width
-    Partitions part = (Partitions)(w * 5 + h);
+    // there are currently six height partitions per width
+    Partitions part = (Partitions)(w * 6 + h);
     return (int) part;
 }
 
