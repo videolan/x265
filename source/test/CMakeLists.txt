@@ -29,6 +29,7 @@ add_executable(TestBench
     timer.cpp testharness.h
     pixelharness.cpp pixelharness.h
     filterharness.cpp filterharness.h
-    mbdstharness.cpp mbdstharness.h)
+    mbdstharness.cpp mbdstharness.h
+    ipfilterharness.cpp ipfilterharness.h)
 
 target_link_libraries(TestBench x265 ${PLATFORM_LIBS})
