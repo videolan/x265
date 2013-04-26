@@ -344,9 +344,7 @@ struct HrdSubLayerInfo
     UInt cpbSizeValue[MAX_CPB_CNT][2];
     UInt ducpbSizeValue[MAX_CPB_CNT][2];
     UInt cbrFlag[MAX_CPB_CNT][2];
-#if L0363_DU_BIT_RATE
     UInt duBitRateValue[MAX_CPB_CNT][2];
-#endif
 };
 
 class TComHRD
@@ -506,12 +504,10 @@ public:
 
     UInt getDuCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl];        }
 
-#if L0363_DU_BIT_RATE
     Void setDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value;       }
 
     UInt getDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)              { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl];        }
 
-#endif
     Void setCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
 
     Bool getCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl];             }
