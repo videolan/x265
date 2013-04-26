@@ -1,5 +1,6 @@
 if (GCC)
     add_definitions(-DHAVE_ALIGNED_STACK=1)
+    add_definitions(-Wno-error=unused-parameter)
 else()
     add_definitions(-DHAVE_ALIGNED_STACK=0)
 endif()
