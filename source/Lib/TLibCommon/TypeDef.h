@@ -81,14 +81,8 @@
 
 #define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now)
 
-#define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
-#if SAO_ENCODING_CHOICE
 #define SAO_ENCODING_RATE                0.75
-#define SAO_ENCODING_CHOICE_CHROMA       1 ///< J0044: picture early termination Luma and Chroma are handled separately
-#if SAO_ENCODING_CHOICE_CHROMA
 #define SAO_ENCODING_RATE_CHROMA         0.5
-#endif
-#endif
 
 #define MAX_NUM_VPS                16
 #define MAX_NUM_SPS                16

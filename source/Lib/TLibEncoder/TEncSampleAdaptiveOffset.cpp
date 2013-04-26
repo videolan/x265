@@ -59,7 +59,6 @@ TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     m_dCostPartBest = NULL;
     m_iDistOrg = NULL;
     m_iTypePartBest = NULL;
-#if SAO_ENCODING_CHOICE_CHROMA
     m_depthSaoRate[0][0] = 0;
     m_depthSaoRate[0][1] = 0;
     m_depthSaoRate[0][2] = 0;
@@ -68,7 +67,6 @@ TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     m_depthSaoRate[1][1] = 0;
     m_depthSaoRate[1][2] = 0;
     m_depthSaoRate[1][3] = 0;
-#endif
 }
 
 TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()
@@ -1682,11 +1680,7 @@ Void TEncSampleAdaptiveOffset::resetStats()
  * \param dLambdaLuma
  * \param dLambdaChroma
  */
-#if SAO_ENCODING_CHOICE
 Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambdaLuma, Double dLambdaChroma, Int depth)
-#else
-Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambdaLuma, Double dLambdaChroma)
-#endif
 #else
 
 /** Sample adaptive offset process
@@ -1712,11 +1706,7 @@ Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambda)
     Double dCostFinal = 0;
     if (m_saoLcuBasedOptimization)
     {
-#if SAO_ENCODING_CHOICE
         rdoSaoUnitAll(pcSaoParam, dLambdaLuma, dLambdaChroma, depth);
-#else
-        rdoSaoUnitAll(pcSaoParam, dLambdaLuma, dLambdaChroma);
-#endif
     }
     else
     {
@@ -1873,11 +1863,7 @@ Void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SA
  * \param lambda
  * \param lambdaChroma
  */
-#if SAO_ENCODING_CHOICE
 Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth)
-#else
-Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma)
-#endif
 {
     Int idxY;
     Int idxX;
@@ -1897,8 +1883,6 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
     saoParam->oneUnitFlag[1] = false;
     saoParam->oneUnitFlag[2] = false;
 
-#if SAO_ENCODING_CHOICE
-#if SAO_ENCODING_CHOICE_CHROMA
     Int numNoSao[2];
     numNoSao[0] = 0; // Luma
     numNoSao[1] = 0; // Chroma
@@ -1910,16 +1894,6 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
     {
         saoParam->bSaoFlag[1] = false;
     }
-#else // if SAO_ENCODING_CHOICE_CHROMA
-    Int numNoSao = 0;
-
-    if (depth > 0 && m_depth0SaoRate > SAO_ENCODING_RATE)
-    {
-        saoParam->bSaoFlag[0] = false;
-        saoParam->bSaoFlag[1] = false;
-    }
-#endif // if SAO_ENCODING_CHOICE_CHROMA
-#endif // if SAO_ENCODING_CHOICE
 
     for (idxY = 0; idxY < frameHeightInCU; idxY++)
     {
@@ -1994,9 +1968,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
                 saoParam->saoLcuParam[compIdx][addr].mergeUpFlag   = 0;
                 saoParam->saoLcuParam[compIdx][addr].mergeLeftFlag = 0;
                 saoParam->saoLcuParam[compIdx][addr].subTypeIdx    = 0;
-#if SAO_ENCODING_CHOICE
                 if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-#endif
                 {
                     calcSaoStatsCu(addr, compIdx,  compIdx);
                 }
@@ -2064,8 +2036,6 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
                     }
                 }
 
-#if SAO_ENCODING_CHOICE
-#if SAO_ENCODING_CHOICE_CHROMA
                 if (saoParam->saoLcuParam[0][addr].typeIdx == -1)
                 {
                     numNoSao[0]++;
@@ -2074,25 +2044,12 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
                 {
                     numNoSao[1] += 2;
                 }
-#else
-                for (compIdx = 0; compIdx < 3; compIdx++)
-                {
-                    if (depth == 0 && saoParam->saoLcuParam[compIdx][addr].typeIdx == -1)
-                    {
-                        numNoSao++;
-                    }
-                }
-
-#endif // if SAO_ENCODING_CHOICE_CHROMA
-#endif // if SAO_ENCODING_CHOICE
                 m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[0][CI_TEMP_BEST]);
                 m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
             }
         }
     }
 
-#if SAO_ENCODING_CHOICE
-#if SAO_ENCODING_CHOICE_CHROMA
     if (!saoParam->bSaoFlag[0])
     {
         m_depthSaoRate[0][depth] = 1.0;
@@ -2109,14 +2066,6 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
     {
         m_depthSaoRate[1][depth] = numNoSao[1] / ((Double)frameHeightInCU * frameWidthInCU * 2);
     }
-#else // if SAO_ENCODING_CHOICE_CHROMA
-    if (depth == 0)
-    {
-        // update SAO Rate
-        m_depth0SaoRate = numNoSao / ((Double)frameHeightInCU * frameWidthInCU * 3);
-    }
-#endif // if SAO_ENCODING_CHOICE_CHROMA
-#endif // if SAO_ENCODING_CHOICE
 }
 
 /** rate distortion optimization of SAO unit
