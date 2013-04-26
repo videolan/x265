@@ -308,7 +308,6 @@ Void TEncCu::encodeCU(TComDataCU* pcCU)
  *\param   bTestMergeAMP_Ver
  *\returns Void
 */
-#if AMP_ENC_SPEEDUP
 #if AMP_MRG
 Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver, Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver)
 #else
@@ -376,8 +375,6 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
 #endif // if AMP_MRG
 }
 
-#endif // if AMP_ENC_SPEEDUP
-
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
@@ -390,11 +387,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
-#if AMP_ENC_SPEEDUP
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, PartSize eParentPartSize)
-#else
-Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
-#endif
 {
     TComPic* pcPic = rpcBestCU->getPic();
 
@@ -599,13 +592,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                         }
                     }
 
-#if 1
                     //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
                     if (pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth))
                     {
-#if AMP_ENC_SPEEDUP
                         Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
-
 #if AMP_MRG
                         Bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
 
@@ -698,20 +688,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                         }
 #endif // if AMP_MRG
 
-#else // if AMP_ENC_SPEEDUP
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxnU);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxnD);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_nLx2N);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_nRx2N);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-
-#endif // if AMP_ENC_SPEEDUP
                     }
-#endif // if 1
                 }
 
                 // do normal intra modes
@@ -879,7 +856,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                         }
                     }
 
-#if AMP_ENC_SPEEDUP
                     if (rpcBestCU->isIntra(0))
                     {
                         xCompressCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth, SIZE_NONE);
@@ -888,9 +864,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                     {
                         xCompressCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                     }
-#else
-                    xCompressCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth);
-#endif
 
                     rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                     xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
