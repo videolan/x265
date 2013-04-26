@@ -1777,8 +1777,8 @@ public:
 
 #if ADAPTIVE_QP_SELECTION
     Void      setSliceQpBase(Int i)                       { m_iSliceQpBase      = i;      }
-
 #endif
+
     Void      setSliceQpDelta(Int i)                       { m_iSliceQpDelta     = i;      }
 
     Void      setSliceQpDeltaCb(Int i)                       { m_iSliceQpDeltaCb   = i;      }
@@ -1803,11 +1803,7 @@ public:
 
     Void      setDepth(Int iDepth)                  { m_iDepth            = iDepth; }
 
-#if FIX1071
     Void      setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false);
-#else
-    Void      setRefPicList(TComList<TComPic*>& rcListPic);
-#endif
     Void      setRefPOCList();
     Void      setColFromL0Flag(UInt colFromL0) { m_colFromL0Flag = colFromL0; }
 

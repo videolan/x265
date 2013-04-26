@@ -302,15 +302,9 @@ Void TComSlice::setList1IdxToList0Idx()
     }
 }
 
-#if FIX1071
 Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr)
-#else
-Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic)
-#endif
 {
-#if FIX1071
     if (!checkNumPocTotalCurr)
-#endif
     {
         if (m_eSliceType == I_SLICE)
         {
@@ -380,7 +374,6 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic)
     TComPic*  rpsCurrList0[MAX_NUM_REF + 1];
     TComPic*  rpsCurrList1[MAX_NUM_REF + 1];
     Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr;
-#if FIX1071
     if (checkNumPocTotalCurr)
     {
         // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance that the following applies to the value of NumPocTotalCurr:
@@ -404,7 +397,6 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic)
         m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
         m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
     }
-#endif // if FIX1071
 
     Int cIdx = 0;
     for (i = 0; i < NumPocStCurr0; i++, cIdx++)

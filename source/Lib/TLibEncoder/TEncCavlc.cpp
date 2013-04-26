@@ -700,7 +700,6 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
             WRITE_CODE(picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
             TComReferencePictureSet* rps = pcSlice->getRPS();
 
-#if FIX1071
             // Deal with bitstream restriction stating that:
             // - If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
             // Ideally this process should not be repeated for each slice in a picture
@@ -725,9 +724,6 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
             }
 
             if (pcSlice->getRPSidx() < 0 || useAltRps)
-#else // if FIX1071
-            if (pcSlice->getRPSidx() < 0)
-#endif // if FIX1071
             {
                 WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
                 codeShortTermRefPicSet(pcSlice->getSPS(), rps, true, pcSlice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
