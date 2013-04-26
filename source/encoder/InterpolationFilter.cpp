@@ -129,7 +129,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)((sum + offset) >> headRoom);
+            short val = (short)(sum + offset) >> headRoom;
 
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
@@ -180,7 +180,7 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            short val = (short)(sum + offset) >> shift;
             dst[col] = val;
         }
 
