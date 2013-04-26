@@ -314,11 +314,7 @@ Void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
         WRITE_FLAG(pcVUI->getTilesFixedStructureFlag(),             "tiles_fixed_structure_flag");
         WRITE_FLAG(pcVUI->getMotionVectorsOverPicBoundariesFlag(),  "motion_vectors_over_pic_boundaries_flag");
         WRITE_FLAG(pcVUI->getRestrictedRefPicListsFlag(),           "restricted_ref_pic_lists_flag");
-#if L0043_MSS_IDC
         WRITE_UVLC(pcVUI->getMinSpatialSegmentationIdc(),           "min_spatial_segmentation_idc");
-#else
-        WRITE_CODE(pcVUI->getMinSpatialSegmentationIdc(),        8, "min_spatial_segmentation_idc");
-#endif
         WRITE_UVLC(pcVUI->getMaxBytesPerPicDenom(),                 "max_bytes_per_pic_denom");
         WRITE_UVLC(pcVUI->getMaxBitsPerMinCuDenom(),                "max_bits_per_mincu_denom");
         WRITE_UVLC(pcVUI->getLog2MaxMvLengthHorizontal(),           "log2_max_mv_length_horizontal");
@@ -1126,11 +1122,7 @@ Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
 
     for (UInt idx = 0; idx < numEntryPointOffsets; idx++)
     {
-#if L0116_ENTRY_POINT
         WRITE_CODE(entryPointOffset[idx] - 1, offsetLenMinus1 + 1, "entry_point_offset_minus1");
-#else
-        WRITE_CODE(entryPointOffset[idx], offsetLenMinus1 + 1, "entry_point_offset");
-#endif
     }
 
     delete [] entryPointOffset;

@@ -50,8 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0043_MSS_IDC 1
-#define L0116_ENTRY_POINT 1
 #define L0363_MORE_BITS 1
 #define L0363_MVP_POC 1
 #define L0363_BYTE_ALIGN 1
