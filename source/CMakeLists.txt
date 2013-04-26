@@ -88,8 +88,10 @@ if(ENABLE_CLI)
     add_subdirectory(input)
     add_subdirectory(output)
 
+    file(GLOB APPCOMMON  Lib/TAppCommon/*.h Lib/TAppCommon/*.cpp)
+
     add_executable(x265-cli
-        x265main.cpp ${EXTRAS}
+        x265main.cpp ${EXTRAS} ${APPCOMMON}
         x265cfg.cpp x265cfg.h
         x265enc.cpp x265enc.h)
 
