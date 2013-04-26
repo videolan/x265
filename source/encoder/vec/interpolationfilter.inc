@@ -438,6 +438,68 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
     }
 }
 
+void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+{
+    int shift = IF_INTERNAL_PREC - bitDepth;
+    int row, col;
+    Vec8s src_v, dst_v, val_v;
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width - 7; col += 8)
+        {
+            src_v.load(src + col);
+            val_v = src_v << shift;
+            dst_v = val_v - IF_INTERNAL_OFFS;
+            dst_v.store(dst + col);
+        }
+
+        if (col < width)
+        {
+            src_v.load(src + col);
+            val_v = src_v << shift;
+            dst_v = val_v - IF_INTERNAL_OFFS;
+            dst_v.store_partial(width - col, dst + col);
+        }
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
+void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+{
+    int shift = IF_INTERNAL_PREC - bitDepth;
+    short offset = IF_INTERNAL_OFFS;
+
+    offset += shift ? (1 << (shift - 1)) : 0;
+    short maxVal = (1 << bitDepth) - 1;
+    Vec8s minVal(0);
+    int row, col;
+    Vec8s src_c, val_c;
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width - 7; col += 8)
+        {
+            src_c.load(src + col);
+            val_c = add_saturated(src_c, offset) >> shift;
+            val_c = max(val_c, minVal);
+            val_c = min(val_c, maxVal);
+            val_c.store(dst + col);
+        }
+
+        if (col < width)
+        {
+            src_c.load(src + col);
+            val_c = add_saturated(src_c, offset) >> shift;
+            val_c = max(val_c, minVal);
+            val_c = min(val_c, maxVal);
+            val_c.store_partial(width - col, dst + col);
+        }
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(default: 4100)
@@ -451,8 +513,6 @@ void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
     p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
     p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
-
-    /* p.ipfilterConvert_p_s = filterConvertPelToShort;
-     p.ipfilterConvert_s_p = filterConvertShortToPel;*/
-     
+    p.ipfilterConvert_p_s = filterConvertPelToShort;
+    p.ipfilterConvert_s_p = filterConvertShortToPel;
 }

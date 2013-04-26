@@ -211,7 +211,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
             rand_width,
             rand_height);
 
-        if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
             return false;
     }
 
