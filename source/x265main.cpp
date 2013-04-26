@@ -37,15 +37,15 @@ int main(int argc, char *argv[])
 
     PPA_INIT();
 
-    fprintf(stdout, "x265 HEVC encoder version %s\n", XSTR(X265_VERSION));
+    fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
     fprintf(stdout, "x265: build info ");
     fprintf(stdout, NVM_ONOS);
     fprintf(stdout, NVM_COMPILEDBY);
     fprintf(stdout, NVM_BITS);
 #if HIGH_BIT_DEPTH
-    fprintf(stdout, " 16bpp");
+    fprintf(stdout, "16bpp");
 #else
-    fprintf(stdout, " 8bpp");
+    fprintf(stdout, "8bpp");
 #endif
     fprintf(stdout, "\n");
 
