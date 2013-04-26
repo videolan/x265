@@ -265,9 +265,7 @@ Void TEncTop::init()
 
     /* set the VPS profile information */
     *m_cVPS.getPTL() = *m_cSPS.getPTL();
-#if L0043_TIMING_INFO
     m_cVPS.getTimingInfo()->setTimingInfoPresentFlag(false);
-#endif
     // initialize PPS
     m_cPPS.setSPS(&m_cSPS);
     xInitPPS();
@@ -559,13 +557,8 @@ Void TEncTop::xInitSPS()
         pcVUI->setFrameFieldInfoPresentFlag(getFrameFieldInfoPresentFlag());
         pcVUI->setFieldSeqFlag(false);
         pcVUI->setHrdParametersPresentFlag(false);
-#if L0043_TIMING_INFO
         pcVUI->getTimingInfo()->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
         pcVUI->getTimingInfo()->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
-#else
-        pcVUI->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
-        pcVUI->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
-#endif
         pcVUI->setBitstreamRestrictionFlag(getBitstreamRestrictionFlag());
         pcVUI->setTilesFixedStructureFlag(getTilesFixedStructureFlag());
         pcVUI->setMotionVectorsOverPicBoundariesFlag(getMotionVectorsOverPicBoundariesFlag());

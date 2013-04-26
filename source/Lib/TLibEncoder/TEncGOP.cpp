@@ -1154,11 +1154,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             sei_buffering_period.m_initialCpbRemovalDelay[0][1]     = uiInitialCpbRemovalDelay;
             sei_buffering_period.m_initialCpbRemovalDelayOffset[0][1]     = uiInitialCpbRemovalDelay;
 
-#if L0043_TIMING_INFO
             Double dTmp = (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick() / (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
-#else
-            Double dTmp = (Double)pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNumUnitsInTick() / (Double)pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTimeScale();
-#endif
 
             UInt uiTmp = (UInt)(dTmp * 90000.0);
             uiInitialCpbRemovalDelay -= uiTmp;
@@ -1729,11 +1725,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                     for (i = (numDU - 2); i >= 0; i--)
                     {
-#if L0043_TIMING_INFO
                         ui64Tmp = (((accumBitsDU[numDU - 1]  - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#else
-                        ui64Tmp = (((accumBitsDU[numDU - 1]  - accumBitsDU[i]) * (hrd->getTimeScale() / hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#endif
                         if ((UInt)ui64Tmp > maxDiff)
                         {
                             tmp++;
@@ -1746,11 +1738,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     for (i = (numDU - 2); i >= 0; i--)
                     {
                         flag = 0;
-#if L0043_TIMING_INFO
                         ui64Tmp = (((accumBitsDU[numDU - 1]  - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#else
-                        ui64Tmp = (((accumBitsDU[numDU - 1]  - accumBitsDU[i]) * (hrd->getTimeScale() / hrd->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_pcCfg->getTargetBitrate()));
-#endif
 
                         if ((UInt)ui64Tmp > maxDiff)
                         {
