@@ -46,18 +46,14 @@ bool FastHeight(int Height)
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)
 {
-    // Check for bits in the unexpected places
-    if ((Width | Height) & ~(4 | 8 | 16 | 32 | 64))
-        return -1;
-
     int8_t w = psize[(Width >> 2) - 1];
     int8_t h = psize[(Height >> 2) - 1];
-    if ((w | h) < 0)
-        return -1;
+
+    assert(((Width | Height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
+    assert((w | h) >= 0);
 
     // there are currently seven height partitions per width
-    Partitions part = (Partitions)(w * 7 + h);
-    return (int) part;
+    return w * 7 + h;
 }
 
 /* the "authoritative" set of encoder primitives */
