@@ -439,12 +439,10 @@ Void TEncTop::xInitSPS()
     profileTierLevel.setTierFlag(m_levelTier);
     profileTierLevel.setProfileIdc(m_profile);
     profileTierLevel.setProfileCompatibilityFlag(m_profile, 1);
-#if L0046_CONSTRAINT_FLAGS
     profileTierLevel.setProgressiveSourceFlag(m_progressiveSourceFlag);
     profileTierLevel.setInterlacedSourceFlag(m_interlacedSourceFlag);
     profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
-#endif
 
     if (m_profile == Profile::MAIN10 && g_bitDepthY == 8 && g_bitDepthC == 8)
     {

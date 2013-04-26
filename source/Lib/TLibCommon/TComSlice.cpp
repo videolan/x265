@@ -1975,12 +1975,10 @@ ProfileTierLevel::ProfileTierLevel()
     , m_tierFlag(false)
     , m_profileIdc(0)
     , m_levelIdc(0)
-#if L0046_CONSTRAINT_FLAGS
     , m_progressiveSourceFlag(false)
     , m_interlacedSourceFlag(false)
     , m_nonPackedConstraintFlag(false)
     , m_frameOnlyConstraintFlag(false)
-#endif
 {
     ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
 }

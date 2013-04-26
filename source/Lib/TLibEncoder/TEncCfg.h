@@ -116,12 +116,10 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
-#if L0046_CONSTRAINT_FLAGS
     Bool m_progressiveSourceFlag;
     Bool m_interlacedSourceFlag;
     Bool m_nonPackedConstraintFlag;
     Bool m_frameOnlyConstraintFlag;
-#endif
 
     //====== Coding Structure ========
     UInt      m_uiIntraPeriod;
@@ -1086,7 +1084,6 @@ public:
 
     Void      setLog2MaxMvLengthVertical(Int i)             { m_log2MaxMvLengthVertical = i; }
 
-#if L0046_CONSTRAINT_FLAGS
     Bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
 
     Void setProgressiveSourceFlag(Bool b) { m_progressiveSourceFlag = b; }
@@ -1102,10 +1099,8 @@ public:
     Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
 
     Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
-
-#endif // if L0046_CONSTRAINT_FLAGS
 };
 
 //! \}
 
-#endif // !defined(AFX_TENCCFG_H__6B99B797_F4DA_4E46_8E78_7656339A6C41__INCLUDED_)
+#endif // __TENCCFG__

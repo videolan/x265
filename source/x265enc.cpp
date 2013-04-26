@@ -86,12 +86,10 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setProfile(m_profile);
     m_cTEncTop.setLevel(m_levelTier, m_level);
-#if L0046_CONSTRAINT_FLAGS
     m_cTEncTop.setProgressiveSourceFlag(m_progressiveSourceFlag);
     m_cTEncTop.setInterlacedSourceFlag(m_interlacedSourceFlag);
     m_cTEncTop.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     m_cTEncTop.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
-#endif
 
     m_cTEncTop.setFrameRate(m_iFrameRate);
     m_cTEncTop.setFrameSkip(m_FrameSkip);
