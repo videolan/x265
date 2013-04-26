@@ -51,9 +51,7 @@ TComSlice::TComSlice()
     , m_eSliceType(I_SLICE)
     , m_iSliceQp(0)
     , m_dependentSliceSegmentFlag(false)
-#if ADAPTIVE_QP_SELECTION
     , m_iSliceQpBase(0)
-#endif
     , m_deblockingFilterDisable(false)
     , m_deblockingFilterOverrideFlag(false)
     , m_deblockingFilterBetaOffsetDiv2(0)
@@ -643,9 +641,7 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_eNalUnitType         = pSrc->m_eNalUnitType;
     m_eSliceType           = pSrc->m_eSliceType;
     m_iSliceQp             = pSrc->m_iSliceQp;
-#if ADAPTIVE_QP_SELECTION
     m_iSliceQpBase         = pSrc->m_iSliceQpBase;
-#endif
     m_deblockingFilterDisable   = pSrc->m_deblockingFilterDisable;
     m_deblockingFilterOverrideFlag = pSrc->m_deblockingFilterOverrideFlag;
     m_deblockingFilterBetaOffsetDiv2 = pSrc->m_deblockingFilterBetaOffsetDiv2;

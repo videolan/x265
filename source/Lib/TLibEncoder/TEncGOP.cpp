@@ -609,9 +609,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
 
-#if ADAPTIVE_QP_SELECTION
         pcSlice->setTrQuant(m_pcEncTop->getTrQuant());
-#endif
 
         //  Set reference list
         pcSlice->setRefPicList(rcListPic);
@@ -2221,7 +2219,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
     if (!pcSlice->isReferenced()) c += 32;
 
-#if ADAPTIVE_QP_SELECTION
     printf("POC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            pcSlice->getPOC(),
            pcSlice->getTLayer(),
@@ -2229,14 +2226,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
            pcSlice->getSliceQpBase(),
            pcSlice->getSliceQp(),
            uibits);
-#else
-    printf("POC %4d TId: %1d ( %c-SLICE, QP %d ) %10d bits",
-           pcSlice->getPOC() - pcSlice->getLastIDR(),
-           pcSlice->getTLayer(),
-           c,
-           pcSlice->getSliceQp(),
-           uibits);
-#endif // if ADAPTIVE_QP_SELECTION
 
     printf(" [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", dYPSNR, dUPSNR, dVPSNR);
     printf(" [ET %5.0f ]", dEncTime);

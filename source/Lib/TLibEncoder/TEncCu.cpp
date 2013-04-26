@@ -271,7 +271,6 @@ Void TEncCu::compressCU(TComDataCU*& rpcCU)
     // analysis of CU
     xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], 0);
 
-#if ADAPTIVE_QP_SELECTION
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
         if (rpcCU->getSlice()->getSliceType() != I_SLICE) //IIII
@@ -279,7 +278,6 @@ Void TEncCu::compressCU(TComDataCU*& rpcCU)
             xLcuCollectARLStats(rpcCU);
         }
     }
-#endif
 }
 
 /** \param  pcCU  pointer of CU data class
@@ -1585,8 +1583,6 @@ Void TEncCu::xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv)
     }
 }
 
-#if ADAPTIVE_QP_SELECTION
-
 /** Collect ARL statistics from one block
   */
 Int TEncCu::xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffInCU, Double* cSum, UInt* numSamples)
@@ -1656,5 +1652,4 @@ Void TEncCu::xLcuCollectARLStats(TComDataCU* rpcCU)
     m_pcTrQuant->getSliceNSamples()[LEVEL_RANGE] += numSamples[LEVEL_RANGE];
 }
 
-#endif // if ADAPTIVE_QP_SELECTION
 //! \}

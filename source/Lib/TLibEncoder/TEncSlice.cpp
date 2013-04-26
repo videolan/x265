@@ -380,9 +380,7 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     }
 
     rpcSlice->setSliceQp(iQP);
-#if ADAPTIVE_QP_SELECTION
     rpcSlice->setSliceQpBase(iQP);
-#endif
     rpcSlice->setSliceQpDelta(0);
     rpcSlice->setSliceQpDeltaCb(0);
     rpcSlice->setSliceQpDeltaCr(0);
@@ -674,9 +672,7 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
     for (UInt uiQpIdx = 0; uiQpIdx < 2 * m_pcCfg->getDeltaQpRD() + 1; uiQpIdx++)
     {
         pcSlice->setSliceQp(m_piRdPicQp[uiQpIdx]);
-#if ADAPTIVE_QP_SELECTION
         pcSlice->setSliceQpBase(m_piRdPicQp[uiQpIdx]);
-#endif
         m_pcRdCost->setLambda(m_pdRdPicLambda[uiQpIdx]);
 #if WEIGHTED_CHROMA_DISTORTION
         // for RDO
@@ -731,9 +727,7 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
 
     // set best values
     pcSlice->setSliceQp(m_piRdPicQp[uiQpIdxBest]);
-#if ADAPTIVE_QP_SELECTION
     pcSlice->setSliceQpBase(m_piRdPicQp[uiQpIdxBest]);
-#endif
     m_pcRdCost->setLambda(m_pdRdPicLambda[uiQpIdxBest]);
 #if WEIGHTED_CHROMA_DISTORTION
     // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
@@ -832,7 +826,6 @@ Void TEncSlice::compressSlice(TComPic*& rpcPic)
         xCheckWPEnable(pcSlice);
     }
 
-#if ADAPTIVE_QP_SELECTION
     if (m_pcCfg->getUseAdaptQpSelect())
     {
         m_pcTrQuant->clearSliceARLCnt();
@@ -842,7 +835,6 @@ Void TEncSlice::compressSlice(TComPic*& rpcPic)
             pcSlice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
         }
     }
-#endif
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
     TComBitCounter* pcBitCounters     = pcEncTop->getBitCounters();
@@ -1491,12 +1483,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         }
         CTXMem[0]->loadContexts(m_pcSbacCoder); //ctx end of dep.slice
     }
-#if ADAPTIVE_QP_SELECTION
     if (m_pcCfg->getUseAdaptQpSelect())
     {
         m_pcTrQuant->storeSliceQpNext(pcSlice);
     }
-#endif
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {
         if  (pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag())

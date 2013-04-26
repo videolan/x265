@@ -173,9 +173,7 @@ protected:
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
     Int       m_chromaCrQpOffset;               //  Chroma Cr Qp Offset (0:default)
 
-#if ADAPTIVE_QP_SELECTION
     Bool      m_bUseAdaptQpSelect;
-#endif
 
     Bool      m_bUseAdaptiveQP;
     Int       m_iQPAdaptationRange;
@@ -429,12 +427,9 @@ public:
 
     Void      setChromaCrQpOffset(Int i)      { m_chromaCrQpOffset = i; }
 
-#if ADAPTIVE_QP_SELECTION
     Void      setUseAdaptQpSelect(Bool i) { m_bUseAdaptQpSelect    = i; }
 
     Bool      getUseAdaptQpSelect()           { return m_bUseAdaptQpSelect; }
-
-#endif
 
     Void      setUseAdaptiveQP(Bool b)      { m_bUseAdaptiveQP = b; }
 

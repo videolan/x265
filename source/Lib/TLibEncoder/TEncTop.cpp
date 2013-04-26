@@ -99,12 +99,10 @@ Void TEncTop::create()
         m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_cEncSAO.createEncBuffer();
     }
-#if ADAPTIVE_QP_SELECTION
     if (m_bUseAdaptQpSelect)
     {
         m_cTrQuant.initSliceQpDelta();
     }
-#endif
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
@@ -284,11 +282,9 @@ Void TEncTop::init()
     m_cTrQuant.init(1 << m_uiQuadtreeTULog2MaxSize,
                     m_useRDOQ,
                     m_useRDOQTS,
-                    true
-                    , m_useTransformSkipFast
-        #if ADAPTIVE_QP_SELECTION
-                    , m_bUseAdaptQpSelect
-        #endif
+                    true,
+                    m_useTransformSkipFast,
+                    m_bUseAdaptQpSelect
                     );
 
     // initialize encoder search class

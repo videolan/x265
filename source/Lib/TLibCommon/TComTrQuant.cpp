@@ -107,7 +107,6 @@ TComTrQuant::~TComTrQuant()
     destroyScalingList();
 }
 
-#if ADAPTIVE_QP_SELECTION
 Void TComTrQuant::storeSliceQpNext(TComSlice* pcSlice)
 {
     Int qpBase = pcSlice->getSliceQpBase();
@@ -178,8 +177,6 @@ Void TComTrQuant::clearSliceARLCnt()
     memset(m_sliceSumC, 0, sizeof(Double) * (LEVEL_RANGE + 1));
     memset(m_sliceNsamples, 0, sizeof(Int) * (LEVEL_RANGE + 1));
 }
-
-#endif // if ADAPTIVE_QP_SELECTION
 
 /** Set qP for Quantization.
  * \param qpy QPy
@@ -1063,9 +1060,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
 Void TComTrQuant::xQuant(TComDataCU* pcCU,
                          Int*        pSrc,
                          TCoeff*     pDes,
-#if ADAPTIVE_QP_SELECTION
                          Int*&       pArlDes,
-#endif
                          Int         iWidth,
                          Int         iHeight,
                          UInt&       uiAcSum,
@@ -1075,19 +1070,13 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
     Int*   piCoef    = pSrc;
     TCoeff* piQCoef   = pDes;
 
-#if ADAPTIVE_QP_SELECTION
     Int*   piArlCCoef = pArlDes;
-#endif
     Int   iAdd = 0;
 
     Bool useRDOQ = pcCU->getTransformSkip(uiAbsPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
     {
-#if ADAPTIVE_QP_SELECTION
         xRateDistOptQuant(pcCU, piCoef, pDes, pArlDes, iWidth, iHeight, uiAcSum, eTType, uiAbsPartIdx);
-#else
-        xRateDistOptQuant(pcCU, piCoef, pDes, iWidth, iHeight, uiAcSum, eTType, uiAbsPartIdx);
-#endif
     }
     else
     {
@@ -1098,7 +1087,6 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
 
         Int deltaU[32 * 32];
 
-#if ADAPTIVE_QP_SELECTION
         QpParam cQpBase;
         Int iQpBase = pcCU->getSlice()->getSliceQpBase();
 
@@ -1134,7 +1122,6 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
             }
         }
         cQpBase.setQpParam(qpScaled);
-#endif // if ADAPTIVE_QP_SELECTION
 
         UInt uiLog2TrSize = g_aucConvertToBit[iWidth] + 2;
         Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
@@ -1149,12 +1136,10 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
 
         iAdd = (pcCU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (iQBits - 9);
 
-#if ADAPTIVE_QP_SELECTION
         iQBits = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift;
         iAdd = (pcCU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (iQBits - 9);
         Int iQBitsC = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift - ARL_C_PRECISION;
         Int iAddC   = 1 << (iQBitsC - 1);
-#endif
 
         Int qBits8 = iQBits - 8;
         for (Int n = 0; n < iWidth * iHeight; n++)
@@ -1165,7 +1150,6 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
             iLevel  = piCoef[uiBlockPos];
             iSign   = (iLevel < 0 ? -1 : 1);
 
-#if ADAPTIVE_QP_SELECTION
             Int64 tmpLevel = (Int64)abs(iLevel) * piQuantCoeff[uiBlockPos];
             if (m_bUseAdaptQpSelect)
             {
@@ -1173,10 +1157,6 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
             }
             iLevel = (Int)((tmpLevel + iAdd) >> iQBits);
             deltaU[uiBlockPos] = (Int)((tmpLevel - (iLevel << iQBits)) >> qBits8);
-#else
-            iLevel = ((Int64)abs(iLevel) * piQuantCoeff[uiBlockPos] + iAdd) >> iQBits;
-            deltaU[uiBlockPos] = (Int)(((Int64)abs(piCoef[uiBlockPos]) * piQuantCoeff[uiBlockPos] - (iLevel << iQBits)) >> qBits8);
-#endif
             uiAcSum += iLevel;
             iLevel *= iSign;
             piQCoef[uiBlockPos] = Clip3(-32768, 32767, iLevel);
@@ -1190,7 +1170,6 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
             }
         }
     } //if RDOQ
-      //return;
 }
 
 Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType)
@@ -1256,19 +1235,15 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWid
 Void TComTrQuant::init(UInt uiMaxTrSize,
                        Bool bUseRDOQ,
                        Bool bUseRDOQTS,
-                       Bool bEnc, Bool useTransformSkipFast
-#if ADAPTIVE_QP_SELECTION
-                       , Bool bUseAdaptQpSelect
-#endif
-                       )
+                       Bool bEnc,
+                       Bool useTransformSkipFast,
+                       Bool bUseAdaptQpSelect)
 {
     m_uiMaxTrSize  = uiMaxTrSize;
     m_bEnc         = bEnc;
     m_useRDOQ     = bUseRDOQ;
     m_useRDOQTS     = bUseRDOQTS;
-#if ADAPTIVE_QP_SELECTION
     m_bUseAdaptQpSelect = bUseAdaptQpSelect;
-#endif
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
@@ -1276,9 +1251,7 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
                                Pel*        pcResidual,
                                UInt        uiStride,
                                TCoeff*     rpcCoeff,
-#if ADAPTIVE_QP_SELECTION
                                Int*&       rpcArlCoeff,
-#endif
                                UInt        uiWidth,
                                UInt        uiHeight,
                                UInt&       uiAbsSum,
@@ -1322,11 +1295,7 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
     {
         xT(bitDepth, uiMode, pcResidual, uiStride, m_plTempCoeff, uiWidth, uiHeight);
     }
-    xQuant(pcCU, m_plTempCoeff, rpcCoeff,
-#if ADAPTIVE_QP_SELECTION
-           rpcArlCoeff,
-#endif
-           uiWidth, uiHeight, uiAbsSum, eTType, uiAbsPartIdx);
+    xQuant(pcCU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, uiWidth, uiHeight, uiAbsSum, eTType, uiAbsPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Pel* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
@@ -1600,9 +1569,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Pel* pResidual, UIn
 Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
                                     Int*        plSrcCoeff,
                                     TCoeff*     piDstCoeff,
-#if ADAPTIVE_QP_SELECTION
                                     Int*&       piArlDstCoeff,
-#endif
                                     UInt        uiWidth,
                                     UInt        uiHeight,
                                     UInt&       uiAbsSum,
@@ -1630,15 +1597,11 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
     Int *piQCoefOrg = getQuantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
     Int *piQCoef = piQCoefOrg;
     Double *pdErrScale = pdErrScaleOrg;
-#if ADAPTIVE_QP_SELECTION
     Int iQBitsC = iQBits - ARL_C_PRECISION;
     Int iAddC =  1 << (iQBitsC - 1);
-#endif
     UInt uiScanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, uiWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
 
-#if ADAPTIVE_QP_SELECTION
     memset(piArlDstCoeff, 0, sizeof(Int) *  uiMaxNumCoeff);
-#endif
 
     Double pdCostCoeff[32 * 32];
     Double pdCostSig[32 * 32];
@@ -1710,12 +1673,10 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
             dTemp = pdErrScale[uiBlkPos];
             Int lLevelDouble          = plSrcCoeff[uiBlkPos];
             lLevelDouble              = (Int)min<Int64>((Int64)abs((Int)lLevelDouble) * uiQ, MAX_INT - (1 << (iQBits - 1)));
-#if ADAPTIVE_QP_SELECTION
             if (m_bUseAdaptQpSelect)
             {
                 piArlDstCoeff[uiBlkPos]   = (Int)((lLevelDouble + iAddC) >> iQBitsC);
             }
-#endif
             UInt uiMaxAbsLevel        = (lLevelDouble + (1 << (iQBits - 1))) >> iQBits;
 
             Double dErr               = Double(lLevelDouble);

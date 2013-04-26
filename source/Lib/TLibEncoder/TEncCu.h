@@ -125,7 +125,6 @@ public:
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
     UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
-
 #endif
 
 protected:
@@ -152,11 +151,9 @@ protected:
 
     Void setdQPFlag(Bool b)                { m_bEncodeDQP = b;           }
 
-#if ADAPTIVE_QP_SELECTION
     // Adaptive reconstruction level (ARL) statistics collection functions
     Void xLcuCollectARLStats(TComDataCU* rpcCU);
     Int  xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffInCU, Double* cSum, UInt* numSamples);
-#endif
 
     Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver, Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
     Void xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv);

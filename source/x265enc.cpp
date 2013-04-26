@@ -144,9 +144,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setChromaCbQpOffset(m_cbQpOffset);
     m_cTEncTop.setChromaCrQpOffset(m_crQpOffset);
 
-#if ADAPTIVE_QP_SELECTION
     m_cTEncTop.setUseAdaptQpSelect(m_bUseAdaptQpSelect);
-#endif
 
     Int lowestQP;
     lowestQP =  -6 * (g_bitDepthY - 8); // XXX: check

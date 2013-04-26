@@ -362,9 +362,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
         ("CrQpOffset,-crqpofs",  m_crQpOffset,        0, "Chroma Cr QP Offset")
 
-#if ADAPTIVE_QP_SELECTION
         ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
-#endif
 
         ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
         ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,       6, "QP adaptation range")
@@ -990,10 +988,8 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
     xConfirmPara(m_maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
 
-#if ADAPTIVE_QP_SELECTION
     xConfirmPara(m_bUseAdaptQpSelect && m_iQP < 0,                                "AdaptiveQpSelection must be disabled when QP < 0.");
     xConfirmPara(m_bUseAdaptQpSelect && (m_cbQpOffset != 0 || m_crQpOffset != 0), "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
-#endif
 
     if (m_usePCM)
     {
@@ -1617,9 +1613,7 @@ Void TAppEncCfg::xPrintParameter()
            m_iWaveFrontSynchro, m_iWaveFrontSubstreams);
     printf(" ScalingList:%d ", m_useScalingListId);
     printf("TMVPMode:%d ", m_TMVPModeId);
-#if ADAPTIVE_QP_SELECTION
     printf("AQpS:%d", m_bUseAdaptQpSelect);
-#endif
 
     printf(" SignBitHidingFlag:%d ", m_signHideFlag);
     printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0);

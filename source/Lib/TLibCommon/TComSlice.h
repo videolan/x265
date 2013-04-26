@@ -1487,9 +1487,7 @@ private:
     SliceType   m_eSliceType;
     Int         m_iSliceQp;
     Bool        m_dependentSliceSegmentFlag;
-#if ADAPTIVE_QP_SELECTION
     Int         m_iSliceQpBase;
-#endif
     Bool        m_deblockingFilterDisable;
     Bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     Int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
@@ -1516,9 +1514,7 @@ private:
     TComSPS*    m_pcSPS;
     TComPPS*    m_pcPPS;
     TComPic*    m_pcPic;
-#if ADAPTIVE_QP_SELECTION
     TComTrQuant* m_pcTrQuant;
-#endif
     UInt        m_colFromL0Flag; // collocated picture from List0 flag
 
     UInt        m_colRefIdx;
@@ -1585,12 +1581,9 @@ public:
 
     TComPPS*  getPPS() { return m_pcPPS; }
 
-#if ADAPTIVE_QP_SELECTION
     Void          setTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
 
     TComTrQuant*  getTrQuant() { return m_pcTrQuant; }
-
-#endif
 
     Void      setPPSId(Int PPSId)         { m_iPPSId = PPSId; }
 
@@ -1636,10 +1629,8 @@ public:
 
     void      setDependentSliceSegmentFlag(Bool val)      { m_dependentSliceSegmentFlag = val; }
 
-#if ADAPTIVE_QP_SELECTION
     Int       getSliceQpBase()                          { return m_iSliceQpBase;       }
 
-#endif
     Int       getSliceQpDelta()                          { return m_iSliceQpDelta;      }
 
     Int       getSliceQpDeltaCb()                          { return m_iSliceQpDeltaCb;      }
@@ -1699,9 +1690,7 @@ public:
 
     Void      setSliceQp(Int i)                       { m_iSliceQp          = i;      }
 
-#if ADAPTIVE_QP_SELECTION
     Void      setSliceQpBase(Int i)                       { m_iSliceQpBase      = i;      }
-#endif
 
     Void      setSliceQpDelta(Int i)                       { m_iSliceQpDelta     = i;      }
 
