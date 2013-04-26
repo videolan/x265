@@ -371,9 +371,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("dQPFile,m",                     cfg_dQPFile,       string(""), "dQP file name")
         ("RDOQ",                          m_useRDOQ,                  1)
         ("RDOQTS",                        m_useRDOQTS,                1)
-#if L0232_RD_PENALTY
         ("RDpenalty",                     m_rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
-#endif
         // Entropy coding parameters
         ("SBACRD",                         m_bUseSBACRD,                     1, "SBAC based RD estimation")
 
@@ -1585,9 +1583,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("SRD:%d ", m_bUseSBACRD);
     printf("RDQ:%d ", m_useRDOQ);
     printf("RDQTS:%d ", m_useRDOQTS);
-#if L0232_RD_PENALTY
     printf("RDpenalty:%d ", m_rdPenalty);
-#endif
     printf("SQP:%d ", m_uiDeltaQpRD);
     printf("ASR:%d ", m_bUseASR);
     printf("FEN:%d ", m_bUseFastEnc);

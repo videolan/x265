@@ -186,9 +186,7 @@ protected:
     Bool      m_bUseHADME;
     Bool      m_useRDOQ;
     Bool      m_useRDOQTS;
-#if L0232_RD_PENALTY
     UInt      m_rdPenalty;
-#endif
     Bool      m_bUseFastEnc;
     Bool      m_bUseEarlyCU;
     Bool      m_useFastDecisionForMerge;
@@ -525,9 +523,8 @@ public:
 
     Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
 
-#if L0232_RD_PENALTY
     Void      setRDpenalty(UInt b)     { m_rdPenalty  = b; }
-#endif
+    
     Void      setUseFastEnc(Bool b)     { m_bUseFastEnc = b; }
 
     Void      setUseEarlyCU(Bool b)     { m_bUseEarlyCU = b; }
@@ -564,9 +561,7 @@ public:
 
     Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
 
-#if L0232_RD_PENALTY
     Int       getRDpenalty()      { return m_rdPenalty;  }
-#endif
 
     Bool      getUseFastEnc()      { return m_bUseFastEnc; }
 

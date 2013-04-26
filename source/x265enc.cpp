@@ -168,9 +168,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setdQPs(m_aidQP);
     m_cTEncTop.setUseRDOQ(m_useRDOQ);
     m_cTEncTop.setUseRDOQTS(m_useRDOQTS);
-#if L0232_RD_PENALTY
     m_cTEncTop.setRDpenalty(m_rdPenalty);
-#endif
     m_cTEncTop.setQuadtreeTULog2MaxSize(m_uiQuadtreeTULog2MaxSize);
     m_cTEncTop.setQuadtreeTULog2MinSize(m_uiQuadtreeTULog2MinSize);
     m_cTEncTop.setQuadtreeTUMaxDepthInter(m_uiQuadtreeTUMaxDepthInter);
