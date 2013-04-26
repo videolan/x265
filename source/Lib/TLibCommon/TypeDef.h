@@ -200,7 +200,6 @@
 
 #define REG_DCT 65535
 
-#define AMP_SAD                               1           ///< dedicated SAD functions for AMP
 #define AMP_ENC_SPEEDUP                       1           ///< encoder only speed-up by AMP mode skipping
 #if AMP_ENC_SPEEDUP
 #define AMP_MRG                               1           ///< encoder only force merge for AMP partition (no motion search for AMP)
@@ -451,7 +450,6 @@ enum DFunc
     DF_HADS64   = 27,   ///<  64xM HAD with step
     DF_HADS16N  = 28,   ///< 16NxM HAD with step
 
-#if AMP_SAD
     DF_SAD12    = 43,
     DF_SAD24    = 44,
     DF_SAD48    = 45,
@@ -461,9 +459,6 @@ enum DFunc
     DF_SADS48   = 48,
 
     DF_SSE_FRAME = 50   ///< Frame-based SSE
-#else
-    DF_SSE_FRAME = 33   ///< Frame-based SSE
-#endif // if AMP_SAD
 };
 
 /// index for SBAC based RD optimization

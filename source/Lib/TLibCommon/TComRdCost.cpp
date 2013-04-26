@@ -202,7 +202,6 @@ Void TComRdCost::init()
     m_afpDistortFunc[20] = TComRdCost::xGetSAD64;
     m_afpDistortFunc[21] = TComRdCost::xGetSAD16N;
 
-#if AMP_SAD
     m_afpDistortFunc[43] = TComRdCost::xGetSAD12;
     m_afpDistortFunc[44] = TComRdCost::xGetSAD24;
     m_afpDistortFunc[45] = TComRdCost::xGetSAD48;
@@ -210,7 +209,7 @@ Void TComRdCost::init()
     m_afpDistortFunc[46] = TComRdCost::xGetSAD12;
     m_afpDistortFunc[47] = TComRdCost::xGetSAD24;
     m_afpDistortFunc[48] = TComRdCost::xGetSAD48;
-#endif
+
     m_afpDistortFunc[22] = TComRdCost::xGetHADs;
     m_afpDistortFunc[23] = TComRdCost::xGetHADs;
     m_afpDistortFunc[24] = TComRdCost::xGetHADs;
@@ -310,7 +309,6 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     rcDistParam.iRows    = pcPatternKey->getROIYHeight();
     rcDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[rcDistParam.iCols] + 1];
 
-#if AMP_SAD
     if (rcDistParam.iCols == 12)
     {
         rcDistParam.DistFunc = m_afpDistortFunc[43];
@@ -323,7 +321,6 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     {
         rcDistParam.DistFunc = m_afpDistortFunc[45];
     }
-#endif // if AMP_SAD
 
     // initialize
     rcDistParam.iSubShift  = 0;
@@ -357,7 +354,7 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     if (!bHADME)
     {
         rcDistParam.DistFunc = m_afpDistortFunc[DF_SADS + g_aucConvertToBit[rcDistParam.iCols] + 1];
-#if AMP_SAD
+
         if (rcDistParam.iCols == 12)
         {
             rcDistParam.DistFunc = m_afpDistortFunc[46];
@@ -370,8 +367,6 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
         {
             rcDistParam.DistFunc = m_afpDistortFunc[48];
         }
-
-#endif // if AMP_SAD
     }
     else
     {
@@ -672,7 +667,6 @@ UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
-#if AMP_SAD
 UInt TComRdCost::xGetSAD12(DistParam* pcDtParam)
 {
     if (pcDtParam->bApplyWeight)
@@ -712,8 +706,6 @@ UInt TComRdCost::xGetSAD12(DistParam* pcDtParam)
     uiSum <<= iSubShift;
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
-
-#endif // if AMP_SAD
 
 UInt TComRdCost::xGetSAD16N(DistParam* pcDtParam)
 {
@@ -816,7 +808,6 @@ UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
-#if AMP_SAD
 UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
 {
     if (pcDtParam->bApplyWeight)
@@ -867,8 +858,6 @@ UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
     uiSum <<= iSubShift;
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
-
-#endif // if AMP_SAD
 
 UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
 {
@@ -962,7 +951,6 @@ UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
-#if AMP_SAD
 UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
 {
     if (pcDtParam->bApplyWeight)
@@ -1655,7 +1643,6 @@ UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 #endif // if ENABLE_PRIMITIVES
 }
 
-#endif // if AMP_SAD
 
 UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {

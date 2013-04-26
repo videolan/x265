@@ -362,9 +362,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     FpDistFunc  *m_afpDistortFunc;
     m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
     m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
-
-#if AMP_SAD
-
     if (m_cDistParam.iCols == 12)
     {
         m_cDistParam.DistFunc = m_afpDistortFunc[43];
@@ -377,7 +374,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     {
         m_cDistParam.DistFunc = m_afpDistortFunc[45];
     }
-#endif // if AMP_SAD
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
 #endif // if ENABLE_PRIMITIVES
 
