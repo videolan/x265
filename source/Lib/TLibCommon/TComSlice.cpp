@@ -1382,9 +1382,7 @@ Void TComSPS::setHrdParameters(UInt frameRate, UInt numDU, UInt bitRate, Bool ra
         hrd->setTickDivisorMinus2(100 - 2);                        //
         hrd->setDuCpbRemovalDelayLengthMinus1(7);                  // 8-bit precision ( plus 1 for last DU in AU )
         hrd->setSubPicCpbParamsInPicTimingSEIFlag(true);
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
         hrd->setDpbOutputDelayDuLengthMinus1(5 + 7);               // With sub-clock tick factor of 100, at least 7 bits to have the same value as AU dpb delay
-#endif
     }
     else
     {

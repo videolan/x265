@@ -334,13 +334,11 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
     {
         WRITE_CODE(sei.m_duSptCpbRemovalDelay, (vui->getHrdParameters()->getDuCpbRemovalDelayLengthMinus1() + 1), "du_spt_cpb_removal_delay");
     }
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     WRITE_FLAG(sei.m_dpbOutputDuDelayPresentFlag, "dpb_output_du_delay_present_flag");
     if (sei.m_dpbOutputDuDelayPresentFlag)
     {
         WRITE_CODE(sei.m_picSptDpbOutputDuDelay, vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, "pic_spt_dpb_output_du_delay");
     }
-#endif
     xWriteByteAlign();
 }
 
@@ -413,12 +411,10 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
 #endif
     WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
     WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     if (hrd->getSubPicCpbParamsPresentFlag())
     {
         WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
     }
-#endif
     if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
     {
         WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");

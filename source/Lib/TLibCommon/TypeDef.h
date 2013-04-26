@@ -50,8 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
-                                        ///<        picture timing SEI and DU information SEI
 #define L0045_PERSISTENCE_FLAGS  1      ///< L0045: Replace "repetition_period" syntax elements in SEI with "persistence_flag"
 #define L0045_NON_NESTED_SEI_RESTRICTIONS 1 ///< L0045; Include restriction on the order of APS and non-nested BP, PT and DU info SEI messages
 #define L0044_CPB_DPB_DELAY_OFFSET 1  ///< L0044: Include syntax elements cpb_delay_offset and dpb_delay_offset in the BP SEI message

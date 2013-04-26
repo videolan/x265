@@ -361,9 +361,7 @@ Void TEncCavlc::codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt 
                 WRITE_CODE(hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2");
                 WRITE_CODE(hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1");
                 WRITE_FLAG(hrd->getSubPicCpbParamsInPicTimingSEIFlag() ? 1 : 0, "sub_pic_cpb_params_in_pic_timing_sei_flag");
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
                 WRITE_CODE(hrd->getDpbOutputDelayDuLengthMinus1(), 5,   "dpb_output_delay_du_length_minus1");
-#endif
             }
             WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
             WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");

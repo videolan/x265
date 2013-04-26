@@ -362,9 +362,7 @@ private:
     UInt m_tickDivisorMinus2;
     UInt m_duCpbRemovalDelayLengthMinus1;
     Bool m_subPicCpbParamsInPicTimingSEIFlag;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     UInt m_dpbOutputDelayDuLengthMinus1;
-#endif
     UInt m_bitRateScale;
     UInt m_cpbSizeScale;
     UInt m_ducpbSizeScale;
@@ -390,9 +388,7 @@ public:
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
         , m_subPicCpbParamsInPicTimingSEIFlag(false)
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
         , m_dpbOutputDelayDuLengthMinus1(0)
-#endif
         , m_bitRateScale(0)
         , m_cpbSizeScale(0)
         , m_initialCpbRemovalDelayLengthMinus1(0)
@@ -441,12 +437,9 @@ public:
 
     Bool getSubPicCpbParamsInPicTimingSEIFlag()             { return m_subPicCpbParamsInPicTimingSEIFlag; }
 
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     Void setDpbOutputDelayDuLengthMinus1(UInt value)  { m_dpbOutputDelayDuLengthMinus1 = value; }
 
     UInt getDpbOutputDelayDuLengthMinus1()             { return m_dpbOutputDelayDuLengthMinus1; }
-
-#endif
 
     Void setBitRateScale(UInt value) { m_bitRateScale = value;                       }
 

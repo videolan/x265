@@ -400,9 +400,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     scalableNestingSEI.m_nestingLayerId[0]             = 0;
     scalableNestingSEI.m_callerOwnsSEIs                = true;
 #endif // if K0180_SCALABLE_NESTING_SEI
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     Int picSptDpbOutputDuDelay = 0;
-#endif
     UInt *accumBitsDU = NULL;
     UInt *accumNalsDU = NULL;
     SEIDecodingUnitInfo decodingUnitInfoSEI;
@@ -1141,14 +1139,12 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             }
             pictureTimingSEI.m_auCpbRemovalDelay = std::max<Int>(1, m_totalCoded - m_lastBPSEI); // Syntax element signalled as minus, hence the .
             pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(0) + pcSlice->getPOC() - m_totalCoded;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
             Int factor = pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2;
             pictureTimingSEI.m_picDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
             if (m_pcCfg->getDecodingUnitInfoSEIEnabled())
             {
                 picSptDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
             }
-#endif
         }
 
         if ((m_pcCfg->getBufferingPeriodSEIEnabled()) && (pcSlice->getSliceType() == I_SLICE) &&
@@ -1861,10 +1857,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     SEIDecodingUnitInfo tempSEI;
                     tempSEI.m_decodingUnitIdx = i;
                     tempSEI.m_duSptCpbRemovalDelay = pictureTimingSEI.m_duCpbRemovalDelayMinus1[i] + 1;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
                     tempSEI.m_dpbOutputDuDelayPresentFlag = false;
                     tempSEI.m_picSptDpbOutputDuDelay = picSptDpbOutputDuDelay;
-#endif
 
                     AccessUnit::iterator it;
                     // Insert the first one in the right location, before the first slice

@@ -202,9 +202,7 @@ public:
         , m_progressiveSourceIdc(0)
 #endif
         , m_duplicateFlag(false)
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
         , m_picDpbOutputDuDelay(0)
-#endif
         , m_numNalusInDuMinus1(NULL)
         , m_duCpbRemovalDelayMinus1(NULL)
     {}
@@ -231,9 +229,7 @@ public:
 
     UInt  m_auCpbRemovalDelay;
     UInt  m_picDpbOutputDelay;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     UInt  m_picDpbOutputDuDelay;
-#endif
     UInt  m_numDecodingUnitsMinus1;
     Bool  m_duCommonCpbRemovalDelayFlag;
     UInt  m_duCommonCpbRemovalDelayMinus1;
@@ -250,20 +246,16 @@ public:
     SEIDecodingUnitInfo()
         : m_decodingUnitIdx(0)
         , m_duSptCpbRemovalDelay(0)
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
         , m_dpbOutputDuDelayPresentFlag(false)
         , m_picSptDpbOutputDuDelay(0)
-#endif
     {}
 
     virtual ~SEIDecodingUnitInfo() {}
 
     Int m_decodingUnitIdx;
     Int m_duSptCpbRemovalDelay;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     Bool m_dpbOutputDuDelayPresentFlag;
     Int m_picSptDpbOutputDuDelay;
-#endif
 };
 
 class SEIRecoveryPoint : public SEI
