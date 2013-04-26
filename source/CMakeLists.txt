@@ -44,18 +44,11 @@ endif(HIGH_BIT_DEPTH)
 option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
 if(ENABLE_PRIMITIVES)
     add_definitions(-DENABLE_PRIMITIVES)
-
     option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
-    if(ENABLE_PRIMITIVES_VEC)
-        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
-    endif(ENABLE_PRIMITIVES_VEC)
 
     find_package(Yasm)
     if(YASM_FOUND)
         option(ENABLE_PRIMITIVES_ASM "Enable use of assembly coded primitives" ON)
-        if(ENABLE_PRIMITIVES_ASM)
-            add_definitions(-DENABLE_ASM_PRIMITIVES=1)
-        endif(ENABLE_PRIMITIVES_ASM)
     endif(YASM_FOUND)
 endif(ENABLE_PRIMITIVES)
 
