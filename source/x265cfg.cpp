@@ -1572,7 +1572,6 @@ Void TAppEncCfg::xSetGlobal()
 
 Void TAppEncCfg::xPrintParameter()
 {
-    printf("\n");
     printf("Bitstream      File          : %s\n", m_pchBitstreamFile);
     printf("Format                       : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate);
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
