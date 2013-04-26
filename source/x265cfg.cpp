@@ -1307,26 +1307,14 @@ Void TAppEncCfg::xCheckParameter()
     for (Int i = 0; i < MAX_TLAYER; i++)
     {
         m_numReorderPics[i] = 0;
-#if L0323_DPB
         m_maxDecPicBuffering[i] = 1;
-#else
-        m_maxDecPicBuffering[i] = 0;
-#endif
     }
 
     for (Int i = 0; i < m_iGOPSize; i++)
     {
-#if L0323_DPB
         if (m_GOPList[i].m_numRefPics + 1 > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
-#else
-        if (m_GOPList[i].m_numRefPics > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
-#endif
         {
-#if L0323_DPB
             m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
-#else
-            m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics;
-#endif
         }
         Int highestDecodingNumberWithLowerPOC = 0;
         for (Int j = 0; j < m_iGOPSize; j++)
@@ -1360,19 +1348,11 @@ Void TAppEncCfg::xCheckParameter()
         {
             m_numReorderPics[i + 1] = m_numReorderPics[i];
         }
-#if L0323_DPB
         // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] - 1, inclusive
         if (m_numReorderPics[i] > m_maxDecPicBuffering[i] - 1)
         {
             m_maxDecPicBuffering[i] = m_numReorderPics[i] + 1;
         }
-#else
-        // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
-        if (m_numReorderPics[i] > m_maxDecPicBuffering[i])
-        {
-            m_maxDecPicBuffering[i] = m_numReorderPics[i];
-        }
-#endif // if L0323_DPB
        // a lower layer can not have higher value of m_uiMaxDecPicBuffering than a higher layer
         if (m_maxDecPicBuffering[i + 1] < m_maxDecPicBuffering[i])
         {
@@ -1380,19 +1360,11 @@ Void TAppEncCfg::xCheckParameter()
         }
     }
 
-#if L0323_DPB
     // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] -  1, inclusive
     if (m_numReorderPics[MAX_TLAYER - 1] > m_maxDecPicBuffering[MAX_TLAYER - 1] - 1)
     {
         m_maxDecPicBuffering[MAX_TLAYER - 1] = m_numReorderPics[MAX_TLAYER - 1] + 1;
     }
-#else
-    // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
-    if (m_numReorderPics[MAX_TLAYER - 1] > m_maxDecPicBuffering[MAX_TLAYER - 1])
-    {
-        m_maxDecPicBuffering[MAX_TLAYER - 1] = m_numReorderPics[MAX_TLAYER - 1];
-    }
-#endif // if L0323_DPB
 
     if (m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
     {
