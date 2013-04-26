@@ -1486,12 +1486,10 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
 
     xConfirmPara(m_log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
-#if L0444_FPA_TYPE
     if (m_framePackingSEIEnabled)
     {
         xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5, "SEIFramePackingType must be in rage 3 to 5");
     }
-#endif
 
 #undef xConfirmPara
     if (check_failed)

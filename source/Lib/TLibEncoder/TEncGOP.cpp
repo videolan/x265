@@ -179,9 +179,7 @@ SEIFramePacking* TEncGOP::xCreateSEIFramePacking()
     seiFramePacking->m_arrangementId = m_pcCfg->getFramePackingArrangementSEIId();
     seiFramePacking->m_arrangementCancelFlag = 0;
     seiFramePacking->m_arrangementType = m_pcCfg->getFramePackingArrangementSEIType();
-#if L0444_FPA_TYPE
     assert((seiFramePacking->m_arrangementType > 2) && (seiFramePacking->m_arrangementType < 6));
-#endif
     seiFramePacking->m_quincunxSamplingFlag = m_pcCfg->getFramePackingArrangementSEIQuincunx();
     seiFramePacking->m_contentInterpretationType = m_pcCfg->getFramePackingArrangementSEIInterpretation();
     seiFramePacking->m_spatialFlippingFlag = 0;
