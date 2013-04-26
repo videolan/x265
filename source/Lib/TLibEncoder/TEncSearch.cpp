@@ -3182,11 +3182,7 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* pcCU, UInt puIdx, TComMvFi
  * \param bUseRes
  * \returns Void
  */
-#if AMP_MRG
 Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG)
-#else
-Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes)
-#endif
 {
     m_acYuvPred[0].clear();
     m_acYuvPred[1].clear();
@@ -3286,7 +3282,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
 
-#if AMP_MRG
         Bool bTestNormalMC = true;
 
         if (bUseMRG && pcCU->getWidth(0) > 8 && iNumPart == 2)
@@ -3296,8 +3291,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         if (bTestNormalMC)
         {
-#endif
-
         //  Uni-directional prediction
         for (Int iRefList = 0; iRefList < iNumPredDir; iRefList++)
         {
@@ -3715,10 +3708,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         }
 #endif // if ZERO_MVD_EST
 
-#if AMP_MRG
     } //end if bTestNormalMC
 
-#endif
         //  Clear Motion Field
         pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), ePartSize, uiPartAddr, 0, iPartIdx);
         pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), ePartSize, uiPartAddr, 0, iPartIdx);
@@ -3743,10 +3734,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
             uiCost[1] = MAX_UINT;
         }
 #endif
-#if AMP_MRG
         if (bTestNormalMC)
         {
-#endif
 #if ZERO_MVD_EST
         if (uiZeroMvdCost <= uiCostBi && uiZeroMvdCost <= uiCost[0] && uiZeroMvdCost <= uiCost[1])
         {
@@ -3855,9 +3844,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
             uiMEBits = uiBits[1];
         }
-#if AMP_MRG
     } // end if bTestNormalMC
-#endif
 
         if (pcCU->getPartitionSize(uiPartAddr) != SIZE_2Nx2N)
         {
@@ -3869,7 +3856,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
             TComMvField cMEMvField[2];
 
             m_pcRdCost->getMotionCost(1, 0);
-#if AMP_MRG
             // calculate ME cost
             UInt uiMEError = MAX_UINT;
             UInt uiMECost = MAX_UINT;
@@ -3879,13 +3865,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                 xGetInterPredictionError(pcCU, pcOrgYuv, iPartIdx, uiMEError, m_pcEncCfg->getUseHADME());
                 uiMECost = uiMEError + m_pcRdCost->getCost(uiMEBits);
             }
-#else
-            // calculate ME cost
-            UInt uiMEError = MAX_UINT;
-            xGetInterPredictionError(pcCU, pcOrgYuv, iPartIdx, uiMEError, m_pcEncCfg->getUseHADME());
-            UInt uiMECost = uiMEError + m_pcRdCost->getCost(uiMEBits);
-#endif // if AMP_MRG
-       // save ME result.
+            // save ME result.
             uiMEInterDir = pcCU->getInterDir(uiPartAddr);
             pcCU->getMvField(pcCU, uiPartAddr, REF_PIC_LIST_0, cMEMvField[0]);
             pcCU->getMvField(pcCU, uiPartAddr, REF_PIC_LIST_1, cMEMvField[1]);

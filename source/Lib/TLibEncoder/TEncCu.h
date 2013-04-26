@@ -139,11 +139,7 @@ protected:
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
 
-#if AMP_MRG
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
-#else
-    Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
-#endif
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckDQP(TComDataCU* pcCU);
 
@@ -162,13 +158,8 @@ protected:
     Int  xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffInCU, Double* cSum, UInt* numSamples);
 #endif
 
-#if AMP_MRG
     Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver, Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
-#else
-    Void deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver);
-#endif
-
-    Void  xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv);
+    Void xFillPCMBuffer(TComDataCU*& pCU, TComYuv* pOrgYuv);
 };
 
 //! \}

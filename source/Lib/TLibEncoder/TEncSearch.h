@@ -196,11 +196,8 @@ public:
                          TComYuv*& rpcPredYuv,
                          TComYuv*& rpcResiYuv,
                          TComYuv*& rpcRecoYuv,
-                         Bool bUseRes = false
-#if AMP_MRG
-                         , Bool        bUseMRG = false
-#endif
-                         );
+                         Bool bUseRes = false,
+                         Bool bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
     Void encodeResAndCalcRdInterCU(TComDataCU* pcCU,
