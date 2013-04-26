@@ -65,7 +65,7 @@ if(ENABLE_PPA)
     add_subdirectory(PPA)
 endif(ENABLE_PPA)
 
-include_directories(. Lib VectorClass encoder)
+include_directories(. Lib encoder)
 add_subdirectory(Lib)
 add_subdirectory(encoder)
 

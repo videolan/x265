@@ -9,6 +9,8 @@ if(ENABLE_PRIMITIVES)
     set(CPRIMITIVES pixel.cpp macroblock.cpp InterpolationFilter.cpp)
 endif(ENABLE_PRIMITIVES)
 
+include_directories(../VectorClass)
+
 add_library(x265 ../../COPYING
     ${CPRIMITIVES}
     primitives.cpp primitives.h
