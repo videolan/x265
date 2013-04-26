@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <malloc.h>
+
 #ifdef __MINGW32__
 #define _aligned_malloc __mingw_aligned_malloc
 #define _aligned_free  __mingw_aligned_free
