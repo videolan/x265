@@ -393,11 +393,7 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
     if (vui->getFrameFieldInfoPresentFlag())
     {
         WRITE_CODE(sei.m_picStruct, 4,              "pic_struct");
-#if L0046_RENAME_PROG_SRC_IDC
         WRITE_CODE(sei.m_sourceScanType, 2,         "source_scan_type");
-#else
-        WRITE_CODE(sei.m_progressiveSourceIdc, 2,   "progressive_source_idc");
-#endif
         WRITE_FLAG(sei.m_duplicateFlag ? 1 : 0,     "duplicate_flag");
     }
 
