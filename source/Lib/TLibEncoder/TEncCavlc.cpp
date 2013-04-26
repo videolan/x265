@@ -962,7 +962,6 @@ Void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLa
     }
     WRITE_CODE(pcPTL->getGeneralPTL()->getLevelIdc(), 8, "general_level_idc");
 
-#if L0363_BYTE_ALIGN
     for (Int i = 0; i < maxNumSubLayersMinus1; i++)
     {
         if (profilePresentFlag)
@@ -980,18 +979,9 @@ Void TEncCavlc::codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLa
             WRITE_CODE(0, 2, "reserved_zero_2bits");
         }
     }
-#endif // if L0363_BYTE_ALIGN
 
     for (Int i = 0; i < maxNumSubLayersMinus1; i++)
     {
-#if !L0363_BYTE_ALIGN
-        if (profilePresentFlag)
-        {
-            WRITE_FLAG(pcPTL->getSubLayerProfilePresentFlag(i), "sub_layer_profile_present_flag[i]");
-        }
-
-        WRITE_FLAG(pcPTL->getSubLayerLevelPresentFlag(i),   "sub_layer_level_present_flag[i]");
-#endif
         if (profilePresentFlag && pcPTL->getSubLayerProfilePresentFlag(i))
         {
             codeProfileTier(pcPTL->getSubLayerPTL(i)); // sub_layer_...

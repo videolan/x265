@@ -50,7 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0363_BYTE_ALIGN 1
 #define L0363_SEI_ALLOW_SUFFIX 1
 #define L0323_LIMIT_DEFAULT_LIST_SIZE 1
 #define L0255_MOVE_PPS_FLAGS       1  ///< move some flags to earlier positions in the PPS
