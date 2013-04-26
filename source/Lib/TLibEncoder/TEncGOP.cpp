@@ -635,19 +635,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         {
             pcSlice->setSliceType(P_SLICE);
         }
-#if !L0034_COMBINED_LIST_CLEANUP
-        if (pcSlice->getSliceType() != B_SLICE || !pcSlice->getSPS()->getUseLComb())
-        {
-            pcSlice->setNumRefIdx(REF_PIC_LIST_C, 0);
-            pcSlice->setRefPicListCombinationFlag(false);
-            pcSlice->setRefPicListModificationFlagLC(false);
-        }
-        else
-        {
-            pcSlice->setRefPicListCombinationFlag(pcSlice->getSPS()->getUseLComb());
-            pcSlice->setNumRefIdx(REF_PIC_LIST_C, pcSlice->getNumRefIdx(REF_PIC_LIST_0));
-        }
-#endif // if !L0034_COMBINED_LIST_CLEANUP
 
         if (pcSlice->getSliceType() == B_SLICE)
         {
@@ -684,33 +671,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         //-------------------------------------------------------------
         pcSlice->setRefPOCList();
 
-#if L0034_COMBINED_LIST_CLEANUP
         pcSlice->setList1IdxToList0Idx();
-#else
-        pcSlice->setNoBackPredFlag(false);
-        if (pcSlice->getSliceType() == B_SLICE && !pcSlice->getRefPicListCombinationFlag())
-        {
-            if (pcSlice->getNumRefIdx(RefPicList(0)) == pcSlice->getNumRefIdx(RefPicList(1)))
-            {
-                pcSlice->setNoBackPredFlag(true);
-                Int i;
-                for (i = 0; i < pcSlice->getNumRefIdx(RefPicList(1)); i++)
-                {
-                    if (pcSlice->getRefPOC(RefPicList(1), i) != pcSlice->getRefPOC(RefPicList(0), i))
-                    {
-                        pcSlice->setNoBackPredFlag(false);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (pcSlice->getNoBackPredFlag())
-        {
-            pcSlice->setNumRefIdx(REF_PIC_LIST_C, 0);
-        }
-        pcSlice->generateCombinedList();
-#endif // if L0034_COMBINED_LIST_CLEANUP
 
         if (m_pcEncTop->getTMVPModeId() == 2)
         {

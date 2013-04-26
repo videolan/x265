@@ -982,10 +982,6 @@ private:
     UInt        m_uiPCMLog2MinSize;
     Bool        m_useAMP;
 
-#if !L0034_COMBINED_LIST_CLEANUP
-    Bool        m_bUseLComb;
-#endif
-
     // Parameter
     Int         m_bitDepthY;
     Int         m_bitDepthC;
@@ -1149,13 +1145,6 @@ public:
     UInt getMaxTrSize()         { return m_uiMaxTrSize;   }
 
     // Tool list
-#if !L0034_COMBINED_LIST_CLEANUP
-    Void setUseLComb(Bool b)   { m_bUseLComb = b;         }
-
-    Bool getUseLComb()         { return m_bUseLComb;      }
-
-#endif
-
     Bool getUseLossless()         { return m_useLossless; }
 
     Void setUseLossless(Bool b) { m_useLossless  = b; }
@@ -1581,20 +1570,8 @@ private:
     Bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     Int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
     Int         m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
-#if L0034_COMBINED_LIST_CLEANUP
     Int         m_list1IdxToList0Idx[MAX_NUM_REF];
     Int         m_aiNumRefIdx[2];     //  for multiple reference of current slice
-#else
-    Int         m_aiNumRefIdx[3];     //  for multiple reference of current slice
-
-    Int         m_iRefIdxOfLC[2][MAX_NUM_REF_LC];
-    Int         m_eListIdFromIdxOfLC[MAX_NUM_REF_LC];
-    Int         m_iRefIdxFromIdxOfLC[MAX_NUM_REF_LC];
-    Int         m_iRefIdxOfL1FromRefIdxOfL0[MAX_NUM_REF_LC];
-    Int         m_iRefIdxOfL0FromRefIdxOfL1[MAX_NUM_REF_LC];
-    Bool        m_bRefPicListModificationFlagLC;
-    Bool        m_bRefPicListCombinationFlag;
-#endif // if L0034_COMBINED_LIST_CLEANUP
 
     Bool        m_bCheckLDC;
 
@@ -1631,9 +1608,6 @@ private:
 #endif
 
     Bool        m_abEqualRef[2][MAX_NUM_REF][MAX_NUM_REF];
-#if !L0034_COMBINED_LIST_CLEANUP
-    Bool        m_bNoBackPredFlag;
-#endif
     UInt        m_uiTLayer;
     Bool        m_bTLayerSwitchingFlag;
 
@@ -1778,29 +1752,8 @@ public:
     Bool      getMvdL1ZeroFlag()                                  { return m_bLMvdL1Zero;    }
 
     Int       getNumRpsCurrTempList();
-#if L0034_COMBINED_LIST_CLEANUP
     Int       getList1IdxToList0Idx(Int list1Idx)               { return m_list1IdxToList0Idx[list1Idx]; }
 
-#else
-    Int       getRefIdxOfLC(RefPicList e, Int iRefIdx)     { return m_iRefIdxOfLC[e][iRefIdx];           }
-
-    Int       getListIdFromIdxOfLC(Int iRefIdx)                   { return m_eListIdFromIdxOfLC[iRefIdx];       }
-
-    Int       getRefIdxFromIdxOfLC(Int iRefIdx)                   { return m_iRefIdxFromIdxOfLC[iRefIdx];       }
-
-    Int       getRefIdxOfL0FromRefIdxOfL1(Int iRefIdx)            { return m_iRefIdxOfL0FromRefIdxOfL1[iRefIdx]; }
-
-    Int       getRefIdxOfL1FromRefIdxOfL0(Int iRefIdx)            { return m_iRefIdxOfL1FromRefIdxOfL0[iRefIdx]; }
-
-    Bool      getRefPicListModificationFlagLC()                   { return m_bRefPicListModificationFlagLC; }
-
-    Void      setRefPicListModificationFlagLC(Bool bflag)         { m_bRefPicListModificationFlagLC = bflag; }
-
-    Bool      getRefPicListCombinationFlag()                      { return m_bRefPicListCombinationFlag; }
-
-    Void      setRefPicListCombinationFlag(Bool bflag)            { m_bRefPicListCombinationFlag = bflag; }
-
-#endif // if L0034_COMBINED_LIST_CLEANUP
     Void      setReferenced(Bool b)                               { m_bRefenced = b; }
 
     Bool      isReferenced()                                      { return m_bRefenced; }
@@ -1897,15 +1850,8 @@ public:
     }
 
     static Void      sortPicList(TComList<TComPic*>& rcListPic);
-#if L0034_COMBINED_LIST_CLEANUP
+
     Void setList1IdxToList0Idx();
-#else
-    Bool getNoBackPredFlag() { return m_bNoBackPredFlag; }
-
-    Void setNoBackPredFlag(Bool b) { m_bNoBackPredFlag = b; }
-
-    Void generateCombinedList();
-#endif
 
     UInt getTLayer()                            { return m_uiTLayer;                      }
 

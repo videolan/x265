@@ -338,9 +338,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
         ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
         ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
-#if !L0034_COMBINED_LIST_CLEANUP
-        ("ListCombination,-lc",     m_bUseLComb,               true, "Combined reference list for uni-prediction estimation in B-slices")
-#endif
         // motion options
         ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
         ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
@@ -1472,9 +1469,6 @@ Void TAppEncCfg::xCheckParameter()
             m_minSpatialSegmentationIdc = 0;
         }
     }
-#if !L0034_COMBINED_LIST_CLEANUP
-    xConfirmPara(m_bUseLComb == false && m_numReorderPics[MAX_TLAYER - 1] != 0, "ListCombination can only be 0 in low delay coding (more precisely when L0 and L1 are identical)"); // Note however this is not the full necessary condition as ref_pic_list_combination_flag can only be 0 if L0 == L1.
-#endif
     xConfirmPara(m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
     xConfirmPara(m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive");
     xConfirmPara(m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1");
@@ -1630,9 +1624,6 @@ Void TAppEncCfg::xPrintParameter()
 #endif
     printf("SQP:%d ", m_uiDeltaQpRD);
     printf("ASR:%d ", m_bUseASR);
-#if !L0034_COMBINED_LIST_CLEANUP
-    printf("LComb:%d ", m_bUseLComb);
-#endif
     printf("FEN:%d ", m_bUseFastEnc);
     printf("ECU:%d ", m_bUseEarlyCU);
     printf("FDM:%d ", m_useFastDecisionForMerge);
