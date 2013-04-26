@@ -199,11 +199,7 @@ SEIFramePacking* TEncGOP::xCreateSEIFramePacking()
     seiFramePacking->m_frame1GridPositionX = 0;
     seiFramePacking->m_frame1GridPositionY = 0;
     seiFramePacking->m_arrangementReservedByte = 0;
-#if L0045_PERSISTENCE_FLAGS
     seiFramePacking->m_arrangementPersistenceFlag = true;
-#else
-    seiFramePacking->m_arrangementRepetetionPeriod = 1;
-#endif
     seiFramePacking->m_upsampledAspectRatio = 0;
     return seiFramePacking;
 }

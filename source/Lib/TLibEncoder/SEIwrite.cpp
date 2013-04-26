@@ -474,11 +474,7 @@ Void SEIWriter::xWriteSEIFramePacking(const SEIFramePacking& sei)
         }
 
         WRITE_CODE(sei.m_arrangementReservedByte, 8,   "frame_packing_arrangement_reserved_byte");
-#if L0045_PERSISTENCE_FLAGS
         WRITE_FLAG(sei.m_arrangementPersistenceFlag,   "frame_packing_arrangement_persistence_flag");
-#else
-        WRITE_UVLC(sei.m_arrangementRepetetionPeriod,  "frame_packing_arrangement_repetition_period");
-#endif
     }
 
     WRITE_FLAG(sei.m_upsampledAspectRatio,           "upsampled_aspect_ratio");
