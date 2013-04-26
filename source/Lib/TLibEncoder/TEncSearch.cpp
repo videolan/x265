@@ -763,11 +763,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
     Pel*  piRefPos;
     Int iRefStride = m_filteredBlock[0][0].getStride();
 
-#if NS_HAD
-    m_pcRdCost->setDistParam(pcPatternKey, m_filteredBlock[0][0].getLumaAddr(), iRefStride, 1, m_cDistParam, m_pcEncCfg->getUseHADME(), m_pcEncCfg->getUseNSQT());
-#else
     m_pcRdCost->setDistParam(pcPatternKey, m_filteredBlock[0][0].getLumaAddr(), iRefStride, 1, m_cDistParam, m_pcEncCfg->getUseHADME());
-#endif
 
     const TComMv* pcMvRefine = (iFrac == 2 ? s_acMvRefineH : s_acMvRefineQ);
 
@@ -3073,11 +3069,7 @@ Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, I
     m_pcRdCost->setDistParam(cDistParam, g_bitDepthY,
                              pcYuvOrg->getLumaAddr(uiAbsPartIdx), pcYuvOrg->getStride(),
                              m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride(),
-#if NS_HAD
-                             iWidth, iHeight, m_pcEncCfg->getUseHADME(), m_pcEncCfg->getUseNSQT());
-#else
                              iWidth, iHeight, m_pcEncCfg->getUseHADME());
-#endif
     ruiErr = cDistParam.DistFunc(&cDistParam);
     x264_cpu_emms();
 }
