@@ -129,23 +129,17 @@ public:
     PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
     SEIActiveParameterSets()
-#if !L0047_APS_FLAGS
-        : numSpsIdsMinus1(0)
-#else
         : activeVPSId(0)
         , m_fullRandomAccessFlag(false)
         , m_noParamSetUpdateFlag(false)
         , numSpsIdsMinus1(0)
-#endif
     {}
 
     virtual ~SEIActiveParameterSets() {}
 
     Int activeVPSId;
-#if L0047_APS_FLAGS
     Bool m_fullRandomAccessFlag;
     Bool m_noParamSetUpdateFlag;
-#endif
     Int numSpsIdsMinus1;
     std::vector<Int> activeSeqParamSetId;
 };

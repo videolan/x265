@@ -50,7 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0047_APS_FLAGS            1  ///< L0047: Include full_random_access_flag and no_param_set_update_flag in the active parameter set SEI message
 #define L0043_TIMING_INFO          1  ///< L0043: Timing information is signalled in VUI outside hrd_parameters()
 #define L0046_RENAME_PROG_SRC_IDC  1  ///< L0046: Rename progressive_source_idc to source_scan_type
 #define L0045_CONDITION_SIGNALLING 1  ///< L0045: Condition the signaling of some syntax elements in picture timing SEI message

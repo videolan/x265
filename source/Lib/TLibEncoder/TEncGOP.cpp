@@ -164,10 +164,8 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
     SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
 
     seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId();
-#if L0047_APS_FLAGS
     seiActiveParameterSets->m_fullRandomAccessFlag = false;
     seiActiveParameterSets->m_noParamSetUpdateFlag = false;
-#endif
     seiActiveParameterSets->numSpsIdsMinus1 = 0;
     seiActiveParameterSets->activeSeqParamSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
     seiActiveParameterSets->activeSeqParamSetId[0] = sps->getSPSId();
