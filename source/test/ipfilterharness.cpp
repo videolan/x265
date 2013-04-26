@@ -58,7 +58,7 @@ IPFilterHarness::IPFilterHarness()
     {
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
-        pixel_buff[i] = (pixel)(rand() &  PIXEL_MAX);
+        pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
         short_buff[i] = (isPositive) * (rand() &  SHRT_MAX);
     }
 }
@@ -260,7 +260,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipFilter_p_p[value], opt.ipFilter_p_p[value]))
             {
-                printf("\nfilterHorizontal_pel_pel_%d_%d failed\n", 8 / (value + 1));
+                printf("\nfilterHorizontal_pel_pel_%d failed\n", 8 / (value + 1));
                 return false;
             }
         }
