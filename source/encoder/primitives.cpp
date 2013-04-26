@@ -36,12 +36,6 @@ namespace x265 {
 static int8_t psize[16] = { 0,  1,  2,  3, -1,  4, -1, 5, 
                            -1, -1, -1, -1, -1, -1, -1, 6 };
 
-// Returns true if the given height could support an optimized primitive
-bool FastHeight(int Height)
-{
-    return !(Height & ~3) && psize[(Height >> 2) - 1] >= 0;
-}
-
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height)

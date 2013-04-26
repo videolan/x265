@@ -318,8 +318,8 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     UInt  uiSad = 0;
     Pel*  piRefSrch;
 
+    // Initialise the DistParam for HM Primitives and Optimized Primitives
     piRefSrch = rcStruct.piRefY + iSearchY * rcStruct.iYStride + iSearchX;
-    //Initialise the DistParam for HM Primitives and Optimized Primitives
     m_cDistParam.pOrg = pcPatternKey->getROIY();
     m_cDistParam.pCur = piRefSrch;
     m_cDistParam.iStrideOrg = pcPatternKey->getPatternLStride();
@@ -333,16 +333,12 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     // fast encoder decision: use subsampled SAD when rows > 8 for integer ME
     if (m_pcEncCfg->getUseFastEnc())
     {
-        if (m_cDistParam.iRows > 8
-#if ENABLE_PRIMITIVES
-            && x265::FastHeight(m_cDistParam.iRows >> 1)
-#endif
-            )
+        if (m_cDistParam.iRows > 12)
         {
             m_cDistParam.iSubShift = 1;
         }
     }
-    //setDistParamComp(0); // Y component
+
     m_cDistParam.uiComp = 0;
 
     // distortion
@@ -359,39 +355,31 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
 
 #if ENABLE_PRIMITIVES
     int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
-
-    //Call the Vector or C Primitives
-    if (part >= 0)
-    {
-        uiSad = (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
-            DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
-
-        x264_cpu_emms();
-    }
-    else      // if None of C and Vector Primitives are available while Primitives are Enabled then call the HM Sad Functions
-#endif // if ENABLE_PRIMITIVES
-    {
-        FpDistFunc  *m_afpDistortFunc;
-        m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
-        m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
+    uiSad = (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
+        DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
+    x264_cpu_emms();
+#else
+    FpDistFunc  *m_afpDistortFunc;
+    m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
+    m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
 
 #if AMP_SAD
 
-        if (m_cDistParam.iCols == 12)
-        {
-            m_cDistParam.DistFunc = m_afpDistortFunc[43];
-        }
-        else if (m_cDistParam.iCols == 24)
-        {
-            m_cDistParam.DistFunc = m_afpDistortFunc[44];
-        }
-        else if (m_cDistParam.iCols == 48)
-        {
-            m_cDistParam.DistFunc = m_afpDistortFunc[45];
-        }
-#endif     // if AMP_SAD
-        uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+    if (m_cDistParam.iCols == 12)
+    {
+        m_cDistParam.DistFunc = m_afpDistortFunc[43];
     }
+    else if (m_cDistParam.iCols == 24)
+    {
+        m_cDistParam.DistFunc = m_afpDistortFunc[44];
+    }
+    else if (m_cDistParam.iCols == 48)
+    {
+        m_cDistParam.DistFunc = m_afpDistortFunc[45];
+    }
+#endif // if AMP_SAD
+    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+#endif // if ENABLE_PRIMITIVES
 
     // motion cost
     uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
