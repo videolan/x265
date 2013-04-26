@@ -50,7 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0045_NON_NESTED_SEI_RESTRICTIONS 1 ///< L0045; Include restriction on the order of APS and non-nested BP, PT and DU info SEI messages
 #define L0044_CPB_DPB_DELAY_OFFSET 1  ///< L0044: Include syntax elements cpb_delay_offset and dpb_delay_offset in the BP SEI message
 #define L0047_APS_FLAGS            1  ///< L0047: Include full_random_access_flag and no_param_set_update_flag in the active parameter set SEI message
 #define L0043_TIMING_INFO          1  ///< L0043: Timing information is signalled in VUI outside hrd_parameters()

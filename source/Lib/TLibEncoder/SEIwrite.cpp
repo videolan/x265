@@ -568,11 +568,7 @@ Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
         WRITE_FLAG(sei.horFlip,                   "hor_flip");
         WRITE_FLAG(sei.verFlip,                   "ver_flip");
         WRITE_CODE(sei.anticlockwiseRotation, 16, "anticlockwise_rotation");
-#if L0045_PERSISTENCE_FLAGS
         WRITE_FLAG(sei.persistenceFlag,          "display_orientation_persistence_flag");
-#else
-        WRITE_UVLC(sei.repetitionPeriod,          "display_orientation_repetition_period");
-#endif
 #if !REMOVE_SINGLE_SEI_EXTENSION_FLAGS
         WRITE_FLAG(sei.extensionFlag,             "display_orientation_extension_flag");
         assert(!sei.extensionFlag);
