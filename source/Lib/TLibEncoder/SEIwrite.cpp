@@ -385,11 +385,6 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
     TComVUI *vui = sps->getVuiParameters();
     TComHRD *hrd = vui->getHrdParameters();
 
-#if !L0045_CONDITION_SIGNALLING
-    // This condition was probably OK before the pic_struct, progressive_source_idc, duplicate_flag were added
-    if (!hrd->getNalHrdParametersPresentFlag() && !hrd->getVclHrdParametersPresentFlag())
-        return;
-#endif
     if (vui->getFrameFieldInfoPresentFlag())
     {
         WRITE_CODE(sei.m_picStruct, 4,              "pic_struct");
@@ -397,39 +392,35 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
         WRITE_FLAG(sei.m_duplicateFlag ? 1 : 0,     "duplicate_flag");
     }
 
-#if L0045_CONDITION_SIGNALLING
     if (hrd->getCpbDpbDelaysPresentFlag())
     {
-#endif
-    WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
-    WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
-    if (hrd->getSubPicCpbParamsPresentFlag())
-    {
-        WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
-    }
-    if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
-    {
-        WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");
-        WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");
-        if (sei.m_duCommonCpbRemovalDelayFlag)
+        WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
+        WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
+        if (hrd->getSubPicCpbParamsPresentFlag())
         {
-            WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                       "du_common_cpb_removal_delay_minus1");
+            WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
         }
-        for (i = 0; i <= sei.m_numDecodingUnitsMinus1; i++)
+        if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
         {
-            WRITE_UVLC(sei.m_numNalusInDuMinus1[i],  "num_nalus_in_du_minus1");
-            if ((!sei.m_duCommonCpbRemovalDelayFlag) && (i < sei.m_numDecodingUnitsMinus1))
+            WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");
+            WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");
+            if (sei.m_duCommonCpbRemovalDelayFlag)
             {
-                WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                        "du_cpb_removal_delay_minus1");
+                WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                       "du_common_cpb_removal_delay_minus1");
+            }
+            for (i = 0; i <= sei.m_numDecodingUnitsMinus1; i++)
+            {
+                WRITE_UVLC(sei.m_numNalusInDuMinus1[i],  "num_nalus_in_du_minus1");
+                if ((!sei.m_duCommonCpbRemovalDelayFlag) && (i < sei.m_numDecodingUnitsMinus1))
+                {
+                    WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                        "du_cpb_removal_delay_minus1");
+                }
             }
         }
     }
-#if L0045_CONDITION_SIGNALLING
-}
-
-#endif
     xWriteByteAlign();
 }
+
 Void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
 {
     WRITE_SVLC(sei.m_recoveryPocCnt,    "recovery_poc_cnt");
