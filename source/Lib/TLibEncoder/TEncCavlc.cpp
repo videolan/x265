@@ -157,10 +157,8 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     WRITE_UVLC(pcPPS->getPPSId(),                             "pps_pic_parameter_set_id");
     WRITE_UVLC(pcPPS->getSPSId(),                             "pps_seq_parameter_set_id");
     WRITE_FLAG(pcPPS->getDependentSliceSegmentsEnabledFlag()    ? 1 : 0, "dependent_slice_segments_enabled_flag");
-#if L0255_MOVE_PPS_FLAGS
     WRITE_FLAG(pcPPS->getOutputFlagPresentFlag() ? 1 : 0,     "output_flag_present_flag");
     WRITE_CODE(pcPPS->getNumExtraSliceHeaderBits(), 3,        "num_extra_slice_header_bits");
-#endif
     WRITE_FLAG(pcPPS->getSignHideFlag(), "sign_data_hiding_flag");
     WRITE_FLAG(pcPPS->getCabacInitPresentFlag() ? 1 : 0,   "cabac_init_present_flag");
     WRITE_UVLC(pcPPS->getNumRefIdxL0DefaultActive() - 1,     "num_ref_idx_l0_default_active_minus1");
@@ -180,9 +178,6 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
 
     WRITE_FLAG(pcPPS->getUseWP() ? 1 : 0,  "weighted_pred_flag");   // Use of Weighting Prediction (P_SLICE)
     WRITE_FLAG(pcPPS->getWPBiPred() ? 1 : 0, "weighted_bipred_flag");  // Use of Weighting Bi-Prediction (B_SLICE)
-#if !L0255_MOVE_PPS_FLAGS
-    WRITE_FLAG(pcPPS->getOutputFlagPresentFlag() ? 1 : 0,  "output_flag_present_flag");
-#endif
     WRITE_FLAG(pcPPS->getTransquantBypassEnableFlag() ? 1 : 0, "transquant_bypass_enable_flag");
     WRITE_FLAG(pcPPS->getTilesEnabledFlag()             ? 1 : 0, "tiles_enabled_flag");
     WRITE_FLAG(pcPPS->getEntropyCodingSyncEnabledFlag() ? 1 : 0, "entropy_coding_sync_enabled_flag");
@@ -230,9 +225,6 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     }
     WRITE_FLAG(pcPPS->getListsModificationPresentFlag(), "lists_modification_present_flag");
     WRITE_UVLC(pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
-#if !L0255_MOVE_PPS_FLAGS
-    WRITE_CODE(pcPPS->getNumExtraSliceHeaderBits(), 3, "num_extra_slice_header_bits");
-#endif
     WRITE_FLAG(pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }

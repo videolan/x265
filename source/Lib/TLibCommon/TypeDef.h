@@ -50,9 +50,6 @@
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#define L0363_SEI_ALLOW_SUFFIX 1
-#define L0323_LIMIT_DEFAULT_LIST_SIZE 1
-#define L0255_MOVE_PPS_FLAGS       1  ///< move some flags to earlier positions in the PPS
 #define L0444_FPA_TYPE             1  ///< allow only FPA types 3, 4 and 5
 #define L0372 1
 #define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
