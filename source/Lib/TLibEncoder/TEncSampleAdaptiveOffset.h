@@ -60,11 +60,7 @@ private:
     TEncEntropy*      m_pcEntropyCoder;
     TEncSbac***       m_pppcRDSbacCoder;            ///< for CABAC
     TEncSbac*         m_pcRDGoOnSbacCoder;
-#if FAST_BIT_EST
     TEncBinCABACCounter*** m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
-#else
-    TEncBinCABAC***   m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
-#endif
 
     Int64  ***m_iCount;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_iOffset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];

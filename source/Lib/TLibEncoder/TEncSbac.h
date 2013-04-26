@@ -49,9 +49,7 @@
 #include "TEncEntropy.h"
 #include "TEncBinCoder.h"
 #include "TEncBinCoderCABAC.h"
-#if FAST_BIT_EST
 #include "TEncBinCoderCABACCounter.h"
-#endif
 
 class TEncTop;
 

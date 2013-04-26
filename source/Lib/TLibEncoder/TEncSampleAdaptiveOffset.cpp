@@ -646,28 +646,16 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
 
     Int iMaxDepth = 4;
     m_pppcRDSbacCoder = new TEncSbac * *[iMaxDepth + 1];
-#if FAST_BIT_EST
     m_pppcBinCoderCABAC = new TEncBinCABACCounter * *[iMaxDepth + 1];
-#else
-    m_pppcBinCoderCABAC = new TEncBinCABAC * *[iMaxDepth + 1];
-#endif
 
     for (Int iDepth = 0; iDepth < iMaxDepth + 1; iDepth++)
     {
         m_pppcRDSbacCoder[iDepth] = new TEncSbac*[CI_NUM];
-#if FAST_BIT_EST
         m_pppcBinCoderCABAC[iDepth] = new TEncBinCABACCounter*[CI_NUM];
-#else
-        m_pppcBinCoderCABAC[iDepth] = new TEncBinCABAC*[CI_NUM];
-#endif
         for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
         {
             m_pppcRDSbacCoder[iDepth][iCIIdx] = new TEncSbac;
-#if FAST_BIT_EST
             m_pppcBinCoderCABAC[iDepth][iCIIdx] = new TEncBinCABACCounter;
-#else
-            m_pppcBinCoderCABAC[iDepth][iCIIdx] = new TEncBinCABAC;
-#endif
             m_pppcRDSbacCoder[iDepth][iCIIdx]->init(m_pppcBinCoderCABAC[iDepth][iCIIdx]);
         }
     }

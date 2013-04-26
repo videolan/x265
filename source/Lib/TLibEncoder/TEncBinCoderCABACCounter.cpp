@@ -38,8 +38,6 @@
 #include "TEncBinCoderCABACCounter.h"
 #include "TLibCommon/TComRom.h"
 
-#if FAST_BIT_EST
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -109,4 +107,3 @@ Void TEncBinCABACCounter::encodeBinTrm(UInt binValue)
 }
 
 //! \}
-#endif // if FAST_BIT_EST

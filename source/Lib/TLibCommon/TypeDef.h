@@ -128,8 +128,6 @@
 
 #define MIN_SCAN_POS_CROSS          4
 
-#define FAST_BIT_EST                1   ///< G763: Table-based bit estimation for CABAC
-
 #define MLS_GRP_NUM                         64     ///< G644 : Max number of coefficient groups, max(16, 64)
 #define MLS_CG_SIZE                         4      ///< G644 : Coefficient group size of 4x4
 
