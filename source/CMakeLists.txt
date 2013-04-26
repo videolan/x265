@@ -76,7 +76,6 @@ if(ENABLE_CLI)
         add_definitions(/wd4100) # unreferenced formal parameter
         add_definitions(/wd4244) # type conversion, possible loss of data
         add_definitions(/wd4512) # assignment operator could not be generated
-        SET(EXTRAS compat/msvc/getopt.c compat/msvc/getopt.h)
     endif(MSVC)
     if(GCC)
         add_definitions(-Wno-sign-compare)
