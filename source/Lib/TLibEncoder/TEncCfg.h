@@ -276,7 +276,6 @@ protected:
     Char*     m_scalingListFile;        ///< quantization matrix file name
     Int       m_TMVPModeId;
     Int       m_signHideFlag;
-#if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      m_RCEnableRateControl;
     Int       m_RCTargetBitrate;
     Bool      m_RCKeepHierarchicalBit;
@@ -284,11 +283,6 @@ protected:
     Bool      m_RCUseLCUSeparateModel;
     Int       m_RCInitialQP;
     Bool      m_RCForceIntraQP;
-#else
-    Bool      m_enableRateCtrl;                              ///< Flag for using rate control algorithm
-    Int       m_targetBitrate;                               ///< target bitrate
-    Int       m_numLCUInUnit;                                ///< Total number of LCUs in a frame should be divided by the NumLCUInUnit
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
     TComVPS   m_cVPS;
@@ -887,7 +881,6 @@ public:
 
     Int       getSignHideFlag()                    { return m_signHideFlag; }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      getUseRateCtrl()              { return m_RCEnableRateControl;   }
 
     Void      setUseRateCtrl(Bool b)      { m_RCEnableRateControl = b;      }
@@ -916,20 +909,6 @@ public:
 
     Void      setForceIntraQP(Bool b)      { m_RCForceIntraQP = b;           }
 
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    Bool      getUseRateCtrl()                { return m_enableRateCtrl;    }
-
-    Void      setUseRateCtrl(Bool flag)       { m_enableRateCtrl = flag;    }
-
-    Int       getTargetBitrate()                { return m_targetBitrate;     }
-
-    Void      setTargetBitrate(Int target)      { m_targetBitrate  = target;  }
-
-    Int       getNumLCUInUnit()                { return m_numLCUInUnit;      }
-
-    Void      setNumLCUInUnit(Int numLCUs)     { m_numLCUInUnit   = numLCUs; }
-
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
 
     Void      setTransquantBypassEnableFlag(Bool flag)  { m_TransquantBypassEnableFlag = flag; }

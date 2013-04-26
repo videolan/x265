@@ -297,7 +297,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseScalingListId(m_useScalingListId);
     m_cTEncTop.setScalingListFile(m_scalingListFile);
     m_cTEncTop.setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
     m_cTEncTop.setUseRateCtrl(m_RCEnableRateControl);
     m_cTEncTop.setTargetBitrate(m_RCTargetBitrate);
     m_cTEncTop.setKeepHierBit(m_RCKeepHierarchicalBit);
@@ -305,11 +304,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseLCUSeparateModel(m_RCUseLCUSeparateModel);
     m_cTEncTop.setInitialQP(m_RCInitialQP);
     m_cTEncTop.setForceIntraQP(m_RCForceIntraQP);
-#else
-    m_cTEncTop.setUseRateCtrl(m_enableRateCtrl);
-    m_cTEncTop.setTargetBitrate(m_targetBitrate);
-    m_cTEncTop.setNumLCUInUnit(m_numLCUInUnit);
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
     m_cTEncTop.setUseRecalculateQPAccordingToLambda(m_recalculateQPAccordingToLambda);

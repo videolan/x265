@@ -439,7 +439,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
         ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
         ("ESD", m_useEarlySkipDetection, 0, "Early SKIP detection setting")
-#if RATE_CONTROL_LAMBDA_DOMAIN
         ("RateControl",         m_RCEnableRateControl,       0, "Rate control: enable rate control")
         ("TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate")
         ("KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
@@ -447,11 +446,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("RCLCUSeparateModel",  m_RCUseLCUSeparateModel,     1, "Rate control: use LCU level separate R-lambda model")
         ("InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP")
         ("RCForceIntraQP",      m_RCForceIntraQP,            0, "Rate control: force intra QP to be equal to initial QP")
-#else
-        ("RateCtrl,-rc", m_enableRateCtrl, 0, "Rate control on/off")
-        ("TargetBitrate,-tbr", m_targetBitrate, 0, "Input target bitrate")
-        ("NumLCUInUnit,-nu", m_numLCUInUnit, 0, "Number of LCUs in an Unit")
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
 
         ("TransquantBypassEnableFlag",     m_TransquantBypassEnableFlag,         0, "transquant_bypass_enable_flag indicator in PPS")
         ("CUTransquantBypassFlagValue",    m_CUTransquantBypassFlagValue,        0, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
@@ -1450,7 +1444,6 @@ Void TAppEncCfg::xCheckParameter()
     }
 #endif // if J0149_TONE_MAPPING_SEI
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         if (m_RCForceIntraQP)
@@ -1463,19 +1456,6 @@ Void TAppEncCfg::xCheckParameter()
         }
         xConfirmPara(m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n");
     }
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    if (m_enableRateCtrl)
-    {
-        Int numLCUInWidth  = (m_iSourceWidth  / m_uiMaxCUWidth) + ((m_iSourceWidth  %  m_uiMaxCUWidth) ? 1 : 0);
-        Int numLCUInHeight = (m_iSourceHeight / m_uiMaxCUHeight) + ((m_iSourceHeight %  m_uiMaxCUHeight) ? 1 : 0);
-        Int numLCUInPic    =  numLCUInWidth * numLCUInHeight;
-
-        xConfirmPara((numLCUInPic % m_numLCUInUnit) != 0, "total number of LCUs in a frame should be completely divided by NumLCUInUnit");
-
-        m_iMaxDeltaQP       = MAX_DELTA_QP;
-        m_iMaxCuDQPDepth    = MAX_CUDQP_DEPTH;
-    }
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
 
     xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
 
@@ -1549,7 +1529,6 @@ Void TAppEncCfg::xPrintParameter()
     printf("Internal bit depth           : %d\n", m_internalBitDepth);
 #endif
     printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
-#if RATE_CONTROL_LAMBDA_DOMAIN
     printf("RateControl                  : %d\n", m_RCEnableRateControl);
     if (m_RCEnableRateControl)
     {
@@ -1560,14 +1539,6 @@ Void TAppEncCfg::xPrintParameter()
         printf("InitialQP                    : %d\n", m_RCInitialQP);
         printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP);
     }
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    printf("RateControl                  : %d\n", m_enableRateCtrl);
-    if (m_enableRateCtrl)
-    {
-        printf("TargetBitrate                : %d\n", m_targetBitrate);
-        printf("NumLCUInUnit                 : %d\n", m_numLCUInUnit);
-    }
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     printf("Max Num Merge Candidates     : %d\n", m_maxNumMergeCand);
     printf("\n");
 

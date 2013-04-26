@@ -98,11 +98,9 @@ private:
     TEncSbac*               m_pcRDGoOnSbacCoder;
     Bool                    m_bUseSBACRD;
     TEncRateCtrl*           m_pcRateCtrl;
-#if RATE_CONTROL_LAMBDA_DOMAIN
     UInt                    m_LCUPredictionSAD;
     Int                     m_addSADDepth;
     Int                     m_temporalSAD;
-#endif
 
 public:
 
@@ -123,9 +121,7 @@ public:
 
     Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter; }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
-#endif
 
 protected:
 

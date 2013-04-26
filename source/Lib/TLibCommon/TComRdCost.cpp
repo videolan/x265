@@ -471,7 +471,6 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
 #endif // if WEIGHTED_CHROMA_DISTORTION
 }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
 UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height)
 {
     Int shift = DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
@@ -487,7 +486,6 @@ UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelO
             return cost;
         }
     }
-
 #endif // if ENABLE_PRIMITIVES
 
     UInt SAD = 0;
@@ -504,8 +502,6 @@ UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelO
 
     return SAD;
 }
-
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
 
 // ====================================================================================================================
 // Distortion functions

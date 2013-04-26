@@ -105,15 +105,11 @@ Void TEncTop::create()
     }
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
-#else
-    m_cRateCtrl.create(getIntraPeriod(), getGOPSize(), getFrameRate(), getTargetBitrate(), getQP(), getNumLCUInUnit(), getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
-#endif
     // if SBAC-based RD optimization is used
     if (m_bUseSBACRD)
     {
@@ -345,22 +341,18 @@ Void TEncTop::encode(Bool flush, const x265_picture* pic, TComList<TComPicYuv*>&
         return;
     }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.initRCGOP(m_iNumPicRcvd);
     }
-#endif
 
     // compress GOP
     m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, accessUnitsOut);
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.destroyRCGOP();
     }
-#endif
 
     iNumEncoded         = m_iNumPicRcvd;
     m_iNumPicRcvd       = 0;
@@ -606,14 +598,12 @@ Void TEncTop::xInitPPS()
         m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
     }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         m_cPPS.setUseDQP(true);
         m_cPPS.setMaxCuDQPDepth(0);
         m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
     }
-#endif
 
     m_cPPS.setChromaCbQpOffset(m_chromaCbQpOffset);
     m_cPPS.setChromaCrQpOffset(m_chromaCrQpOffset);
