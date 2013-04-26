@@ -212,189 +212,6 @@ Void TComTrQuant::setQPforQuant(Int qpy, TextType eTxtType, Int qpBdOffset, Int 
     m_cQP.setQpParam(qpScaled);
 }
 
-#if MATRIX_MULT
-
-/** NxN forward transform (2D) using brute force matrix multiplication (3 nested loops)
- *  \param block pointer to input data (residual)
- *  \param coeff pointer to output data (transform coefficients)
- *  \param uiStride stride of input data
- *  \param uiTrSize transform size (uiTrSize x uiTrSize)
- *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
- */
-void xTr(Int bitDepth, Pel *block, Int *coeff, UInt uiStride, UInt uiTrSize, UInt uiMode)
-{
-    Int i, j, k, iSum;
-    Int tmp[32 * 32];
-    const Short *iT;
-    UInt uiLog2TrSize = g_aucConvertToBit[uiTrSize] + 2;
-
-    if (uiTrSize == 4)
-    {
-        iT  = g_aiT4[0];
-    }
-    else if (uiTrSize == 8)
-    {
-        iT = g_aiT8[0];
-    }
-    else if (uiTrSize == 16)
-    {
-        iT = g_aiT16[0];
-    }
-    else if (uiTrSize == 32)
-    {
-        iT = g_aiT32[0];
-    }
-    else
-    {
-        assert(0);
-    }
-
-    Int shift_1st = uiLog2TrSize - 1 + bitDepth - 8; // log2(N) - 1 + g_bitDepth-8
-    Int add_1st = 1 << (shift_1st - 1);
-    Int shift_2nd = uiLog2TrSize + 6;
-    Int add_2nd = 1 << (shift_2nd - 1);
-
-    /* Horizontal transform */
-
-    if (uiTrSize == 4)
-    {
-        if (uiMode != REG_DCT && g_aucDCTDSTMode_Hor[uiMode])
-        {
-            iT  =  g_as_DST_MAT_4[0];
-        }
-    }
-    for (i = 0; i < uiTrSize; i++)
-    {
-        for (j = 0; j < uiTrSize; j++)
-        {
-            iSum = 0;
-            for (k = 0; k < uiTrSize; k++)
-            {
-                iSum += iT[i * uiTrSize + k] * block[j * uiStride + k];
-            }
-
-            tmp[i * uiTrSize + j] = (iSum + add_1st) >> shift_1st;
-        }
-    }
-
-    /* Vertical transform */
-    if (uiTrSize == 4)
-    {
-        if (uiMode != REG_DCT && g_aucDCTDSTMode_Vert[uiMode])
-        {
-            iT  =  g_as_DST_MAT_4[0];
-        }
-        else
-        {
-            iT  = g_aiT4[0];
-        }
-    }
-    for (i = 0; i < uiTrSize; i++)
-    {
-        for (j = 0; j < uiTrSize; j++)
-        {
-            iSum = 0;
-            for (k = 0; k < uiTrSize; k++)
-            {
-                iSum += iT[i * uiTrSize + k] * tmp[j * uiTrSize + k];
-            }
-
-            coeff[i * uiTrSize + j] = (iSum + add_2nd) >> shift_2nd;
-        }
-    }
-}
-
-/** NxN inverse transform (2D) using brute force matrix multiplication (3 nested loops)
- *  \param coeff pointer to input data (transform coefficients)
- *  \param block pointer to output data (residual)
- *  \param uiStride stride of output data
- *  \param uiTrSize transform size (uiTrSize x uiTrSize)
- *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
- */
-void xITr(Int *coeff, Pel *block, UInt uiStride, UInt uiTrSize, UInt uiMode)
-{
-    Int i, j, k, iSum;
-    Int tmp[32 * 32];
-    const Short *iT;
-
-    if (uiTrSize == 4)
-    {
-        iT  = g_aiT4[0];
-    }
-    else if (uiTrSize == 8)
-    {
-        iT = g_aiT8[0];
-    }
-    else if (uiTrSize == 16)
-    {
-        iT = g_aiT16[0];
-    }
-    else if (uiTrSize == 32)
-    {
-        iT = g_aiT32[0];
-    }
-    else
-    {
-        assert(0);
-    }
-
-    Int shift_1st = SHIFT_INV_1ST;
-    Int add_1st = 1 << (shift_1st - 1);
-    Int shift_2nd = SHIFT_INV_2ND - g_bitDepth - 8;
-    Int add_2nd = 1 << (shift_2nd - 1);
-    if (uiTrSize == 4)
-    {
-        if (uiMode != REG_DCT && g_aucDCTDSTMode_Vert[uiMode]) // Check for DCT or DST
-        {
-            iT  =  g_as_DST_MAT_4[0];
-        }
-    }
-
-    /* Horizontal transform */
-    for (i = 0; i < uiTrSize; i++)
-    {
-        for (j = 0; j < uiTrSize; j++)
-        {
-            iSum = 0;
-            for (k = 0; k < uiTrSize; k++)
-            {
-                iSum += iT[k * uiTrSize + i] * coeff[k * uiTrSize + j];
-            }
-
-            tmp[i * uiTrSize + j] = Clip3(-32768, 32767, (iSum + add_1st) >> shift_1st); // Clipping is normative
-        }
-    }
-
-    if (uiTrSize == 4)
-    {
-        if (uiMode != REG_DCT && g_aucDCTDSTMode_Hor[uiMode]) // Check for DCT or DST
-        {
-            iT  =  g_as_DST_MAT_4[0];
-        }
-        else
-        {
-            iT  = g_aiT4[0];
-        }
-    }
-
-    /* Vertical transform */
-    for (i = 0; i < uiTrSize; i++)
-    {
-        for (j = 0; j < uiTrSize; j++)
-        {
-            iSum = 0;
-            for (k = 0; k < uiTrSize; k++)
-            {
-                iSum += iT[k * uiTrSize + j] * tmp[i * uiTrSize + k];
-            }
-
-            block[i * uiStride + j] = Clip3(-32768, 32767, (iSum + add_2nd) >> shift_2nd); // Clipping is non-normative
-        }
-    }
-}
-
-#else //MATRIX_MULT
-
 /** 4x4 forward transform implemented using partial butterfly structure (1D)
  *  \param src   input data (residual)
  *  \param dst   output data (transform coefficients)
@@ -931,8 +748,6 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     }
 }
 
-#endif //MATRIX_MULT
-
 // To minimize the distortion only. No rate is considered.
 Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
@@ -1388,10 +1203,6 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
-#if MATRIX_MULT
-    Int iSize = iWidth;
-    xTr(bitDepth, piBlkResi, psCoeff, uiStride, (UInt)iSize, uiMode);
-#else
     Int j;
     {
 #ifdef _WIN32
@@ -1423,7 +1234,6 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
 
         return;
     }
-#endif // if MATRIX_MULT
 }
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
@@ -1435,10 +1245,6 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
-#if MATRIX_MULT
-    Int iSize = iWidth;
-    xITr(bitDepth, plCoef, pResidual, uiStride, (UInt)iSize, uiMode);
-#else
     Int j;
     {
 #ifdef _WIN32
@@ -1470,7 +1276,6 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
         }
         return;
     }
-#endif // if MATRIX_MULT
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping

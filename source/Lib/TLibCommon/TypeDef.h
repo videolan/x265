@@ -153,8 +153,6 @@
 #define LOG2_MAX_COLUMN_WIDTH              13
 #define LOG2_MAX_ROW_HEIGHT                13
 
-#define MATRIX_MULT                             0   // Brute force matrix multiplication instead of partial butterfly
-
 #define REG_DCT 65535
 
 #define SCALING_LIST_OUTPUT_RESULT    0 //JCTVC-G880/JCTVC-G1016 quantization matrices
