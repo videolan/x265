@@ -680,18 +680,10 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
 */
 void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, UInt uiMode)
 {
+    ALIGN_VAR_32(Short, tmp[64 * 64]);
+
     Int shift_1st = SHIFT_INV_1ST;
     Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
-
-#ifdef _WIN32
-#ifdef __MINGW32__
-    Short tmp[64 * 64] __attribute__((aligned(32)));
-#else
-    __declspec(align(32)) Short tmp[64 * 64];
-#endif
-#else
-    Short tmp[64 * 64] __attribute__((aligned(32)));
-#endif
 
     if (iWidth == 4 && iHeight == 4)
     {
@@ -1203,36 +1195,20 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
+    ALIGN_VAR_32(Short, block[64 * 64]);
+    ALIGN_VAR_32(Short, coeff[64 * 64]);
     Int j;
+    for (j = 0; j < iHeight; j++)
     {
-#ifdef _WIN32
-#ifdef __MINGW32__
-        Short block[64 * 64] __attribute__((aligned(32)));
-        Short coeff[64 * 64] __attribute__((aligned(32)));
-#else
-        __declspec(align(32)) Short block[64 * 64];
-        __declspec(align(32)) Short coeff[64 * 64];
-#endif
-#else
-        Short block[64 * 64] __attribute__((aligned(32)));
-        Short coeff[64 * 64] __attribute__((aligned(32)));
-#endif
+        for (int i = 0; i < iWidth; i++)
         {
-            for (j = 0; j < iHeight; j++)
-            {
-                for (int i = 0; i < iWidth; i++)
-                {
-                    block[j * iWidth + i] = (Short)piBlkResi[j * uiStride + i];
-                }
-            }
+            block[j * iWidth + i] = (Short)piBlkResi[j * uiStride + i];
         }
-        xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
-        for (j = 0; j < iHeight * iWidth; j++)
-        {
-            psCoeff[j] = coeff[j];
-        }
-
-        return;
+    }
+    xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
+    for (j = 0; j < iHeight * iWidth; j++)
+    {
+        psCoeff[j] = coeff[j];
     }
 }
 
@@ -1245,36 +1221,24 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
+    ALIGN_VAR_32(Short, block[64 * 64]);
+    ALIGN_VAR_32(Short, coeff[64 * 64]);
     Int j;
-    {
-#ifdef _WIN32
-#ifdef __MINGW32__
-        Short block[64 * 64] __attribute__((aligned(32)));
-        Short coeff[64 * 64] __attribute__((aligned(32)));
-#else
-        __declspec(align(32)) Short block[64 * 64];
-        __declspec(align(32)) Short coeff[64 * 64];
-#endif
-#else
-        Short block[64 * 64] __attribute__((aligned(32)));
-        Short coeff[64 * 64] __attribute__((aligned(32)));
-#endif
-        for (j = 0; j < iHeight * iWidth; j++)
-        {
-            coeff[j] = (Short)plCoef[j];
-        }
 
-        xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    for (j = 0; j < iHeight * iWidth; j++)
+    {
+        coeff[j] = (Short)plCoef[j];
+    }
+
+    xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    {
+        for (j = 0; j < iHeight; j++)
         {
-            for (j = 0; j < iHeight; j++)
+            for (int i = 0; i < iWidth; i++)
             {
-                for (int i = 0; i < iWidth; i++)
-                {
-                    pResidual[j * uiStride + i] = (Pel)block[j * iWidth + i];
-                }
+                pResidual[j * uiStride + i] = (Pel)block[j * iWidth + i];
             }
         }
-        return;
     }
 }
 

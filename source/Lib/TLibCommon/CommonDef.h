@@ -39,6 +39,7 @@
 #define __COMMONDEF__
 
 #include <algorithm>
+#include <malloc.h>
 
 #if _MSC_VER > 1000
 // disable "signed and unsigned mismatch"
@@ -137,19 +138,22 @@ inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(
 template<typename T>
 inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); }                            ///< general min/max clip
 
-#define DATA_ALIGN                  1                                                                 ///< use 32-bit aligned malloc/free
-#if     DATA_ALIGN && _WIN32 && (_MSC_VER > 1300)
+#if _WIN32
 #define xMalloc(type, len)        _aligned_malloc(sizeof(type) * (len), 32)
 #define xFree(ptr)                _aligned_free(ptr)
+#if __MINGW32__
+#define _aligned_malloc           __mingw_aligned_malloc
+#define _aligned_free             __mingw_aligned_free
+#endif
 #else
-#define xMalloc(type, len)        malloc(sizeof(type) * (len))
+#define xMalloc(type, len)        aligned_alloc(32, sizeof(type) * (len))
 #define xFree(ptr)                free(ptr)
 #endif
 
-#define FATAL_ERROR_0(MESSAGE, EXITCODE)                      \
-    {                                                             \
-        printf(MESSAGE);                                            \
-        exit(EXITCODE);                                             \
+#define FATAL_ERROR_0(MESSAGE, EXITCODE) \
+    {                                    \
+        printf(MESSAGE);                 \
+        exit(EXITCODE);                  \
     }
 
 // ====================================================================================================================
