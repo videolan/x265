@@ -25,6 +25,9 @@
 #ifndef __TSHORTYUV__
 #define __TSHORTYUV__
 
+#include "TLibCommon\CommonDef.h"
+#include "TLibCommon\TComPicYuv.h"
+
 class TShortYUV
 {
 private:
@@ -37,7 +40,22 @@ private:
     unsigned int height;
     unsigned int Cwidth;
     unsigned int Cheight;
-        
+       
+    static Int getAddrOffset(UInt uiPartUnitIdx, UInt width)
+    {
+        Int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
+        Int blkY = g_auiRasterToPelY[g_auiZscanToRaster[uiPartUnitIdx]];
+
+        return blkX + blkY * width;
+    }
+
+    static Int getAddrOffset(UInt iTransUnitIdx, UInt iBlkSize, UInt width)
+    {
+        Int blkX = (iTransUnitIdx * iBlkSize) &  (width - 1);
+        Int blkY = (iTransUnitIdx * iBlkSize) & ~(width - 1);
+
+        return blkX + blkY * iBlkSize;
+    }
 public:
 
     TShortYUV();
@@ -52,6 +70,21 @@ public:
     Short*    getCbAddr()    { return CbBuf; }
 
     Short*    getCrAddr()    { return CrBuf; }
+
+    //  Access starting position of YUV partition unit buffer
+    Short* getLumaAddr(UInt iPartUnitIdx) { return YBuf +   getAddrOffset(iPartUnitIdx, width); }
+
+    Short* getCbAddr(UInt iPartUnitIdx) { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+
+    Short* getCrAddr(UInt iPartUnitIdx) { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+
+    //  Access starting position of YUV transform unit buffer
+    Short* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }
+
+    Short* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize) { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+
+    Short* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+
 
     unsigned int    getHeight()    { return height; }
 
