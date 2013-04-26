@@ -192,11 +192,11 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
 
     for (int i = 0; i <= 100; i++)
     {
-        memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
-        memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
+        memset(IPF_vec_output_s, 0, ipf_t_size);      // Initialize output buffer to zero
+        memset(IPF_C_output_s, 0, ipf_t_size);        // Initialize output buffer to zero
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
+        rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
 
         opt(8, pixel_buff,
             rand_srcStride,
@@ -229,8 +229,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x2
         memset(IPF_vec_output_p, 0, ipf_t_size);      // Initialize output buffer to zero
         memset(IPF_C_output_p, 0, ipf_t_size);        // Initialize output buffer to zero
 
-        rand_srcStride = rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = rand() % 100;              // Randomly generated dstStride
+        rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
+        rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
 
         opt(8, short_buff,
             rand_srcStride,
