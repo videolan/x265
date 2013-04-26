@@ -6,8 +6,16 @@ if(GCC)
 endif(GCC)
 
 if(ENABLE_PRIMITIVES)
-    set(CPRIMITIVES pixel.cpp macroblock.cpp)
+    set(CPRIMITIVES pixel.cpp macroblock.cpp InterpolationFilter.cpp)
+    if(ENABLE_PRIMITIVES_VEC)
+        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_VEC)
+    if(ENABLE_PRIMITIVES_ASM)
+        add_definitions(-DENABLE_ASM_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_ASM)
 endif(ENABLE_PRIMITIVES)
+
+include_directories(../VectorClass)
 
 add_library(x265 ../../COPYING
     ${CPRIMITIVES}
@@ -16,7 +24,7 @@ add_library(x265 ../../COPYING
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     md5.cpp md5.h
-    InterpolationFilter.cpp InterpolationFilter.h)
+    InterpolationFilter.h)
 
 if(ENABLE_PRIMITIVES)
     if(ENABLE_PRIMITIVES_VEC)

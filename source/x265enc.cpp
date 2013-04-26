@@ -155,9 +155,9 @@ Void TAppEncTop::xInitLibCfg()
     Int lowestQP;
     lowestQP =  -6 * (g_bitDepthY - 8); // XXX: check
 
-    if ((m_iMaxDeltaQP == 0) && (m_iQP == lowestQP) && (m_useLossless == true))
+    if ((m_iMaxDeltaQP == 0) && (m_iQP == lowestQP) && m_useLossless)
     {
-        m_bUseAdaptiveQP = false;
+        m_bUseAdaptiveQP = 0;
     }
 
     m_cTEncTop.setUseAdaptiveQP(m_bUseAdaptiveQP);
