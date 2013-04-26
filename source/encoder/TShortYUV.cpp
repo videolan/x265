@@ -22,3 +22,51 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
+
+#include <stdlib.h>
+#include <memory.h>
+#include <assert.h>
+#include <math.h>
+
+#include "TLibCommon\CommonDef.h"
+#include "TShortYUV.h"
+
+TShortYUV::TShortYUV()
+{
+    YBuf = NULL;
+    CbBuf = NULL;
+    CrBuf = NULL;
+}
+
+TShortYUV::~TShortYUV()
+{}
+
+void TShortYUV::create(unsigned int Width, unsigned int Height)
+{
+    YBuf  = (short*)xMalloc(short, Width * Height);
+    CbBuf  = (short*)xMalloc(short, Width * Height >> 2);
+    CrBuf  = (short*)xMalloc(short, Width * Height >> 2);
+
+    // set width and height
+    width   = Width;
+    height  = Height;
+    Cwidth  = Width  >> 1;
+    Cheight = Height >> 1;
+}
+
+void TShortYUV::destroy()
+{
+    xFree(YBuf);
+    YBuf = NULL;
+    xFree(CbBuf);
+    CbBuf = NULL;
+    xFree(CrBuf);
+    CrBuf = NULL;
+}
+
+void TShortYUV::clear()
+{
+    ::memset(YBuf, 0, (width  * height) * sizeof(short));
+    ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
+    ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
+}

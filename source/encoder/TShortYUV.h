@@ -37,45 +37,15 @@ private:
     unsigned int height;
     unsigned int Cwidth;
     unsigned int Cheight;
-
+        
 public:
 
-    TShortYUV()
-    {
-        YBuf = NULL;
-        CbBuf = NULL;
-        CrBuf = NULL;
-    }
-
-    void create(unsigned int Width, unsigned int Height)
-    {
-        YBuf  = (short*)xMalloc(short, Width * Height);
-        CbBuf  = (short*)xMalloc(short, Width * Height >> 2);
-        CrBuf  = (short*)xMalloc(short, Width * Height >> 2);
-
-        // set width and height
-        width   = Width;
-        height  = Height;
-        Cwidth  = Width  >> 1;
-        Cheight = Height >> 1;
-    }
-
-    void destroy()
-    {
-        xFree(YBuf);
-        YBuf = NULL;
-        xFree(CbBuf);
-        CbBuf = NULL;
-        xFree(CrBuf);
-        CrBuf = NULL;
-    }
-
-    void clear()
-    {
-        ::memset(YBuf, 0, (width  * height) * sizeof(short));
-        ::memset(CbBuf, 0, (Cwidth * Cheight) * sizeof(short));
-        ::memset(CrBuf, 0, (Cwidth * Cheight) * sizeof(short));
-    }
+    TShortYUV();
+    virtual ~TShortYUV();
+    
+    void create(unsigned int Width, unsigned int Height);
+    void destroy();
+    void clear();    
 
     Short*    getLumaAddr()    { return YBuf; }
 
@@ -94,4 +64,4 @@ public:
 
 
 
-#endif
+#endif //end __TSHORTYUV__
