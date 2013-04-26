@@ -37,9 +37,13 @@ using namespace x265;
 // Initialize the Func Names for all the Pixel Comp
 static const char *FuncNames[NUM_PARTITIONS] =
 {
-    "4x4", "8x4", "4x8", "8x8", "4x16", "16x4", "8x16", "16x8", "16x16",
-    "4x32", "32x4", "8x32", "32x8", "16x32", "32x16", "32x32", "4x64",
-    "64x4", "8x64", "64x8", "16x64", "64x16", "32x64", "64x32", "64x64"
+    "  4x4", "  4x8", " 4x12", " 4x16", " 4x24", " 4x32", " 4x64",
+    "  8x4", "  8x8", " 8x12", " 8x16", " 8x24", " 8x32", " 8x64",
+    " 12x4", " 12x8", "12x12", "12x16", "12x24", "12x32", "12x64",
+    " 16x4", " 16x8", "16x12", "16x16", "16x24", "16x32", "16x64",
+    " 24x4", " 24x8", "24x12", "24x16", "24x24", "24x32", "24x64",
+    " 32x4", " 32x8", "32x12", "32x16", "32x24", "32x32", "32x64",
+    " 64x4", " 64x8", "64x12", "64x16", "64x24", "64x32", "64x64"
 };
 
 #if HIGH_BIT_DEPTH
@@ -166,14 +170,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         if (opt.sad[curpar])
         {
-            printf("sad[%s]", FuncNames[curpar]);
+            printf(" sad[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                 opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
                 ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
         }
 
         // adaptive iteration count, reduce as partition size increases
-        if ((curpar & 7) == 7) iters >>= 1;
+        if ((curpar & 15) == 15) iters >>= 1;
     }
 
     if (opt.sa8d_8x8)

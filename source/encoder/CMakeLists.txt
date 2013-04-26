@@ -7,7 +7,15 @@ endif(GCC)
 
 if(ENABLE_PRIMITIVES)
     set(CPRIMITIVES pixel.cpp macroblock.cpp InterpolationFilter.cpp)
+    if(ENABLE_PRIMITIVES_VEC)
+        add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_VEC)
+    if(ENABLE_PRIMITIVES_ASM)
+        add_definitions(-DENABLE_ASM_PRIMITIVES=1)
+    endif(ENABLE_PRIMITIVES_ASM)
 endif(ENABLE_PRIMITIVES)
+
+include_directories(../VectorClass)
 
 add_library(x265 ../../COPYING
     ${CPRIMITIVES}
