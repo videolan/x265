@@ -28,7 +28,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "TLibCommon\CommonDef.h"
+#include "TLibCommon/CommonDef.h"
 #include "TShortYUV.h"
 
 TShortYUV::TShortYUV()
