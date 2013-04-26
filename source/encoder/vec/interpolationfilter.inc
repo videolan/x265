@@ -440,6 +440,8 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
 
 void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
+    pixel* srcOrg = src;
+    short* dstOrg = dst;
     int shift = IF_INTERNAL_PREC - bitDepth;
     int row, col;
     Vec8s src_v, dst_v, val_v;
@@ -454,20 +456,32 @@ void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, shor
             dst_v.store(dst + col);
         }
 
-        if (col < width)
+        src += srcStride;
+        dst += dstStride;
+    }
+
+    if (width % 8 != 0)
+    {
+        src = srcOrg;
+        dst = dstOrg;
+        col = width - (width % 8);
+        for (row = 0; row < height; row++)
         {
             src_v.load(src + col);
             val_v = src_v << shift;
             dst_v = val_v - IF_INTERNAL_OFFS;
             dst_v.store_partial(width - col, dst + col);
+
+            src += srcStride;
+            dst += dstStride;
         }
-        src += srcStride;
-        dst += dstStride;
     }
 }
 
 void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
+    short* srcOrg = src;
+    pixel* dstOrg = dst;
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
 
@@ -487,16 +501,26 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
             val_c.store(dst + col);
         }
 
-        if (col < width)
+        src += srcStride;
+        dst += dstStride;
+    }
+
+    if (width % 8 != 0)
+    {
+        src = srcOrg;
+        dst = dstOrg;
+        col = width - (width % 8);
+        for (row = 0; row < height; row++)
         {
             src_c.load(src + col);
             val_c = add_saturated(src_c, offset) >> shift;
             val_c = max(val_c, minVal);
             val_c = min(val_c, maxVal);
             val_c.store_partial(width - col, dst + col);
+
+            src += srcStride;
+            dst += dstStride;
         }
-        src += srcStride;
-        dst += dstStride;
     }
 }
 
