@@ -325,12 +325,8 @@ protected:
                              RefPicList eRefPicList,
                              Int iRefIdx,
                              TComMv& rcMvPred,
-                             Bool bFilled = false
-                             , UInt*       puiDistBiP = NULL
-#if ZERO_MVD_EST
-                             , UInt*       puiDist = NULL
-#endif
-                             );
+                             Bool bFilled = false,
+                             UInt* puiDistBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* pcCU,
                        RefPicList  eRefPicList,
@@ -351,11 +347,7 @@ protected:
                           RefPicList eRefPicList,
                           Int iRefIdx,
                           Int iSizeX,
-                          Int         iSizeY
-#if ZERO_MVD_EST
-                          , UInt&       ruiDist
-#endif
-                          );
+                          Int iSizeY);
 
     Void xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst);
     UInt xGetMvpIdxBits(Int iIdx, Int iNum);
@@ -367,8 +359,8 @@ protected:
                           UInt& uiInterDir,
                           TComMvField* pacMvField,
                           UInt& uiMergeIndex,
-                          UInt& ruiCost
-                          , TComMvField* cMvFieldNeighbours,
+                          UInt& ruiCost,
+                          TComMvField* cMvFieldNeighbours,
                           UChar* uhInterDirNeighbours,
                           Int& numValidMergeCand);
 
