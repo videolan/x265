@@ -21,4 +21,4 @@ file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
 add_library(PrimitivesVec vec-primitives.cpp ${PRIMITIVES} ${VECTORCLASS}
-            vecprimitives.inc pixel.inc macroblock.inc)
+            vecprimitives.inc pixel.inc macroblock.inc interpolationfilter.inc)
