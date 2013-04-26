@@ -638,7 +638,6 @@ Void TEncTop::xInitPPS()
     m_cPPS.setWPBiPred(m_useWeightedBiPred);
     m_cPPS.setOutputFlagPresentFlag(false);
     m_cPPS.setSignHideFlag(getSignHideFlag());
-#if L0386_DB_METRIC
     if (getDeblockingFilterMetric())
     {
         m_cPPS.setDeblockingFilterControlPresentFlag(true);
@@ -651,9 +650,6 @@ Void TEncTop::xInitPPS()
     {
         m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
     }
-#else // if L0386_DB_METRIC
-    m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
-#endif // if L0386_DB_METRIC
     m_cPPS.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     m_cPPS.setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
     m_cPPS.setLoopFilterAcrossSlicesEnabledFlag(m_bLFCrossSliceBoundaryFlag);

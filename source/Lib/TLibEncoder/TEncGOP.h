@@ -192,9 +192,7 @@ protected:
 
 #endif
 #endif // if L0045_NON_NESTED_SEI_RESTRICTIONS
-#if L0386_DB_METRIC
     Void dblMetric(TComPic* pcPic, UInt uiNumSlices);
-#endif
 }; // END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================

@@ -132,9 +132,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setLoopFilterBetaOffset(m_loopFilterBetaOffsetDiv2);
     m_cTEncTop.setLoopFilterTcOffset(m_loopFilterTcOffsetDiv2);
     m_cTEncTop.setDeblockingFilterControlPresent(m_DeblockingFilterControlPresent);
-#if L0386_DB_METRIC
     m_cTEncTop.setDeblockingFilterMetric(m_DeblockingFilterMetric);
-#endif
 
     //====== Motion search ========
     m_cTEncTop.setFastSearch(m_iFastSearch);

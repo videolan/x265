@@ -385,9 +385,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("LoopFilterBetaOffset_div2",      m_loopFilterBetaOffsetDiv2,       0)
         ("LoopFilterTcOffset_div2",        m_loopFilterTcOffsetDiv2,         0)
         ("DeblockingFilterControlPresent", m_DeblockingFilterControlPresent, 0)
-#if L0386_DB_METRIC
         ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         0)
-#endif
 
         // Coding tools
         ("AMP",                      m_enableAMP,                 1,  "Enable asymmetric motion partitions")

@@ -982,12 +982,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         //-- Loop filter
         Bool bLFCrossTileBoundary = pcSlice->getPPS()->getLoopFilterAcrossTilesEnabledFlag();
         m_pcLoopFilter->setCfg(bLFCrossTileBoundary);
-#if L0386_DB_METRIC
         if (m_pcCfg->getDeblockingFilterMetric())
         {
             dblMetric(pcPic, uiNumSlices);
         }
-#endif
         m_pcLoopFilter->loopFilterPic(pcPic);
 
         pcSlice = pcPic->getSlice(0);
@@ -2568,7 +2566,6 @@ Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
 
 #endif // if L0045_NON_NESTED_SEI_RESTRICTIONS
 
-#if L0386_DB_METRIC
 Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
 {
     TComPicYuv* pcPicYuvRec = pcPic->getPicYuvRec();
@@ -2694,5 +2691,4 @@ Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
     free(rowSAD);
 }
 
-#endif // if L0386_DB_METRIC
 //! \}
