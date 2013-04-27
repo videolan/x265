@@ -196,7 +196,6 @@ typedef       unsigned long long  UInt64;
 // Type definition
 // ====================================================================================================================
 
-typedef       UChar           Pxl;        ///< 8-bit pixel type
 #if HIGH_BIT_DEPTH
 typedef       Short           Pel;        ///< 16-bit pixel type
 #else
