@@ -1029,7 +1029,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
                                      UInt        uiAbsPartIdx,
                                      TComYuv*    pcOrgYuv,
                                      TComYuv*    pcPredYuv,
-                                     TComYuv*    pcResiYuv,
+                                     TShortYUV*    pcResiYuv,
                                      UInt&       ruiDist,
                                      Int         default0Save1Load2)
 {
@@ -1188,7 +1188,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
                                        UInt        uiAbsPartIdx,
                                        TComYuv*    pcOrgYuv,
                                        TComYuv*    pcPredYuv,
-                                       TComYuv*    pcResiYuv,
+                                       TShortYUV*    pcResiYuv,
                                        UInt&       ruiDist,
                                        UInt        uiChromaId,
                                        Int         default0Save1Load2)
@@ -1386,7 +1386,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                                      Bool        bLumaOnly,
                                      TComYuv*    pcOrgYuv,
                                      TComYuv*    pcPredYuv,
-                                     TComYuv*    pcResiYuv,
+                                     TShortYUV*    pcResiYuv,
                                      UInt&       ruiDistY,
                                      UInt&       ruiDistC,
 #if HHI_RQT_INTRA_SPEEDUP
@@ -2155,7 +2155,7 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* pcCU,
                                            UInt        uiAbsPartIdx,
                                            TComYuv*    pcOrgYuv,
                                            TComYuv*    pcPredYuv,
-                                           TComYuv*    pcResiYuv,
+                                           TShortYUV*    pcResiYuv,
                                            UInt&       ruiDist)
 {
     UInt uiFullDepth = pcCU->getDepth(0) +  uiTrDepth;
@@ -2423,7 +2423,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                                 TComYuv*    pcOrgYuv,
                                 TComYuv*    pcPredYuv,
-                                TComYuv*    pcResiYuv,
+                                TShortYUV*    pcResiYuv,
                                 TComYuv*    pcRecoYuv,
                                 UInt&       ruiDistC,
                                 Bool        bLumaOnly)
@@ -2760,7 +2760,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 Void TEncSearch::estIntraPredChromaQT(TComDataCU* pcCU,
                                       TComYuv*    pcOrgYuv,
                                       TComYuv*    pcPredYuv,
-                                      TComYuv*    pcResiYuv,
+                                      TShortYUV*    pcResiYuv,
                                       TComYuv*    pcRecoYuv,
                                       UInt        uiPreCalcDistC)
 {
@@ -2924,7 +2924,7 @@ Void TEncSearch::xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* p
  * \param rpcRecoYuv
  * \returns Void
  */
-Void TEncSearch::IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv)
+Void TEncSearch::IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv)
 {
     UInt   uiDepth        = pcCU->getDepth(0);
     UInt   uiWidth        = pcCU->getWidth(0);
@@ -3116,7 +3116,7 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* pcCU, UInt puIdx, TComMvFi
  * \param bUseRes
  * \returns Void
  */
-Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG)
+Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG)
 {
     m_acYuvPred[0].clear();
     m_acYuvPred[1].clear();
@@ -4243,7 +4243,7 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
  * \param bSkipRes
  * \returns Void
  */
-Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, TComYuv* pcYuvPred, TComYuv*& rpcYuvResi, TComYuv*& rpcYuvResiBest, TComYuv*& rpcYuvRec, Bool bSkipRes)
+Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, TComYuv* pcYuvPred, TShortYUV*& rpcYuvResi, TShortYUV*& rpcYuvResiBest, TComYuv*& rpcYuvRec, Bool bSkipRes)
 {
     if (pcCU->isIntra(0))
     {
@@ -4386,7 +4386,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 #endif // if 0
         uiBits = 0;
         {
-            TComYuv *pDummy = NULL;
+            TShortYUV *pDummy = NULL;
             xAddSymbolBitsInter(pcCU, 0, 0, uiBits, pDummy, NULL, pDummy);
         }
 
@@ -4491,7 +4491,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                                      UInt        uiQuadrant,
                                      UInt        uiAbsPartIdx,
                                      UInt        absTUPartIdx,
-                                     TComYuv*    pcResi,
+                                     TShortYUV*    pcResi,
                                      const UInt  uiDepth,
                                      Double &    rdCost,
                                      UInt &      ruiBits,
@@ -5325,7 +5325,7 @@ Void TEncSearch::xEncodeResidualQT(TComDataCU* pcCU, UInt uiAbsPartIdx, const UI
     }
 }
 
-Void TEncSearch::xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, UInt uiDepth, Bool bSpatial)
+Void TEncSearch::xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TShortYUV* pcResi, UInt uiDepth, Bool bSpatial)
 {
     assert(pcCU->getDepth(0) == pcCU->getDepth(uiAbsPartIdx));
     const UInt uiCurrTrMode = uiDepth - pcCU->getDepth(0);
@@ -5451,7 +5451,7 @@ UInt TEncSearch::xUpdateCandList(UInt uiMode, Double uiCost, UInt uiFastCandNum,
  * \param rpcYuvResi
  * \returns Void
  */
-Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode, UInt& ruiBits, TComYuv*& rpcYuvRec, TComYuv*pcYuvPred, TComYuv*& rpcYuvResi)
+Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode, UInt& ruiBits, TComYuv*& rpcYuvRec, TComYuv*pcYuvPred, TShortYUV*& rpcYuvResi)
 {
     if (pcCU->getMergeFlag(0) && pcCU->getPartitionSize(0) == SIZE_2Nx2N && !pcCU->getQtRootCbf(0))
     {
