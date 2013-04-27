@@ -1733,25 +1733,23 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
     Int  iStrideCur = pcDtParam->iStrideCur;
     Int  iStrideOrg = pcDtParam->iStrideOrg;
     Int  iStep  = pcDtParam->iStep;
-    Int  y;
-    Int  iOffsetOrg = iStrideOrg << 2;
-    Int  iOffsetCur = iStrideCur << 2;
-
     UInt uiSum = 0;
 
-    for (y = 0; y < iRows; y += 4)
-    {
 #ifdef ENABLE_PRIMITIVES
-        assert(iStep == 1);
-        uiSum += x265::primitives.satd[x265::PARTITION_4x4]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur);
-        x264_cpu_emms();
+    assert(iStep == 1);
+    int part = x265::PartitionFromSizes(4, iRows);
+    uiSum = x265::primitives.satd[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur);
+    x264_cpu_emms();
 #else
+    Int  iOffsetOrg = iStrideOrg << 2;
+    Int  iOffsetCur = iStrideCur << 2;
+    for (Int y = 0; y < iRows; y += 4)
+    {
         uiSum += xCalcHADs4x4(piOrg, piCur, iStrideOrg, iStrideCur, iStep);
-#endif
         piOrg += iOffsetOrg;
         piCur += iOffsetCur;
     }
-
+#endif
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
@@ -1774,9 +1772,7 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
     if (iRows == 4)
     {
 #ifdef ENABLE_PRIMITIVES
-        assert(iStep == 1);
         uiSum += x265::primitives.satd[x265::PARTITION_8x4]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur);
-        x264_cpu_emms();
 #else
         uiSum += xCalcHADs4x4(piOrg + 0, piCur, iStrideOrg, iStrideCur, iStep);
         uiSum += xCalcHADs4x4(piOrg + 4, piCur + 4 * iStep, iStrideOrg, iStrideCur, iStep);
@@ -1789,9 +1785,7 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
         for (y = 0; y < iRows; y += 8)
         {
 #ifdef ENABLE_PRIMITIVES
-            assert(iStep == 1);
             uiSum += x265::primitives.sa8d_8x8((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur);
-            x264_cpu_emms();
 #else
             uiSum += xCalcHADs8x8(piOrg, piCur, iStrideOrg, iStrideCur, iStep);
 #endif
@@ -1800,6 +1794,10 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
         }
     }
 
+#ifdef ENABLE_PRIMITIVES
+    assert(iStep == 1);
+    x264_cpu_emms();
+#endif
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
@@ -1829,9 +1827,7 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
             for (x = 0; x < iCols; x += 8)
             {
 #ifdef ENABLE_PRIMITIVES
-                assert(iStep == 1);
                 uiSum += x265::primitives.sa8d_8x8((pixel*)(&piOrg[x]), iStrideOrg, (pixel*)(&piCur[x * iStep]), iStrideCur);
-                x264_cpu_emms();
 #else
                 uiSum += xCalcHADs8x8(&piOrg[x], &piCur[x * iStep], iStrideOrg, iStrideCur, iStep);
 #endif
@@ -1843,6 +1839,10 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
     }
     else if ((iRows % 4 == 0) && (iCols % 4 == 0))
     {
+#ifdef ENABLE_PRIMITIVES
+        int part = x265::PartitionFromSizes(iCols, iRows);
+        uiSum += x265::primitives.satd[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur);
+#else
         Int  iOffsetOrg = iStrideOrg << 2;
         Int  iOffsetCur = iStrideCur << 2;
 
@@ -1850,18 +1850,13 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
         {
             for (x = 0; x < iCols; x += 4)
             {
-#ifdef ENABLE_PRIMITIVES
-                assert(iStep == 1);
-                uiSum += x265::primitives.satd[x265::PARTITION_4x4]((pixel*)(&piOrg[x]), iStrideOrg, (pixel*)(&piCur[x * iStep]), iStrideCur);
-                x264_cpu_emms();
-#else
                 uiSum += xCalcHADs4x4(&piOrg[x], &piCur[x * iStep], iStrideOrg, iStrideCur, iStep);
-#endif
             }
 
             piOrg += iOffsetOrg;
             piCur += iOffsetCur;
         }
+#endif
     }
     else if ((iRows % 2 == 0) && (iCols % 2 == 0))
     {
@@ -1883,6 +1878,10 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
         assert(false);
     }
 
+#ifdef ENABLE_PRIMITIVES
+    assert(iStep == 1);
+    x264_cpu_emms();
+#endif
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 
