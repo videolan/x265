@@ -22,6 +22,7 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
+
 #ifndef __TSHORTYUV__
 #define __TSHORTYUV__
 
@@ -56,6 +57,7 @@ private:
 
         return blkX + blkY * iBlkSize;
     }
+
 public:
 
     TShortYUV();
@@ -65,7 +67,7 @@ public:
     void destroy();
     void clear();    
 
-    Short*    getLumaAddr()    { return YBuf; }
+    Short*    getLumaAddr()  { return YBuf; }
 
     Short*    getCbAddr()    { return CbBuf; }
 
@@ -74,27 +76,25 @@ public:
     //  Access starting position of YUV partition unit buffer
     Short* getLumaAddr(UInt iPartUnitIdx) { return YBuf +   getAddrOffset(iPartUnitIdx, width); }
 
-    Short* getCbAddr(UInt iPartUnitIdx) { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    Short* getCbAddr(UInt iPartUnitIdx)   { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
 
-    Short* getCrAddr(UInt iPartUnitIdx) { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    Short* getCrAddr(UInt iPartUnitIdx)   { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
     Short* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }
 
-    Short* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize) { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    Short* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize)   { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
 
-    Short* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize) { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    Short* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize)   { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
 
 
-    unsigned int    getHeight()    { return height; }
+    unsigned int    getHeight()   { return height; }
 
     unsigned int    getWidth()    { return width; }
 
-    unsigned int    getCHeight()    { return Cheight; }
+    unsigned int    getCHeight()  { return Cheight; }
 
-    unsigned int    getCWidth()    { return Cwidth; }
+    unsigned int    getCWidth()   { return Cwidth; }
 };
-
-
 
 #endif //end __TSHORTYUV__
