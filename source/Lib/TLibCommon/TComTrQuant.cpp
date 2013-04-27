@@ -1294,7 +1294,7 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
         {
             for (UInt j = 0; j < uiWidth; j++)
             {
-                rpcCoeff[k * uiWidth + j] = pcResidual[k * uiStride + j];
+                rpcCoeff[k * uiWidth + j] = ((Short)pcResidual[k * uiStride + j]);
                 uiAbsSum += abs(pcResidual[k * uiStride + j]);
             }
         }
