@@ -25,8 +25,8 @@
 #ifndef __TSHORTYUV__
 #define __TSHORTYUV__
 
-#include "TLibCommon\CommonDef.h"
-#include "TLibCommon\TComPicYuv.h"
+#include "TLibCommon/CommonDef.h"
+#include "TLibCommon/TComPicYuv.h"
 
 class TShortYUV
 {
