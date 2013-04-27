@@ -39,6 +39,8 @@ endif()
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
+else(HIGH_BIT_DEPTH)
+    add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
 option(ENABLE_PRIMITIVES "Enable use of optimized encoder primitives" ON)
