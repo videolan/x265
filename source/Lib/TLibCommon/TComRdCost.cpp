@@ -479,12 +479,9 @@ UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelO
     if (shift == 0)
     {
         int part = x265::PartitionFromSizes(width, height);
-        if (part >= 0)
-        {
-            UInt cost = x265::primitives.sad[part]((pixel*)pelCur, curStride, (pixel*)pelOrg, orgStride);
-            x264_cpu_emms();
-            return cost;
-        }
+        UInt cost = x265::primitives.sad[part]((pixel*)pelCur, curStride, (pixel*)pelOrg, orgStride);
+        x264_cpu_emms();
+        return cost;
     }
 #endif // if ENABLE_PRIMITIVES
 
