@@ -43,6 +43,9 @@ x265_picture;
 //       end users to have control over.
 typedef struct
 {
+    // coding tools (bit-depth)
+    int       m_internalBitDepth;                 ///< bit-depth codec operates at
+
     // source specification
     int       m_iFrameRate;                       ///< source frame-rates (Hz)
     uint32_t  m_FrameSkip;                        ///< number of skipped frames from the beginning
@@ -262,13 +265,6 @@ typedef struct
     int       m_maxBitsPerMinCuDenom;             ///< Indicates an upper bound for the number of bits of coding_unit() data
     int       m_log2MaxMvLengthHorizontal;        ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
     int       m_log2MaxMvLengthVertical;          ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
-
-#if HIGH_BIT_DEPTH
-    // coding tools (bit-depth)
-    int       m_inputBitDepth;                    ///< bit-depth of input file (luma component)
-    int       m_outputBitDepth;                   ///< bit-depth of output file (luma component)
-    int       m_internalBitDepth;                 ///< bit-depth codec operates at in luma (input/output files will be converted)
-#endif
 }
 x265_params;
 

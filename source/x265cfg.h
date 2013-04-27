@@ -58,6 +58,9 @@ protected:
     x265::Input*  m_input;
     x265::Output* m_recon;
 
+    int       m_inputBitDepth;                  ///< bit-depth of input file
+    int       m_outputBitDepth;                 ///< bit-depth of output file
+
     // file I/O
     Char*     m_pchBitstreamFile;               ///< output bitstream file
     Double    m_adLambdaModifier[MAX_TLAYER];   ///< Lambda modifier array for each temporal layer

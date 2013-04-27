@@ -301,12 +301,10 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("FrameSkip,-fs",         m_FrameSkip,         0u, "Number of frames to skip at start of input YUV")
         ("FramesToBeEncoded,f",   m_framesToBeEncoded, 0, "Number of frames to be encoded (default=all)")
 
-#if HIGH_BIT_DEPTH
+        ("InternalBitDepth",      m_internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+        "If different to InputBitDepth, source data will be converted")
         ("InputBitDepth",         m_inputBitDepth,     8, "Bit-depth of input file")
         ("OutputBitDepth",        m_outputBitDepth,    0, "Bit-depth of output file (default:InternalBitDepth)")
-        ("InternalBitDepth",      m_internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-         "If different to InputBitDepth, source data will be converted")
-#endif
 
         // Profile and level
         ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
@@ -608,51 +606,38 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         printf("Unable to open source file\n");
         return 1;
     }
-
     if (m_input->getWidth())
     {
         m_iSourceWidth = m_input->getWidth();
         m_iSourceHeight = m_input->getHeight();
         m_iFrameRate = (int)m_input->getRate();
-#if HIGH_BIT_DEPTH
         m_inputBitDepth = 8;
-#endif
     }
     else
     {
         m_input->setDimensions(m_iSourceWidth, m_iSourceHeight);
-#if HIGH_BIT_DEPTH
         m_input->setBitDepth(m_inputBitDepth);
-#else
-        m_input->setBitDepth(8);
-#endif
     }
 
-#if HIGH_BIT_DEPTH
     /* rules for input, output and internal bitdepths as per help text */
     if (!m_internalBitDepth) { m_internalBitDepth = m_inputBitDepth; }
     if (!m_outputBitDepth) { m_outputBitDepth = m_internalBitDepth; }
-#endif
+
+    int numRemainingFrames = m_input->guessFrameCount();
 
     if (m_FrameSkip && m_input)
     {
         m_input->skipFrames(m_FrameSkip);
     }
 
-    int numRemainingFrames = m_input->guessFrameCount();
-
     m_framesToBeEncoded = m_framesToBeEncoded ? min(m_framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-    printf("Input          File          : %s (%d frames)\n", cfg_InputFile.c_str(), numRemainingFrames);
+    printf("Input          File          : %s (%d total frames)\n", cfg_InputFile.c_str(), numRemainingFrames);
 
     if (!cfg_ReconFile.empty())
     {
         printf("Reconstruction File          : %s\n", cfg_ReconFile.c_str());
-#if HIGH_BIT_DEPTH
         m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, m_outputBitDepth, m_iFrameRate);
-#else
-        m_recon = x265::Output::Open(cfg_ReconFile.c_str(), m_iSourceWidth, m_iSourceHeight, 8, m_iFrameRate);
-#endif
         if (m_recon->isFail())
         {
             printf("Unable to write reconstruction file\n");
@@ -660,6 +645,15 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
             m_recon = 0;
         }
     }
+
+#if !HIGH_BIT_DEPTH
+    if (m_inputBitDepth != 8 || m_outputBitDepth != 8 || m_internalBitDepth != 8)
+    {
+        printf("x265 not compiled for bit depths greater than 8\n");
+        exit(1);
+    }
+#endif
+
 
     Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
     Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
@@ -926,14 +920,10 @@ Void TAppEncCfg::xCheckParameter()
     Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a, b) check_failed |= confirmPara(a, b)
     // check range of parameters
-#if HIGH_BIT_DEPTH
     xConfirmPara(m_inputBitDepth < 8,                                                      "InputBitDepth must be at least 8");
     xConfirmPara(m_inputBitDepth < 8,                                                      "InputBitDepth must be at least 8");
     xConfirmPara(m_outputBitDepth > m_internalBitDepth,                                    "OutputBitDepth must be less than or equal to InternalBitDepth");
     xConfirmPara(m_iQP <  -6 * (m_internalBitDepth - 8) || m_iQP > 51,                     "QP exceeds supported range (-QpBDOffsety to 51)");
-#else
-    xConfirmPara(m_iQP < 0 || m_iQP > 51,                                                  "QP exceeds supported range (-QpBDOffsety to 51)");
-#endif
     xConfirmPara(m_iFrameRate <= 0,                                                        "Frame rate must be more than 1");
     xConfirmPara(m_framesToBeEncoded <= 0,                                                 "Total Number Of Frames encoded must be more than 0");
     xConfirmPara(m_iGOPSize < 1,                                                           "GOP Size must be greater or equal to 1");
