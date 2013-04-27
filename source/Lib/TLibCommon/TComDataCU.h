@@ -139,7 +139,6 @@ private:
     TCoeff*       m_pcTrCoeffY;       ///< transformed coefficient buffer (Y)
     TCoeff*       m_pcTrCoeffCb;      ///< transformed coefficient buffer (Cb)
     TCoeff*       m_pcTrCoeffCr;      ///< transformed coefficient buffer (Cr)
-#if ADAPTIVE_QP_SELECTION
     Int*          m_pcArlCoeffY;      ///< ARL coefficient buffer (Y)
     Int*          m_pcArlCoeffCb;     ///< ARL coefficient buffer (Cb)
     Int*          m_pcArlCoeffCr;     ///< ARL coefficient buffer (Cr)
@@ -148,7 +147,6 @@ private:
     static Int*   m_pcGlbArlCoeffY;   ///< ARL coefficient buffer (Y)
     static Int*   m_pcGlbArlCoeffCb;  ///< ARL coefficient buffer (Cb)
     static Int*   m_pcGlbArlCoeffCr;  ///< ARL coefficient buffer (Cr)
-#endif
 
     Pel*          m_pcIPCMSampleY;    ///< PCM sample buffer (Y)
     Pel*          m_pcIPCMSampleCb;   ///< PCM sample buffer (Cb)
@@ -177,9 +175,7 @@ private:
 
     Bool*         m_pbMergeFlag;      ///< array of merge flags
     UChar*        m_puhMergeIndex;    ///< array of merge candidate indices
-#if AMP_MRG
     Bool          m_bIsMergeAMP;
-#endif
     UChar*        m_puhLumaIntraDir;  ///< array of intra directions (luma)
     UChar*        m_puhChromaIntraDir; ///< array of intra directions (chroma)
     UChar*        m_puhInterDir;      ///< array of inter directions
@@ -227,11 +223,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void          create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu, Int unitSize
-#if ADAPTIVE_QP_SELECTION
-                         , Bool bGlobalRMARLBuffer = false
-#endif
-                         );
+    Void          create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer = false);
     Void          destroy();
 
     Void          initCU(TComPic* pcPic, UInt uiCUAddr);
@@ -359,14 +351,11 @@ public:
 
     TCoeff*&      getCoeffCr()                        { return m_pcTrCoeffCr; }
 
-#if ADAPTIVE_QP_SELECTION
     Int*&         getArlCoeffY()                        { return m_pcArlCoeffY; }
 
     Int*&         getArlCoeffCb()                        { return m_pcArlCoeffCb; }
 
     Int*&         getArlCoeffCr()                        { return m_pcArlCoeffCr; }
-
-#endif
 
     Pel*&         getPCMSampleY()                        { return m_pcIPCMSampleY; }
 
@@ -411,12 +400,9 @@ public:
     template<typename T>
     Void          setSubPart(T bParameter, T* pbBaseLCU, UInt uiCUAddr, UInt uiCUDepth, UInt uiPUIdx);
 
-#if AMP_MRG
     Void          setMergeAMP(Bool b)      { m_bIsMergeAMP = b; }
 
     Bool          getMergeAMP()             { return m_bIsMergeAMP; }
-
-#endif
 
     UChar*        getLumaIntraDir()                        { return m_puhLumaIntraDir; }
 

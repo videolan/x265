@@ -299,10 +299,8 @@ Void SEIWriter::xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei)
 Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
 {
     WRITE_CODE(sei.activeVPSId,     4, "active_vps_id");
-#if L0047_APS_FLAGS
     WRITE_FLAG(sei.m_fullRandomAccessFlag, "full_random_access_flag");
     WRITE_FLAG(sei.m_noParamSetUpdateFlag, "no_param_set_update_flag");
-#endif
     WRITE_UVLC(sei.numSpsIdsMinus1,    "num_sps_ids_minus1");
 
     assert(sei.activeSeqParamSetId.size() == (sei.numSpsIdsMinus1 + 1));
@@ -334,13 +332,11 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
     {
         WRITE_CODE(sei.m_duSptCpbRemovalDelay, (vui->getHrdParameters()->getDuCpbRemovalDelayLengthMinus1() + 1), "du_spt_cpb_removal_delay");
     }
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     WRITE_FLAG(sei.m_dpbOutputDuDelayPresentFlag, "dpb_output_du_delay_present_flag");
     if (sei.m_dpbOutputDuDelayPresentFlag)
     {
         WRITE_CODE(sei.m_picSptDpbOutputDuDelay, vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, "pic_spt_dpb_output_du_delay");
     }
-#endif
     xWriteByteAlign();
 }
 
@@ -355,17 +351,13 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
     {
         WRITE_FLAG(sei.m_rapCpbParamsPresentFlag, "rap_cpb_params_present_flag");
     }
-#if L0328_SPLICING
     WRITE_FLAG(sei.m_concatenationFlag, "concatenation_flag");
     WRITE_CODE(sei.m_auCpbRemovalDelayDelta - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_delta_minus1");
-#endif
-#if L0044_CPB_DPB_DELAY_OFFSET
     if (sei.m_rapCpbParamsPresentFlag)
     {
         WRITE_CODE(sei.m_cpbDelayOffset, hrd->getCpbRemovalDelayLengthMinus1() + 1, "cpb_delay_offset");
         WRITE_CODE(sei.m_dpbDelayOffset, hrd->getDpbOutputDelayLengthMinus1()  + 1, "dpb_delay_offset");
     }
-#endif
     for (nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
     {
         if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
@@ -393,57 +385,42 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
     TComVUI *vui = sps->getVuiParameters();
     TComHRD *hrd = vui->getHrdParameters();
 
-#if !L0045_CONDITION_SIGNALLING
-    // This condition was probably OK before the pic_struct, progressive_source_idc, duplicate_flag were added
-    if (!hrd->getNalHrdParametersPresentFlag() && !hrd->getVclHrdParametersPresentFlag())
-        return;
-#endif
     if (vui->getFrameFieldInfoPresentFlag())
     {
         WRITE_CODE(sei.m_picStruct, 4,              "pic_struct");
-#if L0046_RENAME_PROG_SRC_IDC
         WRITE_CODE(sei.m_sourceScanType, 2,         "source_scan_type");
-#else
-        WRITE_CODE(sei.m_progressiveSourceIdc, 2,   "progressive_source_idc");
-#endif
         WRITE_FLAG(sei.m_duplicateFlag ? 1 : 0,     "duplicate_flag");
     }
 
-#if L0045_CONDITION_SIGNALLING
     if (hrd->getCpbDpbDelaysPresentFlag())
     {
-#endif
-    WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
-    WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
-    if (hrd->getSubPicCpbParamsPresentFlag())
-    {
-        WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
-    }
-#endif
-    if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
-    {
-        WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");
-        WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");
-        if (sei.m_duCommonCpbRemovalDelayFlag)
+        WRITE_CODE(sei.m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1),                                         "au_cpb_removal_delay_minus1");
+        WRITE_CODE(sei.m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1),                                          "pic_dpb_output_delay");
+        if (hrd->getSubPicCpbParamsPresentFlag())
         {
-            WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                       "du_common_cpb_removal_delay_minus1");
+            WRITE_CODE(sei.m_picDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_dpb_output_du_delay");
         }
-        for (i = 0; i <= sei.m_numDecodingUnitsMinus1; i++)
+        if (hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag())
         {
-            WRITE_UVLC(sei.m_numNalusInDuMinus1[i],  "num_nalus_in_du_minus1");
-            if ((!sei.m_duCommonCpbRemovalDelayFlag) && (i < sei.m_numDecodingUnitsMinus1))
+            WRITE_UVLC(sei.m_numDecodingUnitsMinus1,     "num_decoding_units_minus1");
+            WRITE_FLAG(sei.m_duCommonCpbRemovalDelayFlag, "du_common_cpb_removal_delay_flag");
+            if (sei.m_duCommonCpbRemovalDelayFlag)
             {
-                WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                        "du_cpb_removal_delay_minus1");
+                WRITE_CODE(sei.m_duCommonCpbRemovalDelayMinus1, (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                       "du_common_cpb_removal_delay_minus1");
+            }
+            for (i = 0; i <= sei.m_numDecodingUnitsMinus1; i++)
+            {
+                WRITE_UVLC(sei.m_numNalusInDuMinus1[i],  "num_nalus_in_du_minus1");
+                if ((!sei.m_duCommonCpbRemovalDelayFlag) && (i < sei.m_numDecodingUnitsMinus1))
+                {
+                    WRITE_CODE(sei.m_duCpbRemovalDelayMinus1[i], (hrd->getDuCpbRemovalDelayLengthMinus1() + 1),                        "du_cpb_removal_delay_minus1");
+                }
             }
         }
     }
-#if L0045_CONDITION_SIGNALLING
-}
-
-#endif
     xWriteByteAlign();
 }
+
 Void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
 {
     WRITE_SVLC(sei.m_recoveryPocCnt,    "recovery_poc_cnt");
@@ -480,11 +457,7 @@ Void SEIWriter::xWriteSEIFramePacking(const SEIFramePacking& sei)
         }
 
         WRITE_CODE(sei.m_arrangementReservedByte, 8,   "frame_packing_arrangement_reserved_byte");
-#if L0045_PERSISTENCE_FLAGS
         WRITE_FLAG(sei.m_arrangementPersistenceFlag,   "frame_packing_arrangement_persistence_flag");
-#else
-        WRITE_UVLC(sei.m_arrangementRepetetionPeriod,  "frame_packing_arrangement_repetition_period");
-#endif
     }
 
     WRITE_FLAG(sei.m_upsampledAspectRatio,           "upsampled_aspect_ratio");
@@ -578,11 +551,7 @@ Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
         WRITE_FLAG(sei.horFlip,                   "hor_flip");
         WRITE_FLAG(sei.verFlip,                   "ver_flip");
         WRITE_CODE(sei.anticlockwiseRotation, 16, "anticlockwise_rotation");
-#if L0045_PERSISTENCE_FLAGS
         WRITE_FLAG(sei.persistenceFlag,          "display_orientation_persistence_flag");
-#else
-        WRITE_UVLC(sei.repetitionPeriod,          "display_orientation_repetition_period");
-#endif
 #if !REMOVE_SINGLE_SEI_EXTENSION_FLAGS
         WRITE_FLAG(sei.extensionFlag,             "display_orientation_extension_flag");
         assert(!sei.extensionFlag);

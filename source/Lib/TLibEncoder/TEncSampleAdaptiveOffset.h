@@ -60,11 +60,7 @@ private:
     TEncEntropy*      m_pcEntropyCoder;
     TEncSbac***       m_pppcRDSbacCoder;            ///< for CABAC
     TEncSbac*         m_pcRDGoOnSbacCoder;
-#if FAST_BIT_EST
     TEncBinCABACCounter*** m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
-#else
-    TEncBinCABAC***   m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
-#endif
 
     Int64  ***m_iCount;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     Int64  ***m_iOffset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
@@ -80,13 +76,7 @@ private:
     Int     m_iOffsetThY;
     Int     m_iOffsetThC;
     Bool    m_bUseSBACRD;
-#if SAO_ENCODING_CHOICE
-#if SAO_ENCODING_CHOICE_CHROMA
     Double  m_depthSaoRate[2][4];
-#else
-    Double  m_depth0SaoRate;
-#endif
-#endif
 
 public:
 
@@ -97,11 +87,7 @@ public:
     Void endSaoEnc();
     Void resetStats();
 #if SAO_CHROMA_LAMBDA
-#if SAO_ENCODING_CHOICE
     Void SAOProcess(SAOParam *pcSaoParam, Double dLambda, Double dLambdaChroma, Int depth);
-#else
-    Void SAOProcess(SAOParam *pcSaoParam, Double dLambda, Double dLambdaChroma);
-#endif
 #else
     Void SAOProcess(SAOParam *pcSaoParam, Double dLambda);
 #endif
@@ -119,11 +105,7 @@ public:
     Void createEncBuffer();
     Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag, Int yCbCr);
     Void checkMerge(SaoLcuParam * lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
-#if SAO_ENCODING_CHOICE
     Void rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth);
-#else
-    Void rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma);
-#endif
     Void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
     Void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);
     inline Int64 estSaoDist(Int64 count, Int64 offset, Int64 offsetOrg, Int shift);

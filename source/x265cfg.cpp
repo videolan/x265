@@ -313,12 +313,10 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
         ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
 
-#if L0046_CONSTRAINT_FLAGS
         ("ProgressiveSource", m_progressiveSourceFlag,   0, "Indicate that source is progressive")
         ("InterlacedSource",  m_interlacedSourceFlag,    0, "Indicate that source is interlaced")
         ("NonPackedSource",   m_nonPackedConstraintFlag, 0, "Indicate that source does not contain frame packing")
         ("FrameOnly",         m_frameOnlyConstraintFlag, 0, "Indicate that the bitstream contains only frames")
-#endif
 
         // Unit definition parameters
         ("MaxCUWidth",              m_uiMaxCUWidth,             64u)
@@ -338,9 +336,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
         ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
         ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
-#if !L0034_COMBINED_LIST_CLEANUP
-        ("ListCombination,-lc",     m_bUseLComb,               true, "Combined reference list for uni-prediction estimation in B-slices")
-#endif
         // motion options
         ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
         ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
@@ -367,18 +362,14 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
         ("CrQpOffset,-crqpofs",  m_crQpOffset,        0, "Chroma Cr QP Offset")
 
-#if ADAPTIVE_QP_SELECTION
         ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
-#endif
 
         ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
         ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,       6, "QP adaptation range")
         ("dQPFile,m",                     cfg_dQPFile,       string(""), "dQP file name")
         ("RDOQ",                          m_useRDOQ,                  1)
         ("RDOQTS",                        m_useRDOQTS,                1)
-#if L0232_RD_PENALTY
         ("RDpenalty",                     m_rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
-#endif
         // Entropy coding parameters
         ("SBACRD",                         m_bUseSBACRD,                     1, "SBAC based RD estimation")
 
@@ -388,9 +379,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("LoopFilterBetaOffset_div2",      m_loopFilterBetaOffsetDiv2,       0)
         ("LoopFilterTcOffset_div2",        m_loopFilterTcOffsetDiv2,         0)
         ("DeblockingFilterControlPresent", m_DeblockingFilterControlPresent, 0)
-#if L0386_DB_METRIC
         ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         0)
-#endif
 
         // Coding tools
         ("AMP",                      m_enableAMP,                 1,  "Enable asymmetric motion partitions")
@@ -450,7 +439,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
         ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
         ("ESD", m_useEarlySkipDetection, 0, "Early SKIP detection setting")
-#if RATE_CONTROL_LAMBDA_DOMAIN
         ("RateControl",         m_RCEnableRateControl,       0, "Rate control: enable rate control")
         ("TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate")
         ("KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
@@ -458,11 +446,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("RCLCUSeparateModel",  m_RCUseLCUSeparateModel,     1, "Rate control: use LCU level separate R-lambda model")
         ("InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP")
         ("RCForceIntraQP",      m_RCForceIntraQP,            0, "Rate control: force intra QP to be equal to initial QP")
-#else
-        ("RateCtrl,-rc", m_enableRateCtrl, 0, "Rate control on/off")
-        ("TargetBitrate,-tbr", m_targetBitrate, 0, "Input target bitrate")
-        ("NumLCUInUnit,-nu", m_numLCUInUnit, 0, "Number of LCUs in an Unit")
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
 
         ("TransquantBypassEnableFlag",     m_TransquantBypassEnableFlag,         0, "transquant_bypass_enable_flag indicator in PPS")
         ("CUTransquantBypassFlagValue",    m_CUTransquantBypassFlagValue,        0, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
@@ -999,10 +982,8 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
     xConfirmPara(m_maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
 
-#if ADAPTIVE_QP_SELECTION
     xConfirmPara(m_bUseAdaptQpSelect && m_iQP < 0,                                "AdaptiveQpSelection must be disabled when QP < 0.");
     xConfirmPara(m_bUseAdaptQpSelect && (m_cbQpOffset != 0 || m_crQpOffset != 0), "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
-#endif
 
     if (m_usePCM)
     {
@@ -1310,26 +1291,14 @@ Void TAppEncCfg::xCheckParameter()
     for (Int i = 0; i < MAX_TLAYER; i++)
     {
         m_numReorderPics[i] = 0;
-#if L0323_DPB
         m_maxDecPicBuffering[i] = 1;
-#else
-        m_maxDecPicBuffering[i] = 0;
-#endif
     }
 
     for (Int i = 0; i < m_iGOPSize; i++)
     {
-#if L0323_DPB
         if (m_GOPList[i].m_numRefPics + 1 > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
-#else
-        if (m_GOPList[i].m_numRefPics > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
-#endif
         {
-#if L0323_DPB
             m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
-#else
-            m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics;
-#endif
         }
         Int highestDecodingNumberWithLowerPOC = 0;
         for (Int j = 0; j < m_iGOPSize; j++)
@@ -1363,19 +1332,11 @@ Void TAppEncCfg::xCheckParameter()
         {
             m_numReorderPics[i + 1] = m_numReorderPics[i];
         }
-#if L0323_DPB
         // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] - 1, inclusive
         if (m_numReorderPics[i] > m_maxDecPicBuffering[i] - 1)
         {
             m_maxDecPicBuffering[i] = m_numReorderPics[i] + 1;
         }
-#else
-        // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
-        if (m_numReorderPics[i] > m_maxDecPicBuffering[i])
-        {
-            m_maxDecPicBuffering[i] = m_numReorderPics[i];
-        }
-#endif // if L0323_DPB
        // a lower layer can not have higher value of m_uiMaxDecPicBuffering than a higher layer
         if (m_maxDecPicBuffering[i + 1] < m_maxDecPicBuffering[i])
         {
@@ -1383,19 +1344,11 @@ Void TAppEncCfg::xCheckParameter()
         }
     }
 
-#if L0323_DPB
     // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] -  1, inclusive
     if (m_numReorderPics[MAX_TLAYER - 1] > m_maxDecPicBuffering[MAX_TLAYER - 1] - 1)
     {
         m_maxDecPicBuffering[MAX_TLAYER - 1] = m_numReorderPics[MAX_TLAYER - 1] + 1;
     }
-#else
-    // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
-    if (m_numReorderPics[MAX_TLAYER - 1] > m_maxDecPicBuffering[MAX_TLAYER - 1])
-    {
-        m_maxDecPicBuffering[MAX_TLAYER - 1] = m_numReorderPics[MAX_TLAYER - 1];
-    }
-#endif // if L0323_DPB
 
     if (m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
     {
@@ -1472,9 +1425,6 @@ Void TAppEncCfg::xCheckParameter()
             m_minSpatialSegmentationIdc = 0;
         }
     }
-#if !L0034_COMBINED_LIST_CLEANUP
-    xConfirmPara(m_bUseLComb == false && m_numReorderPics[MAX_TLAYER - 1] != 0, "ListCombination can only be 0 in low delay coding (more precisely when L0 and L1 are identical)"); // Note however this is not the full necessary condition as ref_pic_list_combination_flag can only be 0 if L0 == L1.
-#endif
     xConfirmPara(m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
     xConfirmPara(m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive");
     xConfirmPara(m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1");
@@ -1494,7 +1444,6 @@ Void TAppEncCfg::xCheckParameter()
     }
 #endif // if J0149_TONE_MAPPING_SEI
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     if (m_RCEnableRateControl)
     {
         if (m_RCForceIntraQP)
@@ -1507,29 +1456,14 @@ Void TAppEncCfg::xCheckParameter()
         }
         xConfirmPara(m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n");
     }
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    if (m_enableRateCtrl)
-    {
-        Int numLCUInWidth  = (m_iSourceWidth  / m_uiMaxCUWidth) + ((m_iSourceWidth  %  m_uiMaxCUWidth) ? 1 : 0);
-        Int numLCUInHeight = (m_iSourceHeight / m_uiMaxCUHeight) + ((m_iSourceHeight %  m_uiMaxCUHeight) ? 1 : 0);
-        Int numLCUInPic    =  numLCUInWidth * numLCUInHeight;
-
-        xConfirmPara((numLCUInPic % m_numLCUInUnit) != 0, "total number of LCUs in a frame should be completely divided by NumLCUInUnit");
-
-        m_iMaxDeltaQP       = MAX_DELTA_QP;
-        m_iMaxCuDQPDepth    = MAX_CUDQP_DEPTH;
-    }
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
 
     xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
 
     xConfirmPara(m_log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
-#if L0444_FPA_TYPE
     if (m_framePackingSEIEnabled)
     {
         xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5, "SEIFramePackingType must be in rage 3 to 5");
     }
-#endif
 
 #undef xConfirmPara
     if (check_failed)
@@ -1595,7 +1529,6 @@ Void TAppEncCfg::xPrintParameter()
     printf("Internal bit depth           : %d\n", m_internalBitDepth);
 #endif
     printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
-#if RATE_CONTROL_LAMBDA_DOMAIN
     printf("RateControl                  : %d\n", m_RCEnableRateControl);
     if (m_RCEnableRateControl)
     {
@@ -1606,14 +1539,6 @@ Void TAppEncCfg::xPrintParameter()
         printf("InitialQP                    : %d\n", m_RCInitialQP);
         printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP);
     }
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    printf("RateControl                  : %d\n", m_enableRateCtrl);
-    if (m_enableRateCtrl)
-    {
-        printf("TargetBitrate                : %d\n", m_targetBitrate);
-        printf("NumLCUInUnit                 : %d\n", m_numLCUInUnit);
-    }
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     printf("Max Num Merge Candidates     : %d\n", m_maxNumMergeCand);
     printf("\n");
 
@@ -1625,14 +1550,9 @@ Void TAppEncCfg::xPrintParameter()
     printf("SRD:%d ", m_bUseSBACRD);
     printf("RDQ:%d ", m_useRDOQ);
     printf("RDQTS:%d ", m_useRDOQTS);
-#if L0232_RD_PENALTY
     printf("RDpenalty:%d ", m_rdPenalty);
-#endif
     printf("SQP:%d ", m_uiDeltaQpRD);
     printf("ASR:%d ", m_bUseASR);
-#if !L0034_COMBINED_LIST_CLEANUP
-    printf("LComb:%d ", m_bUseLComb);
-#endif
     printf("FEN:%d ", m_bUseFastEnc);
     printf("ECU:%d ", m_bUseEarlyCU);
     printf("FDM:%d ", m_useFastDecisionForMerge);
@@ -1664,9 +1584,7 @@ Void TAppEncCfg::xPrintParameter()
            m_iWaveFrontSynchro, m_iWaveFrontSubstreams);
     printf(" ScalingList:%d ", m_useScalingListId);
     printf("TMVPMode:%d ", m_TMVPModeId);
-#if ADAPTIVE_QP_SELECTION
     printf("AQpS:%d", m_bUseAdaptQpSelect);
-#endif
 
     printf(" SignBitHidingFlag:%d ", m_signHideFlag);
     printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0);

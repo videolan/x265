@@ -80,7 +80,6 @@ public:
 
     Int getEntropyBits(Short val) { return m_entropyBits[m_ucState ^ val]; }
 
-#if FAST_BIT_EST
     Void update(Int binVal)
     {
         m_ucState = m_nextState[m_ucState][binVal];
@@ -89,7 +88,6 @@ public:
     static Void buildNextStateTable();
     static Int getEntropyBitsTrm(Int val) { return m_entropyBits[126 ^ val]; }
 
-#endif
     Void setBinsCoded(UInt val)   { m_binsCoded = val;  }
 
     UInt getBinsCoded()           { return m_binsCoded;   }
@@ -100,9 +98,7 @@ private:
     static const  UChar m_aucNextStateMPS[128];
     static const  UChar m_aucNextStateLPS[128];
     static const Int m_entropyBits[128];
-#if FAST_BIT_EST
-    static UChar m_nextState[128][2];
-#endif
+    static UChar  m_nextState[128][2];
     UInt          m_binsCoded;
 };
 

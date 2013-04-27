@@ -42,11 +42,9 @@
 //! \ingroup TLibCommon
 //! \{
 
-#if ADAPTIVE_QP_SELECTION
 Int * TComDataCU::m_pcGlbArlCoeffY  = NULL;
 Int * TComDataCU::m_pcGlbArlCoeffCb = NULL;
 Int * TComDataCU::m_pcGlbArlCoeffCr = NULL;
-#endif
 
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
@@ -81,12 +79,10 @@ TComDataCU::TComDataCU()
     m_pcTrCoeffY         = NULL;
     m_pcTrCoeffCb        = NULL;
     m_pcTrCoeffCr        = NULL;
-#if ADAPTIVE_QP_SELECTION
     m_ArlCoeffIsAliasedAllocation = false;
     m_pcArlCoeffY        = NULL;
     m_pcArlCoeffCb       = NULL;
     m_pcArlCoeffCr       = NULL;
-#endif
 
     m_pbIPCMFlag         = NULL;
     m_pcIPCMSampleY      = NULL;
@@ -116,11 +112,7 @@ TComDataCU::TComDataCU()
 TComDataCU::~TComDataCU()
 {}
 
-Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu, Int unitSize
-#if ADAPTIVE_QP_SELECTION
-                        , Bool bGlobalRMARLBuffer
-#endif
-                        )
+Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer)
 {
     m_bDecSubCu = bDecSubCu;
 
@@ -170,7 +162,6 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
         memset(m_pcTrCoeffY, 0, uiWidth * uiHeight * sizeof(TCoeff));
         memset(m_pcTrCoeffCb, 0, uiWidth * uiHeight / 4 * sizeof(TCoeff));
         memset(m_pcTrCoeffCr, 0, uiWidth * uiHeight / 4 * sizeof(TCoeff));
-#if ADAPTIVE_QP_SELECTION
         if (bGlobalRMARLBuffer)
         {
             if (m_pcGlbArlCoeffY == NULL)
@@ -190,7 +181,6 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
             m_pcArlCoeffCb       = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
             m_pcArlCoeffCr       = (Int*)xMalloc(Int, uiWidth * uiHeight / 4);
         }
-#endif // if ADAPTIVE_QP_SELECTION
 
         m_pbIPCMFlag         = (Bool*)xMalloc(Bool, uiNumPartition);
         m_pcIPCMSampleY      = (Pel*)xMalloc(Pel, uiWidth * uiHeight);
@@ -262,7 +252,6 @@ Void TComDataCU::destroy()
         if (m_pcTrCoeffY) { xFree(m_pcTrCoeffY); m_pcTrCoeffY = NULL; }
         if (m_pcTrCoeffCb) { xFree(m_pcTrCoeffCb); m_pcTrCoeffCb = NULL; }
         if (m_pcTrCoeffCr) { xFree(m_pcTrCoeffCr); m_pcTrCoeffCr = NULL; }
-#if ADAPTIVE_QP_SELECTION
         if (!m_ArlCoeffIsAliasedAllocation)
         {
             xFree(m_pcArlCoeffY);
@@ -275,7 +264,6 @@ Void TComDataCU::destroy()
         if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY); m_pcGlbArlCoeffY = NULL; }
         if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb); m_pcGlbArlCoeffCb = NULL; }
         if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr); m_pcGlbArlCoeffCr = NULL; }
-#endif // if ADAPTIVE_QP_SELECTION
         if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag); m_pbIPCMFlag = NULL; }
         if (m_pcIPCMSampleY) { xFree(m_pcIPCMSampleY); m_pcIPCMSampleY = NULL; }
         if (m_pcIPCMSampleCb) { xFree(m_pcIPCMSampleCb); m_pcIPCMSampleCb = NULL; }
@@ -453,17 +441,13 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
         m_acCUMvField[0].clearMvField();
         m_acCUMvField[1].clearMvField();
         memset(m_pcTrCoeffY, 0, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
         memset(m_pcArlCoeffY, 0, sizeof(Int) * uiTmp);
-#endif
         memset(m_pcIPCMSampleY, 0, sizeof(Pel) * uiTmp);
         uiTmp  >>= 2;
         memset(m_pcTrCoeffCb, 0, sizeof(TCoeff) * uiTmp);
         memset(m_pcTrCoeffCr, 0, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
         memset(m_pcArlCoeffCb, 0, sizeof(Int) * uiTmp);
         memset(m_pcArlCoeffCr, 0, sizeof(Int) * uiTmp);
-#endif
         memset(m_pcIPCMSampleCb, 0, sizeof(Pel) * uiTmp);
         memset(m_pcIPCMSampleCr, 0, sizeof(Pel) * uiTmp);
     }
@@ -475,9 +459,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
         for (Int i = 0; i < uiTmp; i++)
         {
             m_pcTrCoeffY[i] = pcFrom->m_pcTrCoeffY[i];
-#if ADAPTIVE_QP_SELECTION
             m_pcArlCoeffY[i] = pcFrom->m_pcArlCoeffY[i];
-#endif
             m_pcIPCMSampleY[i] = pcFrom->m_pcIPCMSampleY[i];
         }
 
@@ -485,10 +467,8 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
         {
             m_pcTrCoeffCb[i] = pcFrom->m_pcTrCoeffCb[i];
             m_pcTrCoeffCr[i] = pcFrom->m_pcTrCoeffCr[i];
-#if ADAPTIVE_QP_SELECTION
             m_pcArlCoeffCb[i] = pcFrom->m_pcArlCoeffCb[i];
             m_pcArlCoeffCr[i] = pcFrom->m_pcArlCoeffCr[i];
-#endif
             m_pcIPCMSampleCb[i] = pcFrom->m_pcIPCMSampleCb[i];
             m_pcIPCMSampleCr[i] = pcFrom->m_pcIPCMSampleCr[i];
         }
@@ -593,18 +573,14 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
         uiTmp = uhWidth * uhHeight;
 
         memset(m_pcTrCoeffY,    0, uiTmp * sizeof(*m_pcTrCoeffY));
-#if ADAPTIVE_QP_SELECTION
         memset(m_pcArlCoeffY,  0, uiTmp * sizeof(*m_pcArlCoeffY));
-#endif
         memset(m_pcIPCMSampleY, 0, uiTmp * sizeof(*m_pcIPCMSampleY));
 
         uiTmp >>= 2;
         memset(m_pcTrCoeffCb,    0, uiTmp * sizeof(*m_pcTrCoeffCb));
         memset(m_pcTrCoeffCr,    0, uiTmp * sizeof(*m_pcTrCoeffCr));
-#if ADAPTIVE_QP_SELECTION
         memset(m_pcArlCoeffCb,   0, uiTmp * sizeof(*m_pcArlCoeffCb));
         memset(m_pcArlCoeffCr,   0, uiTmp * sizeof(*m_pcArlCoeffCr));
-#endif
         memset(m_pcIPCMSampleCb, 0, uiTmp * sizeof(*m_pcIPCMSampleCb));
         memset(m_pcIPCMSampleCr, 0, uiTmp * sizeof(*m_pcIPCMSampleCr));
     }
@@ -698,17 +674,13 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
 
     UInt uiTmp = uhWidth * uhHeight;
     memset(m_pcTrCoeffY, 0, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memset(m_pcArlCoeffY, 0, sizeof(Int) * uiTmp);
-#endif
     memset(m_pcIPCMSampleY, 0, sizeof(Pel) * uiTmp);
     uiTmp >>= 2;
     memset(m_pcTrCoeffCb, 0, sizeof(TCoeff) * uiTmp);
     memset(m_pcTrCoeffCr, 0, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memset(m_pcArlCoeffCb, 0, sizeof(Int) * uiTmp);
     memset(m_pcArlCoeffCr, 0, sizeof(Int) * uiTmp);
-#endif
     memset(m_pcIPCMSampleCb, 0, sizeof(Pel) * uiTmp);
     memset(m_pcIPCMSampleCr, 0, sizeof(Pel) * uiTmp);
     m_acCUMvField[0].clearMvField();
@@ -729,9 +701,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
         for (Int i = 0; i < uiTmp; i++)
         {
             m_pcTrCoeffY[i] = bigCU->m_pcTrCoeffY[uiCoffOffset + i];
-#if ADAPTIVE_QP_SELECTION
             m_pcArlCoeffY[i] = bigCU->m_pcArlCoeffY[uiCoffOffset + i];
-#endif
             m_pcIPCMSampleY[i] = bigCU->m_pcIPCMSampleY[uiCoffOffset + i];
         }
 
@@ -741,10 +711,8 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
         {
             m_pcTrCoeffCr[i] = bigCU->m_pcTrCoeffCr[uiCoffOffset + i];
             m_pcTrCoeffCb[i] = bigCU->m_pcTrCoeffCb[uiCoffOffset + i];
-#if ADAPTIVE_QP_SELECTION
             m_pcArlCoeffCr[i] = bigCU->m_pcArlCoeffCr[uiCoffOffset + i];
             m_pcArlCoeffCb[i] = bigCU->m_pcArlCoeffCb[uiCoffOffset + i];
-#endif
             m_pcIPCMSampleCb[i] = bigCU->m_pcIPCMSampleCb[uiCoffOffset + i];
             m_pcIPCMSampleCr[i] = bigCU->m_pcIPCMSampleCr[uiCoffOffset + i];
         }
@@ -841,19 +809,15 @@ Void TComDataCU::copySubCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     UInt uiCoffOffset = uiMaxCuWidth * uiMaxCuHeight * uiAbsPartIdx / pcCU->getPic()->getNumPartInCU();
 
     m_pcTrCoeffY = pcCU->getCoeffY() + uiCoffOffset;
-#if ADAPTIVE_QP_SELECTION
     m_pcArlCoeffY = pcCU->getArlCoeffY() + uiCoffOffset;
-#endif
     m_pcIPCMSampleY = pcCU->getPCMSampleY() + uiCoffOffset;
 
     uiTmp >>= 2;
     uiCoffOffset >>= 2;
     m_pcTrCoeffCb = pcCU->getCoeffCb() + uiCoffOffset;
     m_pcTrCoeffCr = pcCU->getCoeffCr() + uiCoffOffset;
-#if ADAPTIVE_QP_SELECTION
     m_pcArlCoeffCb = pcCU->getArlCoeffCb() + uiCoffOffset;
     m_pcArlCoeffCr = pcCU->getArlCoeffCr() + uiCoffOffset;
-#endif
     m_pcIPCMSampleCb = pcCU->getPCMSampleCb() + uiCoffOffset;
     m_pcIPCMSampleCr = pcCU->getPCMSampleCr() + uiCoffOffset;
 
@@ -967,19 +931,15 @@ Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth
     UInt uiTmp  = g_uiMaxCUWidth * g_uiMaxCUHeight >> (uiDepth << 1);
     UInt uiTmp2 = uiPartUnitIdx * uiTmp;
     memcpy(m_pcTrCoeffY  + uiTmp2, pcCU->getCoeffY(),  sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(m_pcArlCoeffY  + uiTmp2, pcCU->getArlCoeffY(),  sizeof(Int) * uiTmp);
-#endif
     memcpy(m_pcIPCMSampleY + uiTmp2, pcCU->getPCMSampleY(), sizeof(Pel) * uiTmp);
 
     uiTmp >>= 2;
     uiTmp2 >>= 2;
     memcpy(m_pcTrCoeffCb + uiTmp2, pcCU->getCoeffCb(), sizeof(TCoeff) * uiTmp);
     memcpy(m_pcTrCoeffCr + uiTmp2, pcCU->getCoeffCr(), sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(m_pcArlCoeffCb + uiTmp2, pcCU->getArlCoeffCb(), sizeof(Int) * uiTmp);
     memcpy(m_pcArlCoeffCr + uiTmp2, pcCU->getArlCoeffCr(), sizeof(Int) * uiTmp);
-#endif
     memcpy(m_pcIPCMSampleCb + uiTmp2, pcCU->getPCMSampleCb(), sizeof(Pel) * uiTmp);
     memcpy(m_pcIPCMSampleCr + uiTmp2, pcCU->getPCMSampleCr(), sizeof(Pel) * uiTmp);
     m_uiTotalBins += pcCU->getTotalBins();
@@ -1040,19 +1000,15 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     UInt uiTmp  = (g_uiMaxCUWidth * g_uiMaxCUHeight) >> (uhDepth << 1);
     UInt uiTmp2 = m_uiAbsIdxInLCU * m_pcPic->getMinCUWidth() * m_pcPic->getMinCUHeight();
     memcpy(rpcCU->getCoeffY()  + uiTmp2, m_pcTrCoeffY,  sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(rpcCU->getArlCoeffY()  + uiTmp2, m_pcArlCoeffY,  sizeof(Int) * uiTmp);
-#endif
     memcpy(rpcCU->getPCMSampleY() + uiTmp2, m_pcIPCMSampleY, sizeof(Pel) * uiTmp);
 
     uiTmp >>= 2;
     uiTmp2 >>= 2;
     memcpy(rpcCU->getCoeffCb() + uiTmp2, m_pcTrCoeffCb, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getCoeffCr() + uiTmp2, m_pcTrCoeffCr, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(rpcCU->getArlCoeffCb() + uiTmp2, m_pcArlCoeffCb, sizeof(Int) * uiTmp);
     memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_pcArlCoeffCr, sizeof(Int) * uiTmp);
-#endif
     memcpy(rpcCU->getPCMSampleCb() + uiTmp2, m_pcIPCMSampleCb, sizeof(Pel) * uiTmp);
     memcpy(rpcCU->getPCMSampleCr() + uiTmp2, m_pcIPCMSampleCr, sizeof(Pel) * uiTmp);
     rpcCU->getTotalBins() = m_uiTotalBins;
@@ -1111,20 +1067,15 @@ Void TComDataCU::copyToPic(UChar uhDepth, UInt uiPartIdx, UInt uiPartDepth)
     UInt uiTmp  = (g_uiMaxCUWidth * g_uiMaxCUHeight) >> ((uhDepth + uiPartDepth) << 1);
     UInt uiTmp2 = uiPartOffset * m_pcPic->getMinCUWidth() * m_pcPic->getMinCUHeight();
     memcpy(rpcCU->getCoeffY()  + uiTmp2, m_pcTrCoeffY,  sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(rpcCU->getArlCoeffY()  + uiTmp2, m_pcArlCoeffY,  sizeof(Int) * uiTmp);
-#endif
-
     memcpy(rpcCU->getPCMSampleY() + uiTmp2, m_pcIPCMSampleY, sizeof(Pel) * uiTmp);
 
     uiTmp >>= 2;
     uiTmp2 >>= 2;
     memcpy(rpcCU->getCoeffCb() + uiTmp2, m_pcTrCoeffCb, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getCoeffCr() + uiTmp2, m_pcTrCoeffCr, sizeof(TCoeff) * uiTmp);
-#if ADAPTIVE_QP_SELECTION
     memcpy(rpcCU->getArlCoeffCb() + uiTmp2, m_pcArlCoeffCb, sizeof(Int) * uiTmp);
     memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_pcArlCoeffCr, sizeof(Int) * uiTmp);
-#endif
 
     memcpy(rpcCU->getPCMSampleCb() + uiTmp2, m_pcIPCMSampleCb, sizeof(Pel) * uiTmp);
     memcpy(rpcCU->getPCMSampleCr() + uiTmp2, m_pcIPCMSampleCr, sizeof(Pel) * uiTmp);
@@ -3144,11 +3095,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
         return false;
     }
 
-#if L0363_MVP_POC
     if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0 && m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC() == pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx)))
-#else
-    if (m_pcSlice->isEqualRef(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx), iRefIdx))
-#endif
     {
         TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
 

@@ -106,11 +106,7 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
     for (i = 0; i < m_uiNumCUsInFrame; i++)
     {
         m_apcTComDataCU[i] = new TComDataCU;
-        m_apcTComDataCU[i]->create(m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, false, m_uiMaxCUWidth >> m_uhTotalDepth
-#if ADAPTIVE_QP_SELECTION
-                                   , true
-#endif
-                                   );
+        m_apcTComDataCU[i]->create(m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, false, m_uiMaxCUWidth >> m_uhTotalDepth, true);
     }
 
     m_puiCUOrderMap = new UInt[m_uiNumCUsInFrame + 1];

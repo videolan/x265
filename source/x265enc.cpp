@@ -86,12 +86,10 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setProfile(m_profile);
     m_cTEncTop.setLevel(m_levelTier, m_level);
-#if L0046_CONSTRAINT_FLAGS
     m_cTEncTop.setProgressiveSourceFlag(m_progressiveSourceFlag);
     m_cTEncTop.setInterlacedSourceFlag(m_interlacedSourceFlag);
     m_cTEncTop.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     m_cTEncTop.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
-#endif
 
     m_cTEncTop.setFrameRate(m_iFrameRate);
     m_cTEncTop.setFrameSkip(m_FrameSkip);
@@ -132,9 +130,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setLoopFilterBetaOffset(m_loopFilterBetaOffsetDiv2);
     m_cTEncTop.setLoopFilterTcOffset(m_loopFilterTcOffsetDiv2);
     m_cTEncTop.setDeblockingFilterControlPresent(m_DeblockingFilterControlPresent);
-#if L0386_DB_METRIC
     m_cTEncTop.setDeblockingFilterMetric(m_DeblockingFilterMetric);
-#endif
 
     //====== Motion search ========
     m_cTEncTop.setFastSearch(m_iFastSearch);
@@ -148,9 +144,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setChromaCbQpOffset(m_cbQpOffset);
     m_cTEncTop.setChromaCrQpOffset(m_crQpOffset);
 
-#if ADAPTIVE_QP_SELECTION
     m_cTEncTop.setUseAdaptQpSelect(m_bUseAdaptQpSelect);
-#endif
 
     Int lowestQP;
     lowestQP =  -6 * (g_bitDepthY - 8); // XXX: check
@@ -169,15 +163,10 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseASR(m_bUseASR);
     m_cTEncTop.setUseHADME(m_bUseHADME);
     m_cTEncTop.setUseLossless(m_useLossless);
-#if !L0034_COMBINED_LIST_CLEANUP
-    m_cTEncTop.setUseLComb(m_bUseLComb);
-#endif
     m_cTEncTop.setdQPs(m_aidQP);
     m_cTEncTop.setUseRDOQ(m_useRDOQ);
     m_cTEncTop.setUseRDOQTS(m_useRDOQTS);
-#if L0232_RD_PENALTY
     m_cTEncTop.setRDpenalty(m_rdPenalty);
-#endif
     m_cTEncTop.setQuadtreeTULog2MaxSize(m_uiQuadtreeTULog2MaxSize);
     m_cTEncTop.setQuadtreeTULog2MinSize(m_uiQuadtreeTULog2MinSize);
     m_cTEncTop.setQuadtreeTUMaxDepthInter(m_uiQuadtreeTUMaxDepthInter);
@@ -308,7 +297,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseScalingListId(m_useScalingListId);
     m_cTEncTop.setScalingListFile(m_scalingListFile);
     m_cTEncTop.setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
     m_cTEncTop.setUseRateCtrl(m_RCEnableRateControl);
     m_cTEncTop.setTargetBitrate(m_RCTargetBitrate);
     m_cTEncTop.setKeepHierBit(m_RCKeepHierarchicalBit);
@@ -316,11 +304,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseLCUSeparateModel(m_RCUseLCUSeparateModel);
     m_cTEncTop.setInitialQP(m_RCInitialQP);
     m_cTEncTop.setForceIntraQP(m_RCForceIntraQP);
-#else
-    m_cTEncTop.setUseRateCtrl(m_enableRateCtrl);
-    m_cTEncTop.setTargetBitrate(m_targetBitrate);
-    m_cTEncTop.setNumLCUInUnit(m_numLCUInUnit);
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
     m_cTEncTop.setUseRecalculateQPAccordingToLambda(m_recalculateQPAccordingToLambda);

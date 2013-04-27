@@ -116,12 +116,10 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
-#if L0046_CONSTRAINT_FLAGS
     Bool m_progressiveSourceFlag;
     Bool m_interlacedSourceFlag;
     Bool m_nonPackedConstraintFlag;
     Bool m_frameOnlyConstraintFlag;
-#endif
 
     //====== Coding Structure ========
     UInt      m_uiIntraPeriod;
@@ -154,9 +152,7 @@ protected:
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
     Bool      m_DeblockingFilterControlPresent;
-#if L0386_DB_METRIC
     Bool      m_DeblockingFilterMetric;
-#endif
     Bool      m_bUseSAO;
     Int       m_maxNumOffsetsPerPic;
     Bool      m_saoLcuBoundary;
@@ -177,9 +173,7 @@ protected:
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
     Int       m_chromaCrQpOffset;               //  Chroma Cr Qp Offset (0:default)
 
-#if ADAPTIVE_QP_SELECTION
     Bool      m_bUseAdaptQpSelect;
-#endif
 
     Bool      m_bUseAdaptiveQP;
     Int       m_iQPAdaptationRange;
@@ -188,14 +182,9 @@ protected:
     Bool      m_bUseSBACRD;
     Bool      m_bUseASR;
     Bool      m_bUseHADME;
-#if !L0034_COMBINED_LIST_CLEANUP
-    Bool      m_bUseLComb;
-#endif
     Bool      m_useRDOQ;
     Bool      m_useRDOQTS;
-#if L0232_RD_PENALTY
     UInt      m_rdPenalty;
-#endif
     Bool      m_bUseFastEnc;
     Bool      m_bUseEarlyCU;
     Bool      m_useFastDecisionForMerge;
@@ -287,7 +276,6 @@ protected:
     Char*     m_scalingListFile;        ///< quantization matrix file name
     Int       m_TMVPModeId;
     Int       m_signHideFlag;
-#if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      m_RCEnableRateControl;
     Int       m_RCTargetBitrate;
     Bool      m_RCKeepHierarchicalBit;
@@ -295,11 +283,6 @@ protected:
     Bool      m_RCUseLCUSeparateModel;
     Int       m_RCInitialQP;
     Bool      m_RCForceIntraQP;
-#else
-    Bool      m_enableRateCtrl;                              ///< Flag for using rate control algorithm
-    Int       m_targetBitrate;                               ///< target bitrate
-    Int       m_numLCUInUnit;                                ///< Total number of LCUs in a frame should be divided by the NumLCUInUnit
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
     TComVPS   m_cVPS;
@@ -420,10 +403,7 @@ public:
 
     Void      setDeblockingFilterControlPresent(Bool b) { m_DeblockingFilterControlPresent = b; }
 
-#if L0386_DB_METRIC
     Void      setDeblockingFilterMetric(Bool b)      { m_DeblockingFilterMetric = b; }
-
-#endif
 
     //====== Motion search ========
     Void      setFastSearch(Int i)      { m_iFastSearch = i; }
@@ -441,12 +421,9 @@ public:
 
     Void      setChromaCrQpOffset(Int i)      { m_chromaCrQpOffset = i; }
 
-#if ADAPTIVE_QP_SELECTION
     Void      setUseAdaptQpSelect(Bool i) { m_bUseAdaptQpSelect    = i; }
 
     Bool      getUseAdaptQpSelect()           { return m_bUseAdaptQpSelect; }
-
-#endif
 
     Void      setUseAdaptiveQP(Bool b)      { m_bUseAdaptiveQP = b; }
 
@@ -505,10 +482,7 @@ public:
 
     Bool      getDeblockingFilterControlPresent()  { return m_DeblockingFilterControlPresent; }
 
-#if L0386_DB_METRIC
     Bool      getDeblockingFilterMetric()      { return m_DeblockingFilterMetric; }
-
-#endif
 
     //==== Motion search ========
     Int       getFastSearch()      { return m_iFastSearch; }
@@ -534,18 +508,12 @@ public:
 
     Void      setUseHADME(Bool b)     { m_bUseHADME   = b; }
 
-#if !L0034_COMBINED_LIST_CLEANUP
-    Void      setUseLComb(Bool b)     { m_bUseLComb   = b; }
-
-#endif
     Void      setUseRDOQ(Bool b)     { m_useRDOQ    = b; }
 
     Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
 
-#if L0232_RD_PENALTY
     Void      setRDpenalty(UInt b)     { m_rdPenalty  = b; }
-
-#endif
+    
     Void      setUseFastEnc(Bool b)     { m_bUseFastEnc = b; }
 
     Void      setUseEarlyCU(Bool b)     { m_bUseEarlyCU = b; }
@@ -578,17 +546,11 @@ public:
 
     Bool      getUseHADME()      { return m_bUseHADME;   }
 
-#if !L0034_COMBINED_LIST_CLEANUP
-    Bool      getUseLComb()      { return m_bUseLComb;   }
-#endif
-
     Bool      getUseRDOQ()       { return m_useRDOQ;    }
 
     Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
 
-#if L0232_RD_PENALTY
     Int       getRDpenalty()      { return m_rdPenalty;  }
-#endif
 
     Bool      getUseFastEnc()      { return m_bUseFastEnc; }
 
@@ -919,7 +881,6 @@ public:
 
     Int       getSignHideFlag()                    { return m_signHideFlag; }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      getUseRateCtrl()              { return m_RCEnableRateControl;   }
 
     Void      setUseRateCtrl(Bool b)      { m_RCEnableRateControl = b;      }
@@ -948,20 +909,6 @@ public:
 
     Void      setForceIntraQP(Bool b)      { m_RCForceIntraQP = b;           }
 
-#else // if RATE_CONTROL_LAMBDA_DOMAIN
-    Bool      getUseRateCtrl()                { return m_enableRateCtrl;    }
-
-    Void      setUseRateCtrl(Bool flag)       { m_enableRateCtrl = flag;    }
-
-    Int       getTargetBitrate()                { return m_targetBitrate;     }
-
-    Void      setTargetBitrate(Int target)      { m_targetBitrate  = target;  }
-
-    Int       getNumLCUInUnit()                { return m_numLCUInUnit;      }
-
-    Void      setNumLCUInUnit(Int numLCUs)     { m_numLCUInUnit   = numLCUs; }
-
-#endif // if RATE_CONTROL_LAMBDA_DOMAIN
     Bool      getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
 
     Void      setTransquantBypassEnableFlag(Bool flag)  { m_TransquantBypassEnableFlag = flag; }
@@ -1106,7 +1053,6 @@ public:
 
     Void      setLog2MaxMvLengthVertical(Int i)             { m_log2MaxMvLengthVertical = i; }
 
-#if L0046_CONSTRAINT_FLAGS
     Bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
 
     Void setProgressiveSourceFlag(Bool b) { m_progressiveSourceFlag = b; }
@@ -1122,10 +1068,8 @@ public:
     Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
 
     Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
-
-#endif // if L0046_CONSTRAINT_FLAGS
 };
 
 //! \}
 
-#endif // !defined(AFX_TENCCFG_H__6B99B797_F4DA_4E46_8E78_7656339A6C41__INCLUDED_)
+#endif // __TENCCFG__

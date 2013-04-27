@@ -41,148 +41,102 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define FIX1071 1 ///< Temporary fix for issue #1071
+#define L0208_SOP_DESCRIPTION_SEI                 1 ///< L0208: add SOP description SEI
+#define J0149_TONE_MAPPING_SEI                    1 ///< J0149: Tone mapping information SEI
 
-#define L0208_SOP_DESCRIPTION_SEI     1 ///< L0208: add SOP descrioption SEI
-#define MAX_NUM_PICS_IN_SOP           1024
+#define MAX_NUM_PICS_IN_SOP                    1024
 
-#define K0180_SCALABLE_NESTING_SEI  1   ///JCTVC-K0180 scalable nesting sei message
-#define MAX_NESTING_NUM_OPS         1024
-#define MAX_NESTING_NUM_LAYER       64
+#define K0180_SCALABLE_NESTING_SEI                1 ///JCTVC-K0180 scalable nesting SEI message
+#define MAX_NESTING_NUM_OPS                    1024
+#define MAX_NESTING_NUM_LAYER                    64
 
-#define J0149_TONE_MAPPING_SEI        1 ///< J0149: Tone mapping information SEI
-#define L0363_DU_BIT_RATE             1 ///< L0363: add bit_rate_du_value_minus1 to HRD parameters
-#define L0328_SPLICING                1 ///< L0328: splicing support in HRD
-#define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
-                                        ///<        picture timing SEI and DU information SEI
-#define L0045_PERSISTENCE_FLAGS  1      ///< L0045: Replace "repetition_period" syntax elements in SEI with "persistence_flag"
-#define L0045_NON_NESTED_SEI_RESTRICTIONS 1 ///< L0045; Include restriction on the order of APS and non-nested BP, PT and DU info SEI messages
-#define L0044_CPB_DPB_DELAY_OFFSET 1  ///< L0044: Include syntax elements cpb_delay_offset and dpb_delay_offset in the BP SEI message
-#define L0047_APS_FLAGS            1  ///< L0047: Include full_random_access_flag and no_param_set_update_flag in the active parameter set SEI message
-#define L0043_TIMING_INFO          1  ///< L0043: Timing information is signalled in VUI outside hrd_parameters()
-#define L0046_RENAME_PROG_SRC_IDC  1  ///< L0046: Rename progressive_source_idc to source_scan_type
-#define L0045_CONDITION_SIGNALLING 1  ///< L0045: Condition the signaling of some syntax elements in picture timing SEI message
-#define L0043_MSS_IDC 1
-#define L0116_ENTRY_POINT 1
-#define L0363_MORE_BITS 1
-#define L0363_MVP_POC 1
-#define L0363_BYTE_ALIGN 1
-#define L0363_SEI_ALLOW_SUFFIX 1
-#define L0323_LIMIT_DEFAULT_LIST_SIZE 1
-#define L0046_CONSTRAINT_FLAGS 1
-#define L0255_MOVE_PPS_FLAGS       1  ///< move some flags to earlier positions in the PPS
-#define L0444_FPA_TYPE             1  ///< allow only FPA types 3, 4 and 5
-#define L0372 1
-#define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
-#define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
-#define L0386_DB_METRIC            1  ///< L0386: non-normative blockiness metric (automatically configures deblocking parameters in bitstream)
-#define L0323_DPB                     1 ///< L0323: Specification of active reference indices and decoded picture buffer
-
-#define L0034_COMBINED_LIST_CLEANUP 1
+#define SIGNAL_BITRATE_PICRATE_IN_VPS             0 ///< K0125: Signal bit_rate and pic_rate in VPS
 
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
 #define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
 
-#define RATE_CONTROL_LAMBDA_DOMAIN                  1  ///< JCTVC-K0103, rate control by R-lambda model
-#define L0033_RC_BUGFIX                             1  ///< JCTVC-L0033, bug fix for R-lambda model based rate control
+#define MAX_CPB_CNT                               32 ///< Upper bound of (cpb_cnt_minus1 + 1)
+#define MAX_NUM_LAYER_IDS                         64
 
-#define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
-#define MAX_NUM_LAYER_IDS                64
+#define COEF_REMAIN_BIN_REDUCTION                 3 ///< indicates the level at which the VLC
+                                                    ///< transitions from Golomb-Rice to TU+EG(k)
 
-#define COEF_REMAIN_BIN_REDUCTION        3 ///< indicates the level at which the VLC
-                                           ///< transitions from Golomb-Rice to TU+EG(k)
+#define CU_DQP_TU_CMAX                            5 ///< max number bins for truncated unary
+#define CU_DQP_EG_k                               0 ///< expgolomb order
 
-#define CU_DQP_TU_CMAX 5                   ///< max number bins for truncated unary
-#define CU_DQP_EG_k 0                      ///< expgolomb order
+#define SBH_THRESHOLD                             4 ///< I0156: value of the fixed SBH controlling threshold
 
-#define SBH_THRESHOLD                    4  ///< I0156: value of the fixed SBH controlling threshold
+#define SEQUENCE_LEVEL_LOSSLESS                   0 ///< H0530: used only for sequence or frame-level lossless coding
 
-#define SEQUENCE_LEVEL_LOSSLESS           0  ///< H0530: used only for sequence or frame-level lossless coding
+#define DISABLING_CLIP_FOR_BIPREDME               1  ///< Ticket #175
 
-#define DISABLING_CLIP_FOR_BIPREDME         1  ///< Ticket #175
+#define C1FLAG_NUMBER                             8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
+#define C2FLAG_NUMBER                             1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
 
-#define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
-#define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
+#define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3          1 ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
 
-#define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3 1  ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
+#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS         1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now)
 
-#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now)
+#define SAO_ENCODING_RATE                         0.75
+#define SAO_ENCODING_RATE_CHROMA                  0.5
 
-#define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
-#if SAO_ENCODING_CHOICE
-#define SAO_ENCODING_RATE                0.75
-#define SAO_ENCODING_CHOICE_CHROMA       1 ///< J0044: picture early termination Luma and Chroma are handled separately
-#if SAO_ENCODING_CHOICE_CHROMA
-#define SAO_ENCODING_RATE_CHROMA         0.5
-#endif
-#endif
+#define MAX_NUM_VPS                               16
+#define MAX_NUM_SPS                               16
+#define MAX_NUM_PPS                               64
 
-#define MAX_NUM_VPS                16
-#define MAX_NUM_SPS                16
-#define MAX_NUM_PPS                64
+#define WEIGHTED_CHROMA_DISTORTION                1 ///< F386: weighting of chroma for RDO
+#define RDOQ_CHROMA_LAMBDA                        1 ///< F386: weighting of chroma for RDOQ
+#define SAO_CHROMA_LAMBDA                         1 ///< F386: weighting of chroma for SAO
 
-#define WEIGHTED_CHROMA_DISTORTION  1   ///< F386: weighting of chroma for RDO
-#define RDOQ_CHROMA_LAMBDA          1   ///< F386: weighting of chroma for RDOQ
-#define SAO_CHROMA_LAMBDA           1   ///< F386: weighting of chroma for SAO
+#define MIN_SCAN_POS_CROSS                        4
 
-#define MIN_SCAN_POS_CROSS          4
+#define MLS_GRP_NUM                              64 ///< G644 : Max number of coefficient groups, max(16, 64)
+#define MLS_CG_SIZE                               4 ///< G644 : Coefficient group size of 4x4
 
-#define FAST_BIT_EST                1   ///< G763: Table-based bit estimation for CABAC
+#define ARL_C_PRECISION                           7 ///< G382: 7-bit arithmetic precision
+#define LEVEL_RANGE                              30 ///< G382: max coefficient level in statistics collection
 
-#define MLS_GRP_NUM                         64     ///< G644 : Max number of coefficient groups, max(16, 64)
-#define MLS_CG_SIZE                         4      ///< G644 : Coefficient group size of 4x4
-
-#define ADAPTIVE_QP_SELECTION               1      ///< G382: Adaptive reconstruction levels, non-normative part for adaptive QP selection
-#if ADAPTIVE_QP_SELECTION
-#define ARL_C_PRECISION                     7      ///< G382: 7-bit arithmetic precision
-#define LEVEL_RANGE                         30     ///< G382: max coefficient level in statistics collection
-#endif
-
-#define NS_HAD                               0
-
-#define HHI_RQT_INTRA_SPEEDUP             1           ///< tests one best mode with full rqt
-#define HHI_RQT_INTRA_SPEEDUP_MOD         0           ///< tests two best modes with full rqt
+#define HHI_RQT_INTRA_SPEEDUP                     1 ///< tests one best mode with full rqt
+#define HHI_RQT_INTRA_SPEEDUP_MOD                 0 ///< tests two best modes with full rqt
 
 #if HHI_RQT_INTRA_SPEEDUP_MOD && !HHI_RQT_INTRA_SPEEDUP
 #error
 #endif
 
-#define VERBOSE_RATE 0 ///< Print additional rate information in encoder
+#define VERBOSE_RATE                              0 ///< Print additional rate information in encoder
 
-#define AMVP_DECIMATION_FACTOR            4
+#define AMVP_DECIMATION_FACTOR                    4
 
-#define SCAN_SET_SIZE                     16
-#define LOG2_SCAN_SET_SIZE                4
+#define SCAN_SET_SIZE                            16
+#define LOG2_SCAN_SET_SIZE                        4
 
-#define FAST_UDI_MAX_RDMODE_NUM               35          ///< maximum number of RD comparison in fast-UDI estimation loop
-
-#define ZERO_MVD_EST                          0           ///< Zero Mvd Estimation in normal mode
+#define FAST_UDI_MAX_RDMODE_NUM                  35 ///< maximum number of RD comparison in fast-UDI estimation loop
 
 #define NUM_INTRA_MODE 36
 #if !REMOVE_LM_CHROMA
 #define LM_CHROMA_IDX  35
 #endif
 
-#define WRITE_BACK                      1           ///< Enable/disable the encoder to replace the deltaPOC and Used by current from the config file with the values derived by the refIdc parameter.
-#define AUTO_INTER_RPS                  1           ///< Enable/disable the automatic generation of refIdc from the deltaPOC and Used by current from the config file.
-#define PRINT_RPS_INFO                  0           ///< Enable/disable the printing of bits used to send the RPS.
+#define WRITE_BACK                                1 ///< Enable/disable the encoder to replace the deltaPOC and Used by current from the config file with the values derived by the refIdc parameter.
+#define AUTO_INTER_RPS                            1 ///< Enable/disable the automatic generation of refIdc from the deltaPOC and Used by current from the config file.
+#define PRINT_RPS_INFO                            0 ///< Enable/disable the printing of bits used to send the RPS.
                                                     // using one nearest frame as reference frame, and the other frames are high quality (POC%4==0) frames (1+X)
                                                     // this should be done with encoder only decision
                                                     // but because of the absence of reference frame management, the related code was hard coded currently
 
-#define RVM_VCEGAM10_M 4
+#define RVM_VCEGAM10_M                            4
 
-#define PLANAR_IDX             0
-#define VER_IDX                26                    // index for intra VERTICAL   mode
-#define HOR_IDX                10                    // index for intra HORIZONTAL mode
-#define DC_IDX                 1                     // index for intra DC mode
-#define NUM_CHROMA_MODE        5                     // total number of chroma modes
-#define DM_CHROMA_IDX          36                    // chroma mode index for derived from luma intra mode
+#define PLANAR_IDX                                0
+#define VER_IDX                                  26 // index for intra VERTICAL   mode
+#define HOR_IDX                                  10 // index for intra HORIZONTAL mode
+#define DC_IDX                                    1 // index for intra DC mode
+#define NUM_CHROMA_MODE                           5 // total number of chroma modes
+#define DM_CHROMA_IDX                            36 // chroma mode index for derived from luma intra mode
 
-#define FAST_UDI_USE_MPM 1
+#define FAST_UDI_USE_MPM                          1
 
-#define RDO_WITHOUT_DQP_BITS              0           ///< Disable counting dQP bits in RDO-based mode decision
+#define RDO_WITHOUT_DQP_BITS                      0 ///< Disable counting dQP bits in RDO-based mode decision
 
 #define FULL_NBIT 0 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
 #if FULL_NBIT || !defined(HIGH_BIT_DEPTH)
@@ -191,24 +145,16 @@
 # define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
 #endif
 
-#define LOG2_MAX_NUM_COLUMNS_MINUS1        7
-#define LOG2_MAX_NUM_ROWS_MINUS1           7
-#define LOG2_MAX_COLUMN_WIDTH              13
-#define LOG2_MAX_ROW_HEIGHT                13
+#define LOG2_MAX_NUM_COLUMNS_MINUS1               7
+#define LOG2_MAX_NUM_ROWS_MINUS1                  7
+#define LOG2_MAX_COLUMN_WIDTH                    13
+#define LOG2_MAX_ROW_HEIGHT                      13
 
-#define MATRIX_MULT                             0   // Brute force matrix multiplication instead of partial butterfly
+#define REG_DCT                               65535
 
-#define REG_DCT 65535
+#define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices
 
-#define AMP_SAD                               1           ///< dedicated SAD functions for AMP
-#define AMP_ENC_SPEEDUP                       1           ///< encoder only speed-up by AMP mode skipping
-#if AMP_ENC_SPEEDUP
-#define AMP_MRG                               1           ///< encoder only force merge for AMP partition (no motion search for AMP)
-#endif
-
-#define SCALING_LIST_OUTPUT_RESULT    0 //JCTVC-G880/JCTVC-G1016 quantization matrices
-
-#define CABAC_INIT_PRESENT_FLAG     1
+#define CABAC_INIT_PRESENT_FLAG                   1
 
 // ====================================================================================================================
 // Basic type redefinition
@@ -250,7 +196,6 @@ typedef       unsigned long long  UInt64;
 // Type definition
 // ====================================================================================================================
 
-typedef       UChar           Pxl;        ///< 8-bit pixel type
 #if HIGH_BIT_DEPTH
 typedef       Short           Pel;        ///< 16-bit pixel type
 #else
@@ -409,9 +354,6 @@ enum RefPicList
 {
     REF_PIC_LIST_0 = 0, ///< reference list 0
     REF_PIC_LIST_1 = 1, ///< reference list 1
-#if !L0034_COMBINED_LIST_CLEANUP
-    REF_PIC_LIST_C = 2, ///< combined reference list for uni-prediction in B-Slices
-#endif
     REF_PIC_LIST_X = 100 ///< special mark
 };
 
@@ -451,7 +393,6 @@ enum DFunc
     DF_HADS64   = 27,   ///<  64xM HAD with step
     DF_HADS16N  = 28,   ///< 16NxM HAD with step
 
-#if AMP_SAD
     DF_SAD12    = 43,
     DF_SAD24    = 44,
     DF_SAD48    = 45,
@@ -461,9 +402,6 @@ enum DFunc
     DF_SADS48   = 48,
 
     DF_SSE_FRAME = 50   ///< Frame-based SSE
-#else
-    DF_SSE_FRAME = 33   ///< Frame-based SSE
-#endif // if AMP_SAD
 };
 
 /// index for SBAC based RD optimization

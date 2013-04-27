@@ -69,14 +69,12 @@ private:
     TCoeff*         m_pcQTTempCoeffY;
     TCoeff*         m_pcQTTempCoeffCb;
     TCoeff*         m_pcQTTempCoeffCr;
-#if ADAPTIVE_QP_SELECTION
     Int**           m_ppcQTTempArlCoeffY;
     Int**           m_ppcQTTempArlCoeffCb;
     Int**           m_ppcQTTempArlCoeffCr;
     Int*            m_pcQTTempArlCoeffY;
     Int*            m_pcQTTempArlCoeffCb;
     Int*            m_pcQTTempArlCoeffCr;
-#endif
     UChar*          m_puhQTTempTrIdx;
     UChar*          m_puhQTTempCbf[3];
 
@@ -88,11 +86,9 @@ private:
     TCoeff*         m_pcQTTempTUCoeffCr;
     UChar*          m_puhQTTempTransformSkipFlag[3];
     TComYuv         m_pcQTTempTransformSkipTComYuv;
-#if ADAPTIVE_QP_SELECTION
     Int*            m_ppcQTTempTUArlCoeffY;
     Int*            m_ppcQTTempTUArlCoeffCb;
     Int*            m_ppcQTTempTUArlCoeffCr;
-#endif
 
 protected:
 
@@ -196,11 +192,8 @@ public:
                          TComYuv*& rpcPredYuv,
                          TComYuv*& rpcResiYuv,
                          TComYuv*& rpcRecoYuv,
-                         Bool bUseRes = false
-#if AMP_MRG
-                         , Bool        bUseMRG = false
-#endif
-                         );
+                         Bool bUseRes = false,
+                         Bool bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
     Void encodeResAndCalcRdInterCU(TComDataCU* pcCU,
@@ -328,12 +321,8 @@ protected:
                              RefPicList eRefPicList,
                              Int iRefIdx,
                              TComMv& rcMvPred,
-                             Bool bFilled = false
-                             , UInt*       puiDistBiP = NULL
-#if ZERO_MVD_EST
-                             , UInt*       puiDist = NULL
-#endif
-                             );
+                             Bool bFilled = false,
+                             UInt* puiDistBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* pcCU,
                        RefPicList  eRefPicList,
@@ -354,11 +343,7 @@ protected:
                           RefPicList eRefPicList,
                           Int iRefIdx,
                           Int iSizeX,
-                          Int         iSizeY
-#if ZERO_MVD_EST
-                          , UInt&       ruiDist
-#endif
-                          );
+                          Int iSizeY);
 
     Void xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst);
     UInt xGetMvpIdxBits(Int iIdx, Int iNum);
@@ -370,8 +355,8 @@ protected:
                           UInt& uiInterDir,
                           TComMvField* pacMvField,
                           UInt& uiMergeIndex,
-                          UInt& ruiCost
-                          , TComMvField* cMvFieldNeighbours,
+                          UInt& ruiCost,
+                          TComMvField* cMvFieldNeighbours,
                           UChar* uhInterDirNeighbours,
                           Int& numValidMergeCand);
 

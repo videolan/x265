@@ -40,8 +40,6 @@
 
 #include "TEncBinCoderCABAC.h"
 
-#if FAST_BIT_EST
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -64,7 +62,5 @@ private:
 };
 
 //! \}
-
-#endif // if FAST_BIT_EST
 
 #endif // ifndef __TENC_BIN_CODER_CABAC_COUNTER__

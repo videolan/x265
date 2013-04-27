@@ -122,22 +122,19 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt uiMaxTrSize, Bool useRDOQ = false,
+    Void init(UInt uiMaxTrSize,
+              Bool useRDOQ = false,
               Bool useRDOQTS = false,
-              Bool bEnc = false, Bool useTransformSkipFast = false
-#if ADAPTIVE_QP_SELECTION
-              , Bool bUseAdaptQpSelect = false
-#endif
-              );
+              Bool bEnc = false,
+              Bool useTransformSkipFast = false,
+              Bool bUseAdaptQpSelect = false);
 
     // transform & inverse transform functions
     Void transformNxN(TComDataCU * pcCU,
                       Pel *        pcResidual,
                       UInt        uiStride,
                       TCoeff *     rpcCoeff,
-#if ADAPTIVE_QP_SELECTION
                       Int * &rpcArlCoeff,
-#endif
                       UInt        uiWidth,
                       UInt        uiHeight,
                       UInt &       uiAbsSum,
@@ -198,7 +195,6 @@ public:
     Void setScalingListDec(TComScalingList *scalingList);
     Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
-#if ADAPTIVE_QP_SELECTION
     Void    initSliceQpDelta();
     Void    storeSliceQpNext(TComSlice* pcSlice);
     Void    clearSliceARLCnt();
@@ -208,15 +204,11 @@ public:
 
     Double* getSliceSumC()    { return m_sliceSumC; }
 
-#endif
-
 protected:
 
-#if ADAPTIVE_QP_SELECTION
     Int     m_qpDelta[MAX_QP + 1];
     Int     m_sliceNsamples[LEVEL_RANGE + 1];
     Double  m_sliceSumC[LEVEL_RANGE + 1];
-#endif
     Int *    m_plTempCoeff;
 
     QpParam  m_cQP;
@@ -230,9 +222,7 @@ protected:
     Bool     m_bEnc;
     Bool     m_useRDOQ;
     Bool     m_useRDOQTS;
-#if ADAPTIVE_QP_SELECTION
     Bool     m_bUseAdaptQpSelect;
-#endif
     Bool     m_useTransformSkipFast;
     Bool     m_scalingListEnabledFlag;
     Int      *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
@@ -253,12 +243,10 @@ private:
     Void xQuant(TComDataCU * pcCU,
                 Int *        pSrc,
                 TCoeff *     pDes,
-#if ADAPTIVE_QP_SELECTION
-                Int * &pArlDes,
-#endif
+                Int *       &pArlDes,
                 Int         iWidth,
                 Int         iHeight,
-                UInt &       uiAcSum,
+                UInt &      uiAcSum,
                 TextType    eTType,
                 UInt        uiAbsPartIdx);
 
@@ -267,14 +255,13 @@ private:
     Void           xRateDistOptQuant(TComDataCU *                     pcCU,
                                      Int *                            plSrcCoeff,
                                      TCoeff *                         piDstCoeff,
-#if ADAPTIVE_QP_SELECTION
-                                     Int * &piArlDstCoeff,
-#endif
+                                     Int *                           &piArlDstCoeff,
                                      UInt                            uiWidth,
                                      UInt                            uiHeight,
-                                     UInt &                           uiAbsSum,
+                                     UInt &                          uiAbsSum,
                                      TextType                        eTType,
                                      UInt                            uiAbsPartIdx);
+
     __inline UInt              xGetCodedLevel(Double& rd64CodedCost,
                                               Double& rd64CodedCost0,
                                               Double& rd64CodedCostSig,
