@@ -1725,7 +1725,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
         for (Int subSet = (uiWidth * uiHeight - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
-            Int  subPos     = subSet << LOG2_SCAN_SET_SIZE;
+            Int  subPos = subSet << LOG2_SCAN_SET_SIZE;
             Int  firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
             absSum = 0;
 
