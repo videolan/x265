@@ -476,28 +476,24 @@ UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelO
     Int shift = DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
 
 #if ENABLE_PRIMITIVES
-    if (shift == 0)
-    {
-        int part = x265::PartitionFromSizes(width, height);
-        UInt cost = x265::primitives.sad[part]((pixel*)pelCur, curStride, (pixel*)pelOrg, orgStride);
-        x264_cpu_emms();
-        return cost;
-    }
-#endif // if ENABLE_PRIMITIVES
-
+    int part = x265::PartitionFromSizes(width, height);
+    UInt cost = x265::primitives.sad[part]((pixel*)pelCur, curStride, (pixel*)pelOrg, orgStride);
+    x264_cpu_emms();
+    return cost >> shift;
+#else
     UInt SAD = 0;
     for (Int i = 0; i < height; i++)
     {
         for (Int j = 0; j < width; j++)
         {
-            SAD += abs((pelCur[j] - pelOrg[j])) >> shift;
+            SAD += abs((pelCur[j] - pelOrg[j]));
         }
 
         pelCur = pelCur + curStride;
         pelOrg = pelOrg + orgStride;
     }
-
-    return SAD;
+    return SAD >> shift;
+#endif // if ENABLE_PRIMITIVES
 }
 
 // ====================================================================================================================
