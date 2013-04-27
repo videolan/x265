@@ -17,7 +17,7 @@ endif(ENABLE_PRIMITIVES)
 
 include_directories(../VectorClass)
 
-add_library(x265 ../../COPYING
+add_library(x265 ../../COPYING ../x265.h
     ${CPRIMITIVES}
     primitives.cpp primitives.h
     ../VectorClass/instrset_detect.cpp
