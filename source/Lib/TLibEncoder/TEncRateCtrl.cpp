@@ -642,17 +642,10 @@ Double TEncRCPic::getLCUTargetBpp()
         }
     }
 
-#if L0033_RC_BUGFIX
     if (avgBits < 1)
     {
         avgBits = 1;
     }
-#else
-    if (avgBits < 5)
-    {
-        avgBits = 5;
-    }
-#endif
 
     bpp = (Double)avgBits / (Double)m_LCUs[LCUIdx].m_numberOfPixel;
     m_LCUs[LCUIdx].m_targetBits = avgBits;
@@ -722,11 +715,7 @@ Int TEncRCPic::getLCUEstQP(Double lambda, Int clipPicQP)
     //for Lambda clip, LCU level clip
     Int clipNeighbourQP = g_RCInvalidQPValue;
 
-#if L0033_RC_BUGFIX
     for (int i = LCUIdx - 1; i >= 0; i--)
-#else
-    for (int i = LCUIdx; i >= 0; i--)
-#endif
     {
         if ((getLCU(i)).m_QP > g_RCInvalidQPValue)
         {
