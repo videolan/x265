@@ -44,6 +44,7 @@
 #include "TEncAnalyze.h"
 #include "TLibCommon/SEI.h"
 #include "TLibCommon/NAL.h"
+#include "PPA/ppa.h"
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
@@ -362,6 +363,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     TComPicYuv*     pcPicYuvRecOut;
     TComSlice*      pcSlice;
     TComOutputBitstream  *pcBitstreamRedirect;
+    PPAScopeEvent(TEncGOP_compressGOP);
 
     pcBitstreamRedirect = new TComOutputBitstream;
     AccessUnit::iterator  itLocationToPushSliceHeaderNALU; // used to store location where NALU containing slice header is to be inserted

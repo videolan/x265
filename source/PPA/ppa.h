@@ -37,6 +37,7 @@
 #define PPA_INIT()
 #define PPAStartCpuEventFunc(e)
 #define PPAStopCpuEventFunc(e)
+#define PPAScopeEvent(e)
 
 #else
 
@@ -53,11 +54,23 @@ enum PPACpuEventEnum
 #define PPA_INIT()               initializePPA()
 #define PPAStartCpuEventFunc(e)  if (ppabase) ppabase->triggerStartEvent(ppabase->getEventId(e))
 #define PPAStopCpuEventFunc(e)   if (ppabase) ppabase->triggerEndEvent(ppabase->getEventId(e))
+#define PPAScopeEvent(e)         _PPAScope __scope_ ## e(e)
 
 #include "ppaApi.h"
 
 void initializePPA();
 extern ppa::Base *ppabase;
+
+class _PPAScope
+{
+protected:
+    ppa::EventID m_id;
+
+public:
+    _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } }
+    ~_PPAScope()     { if (ppabase) ppabase->triggerEndEvent(m_id); }
+};
+
 
 #endif // if !defined(ENABLE_PPA)
 

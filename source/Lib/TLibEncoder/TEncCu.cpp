@@ -39,6 +39,7 @@
 #include "TEncTop.h"
 #include "TEncCu.h"
 #include "TEncAnalyze.h"
+#include "PPA/ppa.h"
 
 #include <cmath>
 #include <algorithm>
@@ -365,6 +366,8 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, PartSize eParentPartSize)
 {
     TComPic* pcPic = rpcBestCU->getPic();
+
+    PPAScopeEvent(TEncCu_xCompressCU);
 
     // get Original YUV data from picture
     m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
@@ -1296,6 +1299,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize)
 {
     UInt uiDepth = rpcTempCU->getDepth(0);
+    PPAScopeEvent(TEncCU_xCheckRDCostIntra);
 
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
 
@@ -1354,6 +1358,7 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 Void TEncCu::xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU)
 {
     UInt uiDepth = rpcTempCU->getDepth(0);
+    PPAScopeEvent(TEncCU_xCheckIntraPCM);
 
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
 

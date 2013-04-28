@@ -41,6 +41,7 @@
 #include "TEncSearch.h"
 #include "primitives.h"
 #include "InterpolationFilter.h"
+#include "PPA/ppa.h"
 #include <math.h>
 
 using namespace x265;
@@ -3842,6 +3843,8 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     TComMv        cMvSrchRngRB;
 
     TComYuv*      pcYuv = pcYuvOrg;
+
+    PPAScopeEvent(TEncSearch_xMotionEstimation);
 
     m_iSearchRange = m_aaiAdaptSR[eRefPicList][iRefIdxPred];
 

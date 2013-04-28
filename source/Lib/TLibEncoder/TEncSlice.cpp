@@ -37,6 +37,7 @@
 
 #include "TEncTop.h"
 #include "TEncSlice.h"
+#include "PPA/ppa.h"
 #include <math.h>
 
 //! \ingroup TLibEncoder
@@ -650,6 +651,7 @@ Void TEncSlice::compressSlice(TComPic*& rpcPic)
     UInt  uiCUAddr;
     UInt   uiStartCUAddr;
     UInt   uiBoundingCUAddr;
+    PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
     TEncBinCABAC* pppcRDSbacCoder = NULL;
