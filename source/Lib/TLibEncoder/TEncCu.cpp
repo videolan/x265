@@ -458,7 +458,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                 if (m_pcEncCfg->getUseEarlySkipDetection())
                 {
                     xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-                    rpcTempCU->initEstData(uiDepth, iQP);                                                //by Competition for inter_2Nx2N
+                    rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
                 }
                 // SKIP
                 xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
@@ -1322,7 +1322,7 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     m_pcEntropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0,          true);
+        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
     }
     m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
     m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);

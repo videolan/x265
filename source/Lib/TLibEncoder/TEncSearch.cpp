@@ -3904,11 +3904,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setCostScale(1);
 
-    {
-        xPatternSearchFracDIF(pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost
-                              , bBi
-                              );
-    }
+    xPatternSearchFracDIF(pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi);
 
     m_pcRdCost->setCostScale(0);
     rcMv <<= 2;
