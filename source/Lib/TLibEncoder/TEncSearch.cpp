@@ -5451,7 +5451,7 @@ UInt TEncSearch::xUpdateCandList(UInt uiMode, Double uiCost, UInt uiFastCandNum,
  * \param rpcYuvResi
  * \returns Void
  */
-Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode, UInt& ruiBits, TComYuv*& rpcYuvRec, TComYuv*pcYuvPred, TShortYUV*& rpcYuvResi)
+Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode, UInt& ruiBits, TShortYUV*& rpcYuvRec, TComYuv*pcYuvPred, TShortYUV*& rpcYuvResi)
 {
     if (pcCU->getMergeFlag(0) && pcCU->getPartitionSize(0) == SIZE_2Nx2N && !pcCU->getQtRootCbf(0))
     {

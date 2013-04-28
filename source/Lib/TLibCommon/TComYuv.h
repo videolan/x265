@@ -43,6 +43,8 @@
 #include "CommonDef.h"
 #include "TComPicYuv.h"
 
+class TShortYUV;
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -127,10 +129,14 @@ public:
 
     //  Copy YUV partition buffer to other YUV partition buffer
     Void    copyPartToPartYuv(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
+    Void    copyPartToPartYuv(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
     Void    copyPartToPartLuma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
+    Void    copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
     Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-
+    Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
+    
     Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId);
+    
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
@@ -138,8 +144,11 @@ public:
 
     //  Clip(pcYuvSrc0 + pcYuvSrc1) -> m_apiBuf
     Void    addClip(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
+    Void    addClip(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
     Void    addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
+    Void    addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
     Void    addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
+    Void    addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
 
     //  pcYuvSrc0 - pcYuvSrc1 -> m_apiBuf
     Void    subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);

@@ -445,7 +445,7 @@ protected:
                              UInt        uiQp,
                              UInt        uiTrMode,
                              UInt&       ruiBits,
-                             TComYuv*&   rpcYuvRec,
+                             TShortYUV*&   rpcYuvRec,
                              TComYuv*    pcYuvPred,
                              TShortYUV*&   rpcYuvResi);
 

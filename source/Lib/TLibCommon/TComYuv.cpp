@@ -44,6 +44,7 @@
 #include "CommonDef.h"
 #include "TComYuv.h"
 #include "TComInterpolationFilter.h"
+#include "TShortYUV.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -295,6 +296,13 @@ Void TComYuv::copyPartToPartYuv(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, 
     copyPartToPartChroma(pcYuvDst, uiPartIdx, iWidth >> 1, iHeight >> 1);
 }
 
+Void TComYuv::copyPartToPartYuv(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
+{
+    copyPartToPartLuma(pcYuvDst, uiPartIdx, iWidth, iHeight);
+    copyPartToPartChroma(pcYuvDst, uiPartIdx, iWidth >> 1, iHeight >> 1);
+}
+
+
 Void TComYuv::copyPartToPartLuma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
 {
     Pel* pSrc =           getLumaAddr(uiPartIdx);
@@ -316,6 +324,32 @@ Void TComYuv::copyPartToPartLuma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth,
         pDst += iDstStride;
     }
 }
+
+
+Void TComYuv::copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
+{
+    Pel* pSrc =           getLumaAddr(uiPartIdx);
+    Short* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
+
+    if (pSrc == pDst)
+    {
+        //th not a good idea
+        //th best would be to fix the caller
+        return;
+    }
+
+    UInt  iSrcStride = getStride();
+    UInt  iDstStride = pcYuvDst->getStride();
+    for (UInt y = iHeight; y != 0; y--)
+    {
+        for(UInt x = 0; x < iWidth; x++)
+            pDst[y*iWidth + x] = (Short) (pSrc[y*iWidth + x]);
+
+        pSrc += iSrcStride;
+        pDst += iDstStride;
+    }
+}
+
 
 Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
 {
@@ -343,6 +377,37 @@ Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidt
         pDstV += iDstStride;
     }
 }
+
+Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
+{
+    Pel*  pSrcU =           getCbAddr(uiPartIdx);
+    Pel*  pSrcV =           getCrAddr(uiPartIdx);
+    Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
+    Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+
+    if (pSrcU == pDstU && pSrcV == pDstV)
+    {
+        //th not a good idea
+        //th best would be to fix the caller
+        return;
+    }
+
+    UInt   iSrcStride = getCStride();
+    UInt   iDstStride = pcYuvDst->getCStride();
+    for (UInt y = iHeight; y != 0; y--)
+    {
+        for(UInt x = 0; x < iWidth; x++)
+        {
+            pDstU[y*iWidth + x] = (Short) (pSrcU[y*iWidth + x]);
+            pDstV[y*iWidth + x] = (Short) (pSrcV[y*iWidth + x]);
+        } 
+        pSrcU += iSrcStride;
+        pSrcV += iSrcStride;
+        pDstU += iDstStride;
+        pDstV += iDstStride;
+    }
+}
+
 
 Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId)
 {
@@ -413,12 +478,43 @@ Void TComYuv::addClip(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, 
     addClipChroma(pcYuvSrc0, pcYuvSrc1, uiTrUnitIdx, uiPartSize >> 1);
 }
 
+Void TComYuv::addClip(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
+{
+    addClipLuma(pcYuvSrc0, pcYuvSrc1, uiTrUnitIdx, uiPartSize);
+    addClipChroma(pcYuvSrc0, pcYuvSrc1, uiTrUnitIdx, uiPartSize >> 1);
+}
+
 Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
     Int x, y;
 
     Pel* pSrc0 = pcYuvSrc0->getLumaAddr(uiTrUnitIdx, uiPartSize);
     Pel* pSrc1 = pcYuvSrc1->getLumaAddr(uiTrUnitIdx, uiPartSize);
+    Pel* pDst  = getLumaAddr(uiTrUnitIdx, uiPartSize);
+
+    UInt iSrc0Stride = pcYuvSrc0->getStride();
+    UInt iSrc1Stride = pcYuvSrc1->getStride();
+    UInt iDstStride  = getStride();
+
+    for (y = uiPartSize - 1; y >= 0; y--)
+    {
+        for (x = uiPartSize - 1; x >= 0; x--)
+        {
+            pDst[x] = ClipY(static_cast<Short> (pSrc0[x]) + static_cast<Short>(pSrc1[x]));
+        }
+
+        pSrc0 += iSrc0Stride;
+        pSrc1 += iSrc1Stride;
+        pDst  += iDstStride;
+    }
+}
+
+Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
+{
+    Int x, y;
+
+    Pel* pSrc0 = pcYuvSrc0->getLumaAddr(uiTrUnitIdx, uiPartSize);
+    Short* pSrc1 = pcYuvSrc1->getLumaAddr(uiTrUnitIdx, uiPartSize);
     Pel* pDst  = getLumaAddr(uiTrUnitIdx, uiPartSize);
 
     UInt iSrc0Stride = pcYuvSrc0->getStride();
@@ -437,6 +533,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitI
         pDst  += iDstStride;
     }
 }
+
 
 Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
@@ -469,6 +566,39 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUni
         pDstV  += iDstStride;
     }
 }
+
+Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
+{
+    Int x, y;
+
+    Pel* pSrcU0 = pcYuvSrc0->getCbAddr(uiTrUnitIdx, uiPartSize);
+    Short* pSrcU1 = pcYuvSrc1->getCbAddr(uiTrUnitIdx, uiPartSize);
+    Pel* pSrcV0 = pcYuvSrc0->getCrAddr(uiTrUnitIdx, uiPartSize);
+    Short* pSrcV1 = pcYuvSrc1->getCrAddr(uiTrUnitIdx, uiPartSize);
+    Pel* pDstU = getCbAddr(uiTrUnitIdx, uiPartSize);
+    Pel* pDstV = getCrAddr(uiTrUnitIdx, uiPartSize);
+
+    UInt  iSrc0Stride = pcYuvSrc0->getCStride();
+    UInt  iSrc1Stride = pcYuvSrc1->getCStride();
+    UInt  iDstStride  = getCStride();
+
+    for (y = uiPartSize - 1; y >= 0; y--)
+    {
+        for (x = uiPartSize - 1; x >= 0; x--)
+        {
+            pDstU[x] = ClipC(static_cast<Short> (pSrcU0[x]) + pSrcU1[x]);
+            pDstV[x] = ClipC(static_cast<Short> (pSrcV0[x]) + pSrcV1[x]);
+        }
+
+        pSrcU0 += iSrc0Stride;
+        pSrcU1 += iSrc1Stride;
+        pSrcV0 += iSrc0Stride;
+        pSrcV1 += iSrc1Stride;
+        pDstU  += iDstStride;
+        pDstV  += iDstStride;
+    }
+}
+
 
 Void TComYuv::subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
