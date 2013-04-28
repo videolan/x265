@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <malloc.h>
+#include <stdlib.h>
 
 #if _MSC_VER > 1000
 // disable "signed and unsigned mismatch"
