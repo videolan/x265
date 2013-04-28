@@ -381,10 +381,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
     Bool    bSubBranch = true;
 
     // variable for Cbf fast mode PU decision
-    Bool    doNotBlockPu = true;
+    Bool doNotBlockPu = true;
     Bool earlyDetectionSkipMode = false;
 
-    Bool    bTrySplitDQP  = true;
+    Bool bTrySplitDQP  = true;
 
     static  Double  afCost[MAX_CU_DEPTH];
     static  Int      aiNum[MAX_CU_DEPTH];
@@ -727,7 +727,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
         m_addSADDepth++;
     }
 
-    // copy orginal YUV samples to PCM buffer
+    // copy original YUV samples to PCM buffer
     if (rpcBestCU->isLosslessCoded(0) && (rpcBestCU->getIPCMFlag(0) == false))
     {
         xFillPCMBuffer(rpcBestCU, m_ppcOrigYuv[uiDepth]);
