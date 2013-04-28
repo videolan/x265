@@ -1,13 +1,3 @@
-if(UNIX)
-    SET(PLATFORM_LIBS pthread rt)
-endif(UNIX)
-if(ENABLE_PPA)
-    SET(PLATFORM_LIBS ${PLATFORM_LIBS} PPA)
-    if(UNIX)
-        SET(PLATFORM_LIBS ${PLATFORM_LIBS} dl)
-    endif(UNIX)
-endif(ENABLE_PPA)
-
 if(ENABLE_PRIMITIVES)
     if(ENABLE_PRIMITIVES_VEC)
         add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)

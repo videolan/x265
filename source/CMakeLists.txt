@@ -54,10 +54,18 @@ if(ENABLE_PRIMITIVES)
     endif(YASM_FOUND)
 endif(ENABLE_PRIMITIVES)
 
+if(UNIX)
+    SET(PLATFORM_LIBS pthread rt)
+endif(UNIX)
+
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
     add_subdirectory(PPA)
+    SET(PLATFORM_LIBS ${PLATFORM_LIBS} PPA)
+    if(UNIX)
+        SET(PLATFORM_LIBS ${PLATFORM_LIBS} dl)
+    endif(UNIX)
 endif(ENABLE_PPA)
 
 include_directories(. Lib encoder)
@@ -89,13 +97,7 @@ if(ENABLE_CLI)
         x265cfg.cpp x265cfg.h
         x265enc.cpp x265enc.h)
 
-    target_link_libraries(x265-cli HM x265 InputFiles OutputFiles)
-    if(ENABLE_PPA)
-        target_link_libraries(x265-cli PPA)
-        if(UNIX)
-            target_link_libraries(x265-cli dl)
-        endif(UNIX)
-    endif(ENABLE_PPA)
+    target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 endif(ENABLE_CLI)
 
 # Test applications
