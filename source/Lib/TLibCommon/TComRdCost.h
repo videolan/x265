@@ -48,8 +48,6 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define FIX203 1
-
 class DistParam;
 class TComPattern;
 
@@ -125,19 +123,9 @@ private:
     Double                  m_dFrameLambda;
 
     // for motion cost
-#if FIX203
     TComMv                  m_mvPredictor;
-#else
-    UInt*                   m_puiComponentCostOriginP;
-    UInt*                   m_puiComponentCost;
-    UInt*                   m_puiVerCost;
-    UInt*                   m_puiHorCost;
-#endif
     UInt                    m_uiCost;
     Int                     m_iCostScale;
-#if !FIX203
-    Int                     m_iSearchLimit;
-#endif
 
 public:
 
@@ -170,44 +158,24 @@ public:
     UInt    calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight);
 
     // for motion cost
-#if !FIX203
-    Void    initRateDistortionModel(Int iSubPelSearchLimit);
-    Void    xUninit();
-#endif
     UInt    xGetComponentBits(Int iVal);
     Void    getMotionCost(Bool bSad, Int iAdd) { m_uiCost = (bSad ? m_uiLambdaMotionSAD + iAdd : m_uiLambdaMotionSSE + iAdd); }
 
-    Void    setPredictor(TComMv& rcMv)
-    {
-#if FIX203
-        m_mvPredictor = rcMv;
-#else
-        m_puiHorCost = m_puiComponentCost - rcMv.getHor();
-        m_puiVerCost = m_puiComponentCost - rcMv.getVer();
-#endif
-    }
+    Void    setPredictor(TComMv& rcMv)      { m_mvPredictor = rcMv; }
 
     Void    setCostScale(Int iCostScale)    { m_iCostScale = iCostScale; }
 
     __inline UInt getCost(Int x, Int y)
     {
-#if FIX203
         return m_uiCost * getBits(x, y) >> 16;
-#else
-        return (m_uiCost * (m_puiHorCost[x * (1 << m_iCostScale)] + m_puiVerCost[y * (1 << m_iCostScale)])) >> 16;
-#endif
     }
 
     UInt    getCost(UInt b)                 { return (m_uiCost * b) >> 16; }
 
     UInt    getBits(Int x, Int y)
     {
-#if FIX203
-        return xGetComponentBits((x << m_iCostScale) - m_mvPredictor.getHor())
-               +      xGetComponentBits((y << m_iCostScale) - m_mvPredictor.getVer());
-#else
-        return m_puiHorCost[x * (1 << m_iCostScale)] + m_puiVerCost[y * (1 << m_iCostScale)];
-#endif
+        return xGetComponentBits((x << m_iCostScale) - m_mvPredictor.getHor()) +
+               xGetComponentBits((y << m_iCostScale) - m_mvPredictor.getVer());
     }
 
     FpDistFunc * getSadFunctions()         { return m_afpDistortFunc; }
