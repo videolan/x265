@@ -210,10 +210,7 @@ public:
 #endif
     }
 
-    __inline FpDistFunc * GetsadFunctions()
-    {
-        return m_afpDistortFunc;
-    }
+    FpDistFunc * getSadFunctions()         { return m_afpDistortFunc; }
 
 private:
 

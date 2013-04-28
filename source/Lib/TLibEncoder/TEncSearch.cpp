@@ -345,7 +345,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     x264_cpu_emms();
 #else
     FpDistFunc  *m_afpDistortFunc;
-    m_afpDistortFunc =  m_pcRdCost->GetsadFunctions();
+    m_afpDistortFunc =  m_pcRdCost->getSadFunctions();
     m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
     if (m_cDistParam.iCols == 12)
     {
