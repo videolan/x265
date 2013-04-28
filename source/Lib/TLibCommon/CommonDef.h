@@ -147,7 +147,7 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 #define _aligned_free             __mingw_aligned_free
 #endif
 #else
-#define xMalloc(type, len)        aligned_alloc(32, sizeof(type) * (len))
+#define xMalloc(type, len)        memalign(32, sizeof(type) * (len))
 #define xFree(ptr)                free(ptr)
 #endif
 
