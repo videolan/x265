@@ -25,7 +25,7 @@
 #define _TESTHARNESS_H_ 1
 
 #include "primitives.h"
-#include <stdint.h>
+#include <stddef.h>
 
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
