@@ -67,9 +67,17 @@ void Setup_C_Primitives(EncoderPrimitives &p)
 #endif // if ENABLE_PRIMITIVES
 
 /* cpuid == 0 - auto-detect CPU type, else
- * cpuid != 0 - force CPU type */
+ * cpuid > 0 -  force CPU type
+ * cpuid < 0  - auto-detect if uninitialized */
 void SetupPrimitives(int cpuid)
 {
+    if (cpuid < 0)
+    {
+        if (primitives.sad[0])
+            return;
+        else
+            cpuid = 0;
+    }
     if (cpuid == 0)
     {
         cpuid = CpuIDDetect();
@@ -133,3 +141,10 @@ int CpuIDDetect(void)
     }
 }
 }
+
+extern "C"
+void x265_init_primitives( int cpuid )
+{
+    x265::SetupPrimitives(cpuid);
+}
+

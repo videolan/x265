@@ -55,6 +55,7 @@
 #include "TEncSampleAdaptiveOffset.h"
 #include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
+#include "threadpool.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -116,6 +117,7 @@ private:
 
     TComScalingList         m_scalingList;               ///< quantization matrix information
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
+    x265::ThreadPool       *m_threadPool;
 
 protected:
 

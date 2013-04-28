@@ -470,3 +470,10 @@ static int get_cpu_count()
 #endif // if WIN32
 }
 } // end namespace x265
+
+extern "C"
+void x265_init_threading( int threadcount )
+{
+    x265::ThreadPool::AllocThreadPool(threadcount);
+}
+

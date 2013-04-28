@@ -40,6 +40,9 @@
 #include "TEncPic.h"
 #include "TLibCommon/ContextModel.h"
 
+#include "primitives.h"
+#include "threadpool.h"
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -84,6 +87,10 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create()
 {
+    x265::SetupPrimitives(-1);  // -1 means auto-detect if uninitialized
+
+    m_threadPool = x265::ThreadPool::AllocThreadPool(0);
+
     // initialize global variables
     initROM();
 
@@ -250,6 +257,9 @@ Void TEncTop::destroy()
 
     // destroy ROM
     destroyROM();
+
+    if (m_threadPool)
+        m_threadPool->Release();
 }
 
 Void TEncTop::init()

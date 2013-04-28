@@ -44,6 +44,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibEncoder/TEncRateCtrl.h"
 #include "primitives.h"
+#include "threadpool.h"
 #include "x265cfg.h"
 
 static istream& operator >>(istream &, Level::Name &);
@@ -262,6 +263,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     Bool do_help = false;
 
     int cpuid;
+    int threadcount;
 
     string cfg_InputFile;
     string cfg_ReconFile;
@@ -290,6 +292,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("c", po::parseConfigFile, "configuration file name")
 
         ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
+        ("threads",               threadcount,         0, "Number of threads for thread pool (default:CPU HT core count)")
 
         // File, I/O and source parameters
         ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
@@ -591,6 +594,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     }
 
     x265::SetupPrimitives(cpuid);
+    x265::ThreadPool::AllocThreadPool(threadcount);
 
     /*
      * Set any derived parameters
