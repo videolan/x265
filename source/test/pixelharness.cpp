@@ -27,11 +27,6 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-#ifdef __MINGW32__
-#define _aligned_malloc __mingw_aligned_malloc
-#define _aligned_free  __mingw_aligned_free
-#endif
-
 using namespace x265;
 
 // Initialize the Func Names for all the Pixel Comp
@@ -56,13 +51,9 @@ static const char *FuncNames[NUM_PARTITIONS] =
 
 PixelHarness::PixelHarness()
 {
-#if _WIN32
-    pbuf1 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
-    pbuf2 = (pixel*)_aligned_malloc(0x1e00 * sizeof(pixel), 32);
-#else
-    posix_memalign((void**)&pbuf1, 32, 0x1e00 * sizeof(pixel));
-    posix_memalign((void**)&pbuf2, 32, 0x1e00 * sizeof(pixel));
-#endif
+    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 0x1e00, 32);
+    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 0x1e00, 32);
+
     if (!pbuf1 || !pbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
@@ -79,13 +70,8 @@ PixelHarness::PixelHarness()
 
 PixelHarness::~PixelHarness()
 {
-#if _WIN32
-    _aligned_free(pbuf1);
-    _aligned_free(pbuf2);
-#else
-    free(pbuf1);
-    free(pbuf2);
-#endif
+    TestHarness::alignedFree(pbuf1);
+    TestHarness::alignedFree(pbuf2);
 }
 
 #define INCR 16

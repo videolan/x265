@@ -45,6 +45,10 @@ public:
     virtual bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
 
     virtual void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt) = 0;
+
+    static void *alignedMalloc(size_t size, int count, int alignment);
+
+    static void alignedFree(void *ptr);
 };
 
 class Timer

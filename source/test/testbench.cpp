@@ -36,6 +36,31 @@
 
 using namespace x265;
 
+#ifdef __MINGW32__
+#define _aligned_malloc __mingw_aligned_malloc
+#define _aligned_free  __mingw_aligned_free
+#endif
+
+void *TestHarness::alignedMalloc(size_t size, int count, int alignment)
+{
+#if _WIN32
+    return _aligned_malloc(count * size, alignment);
+#else
+    void *ptr;
+    posix_memalign((void**)&ptr, alignment, count * size);
+    return ptr;
+#endif
+}
+
+void TestHarness::alignedFree(void *ptr)
+{
+#if _WIN32
+    _aligned_free(ptr);
+#else
+    free(ptr);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
 #if ENABLE_PRIMITIVES
