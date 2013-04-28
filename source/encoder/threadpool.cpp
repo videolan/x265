@@ -39,8 +39,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define CLZ64(x)                        __builtin_clzll(x)
-
+#define CLZ64(id, x)                    id = 63 - (unsigned long)__builtin_clzll(x)
 #define ATOMIC_INC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, 1)
 #define ATOMIC_DEC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, -1)
 #define ATOMIC_OR(ptr, mask)            __sync_or_and_fetch(ptr, mask)
@@ -51,22 +50,25 @@
 
 #include <intrin.h>
 
-#if _WIN64
-#define CLZ64(x)                        __lzcnt64(x)
-#else
-#define CLZ64(x)                        __lzcnt_2x32(x)
-inline int __lzcnt_2x32(uint64_t x64)
+#if !_WIN64
+inline int _BitScanReverse64(DWORD *id, uint64_t x64)
 {
     uint32_t high32 = (uint32_t)(x64 >> 32);
     uint32_t low32 = (uint32_t)x64;
     if (high32)
-        return __lzcnt(high32);
+    {
+        _BitScanReverse(id, high32);
+        *id += 32;
+        return 1;
+    }
+    else if (low32)
+        return _BitScanReverse(id, low32);
     else
-        return __lzcnt(low32) + 32;
+        return *id = 0;
 }
+#endif // if !_WIN64
 
-#endif // if _WIN64
-
+#define CLZ64(id, x)                    _BitScanReverse64(&id, x)
 #define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile LONG*)ptr)
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
@@ -414,6 +416,8 @@ void QueueFrame::EnqueueRow(int row)
 
 bool QueueFrame::FindJob()
 {
+    unsigned long id;
+
     // thread safe
     for (int w = 0; w < m_numWords; w++)
     {
@@ -423,7 +427,7 @@ bool QueueFrame::FindJob()
             if (oldval == 0) // race condition
                 break;
 
-            int id = 63 - (int)CLZ64(oldval);
+            CLZ64(id, oldval);
             uint64_t newval = oldval & ~(1LL << id);
 
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
