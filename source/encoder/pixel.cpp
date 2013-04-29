@@ -47,6 +47,27 @@ int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pi
 }
 
 template<int lx, int ly>
+void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, int *res)
+{
+    res[0] = 0;
+    res[1] = 0;
+    res[2] = 0;
+    for (int y = 0; y < ly; y++)
+    {
+        for (int x = 0; x < lx; x++)
+        {
+            res[0] += abs(pix1[x] - pix2[x]);
+            res[1] += abs(pix1[x] - pix3[x]);
+            res[2] += abs(pix1[x] - pix4[x]);
+        }
+        pix1 += FENC_STRIDE;
+        pix2 += FENC_STRIDE;
+        pix3 += FENC_STRIDE;
+        pix4 += FENC_STRIDE;
+    }
+}
+
+template<int lx, int ly>
 int CDECL x265_sad(char *pix1, intptr_t stride_pix1, char *pix2, intptr_t stride_pix2)
 {
     // TODO: we could use SWAR here fairly easily.  Would it help?
@@ -368,6 +389,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_64x24] = satd8<64, 24>;
     p.satd[PARTITION_64x32] = satd8<64, 32>;
     p.satd[PARTITION_64x64] = satd8<64, 64>;
+
+    p.sad_x3[PARTITION_64x16] = sad_x3<64, 16>;
+    p.sad_x3[PARTITION_64x24] = sad_x3<64, 24>;
+    p.sad_x3[PARTITION_64x32] = sad_x3<64, 32>;
+    p.sad_x3[PARTITION_64x64] = sad_x3<64, 64>;
 
     p.sa8d_8x8 = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;

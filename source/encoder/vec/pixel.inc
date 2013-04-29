@@ -115,6 +115,40 @@ int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
            horizontal_add_x(extend_high(sum));
 }
 
+template<int lx, int ly>
+void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+{    
+    res[0] = 0;
+    res[1] = 0;
+    res[2] = 0;
+    for (int row = 0; row < ly; row++)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for (int col = 0; col < lx; col += 8)
+        {
+            Vec8s m1, n1, n2, n3;
+
+            m1.load_a(piOrg + col);
+            n1.load(piCur1 + col);
+            n2.load(piCur2 + col);
+            n3.load(piCur3 + col);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+        }
+        res[0] += horizontal_add_x(sum1);
+        res[1] += horizontal_add_x(sum2);
+        res[2] += horizontal_add_x(sum3);
+        piOrg += FENC_STRIDE;
+        piCur1 += FENC_STRIDE;
+        piCur2 += FENC_STRIDE;
+        piCur3 += FENC_STRIDE;
+    }
+}
+
 int CDECL satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {
     int satd = 0;
@@ -590,6 +624,11 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_64x24] = sad_32x8<64, 24>;
     p.sad[PARTITION_64x32] = sad_16x16<64, 32>;
     p.sad[PARTITION_64x64] = sad_16x16<64, 64>;
+
+    p.sad_x3[PARTITION_64x16] = sad_8_x3<64, 16>;
+    p.sad_x3[PARTITION_64x24] = sad_8_x3<64, 24>;
+    p.sad_x3[PARTITION_64x32] = sad_8_x3<64, 32>;
+    p.sad_x3[PARTITION_64x64] = sad_8_x3<64, 64>;
 
 #if HIGH_BIT_DEPTH
     p.satd[PARTITION_4x4] = satd_4x4;
