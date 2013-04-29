@@ -131,7 +131,7 @@ public:
 
     // transform & inverse transform functions
     Void transformNxN(TComDataCU * pcCU,
-                      Pel *        pcResidual,
+                      Short *        pcResidual,
                       UInt        uiStride,
                       TCoeff *     rpcCoeff,
                       Int * &rpcArlCoeff,
@@ -142,8 +142,8 @@ public:
                       UInt        uiAbsPartIdx,
                       Bool        useTransformSkip = false);
 
-    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Pel* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
-    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Pel* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
+    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
+    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
                               UInt uiMaxTrMode,  UInt uiTrMode, TCoeff* rpcCoeff);
 
     // Misc functions
@@ -232,10 +232,10 @@ protected:
 private:
 
     // forward Transform
-    Void xT(Int bitDepth, UInt uiMode, Pel* pResidual, UInt uiStride, Int* plCoeff, Int iWidth, Int iHeight);
+    Void xT(Int bitDepth, UInt uiMode, Short* pResidual, UInt uiStride, Int* plCoeff, Int iWidth, Int iHeight);
 
     // skipping Transform
-    Void xTransformSkip(Int bitDepth, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height);
+    Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height);
 
     Void signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height);
 
@@ -301,10 +301,10 @@ private:
     Void xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType);
 
     // inverse transform
-    Void xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight);
+    Void xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight);
 
     // inverse skipping transform
-    Void xITransformSkip(Int bitDepth, Int* plCoef, Pel* pResidual, UInt uiStride, Int width, Int height);
+    Void xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, UInt uiStride, Int width, Int height);
 }; // END CLASS DEFINITION TComTrQuant
 
 //! \}
