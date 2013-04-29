@@ -72,6 +72,12 @@ include_directories(. Lib encoder)
 add_subdirectory(Lib)
 add_subdirectory(encoder)
 
+# Test applications
+option(ENABLE_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif(ENABLE_TESTS)
+
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
@@ -101,9 +107,3 @@ if(ENABLE_CLI)
 
     target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 endif(ENABLE_CLI)
-
-# Test applications
-option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
-    add_subdirectory(test)
-endif(ENABLE_TESTS)
