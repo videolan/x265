@@ -331,19 +331,12 @@ Void TComYuv::copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidt
     Pel* pSrc =           getLumaAddr(uiPartIdx);
     Short* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
 
-    if (pSrc == pDst)
-    {
-        //th not a good idea
-        //th best would be to fix the caller
-        return;
-    }
-
     UInt  iSrcStride = getStride();
     UInt  iDstStride = pcYuvDst->getStride();
     for (UInt y = iHeight; y != 0; y--)
     {
         for(UInt x = 0; x < iWidth; x++)
-            pDst[y*iWidth + x] = (Short) (pSrc[y*iWidth + x]);
+            pDst[x] = (Short) (pSrc[x]);
 
         pSrc += iSrcStride;
         pDst += iDstStride;
@@ -385,21 +378,14 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
     Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
     Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
-    if (pSrcU == pDstU && pSrcV == pDstV)
-    {
-        //th not a good idea
-        //th best would be to fix the caller
-        return;
-    }
-
     UInt   iSrcStride = getCStride();
     UInt   iDstStride = pcYuvDst->getCStride();
     for (UInt y = iHeight; y != 0; y--)
     {
         for(UInt x = 0; x < iWidth; x++)
         {
-            pDstU[y*iWidth + x] = (Short) (pSrcU[y*iWidth + x]);
-            pDstV[y*iWidth + x] = (Short) (pSrcV[y*iWidth + x]);
+            pDstU[x] = (Short) (pSrcU[x]);
+            pDstV[x] = (Short) (pSrcV[x]);
         } 
         pSrcU += iSrcStride;
         pSrcV += iSrcStride;
