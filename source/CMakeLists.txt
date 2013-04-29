@@ -81,6 +81,9 @@ endif(ENABLE_TESTS)
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
+    # x265cfg.cpp and x265enc.cpp are copied from HM sources (still have the BSD headers) and have many
+    # compiler warnings we do not want to waste time fixing.  x265main.cpp includes many HM headers, so
+    # they leak in there as well.
     if(MSVC)
         add_definitions(/wd4100) # unreferenced formal parameter
         add_definitions(/wd4244) # type conversion, possible loss of data
