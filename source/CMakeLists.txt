@@ -79,12 +79,14 @@ if(ENABLE_CLI)
         add_definitions(/wd4100) # unreferenced formal parameter
         add_definitions(/wd4244) # type conversion, possible loss of data
         add_definitions(/wd4512) # assignment operator could not be generated
+        add_definitions(/wd4800) # performance warning: bool coersion
+        set_source_files_properties(x265cfg.cpp PROPERTIES COMPILE_FLAGS "/D_CRT_NONSTDC_NO_DEPRECATE /wd4018")
     endif(MSVC)
     if(GCC)
         add_definitions(-Wno-sign-compare)
         add_definitions(-Wno-unused-parameter)
+        set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
     endif(GCC)
-    set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
     set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
     add_subdirectory(input)
