@@ -78,7 +78,7 @@ private:
     UChar*          m_puhQTTempTrIdx;
     UChar*          m_puhQTTempCbf[3];
 
-    TComYuv*        m_pcQTTempTComYuv;
+    TShortYUV*        m_pcQTTempTComYuv;
     TComYuv         m_tmpYuvPred; // To be used in xGetInterPredictionError() to avoid constant memory allocation/deallocation
     Pel*            m_pSharedPredTransformSkip[3];
     TCoeff*         m_pcQTTempTUCoeffY;
@@ -207,7 +207,7 @@ public:
     /// set ME search range
     Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange; }
 
-    Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Pel* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
+    Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Short* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
     Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv);
 
 protected:
