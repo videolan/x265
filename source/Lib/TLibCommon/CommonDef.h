@@ -116,6 +116,14 @@
 #define MAX_INT                     2147483647  ///< max. value of signed 32-bit integer
 #define MAX_INT64                   0x7FFFFFFFFFFFFFFFLL  ///< max. value of signed 64-bit integer
 #define MAX_DOUBLE                  1.7e+308    ///< max. value of double-type value
+#define QQ_4                        8388608
+#define QQ_8                        4194304
+#define QQ_16                        2097152
+#define QQ_32                        1048576
+#define Q_4                        MAX_INT -  8388608
+#define Q_8                         MAX_INT - 4194304
+#define Q_16                        MAX_INT -  2097152
+#define Q_32                        MAX_INT - 10485762
 
 #define MIN_QP                      0
 #define MAX_QP                      51

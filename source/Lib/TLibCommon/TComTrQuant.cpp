@@ -881,6 +881,7 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
     Int   iAdd = 0;
 
     Bool useRDOQ = pcCU->getTransformSkip(uiAbsPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
+
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
     {
         xRateDistOptQuant(pcCU, piCoef, pDes, pArlDes, iWidth, iHeight, uiAcSum, eTType, uiAbsPartIdx);
@@ -1205,6 +1206,7 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
             block[j * iWidth + i] = (Short)piBlkResi[j * uiStride + i];
         }
     }
+
     xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
     for (j = 0; j < iHeight * iWidth; j++)
     {
@@ -1345,7 +1347,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
                                     TextType    eTType,
                                     UInt        uiAbsPartIdx)
 {
-    Int    iQBits      = m_cQP.m_iBits;
+    //Int    iQBits      = m_cQP.m_iBits;
     Double dTemp       = 0;
     UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
     Int uiQ = g_quantScales[m_cQP.rem()];
@@ -1360,7 +1362,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
     assert(scalingListType < 6);
 
-    iQBits = QUANT_SHIFT + m_cQP.m_iPer + iTransformShift;                 // Right shift of non-RDOQ quantizer;  level = (coeff*uiQ + offset)>>q_bits
+    Int iQBits = QUANT_SHIFT + m_cQP.m_iPer + iTransformShift;                 // Right shift of non-RDOQ quantizer;  level = (coeff*uiQ + offset)>>q_bits
     Double dErrScale   = 0;
     Double *pdErrScaleOrg = getErrScaleCoeff(scalingListType, uiLog2TrSize - 2, m_cQP.m_iRem);
     Int *piQCoefOrg = getQuantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
@@ -1370,21 +1372,21 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
     Int iAddC =  1 << (iQBitsC - 1);
     UInt uiScanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, uiWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
 
-    memset(piArlDstCoeff, 0, sizeof(Int) *  uiMaxNumCoeff);
+    // memset(piArlDstCoeff, 0, sizeof(Int) *  uiMaxNumCoeff);
 
     Double pdCostCoeff[32 * 32];
     Double pdCostSig[32 * 32];
     Double pdCostCoeff0[32 * 32];
-    ::memset(pdCostCoeff, 0, sizeof(Double) *  uiMaxNumCoeff);
-    ::memset(pdCostSig,   0, sizeof(Double) *  uiMaxNumCoeff);
+    //::memset(pdCostCoeff, 0, sizeof(Double) *  uiMaxNumCoeff);
+    //::memset(pdCostSig,   0, sizeof(Double) *  uiMaxNumCoeff);
     Int rateIncUp[32 * 32];
     Int rateIncDown[32 * 32];
     Int sigRateDelta[32 * 32];
     Int deltaU[32 * 32];
-    ::memset(rateIncUp,    0, sizeof(Int) *  uiMaxNumCoeff);
-    ::memset(rateIncDown,  0, sizeof(Int) *  uiMaxNumCoeff);
-    ::memset(sigRateDelta, 0, sizeof(Int) *  uiMaxNumCoeff);
-    ::memset(deltaU,       0, sizeof(Int) *  uiMaxNumCoeff);
+    //::memset(rateIncUp,    0, sizeof(Int) *  uiMaxNumCoeff);
+    // ::memset(rateIncDown,  0, sizeof(Int) *  uiMaxNumCoeff);
+    // ::memset(sigRateDelta, 0, sizeof(Int) *  uiMaxNumCoeff);
+    // ::memset(deltaU,       0, sizeof(Int) *  uiMaxNumCoeff);
 
     const UInt * scanCG;
     {
@@ -1417,12 +1419,18 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
     const UInt *scan = g_auiSigLastScan[uiScanIdx][uiLog2BlkSize - 1];
 
-    ::memset(pdCostCoeffGroupSig,   0, sizeof(Double) * MLS_GRP_NUM);
+    //::memset(pdCostCoeffGroupSig,   0, sizeof(Double) * MLS_GRP_NUM);
     ::memset(uiSigCoeffGroupFlag,   0, sizeof(UInt) * MLS_GRP_NUM);
 
     UInt uiCGNum = uiWidth * uiHeight >> MLS_CG_SIZE;
     Int iScanPos;
     coeffGroupRDStats rdStats;
+    Int offset = 0;
+    Int offset_temp = 0;
+    if (uiWidth == 4) { offset = Q_4; offset_temp = QQ_4; }
+    if (uiWidth == 8) { offset = Q_8; offset_temp = QQ_8; }
+    if (uiWidth == 16) { offset = Q_16; offset_temp = QQ_16; }
+    if (uiWidth == 32) { offset = Q_32; offset_temp = QQ_32; }
 
     for (Int iCGScanPos = uiCGNum - 1; iCGScanPos >= 0; iCGScanPos--)
     {
@@ -1441,12 +1449,14 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
             uiQ  = piQCoef[uiBlkPos];
             dTemp = pdErrScale[uiBlkPos];
             Int lLevelDouble          = plSrcCoeff[uiBlkPos];
-            lLevelDouble              = (Int)min<Int64>((Int64)abs((Int)lLevelDouble) * uiQ, MAX_INT - (1 << (iQBits - 1)));
+            //lLevelDouble              = (Int)min<Int64>((Int64)abs((Int)lLevelDouble) * uiQ, MAX_INT - (1 << (iQBits - 1)));
+            lLevelDouble              = min(abs(lLevelDouble) * uiQ, offset);
             if (m_bUseAdaptQpSelect)
             {
                 piArlDstCoeff[uiBlkPos]   = (Int)((lLevelDouble + iAddC) >> iQBitsC);
             }
-            UInt uiMaxAbsLevel        = (lLevelDouble + (1 << (iQBits - 1))) >> iQBits;
+            //UInt uiMaxAbsLevel        = (lLevelDouble + (1 << (iQBits - 1))) >> iQBits;
+            UInt uiMaxAbsLevel        = (lLevelDouble + offset_temp) >> iQBits;
 
             Double dErr               = Double(lLevelDouble);
             pdCostCoeff0[iScanPos]  = dErr * dErr * dTemp;
@@ -1462,6 +1472,10 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
             if (iLastScanPos >= 0)
             {
+                rateIncUp[uiBlkPos] = 0;
+                rateIncDown[uiBlkPos] = 0;
+                deltaU[uiBlkPos] = 0;
+                sigRateDelta[uiBlkPos] = 0;
                 //===== coefficient level estimation =====
                 UInt  uiLevel;
                 UInt  uiOneCtx         = 4 * uiCtxSet + c1;
@@ -1540,6 +1554,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
             }
             else
             {
+                pdCostCoeff[iScanPos] = 0;
                 d64BaseCost    += pdCostCoeff0[iScanPos];
             }
             rdStats.d64SigCost += pdCostSig[iScanPos];
@@ -1561,6 +1576,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
         if (iCGLastScanPos >= 0)
         {
+            pdCostCoeffGroupSig[iCGScanPos] = 0;
             if (iCGScanPos)
             {
                 if (uiSigCoeffGroupFlag[uiCGBlkPos] == 0)
