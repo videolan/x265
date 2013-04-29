@@ -32,8 +32,10 @@ class PixelHarness : public TestHarness
 protected:
 
     pixel *pbuf1, *pbuf2;
+    char *pbuf1_c, *pbuf2_c;
 
     bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
+    bool check_pixel_primitive_char(x265::pixelcmp_char ref, x265::pixelcmp_char opt);
 
 public:
 
