@@ -458,6 +458,65 @@ Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidt
     }
 }
 
+Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId)
+{
+    if (chromaId == 0)
+    {
+        Pel*  pSrcU =           getCbAddr(uiPartIdx);
+        Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
+        
+        UInt   iSrcStride = getCStride();
+        UInt   iDstStride = pcYuvDst->getCStride();
+        for (UInt y = iHeight; y != 0; y--)
+        {
+            for(int x = 0; x < iWidth; x++)
+                pDstU[x] = (Short) pSrcU[x];
+
+            pSrcU += iSrcStride;
+            pDstU += iDstStride;
+        }
+    }
+    else if (chromaId == 1)
+    {
+        Pel*  pSrcV =           getCrAddr(uiPartIdx);
+        Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+       
+        UInt   iSrcStride = getCStride();
+        UInt   iDstStride = pcYuvDst->getCStride();
+        for (UInt y = iHeight; y != 0; y--)
+        {
+            for(int x = 0; x < iWidth; x++)
+                pDstV[x] = (Short) pSrcV[x];
+
+            pSrcV += iSrcStride;
+            pDstV += iDstStride;
+        }
+    }
+    else
+    {
+        Pel*  pSrcU =           getCbAddr(uiPartIdx);
+        Pel*  pSrcV =           getCrAddr(uiPartIdx);
+        Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
+        Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+
+        UInt   iSrcStride = getCStride();
+        UInt   iDstStride = pcYuvDst->getCStride();
+        for (UInt y = iHeight; y != 0; y--)
+        {
+            for(int x = 0; x < iWidth; x++)
+            {
+                pDstU[x] = (Short) pSrcU[x];
+                pDstV[x] = (Short) pSrcV[x];
+            }
+            pSrcU += iSrcStride;
+            pSrcV += iSrcStride;
+            pDstU += iDstStride;
+            pDstV += iDstStride;
+        }
+    }
+}
+
+
 Void TComYuv::addClip(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
     addClipLuma(pcYuvSrc0, pcYuvSrc1, uiTrUnitIdx, uiPartSize);
