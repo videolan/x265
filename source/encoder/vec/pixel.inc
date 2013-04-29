@@ -118,6 +118,7 @@ int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 template<int lx, int ly>
 void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
 {    
+    Vec8s m1, n1, n2, n3;
     res[0] = 0;
     res[1] = 0;
     res[2] = 0;
@@ -128,8 +129,6 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
         Vec8s sum3(0);
         for (int col = 0; col < lx; col += 8)
         {
-            Vec8s m1, n1, n2, n3;
-
             m1.load_a(piOrg + col);
             n1.load(piCur1 + col);
             n2.load(piCur2 + col);
