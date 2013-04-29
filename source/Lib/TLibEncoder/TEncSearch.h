@@ -78,7 +78,7 @@ private:
     UChar*          m_puhQTTempTrIdx;
     UChar*          m_puhQTTempCbf[3];
 
-    TComYuv*        m_pcQTTempTComYuv;
+    TShortYUV*        m_pcQTTempTComYuv;
     TComYuv         m_tmpYuvPred; // To be used in xGetInterPredictionError() to avoid constant memory allocation/deallocation
     Pel*            m_pSharedPredTransformSkip[3];
     TCoeff*         m_pcQTTempTUCoeffY;
@@ -175,14 +175,14 @@ public:
     Void  estIntraPredQT(TComDataCU* pcCU,
                          TComYuv*    pcOrgYuv,
                          TComYuv*    pcPredYuv,
-                         TComYuv*    pcResiYuv,
+                         TShortYUV*    pcResiYuv,
                          TComYuv*    pcRecoYuv,
                          UInt&       ruiDistC,
                          Bool        bLumaOnly);
     Void  estIntraPredChromaQT(TComDataCU* pcCU,
                                TComYuv*    pcOrgYuv,
                                TComYuv*    pcPredYuv,
-                               TComYuv*    pcResiYuv,
+                               TShortYUV*    pcResiYuv,
                                TComYuv*    pcRecoYuv,
                                UInt        uiPreCalcDistC);
 
@@ -190,7 +190,7 @@ public:
     Void predInterSearch(TComDataCU* pcCU,
                          TComYuv* pcOrgYuv,
                          TComYuv*& rpcPredYuv,
-                         TComYuv*& rpcResiYuv,
+                         TShortYUV*& rpcResiYuv,
                          TComYuv*& rpcRecoYuv,
                          Bool bUseRes = false,
                          Bool bUseMRG = false);
@@ -199,16 +199,16 @@ public:
     Void encodeResAndCalcRdInterCU(TComDataCU* pcCU,
                                    TComYuv*    pcYuvOrg,
                                    TComYuv*    pcYuvPred,
-                                   TComYuv*&   rpcYuvResi,
-                                   TComYuv*&   rpcYuvResiBest,
+                                   TShortYUV*&   rpcYuvResi,
+                                   TShortYUV*&   rpcYuvResiBest,
                                    TComYuv*&   rpcYuvRec,
                                    Bool        bSkipRes);
 
     /// set ME search range
     Void setAdaptiveSearchRange(Int iDir, Int iRefIdx, Int iSearchRange) { m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange; }
 
-    Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Pel* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
-    Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv);
+    Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Short* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
+    Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv);
 
 protected:
 
@@ -249,7 +249,7 @@ protected:
                               UInt        uiAbsPartIdx,
                               TComYuv*    pcOrgYuv,
                               TComYuv*    pcPredYuv,
-                              TComYuv*    pcResiYuv,
+                              TShortYUV*    pcResiYuv,
                               UInt&       ruiDist,
                               Int         default0Save1Load2 = 0);
     Void  xIntraCodingChromaBlk(TComDataCU* pcCU,
@@ -257,7 +257,7 @@ protected:
                                 UInt        uiAbsPartIdx,
                                 TComYuv*    pcOrgYuv,
                                 TComYuv*    pcPredYuv,
-                                TComYuv*    pcResiYuv,
+                                TShortYUV*    pcResiYuv,
                                 UInt&       ruiDist,
                                 UInt        uiChromaId,
                                 Int         default0Save1Load2 = 0);
@@ -268,7 +268,7 @@ protected:
                               Bool         bLumaOnly,
                               TComYuv *     pcOrgYuv,
                               TComYuv *     pcPredYuv,
-                              TComYuv *     pcResiYuv,
+                              TShortYUV *     pcResiYuv,
                               UInt &        ruiDistY,
                               UInt &        ruiDistC,
 #if HHI_RQT_INTRA_SPEEDUP
@@ -287,7 +287,7 @@ protected:
                                     UInt        uiAbsPartIdx,
                                     TComYuv*    pcOrgYuv,
                                     TComYuv*    pcPredYuv,
-                                    TComYuv*    pcResiYuv,
+                                    TShortYUV*    pcResiYuv,
                                     UInt&       ruiDist);
     Void  xSetIntraResultChromaQT(TComDataCU* pcCU,
                                   UInt        uiTrDepth,
@@ -431,8 +431,8 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     Void xEncodeResidualQT(TComDataCU* pcCU, UInt uiAbsPartIdx, const UInt uiDepth, Bool bSubdivAndCbf, TextType eType);
-    Void xEstimateResidualQT(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist);
-    Void xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TComYuv* pcResi, UInt uiDepth, Bool bSpatial);
+    Void xEstimateResidualQT(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TShortYUV* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist);
+    Void xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TShortYUV* pcResi, UInt uiDepth, Bool bSpatial);
 
     UInt  xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
     UInt  xUpdateCandList(UInt uiMode, Double uiCost, UInt uiFastCandNum, UInt * CandModeList, Double * CandCostList);
@@ -445,9 +445,9 @@ protected:
                              UInt        uiQp,
                              UInt        uiTrMode,
                              UInt&       ruiBits,
-                             TComYuv*&   rpcYuvRec,
+                             TShortYUV*&   rpcYuvRec,
                              TComYuv*    pcYuvPred,
-                             TComYuv*&   rpcYuvResi);
+                             TShortYUV*&   rpcYuvResi);
 
     Void  setWpScalingDistParam(TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur);
     inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp; }

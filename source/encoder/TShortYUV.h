@@ -29,6 +29,8 @@
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPicYuv.h"
 
+class TComYuv;
+
 class TShortYUV
 {
 private:
@@ -42,15 +44,15 @@ private:
     unsigned int Cwidth;
     unsigned int Cheight;
        
-    static Int getAddrOffset(UInt uiPartUnitIdx, UInt width)
+    static int getAddrOffset(unsigned int uiPartUnitIdx, unsigned int width)
     {
-        Int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
-        Int blkY = g_auiRasterToPelY[g_auiZscanToRaster[uiPartUnitIdx]];
+        int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
+        int blkY = g_auiRasterToPelY[g_auiZscanToRaster[uiPartUnitIdx]];
 
         return blkX + blkY * width;
     }
 
-    static Int getAddrOffset(UInt iTransUnitIdx, UInt iBlkSize, UInt width)
+    static int getAddrOffset(unsigned int iTransUnitIdx, unsigned int iBlkSize, unsigned int width)
     {
         Int blkX = (iTransUnitIdx * iBlkSize) &  (width - 1);
         Int blkY = (iTransUnitIdx * iBlkSize) & ~(width - 1);
@@ -67,26 +69,43 @@ public:
     void destroy();
     void clear();    
 
-    Short*    getLumaAddr()  { return YBuf; }
+    short*    getLumaAddr()    { return YBuf; }
 
-    Short*    getCbAddr()    { return CbBuf; }
+    short*    getCbAddr()    { return CbBuf; }
 
-    Short*    getCrAddr()    { return CrBuf; }
+    short*    getCrAddr()    { return CrBuf; }
 
     //  Access starting position of YUV partition unit buffer
-    Short* getLumaAddr(UInt iPartUnitIdx) { return YBuf +   getAddrOffset(iPartUnitIdx, width); }
+    short* getLumaAddr(unsigned int iPartUnitIdx) { return YBuf +   getAddrOffset(iPartUnitIdx, width); }
 
-    Short* getCbAddr(UInt iPartUnitIdx)   { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    short* getCbAddr(unsigned int iPartUnitIdx) { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
 
-    Short* getCrAddr(UInt iPartUnitIdx)   { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    short* getCrAddr(unsigned int iPartUnitIdx) { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
-    Short* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }
+    short* getLumaAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }
 
-    Short* getCbAddr(UInt iTransUnitIdx, UInt iBlkSize)   { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    short* getCbAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
 
-    Short* getCrAddr(UInt iTransUnitIdx, UInt iBlkSize)   { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    short* getCrAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
 
+    void subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+
+    void    addClip(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void    addClipLuma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void    addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    
+    void    copyPartToPartYuv(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
+
+    void    copyPartToPartYuv(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
 
     unsigned int    getHeight()   { return height; }
 
@@ -95,6 +114,11 @@ public:
     unsigned int    getCHeight()  { return Cheight; }
 
     unsigned int    getCWidth()   { return Cwidth; }
+
+    unsigned int    getStride()    { return width; }
+
+    unsigned int    getCStride()    { return Cwidth; }
+
 };
 
 #endif //end __TSHORTYUV__

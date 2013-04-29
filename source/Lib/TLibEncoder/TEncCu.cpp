@@ -66,10 +66,10 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
 
     m_ppcPredYuvBest = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcResiYuvBest = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcResiYuvBest = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvBest = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcPredYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcResiYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
@@ -87,14 +87,14 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
         m_ppcPredYuvBest[i] = new TComYuv;
         m_ppcPredYuvBest[i]->create(uiWidth, uiHeight);
-        m_ppcResiYuvBest[i] = new TComYuv;
+        m_ppcResiYuvBest[i] = new TShortYUV;
         m_ppcResiYuvBest[i]->create(uiWidth, uiHeight);
         m_ppcRecoYuvBest[i] = new TComYuv;
         m_ppcRecoYuvBest[i]->create(uiWidth, uiHeight);
 
         m_ppcPredYuvTemp[i] = new TComYuv;
         m_ppcPredYuvTemp[i]->create(uiWidth, uiHeight);
-        m_ppcResiYuvTemp[i] = new TComYuv;
+        m_ppcResiYuvTemp[i] = new TShortYUV;
         m_ppcResiYuvTemp[i]->create(uiWidth, uiHeight);
         m_ppcRecoYuvTemp[i] = new TComYuv;
         m_ppcRecoYuvTemp[i]->create(uiWidth, uiHeight);
