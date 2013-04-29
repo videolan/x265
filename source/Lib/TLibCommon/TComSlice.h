@@ -337,7 +337,7 @@ struct HrdSubLayerInfo
     UInt bitRateValueMinus1[MAX_CPB_CNT][2];
     UInt cpbSizeValue[MAX_CPB_CNT][2];
     UInt ducpbSizeValue[MAX_CPB_CNT][2];
-    UInt cbrFlag[MAX_CPB_CNT][2];
+    Bool cbrFlag[MAX_CPB_CNT][2];
     UInt duBitRateValue[MAX_CPB_CNT][2];
 };
 
@@ -468,7 +468,7 @@ public:
 
     UInt getDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)              { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl];        }
 
-    Void setCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
+    Void setCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl, Bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
 
     Bool getCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl];             }
 
@@ -1158,8 +1158,8 @@ class TComRefPicListModification
 {
 private:
 
-    UInt      m_bRefPicListModificationFlagL0;
-    UInt      m_bRefPicListModificationFlagL1;
+    Bool      m_bRefPicListModificationFlagL0;
+    Bool      m_bRefPicListModificationFlagL1;
     UInt      m_RefPicSetIdxL0[32];
     UInt      m_RefPicSetIdxL1[32];
 
@@ -1222,7 +1222,7 @@ private:
     Bool        m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
-    Int      m_uniformSpacingFlag;
+    Bool     m_uniformSpacingFlag;
     Int      m_iNumColumnsMinus1;
     UInt*    m_puiColumnWidth;
     Int      m_iNumRowsMinus1;
