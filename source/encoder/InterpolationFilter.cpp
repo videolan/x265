@@ -231,6 +231,82 @@ void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, shor
         dst += dstStride;
     }
 }
+
+template<int N>
+void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+{
+    short c[8];
+
+
+    c[0] = coeff[0];
+    c[1] = coeff[1];
+    if (N >= 4)
+    {
+        c[2] = coeff[2];
+        c[3] = coeff[3];
+    }
+    if (N >= 6)
+    {
+        c[4] = coeff[4];
+        c[5] = coeff[5];
+    }
+    if (N == 8)
+    {
+        c[6] = coeff[6];
+        c[7] = coeff[7];
+    }
+
+    int cStride = srcStride;
+    src -= (N / 2 - 1) * cStride;
+
+    int offset;
+    short maxVal;
+    //int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+
+    //shift += headRoom;
+    offset = 1 << (shift - 1);
+    //offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
+    maxVal = (1 << bitDepth) - 1;
+    
+    int row, col;   
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = src[col + 0 * cStride] * c[0];
+            sum += src[col + 1 * cStride] * c[1];
+            if (N >= 4)
+            {
+                sum += src[col + 2 * cStride] * c[2];
+                sum += src[col + 3 * cStride] * c[3];
+            }
+            if (N >= 6)
+            {
+                sum += src[col + 4 * cStride] * c[4];
+                sum += src[col + 5 * cStride] * c[5];
+            }
+            if (N == 8)
+            {
+                sum += src[col + 6 * cStride] * c[6];
+                sum += src[col + 7 * cStride] * c[7];
+            }
+
+            short val = (short)((sum + offset) >> shift);            
+                val = (val < 0) ? 0 : val;
+                val = (val > maxVal) ? maxVal : val;
+            
+            dst[col] = (pixel)val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 }
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
@@ -250,5 +326,8 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
     p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
     p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
+
+    p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
+    p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
 }
 }

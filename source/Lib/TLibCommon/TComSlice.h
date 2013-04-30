@@ -1854,7 +1854,7 @@ public:
 
     Void setTileLocation(Int idx, UInt location)
     {
-        assert(idx < m_tileByteLocation.size());
+        assert(idx < (Int)m_tileByteLocation.size());
         m_tileByteLocation[idx] = location;
     }
 
