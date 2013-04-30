@@ -1056,7 +1056,7 @@ Void TComTrQuant::init(UInt uiMaxTrSize,
 }
 
 Void TComTrQuant::transformNxN(TComDataCU* pcCU,
-                               Pel*        pcResidual,
+                               Short*        pcResidual,
                                UInt        uiStride,
                                TCoeff*     rpcCoeff,
                                Int*&       rpcArlCoeff,
@@ -1106,7 +1106,7 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
     xQuant(pcCU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, uiWidth, uiHeight, uiAbsSum, eTType, uiAbsPartIdx);
 }
 
-Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Pel* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
+Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
 {
     if (transQuantBypass)
     {
@@ -1114,7 +1114,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
         {
             for (UInt j = 0; j < uiWidth; j++)
             {
-                rpcResidual[k * uiStride + j] = pcCoeff[k * uiWidth + j];
+                rpcResidual[k * uiStride + j] = (Short) (pcCoeff[k * uiWidth + j]);
             }
         }
 
@@ -1132,7 +1132,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
     }
 }
 
-Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Pel* rpcResidual, UInt uiAddr, UInt uiStride, UInt uiWidth, UInt uiHeight, UInt uiMaxTrMode, UInt uiTrMode, TCoeff* rpcCoeff)
+Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr, UInt uiStride, UInt uiWidth, UInt uiHeight, UInt uiMaxTrMode, UInt uiTrMode, TCoeff* rpcCoeff)
 {
     if (!pcCU->getCbf(uiAbsPartIdx, eTxt, uiTrMode))
     {
@@ -1154,7 +1154,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
             uiWidth  <<= 1;
             uiHeight <<= 1;
         }
-        Pel* pResi = rpcResidual + uiAddr;
+        Short* pResi = rpcResidual + uiAddr;
         Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
         assert(scalingListType < 6);
         invtransformNxN(pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt));
@@ -1194,7 +1194,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  *  \param iSize transform size (iSize x iSize)
  *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
+Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
     ALIGN_VAR_32(Short, block[64 * 64]);
     ALIGN_VAR_32(Short, coeff[64 * 64]);
@@ -1203,7 +1203,7 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
     {
         for (int i = 0; i < iWidth; i++)
         {
-            block[j * iWidth + i] = (Short)piBlkResi[j * uiStride + i];
+            block[j * iWidth + i] = piBlkResi[j * uiStride + i];
         }
     }
 
@@ -1221,7 +1221,7 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Pel* piBlkResi, UInt uiStride, I
  *  \param iSize transform size (iSize x iSize)
  *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight)
+Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
     ALIGN_VAR_32(Short, block[64 * 64]);
     ALIGN_VAR_32(Short, coeff[64 * 64]);
@@ -1238,7 +1238,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
         {
             for (int i = 0; i < iWidth; i++)
             {
-                pResidual[j * uiStride + i] = (Pel)block[j * iWidth + i];
+                pResidual[j * uiStride + i] = block[j * iWidth + i];
             }
         }
     }
@@ -1250,7 +1250,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UI
  *  \param uiStride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  */
-Void TComTrQuant::xTransformSkip(Int bitDepth, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height)
+Void TComTrQuant::xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height)
 {
     assert(width == height);
     UInt uiLog2TrSize = g_aucConvertToBit[width] + 2;
@@ -1290,7 +1290,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Pel* piBlkResi, UInt uiStride, In
  *  \param uiStride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  */
-Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Pel* pResidual, UInt uiStride, Int width, Int height)
+Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, UInt uiStride, Int width, Int height)
 {
     assert(width == height);
     UInt uiLog2TrSize = g_aucConvertToBit[width] + 2;

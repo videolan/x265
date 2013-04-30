@@ -154,25 +154,25 @@ public:
 
     Void         setNumColumnsMinus1(Int i)                          { m_iNumColumnsMinus1 = i; }
 
-    Int          getNumColumnsMinus1()                                 { return m_iNumColumnsMinus1; }
+    Int          getNumColumnsMinus1()                               { return m_iNumColumnsMinus1; }
 
     Void         setNumRowsMinus1(Int i)                             { m_iNumRowsMinus1 = i; }
 
-    Int          getNumRowsMinus1()                                    { return m_iNumRowsMinus1; }
+    Int          getNumRowsMinus1()                                  { return m_iNumRowsMinus1; }
 
-    Int          getNumTiles()                                         { return (m_iNumRowsMinus1 + 1) * (m_iNumColumnsMinus1 + 1); }
+    Int          getNumTiles()                                       { return (m_iNumRowsMinus1 + 1) * (m_iNumColumnsMinus1 + 1); }
 
-    TComTile*    getTComTile(UInt tileIdx)                         { return *(m_apcTComTile + tileIdx); }
+    TComTile*    getTComTile(UInt tileIdx)                           { return *(m_apcTComTile + tileIdx); }
 
-    Void         setCUOrderMap(Int encCUOrder, Int cuAddr)           { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
+    Void         setCUOrderMap(UInt encCUOrder, Int cuAddr)          { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
 
-    UInt         getCUOrderMap(Int encCUOrder)                       { return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
+    UInt         getCUOrderMap(UInt encCUOrder)                      { return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
 
     UInt         getTileIdxMap(Int i)                                { return *(m_puiTileIdxMap + i); }
 
-    Void         setInverseCUOrderMap(Int cuAddr, Int encCUOrder)    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
+    Void         setInverseCUOrderMap(UInt cuAddr, UInt encCUOrder)  { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
 
-    UInt         getInverseCUOrderMap(Int cuAddr)                    { return *(m_puiInverseCUOrderMap + (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
+    UInt         getInverseCUOrderMap(UInt cuAddr)                   { return *(m_puiInverseCUOrderMap + (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
 
     UInt         getPicSCUEncOrder(UInt SCUAddr);
     UInt         getPicSCUAddr(UInt SCUEncOrder);

@@ -49,6 +49,7 @@
 #include "TEncEntropy.h"
 #include "TEncSearch.h"
 #include "TEncRateCtrl.h"
+#include "TShortYUV.h"
 //! \ingroup TLibEncoder
 //! \{
 
@@ -71,10 +72,10 @@ private:
     UChar                   m_uhTotalDepth;
 
     TComYuv**               m_ppcPredYuvBest; ///< Best Prediction Yuv for each depth
-    TComYuv**               m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
+    TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
-    TComYuv**               m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
+    TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_ppcOrigYuv;   ///< Original Yuv for each depth
 
