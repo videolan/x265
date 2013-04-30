@@ -423,6 +423,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
 #endif // if WEIGHTED_CHROMA_DISTORTION
 }
 
+#if !HIGH_BIT_DEPTH
 #if WEIGHTED_CHROMA_DISTORTION
 UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
 #else
@@ -512,7 +513,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
     return DtParam->DistFunc(DtParam);
 #endif // if WEIGHTED_CHROMA_DISTORTION
 }
-
+#endif
 
 UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height)
 {
