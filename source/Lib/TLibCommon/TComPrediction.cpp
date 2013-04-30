@@ -37,7 +37,29 @@
 
 #include <memory.h>
 #include "TComPrediction.h"
+#include "primitives.h"
 
+using namespace x265;
+
+const short m_lumaFilter[4][8] =
+{
+    {  0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+};
+
+const short m_chromaFilter[8][4] =
+{
+    {  0, 64,  0,  0 },
+    { -2, 58, 10, -2 },
+    { -4, 54, 16, -2 },
+    { -6, 46, 28, -4 },
+    { -4, 36, 36, -4 },
+    { -4, 28, 46, -6 },
+    { -2, 16, 54, -4 },
+    { -2, 10, 58, -2 }
+};
 //! \ingroup TLibCommon
 //! \{
 
@@ -560,14 +582,85 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 {
     Int refStride = refPic->getStride();
     Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
-    Short *ref      = (Short *) refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     Int dstStride = dstPic->getStride();
-    Short *dst      = (Short *) dstPic->getLumaAddr(partAddr);
+    Pel *dst      = dstPic->getLumaAddr(partAddr);
 
     Int xFrac = mv->getHor() & 0x3;
     Int yFrac = mv->getVer() & 0x3;
 
+#if ENABLE_PRIMITIVES
+    if (yFrac == 0)
+    {
+        if(xFrac != 0)
+        {
+            //if(!bi)           
+                primitives.ipFilter_p_p[FILTER_H_P_P_8](g_bitDepthY,(pixel*)ref,refStride, (pixel*) dst, dstStride, width, height, m_lumaFilter[xFrac]);
+
+            //else            
+            //    //filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY,ref,refStride, dst, dstStride, width, height,m_lumaFilter[xFrac]);
+            //    m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,!bi);            
+
+        }
+        else
+        {
+            //if(!bi)
+            {
+                //filterCopy(ref,refStride, dst, dstStride, width, height);
+                for (int row = 0; row < height; row++)
+                {
+                    memcpy(dst, ref, sizeof(Pel) * width);
+
+                    ref += refStride;
+                    dst += dstStride;
+                }
+                
+
+            }
+            //else
+                //filterConvertPelToShort(g_bitDepthY,ref,refStride, dst, dstStride, width, height);        
+             //   m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,!bi);
+
+        }
+    }
+        else if (xFrac == 0)
+        {
+            primitives.ipFilter_p_p[FILTER_V_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);            
+        }
+        else
+        {
+            Int tmpStride = width;
+            Int filterSize = NTAPS_LUMA;
+            Int halfFilterSize = (filterSize >> 1);
+
+            Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+
+            primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1,m_lumaFilter[xFrac]);
+            //if(!bi)
+            {
+                primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,
+                    tmpStride,
+                    (pixel*)dst,
+                    dstStride,
+                    width,
+                    height, m_lumaFilter[yFrac]);
+            }
+            /*else
+            {
+                m_if.filterVerLuma(tmp + (halfFilterSize - 1) * tmpStride,
+                    tmpStride,
+                    dst,
+                    dstStride,
+                    width,
+                    height,
+                    yFrac,
+                    false,
+                    !bi);
+            }*/
+            free(tmp);
+        }
+#else
     if (yFrac == 0)
     {
         m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,       !bi);
@@ -603,6 +696,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
                            !bi);
         free(tmp);
     }
+#endif
 }
 
 /**
@@ -624,11 +718,11 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     Int     refOffset  = (mv->getHor() >> 3) + (mv->getVer() >> 3) * refStride;
 
-    Short*    refCb     = (Short *) refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Short*    refCr     = (Short *) refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Pel*    refCb     =  refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Pel*    refCr     =  refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Short* dstCb = (Short *) dstPic->getCbAddr(partAddr);
-    Short* dstCr = (Short *) dstPic->getCrAddr(partAddr);
+    Pel* dstCb =  dstPic->getCbAddr(partAddr);
+    Pel* dstCr =  dstPic->getCrAddr(partAddr);
 
     Int     xFrac  = mv->getHor() & 0x7;
     Int     yFrac  = mv->getVer() & 0x7;
@@ -641,6 +735,49 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     Int     extStride = cxWidth;
     Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
+#if ENABLE_PRIMITIVES
+    if (yFrac == 0)
+    {
+        if(xFrac==0)
+        {
+            //filterCopy
+            for (int row = 0; row < cxHeight; row++)
+                {
+                    memcpy(dstCb, refCb, sizeof(Pel) * cxWidth);
+
+                    refCb += refStride;
+                    dstCb += dstStride;
+                }
+             for (int row = 0; row < cxHeight; row++)
+                {
+                    memcpy(dstCr, refCr, sizeof(Pel) * cxWidth);
+
+                    refCr += refStride;
+                    dstCr += dstStride;
+                }
+        }
+        else{
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+        }
+    }
+    else if (xFrac == 0)
+    {
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+        //m_if.filterVerChroma(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
+        //m_if.filterVerChroma(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
+    }
+    else
+    {
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);        
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+       
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+    }
+    free(extY);
+#else
 
     if (yFrac == 0)
     {
@@ -661,6 +798,8 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
         m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
     }
     free(extY);
+
+#endif
 }
 
 Void TComPrediction::xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv*& rpcYuvDst)
