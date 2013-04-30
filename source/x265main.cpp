@@ -66,5 +66,7 @@ int main(int argc, char *argv[])
 
     cTAppEncTop.destroy();
 
+    x265_cleanup();
+
     return 0;
 }

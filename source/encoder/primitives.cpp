@@ -23,6 +23,7 @@
 
 #include "primitives.h"
 #include "instrset.h"
+#include "bitcost.h"
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -163,4 +164,10 @@ extern "C"
 void x265_init_primitives(int cpuid)
 {
     x265::SetupPrimitives(cpuid);
+}
+
+extern "C"
+void x265_cleanup(void)
+{
+    x265::BitCost::cleanupCosts();
 }

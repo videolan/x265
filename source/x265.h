@@ -26,6 +26,10 @@
 
 #include <stdint.h>
 
+#if __cplusplus
+extern "C" {
+#endif
+
 /* Public C interface to x265 encoder (incomplete) */
 
 typedef struct
@@ -49,6 +53,11 @@ void x265_init_primitives( int cpuid );
  * encoder is created it will allocate a default thread pool if necessary.  Default
  * is one thread per CPU core (counting hyperthreading). */
 void x265_init_threading( int threadcount );
+
+/***
+ * Release library static allocations
+ */
+void x265_cleanup(void);
 
 ///TODO: this list needs to be pruned substantially to just the settings we want
 //       end users to have control over.
@@ -278,5 +287,9 @@ x265_params;
 
 // TODO: Needs methods to initialize this structure to sane defaults, apply
 // reasonable presets, and create an encoder with the given settings.
+
+#if __cplusplus
+};
+#endif
 
 #endif // _X265_H_
