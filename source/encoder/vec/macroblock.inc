@@ -1022,18 +1022,22 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
     int j;
-    int E[2], O[2];
     int add = 1 << (shift - 1);
 
+    Vec4i dst_first(-32768);
     Vec4i dst_second(32767);
 
     for (j = 0; j < line; j++)
     {
-        int O_first_value = O[0] = 83 * src[line] + 36 * src[3 * line];
-        int O_second_value =  O[1] = 36 * src[line] + ((-83) * src[3 * line]);
+        int src_line = src[line];
+        int src_line3 = src[3 * line];
+        int src_line2_shift = (src[2 * line] << 6);
+        int src_zero_shift = (src[0] << 6);
 
-        int E_first_value = E[0] = 64 * src[0] + 64 * src[2 * line];
-        int E_second_value = E[1] = 64 * src[0] + ((-64) * src[2 * line]);
+        int O_first_value = 83 * src_line + 36 * src_line3;
+        int O_second_value = 36 * src_line - 83 * src_line3;
+        int E_first_value = src_zero_shift + src_line2_shift;
+        int E_second_value = src_zero_shift - src_line2_shift;
 
         int first_value = E_first_value + O_first_value;
         int second_value = E_second_value + O_second_value;
@@ -1041,15 +1045,14 @@ void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
         int fourth_value = E_first_value - O_first_value;
 
         Vec4i dst_third(first_value, second_value, third_value, fourth_value);
-        dst_third = dst_third + add;
-        dst_third = dst_third >> shift;
-
-        Vec4i value;
-        value = min(dst_third, dst_second);
+        dst_third = (dst_third + add) >> shift;
+        dst_third = max(dst_first, dst_third);
+        dst_third = min(dst_third, dst_second);
 
         Vec4i all_zero(0);
-        Vec8s final_value = compress(value, all_zero);
+        Vec8s final_value = compress(dst_third, all_zero);
         final_value.store_partial(4, dst);
+
         src++;
         dst += 4;
     }
