@@ -47,7 +47,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
         uint32_t *c = costs[qp];
         for (int i = 0; i < MAX_MV; i++)
         {
-            c[i] = c[-1] = (uint32_t)(bitCost(i) * lambda);
+            c[i] = c[-i] = (uint32_t)(bitCost(i) * lambda);
         }
     }
 }
