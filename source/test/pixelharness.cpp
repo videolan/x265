@@ -97,8 +97,8 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
 {
     int j = 0;
-    ALIGN_VAR_16(int, cres[3]);
-    ALIGN_VAR_16(int, vres[3]);
+    ALIGN_VAR_16(int, cres[16]);
+    ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
     {
         opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &vres[0]);
@@ -169,9 +169,8 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     Timer *t = Timer::CreateTimer();
-    ALIGN_VAR_16(int, cres[3]);
+    ALIGN_VAR_16(int, cres[16]);
     int iters = 2000000;
-    int j = 0;
 
     for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
     {
@@ -195,10 +194,9 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf(" sad_x3[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
-                opt.sad_x3[curpar](pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &cres[0]),
-                ref.sad_x3[curpar](pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &cres[0]));
+                opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]),
+                ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]));
         }
-        j += INCR;
 
         // adaptive iteration count, reduce as partition size increases
         if ((curpar & 15) == 15) iters >>= 1;
