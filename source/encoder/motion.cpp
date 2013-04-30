@@ -195,6 +195,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     }
     while (res);
 
+    x264_cpu_emms();
     outQMv = bmv;
     return bcost >> 4;
 }
