@@ -2072,10 +2072,9 @@ __inline Double TComTrQuant::xGetICRateCost(UInt uiAbsLevel,
 __inline Int TComTrQuant::xGetICRate(UInt uiAbsLevel,
                                      UShort ui16CtxNumOne,
                                      UShort ui16CtxNumAbs,
-                                     UShort ui16AbsGoRice
-                                     , UInt                            c1Idx,
-                                     UInt                            c2Idx
-                                     ) const
+                                     UShort ui16AbsGoRice,
+                                     UInt   c1Idx,
+                                     UInt   c2Idx) const
 {
     Int iRate = 0;
     UInt baseLevel  =  (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;

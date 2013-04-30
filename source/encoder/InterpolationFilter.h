@@ -273,4 +273,91 @@ void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, 
     }
 }
 
+template<int N>
+void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+{
+    short c[8];
+
+
+    c[0] = coeff[0];
+    c[1] = coeff[1];
+    if (N >= 4)
+    {
+        c[2] = coeff[2];
+        c[3] = coeff[3];
+    }
+    if (N >= 6)
+    {
+        c[4] = coeff[4];
+        c[5] = coeff[5];
+    }
+    if (N == 8)
+    {
+        c[6] = coeff[6];
+        c[7] = coeff[7];
+    }
+
+    int cStride = srcStride;
+    src -= (N / 2 - 1) * cStride;
+
+    int offset;
+    short maxVal;
+    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+
+    shift += headRoom;
+    offset = 1 << (shift - 1);
+    offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
+    maxVal = (1 << bitDepth) - 1;
+
+    int row, col;
+
+    int sumCoeffs = c[0] + c[1] + c[2] + c[3];
+    if (N == 8)
+        sumCoeffs += c[4] + c[5] + c[6] + c[7];
+
+    for (row = 0; row < height; row++)
+    {
+        for (col = 0; col < width; col++)
+        {
+            int sum;
+
+            sum  = (((short)src[col + 0 * cStride] << headRoom)) * c[0];
+            sum += (((short)src[col + 1 * cStride] << headRoom)) * c[1];
+            if (N >= 4)
+            {
+                sum += (((short)src[col + 2 * cStride] << headRoom)) * c[2];
+                sum += (((short)src[col + 3 * cStride] << headRoom)) * c[3];
+            }
+            if (N >= 6)
+            {
+                sum += (((short)src[col + 4 * cStride] << headRoom)) * c[4];
+                sum += (((short)src[col + 5 * cStride] << headRoom)) * c[5];
+            }
+            if (N == 8)
+            {
+                sum += (((short)src[col + 6 * cStride] << headRoom)) * c[6];
+                sum += (((short)src[col + 7 * cStride] << headRoom)) * c[7];
+            }
+
+            sum -= sumCoeffs * IF_INTERNAL_OFFS;
+            short val = (short)((sum + offset) >> shift);
+
+            val = (val < 0) ? 0 : val;
+            val = (val > maxVal) ? maxVal : val;
+
+            dst[col] = val;
+        }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
 #endif // ifndef X265_INTERPOLATIONFILTER_H
+
+//template<int N>
+//void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+//    template<int N>
+//void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+//    template<int N>
+//void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
