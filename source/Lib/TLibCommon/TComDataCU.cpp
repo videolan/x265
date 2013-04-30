@@ -2987,7 +2987,7 @@ Bool TComDataCU::isBipredRestriction(UInt puIdx)
 
 Void TComDataCU::clipMv(TComMv& rcMv)
 {
-    Int  iMvShift = 2;
+    Int iMvShift = 2;
     Int iOffset = 8;
     Int iHorMax = (m_pcSlice->getSPS()->getPicWidthInLumaSamples() + iOffset - m_uiCUPelX - 1) << iMvShift;
     Int iHorMin = (-(Int)g_uiMaxCUWidth - iOffset - (Int)m_uiCUPelX + 1) << iMvShift;
@@ -2995,8 +2995,8 @@ Void TComDataCU::clipMv(TComMv& rcMv)
     Int iVerMax = (m_pcSlice->getSPS()->getPicHeightInLumaSamples() + iOffset - m_uiCUPelY - 1) << iMvShift;
     Int iVerMin = (-(Int)g_uiMaxCUHeight - iOffset - (Int)m_uiCUPelY + 1) << iMvShift;
 
-    rcMv.setHor(min(iHorMax, max(iHorMin, rcMv.getHor())));
-    rcMv.setVer(min(iVerMax, max(iVerMin, rcMv.getVer())));
+    rcMv.setHor(min(iHorMax, max(iHorMin, (Int)rcMv.getHor())));
+    rcMv.setVer(min(iVerMax, max(iVerMin, (Int)rcMv.getVer())));
 }
 
 UInt TComDataCU::getIntraSizeIdx(UInt uiAbsPartIdx)
