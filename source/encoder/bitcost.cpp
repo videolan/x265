@@ -35,8 +35,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
     {
         ScopedLock s(costCalcLock);
 
-        // Now that we have the lock check again if another thread calculated
-        // this row while we were blocking
+        // Now that we have acquired the lock, check again if another thread calculated
+        // this row while we were blocked
         if (costs[qp])
         {
             cost = costs[qp];
