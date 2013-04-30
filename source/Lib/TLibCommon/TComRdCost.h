@@ -122,12 +122,11 @@ private:
     UInt                    m_uiLambdaMotionSSE;
     Double                  m_dFrameLambda;
 
-    // for motion cost
+public:
+
     TComMv                  m_mvPredictor;
     UInt                    m_uiCost;
     Int                     m_iCostScale;
-
-public:
 
     TComRdCost();
     virtual ~TComRdCost();
@@ -139,6 +138,7 @@ public:
     Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = cbDistortionWeight; }
 
     Void    setCrDistortionWeight(Double crDistortionWeight) { m_crDistortionWeight = crDistortionWeight; }
+
 #endif
     Void    setLambda(Double dLambda);
     Void    setFrameLambda(Double dLambda) { m_dFrameLambda = dLambda; }
