@@ -182,7 +182,6 @@ extern int *Motion_Cost;
 
 void SetupPrimitives(int cpuid = 0);
 int CpuIDDetect(void);
-void SetUpMVCost(void);
 
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid);

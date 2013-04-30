@@ -33,7 +33,7 @@ namespace x265 {
 // x265 private namespace
 
 #if ENABLE_PRIMITIVES
-//  4   8  12  16      24     32 / 64
+//                          4   8  12  16      24     32 / 64
 static int8_t psize[16] = { 0,  1,  2,  3, -1,  4, -1, 5,
                             -1, -1, -1, -1, -1, -1, -1, 6 };
 int *Motion_Cost;
@@ -55,6 +55,7 @@ int PartitionFromSizes(int Width, int Height)
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
+void SetUpMVCost(void);
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
 void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
