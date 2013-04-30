@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <malloc.h>
 
 using namespace x265;
 
@@ -103,7 +104,7 @@ int main(int argc, char *argv[])
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, i);
         printf("Testing vector class primitives: CPUID %d\n", i);
-        for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
+        for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, i);
         printf("Testing assembly primitives: CPUID %d\n", i);
-        for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
+        for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "\nTest performance improvement with full optimizations\n");
 
-    for (int h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
+    for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
     {
         harness[h]->measureSpeed(cprim, optprim);
     }
