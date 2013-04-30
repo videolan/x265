@@ -39,6 +39,14 @@
 #include "TComDataCU.h"
 #include "TComPic.h"
 
+static x265::MV scaleMv(x265::MV mv, int scale)
+{
+    int mvx = Clip3(-32768, 32767, (scale * mv.x + 127 + (scale * mv.x < 0)) >> 8);
+    int mvy = Clip3(-32768, 32767, (scale * mv.y + 127 + (scale * mv.y < 0)) >> 8);
+
+    return x265::MV((int16_t)mvx, (int16_t)mvy);
+}
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -3220,7 +3228,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
                 }
                 else
                 {
-                    rcMv = cMvPred.scaleMv(iScale);
+                    rcMv = scaleMv(cMvPred, iScale);
                 }
             }
             pInfo->m_acMvCand[pInfo->iN++] = rcMv;
@@ -3250,7 +3258,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
                 }
                 else
                 {
-                    rcMv = cMvPred.scaleMv(iScale);
+                    rcMv = scaleMv(cMvPred, iScale);
                 }
             }
             pInfo->m_acMvCand[pInfo->iN++] = rcMv;
@@ -3333,7 +3341,7 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
         }
         else
         {
-            rcMv = cColMv.scaleMv(iScale);
+            rcMv = scaleMv(cColMv, iScale);
         }
     }
     return true;

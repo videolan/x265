@@ -78,14 +78,6 @@ public:
     // Scale up an FPEL mv to QPEL by shifting up two bits
     MV toQPel() const                          { return MV(word << 2); }
 
-    const MV scaleMv(int scale) const
-    {
-        int mvx = Clip3(-32768, 32767, (scale * x + 127 + (scale * x < 0)) >> 8);
-        int mvy = Clip3(-32768, 32767, (scale * y + 127 + (scale * y < 0)) >> 8);
-
-        return MV((int16_t)mvx, (int16_t)mvy);
-    }
-
     MV min(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
     MV max(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
 
