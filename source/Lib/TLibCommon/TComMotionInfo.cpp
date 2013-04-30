@@ -89,8 +89,8 @@ Void TComCUMvField::clearMvField()
 {
     for (Int i = 0; i < m_uiNumPartition; i++)
     {
-        m_pcMv[i].setZero();
-        m_pcMvd[i].setZero();
+        m_pcMv[i] = 0;
+        m_pcMvd[i] = 0;
     }
 
     assert(sizeof(*m_piRefIdx) == 1);

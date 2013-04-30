@@ -102,8 +102,6 @@ public:
     /* For compatibility with TComMV */
     void  set(int16_t _x, int16_t _y) { x = _x; y = _y; }
 
-    void  setZero()               { word = 0; }
-
     void  setHor(short i)         { x = i; }
 
     void  setVer(short i)         { y = i; }
