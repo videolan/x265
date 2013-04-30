@@ -57,7 +57,7 @@ public:
 
     const MV& operator <<=(int i)              { x <<= i; y <<= i; return *this; }
 
-    MV operator >>(int i) const                { return MV(word >> i); }
+    MV operator >>(int i) const                { return MV(x >> i, y >> i); }
 
     MV operator <<(int i) const                { return MV(word << i); }
 
@@ -70,12 +70,13 @@ public:
     bool operator !=(const MV& other) const    { return word != other.word; }
 
     // Scale down a QPEL mv to FPEL mv, rounding up by one HPEL offset
-    const MV roundToFPel() const               { return MV(x + 2, y + 2) >> 2; }
+    MV roundToFPel() const                     { return MV(x + 2, y + 2) >> 2; }
+    //MV roundToFPel() const               { return MV(((word + 0x00020002) & ~0x00030003) >> 2); }
 
-    //const MV roundToFPel() const               { return MV(((word + 0x00020002) & ~0x00030003) >> 2); }
+    MV toFPel() const                          { return MV((word & ~0x00030003) >> 2); }
 
     // Scale up an FPEL mv to QPEL by shifting up two bits
-    const MV asQPel() const                    { return MV(word << 2); }
+    MV toQPel() const                          { return MV(word << 2); }
 
     const MV scaleMv(int scale) const
     {

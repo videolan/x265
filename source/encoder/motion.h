@@ -73,9 +73,7 @@ protected:
 
     int blockWidth;
     int blockHeight;
-
-    int blockOffsetX;
-    int blockOffsetY;
+    int blockOffset;
 
     BitCost bc;
 
@@ -119,41 +117,39 @@ public:
 
     /* Methods called for searches */
 
-    int bufSAD(pixel *fref, intptr_t stride) { return sad(fenc, FENC_STRIDE, fref, stride); }
+    uint32_t bufSAD(pixel *fref, intptr_t stride) { return sad(fenc, FENC_STRIDE, fref, stride); }
 
-    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    uint32_t bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
     void setReference(MotionReference* tref) { ref = tref; }
 
-    int fpelSad(const MV& fmv)
+    uint32_t fpelSad(const MV& fmv)
     {
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
     }
 
-    int qpelSad(const MV& qmv)
+    uint32_t qpelSad(const MV& qmv)
     {
-        int x = blockOffsetX + (qmv.x >> 2);
-        int y = blockOffsetY + (qmv.y >> 2);
-
+        MV fmc = qmv >> 2;
+        pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
         return sad(fenc, FENC_STRIDE,
-                   ref->plane[qmv.x & 3][qmv.y & 3][0] + y * ref->lumaStride + x,
+                   qfref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
     }
 
-    int qpelSatd(const MV& qmv)
+    uint32_t qpelSatd(const MV& qmv)
     {
-        int x = blockOffsetX + (qmv.x >> 2);
-        int y = blockOffsetY + (qmv.y >> 2);
-
+        MV fmc = qmv >> 2;
+        pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
         return satd(fenc, FENC_STRIDE,
-                    ref->plane[qmv.x & 3][qmv.y & 3][0] + y * ref->lumaStride + x,
+                    qfref + fmv.y * ref->lumaStride + fmv.x,
                     ref->lumaStride);
     }
 
     /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
-    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
+    uint32_t motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
     /* Motion Compensation */
     void buildResidual(const MV &mv);

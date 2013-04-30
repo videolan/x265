@@ -36,10 +36,7 @@ public:
     void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
 
     // return bit cost of absolute motion vector
-    uint32_t bitCostMV(const MV& mv) const   { return cost_mvx[mvd.x] + cost_mvy[mvd.y]; }
-
-    // return bit cost of vector difference from prediction
-    uint32_t bitCostMVD(const MV& mvd) const { return cost[mv.x] + cost[mv.y]; }
+    uint32_t mvcost(const MV& mv) const      { return cost_mvx[mvd.x] + cost_mvy[mvd.y]; }
 
     void setQP(unsigned int qp, double lambda);
 
