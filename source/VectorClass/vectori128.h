@@ -289,6 +289,7 @@ static inline bool horizontal_or (Vec128b const & a) {
 *****************************************************************************/
 
 #if _MSC_VER
+#pragma warning(push)
 #pragma warning(disable: 4244) // type conversion, possible loss of data
 #pragma warning(disable: 4127) // conditional  expression is constant
 #endif
@@ -5322,5 +5323,9 @@ static inline Vec16uc & operator /= (Vec16uc & a, Const_int_t<d> b) {
     a = a / b;
     return a;
 }
+
+#if _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif // VECTORI128_H

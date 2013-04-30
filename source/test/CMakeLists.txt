@@ -13,16 +13,6 @@ if(ENABLE_TEST_THREADPOOL)
     target_link_libraries(PoolTest x265 ${PLATFORM_LIBS})
 endif()
 
-if(MSVC)
-    # these should be cleaned up so the test bench compiles clean for
-    # both HIGH_BIT_DEPTH and without
-    add_definitions(/wd4244) # type conversion, possible loss of data
-    add_definitions(/wd4267) # int size conversion, possible loss of data
-endif(MSVC)
-if(GCC)
-    add_definitions(-Wno-sign-compare)
-endif(GCC)
-
 add_executable(TestBench
     testbench.cpp 
     timer.cpp testharness.h

@@ -59,7 +59,7 @@ IPFilterHarness::IPFilterHarness()
         int isPositive = rand() & 1;                             // To randomly generate Positive and Negative values
         isPositive = (isPositive) ? 1 : -1;
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
-        short_buff[i] = (isPositive) * (rand() &  SHRT_MAX);
+        short_buff[i] = (short)(isPositive) * (rand() &  SHRT_MAX);
     }
 }
 
@@ -186,8 +186,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_s_p ref, x265::IPF
 
 bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x265::IPFilterConvert_p_s opt)
 {
-    int rand_height = rand() % 100;                 // Randomly generated Height
-    int rand_width = rand() % 100;                  // Randomly generated Width
+    short rand_height = (short) rand() % 100;                 // Randomly generated Height
+    short rand_width = (short) rand() % 100;                  // Randomly generated Width
     short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
@@ -220,8 +220,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
 
 bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x265::IPFilterConvert_s_p opt)
 {
-    int rand_height = rand() % 100;                 // Randomly generated Height
-    int rand_width = rand() % 100;                  // Randomly generated Width
+    short rand_height = (short) rand() % 100;                 // Randomly generated Height
+    short rand_width = (short) rand() % 100;                  // Randomly generated Width
     short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)

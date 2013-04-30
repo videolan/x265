@@ -1,5 +1,7 @@
 if (MSVC)
     set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp)
+    add_definitions(/wd4127) # conditional expression is constant
+    add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
 endif()
 if (MSVC_VERSION EQUAL 1600) # VC10
     set(PRIMITIVES ${PRIMITIVES} avx.cpp)

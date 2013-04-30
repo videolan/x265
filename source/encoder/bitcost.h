@@ -21,30 +21,50 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _PIXELHARNESS_H_1
-#define _PIXELHARNESS_H_1 1
+#ifndef __BITCOST__
+#define __BITCOST__
 
-#include "testharness.h"
-#include "primitives.h"
+#include <stdint.h>
 
-class PixelHarness : public TestHarness
+namespace x265 {
+// private x265 namespace
+
+class BitCost
 {
-protected:
-
-    pixel *pbuf1, *pbuf2;
-
-    bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
-    bool check_pixel_primitive_x3(x265::pixelcmp_x3 ref, x265::pixelcmp_x3 opt);
-
 public:
 
-    PixelHarness();
+    void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
 
-    virtual ~PixelHarness();
+    // return bit cost of absolute motion vector
+    uint32_t bitCostMV(const MV& mv) const   { return cost_mvx[mvd.x] + cost_mvy[mvd.y]; }
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    // return bit cost of vector difference from prediction
+    uint32_t bitCostMVD(const MV& mvd) const { return cost[mv.x] + cost[mv.y]; }
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+    void setQP(unsigned int qp, double lambda);
+
+    static void cleanupCosts();
+
+protected:
+
+    uint32_t *cost_mvx;
+
+    uint32_t *cost_mvy;
+
+    uint32_t *cost;
+
+    BitCost& operator=(const BitCost&);
+
+private:
+
+    static const int MAX_QP = 51;
+
+    static int *costs[MAX_QP];
+
+    static Lock costCalcLock;
+
+    static int bitCost(int val);
 };
+}
 
-#endif // ifndef _PIXELHARNESS_H_1
+#endif // ifndef __BITCOST__

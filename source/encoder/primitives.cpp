@@ -27,14 +27,16 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 namespace x265 {
 // x265 private namespace
 
 #if ENABLE_PRIMITIVES
-                        //  4   8  12  16      24     32 / 64
-static int8_t psize[16] = { 0,  1,  2,  3, -1,  4, -1, 5, 
-                           -1, -1, -1, -1, -1, -1, -1, 6 };
+//                          4   8  12  16      24     32 / 64
+static int8_t psize[16] = { 0,  1,  2,  3, -1,  4, -1, 5,
+                            -1, -1, -1, -1, -1, -1, -1, 6 };
+int *Motion_Cost;
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)
@@ -53,6 +55,7 @@ int PartitionFromSizes(int Width, int Height)
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
+void SetUpMVCost(void);
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
 void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
@@ -82,6 +85,8 @@ void SetupPrimitives(int cpuid)
     {
         cpuid = CpuIDDetect();
     }
+
+    SetUpMVCost();
 
     fprintf(stdout, "x265: performance primitives:");
 
@@ -140,11 +145,22 @@ int CpuIDDetect(void)
         return iset;
     }
 }
+
+void SetUpMVCost(void)
+{
+    Motion_Cost = (int*)malloc((8 * 4 * 2024) * sizeof(int));
+    Motion_Cost[0] = 1;
+    Motion_Cost[1] = 1;
+
+    for (int i = 2; i < 8 * 4 * 2024; i++)
+    {
+        Motion_Cost[i] = (int)(2 * (ceil(log((double)i + 1) / log(2.0000))) - 1);
+    }
+}
 }
 
 extern "C"
-void x265_init_primitives( int cpuid )
+void x265_init_primitives(int cpuid)
 {
     x265::SetupPrimitives(cpuid);
 }
-

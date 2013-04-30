@@ -253,7 +253,7 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, un
     unsigned int  iDstStride = pcYuvDst->getStride();
     for (unsigned int y = iHeight; y != 0; y--)
     {
-        for(int x = 0; x < iWidth; x++)
+        for(unsigned int x = 0; x < iWidth; x++)
             pDst[x] = (Pel) (pSrc[x]);
 
         pSrc += iSrcStride;
@@ -300,7 +300,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     unsigned int   iDstStride = pcYuvDst->getCStride();
     for (unsigned int y = iHeight; y != 0; y--)
     {
-       for(int x = 0; x < iWidth; x++)
+       for(unsigned int x = 0; x < iWidth; x++)
        {
            pDstU[x] = (Pel)(pSrcU[x]);
            pDstV[x] = (Pel)(pSrcV[x]);
@@ -386,7 +386,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for(int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstU[x] = (Pel)(pSrcU[x]);
             }
@@ -402,7 +402,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for(int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstV[x] = (Pel)(pSrcV[x]);
             }
@@ -421,7 +421,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for(int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstU[x] = (Pel)(pSrcU[x]);
                 pDstV[x] = (Pel)(pSrcV[x]);

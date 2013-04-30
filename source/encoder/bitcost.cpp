@@ -21,30 +21,57 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef _PIXELHARNESS_H_1
-#define _PIXELHARNESS_H_1 1
+#include "bitcost.cpp"
+#include <stdint.h>
 
-#include "testharness.h"
-#include "primitives.h"
+using namespace x265;
 
-class PixelHarness : public TestHarness
+void BitCost::setQP(unsigned int qp, double lambda)
 {
-protected:
+    if (costs[QP])
+        cost = costs[qp];
+    else
+    {
+        ScopedLock s(costCalcLock);
 
-    pixel *pbuf1, *pbuf2;
+        // Now that we have the lock check again if another thread calculated
+        // this row while we were blocking
+        if (costs[qp])
+        {
+            cost = costs[qp];
+            return;
+        }
 
-    bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
-    bool check_pixel_primitive_x3(x265::pixelcmp_x3 ref, x265::pixelcmp_x3 opt);
+        costs[qp] = new uint32_t[2 * MV_MAX] + MV_MAX;
+        uint32_t *c = cost[qp];
+        for (int i = 0; i < MV_MAX; i++)
+        {
+            c[i] = c[-1] = (uint32_t)(bitCost(i) * lambda);
+        }
+    }
+}
 
-public:
+/***
+ * Class static data and methods
+ */
 
-    PixelHarness();
+int *BitCost::costs[MAX_QP];
 
-    virtual ~PixelHarness();
+Lock BitCost::costCalcLock;
 
-    bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
+int BitCost::bitCost(int val)
+{
+}
 
-    void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
-};
+void BitCost::cleanupCosts()
+{
+    for (int i = 0; i < MAX_QP; i++)
+    {
+        if (costs[i])
+        {
+            delete [] (costs[i] - MV_MAX);
+        }
+    }
+}
 
-#endif // ifndef _PIXELHARNESS_H_1
+#endif // ifndef __BITCOST__

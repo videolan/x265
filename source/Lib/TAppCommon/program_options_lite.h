@@ -91,6 +91,8 @@ struct OptionBase
 template<typename T>
 struct Option : public OptionBase
 {
+    Option& operator=(const Option&); // non-existant copy operator
+
     Option(const std::string& name, T& storage, T default_val, const std::string& desc)
         : OptionBase(name, desc), opt_storage(storage), opt_default_val(default_val)
     {}
@@ -134,6 +136,8 @@ inline void Option<std::string>::parse(const std::string& arg)
 /** Option class for argument handling using a user provided function */
 struct OptionFunc : public OptionBase
 {
+    OptionFunc& operator=(const OptionFunc&); // non-existant copy operator
+
     typedef void (Func)(Options&, const std::string&);
 
     OptionFunc(const std::string& name, Options& parent_, Func *func_, const std::string& desc)
@@ -190,6 +194,7 @@ struct Options
 class OptionSpecific
 {
 public:
+    OptionSpecific& operator=(const OptionSpecific&); // non-existant copy operator
 
     OptionSpecific(Options& parent_) : parent(parent_) {}
 

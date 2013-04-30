@@ -606,8 +606,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         arrangeLongtermPicturesInRPS(pcSlice, rcListPic);
         TComRefPicListModification* refPicListModification = pcSlice->getRefPicListModification();
-        refPicListModification->setRefPicListModificationFlagL0(0);
-        refPicListModification->setRefPicListModificationFlagL1(0);
+        refPicListModification->setRefPicListModificationFlagL0(false);
+        refPicListModification->setRefPicListModificationFlagL1(false);
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
 

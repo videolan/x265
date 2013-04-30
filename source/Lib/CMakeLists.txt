@@ -11,6 +11,8 @@ if(MSVC)
     add_definitions(/wd4512) # assignment operator could not be generated
     add_definitions(/wd4127) # conditional expression is constant
     add_definitions(/wd4389) # signed/unsigned mismatch
+    add_definitions(/wd4018) # '<' signed/unsigned mismatch
+    add_definitions(/wd4800) # performance warning: bool coersion
 endif(MSVC)
 
 file(GLOB LIBCOMMON  TLibCommon/*.h TLibCommon/*.cpp)
