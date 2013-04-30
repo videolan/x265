@@ -94,9 +94,9 @@ public:
         return cl.max(_min);
     }
 
-    bool checkRange(const MV& min, const MV& max) const
+    bool checkRange(const MV& _min, const MV& _max) const
     {
-        return x < min.x || x > max.x || y < min.y || y > max.y;
+        return x < _min.x || x > _max.x || y < _min.y || y > _max.y;
     }
 
     /* For compatibility with TComMV */
