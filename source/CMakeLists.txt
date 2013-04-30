@@ -72,19 +72,30 @@ include_directories(. Lib encoder)
 add_subdirectory(Lib)
 add_subdirectory(encoder)
 
+# Test applications
+option(ENABLE_TESTS "Enable Unit Tests" OFF)
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif(ENABLE_TESTS)
+
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
+    # x265cfg.cpp and x265enc.cpp are copied from HM sources (still have the BSD headers) and have many
+    # compiler warnings we do not want to waste time fixing.  x265main.cpp includes many HM headers, so
+    # they leak in there as well.
     if(MSVC)
         add_definitions(/wd4100) # unreferenced formal parameter
         add_definitions(/wd4244) # type conversion, possible loss of data
         add_definitions(/wd4512) # assignment operator could not be generated
+        add_definitions(/wd4800) # performance warning: bool coersion
+        set_source_files_properties(x265cfg.cpp PROPERTIES COMPILE_FLAGS "/D_CRT_NONSTDC_NO_DEPRECATE /wd4018")
     endif(MSVC)
     if(GCC)
         add_definitions(-Wno-sign-compare)
         add_definitions(-Wno-unused-parameter)
+        set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
     endif(GCC)
-    set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
     set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
     add_subdirectory(input)
@@ -99,9 +110,3 @@ if(ENABLE_CLI)
 
     target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 endif(ENABLE_CLI)
-
-# Test applications
-option(ENABLE_TESTS "Enable Unit Tests" OFF)
-if(ENABLE_TESTS)
-    add_subdirectory(test)
-endif(ENABLE_TESTS)

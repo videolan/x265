@@ -377,9 +377,9 @@ public:
 
     Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_iMaxRefPicNum = iMaxRefPicNum;  }
 
-    Bool      getMaxTempLayer()                              { return m_maxTempLayer;              }
+    Bool      getMaxTempLayer()                            { return m_maxTempLayer > 0;        }
 
-    Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer;      }
+    Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer;    }
 
     //======== Transform =============
     Void      setQuadtreeTULog2MaxSize(UInt u)      { m_uiQuadtreeTULog2MaxSize = u; }
