@@ -21,14 +21,15 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "bitcost.cpp"
+#include "bitcost.h"
 #include <stdint.h>
+#include <math.h>
 
 using namespace x265;
 
 void BitCost::setQP(unsigned int qp, double lambda)
 {
-    if (costs[QP])
+    if (costs[qp])
         cost = costs[qp];
     else
     {
@@ -42,9 +43,9 @@ void BitCost::setQP(unsigned int qp, double lambda)
             return;
         }
 
-        costs[qp] = new uint32_t[2 * MV_MAX] + MV_MAX;
-        uint32_t *c = cost[qp];
-        for (int i = 0; i < MV_MAX; i++)
+        costs[qp] = new uint32_t[2 * MAX_MV] + MAX_MV;
+        uint32_t *c = costs[qp];
+        for (int i = 0; i < MAX_MV; i++)
         {
             c[i] = c[-1] = (uint32_t)(bitCost(i) * lambda);
         }
@@ -55,12 +56,16 @@ void BitCost::setQP(unsigned int qp, double lambda)
  * Class static data and methods
  */
 
-int *BitCost::costs[MAX_QP];
+uint32_t *BitCost::costs[MAX_QP];
 
 Lock BitCost::costCalcLock;
 
-int BitCost::bitCost(int val)
+uint32_t BitCost::bitCost(int val)
 {
+    if (val < 2)
+        return 1;
+    
+    return (uint32_t)(2 * (ceil(log((double)(val + 1)) / log(2.0000))) - 1);
 }
 
 void BitCost::cleanupCosts()
@@ -69,9 +74,7 @@ void BitCost::cleanupCosts()
     {
         if (costs[i])
         {
-            delete [] (costs[i] - MV_MAX);
+            delete [] (costs[i] - MAX_MV);
         }
     }
 }
-
-#endif // ifndef __BITCOST__

@@ -25,7 +25,6 @@
 #define __MOTIONESTIMATE__
 
 #include "primitives.h"
-#include "threading.h"
 #include "mv.h"
 #include "bitcost.h"
 

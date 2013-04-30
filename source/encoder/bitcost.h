@@ -24,6 +24,9 @@
 #ifndef __BITCOST__
 #define __BITCOST__
 
+#include "threading.h"
+#include "mv.h"
+
 #include <stdint.h>
 
 namespace x265 {
@@ -36,7 +39,7 @@ public:
     void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
 
     // return bit cost of absolute motion vector
-    uint32_t mvcost(const MV& mv) const      { return cost_mvx[mvd.x] + cost_mvy[mvd.y]; }
+    uint32_t mvcost(const MV& mv) const      { return cost_mvx[mv.x] + cost_mvy[mv.y]; }
 
     void setQP(unsigned int qp, double lambda);
 
@@ -54,13 +57,15 @@ protected:
 
 private:
 
+    static const int MAX_MV = 0x8000;
+
     static const int MAX_QP = 51;
 
-    static int *costs[MAX_QP];
+    static uint32_t *costs[MAX_QP];
 
     static Lock costCalcLock;
 
-    static int bitCost(int val);
+    static uint32_t bitCost(int val);
 };
 }
 

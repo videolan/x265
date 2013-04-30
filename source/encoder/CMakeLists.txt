@@ -24,7 +24,7 @@ add_library(x265 ../../COPYING ../x265.h
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     md5.cpp md5.h
-    mv.h
+    bitcost.cpp bitcost.h mv.h
     TShortYUV.cpp TShortYUV.h)
 
 if(ENABLE_PRIMITIVES)
