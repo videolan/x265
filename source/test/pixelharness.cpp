@@ -94,6 +94,25 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
     return true;
 }
 
+bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
+{
+    int j = 0;
+    ALIGN_VAR_16(int, cres[16]);
+    ALIGN_VAR_16(int, vres[16]);
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &cres[0]);
+
+        if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -112,6 +131,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_pixel_primitive(ref.sad[curpar], opt.sad[curpar]))
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
+        if (opt.sad_x3[curpar])
+        {
+            if (!check_pixel_primitive_x3(ref.sad_x3[curpar], opt.sad_x3[curpar]))
+            {
+                printf("sad_x3[%s]: failed!\n", FuncNames[curpar]);
                 return false;
             }
         }
@@ -141,7 +169,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     Timer *t = Timer::CreateTimer();
-
+    ALIGN_VAR_16(int, cres[16]);
     int iters = 2000000;
 
     for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -160,6 +188,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             REPORT_SPEEDUP(iters,
                 opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
                 ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
+        }
+
+        if (opt.sad_x3[curpar])
+        {
+            printf(" sad_x3[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(iters,
+                opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]),
+                ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]));
         }
 
         // adaptive iteration count, reduce as partition size increases

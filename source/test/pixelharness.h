@@ -34,6 +34,7 @@ protected:
     pixel *pbuf1, *pbuf2;
 
     bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
+    bool check_pixel_primitive_x3(x265::pixelcmp_x3 ref, x265::pixelcmp_x3 opt);
 
 public:
 
