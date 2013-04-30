@@ -50,9 +50,13 @@ static inline void cpuid(int output[4], int functionnumber)
 // Define interface to xgetbv instruction
 static inline int64_t xgetbv(int ctr)
 {
-// MSVC 2010 SP1 or later, or similar Intel release
-#if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
+#if MACOS
 
+    return 0 & ctr;
+
+#elif (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
+
+    // MSVC 2010 SP1 or later, or similar Intel release
     return _xgetbv(ctr);   // intrinsic function for XGETBV
 
 #elif defined(__GNUC__)    // use inline assembly, Gnu/AT&T syntax
