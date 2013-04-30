@@ -78,13 +78,13 @@ public:
     // Scale up an FPEL mv to QPEL by shifting up two bits
     MV toQPel() const                          { return MV(word << 2); }
 
-    MV min(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
-    MV max(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
+    MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
+    MV mvmax(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
 
-    const MV clipped(const MV& _min, const MV& _max) const
+    MV clipped(const MV& _min, const MV& _max) const
     {
-        MV cl = min(_max);
-        return cl.max(_min);
+        MV cl = mvmin(_max);
+        return cl.mvmax(_min);
     }
 
     bool checkRange(const MV& _min, const MV& _max) const
@@ -102,10 +102,6 @@ public:
     short getHor() const          { return x; }
 
     short getVer() const          { return y; }
-
-    int   getAbsHor() const       { return abs(x); }
-
-    int   getAbsVer() const       { return abs(y); }
 };
 }
 

@@ -1245,8 +1245,8 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                         if (rpcBestCU->getSlice()->getNumRefIdx(RefPicList(uiRefListIdx)) > 0)
                         {
                             TComCUMvField* pcCUMvField = rpcBestCU->getCUMvField(RefPicList(uiRefListIdx));
-                            Int iHor = pcCUMvField->getMvd(0).getAbsHor();
-                            Int iVer = pcCUMvField->getMvd(0).getAbsVer();
+                            Int iHor = abs(pcCUMvField->getMvd(0).x);
+                            Int iVer = abs(pcCUMvField->getMvd(0).y);
                             absoulte_MV += iHor + iVer;
                         }
                     }
