@@ -2508,7 +2508,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             }
 
             for (Int j = 0; j < numCand; j++)
-
             {
                 Bool mostProbableModeIncluded = false;
                 Int mostProbableMode = uiPreds[j];
@@ -2523,7 +2522,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                     uiRdModeList[numModesForFullRD++] = mostProbableMode;
                 }
             }
-
 #endif // FAST_UDI_USE_MPM
         }
         else
