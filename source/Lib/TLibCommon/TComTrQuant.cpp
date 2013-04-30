@@ -1434,7 +1434,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
             uiQ  = piQCoef[uiBlkPos];
             dTemp = pdErrScale[uiBlkPos];
             Int lLevelDouble          = plSrcCoeff[uiBlkPos];
-            lLevelDouble              = min(abs(lLevelDouble) * uiQ, MAX_INT - (1 << (iQBits - 1)));
+            lLevelDouble              = (Int)min<Int64>((Int64)abs((Int)lLevelDouble) * uiQ, MAX_INT - (1 << (iQBits - 1)));
 
             if (m_bUseAdaptQpSelect)
             {
