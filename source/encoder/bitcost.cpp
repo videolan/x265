@@ -39,11 +39,12 @@ void BitCost::setQP(unsigned int qp, double lambda)
         // this row while we were blocked
         if (!costs[qp])
         {
+            CalculateLogs();
             costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
             uint32_t *c = costs[qp];
             for (int i = 0; i < BC_MAX_MV; i++)
             {
-                c[i] = c[-i] = (uint32_t)(bitCost(i) * lambda);
+                c[i] = c[-i] = (uint32_t)(logs[i] * lambda + 0.5);
             }
         }
 
@@ -57,14 +58,20 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
 uint32_t *BitCost::costs[BC_MAX_QP];
 
+float *BitCost::logs;
+
 Lock BitCost::costCalcLock;
 
-uint32_t BitCost::bitCost(int val)
+void BitCost::CalculateLogs()
 {
-    if (val < 2)
-        return 1;
-    
-    return (uint32_t)(2 * (ceil(log((double)(val + 1)) / log(2.0000))) - 1);
+    if (!logs)
+    {
+        logs = new float[BC_MAX_MV + 1];
+        logs[0] = 1;
+        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
+        for( int i = 1; i <= BC_MAX_MV; i++ )
+            logs[i] = ceil(log((float)(i+1)) * log2_2);
+    }
 }
 
 void BitCost::cleanupCosts()
@@ -74,6 +81,14 @@ void BitCost::cleanupCosts()
         if (costs[i])
         {
             delete [] (costs[i] - BC_MAX_MV);
+
+            costs[i] = 0;
         }
+    }
+    if (logs)
+    {
+        delete [] logs;
+
+        logs = 0;
     }
 }

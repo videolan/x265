@@ -61,13 +61,17 @@ private:
 
     static const int BC_MAX_MV = 0x8000;
 
-    static const int BC_MAX_QP = 51;
+    static const int BC_MAX_QP = 82;
+
+    static float *logs;
 
     static uint32_t *costs[BC_MAX_QP];
 
     static Lock costCalcLock;
 
     static uint32_t bitCost(int val);
+
+    static void CalculateLogs();
 };
 }
 
