@@ -169,7 +169,7 @@ void x265_init_primitives(int cpuid)
 extern "C"
 void x265_cleanup(void)
 {
-    x265::BitCost::cleanupCosts();
+    x265::BitCost::destroy();
 
     if (x265::Motion_Cost)
         delete [] x265::Motion_Cost;

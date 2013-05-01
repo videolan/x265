@@ -81,7 +81,7 @@ void BitCost::CalculateLogs()
     }
 }
 
-void BitCost::cleanupCosts()
+void BitCost::destroy()
 {
     for (int i = 0; i < BC_MAX_QP; i++)
     {

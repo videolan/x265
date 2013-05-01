@@ -45,7 +45,7 @@ public:
 
     void setQP(unsigned int qp, double lambda);
 
-    static void cleanupCosts();
+    static void destroy();
 
 protected:
 
