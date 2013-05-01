@@ -113,6 +113,25 @@ bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
     return true;
 }
 
+bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
+{
+    int j = INCR;
+    ALIGN_VAR_16(int, cres[16]);
+    ALIGN_VAR_16(int, vres[16]);
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, &cres[0]);
+
+        if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])) || ((vres[3] != cres[3])))
+            return false;
+
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -140,6 +159,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_pixel_primitive_x3(ref.sad_x3[curpar], opt.sad_x3[curpar]))
             {
                 printf("sad_x3[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
+        if (opt.sad_x4[curpar])
+        {
+            if (!check_pixel_primitive_x4(ref.sad_x4[curpar], opt.sad_x4[curpar]))
+            {
+                printf("sad_x4[%s]: failed!\n", FuncNames[curpar]);
                 return false;
             }
         }
@@ -192,10 +220,22 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         if (opt.sad_x3[curpar])
         {
+            pbuf2 += 1;
             printf(" sad_x3[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                 opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]),
                 ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]));
+            pbuf2 -= 1;
+        }
+
+        if (opt.sad_x4[curpar])
+        {
+            pbuf2 += INCR;
+            printf(" sad_x4[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(iters,
+                opt.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]),
+                ref.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]));
+            pbuf2 -= INCR;
         }
 
         // adaptive iteration count, reduce as partition size increases

@@ -148,6 +148,7 @@ int PartitionFromSizes(int Width, int Height);
 
 typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, int *res);
+typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, int *res);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
 typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width,
                                 int block_height, int bitDepth);
@@ -166,6 +167,7 @@ struct EncoderPrimitives
     /* All pixel comparison functions take the same arguments */
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
+    pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
