@@ -43,9 +43,9 @@ void BitCost::setQP(unsigned int qp, double lambda)
             return;
         }
 
-        costs[qp] = new uint32_t[2 * MAX_MV] + MAX_MV;
+        costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
         uint32_t *c = costs[qp];
-        for (int i = 0; i < MAX_MV; i++)
+        for (int i = 0; i < BC_MAX_MV; i++)
         {
             c[i] = c[-i] = (uint32_t)(bitCost(i) * lambda);
         }
@@ -56,7 +56,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
  * Class static data and methods
  */
 
-uint32_t *BitCost::costs[MAX_QP];
+uint32_t *BitCost::costs[BC_MAX_QP];
 
 Lock BitCost::costCalcLock;
 
@@ -70,11 +70,11 @@ uint32_t BitCost::bitCost(int val)
 
 void BitCost::cleanupCosts()
 {
-    for (int i = 0; i < MAX_QP; i++)
+    for (int i = 0; i < BC_MAX_QP; i++)
     {
         if (costs[i])
         {
-            delete [] (costs[i] - MAX_MV);
+            delete [] (costs[i] - BC_MAX_MV);
         }
     }
 }

@@ -57,11 +57,11 @@ protected:
 
 private:
 
-    static const int MAX_MV = 0x8000;
+    static const int BC_MAX_MV = 0x8000;
 
-    static const int MAX_QP = 51;
+    static const int BC_MAX_QP = 51;
 
-    static uint32_t *costs[MAX_QP];
+    static uint32_t *costs[BC_MAX_QP];
 
     static Lock costCalcLock;
 

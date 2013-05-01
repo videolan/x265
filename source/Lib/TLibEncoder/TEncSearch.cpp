@@ -3889,6 +3889,9 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
 
+    //m_bc.setQP( qp, m_pcRdCost->getLambda() );
+    //m_bc.setMVP(*pcMvPred);
+
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
     //  Do integer search
     if (!m_iFastSearch || bBi)

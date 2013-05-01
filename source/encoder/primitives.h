@@ -47,7 +47,9 @@ extern "C" void x264_cpu_emms(void);
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
+#ifndef CDECL
 #define CDECL                _cdecl
+#endif
 #endif
 
 #if HIGH_BIT_DEPTH

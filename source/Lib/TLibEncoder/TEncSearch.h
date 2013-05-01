@@ -49,6 +49,8 @@
 #include "TEncSbac.h"
 #include "TEncCfg.h"
 
+#include "bitcost.h"
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -89,6 +91,8 @@ private:
     Int*            m_ppcQTTempTUArlCoeffY;
     Int*            m_ppcQTTempTUArlCoeffCb;
     Int*            m_ppcQTTempTUArlCoeffCr;
+
+    x265::BitCost   m_bc;
 
 protected:
 
