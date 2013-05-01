@@ -364,7 +364,9 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     Int uiTempx   = (MVx <= 0) ? x265::Motion_Cost[(-MVx << 1) + 1] : x265::Motion_Cost[(MVx << 1)];
     Int uiTempy   = (MVy <= 0) ? x265::Motion_Cost[(-MVy << 1) + 1] : x265::Motion_Cost[(MVy << 1)];
 
-    uiSad += (m_pcRdCost->m_uiCost * (uiTempx + uiTempy)) >> 16;
+    UInt mvcost = (m_pcRdCost->m_uiCost * (uiTempx + uiTempy)) >> 16;
+    UInt mycost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
+    uiSad += mvcost;
 
     if (uiSad < rcStruct.uiBestSad)
     {
@@ -3889,8 +3891,9 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
 
-    //m_bc.setQP( qp, m_pcRdCost->getLambda() );
-    //m_bc.setMVP(*pcMvPred);
+    // Configure the MV bit cost calculator
+    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getLambda());
+    m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
     //  Do integer search

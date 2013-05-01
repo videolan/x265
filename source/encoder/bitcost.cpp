@@ -37,18 +37,17 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
         // Now that we have acquired the lock, check again if another thread calculated
         // this row while we were blocked
-        if (costs[qp])
+        if (!costs[qp])
         {
-            cost = costs[qp];
-            return;
+            costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
+            uint32_t *c = costs[qp];
+            for (int i = 0; i < BC_MAX_MV; i++)
+            {
+                c[i] = c[-i] = (uint32_t)(bitCost(i) * lambda);
+            }
         }
 
-        costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
-        uint32_t *c = costs[qp];
-        for (int i = 0; i < BC_MAX_MV; i++)
-        {
-            c[i] = c[-i] = (uint32_t)(bitCost(i) * lambda);
-        }
+        cost = costs[qp];
     }
 }
 

@@ -36,6 +36,8 @@ class BitCost
 {
 public:
 
+    BitCost() : cost(0), cost_mvx(0), cost_mvy(0) {}
+
     void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
 
     // return bit cost of absolute motion vector
