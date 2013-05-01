@@ -38,12 +38,12 @@ public:
 
     BitCost() : cost_mvx(0), cost_mvy(0), cost(0) {}
 
+    void setQP(unsigned int qp, double lambda);
+
     void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
 
     // return bit cost of absolute motion vector
     uint16_t mvcost(const MV& mv) const      { return cost_mvx[mv.x] + cost_mvy[mv.y]; }
-
-    void setQP(unsigned int qp, double lambda);
 
     static void destroy();
 
