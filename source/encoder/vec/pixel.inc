@@ -132,6 +132,80 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
     res[0] = 0;
     res[1] = 0;
     res[2] = 0;
+    for (row = 0; row < ly-7; row+=8)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for(int temp_rows = 0; temp_rows < 8; temp_rows++)
+        {
+            for (int col = 0; col < lx; col += 8)
+            {
+                m1.load_a(piOrg + col);
+                n1.load(piCur1 + col);
+                n2.load(piCur2 + col);
+                n3.load(piCur3 + col);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+            }
+            piOrg += FENC_STRIDE;
+            piCur1 += FENC_STRIDE;
+            piCur2 += FENC_STRIDE;
+            piCur3 += FENC_STRIDE;
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+    }
+    for (; row < ly; row++)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for (int col = 0; col < lx; col += 8)
+        {
+            m1.load_a(piOrg + col);
+            n1.load(piCur1 + col);
+            n2.load(piCur2 + col);
+            n3.load(piCur3 + col);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+
+        piOrg += FENC_STRIDE;
+        piCur1 += FENC_STRIDE;
+        piCur2 += FENC_STRIDE;
+        piCur3 += FENC_STRIDE;
+    }
+    res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
+    res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
+    res[2] += horizontal_add_x(sum3_low) + horizontal_add_x(sum3_high);
+}
+
+template<int lx, int ly>
+void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+{    
+    Vec8s m1, n1, n2, n3;
+    Vec4i sum1_low(0), sum1_high(0);
+    Vec4i sum2_low(0), sum2_high(0);
+    Vec4i sum3_low(0), sum3_high(0);
+    int row;
+    res[0] = 0;
+    res[1] = 0;
+    res[2] = 0;
     for (row = 0; row < ly-3; row+=4)
     {
         Vec8s sum1(0);
@@ -198,19 +272,19 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 template<int lx, int ly>
 void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
 {    
-    Vec16s m1, n1, n2, n3;
-    Vec8i sum1_low(0), sum1_high(0);
-    Vec8i sum2_low(0), sum2_high(0);
-    Vec8i sum3_low(0), sum3_high(0);
+    Vec8s m1, n1, n2, n3;
+    Vec4i sum1_low(0), sum1_high(0);
+    Vec4i sum2_low(0), sum2_high(0);
+    Vec4i sum3_low(0), sum3_high(0);
     int row;
     res[0] = 0;
     res[1] = 0;
     res[2] = 0;
     for (row = 0; row < ly-7; row+=8)
     {
-        Vec16s sum1(0);
-        Vec16s sum2(0);
-        Vec16s sum3(0);
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
         for(int temp_rows = 0; temp_rows < 8; temp_rows++)
         {
             for (int col = 0; col < lx; col += 16)
@@ -219,6 +293,15 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 n1.load(piCur1 + col);
                 n2.load(piCur2 + col);
                 n3.load(piCur3 + col);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 8);
+                n1.load(piCur1 + col + 8);
+                n2.load(piCur2 + col + 8);
+                n3.load(piCur3 + col + 8);
 
                 sum1 += abs(m1 - n1);
                 sum2 += abs(m1 - n2);
@@ -238,15 +321,116 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     }
     for (; row < ly; row++)
     {
-        Vec16s sum1(0);
-        Vec16s sum2(0);
-        Vec16s sum3(0);
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
         for (int col = 0; col < lx; col += 16)
         {
             m1.load_a(piOrg + col);
             n1.load(piCur1 + col);
             n2.load(piCur2 + col);
             n3.load(piCur3 + col);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 8);
+            n1.load(piCur1 + col + 8);
+            n2.load(piCur2 + col + 8);
+            n3.load(piCur3 + col + 8);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+
+        piOrg += FENC_STRIDE;
+        piCur1 += FENC_STRIDE;
+        piCur2 += FENC_STRIDE;
+        piCur3 += FENC_STRIDE;
+    }
+    res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
+    res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
+    res[2] += horizontal_add_x(sum3_low) + horizontal_add_x(sum3_high);
+}
+
+template<int lx, int ly>
+void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+{    
+    Vec8s m1, n1, n2, n3;
+    Vec4i sum1_low(0), sum1_high(0);
+    Vec4i sum2_low(0), sum2_high(0);
+    Vec4i sum3_low(0), sum3_high(0);
+    int row;
+    res[0] = 0;
+    res[1] = 0;
+    res[2] = 0;
+    for (row = 0; row < ly-3; row+=4)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for(int temp_rows = 0; temp_rows < 4; temp_rows++)
+        {
+            for (int col = 0; col < lx; col += 16)
+            {
+                m1.load_a(piOrg + col);
+                n1.load(piCur1 + col);
+                n2.load(piCur2 + col);
+                n3.load(piCur3 + col);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 8);
+                n1.load(piCur1 + col + 8);
+                n2.load(piCur2 + col + 8);
+                n3.load(piCur3 + col + 8);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+            }
+            piOrg += FENC_STRIDE;
+            piCur1 += FENC_STRIDE;
+            piCur2 += FENC_STRIDE;
+            piCur3 += FENC_STRIDE;
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+    }
+    for (; row < ly; row++)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for (int col = 0; col < lx; col += 16)
+        {
+            m1.load_a(piOrg + col);
+            n1.load(piCur1 + col);
+            n2.load(piCur2 + col);
+            n3.load(piCur3 + col);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 8);
+            n1.load(piCur1 + col + 8);
+            n2.load(piCur2 + col + 8);
+            n3.load(piCur3 + col + 8);
 
             sum1 += abs(m1 - n1);
             sum2 += abs(m1 - n2);
@@ -272,20 +456,20 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 template<int lx, int ly>
 void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
 {    
-    Vec16s m1, n1, n2, n3;
-    Vec8i sum1_low(0), sum1_high(0);
-    Vec8i sum2_low(0), sum2_high(0);
-    Vec8i sum3_low(0), sum3_high(0);
+    Vec8s m1, n1, n2, n3;
+    Vec4i sum1_low(0), sum1_high(0);
+    Vec4i sum2_low(0), sum2_high(0);
+    Vec4i sum3_low(0), sum3_high(0);
     int row;
     res[0] = 0;
     res[1] = 0;
     res[2] = 0;
-    for (row = 0; row < ly-7; row+=8)
+    for (row = 0; row < ly-3; row+=4)
     {
-        Vec16s sum1(0);
-        Vec16s sum2(0);
-        Vec16s sum3(0);
-        for(int temp_rows = 0; temp_rows < 8; temp_rows++)
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for(int temp_rows = 0; temp_rows < 4; temp_rows++)
         {
             for (int col = 0; col < lx; col += 32)
             {
@@ -298,10 +482,28 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum2 += abs(m1 - n2);
                 sum3 += abs(m1 - n3);
 
+                m1.load_a(piOrg + col + 8);
+                n1.load(piCur1 + col + 8);
+                n2.load(piCur2 + col + 8);
+                n3.load(piCur3 + col + 8);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
                 m1.load_a(piOrg + col + 16);
                 n1.load(piCur1 + col + 16);
                 n2.load(piCur2 + col + 16);
                 n3.load(piCur3 + col + 16);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 24);
+                n1.load(piCur1 + col + 24);
+                n2.load(piCur2 + col + 24);
+                n3.load(piCur3 + col + 24);
 
                 sum1 += abs(m1 - n1);
                 sum2 += abs(m1 - n2);
@@ -321,9 +523,9 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     }
     for (; row < ly; row++)
     {
-        Vec16s sum1(0);
-        Vec16s sum2(0);
-        Vec16s sum3(0);
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
         for (int col = 0; col < lx; col += 32)
         {
             m1.load_a(piOrg + col);
@@ -335,10 +537,228 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
             sum2 += abs(m1 - n2);
             sum3 += abs(m1 - n3);
 
+            m1.load_a(piOrg + col + 8);
+            n1.load(piCur1 + col + 8);
+            n2.load(piCur2 + col + 8);
+            n3.load(piCur3 + col + 8);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
             m1.load_a(piOrg + col + 16);
             n1.load(piCur1 + col + 16);
             n2.load(piCur2 + col + 16);
             n3.load(piCur3 + col + 16);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 24);
+            n1.load(piCur1 + col + 24);
+            n2.load(piCur2 + col + 24);
+            n3.load(piCur3 + col + 24);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+
+        piOrg += FENC_STRIDE;
+        piCur1 += FENC_STRIDE;
+        piCur2 += FENC_STRIDE;
+        piCur3 += FENC_STRIDE;
+    }
+    res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
+    res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
+    res[2] += horizontal_add_x(sum3_low) + horizontal_add_x(sum3_high);
+}
+
+template<int lx, int ly>
+void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+{    
+    Vec8s m1, n1, n2, n3;
+    Vec4i sum1_low(0), sum1_high(0);
+    Vec4i sum2_low(0), sum2_high(0);
+    Vec4i sum3_low(0), sum3_high(0);
+    int row;
+    res[0] = 0;
+    res[1] = 0;
+    res[2] = 0;
+    for (row = 0; row < ly-1; row+=2)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for(int temp_rows = 0; temp_rows < 2; temp_rows++)
+        {
+            for (int col = 0; col < lx; col += 64)
+            {
+                m1.load_a(piOrg + col);
+                n1.load(piCur1 + col);
+                n2.load(piCur2 + col);
+                n3.load(piCur3 + col);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 8);
+                n1.load(piCur1 + col + 8);
+                n2.load(piCur2 + col + 8);
+                n3.load(piCur3 + col + 8);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 16);
+                n1.load(piCur1 + col + 16);
+                n2.load(piCur2 + col + 16);
+                n3.load(piCur3 + col + 16);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 24);
+                n1.load(piCur1 + col + 24);
+                n2.load(piCur2 + col + 24);
+                n3.load(piCur3 + col + 24);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 32);
+                n1.load(piCur1 + col + 32);
+                n2.load(piCur2 + col + 32);
+                n3.load(piCur3 + col + 32);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 40);
+                n1.load(piCur1 + col + 40);
+                n2.load(piCur2 + col + 40);
+                n3.load(piCur3 + col + 40);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 48);
+                n1.load(piCur1 + col + 48);
+                n2.load(piCur2 + col + 48);
+                n3.load(piCur3 + col + 48);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+
+                m1.load_a(piOrg + col + 56);
+                n1.load(piCur1 + col + 56);
+                n2.load(piCur2 + col + 56);
+                n3.load(piCur3 + col + 56);
+
+                sum1 += abs(m1 - n1);
+                sum2 += abs(m1 - n2);
+                sum3 += abs(m1 - n3);
+            }
+            piOrg += FENC_STRIDE;
+            piCur1 += FENC_STRIDE;
+            piCur2 += FENC_STRIDE;
+            piCur3 += FENC_STRIDE;
+        }
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+    }
+    for (; row < ly; row++)
+    {
+        Vec8s sum1(0);
+        Vec8s sum2(0);
+        Vec8s sum3(0);
+        for (int col = 0; col < lx; col += 64)
+        {
+            m1.load_a(piOrg + col);
+            n1.load(piCur1 + col);
+            n2.load(piCur2 + col);
+            n3.load(piCur3 + col);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 8);
+            n1.load(piCur1 + col + 8);
+            n2.load(piCur2 + col + 8);
+            n3.load(piCur3 + col + 8);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 16);
+            n1.load(piCur1 + col + 16);
+            n2.load(piCur2 + col + 16);
+            n3.load(piCur3 + col + 16);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 24);
+            n1.load(piCur1 + col + 24);
+            n2.load(piCur2 + col + 24);
+            n3.load(piCur3 + col + 24);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 32);
+            n1.load(piCur1 + col + 32);
+            n2.load(piCur2 + col + 32);
+            n3.load(piCur3 + col + 32);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 40);
+            n1.load(piCur1 + col + 40);
+            n2.load(piCur2 + col + 40);
+            n3.load(piCur3 + col + 40);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 48);
+            n1.load(piCur1 + col + 48);
+            n2.load(piCur2 + col + 48);
+            n3.load(piCur3 + col + 48);
+
+            sum1 += abs(m1 - n1);
+            sum2 += abs(m1 - n2);
+            sum3 += abs(m1 - n3);
+
+            m1.load_a(piOrg + col + 56);
+            n1.load(piCur1 + col + 56);
+            n2.load(piCur2 + col + 56);
+            n3.load(piCur3 + col + 56);
 
             sum1 += abs(m1 - n1);
             sum2 += abs(m1 - n2);
@@ -886,10 +1306,54 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_64x64] = sad_16x16<64, 64>;
 
 #if HIGH_BIT_DEPTH
-    p.sad_x3[PARTITION_64x16] = sad_16_x3<64, 16>;
-    p.sad_x3[PARTITION_64x24] = sad_8_x3<64, 24>;
-    p.sad_x3[PARTITION_64x32] = sad_32_x3<64, 32>;
-    p.sad_x3[PARTITION_64x64] = sad_32_x3<64, 64>;
+
+    //p.sad_x3[PARTITION_4x4] = sad_4<4>;
+    //p.sad_x3[PARTITION_4x8] = sad_4<8>;
+    //p.sad_x3[PARTITION_4x12] = sad_4<12>;
+    //p.sad_x3[PARTITION_4x16] = sad_4<16>;
+    //p.sad_x3[PARTITION_4x24] = sad_4<24>;
+    //p.sad_x3[PARTITION_4x32] = sad_4<32>;
+    //p.sad_x3[PARTITION_4x64] = sad_4x16<64>;
+
+    p.sad_x3[PARTITION_8x4] = sad_8_4_x3<8, 4>;
+    p.sad_x3[PARTITION_8x8] = sad_8_x3<8, 8>;
+    p.sad_x3[PARTITION_8x12] = sad_8_4_x3<8, 12>;
+    p.sad_x3[PARTITION_8x16] = sad_8_x3<8, 16>;
+    p.sad_x3[PARTITION_8x24] = sad_8_x3<8, 24>;
+    p.sad_x3[PARTITION_8x32] = sad_8_x3<8, 32>;
+    p.sad_x3[PARTITION_8x64] = sad_8_x3<8, 64>;
+
+    //p.sad_x3[PARTITION_12x4] = sad_12<4>;
+    //p.sad_x3[PARTITION_12x8] = sad_12<8>;
+    //p.sad_x3[PARTITION_12x12] = sad_12<12>;
+    //p.sad_x3[PARTITION_12x16] = sad_12x8<16>;
+    //p.sad_x3[PARTITION_12x24] = sad_12x8<24>;
+    //p.sad_x3[PARTITION_12x32] = sad_12x8<32>;
+    //p.sad_x3[PARTITION_12x64] = sad_12x8<64>;
+
+    p.sad_x3[PARTITION_16x4] = sad_16_4_x3<16, 4>;
+    p.sad_x3[PARTITION_16x8] = sad_16_x3<16, 8>;
+    p.sad_x3[PARTITION_16x12] = sad_16_4_x3<16, 12>;
+    p.sad_x3[PARTITION_16x16] = sad_16_x3<16, 16>;
+    p.sad_x3[PARTITION_16x24] = sad_16_x3<16, 24>;
+    p.sad_x3[PARTITION_16x32] = sad_16_x3<16, 32>;
+    p.sad_x3[PARTITION_16x64] = sad_16_x3<16, 64>;
+
+    p.sad_x3[PARTITION_32x4] = sad_32_x3<32, 4>;
+    p.sad_x3[PARTITION_32x8] = sad_32_x3<32, 8>;
+    p.sad_x3[PARTITION_32x12] = sad_32_x3<32, 12>;
+    p.sad_x3[PARTITION_32x16] = sad_32_x3<32, 16>;
+    p.sad_x3[PARTITION_32x24] = sad_32_x3<32, 24>;
+    p.sad_x3[PARTITION_32x32] = sad_32_x3<32, 32>;
+    p.sad_x3[PARTITION_32x64] = sad_32_x3<32, 64>;
+
+    p.sad_x3[PARTITION_64x4] = sad_64_x3<64, 4>;
+    p.sad_x3[PARTITION_64x8] = sad_64_x3<64, 8>;
+    p.sad_x3[PARTITION_64x12] = sad_64_x3<64,12>;
+    p.sad_x3[PARTITION_64x16] = sad_64_x3<64, 16>;
+    p.sad_x3[PARTITION_64x24] = sad_64_x3<64, 24>;
+    p.sad_x3[PARTITION_64x32] = sad_64_x3<64, 32>;
+    p.sad_x3[PARTITION_64x64] = sad_64_x3<64, 64>;
 
     p.satd[PARTITION_4x4] = satd_4x4;
     p.satd[PARTITION_4x8] = satd<4, 8>;
