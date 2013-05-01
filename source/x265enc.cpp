@@ -545,7 +545,7 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
             pic.planes[0] = pcPicYuvRec->getLumaAddr(); pic.stride[0] = pcPicYuvRec->getStride();
             pic.planes[1] = pcPicYuvRec->getCbAddr();   pic.stride[1] = pcPicYuvRec->getCStride();
             pic.planes[2] = pcPicYuvRec->getCrAddr();   pic.stride[2] = pcPicYuvRec->getCStride();
-            pic.bitDepth = sizeof(Pel) == 8 ? 8 : 16;
+            pic.bitDepth = sizeof(Pel)*8;
             m_recon->writePicture(pic);
         }
 
