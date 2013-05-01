@@ -358,8 +358,9 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
 #endif // if ENABLE_PRIMITIVES
 
-    //uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
-    uiSad += m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
+    //UInt mvcost_hm = m_pcRdCost->getCost(iSearchX, iSearchY);
+    UInt mvcost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
+    uiSad += mvcost;
 
     if (uiSad < rcStruct.uiBestSad)
     {
