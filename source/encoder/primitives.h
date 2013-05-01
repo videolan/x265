@@ -182,7 +182,6 @@ struct EncoderPrimitives
 /* This copy of the table is what gets used by all by the encoder.
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
-extern int *Motion_Cost;
 
 void SetupPrimitives(int cpuid = 0);
 int CpuIDDetect(void);

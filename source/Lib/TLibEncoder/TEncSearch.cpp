@@ -358,15 +358,8 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
 #endif // if ENABLE_PRIMITIVES
 
-    // motion cost
-    Int MVx = (iSearchX << m_pcRdCost->m_iCostScale) - m_pcRdCost->m_mvPredictor.getHor();
-    Int MVy = (iSearchY << m_pcRdCost->m_iCostScale) - m_pcRdCost->m_mvPredictor.getVer();
-    Int uiTempx   = (MVx <= 0) ? x265::Motion_Cost[(-MVx << 1) + 1] : x265::Motion_Cost[(MVx << 1)];
-    Int uiTempy   = (MVy <= 0) ? x265::Motion_Cost[(-MVy << 1) + 1] : x265::Motion_Cost[(MVy << 1)];
-
-    UInt mvcost = (m_pcRdCost->m_uiCost * (uiTempx + uiTempy)) >> 16;
-    UInt mycost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
-    uiSad += mvcost;
+    //uiSad += m_pcRdCost->getCost(iSearchX, iSearchY);
+    uiSad += m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
 
     if (uiSad < rcStruct.uiBestSad)
     {

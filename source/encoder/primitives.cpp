@@ -56,7 +56,6 @@ int PartitionFromSizes(int Width, int Height)
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
-void SetUpMVCost(void);
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
 void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
@@ -86,8 +85,6 @@ void SetupPrimitives(int cpuid)
     {
         cpuid = CpuIDDetect();
     }
-
-    SetUpMVCost();
 
     fprintf(stdout, "x265: performance primitives:");
 
@@ -146,18 +143,6 @@ int CpuIDDetect(void)
         return iset;
     }
 }
-
-void SetUpMVCost(void)
-{
-    Motion_Cost = (int*)malloc((8 * 4 * 2024) * sizeof(int));
-    Motion_Cost[0] = 1;
-    Motion_Cost[1] = 1;
-
-    for (int i = 2; i < 8 * 4 * 2024; i++)
-    {
-        Motion_Cost[i] = (int)(2 * (ceil(log((double)i + 1) / log(2.0000))) - 1);
-    }
-}
 }
 
 extern "C"
@@ -170,8 +155,4 @@ extern "C"
 void x265_cleanup(void)
 {
     x265::BitCost::destroy();
-
-    if (x265::Motion_Cost)
-        delete [] x265::Motion_Cost;
-    x265::Motion_Cost = 0;
 }
