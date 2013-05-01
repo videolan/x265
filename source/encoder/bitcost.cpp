@@ -42,10 +42,19 @@ void BitCost::setQP(unsigned int qp, double lambda)
             CalculateLogs();
             costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
             uint32_t *c = costs[qp];
+#if X264_APPROACH
+            // estimate same cost for negative and positive MVD
             for (int i = 0; i < BC_MAX_MV; i++)
-            {
                 c[i] = c[-i] = (uint32_t)(logs[i] * lambda + 0.5);
+#else
+            // penalize negative MVD by one bit
+            c[0] = (uint32_t)lambda;
+            for (int i = 1; i < BC_MAX_MV; i++)
+            {
+                c[i]  = (uint32_t)(logs[i<<1] * lambda + 0.5);
+                c[-i] = (uint32_t)(logs[(i<<1)+1] * lambda + 0.5);
             }
+#endif
         }
 
         cost = costs[qp];
@@ -68,13 +77,14 @@ void BitCost::CalculateLogs()
     {
         logs = new float[BC_MAX_MV + 1];
         logs[0] = 1;
+        logs[1] = 1;
         float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
-        for( int i = 1; i <= BC_MAX_MV; i++ )
+        for( int i = 2; i <= BC_MAX_MV; i++ )
             logs[i] = ceil(log((float)(i+1)) * log2_2);
     }
 }
 
-void BitCost::cleanupCosts()
+void BitCost::destroy()
 {
     for (int i = 0; i < BC_MAX_QP; i++)
     {
