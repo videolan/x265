@@ -170,4 +170,8 @@ extern "C"
 void x265_cleanup(void)
 {
     x265::BitCost::cleanupCosts();
+
+    if (x265::Motion_Cost)
+        delete [] x265::Motion_Cost;
+    x265::Motion_Cost = 0;
 }
