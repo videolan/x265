@@ -311,7 +311,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     m_cDistParam.iStrideCur = rcStruct.iYStride;
     m_cDistParam.iSubShift = 0;
 
-    // fast encoder decision: use subsampled SAD when rows > 8 for integer ME
+    // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
     if (m_pcEncCfg->getUseFastEnc())
     {
         if (m_cDistParam.iRows > 12)
@@ -3883,8 +3883,10 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     TComMv      cMvPred = *pcMvPred;
 
-    if (bBi) xSetSearchRange(pcCU, rcMv, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
-    else xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
+    if (bBi)
+        xSetSearchRange(pcCU, rcMv, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
+    else
+        xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
     m_pcRdCost->getMotionCost(1, 0);
 
@@ -3896,6 +3898,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
+
     //  Do integer search
     if (!m_iFastSearch || bBi)
     {
@@ -3910,6 +3913,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setCostScale(1);
 
+    // half-pel refine
     xPatternSearchFracDIF(pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi);
 
     m_pcRdCost->setCostScale(0);
