@@ -96,7 +96,7 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 
 bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
 {
-    int j = 0;
+    int j = INCR;
     ALIGN_VAR_16(int, cres[16]);
     ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
