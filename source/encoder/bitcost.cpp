@@ -29,9 +29,7 @@ using namespace x265;
 
 void BitCost::setQP(unsigned int qp, double lambda)
 {
-    if (costs[qp])
-        cost = costs[qp];
-    else
+    if (!costs[qp])
     {
         ScopedLock s(costCalcLock);
 
@@ -58,9 +56,9 @@ void BitCost::setQP(unsigned int qp, double lambda)
             }
 #endif
         }
-
-        cost = costs[qp];
     }
+
+    cost = costs[qp];
 }
 
 /***
