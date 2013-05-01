@@ -59,7 +59,7 @@ public:
 
     MV operator >>(int i) const                { return MV(x >> i, y >> i); }
 
-    MV operator <<(int i) const                { return MV(word << i); }
+    MV operator <<(int i) const                { return MV(x << i, y << i); }
 
     const MV operator -(const MV& other) const { return MV(x - other.x, y - other.y); }
 
@@ -71,12 +71,11 @@ public:
 
     // Scale down a QPEL mv to FPEL mv, rounding up by one HPEL offset
     MV roundToFPel() const                     { return MV(x + 2, y + 2) >> 2; }
-    //MV roundToFPel() const               { return MV(((word + 0x00020002) & ~0x00030003) >> 2); }
 
-    MV toFPel() const                          { return MV((word & ~0x00030003) >> 2); }
+    MV toFPel() const                          { return *this >> 2; }
 
     // Scale up an FPEL mv to QPEL by shifting up two bits
-    MV toQPel() const                          { return MV(word << 2); }
+    MV toQPel() const                          { return *this << 2; }
 
     MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
     MV mvmax(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
