@@ -42,10 +42,17 @@ void BitCost::setQP(unsigned int qp, double lambda)
             CalculateLogs();
             costs[qp] = new uint32_t[2 * BC_MAX_MV] + BC_MAX_MV;
             uint32_t *c = costs[qp];
+#if X264_APPROACH
             for (int i = 0; i < BC_MAX_MV; i++)
-            {
                 c[i] = c[-i] = (uint32_t)(logs[i] * lambda + 0.5);
+#else
+            c[0] = (uint32_t)lambda;
+            for (int i = 1; i < BC_MAX_MV; i++)
+            {
+                c[i]  = (uint32_t)(logs[i<<1] * lambda + 0.5);
+                c[-i] = (uint32_t)(logs[(i<<1)+1] * lambda + 0.5);
             }
+#endif
         }
 
         cost = costs[qp];
