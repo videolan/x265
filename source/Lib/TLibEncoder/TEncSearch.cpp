@@ -3894,7 +3894,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->setCostScale(2);
 
     // Configure the MV bit cost calculator
-    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getLambda());
+    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
