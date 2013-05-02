@@ -76,9 +76,11 @@ void SetupPrimitives(int cpuid)
 {
     if (cpuid < 0)
     {
+#if ENABLE_PRIMITIVES
         if (primitives.sad[0])
             return;
         else
+#endif
             cpuid = 0;
     }
     if (cpuid == 0)
