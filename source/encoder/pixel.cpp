@@ -270,11 +270,12 @@ int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i
 
     return (sum + 2) >> 2;
 }
-void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
+
+void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
-        for (int x = 0; x < bx; b++)
+        for (int x = 0; x < bx; x++)
             a[x] = b[x];
 
         a += stridea;
@@ -282,11 +283,11 @@ void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_
     }
 }
 
-void blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_t strideb)
+void CDECL blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
-        for (int x = 0; x < bx; b++)
+        for (int x = 0; x < bx; x++)
             a[x] = (short)b[x];
 
         a += stridea;
@@ -294,11 +295,11 @@ void blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_
     }
 }
 
-void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, intptr_t strideb)
+void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
-        for (int x = 0; x < bx; b++)
+        for (int x = 0; x < bx; x++)
             a[x] = (pixel)b[x];
 
         a += stridea;
