@@ -36,7 +36,7 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall -Wextra -Werror -Wshadow)
 endif()
 
-option(HIGH_BIT_DEPTH "Use 16bit pixels internally" ON)
+option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
 else(HIGH_BIT_DEPTH)
