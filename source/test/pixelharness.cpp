@@ -204,7 +204,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.satd[curpar])
         {
-            printf("satd[%s]", FuncNames[curpar]);
+            printf("  satd[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                            opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
                            ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
@@ -212,7 +212,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         if (opt.sad[curpar])
         {
-            printf(" sad[%s]", FuncNames[curpar]);
+            printf("   sad[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                 opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
                 ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
@@ -221,7 +221,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.sad_x3[curpar])
         {
             pbuf2 += 1;
-            printf(" sad_x3[%s]", FuncNames[curpar]);
+            printf("sad_x3[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                 opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]),
                 ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]));
@@ -231,7 +231,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.sad_x4[curpar])
         {
             pbuf2 += INCR;
-            printf(" sad_x4[%s]", FuncNames[curpar]);
+            printf("sad_x4[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
                 opt.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]),
                 ref.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]));
