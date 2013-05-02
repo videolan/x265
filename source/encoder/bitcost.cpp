@@ -40,7 +40,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
             CalculateLogs();
             costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
             uint16_t *c = costs[qp];
-            const float max16 = (1 << 16)-1;
+            const uint16_t max16 = (1 << 16)-1;
 
 #if X264_APPROACH
             // estimate same cost for negative and positive MVD
@@ -51,8 +51,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
             c[0] = (uint16_t)lambda;
             for (int i = 1; i < BC_MAX_MV; i++)
             {
-                c[i]  = (uint16_t) fmin(max16, logs[i<<1] * lambda + 0.5);
-                c[-i] = (uint16_t) fmin(max16, logs[(i<<1)+1] * lambda + 0.5);
+                c[i]  = (uint16_t) min(max16, (uint16_t)(logs[i<<1] * lambda + 0.5));
+                c[-i] = (uint16_t) min(max16, (uint16_t)(logs[(i<<1)+1] * lambda + 0.5));
             }
 #endif
         }
