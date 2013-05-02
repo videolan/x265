@@ -114,24 +114,24 @@ public:
 
     void setSourcePU(int offsetX, int offsetY, int pwidth, int pheight);
 
-    void setSearchLimits(MV& min, MV& max)   { mvmin = min; mvmax = max; }
+    void setSearchLimits(MV& min, MV& max)    { mvmin = min; mvmax = max; }
 
     /* Methods called for searches */
 
-    uint32_t bufSAD(pixel *fref, intptr_t stride) { return sad(fenc, FENC_STRIDE, fref, stride); }
+    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
 
-    uint32_t bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
-    void setReference(MotionReference* tref) { ref = tref; }
+    void setReference(MotionReference* tref)  { ref = tref; }
 
-    uint32_t fpelSad(const MV& fmv)
+    int fpelSad(const MV& fmv)
     {
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
     }
 
-    uint32_t qpelSad(const MV& qmv)
+    int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
@@ -140,7 +140,7 @@ public:
                    ref->lumaStride);
     }
 
-    uint32_t qpelSatd(const MV& qmv)
+    int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
@@ -150,7 +150,7 @@ public:
     }
 
     /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
-    uint32_t motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
+    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
     /* Motion Compensation */
     void buildResidual(const MV &mv);

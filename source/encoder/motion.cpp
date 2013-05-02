@@ -52,13 +52,13 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 
 #define COST_MV_X4_DIR( m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs )\
 {\
-    int stride = ref->lumaStride;\
+    size_t stride = ref->lumaStride;\
     pixel *pix_base = fref + bmv.x + bmv.y * stride;\
     sad_x4(fenc,\
-           fref + (m0x) + (m0y)*stride,\
-           fref + (m1x) + (m1y)*stride,\
-           fref + (m2x) + (m2y)*stride,\
-           fref + (m3x) + (m3y)*stride,\
+           pix_base + (m0x) + (m0y)*stride,\
+           pix_base + (m1x) + (m1y)*stride,\
+           pix_base + (m2x) + (m2y)*stride,\
+           pix_base + (m3x) + (m3y)*stride,\
            stride, costs);\
     (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
     (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
@@ -68,23 +68,23 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 
 #define COST_MV_X3_DIR( m0x, m0y, m1x, m1y, m2x, m2y, costs )\
 {\
-    int stride = ref->lumaStride;\
+    size_t stride = ref->lumaStride;\
     pixel *pix_base = fref + bmv.x + bmv.y * stride;\
     sad_x3(fenc,\
-           fref + (m0x) + (m0y)*stride,\
-           fref + (m1x) + (m1y)*stride,\
-           fref + (m2x) + (m2y)*stride,\
+           pix_base + (m0x) + (m0y)*stride,\
+           pix_base + (m1x) + (m1y)*stride,\
+           pix_base + (m2x) + (m2y)*stride,\
            stride, costs);\
     (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
     (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
     (costs)[2] += bc.mvcost((bmv + MV(m2x,m2y)) << 2);\
 }
 
-uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
-                                        int       numCandidates,
-                                        const MV *mvc,
-                                        int       merange,
-                                        MV &      outQMv)
+int MotionEstimate::motionEstimate(const MV &qmvp,
+                                   int       numCandidates,
+                                   const MV *mvc,
+                                   int       merange,
+                                   MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
 
@@ -96,7 +96,7 @@ uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
     // measure SAD cost at MVP
     MV bmv = qmvp.clipped(qmvmin, qmvmax);
     MV bestpre = bmv;
-    uint32_t bcost = qpelSad(bmv);
+    int bcost = qpelSad(bmv);
 
     /* measure SAD cost at each candidate */
     for (int i = 0; i < numCandidates; i++)
@@ -105,7 +105,7 @@ uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
         if (m == 0) // zero is measured later
             continue;
 
-        uint32_t cost = qpelSad(m);
+        int cost = qpelSad(m);
         cost += bc.mvcost(m);
 
         if (cost < bcost)
@@ -117,7 +117,7 @@ uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
 
     if (bmv != 0)
     {
-        uint32_t cost = fpelSad(0) + bc.mvcost(0);
+        int cost = fpelSad(0) + bc.mvcost(0);
         if (cost < bcost)
         {
             bcost = cost;
@@ -125,7 +125,7 @@ uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
     /* remember the best SAD cost of motion candidates */
-    uint32_t bprecost = bcost;
+    int bprecost = bcost;
 
     /* Measure full pel SAD at MVP */
     bmv = bmv.roundToFPel();
@@ -166,16 +166,16 @@ uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
     /* bmv has the best full pel motion vector found by SAD search or motion candidates */
 
     // TODO: add chroma satd costs
-    bcost = qpelSatd(bmv) + bc.mvcost(mv); // remeasure BMV using SATD
+    bcost = qpelSatd(bmv) + bc.mvcost(bmv); // remeasure BMV using SATD
 
     /* HPEL refinement followed by QPEL refinement */
 
     bcost <<= 4;
-    int res = 2;
+    int16_t res = 2;
     do
     {
         /* TODO: include chroma satd costs */
-        MV MV = bmv + MV(0, -res);
+        MV mv = bmv + MV(0, -res);
         int cost = qpelSatd(mv) + bc.mvcost(mv);
         COPY1_IF_LT(bcost, (cost<<4)+1);
 
@@ -222,11 +222,11 @@ void MotionEstimate::buildResidual(const MV& qmv)
         {
             for (int col = 0; col < blockWidth; col++)
             {
-                resi[col] = (short)orig[col] - (Short)fref[col];
+                resi[col] = (short)orig[col] - (short)fref[col];
             }
 
             resi += resLumaStride;
-            orig += fencStride;
+            orig += fencLumaStride;
             fref += ref->lumaStride;
         }
     }
@@ -235,7 +235,7 @@ void MotionEstimate::buildResidual(const MV& qmv)
     for (int ch = 1; ch < 3; ch++)
     {
         /* TODO: Double check this indexing; I doubt it is correct */
-        uint32_t qpoffs = (blockOffset >> 2) + cmv.y * ref->chromaStride + cmv.x;
+        intptr_t qpoffs = (blockOffset >> 2) + cmv.y * ref->chromaStride + cmv.x;
         pixel *orig = fencplanes[ch] + (blockOffset >> 2);
         pixel *fref = ref->plane[qmv.x & 3][qmv.y & 3][ch] + qpoffs;
         // Only works if recon and residual planes have same stride
@@ -245,7 +245,7 @@ void MotionEstimate::buildResidual(const MV& qmv)
         {
             for (int col = 0; col < blockWidth >> 1; col++)
             {
-                resi[col] = (short)orig[col] - (Short)fref[col];
+                resi[col] = (short)orig[col] - (short)fref[col];
             }
 
             resi += resChromaStride;
