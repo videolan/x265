@@ -6,7 +6,7 @@ if(GCC)
 endif(GCC)
 
 if(ENABLE_PRIMITIVES)
-    set(CPRIMITIVES pixel.cpp macroblock.cpp InterpolationFilter.cpp InterpolationFilter.h)
+    set(CPRIMITIVES pixel.cpp macroblock.cpp ipfilter.cpp)
     if(ENABLE_PRIMITIVES_VEC)
         add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
     endif(ENABLE_PRIMITIVES_VEC)
@@ -26,7 +26,8 @@ add_library(x265 ../../COPYING ../x265.h
     md5.cpp md5.h
     bitcost.cpp bitcost.h mv.h
     motion.cpp motion.h
-    TShortYUV.cpp TShortYUV.h)
+    TShortYUV.cpp TShortYUV.h
+    InterpolationFilter.cpp InterpolationFilter.h)
 
 if(ENABLE_PRIMITIVES)
     if(ENABLE_PRIMITIVES_VEC)

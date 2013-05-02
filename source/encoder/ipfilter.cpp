@@ -22,11 +22,9 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-/* Interpolation Filter functions */
-
-#include "InterpolationFilter.h"
-#include "TLibCommon/TypeDef.h"
-#include <string.h>
+#include "primitives.h"
+#include <cstring>
+#include <assert.h>
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -37,8 +35,9 @@
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
+namespace {
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int cStride = srcStride;
 
@@ -84,7 +83,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst,
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 
-            dst[col] = (Pel)val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -93,7 +92,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, Pel *dst,
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int cStride = 1;
 
@@ -130,11 +129,11 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)((sum + offset) >> headRoom);
+            short val = (short)(sum + offset) >> headRoom;
 
             if (val < 0) val = 0;
             if (val > maxVal) val = maxVal;
-            dst[col] = (Pel)val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -143,7 +142,7 @@ void filterHorizontal_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, i
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     int cStride = 1;
 
@@ -181,7 +180,7 @@ void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *ds
                 sum += src[col + 7 * cStride] * coeff[7];
             }
 
-            short val = (short)((sum + offset) >> shift);
+            short val = (short)(sum + offset) >> shift;
             dst[col] = val;
         }
 
@@ -190,20 +189,7 @@ void filterHorizontal_pel_short(int bitDepth, Pel *src, int srcStride, short *ds
     }
 }
 
-void filterCopy(Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height)
-{
-    int row;
-
-    for (row = 0; row < height; row++)
-    {
-        memcpy(dst, src, sizeof(Pel) * width);
-
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
-void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height)
+void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
@@ -220,7 +206,7 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, 
             val = (val + offset) >> shift;
             if (val < minVal) val = minVal;
             if (val > maxVal) val = maxVal;
-            dst[col] = (Pel)val;
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -228,7 +214,7 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, Pel *dst, 
     }
 }
 
-void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - bitDepth;
     int row, col;
@@ -247,9 +233,10 @@ void filterConvertPelToShort(int bitDepth, Pel *src, int srcStride, short *dst, 
 }
 
 template<int N>
-void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
+
 
     c[0] = coeff[0];
     c[1] = coeff[1];
@@ -274,19 +261,15 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
 
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    //int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
 
-    shift += headRoom;
+    //shift += headRoom;
     offset = 1 << (shift - 1);
-    offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
+    //offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << bitDepth) - 1;
-
-    int row, col;
-
-    int sumCoeffs = c[0] + c[1] + c[2] + c[3];
-    if (N == 8)
-        sumCoeffs += c[4] + c[5] + c[6] + c[7];
+    
+    int row, col;   
 
     for (row = 0; row < height; row++)
     {
@@ -294,31 +277,29 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
         {
             int sum;
 
-            sum  = (((short)src[col + 0 * cStride] << headRoom)) * c[0];
-            sum += (((short)src[col + 1 * cStride] << headRoom)) * c[1];
+            sum  = src[col + 0 * cStride] * c[0];
+            sum += src[col + 1 * cStride] * c[1];
             if (N >= 4)
             {
-                sum += (((short)src[col + 2 * cStride] << headRoom)) * c[2];
-                sum += (((short)src[col + 3 * cStride] << headRoom)) * c[3];
+                sum += src[col + 2 * cStride] * c[2];
+                sum += src[col + 3 * cStride] * c[3];
             }
             if (N >= 6)
             {
-                sum += (((short)src[col + 4 * cStride] << headRoom)) * c[4];
-                sum += (((short)src[col + 5 * cStride] << headRoom)) * c[5];
+                sum += src[col + 4 * cStride] * c[4];
+                sum += src[col + 5 * cStride] * c[5];
             }
             if (N == 8)
             {
-                sum += (((short)src[col + 6 * cStride] << headRoom)) * c[6];
-                sum += (((short)src[col + 7 * cStride] << headRoom)) * c[7];
+                sum += src[col + 6 * cStride] * c[6];
+                sum += src[col + 7 * cStride] * c[7];
             }
 
-            sum -= sumCoeffs * IF_INTERNAL_OFFS;
-            short val = (short)((sum + offset) >> shift);
-
-            val = (val < 0) ? 0 : val;
-            val = (val > maxVal) ? maxVal : val;
-
-            dst[col] = (Pel)val;
+            short val = (short)((sum + offset) >> shift);            
+                val = (val < 0) ? 0 : val;
+                val = (val > maxVal) ? maxVal : val;
+            
+            dst[col] = (pixel)val;
         }
 
         src += srcStride;
@@ -326,25 +307,27 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
     }
 }
 
-template
-void filterVertical_pel_pel<8>(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterVertical_short_pel<8>(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_pel<8>(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_short<8>(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-
-template
-void filterVertical_pel_pel<4>(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterVertical_short_pel<4>(int bitDepth, short *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_pel<4>(int bitDepth, Pel *src, int srcStride, Pel *dst, int dstStride, int width, int height, short const *coeff);
-template
-void filterHorizontal_pel_short<4>(int bitDepth, Pel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-
+}
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(default: 4100)
 #endif
+
+namespace x265 {
+// x265 private namespace
+
+void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
+{
+    p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
+    p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
+    p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
+    p.ipfilterConvert_p_s = filterConvertPelToShort;
+    p.ipfilterConvert_s_p = filterConvertShortToPel;
+    p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
+    p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
+    p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
+
+    p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
+    p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+}
+}

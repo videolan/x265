@@ -38,28 +38,10 @@
 #include <memory.h>
 #include "TComPrediction.h"
 #include "primitives.h"
+#include "InterpolationFilter.h"
 
 using namespace x265;
 
-const short m_lumaFilter[4][8] =
-{
-    {  0, 0,   0, 64,  0,   0, 0,  0 },
-    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-    { -1, 4, -11, 40, 40, -11, 4, -1 },
-    {  0, 1,  -5, 17, 58, -10, 4, -1 }
-};
-
-const short m_chromaFilter[8][4] =
-{
-    {  0, 64,  0,  0 },
-    { -2, 58, 10, -2 },
-    { -4, 54, 16, -2 },
-    { -6, 46, 28, -4 },
-    { -4, 36, 36, -4 },
-    { -4, 28, 46, -6 },
-    { -2, 16, 54, -4 },
-    { -2, 10, 58, -2 }
-};
 //! \ingroup TLibCommon
 //! \{
 
@@ -228,7 +210,7 @@ Void TComPrediction::xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*&
     // Do the DC prediction
     if (modeDC)
     {
-        UChar dcval = (UChar) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+        UChar dcval = (UChar)predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
 
         for (k = 0; k < blkSize; k++)
         {
@@ -301,7 +283,7 @@ Void TComPrediction::xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*&
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, static_cast<Short> (pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
+                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, static_cast<Short>(pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
                 }
             }
         }
@@ -580,6 +562,8 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
  */
 Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *&dstPic, Bool bi)
 {
+    assert(bi == false);
+
     Int refStride = refPic->getStride();
     Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
     Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
@@ -593,74 +577,65 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 #if ENABLE_PRIMITIVES
     if (yFrac == 0)
     {
-        if(xFrac != 0)
+        if (xFrac != 0)
         {
-            //if(!bi)           
-                primitives.ipFilter_p_p[FILTER_H_P_P_8](g_bitDepthY,(pixel*)ref,refStride, (pixel*) dst, dstStride, width, height, m_lumaFilter[xFrac]);
-
-            //else            
-            //    //filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY,ref,refStride, dst, dstStride, width, height,m_lumaFilter[xFrac]);
-            //    m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,!bi);            
-
+            primitives.ipFilter_p_p[FILTER_H_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[xFrac]);
         }
         else
         {
-            //if(!bi)
-            {
-                //filterCopy(ref,refStride, dst, dstStride, width, height);
-                for (int row = 0; row < height; row++)
-                {
-                    memcpy(dst, ref, sizeof(Pel) * width);
-
-                    ref += refStride;
-                    dst += dstStride;
-                }
-                
-
-            }
-            //else
-                //filterConvertPelToShort(g_bitDepthY,ref,refStride, dst, dstStride, width, height);        
-             //   m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,!bi);
-
+            filterCopy(ref, refStride, dst, dstStride, width, height);
         }
     }
-        else if (xFrac == 0)
+    else if (xFrac == 0)
+    {
+        primitives.ipFilter_p_p[FILTER_V_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
+    }
+    else
+    {
+        Int tmpStride = width;
+        Int filterSize = NTAPS_LUMA;
+        Int halfFilterSize = (filterSize >> 1);
+
+        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+
+        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
+
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
+
+        free(tmp);
+    }
+#else // if ENABLE_PRIMITIVES
+    if (yFrac == 0)
+    {
+        if (xFrac != 0)
         {
-            primitives.ipFilter_p_p[FILTER_V_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);            
+            filterHorizontal_pel_pel<8>(g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[xFrac]);
         }
         else
         {
-            Int tmpStride = width;
-            Int filterSize = NTAPS_LUMA;
-            Int halfFilterSize = (filterSize >> 1);
-
-            Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-
-            primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1,m_lumaFilter[xFrac]);
-            //if(!bi)
-            {
-                primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,
-                    tmpStride,
-                    (pixel*)dst,
-                    dstStride,
-                    width,
-                    height, m_lumaFilter[yFrac]);
-            }
-            /*else
-            {
-                m_if.filterVerLuma(tmp + (halfFilterSize - 1) * tmpStride,
-                    tmpStride,
-                    dst,
-                    dstStride,
-                    width,
-                    height,
-                    yFrac,
-                    false,
-                    !bi);
-            }*/
-            free(tmp);
+            filterCopy(ref, refStride, dst, dstStride, width, height);
         }
-#else
+    }
+    else if (xFrac == 0)
+    {
+        filterVertical_pel_pel<8>(g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
+    }
+    else
+    {
+        Int tmpStride = width;
+        Int filterSize = NTAPS_LUMA;
+        Int halfFilterSize = (filterSize >> 1);
+
+        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+
+        filterHorizontal_pel_short<8>(g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
+        filterVertical_short_pel<8>(g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,  tmpStride, (pixel*)dst, dstStride, width,  height, m_lumaFilter[yFrac]);
+
+        free(tmp);
+    }
+#endif // if ENABLE_PRIMITIVES
+
+/*  //Original HM code
     if (yFrac == 0)
     {
         m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,       !bi);
@@ -696,7 +671,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
                            !bi);
         free(tmp);
     }
-#endif
+*/
 }
 
 /**
@@ -713,6 +688,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
  */
 Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *&dstPic, Bool bi)
 {
+    assert(bi == false);
+
     Int     refStride  = refPic->getCStride();
     Int     dstStride  = dstPic->getCStride();
 
@@ -738,25 +715,13 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 #if ENABLE_PRIMITIVES
     if (yFrac == 0)
     {
-        if(xFrac==0)
+        if (xFrac == 0)
         {
-            //filterCopy
-            for (int row = 0; row < cxHeight; row++)
-                {
-                    memcpy(dstCb, refCb, sizeof(Pel) * cxWidth);
-
-                    refCb += refStride;
-                    dstCb += dstStride;
-                }
-             for (int row = 0; row < cxHeight; row++)
-                {
-                    memcpy(dstCr, refCr, sizeof(Pel) * cxWidth);
-
-                    refCr += refStride;
-                    dstCr += dstStride;
-                }
+            filterCopy(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight);
+            filterCopy(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight);
         }
-        else{
+        else
+        {
             primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
             primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
         }
@@ -765,20 +730,48 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     {
         primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
         primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
-        //m_if.filterVerChroma(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
-        //m_if.filterVerChroma(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
     }
     else
     {
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);        
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
         primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
-       
+
         primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
         primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
     }
     free(extY);
-#else
+#else // if ENABLE_PRIMITIVES
+    if (yFrac == 0)
+    {
+        if (xFrac == 0)
+        {
+            filterCopy(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight);
+            filterCopy(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight);
+        }
+        else
+        {
+            filterHorizontal_pel_pel<4>(g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+            filterHorizontal_pel_pel<4>(g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+        }
+    }
+    else if (xFrac == 0)
+    {
+        filterVertical_pel_pel<4>(g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        filterVertical_pel_pel<4>(g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+    }
+    else
+    {
+        filterHorizontal_pel_short<4>(g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
+        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
 
+        filterHorizontal_pel_short<4>(g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
+        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+    }
+    free(extY);
+
+#endif // if ENABLE_PRIMITIVES
+
+/* //Original HM code
     if (yFrac == 0)
     {
         m_if.filterHorChroma(refCb, refStride, dstCb,  dstStride, cxWidth, cxHeight, xFrac, !bi);
@@ -798,8 +791,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
         m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
     }
     free(extY);
-
-#endif
+*/
 }
 
 Void TComPrediction::xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv*& rpcYuvDst)
