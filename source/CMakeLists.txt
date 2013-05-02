@@ -55,7 +55,7 @@ if(ENABLE_PRIMITIVES)
 endif(ENABLE_PRIMITIVES)
 
 if(UNIX)
-    SET(PLATFORM_LIBS pthread rt)
+    SET(PLATFORM_LIBS pthread rt m)
 endif(UNIX)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
