@@ -161,7 +161,7 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s
         opt(64, 64, opt_dest, 64, pbuf2 + j, 128);
         ref(64, 64, ref_dest, 64, pbuf2 + j, 128);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
         j += 4;

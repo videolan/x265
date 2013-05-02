@@ -105,7 +105,7 @@ void CDECL blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, pixel *sr
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec16c word;
+                Vec16uc word;
                 word.load_a(src + x);
                 extend_low(word).store_a(dst + x);
                 extend_high(word).store_a(dst + x + 8);
@@ -136,7 +136,7 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *sr
         {
             for (int x = 0; x < bx; x += 16)
             {
-                Vec8s word0, word1;
+                Vec8us word0, word1;
                 word0.load_a(src + x);
                 word1.load_a(src + x + 8);
                 compress(word0, word1).store_a(dst + x);
