@@ -25,7 +25,6 @@
 #include <assert.h>
 
 #if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(disable: 4100) // unreferenced formal parameter
 #endif
 
@@ -538,6 +537,5 @@ void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
 #endif
 }
 #if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(default: 4100)
 #endif

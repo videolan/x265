@@ -102,8 +102,8 @@ bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
     ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
     {
-        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &vres[0]);
-        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, &cres[0]);
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &cres[0]);
 
         if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])))
             return false;
@@ -121,8 +121,8 @@ bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
     ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
     {
-        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, &vres[0]);
-        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, &cres[0]);
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &cres[0]);
 
         if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])) || ((vres[3] != cres[3])))
             return false;
@@ -317,8 +317,8 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             pbuf2 += 1;
             printf("sad_x3[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
-                opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]),
-                ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, &cres[0]));
+                opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, FENC_STRIDE + 5, &cres[0]),
+                ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, FENC_STRIDE + 5, &cres[0]));
             pbuf2 -= 1;
         }
 
@@ -327,8 +327,8 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             pbuf2 += INCR;
             printf("sad_x4[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(iters,
-                opt.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]),
-                ref.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, &cres[0]));
+                opt.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, FENC_STRIDE + 5, &cres[0]),
+                ref.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, FENC_STRIDE + 5, &cres[0]));
             pbuf2 -= INCR;
         }
 

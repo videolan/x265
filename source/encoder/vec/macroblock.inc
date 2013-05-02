@@ -1142,31 +1142,80 @@ void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line
     Vec4i dst_first(-32768);
     int add = 1 << (shift - 1);
 
+    Vec4i coeff_const1(89, 75, 50, 18);
+    Vec4i coeff_const2(75, -18, -89, -50);
+    Vec4i coeff_const3(50, -89, 18, 75);
+    Vec4i coeff_const4(18, -50, 75, -89);
+
+    Vec4i coeff_const5(90, 87, 80, 70);
+    Vec4i coeff_const6(87, 57, 9, -43);
+    Vec4i coeff_const7(80, 9, -70, -87);
+    Vec4i coeff_const8(70, -43, -87, 9);
+    Vec4i coeff_const9(57, -80, -25, 90);
+    Vec4i coeff_const10(43, -90, 57, 25);
+    Vec4i coeff_const11(25, -70, 90, -80);
+    Vec4i coeff_const12(9, -25, 43, -57);
+
+    Vec4i coeff_const13(57, 43, 25, 9);
+    Vec4i coeff_const14(-80, -90, -70, -25);
+    Vec4i coeff_const15(-25, 57, 90, 43);
+    Vec4i coeff_const16(90, 25, -80, -57);
+    Vec4i coeff_const17(-9, -87, 43, 70);
+    Vec4i coeff_const18(-87, 70, 9, -80);
+    Vec4i coeff_const19(43, 9, -57, 87);
+    Vec4i coeff_const20(70, -80, 87, -90);
+
     for (j = 0; j < line; j++)
     {
-        int O_first = 90 * src[line] + 87 * src[3 * line] + 80 * src[5 * line] + 70 * src[7 * line] + 57 * src[9 * line] + 43 * src[11 * line] +  25 * src[13 * line] + 9 * src[15 * line];
-        int O_second = 87 * src[line] + 57 * src[3 * line] + 9 * src[5 * line] + (-43) * src[7 * line] + (-80) * src[9 * line] + (-90) * src[11 * line] +  (-70) * src[13 * line] + (-25) * src[15 * line];
-        int O_third = 80 * src[line] + 9 * src[3 * line] + (-70) * src[5 * line] + (-87) * src[7 * line] + (-25) * src[9 * line] + (57) * src[11 * line] +  (90) * src[13 * line] + (43) * src[15 * line];
-        int O_fourth = 70 * src[line] +  (-43) * src[3 * line] + (-87) * src[5 * line] + (9) * src[7 * line] + (90) * src[9 * line] + (25) * src[11 * line] +  (-80) * src[13 * line] + (-57) * src[15 * line];
-        int O_fifth = 57 * src[line] +  (-80) * src[3 * line] + (-25) * src[5 * line] + (90) * src[7 * line] + (-9) * src[9 * line] + (-87) * src[11 * line] +  (43) * src[13 * line] + (70) * src[15 * line];
-        int O_sixth = 43 * src[line] +  (-90) * src[3 * line] + (57) * src[5 * line] + (25) * src[7 * line] + (-87) * src[9 * line] + (70) * src[11 * line] +  (9) * src[13 * line] + (-80) * src[15 * line];
-        int O_seventh = 25 * src[line] +  (-70) * src[3 * line] + (90) * src[5 * line] + (-80) * src[7 * line] + (43) * src[9 * line] + (9) * src[11 * line] +  (-57) * src[13 * line] + (87) * src[15 * line];
-        int O_eight = 9 * src[line] +  (-25) * src[3 * line] + (43) * src[5 * line] + (-57) * src[7 * line] + (70) * src[9 * line] + (-80) * src[11 * line] +  (87) * src[13 * line] + (-90) * src[15 * line];
+        int src_line = src[line];
+        int src_line3 = src[3 * line];
+        int src_line5 = src[5 * line];
+        int src_line7 = src[7 * line];
+        int src_line9 = src[9 * line];
+        int src_line11 = src[11 * line];
+        int src_line13 = src[13 * line];
+        int src_line15 = src[15 * line];
 
-        Vec4i O_first_half(O_first, O_second, O_third, O_fourth);
-        Vec4i O_second_half(O_fifth, O_sixth, O_seventh, O_eight);
+        int src_line2 = src[2 * line];
+        int src_line6 = src[6 * line];
+        int src_line10 = src[10 * line];
+        int src_line14 = src[14 * line];
 
-        int EO_zero = 89 * src[2 * line] + 75 * src[6 * line] + 50 * src[10 * line] + 18 * src[14 * line];
-        int EO_one = 75 * src[2 * line] + (-18) * src[6 * line] + -89 * src[10 * line] + (-50) * src[14 * line];
-        int EO_two = 50 * src[2 * line] + -89 * src[6 * line] + 18 * src[10 * line] + 75 * src[14 * line];
-        int EO_three = 18 * src[2 * line] + -50 * src[6 * line] + 75 * src[10 * line] + -89 * src[14 * line];
+        Vec4i O_tmp1 = coeff_const5 * src_line;
+        Vec4i O_tmp2 = coeff_const6 * src_line3;
+        Vec4i O_tmp3 = coeff_const7 * src_line5;
+        Vec4i O_tmp4 = coeff_const8 * src_line7;
+        Vec4i O_tmp5 = coeff_const9 * src_line9;
+        Vec4i O_tmp6 = coeff_const10 * src_line11;
+        Vec4i O_tmp7 = coeff_const11 * src_line13;
+        Vec4i O_tmp8 = coeff_const12 * src_line15;
 
-        Vec4i EO(EO_zero, EO_one, EO_two, EO_three);
+        Vec4i O_tmp9 = coeff_const13 * src_line;
+        Vec4i O_tmp10 = coeff_const14 * src_line3;
+        Vec4i O_tmp11 = coeff_const15 * src_line5;
+        Vec4i O_tmp12 = coeff_const16 * src_line7;
+        Vec4i O_tmp13 = coeff_const17 * src_line9;
+        Vec4i O_tmp14 = coeff_const18 * src_line11;
+        Vec4i O_tmp15 = coeff_const19 * src_line13;
+        Vec4i O_tmp16 = coeff_const20 * src_line15;
+
+        Vec4i O_first_half = O_tmp1 + O_tmp2 + O_tmp3 + O_tmp4 + O_tmp5 + O_tmp6 + O_tmp7 + O_tmp8;
+        Vec4i O_second_half = O_tmp9 + O_tmp10 + O_tmp11 + O_tmp12 + O_tmp13 + O_tmp14 + O_tmp15 + O_tmp16;
+
+        Vec4i tmp1 = coeff_const1 * src_line2;
+        Vec4i tmp2 = coeff_const2 * src_line6;
+        Vec4i tmp3 = coeff_const3 * src_line10;
+        Vec4i tmp4 = coeff_const4 * src_line14;
+
+        Vec4i EO = tmp1 + tmp2 + tmp3 + tmp4;
+
+        int src_zero = (src[0] << 6);
+        int src_eight = (src[line << 3] << 6);
 
         int EEO_zero = 83 * src[4 * line] + 36 * src[12 * line];
-        int EEE_zero = 64 * src[0] + 64 * src[8 * line];
+        int EEE_zero = src_zero + src_eight;
         int EEO_one  = 36 * src[4 * line] + -83 * src[12 * line];
-        int EEE_one  = 64 * src[0] +  -64 * src[8 * line];
+        int EEE_one  = src_zero - src_eight;
 
         int EE_zero = EEE_zero + EEO_zero;
         int EE_one = EEE_one + EEO_one;
