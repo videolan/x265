@@ -118,9 +118,9 @@ public:
 
     /* Methods called for searches */
 
-    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
+    int bufSAD(pixel *afref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, afref, stride); }
 
-    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    int bufSATD(pixel *afref, intptr_t stride) { return satd(fenc, FENC_STRIDE, afref, stride); }
 
     void setReference(MotionReference* tref)  { ref = tref; }
 

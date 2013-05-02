@@ -215,19 +215,19 @@ void MotionEstimate::buildResidual(const MV& qmv)
     /* We need block copy and block-residual primitives */
     {
         pixel *orig = fenc;
-        pixel *fref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset + fmv.y * ref->lumaStride + fmv.x;
+        pixel *afref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset + fmv.y * ref->lumaStride + fmv.x;
         short *resi = residual[0] + blockOffset;
 
         for (int row = 0; row < blockHeight; row++)
         {
             for (int col = 0; col < blockWidth; col++)
             {
-                resi[col] = (short)orig[col] - (short)fref[col];
+                resi[col] = (short)orig[col] - (short)afref[col];
             }
 
             resi += resLumaStride;
             orig += fencLumaStride;
-            fref += ref->lumaStride;
+            afref += ref->lumaStride;
         }
     }
 
@@ -237,7 +237,7 @@ void MotionEstimate::buildResidual(const MV& qmv)
         /* TODO: Double check this indexing; I doubt it is correct */
         intptr_t qpoffs = (blockOffset >> 2) + cmv.y * ref->chromaStride + cmv.x;
         pixel *orig = fencplanes[ch] + (blockOffset >> 2);
-        pixel *fref = ref->plane[qmv.x & 3][qmv.y & 3][ch] + qpoffs;
+        pixel *afref = ref->plane[qmv.x & 3][qmv.y & 3][ch] + qpoffs;
         // Only works if recon and residual planes have same stride
         short *resi = residual[ch] + blockOffset;
 
@@ -245,12 +245,12 @@ void MotionEstimate::buildResidual(const MV& qmv)
         {
             for (int col = 0; col < blockWidth >> 1; col++)
             {
-                resi[col] = (short)orig[col] - (short)fref[col];
+                resi[col] = (short)orig[col] - (short)afref[col];
             }
 
             resi += resChromaStride;
             orig += fencChromaStride;
-            fref += ref->chromaStride;
+            afref += ref->chromaStride;
         }
     }
 }
