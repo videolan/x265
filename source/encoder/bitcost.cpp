@@ -75,11 +75,11 @@ void BitCost::CalculateLogs()
 {
     if (!logs)
     {
-        logs = new float[BC_MAX_MV + 1];
+        logs = new float[2*BC_MAX_MV + 1];
         logs[0] = 0.718f;
         logs[1] = 0.718f;
         float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
-        for( int i = 2; i <= BC_MAX_MV; i++ )
+        for( int i = 2; i <= 2*BC_MAX_MV; i++ )
             logs[i] = log((float)(i+1)) * log2_2 + 0.718f;
     }
 }
