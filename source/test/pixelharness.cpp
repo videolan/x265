@@ -52,8 +52,8 @@ static const char *FuncNames[NUM_PARTITIONS] =
 
 PixelHarness::PixelHarness()
 {
-    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 0x1e00, 32);
-    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 0x1e00, 32);
+    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
+    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
 
     if (!pbuf1 || !pbuf2)
     {
@@ -61,7 +61,7 @@ PixelHarness::PixelHarness()
         exit(1);
     }
 
-    for (int i = 0; i < 0x1e00; i++)
+    for (int i = 0; i < 64 * 64 * 32; i++)
     {
         //Generate the Random Buffer for Testing
         pbuf1[i] = rand() & PIXEL_MAX;
