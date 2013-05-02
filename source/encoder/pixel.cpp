@@ -49,7 +49,7 @@ int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pi
 }
 
 template<int lx, int ly>
-void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, int *res)
+void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t strideCur, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -63,14 +63,14 @@ void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, int *res)
             res[2] += abs(pix1[x] - pix4[x]);
         }
         pix1 += FENC_STRIDE;
-        pix2 += FENC_STRIDE;
-        pix3 += FENC_STRIDE;
-        pix4 += FENC_STRIDE;
+        pix2 += strideCur;
+        pix3 += strideCur;
+        pix4 += strideCur;
     }
 }
 
 template<int lx, int ly>
-void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, int *res)
+void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t strideCur, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -86,10 +86,10 @@ void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix
             res[3] += abs(pix1[x] - pix5[x]);
         }
         pix1 += FENC_STRIDE;
-        pix2 += FENC_STRIDE;
-        pix3 += FENC_STRIDE;
-        pix4 += FENC_STRIDE;
-        pix5 += FENC_STRIDE;
+        pix2 += strideCur;
+        pix3 += strideCur;
+        pix4 += strideCur;
+        pix5 += strideCur;
     }
 }
 

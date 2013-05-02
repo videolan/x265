@@ -108,7 +108,7 @@ int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0);
@@ -137,9 +137,9 @@ void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -165,9 +165,9 @@ void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
         sum2_low += extend_low(sum2);
         sum3_low += extend_low(sum3);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -176,7 +176,7 @@ void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_4_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_4_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0);
@@ -205,9 +205,9 @@ void CDECL sad_4_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -233,9 +233,9 @@ void CDECL sad_4_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
         sum2_low += extend_low(sum2);
         sum3_low += extend_low(sum3);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -243,7 +243,7 @@ void CDECL sad_4_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
 }
 
 template<int lx, int ly>
-void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -272,9 +272,9 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -307,9 +307,9 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -317,7 +317,7 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 }
 
 template<int lx, int ly>
-void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -346,9 +346,9 @@ void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -381,9 +381,9 @@ void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -392,7 +392,7 @@ void CDECL sad_8_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0);
@@ -439,9 +439,9 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -485,9 +485,9 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum2_low += extend_low(sum2);
         sum3_low += extend_low(sum3);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -496,7 +496,7 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_12_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_12_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0);
@@ -543,9 +543,9 @@ void CDECL sad_12_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -589,9 +589,9 @@ void CDECL sad_12_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
         sum2_low += extend_low(sum2);
         sum3_low += extend_low(sum3);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -599,7 +599,7 @@ void CDECL sad_12_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
 }
 
 template<int lx, int ly>
-void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -637,9 +637,9 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -681,9 +681,9 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -691,7 +691,7 @@ void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int lx, int ly>
-void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -729,9 +729,9 @@ void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -773,9 +773,9 @@ void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -783,7 +783,7 @@ void CDECL sad_16_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
 }
 
 template<int lx, int ly>
-void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -839,9 +839,9 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -901,9 +901,9 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -911,7 +911,7 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int lx, int ly>
-void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, int *res)
+void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1003,9 +1003,9 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum3 += abs(m1 - n3);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -1101,9 +1101,9 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum3_high += extend_high(sum3);
 
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -1112,7 +1112,7 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0);
@@ -1146,10 +1146,10 @@ void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -1180,10 +1180,10 @@ void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
         sum3_low += extend_low(sum3);
         sum4_low += extend_low(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -1193,7 +1193,7 @@ void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_4_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_4_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0);
@@ -1227,10 +1227,10 @@ void CDECL sad_4_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -1261,10 +1261,10 @@ void CDECL sad_4_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
         sum3_low += extend_low(sum3);
         sum4_low += extend_low(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -1273,7 +1273,7 @@ void CDECL sad_4_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
 }
 
 template<int lx, int ly>
-void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1307,10 +1307,10 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -1349,10 +1349,10 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -1361,7 +1361,7 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 }
 
 template<int lx, int ly>
-void CDECL sad_8_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_8_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1395,10 +1395,10 @@ void CDECL sad_8_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -1437,10 +1437,10 @@ void CDECL sad_8_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -1450,7 +1450,7 @@ void CDECL sad_8_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3,
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1506,10 +1506,10 @@ void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -1562,10 +1562,10 @@ void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum3_low += extend_low(sum3);
         sum4_low += extend_low(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -1575,7 +1575,7 @@ void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
 template<int lx, int ly>
-void CDECL sad_12_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_12_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1631,10 +1631,10 @@ void CDECL sad_12_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum2_low += extend_low(sum2);
@@ -1687,10 +1687,10 @@ void CDECL sad_12_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
         sum3_low += extend_low(sum3);
         sum4_low += extend_low(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low);
     res[1] += horizontal_add_x(sum2_low);
@@ -1699,7 +1699,7 @@ void CDECL sad_12_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
 }
 
 template<int lx, int ly>
-void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1744,10 +1744,10 @@ void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -1797,10 +1797,10 @@ void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -1809,7 +1809,7 @@ void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int lx, int ly>
-void CDECL sad_16_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_16_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1854,10 +1854,10 @@ void CDECL sad_16_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -1907,10 +1907,10 @@ void CDECL sad_16_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -1919,7 +1919,7 @@ void CDECL sad_16_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3
 }
 
 template<int lx, int ly>
-void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -1986,10 +1986,10 @@ void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -2061,10 +2061,10 @@ void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -2073,7 +2073,7 @@ void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int lx, int ly>
-void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, int *res)
+void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
     Vec4i sum1_low(0), sum1_high(0);
@@ -2184,10 +2184,10 @@ void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
                 sum4 += abs(m1 - n4);
             }
             piOrg += FENC_STRIDE;
-            piCur1 += FENC_STRIDE;
-            piCur2 += FENC_STRIDE;
-            piCur3 += FENC_STRIDE;
-            piCur4 += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
         }
         sum1_low += extend_low(sum1);
         sum1_high += extend_high(sum1);
@@ -2303,10 +2303,10 @@ void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum4_low += extend_low(sum4);
         sum4_high += extend_high(sum4);
         piOrg += FENC_STRIDE;
-        piCur1 += FENC_STRIDE;
-        piCur2 += FENC_STRIDE;
-        piCur3 += FENC_STRIDE;
-        piCur4 += FENC_STRIDE;
+        piCur1 += strideCur;
+        piCur2 += strideCur;
+        piCur3 += strideCur;
+        piCur4 += strideCur;
     }
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
