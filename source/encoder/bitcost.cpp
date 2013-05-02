@@ -77,10 +77,16 @@ void BitCost::CalculateLogs()
     {
         logs = new float[2*BC_MAX_MV + 1];
         logs[0] = 0.718f;
+#if X264_APPROACH
+        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
+        for( int i = 1; i <= 2*BC_MAX_MV; i++ )
+            logs[i] = log((float)(i+1)) * log2_2 + 1.718f;
+#else
         logs[1] = 0.718f;
         float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
         for( int i = 2; i <= 2*BC_MAX_MV; i++ )
             logs[i] = log((float)(i+1)) * log2_2 + 0.718f;
+#endif
     }
 }
 
