@@ -25,6 +25,7 @@
  * one will define ARCH to a different value. */
 
 #include "primitives.h"
+#include <string.h>
 
 using namespace x265;
 
@@ -34,6 +35,7 @@ namespace {
 #include "pixel.inc"
 #include "macroblock.inc"
 #include "interpolationfilter.inc"
+#include "blockcopy.inc"
 }
 
 #define PASTER(name, val) name ## _ ## val
@@ -50,5 +52,6 @@ void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
     Setup_Vec_PixelPrimitives(p);
     Setup_Vec_MacroblockPrimitives(p);
     Setup_Vec_IPFilterPrimitives(p);
+    Setup_Vec_BlockCopyPrimitives(p);
 }
 }
