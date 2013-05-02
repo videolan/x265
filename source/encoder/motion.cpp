@@ -26,9 +26,9 @@
 
 using namespace x265;
 
-void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height);
+void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height)
 {
-    Partitions size = PartitionFromSizes(width, height);
+    int size = PartitionFromSizes(width, height);
     sad = primitives.sad[size];
     satd = primitives.satd[size];
     sad_x3 = primitives.sad_x3[size];
@@ -36,12 +36,12 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 
     blockWidth = width;
     blockHeight = height;
-    blockOffset = offsetY * ref->lumaStride + offsetX;
+    blockOffset = offsetY * (int)ref->lumaStride + offsetX;
 
     fref = ref->plane[0][0][0] + blockOffset;
 
     /* copy block into local buffer */
-    fencblock = fencplanes[0] + offsetY * fencLumaStride + offsetX;
+    pixel *fencblock = fencplanes[0] + offsetY * fencLumaStride + offsetX;
     for (int i = 0; i < height; i++)
     {
         memcpy(fenc + i * FENC_STRIDE, fencblock + i * fencLumaStride, width);
@@ -54,12 +54,12 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 {\
     int stride = ref->lumaStride;\
     pixel *pix_base = fref + bmv.x + bmv.y * stride;\
-    sad_x4( p_fenc,\
-        pix_base + (m0x) + (m0y)*stride,\
-        pix_base + (m1x) + (m1y)*stride,\
-        pix_base + (m2x) + (m2y)*stride,\
-        pix_base + (m3x) + (m3y)*stride,\
-        stride, costs );\
+    sad_x4(fenc,\
+           fref + (m0x) + (m0y)*stride,\
+           fref + (m1x) + (m1y)*stride,\
+           fref + (m2x) + (m2y)*stride,\
+           fref + (m3x) + (m3y)*stride,\
+           stride, costs);\
     (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
     (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
     (costs)[2] += bc.mvcost((bmv + MV(m2x,m2y)) << 2);\
@@ -70,21 +70,21 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 {\
     int stride = ref->lumaStride;\
     pixel *pix_base = fref + bmv.x + bmv.y * stride;\
-    sad_x3( p_fenc,\
-        pix_base + (m0x) + (m0y)*stride,\
-        pix_base + (m1x) + (m1y)*stride,\
-        pix_base + (m2x) + (m2y)*stride,\
-        stride, costs );\
+    sad_x3(fenc,\
+           fref + (m0x) + (m0y)*stride,\
+           fref + (m1x) + (m1y)*stride,\
+           fref + (m2x) + (m2y)*stride,\
+           stride, costs);\
     (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
     (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
     (costs)[2] += bc.mvcost((bmv + MV(m2x,m2y)) << 2);\
 }
 
-int MotionEstimate::motionEstimate(const MV &qmvp,
-                                   int       numCandidates,
-                                   const MV *mvc,
-                                   int       merange,
-                                   MV &      outQMv)
+uint32_t MotionEstimate::motionEstimate(const MV &qmvp,
+                                        int       numCandidates,
+                                        const MV *mvc,
+                                        int       merange,
+                                        MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
 
@@ -128,16 +128,17 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     uint32_t bprecost = bcost;
 
     /* Measure full pel SAD at MVP */
-    MV bmv = bmv.roundToFPel();
+    bmv = bmv.roundToFPel();
     bcost = fpelSad(bmv) + bc.mvcost(bmv.toQPel());
 
+    int meMethod = 0;
     switch (meMethod)
     {
-    case X264_ME_DIA:
+    case 0:
     {
         /* diamond search, radius 1 */
         bcost <<= 4;
-        int i = meRange;
+        int i = merange;
         do
         {
             COST_MV_X4_DIR(0, -1, 0, 1, -1, 0, 1, 0, costs);

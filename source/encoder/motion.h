@@ -62,6 +62,8 @@ protected:
     intptr_t resLumaStride;
     intptr_t resChromaStride;
 
+    MV mvmin, mvmax;
+
     MotionReference *ref;   // current reference frame
     pixel *fref;            // coincident block in reference frame
 
@@ -131,7 +133,7 @@ public:
 
     uint32_t qpelSad(const MV& qmv)
     {
-        MV fmc = qmv >> 2;
+        MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
@@ -140,7 +142,7 @@ public:
 
     uint32_t qpelSatd(const MV& qmv)
     {
-        MV fmc = qmv >> 2;
+        MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
         return satd(fenc, FENC_STRIDE,
                     qfref + fmv.y * ref->lumaStride + fmv.x,
