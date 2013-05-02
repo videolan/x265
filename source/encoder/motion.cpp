@@ -23,6 +23,7 @@
 
 #include "primitives.h"
 #include "motion.h"
+#include <string.h>
 
 using namespace x265;
 
