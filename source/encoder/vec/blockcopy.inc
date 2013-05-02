@@ -42,9 +42,9 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *sr
         // fast path, multiples of 8 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
-            Vec8s word;
             for (int x = 0; x < bx; x += 8)
             {
+                Vec8s word;
                 word.load_a(src + x);
                 word.store_a(dst + x);
             }
@@ -56,39 +56,94 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *sr
 
 #else
 
-void CDECL blockcopy_p_p(int bx, int by, pixel *dest, intptr_t dstride, pixel *src, intptr_t sstride)
+void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    for (int y = 0; y < by; y++)
+    if (((size_t)dst | (size_t)src | bx) & 15)
     {
-        for (int x = 0; x < bx; b++)
-            dest[x] = src[x];
-
-        dest += dstride;
-        src += sstride;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            memcpy(dst, src, bx * sizeof(pixel));
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16c word;
+                word.load_a(src + x);
+                word.store_a(dst + x);
+            }
+            src += sstride;
+            dst += dstride;
+        }
     }
 }
 
-void CDECL blockcopy_s_p(int bx, int by, short *dest, intptr_t dstride, pixel *src, intptr_t sstride)
+void CDECL blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    for (int y = 0; y < by; y++)
+    if (((size_t)dst | (size_t)src | bx) & 15)
     {
-        for (int x = 0; x < bx; b++)
-            dest[x] = (short)src[x];
-
-        dest += dstride;
-        src += sstride;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+                dst[x] = src[x];
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16c word;
+                word.load_a(src + x);
+                extend_low(word).store_a(dst + x);
+                extend_high(word).store_a(dst + x + 8);
+            }
+            src += sstride;
+            dst += dstride;
+        }
     }
 }
 
-void CDECL blockcopy_p_s(int bx, int by, pixel *dest, intptr_t dstride, short *src, intptr_t sstride)
+void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
-    for (int y = 0; y < by; y++)
+    if (((size_t)dst | (size_t)src | bx) & 15)
     {
-        for (int x = 0; x < bx; b++)
-            a[x] = (pixel)b[x];
-
-        dest += dstride;
-        src += sstride;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+                dst[x] = (pixel)src[x];
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec8s word0, word1;
+                word0.load_a(src + x);
+                word1.load_a(src + x + 8);
+                compress(word0, word1).store_a(dst + x);
+            }
+            src += sstride;
+            dst += dstride;
+        }
     }
 }
 #endif
