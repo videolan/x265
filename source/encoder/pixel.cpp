@@ -270,6 +270,41 @@ int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i
 
     return (sum + 2) >> 2;
 }
+void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; b++)
+            a[x] = b[x];
+
+        a += stridea;
+        b += strideb;
+    }
+}
+
+void blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; b++)
+            a[x] = (short)b[x];
+
+        a += stridea;
+        b += strideb;
+    }
+}
+
+void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; b++)
+            a[x] = (pixel)b[x];
+
+        a += stridea;
+        b += strideb;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -505,6 +540,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x4[PARTITION_64x24] = sad_x4<64, 24>;
     p.sad_x4[PARTITION_64x32] = sad_x4<64, 32>;
     p.sad_x4[PARTITION_64x64] = sad_x4<64, 64>;
+
+    p.cpyblock = blockcopy_p_p;
+    p.cpyblock_s_p = blockcopy_s_p;
+    p.cpyblock_p_s = blockcopy_p_s;
 
     // sa8d
     p.sa8d_8x8 = pixel_sa8d_8x8;

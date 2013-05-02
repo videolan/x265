@@ -36,6 +36,9 @@ protected:
     bool check_pixel_primitive(x265::pixelcmp ref, x265::pixelcmp opt);
     bool check_pixel_primitive_x3(x265::pixelcmp_x3 ref, x265::pixelcmp_x3 opt);
     bool check_pixel_primitive_x4(x265::pixelcmp_x4 ref, x265::pixelcmp_x4 opt);
+    bool check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p opt);
+    bool check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt);
+    bool check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt);
 
 public:
 

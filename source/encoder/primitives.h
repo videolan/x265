@@ -148,18 +148,20 @@ enum IPFilterConf_S_P
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
 
-typedef int (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef int  (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, int *res);
 typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, int *res);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
-typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width,
-                                int block_height, int bitDepth);
+typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
 typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
 typedef void (CDECL * IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilterConvert_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
 typedef void (CDECL * IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (CDECL * blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (CDECL * blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (CDECL * blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -181,6 +183,9 @@ struct EncoderPrimitives
     IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];
     IPFilterConvert_p_s ipfilterConvert_p_s;
     IPFilterConvert_s_p ipfilterConvert_s_p;
+    blockcpy_p_p cpyblock;
+    blockcpy_p_s cpyblock_p_s;
+    blockcpy_s_p cpyblock_s_p;
 };
 
 /* This copy of the table is what gets used by all by the encoder.

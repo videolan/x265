@@ -24,6 +24,7 @@
 #include "pixelharness.h"
 #include "primitives.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
 
@@ -132,6 +133,60 @@ bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
     return true;
 }
 
+bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64*64]);
+    ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(64, 64, opt_dest, 64, pbuf2 + j, 128);
+        ref(64, 64, ref_dest, 64, pbuf2 + j, 128);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += 4;
+    }
+    return true;
+}
+
+bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt)
+{
+    ALIGN_VAR_16(short, ref_dest[64*64]);
+    ALIGN_VAR_16(short, opt_dest[64*64]);
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(64, 64, opt_dest, 64, pbuf2 + j, 128);
+        ref(64, 64, ref_dest, 64, pbuf2 + j, 128);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += 4;
+    }
+    return true;
+}
+
+bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64*64]);
+    ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(64, 64, opt_dest, 64, (short*)pbuf2 + j, 128);
+        ref(64, 64, ref_dest, 64, (short*)pbuf2 + j, 128);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += 4;
+    }
+    return true;
+}
+
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -187,6 +242,33 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_pixel_primitive(ref.sa8d_16x16, opt.sa8d_16x16))
         {
             printf("sa8d_16x16: failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.cpyblock)
+    {
+        if (!check_block_copy(ref.cpyblock, opt.cpyblock))
+        {
+            printf("block copy failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.cpyblock_p_s)
+    {
+        if (!check_block_copy_p_s(ref.cpyblock_p_s, opt.cpyblock_p_s))
+        {
+            printf("block copy pixel_short failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.cpyblock_s_p)
+    {
+        if (!check_block_copy_s_p(ref.cpyblock_s_p, opt.cpyblock_s_p))
+        {
+            printf("block copy short_pixel failed!\n");
             return false;
         }
     }
