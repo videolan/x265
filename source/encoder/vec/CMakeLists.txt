@@ -26,5 +26,7 @@ add_library(PrimitivesVec vec-primitives.cpp ${PRIMITIVES} ${VECTORCLASS}
             vecprimitives.inc
             blockcopy.inc
             pixel.inc
+            pixel8.inc
+            pixel16.inc
             macroblock.inc
             interpolationfilter.inc)

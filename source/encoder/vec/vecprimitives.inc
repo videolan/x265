@@ -32,6 +32,11 @@ using namespace x265;
 namespace {
 // each of these headers implements a portion of the performance
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
+#if HIGH_BIT_DEPTH
+    #include "pixel16.inc"
+#else
+    #include "pixel8.inc"
+#endif
 #include "pixel.inc"
 #include "macroblock.inc"
 #include "interpolationfilter.inc"

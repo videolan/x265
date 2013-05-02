@@ -524,13 +524,9 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
     }
 }
 
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(default: 4100)
-#endif
-
 void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
 {
+#if HIGH_BIT_DEPTH
     p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
     p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
     p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
@@ -539,4 +535,9 @@ void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
     p.ipfilterConvert_p_s = filterConvertPelToShort;
     p.ipfilterConvert_s_p = filterConvertShortToPel;
+#endif
 }
+#if _MSC_VER
+#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
+#pragma warning(default: 4100)
+#endif
