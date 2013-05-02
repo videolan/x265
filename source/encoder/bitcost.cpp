@@ -52,8 +52,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
             c[0] = (uint16_t)lambda;
             for (int i = 1; i < BC_MAX_MV; i++)
             {
-                c[i]  = std::min<uint16_t>(max16, logs[i<<1] * lambda + 0.5);
-                c[-i] = std::min<uint16_t>(max16, logs[(i<<1)+1] * lambda + 0.5);
+                c[i]  = std::min<uint16_t>(max16, (uint16_t)(logs[i<<1] * lambda + 0.5));
+                c[-i] = std::min<uint16_t>(max16, (uint16_t)(logs[(i<<1)+1] * lambda + 0.5));
             }
 #endif
         }
