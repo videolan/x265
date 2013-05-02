@@ -137,16 +137,20 @@ bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p o
 {
     ALIGN_VAR_16(pixel, ref_dest[64*64]);
     ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    int bx = 64;
+    int by = 64;
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
-        opt(64, 64, opt_dest, 64, pbuf2 + j, 128);
-        ref(64, 64, ref_dest, 64, pbuf2 + j, 128);
+        opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
+        ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += 4;
+        bx = 4 * ((rand() & 15) + 1);
+        by = 4 * ((rand() & 15) + 1);
     }
     return true;
 }
@@ -155,16 +159,20 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s
 {
     ALIGN_VAR_16(short, ref_dest[64*64]);
     ALIGN_VAR_16(short, opt_dest[64*64]);
+    int bx = 64;
+    int by = 64;
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
-        opt(64, 64, opt_dest, 64, pbuf2 + j, 128);
-        ref(64, 64, ref_dest, 64, pbuf2 + j, 128);
+        opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
+        ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
         j += 4;
+        bx = 4 * ((rand() & 15) + 1);
+        by = 4 * ((rand() & 15) + 1);
     }
     return true;
 }
@@ -173,16 +181,20 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p
 {
     ALIGN_VAR_16(pixel, ref_dest[64*64]);
     ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    int bx = 64;
+    int by = 64;
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
-        opt(64, 64, opt_dest, 64, (short*)pbuf2 + j, 128);
-        ref(64, 64, ref_dest, 64, (short*)pbuf2 + j, 128);
+        opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, 128);
+        ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, 128);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += 4;
+        bx = 4 * ((rand() & 15) + 1);
+        by = 4 * ((rand() & 15) + 1);
     }
     return true;
 }
