@@ -609,7 +609,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     {
         if (xFrac != 0)
         {
-            filterHorizontal_pel_pel<8>(g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[xFrac]);
+            filterHorizontal_pel_pel<8>(g_bitDepthY, ref, refStride, dst, dstStride, width, height, m_lumaFilter[xFrac]);
         }
         else
         {
@@ -618,7 +618,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     }
     else if (xFrac == 0)
     {
-        filterVertical_pel_pel<8>(g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
+        filterVertical_pel_pel<8>(g_bitDepthY, ref, refStride, dst, dstStride, width, height, m_lumaFilter[yFrac]);
     }
     else
     {
@@ -628,8 +628,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 
         Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
 
-        filterHorizontal_pel_short<8>(g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
-        filterVertical_short_pel<8>(g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,  tmpStride, (pixel*)dst, dstStride, width,  height, m_lumaFilter[yFrac]);
+        filterHorizontal_pel_short<8>(g_bitDepthY, ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
+        filterVertical_short_pel<8>(g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,  tmpStride, dst, dstStride, width,  height, m_lumaFilter[yFrac]);
 
         free(tmp);
     }
@@ -750,22 +750,22 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
         }
         else
         {
-            filterHorizontal_pel_pel<4>(g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
-            filterHorizontal_pel_pel<4>(g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+            filterHorizontal_pel_pel<4>(g_bitDepthC, refCb, refStride, dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+            filterHorizontal_pel_pel<4>(g_bitDepthC, refCr, refStride, dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        filterVertical_pel_pel<4>(g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
-        filterVertical_pel_pel<4>(g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+        filterVertical_pel_pel<4>(g_bitDepthC, refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        filterVertical_pel_pel<4>(g_bitDepthC, refCr, refStride, dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
     }
     else
     {
-        filterHorizontal_pel_short<4>(g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
-        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        filterHorizontal_pel_short<4>(g_bitDepthC, (refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
+        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
 
-        filterHorizontal_pel_short<4>(g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
-        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+        filterHorizontal_pel_short<4>(g_bitDepthC, (refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
+        filterVertical_short_pel<4>(g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
     }
     free(extY);
 
