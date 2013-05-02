@@ -46,7 +46,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
 #if X264_APPROACH
             // estimate same cost for negative and positive MVD
             for (int i = 0; i < BC_MAX_MV; i++)
-                c[i] = c[-i] = std::min<uint16_t>(max16, logs[i] * lambda + 0.5);
+                c[i] = c[-i] = std::min<uint16_t>(max16, (uint16_t)(logs[i] * lambda + 0.5));
 #else
             // penalize negative MVD by one bit
             c[0] = (uint16_t)lambda;
