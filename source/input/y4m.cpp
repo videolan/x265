@@ -216,6 +216,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     pic.planes[2] = buf + width * height + ((width * height) >> 2);
 
+    pic.bitDepth = 8;
+
     pic.stride[0] = width;
 
     pic.stride[1] = pic.stride[2] = pic.stride[0] >> 1;
