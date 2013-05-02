@@ -340,5 +340,29 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
+    if (opt.cpyblock)
+    {
+        printf("block cpy");
+        REPORT_SPEEDUP(iters,
+            opt.cpyblock(64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE),
+            ref.cpyblock(64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE));
+    }
+
+    if (opt.cpyblock_p_s)
+    {
+        printf("p_s   cpy");
+        REPORT_SPEEDUP(iters,
+            opt.cpyblock_p_s(64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE),
+            ref.cpyblock_p_s(64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE));
+    }
+
+    if (opt.cpyblock_s_p)
+    {
+        printf("s_p   cpy");
+        REPORT_SPEEDUP(iters,
+            opt.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE),
+            ref.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE));
+    }
+
     t->Release();
 }
