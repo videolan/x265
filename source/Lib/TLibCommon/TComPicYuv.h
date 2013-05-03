@@ -164,7 +164,10 @@ public:
 
     Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
-    /*TODO: Add access functions for m_filteredBlock */
+    /* Access functions for m_filteredBlock */
+    Pel* getLumaFilterBlock(int ver, int hor) { return m_filteredBlockOrgY[ver][hor]; }
+    Pel* getCbFilterBlock(int ver, int hor) { return m_filteredBlockOrgU[ver][hor]; }
+    Pel* getCrFilterBlock(int ver, int hor) { return m_filteredBlockOrgV[ver][hor]; }
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
