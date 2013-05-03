@@ -119,6 +119,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
     pDcVal = (iSum + (1<<(logSize-1))) >> logSize;
 
 #else
+
     // CHECK_ME: un-test code
     Int iInd, iSum = 0;
     Pel pDcVal;
@@ -141,16 +142,15 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
 
     logSize += (bAbove + bLeft - 1);
     pDcVal = (iSum + (1<<(logSize-1))) >> logSize;
-
-    return pDcVal;
 #endif
 
     return pDcVal;
 }
-
 }
 
 void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
 {
+#if HIGH_BIT_DEPTH
     p.getdcval_p = predIntraGetPredValDC;
+#endif
 }
