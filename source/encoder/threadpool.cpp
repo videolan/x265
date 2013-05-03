@@ -68,9 +68,9 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
 }
 #endif // if !_WIN64
 
-FORCEINLINE
-LONGLONG
-_InterlockedOr64 (
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+/* XP did not define this intrinsic */
+FORCEINLINE LONGLONG _InterlockedOr64 (
     __inout LONGLONG volatile *Destination,
     __in    LONGLONG Value
     )
@@ -85,6 +85,7 @@ _InterlockedOr64 (
 
     return Old;
 }
+#endif
 
 #define CLZ64(id, x)                    _BitScanReverse64(&id, x)
 #define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
@@ -422,7 +423,9 @@ QueueFrame::~QueueFrame()
     }
 }
 
+#if _MSC_VER
 #pragma intrinsic(_InterlockedCompareExchange64)
+#endif
 void QueueFrame::EnqueueRow(int row)
 {
     // thread safe
