@@ -68,11 +68,29 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
 }
 #endif // if !_WIN64
 
+FORCEINLINE
+LONGLONG
+_InterlockedOr64 (
+    __inout LONGLONG volatile *Destination,
+    __in    LONGLONG Value
+    )
+{
+    LONGLONG Old;
+
+    do {
+        Old = *Destination;
+    } while (_InterlockedCompareExchange64(Destination,
+                                          Old | Value,
+                                          Old) != Old);
+
+    return Old;
+}
+
 #define CLZ64(id, x)                    _BitScanReverse64(&id, x)
 #define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile LONG*)ptr)
-#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
-#define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
+#define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
+#define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define GIVE_UP_TIME()                  Sleep(0)
 
 #endif // ifdef __GNUC__
@@ -404,6 +422,7 @@ QueueFrame::~QueueFrame()
     }
 }
 
+#pragma intrinsic(_InterlockedCompareExchange64)
 void QueueFrame::EnqueueRow(int row)
 {
     // thread safe
