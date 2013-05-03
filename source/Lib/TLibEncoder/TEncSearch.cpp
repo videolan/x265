@@ -3934,7 +3934,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     UInt uiMvBits = m_pcRdCost->getBits(rcMv.getHor(), rcMv.getVer());
 
     //x265::MV out;  // compare with rcMV
-    //int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 3, m_acMvPredictors, iSrchRng, out);
+    //int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, out);
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
