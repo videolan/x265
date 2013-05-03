@@ -152,7 +152,8 @@ int main(int argc, char *argv[])
 
     printf("\n");
 #else // if ENABLE_PRIMITIVES
-    printf("x265 is configured without performance primitives, nothing to test\n");
+    argc = 0;
+    printf("%s is configured without performance primitives, nothing to test\n", argv[argc]);
 #endif // if ENABLE_PRIMITIVES
     return 0;
 }
