@@ -68,7 +68,6 @@ private:
     TComPicYuv*           m_pcPicYuvPred;         //  Prediction
     TComPicYuv*           m_pcPicYuvResi;         //  Residual
     Bool                  m_bReconstructed;
-    Bool                  m_bNeededForOutput;
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
     Int*                  m_pSliceSUMap;
     Bool*                 m_pbValidSlice;
@@ -159,10 +158,6 @@ public:
     Void          setReconMark(Bool b) { m_bReconstructed = b; }
 
     Bool          getReconMark()       { return m_bReconstructed; }
-
-    Void          setOutputMark(Bool b) { m_bNeededForOutput = b; }
-
-    Bool          getOutputMark()       { return m_bNeededForOutput; }
 
     Void          setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
 
