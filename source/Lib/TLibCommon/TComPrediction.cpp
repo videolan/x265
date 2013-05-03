@@ -122,9 +122,11 @@ Void TComPrediction::initTempBuff()
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
+Void xPredIntraPlanar(Int* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height);
+Void xDCPredFiltering(Int* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
 
 // Function for calculating DC value of the reference samples used in Intra prediction
-Pel TComPrediction::predIntraGetPredValDC(Int* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft)
+Pel predIntraGetPredValDC(Int* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft)
 {
     Int iInd, iSum = 0;
     Pel pDcVal;
@@ -185,7 +187,7 @@ Pel TComPrediction::predIntraGetPredValDC(Int* pSrc, Int iSrcStride, UInt iWidth
  * the predicted value for the pixel is linearly interpolated from the reference samples. All reference samples are taken
  * from the extended main reference.
  */
-Void TComPrediction::xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, UInt dirMode, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter)
+Void xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, UInt dirMode, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter)
 {
     Int k, l;
     Int blkSize        = width;
@@ -832,7 +834,7 @@ Void TComPrediction::getMvPredAMVP(TComDataCU* pcCU, UInt uiPartIdx, UInt uiPart
  *
  * This function derives the prediction samples for planar mode (intra coding).
  */
-Void TComPrediction::xPredIntraPlanar(Int* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height)
+Void xPredIntraPlanar(Int* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height)
 {
     assert(width == height);
 
@@ -885,7 +887,7 @@ Void TComPrediction::xPredIntraPlanar(Int* pSrc, Int srcStride, Pel* rpDst, Int 
  *
  * This function performs filtering left and top edges of the prediction samples for DC mode (intra coding).
  */
-Void TComPrediction::xDCPredFiltering(Int* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight)
+Void xDCPredFiltering(Int* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight)
 {
     Pel* pDst = rpDst;
     Int x, y, iDstStride2, iSrcStride2;
