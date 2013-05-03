@@ -3203,9 +3203,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         xGetBlkBits(ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
-
+#if ENABLE_PRIMITIVES
         m_me.setSourcePU(uiPartAddr, iRoiWidth, iRoiHeight);
-
+#endif
         Bool bTestNormalMC = true;
 
         if (bUseMRG && pcCU->getWidth(0) > 8 && iNumPart == 2)
@@ -3898,6 +3898,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
+#if ENABLE_PRIMITIVES
     x265::MotionReference ref;
     ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
     ref.plane[0][0][1] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCbAddr();
@@ -3907,6 +3908,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setReference(&ref);
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
+#endif
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
 
