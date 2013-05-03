@@ -61,9 +61,9 @@ bool IntraPredHarness::check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::ge
         int blkAboveAvailable = rand() & 1;
         int blkLeftAvailable = rand() & 1;
 
-        for (int i = 0; i < ip_t_size; i++)                         // fill input buffer with random value
+        for (int j = 0; j < ip_t_size; j++)                         // fill input buffer with random value
         {
-            pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
+            pixel_buff[j] = (pixel)(rand() &  ((1 << 8) - 1));
         }
 
         // The Left and Above can't false both
