@@ -224,6 +224,8 @@ Void TComPicYuv::extendPicBorder()
     xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
 
+    /* TODO: Here is an excellent place to interpolate HPEL/QPEL planes */
+
     m_bIsBorderExtended = true;
 }
 
@@ -232,6 +234,7 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int i
     Int   x, y;
     Pel*  pi;
 
+    /* TODO: this should become a performance primitive */
     pi = piTxt;
     for (y = 0; y < iHeight; y++)
     {
