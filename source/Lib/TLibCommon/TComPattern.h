@@ -116,11 +116,11 @@ public:
     Int   getPatternLStride()       { return m_cPatternY.m_iPatternStride; }
 
     // access functions of ADI buffers
-    Int*  getAdiOrgBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf);
-    Int*  getAdiCbBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf);
-    Int*  getAdiCrBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf);
+    Pel*  getAdiOrgBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
+    Pel*  getAdiCbBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
+    Pel*  getAdiCrBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
 
-    Int*  getPredictorPtr(UInt uiDirMode, UInt uiWidthBits, Int* piAdiBuf);
+    Pel*  getPredictorPtr(UInt uiDirMode, UInt uiWidthBits, Pel* piAdiBuf);
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
     // -------------------------------------------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ public:
     Void  initAdiPattern(TComDataCU* pcCU,
                          UInt uiZorderIdxInPart,
                          UInt uiPartDepth,
-                         Int* piAdiBuf,
+                         Pel* piAdiBuf,
                          Int iOrgBufStride,
                          Int iOrgBufHeight,
                          Bool& bAbove,
@@ -156,7 +156,7 @@ public:
     Void  initAdiPatternChroma(TComDataCU* pcCU,
                                UInt        uiZorderIdxInPart,
                                UInt        uiPartDepth,
-                               Int*        piAdiBuf,
+                               Pel*        piAdiBuf,
                                Int         iOrgBufStride,
                                Int         iOrgBufHeight,
                                Bool&       bAbove,
@@ -165,7 +165,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Int* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode = false);
+    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode = false);
 
     /// constrained intra prediction
     Bool  isAboveLeftAvailable(TComDataCU* pcCU, UInt uiPartIdxLT);

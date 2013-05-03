@@ -59,7 +59,7 @@ class TComPrediction : public TComWeightPrediction
 {
 protected:
 
-    Int*      m_piYuvExt;
+    Pel*      m_piYuvExt;
     Int       m_iYuvExtStride;
     Int       m_iYuvExtHeight;
 
@@ -101,10 +101,10 @@ public:
 
     // Angular Intra
     Void predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
-    Void predIntraChromaAng(Int* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
+    Void predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
 
 
-    Int* getPredicBuf()             { return m_piYuvExt; }
+    Pel* getPredicBuf()             { return m_piYuvExt; }
 
     Int  getPredicBufWidth()        { return m_iYuvExtStride; }
 

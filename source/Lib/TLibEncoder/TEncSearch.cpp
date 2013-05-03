@@ -1243,7 +1243,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
 
         pcCU->getPattern()->initAdiPatternChroma(pcCU, uiAbsPartIdx, uiTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
-        Int*  pPatChroma  = (uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt) : pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt));
+        Pel*  pPatChroma  = (uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt) : pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt));
 
         //===== get prediction signal =====
         {
@@ -2390,8 +2390,8 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
     pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
-    Int*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt);
-    Int*  pPatChromaV = pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt);
+    Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt);
+    Pel*  pPatChromaV = pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt);
 
     //===== get best prediction modes (using SAD) =====
     UInt  uiMinMode   = 0;

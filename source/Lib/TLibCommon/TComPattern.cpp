@@ -171,10 +171,10 @@ Void TComPattern::initPattern(TComDataCU* pcCU, UInt uiPartDepth, UInt uiAbsPart
     m_cPatternCr.setPatternParamCU(pcCU, 2, uiWidth >> 1, uiHeight >> 1, uiOffsetLeft, uiOffsetAbove, uiAbsPartIdx);
 }
 
-Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Int* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Bool bLMmode)
+Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Bool bLMmode)
 {
     Pel*  piRoiOrigin;
-    Int*  piAdiTemp;
+    Pel*  piAdiTemp;
     UInt  uiCuWidth   = pcCU->getWidth(0) >> uiPartDepth;
     UInt  uiCuHeight  = pcCU->getHeight(0) >> uiPartDepth;
     UInt  uiCuWidth2  = uiCuWidth << 1;
@@ -226,10 +226,10 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
 
     UInt uiWH = uiWidth * uiHeight;             // number of elements in one buffer
 
-    Int* piFilteredBuf1 = piAdiBuf + uiWH;      // 1. filter buffer
-    Int* piFilteredBuf2 = piFilteredBuf1 + uiWH; // 2. filter buffer
-    Int* piFilterBuf = piFilteredBuf2 + uiWH;   // buffer for 2. filtering (sequential)
-    Int* piFilterBufN = piFilterBuf + iBufSize; // buffer for 1. filtering (sequential)
+    Pel* piFilteredBuf1 = piAdiBuf + uiWH;      // 1. filter buffer
+    Pel* piFilteredBuf2 = piFilteredBuf1 + uiWH; // 2. filter buffer
+    Pel* piFilterBuf = piFilteredBuf2 + uiWH;   // buffer for 2. filtering (sequential)
+    Pel* piFilterBufN = piFilterBuf + iBufSize; // buffer for 1. filtering (sequential)
 
     Int l = 0;
     // left border from bottom to top
@@ -308,10 +308,10 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     }
 }
 
-Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Int* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
+Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
 {
     Pel*  piRoiOrigin;
-    Int*  piAdiTemp;
+    Pel*  piAdiTemp;
     UInt  uiCuWidth  = pcCU->getWidth(0) >> uiPartDepth;
     UInt  uiCuHeight = pcCU->getHeight(0) >> uiPartDepth;
     UInt  uiWidth;
@@ -367,7 +367,7 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart,
     fillReferenceSamples(g_bitDepthC, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor, iUnitSize, iNumUnitsInCu, iTotalUnits, uiCuWidth, uiCuHeight, uiWidth, uiHeight, iPicStride);
 }
 
-Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Int* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode)
+Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode)
 {
     Pel* piRoiTemp;
     Int  i, j;
@@ -558,17 +558,17 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Int* piAd
     }
 }
 
-Int* TComPattern::getAdiOrgBuf(Int /*iCuWidth*/, Int /*iCuHeight*/, Int* piAdiBuf)
+Pel* TComPattern::getAdiOrgBuf(Int /*iCuWidth*/, Int /*iCuHeight*/, Pel* piAdiBuf)
 {
     return piAdiBuf;
 }
 
-Int* TComPattern::getAdiCbBuf(Int /*iCuWidth*/, Int /*iCuHeight*/, Int* piAdiBuf)
+Pel* TComPattern::getAdiCbBuf(Int /*iCuWidth*/, Int /*iCuHeight*/, Pel* piAdiBuf)
 {
     return piAdiBuf;
 }
 
-Int* TComPattern::getAdiCrBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf)
+Pel* TComPattern::getAdiCrBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf)
 {
     return piAdiBuf + (iCuWidth * 2 + 1) * (iCuHeight * 2 + 1);
 }
@@ -581,9 +581,9 @@ Int* TComPattern::getAdiCrBuf(Int iCuWidth, Int iCuHeight, Int* piAdiBuf)
  *
  * The prediction mode index is used to determine whether a smoothed reference sample buffer is returned.
  */
-Int* TComPattern::getPredictorPtr(UInt uiDirMode, UInt log2BlkSize, Int* piAdiBuf)
+Pel* TComPattern::getPredictorPtr(UInt uiDirMode, UInt log2BlkSize, Pel* piAdiBuf)
 {
-    Int* piSrc;
+    Pel* piSrc;
 
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
     Int diff = min<Int>(abs((Int)uiDirMode - HOR_IDX), abs((Int)uiDirMode - VER_IDX));
