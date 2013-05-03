@@ -358,18 +358,12 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-        if ((iWidth > 16) || (iHeight > 16))
-        {
-            xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, false);
-        }
-        else
-        {
-            xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, true);
+        bool isBigBlock = ((iWidth > 16) || (iHeight > 16));
+        xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, !isBigBlock);
 
-            if ((uiDirMode == DC_IDX) && bAbove && bLeft)
-            {
-                xDCPredFiltering(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
-            }
+        if ( !isBigBlock && (uiDirMode == DC_IDX) && bAbove && bLeft)
+        {
+            xDCPredFiltering(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
         }
     }
 }
