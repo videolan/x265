@@ -42,6 +42,7 @@
 #include "x265.h"
 #include "CommonDef.h"
 #include "TComRom.h"
+#include "TShortYUV.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -67,6 +68,14 @@ private:
     Pel*  m_piPicOrgU;
     Pel*  m_piPicOrgV;
 
+    /* Pointers to HPel/ QPel planes */
+    Pel* m_filteredBlockBufY[4][4];
+    Pel* m_filteredBlockBufU[4][4];
+    Pel* m_filteredBlockBufV[4][4];
+    Pel* m_filteredBlockOrgY[4][4];
+    Pel* m_filteredBlockOrgU[4][4];
+    Pel* m_filteredBlockOrgV[4][4];
+
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
     // ------------------------------------------------------------------------------------------------
@@ -91,6 +100,7 @@ private:
 protected:
 
     Void  xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int iHeight, Int iMarginX, Int iMarginY);
+    Void generateHQpel();
 
 public:
 
@@ -153,6 +163,8 @@ public:
     Pel*  getCbAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgU + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
+
+    /*TODO: Add access functions for m_filteredBlock */
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous

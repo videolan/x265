@@ -38,6 +38,10 @@
 #include <cstdlib>
 #include <assert.h>
 #include <memory.h>
+#include "InterpolationFilter.h"
+#include "primitives.h"
+
+using namespace x265;
 
 #ifdef __APPLE__
 #include <malloc/malloc.h>
@@ -131,6 +135,20 @@ Void TComPicYuv::destroy()
     delete[] m_cuOffsetC;
     delete[] m_buOffsetY;
     delete[] m_buOffsetC;
+
+    /* Delete m_filteredBlocks */
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            m_filteredBlockOrgY[i][j]       = NULL;
+            m_filteredBlockOrgU[i][j]       = NULL;
+            m_filteredBlockOrgV[i][j]      = NULL;
+            if (m_filteredBlockBufY[i][j]) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
+            if (m_filteredBlockBufU[i][j]) { xFree(m_apiPicBufU);    m_apiPicBufU = NULL; }
+            if (m_filteredBlockBufV[i][j]) { xFree(m_apiPicBufV);    m_apiPicBufV = NULL; }
+        }
+    }
 }
 
 Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth)
@@ -225,6 +243,26 @@ Void TComPicYuv::extendPicBorder()
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
 
     /* TODO: Here is an excellent place to interpolate HPEL/QPEL planes */
+
+    /* Create buffers for Hpe/Qpel Planes */
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            m_filteredBlockBufY[i][j]      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+            m_filteredBlockBufU[i][j]      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+            m_filteredBlockBufV[i][j]      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+
+            m_filteredBlockOrgY[i][j]      = m_filteredBlockBufY[i][j] + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
+            m_filteredBlockOrgU[i][j]      = m_filteredBlockBufU[i][j] + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
+            m_filteredBlockOrgV[i][j]      = m_filteredBlockBufV[i][j] + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
+        }
+    }
+
+    /* TODO:
+        Call filter
+        Extend borders
+    */
 
     m_bIsBorderExtended = true;
 }
@@ -350,17 +388,20 @@ Void TComPicYuv::copyFromPicture(const x265_picture& pic)
         for (int r = 0; r < m_iPicHeight; r++)
         {
             for (int c = 0; c < m_iPicWidth; c++)
-                Y[c] = (Pel) y[c];
+            {
+                Y[c] = (Pel)y[c];
+            }
 
             Y += getStride();
             y += pic.stride[0];
         }
+
         for (int r = 0; r < m_iPicHeight >> 1; r++)
         {
             for (int c = 0; c < m_iPicWidth >> 1; c++)
             {
-                U[c] = (Pel) u[c];
-                V[c] = (Pel) v[c];
+                U[c] = (Pel)u[c];
+                V[c] = (Pel)v[c];
             }
 
             U += getCStride();
@@ -370,7 +411,7 @@ Void TComPicYuv::copyFromPicture(const x265_picture& pic)
         }
     }
     else
-#endif
+#endif // if HIGH_BIT_DEPTH
     {
         int width = m_iPicWidth * (pic.bitDepth > 8 ? 2 : 1);
 
@@ -382,6 +423,7 @@ Void TComPicYuv::copyFromPicture(const x265_picture& pic)
             Y += getStride();
             y += pic.stride[0];
         }
+
         for (int r = 0; r < m_iPicHeight >> 1; r++)
         {
             memcpy(U, u, width >> 1);

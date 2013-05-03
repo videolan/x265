@@ -27,7 +27,7 @@
 #define __TSHORTYUV__
 
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComPicYuv.h"
+#include "TLibCommon/TComRom.h"
 
 class TComYuv;
 
