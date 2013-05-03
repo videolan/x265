@@ -3171,6 +3171,12 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
 
+    m_me.setSourcePlanes((pixel*)pcOrgYuv->getLumaAddr(),
+                         (pixel*)pcOrgYuv->getCbAddr(),
+                         (pixel*)pcOrgYuv->getCrAddr(),
+                         pcOrgYuv->getWidth(),
+                         pcOrgYuv->getCWidth());
+
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
     {
         UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
@@ -3197,6 +3203,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         xGetBlkBits(ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
+
+        m_me.setSourcePU(uiPartAddr, iRoiWidth, iRoiHeight);
 
         Bool bTestNormalMC = true;
 
@@ -3883,13 +3891,22 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
     m_pcRdCost->getMotionCost(1, 0);
-
     m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
 
-    // Configure the MV bit cost calculator
+    // Configure the MV bit cost calculator  (TODO: m_bc will go away)
     m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
+
+    x265::MotionReference ref;
+    ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
+    ref.plane[0][0][1] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCbAddr();
+    ref.plane[0][0][2] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCrAddr();
+    ref.chromaStride = pcYuv->getCWidth();
+    ref.lumaStride = pcYuv->getWidth();
+    m_me.setReference(&ref);
+    m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
+    m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
 
@@ -3907,7 +3924,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setCostScale(1);
 
-    // half-pel refine
     xPatternSearchFracDIF(pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi);
 
     m_pcRdCost->setCostScale(0);
@@ -3916,6 +3932,9 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     rcMv +=  cMvQter;
 
     UInt uiMvBits = m_pcRdCost->getBits(rcMv.getHor(), rcMv.getVer());
+
+    //x265::MV out;  // compare with rcMV
+    //int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, out);
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));

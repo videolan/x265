@@ -50,6 +50,7 @@
 #include "TEncCfg.h"
 
 #include "bitcost.h"
+#include "motion.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -93,6 +94,7 @@ private:
     Int*            m_ppcQTTempTUArlCoeffCr;
 
     x265::BitCost   m_bc;
+    x265::MotionEstimate m_me;
 
 protected:
 

@@ -88,7 +88,7 @@ public:
 
     bool checkRange(const MV& _min, const MV& _max) const
     {
-        return x < _min.x || x > _max.x || y < _min.y || y > _max.y;
+        return x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y;
     }
 
     /* For compatibility with TComMV */

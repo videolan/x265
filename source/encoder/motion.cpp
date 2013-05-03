@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height)
+void MotionEstimate::setSourcePU(int offset, int width, int height)
 {
     int size = PartitionFromSizes(width, height);
     sad = primitives.sad[size];
@@ -37,12 +37,10 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 
     blockWidth = width;
     blockHeight = height;
-    blockOffset = offsetY * (int)ref->lumaStride + offsetX;
-
-    fref = ref->plane[0][0][0] + blockOffset;
+    blockOffset = offset;
 
     /* copy block into local buffer */
-    pixel *fencblock = fencplanes[0] + offsetY * fencLumaStride + offsetX;
+    pixel *fencblock = fencplanes[0] + offset;
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 }
 
@@ -87,6 +85,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     ALIGN_VAR_16(int, costs[16]);
 
     bc.setMVP(qmvp);
+    fref = ref->plane[0][0][0] + blockOffset;
 
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();

@@ -82,9 +82,9 @@ protected:
 
 public:
 
-    MotionEstimate();
+    MotionEstimate() {}
 
-    ~MotionEstimate();
+    ~MotionEstimate() {}
 
     /* Methods called at slice setup */
 
@@ -112,7 +112,7 @@ public:
 
     /* Methods called at CU setup */
 
-    void setSourcePU(int offsetX, int offsetY, int pwidth, int pheight);
+    void setSourcePU(int offset, int pwidth, int pheight);
 
     void setSearchLimits(MV& min, MV& max)    { mvmin = min; mvmax = max; }
 
@@ -123,6 +123,14 @@ public:
     int bufSATD(pixel *afref, intptr_t stride) { return satd(fenc, FENC_STRIDE, afref, stride); }
 
     void setReference(MotionReference* tref)  { ref = tref; }
+
+    /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
+    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
+
+    /* Motion Compensation */
+    void buildResidual(const MV &mv);
+
+protected:
 
     int fpelSad(const MV& fmv)
     {
@@ -148,12 +156,6 @@ public:
                     qfref + fmv.y * ref->lumaStride + fmv.x,
                     ref->lumaStride);
     }
-
-    /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
-    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
-
-    /* Motion Compensation */
-    void buildResidual(const MV &mv);
 };
 }
 
