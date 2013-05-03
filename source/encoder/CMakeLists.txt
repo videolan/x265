@@ -6,7 +6,7 @@ if(GCC)
 endif(GCC)
 
 if(ENABLE_PRIMITIVES)
-    set(CPRIMITIVES pixel.cpp macroblock.cpp ipfilter.cpp)
+    set(CPRIMITIVES pixel.cpp macroblock.cpp ipfilter.cpp IntraPred.cpp)
     if(ENABLE_PRIMITIVES_VEC)
         add_definitions(-DENABLE_VECTOR_PRIMITIVES=1)
     endif(ENABLE_PRIMITIVES_VEC)
