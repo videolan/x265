@@ -126,7 +126,8 @@ Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt 
 Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
 
 // Function for calculating DC value of the reference samples used in Intra prediction
-Pel predIntraGetPredValDC(Pel* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft)
+#if !ENABLE_PRIMITIVES
+Pel CDECL predIntraGetPredValDC(Pel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
 {
     Int iInd, iSum = 0;
     Pel pDcVal;
@@ -165,6 +166,7 @@ Pel predIntraGetPredValDC(Pel* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, 
 
     return pDcVal;
 }
+#endif
 
 // Function for deriving the angular Intra predictions
 
@@ -330,7 +332,11 @@ Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt wid
     Pel* pDst          = rpDst;
 
     // Do the DC prediction
+#if ENABLE_PRIMITIVES
+    Pel dcval = (Pel) primitives.getdcval_p((pixel*)pSrc, srcStride, width, height, (blkAboveAvailable ? 1 : 0), (blkLeftAvailable ? 1 : 0));
+#else
     UChar dcval = (UChar) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+#endif
 
     for (k = 0; k < blkSize; k++)
     {

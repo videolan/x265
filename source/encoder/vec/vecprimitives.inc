@@ -26,6 +26,7 @@
 
 #include "primitives.h"
 #include <string.h>
+#include "TLibCommon/TComRom.h" // g_aucConvertToBit
 
 using namespace x265;
 
@@ -41,6 +42,7 @@ namespace {
 #include "macroblock.inc"
 #include "interpolationfilter.inc"
 #include "blockcopy.inc"
+#include "intrapred.inc"
 }
 
 #define PASTER(name, val) name ## _ ## val
@@ -58,5 +60,6 @@ void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
     Setup_Vec_MacroblockPrimitives(p);
     Setup_Vec_IPFilterPrimitives(p);
     Setup_Vec_BlockCopyPrimitives(p);
+    Setup_Vec_IPredPrimitives(p);
 }
 }

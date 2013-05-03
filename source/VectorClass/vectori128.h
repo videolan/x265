@@ -975,6 +975,11 @@ public:
         xmm = _mm_load_si128((__m128i const*)p);
         return *this;
     }
+    // Partial load. Load 4 elements and set the rest to 0(MMX)
+    Vec8s & load_partial4(void const * p) {
+        xmm = _mm_loadl_epi64((__m128i const*)p);
+        return *this;
+    }
     // Partial load. Load n elements and set the rest to 0
     Vec8s & load_partial(int n, void const * p) {
         if      (n >= 8) load(p);
@@ -991,6 +996,10 @@ public:
         }
         cutoff(n);
         return *this;
+    }
+    // Partial store. Store 4 elements
+    void store_partial4(void * p) const {
+        _mm_storel_epi64((__m128i*)p, xmm);
     }
     // Partial store. Store n elements
     void store_partial(int n, void * p) const {
