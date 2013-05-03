@@ -141,12 +141,13 @@ Void TComPicYuv::destroy()
     {
         for (int j = 0; j < 4; j++)
         {
-            m_filteredBlockOrgY[i][j]       = NULL;
-            m_filteredBlockOrgU[i][j]       = NULL;
+            if (m_filteredBlockBufY[i][j]) { xFree(m_filteredBlockBufY[i][j]);    m_filteredBlockBufY[i][j] = NULL; }
+            if (m_filteredBlockBufU[i][j]) { xFree(m_filteredBlockBufU[i][j]);    m_filteredBlockBufU[i][j] = NULL; }
+            if (m_filteredBlockBufV[i][j]) { xFree(m_filteredBlockBufV[i][j]);    m_filteredBlockBufV[i][j] = NULL; }
+
+            m_filteredBlockOrgY[i][j]      = NULL;
+            m_filteredBlockOrgU[i][j]      = NULL;
             m_filteredBlockOrgV[i][j]      = NULL;
-            if (m_filteredBlockBufY[i][j]) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
-            if (m_filteredBlockBufU[i][j]) { xFree(m_apiPicBufU);    m_apiPicBufU = NULL; }
-            if (m_filteredBlockBufV[i][j]) { xFree(m_apiPicBufV);    m_apiPicBufV = NULL; }
         }
     }
 }
@@ -436,3 +437,6 @@ Void TComPicYuv::copyFromPicture(const x265_picture& pic)
         }
     }
 }
+
+
+
