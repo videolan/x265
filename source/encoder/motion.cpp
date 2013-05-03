@@ -43,10 +43,7 @@ void MotionEstimate::setSourcePU(int offsetX, int offsetY, int width, int height
 
     /* copy block into local buffer */
     pixel *fencblock = fencplanes[0] + offsetY * fencLumaStride + offsetX;
-    for (int i = 0; i < height; i++)
-    {
-        memcpy(fenc + i * FENC_STRIDE, fencblock + i * fencLumaStride, width);
-    }
+    primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 }
 
 #define COPY1_IF_LT(x,y) if((y)<(x)) (x)=(y);
@@ -157,6 +154,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         bcost >>= 4;
         break;
     }
+    /* TODO: add UMH and ESA modes */
     }
 
     if (bprecost < bcost)
