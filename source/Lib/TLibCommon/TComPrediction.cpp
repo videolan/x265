@@ -194,10 +194,9 @@ Void xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     Pel* pDst          = rpDst;
 
     // Map the mode index to main prediction direction and angle
-    assert(dirMode > 0); //no planar
-    Bool modeDC        = dirMode < 2;
-    Bool modeHor       = !modeDC && (dirMode < 18);
-    Bool modeVer       = !modeDC && !modeHor;
+    assert(dirMode > 1); //no planar and dc
+    Bool modeHor       = (dirMode < 18);
+    Bool modeVer       = !modeHor;
     Int intraPredAngle = modeVer ? (Int)dirMode - VER_IDX : modeHor ? -((Int)dirMode - HOR_IDX) : 0;
     Int absAng         = abs(intraPredAngle);
     Int signAng        = intraPredAngle < 0 ? -1 : 1;
@@ -209,22 +208,7 @@ Void xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     absAng             = angTable[absAng];
     intraPredAngle     = signAng * absAng;
 
-    // Do the DC prediction
-    if (modeDC)
-    {
-        UChar dcval = (UChar)predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
-
-        for (k = 0; k < blkSize; k++)
-        {
-            for (l = 0; l < blkSize; l++)
-            {
-                pDst[k * dstStride + l] = dcval;
-            }
-        }
-    }
-
     // Do angular predictions
-    else
     {
         Pel* refMain;
         Pel* refSide;
@@ -339,6 +323,28 @@ Void xPredIntraAng(Int bitDepth, Int* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     }
 }
 
+Void xPredIntraDC(Int* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter)
+{
+    Int k, l;
+    Int blkSize        = width;
+    Pel* pDst          = rpDst;
+
+    // Do the DC prediction
+    UChar dcval = (UChar) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+
+    for (k = 0; k < blkSize; k++)
+    {
+        for (l = 0; l < blkSize; l++)
+        {
+            pDst[k * dstStride + l] = dcval;
+        }
+    }
+    if (bFilter && blkAboveAvailable && blkLeftAvailable)
+    {
+        xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
+    }
+}
+
 Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
 {
     Pel *pDst = piPred;
@@ -352,21 +358,20 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
 
     // get starting pixel in block
     Int sw = 2 * iWidth + 1;
+    Bool bFilter = ((iWidth <= 16) && (iHeight <= 16));
 
     // Create the prediction
     if (uiDirMode == PLANAR_IDX)
     {
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
     }
+    else if (uiDirMode == DC_IDX)
+    {
+        xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, bFilter);
+    }
     else
     {
-        bool isBigBlock = ((iWidth > 16) || (iHeight > 16));
-        xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, !isBigBlock);
-
-        if ( !isBigBlock && (uiDirMode == DC_IDX) && bAbove && bLeft)
-        {
-            xDCPredFiltering(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
-        }
+        xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, bFilter);
     }
 }
 
@@ -382,6 +387,10 @@ Void TComPrediction::predIntraChromaAng(Int* piSrc, UInt uiDirMode, Pel* piPred,
     if (uiDirMode == PLANAR_IDX)
     {
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+    }
+    else if (uiDirMode == DC_IDX)
+    {
+        xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
     }
     else
     {
