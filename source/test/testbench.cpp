@@ -28,6 +28,7 @@
 #include "filterharness.h"
 #include "mbdstharness.h"
 #include "ipfilterharness.h"
+#include "intrapredharness.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,6 +85,7 @@ int main(int argc, char *argv[])
     FilterHarness HFilter;
     MBDstHarness  HMBDist;
     IPFilterHarness HIPFilter;
+    IntraPredHarness HIPred;
 
     // To disable classes of tests, simply comment them out in this list
     TestHarness *harness[] =
@@ -91,7 +93,8 @@ int main(int argc, char *argv[])
         &HPixel,
         &HFilter,
         &HMBDist,
-        &HIPFilter
+        &HIPFilter,
+        &HIPred
     };
 
     EncoderPrimitives cprim;
