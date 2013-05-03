@@ -25,11 +25,6 @@
 #include <cstring>
 #include <assert.h>
 
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(default: 4100)
-#endif
-
 namespace {
 pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
 {
@@ -77,7 +72,6 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    // CHECK_ME: I assume Pel is a alias to pixel
-    p.getdcval_p = (getDCVal_p)predIntraGetPredValDC;
+    p.getdcval_p = predIntraGetPredValDC;
 }
 }
