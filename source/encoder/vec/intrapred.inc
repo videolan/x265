@@ -113,7 +113,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
     if (bAbove)
     {
         Vec16uc pix;
-        Vec8us  im0, im1;
+        Vec8us  im;
 
         switch( iWidth )
         {
@@ -131,28 +131,22 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 break;
             case 32:
                 pix.load(pSrcAbove);
-                im0 = extend_low(pix);
-                im1 = extend_high(pix);
+                im = extend_low(pix) + extend_high(pix);
                 pix.load(pSrcAbove + 16);
-                im0 += extend_low(pix);
-                im1 += extend_high(pix);
-                iSum += horizontal_add(im0) + horizontal_add(im1);
+                im += extend_low(pix) + extend_high(pix);
+                iSum += horizontal_add(im);
                 break;
             //case 64:
             default:
                 pix.load(pSrcAbove);
-                im0 = extend_low(pix);
-                im1 = extend_high(pix);
+                im = extend_low(pix) + extend_high(pix);
                 pix.load(pSrcAbove + 16);
-                im0 += extend_low(pix);
-                im1 += extend_high(pix);
+                im += extend_low(pix) + extend_high(pix);
                 pix.load(pSrcAbove + 32);
-                im0 += extend_low(pix);
-                im1 += extend_high(pix);
+                im += extend_low(pix) + extend_high(pix);
                 pix.load(pSrcAbove + 48);
-                im0 += extend_low(pix);
-                im1 += extend_high(pix);
-                iSum += horizontal_add(im0) + horizontal_add(im1);
+                im += extend_low(pix) + extend_high(pix);
+                iSum += horizontal_add(im);
                 break;
         }
     }
