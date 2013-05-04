@@ -122,7 +122,11 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 iSum = horizontal_add(extend_low(pix));
                 break;
             case 8:
+#if _WIN64
+                pix.fromUint64(*(uint64_t*)pSrcAbove);
+#else
                 pix.load_partial(8, pSrcAbove);
+#endif
                 iSum = horizontal_add(extend_low(pix));
                 break;
             case 16:

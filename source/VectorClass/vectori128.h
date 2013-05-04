@@ -307,6 +307,11 @@ public:
     void fromUint32(uint32_t i) {
         xmm = _mm_cvtsi32_si128(i);
     }
+#if _WIN64
+    void fromUint64(uint64_t i) {
+        xmm = _mm_cvtsi64_si128(i);
+    }
+#endif
     // Constructor to build from all elements:
     Vec16c(int8_t i0, int8_t i1, int8_t i2, int8_t i3, int8_t i4, int8_t i5, int8_t i6, int8_t i7,
         int8_t i8, int8_t i9, int8_t i10, int8_t i11, int8_t i12, int8_t i13, int8_t i14, int8_t i15) {
