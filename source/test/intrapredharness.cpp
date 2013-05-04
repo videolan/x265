@@ -109,10 +109,10 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     {
         printf("intrapred_getDCVal_pel");
         REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getdcval_p(pixel_buff, srcStride,
+                       opt.getdcval_p(pixel_buff + srcStride, srcStride,
                                       width, width,
                                       blkAboveAvailable, blkLeftAvailable),
-                       ref.getdcval_p(pixel_buff, srcStride,
+                       ref.getdcval_p(pixel_buff + srcStride, srcStride,
                                       width, width,
                                       blkAboveAvailable, blkLeftAvailable)
                        );
