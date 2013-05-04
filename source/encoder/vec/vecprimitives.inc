@@ -26,7 +26,8 @@
 
 #include "primitives.h"
 #include <string.h>
-#include "TLibCommon/TComRom.h" // g_aucConvertToBit
+
+extern char g_aucConvertToBit[];
 
 using namespace x265;
 
