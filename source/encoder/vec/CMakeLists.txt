@@ -29,4 +29,5 @@ add_library(PrimitivesVec vec-primitives.cpp ${PRIMITIVES} ${VECTORCLASS}
             pixel8.inc
             pixel16.inc
             macroblock.inc
+            intrapred.inc
             interpolationfilter.inc)
