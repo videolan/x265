@@ -27,7 +27,7 @@
 
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(default: 4100)
+#pragma warning(disable: 4100)
 #endif
 
 namespace {
