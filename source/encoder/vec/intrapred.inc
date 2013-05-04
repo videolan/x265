@@ -103,7 +103,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 sumAbove += m0;
                 break;
         }
-        iSum = horizontal_add(sumAbove);
+        iSum = horizontal_add_x(sumAbove);
     }
 
     if (bLeft)
