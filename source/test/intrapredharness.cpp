@@ -32,7 +32,7 @@ using namespace x265;
 
 IntraPredHarness::IntraPredHarness()
 {
-    ip_t_size = 4 * 65 * 65;
+    ip_t_size = 4 * 65 * 65 * 100;
     pixel_buff = (pixel*)malloc(ip_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
 
     if (!pixel_buff)
@@ -43,7 +43,7 @@ IntraPredHarness::IntraPredHarness()
 
     for (int i = 0; i < ip_t_size; i++)                         // Initialize input buffer
     {
-        pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
+        pixel_buff[i] = rand() % PIXEL_MAX;
     }
 
     initROM();
@@ -56,28 +56,25 @@ IntraPredHarness::~IntraPredHarness()
 
 bool IntraPredHarness::check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::getDCVal_p opt)
 {
-    int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
+    int j = FENC_STRIDE;
 
     for (int i = 0; i <= 100; i++)
     {
-        int rand_srcStride = rand() % 100;              // Randomly generated srcStride
         int blkAboveAvailable = rand() & 1;
         int blkLeftAvailable = rand() & 1;
+        int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
 
-        for (int j = 0; j < ip_t_size; j++)                         // fill input buffer with random value
-        {
-            pixel_buff[j] = (pixel)(rand() &  ((1 << 8) - 1));
-        }
-
-        // The Left and Above can't false both
+        // The Left and Above can't both be false
         if (!blkLeftAvailable)
             blkAboveAvailable = 1;
 
-        pixel val_o = opt(pixel_buff, rand_srcStride, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
-        pixel val_r = ref(pixel_buff, rand_srcStride, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
+        pixel val_o = opt(pixel_buff + j, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
+        pixel val_r = ref(pixel_buff + j, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
 
         if (val_o != val_r)
             return false;
+
+        j += FENC_STRIDE;
     }
 
     return true;
