@@ -38,17 +38,9 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
 #if HIGH_BIT_DEPTH
     int iInd, iSum = 0;
     pixel pDcVal;
-    int logSize;
 
     //assert(iWidth == iHeight); // all of Intra is NxN
-    switch( iWidth )
-    {
-    case  4: logSize = 2; break;
-    case  8: logSize = 3; break;
-    case 16: logSize = 4; break;
-    case 32: logSize = 5; break;
-    default/*case 64*/: logSize = 6; break;
-    }
+    int logSize = g_aucConvertToBit[iWidth] + 2;
 
     Vec8s sumAbove(0);
     Vec8s m0;
