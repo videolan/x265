@@ -21,17 +21,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "primitives.h"
-#include <assert.h>
-#include <stdio.h>
-
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(default: 4100)
-#endif
-
-namespace {
-
 // Function for calculating DC value of the reference samples used in Intra prediction
 pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
 {
@@ -166,7 +155,6 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
     logSize += (bAbove + bLeft - 1);
     return (iSum + (1<<(logSize-1))) >> logSize;
 #endif
-}
 }
 
 void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
