@@ -23,3 +23,4 @@ add_executable(TestBench
     intrapredharness.cpp intrapredharness.h)
 
 target_link_libraries(TestBench x265 ${PLATFORM_LIBS})
+target_link_libraries(TestBench HM) # just for TComROM
