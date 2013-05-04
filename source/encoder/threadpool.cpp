@@ -68,7 +68,7 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
 }
 #endif // if !_WIN64
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+#if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 /* XP did not define this intrinsic */
 FORCEINLINE LONGLONG _InterlockedOr64 (
     __inout LONGLONG volatile *Destination,
