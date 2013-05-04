@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include "TLibCommon/TComRom.h"
 
 using namespace x265;
 
@@ -44,6 +45,8 @@ IntraPredHarness::IntraPredHarness()
     {
         pixel_buff[i] = (pixel)(rand() &  ((1 << 8) - 1));
     }
+
+    initROM();
 }
 
 IntraPredHarness::~IntraPredHarness()
