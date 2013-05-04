@@ -27,7 +27,7 @@
 
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(disable: 4100)
+#pragma warning(default: 4100)
 #endif
 
 namespace {
@@ -35,16 +35,14 @@ namespace {
 // Function for calculating DC value of the reference samples used in Intra prediction
 pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
 {
-#if HIGH_BIT_DEPTH
-    int iInd, iSum = 0;
-    pixel pDcVal;
-
     //assert(iWidth == iHeight); // all of Intra is NxN
+    int iSum = 0;
     int logSize = g_aucConvertToBit[iWidth] + 2;
+    pixel *pSrcAbove = &pSrc[-iSrcStride];
 
+#if HIGH_BIT_DEPTH
     Vec8s sumAbove(0);
     Vec8s m0;
-    pixel *pSrcAbove = &pSrc[-iSrcStride];
 
     if (bAbove)
     {
@@ -100,7 +98,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
 
     if (bLeft)
     {
-        for (iInd = 0; iInd < iHeight; iInd++)
+        for (int iInd = 0; iInd < iHeight; iInd++)
         {
             iSum += pSrc[iInd * iSrcStride - 1];
         }
@@ -108,41 +106,72 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
 
 //     assert(bAbove || bLeft);
     logSize += (bAbove + bLeft - 1);
-    pDcVal = (iSum + (1<<(logSize-1))) >> logSize;
+    return (iSum + (1<<(logSize-1))) >> logSize;
 
 #else
 
-    // CHECK_ME: un-test code
-    Int iInd, iSum = 0;
-    Pel pDcVal;
-    int logSize = g_aucConvertToBit[iWidth] + 2;
-
     if (bAbove)
     {
-        for (iInd = 0; iInd < iWidth; iInd++)
+        Vec16uc pix;
+        Vec8us  im0, im1;
+
+        switch( iWidth )
         {
-            iSum += pSrc[iInd - iSrcStride];
+            case 4:
+                pix.fromUint32(*(uint32_t*)pSrcAbove);
+                iSum = horizontal_add(extend_low(pix));
+                break;
+            case 8:
+                pix.load_partial(8, pSrcAbove);
+                iSum = horizontal_add(extend_low(pix));
+                break;
+            case 16:
+                pix.load(pSrcAbove);
+                iSum = horizontal_add_x(pix);
+                break;
+            case 32:
+                pix.load(pSrcAbove);
+                im0 = extend_low(pix);
+                im1 = extend_high(pix);
+                pix.load(pSrcAbove + 16);
+                im0 += extend_low(pix);
+                im1 += extend_high(pix);
+                iSum += horizontal_add(im0) + horizontal_add(im1);
+                break;
+            //case 64:
+            default:
+                pix.load(pSrcAbove);
+                im0 = extend_low(pix);
+                im1 = extend_high(pix);
+                pix.load(pSrcAbove + 16);
+                im0 += extend_low(pix);
+                im1 += extend_high(pix);
+                pix.load(pSrcAbove + 32);
+                im0 += extend_low(pix);
+                im1 += extend_high(pix);
+                pix.load(pSrcAbove + 48);
+                im0 += extend_low(pix);
+                im1 += extend_high(pix);
+                iSum += horizontal_add(im0) + horizontal_add(im1);
+                break;
         }
     }
+
     if (bLeft)
     {
-        for (iInd = 0; iInd < iHeight; iInd++)
+        for (int iInd = 0; iInd < iHeight; iInd++)
         {
             iSum += pSrc[iInd * iSrcStride - 1];
         }
     }
 
     logSize += (bAbove + bLeft - 1);
-    pDcVal = (iSum + (1<<(logSize-1))) >> logSize;
+    return (iSum + (1<<(logSize-1))) >> logSize;
 #endif
-
-    return pDcVal;
 }
 }
 
 void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
 {
-#if HIGH_BIT_DEPTH
     p.getdcval_p = predIntraGetPredValDC;
-#endif
 }
