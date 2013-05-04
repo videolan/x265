@@ -85,12 +85,15 @@ FORCEINLINE LONGLONG _InterlockedOr64 (
 
     return Old;
 }
+#define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
+#pragma intrinsic(_InterlockedCompareExchange64)
+#else
+#define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif
 
 #define CLZ64(id, x)                    _BitScanReverse64(&id, x)
 #define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                 InterlockedDecrement((volatile LONG*)ptr)
-#define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
 #define ATOMIC_CAS(ptr, oldval, newval) (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
 #define GIVE_UP_TIME()                  Sleep(0)
 
@@ -423,9 +426,6 @@ QueueFrame::~QueueFrame()
     }
 }
 
-#if _MSC_VER
-#pragma intrinsic(_InterlockedCompareExchange64)
-#endif
 void QueueFrame::EnqueueRow(int row)
 {
     // thread safe
