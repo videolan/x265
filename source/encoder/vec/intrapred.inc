@@ -85,24 +85,13 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
         iSum = horizontal_add_x(sumAbove);
     }
 
-    if (bLeft)
-    {
-        for (int iInd = 0; iInd < iHeight; iInd++)
-        {
-            iSum += pSrc[iInd * iSrcStride - 1];
-        }
-    }
-
-//     assert(bAbove || bLeft);
-    logSize += (bAbove + bLeft - 1);
-    return (iSum + (1<<(logSize-1))) >> logSize;
-
 #else
 
     if (bAbove)
     {
         Vec16uc pix;
         Vec8us  im;
+        Vec4ui  im1, im2;
 
         switch( iWidth )
         {
@@ -124,37 +113,42 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 break;
             case 32:
                 pix.load(pSrcAbove);
-                im = extend_low(pix) + extend_high(pix);
+                im1 = Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 16);
-                im += extend_low(pix) + extend_high(pix);
-                iSum += horizontal_add(im);
+                im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
+                im1 += (im1 >> const_int(64));
+                iSum += toInt32(im1);
                 break;
             //case 64:
             default:
                 pix.load(pSrcAbove);
-                im = extend_low(pix) + extend_high(pix);
+                im1 = Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 16);
-                im += extend_low(pix) + extend_high(pix);
+                im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 32);
-                im += extend_low(pix) + extend_high(pix);
+                im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 48);
-                im += extend_low(pix) + extend_high(pix);
-                iSum += horizontal_add(im);
+                im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
+                im1 += (im1 >> const_int(64));
+                //im1 += extract_hi64(im1);
+                iSum += toInt32(im1);
                 break;
         }
     }
+#endif
 
     if (bLeft)
     {
         for (int iInd = 0; iInd < iHeight; iInd++)
         {
-            iSum += pSrc[iInd * iSrcStride - 1];
+            iSum += pSrcAbove[iSrcStride - 1];
+            pSrcAbove += iSrcStride;
         }
     }
 
+//     assert(bAbove || bLeft);
     logSize += (bAbove + bLeft - 1);
     return (iSum + (1<<(logSize-1))) >> logSize;
-#endif
 }
 
 void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
