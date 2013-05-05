@@ -110,7 +110,7 @@ void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
     Vec16uc m1, n1, n2, n3;
     Vec4i sum1_low(0);
     Vec4i sum2_low(0);
-    Vec4i sum3_low(0);    
+    Vec4i sum3_low(0);
     Vec8us sum1(0);
     Vec8us sum2(0);
     Vec8us sum3(0);
@@ -175,13 +175,14 @@ void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
     Vec16uc m1, n1, n2, n3;
     Vec4i sum1_low(0);
     Vec4i sum2_low(0);
-    Vec4i sum3_low(0);    
+    Vec4i sum3_low(0);
     Vec8us sum1(0);
     Vec8us sum2(0);
     Vec8us sum3(0);
+    int main_iters = (ly >> 3) << 3;
     int row;
 
-    for (row = 0; row < ly-7; row += 8)
+    for (row = 0; row < main_iters; row += 8)
     {
         for(int temp_rows = 0; temp_rows < 8; temp_rows++)
         {
