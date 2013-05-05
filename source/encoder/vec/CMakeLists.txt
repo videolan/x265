@@ -23,6 +23,8 @@ file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
 source_group(VectorClass FILES ${VECTORCLASS})
 
 add_library(PrimitivesVec vec-primitives.cpp ${PRIMITIVES} ${VECTORCLASS}
+            # *.inc files listed here show up in Visual Studio, but are not built
+            # it is simply a convenience to make them easy to edit
             vecprimitives.inc
             blockcopy.inc
             pixel.inc
