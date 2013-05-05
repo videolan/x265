@@ -28,14 +28,14 @@
 template<int ly>
 int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec8s sum(0);
+    Vec8us sum(0);
+    Vec16uc m1, n1;
 
     for (int row = 0; row < ly; row++)
     {
-        Vec16uc m1, n1;
         m1.fromUint32(*(uint32_t*)piOrg);
         n1.fromUint32(*(uint32_t*)piCur);
-        sum += Vec8s(m1.sad(n1));
+        sum.addSumAbsDiff(m1, n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
@@ -47,13 +47,13 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 template<int ly>
 int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec8s sum(0);
+    Vec8us sum(0);
+    Vec16uc m1, n1;
     for (int row = 0; row < ly; row++)
     {
-        Vec16uc m1, n1;
         m1.load(piOrg);
         n1.load(piCur);
-        sum += Vec8s(m1.sad(n1));
+        sum.addSumAbsDiff(m1, n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
@@ -64,13 +64,14 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 template<int ly>
 int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec8s sum(0);
+    Vec8us sum(0);
+    Vec16uc m1, n1;
+
     for (int row = 0; row < ly; row++)
     {
-        Vec16uc m1, n1;
         m1.load_a(piOrg);
         n1.load(piCur);
-        sum += Vec8s(m1.sad(n1));
+        sum.addSumAbsDiff(m1, n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
@@ -81,28 +82,26 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 template<int lx, int ly>
 int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
+    Vec8us sad(0);
+    Vec16uc m1, n1;
+
     // TODO: AVX2
-    int sum = 0;
     for (int row = 0; row < ly; row++)
     {
-        Vec8s sad(0);
         for (int col = 0; col < lx; col += 32)
         {
-            Vec16uc m1, n1;
             m1.load_a(piOrg + col);
             n1.load(piCur + col);
-            sad += Vec8s(m1.sad(n1));
-            Vec16uc m2, n2;
-            m2.load_a(piOrg + col + 16);
-            n2.load(piCur + col + 16);
-            sad += Vec8s(m2.sad(n2));
+            sad.addSumAbsDiff(m1, n1);
+            m1.load_a(piOrg + col + 16);
+            n1.load(piCur + col + 16);
+            sad.addSumAbsDiff(m1, n1);
         }
 
         piOrg += strideOrg;
         piCur += strideCur;
-        sum += horizontal_add_x(sad);
     }
-    return sum;
+    return horizontal_add_x(sad);
 }
 
 template<int lx, int ly>
