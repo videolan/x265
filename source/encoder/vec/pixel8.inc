@@ -708,7 +708,7 @@ void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 }
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
-template<int lx, int ly>
+template<int ly>
 void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
@@ -716,76 +716,70 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
     Vec4i sum2_low(0);
     Vec4i sum3_low(0);
     Vec4i sum4_low(0);
+    Vec8us sum1(0);
+    Vec8us sum2(0);
+    Vec8us sum3(0);
+    Vec8us sum4(0);
+    int main_iters = (ly >> 4) << 4;
     int row;
-    res[0] = 0;
-    res[1] = 0;
-    res[2] = 0;
-    res[3] = 0; 
-    for (row = 0; row < ly-7; row+=8)
-    {
-        Vec8s sum1(0);
-        Vec8s sum2(0);
-        Vec8s sum3(0);
-        Vec8s sum4(0);
-        for(int temp_rows = 0; temp_rows < 8; temp_rows++)
-        {
-            for (int col = 0; col < lx; col += 8)
-            {
-                m1.load_a(piOrg + col);
-                n1.load(piCur1 + col);
-                n2.load(piCur2 + col);
-                n3.load(piCur3 + col);
-                n4.load(piCur4 + col);
 
-                sum1 += Vec8s(m1.sad(n1));
-                sum2 += Vec8s(m1.sad(n2));
-                sum3 += Vec8s(m1.sad(n3));
-                sum4 += Vec8s(m1.sad(n4));
-            }
+    for (row = 0; row < main_iters; row += 16)
+    {
+        for(int i = 0; i < 16; i++)
+        {
+            m1.load_a(piOrg);
+            n1.load(piCur1);
+            n2.load(piCur2);
+            n3.load(piCur3);
+            n4.load(piCur4);
+
+            sum1.addSumAbsDiff(m1, n1);
+            sum2.addSumAbsDiff(m1, n2);
+            sum3.addSumAbsDiff(m1, n3);
+            sum4.addSumAbsDiff(m1, n4);
+         
             piOrg += FENC_STRIDE;
             piCur1 += strideCur;
             piCur2 += strideCur;
             piCur3 += strideCur;
             piCur4 += strideCur;
         }
-        sum1_low += extend_low(sum1);      
-        sum2_low += extend_low(sum2);      
-        sum3_low += extend_low(sum3);       
-        sum4_low += extend_low(sum4);       
+
+        sum1_low += extend_low(sum1);
+        sum2_low += extend_low(sum2);
+        sum3_low += extend_low(sum3);
+        sum4_low += extend_low(sum4);
+        sum1 = 0; sum2 = 0; sum3 = 0; sum4 = 0;
     }
     for (; row < ly; row++)
     {
-        Vec8s sum1(0);
-        Vec8s sum2(0);
-        Vec8s sum3(0);
-        Vec8s sum4(0);
-        for (int col = 0; col < lx; col += 8)
-        {
-            m1.load_a(piOrg + col);
-            n1.load(piCur1 + col);
-            n2.load(piCur2 + col);
-            n3.load(piCur3 + col);
-            n4.load(piCur4 + col);
+        m1.load_a(piOrg);
+        n1.load(piCur1);
+        n2.load(piCur2);
+        n3.load(piCur3);
+        n4.load(piCur4);
 
-            sum1 += Vec8s(m1.sad(n1));
-            sum2 += Vec8s(m1.sad(n2));
-            sum3 += Vec8s(m1.sad(n3));
-            sum4 += Vec8s(m1.sad(n4));
-        }
-        sum1_low += extend_low(sum1);      
-        sum2_low += extend_low(sum2);       
-        sum3_low += extend_low(sum3);     
-        sum4_low += extend_low(sum4);       
+        sum1.addSumAbsDiff(m1, n1);
+        sum2.addSumAbsDiff(m1, n2);
+        sum3.addSumAbsDiff(m1, n3);
+        sum4.addSumAbsDiff(m1, n4);
+
         piOrg += FENC_STRIDE;
         piCur1 += strideCur;
         piCur2 += strideCur;
         piCur3 += strideCur;
         piCur4 += strideCur;
     }
-    res[0] += horizontal_add_x(sum1_low);
-    res[1] += horizontal_add_x(sum2_low);
-    res[2] += horizontal_add_x(sum3_low);
-    res[3] += horizontal_add_x(sum4_low);
+
+    sum1_low += extend_low(sum1);
+    sum2_low += extend_low(sum2);
+    sum3_low += extend_low(sum3);
+    sum4_low += extend_low(sum4);
+
+    res[0] = horizontal_add(sum1_low);
+    res[1] = horizontal_add(sum2_low);
+    res[2] = horizontal_add(sum3_low);
+    res[3] = horizontal_add(sum4_low);
 }
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
