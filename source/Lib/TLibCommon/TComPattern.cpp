@@ -240,11 +240,9 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
 
     // top left corner
     piFilterBuf[l++] = piAdiTemp[0];
+
     // above border from left to right
-    for (i = 0; i < uiCuWidth2; i++)
-    {
-        piFilterBuf[l++] = piAdiTemp[1 + i];
-    }
+    memcpy(&piFilterBuf[l], &piAdiTemp[1], uiCuWidth2*sizeof(*piFilterBuf));
 
     if (pcCU->getSlice()->getSPS()->getUseStrongIntraSmoothing())
     {
@@ -302,10 +300,7 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     }
 
     piFilteredBuf1[0] = piFilterBufN[l++];
-    for (i = 0; i < uiCuWidth2; i++)
-    {
-        piFilteredBuf1[1 + i] = piFilterBufN[l++];
-    }
+    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));
 }
 
 Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
