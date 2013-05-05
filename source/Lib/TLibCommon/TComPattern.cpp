@@ -171,7 +171,7 @@ Void TComPattern::initPattern(TComDataCU* pcCU, UInt uiPartDepth, UInt uiAbsPart
     m_cPatternCr.setPatternParamCU(pcCU, 2, uiWidth >> 1, uiHeight >> 1, uiOffsetLeft, uiOffsetAbove, uiAbsPartIdx);
 }
 
-Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Bool bLMmode)
+Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
 {
     Pel*  piRoiOrigin;
     Pel*  piAdiTemp;
@@ -218,7 +218,7 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     piRoiOrigin = pcCU->getPic()->getPicYuvRec()->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiZorderIdxInPart);
     piAdiTemp   = piAdiBuf;
 
-    fillReferenceSamples(g_bitDepthY, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor, iUnitSize, iNumUnitsInCu, iTotalUnits, uiCuWidth, uiCuHeight, uiWidth, uiHeight, iPicStride, bLMmode);
+    fillReferenceSamples(g_bitDepthY, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor, iUnitSize, iNumUnitsInCu, iTotalUnits, uiCuWidth, uiCuHeight, uiWidth, uiHeight, iPicStride);
 
     Int   i;
     // generate filtered intra prediction samples
@@ -362,7 +362,7 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart,
     fillReferenceSamples(g_bitDepthC, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor, iUnitSize, iNumUnitsInCu, iTotalUnits, uiCuWidth, uiCuHeight, uiWidth, uiHeight, iPicStride);
 }
 
-Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode)
+Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride)
 {
     Pel* piRoiTemp;
     Int  i, j;
@@ -389,11 +389,6 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
 
         // Fill left border with rec. samples
         piRoiTemp = piRoiOrigin - 1;
-
-        if (bLMmode)
-        {
-            piRoiTemp--; // move to the second left column
-        }
 
         for (i = 0; i < uiCuHeight; i++)
         {
@@ -453,10 +448,6 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
 
         // Fill left & below-left samples
         piRoiTemp += iPicStride;
-        if (bLMmode)
-        {
-            piRoiTemp--; // move the second left column
-        }
         piAdiLineTemp--;
         pbNeighborFlags--;
         for (j = 0; j < iNumUnits2; j++)

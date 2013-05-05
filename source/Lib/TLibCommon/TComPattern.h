@@ -149,7 +149,6 @@ public:
                          Int iOrgBufHeight,
                          Bool& bAbove,
                          Bool& bLeft
-                         , Bool        bLMmode = false     // using for LM chroma or not
                          );
 
     /// set chroma parameters from CU data for accessing ADI data
@@ -165,7 +164,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride, Bool bLMmode = false);
+    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride);
 
     /// constrained intra prediction
     Bool  isAboveLeftAvailable(TComDataCU* pcCU, UInt uiPartIdxLT);
