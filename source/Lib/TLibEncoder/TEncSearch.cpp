@@ -3901,7 +3901,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
 #if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, pcPatternKey->getROIY(), pcPatternKey->getPatternLStride());
+    x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)pcPatternKey->getROIY(), pcPatternKey->getPatternLStride());
 
     x265::MotionReference ref;
     ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
