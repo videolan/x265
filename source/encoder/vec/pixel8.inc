@@ -156,12 +156,8 @@ template<int ly>
 void CDECL sad_4_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -219,12 +215,8 @@ template<int ly>
 void CDECL sad_8_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -283,12 +275,8 @@ template<int ly>
 void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);    
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -346,12 +334,8 @@ template<int ly>
 void CDECL sad_16_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -409,12 +393,8 @@ template<int ly>
 void CDECL sad_24_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -490,12 +470,8 @@ template<int ly>
 void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int main_iters = (ly >> 3) << 3;
     int row;
 
@@ -571,12 +547,8 @@ template<int ly>
 void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);    
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
+    Vec4i sum1(0), sum2(0), sum3(0);
+    Vec8us sad1(0), sad2(0), sad3(0);
     int row;
 
     for (row = 0; row < ly; row += 4)
@@ -640,14 +612,8 @@ template<int ly>
 void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -712,14 +678,8 @@ template<int ly>
 void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -787,14 +747,8 @@ template<int ly>
 void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -861,14 +815,8 @@ template<int ly>
 void CDECL sad_16_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -935,14 +883,8 @@ template<int ly>
 void CDECL sad_24_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 4) << 4;
     int row;
 
@@ -1031,14 +973,8 @@ template<int ly>
 void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int main_iters = (ly >> 3) << 3;
     int row;
 
@@ -1127,14 +1063,8 @@ template<int ly>
 void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec16uc m1, n1, n2, n3, n4;
-    Vec4i sum1(0);
-    Vec4i sum2(0);
-    Vec4i sum3(0);
-    Vec4i sum4(0);
-    Vec8us sad1(0);
-    Vec8us sad2(0);
-    Vec8us sad3(0);
-    Vec8us sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
     int row;
 
     for (row = 0; row < ly; row += 4)
