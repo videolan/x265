@@ -40,7 +40,7 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
     {
         for(int i = 0; i < 16; i++)
         {
-            m1.load(piOrg);
+            m1.load_a(piOrg);
             n1.load(piCur);
             sad += abs(m1 - n1);
 
@@ -53,7 +53,7 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
     }
     while (row++ < ly)
     {
-        m1.load(piOrg);
+        m1.load_a(piOrg);
         n1.load(piCur);
         sad += abs(m1 - n1);
 
@@ -78,7 +78,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
     {
         for(int i = 0; i < 16; i++)
         {
-            m1.load(piOrg);
+            m1.load_a(piOrg);
             n1.load(piCur);
             sad += abs(m1 - n1);
 
@@ -91,8 +91,54 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
     }
     while (row++ < ly)
     {
-        m1.load(piOrg);
+        m1.load_a(piOrg);
         n1.load(piCur);
+        sad += abs(m1 - n1);
+
+        piOrg += strideOrg;
+        piCur += strideCur;
+    }
+    sum += extend_low(sad) + extend_high(sad);
+
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int main_iters = (ly >> 4) << 4;
+    int row;
+
+    for (row = 0; row < main_iters; row += 16)
+    {
+        for(int i = 0; i < 16; i++)
+        {
+            m1.load_a(piOrg);
+            n1.load(piCur);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 8); m1.cutoff(4);
+            n1.load(piCur + 8); n1.cutoff(4);
+            sad += abs(m1 - n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
+        }
+
+        sum += extend_low(sad) + extend_high(sad);
+        sad = 0;
+    }
+    while (row++ < ly)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        sad += abs(m1 - n1);
+
+        m1.load_a(piOrg + 8); m1.cutoff(4);
+        n1.load(piCur + 8); n1.cutoff(4);
         sad += abs(m1 - n1);
 
         piOrg += strideOrg;
@@ -106,25 +152,52 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 template<int ly>
 int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16s sum(0);
-    for (int row = 0; row < ly; row++)
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int main_iters = (ly >> 3) << 3;
+    int row;
+
+    for (row = 0; row < main_iters; row += 8)
     {
-        Vec16s m1, n1;
+        for(int i = 0; i < 8; i++)
+        {
+            m1.load_a(piOrg);
+            n1.load(piCur);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 8);
+            n1.load(piCur + 8);
+            sad += abs(m1 - n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
+        }
+
+        sum += extend_low(sad) + extend_high(sad);
+        sad = 0;
+    }
+    while (row++ < ly)
+    {
         m1.load_a(piOrg);
         n1.load(piCur);
-        sum += abs(m1 - n1);
+        sad += abs(m1 - n1);
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        sad += abs(m1 - n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
     }
+    sum += extend_low(sad) + extend_high(sad);
 
-    return horizontal_add(extend_low(sum)) +
-           horizontal_add(extend_high(sum));
+    return horizontal_add(sum);
 }
 
 template<int ly>
-int CDECL sad_24(pixel *piOrg, intptr_t strideOrig, pixel *piCur, intptr_t strideCur)
-{    
+int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+{
     Vec8s m1, n1;
     Vec4i sum(0);
     Vec8us sad(0);
@@ -147,7 +220,7 @@ int CDECL sad_24(pixel *piOrg, intptr_t strideOrig, pixel *piCur, intptr_t strid
             n1.load(piCur + 16);
             sad += abs(m1 - n1);
 
-            piOrg += strideOrig;
+            piOrg += strideOrg;
             piCur += strideCur;
         }
 
@@ -168,38 +241,129 @@ int CDECL sad_24(pixel *piOrg, intptr_t strideOrig, pixel *piCur, intptr_t strid
         n1.load(piCur + 16);
         sad += abs(m1 - n1);
 
-        piOrg += strideOrig;
+        piOrg += strideOrg;
         piCur += strideCur;
     }
-
     sum += extend_low(sad) + extend_high(sad);
 
     return horizontal_add(sum);
 }
 
-template<int lx, int ly>
+template<int ly>
 int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16s sum(0);
-    for (int row = 0; row < ly; row++)
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int main_iters = (ly >> 3) << 3;
+    int row;
+
+    for (row = 0; row < main_iters; row += 8)
     {
-        for (int col = 0; col < lx; col += 32)
+        for(int i = 0; i < 8; i++)
         {
-            Vec16s m1, n1;
-            m1.load(piOrg + col);
-            n1.load(piCur + col);
-            sum += abs(m1 - n1);
-            Vec16s m2, n2;
-            m2.load(piOrg + col + 16);
-            n2.load(piCur + col + 16);
-            sum += abs(m2 - n2);
+            m1.load_a(piOrg);
+            n1.load(piCur);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 8);
+            n1.load(piCur + 8);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 16);
+            n1.load(piCur + 16);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 24);
+            n1.load(piCur + 24);
+            sad += abs(m1 - n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
         }
+
+        sum += extend_low(sad) + extend_high(sad);
+        sad = 0;
+    }
+    while (row++ < ly)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        sad += abs(m1 - n1);
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        sad += abs(m1 - n1);
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        sad += abs(m1 - n1);
+
+        m1.load_a(piOrg + 24);
+        n1.load(piCur + 24);
+        sad += abs(m1 - n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
     }
-    return horizontal_add_x(extend_low(sum)) +
-           horizontal_add_x(extend_high(sum));
+    sum += extend_low(sad) + extend_high(sad);
+
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int row;
+
+    for (row = 0; row < ly; row += 4)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            m1.load_a(piOrg);
+            n1.load(piCur);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 8);
+            n1.load(piCur + 8);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 16);
+            n1.load(piCur + 16);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 24);
+            n1.load(piCur + 24);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 32);
+            n1.load(piCur + 32);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 40);
+            n1.load(piCur + 40);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 48);
+            n1.load(piCur + 48);
+            sad += abs(m1 - n1);
+
+            m1.load_a(piOrg + 56);
+            n1.load(piCur + 56);
+            sad += abs(m1 - n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
+        }
+
+        sum += extend_low(sad) + extend_high(sad);
+        sad = 0;
+    }
+
+    return horizontal_add(sum);
 }
 
 template<int ly>
