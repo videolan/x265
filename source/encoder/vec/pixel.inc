@@ -332,37 +332,45 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x4[PARTITION_8x32] = sad_8_x4<32>;
     p.sad_x4[PARTITION_8x64] = sad_8_x4<64>;
 
-    p.sad_x4[PARTITION_12x4] = sad_12_x4<12, 4>;
-    p.sad_x4[PARTITION_12x8] = sad_12_x4<12, 8>;
-    p.sad_x4[PARTITION_12x12] = sad_12_x4<12, 12>;
-    p.sad_x4[PARTITION_12x16] = sad_12_x4<12, 16>;
-    p.sad_x4[PARTITION_12x24] = sad_12_x4<12, 24>;
-    p.sad_x4[PARTITION_12x32] = sad_12_x4<12, 32>;
-    p.sad_x4[PARTITION_12x64] = sad_12_x4<12, 64>;
+    p.sad_x4[PARTITION_12x4] = sad_12_x4<4>;
+    p.sad_x4[PARTITION_12x8] = sad_12_x4<8>;
+    p.sad_x4[PARTITION_12x12] = sad_12_x4<12>;
+    p.sad_x4[PARTITION_12x16] = sad_12_x4<16>;
+    p.sad_x4[PARTITION_12x24] = sad_12_x4<24>;
+    p.sad_x4[PARTITION_12x32] = sad_12_x4<32>;
+    p.sad_x4[PARTITION_12x64] = sad_12_x4<64>;
 
-    p.sad_x4[PARTITION_16x4] = sad_16_x4<16, 4>;
-    p.sad_x4[PARTITION_16x8] = sad_16_x4<16, 8>;
-    p.sad_x4[PARTITION_16x12] = sad_16_x4<16, 12>;
-    p.sad_x4[PARTITION_16x16] = sad_16_x4<16, 16>;
-    p.sad_x4[PARTITION_16x24] = sad_16_x4<16, 24>;
-    p.sad_x4[PARTITION_16x32] = sad_16_x4<16, 32>;
-    p.sad_x4[PARTITION_16x64] = sad_16_x4<16, 64>;
+    p.sad_x4[PARTITION_16x4] = sad_16_x4<4>;
+    p.sad_x4[PARTITION_16x8] = sad_16_x4<8>;
+    p.sad_x4[PARTITION_16x12] = sad_16_x4<12>;
+    p.sad_x4[PARTITION_16x16] = sad_16_x4<16>;
+    p.sad_x4[PARTITION_16x24] = sad_16_x4<24>;
+    p.sad_x4[PARTITION_16x32] = sad_16_x4<32>;
+    p.sad_x4[PARTITION_16x64] = sad_16_x4<64>;
 
-    p.sad_x4[PARTITION_32x4] = sad_32_x4<32, 4>;
-    p.sad_x4[PARTITION_32x8] = sad_32_x4<32, 8>;
-    p.sad_x4[PARTITION_32x12] = sad_32_x4<32, 12>;
-    p.sad_x4[PARTITION_32x16] = sad_32_x4<32, 16>;
-    p.sad_x4[PARTITION_32x24] = sad_32_x4<32, 24>;
-    p.sad_x4[PARTITION_32x32] = sad_32_x4<32, 32>;
-    p.sad_x4[PARTITION_32x64] = sad_32_x4<32, 64>;
+    p.sad_x4[PARTITION_24x4] = sad_24_x4<4>;
+    p.sad_x4[PARTITION_24x8] = sad_24_x4<8>;
+    p.sad_x4[PARTITION_24x12] = sad_24_x4<12>;
+    p.sad_x4[PARTITION_24x16] = sad_24_x4<16>;
+    p.sad_x4[PARTITION_24x24] = sad_24_x4<24>;
+    p.sad_x4[PARTITION_24x32] = sad_24_x4<32>;
+    p.sad_x4[PARTITION_24x64] = sad_24_x4<64>;
 
-    p.sad_x4[PARTITION_64x4] = sad_64_x4<64, 4>;
-    p.sad_x4[PARTITION_64x8] = sad_64_x4<64, 8>;
-    p.sad_x4[PARTITION_64x12] = sad_64_x4<64,12>;
-    p.sad_x4[PARTITION_64x16] = sad_64_x4<64, 16>;
-    p.sad_x4[PARTITION_64x24] = sad_64_x4<64, 24>;
-    p.sad_x4[PARTITION_64x32] = sad_64_x4<64, 32>;
-    p.sad_x4[PARTITION_64x64] = sad_64_x4<64, 64>;
+    p.sad_x4[PARTITION_32x4] = sad_32_x4<4>;
+    p.sad_x4[PARTITION_32x8] = sad_32_x4<8>;
+    p.sad_x4[PARTITION_32x12] = sad_32_x4<12>;
+    p.sad_x4[PARTITION_32x16] = sad_32_x4<16>;
+    p.sad_x4[PARTITION_32x24] = sad_32_x4<24>;
+    p.sad_x4[PARTITION_32x32] = sad_32_x4<32>;
+    p.sad_x4[PARTITION_32x64] = sad_32_x4<64>;
+
+    p.sad_x4[PARTITION_64x4] = sad_64_x4<4>;
+    p.sad_x4[PARTITION_64x8] = sad_64_x4<8>;
+    p.sad_x4[PARTITION_64x12] = sad_64_x4<12>;
+    p.sad_x4[PARTITION_64x16] = sad_64_x4<16>;
+    p.sad_x4[PARTITION_64x24] = sad_64_x4<24>;
+    p.sad_x4[PARTITION_64x32] = sad_64_x4<32>;
+    p.sad_x4[PARTITION_64x64] = sad_64_x4<64>;
 
 #if HIGH_BIT_DEPTH
     // satd
