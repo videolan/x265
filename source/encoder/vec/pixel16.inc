@@ -508,8 +508,8 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 
             m1.load_a(piOrg + 8); m1.cutoff(4);
             n1.load(piCur1 + 8); n1.cutoff(4);
-            n2.load(piCur2 + 8); n1.cutoff(4);
-            n3.load(piCur3 + 8); n1.cutoff(4);
+            n2.load(piCur2 + 8); n2.cutoff(4);
+            n3.load(piCur3 + 8); n3.cutoff(4);
 
             sad1 += abs(m1 - n1);
             sad2 += abs(m1 - n2);
@@ -539,8 +539,8 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 
         m1.load_a(piOrg + 8); m1.cutoff(4);
         n1.load(piCur1 + 8); n1.cutoff(4);
-        n2.load(piCur2 + 8); n1.cutoff(4);
-        n3.load(piCur3 + 8); n1.cutoff(4);
+        n2.load(piCur2 + 8); n2.cutoff(4);
+        n3.load(piCur3 + 8); n3.cutoff(4);
 
         sad1 += abs(m1 - n1);
         sad2 += abs(m1 - n2);
