@@ -49,6 +49,7 @@
 #include "TEncSbac.h"
 #include "TEncCfg.h"
 
+#include "primitives.h"
 #include "bitcost.h"
 #include "motion.h"
 
@@ -95,6 +96,9 @@ private:
 
     x265::BitCost   m_bc;
     x265::MotionEstimate m_me;
+#if ENABLE_PRIMITIVES
+    ALIGN_VAR_32(pixel, m_fencbuf[64 * 64]);
+#endif
 
 protected:
 

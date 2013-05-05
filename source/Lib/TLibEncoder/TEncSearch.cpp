@@ -336,7 +336,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
 
 #if ENABLE_PRIMITIVES
     int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
-    uiSad = (x265::primitives.sad[part]((pixel*)piOrg, iStrideOrg, (pixel*)piCur, iStrideCur) << iSubShift) >>
+    uiSad = (x265::primitives.sad[part]((pixel*)m_fencbuf, FENC_STRIDE * iSubStep, (pixel*)piCur, iStrideCur) << iSubShift) >>
         DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
     x264_cpu_emms();
 #else
@@ -3203,7 +3203,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         xGetBlkBits(ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
+
 #if ENABLE_PRIMITIVES
+        // TODO: uiPartAddr is only the PU offset into the CU.  Need CU base address
         m_me.setSourcePU(uiPartAddr, iRoiWidth, iRoiHeight);
 #endif
         Bool bTestNormalMC = true;
@@ -3899,6 +3901,8 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
 #if ENABLE_PRIMITIVES
+    x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, pcPatternKey->getROIY(), pcPatternKey->getPatternLStride());
+
     x265::MotionReference ref;
     ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
     ref.plane[0][0][1] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCbAddr();
