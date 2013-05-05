@@ -812,6 +812,7 @@ void CDECL sad_4_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
         piOrg += FENC_STRIDE;
         piCur1 += strideCur;
         piCur2 += strideCur;
+        piCur3 += strideCur;
         piCur4 += strideCur;
     }
     sum1 += extend_low(sad1);
