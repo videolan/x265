@@ -588,6 +588,15 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x4[PARTITION_32x48] = sad_x4<32, 48>;
     p.sad_x4[PARTITION_32x64] = sad_x4<32, 64>;
 
+    p.sad_x4[PARTITION_48x4]  = sad_x4<48, 4>;
+    p.sad_x4[PARTITION_48x8]  = sad_x4<48, 8>;
+    p.sad_x4[PARTITION_48x12] = sad_x4<48, 12>;
+    p.sad_x4[PARTITION_48x16] = sad_x4<48, 16>;
+    p.sad_x4[PARTITION_48x24] = sad_x4<48, 24>;
+    p.sad_x4[PARTITION_48x32] = sad_x4<48, 32>;
+    p.sad_x4[PARTITION_48x48] = sad_x4<48, 48>;
+    p.sad_x4[PARTITION_48x64] = sad_x4<48, 64>;
+
     p.sad_x4[PARTITION_64x4]  = sad_x4<64, 4>;
     p.sad_x4[PARTITION_64x8]  = sad_x4<64, 8>;
     p.sad_x4[PARTITION_64x12] = sad_x4<64, 12>;

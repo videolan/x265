@@ -1396,6 +1396,104 @@ void CDECL sad_32_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
+void CDECL sad_48_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+{    
+    Vec8s m1, n1, n2, n3, n4;
+    Vec8us sad1(0), sad2(0), sad3(0), sad4(0);
+    Vec4i sum1(0), sum2(0), sum3(0), sum4(0);
+    int row;
+
+    for (row = 0; row < ly; row += 2)
+    {
+        for(int i = 0; i < 2; i++)
+        {
+            m1.load_a(piOrg);
+            n1.load(piCur1);
+            n2.load(piCur2);
+            n3.load(piCur3);
+            n4.load(piCur4);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            m1.load_a(piOrg + 8);
+            n1.load(piCur1 + 8);
+            n2.load(piCur2 + 8);
+            n3.load(piCur3 + 8);
+            n4.load(piCur4 + 8);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            m1.load_a(piOrg + 16);
+            n1.load(piCur1 + 16);
+            n2.load(piCur2 + 16);
+            n3.load(piCur3 + 16);
+            n4.load(piCur4 + 16);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            m1.load_a(piOrg + 24);
+            n1.load(piCur1 + 24);
+            n2.load(piCur2 + 24);
+            n3.load(piCur3 + 24);
+            n4.load(piCur4 + 24);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            m1.load_a(piOrg + 32);
+            n1.load(piCur1 + 32);
+            n2.load(piCur2 + 32);
+            n3.load(piCur3 + 32);
+            n4.load(piCur4 + 32);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            m1.load_a(piOrg + 40);
+            n1.load(piCur1 + 40);
+            n2.load(piCur2 + 40);
+            n3.load(piCur3 + 40);
+            n4.load(piCur4 + 40);
+
+            sad1 += abs(m1 - n1);
+            sad2 += abs(m1 - n2);
+            sad3 += abs(m1 - n3);
+            sad4 += abs(m1 - n4);
+
+            piOrg += FENC_STRIDE;
+            piCur1 += strideCur;
+            piCur2 += strideCur;
+            piCur3 += strideCur;
+            piCur4 += strideCur;
+        }
+
+        sum1 += extend_low(sad1) + extend_high(sad1);
+        sum2 += extend_low(sad2) + extend_high(sad2);
+        sum3 += extend_low(sad3) + extend_high(sad3);
+        sum4 += extend_low(sad4) + extend_high(sad4);
+        sad1 = 0; sad2 = 0; sad3 = 0; sad4 = 0;
+    }
+
+    res[0] = horizontal_add(sum1);
+    res[1] = horizontal_add(sum2);
+    res[2] = horizontal_add(sum3);
+    res[3] = horizontal_add(sum4);
+}
+
+template<int ly>
 void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {    
     Vec8s m1, n1, n2, n3, n4;
