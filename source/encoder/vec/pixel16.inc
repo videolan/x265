@@ -259,10 +259,10 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         Vec8s sum3(0);
         for(int temp_rows = 0; temp_rows < 8; temp_rows++)
         {
-            m1.load_a(piOrg + col);
-            n1.load(piCur1 + col);
-            n2.load(piCur2 + col);
-            n3.load(piCur3 + col);
+            m1.load_a(piOrg);
+            n1.load(piCur1);
+            n2.load(piCur2);
+            n3.load(piCur3);
 
             sum1 += abs(m1 - n1);
             sum2 += abs(m1 - n2);
@@ -301,10 +301,10 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         Vec8s sum2(0);
         Vec8s sum3(0);
 
-        m1.load_a(piOrg + col);
-        n1.load(piCur1 + col);
-        n2.load(piCur2 + col);
-        n3.load(piCur3 + col);
+        m1.load_a(piOrg);
+        n1.load(piCur1);
+        n2.load(piCur2);
+        n3.load(piCur3);
 
         sum1 += abs(m1 - n1);
         sum2 += abs(m1 - n2);
@@ -540,17 +540,18 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum2 += abs(m1 - n2);
         sum3 += abs(m1 - n3);
 
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+
         piOrg += FENC_STRIDE;
         piCur1 += strideCur;
         piCur2 += strideCur;
         piCur3 += strideCur;
     }
-    sum1_low += extend_low(sum1);
-    sum1_high += extend_high(sum1);
-    sum2_low += extend_low(sum2);
-    sum2_high += extend_high(sum2);
-    sum3_low += extend_low(sum3);
-    sum3_high += extend_high(sum3);
 
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -737,17 +738,18 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum2 += abs(m1 - n2);
         sum3 += abs(m1 - n3);
 
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+
         piOrg += FENC_STRIDE;
         piCur1 += strideCur;
         piCur2 += strideCur;
         piCur3 += strideCur;
     }
-    sum1_low += extend_low(sum1);
-    sum1_high += extend_high(sum1);
-    sum2_low += extend_low(sum2);
-    sum2_high += extend_high(sum2);
-    sum3_low += extend_low(sum3);
-    sum3_high += extend_high(sum3);
 
     res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
     res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
@@ -841,10 +843,6 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
     Vec4i sum3_low(0), sum3_high(0);
     Vec4i sum4_low(0), sum4_high(0);
     int row;
-    res[0] = 0;
-    res[1] = 0;
-    res[2] = 0;
-    res[3] = 0; 
 
     for (row = 0; row < ly-7; row+=8)
     {
@@ -904,20 +902,21 @@ void CDECL sad_8_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
         piCur2 += strideCur;
         piCur3 += strideCur;
         piCur4 += strideCur;
-    }
-    sum1_low += extend_low(sum1);
-    sum1_high += extend_high(sum1);
-    sum2_low += extend_low(sum2);
-    sum2_high += extend_high(sum2);
-    sum3_low += extend_low(sum3);
-    sum3_high += extend_high(sum3);
-    sum4_low += extend_low(sum4);
-    sum4_high += extend_high(sum4);
 
-    res[0] += horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
-    res[1] += horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
-    res[2] += horizontal_add_x(sum3_low) + horizontal_add_x(sum3_high);
-    res[3] += horizontal_add_x(sum4_low) + horizontal_add_x(sum4_high);
+        sum1_low += extend_low(sum1);
+        sum1_high += extend_high(sum1);
+        sum2_low += extend_low(sum2);
+        sum2_high += extend_high(sum2);
+        sum3_low += extend_low(sum3);
+        sum3_high += extend_high(sum3);
+        sum4_low += extend_low(sum4);
+        sum4_high += extend_high(sum4);
+    }
+
+    res[0] = horizontal_add_x(sum1_low) + horizontal_add_x(sum1_high);
+    res[1] = horizontal_add_x(sum2_low) + horizontal_add_x(sum2_high);
+    res[2] = horizontal_add_x(sum3_low) + horizontal_add_x(sum3_high);
+    res[3] = horizontal_add_x(sum4_low) + horizontal_add_x(sum4_high);
 }
 
 /* For performance - This function assumes that the *last load* can access 8 elements. */
