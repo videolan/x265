@@ -404,18 +404,9 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
         }
 
         // Fill top border with rec. samples
-        piRoiTemp = piRoiOrigin - iPicStride;
-        for (i = 0; i < uiCuWidth; i++)
-        {
-            piAdiTemp[1 + i] = piRoiTemp[i];
-        }
-
         // Fill top right border with rec. samples
-        piRoiTemp = piRoiOrigin - iPicStride + uiCuWidth;
-        for (i = 0; i < uiCuWidth; i++)
-        {
-            piAdiTemp[1 + uiCuWidth + i] = piRoiTemp[i];
-        }
+        piRoiTemp = piRoiOrigin - iPicStride;
+        memcpy(&piAdiTemp[1], piRoiTemp, 2*uiCuWidth * sizeof(*piAdiTemp));
     }
     else // reference samples are partially available
     {
@@ -472,10 +463,7 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
         {
             if (*pbNeighborFlags)
             {
-                for (i = 0; i < iUnitSize; i++)
-                {
-                    piAdiLineTemp[i] = piRoiTemp[i];
-                }
+                memcpy(piAdiLineTemp, piRoiTemp, iUnitSize * sizeof(*piAdiTemp));
             }
             piRoiTemp += iUnitSize;
             piAdiLineTemp += iUnitSize;
@@ -531,10 +519,7 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
 
         // Copy processed samples
         piAdiLineTemp = piAdiLine + uiHeight + iUnitSize - 2;
-        for (i = 0; i < uiWidth; i++)
-        {
-            piAdiTemp[i] = piAdiLineTemp[i];
-        }
+        memcpy(piAdiTemp, piAdiLineTemp, uiWidth * sizeof(*piAdiTemp));
 
         piAdiLineTemp = piAdiLine + uiHeight - 1;
         for (i = 1; i < uiHeight; i++)
