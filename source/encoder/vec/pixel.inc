@@ -28,35 +28,6 @@
 /* File for pixels type-neutral code */
 
 template<int ly>
-int CDECL sad_4x16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
-{
-    int sum = 0;
-    for (int row = 0; row < ly; row += 16)
-        sum += sad_4<16>(piOrg + row * strideOrg, strideOrg, piCur + row * strideCur, strideCur);
-    return sum;
-}
-
-template<int ly>
-int CDECL sad_8x8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
-{
-    /* groups of 8x16 blocks, upcasting sum from short to int often enough to avoid overflow */
-    int sum = 0;
-    for (int row = 0; row < ly; row += 8)
-        sum += sad_8<8>(piOrg + row * strideOrg, strideOrg, piCur + row * strideCur, strideCur);
-    return sum;
-}
-
-template<int ly>
-int CDECL sad_8x16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
-{
-    /* groups of 8x16 blocks, upcasting sum from short to int often enough to avoid overflow */
-    int sum = 0;
-    for (int row = 0; row < ly; row += 16)
-        sum += sad_8<16>(piOrg + row * strideOrg, strideOrg, piCur + row * strideCur, strideCur);
-    return sum;
-}
-
-template<int ly>
 int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int sum = 0;
@@ -208,15 +179,15 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad[PARTITION_4x16] = sad_4<16>;
     p.sad[PARTITION_4x24] = sad_4<24>;
     p.sad[PARTITION_4x32] = sad_4<32>;
-    p.sad[PARTITION_4x64] = sad_4x16<64>;
+    p.sad[PARTITION_4x64] = sad_4<64>;
 
     p.sad[PARTITION_8x4] = sad_8<4>;
     p.sad[PARTITION_8x8] = sad_8<8>;
     p.sad[PARTITION_8x12] = sad_8<12>;
     p.sad[PARTITION_8x16] = sad_8<16>;
-    p.sad[PARTITION_8x24] = sad_8x8<24>;
-    p.sad[PARTITION_8x32] = sad_8x16<32>;
-    p.sad[PARTITION_8x64] = sad_8x16<64>;
+    p.sad[PARTITION_8x24] = sad_8<24>;
+    p.sad[PARTITION_8x32] = sad_8<32>;
+    p.sad[PARTITION_8x64] = sad_8<64>;
 
     p.sad[PARTITION_12x4] = sad_12<4>;
     p.sad[PARTITION_12x8] = sad_12<8>;

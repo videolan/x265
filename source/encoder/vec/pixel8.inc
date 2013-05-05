@@ -25,40 +25,79 @@
 
 // Vector class versions of pixel comparison performance primitives
 /* intrinsics for when pixel type is uint8_t */
+
 template<int ly>
 int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec8us sum(0);
     Vec16uc m1, n1;
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int main_iters = (ly >> 4) << 4;
+    int row;
 
-    for (int row = 0; row < ly; row++)
+    for (row = 0; row < main_iters; row += 16)
+    {
+        for(int i = 0; i < 16; i++)
+        {
+            m1.fromUint32(*(uint32_t*)piOrg);
+            n1.fromUint32(*(uint32_t*)piCur);
+            sad.addSumAbsDiff(m1, n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
+        }
+
+        sum += extend_low(sad);
+        sad = 0;
+    }
+    while (row++ < ly)
     {
         m1.fromUint32(*(uint32_t*)piOrg);
         n1.fromUint32(*(uint32_t*)piCur);
-        sum.addSumAbsDiff(m1, n1);
+        sad.addSumAbsDiff(m1, n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
     }
-
+    sum += extend_low(sad);
     return horizontal_add(sum);
 }
 
 template<int ly>
 int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec8us sum(0);
     Vec16uc m1, n1;
-    for (int row = 0; row < ly; row++)
+    Vec4i sum(0);
+    Vec8us sad(0);
+    int main_iters = (ly >> 4) << 4;
+    int row;
+
+    for (row = 0; row < main_iters; row += 16)
+    {
+        for(int i = 0; i < 16; i++)
+        {
+            m1.load(piOrg);
+            n1.load(piCur);
+            sad.addSumAbsDiff(m1, n1);
+
+            piOrg += strideOrg;
+            piCur += strideCur;
+        }
+
+        sum += extend_low(sad);
+        sad = 0;
+    }
+    while (row++ < ly)
     {
         m1.load(piOrg);
         n1.load(piCur);
-        sum.addSumAbsDiff(m1, n1);
+        sad.addSumAbsDiff(m1, n1);
 
         piOrg += strideOrg;
         piCur += strideCur;
     }
-    return sum[0];
+    sum += extend_low(sad);
+    return horizontal_add(sum);
 }
 
 template<int ly>
