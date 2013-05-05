@@ -53,12 +53,12 @@ TComPrediction::TComPrediction()
     : m_pLumaRecBuffer(0)
     , m_iLumaRecStride(0)
 {
-    m_piYuvExt = NULL;
+    m_piPredBuf = NULL;
 }
 
 TComPrediction::~TComPrediction()
 {
-    delete[] m_piYuvExt;
+    delete[] m_piPredBuf;
 
     m_acYuvPred[0].destroy();
     m_acYuvPred[1].destroy();
@@ -84,7 +84,7 @@ TComPrediction::~TComPrediction()
 
 Void TComPrediction::initTempBuff()
 {
-    if (m_piYuvExt == NULL)
+    if (m_piPredBuf == NULL)
     {
         Int extWidth  = MAX_CU_SIZE + 16;
         Int extHeight = MAX_CU_SIZE + 1;
@@ -98,9 +98,9 @@ Void TComPrediction::initTempBuff()
             }
         }
 
-        m_iYuvExtHeight  = ((MAX_CU_SIZE + 2) << 4);
-        m_iYuvExtStride = ((MAX_CU_SIZE  + 8) << 4);
-        m_piYuvExt = new Pel[m_iYuvExtStride * m_iYuvExtHeight];
+        m_iPredBufHeight  = ((MAX_CU_SIZE + 2) << 4);
+        m_iPredBufStride = ((MAX_CU_SIZE  + 8) << 4);
+        m_piPredBuf = new Pel[m_iPredBufStride * m_iPredBufHeight];
 
         // new structure
         m_acYuvPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
@@ -360,7 +360,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     assert(g_aucConvertToBit[iWidth] <= 5);   // 128x128
     assert(iWidth == iHeight);
 
-    ptrSrc = pcTComPattern->getPredictorPtr(uiDirMode, g_aucConvertToBit[iWidth] + 2, m_piYuvExt);
+    ptrSrc = pcTComPattern->getPredictorPtr(uiDirMode, g_aucConvertToBit[iWidth] + 2, m_piPredBuf);
 
     // get starting pixel in block
     Int sw = 2 * iWidth + 1;

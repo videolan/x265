@@ -1061,7 +1061,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     if (default0Save1Load2 != 2)
     {
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
-        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
+        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
         //===== get prediction signal =====
         predIntraLumaAng(pcCU->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
         // save prediction
@@ -1242,8 +1242,8 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
     {
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
 
-        pcCU->getPattern()->initAdiPatternChroma(pcCU, uiAbsPartIdx, uiTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
-        Pel*  pPatChroma  = (uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt) : pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt));
+        pcCU->getPattern()->initAdiPatternChroma(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+        Pel*  pPatChroma  = (uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piPredBuf) : pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf));
 
         //===== get prediction signal =====
         {
@@ -2389,9 +2389,9 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Bool  bLeftAvail  = false;
 
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
-    pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
-    Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piYuvExt);
-    Pel*  pPatChromaV = pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piYuvExt);
+    pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+    Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf);
+    Pel*  pPatChromaV = pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piPredBuf);
 
     //===== get best prediction modes (using SAD) =====
     UInt  uiMinMode   = 0;
@@ -2457,7 +2457,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         Bool bAboveAvail = false;
         Bool bLeftAvail  = false;
         pcCU->getPattern()->initPattern(pcCU, uiInitTrDepth, uiPartOffset);
-        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail);
+        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         Int numModesAvailable     = 35; //total number of Intra modes

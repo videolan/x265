@@ -59,9 +59,9 @@ class TComPrediction : public TComWeightPrediction
 {
 protected:
 
-    Pel*      m_piYuvExt;
-    Int       m_iYuvExtStride;
-    Int       m_iYuvExtHeight;
+    Pel*      m_piPredBuf;
+    Int       m_iPredBufStride;
+    Int       m_iPredBufHeight;
 
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
@@ -104,11 +104,11 @@ public:
     Void predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
 
 
-    Pel* getPredicBuf()             { return m_piYuvExt; }
+    Pel* getPredicBuf()             { return m_piPredBuf; }
 
-    Int  getPredicBufWidth()        { return m_iYuvExtStride; }
+    Int  getPredicBufWidth()        { return m_iPredBufStride; }
 
-    Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
+    Int  getPredicBufHeight()       { return m_iPredBufHeight; }
 };
 
 //! \}
