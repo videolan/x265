@@ -557,6 +557,7 @@ void CDECL sad_32_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         piCur2 += strideCur;
         piCur3 += strideCur;
     }
+
     sum1_low += extend_low(sum1) + extend_high(sum1);
     sum2_low += extend_low(sum2) + extend_high(sum2);
     sum3_low += extend_low(sum3) + extend_high(sum3);
@@ -576,10 +577,9 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     Vec8us sum1(0);
     Vec8us sum2(0);
     Vec8us sum3(0);
-    int main_iters = (ly >> 2) << 2;
     int row;
 
-    for (row = 0; row < main_iters; row += 4)
+    for (row = 0; row < ly; row += 4)
     {
         for(int i = 0; i < 4; i++)
         {
@@ -629,53 +629,6 @@ void CDECL sad_64_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum3_low += extend_low(sum3) + extend_high(sum3);
         sum1 = 0; sum2 = 0; sum3 = 0;
     }
-    while (row++ < ly)
-    {
-        m1.load_a(piOrg);
-        n1.load(piCur1);
-        n2.load(piCur2);
-        n3.load(piCur3);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-
-        m1.load_a(piOrg + 16);
-        n1.load(piCur1 + 16);
-        n2.load(piCur2 + 16);
-        n3.load(piCur3 + 16);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-
-        m1.load_a(piOrg + 32);
-        n1.load(piCur1 + 32);
-        n2.load(piCur2 + 32);
-        n3.load(piCur3 + 32);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-
-        m1.load_a(piOrg + 48);
-        n1.load(piCur1 + 48);
-        n2.load(piCur2 + 48);
-        n3.load(piCur3 + 48);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-
-        piOrg += FENC_STRIDE;
-        piCur1 += strideCur;
-        piCur2 += strideCur;
-        piCur3 += strideCur;
-    }
-
-    sum1_low += extend_low(sum1) + extend_high(sum1);
-    sum2_low += extend_low(sum2) + extend_high(sum2);
-    sum3_low += extend_low(sum3) + extend_high(sum3);
 
     res[0] = horizontal_add(sum1_low);
     res[1] = horizontal_add(sum2_low);
@@ -1182,10 +1135,9 @@ void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     Vec8us sum2(0);
     Vec8us sum3(0);
     Vec8us sum4(0);
-    int main_iters = (ly >> 2) << 2;
     int row;
 
-    for (row = 0; row < main_iters; row += 4)
+    for (row = 0; row < ly; row += 4)
     {
         for(int i = 0; i < 4; i++)
         {
@@ -1245,63 +1197,6 @@ void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum4_low += extend_low(sum4) + extend_high(sum4);
         sum1 = 0; sum2 = 0; sum3 = 0; sum4 = 0;
     }
-    while (row++ < ly)
-    {
-        m1.load_a(piOrg);
-        n1.load(piCur1);
-        n2.load(piCur2);
-        n3.load(piCur3);
-        n4.load(piCur4);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-        sum4.addSumAbsDiff(m1, n4);
-
-        m1.load_a(piOrg + 16);
-        n1.load(piCur1 + 16);
-        n2.load(piCur2 + 16);
-        n3.load(piCur3 + 16);
-        n4.load(piCur4 + 16);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-        sum4.addSumAbsDiff(m1, n4);
-
-        m1.load_a(piOrg + 32);
-        n1.load(piCur1 + 32);
-        n2.load(piCur2 + 32);
-        n3.load(piCur3 + 32);
-        n4.load(piCur4 + 32);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-        sum4.addSumAbsDiff(m1, n4);
-
-        m1.load_a(piOrg + 48);
-        n1.load(piCur1 + 48);
-        n2.load(piCur2 + 48);
-        n3.load(piCur3 + 48);
-        n4.load(piCur4 + 48);
-
-        sum1.addSumAbsDiff(m1, n1);
-        sum2.addSumAbsDiff(m1, n2);
-        sum3.addSumAbsDiff(m1, n3);
-        sum4.addSumAbsDiff(m1, n4);
-
-        piOrg += FENC_STRIDE;
-        piCur1 += strideCur;
-        piCur2 += strideCur;
-        piCur3 += strideCur;
-        piCur4 += strideCur;
-    }
-
-    sum1_low += extend_low(sum1) + extend_high(sum1);
-    sum2_low += extend_low(sum2) + extend_high(sum2);
-    sum3_low += extend_low(sum3) + extend_high(sum3);
-    sum4_low += extend_low(sum4) + extend_high(sum4);
 
     res[0] = horizontal_add(sum1_low);
     res[1] = horizontal_add(sum2_low);
