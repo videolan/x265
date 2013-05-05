@@ -20,12 +20,8 @@ if(MSVC)
     add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
+    add_definitions(/MP)  # multithreaded build
     include_directories(compat/msvc)
-    # Add some multithreaded build support
-    option(MULTITHREADED_BUILD "Number of threads to use for build" ON)
-    if(MULTITHREADED_BUILD)
-        add_definitions(/MP)
-    endif()
 endif(MSVC)
 
 if("$ENV{CXX}" STREQUAL "icpc")
