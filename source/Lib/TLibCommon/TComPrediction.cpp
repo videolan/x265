@@ -855,7 +855,7 @@ Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt 
 
     Int k, l, bottomLeft, topRight;
     Int horPred;
-    Int leftColumn[MAX_CU_SIZE], topRow[MAX_CU_SIZE], bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
+    Int leftColumn[MAX_CU_SIZE+1], topRow[MAX_CU_SIZE+1], bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     UInt blkSize = width;
     UInt offset2D = width;
     UInt shift1D = g_aucConvertToBit[width] + 2;
