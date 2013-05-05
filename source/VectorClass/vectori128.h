@@ -1414,6 +1414,10 @@ public:
         xmm = x;
         return *this;
     };
+    Vec8us & addSumAbsDiff(__m128i const & a, __m128i const & b) {
+        xmm = _mm_add_epi16(xmm, _mm_sad_epu8(a, b));
+        return *this;
+    }
     // Member function to load from array (unaligned)
     Vec8us & load(void const * p) {
         xmm = _mm_loadu_si128((__m128i const*)p);
