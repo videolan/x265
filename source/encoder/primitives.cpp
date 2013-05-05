@@ -34,9 +34,9 @@ namespace x265 {
 // x265 private namespace
 
 #if ENABLE_PRIMITIVES
-//                          4   8  12  16      24     32 / 64
-static int8_t psize[16] = { 0,  1,  2,  3, -1,  4, -1, 5,
-                            -1, -1, -1, -1, -1, -1, -1, 6 };
+//                           4   8  12  16/48   24     32/64
+static int8_t psize[16] = {  0,  1,  2,  3, -1,  4, -1, 5,
+                            -1, -1, -1,  6, -1, -1, -1, 7 };
 int *Motion_Cost;
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
@@ -49,8 +49,8 @@ int PartitionFromSizes(int Width, int Height)
     assert(((Width | Height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
     assert((w | h) >= 0);
 
-    // there are currently seven height partitions per width
-    return w * 7 + h;
+    // there are currently eight height partitions per width
+    return (w << 3) + h;
 }
 
 /* the "authoritative" set of encoder primitives */
