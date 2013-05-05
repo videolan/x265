@@ -283,7 +283,6 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_16x32] = sad_16_x3<32>;
     p.sad_x3[PARTITION_16x64] = sad_16_x3<64>;
 
-#if !HIGH_BIT_DEPTH
     p.sad_x3[PARTITION_24x4] = sad_24_x3<4>;
     p.sad_x3[PARTITION_24x8] = sad_24_x3<8>;
     p.sad_x3[PARTITION_24x12] = sad_24_x3<12>;
@@ -291,7 +290,6 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_24x24] = sad_24_x3<24>;
     p.sad_x3[PARTITION_24x32] = sad_24_x3<32>;
     p.sad_x3[PARTITION_24x64] = sad_24_x3<64>;
-#endif
 
     p.sad_x3[PARTITION_32x4] = sad_32_x3<4>;
     p.sad_x3[PARTITION_32x8] = sad_32_x3<8>;
