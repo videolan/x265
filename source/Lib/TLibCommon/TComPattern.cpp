@@ -388,18 +388,12 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
         piAdiTemp[0] = piRoiTemp[0];
 
         // Fill left border with rec. samples
+        // Fill below left border with rec. samples
         piRoiTemp = piRoiOrigin - 1;
 
-        for (i = 0; i < uiCuHeight; i++)
+        for (i = 0; i < 2 * uiCuHeight; i++)
         {
             piAdiTemp[(1 + i) * uiWidth] = piRoiTemp[0];
-            piRoiTemp += iPicStride;
-        }
-
-        // Fill below left border with rec. samples
-        for (i = 0; i < uiCuHeight; i++)
-        {
-            piAdiTemp[(1 + uiCuHeight + i) * uiWidth] = piRoiTemp[0];
             piRoiTemp += iPicStride;
         }
 
