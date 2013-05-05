@@ -363,7 +363,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     ptrSrc = pcTComPattern->getPredictorPtr(uiDirMode, g_aucConvertToBit[iWidth] + 2, m_piPredBuf);
 
     // get starting pixel in block
-    Int sw = 2 * iWidth + 1;
+    Int sw = ADI_BUF_STRIDE;
     Bool bFilter = ((iWidth <= 16) && (iHeight <= 16));
 
     // Create the prediction
@@ -388,7 +388,7 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     Pel *ptrSrc = piSrc;
 
     // get starting pixel in block
-    Int sw = 2 * iWidth + 1;
+    Int sw = ADI_BUF_STRIDE;
 
     if (uiDirMode == PLANAR_IDX)
     {

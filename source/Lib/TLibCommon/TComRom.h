@@ -54,6 +54,7 @@
 #define     MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))         // maximum allowable size of CU
 #define     MIN_PU_SIZE             4
 #define     MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE)   // maximum number of SPU in horizontal line
+#define     ADI_BUF_STRIDE          (2*MAX_CU_SIZE+1+15)        // alignment to 16 bytes
 
 // ====================================================================================================================
 // Initialize / destroy functions
