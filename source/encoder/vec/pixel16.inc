@@ -310,7 +310,7 @@ void CDECL sad_12_x3(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
         sum2 += abs(m1 - n2);
         sum3 += abs(m1 - n3);
 
-        m1.load_a(piOrg + 4);
+        m1.load(piOrg + 4);
         n1.load(piCur1 + 4);
         n2.load(piCur2 + 4);
         n3.load(piCur3 + 4);
@@ -1006,7 +1006,7 @@ void CDECL sad_12_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
             sum3 += abs(m1 - n3);
             sum4 += abs(m1 - n4);
 
-            m1.load_a(piOrg + col + 4);
+            m1.load(piOrg + col + 4);
             n1.load(piCur1 + col + 4);
             n2.load(piCur2 + col + 4);
             n3.load(piCur3 + col + 4);
