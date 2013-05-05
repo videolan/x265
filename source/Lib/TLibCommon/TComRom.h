@@ -50,7 +50,7 @@
 // Macros
 // ====================================================================================================================
 
-#define     MAX_CU_DEPTH            7                           // log2(LCUSize)
+#define     MAX_CU_DEPTH            6                           // log2(LCUSize)
 #define     MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))         // maximum allowable size of CU
 #define     MIN_PU_SIZE             4
 #define     MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE)   // maximum number of SPU in horizontal line
