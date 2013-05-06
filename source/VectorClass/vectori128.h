@@ -5375,7 +5375,7 @@ static inline Vec16uc & operator /= (Vec16uc & a, Const_int_t<d> b) {
 
 // Shift Vec4ui by compile-time constant
 template <int32_t d>
-static inline Vec4ui shift_right_by_i(Vec4ui const & x) {
+static inline Vec128b shift_right_by_i(Vec128b const & x) {
     const int n = int(d) / 8;
     Static_error_check<((d%8) == 0)> shift_by_non_bytes;
     return _mm_srli_si128(x, n);
@@ -5383,7 +5383,7 @@ static inline Vec4ui shift_right_by_i(Vec4ui const & x) {
 
 // vector operator >> : shift right logical all elements with const bytes (map to PSRLDQ)
 template <int32_t d>
-static inline Vec4ui operator >> (Vec4ui const & a, Const_int_t<d>) {
+static inline Vec128b operator >> (Vec128b const & a, Const_int_t<d>) {
     return shift_right_by_i<d>(a);
 }
 

@@ -116,7 +116,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 im1 = Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 16);
                 im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
-                im1 += (im1 >> const_int(64));
+                im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
                 iSum += toInt32(im1);
                 break;
             //case 64:
@@ -129,7 +129,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
                 im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
                 pix.load(pSrcAbove + 48);
                 im1 += Vec4ui(pix.sad(_mm_setzero_si128()));
-                im1 += (im1 >> const_int(64));
+                im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
                 //im1 += extract_hi64(im1);
                 iSum += toInt32(im1);
                 break;
