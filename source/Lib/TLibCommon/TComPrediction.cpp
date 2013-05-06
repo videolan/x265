@@ -373,7 +373,11 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else if (uiDirMode == DC_IDX)
     {
+#if ENABLE_PRIMITIVES
+        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight, bAbove, bLeft, bFilter);
+#else
         xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, bFilter);
+#endif
     }
     else
     {

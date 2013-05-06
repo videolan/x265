@@ -73,5 +73,6 @@ namespace x265 {
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
     p.getdcval_p = predIntraGetPredValDC;
+    p.getIPredDC = NULL;
 }
 }
