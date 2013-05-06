@@ -45,6 +45,7 @@
 #include "TComYuv.h"
 #include "TComInterpolationFilter.h"
 #include "TShortYUV.h"
+#include "primitives.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -151,35 +152,39 @@ Void TComYuv::copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZo
 
 Void TComYuv::copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx)
 {
-    Int  y;
+    Pel* pDst = m_apiBufY;
+    Pel* pSrc = pcPicYuvSrc->getLumaAddr(iCuAddr, uiAbsZorderIdx);
 
-    Pel* pDst     = m_apiBufY;
-    Pel* pSrc     = pcPicYuvSrc->getLumaAddr(iCuAddr, uiAbsZorderIdx);
+    UInt  iDstStride = getStride();
+    UInt  iSrcStride = pcPicYuvSrc->getStride();
 
-    UInt  iDstStride  = getStride();
-    UInt  iSrcStride  = pcPicYuvSrc->getStride();
-
-    for (y = m_iHeight; y != 0; y--)
+#if ENABLE_PRIMITIVES
+    x265::primitives.cpyblock(m_iWidth, m_iHeight, (pixel*)pDst, iDstStride, (pixel*)pSrc, iSrcStride);
+#else
+    for (Int y = m_iHeight; y != 0; y--)
     {
         ::memcpy(pDst, pSrc, sizeof(Pel) * m_iWidth);
         pDst += iDstStride;
         pSrc += iSrcStride;
     }
+#endif
 }
 
 Void TComYuv::copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx)
 {
-    Int  y;
-
-    Pel* pDstU      = m_apiBufU;
-    Pel* pDstV      = m_apiBufV;
-    Pel* pSrcU      = pcPicYuvSrc->getCbAddr(iCuAddr, uiAbsZorderIdx);
-    Pel* pSrcV      = pcPicYuvSrc->getCrAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* pDstU = m_apiBufU;
+    Pel* pDstV = m_apiBufV;
+    Pel* pSrcU = pcPicYuvSrc->getCbAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* pSrcV = pcPicYuvSrc->getCrAddr(iCuAddr, uiAbsZorderIdx);
 
     UInt  iDstStride = getCStride();
     UInt  iSrcStride = pcPicYuvSrc->getCStride();
 
-    for (y = m_iCHeight; y != 0; y--)
+#if ENABLE_PRIMITIVES
+    x265::primitives.cpyblock(m_iCWidth, m_iCHeight, (pixel*)pDstU, iDstStride, (pixel*)pSrcU, iSrcStride);
+    x265::primitives.cpyblock(m_iCWidth, m_iCHeight, (pixel*)pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
+#else
+    for (Int y = m_iCHeight; y != 0; y--)
     {
         ::memcpy(pDstU, pSrcU, sizeof(Pel) * (m_iCWidth));
         ::memcpy(pDstV, pSrcV, sizeof(Pel) * (m_iCWidth));
@@ -188,6 +193,7 @@ Void TComYuv::copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAb
         pDstU += iDstStride;
         pDstV += iDstStride;
     }
+#endif
 }
 
 Void TComYuv::copyToPartYuv(TComYuv* pcYuvDst, UInt uiDstPartIdx)
