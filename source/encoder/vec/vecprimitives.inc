@@ -36,12 +36,14 @@ namespace {
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
 #if HIGH_BIT_DEPTH
     #include "pixel16.inc"
+    #include "ipfilter16.inc"
 #else
     #include "pixel8.inc"
+    #include "ipfilter8.inc"
 #endif
 #include "pixel.inc"
+#include "ipfilter.inc"
 #include "macroblock.inc"
-#include "interpolationfilter.inc"
 #include "blockcopy.inc"
 #include "intrapred.inc"
 }
