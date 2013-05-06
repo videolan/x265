@@ -154,9 +154,9 @@ static /*inline*/
 void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t iDstStride, int iWidth, int /*iHeight*/)
 {
     pixel* pDst = rpDst;
-    int y, iDstStride2, iSrcStride2;
+    int y;
     pixel pixDC = *pDst;
-    uint16_t pixDCx3 = pixDC * 3 + 2;
+    int pixDCx3 = pixDC * 3 + 2;
 
     // boundary pixels processing
     pDst[0] = (pixel)((pSrc[-iSrcStride] + pSrc[-1] + 2 * pixDC + 2) >> 2);
@@ -326,9 +326,11 @@ void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t i
     }
 #endif
 
-    for (y = 1, iDstStride2 = iDstStride, iSrcStride2 = iSrcStride - 1; y < iWidth; y++, iDstStride2 += iDstStride, iSrcStride2 += iSrcStride)
+    for (y = 1; y < iWidth; y++)
     {
-        pDst[iDstStride2] = (pixel)((pSrc[iSrcStride2] + pixDCx3) >> 2);
+        pDst[iDstStride] = (pixel)((pSrc[iSrcStride - 1] + pixDCx3) >> 2);
+        pSrc += iSrcStride;
+        pDst += iDstStride;
     }
 }
 
