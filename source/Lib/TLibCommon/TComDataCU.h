@@ -242,15 +242,16 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      getPic()                        { return m_pcPic; }
+    TComPic*      getPic()                         { return m_pcPic; }
 
-    TComSlice*    getSlice()                        { return m_pcSlice; }
+    TComSlice*    getSlice()                       { return m_pcSlice; }
 
     UInt&         getAddr()                        { return m_uiCUAddr; }
 
-    UInt&         getZorderIdxInCU()                        { return m_uiAbsIdxInLCU; }
+    UInt&         getZorderIdxInCU()               { return m_uiAbsIdxInLCU; }
 
     UInt          getSCUAddr();
+
     UInt          getCUPelX()                        { return m_uiCUPelX; }
 
     UInt          getCUPelY()                        { return m_uiCUPelY; }

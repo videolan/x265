@@ -135,7 +135,7 @@ public:
     Pel*  getBufV()     { return m_apiPicBufV; }
 
     //  Access starting position of original picture
-    Pel*  getLumaAddr()     { return m_piPicOrgY; }
+    Pel*  getLumaAddr()   { return m_piPicOrgY; }
 
     Pel*  getCbAddr()     { return m_piPicOrgU; }
 
