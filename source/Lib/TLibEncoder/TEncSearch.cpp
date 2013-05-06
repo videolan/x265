@@ -3167,15 +3167,15 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     Int           bestBiPMvpL1 = 0;
     UInt          biPDistTemp = MAX_INT;
 
+    /* TODO: this could be as high as TEncSlice::compressSlice() */
+#if ENABLE_PRIMITIVES
+    TComPicYuv *fenc = pcCU->getSlice()->getPic()->getPicYuvOrg();
+    m_me.setSourcePlanes((pixel*)fenc->getLumaAddr(), (pixel*)fenc->getCbAddr(), (pixel*)fenc->getCrAddr(), fenc->getStride(), fenc->getCStride());
+#endif
+
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
-
-    m_me.setSourcePlanes((pixel*)pcOrgYuv->getLumaAddr(),
-                         (pixel*)pcOrgYuv->getCbAddr(),
-                         (pixel*)pcOrgYuv->getCrAddr(),
-                         pcOrgYuv->getWidth(),
-                         pcOrgYuv->getCWidth());
 
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
     {
@@ -3205,9 +3205,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
 
 #if ENABLE_PRIMITIVES
-        int offset = pcOrgYuv->getLumaAddr(uiPartAddr) - pcOrgYuv->getLumaAddr(0);
-        m_me.setSourcePU(offset, iRoiWidth, iRoiHeight);
-        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, pcOrgYuv->getLumaAddr(uiPartAddr), pcOrgYuv->getStride());
+        Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
+        m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
+        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, PU, fenc->getStride());
 #endif
         Bool bTestNormalMC = true;
 
