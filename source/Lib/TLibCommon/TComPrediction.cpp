@@ -399,7 +399,7 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     else if (uiDirMode == DC_IDX)
     {
         #if ENABLE_PRIMITIVES
-        primitives.getIPredDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
+        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
         #else
         xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
         #endif
