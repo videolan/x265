@@ -49,6 +49,8 @@ const short m_chromaFilter[8][4] =
     { -2, 10, 58, -2 }
 };
 
+#define NTAPS_LUMA        8 ///< Number of taps for luma
+#define NTAPS_CHROMA      4 ///< Number of taps for chroma
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally

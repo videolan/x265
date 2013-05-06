@@ -169,6 +169,8 @@ public:
     Pel* getCbFilterBlock(int ver, int hor) { return m_filteredBlockOrgU[ver][hor]; }
     Pel* getCrFilterBlock(int ver, int hor) { return m_filteredBlockOrgV[ver][hor]; }
 
+    Pel* getLumaFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_filteredBlockOrgY[ver][hor]+m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
+
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
     // ------------------------------------------------------------------------------------------------
