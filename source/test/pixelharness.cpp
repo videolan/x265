@@ -178,6 +178,28 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s
     return true;
 }
 
+bool PixelHarness::check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s_c opt)
+{
+    ALIGN_VAR_16(short, ref_dest[64*64]);
+    ALIGN_VAR_16(short, opt_dest[64*64]);
+    int bx = 64;
+    int by = 64;
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(bx, by, opt_dest, 64, (uint8_t*)pbuf2 + j, 128);
+        ref(bx, by, ref_dest, 64, (uint8_t*)pbuf2 + j, 128);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+            return false;
+
+        j += 4;
+        bx = 4 * ((rand() & 15) + 1);
+        by = 4 * ((rand() & 15) + 1);
+    }
+    return true;
+}
+
 bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64*64]);
@@ -286,6 +308,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.cpyblock_s_c)
+    {
+        if (!check_block_copy_s_c(ref.cpyblock_s_c, opt.cpyblock_s_c))
+        {
+            printf("block copy short_char failed!\n");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -375,6 +405,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(iters,
             opt.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE),
             ref.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE));
+    }
+
+    if (opt.cpyblock_s_c)
+    {
+        printf("s_c   cpy");
+        REPORT_SPEEDUP(iters,
+            opt.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE),
+            ref.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE));
     }
 
     t->Release();

@@ -306,6 +306,18 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, i
         b += strideb;
     }
 }
+
+void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intptr_t strideb)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+            a[x] = (short)b[x];
+
+        a += stridea;
+        b += strideb;
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -609,6 +621,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cpyblock = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;
     p.cpyblock_p_s = blockcopy_p_s;
+    p.cpyblock_s_c = blockcopy_s_c;
 
     // sa8d
     p.sa8d_8x8 = pixel_sa8d_8x8;

@@ -163,6 +163,7 @@ typedef void (CDECL * IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStr
 typedef void (CDECL * blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
+typedef void (CDECL * blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * getIPredDC_p)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/, int blkAboveAvailable, int blkLeftAvailable, int bFilter);
 
 
@@ -186,9 +187,10 @@ struct EncoderPrimitives
     IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];
     IPFilterConvert_p_s ipfilterConvert_p_s;
     IPFilterConvert_s_p ipfilterConvert_s_p;
-    blockcpy_p_p cpyblock;
-    blockcpy_p_s cpyblock_p_s;
-    blockcpy_s_p cpyblock_s_p;
+    blockcpy_p_p cpyblock;     // pixel from pixel
+    blockcpy_p_s cpyblock_p_s; // pixel from short
+    blockcpy_s_p cpyblock_s_p; // short from pixel
+    blockcpy_s_c cpyblock_s_c; // short from unsigned char
     getIPredDC_p getIPredDC;
 };
 
