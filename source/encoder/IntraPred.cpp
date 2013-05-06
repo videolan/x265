@@ -65,6 +65,47 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
 
     return pDcVal;
 }
+
+void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t iDstStride, int iWidth, int iHeight)
+{
+    pixel* pDst = rpDst;
+    intptr_t x, y, iDstStride2, iSrcStride2;
+
+    // boundary pixels processing
+    pDst[0] = (pixel)((pSrc[-iSrcStride] + pSrc[-1] + 2 * pDst[0] + 2) >> 2);
+
+    for (x = 1; x < iWidth; x++)
+    {
+        pDst[x] = (pixel)((pSrc[x - iSrcStride] +  3 * pDst[x] + 2) >> 2);
+    }
+
+    for (y = 1, iDstStride2 = iDstStride, iSrcStride2 = iSrcStride - 1; y < iHeight; y++, iDstStride2 += iDstStride, iSrcStride2 += iSrcStride)
+    {
+        pDst[iDstStride2] = (pixel)((pSrc[iSrcStride2] + 3 * pDst[iDstStride2] + 2) >> 2);
+    }
+}
+
+void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int height, int blkAboveAvailable, int blkLeftAvailable, int bFilter)
+{
+    int k, l;
+    int blkSize        = width;
+    pixel* pDst          = rpDst;
+
+    // Do the DC prediction
+    pixel dcval = (pixel) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+
+    for (k = 0; k < blkSize; k++)
+    {
+        for (l = 0; l < blkSize; l++)
+        {
+            pDst[k * dstStride + l] = dcval;
+        }
+    }
+    if (bFilter && blkAboveAvailable && blkLeftAvailable)
+    {
+        xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
+    }
+}
 }
 
 namespace x265 {
@@ -72,7 +113,6 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.getdcval_p = predIntraGetPredValDC;
-    p.getIPredDC = NULL;
+    p.getIPredDC = xPredIntraDC;
 }
 }

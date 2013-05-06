@@ -163,8 +163,7 @@ typedef void (CDECL * IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStr
 typedef void (CDECL * blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
-typedef pixel (CDECL * getDCVal_p)(pixel* pSrc, intptr_t iSrcStride, intptr_t width, intptr_t height, int bAbove, int bLeft);
-typedef void (CDECL * IPredDC)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/, int blkAboveAvailable, int blkLeftAvailable, int bFilter);
+typedef void (CDECL * getIPredDC_p)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/, int blkAboveAvailable, int blkLeftAvailable, int bFilter);
 
 
 /* Define a structure containing function pointers to optimized encoder
@@ -190,8 +189,7 @@ struct EncoderPrimitives
     blockcpy_p_p cpyblock;
     blockcpy_p_s cpyblock_p_s;
     blockcpy_s_p cpyblock_s_p;
-    getDCVal_p getdcval_p;
-    IPredDC getIPredDC;
+    getIPredDC_p getIPredDC;
 };
 
 /* This copy of the table is what gets used by all by the encoder.

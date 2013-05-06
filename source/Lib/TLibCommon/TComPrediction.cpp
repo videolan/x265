@@ -325,6 +325,7 @@ Void xPredIntraAng(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     }
 }
 
+#if !ENABLE_PRIMITIVES
 Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter)
 {
     Int k, l;
@@ -332,11 +333,7 @@ Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt wid
     Pel* pDst          = rpDst;
 
     // Do the DC prediction
-#if ENABLE_PRIMITIVES
-    Pel dcval = (Pel) primitives.getdcval_p((pixel*)pSrc, srcStride, width, height, (blkAboveAvailable ? 1 : 0), (blkLeftAvailable ? 1 : 0));
-#else
     UChar dcval = (UChar) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
-#endif
 
     for (k = 0; k < blkSize; k++)
     {
@@ -350,6 +347,7 @@ Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt wid
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
     }
 }
+#endif // #if !ENABLE_PRIMITIVES
 
 Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
 {
@@ -400,7 +398,11 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     }
     else if (uiDirMode == DC_IDX)
     {
+        #if ENABLE_PRIMITIVES
+        primitives.getIPredDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
+        #else
         xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
+        #endif
     }
     else
     {
@@ -906,6 +908,7 @@ Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt 
  *
  * This function performs filtering left and top edges of the prediction samples for DC mode (intra coding).
  */
+#if !ENABLE_PRIMITIVES
 Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight)
 {
     Pel* pDst = rpDst;
@@ -924,5 +927,6 @@ Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, In
         pDst[iDstStride2] = (Pel)((pSrc[iSrcStride2] + 3 * pDst[iDstStride2] + 2) >> 2);
     }
 }
+#endif
 
 //! \}
