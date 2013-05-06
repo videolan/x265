@@ -26,15 +26,17 @@
 
 void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
 {
-#if HIGH_BIT_DEPTH
-    p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
-    p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
-    p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
     p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
+    p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;    
     p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
-    p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
+    p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
     p.ipfilterConvert_p_s = filterConvertPelToShort;
     p.ipfilterConvert_s_p = filterConvertShortToPel;
+    p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
+    p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;    
+
+#if HIGH_BIT_DEPTH
+
 #else
     if (&p) return;
 #endif
