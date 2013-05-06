@@ -67,7 +67,7 @@ IntraPredHarness::~IntraPredHarness()
 
 bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt)
 {
-    int j = FENC_STRIDE;
+    int j = ADI_BUF_STRIDE;
 
     for (int i = 0; i <= 100; i++)
     {
