@@ -3207,7 +3207,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if ENABLE_PRIMITIVES
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
-        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, PU, fenc->getStride());
+        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)PU, fenc->getStride());
 #endif
         Bool bTestNormalMC = true;
 
