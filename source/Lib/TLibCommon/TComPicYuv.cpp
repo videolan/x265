@@ -258,8 +258,6 @@ Void TComPicYuv::extendPicBorder()
     xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(),     getHeight(),      m_iLumaMarginX,   m_iLumaMarginY);
     xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
-
-    /* TODO: Here is an excellent place to interpolate HPEL/QPEL planes */
     
     /* Create buffers for Hpel/Qpel Planes */
     for (int i = 0; i < 4; i++)
@@ -278,7 +276,7 @@ Void TComPicYuv::extendPicBorder()
     }
 
     /* Generate H/Q-pel */
-    generateHQpel();    //Untested! Currently generate only HPels 
+    generateHQpel();    
 
     //Extend border. Output is not matching with HM.
     /*for (int i = 0; i < 4; i++)
@@ -470,6 +468,133 @@ Void TComPicYuv::generateHQpel()
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
 #else
     filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
+#endif
+
+    /* Generate QPels */
+    srcPtr = getBufY()+3;
+    intPtr = filteredBlockTmp[1].getLumaAddr()+3;
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width-3, height, m_lumaFilter[1]);
+#else
+    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width-3, height, m_lumaFilter[1]);
+#endif
+
+    srcPtr = getBufY()+3;
+    intPtr = filteredBlockTmp[3].getLumaAddr()+3;  
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width-3, height, m_lumaFilter[3]);
+#else
+    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width-3, height, m_lumaFilter[3]);
+#endif
+
+    // Generate @ 1,1
+    intPtr = filteredBlockTmp[1].getLumaAddr() + 3 * intStride+3;
+    dstPtr = m_filteredBlockBufY[1][1] + 3 * dstStride+3;    
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3, height -3, m_lumaFilter[1]);
+#else
+    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[1]);
+#endif
+
+    // Generate @ 3,1
+    intPtr = filteredBlockTmp[1].getLumaAddr() + 3*intStride + 3;
+    dstPtr = m_filteredBlockBufY[3][1] + 3*dstStride + 3;
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3, height -3, m_lumaFilter[3]);
+#else
+    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[3]);
+#endif
+
+    // Generate @ 2,1
+        intPtr = filteredBlockTmp[1].getLumaAddr() + 3*intStride + 3;
+        dstPtr = m_filteredBlockBufY[2][1] + 3*dstStride + 3;        
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3, height-3, m_lumaFilter[2]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[2]);
+#endif
+
+        // Generate @ 2,3
+        intPtr = filteredBlockTmp[3].getLumaAddr() +  3*intStride + 3;
+        dstPtr = m_filteredBlockBufY[2][3]+3*intStride + 3;
+        
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width-3, height-3, m_lumaFilter[2]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[2]);
+#endif
+
+        // Generate @ 0,1
+        intPtr = filteredBlockTmp[1].getLumaAddr() + 3;
+        dstPtr = m_filteredBlockBufY[0][1] + 3;
+#if ENABLE_PRIMITIVES
+        primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width - 3, height);
+#else
+        filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height);
+#endif
+
+        // Generate @ 0,3
+        intPtr = filteredBlockTmp[3].getLumaAddr() + 3;
+        dstPtr = m_filteredBlockBufY[0][3] + 3;
+#if ENABLE_PRIMITIVES
+        primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width - 3, height);
+#else
+        filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width- 3, height);
+#endif
+
+        // Generate @ 1,2
+        intPtr = filteredBlockTmp[2].getLumaAddr()+3*intStride+3;
+        dstPtr = m_filteredBlockBufY[1][2]+3*dstStride+3;        
+
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3 , height -3, m_lumaFilter[1]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[1]);
+#endif
+
+        // Generate @ 3,2
+        intPtr = filteredBlockTmp[2].getLumaAddr() +3*intStride+3;
+        dstPtr = m_filteredBlockBufY[3][2]+3*dstStride+3;       
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3 , height - 3, m_lumaFilter[3]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[3]);
+#endif
+         // Generate @ 1,0
+        intPtr = filteredBlockTmp[0].getLumaAddr() +3*intStride+3;
+        dstPtr = m_filteredBlockBufY[1][0]+3*dstStride+3;       
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width-3, height-3, m_lumaFilter[1]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[1]);
+#endif
+
+         // Generate @ 3,0
+        intPtr = filteredBlockTmp[0].getLumaAddr()+3*intStride+3;
+        dstPtr = m_filteredBlockBufY[3][0]+3*dstStride+3;       
+#if ENABLE_PRIMITIVES
+        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width - 3, height - 3, m_lumaFilter[3]);
+#else
+        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[3]);
+#endif
+
+// Generate @ 1,3
+    intPtr = filteredBlockTmp[3].getLumaAddr() + 3*intStride+3;
+    dstPtr = m_filteredBlockBufY[1][3]+3*dstStride+3;
+    
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[1]);
+#else
+    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[1]);
+#endif
+
+    // Generate @ 3,3
+    intPtr = filteredBlockTmp[3].getLumaAddr() + 3*intStride+3;
+    dstPtr = m_filteredBlockBufY[3][3]+3*dstStride+3;
+#if ENABLE_PRIMITIVES
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width -3 , height -3, m_lumaFilter[3]);
+#else
+    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width-3, height-3, m_lumaFilter[3]);
 #endif
 }
 
