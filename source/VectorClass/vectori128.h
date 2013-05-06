@@ -5372,9 +5372,21 @@ static inline Vec128b shift_right_by_i(Vec128b const & x) {
     return _mm_srli_si128(x, n);
 }
 
+template <int32_t d>
+static inline Vec8us shift_right_by_i(Vec8us const & x) {
+    Static_error_check<(d<16)> not_support;
+    return _mm_srli_epi16(x, d);
+}
+
 // vector operator >> : shift right logical all elements with const bytes (map to PSRLDQ)
 template <int32_t d>
 static inline Vec128b operator >> (Vec128b const & a, Const_int_t<d>) {
+    return shift_right_by_i<d>(a);
+}
+
+// vector operator >> : shift right logical all elements with const bytes (map to PSRLDQ)
+template <int32_t d>
+static inline Vec8us operator >> (Vec8us const & a, Const_int_t<d>) {
     return shift_right_by_i<d>(a);
 }
 
