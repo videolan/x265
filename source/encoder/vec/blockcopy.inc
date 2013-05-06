@@ -85,37 +85,6 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *sr
     }
 }
 
-void CDECL blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride)
-{
-    if (((size_t)dst | (size_t)src | bx) & 15)
-    {
-        // slow path, irregular memory alignments or sizes
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x++)
-                dst[x] = src[x];
-            src += sstride;
-            dst += dstride;
-        }
-    }
-    else
-    {
-        // fast path, multiples of 8 pixel wide blocks
-        for (int y = 0; y < by; y++)
-        {
-            for (int x = 0; x < bx; x += 16)
-            {
-                Vec16uc word;
-                word.load_a(src + x);
-                extend_low(word).store_a(dst + x);
-                extend_high(word).store_a(dst + x + 8);
-            }
-            src += sstride;
-            dst += dstride;
-        }
-    }
-}
-
 void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
     if (((size_t)dst | (size_t)src | bx) & 15)
@@ -148,6 +117,37 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *sr
 }
 #endif
 
+void CDECL blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
+{
+    if (((size_t)dst | (size_t)src | bx) & 15)
+    {
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+                dst[x] = (short)src[x];
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16uc word;
+                word.load_a(src + x);
+                extend_low(word).store_a(dst + x);
+                extend_high(word).store_a(dst + x + 8);
+            }
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+
 void Setup_Vec_BlockCopyPrimitives(EncoderPrimitives &p)
 {
 #if HIGH_BIT_DEPTH
@@ -155,9 +155,11 @@ void Setup_Vec_BlockCopyPrimitives(EncoderPrimitives &p)
     p.cpyblock = blockcopy_p_p;
     p.cpyblock_s_p = (x265::blockcpy_s_p) blockcopy_p_p;
     p.cpyblock_p_s = (x265::blockcpy_p_s) blockcopy_p_p;
+    p.cpyblock_s_c = (x265::blockcpy_s_c) blockcopy_s_p;
 #else
     p.cpyblock = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;
     p.cpyblock_p_s = blockcopy_p_s;
+    p.cpyblock_s_c = blockcopy_s_p;
 #endif
 }
