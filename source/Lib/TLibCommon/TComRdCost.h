@@ -103,9 +103,16 @@ public:
 class DistParamSSE : public DistParam
 {
 public:
+
     Short* ptr1;
     Short* ptr2;
 };
+
+#define CALCRDCOST(uiBits, uiDistortion, m_dLambda) \
+    (Double)floor((Double)uiDistortion + (Double)((uiBits * m_dLambda + .5))) \
+
+#define CALCRDCOST_SAD(uiBits, uiDistortion, m_dLambda) \
+    (Double)floor((Double)uiDistortion + (Double)((Int)(uiBits * m_dLambda + .5) >> 16)) \
 
 /// RD cost computation class
 class TComRdCost
@@ -123,9 +130,8 @@ private:
     Double                  m_cbDistortionWeight;
     Double                  m_crDistortionWeight;
 #endif
-    Double                  m_dLambda;
+
     Double                  m_sqrtLambda;
-    UInt                    m_uiLambdaMotionSAD;
     UInt                    m_uiLambdaMotionSSE;
     Double                  m_dFrameLambda;
 
@@ -134,6 +140,8 @@ public:
     TComMv                  m_mvPredictor;
     UInt                    m_uiCost;
     Int                     m_iCostScale;
+    Double                  m_dLambda;
+    UInt                    m_uiLambdaMotionSAD;
 
     TComRdCost();
     virtual ~TComRdCost();
@@ -230,7 +238,7 @@ public:
     UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc = DF_SSE);
     UInt   getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc = DF_SSE);
 #endif
-#endif
+#endif // if WEIGHTED_CHROMA_DISTORTION
 
     UInt   getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height);
 }; // END CLASS DEFINITION TComRdCost
