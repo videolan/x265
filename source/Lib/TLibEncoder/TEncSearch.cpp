@@ -3205,8 +3205,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
 
 #if ENABLE_PRIMITIVES
-        // TODO: uiPartAddr is only the PU offset into the CU.  Need CU base address
-        m_me.setSourcePU(uiPartAddr, iRoiWidth, iRoiHeight);
+        int offset = pcOrgYuv->getLumaAddr(uiPartAddr) - pcOrgYuv->getLumaAddr(0);
+        m_me.setSourcePU(offset, iRoiWidth, iRoiHeight);
+        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, pcOrgYuv->getLumaAddr(uiPartAddr), pcOrgYuv->getStride());
 #endif
         Bool bTestNormalMC = true;
 
@@ -3901,8 +3902,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
 #if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)pcPatternKey->getROIY(), pcPatternKey->getPatternLStride());
-
     x265::MotionReference ref;
     ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
     ref.plane[0][0][1] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCbAddr();
