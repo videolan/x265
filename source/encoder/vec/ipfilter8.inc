@@ -24,12 +24,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <assert.h>
-
-#if _MSC_VER
-#pragma warning(disable: 4100) // unreferenced formal parameter
-#endif
-
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally

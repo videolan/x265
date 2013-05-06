@@ -24,8 +24,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <assert.h>
-
 void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
 {
 #if HIGH_BIT_DEPTH
