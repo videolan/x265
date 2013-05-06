@@ -995,11 +995,6 @@ public:
         xmm = _mm_load_si128((__m128i const*)p);
         return *this;
     }
-    // Partial load. Load 4 elements and set the rest to 0(MMX)
-    Vec8s & load_partial4(void const * p) {
-        xmm = _mm_loadl_epi64((__m128i const*)p);
-        return *this;
-    }
     // Partial load. Load n elements and set the rest to 0
     Vec8s & load_partial(int n, void const * p) {
         if      (n >= 8) load(p);
@@ -1016,10 +1011,6 @@ public:
         }
         cutoff(n);
         return *this;
-    }
-    // Partial store. Store 4 elements
-    void store_partial4(void * p) const {
-        _mm_storel_epi64((__m128i*)p, xmm);
     }
     // Partial store. Store n elements
     void store_partial(int n, void * p) const {
@@ -5375,17 +5366,76 @@ static inline Vec16uc & operator /= (Vec16uc & a, Const_int_t<d> b) {
 
 // Shift Vec4ui by compile-time constant
 template <int32_t d>
-static inline Vec4ui shift_right_by_i(Vec4ui const & x) {
+static inline Vec128b shift_right_by_i(Vec128b const & x) {
     const int n = int(d) / 8;
     Static_error_check<((d%8) == 0)> shift_by_non_bytes;
     return _mm_srli_si128(x, n);
 }
 
+template <int32_t d>
+static inline Vec8us shift_right_by_i(Vec8us const & x) {
+    Static_error_check<(d<16)> not_support;
+    return _mm_srli_epi16(x, d);
+}
+
 // vector operator >> : shift right logical all elements with const bytes (map to PSRLDQ)
 template <int32_t d>
-static inline Vec4ui operator >> (Vec4ui const & a, Const_int_t<d>) {
+static inline Vec128b operator >> (Vec128b const & a, Const_int_t<d>) {
     return shift_right_by_i<d>(a);
 }
+
+// vector operator >> : shift right logical all elements with const bytes (map to PSRLDQ)
+template <int32_t d>
+static inline Vec8us operator >> (Vec8us const & a, Const_int_t<d>) {
+    return shift_right_by_i<d>(a);
+}
+
+/*****************************************************************************
+++*
+++*          Vector load_partial: N is a compile-time constant
+++*
+++*****************************************************************************/
+
+template <int32_t d>
+static inline Vec128b load_partial_by_i(void const * p) {
+    Static_error_check<(d==4) || (d==8) || (d==16)> not_support;
+    switch(int(d))
+    {
+        case  4:  return _mm_cvtsi32_si128(*(uint32_t*)p);
+        case  8:  return _mm_loadl_epi64((__m128i*)p);
+        default:  return _mm_loadu_si128((__m128i*)p);
+    }
+}
+
+// Partial load. Load N bytes and set the rest to 0
+template <int32_t d>
+Vec128b load_partial(Const_int_t<d>, void const * p) {
+    return load_partial_by_i<d>(p);
+}
+
+/*****************************************************************************
+*
+*          Vector store_partial: N is a compile-time constant
+*
+*****************************************************************************/
+
+template <int32_t d>
+static inline void store_partial_by_i(void const * p, Vec128b const& a) {
+    Static_error_check<(d==4) || (d==8) || (d==16)> not_support;
+    switch(int(d))
+    {
+        case  4:  *(uint32_t*)p = _mm_cvtsi128_si32(a); break;
+        case  8:  _mm_storel_epi64((__m128i*)p, a);     break;
+        default:  _mm_storeu_si128((__m128i*)p, a);      break;
+    }
+}
+
+// Partial store. Store N bytes and set the rest to 0
+template <int32_t d>
+void store_partial(Const_int_t<d>, void const * p, Vec128b const& a) {
+    store_partial_by_i<d>(p, a);
+}
+
 
 #if _MSC_VER
 #pragma warning(pop)

@@ -26,6 +26,7 @@
 
 #include "primitives.h"
 #include <string.h>
+#include <assert.h>
 
 extern char g_aucConvertToBit[];
 
