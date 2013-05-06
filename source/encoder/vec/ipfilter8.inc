@@ -518,6 +518,3 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
         }
     }
 }
-#if _MSC_VER
-#pragma warning(default: 4100)
-#endif
