@@ -46,15 +46,26 @@ IntraPredHarness::IntraPredHarness()
         pixel_buff[i] = rand() % PIXEL_MAX;
     }
 
+    pixel_out_C   = (pixel*)malloc(ip_t_size * sizeof(pixel));
+    pixel_out_Vec = (pixel*)malloc(ip_t_size * sizeof(pixel));
+
+    if (!pixel_out_C || !pixel_out_Vec)
+    {
+        fprintf(stderr, "init_IntraPred_buffers: malloc failed, unable to initiate tests!\n");
+        exit(-1);
+    }
+
     initROM();
 }
 
 IntraPredHarness::~IntraPredHarness()
 {
     free(pixel_buff);
+    free(pixel_out_C);
+    free(pixel_out_Vec);
 }
 
-bool IntraPredHarness::check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::getDCVal_p opt)
+bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt)
 {
     int j = FENC_STRIDE;
 
@@ -63,16 +74,23 @@ bool IntraPredHarness::check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::ge
         int blkAboveAvailable = rand() & 1;
         int blkLeftAvailable = rand() & 1;
         int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
+        int rand_filter = rand() & 1;
 
         // The Left and Above can't both be false
         if (!blkLeftAvailable)
             blkAboveAvailable = 1;
 
-        pixel val_o = opt(pixel_buff + j, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
-        pixel val_r = ref(pixel_buff + j, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable);
+        memset(pixel_out_Vec, 0xCD, ip_t_size);      // Initialize output buffer to zero
+        memset(pixel_out_C, 0xCD, ip_t_size);        // Initialize output buffer to zero
 
-        if (val_o != val_r)
-            return false;
+        opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
+        ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
+
+        for( int k=0; k<rand_width; k++ )
+        {
+            if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, rand_width))
+                return false;
+        }
 
         j += FENC_STRIDE;
     }
@@ -82,11 +100,11 @@ bool IntraPredHarness::check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::ge
 
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    if (opt.getdcval_p)
+    if (opt.getIPredDC)
     {
-        if (!check_getDCVal_p_primitive(ref.getdcval_p, opt.getdcval_p))
+        if (!check_getIPredDC_primitive(ref.getIPredDC, opt.getIPredDC))
         {
-            printf("intrapred_getDCVal_pel failed\n");
+            printf("intrapred_getIPredDC_pel failed\n");
             return false;
         }
     }
@@ -105,16 +123,29 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     int blkAboveAvailable = 1;
     int blkLeftAvailable = 1;
 
-    if (opt.getdcval_p)
+    if (opt.getIPredDC)
     {
-        printf("intrapred_getDCVal_pel");
+        printf("IPred_getIPredDC_pel[filter=0]");
         REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getdcval_p(pixel_buff + srcStride, srcStride,
+                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
+                                      pixel_out_Vec, FENC_STRIDE,
                                       width, width,
-                                      blkAboveAvailable, blkLeftAvailable),
-                       ref.getdcval_p(pixel_buff + srcStride, srcStride,
+                                      blkAboveAvailable, blkLeftAvailable, 0),
+                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
+                                      pixel_out_C, FENC_STRIDE,
                                       width, width,
-                                      blkAboveAvailable, blkLeftAvailable)
+                                      blkAboveAvailable, blkLeftAvailable, 0)
+                       );
+        printf("IPred_getIPredDC_pel[filter=1]");
+        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
+                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
+                                      pixel_out_Vec, FENC_STRIDE,
+                                      width, width,
+                                      blkAboveAvailable, blkLeftAvailable, 1),
+                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
+                                      pixel_out_C, FENC_STRIDE,
+                                      width, width,
+                                      blkAboveAvailable, blkLeftAvailable, 1)
                        );
     }
 

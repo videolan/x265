@@ -32,12 +32,14 @@ class IntraPredHarness : public TestHarness
 protected:
 
     pixel *pixel_buff;
+    pixel *pixel_out_C;
+    pixel *pixel_out_Vec;
 
     pixel *IP_vec_output_p, *IP_C_output_p;
 
     int ip_t_size;
 
-    bool check_getDCVal_p_primitive(x265::getDCVal_p ref, x265::getDCVal_p opt);
+    bool check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt);
 
 public:
 
