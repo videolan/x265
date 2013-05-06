@@ -38,8 +38,7 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
         switch( iWidth )
         {
             case 4:
-                m0.load_partial4(pSrcAbove);
-                sumAbove = m0;
+                sumAbove = load_partial(const_int(8), pSrcAbove);
                 break;
             case 8:
                 m0.load(pSrcAbove);
