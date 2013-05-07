@@ -68,13 +68,9 @@ private:
     Pel*  m_piPicOrgU;
     Pel*  m_piPicOrgV;
 
-    /* Pointers to HPel/ QPel planes */
+    /* Pointers to Luma HPel/ QPel planes */
     Pel* m_filteredBlockBufY[4][4];
-    Pel* m_filteredBlockBufU[4][4];
-    Pel* m_filteredBlockBufV[4][4];
     Pel* m_filteredBlockOrgY[4][4];
-    Pel* m_filteredBlockOrgU[4][4];
-    Pel* m_filteredBlockOrgV[4][4];
 
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -168,15 +164,7 @@ public:
     /* Access functions for m_filteredBlock */
     Pel* getLumaFilterBlock(int ver, int hor) { return m_filteredBlockOrgY[ver][hor]; }
 
-    Pel* getCbFilterBlock(int ver, int hor) { return m_filteredBlockOrgU[ver][hor]; }
-
-    Pel* getCrFilterBlock(int ver, int hor) { return m_filteredBlockOrgV[ver][hor]; }
-
     Pel* getLumaFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_filteredBlockOrgY[ver][hor] + m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
-
-    Pel* getCbFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_filteredBlockOrgU[ver][hor] + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
-
-    Pel* getCrFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_filteredBlockOrgV[ver][hor] + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
