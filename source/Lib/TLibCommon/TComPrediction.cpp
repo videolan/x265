@@ -598,44 +598,6 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Int srcStride = refPic->getStride();
 
     filterCopy(src, refPic->getStride(), dst, dstStride, width, height);
-
-/*  //Original HM code
-    if (yFrac == 0)
-    {
-        m_if.filterHorLuma(ref, refStride, dst, dstStride, width, height, xFrac,       !bi);
-    }
-    else if (xFrac == 0)
-    {
-        m_if.filterVerLuma(ref, refStride, dst, dstStride, width, height, yFrac, true, !bi);
-    }
-    else
-    {
-        Int tmpStride = width;
-        Int filterSize = NTAPS_LUMA;
-        Int halfFilterSize = (filterSize >> 1);
-
-        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-
-        m_if.filterHorLuma(ref - (halfFilterSize - 1) * refStride,
-                           refStride,
-                           tmp,
-                           tmpStride,
-                           width,
-                           height + filterSize - 1,
-                           xFrac,
-                           false);
-        m_if.filterVerLuma(tmp + (halfFilterSize - 1) * tmpStride,
-                           tmpStride,
-                           dst,
-                           dstStride,
-                           width,
-                           height,
-                           yFrac,
-                           false,
-                           !bi);
-        free(tmp);
-    }
-*/
 }
 
 /**

@@ -786,54 +786,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
 
     return uiDistBest;
 
-    //Original HM code
-
-    /*
-    UInt  uiDist;
-    UInt  uiDistBest  = MAX_UINT;
-    UInt  uiDirecBest = 0;
-
-    Pel*  piRefPos;
-    Int iRefStride = m_filteredBlock[0][0].getStride();
-
-    m_pcRdCost->setDistParam(pcPatternKey, m_filteredBlock[0][0].getLumaAddr(), iRefStride, 1, m_cDistParam, m_pcEncCfg->getUseHADME());
-
-    const TComMv* pcMvRefine = (iFrac == 2 ? s_acMvRefineH : s_acMvRefineQ);
-
-    for (UInt i = 0; i < 9; i++)
-    {
-        TComMv cMvTest = pcMvRefine[i];
-        cMvTest += baseRefMv;
-
-        Int horVal = cMvTest.getHor() * iFrac;
-        Int verVal = cMvTest.getVer() * iFrac;
-        piRefPos = m_filteredBlock[verVal & 3][horVal & 3].getLumaAddr();
-        if (horVal == 2 && (verVal & 1) == 0)
-            piRefPos += 1;
-        if ((horVal & 1) == 0 && verVal == 2)
-            piRefPos += iRefStride;
-
-        cMvTest = pcMvRefine[i];
-        cMvTest += rcMvFrac;
-
-        setDistParamComp(0); // Y component
-
-        m_cDistParam.pCur = piRefPos;
-        m_cDistParam.bitDepth = g_bitDepthY;
-        uiDist = m_cDistParam.DistFunc(&m_cDistParam);
-        x264_cpu_emms();
-        uiDist += m_pcRdCost->getCost(cMvTest.getHor(), cMvTest.getVer());
-
-        if (uiDist < uiDistBest)
-        {
-            uiDistBest  = uiDist;
-            uiDirecBest = i;
-        }
-    }
-
-    rcMvFrac = pcMvRefine[uiDirecBest];
-
-    return uiDistBest; */
 }
 
 Void TEncSearch::xEncSubdivCbfQT(TComDataCU* pcCU,
@@ -4301,43 +4253,6 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
     rcMvQter <<= 1;
 
     ruiCost = xPatternRefinement(pcPatternKey, baseRefMv, 1, rcMvQter, refPic, iOffset, pcCU, uiPartAddr);
-
-    //Original HM Code
-
-    /*
-    //  Reference pattern initialization (integer scale)
-    TComPattern cPatternRoi;
-    Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
-
-    cPatternRoi.initPattern(piRefY +  iOffset,
-                            NULL,
-                            NULL,
-                            pcPatternKey->getROIYWidth(),
-                            pcPatternKey->getROIYHeight(),
-                            iRefStride,
-                            0, 0);
-
-    //  Half-pel refinement
-    xExtDIFUpSamplingH(&cPatternRoi, biPred);
-
-    TComMv baseRefMv(0, 0);
-     rcMvHalf = *pcMvInt;
-    rcMvHalf <<= 1;
-
-    ruiCost = xPatternRefinement(pcPatternKey, baseRefMv, 2, rcMvHalf);
-
-    m_pcRdCost->setCostScale(0);
-
-    xExtDIFUpSamplingQ(&cPatternRoi, rcMvHalf, biPred);
-    baseRefMv = rcMvHalf;
-    baseRefMv <<= 1;
-
-    rcMvQter = *pcMvInt;
-    rcMvQter <<= 1;                         // for mv-cost
-    rcMvQter += rcMvHalf;
-    rcMvQter <<= 1;
-    ruiCost = xPatternRefinement(pcPatternKey, baseRefMv, 1, rcMvQter);
- */
 }
 
 /** encode residual and calculate rate-distortion for a CU block

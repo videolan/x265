@@ -153,11 +153,6 @@ public:
 protected:
 
     /// sub-function for motion vector refinement used in fractional-pel accuracy
-
-    /* UInt  xPatternRefinement(TComPattern* pcPatternKey,
-                             TComMv baseRefMv,
-                             Int iFrac, TComMv& rcMvFrac); */
-
     UInt  xPatternRefinement(TComPattern * pcPatternKey,
                              TComMv baseRefMv,
                              Int iFrac, TComMv & rcMvFrac, TComPicYuv * refPic, Int offset, TComDataCU * pcCU, UInt);
