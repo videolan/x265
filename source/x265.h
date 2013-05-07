@@ -111,6 +111,7 @@ typedef struct
     int       m_useTransformSkip;                 ///< flag for enabling intra transform skipping
     int       m_useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
     int       m_enableAMP;
+    int       m_enableAMPRefine;
 
     // coding quality
     int       m_iQP;                              ///< QP value of key-picture (integer)

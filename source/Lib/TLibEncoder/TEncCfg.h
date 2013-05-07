@@ -139,6 +139,7 @@ protected:
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
+    Bool      m_useAMPRefine;
 
     //======= Transform =============
     UInt      m_uiQuadtreeTULog2MaxSize;
@@ -391,6 +392,8 @@ public:
     Void      setQuadtreeTUMaxDepthIntra(UInt u)      { m_uiQuadtreeTUMaxDepthIntra = u; }
 
     Void setUseAMP(Bool b) { m_useAMP = b; }
+
+    Void setUseAMPRefine(Bool b) { m_useAMPRefine = b; }
 
     //====== Loop/Deblock Filter ========
     Void      setLoopFilterDisable(Bool b)      { m_bLoopFilterDisable       = b; }
