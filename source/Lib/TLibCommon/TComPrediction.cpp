@@ -166,7 +166,8 @@ Pel CDECL predIntraGetPredValDC(Pel* pSrc, intptr_t iSrcStride, intptr_t iWidth,
 
     return pDcVal;
 }
-#endif
+
+#endif // if !ENABLE_PRIMITIVES
 
 // Function for deriving the angular Intra predictions
 
@@ -333,7 +334,7 @@ Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt wid
     Pel* pDst          = rpDst;
 
     // Do the DC prediction
-    UChar dcval = (UChar) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+    UChar dcval = (UChar)predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
 
     for (k = 0; k < blkSize; k++)
     {
@@ -342,11 +343,13 @@ Void xPredIntraDC(Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt wid
             pDst[k * dstStride + l] = dcval;
         }
     }
+
     if (bFilter && blkAboveAvailable && blkLeftAvailable)
     {
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
     }
 }
+
 #endif // #if !ENABLE_PRIMITIVES
 
 Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
@@ -398,11 +401,11 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     }
     else if (uiDirMode == DC_IDX)
     {
-        #if ENABLE_PRIMITIVES
+#if ENABLE_PRIMITIVES
         primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
-        #else
+#else
         xPredIntraDC(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
-        #endif
+#endif
     }
     else
     {
@@ -591,66 +594,10 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Int xFrac = mv->getHor() & 0x3;
     Int yFrac = mv->getVer() & 0x3;
 
-#if ENABLE_PRIMITIVES
-    if (yFrac == 0)
-    {
-        if (xFrac != 0)
-        {
-            primitives.ipFilter_p_p[FILTER_H_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[xFrac]);
-        }
-        else
-        {
-            filterCopy(ref, refStride, dst, dstStride, width, height);
-        }
-    }
-    else if (xFrac == 0)
-    {
-        primitives.ipFilter_p_p[FILTER_V_P_P_8](g_bitDepthY, (pixel*)ref, refStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
-    }
-    else
-    {
-        Int tmpStride = width;
-        Int filterSize = NTAPS_LUMA;
-        Int halfFilterSize = (filterSize >> 1);
+    Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Int srcStride = refPic->getStride();
 
-        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-
-        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
-
-        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride, tmpStride, (pixel*)dst, dstStride, width, height, m_lumaFilter[yFrac]);
-
-        free(tmp);
-    }
-#else // if ENABLE_PRIMITIVES
-    if (yFrac == 0)
-    {
-        if (xFrac != 0)
-        {
-            filterHorizontal_pel_pel<8>(g_bitDepthY, ref, refStride, dst, dstStride, width, height, m_lumaFilter[xFrac]);
-        }
-        else
-        {
-            filterCopy(ref, refStride, dst, dstStride, width, height);
-        }
-    }
-    else if (xFrac == 0)
-    {
-        filterVertical_pel_pel<8>(g_bitDepthY, ref, refStride, dst, dstStride, width, height, m_lumaFilter[yFrac]);
-    }
-    else
-    {
-        Int tmpStride = width;
-        Int filterSize = NTAPS_LUMA;
-        Int halfFilterSize = (filterSize >> 1);
-
-        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-
-        filterHorizontal_pel_short<8>(g_bitDepthY, ref - (halfFilterSize - 1) * refStride,  refStride, tmp, tmpStride, width, height + filterSize - 1, m_lumaFilter[xFrac]);
-        filterVertical_short_pel<8>(g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride,  tmpStride, dst, dstStride, width,  height, m_lumaFilter[yFrac]);
-
-        free(tmp);
-    }
-#endif // if ENABLE_PRIMITIVES
+    filterCopy(src, refPic->getStride(), dst, dstStride, width, height);
 
 /*  //Original HM code
     if (yFrac == 0)
@@ -729,6 +676,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     Int     extStride = cxWidth;
     Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
+
 #if ENABLE_PRIMITIVES
     if (yFrac == 0)
     {
@@ -861,7 +809,7 @@ Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt 
 
     Int k, l, bottomLeft, topRight;
     Int horPred;
-    Int leftColumn[MAX_CU_SIZE+1], topRow[MAX_CU_SIZE+1], bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
+    Int leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1], bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     UInt blkSize = width;
     UInt offset2D = width;
     UInt shift1D = g_aucConvertToBit[width] + 2;
@@ -927,6 +875,7 @@ Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, In
         pDst[iDstStride2] = (Pel)((pSrc[iSrcStride2] + 3 * pDst[iDstStride2] + 2) >> 2);
     }
 }
-#endif
+
+#endif // if !ENABLE_PRIMITIVES
 
 //! \}

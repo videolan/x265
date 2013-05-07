@@ -153,9 +153,14 @@ public:
 protected:
 
     /// sub-function for motion vector refinement used in fractional-pel accuracy
-    UInt  xPatternRefinement(TComPattern* pcPatternKey,
+
+    /* UInt  xPatternRefinement(TComPattern* pcPatternKey,
                              TComMv baseRefMv,
-                             Int iFrac, TComMv& rcMvFrac);
+                             Int iFrac, TComMv& rcMvFrac); */
+
+    UInt  xPatternRefinement(TComPattern * pcPatternKey,
+                             TComMv baseRefMv,
+                             Int iFrac, TComMv & rcMvFrac, TComPicYuv * refPic, Int offset, TComDataCU * pcCU, UInt);
 
     typedef struct
     {
@@ -185,32 +190,32 @@ public:
     Void  estIntraPredQT(TComDataCU* pcCU,
                          TComYuv*    pcOrgYuv,
                          TComYuv*    pcPredYuv,
-                         TShortYUV*    pcResiYuv,
+                         TShortYUV*  pcResiYuv,
                          TComYuv*    pcRecoYuv,
                          UInt&       ruiDistC,
                          Bool        bLumaOnly);
     Void  estIntraPredChromaQT(TComDataCU* pcCU,
                                TComYuv*    pcOrgYuv,
                                TComYuv*    pcPredYuv,
-                               TShortYUV*    pcResiYuv,
+                               TShortYUV*  pcResiYuv,
                                TComYuv*    pcRecoYuv,
                                UInt        uiPreCalcDistC);
 
     /// encoder estimation - inter prediction (non-skip)
     Void predInterSearch(TComDataCU* pcCU,
-                         TComYuv* pcOrgYuv,
-                         TComYuv*& rpcPredYuv,
+                         TComYuv*    pcOrgYuv,
+                         TComYuv*&   rpcPredYuv,
                          TShortYUV*& rpcResiYuv,
-                         TComYuv*& rpcRecoYuv,
-                         Bool bUseRes = false,
-                         Bool bUseMRG = false);
+                         TComYuv*&   rpcRecoYuv,
+                         Bool        bUseRes = false,
+                         Bool        bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
     Void encodeResAndCalcRdInterCU(TComDataCU* pcCU,
                                    TComYuv*    pcYuvOrg,
                                    TComYuv*    pcYuvPred,
-                                   TShortYUV*&   rpcYuvResi,
-                                   TShortYUV*&   rpcYuvResiBest,
+                                   TShortYUV*& rpcYuvResi,
+                                   TShortYUV*& rpcYuvResiBest,
                                    TComYuv*&   rpcYuvRec,
                                    Bool        bSkipRes);
 
@@ -259,7 +264,7 @@ protected:
                               UInt        uiAbsPartIdx,
                               TComYuv*    pcOrgYuv,
                               TComYuv*    pcPredYuv,
-                              TShortYUV*    pcResiYuv,
+                              TShortYUV*  pcResiYuv,
                               UInt&       ruiDist,
                               Int         default0Save1Load2 = 0);
     Void  xIntraCodingChromaBlk(TComDataCU* pcCU,
@@ -267,7 +272,7 @@ protected:
                                 UInt        uiAbsPartIdx,
                                 TComYuv*    pcOrgYuv,
                                 TComYuv*    pcPredYuv,
-                                TShortYUV*    pcResiYuv,
+                                TShortYUV*  pcResiYuv,
                                 UInt&       ruiDist,
                                 UInt        uiChromaId,
                                 Int         default0Save1Load2 = 0);
@@ -297,7 +302,7 @@ protected:
                                     UInt        uiAbsPartIdx,
                                     TComYuv*    pcOrgYuv,
                                     TComYuv*    pcPredYuv,
-                                    TShortYUV*    pcResiYuv,
+                                    TShortYUV*  pcResiYuv,
                                     UInt&       ruiDist);
     Void  xSetIntraResultChromaQT(TComDataCU* pcCU,
                                   UInt        uiTrDepth,
@@ -326,13 +331,13 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     Void xEstimateMvPredAMVP(TComDataCU* pcCU,
-                             TComYuv* pcOrgYuv,
-                             UInt uiPartIdx,
-                             RefPicList eRefPicList,
-                             Int iRefIdx,
-                             TComMv& rcMvPred,
-                             Bool bFilled = false,
-                             UInt* puiDistBiP = NULL);
+                             TComYuv*    pcOrgYuv,
+                             UInt        uiPartIdx,
+                             RefPicList  eRefPicList,
+                             Int         iRefIdx,
+                             TComMv&     rcMvPred,
+                             Bool        bFilled = false,
+                             UInt*       puiDistBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* pcCU,
                        RefPicList  eRefPicList,
@@ -343,32 +348,32 @@ protected:
                        UInt&       ruiCost);
 
     UInt xGetTemplateCost(TComDataCU* pcCU,
-                          UInt uiPartIdx,
-                          UInt uiPartAddr,
-                          TComYuv* pcOrgYuv,
-                          TComYuv* pcTemplateCand,
-                          TComMv cMvCand,
-                          Int iMVPIdx,
-                          Int iMVPNum,
-                          RefPicList eRefPicList,
-                          Int iRefIdx,
-                          Int iSizeX,
-                          Int iSizeY);
+                          UInt        uiPartIdx,
+                          UInt        uiPartAddr,
+                          TComYuv*    pcOrgYuv,
+                          TComYuv*    pcTemplateCand,
+                          TComMv      cMvCand,
+                          Int         iMVPIdx,
+                          Int         iMVPNum,
+                          RefPicList  eRefPicList,
+                          Int         iRefIdx,
+                          Int         iSizeX,
+                          Int         iSizeY);
 
     Void xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst);
     UInt xGetMvpIdxBits(Int iIdx, Int iNum);
     Void xGetBlkBits(PartSize  eCUMode, Bool bPSlice, Int iPartIdx,  UInt uiLastMode, UInt uiBlkBit[3]);
 
-    Void xMergeEstimation(TComDataCU* pcCU,
-                          TComYuv* pcYuvOrg,
-                          Int iPartIdx,
-                          UInt& uiInterDir,
+    Void xMergeEstimation(TComDataCU*  pcCU,
+                          TComYuv*     pcYuvOrg,
+                          Int          iPartIdx,
+                          UInt&        uiInterDir,
                           TComMvField* pacMvField,
-                          UInt& uiMergeIndex,
-                          UInt& ruiCost,
+                          UInt&        uiMergeIndex,
+                          UInt&        ruiCost,
                           TComMvField* cMvFieldNeighbours,
-                          UChar* uhInterDirNeighbours,
-                          Int& numValidMergeCand);
+                          UChar*       uhInterDirNeighbours,
+                          Int&         numValidMergeCand);
 
     Void xRestrictBipredMergeCand(TComDataCU*  pcCU,
                                   UInt         puIdx,
@@ -431,7 +436,7 @@ protected:
                                TComMv& rcMvHalf,
                                TComMv& rcMvQter,
                                UInt& ruiCost
-                               , Bool biPred);
+                               , Bool biPred, TComPicYuv* refPic, UInt uiPartAddr);
 
     Void xExtDIFUpSamplingH(TComPattern* pcPattern, Bool biPred);
     Void xExtDIFUpSamplingQ(TComPattern* pcPatternKey, TComMv halfPelRef, Bool biPred);
@@ -455,9 +460,9 @@ protected:
                              UInt        uiQp,
                              UInt        uiTrMode,
                              UInt&       ruiBits,
-                             TShortYUV*&   rpcYuvRec,
+                             TShortYUV*& rpcYuvRec,
                              TComYuv*    pcYuvPred,
-                             TShortYUV*&   rpcYuvResi);
+                             TShortYUV*& rpcYuvResi);
 
     Void  setWpScalingDistParam(TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur);
     inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp; }
