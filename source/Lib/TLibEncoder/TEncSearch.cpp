@@ -3891,7 +3891,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     Pel*        piRefY      = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
     Int         iRefStride  = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getStride();
 
-    TComPicYuv* refPic = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec(); //For testing new generateHpel
+    TComPicYuv* refPic = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
 
     TComMv      cMvPred = *pcMvPred;
 
@@ -5643,7 +5643,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 #else
     filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[3]);
 #endif
-//------
+
     // Generate @ 1,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[1][1].getLumaAddr();
@@ -5656,7 +5656,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
 #else
     filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
 #endif
-//-------
+
     // Generate @ 3,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[3][1].getLumaAddr();

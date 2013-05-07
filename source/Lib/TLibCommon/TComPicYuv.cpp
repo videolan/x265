@@ -308,8 +308,8 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int i
 
 Void TComPicYuv::generateLumaHQpel()
 {
-    Int width      = m_iPicWidth; // + (m_iLumaMarginX << 1)-8;
-    Int height     =  m_iPicHeight; //+ (m_iLumaMarginY << 1)-8;
+    Int width      = m_iPicWidth; 
+    Int height     =  m_iPicHeight; 
     Int srcStride  =  getStride();
 
     int tmpMarginX = 4; //Generate subpels for entire frame with a margin of tmpMargin
