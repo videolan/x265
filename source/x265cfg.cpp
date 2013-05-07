@@ -384,6 +384,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
         // Coding tools
         ("AMP",                      m_enableAMP,                 1,  "Enable asymmetric motion partitions")
+        ("AMP_REFINE",               m_enableAMPRefine,          1,  "Enable asymmetric refinement motion partitions like include Nx2N and 2NxN")
         ("TransformSkip",            m_useTransformSkip,          0,  "Intra transform skipping")
         ("TransformSkipFast",        m_useTransformSkipFast,      0,  "Fast intra transform skipping")
         ("SAO",                      m_bUseSAO,                   1,  "Enable Sample Adaptive Offset")

@@ -121,6 +121,7 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setMaxTempLayer(m_maxTempLayer);
     m_cTEncTop.setUseAMP(m_enableAMP);
+    m_cTEncTop.setUseAMPRefine(m_enableAMPRefine);
 
     //===== Slice ========
 

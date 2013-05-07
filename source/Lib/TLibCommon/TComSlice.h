@@ -905,6 +905,7 @@ private:
     UInt        m_pcmLog2MaxSize;
     UInt        m_uiPCMLog2MinSize;
     Bool        m_useAMP;
+    Bool        m_useAMPRefine;
 
     // Parameter
     Int         m_bitDepthY;
@@ -926,6 +927,7 @@ private:
     UInt        m_uiMaxTrSize;
 
     Int m_iAMPAcc[MAX_CU_DEPTH];
+    Int m_iAMPRefineAcc[MAX_CU_DEPTH];
     Bool        m_bUseSAO;
 
     Bool        m_bTemporalIdNestingFlag; // temporal_id_nesting_flag
@@ -1032,6 +1034,10 @@ public:
 
     Void setUseAMP(Bool b) { m_useAMP = b; }
 
+    Bool getUseAMPRefine() { return m_useAMPRefine; }
+
+    Void setUseAMPRefine(Bool b) { m_useAMPRefine = b; }
+
     Void setQuadtreeTULog2MaxSize(UInt u) { m_uiQuadtreeTULog2MaxSize = u;    }
 
     UInt getQuadtreeTULog2MaxSize()         { return m_uiQuadtreeTULog2MaxSize; }
@@ -1077,6 +1083,10 @@ public:
     Int       getAMPAcc(UInt uiDepth) { return m_iAMPAcc[uiDepth]; }
 
     Void      setAMPAcc(UInt uiDepth, Int iAccu) { assert(uiDepth < g_uiMaxCUDepth);  m_iAMPAcc[uiDepth] = iAccu; }
+
+    Int       getAMPRefineAcc(UInt uiDepth) { return m_iAMPRefineAcc[uiDepth]; }
+
+    Void      setAMPRefineAcc(UInt uiDepth, Int iAccu) { assert(uiDepth < g_uiMaxCUDepth);  m_iAMPRefineAcc[uiDepth] = iAccu; }
 
     // Bit-depth
     Int      getBitDepthY() { return m_bitDepthY; }

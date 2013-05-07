@@ -539,29 +539,36 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                         }
                     }
 
-                    // 2NxN, Nx2N
-                    if (doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
+                    if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
+                    {    
+                        //assert(0);
+                        // 2NxN, Nx2N
+                        if (doNotBlockPu)
+                            {
+                                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
+                                rpcTempCU->initEstData(uiDepth, iQP);
+                                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
+                                    {
+                                        doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
+                                    }
+                            }
+                        if (doNotBlockPu)
+                            {
+                                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
+                                rpcTempCU->initEstData(uiDepth, iQP);
+                                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
+                                {
+                                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
+                                }
+                            
+                            }
                     }
-                    if (doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
-                    }
+
 
                     //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
                     if (pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth))
                     {
+                        //assert(0);
                         Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
                         Bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
 
