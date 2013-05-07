@@ -17,7 +17,6 @@ add_executable(TestBench
     testbench.cpp 
     timer.cpp testharness.h
     pixelharness.cpp pixelharness.h
-    filterharness.cpp filterharness.h
     mbdstharness.cpp mbdstharness.h
     ipfilterharness.cpp ipfilterharness.h
     intrapredharness.cpp intrapredharness.h)

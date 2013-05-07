@@ -25,7 +25,6 @@
 
 #include "primitives.h"
 #include "pixelharness.h"
-#include "filterharness.h"
 #include "mbdstharness.h"
 #include "ipfilterharness.h"
 #include "intrapredharness.h"
@@ -82,7 +81,6 @@ int main(int argc, char *argv[])
     srand(seed);
 
     PixelHarness  HPixel;
-    FilterHarness HFilter;
     MBDstHarness  HMBDist;
     IPFilterHarness HIPFilter;
     IntraPredHarness HIPred;
@@ -91,7 +89,6 @@ int main(int argc, char *argv[])
     TestHarness *harness[] =
     {
         &HPixel,
-        &HFilter,
         &HMBDist,
         &HIPFilter,
         &HIPred
