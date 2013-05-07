@@ -33,6 +33,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
 {
     int row, col;
     int cstride =  srcStride;
+
     src -= (N / 2 - 1) * cstride;
     int offset;
     short maxVal;
@@ -52,6 +53,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
         cm[i][2] = coeff[i];
         cm[i][3] = coeff[i];
     }
+
     for (row = 0; row < block_height; row++)
     {
         for (col = 0; col < block_width - 7; col += 8)
@@ -142,6 +144,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             sum_uc = compress(sum, vec_zero);
             sum_uc.store_partial(8, dst + col);
         }
+
         //Handle the case when block_width is not multiple of 8
         for (; col < block_width; col += 4)
         {
@@ -206,8 +209,209 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             Vec8s maxVal_v(maxVal);
             sum = min(sum, maxVal_v);
             sum_uc = compress(sum, vec_zero);
-            sum_uc.store_partial(block_width - col, dst + col);           
+            sum_uc.store_partial(block_width - col, dst + col);
         }
+
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
+template<int N>
+void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+{
+    int row, col;
+
+    int cstride =  srcStride;
+
+    src -= (N / 2 - 1) * cstride;
+
+    int offset;
+    short maxVal;
+    //int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_FILTER_PREC;
+
+    offset = 1 << (shift - 1);
+    maxVal = (1 << bitDepth) - 1;
+
+    short cm[8][8];
+    for (int i = 0; i < N; i++)
+    {
+        cm[i][0] = coeff[i];
+        cm[i][1] = coeff[i];
+        cm[i][2] = coeff[i];
+        cm[i][3] = coeff[i];
+        cm[i][4] = coeff[i];
+        cm[i][5] = coeff[i];
+        cm[i][6] = coeff[i];
+        cm[i][7] = coeff[i];
+    }
+
+    for (row = 0; row < block_height; row++)
+    {
+        for (col = 0; col < block_width - 15; col += 16)
+        {
+            Vec16uc row0, row1, row2, row3, row4, row5, row6, row7, sum;
+            Vec8s row0_first, row0_last, row1_first, row1_last;
+            Vec8s c0, c1, c2, c3, c4, c5, c6, c7;
+            Vec8s  sum_first, sum_last;
+
+            row0.load(&src[col]);
+            row1.load(&src[col + cstride]);
+
+            c0.load(cm[0]);
+            c1.load(cm[1]);
+
+            row0_first = extend_low(row0);
+            row1_first = extend_low(row1);
+            row0_last  = extend_high(row0);
+            row1_last  = extend_high(row1);
+
+            row0_first = row0_first * c0;
+            row1_first = row1_first * c1;
+            row0_last = row0_last * c0;
+            row1_last = row1_last * c1;
+
+            sum_first = row0_first + row1_first;
+            sum_last = row0_last + row1_last;
+
+            row2.load(&src[col + 2 * cstride]);
+            row3.load(&src[col + 3 * cstride]);
+
+            c2.load(cm[2]);
+            c3.load(cm[3]);
+
+            row0_first = extend_low(row2);
+            row0_last = extend_high(row2);
+            row0_first = row0_first * c2;
+            row0_last = row0_last * c2;
+            row1_first = extend_low(row3);
+            row1_last = extend_high(row3);
+            row1_first = row1_first * c3;
+            row1_last = row1_last * c3;
+            sum_first += row0_first + row1_first;
+            sum_last += row0_last + row1_last;
+
+            if (N == 8)
+            {
+                row4.load(&src[col + 4 * cstride]);
+                row5.load(&src[col + 5 * cstride]);
+
+                c4.load(cm[4]);
+                c5.load(cm[5]);
+
+                row0_first = extend_low(row4);
+                row0_last = extend_high(row4);
+                row0_first = row0_first * c4;
+                row0_last = row0_last * c4;
+                row1_first = extend_low(row5);
+                row1_last = extend_high(row5);
+                row1_first = row1_first * c5;
+                row1_last = row1_last * c5;
+                sum_first += row0_first + row1_first;
+                sum_last += row0_last + row1_last;
+
+                row6.load(&src[col + 6 * cstride]);
+                row7.load(&src[col + 7 * cstride]);
+
+                c6.load(cm[6]);
+                c7.load(cm[7]);
+
+                row0_first = extend_low(row6);
+                row0_last = extend_high(row6);
+                row0_first = row0_first * c6;
+                row0_last = row0_last * c6;
+                row1_first = extend_low(row7);
+                row1_last = extend_high(row7);
+                row1_first = row1_first * c7;
+                row1_last = row1_last * c7;
+
+                sum_first += row0_first + row1_first;
+                sum_last += row0_last + row1_last;
+            }
+
+            sum_first = (sum_first + offset)  >> shift;
+            sum_last = (sum_last + offset)  >> shift;
+            sum_first = max(sum_first, 0);
+            sum_last = max(sum_last, 0);
+            Vec8s maxVal_v(maxVal);
+            sum_first = min(sum_first, maxVal_v);
+            sum_last = min(sum_last, maxVal_v);
+
+            sum = compress(sum_first, sum_last);
+
+            sum.store(dst + col);
+        }
+
+        //Handle the case when block_width is not multiple of 16
+        for (; col < block_width; col += 8)
+        {
+            Vec16uc row0, row1, row2, row3, row4, row5, row6, row7, sum;
+            Vec8s row0_first, row0_last, row1_first, row1_last;
+            Vec8s c0, c1, c2, c3, c4, c5, c6, c7;
+            Vec8s  sum_first, sum_last;
+
+            row0.load(&src[col]);
+            row1.load(&src[col + cstride]);
+
+            c0.load(cm[0]);
+            c1.load(cm[1]);
+
+            row0_first = extend_low(row0);
+            row1_first = extend_low(row1);
+            row0_first = row0_first * c0;
+            row1_first = row1_first * c1;
+
+            sum_first = row0_first + row1_first;
+
+            row2.load(&src[col + 2 * cstride]);
+            row3.load(&src[col + 3 * cstride]);
+
+            c2.load(cm[2]);
+            c3.load(cm[3]);
+
+            row0_first = extend_low(row2);
+            row0_first = row0_first * c2;
+            row1_first = extend_low(row3);
+            row1_first = row1_first * c3;
+
+            sum_first += row0_first + row1_first;
+
+            if (N == 8)
+            {
+                row4.load(&src[col + 4 * cstride]);
+                row5.load(&src[col + 5 * cstride]);
+
+                c4.load(cm[4]);
+                c5.load(cm[5]);
+
+                row0_first = extend_low(row4);
+                row0_first = row0_first * c4;
+                row1_first = extend_low(row5);
+                row1_first = row1_first * c5;
+                sum_first += row0_first + row1_first;
+
+                row6.load(&src[col + 6 * cstride]);
+                row7.load(&src[col + 7 * cstride]);
+
+                c6.load(cm[6]);
+                c7.load(cm[7]);
+
+                row0_first = extend_low(row6);
+                row0_first = row0_first * c6;
+                row1_first = extend_low(row7);
+                row1_first = row1_first * c7;
+                sum_first += row0_first + row1_first;
+            }
+
+            sum_first = (sum_first + offset)  >> shift;
+            sum_first = max(sum_first, 0);
+            Vec8s maxVal_v(maxVal);
+            sum_first = min(sum_first, maxVal_v);
+            sum = compress(sum_first, 0);
+            sum.store_partial(block_width - col, dst + col);
+        }
+
         src += srcStride;
         dst += dstStride;
     }
@@ -218,6 +422,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
 
 {
     int row, col;
+
     src -= (N / 2 - 1);                                   // Here cStride = 1
     int offset;
     short maxVal;
@@ -239,9 +444,9 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
         {
             vec_src0.load(src + col);                           // Load the 8 elements
             vec_sum_low = extend_low(vec_src0) * vec_c0;        // Multiply by c[0]
-            
+
             vec_src0.load(src + col + 1);                       // Load the 8 elements
-            vec_sum_low += extend_low(vec_src0) * vec_c1;       // Multiply by c[1]         
+            vec_sum_low += extend_low(vec_src0) * vec_c1;       // Multiply by c[1]
 
             vec_src0.load(src + col + 2);                       // Load the 8 elements
             vec_sum_low += extend_low(vec_src0) * vec_c2;       // Multiply by c[2]
@@ -265,12 +470,13 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
             }
 
             vec_sum_low = (vec_sum_low + vec_offset);               // Add offset(value copied into all short vector elements) to sum_low
-            vec_sum_low = vec_sum_low >> headRoom;                  
+            vec_sum_low = vec_sum_low >> headRoom;
             vec_sum_low = max(vec_sum_low, 0);                      // (val < 0) ? 0 : val;
             vec_sum_low = min(vec_sum_low, vec_maxVal);             // (val > maxVal) ? maxVal : val;
             vec_sum = compress(vec_sum_low, vec_zero);              // Save two short vectors(Vec8s, Vec8s(0)) to single short vector(Vec8s)
-            vec_sum.store_partial(8,dst + col);                     // Store vector
+            vec_sum.store_partial(8, dst + col);                     // Store vector
         }
+
         for (; col < block_width; col++)                           // Remaining iterations
         {
             if (N == 8)
@@ -288,6 +494,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
             val = (val > maxVal) ? maxVal : val;
             dst[col] = (pixel)val;
         }
+
         src += srcStride;
         dst += dstStride;
     }
@@ -297,6 +504,7 @@ template<int N>
 void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
+
     src -= (N / 2 - 1);
     int offset;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
@@ -319,9 +527,9 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
         {
             vec_src0.load(src + col);                           // Load the 8 elements
             vec_sum_low = extend_low(vec_src0) * vec_c0;        // Multiply by c[0]
-            
+
             vec_src0.load(src + col + 1);                       // Load the 8 elements
-            vec_sum_low += extend_low(vec_src0) * vec_c1;       // Multiply by c[1]         
+            vec_sum_low += extend_low(vec_src0) * vec_c1;       // Multiply by c[1]
 
             vec_src0.load(src + col + 2);                       // Load the 8 elements
             vec_sum_low += extend_low(vec_src0) * vec_c2;       // Multiply by c[2]
@@ -343,10 +551,11 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
                 vec_src0.load(src + col + 7);                     // Load the 8/16 elements
                 vec_sum_low += extend_low(vec_src0) * vec_c7;     // Multiply by c[7]
             }
-            vec_sum_low = (vec_sum_low + vec_offset);               // Add offset(value copied into all integer vector elements) to sum_low 
-            vec_sum_low = vec_sum_low >> shift;                    
+            vec_sum_low = (vec_sum_low + vec_offset);               // Add offset(value copied into all integer vector elements) to sum_low
+            vec_sum_low = vec_sum_low >> shift;
             vec_sum_low.store(dst + col);                           // Store vector
         }
+
         for (; col < block_width; col++)                           // Remaining iterations
         {
             if (N == 8)
@@ -362,6 +571,7 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
             short val = (short)(sum + offset) >> shift;
             dst[col] = val;
         }
+
         src += srcStride;
         dst += dstStride;
     }
@@ -375,6 +585,7 @@ void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, shor
     int row, col;
     Vec16uc src_v;
     Vec8s dst_v, val_v;
+
     for (row = 0; row < height; row++)
     {
         for (col = 0; col < width - 7; col += 8)
@@ -384,9 +595,11 @@ void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, shor
             dst_v = val_v - IF_INTERNAL_OFFS;
             dst_v.store(dst + col);
         }
+
         src += srcStride;
         dst += dstStride;
     }
+
     if (width % 8 != 0)
     {
         src = srcOrg;
@@ -410,6 +623,7 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
     pixel* dstOrg = dst;
     int shift = IF_INTERNAL_PREC - bitDepth;
     short offset = IF_INTERNAL_OFFS;
+
     offset += shift ? (1 << (shift - 1)) : 0;
     short maxVal = (1 << bitDepth) - 1;
     Vec8s minVal(0);
@@ -425,11 +639,13 @@ void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixe
             val_c = max(val_c, minVal);
             val_c = min(val_c, maxVal);
             val_uc = compress(val_c, val_zero);
-            val_uc.store_partial(8,dst + col);
+            val_uc.store_partial(8, dst + col);
         }
+
         src += srcStride;
         dst += dstStride;
     }
+
     if (width % 8 != 0)
     {
         src = srcOrg;

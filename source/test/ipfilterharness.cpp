@@ -38,6 +38,14 @@ const short m_lumaFilter[4][8] =
     { 0, 1,  -5, 17, 58, -10, 4, -1 }
 };
 
+const char* IPFilterPPNames[] =
+{
+    "FilterHorizonal_Pel_Pel<8>",
+    "FilterHorizonal_Pel_Pel<4>",
+    "FilterVertical_Pel_Pel<8>",
+    "FilterVertical_Pel_Pel<4>"
+};
+
 IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
@@ -186,8 +194,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_s_p ref, x265::IPF
 
 bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x265::IPFilterConvert_p_s opt)
 {
-    short rand_height = (short) rand() % 100;                 // Randomly generated Height
-    short rand_width = (short) rand() % 100;                  // Randomly generated Width
+    short rand_height = (short)rand() % 100;                 // Randomly generated Height
+    short rand_width = (short)rand() % 100;                  // Randomly generated Width
     short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
@@ -220,8 +228,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
 
 bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x265::IPFilterConvert_s_p opt)
 {
-    short rand_height = (short) rand() % 100;                 // Randomly generated Height
-    short rand_width = (short) rand() % 100;                  // Randomly generated Width
+    short rand_height = (short)rand() % 100;                 // Randomly generated Height
+    short rand_width = (short)rand() % 100;                  // Randomly generated Width
     short rand_srcStride, rand_dstStride;
 
     for (int i = 0; i <= 100; i++)
@@ -260,7 +268,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipFilter_p_p[value], opt.ipFilter_p_p[value]))
             {
-                printf("\nfilterHorizontal_pel_pel_%d failed\n", 8 / (value + 1));
+                printf("\n %s failed\n", IPFilterPPNames[value]);
                 return false;
             }
         }
@@ -327,7 +335,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipFilter_p_p[value])
         {
-            printf("filterHorizontal_pel_pel_%d", 8 / (value + 1));
+            printf("%s", IPFilterPPNames[value]);
             REPORT_SPEEDUP(FILTER_ITERATIONS,
                            opt.ipFilter_p_p[value](8, pixel_buff + 3 * srcStride,
                                                    srcStride,
