@@ -274,19 +274,11 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
 
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
     int shift = IF_FILTER_PREC;
-
-    shift += headRoom;
     offset = 1 << (shift - 1);
-    offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << bitDepth) - 1;
 
     int row, col;
-
-    int sumCoeffs = c[0] + c[1] + c[2] + c[3];
-    if (N == 8)
-        sumCoeffs += c[4] + c[5] + c[6] + c[7];
 
     for (row = 0; row < height; row++)
     {
@@ -294,27 +286,25 @@ void filterVertical_pel_pel(int bitDepth, Pel *src, int srcStride, Pel *dst, int
         {
             int sum;
 
-            sum  = (((short)src[col + 0 * cStride] << headRoom)) * c[0];
-            sum += (((short)src[col + 1 * cStride] << headRoom)) * c[1];
+            sum  = src[col + 0 * cStride] * c[0];
+            sum += src[col + 1 * cStride] * c[1];
             if (N >= 4)
             {
-                sum += (((short)src[col + 2 * cStride] << headRoom)) * c[2];
-                sum += (((short)src[col + 3 * cStride] << headRoom)) * c[3];
+                sum += src[col + 2 * cStride] * c[2];
+                sum += src[col + 3 * cStride] * c[3];
             }
             if (N >= 6)
             {
-                sum += (((short)src[col + 4 * cStride] << headRoom)) * c[4];
-                sum += (((short)src[col + 5 * cStride] << headRoom)) * c[5];
+                sum += src[col + 4 * cStride] * c[4];
+                sum += src[col + 5 * cStride] * c[5];
             }
             if (N == 8)
             {
-                sum += (((short)src[col + 6 * cStride] << headRoom)) * c[6];
-                sum += (((short)src[col + 7 * cStride] << headRoom)) * c[7];
+                sum += src[col + 6 * cStride] * c[6];
+                sum += src[col + 7 * cStride] * c[7];
             }
 
-            sum -= sumCoeffs * IF_INTERNAL_OFFS;
             short val = (short)((sum + offset) >> shift);
-
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
 
