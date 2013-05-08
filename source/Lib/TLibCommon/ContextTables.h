@@ -41,8 +41,6 @@
 
 //! \ingroup TLibCommon
 //! \{
-#define FIX827 1 ///< Fix for issue #827: CABAC init tables
-#define FIX712 1 ///< Fix for issue #712: CABAC init tables
 
 // ====================================================================================================================
 // Constants
@@ -295,29 +293,17 @@ static const UChar
 static const UChar
     INIT_SAO_TYPE_IDX[3][NUM_SAO_TYPE_IDX_CTX] =
 {
-#if FIX827
     { 160, },
     { 185, },
     { 200, },
-#else
-    { 200, },
-    { 185, },
-    { 160, },
-#endif
 };
 
 static const UChar
     INIT_TRANS_SUBDIV_FLAG[3][NUM_TRANS_SUBDIV_FLAG_CTX] =
 {
-#if FIX712
     { 224,  167,  122, },
     { 124,  138,   94, },
     { 153,  138,  138, },
-#else
-    { 153,  138,  138, },
-    { 124,  138,   94, },
-    { 224,  167,  122, },
-#endif
 };
 
 static const UChar
