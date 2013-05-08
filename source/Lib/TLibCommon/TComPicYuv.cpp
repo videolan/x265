@@ -40,6 +40,7 @@
 #include <memory.h>
 #include "InterpolationFilter.h"
 #include "primitives.h"
+#include "PPA/ppa.h"
 
 using namespace x265;
 
@@ -244,7 +245,7 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
 Void TComPicYuv::extendPicBorder()
 {
     if (m_bIsBorderExtended) return;
-
+    PPAScopeEvent(TComPicYUV_extendPicBorder);
     xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(),     getHeight(),      m_iLumaMarginX,   m_iLumaMarginY);
     xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
