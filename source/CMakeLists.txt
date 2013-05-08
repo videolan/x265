@@ -74,6 +74,12 @@ if(ENABLE_TESTS)
     add_subdirectory(test)
 endif(ENABLE_TESTS)
 
+# Tool applications
+option(ENABLE_TOOLS "Enable debug and regression tools" OFF)
+if(ENABLE_TOOLS)
+    add_subdirectory(tools)
+endif(ENABLE_TOOLS)
+
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
