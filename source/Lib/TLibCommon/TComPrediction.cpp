@@ -598,7 +598,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Int srcStride = refPic->getStride();
 
 #if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock(width,height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
+    x265::primitives.cpyblock(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
 #else
     filterCopy(src, srcStride, dst, dstStride, width, height);
 #endif
@@ -648,9 +648,8 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     {
         if (xFrac == 0)
         {
-            x265::primitives.cpyblock(cxWidth,cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
-            x265::primitives.cpyblock(cxWidth,cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
-
+            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
+            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
         }
         else
         {

@@ -308,8 +308,8 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int i
 
 Void TComPicYuv::generateLumaHQpel()
 {
-    Int width      = m_iPicWidth; 
-    Int height     =  m_iPicHeight; 
+    Int width      = m_iPicWidth;
+    Int height     =  m_iPicHeight;
     Int srcStride  =  getStride();
 
     int tmpMarginX = 4; //Generate subpels for entire frame with a margin of tmpMargin
@@ -337,7 +337,7 @@ Void TComPicYuv::generateLumaHQpel()
     dstPtr = m_filteredBlockOrgY[0][0] - (tmpMarginY + 4) * dstStride - (tmpMarginX + 4);
 
 #if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock( width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4 , (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
+    x265::primitives.cpyblock(width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
 #else
     filterCopy(srcPtr, srcStride, dstPtr, dstStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4);
 #endif
