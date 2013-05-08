@@ -31,7 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _ANNEXBWRITE_
+#define _ANNEXBWRITE_ 1
 
 #include <ostream>
 #include "TLibCommon/AccessUnit.h"
@@ -85,3 +86,5 @@ static std::vector<UInt> writeAnnexB(std::ostream& out, const AccessUnit& au)
 }
 
 //! \}
+
+#endif

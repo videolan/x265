@@ -38,10 +38,6 @@
 #ifndef __SYNTAXELEMENTWRITER__
 #define __SYNTAXELEMENTWRITER__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/TComRom.h"

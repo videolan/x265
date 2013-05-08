@@ -31,7 +31,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _SEI_
+#define _SEI_ 1
+
 #include <list>
 #include <vector>
 #include <cstring>
@@ -446,3 +448,5 @@ public:
 #endif // if K0180_SCALABLE_NESTING_SEI
 
 //! \}
+
+#endif

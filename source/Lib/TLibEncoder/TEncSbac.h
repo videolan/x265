@@ -38,10 +38,6 @@
 #ifndef __TENCSBAC__
 #define __TENCSBAC__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/ContextTables.h"
 #include "TLibCommon/ContextModel.h"
@@ -217,4 +213,4 @@ private:
 
 //! \}
 
-#endif // !defined(AFX_TENCSBAC_H__DDA7CDC4_EDE3_4015_9D32_2156249C82AA__INCLUDED_)
+#endif // !defined(__TENCSBAC__)

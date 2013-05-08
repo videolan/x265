@@ -31,7 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _NAL_
+#define _NAL_ 1
 
 #include <vector>
 #include <sstream>
@@ -111,4 +112,5 @@ struct NALUnitEBSP : public NALUnit
 };
 
 //! \}
-//! \}
+
+#endif

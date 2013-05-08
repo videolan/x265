@@ -38,10 +38,6 @@
 #ifndef _TCOMLIST_
 #define _TCOMLIST_
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include <list>
 #include <assert.h>
 #include "CommonDef.h"

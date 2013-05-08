@@ -38,10 +38,6 @@
 #ifndef __TENCCAVLC__
 #define __TENCCAVLC__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/TComRom.h"
@@ -170,4 +166,4 @@ public:
 
 //! \}
 
-#endif // !defined(AFX_TENCCAVLC_H__EE8A0B30_945B_4169_B290_24D3AD52296F__INCLUDED_)
+#endif // !defined(_TENCCAVLC_)
