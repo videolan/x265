@@ -6,12 +6,12 @@
 using namespace std;
 
 SsimCalculator::SsimCalculator() :
+    Ssimconst1(0.01f * 255.0f * 0.01f * 255.0f), // constants needed for Ssim calc
+    Ssimconst2(0.03f * 255.0f * 0.03f * 255.0f),
     m_ySsimTotal(0.0),
     m_uSsimTotal(0.0),
     m_vSsimTotal(0.0),
-    m_frameCount(0L),
-    Ssimconst1(0.01f * 255.0f * 0.01f * 255.0f), // constants needed for Ssim calc
-    Ssimconst2(0.03f * 255.0f * 0.03f * 255.0f)
+    m_frameCount(0L)
 {
     for (int i = 0; i < 3; i++)
     {
@@ -31,7 +31,7 @@ void SsimCalculator::ResetPsnrCounters()
     m_uSsimTotal = 0.0;
     m_vSsimTotal = 0.0; //(0.0),
     m_frameCount = 0L;
-//{
+
     for (int i = 0; i < 3; i++)
     {
         m_diff_src[i] = (0L);
@@ -178,8 +178,7 @@ double SsimCalculator::GetSsimbySpace(const unsigned char* origbuff,
         m_Ssim_weight[YUVflag] += Ssim_weight;
     }
 
-    double Ssim = Ssim_total / Ssim_weight;
-    return Ssim;
+    return Ssim_total / Ssim_weight;
 }
 
 void SsimCalculator::GetGlobalSsim(double  frameSize,
