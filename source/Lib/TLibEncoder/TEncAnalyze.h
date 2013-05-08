@@ -38,10 +38,6 @@
 #ifndef __TENCANALYZE__
 #define __TENCANALYZE__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include <stdio.h>
 #include <memory.h>
 #include <assert.h>
@@ -165,4 +161,4 @@ extern TEncAnalyze             m_gcAnalyzeB;
 
 //! \}
 
-#endif // !defined(AFX_TENCANALYZE_H__C79BCAA2_6AC8_4175_A0FE_CF02F5829233__INCLUDED_)
+#endif // !defined(_TENCANALYZE_)

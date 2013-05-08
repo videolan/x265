@@ -31,7 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _NAL_WRITE_
+#define _NAL_WRITE_ 1
 
 #include <ostream>
 
@@ -82,3 +83,5 @@ inline NALUnitEBSP::NALUnitEBSP(OutputNALUnit& nalu)
 void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
 
 //! \}
+
+#endif

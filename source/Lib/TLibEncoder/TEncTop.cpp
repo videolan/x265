@@ -951,8 +951,7 @@ Void  TEncTop::xInitPPSforTiles()
     m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 
     // # substreams is "per tile" when tiles are independent.
-    if (m_iWaveFrontSynchro
-        )
+    if (m_iWaveFrontSynchro)
     {
         m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams * (m_iNumColumnsMinus1 + 1));
     }

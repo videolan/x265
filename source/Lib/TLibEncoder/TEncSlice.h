@@ -96,7 +96,7 @@ private:
     Double*                 m_pdRdPicLambda;                    ///< array of lambda candidates
     Double*                 m_pdRdPicQp;                        ///< array of picture QP candidates (double-type for lambda)
     Int*                    m_piRdPicQp;                        ///< array of picture QP candidates (Int-type)
-    TEncBinCABAC*           m_pcBufferBinCoderCABACs;     ///< line of bin coder CABAC
+    TEncBinCABAC*           m_pcBufferBinCoderCABACs;           ///< line of bin coder CABAC
     TEncSbac*               m_pcBufferSbacCoders;               ///< line to store temporary contexts
     TEncBinCABAC*           m_pcBufferLowLatBinCoderCABACs;     ///< dependent tiles: line of bin coder CABAC
     TEncSbac*               m_pcBufferLowLatSbacCoders;         ///< dependent tiles: line to store temporary contexts

@@ -31,7 +31,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _SEI_WRITE_
+#define _SEI_WRITE_
 
 #include "SyntaxElementWriter.h"
 #include "TLibCommon/SEI.h"
@@ -82,3 +83,5 @@ protected:
 };
 
 //! \}
+
+#endif

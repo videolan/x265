@@ -36,7 +36,8 @@
  \brief    Access Unit class (header)
  */
 
-#pragma once
+#ifndef _ACCESS_UNIT_
+#define _ACCESS_UNIT_ 1
 
 #include <list>
 #include "NAL.h"
@@ -68,3 +69,5 @@ public: ~AccessUnit()
 };
 
 //! \}
+
+#endif
