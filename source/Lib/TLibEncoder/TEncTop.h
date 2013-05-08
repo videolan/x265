@@ -77,8 +77,9 @@ private:
 
     // encoder search
     TEncSearch              m_cSearch;                    ///< encoder search class
-    TEncEntropy*            m_pcEntropyCoder;                   ///< entropy encoder
-    TEncCavlc*              m_pcCavlcCoder;                     ///< CAVLC encoder
+    TEncEntropy*            m_pcEntropyCoder;             ///< entropy encoder
+    TEncCavlc*              m_pcCavlcCoder;               ///< CAVLC encoder
+
     // coding tool
     TComTrQuant             m_cTrQuant;                   ///< transform & quantization class
     TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
@@ -94,9 +95,11 @@ private:
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
     TEncSlice               m_cSliceEncoder;              ///< slice encoder
     TEncCu                  m_cCuEncoder;                 ///< CU encoder
+
     // SPS
     TComSPS                 m_cSPS;                       ///< SPS
     TComPPS                 m_cPPS;                       ///< PPS
+
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
     TComRdCost              m_cRdCost;                    ///< RD cost computation class
@@ -104,18 +107,19 @@ private:
     TEncSbac                m_cRDGoOnSbacCoder;           ///< going on SBAC model for RD stage
     TEncBinCABACCounter***  m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
     TEncBinCABACCounter     m_cRDGoOnBinCoderCABAC;       ///< going on bin coder CABAC for RD stage
-    Int                     m_iNumSubstreams;              ///< # of top-level elements allocated.
-    TComBitCounter*         m_pcBitCounters;               ///< bit counters for RD optimization per substream
-    TComRdCost*             m_pcRdCosts;                   ///< RD cost computation class per substream
-    TEncSbac****            m_ppppcRDSbacCoders;           ///< temporal storage for RD computation per substream
-    TEncSbac*               m_pcRDGoOnSbacCoders;          ///< going on SBAC model for RD stage per substream
-    TEncBinCABAC****        m_ppppcBinCodersCABAC;         ///< temporal CABAC state storage for RD computation per substream
-    TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;      ///< going on bin coder CABAC for RD stage per substream
+
+    Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
+    TComBitCounter*         m_pcBitCounters;              ///< bit counters for RD optimization per substream
+    TComRdCost*             m_pcRdCosts;                  ///< RD cost computation class per substream
+    TEncSbac****            m_ppppcRDSbacCoders;          ///< temporal storage for RD computation per substream
+    TEncSbac*               m_pcRDGoOnSbacCoders;         ///< going on SBAC model for RD stage per substream
+    TEncBinCABAC****        m_ppppcBinCodersCABAC;        ///< temporal CABAC state storage for RD computation per substream
+    TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;     ///< going on bin coder CABAC for RD stage per substream
 
     // quality control
     TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
 
-    TComScalingList         m_scalingList;               ///< quantization matrix information
+    TComScalingList         m_scalingList;                ///< quantization matrix information
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
     x265::ThreadPool       *m_threadPool;
 

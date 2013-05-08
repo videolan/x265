@@ -565,10 +565,8 @@ public:
     UInt          getCtxSkipFlag(UInt uiAbsPartIdx);
     UInt          getCtxInterDir(UInt uiAbsPartIdx);
 
-    UInt          getSliceStartCU(UInt pos)                  { return m_sliceStartCU[pos - m_uiAbsIdxInLCU]; }
-
-    UInt          getSliceSegmentStartCU(UInt pos)                  { return m_sliceSegmentStartCU[pos - m_uiAbsIdxInLCU]; }
-
+    UInt          getSliceStartCU(UInt pos)                 { return m_sliceStartCU[pos - m_uiAbsIdxInLCU]; }
+    UInt          getSliceSegmentStartCU(UInt pos)          { return m_sliceSegmentStartCU[pos - m_uiAbsIdxInLCU]; }
     UInt&         getTotalBins()                            { return m_uiTotalBins; }
 
     // -------------------------------------------------------------------------------------------------------------------
