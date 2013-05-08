@@ -25,6 +25,7 @@
 #define _TESTHARNESS_H_ 1
 
 #include "primitives.h"
+#include <intrin.h>
 #include <stddef.h>
 
 #if HIGH_BIT_DEPTH
@@ -70,13 +71,25 @@ public:
     virtual void Release() = 0;
 };
 
+static inline uint64_t read_time(void)
+{
+    unsigned __int64 i=0;
+#ifdef _MSC_VER    
+    i = __rdtsc();
+#endif
+    return i;
+}
+
 #define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
 { \
-    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNOPT; } t->Stop(); \
+    t->Start(); unsigned __int64 ticks1 = read_time(); for (int X=0; X < ITERATIONS; X++) { RUNOPT; } unsigned __int64 ticks2 = read_time(); t->Stop(); \
     uint64_t optelapsed = t->Elapsed(); \
-    t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNREF; } t->Stop(); \
+    uint64_t optelapsed2 = ticks2 - ticks1; \
+    ticks1 = read_time(); t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNREF; } t->Stop(); ticks2 = read_time(); \
     uint64_t refelapsed = t->Elapsed(); \
-    printf("\t%3.2fx\n", (double)refelapsed/optelapsed); \
+    uint64_t refelapsed2 = ticks2 - ticks1; \
+    printf("\t%3.2fx ", (double)refelapsed/optelapsed ); \
+    printf("\t %.2lf \t %.2lf\n", (double)optelapsed2/ITERATIONS, (double)refelapsed2/ITERATIONS); \
 }
 
 #endif // ifndef _TESTHARNESS_H_
