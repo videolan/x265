@@ -336,7 +336,11 @@ Void TComPicYuv::generateLumaHQpel()
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     dstPtr = m_filteredBlockOrgY[0][0] - (tmpMarginY + 4) * dstStride - (tmpMarginX + 4);
 
+#if ENABLE_PRIMITIVES
+    x265::primitives.cpyblock( width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4 , (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
+#else
     filterCopy(srcPtr, srcStride, dstPtr, dstStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4);
+#endif
 
     intPtr = filteredBlockTmp[0].getLumaAddr() + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
