@@ -25,7 +25,9 @@
 #define _TESTHARNESS_H_ 1
 
 #include "primitives.h"
+#ifdef _MSC_VER
 #include <intrin.h>
+#endif
 #include <stddef.h>
 
 #if HIGH_BIT_DEPTH
@@ -73,11 +75,11 @@ public:
 
 static inline uint64_t read_time(void)
 {
-    unsigned __int64 i=0;
-#ifdef _MSC_VER    
-    i = __rdtsc();
+#ifdef _MSC_VER 
+    return __rdtsc();
+#else
+    return 0;
 #endif
-    return i;
 }
 
 #define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
