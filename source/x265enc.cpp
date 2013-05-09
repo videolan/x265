@@ -269,9 +269,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setTemporalLevel0IndexSEIEnabled(m_temporalLevel0IndexSEIEnabled);
     m_cTEncTop.setGradualDecodingRefreshInfoEnabled(m_gradualDecodingRefreshInfoEnabled);
     m_cTEncTop.setDecodingUnitInfoSEIEnabled(m_decodingUnitInfoSEIEnabled);
-#if L0208_SOP_DESCRIPTION_SEI
     m_cTEncTop.setSOPDescriptionSEIEnabled(m_SOPDescriptionSEIEnabled);
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     m_cTEncTop.setScalableNestingSEIEnabled(m_scalableNestingSEIEnabled);
 #endif

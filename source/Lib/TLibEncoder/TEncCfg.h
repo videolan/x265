@@ -258,9 +258,7 @@ protected:
     Int       m_temporalLevel0IndexSEIEnabled;
     Int       m_gradualDecodingRefreshInfoEnabled;
     Int       m_decodingUnitInfoSEIEnabled;
-#if L0208_SOP_DESCRIPTION_SEI
     Int       m_SOPDescriptionSEIEnabled;
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     Int       m_scalableNestingSEIEnabled;
 #endif
@@ -836,18 +834,16 @@ public:
 
     Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
 
-#if L0208_SOP_DESCRIPTION_SEI
     Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
 
     Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
 
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
 
     Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
-
 #endif
+
     Void      setUseWP(Bool b)    { m_useWeightedPred   = b;    }
 
     Void      setWPBiPred(Bool b)    { m_useWeightedBiPred = b;    }

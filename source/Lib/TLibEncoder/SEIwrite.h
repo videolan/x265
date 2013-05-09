@@ -73,9 +73,7 @@ protected:
 #if J0149_TONE_MAPPING_SEI
     Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
 #endif
-#if L0208_SOP_DESCRIPTION_SEI
     Void xWriteSEISOPDescription(const SEISOPDescription& sei);
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
 #endif

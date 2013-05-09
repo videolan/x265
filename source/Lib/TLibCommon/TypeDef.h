@@ -41,7 +41,6 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define L0208_SOP_DESCRIPTION_SEI                 1 ///< L0208: add SOP description SEI
 #define J0149_TONE_MAPPING_SEI                    1 ///< J0149: Tone mapping information SEI
 
 #define MAX_NUM_PICS_IN_SOP                    1024

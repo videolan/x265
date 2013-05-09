@@ -88,11 +88,9 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
         fprintf(g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
         break;
 #endif
-#if L0208_SOP_DESCRIPTION_SEI
     case SEI::SOP_DESCRIPTION:
         fprintf(g_hTrace, "=========== SOP Description SEI message ===========\n");
         break;
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     case SEI::SCALABLE_NESTING:
         fprintf(g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
@@ -152,11 +150,9 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
         xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
         break;
 #endif
-#if L0208_SOP_DESCRIPTION_SEI
     case SEI::SOP_DESCRIPTION:
         xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
         break;
-#endif
 #if K0180_SCALABLE_NESTING_SEI
     case SEI::SCALABLE_NESTING:
         xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
@@ -573,7 +569,6 @@ Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefr
     xWriteByteAlign();
 }
 
-#if L0208_SOP_DESCRIPTION_SEI
 Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 {
     WRITE_UVLC(sei.m_sopSeqParameterSetId,           "sop_seq_parameter_set_id");
@@ -594,8 +589,6 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 
     xWriteByteAlign();
 }
-
-#endif // if L0208_SOP_DESCRIPTION_SEI
 
 #if K0180_SCALABLE_NESTING_SEI
 Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)

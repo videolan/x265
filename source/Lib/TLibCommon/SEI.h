@@ -340,7 +340,6 @@ public:
     Bool m_gdrForegroundFlag;
 };
 
-#if L0208_SOP_DESCRIPTION_SEI
 class SEISOPDescription : public SEI
 {
 public:
@@ -359,8 +358,6 @@ public:
     UInt m_sopDescStRpsIdx[MAX_NUM_PICS_IN_SOP];
     Int m_sopDescPocDelta[MAX_NUM_PICS_IN_SOP];
 };
-
-#endif // if L0208_SOP_DESCRIPTION_SEI
 
 #if J0149_TONE_MAPPING_SEI
 class SEIToneMappingInfo : public SEI
