@@ -3910,11 +3910,15 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
 #if ENABLE_PRIMITIVES
     x265::MotionReference ref;
-    ref.plane[0][0][0] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getLumaAddr();
-    ref.plane[0][0][1] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCbAddr();
-    ref.plane[0][0][2] = (pixel*)pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec()->getCrAddr();
-    ref.chromaStride = pcYuv->getCWidth();
-    ref.lumaStride = pcYuv->getWidth();
+    TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
+    ref.plane[0][0][0] = (pixel*)refRecon->getLumaAddr();
+    ref.plane[0][0][1] = (pixel*)refRecon->getCbAddr();
+    ref.plane[0][0][2] = (pixel*)refRecon->getCrAddr();
+    for (int y = 0; y < 4; y++)
+        for (int x = 0; x < 4; x++)
+            ref.plane[x][y][0] = (pixel*)refRecon->getLumaFilterBlock(y, x);
+    ref.chromaStride = refRecon->getCStride();
+    ref.lumaStride = refRecon->getStride();
     m_me.setReference(&ref);
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
@@ -3945,8 +3949,8 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     UInt uiMvBits = m_pcRdCost->getBits(rcMv.getHor(), rcMv.getVer());
 
-    //x265::MV out;  // compare with rcMV
-    //int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, out);
+    x265::MV out;  // compare with rcMV
+    int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, out);
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
