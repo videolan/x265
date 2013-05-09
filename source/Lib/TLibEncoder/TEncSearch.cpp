@@ -3923,7 +3923,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
-    if (m_cDistParam.bApplyWeight == false && !bBi)
+    if (0 && m_cDistParam.bApplyWeight == false && !bBi)
     {
         int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, rcMv);
         UInt mvcost = m_bc.mvcost(rcMv);
