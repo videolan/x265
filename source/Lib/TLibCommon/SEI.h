@@ -409,7 +409,6 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 /// delete list of SEI messages (freeing the referenced objects)
 Void deleteSEIs(SEIMessages &seiList);
 
-#if K0180_SCALABLE_NESTING_SEI
 class SEIScalableNesting : public SEI
 {
 public:
@@ -441,8 +440,6 @@ public:
     Bool  m_callerOwnsSEIs;
     SEIMessages m_nestedSEIs;
 };
-
-#endif // if K0180_SCALABLE_NESTING_SEI
 
 //! \}
 

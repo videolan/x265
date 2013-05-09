@@ -270,9 +270,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setGradualDecodingRefreshInfoEnabled(m_gradualDecodingRefreshInfoEnabled);
     m_cTEncTop.setDecodingUnitInfoSEIEnabled(m_decodingUnitInfoSEIEnabled);
     m_cTEncTop.setSOPDescriptionSEIEnabled(m_SOPDescriptionSEIEnabled);
-#if K0180_SCALABLE_NESTING_SEI
     m_cTEncTop.setScalableNestingSEIEnabled(m_scalableNestingSEIEnabled);
-#endif
     m_cTEncTop.setUniformSpacingIdr(m_iUniformSpacingIdr);
     m_cTEncTop.setNumColumnsMinus1(m_iNumColumnsMinus1);
     m_cTEncTop.setNumRowsMinus1(m_iNumRowsMinus1);

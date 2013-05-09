@@ -531,9 +531,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
         ("SEIDecodingUnitInfo",            m_decodingUnitInfoSEIEnabled,             0, "Control generation of decoding unit information SEI message.")
         ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,               0, "Control generation of SOP description SEI messages")
-#if K0180_SCALABLE_NESTING_SEI
         ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
-#endif
     ;
 
     for (Int i = 1; i < MAX_GOP + 1; i++)

@@ -259,9 +259,7 @@ protected:
     Int       m_gradualDecodingRefreshInfoEnabled;
     Int       m_decodingUnitInfoSEIEnabled;
     Int       m_SOPDescriptionSEIEnabled;
-#if K0180_SCALABLE_NESTING_SEI
     Int       m_scalableNestingSEIEnabled;
-#endif
     //====== Weighted Prediction ========
     Bool      m_useWeightedPred;     //< Use of Weighting Prediction (P_SLICE)
     Bool      m_useWeightedBiPred;  //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -838,11 +836,9 @@ public:
 
     Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
 
-#if K0180_SCALABLE_NESTING_SEI
     Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
 
     Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
-#endif
 
     Void      setUseWP(Bool b)    { m_useWeightedPred   = b;    }
 

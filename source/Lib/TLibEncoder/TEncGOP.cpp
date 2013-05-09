@@ -120,9 +120,7 @@ TEncGOP::TEncGOP()
     m_cpbRemovalDelay   = 0;
     m_lastBPSEI         = 0;
     xResetNonNestedSEIPresentFlags();
-#if K0180_SCALABLE_NESTING_SEI
     xResetNestedSEIPresentFlags();
-#endif
 }
 
 TEncGOP::~TEncGOP()
@@ -376,7 +374,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     m_iNumPicCoded = 0;
     SEIPictureTiming pictureTimingSEI;
     Bool writeSOP = m_pcCfg->getSOPDescriptionSEIEnabled();
-#if K0180_SCALABLE_NESTING_SEI
     // Initialize Scalable Nesting SEI with single layer values
     SEIScalableNesting scalableNestingSEI;
     scalableNestingSEI.m_bitStreamSubsetFlag           = 1;    // If the nested SEI messages are picture buffereing SEI mesages, picure timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
@@ -387,7 +384,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; //nesting_num_layers_minus1
     scalableNestingSEI.m_nestingLayerId[0]             = 0;
     scalableNestingSEI.m_callerOwnsSEIs                = true;
-#endif // if K0180_SCALABLE_NESTING_SEI
     Int picSptDpbOutputDuDelay = 0;
     UInt *accumBitsDU = NULL;
     UInt *accumNalsDU = NULL;
@@ -1173,7 +1169,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 m_bufferingPeriodSEIPresentInAU = true;
             }
 
-#if K0180_SCALABLE_NESTING_SEI
             if (m_pcCfg->getScalableNestingSEIEnabled())
             {
                 OutputNALUnit naluTmp(NAL_UNIT_PREFIX_SEI);
@@ -1194,7 +1189,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 accessUnit.insert(it, new NALUnitEBSP(naluTmp));
                 m_nestedBufferingPeriodSEIPresentInAU = true;
             }
-#endif // if K0180_SCALABLE_NESTING_SEI
 
             m_lastBPSEI = m_totalCoded;
             m_cpbRemovalDelay = 0;
@@ -1750,7 +1744,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     accessUnit.insert(it, new NALUnitEBSP(nalu));
                     m_pictureTimingSEIPresentInAU = true;
                 }
-#if K0180_SCALABLE_NESTING_SEI
                 if (m_pcCfg->getScalableNestingSEIEnabled()) // put picture timing SEI into scalable nesting SEI
                 {
                     OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
@@ -1771,7 +1764,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     accessUnit.insert(it, new NALUnitEBSP(nalu));
                     m_nestedPictureTimingSEIPresentInAU = true;
                 }
-#endif // if K0180_SCALABLE_NESTING_SEI
             }
             if (m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
             {
@@ -1830,9 +1822,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             }
         }
         xResetNonNestedSEIPresentFlags();
-#if K0180_SCALABLE_NESTING_SEI
         xResetNestedSEIPresentFlags();
-#endif
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
 
         pcPic->setReconMark(true);

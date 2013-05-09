@@ -53,11 +53,7 @@ public:
 
 protected:
 
-#if K0180_SCALABLE_NESTING_SEI
     Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
-#else
-    Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
-#endif
     Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
     Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
     Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
@@ -74,9 +70,7 @@ protected:
     Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
 #endif
     Void xWriteSEISOPDescription(const SEISOPDescription& sei);
-#if K0180_SCALABLE_NESTING_SEI
     Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
-#endif
     Void xWriteByteAlign();
 };
 
