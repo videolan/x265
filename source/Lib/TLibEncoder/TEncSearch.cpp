@@ -3922,6 +3922,16 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setReference(&ref);
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
+
+    if (m_cDistParam.bApplyWeight == false && !bBi)
+    {
+        int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, rcMv);
+        UInt mvcost = m_bc.mvcost(rcMv);
+        UInt mvbits = mvcost / m_pcRdCost->getSqrtLambda();
+        ruiBits += mvbits;
+        ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
+        return;
+    }
 #endif
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
@@ -3948,9 +3958,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     rcMv +=  cMvQter;
 
     UInt uiMvBits = m_pcRdCost->getBits(rcMv.getHor(), rcMv.getVer());
-
-    x265::MV out;  // compare with rcMV
-    int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, out);
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
