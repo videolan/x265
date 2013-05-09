@@ -50,8 +50,6 @@
 #define MAX_NESTING_NUM_OPS                    1024
 #define MAX_NESTING_NUM_LAYER                    64
 
-#define SIGNAL_BITRATE_PICRATE_IN_VPS             0 ///< K0125: Signal bit_rate and pic_rate in VPS
-
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
 #define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1

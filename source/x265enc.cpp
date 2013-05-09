@@ -342,35 +342,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
     m_cTEncTop.setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
     m_cTEncTop.setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-    TComBitRatePicRateInfo *bitRatePicRateInfo = m_cTEncTop.getVPS()->getBitratePicrateInfo();
-    // The number of bit rate/pic rate have to equal to number of sub-layers.
-    if (m_bitRatePicRateMaxTLayers)
-    {
-        assert(m_bitRatePicRateMaxTLayers == m_cTEncTop.getVPS()->getMaxTLayers());
-    }
-
-    for (Int i = 0; i < m_bitRatePicRateMaxTLayers; i++)
-    {
-        bitRatePicRateInfo->setBitRateInfoPresentFlag(i, m_bitRateInfoPresentFlag[i]);
-        if (bitRatePicRateInfo->getBitRateInfoPresentFlag(i))
-        {
-            bitRatePicRateInfo->setAvgBitRate(i, m_avgBitRate[i]);
-            bitRatePicRateInfo->setMaxBitRate(i, m_maxBitRate[i]);
-        }
-    }
-
-    for (Int i = 0; i < m_bitRatePicRateMaxTLayers; i++)
-    {
-        bitRatePicRateInfo->setPicRateInfoPresentFlag(i, m_picRateInfoPresentFlag[i]);
-        if (bitRatePicRateInfo->getPicRateInfoPresentFlag(i))
-        {
-            bitRatePicRateInfo->setAvgPicRate(i, m_avgPicRate[i]);
-            bitRatePicRateInfo->setConstantPicRateIdc(i, m_constantPicRateIdc[i]);
-        }
-    }
-
-#endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
 }
 
 Void TAppEncTop::xCreateLib()

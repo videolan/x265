@@ -93,9 +93,6 @@ public:
     Void  codeSliceHeader(TComSlice* pcSlice);
     Void  codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
     Void  codeProfileTier(ProfileTierLevel* ptl);
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-    Void codeBitratePicRateInfo(TComBitRatePicRateInfo *info, Int tempLevelLow, Int tempLevelHigh);
-#endif
     Void  codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
     Void  codeTilesWPPEntryPoint(TComSlice* pSlice);
     Void  codeTerminatingBit(UInt uilsLast);

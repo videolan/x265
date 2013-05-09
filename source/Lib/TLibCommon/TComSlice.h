@@ -287,46 +287,6 @@ public:
 
 /// VPS class
 
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-class TComBitRatePicRateInfo
-{
-    Bool        m_bitRateInfoPresentFlag[MAX_TLAYER];
-    Bool        m_picRateInfoPresentFlag[MAX_TLAYER];
-    Int         m_avgBitRate[MAX_TLAYER];
-    Int         m_maxBitRate[MAX_TLAYER];
-    Int         m_constantPicRateIdc[MAX_TLAYER];
-    Int         m_avgPicRate[MAX_TLAYER];
-
-public:
-
-    TComBitRatePicRateInfo();
-    Bool        getBitRateInfoPresentFlag(Int i) { return m_bitRateInfoPresentFlag[i]; }
-
-    Void        setBitRateInfoPresentFlag(Int i, Bool x) { m_bitRateInfoPresentFlag[i] = x; }
-
-    Bool        getPicRateInfoPresentFlag(Int i) { return m_picRateInfoPresentFlag[i]; }
-
-    Void        setPicRateInfoPresentFlag(Int i, Bool x) { m_picRateInfoPresentFlag[i] = x; }
-
-    Int         getAvgBitRate(Int i) { return m_avgBitRate[i]; }
-
-    Void        setAvgBitRate(Int i, Int x) { m_avgBitRate[i] = x; }
-
-    Int         getMaxBitRate(Int i) { return m_maxBitRate[i]; }
-
-    Void        setMaxBitRate(Int i, Int x) { m_maxBitRate[i] = x; }
-
-    Int         getConstantPicRateIdc(Int i) { return m_constantPicRateIdc[i]; }
-
-    Void        setConstantPicRateIdc(Int i, Int x) { m_constantPicRateIdc[i] = x; }
-
-    Int         getAvgPicRate(Int i) { return m_avgPicRate[i]; }
-
-    Void        setAvgPicRate(Int i, Int x) { m_avgPicRate[i] = x; }
-};
-
-#endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
-
 struct HrdSubLayerInfo
 {
     Bool fixedPicRateFlag;
@@ -539,9 +499,6 @@ private:
     Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 
     TComPTL     m_pcPTL;
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-    TComBitRatePicRateInfo    m_bitRatePicRateInfo;
-#endif
     TimingInfo  m_timingInfo;
 
 public:
@@ -611,10 +568,6 @@ public:
     Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
 
     TComPTL* getPTL() { return &m_pcPTL; }
-
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-    TComBitRatePicRateInfo *getBitratePicrateInfo() { return &m_bitRatePicRateInfo; }
-#endif
 
     TimingInfo* getTimingInfo() { return &m_timingInfo; }
 };
