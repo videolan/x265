@@ -340,7 +340,6 @@ public:
     Bool m_gdrForegroundFlag;
 };
 
-#if L0208_SOP_DESCRIPTION_SEI
 class SEISOPDescription : public SEI
 {
 public:
@@ -359,8 +358,6 @@ public:
     UInt m_sopDescStRpsIdx[MAX_NUM_PICS_IN_SOP];
     Int m_sopDescPocDelta[MAX_NUM_PICS_IN_SOP];
 };
-
-#endif // if L0208_SOP_DESCRIPTION_SEI
 
 #if J0149_TONE_MAPPING_SEI
 class SEIToneMappingInfo : public SEI
@@ -412,7 +409,6 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 /// delete list of SEI messages (freeing the referenced objects)
 Void deleteSEIs(SEIMessages &seiList);
 
-#if K0180_SCALABLE_NESTING_SEI
 class SEIScalableNesting : public SEI
 {
 public:
@@ -444,8 +440,6 @@ public:
     Bool  m_callerOwnsSEIs;
     SEIMessages m_nestedSEIs;
 };
-
-#endif // if K0180_SCALABLE_NESTING_SEI
 
 //! \}
 
