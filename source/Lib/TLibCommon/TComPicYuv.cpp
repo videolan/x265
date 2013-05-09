@@ -337,18 +337,18 @@ Void TComPicYuv::generateLumaHQpel()
     dstPtr = m_filteredBlockOrgY[0][0] - (tmpMarginY + 4) * dstStride - (tmpMarginX + 4);
 
 #if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock(width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
+    x265::primitives.cpyblock(width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
 #else
-    filterCopy(srcPtr, srcStride, dstPtr, dstStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4);
+    filterCopy(srcPtr, srcStride, dstPtr, dstStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
 #endif
 
     intPtr = filteredBlockTmp[0] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr,
-                                   intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4);
+                                   intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
 #else
     filterConvertPelToShort(g_bitDepthY, srcPtr, srcStride, intPtr,
-                            intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4);
+                            intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
 #endif
 
     intPtr = filteredBlockTmp[0] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
@@ -363,9 +363,9 @@ Void TComPicYuv::generateLumaHQpel()
 
     intPtr = filteredBlockTmp[2] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4,  m_lumaFilter[2]);
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8,  m_lumaFilter[2]);
 #else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4,  m_lumaFilter[2]);
+    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8,  m_lumaFilter[2]);
 #endif
 
     intPtr = filteredBlockTmp[2] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
@@ -388,17 +388,17 @@ Void TComPicYuv::generateLumaHQpel()
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     intPtr = filteredBlockTmp[1] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, m_lumaFilter[1]);
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, m_lumaFilter[1]);
 #else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, m_lumaFilter[1]);
+    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, m_lumaFilter[1]);
 #endif
 
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     intPtr = filteredBlockTmp[3] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, m_lumaFilter[3]);
+    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, m_lumaFilter[3]);
 #else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 4, height + (tmpMarginY << 1) + 4, m_lumaFilter[3]);
+    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, m_lumaFilter[3]);
 #endif
 
     // Generate @ 1,1
