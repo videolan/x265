@@ -30,10 +30,14 @@
 %assign SIZEOF_PIXEL 1
 %assign SIZEOF_DCTCOEF 2
 %define pixel byte
+%define vpbroadcastdct vpbroadcastw
+%define vpbroadcastpix vpbroadcastb
 %if HIGH_BIT_DEPTH
     %assign SIZEOF_PIXEL 2
     %assign SIZEOF_DCTCOEF 4
     %define pixel word
+    %define vpbroadcastdct vpbroadcastd
+    %define vpbroadcastpix vpbroadcastw
 %endif
 
 %assign FENC_STRIDEB SIZEOF_PIXEL*FENC_STRIDE
@@ -52,7 +56,10 @@
 
 
 %macro SBUTTERFLY 4
-%if avx_enabled && mmsize == 16
+%ifidn %1, dqqq
+    vperm2i128  m%4, m%2, m%3, q0301 ; punpckh
+    vinserti128 m%2, m%2, xm%3, 1    ; punpckl
+%elif avx_enabled && mmsize >= 16
     punpckh%1 m%4, m%2, m%3
     punpckl%1 m%2, m%3
 %else
@@ -214,15 +221,20 @@
 %endif
 %endmacro
 
-%macro ABSD 2
+%macro ABSD 2-3
 %if cpuflag(ssse3)
     pabsd   %1, %2
 %else
-    pxor    %1, %1
-    pcmpgtd %1, %2
-    pxor    %2, %1
-    psubd   %2, %1
-    SWAP    %1, %2
+    %define %%s %2
+%if %0 == 3
+    mova    %3, %2
+    %define %%s %3
+%endif
+    pxor     %1, %1
+    pcmpgtd  %1, %%s
+    pxor    %%s, %1
+    psubd   %%s, %1
+    SWAP     %1, %%s
 %endif
 %endmacro
 
@@ -255,9 +267,13 @@
 %endmacro
 
 %imacro SPLATW 2-3 0
-    PSHUFLW    %1, %2, (%3)*q1111
+%if cpuflag(avx2) && %3 == 0
+    vpbroadcastw %1, %2
+%else
+    PSHUFLW      %1, %2, (%3)*q1111
 %if mmsize == 16
-    punpcklqdq %1, %1
+    punpcklqdq   %1, %1
+%endif
 %endif
 %endmacro
 
@@ -275,16 +291,24 @@
 %endmacro
 
 %macro HADDD 2 ; sum junk
-%if mmsize == 16
+%if sizeof%1 == 32
+%define %2 xmm%2
+    vextracti128 %2, %1, 1
+%define %1 xmm%1
+    paddd   %1, %2
+%endif
+%if mmsize >= 16
     movhlps %2, %1
     paddd   %1, %2
 %endif
     PSHUFLW %2, %1, q0032
     paddd   %1, %2
+%undef %1
+%undef %2
 %endmacro
 
 %macro HADDW 2 ; reg, tmp
-%if cpuflag(xop) && mmsize == 16
+%if cpuflag(xop) && sizeof%1 == 16
     vphaddwq  %1, %1
     movhlps   %2, %1
     paddd     %1, %2
@@ -294,17 +318,25 @@
 %endif
 %endmacro
 
-%macro HADDUW 2
-%if cpuflag(xop) && mmsize == 16
-    vphadduwq %1, %1
-    movhlps   %2, %1
-    paddd     %1, %2
+%macro HADDUWD 2
+%if cpuflag(xop) && sizeof%1 == 16
+    vphadduwd %1, %1
 %else
     psrld %2, %1, 16
     pslld %1, 16
     psrld %1, 16
     paddd %1, %2
-    HADDD %1, %2
+%endif
+%endmacro
+
+%macro HADDUW 2
+%if cpuflag(xop) && sizeof%1 == 16
+    vphadduwq %1, %1
+    movhlps   %2, %1
+    paddd     %1, %2
+%else
+    HADDUWD   %1, %2
+    HADDD     %1, %2
 %endif
 %endmacro
 
@@ -475,7 +507,7 @@
 %endif
 %elifidn %1, q
     shufps m%5, m%3, m%4, q3131
-    shufps m%3, m%4, q2020
+    shufps m%3, m%3, m%4, q2020
     SWAP    %4, %5
 %endif
 %endmacro
@@ -498,22 +530,24 @@
 ; %5(%6): tmpregs
 %if %1!=0 ; have to reorder stuff for horizontal op
     %ifidn %2, sumsub
-         %define ORDER ord
-         ; sumsub needs order because a-b != b-a unless a=b
+        %define ORDER ord
+        ; sumsub needs order because a-b != b-a unless a=b
     %else
-         %define ORDER unord
-         ; if we just max, order doesn't matter (allows pblendw+or in sse4)
+        %define ORDER unord
+        ; if we just max, order doesn't matter (allows pblendw+or in sse4)
     %endif
     %if %1==1
-         TRANS d, ORDER, %3, %4, %5, %6
+        TRANS d, ORDER, %3, %4, %5, %6
     %elif %1==2
-         %if mmsize==8
-             SBUTTERFLY dq, %3, %4, %5
-         %else
-             TRANS q, ORDER, %3, %4, %5, %6
-         %endif
+        %if mmsize==8
+            SBUTTERFLY dq, %3, %4, %5
+        %else
+            TRANS q, ORDER, %3, %4, %5, %6
+        %endif
     %elif %1==4
-         SBUTTERFLY qdq, %3, %4, %5
+        SBUTTERFLY qdq, %3, %4, %5
+    %elif %1==8
+        SBUTTERFLY dqqq, %3, %4, %5
     %endif
 %endif
 %ifidn %2, sumsub
@@ -675,11 +709,18 @@
 %endmacro
 
 
-%macro LOAD_DIFF 5
+%macro LOAD_DIFF 5-6 1
 %if HIGH_BIT_DEPTH
+%if %6 ; %5 aligned?
     mova       %1, %4
     psubw      %1, %5
-%elifidn %3, none
+%else
+    movu       %1, %4
+    movu       %2, %5
+    psubw      %1, %2
+%endif
+%else ; !HIGH_BIT_DEPTH
+%ifidn %3, none
     movh       %1, %4
     movh       %2, %5
     punpcklbw  %1, %2
@@ -692,6 +733,7 @@
     punpcklbw  %2, %3
     psubw      %1, %2
 %endif
+%endif ; HIGH_BIT_DEPTH
 %endmacro
 
 %macro LOAD_DIFF8x4 8 ; 4x dst, 1x tmp, 1x mul, 2x ptr
@@ -742,15 +784,25 @@
     movh   [r0+3*FDEC_STRIDE], %4
 %endmacro
 
-%macro LOAD_DIFF_8x4P 7-10 r0,r2,0 ; 4x dest, 2x temp, 2x pointer, increment?
-    LOAD_DIFF m%1, m%5, m%7, [%8],      [%9]
-    LOAD_DIFF m%2, m%6, m%7, [%8+r1],   [%9+r3]
-    LOAD_DIFF m%3, m%5, m%7, [%8+2*r1], [%9+2*r3]
-    LOAD_DIFF m%4, m%6, m%7, [%8+r4],   [%9+r5]
+%macro LOAD_DIFF_8x4P 7-11 r0,r2,0,1 ; 4x dest, 2x temp, 2x pointer, increment, aligned?
+    LOAD_DIFF m%1, m%5, m%7, [%8],      [%9],      %11
+    LOAD_DIFF m%2, m%6, m%7, [%8+r1],   [%9+r3],   %11
+    LOAD_DIFF m%3, m%5, m%7, [%8+2*r1], [%9+2*r3], %11
+    LOAD_DIFF m%4, m%6, m%7, [%8+r4],   [%9+r5],   %11
 %if %10
     lea %8, [%8+4*r1]
     lea %9, [%9+4*r3]
 %endif
+%endmacro
+
+; 2xdst, 2xtmp, 2xsrcrow
+%macro LOAD_DIFF16x2_AVX2 6
+    pmovzxbw m%1, [r1+%5*FENC_STRIDE]
+    pmovzxbw m%2, [r1+%6*FENC_STRIDE]
+    pmovzxbw m%3, [r2+(%5-4)*FDEC_STRIDE]
+    pmovzxbw m%4, [r2+(%6-4)*FDEC_STRIDE]
+    psubw    m%1, m%3
+    psubw    m%2, m%4
 %endmacro
 
 %macro DIFFx2 6-7
