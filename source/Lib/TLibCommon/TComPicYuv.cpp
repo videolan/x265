@@ -263,9 +263,15 @@ Void TComPicYuv::extendPicBorder()
     /* Generate H/Q-pel for LumaBlocks  */
     generateLumaHQpel();
 
+    //Copy entire luma block to m_filteredBlockBufY. No need to call filter
+    memcpy(m_filteredBlockBufY[0][0], m_apiPicBufY, ((m_iPicWidth + (m_iLumaMarginX << 1)) * (m_iPicHeight + (m_iLumaMarginY << 1)) )*sizeof(Pel));
+
     //Extend border.
     int tmpMargin = 4;
-    for (int i = 0; i < 4; i++)
+    xExtendPicCompBorder(m_filteredBlockOrgY[0][1] - tmpMargin * getStride() - tmpMargin, getStride(), getWidth() + 2 * tmpMargin, getHeight() + 2 * tmpMargin, m_iLumaMarginX - tmpMargin, m_iLumaMarginY - tmpMargin);
+    xExtendPicCompBorder(m_filteredBlockOrgY[0][2] - tmpMargin * getStride() - tmpMargin, getStride(), getWidth() + 2 * tmpMargin, getHeight() + 2 * tmpMargin, m_iLumaMarginX - tmpMargin, m_iLumaMarginY - tmpMargin);
+    xExtendPicCompBorder(m_filteredBlockOrgY[0][3] - tmpMargin * getStride() - tmpMargin, getStride(), getWidth() + 2 * tmpMargin, getHeight() + 2 * tmpMargin, m_iLumaMarginX - tmpMargin, m_iLumaMarginY - tmpMargin);
+    for (int i = 1; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
@@ -336,11 +342,7 @@ Void TComPicYuv::generateLumaHQpel()
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     dstPtr = m_filteredBlockOrgY[0][0] - (tmpMarginY + 4) * dstStride - (tmpMarginX + 4);
 
-#if ENABLE_PRIMITIVES
-    x265::primitives.cpyblock(width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, (pixel*)dstPtr, dstStride, (pixel*)srcPtr, srcStride);
-#else
-    filterCopy(srcPtr, srcStride, dstPtr, dstStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
-#endif
+    /* No need to calculate m_filteredBlock[0][0]. Entire Luma block is copied to it in extendPicBorder() */
 
     intPtr = filteredBlockTmp[0] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
 #if ENABLE_PRIMITIVES
