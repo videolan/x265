@@ -1,60 +1,123 @@
 @echo off
 
    cd "%builddir%"
-   mkdir enabled
-   cd enabled
+   mkdir 8bit_prem
+   cd 8bit_prem
    set solution="x265.sln"
+   
 
-	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE ^) >> enablecache.txt
-	echo SET(HIGH_BIT_DEPTH ON CACHE BOOL "Use 16bit pixels internally" FORCE ^) >> enablecache.txt
-	echo SET(ENABLE_PRIMITIVES ON CACHE BOOL "Enable use of optimized encoder primitives" FORCE ^) >> enablecache.txt
-
-	cmake -G %makefile%  -C enablecache.txt ..\..\..\source 
+	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE ^) >> cacheoutput.txt
+	echo SET(HIGH_BIT_DEPTH OFF CACHE BOOL "Use 8bit pixels internally" FORCE ^) >> cacheoutput.txt
+	echo SET(ENABLE_PRIMITIVES ON CACHE BOOL "Enable use of optimized encoder primitives" FORCE ^) >> cacheoutput.txt
+	
+	cmake -G %makefile%  -C cacheoutput.txt ..\..\..\source 
 
 	if exist %solution% (
   		call %vcvars%
 		MSBuild /property:Configuration="Release" x265.sln >> BuildLog.txt
 		
 		if %errorlevel% equ 1 (
-			echo Build with primitive enabled unsuccessfull for %makefile% refer the build log  >> "%LOG%"
+			echo Build with 8bit_prem unsuccessfull for %makefile% refer the build log  >> "%LOG%"
 			exit 1
 		)
-		echo Build with primitives enabled successfull for %makefile% >> "%LOG%"
+		echo Build with 8bit_prem successfull for %makefile% >> "%LOG%"
 
 		if exist Release\x265-cli.exe (
-  			echo build Application with primitive enable successfull for %makefile% >> "%LOG%"			
+  			echo build Application with 8bit_prem successfull for %makefile% >> "%LOG%"			
 		) else (
-			echo build Application with primitive enable unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
+			echo build Application with 8bit_prem unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
 		)     
-        ) else ( echo Primitive Enable solution is not created for %makefile% >> "%LOG%"
+        ) else ( echo 8bit_prem solution is not created for %makefile% >> "%LOG%"
         )
 
 
    cd "%builddir%"
-   mkdir disable
-   cd disable
- 
-	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE^) >> disablecache.txt
-	echo SET(ENABLE_PRIMITIVES OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> disablecache.txt
-	echo SET(ENABLE_PRIMITIVES_VEC OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> disablecache.txt
+   mkdir 8bit_HM
+   cd 8bit_HM
 
-	cmake -G %makefile% -C disablecache.txt ..\..\..\source 
+   	 
+	echo SET(ENABLE_TESTS OFF CACHE BOOL "Enable Unit Tests" FORCE^) >> cacheoutput.txt
+	echo SET(HIGH_BIT_DEPTH OFF CACHE BOOL "Use 8bit pixels internally" FORCE ^) >> cacheoutput.txt
+	echo SET(ENABLE_PRIMITIVES OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> cacheoutput.txt
+
+	cmake -G %makefile% -C cacheoutput.txt ..\..\..\source 
 
 	if exist %solution% (
   		call %vcvars%
 		MSBuild /property:Configuration="Release" x265.sln >> BuildLog.txt
 
 		if %errorlevel% equ 1 (
-			echo Build with primitive disable unsuccessfull for %makefile% refer the build log  >> "%LOG%"
+			echo Build with 8bit_HM unsuccessfull for %makefile% refer the build log  >> "%LOG%"
 			exit 1
 		)
-		echo Build with primitives disable successfull for %makefile% >> "%LOG%"
+		echo Build with 8bit_HM successfull for %makefile% >> "%LOG%"
 
 		if exist Release\x265-cli.exe (
-  			echo build Application with primitive disable successfull for %makefile% >> "%LOG%"			
+  			echo build Application with 8bit_HM successfull for %makefile% >> "%LOG%"			
 		) else (
-			echo build Application with primitive disable unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
+			echo build Application with 8bit_HM unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
 		)     
-        ) else ( echo Primitive Disable solution is not created for %makefile% >> "%LOG%"
+        ) else ( echo 8bit_HM solution is not created for %makefile% >> "%LOG%"
+        )
+
+
+cd "%builddir%"
+   mkdir 16bit_prem
+   cd 16bit_prem
+   set solution="x265.sln"
+   
+	
+	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE ^) >> cacheoutput.txt
+	echo SET(HIGH_BIT_DEPTH ON CACHE BOOL "Use 16bit pixels internally" FORCE ^) >> cacheoutput.txt
+	echo SET(ENABLE_PRIMITIVES ON CACHE BOOL "Enable use of optimized encoder primitives" FORCE ^) >> cacheoutput.txt
+	
+	cmake -G %makefile%  -C cacheoutput.txt ..\..\..\source 
+
+	if exist %solution% (
+  		call %vcvars%
+		MSBuild /property:Configuration="Release" x265.sln >> BuildLog.txt
+		
+		if %errorlevel% equ 1 (
+			echo Build with 16bit_prem unsuccessfull for %makefile% refer the build log  >> "%LOG%"
+			exit 1
+		)
+		echo Build with 16bit_prem successfull for %makefile% >> "%LOG%"
+
+		if exist Release\x265-cli.exe (
+  			echo build Application with 16bit_prem successfull for %makefile% >> "%LOG%"			
+		) else (
+			echo build Application with 16bit_prem unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
+		)     
+        ) else ( echo 16bit_prem solution is not created for %makefile% >> "%LOG%"
+        )
+
+
+   cd "%builddir%"
+   mkdir 16bit_HM
+   cd 16bit_HM
+
+   	
+	echo SET(ENABLE_TESTS OFF CACHE BOOL "Enable Unit Tests" FORCE^) >> cacheoutput.txt
+	echo SET(HIGH_BIT_DEPTH ON CACHE BOOL "Use 16bit pixels internally" FORCE ^) >> cacheoutput.txt
+	echo SET(ENABLE_PRIMITIVES OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> cacheoutput.txt
+	
+	cmake -G %makefile% -C cacheoutput.txt ..\..\..\source 
+
+	if exist %solution% (
+  		call %vcvars%
+		MSBuild /property:Configuration="Release" x265.sln >> BuildLog.txt
+
+		if %errorlevel% equ 1 (
+			echo Build with 16bit_HM unsuccessfull for %makefile% refer the build log  >> "%LOG%"
+			exit 1
+		)
+		echo Build with 16bit_HM successfull for %makefile% >> "%LOG%"
+
+		if exist Release\x265-cli.exe (
+  			echo build Application with 16bit_HM successfull for %makefile% >> "%LOG%"			
+		) else (
+			echo build Application with 16bit_HM unsuccessfull for %makefile%  refer the Build log >> "%LOG%"
+		)     
+        ) else ( echo 16bit_HM solution is not created for %makefile% >> "%LOG%"
         )
 
