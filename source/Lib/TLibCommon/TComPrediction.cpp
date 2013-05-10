@@ -371,7 +371,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     if (uiDirMode == PLANAR_IDX)
     {
 #if ENABLE_PRIMITIVES
-        primitives.getIPredPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight);
 #else
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
 #endif
@@ -402,7 +402,7 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     if (uiDirMode == PLANAR_IDX)
     {
 #if ENABLE_PRIMITIVES
-        primitives.getIPredPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight);
 #else
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
 #endif
