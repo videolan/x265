@@ -822,7 +822,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                             swapCU(rpcBestCU, rpcTempCU, uiDepth);
                             rpcBestCU = rpcParentBestCU;
                             AbortFlag = false;
-                            goto CheckBestMode;
+                            break;
                         }
                     }
 
@@ -847,7 +847,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
             }
 
-CheckBestMode:
+
             if (!AbortFlag && uiPartUnitIdx > 3)
             {
                 AbortFlag = true;
