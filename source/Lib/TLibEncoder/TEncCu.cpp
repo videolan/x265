@@ -363,11 +363,10 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
-static bool flag = true;
 
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
 {
-    flag = true;
+    AbortFlag = true;
     TComPic* pcPic = rpcBestCU->getPic();
 
     PPAScopeEvent(TEncCu_xCompressCU);
@@ -793,9 +792,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             UInt uiPartUnitIdx = 0;
             for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
             {
-                if (!flag)
+                if (!AbortFlag)
                 {
-                    flag = true;
+                    AbortFlag = true;
                     return;
                 }
                 pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
@@ -822,8 +821,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                         {
                             swapCU(rpcBestCU, rpcTempCU, uiDepth);
                             rpcBestCU = rpcParentBestCU;
-                            flag = false;
-                            goto label;
+                            AbortFlag = false;
+                            goto CheckBestMode;
                         }
                     }
 
@@ -835,7 +834,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     {
                         xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                     }
-                    if (flag)
+                    if (AbortFlag)
                     {
                         rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                         xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
@@ -848,10 +847,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
             }
 
-label:
-            if (!flag && uiPartUnitIdx > 3)
+CheckBestMode:
+            if (!AbortFlag && uiPartUnitIdx > 3)
             {
-                flag = true;
+                AbortFlag = true;
                 return;
             }
             if (!bBoundary)
@@ -1483,10 +1482,6 @@ void TEncCu::swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth
     m_ppcRecoYuvTemp[uiDepth] = pcYuv;
 
     pcYuv = NULL;
-    pcCU  = NULL;
-
-    if (m_bUseSBACRD) // store temp best CI for next CU coding
-        m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]);
 }
 
 Void TEncCu::xCheckDQP(TComDataCU* pcCU)
