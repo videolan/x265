@@ -905,7 +905,6 @@ Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
     slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
 }
 
-#if L0208_SOP_DESCRIPTION_SEI
 Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid)
 {
     int rpsIdx = GOPid;
@@ -935,8 +934,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
 
     return rpsIdx;
 }
-
-#endif // if L0208_SOP_DESCRIPTION_SEI
 
 Void  TEncTop::xInitPPSforTiles()
 {

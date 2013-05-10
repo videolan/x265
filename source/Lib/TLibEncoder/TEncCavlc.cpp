@@ -514,9 +514,6 @@ Void TEncCavlc::codeVPS(TComVPS* pcVPS)
     assert(pcVPS->getMaxTLayers() > 1 || pcVPS->getTemporalNestingFlag());
     WRITE_CODE(0xffff,                              16,        "vps_reserved_ffff_16bits");
     codePTL(pcVPS->getPTL(), true, pcVPS->getMaxTLayers() - 1);
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-    codeBitratePicRateInfo(pcVPS->getBitratePicrateInfo(), 0, pcVPS->getMaxTLayers() - 1);
-#endif
     const Bool subLayerOrderingInfoPresentFlag = 1;
     WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
     for (UInt i = 0; i <= pcVPS->getMaxTLayers() - 1; i++)
@@ -999,28 +996,6 @@ Void TEncCavlc::codeProfileTier(ProfileTierLevel* ptl)
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
     WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
 }
-
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-Void TEncCavlc::codeBitratePicRateInfo(TComBitRatePicRateInfo *info, Int tempLevelLow, Int tempLevelHigh)
-{
-    for (Int i = tempLevelLow; i <= tempLevelHigh; i++)
-    {
-        WRITE_FLAG(info->getBitRateInfoPresentFlag(i),  "bit_rate_info_present_flag[i]");
-        WRITE_FLAG(info->getPicRateInfoPresentFlag(i),  "pic_rate_info_present_flag[i]");
-        if (info->getBitRateInfoPresentFlag(i))
-        {
-            WRITE_CODE(info->getAvgBitRate(i), 16, "avg_bit_rate[i]");
-            WRITE_CODE(info->getMaxBitRate(i), 16, "max_bit_rate[i]");
-        }
-        if (info->getPicRateInfoPresentFlag(i))
-        {
-            WRITE_CODE(info->getConstantPicRateIdc(i),  2, "constant_pic_rate_idc[i]");
-            WRITE_CODE(info->getAvgPicRate(i),         16, "avg_pic_rate[i]");
-        }
-    }
-}
-
-#endif // if SIGNAL_BITRATE_PICRATE_IN_VPS
 
 /**
  - write wavefront substreams sizes for the slice header.

@@ -84,9 +84,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
                                    MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
+    pixel *fref = ref->plane[0][0][0] + blockOffset;
 
     bc.setMVP(qmvp);
-    fref = ref->plane[0][0][0] + blockOffset;
 
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
@@ -115,7 +115,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     if (bmv != 0)
     {
-        int cost = fpelSad(0) + bc.mvcost(0);
+        int cost = fpelSad(fref, 0) + bc.mvcost(0);
         if (cost < bcost)
         {
             bcost = cost;
@@ -127,7 +127,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* Measure full pel SAD at MVP */
     bmv = bmv.roundToFPel();
-    bcost = fpelSad(bmv) + bc.mvcost(bmv.toQPel());
+    bcost = fpelSad(fref, bmv) + bc.mvcost(bmv.toQPel());
 
     int meMethod = 0;
     switch (meMethod)
@@ -204,53 +204,5 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     x264_cpu_emms();
     outQMv = bmv;
     return bcost >> 4;
-}
-
-void MotionEstimate::buildResidual(const MV& qmv)
-{
-    MV fmv = qmv.toFPel();
-    MV cmv = qmv >> 1;
-
-    /* We need block copy and block-residual primitives */
-    {
-        pixel *orig = fenc;
-        pixel *afref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset + fmv.y * ref->lumaStride + fmv.x;
-        short *resi = residual[0] + blockOffset;
-
-        for (int row = 0; row < blockHeight; row++)
-        {
-            for (int col = 0; col < blockWidth; col++)
-            {
-                resi[col] = (short)orig[col] - (short)afref[col];
-            }
-
-            resi += resLumaStride;
-            orig += fencLumaStride;
-            afref += ref->lumaStride;
-        }
-    }
-
-    /* TODO: this is color space dependent.  4:2:0 only */
-    for (int ch = 1; ch < 3; ch++)
-    {
-        /* TODO: Double check this indexing; I doubt it is correct */
-        intptr_t qpoffs = (blockOffset >> 2) + cmv.y * ref->chromaStride + cmv.x;
-        pixel *orig = fencplanes[ch] + (blockOffset >> 2);
-        pixel *afref = ref->plane[qmv.x & 3][qmv.y & 3][ch] + qpoffs;
-        // Only works if recon and residual planes have same stride
-        short *resi = residual[ch] + blockOffset;
-
-        for (int row = 0; row < blockHeight >> 1; row++)
-        {
-            for (int col = 0; col < blockWidth >> 1; col++)
-            {
-                resi[col] = (short)orig[col] - (short)afref[col];
-            }
-
-            resi += resChromaStride;
-            orig += fencChromaStride;
-            afref += ref->chromaStride;
-        }
-    }
 }
 #endif

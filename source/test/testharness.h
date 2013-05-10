@@ -25,10 +25,20 @@
 #define _TESTHARNESS_H_ 1
 
 #include "primitives.h"
+#include <stddef.h>
+
 #ifdef _MSC_VER
 #include <intrin.h>
+#elif defined(__GNUC__)
+
+static inline uint32_t __rdtsc(void) 
+{ 
+    uint32_t a = 0;
+    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
+    return a;
+} 
+
 #endif
-#include <stddef.h>
 
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
@@ -73,25 +83,34 @@ public:
     virtual void Release() = 0;
 };
 
-static inline uint64_t read_time(void)
-{
-#ifdef _MSC_VER 
-    return __rdtsc();
-#else
-    return 0;
-#endif
-}
+#define BENCH_RUNS 1000
 
+// Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc
+// and discards invalid times.  Repeats 1000 times to get a good average.  Then measures
+// the C reference with fewer runs and reports X factor and average cycles.
 #define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
 { \
-    t->Start(); unsigned __int64 ticks1 = read_time(); for (int X=0; X < ITERATIONS; X++) { RUNOPT; } unsigned __int64 ticks2 = read_time(); t->Stop(); \
-    uint64_t optelapsed = t->Elapsed(); \
-    uint64_t optelapsed2 = ticks2 - ticks1; \
-    ticks1 = read_time(); t->Start(); for (int X=0; X < ITERATIONS; X++) { RUNREF; } t->Stop(); ticks2 = read_time(); \
-    uint64_t refelapsed = t->Elapsed(); \
-    uint64_t refelapsed2 = ticks2 - ticks1; \
-    printf("\t%3.2fx ", (double)refelapsed/optelapsed ); \
-    printf("\t %.2lf \t %.2lf\n", (double)optelapsed2/ITERATIONS, (double)refelapsed2/ITERATIONS); \
+    uint32_t cycles = 0; int runs = 0;\
+    RUNOPT;\
+    for (int ti = 0; ti < BENCH_RUNS; ti++) {\
+      uint32_t t0 = (uint32_t)__rdtsc();\
+      RUNOPT; RUNOPT; RUNOPT; RUNOPT;\
+      uint32_t t1 = (uint32_t)__rdtsc() - t0;\
+      if (t1*runs <= cycles*4 && ti > 0) { cycles += t1; runs++; }\
+    }\
+    uint32_t refcycles = 0; int refruns = 0;\
+    RUNREF;\
+    for (int ti = 0; ti < BENCH_RUNS/4; ti++) {\
+      uint32_t t0 = (uint32_t)__rdtsc();\
+      RUNREF; RUNREF; RUNREF; RUNREF;\
+      uint32_t t1 = (uint32_t)__rdtsc() - t0;\
+      if (t1*refruns <= refcycles*4 && ti > 0) { refcycles += t1; refruns++; }\
+    }\
+    x264_cpu_emms();\
+    float optperf = (10.0f * cycles / runs) / 4;\
+    float refperf = (10.0f * refcycles / refruns) / 4;\
+    printf("\t%3.2fx ", refperf / optperf);\
+    printf("\t %-4.2lf \t %-4.2lf\n", optperf, refperf); \
 }
 
 #endif // ifndef _TESTHARNESS_H_

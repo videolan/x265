@@ -65,7 +65,6 @@ protected:
     MV mvmin, mvmax;
 
     MotionReference *ref;   // current reference frame
-    pixel *fref;            // coincident block in reference frame
 
     pixelcmp sad;
     pixelcmp satd;
@@ -97,15 +96,6 @@ public:
         fencChromaStride = chroma;
     }
 
-    void setResidualPlanes(short *Y, short *Cb, short *Cr, intptr_t luma, intptr_t chroma)
-    {
-        residual[0] = Y;
-        residual[1] = Cb;
-        residual[2] = Cr;
-        resLumaStride = luma;
-        resChromaStride = chroma;
-    }
-
     // allow the HM to provide QP and lambda together; assumes lambda will
     // always be the same for a given QP
     void setQP(int qp, double lambda)        { bc.setQP(qp, lambda); }
@@ -118,28 +108,26 @@ public:
 
     /* Methods called for searches */
 
-    int bufSAD(pixel *afref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, afref, stride); }
+    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
 
-    int bufSATD(pixel *afref, intptr_t stride) { return satd(fenc, FENC_STRIDE, afref, stride); }
+    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
     void setReference(MotionReference* tref)  { ref = tref; }
 
-    /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
+    /* returns SATD QPEL cost of best outMV for this PU */
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
-
-    /* Motion Compensation */
-    void buildResidual(const MV &mv);
 
 protected:
 
-    int fpelSad(const MV& fmv)
+    /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
+    inline int fpelSad(pixel *fref, const MV& fmv)
     {
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
     }
 
-    int qpelSad(const MV& qmv)
+    inline int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
@@ -148,7 +136,7 @@ protected:
                    ref->lumaStride);
     }
 
-    int qpelSatd(const MV& qmv)
+    inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;

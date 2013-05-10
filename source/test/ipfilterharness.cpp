@@ -402,7 +402,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.ipfilterConvert_p_s)
     {
-        printf("filterConvertPeltoShort");
+        printf("filterConvertPeltoShort\t");
         REPORT_SPEEDUP(FILTER_ITERATIONS,
                        opt.ipfilterConvert_p_s(8, pixel_buff,
                                                srcStride,
@@ -421,7 +421,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.ipfilterConvert_s_p)
     {
-        printf("filterConvertShorttoPel");
+        printf("filterConvertShorttoPel\t");
         REPORT_SPEEDUP(FILTER_ITERATIONS,
                        opt.ipfilterConvert_s_p(8, short_buff,
                                                srcStride,

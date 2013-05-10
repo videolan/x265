@@ -165,6 +165,9 @@ cglobal safe_intel_cpu_indicator_init
 %endif
     push rbp
     mov  rbp, rsp
+%if WIN64
+    sub  rsp, 32 ; shadow space
+%endif
     and  rsp, ~15
     call intel_cpu_indicator_init
     leave

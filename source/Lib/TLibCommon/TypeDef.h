@@ -41,16 +41,12 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define L0208_SOP_DESCRIPTION_SEI                 1 ///< L0208: add SOP description SEI
 #define J0149_TONE_MAPPING_SEI                    1 ///< J0149: Tone mapping information SEI
 
 #define MAX_NUM_PICS_IN_SOP                    1024
 
-#define K0180_SCALABLE_NESTING_SEI                1 ///JCTVC-K0180 scalable nesting SEI message
 #define MAX_NESTING_NUM_OPS                    1024
 #define MAX_NESTING_NUM_LAYER                    64
-
-#define SIGNAL_BITRATE_PICRATE_IN_VPS             0 ///< K0125: Signal bit_rate and pic_rate in VPS
 
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
@@ -75,8 +71,6 @@
 #define C2FLAG_NUMBER                             1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
 
 #define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3          1 ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
-
-#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS         1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now)
 
 #define SAO_ENCODING_RATE                         0.75
 #define SAO_ENCODING_RATE_CHROMA                  0.5
