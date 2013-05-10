@@ -84,9 +84,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
                                    MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
+    pixel *fref = ref->plane[0][0][0] + blockOffset;
 
     bc.setMVP(qmvp);
-    fref = ref->plane[0][0][0] + blockOffset;
 
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
@@ -115,7 +115,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     if (bmv != 0)
     {
-        int cost = fpelSad(0) + bc.mvcost(0);
+        int cost = fpelSad(fref, 0) + bc.mvcost(0);
         if (cost < bcost)
         {
             bcost = cost;
@@ -127,7 +127,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* Measure full pel SAD at MVP */
     bmv = bmv.roundToFPel();
-    bcost = fpelSad(bmv) + bc.mvcost(bmv.toQPel());
+    bcost = fpelSad(fref, bmv) + bc.mvcost(bmv.toQPel());
 
     int meMethod = 0;
     switch (meMethod)

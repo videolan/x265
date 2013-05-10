@@ -65,7 +65,6 @@ protected:
     MV mvmin, mvmax;
 
     MotionReference *ref;   // current reference frame
-    pixel *fref;            // coincident block in reference frame
 
     pixelcmp sad;
     pixelcmp satd;
@@ -109,9 +108,9 @@ public:
 
     /* Methods called for searches */
 
-    int bufSAD(pixel *afref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, afref, stride); }
+    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
 
-    int bufSATD(pixel *afref, intptr_t stride) { return satd(fenc, FENC_STRIDE, afref, stride); }
+    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
     void setReference(MotionReference* tref)  { ref = tref; }
 
@@ -120,14 +119,15 @@ public:
 
 protected:
 
-    int fpelSad(const MV& fmv)
+    /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
+    inline int fpelSad(pixel *fref, const MV& fmv)
     {
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
     }
 
-    int qpelSad(const MV& qmv)
+    inline int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
@@ -136,7 +136,7 @@ protected:
                    ref->lumaStride);
     }
 
-    int qpelSatd(const MV& qmv)
+    inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
