@@ -5390,6 +5390,17 @@ static inline Vec8us operator >> (Vec8us const & a, Const_int_t<d>) {
     return shift_right_by_i<d>(a);
 }
 
+template <int32_t d>
+static inline Vec8us shift_right_by_i_s(Vec8s const & x) {
+    Static_error_check<(d<16)> not_support;
+    return _mm_srai_epi16(x, d);
+}
+
+template <int32_t d>
+static inline Vec8s operator >> (Vec8s const & a, Const_int_t<d>) {
+    return shift_right_by_i_s<d>(a);
+}
+
 // Shift Vec4ui by compile-time constant
 template <int32_t d>
 static inline Vec128b shift_left_by_i(Vec128b const & x) {
@@ -5465,6 +5476,34 @@ static inline void store_partial_by_i(void const * p, Vec128b const& a) {
 template <int32_t d>
 void store_partial(Const_int_t<d>, void const * p, Vec128b const& a) {
     store_partial_by_i<d>(p, a);
+}
+
+/*****************************************************************************
+*
+*          Vector broadcast: N is a compile-time constant
+*
+*****************************************************************************/
+template <int32_t d>
+static inline Vec8us broadcast_by_i(Vec8us const& a) {
+    Static_error_check<(d<8)> not_support;
+    const int dL = d & 3;
+    const int dH = (d >> 2) & 3;
+    Vec8us _tmp = _mm_shufflelo_epi16(a, dL * 0x55);
+    if (d>4) {
+        _tmp = _mm_shufflelo_epi16(_tmp, dH * 0x55);
+    }
+    return _tmp;
+}
+
+// BroadCast. Broad N to all of elements
+template <int32_t d>
+Vec8us broadcast(Const_int_t<d>, Vec8us const& a) {
+    return broadcast_by_i<d>(a);
+}
+
+template <int32_t d>
+Vec8s broadcast(Const_int_t<d>, Vec8s const& a) {
+    return broadcast_by_i<d>((Vec8us)a);
 }
 
 
