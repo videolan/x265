@@ -26,6 +26,7 @@
 
 #include "primitives.h"
 #include <string.h>
+#include <stdio.h>
 #include <assert.h>
 
 #define MAX_CU_SIZE 64
