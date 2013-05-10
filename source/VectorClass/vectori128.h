@@ -5390,6 +5390,37 @@ static inline Vec8us operator >> (Vec8us const & a, Const_int_t<d>) {
     return shift_right_by_i<d>(a);
 }
 
+// Shift Vec4ui by compile-time constant
+template <int32_t d>
+static inline Vec128b shift_left_by_i(Vec128b const & x) {
+    const int n = int(d) / 8;
+    Static_error_check<((d%8) == 0)> shift_by_non_bytes;
+    return _mm_slli_si128(x, n);
+}
+
+template <int32_t d>
+static inline Vec8us shift_left_by_i(Vec8us const & x) {
+    Static_error_check<(d<16)> not_support;
+    return _mm_slli_epi16(x, d);
+}
+
+// vector operator << : shift right logical all elements with const bytes (map to PSLLDQ)
+template <int32_t d>
+static inline Vec128b operator << (Vec128b const & a, Const_int_t<d>) {
+    return shift_left_by_i<d>(a);
+}
+
+// vector operator << : shift right logical all elements with const bytes (map to PSLLW)
+template <int32_t d>
+static inline Vec8us operator << (Vec8us const & a, Const_int_t<d>) {
+    return shift_left_by_i<d>(a);
+}
+
+template <int32_t d>
+static inline Vec8s operator << (Vec8s const & a, Const_int_t<d>) {
+    return (Vec8us)a << const_int(d);
+}
+
 /*****************************************************************************
 ++*
 ++*          Vector load_partial: N is a compile-time constant
