@@ -84,7 +84,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
                                    MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->plane[0][0][0] + blockOffset;
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
     setMVP(qmvp);
 

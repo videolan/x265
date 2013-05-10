@@ -33,9 +33,8 @@ namespace x265 {
 
 struct MotionReference
 {
-    /* indexed by [hpelx|qpelx][hpely|qpely][plane]
-     * aka: full pel Y, Cb, Cr referenced by plane[0][0][0..2] */
-    pixel* plane[4][4][3];
+    /* indexed by [hpelx|qpelx][hpely|qpely] */
+    pixel* lumaPlane[4][4];
 
     intptr_t lumaStride;
 
@@ -124,7 +123,7 @@ protected:
     inline int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
+        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
@@ -133,7 +132,7 @@ protected:
     inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->plane[qmv.x & 3][qmv.y & 3][0] + blockOffset;
+        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
         return satd(fenc, FENC_STRIDE,
                     qfref + fmv.y * ref->lumaStride + fmv.x,
                     ref->lumaStride);

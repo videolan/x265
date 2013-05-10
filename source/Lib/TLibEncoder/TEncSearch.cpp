@@ -3898,7 +3898,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
     for (int y = 0; y < 4; y++)
         for (int x = 0; x < 4; x++)
-            ref.plane[x][y][0] = (pixel*)refRecon->getLumaFilterBlock(y, x);
+            ref.lumaPlane[x][y] = (pixel*)refRecon->getLumaFilterBlock(y, x);
     ref.chromaStride = refRecon->getCStride();
     ref.lumaStride = refRecon->getStride();
     m_me.setReference(&ref);
