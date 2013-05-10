@@ -384,11 +384,7 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
 }
 
-#if WEIGHTED_CHROMA_DISTORTION
 UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
-#else
-UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc)
-#endif
 {
     DistParam cDtParam;
 
@@ -403,7 +399,6 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
     cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
     cDtParam.bitDepth = bitDepth;
 
-#if WEIGHTED_CHROMA_DISTORTION
     if (eText == TEXT_CHROMA_U)
     {
         return (Int)(m_cbDistortionWeight * cDtParam.DistFunc(&cDtParam));
@@ -416,18 +411,10 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
     {
         return cDtParam.DistFunc(&cDtParam);
     }
-
-#else // if WEIGHTED_CHROMA_DISTORTION
-    return cDtParam.DistFunc(&cDtParam);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 }
 
 #if !HIGH_BIT_DEPTH
-#if WEIGHTED_CHROMA_DISTORTION
 UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
-#else
-UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc)
-#endif
 {
     DistParamSSE cDtParam;
 
@@ -449,7 +436,6 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* p
     cDtParam.bitDepth = bitDepth;
 
     DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
-#if WEIGHTED_CHROMA_DISTORTION
     if (eText == TEXT_CHROMA_U)
     {
         return (Int)(m_cbDistortionWeight * DtParam->DistFunc(DtParam));
@@ -462,17 +448,9 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* p
     {
         return DtParam->DistFunc(DtParam);
     }
-
-#else // if WEIGHTED_CHROMA_DISTORTION
-    return DtParam->DistFunc(DtParam);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 }
 
-#if WEIGHTED_CHROMA_DISTORTION
 UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
-#else
-UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc)
-#endif
 {
     DistParamSSE cDtParam;
 
@@ -494,7 +472,6 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
     cDtParam.bitDepth = bitDepth;
 
     DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
-#if WEIGHTED_CHROMA_DISTORTION
     if (eText == TEXT_CHROMA_U)
     {
         return (Int)(m_cbDistortionWeight * DtParam->DistFunc(DtParam));
@@ -507,10 +484,6 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
     {
         return DtParam->DistFunc(DtParam);
     }
-
-#else // if WEIGHTED_CHROMA_DISTORTION
-    return DtParam->DistFunc(DtParam);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 }
 #endif
 

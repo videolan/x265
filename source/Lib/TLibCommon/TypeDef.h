@@ -79,7 +79,6 @@
 #define MAX_NUM_SPS                               16
 #define MAX_NUM_PPS                               64
 
-#define WEIGHTED_CHROMA_DISTORTION                1 ///< F386: weighting of chroma for RDO
 #define RDOQ_CHROMA_LAMBDA                        1 ///< F386: weighting of chroma for RDOQ
 #define SAO_CHROMA_LAMBDA                         1 ///< F386: weighting of chroma for SAO
 

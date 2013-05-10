@@ -329,7 +329,6 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
 
     // store lambda
     m_pcRdCost->setLambda(dLambda);
-#if WEIGHTED_CHROMA_DISTORTION
 // for RDO
 // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
     Double weight = 1.0;
@@ -345,7 +344,6 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     m_pcRdCost->setCrDistortionWeight(weight);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 
 #if RDOQ_CHROMA_LAMBDA
 // for RDOQ
@@ -451,7 +449,6 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     slice->setSliceQp(sliceQP);
     slice->setSliceQpBase(sliceQP);
     m_pcRdCost->setLambda(lambda);
-#if WEIGHTED_CHROMA_DISTORTION
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
     Double weight;
@@ -467,7 +464,6 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     qpc = Clip3(0, 57, sliceQP + chromaQPOffset);
     weight = pow(2.0, (sliceQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     m_pcRdCost->setCrDistortionWeight(weight);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
@@ -557,7 +553,6 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
         pcSlice->setSliceQp(m_piRdPicQp[uiQpIdx]);
         pcSlice->setSliceQpBase(m_piRdPicQp[uiQpIdx]);
         m_pcRdCost->setLambda(m_pdRdPicLambda[uiQpIdx]);
-#if WEIGHTED_CHROMA_DISTORTION
         // for RDO
         // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
         Int iQP = m_piRdPicQp[uiQpIdx];
@@ -574,7 +569,6 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
         qpc = Clip3(0, 57, iQP + chromaQPOffset);
         weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
         m_pcRdCost->setCrDistortionWeight(weight);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 
 #if RDOQ_CHROMA_LAMBDA
         // for RDOQ
@@ -612,7 +606,6 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
     pcSlice->setSliceQp(m_piRdPicQp[uiQpIdxBest]);
     pcSlice->setSliceQpBase(m_piRdPicQp[uiQpIdxBest]);
     m_pcRdCost->setLambda(m_pdRdPicLambda[uiQpIdxBest]);
-#if WEIGHTED_CHROMA_DISTORTION
     // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
     Int iQP = m_piRdPicQp[uiQpIdxBest];
     Double weight = 1.0;
@@ -628,7 +621,6 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     m_pcRdCost->setCrDistortionWeight(weight);
-#endif // if WEIGHTED_CHROMA_DISTORTION
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
