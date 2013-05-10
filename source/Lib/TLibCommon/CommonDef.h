@@ -167,12 +167,6 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 #define MAX_TLAYER                  8           ///< max number of temporal layer
 #define HB_LAMBDA_FOR_LDC           1           ///< use of B-style lambda for non-key pictures in low-delay mode
 
-// Fast estimation of generalized B in low-delay mode
-#define GPB_SIMPLE                  1           ///< Simple GPB mode
-#if     GPB_SIMPLE
-#define GPB_SIMPLE_UNI              1           ///< Simple mode for uni-direction
-#endif
-
 // Fast ME using smoother MV assumption
 #define FASTME_SMOOTHER_MV          1           ///< reduce ME time using faster option
 
