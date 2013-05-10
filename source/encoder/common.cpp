@@ -34,6 +34,6 @@ int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
     }
     fwrite(pbuf, 1, bufsize, fp);
     fclose(fp);
-    printf("dumpBuffer: dumped %8d bytes into %s\n", bufsize, fname);
+    printf("dumpBuffer: dumped %8ld bytes into %s\n", (long)bufsize, fname);
     return 0;
 }
