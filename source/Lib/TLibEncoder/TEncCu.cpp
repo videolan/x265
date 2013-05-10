@@ -266,7 +266,7 @@ Void TEncCu::compressCU(TComDataCU*& rpcCU)
     m_temporalSAD      = 0;
 
     // analysis of CU
-    xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], 0);
+    xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], m_ppcBestCU[0], 0);
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -363,8 +363,10 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
-Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, PartSize eParentPartSize)
+
+Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
 {
+    m_abortFlag = true;
     TComPic* pcPic = rpcBestCU->getPic();
 
     PPAScopeEvent(TEncCu_xCompressCU);
@@ -540,30 +542,28 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                     }
 
                     if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
-                    {    
+                    {
                         //assert(0);
                         // 2NxN, Nx2N
                         if (doNotBlockPu)
+                        {
+                            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
+                            rpcTempCU->initEstData(uiDepth, iQP);
+                            if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
                             {
-                                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
-                                rpcTempCU->initEstData(uiDepth, iQP);
-                                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
-                                    {
-                                        doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                                    }
+                                doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                             }
+                        }
                         if (doNotBlockPu)
+                        {
+                            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
+                            rpcTempCU->initEstData(uiDepth, iQP);
+                            if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
                             {
-                                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
-                                rpcTempCU->initEstData(uiDepth, iQP);
-                                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
-                                {
-                                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                                }
-                            
+                                doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                             }
+                        }
                     }
-
 
                     //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
                     if (pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth))
@@ -789,9 +789,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
             UChar       uhNextDepth         = uiDepth + 1;
             TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
             TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
-
-            for (UInt uiPartUnitIdx = 0; uiPartUnitIdx < 4; uiPartUnitIdx++)
+            UInt uiPartUnitIdx = 0;
+            for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
             {
+                if (!m_abortFlag)
+                {
+                    m_abortFlag = true;
+                    return;
+                }
                 pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
                 pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
@@ -810,17 +815,31 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                         }
                     }
 
+                    // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
+                    if (uiDepth != 0)
+                    {
+                        if (rpcParentBestCU->getTotalCost() < rpcBestCU->getTotalCost())
+                        {
+                            swapCU(rpcBestCU, rpcTempCU, uiDepth);
+                            rpcBestCU = rpcParentBestCU;
+                            m_abortFlag = false;
+                            break;
+                        }
+                    }
+
                     if (rpcBestCU->isIntra(0))
                     {
-                        xCompressCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth, SIZE_NONE);
+                        xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, SIZE_NONE);
                     }
                     else
                     {
-                        xCompressCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
+                        xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                     }
-
-                    rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
-                    xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
+                    if (m_abortFlag)
+                    {
+                        rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
+                        xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
+                    }
                 }
                 else if (bInSlice)
                 {
@@ -829,6 +848,12 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt ui
                 }
             }
 
+
+            if (!m_abortFlag && uiPartUnitIdx > 3)
+            {
+                m_abortFlag = true;
+                return;
+            }
             if (!bBoundary)
             {
                 m_pcEntropyCoder->resetBits();
@@ -1436,6 +1461,28 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
         if (m_bUseSBACRD) // store temp best CI for next CU coding
             m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]);
     }
+}
+
+void TEncCu::swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
+{
+    TComYuv* pcYuv;
+    // Change Information data
+    TComDataCU* pcCU = rpcBestCU;
+
+    rpcBestCU = rpcTempCU;
+    rpcTempCU = pcCU;
+
+    // Change Prediction data
+    pcYuv = m_ppcPredYuvBest[uiDepth];
+    m_ppcPredYuvBest[uiDepth] = m_ppcPredYuvTemp[uiDepth];
+    m_ppcPredYuvTemp[uiDepth] = pcYuv;
+
+    // Change Reconstruction data
+    pcYuv = m_ppcRecoYuvBest[uiDepth];
+    m_ppcRecoYuvBest[uiDepth] = m_ppcRecoYuvTemp[uiDepth];
+    m_ppcRecoYuvTemp[uiDepth] = pcYuv;
+
+    pcYuv = NULL;
 }
 
 Void TEncCu::xCheckDQP(TComDataCU* pcCU)

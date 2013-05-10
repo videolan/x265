@@ -103,6 +103,8 @@ private:
     Int                     m_addSADDepth;
     Int                     m_temporalSAD;
 
+    Bool                    m_abortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
+
 public:
 
     /// copy parameters from encoder class
@@ -127,11 +129,13 @@ public:
 protected:
 
     Void  finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
-    Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, PartSize eParentPartSize = SIZE_NONE);
+    Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, PartSize eParentPartSize = SIZE_NONE);
     Void  xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
+
+    Void swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
 
