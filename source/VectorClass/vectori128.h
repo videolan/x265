@@ -4437,6 +4437,10 @@ static inline Vec16c compress (Vec8s const & low, Vec8s const & high) {
     return  _mm_packus_epi16(lowm,highm);                  // unsigned pack
 }
 
+static inline Vec16uc compress_unsafe (Vec8s const & low, Vec8s const & high) {
+    return  _mm_packus_epi16(low,high);                  // unsigned pack
+}
+
 // Function compress : packs two vectors of 16-bit integers into one vector of 8-bit integers
 // Signed, with saturation
 static inline Vec16c compress_saturated (Vec8s const & low, Vec8s const & high) {
