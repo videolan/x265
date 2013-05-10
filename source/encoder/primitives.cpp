@@ -142,6 +142,9 @@ int CpuIDDetect(void)
         {
             fprintf(stdout, "%s ", CpuType[i]);
         }
+        if (hasXOP())  fprintf(stdout, "XOP ");
+        if (hasFMA3()) fprintf(stdout, "FMA3 ");
+        if (hasFMA4()) fprintf(stdout, "FMA4 ");
 
         fprintf(stdout, "\n");
         return iset;
