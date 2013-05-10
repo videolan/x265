@@ -28,6 +28,7 @@
 #include <string.h>
 #include <assert.h>
 
+#define MAX_CU_SIZE 64
 extern char g_aucConvertToBit[];
 
 using namespace x265;

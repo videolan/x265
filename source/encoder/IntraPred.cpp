@@ -25,6 +25,9 @@
 #include <cstring>
 #include <assert.h>
 
+#define MAX_CU_SIZE 64
+extern char g_aucConvertToBit[];
+
 namespace {
 pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
 {
@@ -106,6 +109,53 @@ void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStr
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
     }
 }
+
+void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
+{
+    //assert(width == height);
+
+    int k, l;
+    pixel bottomLeft, topRight;
+    int horPred;
+    // OPT_ME: when width is 64, the shift1D is 8, then the dynamic range is 17 bits or [-65280, 65280], so we have to use 32 bits here
+    int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
+    // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
+    int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
+    int blkSize = width;
+    int offset2D = width;
+    int shift1D = g_aucConvertToBit[width] + 2;
+    int shift2D = shift1D + 1;
+
+    // Get left and above reference column and row
+    for (k = 0; k < blkSize + 1; k++)
+    {
+        topRow[k] = pSrc[k - srcStride];
+        leftColumn[k] = pSrc[k * srcStride - 1];
+    }
+
+    // Prepare intermediate variables used in interpolation
+    bottomLeft = (pixel)leftColumn[blkSize];
+    topRight   = (pixel)topRow[blkSize];
+    for (k = 0; k < blkSize; k++)
+    {
+        bottomRow[k]   = (int16_t)(bottomLeft - topRow[k]);
+        rightColumn[k] = (int16_t)(topRight   - leftColumn[k]);
+        topRow[k]      <<= shift1D;
+        leftColumn[k]  <<= shift1D;
+    }
+
+    // Generate prediction signal
+    for (k = 0; k < blkSize; k++)
+    {
+        horPred = leftColumn[k] + offset2D;
+        for (l = 0; l < blkSize; l++)
+        {
+            horPred += rightColumn[k];
+            topRow[l] += bottomRow[l];
+            rpDst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
+        }
+    }
+}
 }
 
 namespace x265 {
@@ -114,5 +164,6 @@ namespace x265 {
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
     p.getIPredDC = xPredIntraDC;
+    p.getIPredPlanar = xPredIntraPlanar;
 }
 }

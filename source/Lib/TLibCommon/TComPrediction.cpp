@@ -122,7 +122,7 @@ Void TComPrediction::initTempBuff()
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height);
+Void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int height);
 Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
 
 // Function for calculating DC value of the reference samples used in Intra prediction
@@ -370,7 +370,11 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     // Create the prediction
     if (uiDirMode == PLANAR_IDX)
     {
+#if ENABLE_PRIMITIVES
+        primitives.getIPredPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+#else
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+#endif
     }
     else if (uiDirMode == DC_IDX)
     {
@@ -397,7 +401,11 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
 
     if (uiDirMode == PLANAR_IDX)
     {
+#if ENABLE_PRIMITIVES
+        primitives.getIPredPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+#else
         xPredIntraPlanar(ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight);
+#endif
     }
     else if (uiDirMode == DC_IDX)
     {
@@ -747,7 +755,8 @@ Void TComPrediction::getMvPredAMVP(TComDataCU* pcCU, UInt uiPartIdx, UInt uiPart
  *
  * This function derives the prediction samples for planar mode (intra coding).
  */
-Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt width, UInt height)
+#if !ENABLE_PRIMITIVES
+void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
 {
     assert(width == height);
 
@@ -789,6 +798,8 @@ Void xPredIntraPlanar(Pel* pSrc, Int srcStride, Pel* rpDst, Int dstStride, UInt 
         }
     }
 }
+#endif // #if !ENABLE_PRIMITIVES
+
 
 /** Function for filtering intra DC predictor.
  * \param pSrc pointer to reconstructed sample array
