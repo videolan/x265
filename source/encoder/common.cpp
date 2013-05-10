@@ -24,16 +24,16 @@
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
 {
-	char fname[1024]; sprintf(fname, filename);
-	const char * mode = "wb";
-	
-	FILE * fp = fopen(fname, mode); 
-    if(!fp) 
-    { 
-        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", fname, mode); return -1; 
+    char fname[1024]; sprintf(fname, filename);
+    const char * mode = "wb";
+
+    FILE * fp = fopen(fname, mode);
+    if(!fp)
+    {
+        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", fname, mode); return -1;
     }
-	fwrite(pbuf, 1, bufsize, fp);
-	fclose(fp);
-	printf("dumpBuffer: dumped %8d bytes into %s\n", bufsize, fname);
-	return 0;
+    fwrite(pbuf, 1, bufsize, fp);
+    fclose(fp);
+    printf("dumpBuffer: dumped %8d bytes into %s\n", bufsize, fname);
+    return 0;
 }
