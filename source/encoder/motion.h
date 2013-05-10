@@ -46,7 +46,7 @@ protected:
     MotionReference& operator=(const MotionReference&);
 };
 
-class MotionEstimate
+class MotionEstimate : public BitCost
 {
 protected:
 
@@ -75,8 +75,6 @@ protected:
     int blockHeight;
     int blockOffset;
 
-    BitCost bc;
-
     MotionEstimate& operator=(const MotionEstimate&);
 
 public:
@@ -95,10 +93,6 @@ public:
         fencLumaStride = luma;
         fencChromaStride = chroma;
     }
-
-    // allow the HM to provide QP and lambda together; assumes lambda will
-    // always be the same for a given QP
-    void setQP(int qp, double lambda)        { bc.setQP(qp, lambda); }
 
     /* Methods called at CU setup */
 

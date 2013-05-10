@@ -57,10 +57,10 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
            pix_base + (m2x) + (m2y)*stride,\
            pix_base + (m3x) + (m3y)*stride,\
            stride, costs);\
-    (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
-    (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
-    (costs)[2] += bc.mvcost((bmv + MV(m2x,m2y)) << 2);\
-    (costs)[3] += bc.mvcost((bmv + MV(m3x,m3y)) << 2);\
+    (costs)[0] += mvcost((bmv + MV(m0x,m0y)) << 2);\
+    (costs)[1] += mvcost((bmv + MV(m1x,m1y)) << 2);\
+    (costs)[2] += mvcost((bmv + MV(m2x,m2y)) << 2);\
+    (costs)[3] += mvcost((bmv + MV(m3x,m3y)) << 2);\
 }
 
 #define COST_MV_X3_DIR( m0x, m0y, m1x, m1y, m2x, m2y, costs )\
@@ -72,9 +72,9 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
            pix_base + (m1x) + (m1y)*stride,\
            pix_base + (m2x) + (m2y)*stride,\
            stride, costs);\
-    (costs)[0] += bc.mvcost((bmv + MV(m0x,m0y)) << 2);\
-    (costs)[1] += bc.mvcost((bmv + MV(m1x,m1y)) << 2);\
-    (costs)[2] += bc.mvcost((bmv + MV(m2x,m2y)) << 2);\
+    (costs)[0] += mvcost((bmv + MV(m0x,m0y)) << 2);\
+    (costs)[1] += mvcost((bmv + MV(m1x,m1y)) << 2);\
+    (costs)[2] += mvcost((bmv + MV(m2x,m2y)) << 2);\
 }
 
 int MotionEstimate::motionEstimate(const MV &qmvp,
@@ -86,7 +86,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->plane[0][0][0] + blockOffset;
 
-    bc.setMVP(qmvp);
+    setMVP(qmvp);
 
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
@@ -103,9 +103,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         if (m == 0) // zero is measured later
             continue;
 
-        int cost = qpelSad(m);
-        cost += bc.mvcost(m);
-
+        int cost = qpelSad(m) + mvcost(m);
         if (cost < bcost)
         {
             bcost = cost;
@@ -115,7 +113,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     if (bmv != 0)
     {
-        int cost = fpelSad(fref, 0) + bc.mvcost(0);
+        int cost = fpelSad(fref, 0) + mvcost(0);
         if (cost < bcost)
         {
             bcost = cost;
@@ -127,7 +125,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* Measure full pel SAD at MVP */
     bmv = bmv.roundToFPel();
-    bcost = fpelSad(fref, bmv) + bc.mvcost(bmv.toQPel());
+    bcost = fpelSad(fref, bmv) + mvcost(bmv.toQPel());
 
     int meMethod = 0;
     switch (meMethod)
@@ -165,7 +163,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     /* bmv has the best full pel motion vector found by SAD search or motion candidates */
 
     // TODO: add chroma satd costs
-    bcost = qpelSatd(bmv) + bc.mvcost(bmv); // remeasure BMV using SATD
+    bcost = qpelSatd(bmv) + mvcost(bmv); // remeasure BMV using SATD
 
     /* HPEL refinement followed by QPEL refinement */
 
@@ -175,19 +173,19 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     {
         /* TODO: include chroma satd costs */
         MV mv = bmv + MV(0, -res);
-        int cost = qpelSatd(mv) + bc.mvcost(mv);
+        int cost = qpelSatd(mv) + mvcost(mv);
         COPY1_IF_LT(bcost, (cost<<4)+1);
 
         mv = bmv + MV(0,  res);
-        cost = qpelSatd(mv) + bc.mvcost(mv);
+        cost = qpelSatd(mv) + mvcost(mv);
         COPY1_IF_LT(bcost, (cost<<4)+3);
 
         mv = bmv + MV(-res, 0);
-        cost = qpelSatd(mv) + bc.mvcost(mv);
+        cost = qpelSatd(mv) + mvcost(mv);
         COPY1_IF_LT(bcost, (cost<<4)+4);
 
         mv = bmv + MV(res,  0);
-        cost = qpelSatd(mv) + bc.mvcost(mv);
+        cost = qpelSatd(mv) + mvcost(mv);
         COPY1_IF_LT(bcost, (cost<<4)+12);
 
         if (bcost & 15)

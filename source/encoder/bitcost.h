@@ -36,24 +36,34 @@ class BitCost
 {
 public:
 
-    BitCost() : cost_mvx(0), cost_mvy(0), cost(0) {}
+    BitCost() : m_cost_mvx(0), m_cost_mvy(0), m_cost(0) {}
 
     void setQP(unsigned int qp, double lambda);
 
-    void setMVP(const MV& mvp)               { cost_mvx = cost - mvp.x; cost_mvy = cost - mvp.y; }
+    void setMVP(const MV& mvp)                      { m_mvp = mvp; m_cost_mvx = m_cost - mvp.x; m_cost_mvy = m_cost - mvp.y; }
 
-    // return bit cost of absolute motion vector
-    uint16_t mvcost(const MV& mv) const      { return cost_mvx[mv.x] + cost_mvy[mv.y]; }
+    // return bit cost of motion vector difference, multiplied by lambda
+    inline uint16_t mvcost(const MV& mv) const      { return m_cost_mvx[mv.x] + m_cost_mvy[mv.y]; }
+
+    // return bit cost of motion vector difference, without lambda
+    inline uint16_t bitcost(const MV& mv) const
+    {
+        return (uint16_t)
+            (s_logs[(abs(mv.x-m_mvp.x)<<1) + !!(mv.x < m_mvp.x)] +
+             s_logs[(abs(mv.y-m_mvp.y)<<1) + !!(mv.y < m_mvp.y)]);
+    }
 
     static void destroy();
 
 protected:
 
-    uint16_t *cost_mvx;
+    uint16_t *m_cost_mvx;
 
-    uint16_t *cost_mvy;
+    uint16_t *m_cost_mvy;
 
-    uint16_t *cost;
+    uint16_t *m_cost;
+
+    MV        m_mvp;
 
     BitCost& operator=(const BitCost&);
 
@@ -63,11 +73,11 @@ private:
 
     static const int BC_MAX_QP = 82;
 
-    static float *logs;
+    static float *s_logs;
 
-    static uint16_t *costs[BC_MAX_QP];
+    static uint16_t *s_costs[BC_MAX_QP];
 
-    static Lock costCalcLock;
+    static Lock s_costCalcLock;
 
     static void CalculateLogs();
 };

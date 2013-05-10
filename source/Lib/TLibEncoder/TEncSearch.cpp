@@ -3208,6 +3208,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if ENABLE_PRIMITIVES
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
+
+        // m_fencbuf can go away when HM SAD is removed
         x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)PU, fenc->getStride());
 #endif
         Bool bTestNormalMC = true;
@@ -3891,14 +3893,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     else
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
-    m_pcRdCost->getMotionCost(1, 0);
-    m_pcRdCost->setPredictor(*pcMvPred);
-    m_pcRdCost->setCostScale(2);
-
-    // Configure the MV bit cost calculator  (TODO: m_bc will go away)
-    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
-    m_bc.setMVP(m_pcRdCost->m_mvPredictor);
-
 #if ENABLE_PRIMITIVES
     x265::MotionReference ref;
     TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
@@ -3914,13 +3908,21 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     if (0 && m_cDistParam.bApplyWeight == false && !bBi)
     {
         int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, rcMv);
-        UInt mvcost = m_bc.mvcost(rcMv);
-        UInt mvbits = mvcost / m_pcRdCost->getSqrtLambda();
+        UInt mvcost = m_me.mvcost(rcMv);
+        UInt mvbits = m_me.bitcost(rcMv);
         ruiBits += mvbits;
         ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
         return;
     }
 #endif
+
+    m_pcRdCost->getMotionCost(1, 0);
+    m_pcRdCost->setPredictor(*pcMvPred);
+    m_pcRdCost->setCostScale(2);
+
+    // Configure the MV bit cost calculator  (TODO: m_bc will go away)
+    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
+    m_bc.setMVP(m_pcRdCost->m_mvPredictor);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
 

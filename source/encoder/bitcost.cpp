@@ -30,17 +30,17 @@ using namespace x265;
 
 void BitCost::setQP(unsigned int qp, double lambda)
 {
-    if (!costs[qp])
+    if (!s_costs[qp])
     {
-        ScopedLock s(costCalcLock);
+        ScopedLock s(s_costCalcLock);
 
         // Now that we have acquired the lock, check again if another thread calculated
         // this row while we were blocked
-        if (!costs[qp])
+        if (!s_costs[qp])
         {
             CalculateLogs();
-            costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
-            uint16_t *c = costs[qp];
+            s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
+            uint16_t *c = s_costs[qp];
             const uint16_t max16 = (1 << 16)-1;
 
 #if X264_APPROACH
@@ -52,41 +52,40 @@ void BitCost::setQP(unsigned int qp, double lambda)
             c[0] = (uint16_t)lambda;
             for (int i = 1; i < BC_MAX_MV; i++)
             {
-                c[i]  = std::min<uint16_t>(max16, (uint16_t)(logs[i<<1] * lambda + 0.5));
-                c[-i] = std::min<uint16_t>(max16, (uint16_t)(logs[(i<<1)+1] * lambda + 0.5));
+                c[i]  = std::min<uint16_t>(max16, (uint16_t)(s_logs[i<<1] * lambda + 0.5));
+                c[-i] = std::min<uint16_t>(max16, (uint16_t)(s_logs[(i<<1)+1] * lambda + 0.5));
             }
 #endif
         }
     }
 
-    cost = costs[qp];
+    m_cost = s_costs[qp];
 }
 
 /***
  * Class static data and methods
  */
 
-uint16_t *BitCost::costs[BC_MAX_QP];
+uint16_t *BitCost::s_costs[BC_MAX_QP];
 
-float *BitCost::logs;
+float *BitCost::s_logs;
 
-Lock BitCost::costCalcLock;
+Lock BitCost::s_costCalcLock;
 
 void BitCost::CalculateLogs()
 {
-    if (!logs)
+    if (!s_logs)
     {
-        logs = new float[2*BC_MAX_MV + 1];
-        logs[0] = 0.718f;
+        s_logs = new float[2*BC_MAX_MV + 1];
+        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
+        s_logs[0] = 0.718f;
 #if X264_APPROACH
-        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
         for( int i = 1; i <= 2*BC_MAX_MV; i++ )
-            logs[i] = log((float)(i+1)) * log2_2 + 1.718f;
+            s_logs[i] = log((float)(i+1)) * log2_2 + 1.718f;
 #else
-        logs[1] = 0.718f;
-        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
+        s_logs[1] = 0.718f;
         for( int i = 2; i <= 2*BC_MAX_MV; i++ )
-            logs[i] = log((float)(i+1)) * log2_2 + 0.718f;
+            s_logs[i] = log((float)(i+1)) * log2_2 + 0.718f;
 #endif
     }
 }
@@ -95,17 +94,17 @@ void BitCost::destroy()
 {
     for (int i = 0; i < BC_MAX_QP; i++)
     {
-        if (costs[i])
+        if (s_costs[i])
         {
-            delete [] (costs[i] - BC_MAX_MV);
+            delete [] (s_costs[i] - BC_MAX_MV);
 
-            costs[i] = 0;
+            s_costs[i] = 0;
         }
     }
-    if (logs)
+    if (s_logs)
     {
-        delete [] logs;
+        delete [] s_logs;
 
-        logs = 0;
+        s_logs = 0;
     }
 }
