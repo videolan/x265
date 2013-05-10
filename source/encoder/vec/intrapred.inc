@@ -571,14 +571,14 @@ void predIntraPlanar4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t ds
     int16_t leftColumn[4];
 
     // Get left and above reference column and row
-    Vec16uc im0 = load_partial(const_int(4), &pSrc[-srcStride]); // topRow
+    Vec16uc im0 = (Vec16uc)load_partial(const_int(4), &pSrc[-srcStride]); // topRow
     Vec8s v_topRow = extend_low(im0);
 
     for (k = 0; k < 4; k++)
     {
         leftColumn[k] = pSrc[k * srcStride - 1];
     }
-    Vec8s v_leftColumn = load_partial(const_int(8), leftColumn);   // leftColumn
+    Vec8s v_leftColumn = (Vec8s)load_partial(const_int(8), (void*)leftColumn);   // leftColumn
 
     // Prepare intermediate variables used in interpolation
     bottomLeft = pSrc[4 * srcStride - 1];
