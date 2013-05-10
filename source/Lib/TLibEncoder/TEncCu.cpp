@@ -366,7 +366,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
 
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
 {
-    AbortFlag = true;
+    m_abortFlag = true;
     TComPic* pcPic = rpcBestCU->getPic();
 
     PPAScopeEvent(TEncCu_xCompressCU);
@@ -792,9 +792,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             UInt uiPartUnitIdx = 0;
             for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
             {
-                if (!AbortFlag)
+                if (!m_abortFlag)
                 {
-                    AbortFlag = true;
+                    m_abortFlag = true;
                     return;
                 }
                 pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
@@ -815,13 +815,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                         }
                     }
 
+                    // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                     if (uiDepth != 0)
                     {
                         if (rpcParentBestCU->getTotalCost() < rpcBestCU->getTotalCost())
                         {
                             swapCU(rpcBestCU, rpcTempCU, uiDepth);
                             rpcBestCU = rpcParentBestCU;
-                            AbortFlag = false;
+                            m_abortFlag = false;
                             break;
                         }
                     }
@@ -834,7 +835,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     {
                         xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                     }
-                    if (AbortFlag)
+                    if (m_abortFlag)
                     {
                         rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                         xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
@@ -848,9 +849,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
 
 
-            if (!AbortFlag && uiPartUnitIdx > 3)
+            if (!m_abortFlag && uiPartUnitIdx > 3)
             {
-                AbortFlag = true;
+                m_abortFlag = true;
                 return;
             }
             if (!bBoundary)

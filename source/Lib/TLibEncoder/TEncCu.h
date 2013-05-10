@@ -103,7 +103,7 @@ private:
     Int                     m_addSADDepth;
     Int                     m_temporalSAD;
 
-    Bool                    AbortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
+    Bool                    m_abortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
 
 public:
 
