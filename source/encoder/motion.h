@@ -97,15 +97,6 @@ public:
         fencChromaStride = chroma;
     }
 
-    void setResidualPlanes(short *Y, short *Cb, short *Cr, intptr_t luma, intptr_t chroma)
-    {
-        residual[0] = Y;
-        residual[1] = Cb;
-        residual[2] = Cr;
-        resLumaStride = luma;
-        resChromaStride = chroma;
-    }
-
     // allow the HM to provide QP and lambda together; assumes lambda will
     // always be the same for a given QP
     void setQP(int qp, double lambda)        { bc.setQP(qp, lambda); }
@@ -124,11 +115,8 @@ public:
 
     void setReference(MotionReference* tref)  { ref = tref; }
 
-    /* returns SATD QPEL cost, including chroma, of best outMV for this PU */
+    /* returns SATD QPEL cost of best outMV for this PU */
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
-
-    /* Motion Compensation */
-    void buildResidual(const MV &mv);
 
 protected:
 
