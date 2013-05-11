@@ -379,11 +379,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,    2048,  "Max number of SAO offset per picture (Default: 2048)")
         ("SAOLcuBoundary",           m_saoLcuBoundary,            0,  "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
         ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   1,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
-        ("SliceMode",                m_sliceMode,                 0,  "0: Disable all Recon slice limits, 1: Enforce max # of LCUs, 2: Enforce max # of bytes, 3:specify tiles per dependent slice")
-        ("SliceArgument",            m_sliceArgument,             0,  "Depending on SliceMode being:"
-        "\t1: max number of CTUs per slice"
-        "\t2: max number of bytes per slice"
-        "\t3: max number of tiles per slice")
         ("SliceSegmentMode",         m_sliceSegmentMode,       0,     "0: Disable all slice segment limits, 1: Enforce max # of LCUs, 2: Enforce max # of bytes, 3:specify tiles per dependent slice")
         ("SliceSegmentArgument",     m_sliceSegmentArgument,   0,     "Depending on SliceSegmentMode being:"
         "\t1: max number of CTUs per slice segment"
@@ -881,11 +876,6 @@ Void TAppEncCfg::xCheckParameter()
         xConfirmPara(m_pcmLog2MaxSize < m_uiPCMLog2MinSize,                       "PCMLog2MaxSize must be equal to or greater than m_uiPCMLog2MinSize.");
     }
 
-    xConfirmPara(m_sliceMode < 0 || m_sliceMode > 3, "SliceMode exceeds supported range (0 to 3)");
-    if (m_sliceMode != 0)
-    {
-        xConfirmPara(m_sliceArgument < 1,         "SliceArgument should be larger than or equal to 1");
-    }
     xConfirmPara(m_sliceSegmentMode < 0 || m_sliceSegmentMode > 3, "SliceSegmentMode exceeds supported range (0 to 3)");
     if (m_sliceSegmentMode != 0)
     {
@@ -1304,10 +1294,6 @@ Void TAppEncCfg::xCheckParameter()
         {
             m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY / ((2 * m_iSourceHeight + m_iSourceWidth) * m_uiMaxCUHeight) - 4;
         }
-        else if (m_sliceMode == 1)
-        {
-            m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY / (m_sliceArgument * m_uiMaxCUWidth * m_uiMaxCUHeight) - 4;
-        }
         else
         {
             m_minSpatialSegmentationIdc = 0;
@@ -1449,11 +1435,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("RQT:%d ", 1);
     printf("TransformSkip:%d ",     m_useTransformSkip);
     printf("TransformSkipFast:%d ", m_useTransformSkipFast);
-    printf("Slice: M=%d ", m_sliceMode);
-    if (m_sliceMode != 0)
-    {
-        printf("A=%d ", m_sliceArgument);
-    }
+    printf("Slice: M=%d ", 0);
     printf("SliceSegment: M=%d ", m_sliceSegmentMode);
     if (m_sliceSegmentMode != 0)
     {

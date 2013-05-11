@@ -433,8 +433,6 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
 
     pcPic->setPicYuvPred(m_apcPicYuvPred);
     pcPic->setPicYuvResi(m_apcPicYuvResi);
-    rpcSlice->setSliceMode(m_pcCfg->getSliceMode());
-    rpcSlice->setSliceArgument(m_pcCfg->getSliceArgument());
     rpcSlice->setSliceSegmentMode(m_pcCfg->getSliceSegmentMode());
     rpcSlice->setSliceSegmentArgument(m_pcCfg->getSliceSegmentArgument());
     rpcSlice->setMaxNumMergeCand(m_pcCfg->getMaxNumMergeCand());
@@ -689,7 +687,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         //------------------------------------------------------------------------------
         //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
         //------------------------------------------------------------------------------
-        if (pcSlice->getSliceMode() == 2 || pcSlice->getSliceSegmentMode() == 2)
+        if (pcSlice->getSliceSegmentMode() == 2)
         {
             printf("Weighted Prediction is not supported with slice mode determined by max number of bins.\n");
             exit(0);
@@ -958,11 +956,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pcCuEncoder->encodeCU(pcCU);
 
             pppcRDSbacCoder->setBinCountingEnableFlag(false);
-            if (m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_BYTES && ((pcSlice->getSliceBits() + m_pcEntropyCoder->getNumberOfWrittenBits())) > m_pcCfg->getSliceArgument() << 3)
-            {
-                pcSlice->setNextSlice(true);
-                break;
-            }
             if (m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_BYTES && pcSlice->getSliceSegmentBits() + m_pcEntropyCoder->getNumberOfWrittenBits() > (m_pcCfg->getSliceSegmentArgument() << 3) && pcSlice->getSliceCurEndCUAddr() != pcSlice->getSliceSegmentCurEndCUAddr())
             {
                 pcSlice->setNextSliceSegment(true);
@@ -984,11 +977,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         {
             m_pcCuEncoder->compressCU(pcCU);
             m_pcCuEncoder->encodeCU(pcCU);
-            if (m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_BYTES && ((pcSlice->getSliceBits() + m_pcEntropyCoder->getNumberOfWrittenBits())) > m_pcCfg->getSliceArgument() << 3)
-            {
-                pcSlice->setNextSlice(true);
-                break;
-            }
             if (m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_BYTES && pcSlice->getSliceSegmentBits() + m_pcEntropyCoder->getNumberOfWrittenBits() > m_pcCfg->getSliceSegmentArgument() << 3 && pcSlice->getSliceCurEndCUAddr() != pcSlice->getSliceSegmentCurEndCUAddr())
             {
                 pcSlice->setNextSliceSegment(true);
@@ -1299,7 +1287,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        if ((m_pcCfg->getSliceMode() != 0 || m_pcCfg->getSliceSegmentMode() != 0) &&
+        if ((m_pcCfg->getSliceSegmentMode() != 0) &&
             uiCUAddr == rpcPic->getPicSym()->getCUOrderMap((uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU() - 1))
         {
             m_pcCuEncoder->encodeCU(pcCU);
@@ -1368,40 +1356,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     if (bEncodeSlice)
     {
         UInt uiCUAddrIncrement;
-        switch (m_pcCfg->getSliceMode())
-        {
-        case FIXED_NUMBER_OF_LCU:
-            uiCUAddrIncrement        = m_pcCfg->getSliceArgument();
-            uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame * rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-            break;
-        case FIXED_NUMBER_OF_BYTES:
-            uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-            uiBoundingCUAddrSlice    = pcSlice->getSliceCurEndCUAddr();
-            break;
-        case FIXED_NUMBER_OF_TILES:
-            tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-                    rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddrSlice / rpcPic->getNumPartInCU())
-                    );
-            uiCUAddrIncrement        = 0;
-            tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1() + 1) * (rpcPic->getPicSym()->getNumRowsMinus1() + 1);
-
-            for (tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceArgument(); tileIdxIncrement++)
-            {
-                if ((tileIdx + tileIdxIncrement) < tileTotalCount)
-                {
-                    tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-                    tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-                    uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-                }
-            }
-
-            uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame * rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-            break;
-        default:
             uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
             uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
-            break;
-        }
 
         // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
         if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU() * rpcPic->getNumPartInCU()) != 0))
@@ -1413,36 +1369,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     else
     {
         UInt uiCUAddrIncrement;
-        switch (m_pcCfg->getSliceMode())
-        {
-        case FIXED_NUMBER_OF_LCU:
-            uiCUAddrIncrement        = m_pcCfg->getSliceArgument();
-            uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame * rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-            break;
-        case FIXED_NUMBER_OF_TILES:
-            tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-                    rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddrSlice / rpcPic->getNumPartInCU())
-                    );
-            uiCUAddrIncrement        = 0;
-            tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1() + 1) * (rpcPic->getPicSym()->getNumRowsMinus1() + 1);
-
-            for (tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceArgument(); tileIdxIncrement++)
-            {
-                if ((tileIdx + tileIdxIncrement) < tileTotalCount)
-                {
-                    tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-                    tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-                    uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-                }
-            }
-
-            uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame * rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-            break;
-        default:
             uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
             uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
-            break;
-        }
 
         // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
         if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU() * rpcPic->getNumPartInCU()) != 0))
@@ -1453,28 +1381,6 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     }
 
     Bool tileBoundary = false;
-    if ((m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_LCU || m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_BYTES) &&
-        (m_pcCfg->getNumRowsMinus1() > 0 || m_pcCfg->getNumColumnsMinus1() > 0))
-    {
-        UInt lcuEncAddr = (uiStartCUAddrSlice + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
-        UInt lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-        UInt startTileIdx = rpcPic->getPicSym()->getTileIdxMap(lcuAddr);
-        UInt tileBoundingCUAddrSlice = 0;
-        while (lcuEncAddr < uiNumberOfCUsInFrame && rpcPic->getPicSym()->getTileIdxMap(lcuAddr) == startTileIdx)
-        {
-            lcuEncAddr++;
-            lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-        }
-
-        tileBoundingCUAddrSlice = lcuEncAddr * rpcPic->getNumPartInCU();
-
-        if (tileBoundingCUAddrSlice < uiBoundingCUAddrSlice)
-        {
-            uiBoundingCUAddrSlice = tileBoundingCUAddrSlice;
-            pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
-            tileBoundary = true;
-        }
-    }
 
     // Dependent slice
     UInt startCUAddrSliceSegment, boundingCUAddrSliceSegment;
@@ -1651,12 +1557,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     {
         // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice
         // first. Set the flags accordingly.
-        if ((m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU)
-            || (m_pcCfg->getSliceMode() == 0 && m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU)
-            || (m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode() == 0)
-            || (m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU)
-            || (m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode() == 0)
-            || (m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceMode() == 0)
+        if (   (m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU)
+            || (m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_TILES)
             || tileBoundary
             )
         {

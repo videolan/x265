@@ -196,9 +196,6 @@ protected:
     Bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
     UInt      m_uiPCMLog2MinSize;
-    //====== Slice ========
-    Int       m_sliceMode;
-    Int       m_sliceArgument;
     //====== Dependent Slice ========
     Int       m_sliceSegmentMode;
     Int       m_sliceSegmentArgument;
@@ -580,15 +577,6 @@ public:
     Int*      getdQPs()      { return m_aidQP;       }
 
     UInt      getDeltaQpRD()      { return m_uiDeltaQpRD; }
-
-    //====== Slice ========
-    Void  setSliceMode(Int i)       { m_sliceMode = i;              }
-
-    Void  setSliceArgument(Int i)       { m_sliceArgument = i;          }
-
-    Int   getSliceMode()              { return m_sliceMode;           }
-
-    Int   getSliceArgument()              { return m_sliceArgument;       }
 
     //====== Dependent Slice ========
     Void  setSliceSegmentMode(Int i)      { m_sliceSegmentMode = i;       }

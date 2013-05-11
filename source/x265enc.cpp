@@ -192,10 +192,6 @@ Void TAppEncTop::xInitLibCfg()
     //====== Parallel Merge Estimation ========
     m_cTEncTop.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevel - 2);
 
-    //====== Slice ========
-    m_cTEncTop.setSliceMode(m_sliceMode);
-    m_cTEncTop.setSliceArgument(m_sliceArgument);
-
     //====== Dependent Slice ========
     m_cTEncTop.setSliceSegmentMode(m_sliceSegmentMode);
     m_cTEncTop.setSliceSegmentArgument(m_sliceSegmentArgument);
@@ -205,20 +201,7 @@ Void TAppEncTop::xInitLibCfg()
         m_cTEncTop.setSliceSegmentArgument(m_sliceSegmentArgument * iNumPartInCU);
     }
 
-    if (m_sliceMode == FIXED_NUMBER_OF_LCU)
-    {
-        m_cTEncTop.setSliceArgument(m_sliceArgument * iNumPartInCU);
-    }
-
-    if (m_sliceMode == FIXED_NUMBER_OF_TILES)
-    {
-        m_cTEncTop.setSliceArgument(m_sliceArgument);
-    }
-
-    if (m_sliceMode == 0)
-    {
         m_bLFCrossSliceBoundaryFlag = true;
-    }
 
     m_cTEncTop.setLFCrossSliceBoundaryFlag(m_bLFCrossSliceBoundaryFlag);
     m_cTEncTop.setUseSAO(m_bUseSAO);

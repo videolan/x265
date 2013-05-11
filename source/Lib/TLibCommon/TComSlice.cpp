@@ -75,8 +75,6 @@ TComSlice::TComSlice()
 #endif
     , m_uiTLayer(0)
     , m_bTLayerSwitchingFlag(false)
-    , m_sliceMode(0)
-    , m_sliceArgument(0)
     , m_sliceCurStartCUAddr(0)
     , m_sliceCurEndCUAddr(0)
     , m_sliceIdx(0)
@@ -713,8 +711,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_uiTLayer                      = pSrc->m_uiTLayer;
     m_bTLayerSwitchingFlag          = pSrc->m_bTLayerSwitchingFlag;
 
-    m_sliceMode                   = pSrc->m_sliceMode;
-    m_sliceArgument               = pSrc->m_sliceArgument;
     m_sliceCurStartCUAddr         = pSrc->m_sliceCurStartCUAddr;
     m_sliceCurEndCUAddr           = pSrc->m_sliceCurEndCUAddr;
     m_sliceIdx                    = pSrc->m_sliceIdx;

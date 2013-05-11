@@ -916,11 +916,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             {
                 m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
             }
-            Bool isEndOfSlice        = rpcBestCU->getSlice()->getSliceMode() == FIXED_NUMBER_OF_BYTES
-                && (rpcBestCU->getTotalBits() > rpcBestCU->getSlice()->getSliceArgument() << 3);
             Bool isEndOfSliceSegment = rpcBestCU->getSlice()->getSliceSegmentMode() == FIXED_NUMBER_OF_BYTES
                 && (rpcBestCU->getTotalBits() > rpcBestCU->getSlice()->getSliceSegmentArgument() << 3);
-            if (isEndOfSlice || isEndOfSliceSegment)
+            if (isEndOfSliceSegment)
             {
                 rpcBestCU->getTotalCost() = rpcTempCU->getTotalCost() + 1;
             }
@@ -1014,13 +1012,6 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     if (iGranularityEnd <= pcSlice->getSliceSegmentCurStartCUAddr())
     {
         iGranularityEnd += max(iGranularitySize, (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1)));
-    }
-    // Set slice end parameter
-    if (pcSlice->getSliceMode() == FIXED_NUMBER_OF_BYTES && !pcSlice->getFinalized() && pcSlice->getSliceBits() + numberOfWrittenBits > pcSlice->getSliceArgument() << 3)
-    {
-        pcSlice->setSliceSegmentCurEndCUAddr(iGranularityEnd);
-        pcSlice->setSliceCurEndCUAddr(iGranularityEnd);
-        return;
     }
     // Set dependent slice end parameter
     if (pcSlice->getSliceSegmentMode() == FIXED_NUMBER_OF_BYTES && !pcSlice->getFinalized() && pcSlice->getSliceSegmentBits() + numberOfWrittenBits > pcSlice->getSliceSegmentArgument() << 3)

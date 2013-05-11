@@ -900,7 +900,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             m_pcSliceEncoder->compressSlice(pcPic);
 
             Bool bNoBinBitConstraintViolated = (!pcSlice->isNextSlice() && !pcSlice->isNextSliceSegment());
-            if (pcSlice->isNextSlice() || (bNoBinBitConstraintViolated && m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_LCU))
+            if (pcSlice->isNextSlice())
             {
                 startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
                 // Reconstruction slice
@@ -1013,8 +1013,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             }
             if (m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled())
             {
-                UInt maxCU = m_pcCfg->getSliceArgument() >> (pcSlice->getSPS()->getMaxCUDepth() << 1);
-                UInt numDU = (m_pcCfg->getSliceMode() == 1) ? (pcPic->getNumCUsInFrame() / maxCU) : (0);
+                // CHECK_ME: maybe HM's bug
+                UInt maxCU = 1500 >> (pcSlice->getSPS()->getMaxCUDepth() << 1);
+                UInt numDU = 0;
                 if (pcPic->getNumCUsInFrame() % maxCU != 0)
                 {
                     numDU++;

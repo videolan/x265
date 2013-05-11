@@ -1494,8 +1494,6 @@ private:
     UInt        m_uiTLayer;
     Bool        m_bTLayerSwitchingFlag;
 
-    UInt        m_sliceMode;
-    UInt        m_sliceArgument;
     UInt        m_sliceCurStartCUAddr;
     UInt        m_sliceCurEndCUAddr;
     UInt        m_sliceIdx;
@@ -1740,14 +1738,6 @@ public:
     Void setMaxNumMergeCand(UInt val)         { m_maxNumMergeCand = val;                    }
 
     UInt getMaxNumMergeCand()                  { return m_maxNumMergeCand;                   }
-
-    Void setSliceMode(UInt uiMode)     { m_sliceMode = uiMode;                     }
-
-    UInt getSliceMode()                  { return m_sliceMode;                       }
-
-    Void setSliceArgument(UInt uiArgument) { m_sliceArgument = uiArgument;             }
-
-    UInt getSliceArgument()                  { return m_sliceArgument;                   }
 
     Void setSliceCurStartCUAddr(UInt uiAddr)     { m_sliceCurStartCUAddr = uiAddr;           }
 
