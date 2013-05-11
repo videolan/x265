@@ -405,7 +405,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     Int iBaseQP = xComputeQP(rpcBestCU, uiDepth);
     Int iMinQP;
-    Int iMaxQP;
     Bool isAddLowestQP = false;
     Int lowestQP = -rpcTempCU->getSlice()->getSPS()->getQpBDOffsetY();
 
@@ -413,7 +412,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     {
         Int idQP = m_pcEncCfg->getMaxDeltaQP();
         iMinQP = Clip3(-rpcTempCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, iBaseQP - idQP);
-        iMaxQP = Clip3(-rpcTempCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, iBaseQP + idQP);
         if ((rpcTempCU->getSlice()->getSPS()->getUseLossless()) && (lowestQP < iMinQP) && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             isAddLowestQP = true;
@@ -423,13 +421,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     else
     {
         iMinQP = rpcTempCU->getQP(0);
-        iMaxQP = rpcTempCU->getQP(0);
     }
 
     if (m_pcEncCfg->getUseRateCtrl())
     {
         iMinQP = m_pcRateCtrl->getRCQP();
-        iMaxQP = m_pcRateCtrl->getRCQP();
     }
 
     // If slice start or slice end is within this cu...
@@ -440,8 +436,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     // We need to split, so don't try these modes.
     if (!bSliceEnd && !bSliceStart && bInsidePicture)
     {
-        for (Int iQP = iMinQP; iQP <= iMaxQP; iQP++)
         {
+            Int iQP = iMinQP;
             if (isAddLowestQP && (iQP == iMinQP))
             {
                 iQP = lowestQP;
@@ -517,8 +513,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
         if (!earlyDetectionSkipMode)
         {
-            for (Int iQP = iMinQP; iQP <= iMaxQP; iQP++)
             {
+                Int iQP = iMinQP;
                 if (isAddLowestQP && (iQP == iMinQP))
                 {
                     iQP = lowestQP;
@@ -743,7 +739,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     {
         Int idQP = m_pcEncCfg->getMaxDeltaQP();
         iMinQP = Clip3(-rpcTempCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, iBaseQP - idQP);
-        iMaxQP = Clip3(-rpcTempCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, iBaseQP + idQP);
         if ((rpcTempCU->getSlice()->getSPS()->getUseLossless()) && (lowestQP < iMinQP) && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             isAddLowestQP = true;
@@ -753,7 +748,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     else if ((g_uiMaxCUWidth >> uiDepth) > rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize())
     {
         iMinQP = iBaseQP;
-        iMaxQP = iBaseQP;
     }
     else
     {
@@ -768,15 +762,13 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             iStartQP = rpcTempCU->getQP(uiCurSliceStartPartIdx);
         }
         iMinQP = iStartQP;
-        iMaxQP = iStartQP;
     }
     if (m_pcEncCfg->getUseRateCtrl())
     {
         iMinQP = m_pcRateCtrl->getRCQP();
-        iMaxQP = m_pcRateCtrl->getRCQP();
     }
-    for (Int iQP = iMinQP; iQP <= iMaxQP; iQP++)
     {
+        Int iQP = iMinQP;
         if (isAddLowestQP && (iQP == iMinQP))
         {
             iQP = lowestQP;
