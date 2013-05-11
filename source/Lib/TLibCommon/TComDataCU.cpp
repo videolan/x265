@@ -959,7 +959,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth
 // It is used to predict for next part
 Void TComDataCU::copyToPic(UChar uhDepth)
 {
-    TComDataCU*& rpcCU = m_pcPic->getCU(m_uiCUAddr);
+    TComDataCU* rpcCU = m_pcPic->getCU(m_uiCUAddr);
 
     rpcCU->getTotalCost()       = m_dTotalCost;
     rpcCU->getTotalDistortion() = m_uiTotalDistortion;
@@ -1026,7 +1026,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
 
 Void TComDataCU::copyToPic(UChar uhDepth, UInt uiPartIdx, UInt uiPartDepth)
 {
-    TComDataCU*&  rpcCU       = m_pcPic->getCU(m_uiCUAddr);
+    TComDataCU*   rpcCU       = m_pcPic->getCU(m_uiCUAddr);
     UInt          uiQNumPart  = m_uiNumPartition >> (uiPartDepth << 1);
 
     UInt uiPartStart          = uiPartIdx * uiQNumPart;

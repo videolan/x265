@@ -255,7 +255,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
 
 /** \param  rpcCU pointer of CU data class
  */
-Void TEncCu::compressCU(TComDataCU*& rpcCU)
+Void TEncCu::compressCU(TComDataCU* rpcCU)
 {
     // initialize CU data
     m_ppcBestCU[0]->initCU(rpcCU->getPic(), rpcCU->getAddr());

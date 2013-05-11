@@ -638,7 +638,7 @@ Void TEncSlice::precompressSlice(TComPic*& rpcPic)
 
 /** \param rpcPic   picture class
  */
-Void TEncSlice::compressSlice(TComPic*& rpcPic)
+Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
     UInt  uiCUAddr;
     UInt   uiStartCUAddr;
@@ -807,7 +807,7 @@ Void TEncSlice::compressSlice(TComPic*& rpcPic)
          uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder))
     {
         // initialize CU encoder
-        TComDataCU*& pcCU = rpcPic->getCU(uiCUAddr);
+        TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
         pcCU->initCU(rpcPic, uiCUAddr);
 
         // inherit from TR if necessary, select substream to use.
@@ -1213,7 +1213,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             }
         }
 
-        TComDataCU*& pcCU = rpcPic->getCU(uiCUAddr);
+        TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
         if (pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
@@ -1352,7 +1352,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
  * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
  * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
  */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice)
+Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundingCUAddr, TComPic* rpcPic, Bool bEncodeSlice)
 {
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     UInt uiStartCUAddrSlice, uiBoundingCUAddrSlice;

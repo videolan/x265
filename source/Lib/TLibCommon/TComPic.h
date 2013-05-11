@@ -117,7 +117,7 @@ public:
 
     Int           getPOC()              { return m_apcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
 
-    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcPicSym->getCU(uiCUAddr); }
+    TComDataCU*   getCU(UInt uiCUAddr)  { return m_apcPicSym->getCU(uiCUAddr); }
 
     TComPicYuv*   getPicYuvOrg()        { return m_apcPicYuv[0]; }
 
