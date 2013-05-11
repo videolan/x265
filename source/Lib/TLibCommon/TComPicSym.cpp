@@ -159,31 +159,6 @@ Void TComPicSym::clearSliceBuffer()
     m_uiNumAllocatedSlice = 1;
 }
 
-UInt TComPicSym::xCalculateNxtCUAddr(UInt uiCurrCUAddr)
-{
-    UInt  uiNxtCUAddr;
-
-    //get the raster scan address for the next LCU
-    if (uiCurrCUAddr % m_uiWidthInCU == (m_uiWidthInCU - 1) && uiCurrCUAddr / m_uiWidthInCU == (m_uiHeightInCU - 1))
-    //the current LCU is the last LCU of the tile
-    {
-            uiNxtCUAddr = m_uiNumCUsInFrame;
-    }
-    else //the current LCU is not the last LCU of the tile
-    {
-        if (uiCurrCUAddr % m_uiWidthInCU == (m_uiWidthInCU - 1)) //the current LCU is on the rightmost edge of the tile
-        {
-            uiNxtCUAddr = uiCurrCUAddr + m_uiWidthInCU - this->getFrameWidthInCU() + 1;
-        }
-        else
-        {
-            uiNxtCUAddr = uiCurrCUAddr + 1;
-        }
-    }
-
-    return uiNxtCUAddr;
-}
-
 Void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
 {
     m_saoParam = new SAOParam;

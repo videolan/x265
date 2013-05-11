@@ -110,7 +110,6 @@ public:
 
     UInt        getNumPartInHeight()      { return m_uiNumPartInHeight; }
 
-    UInt         xCalculateNxtCUAddr(UInt uiCurrCUAddr);
     Void allocSaoParam(TComSampleAdaptiveOffset *sao);
     SAOParam *getSaoParam() { return m_saoParam; }
 }; // END CLASS DEFINITION TComPicSym
