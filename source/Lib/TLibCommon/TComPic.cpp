@@ -147,7 +147,6 @@ Void TComPic::compressMotion()
  * \param bNDBFilterCrossTileBoundary cross-tile-boundary in-loop filtering; true for "cross".
  */
 Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int sliceGranularityDepth
-                                    , Int numTiles
                                     , Bool bNDBFilterCrossTileBoundary)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
@@ -162,13 +161,10 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
 
     m_bIndependentSliceBoundaryForNDBFilter = false;
     m_sliceGranularityForNDBFilter = sliceGranularityDepth;
-    m_bIndependentTileBoundaryForNDBFilter  = (bNDBFilterCrossTileBoundary) ? (false) : ((numTiles > 1) ? (true) : (false));
+    m_bIndependentTileBoundaryForNDBFilter  = (false);
 
-    m_pbValidSlice = new Bool[numSlices];
-    for (Int s = 0; s < numSlices; s++)
-    {
-        m_pbValidSlice[s] = true;
-    }
+    m_pbValidSlice = new Bool[1];
+        m_pbValidSlice[0] = true;
 
     m_pSliceSUMap = new Int[maxNumSUInLCU * numLCUInPic];
 

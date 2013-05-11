@@ -951,7 +951,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         if (pcSlice->getSPS()->getUseSAO())
         {
             m_storedStartCUAddrForEncodingSlice.resize(uiNumSlices + 1);
-            pcPic->createNonDBFilterInfo(m_storedStartCUAddrForEncodingSlice, 0, 1, bLFCrossTileBoundary);
+            pcPic->createNonDBFilterInfo(m_storedStartCUAddrForEncodingSlice, 0, bLFCrossTileBoundary);
         }
 
         pcSlice = pcPic->getSlice(0);
