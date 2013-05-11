@@ -111,9 +111,8 @@ private:
     TComDataCU**  m_apcTComDataCU;      ///< array of CU data
 
     Int           m_iTileBoundaryIndependenceIdr;
-    TComTile**    m_apcTComTile;
+    TComTile*     m_apcTComTile;
     UInt*         m_puiCUOrderMap;     //the map of LCU raster scan address relative to LCU encoding order
-    UInt*         m_puiTileIdxMap;     //the map of the tile index relative to LCU raster scan address
     UInt*         m_puiInverseCUOrderMap;
 
     SAOParam *m_saoParam;
@@ -150,13 +149,11 @@ public:
 
     UInt        getNumPartInHeight()      { return m_uiNumPartInHeight; }
 
-    TComTile*    getTComTile(UInt tileIdx)                           { return *(m_apcTComTile + tileIdx); }
+    TComTile*    getTComTile()                                       { return m_apcTComTile; }
 
     Void         setCUOrderMap(UInt encCUOrder, Int cuAddr)          { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
 
     UInt         getCUOrderMap(UInt encCUOrder)                      { return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
-
-    UInt         getTileIdxMap(Int i)                                { return *(m_puiTileIdxMap + i); }
 
     Void         setInverseCUOrderMap(UInt cuAddr, UInt encCUOrder)  { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
 

@@ -797,10 +797,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         {
             //set the width for each tile
-                pcPic->getPicSym()->getTComTile(0)->setTileWidth(pcPic->getPicSym()->getFrameWidthInCU());
+                pcPic->getPicSym()->getTComTile()->setTileWidth(pcPic->getPicSym()->getFrameWidthInCU());
 
             //set the height for each tile
-                pcPic->getPicSym()->getTComTile(0)->setTileHeight(pcPic->getPicSym()->getFrameHeightInCU());
+                pcPic->getPicSym()->getTComTile()->setTileHeight(pcPic->getPicSym()->getFrameHeightInCU());
         }
         //intialize each tile of the current picture
         pcPic->getPicSym()->xInitTiles();

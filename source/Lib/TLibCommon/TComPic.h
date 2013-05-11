@@ -180,7 +180,7 @@ public:
 
     Void          createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int sliceGranularityDepth
                                         , Bool bNDBFilterCrossTileBoundary = true);
-    Void          createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
+    Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
 
     Bool          getValidSlice(Int sliceID)  { return m_pbValidSlice[sliceID]; }

@@ -75,7 +75,6 @@ enum NDBFBlockBorderTag
 /// Non-deblocking filter processing block information
 struct NDBFBlockInfo
 {
-    Int   tileID; //!< tile ID
     Int   sliceID; //!< slice ID
     UInt  startSU; //!< starting SU z-scan address in LCU
     UInt  endSU;  //!< ending SU z-scan address in LCU
@@ -88,7 +87,7 @@ struct NDBFBlockInfo
     Bool  isBorderAvailable[NUM_SGU_BORDER]; //!< the border availabilities
     Bool  allBordersAvailable;
 
-    NDBFBlockInfo() : tileID(0), sliceID(0), startSU(0), endSU(0) {} //!< constructor
+    NDBFBlockInfo() : sliceID(0), startSU(0), endSU(0) {} //!< constructor
 
     const NDBFBlockInfo& operator =(const NDBFBlockInfo& src); //!< "=" operator
 };

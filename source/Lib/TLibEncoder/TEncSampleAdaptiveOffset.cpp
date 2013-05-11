@@ -149,14 +149,14 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
                     if (rx != 0)
                     {
                         // check tile id and slice id
-                        if ((m_pcPic->getPicSym()->getTileIdxMap(addr - 1) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                        if ((m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                         {
                             allowMergeLeft = 0;
                         }
                     }
                     if (ry != 0)
                     {
-                        if ((m_pcPic->getPicSym()->getTileIdxMap(addr - m_iNumCuInWidth) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                        if ((m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                         {
                             allowMergeUp = 0;
                         }
@@ -227,14 +227,14 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
                     if (rx != 0)
                     {
                         // check tile id and slice id
-                        if ((m_pcPic->getPicSym()->getTileIdxMap(addr - 1) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                        if ((m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                         {
                             allowMergeLeft = 0;
                         }
                     }
                     if (ry != 0)
                     {
-                        if ((m_pcPic->getPicSym()->getTileIdxMap(addr - m_iNumCuInWidth) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                        if ((m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                         {
                             allowMergeUp = 0;
                         }
@@ -1909,7 +1909,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
             if (idxX != 0)
             {
                 // check tile id and slice id
-                if ((m_pcPic->getPicSym()->getTileIdxMap(addr - 1) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                if ((m_pcPic->getCU(addr - 1)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                 {
                     allowMergeLeft = 0;
                 }
@@ -1920,7 +1920,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
             }
             if (idxY != 0)
             {
-                if ((m_pcPic->getPicSym()->getTileIdxMap(addr - m_iNumCuInWidth) != m_pcPic->getPicSym()->getTileIdxMap(addr)) || (m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
+                if ((m_pcPic->getCU(addr - m_iNumCuInWidth)->getSlice()->getSliceIdx() != m_pcPic->getCU(addr)->getSlice()->getSliceIdx()))
                 {
                     allowMergeUp = 0;
                 }

@@ -263,12 +263,11 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
             endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
 
             uiAddr = m_apcPicSym->getCUOrderMap(i);
-            Int iTileID = m_apcPicSym->getTileIdxMap(uiAddr);
 
             TComDataCU* pcCU = getCU(uiAddr);
             m_vSliceCUDataLink[s].push_back(pcCU);
 
-            createNonDBFilterInfoLCU(iTileID, s, pcCU, startSU, endSU, m_sliceGranularityForNDBFilter, picWidth, picHeight);
+            createNonDBFilterInfoLCU(s, pcCU, startSU, endSU, m_sliceGranularityForNDBFilter, picWidth, picHeight);
         }
     }
 
@@ -289,35 +288,9 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
             {
                 continue;
             }
-            Int iTileID = m_apcPicSym->getTileIdxMap(uiAddr);
-            Bool bTopTileBoundary = false, bDownTileBoundary = false, bLeftTileBoundary = false, bRightTileBoundary = false;
-
-            if (m_bIndependentTileBoundaryForNDBFilter)
-            {
-                //left
-                if (uiAddr % numLCUsInPicWidth != 0)
-                {
-                    bLeftTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr - 1) != iTileID) ? true : false;
-                }
-                //right
-                if ((uiAddr % numLCUsInPicWidth) != (numLCUsInPicWidth - 1))
-                {
-                    bRightTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr + 1) != iTileID) ? true : false;
-                }
-                //top
-                if (uiAddr >= numLCUsInPicWidth)
-                {
-                    bTopTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr - numLCUsInPicWidth) !=  iTileID) ? true : false;
-                }
-                //down
-                if (uiAddr + numLCUsInPicWidth < numLCUInPic)
-                {
-                    bDownTileBoundary = (m_apcPicSym->getTileIdxMap(uiAddr + numLCUsInPicWidth) != iTileID) ? true : false;
-                }
-            }
 
             pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight
-                                                      , bTopTileBoundary, bDownTileBoundary, bLeftTileBoundary, bRightTileBoundary
+                                                      , false, false, false, false
                                                       , m_bIndependentTileBoundaryForNDBFilter);
         }
     }
@@ -339,7 +312,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
  * \param picWidth picture width
  * \param picHeight picture height
  */
-Void TComPic::createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
+Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
 {
     UInt LCUX          = pcCU->getCUPelX();
     UInt LCUY          = pcCU->getCUPelY();
@@ -375,7 +348,6 @@ Void TComPic::createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU
 
         NDBFBlockInfo NDBFBlock;
 
-        NDBFBlock.tileID  = tileID;
         NDBFBlock.sliceID = sliceID;
         NDBFBlock.posY    = TPelY;
         NDBFBlock.posX    = LPelX;
