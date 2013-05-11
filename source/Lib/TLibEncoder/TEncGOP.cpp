@@ -789,51 +789,18 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         UInt uiRealEndAddress = uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress;
 
-        UInt uiCummulativeTileWidth;
-        UInt uiCummulativeTileHeight;
         Int  p, j;
         UInt uiEncCUAddr;
 
         //create the TComTileArray
         pcPic->getPicSym()->xCreateTComTileArray();
 
-        if (pcSlice->getPPS()->getUniformSpacingFlag() == 1)
         {
             //set the width for each tile
-            j = 0;
-            {
-                p = 0;
-                {
-                    pcPic->getPicSym()->getTComTile(j + p)->setTileWidth((p + 1) * pcPic->getPicSym()->getFrameWidthInCU() - (p * pcPic->getPicSym()->getFrameWidthInCU()));
-                }
-            }
+                pcPic->getPicSym()->getTComTile(0)->setTileWidth(pcPic->getPicSym()->getFrameWidthInCU());
 
             //set the height for each tile
-            j = 0;
-            {
-                p = 0;
-                {
-                    pcPic->getPicSym()->getTComTile(p + j)->setTileHeight((p + 1) * pcPic->getPicSym()->getFrameHeightInCU() - (p * pcPic->getPicSym()->getFrameHeightInCU()));
-                }
-            }
-        }
-        else
-        {
-            //set the width for each tile
-            j = 0;
-            {
-                uiCummulativeTileWidth = 0;
-
-                pcPic->getPicSym()->getTComTile(j)->setTileWidth(pcPic->getPicSym()->getFrameWidthInCU() - uiCummulativeTileWidth);
-            }
-
-            //set the height for each tile
-            j = 0;
-            {
-                uiCummulativeTileHeight = 0;
-
-                pcPic->getPicSym()->getTComTile(j)->setTileHeight(pcPic->getPicSym()->getFrameHeightInCU() - uiCummulativeTileHeight);
-            }
+                pcPic->getPicSym()->getTComTile(0)->setTileHeight(pcPic->getPicSym()->getFrameHeightInCU());
         }
         //intialize each tile of the current picture
         pcPic->getPicSym()->xInitTiles();

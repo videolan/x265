@@ -1178,7 +1178,6 @@ private:
     Bool        m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
-    Bool     m_uniformSpacingFlag;
 
     Int      m_iNumSubstreams;
 
@@ -1287,10 +1286,6 @@ public:
     Bool    getEntropyCodingSyncEnabledFlag() const          { return m_entropyCodingSyncEnabledFlag; }
 
     Void    setEntropyCodingSyncEnabledFlag(Bool val)        { m_entropyCodingSyncEnabledFlag = val; }
-
-    Void     setUniformSpacingFlag(Bool b)          { m_uniformSpacingFlag = b; }
-
-    Bool     getUniformSpacingFlag()                  { return m_uniformSpacingFlag; }
 
     Void     setNumSubstreams(Int iNumSubstreams)               { m_iNumSubstreams = iNumSubstreams; }
 
