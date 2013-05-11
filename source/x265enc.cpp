@@ -242,7 +242,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setDecodingUnitInfoSEIEnabled(m_decodingUnitInfoSEIEnabled);
     m_cTEncTop.setSOPDescriptionSEIEnabled(m_SOPDescriptionSEIEnabled);
     m_cTEncTop.setScalableNestingSEIEnabled(m_scalableNestingSEIEnabled);
-    m_cTEncTop.setUniformSpacingIdr(m_iUniformSpacingIdr);
 
         m_bLFCrossTileBoundaryFlag = true;
 

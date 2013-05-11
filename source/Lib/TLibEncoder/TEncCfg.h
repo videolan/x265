@@ -202,7 +202,6 @@ protected:
     UInt      m_uiPCMBitDepthChroma;
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
-    Int       m_iUniformSpacingIdr;
 
     Int       m_iWaveFrontSynchro;
     Int       m_iWaveFrontSubstreams;
@@ -585,10 +584,6 @@ public:
     Void  setLFCrossTileBoundaryFlag(Bool val)       { m_loopFilterAcrossTilesEnabledFlag = val; }
 
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
-
-    Void  setUniformSpacingIdr(Int i)           { m_iUniformSpacingIdr = i; }
-
-    Int   getUniformSpacingIdr()                  { return m_iUniformSpacingIdr; }
 
     Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_iWaveFrontSynchro = iWaveFrontSynchro; }
 

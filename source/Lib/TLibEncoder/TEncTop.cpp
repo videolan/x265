@@ -932,7 +932,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
 
 Void  TEncTop::xInitPPSforTiles()
 {
-    m_cPPS.setUniformSpacingFlag(m_iUniformSpacingIdr);
     m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 
     // # substreams is "per tile" when tiles are independent.
