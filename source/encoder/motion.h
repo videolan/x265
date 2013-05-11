@@ -51,7 +51,11 @@ protected:
 
     /* Aligned copy of original pixels, in case their native alignment
      * was insufficient (AMP) */
+#if HIGH_BIT_DEPTH
+    ALIGN_VAR_16(pixel, fenc[64 * FENC_STRIDE]);
+#else
     ALIGN_VAR_32(pixel, fenc[64 * FENC_STRIDE]);
+#endif
 
     pixel *fencplanes[3];
     intptr_t fencLumaStride;
