@@ -2406,6 +2406,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         //--- get SAD ---
         UInt  uiSAD  = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
         uiSAD       += m_pcRdCost->calcHAD(g_bitDepthC, piOrgV, uiStride, piPredV, uiStride, uiWidth, uiHeight);
+
         //--- check ---
         if (uiSAD < uiMinSAD)
         {
@@ -2437,6 +2438,33 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     UInt    uiOverallDistC = 0;
     UInt    CandNum;
     Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
+
+#if ENABLE_PRIMITIVES
+    x265::pixelcmp sa8d;
+    switch(uiWidth)
+    {
+    case 64:
+        sa8d = x265::primitives.sa8d_64x64;
+        break;
+    case 32:
+        sa8d = x265::primitives.sa8d_32x32;
+        break;
+    case 16:
+        sa8d = x265::primitives.sa8d_16x16;
+        break;
+    case 8:
+        sa8d = x265::primitives.sa8d_8x8;
+        break;
+    case 4:
+        sa8d = x265::primitives.satd[PARTITION_4x4];
+        break;
+    default:
+        assert(!"invalid intra block width");
+        sa8d = x265::primitives.sad[0];
+        break;
+    }
+    assert(uiWidth == uiHeight);
+#endif
 
     //===== set QP and clear Cbf =====
     if (pcCU->getSlice()->getPPS()->getUseDQP() == true)
@@ -2485,7 +2513,11 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
 
                 // use hadamard transform here
+#if ENABLE_PRIMITIVES
+                UInt uiSad = sa8d(piOrg, uiStride, piPred, uiStride);
+#else
                 UInt uiSad = m_pcRdCost->calcHAD(g_bitDepthY, piOrg, uiStride, piPred, uiStride, uiWidth, uiHeight);
+#endif
 
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
                 Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();
