@@ -97,7 +97,6 @@ private:
     // SBAC RD
     TEncSbac***             m_pppcRDSbacCoder;
     TEncSbac*               m_pcRDGoOnSbacCoder;
-    Bool                    m_bUseSBACRD;
     TEncRateCtrl*           m_pcRateCtrl;
     UInt                    m_LCUPredictionSAD;
     Int                     m_addSADDepth;

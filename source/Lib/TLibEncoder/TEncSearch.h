@@ -125,7 +125,6 @@ protected:
     // RD computation
     TEncSbac***     m_pppcRDSbacCoder;
     TEncSbac*       m_pcRDGoOnSbacCoder;
-    Bool            m_bUseSBACRD;
     DistParam       m_cDistParam;
 
     // Misc.

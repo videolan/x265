@@ -75,7 +75,6 @@ private:
     Int    *m_iTypePartBest; //[MAX_NUM_SAO_PART];
     Int     m_iOffsetThY;
     Int     m_iOffsetThC;
-    Bool    m_bUseSBACRD;
     Double  m_depthSaoRate[2][4];
 
 public:

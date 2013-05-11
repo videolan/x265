@@ -271,6 +271,24 @@ int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i
     return (sum + 2) >> 2;
 }
 
+int CDECL pixel_sa8d_32x32(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    int sum = 0;
+    for (int y = 0; y < 32; y += 8)
+        for (int x = 0; x < 32; x += 8)
+            sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
+    return (sum + 2) >> 2;
+}
+
+int CDECL pixel_sa8d_64x64(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    int sum = 0;
+    for (int y = 0; y < 64; y += 8)
+        for (int x = 0; x < 64; x += 8)
+            sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
+    return (sum + 2) >> 2;
+}
+
 void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
@@ -626,5 +644,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     // sa8d
     p.sa8d_8x8 = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;
+    p.sa8d_32x32 = pixel_sa8d_32x32;
+    p.sa8d_64x64 = pixel_sa8d_64x64;
 }
 }

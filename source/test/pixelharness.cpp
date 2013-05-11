@@ -281,6 +281,24 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.sa8d_32x32)
+    {
+        if (!check_pixel_primitive(ref.sa8d_32x32, opt.sa8d_32x32))
+        {
+            printf("sa8d_32x32: failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.sa8d_64x64)
+    {
+        if (!check_pixel_primitive(ref.sa8d_64x64, opt.sa8d_64x64))
+        {
+            printf("sa8d_64x64: failed!\n");
+            return false;
+        }
+    }
+
     if (opt.cpyblock)
     {
         if (!check_block_copy(ref.cpyblock, opt.cpyblock))
@@ -381,6 +399,22 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(iters,
             opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE),
             ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
+    }
+
+    if (opt.sa8d_32x32)
+    {
+        printf("sa8d_32x32");
+        REPORT_SPEEDUP(iters,
+            opt.sa8d_32x32(pbuf1, STRIDE, pbuf2, STRIDE),
+            ref.sa8d_32x32(pbuf1, STRIDE, pbuf2, STRIDE));
+    }
+
+    if (opt.sa8d_64x64)
+    {
+        printf("sa8d_64x64");
+        REPORT_SPEEDUP(iters,
+            opt.sa8d_64x64(pbuf1, STRIDE, pbuf2, STRIDE),
+            ref.sa8d_64x64(pbuf1, STRIDE, pbuf2, STRIDE));
     }
 
     if (opt.cpyblock)

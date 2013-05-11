@@ -117,23 +117,21 @@ Void TEncTop::create()
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
+
     // if SBAC-based RD optimization is used
-    if (m_bUseSBACRD)
+    m_pppcRDSbacCoder = new TEncSbac * *[g_uiMaxCUDepth + 1];
+    m_pppcBinCoderCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
+
+    for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
     {
-        m_pppcRDSbacCoder = new TEncSbac * *[g_uiMaxCUDepth + 1];
-        m_pppcBinCoderCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
+        m_pppcRDSbacCoder[iDepth] = new TEncSbac*[CI_NUM];
+        m_pppcBinCoderCABAC[iDepth] = new TEncBinCABACCounter*[CI_NUM];
 
-        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
         {
-            m_pppcRDSbacCoder[iDepth] = new TEncSbac*[CI_NUM];
-            m_pppcBinCoderCABAC[iDepth] = new TEncBinCABACCounter*[CI_NUM];
-
-            for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-            {
-                m_pppcRDSbacCoder[iDepth][iCIIdx] = new TEncSbac;
-                m_pppcBinCoderCABAC[iDepth][iCIIdx] = new TEncBinCABACCounter;
-                m_pppcRDSbacCoder[iDepth][iCIIdx]->init(m_pppcBinCoderCABAC[iDepth][iCIIdx]);
-            }
+            m_pppcRDSbacCoder[iDepth][iCIIdx] = new TEncSbac;
+            m_pppcBinCoderCABAC[iDepth][iCIIdx] = new TEncBinCABACCounter;
+            m_pppcRDSbacCoder[iDepth][iCIIdx]->init(m_pppcBinCoderCABAC[iDepth][iCIIdx]);
         }
     }
 }
@@ -164,26 +162,23 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
         m_pcSbacCoders[ui].init(&m_pcBinCoderCABACs[ui]);
     }
 
-    if (m_bUseSBACRD)
+    m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
+    m_ppppcBinCodersCABAC    = new TEncBinCABAC * **[iNumSubstreams];
+    for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
-        m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
-        m_ppppcBinCodersCABAC    = new TEncBinCABAC * **[iNumSubstreams];
-        for (UInt ui = 0; ui < iNumSubstreams; ui++)
+        m_ppppcRDSbacCoders[ui]  = new TEncSbac * *[g_uiMaxCUDepth + 1];
+        m_ppppcBinCodersCABAC[ui] = new TEncBinCABAC * *[g_uiMaxCUDepth + 1];
+
+        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
-            m_ppppcRDSbacCoders[ui]  = new TEncSbac * *[g_uiMaxCUDepth + 1];
-            m_ppppcBinCodersCABAC[ui] = new TEncBinCABAC * *[g_uiMaxCUDepth + 1];
+            m_ppppcRDSbacCoders[ui][iDepth]  = new TEncSbac*[CI_NUM];
+            m_ppppcBinCodersCABAC[ui][iDepth] = new TEncBinCABAC*[CI_NUM];
 
-            for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+            for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
             {
-                m_ppppcRDSbacCoders[ui][iDepth]  = new TEncSbac*[CI_NUM];
-                m_ppppcBinCodersCABAC[ui][iDepth] = new TEncBinCABAC*[CI_NUM];
-
-                for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-                {
-                    m_ppppcRDSbacCoders[ui][iDepth][iCIIdx] = new TEncSbac;
-                    m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx] = new TEncBinCABAC;
-                    m_ppppcRDSbacCoders[ui][iDepth][iCIIdx]->init(m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx]);
-                }
+                m_ppppcRDSbacCoders[ui][iDepth][iCIIdx] = new TEncSbac;
+                m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx] = new TEncBinCABAC;
+                m_ppppcRDSbacCoders[ui][iDepth][iCIIdx]->init(m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx]);
             }
         }
     }
@@ -203,51 +198,48 @@ Void TEncTop::destroy()
     m_cLoopFilter.destroy();
     m_cRateCtrl.destroy();
     // SBAC RD
-    if (m_bUseSBACRD)
+    Int iDepth;
+    for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
     {
-        Int iDepth;
+        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
+        {
+            delete m_pppcRDSbacCoder[iDepth][iCIIdx];
+            delete m_pppcBinCoderCABAC[iDepth][iCIIdx];
+        }
+    }
+
+    for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+    {
+        delete [] m_pppcRDSbacCoder[iDepth];
+        delete [] m_pppcBinCoderCABAC[iDepth];
+    }
+
+    delete [] m_pppcRDSbacCoder;
+    delete [] m_pppcBinCoderCABAC;
+
+    for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
+    {
         for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
             for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
             {
-                delete m_pppcRDSbacCoder[iDepth][iCIIdx];
-                delete m_pppcBinCoderCABAC[iDepth][iCIIdx];
+                delete m_ppppcRDSbacCoders[ui][iDepth][iCIIdx];
+                delete m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx];
             }
         }
 
         for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
-            delete [] m_pppcRDSbacCoder[iDepth];
-            delete [] m_pppcBinCoderCABAC[iDepth];
+            delete [] m_ppppcRDSbacCoders[ui][iDepth];
+            delete [] m_ppppcBinCodersCABAC[ui][iDepth];
         }
 
-        delete [] m_pppcRDSbacCoder;
-        delete [] m_pppcBinCoderCABAC;
-
-        for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
-        {
-            for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-            {
-                for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-                {
-                    delete m_ppppcRDSbacCoders[ui][iDepth][iCIIdx];
-                    delete m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx];
-                }
-            }
-
-            for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-            {
-                delete [] m_ppppcRDSbacCoders[ui][iDepth];
-                delete [] m_ppppcBinCodersCABAC[ui][iDepth];
-            }
-
-            delete[] m_ppppcRDSbacCoders[ui];
-            delete[] m_ppppcBinCodersCABAC[ui];
-        }
-
-        delete[] m_ppppcRDSbacCoders;
-        delete[] m_ppppcBinCodersCABAC;
+        delete[] m_ppppcRDSbacCoders[ui];
+        delete[] m_ppppcBinCodersCABAC[ui];
     }
+
+    delete[] m_ppppcRDSbacCoders;
+    delete[] m_ppppcBinCodersCABAC;
     delete[] m_pcSbacCoders;
     delete[] m_pcBinCoderCABACs;
     delete[] m_pcRDGoOnSbacCoders;

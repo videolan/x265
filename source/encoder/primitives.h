@@ -180,6 +180,8 @@ struct EncoderPrimitives
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
+    pixelcmp sa8d_32x32;
+    pixelcmp sa8d_64x64;
     IPFilter filter[NUM_FILTER];
     mbdst inversedst;
     butterfly partial_butterfly[NUM_BUTTERFLIES];

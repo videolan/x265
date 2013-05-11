@@ -122,16 +122,8 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
 
     for (iTypeIdx = -1; iTypeIdx < iNumTotalType; iTypeIdx++)
     {
-        if (m_bUseSBACRD)
-        {
-            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
-            m_pcRDGoOnSbacCoder->resetBits();
-        }
-        else
-        {
-            m_pcEntropyCoder->resetEntropy();
-            m_pcEntropyCoder->resetBits();
-        }
+        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+        m_pcRDGoOnSbacCoder->resetBits();
 
         iEstDist = 0;
 
@@ -280,8 +272,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
                 m_iDistOrg[iPartIdx] = 0;
                 m_dCostPartBest[iPartIdx] = m_dCost[iPartIdx][iTypeIdx];
                 m_iTypePartBest[iPartIdx] = iTypeIdx;
-                if (m_bUseSBACRD)
-                    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
+                m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
             }
         }
         else
@@ -290,8 +281,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
             {
                 m_dCostPartBest[iPartIdx] = (Double)m_iDistOrg[iPartIdx] + m_pcEntropyCoder->getNumberOfWrittenBits() * dLambda;
                 m_iTypePartBest[iPartIdx] = -1;
-                if (m_bUseSBACRD)
-                    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
+                m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
             }
         }
     }
@@ -372,23 +362,17 @@ Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int iPar
 
         for (Int i = 0; i < NUM_DOWN_PART; i++)
         {
-            if (m_bUseSBACRD)
+            if (0 == i) //initialize RD with previous depth buffer
             {
-                if (0 == i) //initialize RD with previous depth buffer
-                {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
-                }
-                else
-                {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
-                }
+                m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+            }
+            else
+            {
+                m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
             }
             runQuadTreeDecision(psQTPart, pOnePart->DownPartsIdx[i], dCostFinal, iMaxLevel, dLambda, yCbCr);
             dCostSplit += dCostFinal;
-            if (m_bUseSBACRD)
-            {
-                m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_TEMP_BEST]);
-            }
+            m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_TEMP_BEST]);
         }
 
         if (dCostSplit < dCostNotSplit)
@@ -397,10 +381,7 @@ Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int iPar
             pOnePart->bSplit      = true;
             pOnePart->iLength     =  0;
             pOnePart->iBestType   = -1;
-            if (m_bUseSBACRD)
-            {
-                m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
-            }
+            m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
         }
         else
         {
@@ -411,10 +392,7 @@ Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int iPar
                 disablePartTree(psQTPart, pOnePart->DownPartsIdx[i]);
             }
 
-            if (m_bUseSBACRD)
-            {
-                m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-            }
+            m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]->load(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
         }
     }
     else
@@ -664,7 +642,6 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
  */
 Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder)
 {
-    m_bUseSBACRD = true;
     m_pcPic = pcPic;
     m_pcEntropyCoder = pcEntropyCoder;
 
@@ -673,11 +650,8 @@ Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntrop
     m_pcEntropyCoder->resetEntropy();
     m_pcEntropyCoder->resetBits();
 
-    if (m_bUseSBACRD)
-    {
-        m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[0][CI_NEXT_BEST]);
-        m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_NEXT_BEST]);
-    }
+    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[0][CI_NEXT_BEST]);
+    m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_NEXT_BEST]);
 }
 
 /** End SAO encoder

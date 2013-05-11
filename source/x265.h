@@ -152,7 +152,6 @@ typedef struct
     int       m_bPCMFilterDisableFlag;            ///< PCM filter disable flag
 
     // coding tools
-    int       m_bUseSBACRD;                       ///< flag for using RD optimization based on SBAC
     int       m_bUseASR;                          ///< flag for using adaptive motion search range
     int       m_bUseHADME;                        ///< flag for using HAD in sub-pel ME
     int       m_useRDOQ;                          ///< flag for using RD optimized quantization
