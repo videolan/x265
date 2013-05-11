@@ -264,7 +264,6 @@ typedef struct
     int       m_pocProportionalToTimingFlag;      ///< Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS
     int       m_numTicksPocDiffOneMinus1;         ///< Number of ticks minus 1 that for a POC difference of one
     int       m_bitstreamRestrictionFlag;         ///< Signals whether bitstream restriction parameters are present
-    int       m_tilesFixedStructureFlag;          ///< Indicates that each active picture parameter set has the same values of the syntax elements related to tiles
     int       m_motionVectorsOverPicBoundariesFlag;///< Indicates that no samples outside the picture boundaries are used for inter prediction
     int       m_minSpatialSegmentationIdc;        ///< Indicates the maximum size of the spatial segments in the pictures in the coded video sequence
     int       m_maxBytesPerPicDenom;              ///< Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units associated with any coded picture

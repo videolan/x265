@@ -286,7 +286,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
     m_cTEncTop.setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
     m_cTEncTop.setBitstreamRestrictionFlag(m_bitstreamRestrictionFlag);
-    m_cTEncTop.setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
     m_cTEncTop.setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
     m_cTEncTop.setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
     m_cTEncTop.setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);

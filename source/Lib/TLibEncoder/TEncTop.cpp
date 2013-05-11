@@ -560,7 +560,6 @@ Void TEncTop::xInitSPS()
         pcVUI->getTimingInfo()->setPocProportionalToTimingFlag(getPocProportionalToTimingFlag());
         pcVUI->getTimingInfo()->setNumTicksPocDiffOneMinus1(getNumTicksPocDiffOneMinus1());
         pcVUI->setBitstreamRestrictionFlag(getBitstreamRestrictionFlag());
-        pcVUI->setTilesFixedStructureFlag(getTilesFixedStructureFlag());
         pcVUI->setMotionVectorsOverPicBoundariesFlag(getMotionVectorsOverPicBoundariesFlag());
         pcVUI->setMinSpatialSegmentationIdc(getMinSpatialSegmentationIdc());
         pcVUI->setMaxBytesPerPicDenom(getMaxBytesPerPicDenom());

@@ -292,7 +292,6 @@ protected:
     Bool      m_pocProportionalToTimingFlag;                  ///< Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS
     Int       m_numTicksPocDiffOneMinus1;                     ///< Number of ticks minus 1 that for a POC difference of one
     Bool      m_bitstreamRestrictionFlag;                     ///< Signals whether bitstream restriction parameters are present
-    Bool      m_tilesFixedStructureFlag;                      ///< Indicates that each active picture parameter set has the same values of the syntax elements related to tiles
     Bool      m_motionVectorsOverPicBoundariesFlag;           ///< Indicates that no samples outside the picture boundaries are used for inter prediction
     Int       m_minSpatialSegmentationIdc;                    ///< Indicates the maximum size of the spatial segments in the pictures in the coded video sequence
     Int       m_maxBytesPerPicDenom;                          ///< Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units associated with any coded picture
@@ -930,10 +929,6 @@ public:
     Bool      getBitstreamRestrictionFlag()                 { return m_bitstreamRestrictionFlag; }
 
     Void      setBitstreamRestrictionFlag(Bool i)           { m_bitstreamRestrictionFlag = i; }
-
-    Bool      getTilesFixedStructureFlag()                  { return m_tilesFixedStructureFlag; }
-
-    Void      setTilesFixedStructureFlag(Bool i)            { m_tilesFixedStructureFlag = i; }
 
     Bool      getMotionVectorsOverPicBoundariesFlag()       { return m_motionVectorsOverPicBoundariesFlag; }
 

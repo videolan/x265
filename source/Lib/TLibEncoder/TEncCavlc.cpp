@@ -287,7 +287,7 @@ Void TEncCavlc::codeVUI(TComVUI *pcVUI, TComSPS* pcSPS)
     WRITE_FLAG(pcVUI->getBitstreamRestrictionFlag(),              "bitstream_restriction_flag");
     if (pcVUI->getBitstreamRestrictionFlag())
     {
-        WRITE_FLAG(pcVUI->getTilesFixedStructureFlag(),             "tiles_fixed_structure_flag");
+        WRITE_FLAG(0,                                                "tiles_fixed_structure_flag");
         WRITE_FLAG(pcVUI->getMotionVectorsOverPicBoundariesFlag(),  "motion_vectors_over_pic_boundaries_flag");
         WRITE_FLAG(pcVUI->getRestrictedRefPicListsFlag(),           "restricted_ref_pic_lists_flag");
         WRITE_UVLC(pcVUI->getMinSpatialSegmentationIdc(),           "min_spatial_segmentation_idc");
