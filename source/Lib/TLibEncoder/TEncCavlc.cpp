@@ -156,7 +156,7 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
 
     WRITE_UVLC(pcPPS->getPPSId(),                             "pps_pic_parameter_set_id");
     WRITE_UVLC(pcPPS->getSPSId(),                             "pps_seq_parameter_set_id");
-    WRITE_FLAG(pcPPS->getDependentSliceSegmentsEnabledFlag()    ? 1 : 0, "dependent_slice_segments_enabled_flag");
+    WRITE_FLAG(0,                                             "dependent_slice_segments_enabled_flag");
     WRITE_FLAG(pcPPS->getOutputFlagPresentFlag() ? 1 : 0,     "output_flag_present_flag");
     WRITE_CODE(pcPPS->getNumExtraSliceHeaderBits(), 3,        "num_extra_slice_header_bits");
     WRITE_FLAG(pcPPS->getSignHideFlag(), "sign_data_hiding_flag");
@@ -593,10 +593,6 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
     }
     WRITE_UVLC(pcSlice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
     pcSlice->setDependentSliceSegmentFlag(!pcSlice->isNextSlice());
-    if (pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag() && (sliceSegmentAddress != 0))
-    {
-        WRITE_FLAG(pcSlice->getDependentSliceSegmentFlag() ? 1 : 0, "dependent_slice_segment_flag");
-    }
     if (sliceSegmentAddress > 0)
     {
         WRITE_CODE(sliceSegmentAddress, bitsSliceSegmentAddress, "slice_segment_address");

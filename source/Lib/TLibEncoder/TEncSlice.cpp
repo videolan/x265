@@ -738,43 +738,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiTileCol      = 0;
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
-    Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
     uiTileStartLCU = 0;
-    if (depSliceSegmentsEnabled)
-    {
-        if ((pcSlice->getSliceSegmentCurStartCUAddr() != pcSlice->getSliceCurStartCUAddr()) && (uiCUAddr != uiTileStartLCU))
-        {
-            if (m_pcCfg->getWaveFrontsynchro())
-            {
-                uiTileCol = 0;
-                m_pcBufferSbacCoders[uiTileCol].loadContexts(CTXMem[1]);
-                Int iNumSubstreamsPerTile = iNumSubstreams;
-                uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
-                uiLin     = uiCUAddr / uiWidthInLCUs;
-                uiSubStrm = uiLin % iNumSubstreamsPerTile;
-                if ((uiCUAddr % uiWidthInLCUs + 1) >= uiWidthInLCUs)
-                {
-                    uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-                    uiCol     = uiCUAddr % uiWidthInLCUs;
-                    if (uiCol == uiTileStartLCU)
-                    {
-                        CTXMem[0]->loadContexts(m_pcSbacCoder);
-                    }
-                }
-            }
-            m_pppcRDSbacCoder[0][CI_CURR_BEST]->loadContexts(CTXMem[0]);
-            ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(CTXMem[0]);
-        }
-        else
-        {
-            if (m_pcCfg->getWaveFrontsynchro())
-            {
-                CTXMem[1]->loadContexts(m_pcSbacCoder);
-            }
-            CTXMem[0]->loadContexts(m_pcSbacCoder);
-        }
-    }
     // for every CU in slice
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
@@ -795,7 +760,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             uiCol     = uiCUAddr % uiWidthInLCUs;
             uiLin     = uiCUAddr / uiWidthInLCUs;
                 uiSubStrm = uiLin % iNumSubstreams;
-            if (((pcSlice->getPPS()->getNumSubstreams() > 1) || depSliceSegmentsEnabled) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+            if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
             {
                 // We'll sync if the TR is available.
                 TComDataCU *pcCUUp = pcCU->getCUAbove();
@@ -822,22 +787,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
         }
 
-        // reset the entropy coder
-        if (uiCUAddr == 0 &&                               // must be first CU of tile
-            uiCUAddr != 0 &&                                                                                                                              // cannot be first CU of picture
-            uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU() &&
-            uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU()) // cannot be first CU of slice
-        {
-            SliceType sliceType = pcSlice->getSliceType();
-            if (!pcSlice->isIntra() && pcSlice->getPPS()->getCabacInitPresentFlag() && pcSlice->getPPS()->getEncCABACTableIdx() != I_SLICE)
-            {
-                sliceType = (SliceType)pcSlice->getPPS()->getEncCABACTableIdx();
-            }
-            m_pcEntropyCoder->updateContextTables(sliceType, pcSlice->getSliceQp(), false);
-            m_pcEntropyCoder->setEntropyCoder(m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice);
-            m_pcEntropyCoder->updateContextTables(sliceType, pcSlice->getSliceQp());
-            m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
-        }
         // if RD based on SBAC is used
         if (m_pcCfg->getUseSBACRD())
         {
@@ -926,7 +875,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
                 ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
                 //Store probabilties of second LCU in line into buffer
-                if ((uiCol == uiTileLCUX + 1) && (depSliceSegmentsEnabled || (pcSlice->getPPS()->getNumSubstreams() > 1)) && m_pcCfg->getWaveFrontsynchro())
+                if ((uiCol == uiTileLCUX + 1) && (pcSlice->getPPS()->getNumSubstreams() > 1) && m_pcCfg->getWaveFrontsynchro())
                 {
                     m_pcBufferSbacCoders[uiTileCol].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
                 }
@@ -944,17 +893,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         m_uiPicDist      += pcCU->getTotalDistortion();
     }
 
-    if ((pcSlice->getPPS()->getNumSubstreams() > 1) && !depSliceSegmentsEnabled)
+    if (pcSlice->getPPS()->getNumSubstreams() > 1)
     {
         pcSlice->setNextSlice(true);
-    }
-    if (depSliceSegmentsEnabled)
-    {
-        if (m_pcCfg->getWaveFrontsynchro())
-        {
-            CTXMem[1]->loadContexts(&m_pcBufferSbacCoders[uiTileCol]); //ctx 2.LCU
-        }
-        CTXMem[0]->loadContexts(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //ctx end of dep.slice
     }
     xRestoreWPparam(pcSlice);
 }
@@ -1020,43 +961,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     UInt uiTileCol      = 0;
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
-    Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
     uiTileStartLCU = 0;
-    if (depSliceSegmentsEnabled)
-    {
-        if (pcSlice->isNextSlice() || uiCUAddr == 0)
-        {
-            if (m_pcCfg->getWaveFrontsynchro())
-            {
-                CTXMem[1]->loadContexts(m_pcSbacCoder);
-            }
-            CTXMem[0]->loadContexts(m_pcSbacCoder);
-        }
-        else
-        {
-            if (m_pcCfg->getWaveFrontsynchro())
-            {
-                uiTileCol = 0;
-                m_pcBufferSbacCoders[uiTileCol].loadContexts(CTXMem[1]);
-                Int iNumSubstreamsPerTile = iNumSubstreams;
-                uiLin     = uiCUAddr / uiWidthInLCUs;
-                uiSubStrm = uiLin % iNumSubstreamsPerTile;
-                if ((uiCUAddr % uiWidthInLCUs + 1) >= uiWidthInLCUs)
-                {
-                    uiCol     = uiCUAddr % uiWidthInLCUs;
-                    uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-                    if (uiCol == uiTileLCUX)
-                    {
-                        CTXMem[0]->loadContexts(m_pcSbacCoder);
-                    }
-                }
-            }
-            pcSbacCoders[uiSubStrm].loadContexts(CTXMem[0]);
-        }
-    }
 
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
@@ -1075,7 +983,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
             m_pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
             // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-            if (((pcSlice->getPPS()->getNumSubstreams() > 1) || depSliceSegmentsEnabled) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+            if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
             {
                 // We'll sync if the TR is available.
                 TComDataCU *pcCUUp = rpcPic->getCU(uiCUAddr)->getCUAbove();
@@ -1101,45 +1009,6 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
                 }
             }
             m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
-        }
-        // reset the entropy coder
-        if (uiCUAddr == 0 &&                               // must be first CU of tile
-            uiCUAddr != 0 &&                                                                                                                              // cannot be first CU of picture
-            uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU() &&
-            uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU()) // cannot be first CU of slice
-        {
-            {
-                // We're crossing into another tile, tiles are independent.
-                // When tiles are independent, we have "substreams per tile".  Each substream has already been terminated, and we no longer
-                // have to perform it here.
-                if (pcSlice->getPPS()->getNumSubstreams() > 1)
-                {
-                    // do nothing.
-                }
-                else
-                {
-                    SliceType sliceType  = pcSlice->getSliceType();
-                    if (!pcSlice->isIntra() && pcSlice->getPPS()->getCabacInitPresentFlag() && pcSlice->getPPS()->getEncCABACTableIdx() != I_SLICE)
-                    {
-                        sliceType = (SliceType)pcSlice->getPPS()->getEncCABACTableIdx();
-                    }
-                    m_pcEntropyCoder->updateContextTables(sliceType, pcSlice->getSliceQp());
-                    // Byte-alignment in slice_data() when new tile
-                    pcSubstreams[uiSubStrm].writeByteAlignment();
-                }
-            }
-            {
-                UInt numStartCodeEmulations = pcSubstreams[uiSubStrm].countStartCodeEmulations();
-                UInt uiAccumulatedSubstreamLength = 0;
-                for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
-                {
-                    uiAccumulatedSubstreamLength += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
-                }
-
-                // add bits coded in previous dependent slices + bits coded so far
-                // add number of emulation prevention byte count in the tile
-                pcSlice->addTileLocation(((pcSlice->getTileOffstForMultES() + uiAccumulatedSubstreamLength - uiBitsOriginallyInSubstreams) >> 3) + numStartCodeEmulations);
-            }
         }
 
         TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
@@ -1223,35 +1092,20 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             pcSbacCoders[uiSubStrm].load(m_pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
             //Store probabilties of second LCU in line into buffer
-            if ((depSliceSegmentsEnabled || (pcSlice->getPPS()->getNumSubstreams() > 1)) && (uiCol == uiTileLCUX + 1) && m_pcCfg->getWaveFrontsynchro())
+            if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX + 1) && m_pcCfg->getWaveFrontsynchro())
             {
                 m_pcBufferSbacCoders[uiTileCol].loadContexts(&pcSbacCoders[uiSubStrm]);
             }
         }
     }
 
-    if (depSliceSegmentsEnabled)
-    {
-        if (m_pcCfg->getWaveFrontsynchro())
-        {
-            CTXMem[1]->loadContexts(&m_pcBufferSbacCoders[uiTileCol]); //ctx 2.LCU
-        }
-        CTXMem[0]->loadContexts(m_pcSbacCoder); //ctx end of dep.slice
-    }
     if (m_pcCfg->getUseAdaptQpSelect())
     {
         m_pcTrQuant->storeSliceQpNext(pcSlice);
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {
-        if  (pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag())
-        {
-            pcSlice->getPPS()->setEncCABACTableIdx(pcSlice->getSliceType());
-        }
-        else
-        {
             m_pcEntropyCoder->determineCabacInitIdx();
-        }
     }
 }
 

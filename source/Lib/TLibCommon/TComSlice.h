@@ -1174,7 +1174,6 @@ private:
 
     Bool        m_TransquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
     Bool        m_useTransformSkip;
-    Bool        m_dependentSliceSegmentsEnabledFlag;   //!< Indicates the presence of dependent slices
     Bool        m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
@@ -1278,10 +1277,6 @@ public:
     Void    setLoopFilterAcrossTilesEnabledFlag(Bool b)    { m_loopFilterAcrossTilesEnabledFlag = b; }
 
     Bool    getLoopFilterAcrossTilesEnabledFlag()          { return m_loopFilterAcrossTilesEnabledFlag;   }
-
-    Bool    getDependentSliceSegmentsEnabledFlag() const     { return m_dependentSliceSegmentsEnabledFlag; }
-
-    Void    setDependentSliceSegmentsEnabledFlag(Bool val)   { m_dependentSliceSegmentsEnabledFlag = val; }
 
     Bool    getEntropyCodingSyncEnabledFlag() const          { return m_entropyCodingSyncEnabledFlag; }
 

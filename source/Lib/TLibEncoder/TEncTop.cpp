@@ -669,18 +669,6 @@ Void TEncTop::xInitPPS()
     m_cPPS.setNumRefIdxL1DefaultActive(bestPos);
     m_cPPS.setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     m_cPPS.setUseTransformSkip(m_useTransformSkip);
-    if (m_cPPS.getDependentSliceSegmentsEnabledFlag())
-    {
-        Int NumCtx = m_cPPS.getEntropyCodingSyncEnabledFlag() ? 2 : 1;
-        m_cSliceEncoder.initCtxMem(NumCtx);
-        for (UInt st = 0; st < NumCtx; st++)
-        {
-            TEncSbac* ctx = NULL;
-            ctx = new TEncSbac;
-            ctx->init(&m_cBinCoderCABAC);
-            m_cSliceEncoder.setCtxMem(ctx, st);
-        }
-    }
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
