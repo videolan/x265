@@ -199,15 +199,6 @@ typedef       Int             TCoeff;     ///< transform coefficient
 /// parameters for adaptive loop filter
 class TComPicSym;
 
-// Slice / Slice segment encoding modes
-enum SliceConstraint
-{
-    NO_SLICES              = 0,        ///< don't use slices / slice segments
-    FIXED_NUMBER_OF_LCU    = 1,        ///< Limit maximum number of largest coding tree blocks in a slice / slice segments
-    FIXED_NUMBER_OF_BYTES  = 2,        ///< Limit maximum number of bytes in a slice / slice segment
-    FIXED_NUMBER_OF_TILES  = 3,        ///< slices / slice segments span an integer number of tiles
-};
-
 #define NUM_DOWN_PART 4
 
 enum SAOTypeLen
