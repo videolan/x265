@@ -747,7 +747,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     else
     {
         Int iStartQP;
-            iStartQP = rpcTempCU->getQP(0);
+        iStartQP = rpcTempCU->getQP(0);
         iMinQP = iStartQP;
     }
     if (m_pcEncCfg->getUseRateCtrl())
@@ -824,7 +824,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
             }
 
-
             if (!m_abortFlag && uiPartUnitIdx > 3)
             {
                 m_abortFlag = true;
@@ -853,7 +852,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
 
                 UInt uiTargetPartIdx;
-                    uiTargetPartIdx = 0;
+                uiTargetPartIdx = 0;
                 if (hasResidual)
                 {
 #if !RDO_WITHOUT_DQP_BITS
@@ -1024,6 +1023,7 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
 
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
+
     // If slice start is within this cu...
 
     // We need to split, so don't try these modes.

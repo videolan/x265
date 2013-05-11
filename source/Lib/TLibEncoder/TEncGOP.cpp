@@ -361,6 +361,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     TComPicYuv*     pcPicYuvRecOut;
     TComSlice*      pcSlice;
     TComOutputBitstream  *pcBitstreamRedirect;
+
     PPAScopeEvent(TEncGOP_compressGOP);
 
     pcBitstreamRedirect = new TComOutputBitstream;

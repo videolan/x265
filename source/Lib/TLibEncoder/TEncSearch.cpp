@@ -782,7 +782,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
     rcMvFrac = pcMvRefine[uiDirecBest];
 
     return uiDistBest;
-
 }
 
 Void TEncSearch::xEncSubdivCbfQT(TComDataCU* pcCU,
@@ -2360,7 +2359,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 
 #if ENABLE_PRIMITIVES
     x265::pixelcmp sa8d;
-    switch(uiWidth)
+    switch (uiWidth)
     {
     case 32:
         sa8d = x265::primitives.sa8d_32x32;
@@ -2378,9 +2377,10 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         assert(!"invalid intra block width");
         sa8d = x265::primitives.sad[0];
         break;
-   }
-   assert(uiWidth == uiHeight);
-#endif
+    }
+
+    assert(uiWidth == uiHeight);
+#endif // if ENABLE_PRIMITIVES
 
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
     pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
@@ -2400,8 +2400,8 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 
         //--- get SAD ---
 #if ENABLE_PRIMITIVES
-        UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) + 
-                     sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
+        UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
+            sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
 #else
         UInt uiSAD   = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
         uiSAD       += m_pcRdCost->calcHAD(g_bitDepthC, piOrgV, uiStride, piPredV, uiStride, uiWidth, uiHeight);
@@ -2441,7 +2441,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
 #if ENABLE_PRIMITIVES
     x265::pixelcmp sa8d;
-    switch(uiWidth)
+    switch (uiWidth)
     {
     case 64:
         sa8d = x265::primitives.sa8d_64x64;
@@ -2463,8 +2463,9 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         sa8d = x265::primitives.sad[0];
         break;
     }
+
     assert(uiWidth == uiHeight);
-#endif
+#endif // if ENABLE_PRIMITIVES
 
     //===== set QP and clear Cbf =====
     if (pcCU->getSlice()->getPPS()->getUseDQP() == true)
@@ -3267,10 +3268,10 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                         {
                             cMvTemp[1][iRefIdxTemp] = cMvTemp[0][pcCU->getSlice()->getList1IdxToList0Idx(iRefIdxTemp)];
                             uiCostTemp = uiCostTempL0[pcCU->getSlice()->getList1IdxToList0Idx(iRefIdxTemp)];
-                            
+
                             /* first subtract the bit-rate part of the cost of the other list */
                             uiCostTemp -= m_pcRdCost->getCost(uiBitsTempL0[pcCU->getSlice()->getList1IdxToList0Idx(iRefIdxTemp)]);
-                            
+
                             /* correct the bit-rate part of the current ref */
                             m_pcRdCost->setPredictor(cMvPred[iRefList][iRefIdxTemp]);
                             uiBitsTemp += m_pcRdCost->getBits(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer());
@@ -3911,8 +3912,13 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     x265::MotionReference ref;
     TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
     for (int y = 0; y < 4; y++)
+    {
         for (int x = 0; x < 4; x++)
+        {
             ref.lumaPlane[x][y] = (pixel*)refRecon->getLumaFilterBlock(y, x);
+        }
+    }
+
     ref.chromaStride = refRecon->getCStride();
     ref.lumaStride = refRecon->getStride();
     m_me.setReference(&ref);
@@ -3928,7 +3934,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
         return;
     }
-#endif
+#endif // if ENABLE_PRIMITIVES
 
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setPredictor(*pcMvPred);

@@ -306,8 +306,7 @@ public:
     {}
 
     virtual ~TEncCfg()
-    {
-    }
+    {}
 
     Void      setProfile(Profile::Name profile) { m_profile = profile; }
 
@@ -488,7 +487,7 @@ public:
     Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
 
     Void      setRDpenalty(UInt b)     { m_rdPenalty  = b; }
-    
+
     Void      setUseFastEnc(Bool b)     { m_bUseFastEnc = b; }
 
     Void      setUseEarlyCU(Bool b)     { m_bUseEarlyCU = b; }

@@ -639,6 +639,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt  uiCUAddr;
     UInt   uiStartCUAddr;
     UInt   uiBoundingCUAddr;
+
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
@@ -708,6 +709,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     {
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
+
     delete[] m_pcBufferLowLatSbacCoders;
     delete[] m_pcBufferLowLatBinCoderCABACs;
     m_pcBufferLowLatSbacCoders     = new TEncSbac[1];
@@ -1072,11 +1074,12 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     UInt uiBoundingCUAddrSlice;
 
     UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
+
     uiBoundingCUAddrSlice     = uiNumberOfCUsInFrame;
     {
         UInt uiCUAddrIncrement;
-            uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-            uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+        uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
+        uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
         // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
         pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
@@ -1087,8 +1090,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     boundingCUAddrSliceSegment = uiNumberOfCUsInFrame;
     {
         UInt uiCUAddrIncrement;
-            uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
-            boundingCUAddrSliceSegment    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+        uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
+        boundingCUAddrSliceSegment    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
         // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
         pcSlice->setSliceSegmentCurEndCUAddr(boundingCUAddrSliceSegment);
@@ -1128,8 +1131,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     {
         // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice
         // first. Set the flags accordingly.
-            pcSlice->setNextSlice(false);
-            pcSlice->setNextSliceSegment(false);
+        pcSlice->setNextSlice(false);
+        pcSlice->setNextSliceSegment(false);
     }
 }
 

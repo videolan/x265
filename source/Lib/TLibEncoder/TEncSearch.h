@@ -66,6 +66,7 @@ class TEncCu;
 class TEncSearch : public TComPrediction
 {
 private:
+
     x265::MotionEstimate m_me;
     x265::BitCost        m_bc;
 #if ENABLE_PRIMITIVES
