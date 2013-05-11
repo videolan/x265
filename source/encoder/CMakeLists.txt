@@ -27,7 +27,6 @@ add_library(x265 ../../COPYING ../x265.h
     bitcost.cpp bitcost.h mv.h
     motion.cpp motion.h
     TShortYUV.cpp TShortYUV.h
-    InterpolationFilter.cpp InterpolationFilter.h
     common.cpp common.h)
     
 if(ENABLE_PRIMITIVES)

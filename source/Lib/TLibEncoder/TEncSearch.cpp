@@ -40,7 +40,6 @@
 #include "TLibCommon/TComMotionInfo.h"
 #include "TEncSearch.h"
 #include "primitives.h"
-#include "InterpolationFilter.h"
 #include "PPA/ppa.h"
 #include <math.h>
 

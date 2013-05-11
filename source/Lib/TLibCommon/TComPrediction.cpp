@@ -38,12 +38,31 @@
 #include <memory.h>
 #include "TComPrediction.h"
 #include "primitives.h"
-#include "InterpolationFilter.h"
 
 using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{
+
+const short TComPrediction::m_lumaFilter[4][8] =
+{
+    {  0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+};
+
+const short TComPrediction::m_chromaFilter[8][4] =
+{
+    {  0, 64,  0,  0 },
+    { -2, 58, 10, -2 },
+    { -4, 54, 16, -2 },
+    { -6, 46, 28, -4 },
+    { -4, 36, 36, -4 },
+    { -4, 28, 46, -6 },
+    { -2, 16, 54, -4 },
+    { -2, 10, 58, -2 }
+};
 
 // ====================================================================================================================
 // Constructor / destructor / initialize

@@ -58,7 +58,6 @@
 class TComPrediction : public TComWeightPrediction
 {
 protected:
-
     Pel*      m_piPredBuf;
     Int       m_iPredBufStride;
     Int       m_iPredBufHeight;
@@ -109,6 +108,9 @@ public:
     Int  getPredicBufWidth()        { return m_iPredBufStride; }
 
     Int  getPredicBufHeight()       { return m_iPredBufHeight; }
+
+    static const short m_lumaFilter[4][8];
+    static const short m_chromaFilter[8][4];
 };
 
 //! \}
