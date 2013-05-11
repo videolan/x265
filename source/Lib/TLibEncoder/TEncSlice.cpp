@@ -705,25 +705,17 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
     TComBitCounter* pcBitCounters     = pcEncTop->getBitCounters();
     Int  iNumSubstreams = 1;
-    UInt uiTilesAcross  = 0;
 
     if (m_pcCfg->getUseSBACRD())
     {
         iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-        uiTilesAcross = 1;
         delete[] m_pcBufferSbacCoders;
         delete[] m_pcBufferBinCoderCABACs;
-        m_pcBufferSbacCoders     = new TEncSbac[uiTilesAcross];
-        m_pcBufferBinCoderCABACs = new TEncBinCABAC[uiTilesAcross];
-        for (Int ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferSbacCoders[ui].init(&m_pcBufferBinCoderCABACs[ui]);
-        }
+        m_pcBufferSbacCoders     = new TEncSbac[1];
+        m_pcBufferBinCoderCABACs = new TEncBinCABAC[1];
+            m_pcBufferSbacCoders[0].init(&m_pcBufferBinCoderCABACs[0]);
 
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
-        }
+            m_pcBufferSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
         for (UInt ui = 0; ui < iNumSubstreams; ui++) //init all sbac coders for RD optimization
         {
@@ -734,17 +726,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     {
         delete[] m_pcBufferLowLatSbacCoders;
         delete[] m_pcBufferLowLatBinCoderCABACs;
-        m_pcBufferLowLatSbacCoders     = new TEncSbac[uiTilesAcross];
-        m_pcBufferLowLatBinCoderCABACs = new TEncBinCABAC[uiTilesAcross];
-        for (Int ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferLowLatSbacCoders[ui].init(&m_pcBufferLowLatBinCoderCABACs[ui]);
-        }
+        m_pcBufferLowLatSbacCoders     = new TEncSbac[1];
+        m_pcBufferLowLatBinCoderCABACs = new TEncBinCABAC[1];
+            m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
 
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferLowLatSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
-        }
+            m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
     }
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     //UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
