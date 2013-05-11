@@ -434,11 +434,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
-    Bool bSliceStart = false;
     Bool bSliceEnd = (pcSlice->getSliceSegmentCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceSegmentCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
-    if (!bSliceEnd && !bSliceStart && bInsidePicture)
+    if (!bSliceEnd && bInsidePicture)
     {
         for (Int iQP = iMinQP; iQP <= iMaxQP; iQP++)
         {
@@ -1050,10 +1049,9 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
     // If slice start is within this cu...
-    Bool bSliceStart = false;
 
     // We need to split, so don't try these modes.
-    if (!bSliceStart && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+    if ((uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
         m_pcEntropyCoder->encodeSplitFlag(pcCU, uiAbsPartIdx, uiDepth);
     }
@@ -1487,11 +1485,10 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
     UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
-    Bool bSliceStart = false;
     Bool bSliceEnd   = pcSlice->getSliceSegmentCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
         pcSlice->getSliceSegmentCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
 
-    if (!bSliceEnd && !bSliceStart && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+    if (!bSliceEnd && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
         UInt uiAbsPartIdxInRaster = g_auiZscanToRaster[uiAbsPartIdx];
         UInt uiSrcBlkWidth = rpcPic->getNumPartInWidth() >> (uiSrcDepth);
