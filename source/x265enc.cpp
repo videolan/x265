@@ -243,9 +243,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setSOPDescriptionSEIEnabled(m_SOPDescriptionSEIEnabled);
     m_cTEncTop.setScalableNestingSEIEnabled(m_scalableNestingSEIEnabled);
 
-        m_bLFCrossTileBoundaryFlag = true;
-
-    m_cTEncTop.setLFCrossTileBoundaryFlag(m_bLFCrossTileBoundaryFlag);
     m_cTEncTop.setWaveFrontSynchro(m_iWaveFrontSynchro);
     m_cTEncTop.setWaveFrontSubstreams(m_iWaveFrontSubstreams);
     m_cTEncTop.setTMVPModeId(m_TMVPModeId);
