@@ -573,18 +573,10 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
     }
 
     Int ctuAddress;
-    if (pcSlice->isNextSlice())
-    {
         // Calculate slice address
-        ctuAddress = (pcSlice->getSliceCurStartCUAddr() / pcSlice->getPic()->getNumPartInCU());
-    }
-    else
-    {
-        // Calculate slice address
-        ctuAddress = (pcSlice->getSliceSegmentCurStartCUAddr() / pcSlice->getPic()->getNumPartInCU());
-    }
+        ctuAddress = 0;
     //write slice address
-    Int sliceSegmentAddress = (ctuAddress);
+    Int sliceSegmentAddress = 0;
 
     WRITE_FLAG(sliceSegmentAddress == 0, "first_slice_segment_in_pic_flag");
     if (pcSlice->getRapPicFlag())
@@ -983,20 +975,18 @@ Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
         return;
     }
     UInt numEntryPointOffsets = 0, offsetLenMinus1 = 0, maxOffset = 0;
-    Int  numZeroSubstreamsAtStartOfSlice  = 0;
     UInt *entryPointOffset = NULL;
     if (pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
     {
         UInt* pSubstreamSizes               = pSlice->getSubstreamSizes();
         Int maxNumParts                       = pSlice->getPic()->getNumPartInCU();
-        numZeroSubstreamsAtStartOfSlice       = pSlice->getSliceSegmentCurStartCUAddr() / maxNumParts / pSlice->getPic()->getFrameWidthInCU();
         Int  numZeroSubstreamsAtEndOfSlice    = pSlice->getPic()->getFrameHeightInCU() - 1 - ((pSlice->getSliceSegmentCurEndCUAddr() - 1) / maxNumParts / pSlice->getPic()->getFrameWidthInCU());
-        numEntryPointOffsets                  = pSlice->getPPS()->getNumSubstreams() - numZeroSubstreamsAtStartOfSlice - numZeroSubstreamsAtEndOfSlice - 1;
+        numEntryPointOffsets                  = pSlice->getPPS()->getNumSubstreams() - numZeroSubstreamsAtEndOfSlice - 1;
         pSlice->setNumEntryPointOffsets(numEntryPointOffsets);
         entryPointOffset           = new UInt[numEntryPointOffsets];
         for (Int idx = 0; idx < numEntryPointOffsets; idx++)
         {
-            entryPointOffset[idx] = (pSubstreamSizes[idx + numZeroSubstreamsAtStartOfSlice] >> 3);
+            entryPointOffset[idx] = (pSubstreamSizes[idx] >> 3);
             if (entryPointOffset[idx] > maxOffset)
             {
                 maxOffset = entryPointOffset[idx];

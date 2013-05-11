@@ -801,12 +801,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         UInt startCUAddrSliceIdx = 0; // used to index "m_uiStoredStartCUAddrForEncodingSlice" containing locations of slice boundaries
         UInt startCUAddrSlice    = 0; // used to keep track of current slice's starting CU addr.
-        pcSlice->setSliceCurStartCUAddr(startCUAddrSlice); // Setting "start CU addr" for current slice
         m_storedStartCUAddrForEncodingSlice.clear();
 
         UInt startCUAddrSliceSegmentIdx = 0; // used to index "m_uiStoredStartCUAddrForEntropyEncodingSlice" containing locations of slice boundaries
         UInt startCUAddrSliceSegment    = 0; // used to keep track of current Dependent slice's starting CU addr.
-        pcSlice->setSliceSegmentCurStartCUAddr(startCUAddrSliceSegment); // Setting "start CU addr" for current Dependent slice
 
         m_storedStartCUAddrForEncodingSliceSegment.clear();
         UInt nextCUAddr = 0;
@@ -845,8 +843,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     pcSlice = pcPic->getSlice(startCUAddrSliceIdx - 1);
                     pcSlice->copySliceInfo(pcPic->getSlice(0));
                     pcSlice->setSliceIdx(startCUAddrSliceIdx - 1);
-                    pcSlice->setSliceCurStartCUAddr(startCUAddrSlice);
-                    pcSlice->setSliceSegmentCurStartCUAddr(startCUAddrSlice);
                     pcSlice->setSliceBits(0);
                     uiNumSlices++;
                 }
@@ -856,7 +852,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 startCUAddrSliceSegment                                                     = pcSlice->getSliceSegmentCurEndCUAddr();
                 m_storedStartCUAddrForEncodingSliceSegment.push_back(startCUAddrSliceSegment);
                 startCUAddrSliceSegmentIdx++;
-                pcSlice->setSliceSegmentCurStartCUAddr(startCUAddrSliceSegment);
             }
             else
             {
@@ -1176,10 +1171,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     m_pcSliceEncoder->setSliceIdx(startCUAddrSliceIdx);
                     assert(startCUAddrSliceIdx == pcSlice->getSliceIdx());
                     // Reconstruction slice
-                    pcSlice->setSliceCurStartCUAddr(nextCUAddr); // to be used in encodeSlice() + context restriction
                     pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx + 1]);
                     // Dependent slice
-                    pcSlice->setSliceSegmentCurStartCUAddr(nextCUAddr); // to be used in encodeSlice() + context restriction
                     pcSlice->setSliceSegmentCurEndCUAddr(m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx + 1]);
 
                     pcSlice->setNextSlice(true);
@@ -1190,7 +1183,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 else if (nextCUAddr == m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx])
                 {
                     // Dependent slice
-                    pcSlice->setSliceSegmentCurStartCUAddr(nextCUAddr); // to be used in encodeSlice() + context restriction
                     pcSlice->setSliceSegmentCurEndCUAddr(m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx + 1]);
 
                     pcSlice->setNextSliceSegment(true);
@@ -1224,18 +1216,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     uiExternalAddress = (uiExternalAddress + 1);
                 }
                 UInt endAddress = (uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
-                if (endAddress <= pcSlice->getSliceSegmentCurStartCUAddr())
-                {
-                    UInt boundingAddrSlice, boundingAddrSliceSegment;
-                    boundingAddrSlice          = m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx];
-                    boundingAddrSliceSegment = m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx];
-                    nextCUAddr               = min(boundingAddrSlice, boundingAddrSliceSegment);
-                    if (pcSlice->isNextSlice())
-                    {
-                        skippedSlice = true;
-                    }
-                    continue;
-                }
                 if (skippedSlice)
                 {
                     pcSlice->setNextSlice(true);
@@ -1354,17 +1334,15 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                     // Substreams...
                     TComOutputBitstream *pcOut = pcBitstreamRedirect;
-                    Int offs = 0;
                     Int nss = pcSlice->getPPS()->getNumSubstreams();
                     if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
                     {
                         // 1st line present for WPP.
-                        offs = pcSlice->getSliceSegmentCurStartCUAddr() / pcSlice->getPic()->getNumPartInCU() / pcSlice->getPic()->getFrameWidthInCU();
                         nss  = pcSlice->getNumEntryPointOffsets() + 1;
                     }
                     for (UInt ui = 0; ui < nss; ui++)
                     {
-                        pcOut->addSubstream(&pcSubstreamsOut[ui + offs]);
+                        pcOut->addSubstream(&pcSubstreamsOut[ui]);
                     }
                 }
 

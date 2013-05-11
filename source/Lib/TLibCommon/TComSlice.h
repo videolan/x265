@@ -1426,10 +1426,8 @@ private:
     UInt        m_uiTLayer;
     Bool        m_bTLayerSwitchingFlag;
 
-    UInt        m_sliceCurStartCUAddr;
     UInt        m_sliceCurEndCUAddr;
     UInt        m_sliceIdx;
-    UInt        m_sliceSegmentCurStartCUAddr;
     UInt        m_sliceSegmentCurEndCUAddr;
     Bool        m_nextSlice;
     Bool        m_nextSliceSegment;
@@ -1668,10 +1666,6 @@ public:
 
     UInt getMaxNumMergeCand()                  { return m_maxNumMergeCand;                   }
 
-    Void setSliceCurStartCUAddr(UInt uiAddr)     { m_sliceCurStartCUAddr = uiAddr;           }
-
-    UInt getSliceCurStartCUAddr()                  { return m_sliceCurStartCUAddr;             }
-
     Void setSliceCurEndCUAddr(UInt uiAddr)     { m_sliceCurEndCUAddr = uiAddr;             }
 
     UInt getSliceCurEndCUAddr()                  { return m_sliceCurEndCUAddr;               }
@@ -1681,10 +1675,6 @@ public:
     UInt getSliceIdx()                  { return m_sliceIdx;                       }
 
     Void copySliceInfo(TComSlice *pcSliceSrc);
-
-    Void setSliceSegmentCurStartCUAddr(UInt uiAddr)     { m_sliceSegmentCurStartCUAddr = uiAddr;    }
-
-    UInt getSliceSegmentCurStartCUAddr()                  { return m_sliceSegmentCurStartCUAddr;      }
 
     Void setSliceSegmentCurEndCUAddr(UInt uiAddr)     { m_sliceSegmentCurEndCUAddr = uiAddr;      }
 
