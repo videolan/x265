@@ -78,8 +78,6 @@ TComSlice::TComSlice()
     , m_sliceCurStartCUAddr(0)
     , m_sliceCurEndCUAddr(0)
     , m_sliceIdx(0)
-    , m_sliceSegmentMode(0)
-    , m_sliceSegmentArgument(0)
     , m_sliceSegmentCurStartCUAddr(0)
     , m_sliceSegmentCurEndCUAddr(0)
     , m_nextSlice(false)
@@ -714,8 +712,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_sliceCurStartCUAddr         = pSrc->m_sliceCurStartCUAddr;
     m_sliceCurEndCUAddr           = pSrc->m_sliceCurEndCUAddr;
     m_sliceIdx                    = pSrc->m_sliceIdx;
-    m_sliceSegmentMode            = pSrc->m_sliceSegmentMode;
-    m_sliceSegmentArgument        = pSrc->m_sliceSegmentArgument;
     m_sliceSegmentCurStartCUAddr  = pSrc->m_sliceSegmentCurStartCUAddr;
     m_sliceSegmentCurEndCUAddr    = pSrc->m_sliceSegmentCurEndCUAddr;
     m_nextSlice                    = pSrc->m_nextSlice;

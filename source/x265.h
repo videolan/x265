@@ -167,10 +167,6 @@ typedef struct
     int       m_bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
     int       m_useEarlySkipDetection;            ///< flag for using Early SKIP Detection
 
-    int       m_sliceSegmentMode;                 ///< 0: no slice segment limits, 1 : max number of CTBs per slice segment, 2: max number of bytes per slice segment,
-                                                  ///< 3: max number of tiles per slice segment
-    int       m_sliceSegmentArgument;             ///< argument according to selected slice segment mode
-
     int       m_bLFCrossSliceBoundaryFlag;        ///< 1: filter across slice boundaries 0: do not filter across slice boundaries
     int       m_bLFCrossTileBoundaryFlag;         ///< 1: filter across tile boundaries  0: do not filter across tile boundaries
     int       m_iUniformSpacingIdr;

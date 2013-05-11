@@ -927,7 +927,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     uiNumSlices++;
                 }
             }
-            else if (pcSlice->isNextSliceSegment() || (bNoBinBitConstraintViolated && m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU))
+            else if (pcSlice->isNextSliceSegment())
             {
                 startCUAddrSliceSegment                                                     = pcSlice->getSliceSegmentCurEndCUAddr();
                 m_storedStartCUAddrForEncodingSliceSegment.push_back(startCUAddrSliceSegment);

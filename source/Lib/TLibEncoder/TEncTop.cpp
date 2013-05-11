@@ -672,10 +672,6 @@ Void TEncTop::xInitPPS()
     m_cPPS.setNumRefIdxL1DefaultActive(bestPos);
     m_cPPS.setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     m_cPPS.setUseTransformSkip(m_useTransformSkip);
-    if (m_sliceSegmentMode)
-    {
-        m_cPPS.setDependentSliceSegmentsEnabledFlag(true);
-    }
     if (m_cPPS.getDependentSliceSegmentsEnabledFlag())
     {
         Int NumCtx = m_cPPS.getEntropyCodingSyncEnabledFlag() ? 2 : 1;

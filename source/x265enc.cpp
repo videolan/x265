@@ -192,15 +192,6 @@ Void TAppEncTop::xInitLibCfg()
     //====== Parallel Merge Estimation ========
     m_cTEncTop.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevel - 2);
 
-    //====== Dependent Slice ========
-    m_cTEncTop.setSliceSegmentMode(m_sliceSegmentMode);
-    m_cTEncTop.setSliceSegmentArgument(m_sliceSegmentArgument);
-    Int iNumPartInCU = 1 << (m_uiMaxCUDepth << 1);
-    if (m_sliceSegmentMode == FIXED_NUMBER_OF_LCU)
-    {
-        m_cTEncTop.setSliceSegmentArgument(m_sliceSegmentArgument * iNumPartInCU);
-    }
-
         m_bLFCrossSliceBoundaryFlag = true;
 
     m_cTEncTop.setLFCrossSliceBoundaryFlag(m_bLFCrossSliceBoundaryFlag);

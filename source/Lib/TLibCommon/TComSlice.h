@@ -1497,8 +1497,6 @@ private:
     UInt        m_sliceCurStartCUAddr;
     UInt        m_sliceCurEndCUAddr;
     UInt        m_sliceIdx;
-    UInt        m_sliceSegmentMode;
-    UInt        m_sliceSegmentArgument;
     UInt        m_sliceSegmentCurStartCUAddr;
     UInt        m_sliceSegmentCurEndCUAddr;
     Bool        m_nextSlice;
@@ -1752,13 +1750,6 @@ public:
     UInt getSliceIdx()                  { return m_sliceIdx;                       }
 
     Void copySliceInfo(TComSlice *pcSliceSrc);
-    Void setSliceSegmentMode(UInt uiMode)     { m_sliceSegmentMode = uiMode;              }
-
-    UInt getSliceSegmentMode()                  { return m_sliceSegmentMode;                }
-
-    Void setSliceSegmentArgument(UInt uiArgument) { m_sliceSegmentArgument = uiArgument;      }
-
-    UInt getSliceSegmentArgument()                  { return m_sliceSegmentArgument;            }
 
     Void setSliceSegmentCurStartCUAddr(UInt uiAddr)     { m_sliceSegmentCurStartCUAddr = uiAddr;    }
 

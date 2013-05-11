@@ -197,8 +197,6 @@ protected:
     UInt      m_pcmLog2MaxSize;
     UInt      m_uiPCMLog2MinSize;
     //====== Dependent Slice ========
-    Int       m_sliceSegmentMode;
-    Int       m_sliceSegmentArgument;
     Bool      m_bLFCrossSliceBoundaryFlag;
 
     Bool      m_bPCMInputBitDepthFlag;
@@ -577,15 +575,6 @@ public:
     Int*      getdQPs()      { return m_aidQP;       }
 
     UInt      getDeltaQpRD()      { return m_uiDeltaQpRD; }
-
-    //====== Dependent Slice ========
-    Void  setSliceSegmentMode(Int i)      { m_sliceSegmentMode = i;       }
-
-    Void  setSliceSegmentArgument(Int i)      { m_sliceSegmentArgument = i;   }
-
-    Int   getSliceSegmentMode()              { return m_sliceSegmentMode;    }
-
-    Int   getSliceSegmentArgument()              { return m_sliceSegmentArgument; }
 
     Void      setLFCrossSliceBoundaryFlag(Bool bValue)    { m_bLFCrossSliceBoundaryFlag = bValue; }
 
