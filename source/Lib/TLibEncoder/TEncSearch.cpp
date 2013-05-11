@@ -2387,6 +2387,30 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Bool  bAboveAvail = false;
     Bool  bLeftAvail  = false;
 
+#if ENABLE_PRIMITIVES
+    x265::pixelcmp sa8d;
+    switch(uiWidth)
+    {
+    case 32:
+        sa8d = x265::primitives.sa8d_32x32;
+        break;
+    case 16:
+        sa8d = x265::primitives.sa8d_16x16;
+        break;
+    case 8:
+        sa8d = x265::primitives.sa8d_8x8;
+        break;
+    case 4:
+        sa8d = x265::primitives.satd[PARTITION_4x4];
+        break;
+    default:
+        assert(!"invalid intra block width");
+        sa8d = x265::primitives.sad[0];
+        break;
+   }
+   assert(uiWidth == uiHeight);
+#endif
+
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
     pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
     Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf);
@@ -2404,8 +2428,12 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         predIntraChromaAng(pPatChromaV, uiMode, piPredV, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
 
         //--- get SAD ---
-        UInt  uiSAD  = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
+#if ENABLE_PRIMITIVES
+        UInt uiSAD = sa8d(piOrgU, uiStride, piPredU, uiStride) + sa8d(piOrgV, uiStride, piPredV, uiStride);
+#else
+        UInt uiSAD   = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
         uiSAD       += m_pcRdCost->calcHAD(g_bitDepthC, piOrgV, uiStride, piPredV, uiStride, uiWidth, uiHeight);
+#endif
 
         //--- check ---
         if (uiSAD < uiMinSAD)
