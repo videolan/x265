@@ -217,7 +217,7 @@ private:
     static UInt xGetHADs4(DistParam* pcDtParam);
     static UInt xGetHADs8(DistParam* pcDtParam);
     static UInt xGetHADs(DistParam* pcDtParam);
-    static UInt xCalcHADs2x2(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
+
     static UInt xCalcHADs4x4(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
     static UInt xCalcHADs8x8(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
 

@@ -369,16 +369,7 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
     }
     else
     {
-        for (y = 0; y < iHeight; y += 2)
-        {
-            for (x = 0; x < iWidth; x += 2)
-            {
-                uiSum += xCalcHADs2x2(&pi0[x], &pi1[x], iStride0, iStride1, 1);
-            }
-
-            pi0 += iStride0 * 2;
-            pi1 += iStride1 * 2;
-        }
+        assert(!"Unexpected PU size, multiple of 2");
     }
 
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
@@ -1674,28 +1665,6 @@ UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
 // HADAMARD with step (used in fractional search)
 // --------------------------------------------------------------------------------------------------------------------
 
-UInt TComRdCost::xCalcHADs2x2(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
-{
-    Int satd = 0, diff[4], m[4];
-
-    assert(iStep == 1);
-    diff[0] = piOrg[0] - piCur[0];
-    diff[1] = piOrg[1] - piCur[1];
-    diff[2] = piOrg[iStrideOrg] - piCur[0 + iStrideCur];
-    diff[3] = piOrg[iStrideOrg + 1] - piCur[1 + iStrideCur];
-    m[0] = diff[0] + diff[2];
-    m[1] = diff[1] + diff[3];
-    m[2] = diff[0] - diff[2];
-    m[3] = diff[1] - diff[3];
-
-    satd += abs(m[0] + m[1]);
-    satd += abs(m[0] - m[1]);
-    satd += abs(m[2] + m[3]);
-    satd += abs(m[2] - m[3]);
-
-    return satd;
-}
-
 UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
     assert(iStep == 1);
@@ -1992,21 +1961,6 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
             for (x = 0; x < iCols; x += 4)
             {
                 uiSum += xCalcHADs4x4(&piOrg[x], &piCur[x * iStep], iStrideOrg, iStrideCur, iStep);
-            }
-
-            piOrg += iOffsetOrg;
-            piCur += iOffsetCur;
-        }
-    }
-    else if ((iRows % 2 == 0) && (iCols % 2 == 0))
-    {
-        Int  iOffsetOrg = iStrideOrg << 1;
-        Int  iOffsetCur = iStrideCur << 1;
-        for (y = 0; y < iRows; y += 2)
-        {
-            for (x = 0; x < iCols; x += 2)
-            {
-                uiSum += xCalcHADs2x2(&piOrg[x], &piCur[x * iStep], iStrideOrg, iStrideCur, iStep);
             }
 
             piOrg += iOffsetOrg;
