@@ -179,14 +179,8 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     WRITE_FLAG(pcPPS->getUseWP() ? 1 : 0,  "weighted_pred_flag");   // Use of Weighting Prediction (P_SLICE)
     WRITE_FLAG(pcPPS->getWPBiPred() ? 1 : 0, "weighted_bipred_flag");  // Use of Weighting Bi-Prediction (B_SLICE)
     WRITE_FLAG(pcPPS->getTransquantBypassEnableFlag() ? 1 : 0, "transquant_bypass_enable_flag");
-    WRITE_FLAG(pcPPS->getTilesEnabledFlag()             ? 1 : 0, "tiles_enabled_flag");
+    WRITE_FLAG(0,                                                 "tiles_enabled_flag");
     WRITE_FLAG(pcPPS->getEntropyCodingSyncEnabledFlag() ? 1 : 0, "entropy_coding_sync_enabled_flag");
-    if (pcPPS->getTilesEnabledFlag())
-    {
-        WRITE_UVLC(0,                                                               "num_tile_columns_minus1");
-        WRITE_UVLC(0,                                                               "num_tile_rows_minus1");
-        WRITE_FLAG(pcPPS->getUniformSpacingFlag(),                                  "uniform_spacing_flag");
-    }
     WRITE_FLAG(1,                                                            "loop_filter_across_slices_enabled_flag");
     WRITE_FLAG(pcPPS->getDeblockingFilterControlPresentFlag() ? 1 : 0,       "deblocking_filter_control_present_flag");
     if (pcPPS->getDeblockingFilterControlPresentFlag())
@@ -988,35 +982,14 @@ Void TEncCavlc::codeProfileTier(ProfileTierLevel* ptl)
  */
 Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
 {
-    if (!pSlice->getPPS()->getTilesEnabledFlag() && !pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+    if (!pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
     {
         return;
     }
     UInt numEntryPointOffsets = 0, offsetLenMinus1 = 0, maxOffset = 0;
     Int  numZeroSubstreamsAtStartOfSlice  = 0;
     UInt *entryPointOffset = NULL;
-    if (pSlice->getPPS()->getTilesEnabledFlag())
-    {
-        numEntryPointOffsets = pSlice->getTileLocationCount();
-        entryPointOffset     = new UInt[numEntryPointOffsets];
-        for (Int idx = 0; idx < pSlice->getTileLocationCount(); idx++)
-        {
-            if (idx == 0)
-            {
-                entryPointOffset[idx] = pSlice->getTileLocation(0);
-            }
-            else
-            {
-                entryPointOffset[idx] = pSlice->getTileLocation(idx) - pSlice->getTileLocation(idx - 1);
-            }
-
-            if (entryPointOffset[idx] > maxOffset)
-            {
-                maxOffset = entryPointOffset[idx];
-            }
-        }
-    }
-    else if (pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+    if (pSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
     {
         UInt* pSubstreamSizes               = pSlice->getSubstreamSizes();
         Int maxNumParts                       = pSlice->getPic()->getNumPartInCU();

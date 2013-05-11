@@ -623,7 +623,6 @@ Void TEncTop::xInitPPS()
 
     m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams);
     m_cPPS.setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
-    m_cPPS.setTilesEnabledFlag(false);
     m_cPPS.setUseWP(m_useWeightedPred);
     m_cPPS.setWPBiPred(m_useWeightedBiPred);
     m_cPPS.setOutputFlagPresentFlag(false);
