@@ -373,7 +373,7 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
         {
             for (x = 0; x < iWidth; x += 2)
             {
-                uiSum += xCalcHADs8x8(&pi0[x], &pi1[x], iStride0, iStride1, 1);
+                uiSum += xCalcHADs2x2(&pi0[x], &pi1[x], iStride0, iStride1, 1);
             }
 
             pi0 += iStride0 * 2;
