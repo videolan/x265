@@ -1217,8 +1217,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 UInt uiDummyBoundingCUAddr;
                 m_pcSliceEncoder->xDetermineStartAndBoundingCUAddr(uiDummyStartCUAddr, uiDummyBoundingCUAddr, pcPic, true);
 
-                uiInternalAddress = pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
-                uiExternalAddress = pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
+                uiInternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
+                uiExternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
                 uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
                 uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
                 uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
@@ -1236,7 +1236,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     uiInternalAddress = 0;
                     uiExternalAddress = (uiExternalAddress + 1);
                 }
-                UInt endAddress = pcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
+                UInt endAddress = (uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
                 if (endAddress <= pcSlice->getSliceSegmentCurStartCUAddr())
                 {
                     UInt boundingAddrSlice, boundingAddrSliceSegment;

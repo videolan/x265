@@ -149,8 +149,6 @@ public:
 
     TComTile*    getTComTile()                                       { return m_apcTComTile; }
 
-    UInt         getPicSCUEncOrder(UInt SCUAddr);
-    UInt         getPicSCUAddr(UInt SCUEncOrder);
     Void         xCreateTComTileArray();
     Void         xInitTiles();
     UInt         xCalculateNxtCUAddr(UInt uiCurrCUAddr);

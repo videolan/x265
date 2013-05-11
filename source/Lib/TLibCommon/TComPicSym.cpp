@@ -164,16 +164,6 @@ Void TComPicSym::clearSliceBuffer()
     m_uiNumAllocatedSlice = 1;
 }
 
-UInt TComPicSym::getPicSCUEncOrder(UInt SCUAddr)
-{
-    return (SCUAddr / m_uiNumPartitions) * m_uiNumPartitions + SCUAddr % m_uiNumPartitions;
-}
-
-UInt TComPicSym::getPicSCUAddr(UInt SCUEncOrder)
-{
-    return (SCUEncOrder / m_uiNumPartitions) * m_uiNumPartitions + SCUEncOrder % m_uiNumPartitions;
-}
-
 Void TComPicSym::xCreateTComTileArray()
 {
     m_apcTComTile = new TComTile;

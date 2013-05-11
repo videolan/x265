@@ -953,8 +953,8 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     //Calculate end address
     UInt uiCUAddr = pcCU->getSCUAddr() + uiAbsPartIdx;
 
-    UInt uiInternalAddress = pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
-    UInt uiExternalAddress = pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
+    UInt uiInternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
+    UInt uiExternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
     UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
     UInt uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
     UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
@@ -973,7 +973,7 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
         uiInternalAddress = 0;
         uiExternalAddress = (uiExternalAddress + 1);
     }
-    UInt uiRealEndAddress = pcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
+    UInt uiRealEndAddress = (uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
 
     // Encode slice finish
     Bool bTerminateSlice = false;
