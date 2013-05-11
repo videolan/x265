@@ -1288,11 +1288,8 @@ Void TAppEncCfg::xPrintParameter()
     printf("FDM:%d ", m_useFastDecisionForMerge);
     printf("CFM:%d ", m_bUseCbfFastMode);
     printf("ESD:%d ", m_useEarlySkipDetection);
-    printf("RQT:%d ", 1);
     printf("TransformSkip:%d ",     m_useTransformSkip);
     printf("TransformSkipFast:%d ", m_useTransformSkipFast);
-    printf("Slice: M=%d ", 0);
-    printf("SliceSegment: M=%d ", 0);
     printf("CIP:%d ", m_bUseConstrainedIntraPred);
     printf("SAO:%d ", (m_bUseSAO) ? (1) : (0));
     printf("PCM:%d ", (m_usePCM && (1 << m_uiPCMLog2MinSize) <= m_uiMaxCUWidth) ? 1 : 0);
