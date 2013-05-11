@@ -203,7 +203,7 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
             WRITE_FLAG(pcPPS->getLoopFilterAcrossTilesEnabledFlag() ? 1 : 0,          "loop_filter_across_tiles_enabled_flag");
         }
     }
-    WRITE_FLAG(pcPPS->getLoopFilterAcrossSlicesEnabledFlag() ? 1 : 0,        "loop_filter_across_slices_enabled_flag");
+    WRITE_FLAG(1,                                                            "loop_filter_across_slices_enabled_flag");
     WRITE_FLAG(pcPPS->getDeblockingFilterControlPresentFlag() ? 1 : 0,       "deblocking_filter_control_present_flag");
     if (pcPPS->getDeblockingFilterControlPresentFlag())
     {
@@ -927,9 +927,9 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
         Bool isSAOEnabled = (!pcSlice->getSPS()->getUseSAO()) ? (false) : (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma());
         Bool isDBFEnabled = (!pcSlice->getDeblockingFilterDisable());
 
-        if (pcSlice->getPPS()->getLoopFilterAcrossSlicesEnabledFlag() && (isSAOEnabled || isDBFEnabled))
+        if (isSAOEnabled || isDBFEnabled)
         {
-            WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag() ? 1 : 0, "slice_loop_filter_across_slices_enabled_flag");
+            WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
         }
     }
     if (pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())

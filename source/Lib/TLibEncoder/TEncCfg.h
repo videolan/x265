@@ -196,8 +196,6 @@ protected:
     Bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
     UInt      m_uiPCMLog2MinSize;
-    //====== Dependent Slice ========
-    Bool      m_bLFCrossSliceBoundaryFlag;
 
     Bool      m_bPCMInputBitDepthFlag;
     UInt      m_uiPCMBitDepthLuma;
@@ -575,10 +573,6 @@ public:
     Int*      getdQPs()      { return m_aidQP;       }
 
     UInt      getDeltaQpRD()      { return m_uiDeltaQpRD; }
-
-    Void      setLFCrossSliceBoundaryFlag(Bool bValue)    { m_bLFCrossSliceBoundaryFlag = bValue; }
-
-    Bool      getLFCrossSliceBoundaryFlag()                    { return m_bLFCrossSliceBoundaryFlag;   }
 
     Void      setUseSAO(Bool bVal)     { m_bUseSAO = bVal; }
 

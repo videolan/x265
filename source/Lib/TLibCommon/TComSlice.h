@@ -1199,7 +1199,6 @@ private:
     UInt     m_encCABACTableIdx;         // Used to transmit table selection across slices
 
     Bool     m_sliceHeaderExtensionPresentFlag;
-    Bool     m_loopFilterAcrossSlicesEnabledFlag;
     Bool     m_deblockingFilterControlPresentFlag;
     Bool     m_deblockingFilterOverrideEnabledFlag;
     Bool     m_picDisableDeblockingFilterFlag;
@@ -1401,10 +1400,6 @@ public:
 
     Void setNumExtraSliceHeaderBits(Int i) { m_numExtraSliceHeaderBits = i; }
 
-    Void      setLoopFilterAcrossSlicesEnabledFlag(Bool bValue)    { m_loopFilterAcrossSlicesEnabledFlag = bValue; }
-
-    Bool      getLoopFilterAcrossSlicesEnabledFlag()                    { return m_loopFilterAcrossSlicesEnabledFlag;   }
-
     Bool getSliceHeaderExtensionPresentFlag()                    { return m_sliceHeaderExtensionPresentFlag; }
 
     Void setSliceHeaderExtensionPresentFlag(Bool val)            { m_sliceHeaderExtensionPresentFlag = val; }
@@ -1518,7 +1513,6 @@ private:
     Bool       m_bLMvdL1Zero;
     Int         m_numEntryPointOffsets;
     Bool       m_temporalLayerNonReferenceFlag;
-    Bool       m_LFCrossSliceBoundaryFlag;
 
     Bool       m_enableTMVPFlag;
 
@@ -1830,10 +1824,6 @@ public:
     Bool      getTemporalLayerNonReferenceFlag()       { return m_temporalLayerNonReferenceFlag; }
 
     Void      setTemporalLayerNonReferenceFlag(Bool x) { m_temporalLayerNonReferenceFlag = x; }
-
-    Void      setLFCrossSliceBoundaryFlag(Bool val)    { m_LFCrossSliceBoundaryFlag = val; }
-
-    Bool      getLFCrossSliceBoundaryFlag()                { return m_LFCrossSliceBoundaryFlag; }
 
     Void      setEnableTMVPFlag(Bool b)    { m_enableTMVPFlag = b; }
 

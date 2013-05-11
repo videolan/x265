@@ -448,7 +448,6 @@ public:
     std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock; }
 
     Void setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt numLCUInPicHeight, UInt numSUInLCUWidth, UInt numSUInLCUHeight, UInt picWidth, UInt picHeight
-                                             , std::vector<Bool>& LFCrossSliceBoundary
                                              , Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary, Bool bRightTileBoundary
                                              , Bool bIndependentTileBoundaryEnabled);
     // -------------------------------------------------------------------------------------------------------------------

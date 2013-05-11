@@ -357,7 +357,7 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* pcCU, UInt uiAbsZorderIdx)
     }
     if (m_stLFCUParam.bLeftEdge)
     {
-        pcTempCU = pcCU->getPULeft(uiTempPartIdx, uiAbsZorderIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), !m_bLFCrossTileBoundary);
+        pcTempCU = pcCU->getPULeft(uiTempPartIdx, uiAbsZorderIdx, !true, !m_bLFCrossTileBoundary);
         if (pcTempCU)
         {
             m_stLFCUParam.bLeftEdge = true;
@@ -378,7 +378,7 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* pcCU, UInt uiAbsZorderIdx)
     }
     if (m_stLFCUParam.bTopEdge)
     {
-        pcTempCU = pcCU->getPUAbove(uiTempPartIdx, uiAbsZorderIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), false, !m_bLFCrossTileBoundary);
+        pcTempCU = pcCU->getPUAbove(uiTempPartIdx, uiAbsZorderIdx, !true, false, !m_bLFCrossTileBoundary);
 
         if (pcTempCU)
         {
@@ -405,11 +405,11 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* pcCU, Int iDir, UInt
     //-- Calculate Block Index
     if (iDir == EDGE_VER)
     {
-        pcCUP = pcCUQ->getPULeft(uiPartP, uiPartQ, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), !m_bLFCrossTileBoundary);
+        pcCUP = pcCUQ->getPULeft(uiPartP, uiPartQ, !true, !m_bLFCrossTileBoundary);
     }
     else // (iDir == EDGE_HOR)
     {
-        pcCUP = pcCUQ->getPUAbove(uiPartP, uiPartQ, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), false, !m_bLFCrossTileBoundary);
+        pcCUP = pcCUQ->getPUAbove(uiPartP, uiPartQ, !true, false, !m_bLFCrossTileBoundary);
     }
 
     //-- Set BS for Intra MB : BS = 4 or 3
@@ -432,7 +432,7 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* pcCU, Int iDir, UInt
         {
             if (iDir == EDGE_HOR)
             {
-                pcCUP = pcCUQ->getPUAbove(uiPartP, uiPartQ, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), false, !m_bLFCrossTileBoundary);
+                pcCUP = pcCUQ->getPUAbove(uiPartP, uiPartQ, !true, false, !m_bLFCrossTileBoundary);
             }
             if (pcSlice->isInterB() || pcCUP->getSlice()->isInterB())
             {
@@ -568,11 +568,11 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt
             // Derive neighboring PU index
             if (iDir == EDGE_VER)
             {
-                pcCUP = pcCUQ->getPULeft(uiPartPIdx, uiPartQIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), !m_bLFCrossTileBoundary);
+                pcCUP = pcCUQ->getPULeft(uiPartPIdx, uiPartQIdx, !true, !m_bLFCrossTileBoundary);
             }
             else // (iDir == EDGE_HOR)
             {
-                pcCUP = pcCUQ->getPUAbove(uiPartPIdx, uiPartQIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), false, !m_bLFCrossTileBoundary);
+                pcCUP = pcCUQ->getPUAbove(uiPartPIdx, uiPartQIdx, !true, false, !m_bLFCrossTileBoundary);
             }
 
             iQP_P = pcCUP->getQP(uiPartPIdx);
@@ -701,11 +701,11 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UI
             // Derive neighboring PU index
             if (iDir == EDGE_VER)
             {
-                pcCUP = pcCUQ->getPULeft(uiPartPIdx, uiPartQIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), !m_bLFCrossTileBoundary);
+                pcCUP = pcCUQ->getPULeft(uiPartPIdx, uiPartQIdx, !true, !m_bLFCrossTileBoundary);
             }
             else // (iDir == EDGE_HOR)
             {
-                pcCUP = pcCUQ->getPUAbove(uiPartPIdx, uiPartQIdx, !pcCU->getSlice()->getLFCrossSliceBoundaryFlag(), false, !m_bLFCrossTileBoundary);
+                pcCUP = pcCUQ->getPUAbove(uiPartPIdx, uiPartQIdx, !true, false, !m_bLFCrossTileBoundary);
             }
 
             iQP_P = pcCUP->getQP(uiPartPIdx);

@@ -192,9 +192,6 @@ Void TAppEncTop::xInitLibCfg()
     //====== Parallel Merge Estimation ========
     m_cTEncTop.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevel - 2);
 
-        m_bLFCrossSliceBoundaryFlag = true;
-
-    m_cTEncTop.setLFCrossSliceBoundaryFlag(m_bLFCrossSliceBoundaryFlag);
     m_cTEncTop.setUseSAO(m_bUseSAO);
     m_cTEncTop.setMaxNumOffsetsPerPic(m_maxNumOffsetsPerPic);
 

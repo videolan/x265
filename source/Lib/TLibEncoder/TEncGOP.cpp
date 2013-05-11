@@ -471,7 +471,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
         //set default slice level flag to the same as SPS level flag
-        pcSlice->setLFCrossSliceBoundaryFlag(pcSlice->getPPS()->getLoopFilterAcrossSlicesEnabledFlag());
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
         pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
@@ -969,14 +968,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice = pcPic->getSlice(0);
         if (pcSlice->getSPS()->getUseSAO())
         {
-            std::vector<Bool> LFCrossSliceBoundaryFlag;
-            for (Int s = 0; s < uiNumSlices; s++)
-            {
-                LFCrossSliceBoundaryFlag.push_back(((uiNumSlices == 1) ? true : pcPic->getSlice(s)->getLFCrossSliceBoundaryFlag()));
-            }
-
             m_storedStartCUAddrForEncodingSlice.resize(uiNumSlices + 1);
-            pcPic->createNonDBFilterInfo(m_storedStartCUAddrForEncodingSlice, 0, &LFCrossSliceBoundaryFlag, pcPic->getPicSym()->getNumTiles(), bLFCrossTileBoundary);
+            pcPic->createNonDBFilterInfo(m_storedStartCUAddrForEncodingSlice, 0, pcPic->getPicSym()->getNumTiles(), bLFCrossTileBoundary);
         }
 
         pcSlice = pcPic->getSlice(0);
@@ -1894,11 +1887,10 @@ Void TEncGOP::preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBi
     pcSlice = pcPic->getSlice(0);
     if (pcSlice->getSPS()->getUseSAO())
     {
-        std::vector<Bool> LFCrossSliceBoundaryFlag(1, true);
         std::vector<Int>  sliceStartAddress;
         sliceStartAddress.push_back(0);
         sliceStartAddress.push_back(pcPic->getNumCUsInFrame() * pcPic->getNumPartInCU());
-        pcPic->createNonDBFilterInfo(sliceStartAddress, 0, &LFCrossSliceBoundaryFlag);
+        pcPic->createNonDBFilterInfo(sliceStartAddress, 0);
     }
 
     if (pcSlice->getSPS()->getUseSAO())

@@ -379,7 +379,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,    2048,  "Max number of SAO offset per picture (Default: 2048)")
         ("SAOLcuBoundary",           m_saoLcuBoundary,            0,  "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
         ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   1,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
-        ("LFCrossSliceBoundaryFlag", m_bLFCrossSliceBoundaryFlag, 1)
 
         ("ConstrainedIntraPred",     m_bUseConstrainedIntraPred,  0, "Constrained Intra Prediction")
 

@@ -643,7 +643,6 @@ Void TEncTop::xInitPPS()
     }
     m_cPPS.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     m_cPPS.setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
-    m_cPPS.setLoopFilterAcrossSlicesEnabledFlag(m_bLFCrossSliceBoundaryFlag);
     Int histogram[MAX_NUM_REF + 1];
     for (Int i = 0; i <= MAX_NUM_REF; i++)
     {

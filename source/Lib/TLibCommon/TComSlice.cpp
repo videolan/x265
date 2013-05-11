@@ -730,7 +730,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_numEntryPointOffsets  = pSrc->m_numEntryPointOffsets;
 
     m_bLMvdL1Zero = pSrc->m_bLMvdL1Zero;
-    m_LFCrossSliceBoundaryFlag = pSrc->m_LFCrossSliceBoundaryFlag;
     m_enableTMVPFlag                = pSrc->m_enableTMVPFlag;
     m_maxNumMergeCand               = pSrc->m_maxNumMergeCand;
 }
@@ -1428,7 +1427,6 @@ TComPPS::TComPPS()
     , m_cabacInitPresentFlag(false)
     , m_encCABACTableIdx(I_SLICE)
     , m_sliceHeaderExtensionPresentFlag(false)
-    , m_loopFilterAcrossSlicesEnabledFlag(false)
     , m_listsModificationPresentFlag(0)
     , m_numExtraSliceHeaderBits(0)
 {
