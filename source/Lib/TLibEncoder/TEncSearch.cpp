@@ -2429,7 +2429,8 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 
         //--- get SAD ---
 #if ENABLE_PRIMITIVES
-        UInt uiSAD = sa8d(piOrgU, uiStride, piPredU, uiStride) + sa8d(piOrgV, uiStride, piPredV, uiStride);
+        UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) + 
+                     sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
 #else
         UInt uiSAD   = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
         uiSAD       += m_pcRdCost->calcHAD(g_bitDepthC, piOrgV, uiStride, piPredV, uiStride, uiWidth, uiHeight);
@@ -2542,7 +2543,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
                 // use hadamard transform here
 #if ENABLE_PRIMITIVES
-                UInt uiSad = sa8d(piOrg, uiStride, piPred, uiStride);
+                UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 #else
                 UInt uiSad = m_pcRdCost->calcHAD(g_bitDepthY, piOrg, uiStride, piPred, uiStride, uiWidth, uiHeight);
 #endif
