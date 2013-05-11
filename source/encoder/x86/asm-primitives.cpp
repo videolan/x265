@@ -252,20 +252,26 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid == 7)
     {
-        p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_avx;
         p.sa8d_8x8 = x264_pixel_sa8d_8x8_avx;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_avx;
         p.sa8d_32x32 = cmp<32, 32, 16, 16, x264_pixel_sa8d_16x16_avx>;
         p.sa8d_64x64 = cmp<64, 64, 16, 16, x264_pixel_sa8d_16x16_avx>;
-
-        if (hasXOP())
-        {
-            INIT7( satd, _xop );
-            p.sa8d_8x8 = x264_pixel_sa8d_8x8_xop;
-            p.sa8d_16x16 = x264_pixel_sa8d_16x16_xop;
-            p.sa8d_32x32 = cmp<32, 32, 16, 16, x264_pixel_sa8d_16x16_xop>;
-            p.sa8d_64x64 = cmp<64, 64, 16, 16, x264_pixel_sa8d_16x16_xop>;
-        }
+        p.satd[PARTITION_4x16] = x264_pixel_satd_4x16_avx;
+        p.satd[PARTITION_4x32] = cmp<4, 32, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_4x48] = cmp<4, 48, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_4x64] = cmp<4, 64, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_12x16] = cmp<12, 16, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_12x32] = cmp<12, 32, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_12x48] = cmp<12, 48, 4, 16, x264_pixel_satd_4x16_avx>;
+        p.satd[PARTITION_12x64] = cmp<12, 64, 4, 16, x264_pixel_satd_4x16_avx>;
+    }
+    if (hasXOP())
+    {
+        INIT7( satd, _xop );
+        p.sa8d_8x8 = x264_pixel_sa8d_8x8_xop;
+        p.sa8d_16x16 = x264_pixel_sa8d_16x16_xop;
+        p.sa8d_32x32 = cmp<32, 32, 16, 16, x264_pixel_sa8d_16x16_xop>;
+        p.sa8d_64x64 = cmp<64, 64, 16, 16, x264_pixel_sa8d_16x16_xop>;
     }
     if (cpuid >= 8)
     {
