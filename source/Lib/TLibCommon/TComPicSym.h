@@ -51,32 +51,6 @@ class TComSampleAdaptiveOffset;
 // Class definition
 // ====================================================================================================================
 
-class TComTile
-{
-private:
-
-    UInt      m_uiRightEdgePosInCU;
-    UInt      m_uiBottomEdgePosInCU;
-    UInt      m_uiFirstCUAddr;
-
-public:
-
-    TComTile();
-    virtual ~TComTile();
-
-    Void      setRightEdgePosInCU(UInt i)     { m_uiRightEdgePosInCU = i; }
-
-    UInt      getRightEdgePosInCU()           { return m_uiRightEdgePosInCU; }
-
-    Void      setBottomEdgePosInCU(UInt i)    { m_uiBottomEdgePosInCU = i; }
-
-    UInt      getBottomEdgePosInCU()          { return m_uiBottomEdgePosInCU; }
-
-    Void      setFirstCUAddr(UInt i)          { m_uiFirstCUAddr = i; }
-
-    UInt      getFirstCUAddr()                { return m_uiFirstCUAddr; }
-};
-
 /// picture symbol class
 class TComPicSym
 {
@@ -101,7 +75,6 @@ private:
     TComDataCU**  m_apcTComDataCU;      ///< array of CU data
 
     Int           m_iTileBoundaryIndependenceIdr;
-    TComTile*     m_apcTComTile;
 
     SAOParam *m_saoParam;
 
@@ -137,10 +110,6 @@ public:
 
     UInt        getNumPartInHeight()      { return m_uiNumPartInHeight; }
 
-    TComTile*    getTComTile()                                       { return m_apcTComTile; }
-
-    Void         xCreateTComTileArray();
-    Void         xInitTiles();
     UInt         xCalculateNxtCUAddr(UInt uiCurrCUAddr);
     Void allocSaoParam(TComSampleAdaptiveOffset *sao);
     SAOParam *getSaoParam() { return m_saoParam; }

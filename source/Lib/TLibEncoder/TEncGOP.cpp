@@ -791,12 +791,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         Int  j;
 
-        //create the TComTileArray
-        pcPic->getPicSym()->xCreateTComTileArray();
-
-        //intialize each tile of the current picture
-        pcPic->getPicSym()->xInitTiles();
-
         // Allocate some coders, now we know how many tiles there are.
         Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
 

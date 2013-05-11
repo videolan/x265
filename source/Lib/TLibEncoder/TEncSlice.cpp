@@ -740,7 +740,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiTileLCUX     = 0;
     Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
-    uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
+    uiTileStartLCU = 0;
     if (depSliceSegmentsEnabled)
     {
         if ((pcSlice->getSliceSegmentCurStartCUAddr() != pcSlice->getSliceCurStartCUAddr()) && (uiCUAddr != uiTileStartLCU))
@@ -789,7 +789,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         if (m_pcCfg->getUseSBACRD())
         {
             uiTileCol = 0; // what column of tiles are we in?
-            uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
+            uiTileStartLCU = 0;
             uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
             //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
             uiCol     = uiCUAddr % uiWidthInLCUs;
@@ -823,7 +823,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         }
 
         // reset the entropy coder
-        if (uiCUAddr == rpcPic->getPicSym()->getTComTile()->getFirstCUAddr() &&                               // must be first CU of tile
+        if (uiCUAddr == 0 &&                               // must be first CU of tile
             uiCUAddr != 0 &&                                                                                                                              // cannot be first CU of picture
             uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU() &&
             uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU()) // cannot be first CU of slice
@@ -1024,11 +1024,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
-    uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
+    uiTileStartLCU = 0;
     if (depSliceSegmentsEnabled)
     {
-        if (pcSlice->isNextSlice() ||
-            uiCUAddr == rpcPic->getPicSym()->getTComTile()->getFirstCUAddr())
+        if (pcSlice->isNextSlice() || uiCUAddr == 0)
         {
             if (m_pcCfg->getWaveFrontsynchro())
             {
@@ -1067,8 +1066,8 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         if (m_pcCfg->getUseSBACRD())
         {
             uiTileCol = 0; // what column of tiles are we in?
-            uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
-            uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
+            uiTileStartLCU = 0;
+            uiTileLCUX = 0;
             //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
             uiCol     = uiCUAddr % uiWidthInLCUs;
             uiLin     = uiCUAddr / uiWidthInLCUs;
@@ -1104,7 +1103,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
         }
         // reset the entropy coder
-        if (uiCUAddr == rpcPic->getPicSym()->getTComTile()->getFirstCUAddr() &&                               // must be first CU of tile
+        if (uiCUAddr == 0 &&                               // must be first CU of tile
             uiCUAddr != 0 &&                                                                                                                              // cannot be first CU of picture
             uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU() &&
             uiCUAddr != (rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU()) // cannot be first CU of slice

@@ -61,7 +61,6 @@ TComPicSym::TComPicSym()
     , m_uiNumAllocatedSlice(0)
     , m_apcTComDataCU(NULL)
     , m_iTileBoundaryIndependenceIdr(0)
-    , m_apcTComTile(NULL)
 {}
 
 Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth)
@@ -130,10 +129,6 @@ Void TComPicSym::destroy()
     delete [] m_apcTComDataCU;
     m_apcTComDataCU = NULL;
 
-    delete m_apcTComTile;
-
-    m_apcTComTile = NULL;
-
     if (m_saoParam)
     {
         TComSampleAdaptiveOffset::freeSaoParam(m_saoParam);
@@ -164,45 +159,19 @@ Void TComPicSym::clearSliceBuffer()
     m_uiNumAllocatedSlice = 1;
 }
 
-Void TComPicSym::xCreateTComTileArray()
-{
-    m_apcTComTile = new TComTile;
-}
-
-Void TComPicSym::xInitTiles()
-{
-    UInt  uiRightEdgePosInCU;
-    UInt  uiBottomEdgePosInCU;
-
-    //initialize each tile of the current picture
-            //initialize the RightEdgePosInCU for each tile
-            uiRightEdgePosInCU = this->getFrameWidthInCU();
-
-            this->getTComTile()->setRightEdgePosInCU(uiRightEdgePosInCU - 1);
-
-            //initialize the BottomEdgePosInCU for each tile
-            uiBottomEdgePosInCU = this->getFrameHeightInCU();
-
-            this->getTComTile()->setBottomEdgePosInCU(uiBottomEdgePosInCU - 1);
-
-            //initialize the FirstCUAddr for each tile
-            this->getTComTile()->setFirstCUAddr((this->getTComTile()->getBottomEdgePosInCU() - this->getFrameHeightInCU() + 1) * m_uiWidthInCU +
-                                                 this->getTComTile()->getRightEdgePosInCU() - this->getFrameWidthInCU() + 1);
-}
-
 UInt TComPicSym::xCalculateNxtCUAddr(UInt uiCurrCUAddr)
 {
     UInt  uiNxtCUAddr;
 
     //get the raster scan address for the next LCU
-    if (uiCurrCUAddr % m_uiWidthInCU == this->getTComTile()->getRightEdgePosInCU() && uiCurrCUAddr / m_uiWidthInCU == this->getTComTile()->getBottomEdgePosInCU())
+    if (uiCurrCUAddr % m_uiWidthInCU == (m_uiWidthInCU - 1) && uiCurrCUAddr / m_uiWidthInCU == (m_uiHeightInCU - 1))
     //the current LCU is the last LCU of the tile
     {
             uiNxtCUAddr = m_uiNumCUsInFrame;
     }
     else //the current LCU is not the last LCU of the tile
     {
-        if (uiCurrCUAddr % m_uiWidthInCU == this->getTComTile()->getRightEdgePosInCU()) //the current LCU is on the rightmost edge of the tile
+        if (uiCurrCUAddr % m_uiWidthInCU == (m_uiWidthInCU - 1)) //the current LCU is on the rightmost edge of the tile
         {
             uiNxtCUAddr = uiCurrCUAddr + m_uiWidthInCU - this->getFrameWidthInCU() + 1;
         }
@@ -220,11 +189,5 @@ Void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
     m_saoParam = new SAOParam;
     sao->allocSaoParam(m_saoParam);
 }
-
-TComTile::TComTile()
-{}
-
-TComTile::~TComTile()
-{}
 
 //! \}
