@@ -5501,7 +5501,7 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
 
     dstPtr = m_filteredBlock[0][0].getLumaAddr();
 
-    filterCopy(srcPtr + halfFilterSize * srcStride + 1, srcStride, dstPtr, dstStride, width, height);
+    primitives.cpyblock(width, height, (pixel*)dstPtr, dstStride, (pixel*)(srcPtr + halfFilterSize * srcStride + 1), srcStride);
 
     intPtr = filteredBlockTmp[0].getLumaAddr();
 #if ENABLE_PRIMITIVES
