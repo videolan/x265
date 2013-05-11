@@ -176,20 +176,18 @@ Void TComPicSym::xInitTiles()
 
     //initialize each tile of the current picture
             //initialize the RightEdgePosInCU for each tile
-            uiRightEdgePosInCU = 0;
-                uiRightEdgePosInCU += this->getTComTile()->getTileWidth();
+            uiRightEdgePosInCU = this->getFrameWidthInCU();
 
             this->getTComTile()->setRightEdgePosInCU(uiRightEdgePosInCU - 1);
 
             //initialize the BottomEdgePosInCU for each tile
-            uiBottomEdgePosInCU = 0;
-                uiBottomEdgePosInCU += this->getTComTile()->getTileHeight();
+            uiBottomEdgePosInCU = this->getFrameHeightInCU();
 
             this->getTComTile()->setBottomEdgePosInCU(uiBottomEdgePosInCU - 1);
 
             //initialize the FirstCUAddr for each tile
-            this->getTComTile()->setFirstCUAddr((this->getTComTile()->getBottomEdgePosInCU() - this->getTComTile()->getTileHeight() + 1) * m_uiWidthInCU +
-                                                 this->getTComTile()->getRightEdgePosInCU() - this->getTComTile()->getTileWidth() + 1);
+            this->getTComTile()->setFirstCUAddr((this->getTComTile()->getBottomEdgePosInCU() - this->getFrameHeightInCU() + 1) * m_uiWidthInCU +
+                                                 this->getTComTile()->getRightEdgePosInCU() - this->getFrameWidthInCU() + 1);
 }
 
 UInt TComPicSym::xCalculateNxtCUAddr(UInt uiCurrCUAddr)
@@ -206,7 +204,7 @@ UInt TComPicSym::xCalculateNxtCUAddr(UInt uiCurrCUAddr)
     {
         if (uiCurrCUAddr % m_uiWidthInCU == this->getTComTile()->getRightEdgePosInCU()) //the current LCU is on the rightmost edge of the tile
         {
-            uiNxtCUAddr = uiCurrCUAddr + m_uiWidthInCU - this->getTComTile()->getTileWidth() + 1;
+            uiNxtCUAddr = uiCurrCUAddr + m_uiWidthInCU - this->getFrameWidthInCU() + 1;
         }
         else
         {

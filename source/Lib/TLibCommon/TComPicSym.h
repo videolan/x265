@@ -55,8 +55,6 @@ class TComTile
 {
 private:
 
-    UInt      m_uiTileWidth;
-    UInt      m_uiTileHeight;
     UInt      m_uiRightEdgePosInCU;
     UInt      m_uiBottomEdgePosInCU;
     UInt      m_uiFirstCUAddr;
@@ -65,14 +63,6 @@ public:
 
     TComTile();
     virtual ~TComTile();
-
-    Void      setTileWidth(UInt i)            { m_uiTileWidth = i; }
-
-    UInt      getTileWidth()                  { return m_uiTileWidth; }
-
-    Void      setTileHeight(UInt i)           { m_uiTileHeight = i; }
-
-    UInt      getTileHeight()                 { return m_uiTileHeight; }
 
     Void      setRightEdgePosInCU(UInt i)     { m_uiRightEdgePosInCU = i; }
 
