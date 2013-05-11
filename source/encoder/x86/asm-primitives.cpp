@@ -267,11 +267,68 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (hasXOP())
     {
-        INIT7( satd, _xop );
         p.sa8d_8x8 = x264_pixel_sa8d_8x8_xop;
         p.sa8d_16x16 = x264_pixel_sa8d_16x16_xop;
         p.sa8d_32x32 = cmp<32, 32, 16, 16, x264_pixel_sa8d_16x16_xop>;
         p.sa8d_64x64 = cmp<64, 64, 16, 16, x264_pixel_sa8d_16x16_xop>;
+
+        INIT7( satd, _xop );
+        p.satd[PARTITION_4x12] = cmp<4, 12, 4, 4, x264_pixel_satd_4x4_xop>;
+        p.satd[PARTITION_4x24] = cmp<4, 24, 4, 8, x264_pixel_satd_4x8_xop>;
+
+        p.satd[PARTITION_8x12] = cmp<8, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_8x24] = cmp<8, 24, 8, 8, x264_pixel_satd_8x8_xop>;
+        p.satd[PARTITION_8x32] = cmp<8, 32, 8, 16, x264_pixel_satd_8x16_xop>;
+        p.satd[PARTITION_8x48] = cmp<8, 48, 8, 16, x264_pixel_satd_8x16_xop>;
+        p.satd[PARTITION_8x64] = cmp<8, 64, 8, 16, x264_pixel_satd_8x16_xop>;
+
+        p.satd[PARTITION_12x4] = cmp<12, 4, 4, 4, x264_pixel_satd_4x4_xop>;
+        p.satd[PARTITION_12x8] = cmp<12, 8, 4, 8, x264_pixel_satd_4x8_xop>;
+        p.satd[PARTITION_12x12] = cmp<12, 12, 4, 4, x264_pixel_satd_4x4_xop>;
+        p.satd[PARTITION_12x24] = cmp<12, 24, 4, 8, x264_pixel_satd_4x8_xop>;
+
+        p.satd[PARTITION_16x4] = cmp<16, 4, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_16x12] = cmp<16, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_16x24] = cmp<16, 24, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_16x32] = cmp<16, 32, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_16x48] = cmp<16, 48, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_16x64] = cmp<16, 64, 16, 16, x264_pixel_satd_16x16_xop>;
+
+        p.satd[PARTITION_24x4] = cmp<24, 4, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_24x8] = cmp<24, 8, 8, 8, x264_pixel_satd_8x8_xop>;
+        p.satd[PARTITION_24x12] = cmp<24, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_24x16] = cmp<24, 16, 8, 16, x264_pixel_satd_8x16_xop>;
+        p.satd[PARTITION_24x24] = cmp<24, 24, 8, 8, x264_pixel_satd_8x8_xop>;
+        p.satd[PARTITION_24x32] = cmp<24, 32, 8, 16, x264_pixel_satd_8x16_xop>;
+        p.satd[PARTITION_24x48] = cmp<24, 48, 8, 16, x264_pixel_satd_8x16_xop>;
+        p.satd[PARTITION_24x64] = cmp<24, 64, 8, 16, x264_pixel_satd_8x16_xop>;
+
+        p.satd[PARTITION_32x4] = cmp<32, 4, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_32x8] = cmp<32, 8, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_32x12] = cmp<32, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_32x16] = cmp<32, 16, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_32x24] = cmp<32, 24, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_32x32] = cmp<32, 32, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_32x48] = cmp<32, 48, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_32x64] = cmp<32, 64, 16, 16, x264_pixel_satd_16x16_xop>;
+
+        p.satd[PARTITION_48x4] = cmp<48, 4, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_48x8] = cmp<48, 8, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_48x12] = cmp<48, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_48x16] = cmp<48, 16, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_48x24] = cmp<48, 24, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_48x32] = cmp<48, 32, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_48x48] = cmp<48, 48, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_48x64] = cmp<48, 64, 16, 16, x264_pixel_satd_16x16_xop>;
+
+        p.satd[PARTITION_64x4] = cmp<64, 4, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_64x8] = cmp<64, 8, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_64x12] = cmp<64, 12, 8, 4, x264_pixel_satd_8x4_xop>;
+        p.satd[PARTITION_64x16] = cmp<64, 16, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_64x24] = cmp<64, 24, 16, 8, x264_pixel_satd_16x8_xop>;
+        p.satd[PARTITION_64x32] = cmp<64, 32, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x264_pixel_satd_16x16_xop>;
+        p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x264_pixel_satd_16x16_xop>;
     }
     if (cpuid >= 8)
     {
