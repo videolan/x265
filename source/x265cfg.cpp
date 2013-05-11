@@ -801,8 +801,7 @@ Void TAppEncCfg::xCheckParameter()
         xConfirmPara(m_pcmLog2MaxSize < m_uiPCMLog2MinSize,                       "PCMLog2MaxSize must be equal to or greater than m_uiPCMLog2MinSize.");
     }
 
-    Bool tileFlag = false;
-    xConfirmPara(tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
+    xConfirmPara(false && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 
     //TODO:ChromaFmt assumes 4:2:0 below
     xConfirmPara(m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
@@ -1150,32 +1149,7 @@ Void TAppEncCfg::xCheckParameter()
     if (m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
     {
         Int PicSizeInSamplesY =  m_iSourceWidth * m_iSourceHeight;
-        if (tileFlag)
-        {
-            Int maxTileWidth = 0;
-            Int maxTileHeight = 0;
-            Int widthInCU = (m_iSourceWidth % m_uiMaxCUWidth) ? m_iSourceWidth / m_uiMaxCUWidth + 1 : m_iSourceWidth / m_uiMaxCUWidth;
-            Int heightInCU = (m_iSourceHeight % m_uiMaxCUHeight) ? m_iSourceHeight / m_uiMaxCUHeight + 1 : m_iSourceHeight / m_uiMaxCUHeight;
-            if (m_iUniformSpacingIdr)
-            {
-                maxTileWidth = m_uiMaxCUWidth * widthInCU;
-                maxTileHeight = m_uiMaxCUHeight * heightInCU;
-                // if only the last tile-row is one treeblock higher than the others
-                // the maxTileHeight becomes smaller if the last row of treeblocks has lower height than the others
-                    maxTileHeight = maxTileHeight - m_uiMaxCUHeight + (m_iSourceHeight % m_uiMaxCUHeight);
-                // if only the last tile-column is one treeblock wider than the others
-                // the maxTileWidth becomes smaller if the last column of treeblocks has lower width than the others
-                    maxTileWidth = maxTileWidth - m_uiMaxCUWidth + (m_iSourceWidth % m_uiMaxCUWidth);
-            }
-            else // not uniform spacing
-            {
-                    maxTileWidth = m_iSourceWidth;
-                    maxTileHeight = m_iSourceHeight;
-            }
-            Int maxSizeInSamplesY = maxTileWidth * maxTileHeight;
-            m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY / maxSizeInSamplesY - 4;
-        }
-        else if (m_iWaveFrontSynchro)
+        if (m_iWaveFrontSynchro)
         {
             m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY / ((2 * m_iSourceHeight + m_iSourceWidth) * m_uiMaxCUHeight) - 4;
         }
