@@ -584,7 +584,7 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
         ctuAddress = (pcSlice->getSliceSegmentCurStartCUAddr() / pcSlice->getPic()->getNumPartInCU());
     }
     //write slice address
-    Int sliceSegmentAddress = pcSlice->getPic()->getPicSym()->getCUOrderMap(ctuAddress);
+    Int sliceSegmentAddress = (ctuAddress);
 
     WRITE_FLAG(sliceSegmentAddress == 0, "first_slice_segment_in_pic_flag");
     if (pcSlice->getRapPicFlag())

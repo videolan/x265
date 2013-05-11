@@ -971,7 +971,7 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     if (uiInternalAddress == pcCU->getPic()->getNumPartInCU())
     {
         uiInternalAddress = 0;
-        uiExternalAddress = pcPic->getPicSym()->getCUOrderMap(pcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress) + 1);
+        uiExternalAddress = (uiExternalAddress + 1);
     }
     UInt uiRealEndAddress = pcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
 
@@ -1066,8 +1066,8 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
     // If slice start is within this cu...
-    Bool bSliceStart = pcSlice->getSliceSegmentCurStartCUAddr() > pcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
-        pcSlice->getSliceSegmentCurStartCUAddr() < pcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcPic->getNumPartInCU() >> (uiDepth << 1));
+    Bool bSliceStart = pcSlice->getSliceSegmentCurStartCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
+        pcSlice->getSliceSegmentCurStartCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcPic->getNumPartInCU() >> (uiDepth << 1));
 
     // We need to split, so don't try these modes.
     if (!bSliceStart && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
@@ -1504,10 +1504,10 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
     UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
-    Bool bSliceStart = pcSlice->getSliceSegmentCurStartCUAddr() > rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
-        pcSlice->getSliceSegmentCurStartCUAddr() < rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
-    Bool bSliceEnd   = pcSlice->getSliceSegmentCurEndCUAddr() > rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
-        pcSlice->getSliceSegmentCurEndCUAddr() < rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
+    Bool bSliceStart = pcSlice->getSliceSegmentCurStartCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
+        pcSlice->getSliceSegmentCurStartCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
+    Bool bSliceEnd   = pcSlice->getSliceSegmentCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
+        pcSlice->getSliceSegmentCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
 
     if (!bSliceEnd && !bSliceStart && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
@@ -1528,8 +1528,8 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
             UInt uiSubCULPelX   = uiLPelX + (g_uiMaxCUWidth >> (uiDepth + 1)) * (uiPartUnitIdx &  1);
             UInt uiSubCUTPelY   = uiTPelY + (g_uiMaxCUHeight >> (uiDepth + 1)) * (uiPartUnitIdx >> 1);
 
-            Bool bInSlice = rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + uiQNumParts > pcSlice->getSliceSegmentCurStartCUAddr() &&
-                rpcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx < pcSlice->getSliceSegmentCurEndCUAddr();
+            Bool bInSlice = pcCU->getAddr() * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + uiQNumParts > pcSlice->getSliceSegmentCurStartCUAddr() &&
+                pcCU->getAddr() * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx < pcSlice->getSliceSegmentCurEndCUAddr();
             if (bInSlice && (uiSubCULPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiSubCUTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 xCopyYuv2Pic(rpcPic, uiCUAddr, uiAbsPartIdx, uiDepth + 1, uiSrcDepth, pcCU, uiSubCULPelX, uiSubCUTPelY); // Copy Yuv data to picture Yuv

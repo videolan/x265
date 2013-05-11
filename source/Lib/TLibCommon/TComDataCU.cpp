@@ -354,7 +354,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
 
     for (Int i = 0; i < pcPic->getNumPartInCU(); i++)
     {
-        if (pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU() + i >= getSlice()->getSliceCurStartCUAddr())
+        if ((iCUAddr) * pcPic->getNumPartInCU() + i >= getSlice()->getSliceCurStartCUAddr())
         {
             m_sliceStartCU[i] = getSlice()->getSliceCurStartCUAddr();
         }
@@ -366,7 +366,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
 
     for (Int i = 0; i < pcPic->getNumPartInCU(); i++)
     {
-        if (pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU() + i >= getSlice()->getSliceSegmentCurStartCUAddr())
+        if ((iCUAddr) * pcPic->getNumPartInCU() + i >= getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_sliceSegmentStartCU[i] = getSlice()->getSliceSegmentCurStartCUAddr();
         }
@@ -376,7 +376,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
         }
     }
 
-    Int partStartIdx = getSlice()->getSliceSegmentCurStartCUAddr() - pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr) * pcPic->getNumPartInCU();
+    Int partStartIdx = getSlice()->getSliceSegmentCurStartCUAddr() - (iCUAddr) * pcPic->getNumPartInCU();
 
     Int numElements = min<Int>(partStartIdx, m_uiNumPartition);
     for (Int ui = 0; ui < numElements; ui++)
@@ -541,7 +541,7 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 
     for (UInt ui = 0; ui < m_uiNumPartition; ui++)
     {
-        if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui >= getSlice()->getSliceSegmentCurStartCUAddr())
+        if ((getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui >= getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_apiMVPIdx[0][ui] = -1;
             m_apiMVPIdx[1][ui] = -1;
@@ -573,7 +573,7 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 
     UInt uiTmp = uhWidth * uhHeight;
 
-    if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU >= getSlice()->getSliceSegmentCurStartCUAddr())
+    if (getAddr() * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU >= getSlice()->getSliceSegmentCurStartCUAddr())
     {
         m_acCUMvField[0].clearMvField();
         m_acCUMvField[1].clearMvField();
@@ -649,7 +649,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
         m_apiMVPIdx[1][ui] = -1;
         m_apiMVPNum[0][ui] = -1;
         m_apiMVPNum[1][ui] = -1;
-        if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui < getSlice()->getSliceSegmentCurStartCUAddr())
+        if (getAddr() * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU + ui < getSlice()->getSliceSegmentCurStartCUAddr())
         {
             m_apiMVPIdx[0][ui] = pcCU->m_apiMVPIdx[0][uiPartOffset + ui];
             m_apiMVPIdx[1][ui] = pcCU->m_apiMVPIdx[1][uiPartOffset + ui];
@@ -693,7 +693,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
     m_acCUMvField[0].clearMvField();
     m_acCUMvField[1].clearMvField();
 
-    if (m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU < getSlice()->getSliceSegmentCurStartCUAddr())
+    if (getAddr() * m_pcPic->getNumPartInCU() + m_uiAbsIdxInLCU < getSlice()->getSliceSegmentCurStartCUAddr())
     {
         // Part of this CU contains data from an older slice. Now copy in that data.
         UInt uiMaxCuWidth = pcCU->getSlice()->getSPS()->getMaxCUWidth();
@@ -1278,7 +1278,7 @@ TComDataCU* TComDataCU::getPUAboveRight(UInt& uiARPartUnitIdx, UInt uiCurrPartUn
 
     uiARPartUnitIdx = g_auiRasterToZscan[m_pcPic->getNumPartInCU() - uiNumPartInCUWidth];
     if ((bEnforceSliceRestriction && (m_pcCUAboveRight == NULL || m_pcCUAboveRight->getSlice() == NULL ||
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) > m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
+                                      (m_pcCUAboveRight->getAddr()) > getAddr() ||
                                       m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)
                                       ))
         )
@@ -1433,7 +1433,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(UInt& uiARPartUnitIdx, UInt uiCurrPar
 
     uiARPartUnitIdx = g_auiRasterToZscan[m_pcPic->getNumPartInCU() - uiNumPartInCUWidth + uiPartUnitOffset - 1];
     if ((bEnforceSliceRestriction && (m_pcCUAboveRight == NULL || m_pcCUAboveRight->getSlice() == NULL ||
-                                      m_pcPic->getPicSym()->getInverseCUOrderMap(m_pcCUAboveRight->getAddr()) > m_pcPic->getPicSym()->getInverseCUOrderMap(getAddr()) ||
+                                      (m_pcCUAboveRight->getAddr()) > getAddr() ||
                                       m_pcCUAboveRight->getSCUAddr() + uiARPartUnitIdx < m_pcPic->getCU(getAddr())->getSliceStartCU(uiCurrPartUnitIdx)
                                       ))
         )
@@ -1538,10 +1538,10 @@ Char TComDataCU::getLastCodedQP(UInt uiAbsPartIdx)
         {
             return getPic()->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
         }
-        else if (getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) > 0
+        else if (getAddr() > 0
                  && !(getSlice()->getPPS()->getEntropyCodingSyncEnabledFlag() && getAddr() % getPic()->getFrameWidthInCU() == 0))
         {
-            return getPic()->getCU(getPic()->getPicSym()->getCUOrderMap(getPic()->getPicSym()->getInverseCUOrderMap(getAddr()) - 1))->getLastCodedQP(getPic()->getNumPartInCU());
+            return getPic()->getCU(getAddr() - 1)->getLastCodedQP(getPic()->getNumPartInCU());
         }
         else
         {
@@ -3470,7 +3470,7 @@ UInt TComDataCU::getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, B
 
 UInt TComDataCU::getSCUAddr()
 {
-    return getPic()->getPicSym()->getInverseCUOrderMap(m_uiCUAddr) * (1 << (m_pcSlice->getSPS()->getMaxCUDepth() << 1)) + m_uiAbsIdxInLCU;
+    return (m_uiCUAddr) * (1 << (m_pcSlice->getSPS()->getMaxCUDepth() << 1)) + m_uiAbsIdxInLCU;
 }
 
 /** Set neighboring blocks availabilities for non-deblocked filtering

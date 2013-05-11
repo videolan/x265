@@ -739,7 +739,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
     Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
-    uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddr / rpcPic->getNumPartInCU());
+    uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
     uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
     if (depSliceSegmentsEnabled)
     {
@@ -750,7 +750,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
                 uiTileCol = 0;
                 m_pcBufferSbacCoders[uiTileCol].loadContexts(CTXMem[1]);
                 Int iNumSubstreamsPerTile = iNumSubstreams;
-                uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddr / rpcPic->getNumPartInCU());
+                uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
                 uiLin     = uiCUAddr / uiWidthInLCUs;
                 uiSubStrm = uiLin % iNumSubstreamsPerTile;
                 if ((uiCUAddr % uiWidthInLCUs + 1) >= uiWidthInLCUs)
@@ -779,7 +779,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
          uiEncCUOrder < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
-         uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder))
+         uiCUAddr = (++uiEncCUOrder))
     {
         // initialize CU encoder
         TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
@@ -1021,9 +1021,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
     Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
-    uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
-                                                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
-                                                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
+    uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
+                                                              an encoding order index, so we need to convert the index (uiStartCUAddr)
+                                                              into the real raster scan address (uiCUAddr) via the CUOrderMap */
     uiTileStartLCU = rpcPic->getPicSym()->getTComTile()->getFirstCUAddr();
     if (depSliceSegmentsEnabled)
     {
@@ -1062,7 +1062,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
          uiEncCUOrder < (uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
-         uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder))
+         uiCUAddr = (++uiEncCUOrder))
     {
         if (m_pcCfg->getUseSBACRD())
         {
@@ -1148,7 +1148,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         {
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
             Int iNumCuInWidth     = saoParam->numCuInWidth;
-            Int iCUAddrInSlice    = uiCUAddr - rpcPic->getPicSym()->getCUOrderMap(pcSlice->getSliceCurStartCUAddr() / rpcPic->getNumPartInCU());
+            Int iCUAddrInSlice    = uiCUAddr - (pcSlice->getSliceCurStartCUAddr() / rpcPic->getNumPartInCU());
             Int iCUAddrUpInSlice  = iCUAddrInSlice - iNumCuInWidth;
             Int rx = uiCUAddr % iNumCuInWidth;
             Int ry = uiCUAddr / iNumCuInWidth;
@@ -1347,7 +1347,7 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
         if (uiInternalAddress >= rpcPic->getNumPartInCU())
         {
             uiInternalAddress = 0;
-            uiExternalAddress = rpcPic->getPicSym()->getCUOrderMap(rpcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress) + 1);
+            uiExternalAddress = (uiExternalAddress + 1);
         }
         uiPosX = (uiExternalAddress % rpcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
         uiPosY = (uiExternalAddress / rpcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
@@ -1371,7 +1371,7 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
         if (uiInternalAddress >= rpcPic->getNumPartInCU())
         {
             uiInternalAddress = 0;
-            uiExternalAddress = rpcPic->getPicSym()->getCUOrderMap(rpcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress) + 1);
+            uiExternalAddress = (uiExternalAddress + 1);
         }
         uiPosX = (uiExternalAddress % rpcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
         uiPosY = (uiExternalAddress / rpcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];

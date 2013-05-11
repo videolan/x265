@@ -1234,7 +1234,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 if (uiInternalAddress == pcPic->getNumPartInCU())
                 {
                     uiInternalAddress = 0;
-                    uiExternalAddress = pcPic->getPicSym()->getCUOrderMap(pcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress) + 1);
+                    uiExternalAddress = (uiExternalAddress + 1);
                 }
                 UInt endAddress = pcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
                 if (endAddress <= pcSlice->getSliceSegmentCurStartCUAddr())

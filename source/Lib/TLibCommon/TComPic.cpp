@@ -202,7 +202,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
         endLCU              = endAddr   / maxNumSUInLCU;
         lastCUInEndLCU      = endAddr   % maxNumSUInLCU;
 
-        uiAddr = m_apcPicSym->getCUOrderMap(startLCU);
+        uiAddr = (startLCU);
 
         LCUX      = getCU(uiAddr)->getCUPelX();
         LCUY      = getCU(uiAddr)->getCUPelY();
@@ -262,7 +262,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
             startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
             endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
 
-            uiAddr = m_apcPicSym->getCUOrderMap(i);
+            uiAddr = (i);
 
             TComDataCU* pcCU = getCU(uiAddr);
             m_vSliceCUDataLink[s].push_back(pcCU);

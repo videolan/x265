@@ -149,10 +149,6 @@ public:
 
     TComTile*    getTComTile()                                       { return m_apcTComTile; }
 
-    UInt         getCUOrderMap(UInt encCUOrder)                      { return (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder); }
-
-    UInt         getInverseCUOrderMap(UInt cuAddr)                   { return (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr); }
-
     UInt         getPicSCUEncOrder(UInt SCUAddr);
     UInt         getPicSCUAddr(UInt SCUEncOrder);
     Void         xCreateTComTileArray();
