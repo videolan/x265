@@ -243,20 +243,8 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setSOPDescriptionSEIEnabled(m_SOPDescriptionSEIEnabled);
     m_cTEncTop.setScalableNestingSEIEnabled(m_scalableNestingSEIEnabled);
     m_cTEncTop.setUniformSpacingIdr(m_iUniformSpacingIdr);
-    m_cTEncTop.setNumColumnsMinus1(m_iNumColumnsMinus1);
-    m_cTEncTop.setNumRowsMinus1(m_iNumRowsMinus1);
-    if (m_iUniformSpacingIdr == 0)
-    {
-        m_cTEncTop.setColumnWidth(m_pColumnWidth);
-        m_cTEncTop.setRowHeight(m_pRowHeight);
-    }
 
-    m_cTEncTop.xCheckGSParameters();
-    Int uiTilesCount          = (m_iNumRowsMinus1 + 1) * (m_iNumColumnsMinus1 + 1);
-    if (uiTilesCount == 1)
-    {
         m_bLFCrossTileBoundaryFlag = true;
-    }
 
     m_cTEncTop.setLFCrossTileBoundaryFlag(m_bLFCrossTileBoundaryFlag);
     m_cTEncTop.setWaveFrontSynchro(m_iWaveFrontSynchro);

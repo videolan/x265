@@ -183,25 +183,9 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     WRITE_FLAG(pcPPS->getEntropyCodingSyncEnabledFlag() ? 1 : 0, "entropy_coding_sync_enabled_flag");
     if (pcPPS->getTilesEnabledFlag())
     {
-        WRITE_UVLC(pcPPS->getNumColumnsMinus1(),                                    "num_tile_columns_minus1");
-        WRITE_UVLC(pcPPS->getNumRowsMinus1(),                                       "num_tile_rows_minus1");
+        WRITE_UVLC(0,                                                               "num_tile_columns_minus1");
+        WRITE_UVLC(0,                                                               "num_tile_rows_minus1");
         WRITE_FLAG(pcPPS->getUniformSpacingFlag(),                                  "uniform_spacing_flag");
-        if (pcPPS->getUniformSpacingFlag() == 0)
-        {
-            for (UInt i = 0; i < pcPPS->getNumColumnsMinus1(); i++)
-            {
-                WRITE_UVLC(pcPPS->getColumnWidth(i) - 1,                                  "column_width_minus1");
-            }
-
-            for (UInt i = 0; i < pcPPS->getNumRowsMinus1(); i++)
-            {
-                WRITE_UVLC(pcPPS->getRowHeight(i) - 1,                                    "row_height_minus1");
-            }
-        }
-        if (pcPPS->getNumColumnsMinus1() != 0 || pcPPS->getNumRowsMinus1() != 0)
-        {
-            WRITE_FLAG(pcPPS->getLoopFilterAcrossTilesEnabledFlag() ? 1 : 0,          "loop_filter_across_tiles_enabled_flag");
-        }
     }
     WRITE_FLAG(1,                                                            "loop_filter_across_slices_enabled_flag");
     WRITE_FLAG(pcPPS->getDeblockingFilterControlPresentFlag() ? 1 : 0,       "deblocking_filter_control_present_flag");

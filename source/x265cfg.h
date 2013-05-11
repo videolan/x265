@@ -81,11 +81,6 @@ protected:
     Char*     m_pchdQPFile;                     ///< QP offset for each slice (initialized from external file)
     Int*      m_aidQP;                          ///< array of slice QP values
 
-    Char*     m_pchColumnWidth;
-    Char*     m_pchRowHeight;
-    UInt*     m_pColumnWidth;
-    UInt*     m_pRowHeight;
-
     Int*      m_startOfCodedInterval;
     Int*      m_codedPivotValue;
     Int*      m_targetPivotValue;

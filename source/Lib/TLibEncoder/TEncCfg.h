@@ -203,10 +203,6 @@ protected:
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
     Int       m_iUniformSpacingIdr;
-    Int       m_iNumColumnsMinus1;
-    UInt*     m_puiColumnWidth;
-    Int       m_iNumRowsMinus1;
-    UInt*     m_puiRowHeight;
 
     Int       m_iWaveFrontSynchro;
     Int       m_iWaveFrontSubstreams;
@@ -310,14 +306,10 @@ protected:
 public:
 
     TEncCfg()
-        : m_puiColumnWidth()
-        , m_puiRowHeight()
     {}
 
     virtual ~TEncCfg()
     {
-        delete[] m_puiColumnWidth;
-        delete[] m_puiRowHeight;
     }
 
     Void      setProfile(Profile::Name profile) { m_profile = profile; }
@@ -598,49 +590,6 @@ public:
 
     Int   getUniformSpacingIdr()                  { return m_iUniformSpacingIdr; }
 
-    Void  setNumColumnsMinus1(Int i)           { m_iNumColumnsMinus1 = i; }
-
-    Int   getNumColumnsMinus1()                  { return m_iNumColumnsMinus1; }
-
-    Void  setColumnWidth(UInt* columnWidth)
-    {
-        if (m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0)
-        {
-            Int  m_iWidthInCU = (m_iSourceWidth % g_uiMaxCUWidth) ? m_iSourceWidth / g_uiMaxCUWidth + 1 : m_iSourceWidth / g_uiMaxCUWidth;
-            m_puiColumnWidth = new UInt[m_iNumColumnsMinus1];
-
-            for (Int i = 0; i < m_iNumColumnsMinus1; i++)
-            {
-                m_puiColumnWidth[i] = columnWidth[i];
-                printf("col: m_iWidthInCU= %4d i=%4d width= %4d\n", m_iWidthInCU, i, m_puiColumnWidth[i]); //AFU
-            }
-        }
-    }
-
-    UInt  getColumnWidth(UInt columnidx)  { return *(m_puiColumnWidth + columnidx); }
-
-    Void  setNumRowsMinus1(Int i)           { m_iNumRowsMinus1 = i; }
-
-    Int   getNumRowsMinus1()                  { return m_iNumRowsMinus1; }
-
-    Void  setRowHeight(UInt* rowHeight)
-    {
-        if (m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0)
-        {
-            Int  m_iHeightInCU = (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
-            m_puiRowHeight = new UInt[m_iNumRowsMinus1];
-
-            for (Int i = 0; i < m_iNumRowsMinus1; i++)
-            {
-                m_puiRowHeight[i] = rowHeight[i];
-                printf("row: m_iHeightInCU=%4d i=%4d height=%4d\n", m_iHeightInCU, i, m_puiRowHeight[i]); //AFU
-            }
-        }
-    }
-
-    UInt  getRowHeight(UInt rowIdx)     { return *(m_puiRowHeight + rowIdx); }
-
-    Void  xCheckGSParameters();
     Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_iWaveFrontSynchro = iWaveFrontSynchro; }
 
     Int   getWaveFrontsynchro()                            { return m_iWaveFrontSynchro; }

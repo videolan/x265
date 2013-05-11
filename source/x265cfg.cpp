@@ -64,8 +64,6 @@ namespace po = df::program_options_lite;
 TAppEncCfg::TAppEncCfg()
     : m_pchBitstreamFile()
     , m_pchdQPFile()
-    , m_pColumnWidth()
-    , m_pRowHeight()
     , m_scalingListFile()
 {
     m_aidQP = NULL;
@@ -111,8 +109,6 @@ TAppEncCfg::~TAppEncCfg()
 #endif // if J0149_TONE_MAPPING_SEI
     free(m_pchBitstreamFile);
     free(m_pchdQPFile);
-    free(m_pColumnWidth);
-    free(m_pRowHeight);
     free(m_scalingListFile);
 }
 
@@ -265,8 +261,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     string cfg_ReconFile;
     string cfg_BitstreamFile;
     string cfg_dQPFile;
-    string cfg_ColumnWidth;
-    string cfg_RowHeight;
     string cfg_ScalingListFile;
 
 #if J0149_TONE_MAPPING_SEI
@@ -394,10 +388,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         ("WeightedPredB,-wpB",          m_useWeightedBiPred,             0,          "Use weighted (bidirectional) prediction in B slices")
         ("Log2ParallelMergeLevel",      m_log2ParallelMergeLevel,       2u,          "Parallel merge estimation region")
         ("UniformSpacingIdc",           m_iUniformSpacingIdr,            0,          "Indicates if the column and row boundaries are distributed uniformly")
-        ("NumTileColumnsMinus1",        m_iNumColumnsMinus1,             0,          "Number of columns in a picture minus 1")
-        ("ColumnWidthArray",            cfg_ColumnWidth,                 string(""), "Array containing ColumnWidth values in units of LCU")
-        ("NumTileRowsMinus1",           m_iNumRowsMinus1,                0,          "Number of rows in a picture minus 1")
-        ("RowHeightArray",              cfg_RowHeight,                   string(""), "Array containing RowHeight values in units of LCU")
         ("LFCrossTileBoundaryFlag",     m_bLFCrossTileBoundaryFlag,      1,          "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
         ("WaveFrontSynchro",            m_iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
         ("ScalingList",                 m_useScalingListId,              0,          "0: no scaling list, 1: default scaling lists, 2: scaling lists specified in ScalingListFile")
@@ -620,65 +610,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 #endif
 
 
-    Char *pColumnWidth = cfg_ColumnWidth.empty() ? NULL : strdup(cfg_ColumnWidth.c_str());
-    Char *pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
-    if (m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0)
-    {
-        char *columnWidth;
-        int  i = 0;
-        m_pColumnWidth = new UInt[m_iNumColumnsMinus1];
-        columnWidth = strtok(pColumnWidth, " ,-");
-        while (columnWidth != NULL)
-        {
-            if (i >= m_iNumColumnsMinus1)
-            {
-                printf("The number of columns whose width are defined is larger than the allowed number of columns.\n");
-                exit(EXIT_FAILURE);
-            }
-            *(m_pColumnWidth + i) = atoi(columnWidth);
-            columnWidth = strtok(NULL, " ,-");
-            i++;
-        }
-
-        if (i < m_iNumColumnsMinus1)
-        {
-            printf("The width of some columns is not defined.\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else
-    {
-        m_pColumnWidth = NULL;
-    }
-
-    if (m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0)
-    {
-        char *rowHeight;
-        int  i = 0;
-        m_pRowHeight = new UInt[m_iNumRowsMinus1];
-        rowHeight = strtok(pRowHeight, " ,-");
-        while (rowHeight != NULL)
-        {
-            if (i >= m_iNumRowsMinus1)
-            {
-                printf("The number of rows whose height are defined is larger than the allowed number of rows.\n");
-                exit(EXIT_FAILURE);
-            }
-            *(m_pRowHeight + i) = atoi(rowHeight);
-            rowHeight = strtok(NULL, " ,-");
-            i++;
-        }
-
-        if (i < m_iNumRowsMinus1)
-        {
-            printf("The height of some rows is not defined.\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else
-    {
-        m_pRowHeight = NULL;
-    }
     m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
     // allocate slice-based dQP values
@@ -870,7 +801,7 @@ Void TAppEncCfg::xCheckParameter()
         xConfirmPara(m_pcmLog2MaxSize < m_uiPCMLog2MinSize,                       "PCMLog2MaxSize must be equal to or greater than m_uiPCMLog2MinSize.");
     }
 
-    Bool tileFlag = (m_iNumColumnsMinus1 > 0 || m_iNumRowsMinus1 > 0);
+    Bool tileFlag = false;
     xConfirmPara(tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 
     //TODO:ChromaFmt assumes 4:2:0 below
@@ -1227,53 +1158,19 @@ Void TAppEncCfg::xCheckParameter()
             Int heightInCU = (m_iSourceHeight % m_uiMaxCUHeight) ? m_iSourceHeight / m_uiMaxCUHeight + 1 : m_iSourceHeight / m_uiMaxCUHeight;
             if (m_iUniformSpacingIdr)
             {
-                maxTileWidth = m_uiMaxCUWidth * ((widthInCU + m_iNumColumnsMinus1) / (m_iNumColumnsMinus1 + 1));
-                maxTileHeight = m_uiMaxCUHeight * ((heightInCU + m_iNumRowsMinus1) / (m_iNumRowsMinus1 + 1));
+                maxTileWidth = m_uiMaxCUWidth * widthInCU;
+                maxTileHeight = m_uiMaxCUHeight * heightInCU;
                 // if only the last tile-row is one treeblock higher than the others
                 // the maxTileHeight becomes smaller if the last row of treeblocks has lower height than the others
-                if (!((heightInCU - 1) % (m_iNumRowsMinus1 + 1)))
-                {
                     maxTileHeight = maxTileHeight - m_uiMaxCUHeight + (m_iSourceHeight % m_uiMaxCUHeight);
-                }
                 // if only the last tile-column is one treeblock wider than the others
                 // the maxTileWidth becomes smaller if the last column of treeblocks has lower width than the others
-                if (!((widthInCU - 1) % (m_iNumColumnsMinus1 + 1)))
-                {
                     maxTileWidth = maxTileWidth - m_uiMaxCUWidth + (m_iSourceWidth % m_uiMaxCUWidth);
-                }
             }
             else // not uniform spacing
             {
-                if (m_iNumColumnsMinus1 < 1)
-                {
                     maxTileWidth = m_iSourceWidth;
-                }
-                else
-                {
-                    Int accColumnWidth = 0;
-                    for (Int col = 0; col < (m_iNumColumnsMinus1); col++)
-                    {
-                        maxTileWidth = m_pColumnWidth[col] > maxTileWidth ? m_pColumnWidth[col] : maxTileWidth;
-                        accColumnWidth += m_pColumnWidth[col];
-                    }
-
-                    maxTileWidth = (widthInCU - accColumnWidth) > maxTileWidth ? m_uiMaxCUWidth * (widthInCU - accColumnWidth) : m_uiMaxCUWidth * maxTileWidth;
-                }
-                if (m_iNumRowsMinus1 < 1)
-                {
                     maxTileHeight = m_iSourceHeight;
-                }
-                else
-                {
-                    Int accRowHeight = 0;
-                    for (Int row = 0; row < (m_iNumRowsMinus1); row++)
-                    {
-                        maxTileHeight = m_pRowHeight[row] > maxTileHeight ? m_pRowHeight[row] : maxTileHeight;
-                        accRowHeight += m_pRowHeight[row];
-                    }
-
-                    maxTileHeight = (heightInCU - accRowHeight) > maxTileHeight ? m_uiMaxCUHeight * (heightInCU - accRowHeight) : m_uiMaxCUHeight * maxTileHeight;
-                }
             }
             Int maxSizeInSamplesY = maxTileWidth * maxTileHeight;
             m_minSpatialSegmentationIdc = 4 * PicSizeInSamplesY / maxSizeInSamplesY - 4;

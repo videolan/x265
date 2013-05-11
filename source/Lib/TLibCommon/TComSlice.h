@@ -1186,10 +1186,6 @@ private:
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
     Bool     m_uniformSpacingFlag;
-    Int      m_iNumColumnsMinus1;
-    UInt*    m_puiColumnWidth;
-    Int      m_iNumRowsMinus1;
-    UInt*    m_puiRowHeight;
 
     Int      m_iNumSubstreams;
 
@@ -1306,44 +1302,6 @@ public:
     Void     setUniformSpacingFlag(Bool b)          { m_uniformSpacingFlag = b; }
 
     Bool     getUniformSpacingFlag()                  { return m_uniformSpacingFlag; }
-
-    Void     setNumColumnsMinus1(Int i)           { m_iNumColumnsMinus1 = i; }
-
-    Int      getNumColumnsMinus1()                  { return m_iNumColumnsMinus1; }
-
-    Void     setColumnWidth(UInt* columnWidth)
-    {
-        if (m_uniformSpacingFlag == 0 && m_iNumColumnsMinus1 > 0)
-        {
-            m_puiColumnWidth = new UInt[m_iNumColumnsMinus1];
-
-            for (Int i = 0; i < m_iNumColumnsMinus1; i++)
-            {
-                m_puiColumnWidth[i] = columnWidth[i];
-            }
-        }
-    }
-
-    UInt     getColumnWidth(UInt columnIdx) { return *(m_puiColumnWidth + columnIdx); }
-
-    Void     setNumRowsMinus1(Int i)        { m_iNumRowsMinus1 = i; }
-
-    Int      getNumRowsMinus1()               { return m_iNumRowsMinus1; }
-
-    Void     setRowHeight(UInt* rowHeight)
-    {
-        if (m_uniformSpacingFlag == 0 && m_iNumRowsMinus1 > 0)
-        {
-            m_puiRowHeight = new UInt[m_iNumRowsMinus1];
-
-            for (Int i = 0; i < m_iNumRowsMinus1; i++)
-            {
-                m_puiRowHeight[i] = rowHeight[i];
-            }
-        }
-    }
-
-    UInt     getRowHeight(UInt rowIdx)    { return *(m_puiRowHeight + rowIdx); }
 
     Void     setNumSubstreams(Int iNumSubstreams)               { m_iNumSubstreams = iNumSubstreams; }
 

@@ -624,7 +624,7 @@ Void TEncTop::xInitPPS()
 
     m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams);
     m_cPPS.setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
-    m_cPPS.setTilesEnabledFlag((m_iNumColumnsMinus1 > 0 || m_iNumRowsMinus1 > 0));
+    m_cPPS.setTilesEnabledFlag(false);
     m_cPPS.setUseWP(m_useWeightedPred);
     m_cPPS.setWPBiPred(m_useWeightedBiPred);
     m_cPPS.setOutputFlagPresentFlag(false);
@@ -933,81 +933,12 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
 Void  TEncTop::xInitPPSforTiles()
 {
     m_cPPS.setUniformSpacingFlag(m_iUniformSpacingIdr);
-    m_cPPS.setNumColumnsMinus1(m_iNumColumnsMinus1);
-    m_cPPS.setNumRowsMinus1(m_iNumRowsMinus1);
-    if (m_iUniformSpacingIdr == 0)
-    {
-        m_cPPS.setColumnWidth(m_puiColumnWidth);
-        m_cPPS.setRowHeight(m_puiRowHeight);
-    }
     m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 
     // # substreams is "per tile" when tiles are independent.
     if (m_iWaveFrontSynchro)
     {
-        m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams * (m_iNumColumnsMinus1 + 1));
-    }
-}
-
-Void  TEncCfg::xCheckGSParameters()
-{
-    Int   iWidthInCU = (m_iSourceWidth % g_uiMaxCUWidth) ? m_iSourceWidth / g_uiMaxCUWidth + 1 : m_iSourceWidth / g_uiMaxCUWidth;
-    Int   iHeightInCU = (m_iSourceHeight % g_uiMaxCUHeight) ? m_iSourceHeight / g_uiMaxCUHeight + 1 : m_iSourceHeight / g_uiMaxCUHeight;
-    UInt  uiCummulativeColumnWidth = 0;
-    UInt  uiCummulativeRowHeight = 0;
-
-    //check the column relative parameters
-    if (m_iNumColumnsMinus1 >= (1 << (LOG2_MAX_NUM_COLUMNS_MINUS1 + 1)))
-    {
-        printf("The number of columns is larger than the maximum allowed number of columns.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (m_iNumColumnsMinus1 >= iWidthInCU)
-    {
-        printf("The current picture can not have so many columns.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (m_iNumColumnsMinus1 && m_iUniformSpacingIdr == 0)
-    {
-        for (Int i = 0; i < m_iNumColumnsMinus1; i++)
-        {
-            uiCummulativeColumnWidth += m_puiColumnWidth[i];
-        }
-
-        if (uiCummulativeColumnWidth >= iWidthInCU)
-        {
-            printf("The width of the column is too large.\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    //check the row relative parameters
-    if (m_iNumRowsMinus1 >= (1 << (LOG2_MAX_NUM_ROWS_MINUS1 + 1)))
-    {
-        printf("The number of rows is larger than the maximum allowed number of rows.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (m_iNumRowsMinus1 >= iHeightInCU)
-    {
-        printf("The current picture can not have so many rows.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (m_iNumRowsMinus1 && m_iUniformSpacingIdr == 0)
-    {
-        for (Int i = 0; i < m_iNumRowsMinus1; i++)
-        {
-            uiCummulativeRowHeight += m_puiRowHeight[i];
-        }
-
-        if (uiCummulativeRowHeight >= iHeightInCU)
-        {
-            printf("The height of the row is too large.\n");
-            exit(EXIT_FAILURE);
-        }
+        m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams);
     }
 }
 

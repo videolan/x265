@@ -710,7 +710,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     if (m_pcCfg->getUseSBACRD())
     {
         iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-        uiTilesAcross = rpcPic->getPicSym()->getNumColumnsMinus1() + 1;
+        uiTilesAcross = 1;
         delete[] m_pcBufferSbacCoders;
         delete[] m_pcBufferBinCoderCABACs;
         m_pcBufferSbacCoders     = new TEncSbac[uiTilesAcross];
@@ -761,9 +761,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         {
             if (m_pcCfg->getWaveFrontsynchro())
             {
-                uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1() + 1);
+                uiTileCol = 0;
                 m_pcBufferSbacCoders[uiTileCol].loadContexts(CTXMem[1]);
-                Int iNumSubstreamsPerTile = iNumSubstreams / rpcPic->getPicSym()->getNumTiles();
+                Int iNumSubstreamsPerTile = iNumSubstreams;
                 uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddr / rpcPic->getNumPartInCU());
                 uiLin     = uiCUAddr / uiWidthInLCUs;
                 uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(rpcPic->getPicSym()->getCUOrderMap(uiCUAddr)) * iNumSubstreamsPerTile
@@ -803,7 +803,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         // inherit from TR if necessary, select substream to use.
         if (m_pcCfg->getUseSBACRD())
         {
-            uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1() + 1); // what column of tiles are we in?
+            uiTileCol = 0; // what column of tiles are we in?
             uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
             uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
             //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
@@ -812,7 +812,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             if (pcSlice->getPPS()->getNumSubstreams() > 1)
             {
                 // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
-                Int iNumSubstreamsPerTile = iNumSubstreams / rpcPic->getPicSym()->getNumTiles();
+                Int iNumSubstreamsPerTile = iNumSubstreams;
                 uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) * iNumSubstreamsPerTile
                     + uiLin % iNumSubstreamsPerTile;
             }
@@ -1025,7 +1025,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
     UInt uiBitsOriginallyInSubstreams = 0;
     {
-        UInt uiTilesAcross = rpcPic->getPicSym()->getNumColumnsMinus1() + 1;
+        UInt uiTilesAcross = 1;
         for (UInt ui = 0; ui < uiTilesAcross; ui++)
         {
             m_pcBufferSbacCoders[ui].load(m_pcSbacCoder); //init. state
@@ -1067,9 +1067,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         {
             if (m_pcCfg->getWaveFrontsynchro())
             {
-                uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1() + 1);
+                uiTileCol = 0;
                 m_pcBufferSbacCoders[uiTileCol].loadContexts(CTXMem[1]);
-                Int iNumSubstreamsPerTile = iNumSubstreams / rpcPic->getPicSym()->getNumTiles();
+                Int iNumSubstreamsPerTile = iNumSubstreams;
                 uiLin     = uiCUAddr / uiWidthInLCUs;
                 uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(rpcPic->getPicSym()->getCUOrderMap(uiCUAddr)) * iNumSubstreamsPerTile
                     + uiLin % iNumSubstreamsPerTile;
@@ -1094,7 +1094,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     {
         if (m_pcCfg->getUseSBACRD())
         {
-            uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1() + 1); // what column of tiles are we in?
+            uiTileCol = 0; // what column of tiles are we in?
             uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
             uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
             //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
@@ -1103,7 +1103,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             if (pcSlice->getPPS()->getNumSubstreams() > 1)
             {
                 // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
-                Int iNumSubstreamsPerTile = iNumSubstreams / rpcPic->getPicSym()->getNumTiles();
+                Int iNumSubstreamsPerTile = iNumSubstreams;
                 uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) * iNumSubstreamsPerTile
                     + uiLin % iNumSubstreamsPerTile;
             }
