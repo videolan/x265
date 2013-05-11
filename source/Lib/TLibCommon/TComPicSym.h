@@ -112,8 +112,6 @@ private:
 
     Int           m_iTileBoundaryIndependenceIdr;
     TComTile*     m_apcTComTile;
-    UInt*         m_puiCUOrderMap;     //the map of LCU raster scan address relative to LCU encoding order
-    UInt*         m_puiInverseCUOrderMap;
 
     SAOParam *m_saoParam;
 
@@ -151,13 +149,9 @@ public:
 
     TComTile*    getTComTile()                                       { return m_apcTComTile; }
 
-    Void         setCUOrderMap(UInt encCUOrder, Int cuAddr)          { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
+    UInt         getCUOrderMap(UInt encCUOrder)                      { return (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder); }
 
-    UInt         getCUOrderMap(UInt encCUOrder)                      { return *(m_puiCUOrderMap + (encCUOrder >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
-
-    Void         setInverseCUOrderMap(UInt cuAddr, UInt encCUOrder)  { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
-
-    UInt         getInverseCUOrderMap(UInt cuAddr)                   { return *(m_puiInverseCUOrderMap + (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
+    UInt         getInverseCUOrderMap(UInt cuAddr)                   { return (cuAddr >= m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr); }
 
     UInt         getPicSCUEncOrder(UInt SCUAddr);
     UInt         getPicSCUAddr(UInt SCUEncOrder);

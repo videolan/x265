@@ -789,8 +789,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         UInt uiRealEndAddress = uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress;
 
-        Int  p, j;
-        UInt uiEncCUAddr;
+        Int  j;
 
         //create the TComTileArray
         pcPic->getPicSym()->xCreateTComTileArray();
@@ -807,16 +806,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         // Allocate some coders, now we know how many tiles there are.
         Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-
-        //generate the Coding Order Map and Inverse Coding Order Map
-        for (p = 0, uiEncCUAddr = 0; p < pcPic->getPicSym()->getNumberOfCUsInFrame(); p++, uiEncCUAddr = pcPic->getPicSym()->xCalculateNxtCUAddr(uiEncCUAddr))
-        {
-            pcPic->getPicSym()->setCUOrderMap(p, uiEncCUAddr);
-            pcPic->getPicSym()->setInverseCUOrderMap(uiEncCUAddr, p);
-        }
-
-        pcPic->getPicSym()->setCUOrderMap(pcPic->getPicSym()->getNumberOfCUsInFrame(), pcPic->getPicSym()->getNumberOfCUsInFrame());
-        pcPic->getPicSym()->setInverseCUOrderMap(pcPic->getPicSym()->getNumberOfCUsInFrame(), pcPic->getPicSym()->getNumberOfCUsInFrame());
 
         // Allocate some coders, now we know how many tiles there are.
         m_pcEncTop->createWPPCoders(iNumSubstreams);

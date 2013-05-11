@@ -62,8 +62,6 @@ TComPicSym::TComPicSym()
     , m_apcTComDataCU(NULL)
     , m_iTileBoundaryIndependenceIdr(0)
     , m_apcTComTile(NULL)
-    , m_puiCUOrderMap(0)
-    , m_puiInverseCUOrderMap(NULL)
 {}
 
 Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth)
@@ -106,15 +104,6 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
         m_apcTComDataCU[i]->create(m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, false, m_uiMaxCUWidth >> m_uhTotalDepth, true);
     }
 
-    m_puiCUOrderMap = new UInt[m_uiNumCUsInFrame + 1];
-    m_puiInverseCUOrderMap = new UInt[m_uiNumCUsInFrame + 1];
-
-    for (i = 0; i < m_uiNumCUsInFrame; i++)
-    {
-        m_puiCUOrderMap[i] = i;
-        m_puiInverseCUOrderMap[i] = i;
-    }
-
     m_saoParam = NULL;
 }
 
@@ -144,12 +133,6 @@ Void TComPicSym::destroy()
     delete m_apcTComTile;
 
     m_apcTComTile = NULL;
-
-    delete [] m_puiCUOrderMap;
-    m_puiCUOrderMap = NULL;
-
-    delete [] m_puiInverseCUOrderMap;
-    m_puiInverseCUOrderMap = NULL;
 
     if (m_saoParam)
     {
