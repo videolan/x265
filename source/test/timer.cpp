@@ -44,7 +44,7 @@ public:
 
     void Stop()         { QueryPerformanceCounter(&finish); }
 
-    uint64_t Elapsed()  { x264_cpu_emms(); return finish.QuadPart - start.QuadPart; }
+    uint64_t Elapsed()  { x265_emms(); return finish.QuadPart - start.QuadPart; }
 
     void Release()      { delete this; }
 };
@@ -73,7 +73,7 @@ public:
 
     uint64_t Elapsed()
     {
-        x264_cpu_emms();
+        x265_emms();
         return (uint64_t)(finish.tv_sec - start.tv_sec) * 1000000000 + 
                (finish.tv_nsec - start.tv_nsec);
     }

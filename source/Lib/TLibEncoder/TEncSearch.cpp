@@ -336,7 +336,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
     uiSad = (x265::primitives.sad[part]((pixel*)m_fencbuf, FENC_STRIDE * iSubStep, (pixel*)piCur, iStrideCur) << iSubShift) >>
         DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
-    x264_cpu_emms();
+    x265_emms();
 #else
     FpDistFunc  *m_afpDistortFunc;
     m_afpDistortFunc =  m_pcRdCost->getSadFunctions();
@@ -2395,6 +2395,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         //--- get SAD ---
         UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
                      sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
+        x265_emms();
 
         //--- check ---
         if (uiSAD < uiMinSAD)
@@ -2502,6 +2503,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
                 // use hadamard transform here
                 UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+                x265_emms();
 
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
                 Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();

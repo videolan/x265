@@ -106,7 +106,7 @@ public:
       uint32_t t1 = (uint32_t)__rdtsc() - t0;\
       if (t1*refruns <= refcycles*4 && ti > 0) { refcycles += t1; refruns++; }\
     }\
-    x264_cpu_emms();\
+    x265_emms();\
     float optperf = (10.0f * cycles / runs) / 4;\
     float refperf = (10.0f * refcycles / refruns) / 4;\
     printf("\t%3.2fx ", refperf / optperf);\

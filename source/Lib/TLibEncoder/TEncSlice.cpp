@@ -798,7 +798,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             {
                 pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
             }
-            if (true /*bEnforceSliceRestriction*/ && (pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
+            if (true /*bEnforceSliceRestriction*/ && ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL)))
             {
                 // TR not available.
             }
