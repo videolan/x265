@@ -309,11 +309,9 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     m_cDistParam.iSubShift = 0;
 
     // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
+    if (m_cDistParam.iRows > 12)
     {
-        if (m_cDistParam.iRows > 12)
-        {
-            m_cDistParam.iSubShift = 1;
-        }
+        m_cDistParam.iSubShift = 1;
     }
 
     m_cDistParam.uiComp = 0;
@@ -793,30 +791,28 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* pcCU,
     UInt  uiSubdiv        = (uiTrMode > uiTrDepth ? 1 : 0);
     UInt  uiLog2TrafoSize = g_aucConvertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth()] + 2 - uiFullDepth;
 
+    if (pcCU->getPredictionMode(0) == MODE_INTRA && pcCU->getPartitionSize(0) == SIZE_NxN && uiTrDepth == 0)
     {
-        if (pcCU->getPredictionMode(0) == MODE_INTRA && pcCU->getPartitionSize(0) == SIZE_NxN && uiTrDepth == 0)
+        assert(uiSubdiv);
+    }
+    else if (uiLog2TrafoSize > pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
+    {
+        assert(uiSubdiv);
+    }
+    else if (uiLog2TrafoSize == pcCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
+    {
+        assert(!uiSubdiv);
+    }
+    else if (uiLog2TrafoSize == pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx))
+    {
+        assert(!uiSubdiv);
+    }
+    else
+    {
+        assert(uiLog2TrafoSize > pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
+        if (bLuma)
         {
-            assert(uiSubdiv);
-        }
-        else if (uiLog2TrafoSize > pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
-        {
-            assert(uiSubdiv);
-        }
-        else if (uiLog2TrafoSize == pcCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
-        {
-            assert(!uiSubdiv);
-        }
-        else if (uiLog2TrafoSize == pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx))
-        {
-            assert(!uiSubdiv);
-        }
-        else
-        {
-            assert(uiLog2TrafoSize > pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
-            if (bLuma)
-            {
-                m_pcEntropyCoder->encodeTransformSubdivFlag(uiSubdiv, 5 - uiLog2TrafoSize);
-            }
+            m_pcEntropyCoder->encodeTransformSubdivFlag(uiSubdiv, 5 - uiLog2TrafoSize);
         }
     }
 
@@ -842,12 +838,10 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* pcCU,
         return;
     }
 
+    //===== Cbfs =====
+    if (bLuma)
     {
-        //===== Cbfs =====
-        if (bLuma)
-        {
-            m_pcEntropyCoder->encodeQtCbf(pcCU, uiAbsPartIdx, TEXT_LUMA,     uiTrMode);
-        }
+        m_pcEntropyCoder->encodeQtCbf(pcCU, uiAbsPartIdx, TEXT_LUMA,     uiTrMode);
     }
 }
 
