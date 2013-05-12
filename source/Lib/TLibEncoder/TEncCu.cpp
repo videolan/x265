@@ -254,11 +254,11 @@ Void TEncCu::init(TEncTop* pcEncTop)
 
 /** \param  rpcCU pointer of CU data class
  */
-Void TEncCu::compressCU(TComDataCU* rpcCU)
+Void TEncCu::compressCU(TComDataCU* pcCu)
 {
     // initialize CU data
-    m_ppcBestCU[0]->initCU(rpcCU->getPic(), rpcCU->getAddr());
-    m_ppcTempCU[0]->initCU(rpcCU->getPic(), rpcCU->getAddr());
+    m_ppcBestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
+    m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
 
     m_addSADDepth      = 0;
     m_LCUPredictionSAD = 0;
@@ -269,9 +269,9 @@ Void TEncCu::compressCU(TComDataCU* rpcCU)
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
-        if (rpcCU->getSlice()->getSliceType() != I_SLICE) //IIII
+        if (pcCu->getSlice()->getSliceType() != I_SLICE) //IIII
         {
-            xLcuCollectARLStats(rpcCU);
+            xLcuCollectARLStats(pcCu);
         }
     }
 }
