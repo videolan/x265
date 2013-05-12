@@ -569,7 +569,7 @@ Void TEncTop::xInitPPS()
 
     if (getUseLossless())
     {
-        if ((getMaxCuDQPDepth() == 0) && (getMaxDeltaQP() == 0) && (getQP() == lowestQP))
+        if ((getMaxCuDQPDepth() == 0) && (getQP() == lowestQP))
         {
             bUseDQP = false;
         }
@@ -580,13 +580,7 @@ Void TEncTop::xInitPPS()
     }
     else
     {
-        if (bUseDQP == false)
-        {
-            if ((getMaxDeltaQP() != 0) || getUseAdaptiveQP())
-            {
-                bUseDQP = true;
-            }
-        }
+        bUseDQP |= getUseAdaptiveQP();
     }
 
     if (bUseDQP)

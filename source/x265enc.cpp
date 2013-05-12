@@ -139,7 +139,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setBipredSearchRange(m_bipredSearchRange);
 
     //====== Quality control ========
-    m_cTEncTop.setMaxDeltaQP(m_iMaxDeltaQP);
     m_cTEncTop.setMaxCuDQPDepth(m_iMaxCuDQPDepth);
 
     m_cTEncTop.setChromaCbQpOffset(m_cbQpOffset);
@@ -147,10 +146,8 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setUseAdaptQpSelect(m_bUseAdaptQpSelect);
 
-    Int lowestQP;
-    lowestQP =  -6 * (g_bitDepthY - 8); // XXX: check
-
-    if ((m_iMaxDeltaQP == 0) && (m_iQP == lowestQP) && m_useLossless)
+    Int lowestQP = -6 * (g_bitDepthY - 8); // XXX: check
+    if ((m_iQP == lowestQP) && m_useLossless)
     {
         m_bUseAdaptiveQP = 0;
     }

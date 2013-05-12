@@ -338,7 +338,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
         /* Quantization parameters */
         ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
-        ("MaxDeltaQP,d",  m_iMaxDeltaQP,        0, "max dQp offset for block")
         ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
 
         ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
@@ -747,7 +746,6 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_iFastSearch < 0 || m_iFastSearch > 2,                                   "Fast Search Mode is not supported value (0:Full search  1:Diamond  2:PMVFAST)");
     xConfirmPara(m_iSearchRange < 0,                                                       "Search Range must be more than 0");
     xConfirmPara(m_bipredSearchRange < 0,                                                  "Search Range must be more than 0");
-    xConfirmPara(m_iMaxDeltaQP > 7,                                                        "Absolute Delta QP exceeds supported range (0 to 7)");
     xConfirmPara(m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                    "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
     xConfirmPara(m_cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12");

@@ -164,7 +164,6 @@ protected:
     Int       m_bipredSearchRange;
 
     //====== Quality control ========
-    Int       m_iMaxDeltaQP;                    //  Max. absolute delta QP (1:default)
     Int       m_iMaxCuDQPDepth;                 //  Max. depth for a minimum CuDQP (0:default)
 
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
@@ -388,8 +387,6 @@ public:
     Void      setBipredSearchRange(Int i)      { m_bipredSearchRange = i; }
 
     //====== Quality control ========
-    Void      setMaxDeltaQP(Int i)      { m_iMaxDeltaQP = i; }
-
     Void      setMaxCuDQPDepth(Int i)      { m_iMaxCuDQPDepth = i; }
 
     Void      setChromaCbQpOffset(Int i)      { m_chromaCbQpOffset = i; }
@@ -465,8 +462,6 @@ public:
     Int       getSearchRange()      { return m_iSearchRange; }
 
     //==== Quality control ========
-    Int       getMaxDeltaQP()      { return m_iMaxDeltaQP; }
-
     Int       getMaxCuDQPDepth()      { return m_iMaxCuDQPDepth; }
 
     Bool      getUseAdaptiveQP()      { return m_bUseAdaptiveQP; }
