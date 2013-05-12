@@ -340,8 +340,8 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
     ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
 
-    ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
-    ("CrQpOffset,-crqpofs",  m_crQpOffset,        0, "Chroma Cr QP Offset")
+    ("CbQpOffset,-cbqpofs",  m_cbQpOffset,           0, "Chroma Cb QP Offset")
+    ("CrQpOffset,-crqpofs",  m_crQpOffset,           0, "Chroma Cr QP Offset")
 
     ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
 
@@ -1243,8 +1243,11 @@ Void TAppEncCfg::xPrintParameter()
     printf("QP                           : %5.2f\n", m_fQP);
     printf("Max dQP signaling depth      : %d\n", m_iMaxCuDQPDepth);
 
-    printf("Cb QP Offset                 : %d\n", m_cbQpOffset);
-    printf("Cr QP Offset                 : %d\n", m_crQpOffset);
+    if (m_cbQpOffset || m_crQpOffset)
+    {
+        printf("Cb QP Offset                 : %d\n", m_cbQpOffset);
+        printf("Cr QP Offset                 : %d\n", m_crQpOffset);
+    }
 
     printf("QP adaptation                : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0));
     printf("GOP size                     : %d\n", m_iGOPSize);
