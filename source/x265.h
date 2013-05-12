@@ -116,7 +116,6 @@ typedef struct
     // coding quality
     int       m_iQP;                              ///< QP value of key-picture (integer)
     int       m_iMaxDeltaQP;                      ///< max. |delta QP|
-    uint32_t  m_uiDeltaQpRD;                      ///< dQP range for multi-pass slice QP optimization
     int       m_iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
 
     int       m_cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)

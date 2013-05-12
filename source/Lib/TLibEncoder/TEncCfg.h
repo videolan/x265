@@ -189,7 +189,6 @@ protected:
     Bool      m_useTransformSkip;
     Bool      m_useTransformSkipFast;
     Int*      m_aidQP;
-    UInt      m_uiDeltaQpRD;
 
     Bool      m_bUseConstrainedIntraPred;
     Bool      m_usePCM;
@@ -512,8 +511,6 @@ public:
 
     Void      setdQPs(Int* p)     { m_aidQP       = p; }
 
-    Void      setDeltaQpRD(UInt u)     { m_uiDeltaQpRD  = u; }
-
     Bool      getUseASR()      { return m_bUseASR;     }
 
     Bool      getUseHADME()      { return m_bUseHADME;   }
@@ -555,8 +552,6 @@ public:
     Void      setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
 
     Int*      getdQPs()      { return m_aidQP;       }
-
-    UInt      getDeltaQpRD()      { return m_uiDeltaQpRD; }
 
     Void      setUseSAO(Bool bVal)     { m_bUseSAO = bVal; }
 

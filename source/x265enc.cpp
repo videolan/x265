@@ -159,7 +159,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setQPAdaptationRange(m_iQPAdaptationRange);
 
     //====== Tool list ========
-    m_cTEncTop.setDeltaQpRD(m_uiDeltaQpRD);
     m_cTEncTop.setUseASR(m_bUseASR);
     m_cTEncTop.setUseHADME(m_bUseHADME);
     m_cTEncTop.setUseLossless(m_useLossless);

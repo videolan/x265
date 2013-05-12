@@ -338,7 +338,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
         /* Quantization parameters */
         ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
-        ("DeltaQpRD,-dqr", m_uiDeltaQpRD,       0u, "max dQp offset for slice")
         ("MaxDeltaQP,d",  m_iMaxDeltaQP,        0, "max dQp offset for block")
         ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
 
@@ -1182,7 +1181,6 @@ Void TAppEncCfg::xCheckParameter()
                 m_RCForceIntraQP = false;
             }
         }
-        xConfirmPara(m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n");
     }
 
     xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
@@ -1278,7 +1276,6 @@ Void TAppEncCfg::xPrintParameter()
     printf("RDQ:%d ", m_useRDOQ);
     printf("RDQTS:%d ", m_useRDOQTS);
     printf("RDpenalty:%d ", m_rdPenalty);
-    printf("SQP:%d ", m_uiDeltaQpRD);
     printf("ASR:%d ", m_bUseASR);
     printf("FEN:%d ", m_bUseFastEnc);
     printf("ECU:%d ", m_bUseEarlyCU);
