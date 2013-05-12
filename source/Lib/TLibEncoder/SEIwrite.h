@@ -52,6 +52,7 @@ public:
     void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 
 protected:
+    TComSPS *m_pSPS;
 
     Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
     Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
@@ -60,15 +61,11 @@ protected:
     Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
     Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps);
     Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
-    TComSPS *m_pSPS;
     Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
     Void xWriteSEIFramePacking(const SEIFramePacking& sei);
     Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
     Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
     Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
-#if J0149_TONE_MAPPING_SEI
-    Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
-#endif
     Void xWriteSEISOPDescription(const SEISOPDescription& sei);
     Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
     Void xWriteByteAlign();

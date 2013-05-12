@@ -165,10 +165,6 @@ protected:
     SEIFramePacking*        xCreateSEIFramePacking();
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-#if J0149_TONE_MAPPING_SEI
-    SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
-#endif
-
     Void xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
     Int xGetFirstSeiLocation(AccessUnit &accessUnit);
     Void xResetNonNestedSEIPresentFlags()

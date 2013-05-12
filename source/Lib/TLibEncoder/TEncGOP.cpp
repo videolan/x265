@@ -208,96 +208,6 @@ SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
     return seiDisplayOrientation;
 }
 
-#if J0149_TONE_MAPPING_SEI
-SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
-{
-    SEIToneMappingInfo *seiToneMappingInfo = new SEIToneMappingInfo();
-
-    seiToneMappingInfo->m_toneMapId = m_pcCfg->getTMISEIToneMapId();
-    seiToneMappingInfo->m_toneMapCancelFlag = m_pcCfg->getTMISEIToneMapCancelFlag();
-    seiToneMappingInfo->m_toneMapPersistenceFlag = m_pcCfg->getTMISEIToneMapPersistenceFlag();
-
-    seiToneMappingInfo->m_codedDataBitDepth = m_pcCfg->getTMISEICodedDataBitDepth();
-    assert(seiToneMappingInfo->m_codedDataBitDepth >= 8 && seiToneMappingInfo->m_codedDataBitDepth <= 14);
-    seiToneMappingInfo->m_targetBitDepth = m_pcCfg->getTMISEITargetBitDepth();
-    assert((seiToneMappingInfo->m_targetBitDepth >= 1 && seiToneMappingInfo->m_targetBitDepth <= 17) || (seiToneMappingInfo->m_targetBitDepth  == 255));
-    seiToneMappingInfo->m_modelId = m_pcCfg->getTMISEIModelID();
-    assert(seiToneMappingInfo->m_modelId >= 0 && seiToneMappingInfo->m_modelId <= 4);
-
-    switch (seiToneMappingInfo->m_modelId)
-    {
-    case 0:
-    {
-        seiToneMappingInfo->m_minValue = m_pcCfg->getTMISEIMinValue();
-        seiToneMappingInfo->m_maxValue = m_pcCfg->getTMISEIMaxValue();
-        break;
-    }
-    case 1:
-    {
-        seiToneMappingInfo->m_sigmoidMidpoint = m_pcCfg->getTMISEISigmoidMidpoint();
-        seiToneMappingInfo->m_sigmoidWidth = m_pcCfg->getTMISEISigmoidWidth();
-        break;
-    }
-    case 2:
-    {
-        UInt num = 1u << (seiToneMappingInfo->m_targetBitDepth);
-        seiToneMappingInfo->m_startOfCodedInterval.resize(num);
-        Int* ptmp = m_pcCfg->getTMISEIStartOfCodedInterva();
-        if (ptmp)
-        {
-            for (int i = 0; i < num; i++)
-            {
-                seiToneMappingInfo->m_startOfCodedInterval[i] = ptmp[i];
-            }
-        }
-        break;
-    }
-    case 3:
-    {
-        seiToneMappingInfo->m_numPivots = m_pcCfg->getTMISEINumPivots();
-        seiToneMappingInfo->m_codedPivotValue.resize(seiToneMappingInfo->m_numPivots);
-        seiToneMappingInfo->m_targetPivotValue.resize(seiToneMappingInfo->m_numPivots);
-        Int* ptmpcoded = m_pcCfg->getTMISEICodedPivotValue();
-        Int* ptmptarget = m_pcCfg->getTMISEITargetPivotValue();
-        if (ptmpcoded && ptmptarget)
-        {
-            for (int i = 0; i < (seiToneMappingInfo->m_numPivots); i++)
-            {
-                seiToneMappingInfo->m_codedPivotValue[i] = ptmpcoded[i];
-                seiToneMappingInfo->m_targetPivotValue[i] = ptmptarget[i];
-            }
-        }
-        break;
-    }
-    case 4:
-    {
-        seiToneMappingInfo->m_cameraIsoSpeedIdc = m_pcCfg->getTMISEICameraIsoSpeedIdc();
-        seiToneMappingInfo->m_cameraIsoSpeedValue = m_pcCfg->getTMISEICameraIsoSpeedValue();
-        assert(seiToneMappingInfo->m_cameraIsoSpeedValue != 0);
-        seiToneMappingInfo->m_exposureCompensationValueSignFlag = m_pcCfg->getTMISEIExposureCompensationValueSignFlag();
-        seiToneMappingInfo->m_exposureCompensationValueNumerator = m_pcCfg->getTMISEIExposureCompensationValueNumerator();
-        seiToneMappingInfo->m_exposureCompensationValueDenomIdc = m_pcCfg->getTMISEIExposureCompensationValueDenomIdc();
-        seiToneMappingInfo->m_refScreenLuminanceWhite = m_pcCfg->getTMISEIRefScreenLuminanceWhite();
-        seiToneMappingInfo->m_extendedRangeWhiteLevel = m_pcCfg->getTMISEIExtendedRangeWhiteLevel();
-        assert(seiToneMappingInfo->m_extendedRangeWhiteLevel >= 100);
-        seiToneMappingInfo->m_nominalBlackLevelLumaCodeValue = m_pcCfg->getTMISEINominalBlackLevelLumaCodeValue();
-        seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue = m_pcCfg->getTMISEINominalWhiteLevelLumaCodeValue();
-        assert(seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue > seiToneMappingInfo->m_nominalBlackLevelLumaCodeValue);
-        seiToneMappingInfo->m_extendedWhiteLevelLumaCodeValue = m_pcCfg->getTMISEIExtendedWhiteLevelLumaCodeValue();
-        assert(seiToneMappingInfo->m_extendedWhiteLevelLumaCodeValue >= seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue);
-        break;
-    }
-    default:
-    {
-        assert(!"Undefined SEIToneMapModelId");
-        break;
-    }
-    }
-
-    return seiToneMappingInfo;
-}
-
-#endif // if J0149_TONE_MAPPING_SEI
 Void TEncGOP::xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps)
 {
     OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -337,19 +247,6 @@ Void TEncGOP::xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit
         accessUnit.push_back(new NALUnitEBSP(nalu));
         delete sei;
     }
-#if J0149_TONE_MAPPING_SEI
-    if (m_pcCfg->getToneMappingInfoSEIEnabled())
-    {
-        SEIToneMappingInfo *sei = xCreateSEIToneMappingInfo();
-
-        nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
-    }
-#endif // if J0149_TONE_MAPPING_SEI
 }
 
 // ====================================================================================================================

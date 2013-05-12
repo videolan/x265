@@ -41,8 +41,6 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define J0149_TONE_MAPPING_SEI                    1 ///< J0149: Tone mapping information SEI
-
 #define MAX_NUM_PICS_IN_SOP                    1024
 
 #define MAX_NESTING_NUM_OPS                    1024

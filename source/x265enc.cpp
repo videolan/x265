@@ -183,6 +183,7 @@ Void TAppEncTop::xInitLibCfg()
     //====== Weighted Prediction ========
     m_cTEncTop.setUseWP(m_useWeightedPred);
     m_cTEncTop.setWPBiPred(m_useWeightedBiPred);
+
     //====== Parallel Merge Estimation ========
     m_cTEncTop.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevel - 2);
 
@@ -198,33 +199,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setRecoveryPointSEIEnabled(m_recoveryPointSEIEnabled);
     m_cTEncTop.setBufferingPeriodSEIEnabled(m_bufferingPeriodSEIEnabled);
     m_cTEncTop.setPictureTimingSEIEnabled(m_pictureTimingSEIEnabled);
-#if J0149_TONE_MAPPING_SEI
-    m_cTEncTop.setToneMappingInfoSEIEnabled(m_toneMappingInfoSEIEnabled);
-    m_cTEncTop.setTMISEIToneMapId(m_toneMapId);
-    m_cTEncTop.setTMISEIToneMapCancelFlag(m_toneMapCancelFlag);
-    m_cTEncTop.setTMISEIToneMapPersistenceFlag(m_toneMapPersistenceFlag);
-    m_cTEncTop.setTMISEICodedDataBitDepth(m_toneMapCodedDataBitDepth);
-    m_cTEncTop.setTMISEITargetBitDepth(m_toneMapTargetBitDepth);
-    m_cTEncTop.setTMISEIModelID(m_toneMapModelId);
-    m_cTEncTop.setTMISEIMinValue(m_toneMapMinValue);
-    m_cTEncTop.setTMISEIMaxValue(m_toneMapMaxValue);
-    m_cTEncTop.setTMISEISigmoidMidpoint(m_sigmoidMidpoint);
-    m_cTEncTop.setTMISEISigmoidWidth(m_sigmoidWidth);
-    m_cTEncTop.setTMISEIStartOfCodedInterva(m_startOfCodedInterval);
-    m_cTEncTop.setTMISEINumPivots(m_numPivots);
-    m_cTEncTop.setTMISEICodedPivotValue(m_codedPivotValue);
-    m_cTEncTop.setTMISEITargetPivotValue(m_targetPivotValue);
-    m_cTEncTop.setTMISEICameraIsoSpeedIdc(m_cameraIsoSpeedIdc);
-    m_cTEncTop.setTMISEICameraIsoSpeedValue(m_cameraIsoSpeedValue);
-    m_cTEncTop.setTMISEIExposureCompensationValueSignFlag(m_exposureCompensationValueSignFlag);
-    m_cTEncTop.setTMISEIExposureCompensationValueNumerator(m_exposureCompensationValueNumerator);
-    m_cTEncTop.setTMISEIExposureCompensationValueDenomIdc(m_exposureCompensationValueDenomIdc);
-    m_cTEncTop.setTMISEIRefScreenLuminanceWhite(m_refScreenLuminanceWhite);
-    m_cTEncTop.setTMISEIExtendedRangeWhiteLevel(m_extendedRangeWhiteLevel);
-    m_cTEncTop.setTMISEINominalBlackLevelLumaCodeValue(m_nominalBlackLevelLumaCodeValue);
-    m_cTEncTop.setTMISEINominalWhiteLevelLumaCodeValue(m_nominalWhiteLevelLumaCodeValue);
-    m_cTEncTop.setTMISEIExtendedWhiteLevelLumaCodeValue(m_extendedWhiteLevelLumaCodeValue);
-#endif // if J0149_TONE_MAPPING_SEI
+    
     m_cTEncTop.setFramePackingArrangementSEIEnabled(m_framePackingSEIEnabled);
     m_cTEncTop.setFramePackingArrangementSEIType(m_framePackingSEIType);
     m_cTEncTop.setFramePackingArrangementSEIId(m_framePackingSEIId);

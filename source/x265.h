@@ -168,47 +168,6 @@ typedef struct
 
     int       m_bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
 
-    int       m_decodedPictureHashSEIEnabled;     ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
-    int       m_recoveryPointSEIEnabled;
-    int       m_bufferingPeriodSEIEnabled;
-    int       m_pictureTimingSEIEnabled;
-
-    // Tone Mapping SEI
-    int       m_toneMappingInfoSEIEnabled;
-    int       m_toneMapId;
-    int       m_toneMapCancelFlag;
-    int       m_toneMapPersistenceFlag;
-    int       m_toneMapCodedDataBitDepth;
-    int       m_toneMapTargetBitDepth;
-    int       m_toneMapModelId;
-    int       m_toneMapMinValue;
-    int       m_toneMapMaxValue;
-    int       m_sigmoidMidpoint;
-    int       m_sigmoidWidth;
-    int       m_numPivots;
-    int       m_cameraIsoSpeedIdc;
-    int       m_cameraIsoSpeedValue;
-    int       m_exposureCompensationValueSignFlag;
-    int       m_exposureCompensationValueNumerator;
-    int       m_exposureCompensationValueDenomIdc;
-    int       m_refScreenLuminanceWhite;
-    int       m_extendedRangeWhiteLevel;
-    int       m_nominalBlackLevelLumaCodeValue;
-    int       m_nominalWhiteLevelLumaCodeValue;
-    int       m_extendedWhiteLevelLumaCodeValue;
-
-    int       m_framePackingSEIEnabled;
-    int       m_framePackingSEIType;
-    int       m_framePackingSEIId;
-    int       m_framePackingSEIQuincunx;
-    int       m_framePackingSEIInterpretation;
-    int       m_displayOrientationSEIAngle;
-    int       m_temporalLevel0IndexSEIEnabled;
-    int       m_gradualDecodingRefreshInfoEnabled;
-    int       m_decodingUnitInfoSEIEnabled;
-    int       m_SOPDescriptionSEIEnabled;
-    int       m_scalableNestingSEIEnabled;
-
     // weighted prediction
     int       m_useWeightedPred;                  ///< Use of weighted prediction in P slices
     int       m_useWeightedBiPred;                ///< Use of bi-directional weighted prediction in B slices
@@ -231,7 +190,24 @@ typedef struct
 
     int       m_recalculateQPAccordingToLambda;   ///< recalculate QP value according to the lambda value
     int       m_useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
+
+    int       m_decodedPictureHashSEIEnabled;     ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     int       m_activeParameterSetsSEIEnabled;
+    int       m_recoveryPointSEIEnabled;
+    int       m_bufferingPeriodSEIEnabled;
+    int       m_pictureTimingSEIEnabled;
+
+    int       m_framePackingSEIEnabled;
+    int       m_framePackingSEIType;
+    int       m_framePackingSEIId;
+    int       m_framePackingSEIQuincunx;
+    int       m_framePackingSEIInterpretation;
+    int       m_displayOrientationSEIAngle;
+    int       m_temporalLevel0IndexSEIEnabled;
+    int       m_gradualDecodingRefreshInfoEnabled;
+    int       m_decodingUnitInfoSEIEnabled;
+    int       m_SOPDescriptionSEIEnabled;
+    int       m_scalableNestingSEIEnabled;
 
     int       m_vuiParametersPresentFlag;         ///< enable generation of VUI parameters
     int       m_aspectRatioInfoPresentFlag;       ///< Signals whether aspect_ratio_idc is present

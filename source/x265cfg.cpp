@@ -69,11 +69,6 @@ TAppEncCfg::TAppEncCfg()
     m_aidQP = NULL;
     m_input = NULL;
     m_recon = NULL;
-#if J0149_TONE_MAPPING_SEI
-    m_startOfCodedInterval = NULL;
-    m_codedPivotValue = NULL;
-    m_targetPivotValue = NULL;
-#endif
 }
 
 TAppEncCfg::~TAppEncCfg()
@@ -90,23 +85,6 @@ TAppEncCfg::~TAppEncCfg()
     {
         delete[] m_aidQP;
     }
-#if J0149_TONE_MAPPING_SEI
-    if (m_startOfCodedInterval)
-    {
-        delete[] m_startOfCodedInterval;
-        m_startOfCodedInterval = NULL;
-    }
-    if (m_codedPivotValue)
-    {
-        delete[] m_codedPivotValue;
-        m_codedPivotValue = NULL;
-    }
-    if (m_targetPivotValue)
-    {
-        delete[] m_targetPivotValue;
-        m_targetPivotValue = NULL;
-    }
-#endif // if J0149_TONE_MAPPING_SEI
     free(m_pchBitstreamFile);
     free(m_pchdQPFile);
     free(m_scalingListFile);
@@ -263,11 +241,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     string cfg_dQPFile;
     string cfg_ScalingListFile;
 
-#if J0149_TONE_MAPPING_SEI
-    string cfg_startOfCodedInterval;
-    string cfg_codedPivotValue;
-    string cfg_targetPivotValue;
-#endif
     po::Options opts;
     opts.addOptions()
     ("help", do_help, false, "this help text")
@@ -449,38 +422,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("SEIRecoveryPoint",               m_recoveryPointSEIEnabled,            0, "Control generation of recovery point SEI messages")
     ("SEIBufferingPeriod",             m_bufferingPeriodSEIEnabled,          0, "Control generation of buffering period SEI messages")
     ("SEIPictureTiming",               m_pictureTimingSEIEnabled,            0, "Control generation of picture timing SEI messages")
-#if J0149_TONE_MAPPING_SEI
-    ("SEIToneMappingInfo",             m_toneMappingInfoSEIEnabled,        0, "Control generation of Tone Mapping SEI messages")
-    ("SEIToneMapId",                   m_toneMapId,                        0, "Specifies Id of Tone Mapping SEI message for a given session")
-    ("SEIToneMapCancelFlag",           m_toneMapCancelFlag,                0, "Indicates that Tone Mapping SEI message cancels the persistance or follows")
-    ("SEIToneMapPersistenceFlag",      m_toneMapPersistenceFlag,           1, "Specifies the persistence of the Tone Mapping SEI message")
-    ("SEIToneMapCodedDataBitDepth",    m_toneMapCodedDataBitDepth,         8, "Specifies Coded Data BitDepth of Tone Mapping SEI messages")
-    ("SEIToneMapTargetBitDepth",       m_toneMapTargetBitDepth,            8, "Specifies Output BitDepth of Tome mapping function")
-    ("SEIToneMapModelId",              m_toneMapModelId,                   0, "Specifies Model utilized for mapping coded data into target_bit_depth range\n"
-    "\t0:  linear mapping with clipping\n"
-    "\t1:  sigmoidal mapping\n"
-    "\t2:  user-defined table mapping\n"
-    "\t3:  piece-wise linear mapping\n"
-    "\t4:  luminance dynamic range information ")
-    ("SEIToneMapMinValue",                              m_toneMapMinValue,                          0, "Specifies the minimum value in mode 0")
-    ("SEIToneMapMaxValue",                              m_toneMapMaxValue,                       1023, "Specifies the maxmum value in mode 0")
-    ("SEIToneMapSigmoidMidpoint",                       m_sigmoidMidpoint,                        512, "Specifies the centre point in mode 1")
-    ("SEIToneMapSigmoidWidth",                          m_sigmoidWidth,                           960, "Specifies the distance between 5% and 95% values of the target_bit_depth in mode 1")
-    ("SEIToneMapStartOfCodedInterval",                  cfg_startOfCodedInterval,          string(""), "Array of user-defined mapping table")
-    ("SEIToneMapNumPivots",                             m_numPivots,                                0, "Specifies the number of pivot points in mode 3")
-    ("SEIToneMapCodedPivotValue",                       cfg_codedPivotValue,               string(""), "Array of pivot point")
-    ("SEIToneMapTargetPivotValue",                      cfg_targetPivotValue,              string(""), "Array of pivot point")
-    ("SEIToneMapCameraIsoSpeedIdc",                     m_cameraIsoSpeedIdc,                        0, "Indicates the camera ISO speed for daylight illumination")
-    ("SEIToneMapCameraIsoSpeedValue",                   m_cameraIsoSpeedValue,                    400, "Specifies the camera ISO speed for daylight illumination of Extended_ISO")
-    ("SEIToneMapExposureCompensationValueSignFlag",     m_exposureCompensationValueSignFlag,        0, "Specifies the sign of ExposureCompensationValue")
-    ("SEIToneMapExposureCompensationValueNumerator",    m_exposureCompensationValueNumerator,       0, "Specifies the numerator of ExposureCompensationValue")
-    ("SEIToneMapExposureCompensationValueDenomIdc",     m_exposureCompensationValueDenomIdc,        2, "Specifies the denominator of ExposureCompensationValue")
-    ("SEIToneMapRefScreenLuminanceWhite",               m_refScreenLuminanceWhite,                350, "Specifies reference screen brightness setting in units of candela per square metre")
-    ("SEIToneMapExtendedRangeWhiteLevel",               m_extendedRangeWhiteLevel,                800, "Indicates the luminance dynamic range")
-    ("SEIToneMapNominalBlackLevelLumaCodeValue",        m_nominalBlackLevelLumaCodeValue,          16, "Specifies luma sample value of the nominal black level assigned decoded pictures")
-    ("SEIToneMapNominalWhiteLevelLumaCodeValue",        m_nominalWhiteLevelLumaCodeValue,         235, "Specifies luma sample value of the nominal white level assigned decoded pictures")
-    ("SEIToneMapExtendedWhiteLevelLumaCodeValue",       m_extendedWhiteLevelLumaCodeValue,        300, "Specifies luma sample value of the extended dynamic range assigned decoded pictures")
-#endif // if J0149_TONE_MAPPING_SEI
     ("SEIFramePacking",                m_framePackingSEIEnabled,                 0, "Control generation of frame packing SEI messages")
     ("SEIFramePackingType",            m_framePackingSEIType,                    0, "Define frame packing arrangement\n"
     "\t0: checkerboard - pixels alternatively represent either frames\n"
@@ -641,68 +582,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         }
     }
     m_iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
-
-#if J0149_TONE_MAPPING_SEI
-    if (m_toneMappingInfoSEIEnabled && !m_toneMapCancelFlag)
-    {
-        Char* pcStartOfCodedInterval = cfg_startOfCodedInterval.empty() ? NULL : strdup(cfg_startOfCodedInterval.c_str());
-        Char* pcCodedPivotValue = cfg_codedPivotValue.empty() ? NULL : strdup(cfg_codedPivotValue.c_str());
-        Char* pcTargetPivotValue = cfg_targetPivotValue.empty() ? NULL : strdup(cfg_targetPivotValue.c_str());
-        if (m_toneMapModelId == 2 && pcStartOfCodedInterval)
-        {
-            char *startOfCodedInterval;
-            UInt num = 1u << m_toneMapTargetBitDepth;
-            m_startOfCodedInterval = new Int[num];
-            ::memset(m_startOfCodedInterval, 0, sizeof(Int) * num);
-            startOfCodedInterval = strtok(pcStartOfCodedInterval, " .");
-            int i = 0;
-            while (startOfCodedInterval && (i < num))
-            {
-                m_startOfCodedInterval[i] = atoi(startOfCodedInterval);
-                startOfCodedInterval = strtok(NULL, " .");
-                i++;
-            }
-        }
-        else
-        {
-            m_startOfCodedInterval = NULL;
-        }
-        if ((m_toneMapModelId == 3) && (m_numPivots > 0))
-        {
-            if (pcCodedPivotValue && pcTargetPivotValue)
-            {
-                char *codedPivotValue;
-                char *targetPivotValue;
-                m_codedPivotValue = new Int[m_numPivots];
-                m_targetPivotValue = new Int[m_numPivots];
-                ::memset(m_codedPivotValue, 0, sizeof(Int) * (m_numPivots));
-                ::memset(m_targetPivotValue, 0, sizeof(Int) * (m_numPivots));
-                codedPivotValue = strtok(pcCodedPivotValue, " .");
-                int i = 0;
-                while (codedPivotValue && i < m_numPivots)
-                {
-                    m_codedPivotValue[i] = atoi(codedPivotValue);
-                    codedPivotValue = strtok(NULL, " .");
-                    i++;
-                }
-
-                i = 0;
-                targetPivotValue = strtok(pcTargetPivotValue, " .");
-                while (targetPivotValue && i < m_numPivots)
-                {
-                    m_targetPivotValue[i] = atoi(targetPivotValue);
-                    targetPivotValue = strtok(NULL, " .");
-                    i++;
-                }
-            }
-        }
-        else
-        {
-            m_codedPivotValue = NULL;
-            m_targetPivotValue = NULL;
-        }
-    }
-#endif // if J0149_TONE_MAPPING_SEI
 
     // check validity of input parameters
     xCheckParameter();
@@ -1154,19 +1033,6 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1");
 
     xConfirmPara(m_decodedPictureHashSEIEnabled < 0 || m_decodedPictureHashSEIEnabled > 3, "this hash type is not correct!\n");
-
-#if J0149_TONE_MAPPING_SEI
-    if (m_toneMappingInfoSEIEnabled)
-    {
-        xConfirmPara(m_toneMapCodedDataBitDepth < 8 || m_toneMapCodedDataBitDepth > 14, "SEIToneMapCodedDataBitDepth must be in rage 8 to 14");
-        xConfirmPara(m_toneMapTargetBitDepth < 1 || (m_toneMapTargetBitDepth > 16 && m_toneMapTargetBitDepth < 255), "SEIToneMapTargetBitDepth must be in rage 1 to 16 or equal to 255");
-        xConfirmPara(m_toneMapModelId < 0 || m_toneMapModelId > 4, "SEIToneMapModelId must be in rage 0 to 4");
-        xConfirmPara(m_cameraIsoSpeedValue == 0, "SEIToneMapCameraIsoSpeedValue shall not be equal to 0");
-        xConfirmPara(m_extendedRangeWhiteLevel < 100, "SEIToneMapExtendedRangeWhiteLevel should be greater than or equal to 100");
-        xConfirmPara(m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue, "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than SEIToneMapNominalBlackLevelLumaCodeValue");
-        xConfirmPara(m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
-    }
-#endif // if J0149_TONE_MAPPING_SEI
 
     if (m_RCEnableRateControl)
     {
