@@ -270,239 +270,239 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 #endif
     po::Options opts;
     opts.addOptions()
-        ("help", do_help, false, "this help text")
-        ("c", po::parseConfigFile, "configuration file name")
+    ("help", do_help, false, "this help text")
+    ("c", po::parseConfigFile, "configuration file name")
 
-        ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
-        ("threads",               threadcount,         0, "Number of threads for thread pool (default:CPU HT core count)")
+    ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
+    ("threads",               threadcount,         0, "Number of threads for thread pool (default:CPU HT core count)")
 
-        // File, I/O and source parameters
-        ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
-        ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
-        ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
-        ("SourceWidth,-wdt",      m_iSourceWidth,      0, "Source picture width")
-        ("SourceHeight,-hgt",     m_iSourceHeight,     0, "Source picture height")
-        ("FrameRate,-fr",         m_iFrameRate,        0, "Frame rate")
-        ("FrameSkip,-fs",         m_FrameSkip,         0u, "Number of frames to skip at start of input YUV")
-        ("FramesToBeEncoded,f",   m_framesToBeEncoded, 0, "Number of frames to be encoded (default=all)")
+    // File, I/O and source parameters
+    ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
+    ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
+    ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
+    ("SourceWidth,-wdt",      m_iSourceWidth,      0, "Source picture width")
+    ("SourceHeight,-hgt",     m_iSourceHeight,     0, "Source picture height")
+    ("FrameRate,-fr",         m_iFrameRate,        0, "Frame rate")
+    ("FrameSkip,-fs",         m_FrameSkip,         0u, "Number of frames to skip at start of input YUV")
+    ("FramesToBeEncoded,f",   m_framesToBeEncoded, 0, "Number of frames to be encoded (default=all)")
 
-        ("InternalBitDepth",      m_internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-        "If different to InputBitDepth, source data will be converted")
-        ("InputBitDepth",         m_inputBitDepth,     8, "Bit-depth of input file")
-        ("OutputBitDepth",        m_outputBitDepth,    0, "Bit-depth of output file (default:InternalBitDepth)")
+    ("InternalBitDepth",      m_internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+    "If different to InputBitDepth, source data will be converted")
+    ("InputBitDepth",         m_inputBitDepth,     8, "Bit-depth of input file")
+    ("OutputBitDepth",        m_outputBitDepth,    0, "Bit-depth of output file (default:InternalBitDepth)")
 
-        // Profile and level
-        ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
-        ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
-        ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
+    // Profile and level
+    ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
+    ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
+    ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
 
-        ("ProgressiveSource", m_progressiveSourceFlag,   0, "Indicate that source is progressive")
-        ("InterlacedSource",  m_interlacedSourceFlag,    0, "Indicate that source is interlaced")
-        ("NonPackedSource",   m_nonPackedConstraintFlag, 0, "Indicate that source does not contain frame packing")
-        ("FrameOnly",         m_frameOnlyConstraintFlag, 0, "Indicate that the bitstream contains only frames")
+    ("ProgressiveSource", m_progressiveSourceFlag,   0, "Indicate that source is progressive")
+    ("InterlacedSource",  m_interlacedSourceFlag,    0, "Indicate that source is interlaced")
+    ("NonPackedSource",   m_nonPackedConstraintFlag, 0, "Indicate that source does not contain frame packing")
+    ("FrameOnly",         m_frameOnlyConstraintFlag, 0, "Indicate that the bitstream contains only frames")
 
-        // Unit definition parameters
-        ("MaxCUWidth",              m_uiMaxCUWidth,             64u)
-        ("MaxCUHeight",             m_uiMaxCUHeight,            64u)
-        // todo: remove defaults from MaxCUSize
-        ("MaxCUSize,s",             m_uiMaxCUWidth,             64u, "Maximum CU size")
-        ("MaxCUSize,s",             m_uiMaxCUHeight,            64u, "Maximum CU size")
-        ("MaxPartitionDepth,h",     m_uiMaxCUDepth,              4u, "CU depth")
+    // Unit definition parameters
+    ("MaxCUWidth",              m_uiMaxCUWidth,             64u)
+    ("MaxCUHeight",             m_uiMaxCUHeight,            64u)
+    // todo: remove defaults from MaxCUSize
+    ("MaxCUSize,s",             m_uiMaxCUWidth,             64u, "Maximum CU size")
+    ("MaxCUSize,s",             m_uiMaxCUHeight,            64u, "Maximum CU size")
+    ("MaxPartitionDepth,h",     m_uiMaxCUDepth,              4u, "CU depth")
 
-        ("QuadtreeTULog2MaxSize",   m_uiQuadtreeTULog2MaxSize,   6u, "Maximum TU size in logarithm base 2")
-        ("QuadtreeTULog2MinSize",   m_uiQuadtreeTULog2MinSize,   2u, "Minimum TU size in logarithm base 2")
+    ("QuadtreeTULog2MaxSize",   m_uiQuadtreeTULog2MaxSize,   6u, "Maximum TU size in logarithm base 2")
+    ("QuadtreeTULog2MinSize",   m_uiQuadtreeTULog2MinSize,   2u, "Minimum TU size in logarithm base 2")
 
-        ("QuadtreeTUMaxDepthIntra", m_uiQuadtreeTUMaxDepthIntra, 1u, "Depth of TU tree for intra CUs")
-        ("QuadtreeTUMaxDepthInter", m_uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
+    ("QuadtreeTUMaxDepthIntra", m_uiQuadtreeTUMaxDepthIntra, 1u, "Depth of TU tree for intra CUs")
+    ("QuadtreeTUMaxDepthInter", m_uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
 
-        // Coding structure paramters
-        ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
-        ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
-        ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
-        // motion options
-        ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
-        ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
-        ("BipredSearchRange",       m_bipredSearchRange,          4, "Motion search range for bipred refinement")
-        ("HadamardME",              m_bUseHADME,                  1, "Hadamard ME for fractional-pel")
-        ("ASR",                     m_bUseASR,                    0, "Adaptive motion search range")
+    // Coding structure paramters
+    ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
+    ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
+    ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
+    // motion options
+    ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
+    ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
+    ("BipredSearchRange",       m_bipredSearchRange,          4, "Motion search range for bipred refinement")
+    ("HadamardME",              m_bUseHADME,                  1, "Hadamard ME for fractional-pel")
+    ("ASR",                     m_bUseASR,                    0, "Adaptive motion search range")
 
-        // Mode decision parameters
-        ("LambdaModifier0,-LM0", m_adLambdaModifier[0], (Double)1.0, "Lambda modifier for temporal layer 0")
-        ("LambdaModifier1,-LM1", m_adLambdaModifier[1], (Double)1.0, "Lambda modifier for temporal layer 1")
-        ("LambdaModifier2,-LM2", m_adLambdaModifier[2], (Double)1.0, "Lambda modifier for temporal layer 2")
-        ("LambdaModifier3,-LM3", m_adLambdaModifier[3], (Double)1.0, "Lambda modifier for temporal layer 3")
-        ("LambdaModifier4,-LM4", m_adLambdaModifier[4], (Double)1.0, "Lambda modifier for temporal layer 4")
-        ("LambdaModifier5,-LM5", m_adLambdaModifier[5], (Double)1.0, "Lambda modifier for temporal layer 5")
-        ("LambdaModifier6,-LM6", m_adLambdaModifier[6], (Double)1.0, "Lambda modifier for temporal layer 6")
-        ("LambdaModifier7,-LM7", m_adLambdaModifier[7], (Double)1.0, "Lambda modifier for temporal layer 7")
+    // Mode decision parameters
+    ("LambdaModifier0,-LM0", m_adLambdaModifier[0], (Double)1.0, "Lambda modifier for temporal layer 0")
+    ("LambdaModifier1,-LM1", m_adLambdaModifier[1], (Double)1.0, "Lambda modifier for temporal layer 1")
+    ("LambdaModifier2,-LM2", m_adLambdaModifier[2], (Double)1.0, "Lambda modifier for temporal layer 2")
+    ("LambdaModifier3,-LM3", m_adLambdaModifier[3], (Double)1.0, "Lambda modifier for temporal layer 3")
+    ("LambdaModifier4,-LM4", m_adLambdaModifier[4], (Double)1.0, "Lambda modifier for temporal layer 4")
+    ("LambdaModifier5,-LM5", m_adLambdaModifier[5], (Double)1.0, "Lambda modifier for temporal layer 5")
+    ("LambdaModifier6,-LM6", m_adLambdaModifier[6], (Double)1.0, "Lambda modifier for temporal layer 6")
+    ("LambdaModifier7,-LM7", m_adLambdaModifier[7], (Double)1.0, "Lambda modifier for temporal layer 7")
 
-        /* Quantization parameters */
-        ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
-        ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
+    /* Quantization parameters */
+    ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
+    ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
 
-        ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
-        ("CrQpOffset,-crqpofs",  m_crQpOffset,        0, "Chroma Cr QP Offset")
+    ("CbQpOffset,-cbqpofs",  m_cbQpOffset,        0, "Chroma Cb QP Offset")
+    ("CrQpOffset,-crqpofs",  m_crQpOffset,        0, "Chroma Cr QP Offset")
 
-        ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
+    ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
 
-        ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
-        ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,       6, "QP adaptation range")
-        ("dQPFile,m",                     cfg_dQPFile,       string(""), "dQP file name")
-        ("RDOQ",                          m_useRDOQ,                  1)
-        ("RDOQTS",                        m_useRDOQTS,                1)
-        ("RDpenalty",                     m_rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
+    ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
+    ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,       6, "QP adaptation range")
+    ("dQPFile,m",                     cfg_dQPFile,       string(""), "dQP file name")
+    ("RDOQ",                          m_useRDOQ,                  1)
+    ("RDOQTS",                        m_useRDOQTS,                1)
+    ("RDpenalty",                     m_rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
 
-        // Deblocking filter parameters
-        ("LoopFilterDisable",              m_bLoopFilterDisable,             0)
-        ("LoopFilterOffsetInPPS",          m_loopFilterOffsetInPPS,          0)
-        ("LoopFilterBetaOffset_div2",      m_loopFilterBetaOffsetDiv2,       0)
-        ("LoopFilterTcOffset_div2",        m_loopFilterTcOffsetDiv2,         0)
-        ("DeblockingFilterControlPresent", m_DeblockingFilterControlPresent, 0)
-        ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         0)
+    // Deblocking filter parameters
+    ("LoopFilterDisable",              m_bLoopFilterDisable,             0)
+    ("LoopFilterOffsetInPPS",          m_loopFilterOffsetInPPS,          0)
+    ("LoopFilterBetaOffset_div2",      m_loopFilterBetaOffsetDiv2,       0)
+    ("LoopFilterTcOffset_div2",        m_loopFilterTcOffsetDiv2,         0)
+    ("DeblockingFilterControlPresent", m_DeblockingFilterControlPresent, 0)
+    ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         0)
 
-        // Coding tools
-        ("AMP",                      m_enableAMP,                 1,  "Enable asymmetric motion partitions")
-        ("AMP_REFINE",               m_enableAMPRefine,          1,  "Enable asymmetric refinement motion partitions like include Nx2N and 2NxN")
-        ("TransformSkip",            m_useTransformSkip,          0,  "Intra transform skipping")
-        ("TransformSkipFast",        m_useTransformSkipFast,      0,  "Fast intra transform skipping")
-        ("SAO",                      m_bUseSAO,                   1,  "Enable Sample Adaptive Offset")
-        ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,    2048,  "Max number of SAO offset per picture (Default: 2048)")
-        ("SAOLcuBoundary",           m_saoLcuBoundary,            0,  "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
-        ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   1,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
+    // Coding tools
+    ("AMP",                      m_enableAMP,                 1,  "Enable asymmetric motion partitions")
+    ("AMP_REFINE",               m_enableAMPRefine,           1,  "Enable asymmetric refinement motion partitions like include Nx2N and 2NxN")
+    ("TransformSkip",            m_useTransformSkip,          0,  "Intra transform skipping")
+    ("TransformSkipFast",        m_useTransformSkipFast,      0,  "Fast intra transform skipping")
+    ("SAO",                      m_bUseSAO,                   1,  "Enable Sample Adaptive Offset")
+    ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,    2048,  "Max number of SAO offset per picture (Default: 2048)")
+    ("SAOLcuBoundary",           m_saoLcuBoundary,            0,  "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
+    ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   1,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
 
-        ("ConstrainedIntraPred",     m_bUseConstrainedIntraPred,  0, "Constrained Intra Prediction")
+    ("ConstrainedIntraPred",     m_bUseConstrainedIntraPred,  0, "Constrained Intra Prediction")
 
-        ("PCMEnabledFlag",           m_usePCM,                    0)
-        ("PCMLog2MaxSize",           m_pcmLog2MaxSize,            5u)
-        ("PCMLog2MinSize",           m_uiPCMLog2MinSize,          3u)
-        ("PCMInputBitDepthFlag",     m_bPCMInputBitDepthFlag,     1)
-        ("PCMFilterDisableFlag",     m_bPCMFilterDisableFlag,     0)
+    ("PCMEnabledFlag",           m_usePCM,                    0)
+    ("PCMLog2MaxSize",           m_pcmLog2MaxSize,            5u)
+    ("PCMLog2MinSize",           m_uiPCMLog2MinSize,          3u)
+    ("PCMInputBitDepthFlag",     m_bPCMInputBitDepthFlag,     1)
+    ("PCMFilterDisableFlag",     m_bPCMFilterDisableFlag,     0)
 
-        ("LosslessCuEnabled",        m_useLossless,               0)
+    ("LosslessCuEnabled",        m_useLossless,               0)
 
-        ("WeightedPredP,-wpP",          m_useWeightedPred,               0,          "Use weighted prediction in P slices")
-        ("WeightedPredB,-wpB",          m_useWeightedBiPred,             0,          "Use weighted (bidirectional) prediction in B slices")
-        ("Log2ParallelMergeLevel",      m_log2ParallelMergeLevel,       2u,          "Parallel merge estimation region")
-        ("WaveFrontSynchro",            m_iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
-        ("ScalingList",                 m_useScalingListId,              0,          "0: no scaling list, 1: default scaling lists, 2: scaling lists specified in ScalingListFile")
-        ("ScalingListFile",             cfg_ScalingListFile,             string(""), "Scaling list file name")
-        ("SignHideFlag,-SBH",           m_signHideFlag, 1)
-        ("MaxNumMergeCand",             m_maxNumMergeCand,             5u,         "Maximum number of merge candidates")
+    ("WeightedPredP,-wpP",          m_useWeightedPred,               0,          "Use weighted prediction in P slices")
+    ("WeightedPredB,-wpB",          m_useWeightedBiPred,             0,          "Use weighted (bidirectional) prediction in B slices")
+    ("Log2ParallelMergeLevel",      m_log2ParallelMergeLevel,       2u,          "Parallel merge estimation region")
+    ("WaveFrontSynchro",            m_iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+    ("ScalingList",                 m_useScalingListId,              0,          "0: no scaling list, 1: default scaling lists, 2: scaling lists specified in ScalingListFile")
+    ("ScalingListFile",             cfg_ScalingListFile,             string(""), "Scaling list file name")
+    ("SignHideFlag,-SBH",           m_signHideFlag, 1)
+    ("MaxNumMergeCand",             m_maxNumMergeCand,             5u,         "Maximum number of merge candidates")
 
-        /* Misc. */
-        ("SEIDecodedPictureHash",       m_decodedPictureHashSEIEnabled, 0, "Control generation of decode picture hash SEI messages\n"
-        "\t3: checksum\n"
-        "\t2: CRC\n"
-        "\t1: use MD5\n"
-        "\t0: disable")
-        ("SEIpictureDigest",            m_decodedPictureHashSEIEnabled, 0, "deprecated alias for SEIDecodedPictureHash")
-        ("TMVPMode", m_TMVPModeId, 1, "TMVP mode 0: TMVP disable for all slices. 1: TMVP enable for all slices (default) 2: TMVP enable for certain slices only")
-        ("ECU", m_bUseEarlyCU, 0, "Early CU setting")
-        ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
-        ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
-        ("ESD", m_useEarlySkipDetection, 0, "Early SKIP detection setting")
-        ("RateControl",         m_RCEnableRateControl,       0, "Rate control: enable rate control")
-        ("TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate")
-        ("KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
-        ("LCULevelRateControl", m_RCLCULevelRC,              1, "Rate control: true: LCU level RC; false: picture level RC")
-        ("RCLCUSeparateModel",  m_RCUseLCUSeparateModel,     1, "Rate control: use LCU level separate R-lambda model")
-        ("InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP")
-        ("RCForceIntraQP",      m_RCForceIntraQP,            0, "Rate control: force intra QP to be equal to initial QP")
+    /* Misc. */
+    ("SEIDecodedPictureHash",       m_decodedPictureHashSEIEnabled, 0, "Control generation of decode picture hash SEI messages\n"
+    "\t3: checksum\n"
+    "\t2: CRC\n"
+    "\t1: use MD5\n"
+    "\t0: disable")
+    ("SEIpictureDigest",            m_decodedPictureHashSEIEnabled, 0, "deprecated alias for SEIDecodedPictureHash")
+    ("TMVPMode", m_TMVPModeId, 1, "TMVP mode 0: TMVP disable for all slices. 1: TMVP enable for all slices (default) 2: TMVP enable for certain slices only")
+    ("ECU", m_bUseEarlyCU, 0, "Early CU setting")
+    ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
+    ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
+    ("ESD", m_useEarlySkipDetection, 0, "Early SKIP detection setting")
+    ("RateControl",         m_RCEnableRateControl,       0, "Rate control: enable rate control")
+    ("TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate")
+    ("KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
+    ("LCULevelRateControl", m_RCLCULevelRC,              1, "Rate control: true: LCU level RC; false: picture level RC")
+    ("RCLCUSeparateModel",  m_RCUseLCUSeparateModel,     1, "Rate control: use LCU level separate R-lambda model")
+    ("InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP")
+    ("RCForceIntraQP",      m_RCForceIntraQP,            0, "Rate control: force intra QP to be equal to initial QP")
 
-        ("TransquantBypassEnableFlag",     m_TransquantBypassEnableFlag,         0, "transquant_bypass_enable_flag indicator in PPS")
-        ("CUTransquantBypassFlagValue",    m_CUTransquantBypassFlagValue,        0, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
-        ("RecalculateQPAccordingToLambda", m_recalculateQPAccordingToLambda,     0, "Recalculate QP values according to lambda values. Do not suggest to be enabled in all intra case")
-        ("StrongIntraSmoothing,-sis",      m_useStrongIntraSmoothing,            1, "Enable strong intra smoothing for 32x32 blocks")
-        ("SEIActiveParameterSets",         m_activeParameterSetsSEIEnabled,      0, "Enable generation of active parameter sets SEI messages")
-        ("VuiParametersPresent,-vui",      m_vuiParametersPresentFlag,           0, "Enable generation of vui_parameters()")
-        ("AspectRatioInfoPresent",         m_aspectRatioInfoPresentFlag,         0, "Signals whether aspect_ratio_idc is present")
-        ("AspectRatioIdc",                 m_aspectRatioIdc,                     0, "aspect_ratio_idc")
-        ("SarWidth",                       m_sarWidth,                           0, "horizontal size of the sample aspect ratio")
-        ("SarHeight",                      m_sarHeight,                          0, "vertical size of the sample aspect ratio")
-        ("OverscanInfoPresent",            m_overscanInfoPresentFlag,            0, "Indicates whether conformant decoded pictures are suitable for display using overscan\n")
-        ("OverscanAppropriate",            m_overscanAppropriateFlag,            0, "Indicates whether conformant decoded pictures are suitable for display using overscan\n")
-        ("VideoSignalTypePresent",         m_videoSignalTypePresentFlag,         0, "Signals whether video_format, video_full_range_flag, and colour_description_present_flag are present")
-        ("VideoFormat",                    m_videoFormat,                        5, "Indicates representation of pictures")
-        ("VideoFullRange",                 m_videoFullRangeFlag,                 0, "Indicates the black level and range of luma and chroma signals")
-        ("ColourDescriptionPresent",       m_colourDescriptionPresentFlag,       0, "Signals whether colour_primaries, transfer_characteristics and matrix_coefficients are present")
-        ("ColourPrimaries",                m_colourPrimaries,                    2, "Indicates chromaticity coordinates of the source primaries")
-        ("TransferCharateristics",         m_transferCharacteristics,            2, "Indicates the opto-electronic transfer characteristics of the source")
-        ("MatrixCoefficients",             m_matrixCoefficients,                 2, "Describes the matrix coefficients used in deriving luma and chroma from RGB primaries")
-        ("ChromaLocInfoPresent",           m_chromaLocInfoPresentFlag,           0, "Signals whether chroma_sample_loc_type_top_field and chroma_sample_loc_type_bottom_field are present")
-        ("ChromaSampleLocTypeTopField",    m_chromaSampleLocTypeTopField,        0, "Specifies the location of chroma samples for top field")
-        ("ChromaSampleLocTypeBottomField", m_chromaSampleLocTypeBottomField,     0, "Specifies the location of chroma samples for bottom field")
-        ("NeutralChromaIndication",        m_neutralChromaIndicationFlag,        0, "Indicates that the value of all decoded chroma samples is equal to 1<<(BitDepthCr-1)")
-        ("DefaultDisplayWindowFlag",       m_defaultDisplayWindowFlag,           0, "Indicates the presence of the Default Window parameters")
-        ("DefDispWinLeftOffset",           m_defDispWinLeftOffset,               0, "Specifies the left offset of the default display window from the conformance window")
-        ("DefDispWinRightOffset",          m_defDispWinRightOffset,              0, "Specifies the right offset of the default display window from the conformance window")
-        ("DefDispWinTopOffset",            m_defDispWinTopOffset,                0, "Specifies the top offset of the default display window from the conformance window")
-        ("DefDispWinBottomOffset",         m_defDispWinBottomOffset,             0, "Specifies the bottom offset of the default display window from the conformance window")
-        ("FrameFieldInfoPresentFlag",      m_frameFieldInfoPresentFlag,          0, "Indicates that pic_struct and field coding related values are present in picture timing SEI messages")
-        ("PocProportionalToTimingFlag",    m_pocProportionalToTimingFlag,        0, "Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS")
-        ("NumTicksPocDiffOneMinus1",       m_numTicksPocDiffOneMinus1,           0, "Number of ticks minus 1 that for a POC difference of one")
-        ("BitstreamRestriction",           m_bitstreamRestrictionFlag,           0, "Signals whether bitstream restriction parameters are present")
-        ("MotionVectorsOverPicBoundaries", m_motionVectorsOverPicBoundariesFlag, 0, "Indicates that no samples outside the picture boundaries are used for inter prediction")
-        ("MaxBytesPerPicDenom",            m_maxBytesPerPicDenom,                2, "Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units associated with any coded picture")
-        ("MaxBitsPerMinCuDenom",           m_maxBitsPerMinCuDenom,               1, "Indicates an upper bound for the number of bits of coding_unit() data")
-        ("Log2MaxMvLengthHorizontal",      m_log2MaxMvLengthHorizontal,         15, "Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units")
-        ("Log2MaxMvLengthVertical",        m_log2MaxMvLengthVertical,           15, "Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units")
-        ("SEIRecoveryPoint",               m_recoveryPointSEIEnabled,            0, "Control generation of recovery point SEI messages")
-        ("SEIBufferingPeriod",             m_bufferingPeriodSEIEnabled,          0, "Control generation of buffering period SEI messages")
-        ("SEIPictureTiming",               m_pictureTimingSEIEnabled,            0, "Control generation of picture timing SEI messages")
+    ("TransquantBypassEnableFlag",     m_TransquantBypassEnableFlag,         0, "transquant_bypass_enable_flag indicator in PPS")
+    ("CUTransquantBypassFlagValue",    m_CUTransquantBypassFlagValue,        0, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
+    ("RecalculateQPAccordingToLambda", m_recalculateQPAccordingToLambda,     0, "Recalculate QP values according to lambda values. Do not suggest to be enabled in all intra case")
+    ("StrongIntraSmoothing,-sis",      m_useStrongIntraSmoothing,            1, "Enable strong intra smoothing for 32x32 blocks")
+    ("SEIActiveParameterSets",         m_activeParameterSetsSEIEnabled,      0, "Enable generation of active parameter sets SEI messages")
+    ("VuiParametersPresent,-vui",      m_vuiParametersPresentFlag,           0, "Enable generation of vui_parameters()")
+    ("AspectRatioInfoPresent",         m_aspectRatioInfoPresentFlag,         0, "Signals whether aspect_ratio_idc is present")
+    ("AspectRatioIdc",                 m_aspectRatioIdc,                     0, "aspect_ratio_idc")
+    ("SarWidth",                       m_sarWidth,                           0, "horizontal size of the sample aspect ratio")
+    ("SarHeight",                      m_sarHeight,                          0, "vertical size of the sample aspect ratio")
+    ("OverscanInfoPresent",            m_overscanInfoPresentFlag,            0, "Indicates whether conformant decoded pictures are suitable for display using overscan\n")
+    ("OverscanAppropriate",            m_overscanAppropriateFlag,            0, "Indicates whether conformant decoded pictures are suitable for display using overscan\n")
+    ("VideoSignalTypePresent",         m_videoSignalTypePresentFlag,         0, "Signals whether video_format, video_full_range_flag, and colour_description_present_flag are present")
+    ("VideoFormat",                    m_videoFormat,                        5, "Indicates representation of pictures")
+    ("VideoFullRange",                 m_videoFullRangeFlag,                 0, "Indicates the black level and range of luma and chroma signals")
+    ("ColourDescriptionPresent",       m_colourDescriptionPresentFlag,       0, "Signals whether colour_primaries, transfer_characteristics and matrix_coefficients are present")
+    ("ColourPrimaries",                m_colourPrimaries,                    2, "Indicates chromaticity coordinates of the source primaries")
+    ("TransferCharateristics",         m_transferCharacteristics,            2, "Indicates the opto-electronic transfer characteristics of the source")
+    ("MatrixCoefficients",             m_matrixCoefficients,                 2, "Describes the matrix coefficients used in deriving luma and chroma from RGB primaries")
+    ("ChromaLocInfoPresent",           m_chromaLocInfoPresentFlag,           0, "Signals whether chroma_sample_loc_type_top_field and chroma_sample_loc_type_bottom_field are present")
+    ("ChromaSampleLocTypeTopField",    m_chromaSampleLocTypeTopField,        0, "Specifies the location of chroma samples for top field")
+    ("ChromaSampleLocTypeBottomField", m_chromaSampleLocTypeBottomField,     0, "Specifies the location of chroma samples for bottom field")
+    ("NeutralChromaIndication",        m_neutralChromaIndicationFlag,        0, "Indicates that the value of all decoded chroma samples is equal to 1<<(BitDepthCr-1)")
+    ("DefaultDisplayWindowFlag",       m_defaultDisplayWindowFlag,           0, "Indicates the presence of the Default Window parameters")
+    ("DefDispWinLeftOffset",           m_defDispWinLeftOffset,               0, "Specifies the left offset of the default display window from the conformance window")
+    ("DefDispWinRightOffset",          m_defDispWinRightOffset,              0, "Specifies the right offset of the default display window from the conformance window")
+    ("DefDispWinTopOffset",            m_defDispWinTopOffset,                0, "Specifies the top offset of the default display window from the conformance window")
+    ("DefDispWinBottomOffset",         m_defDispWinBottomOffset,             0, "Specifies the bottom offset of the default display window from the conformance window")
+    ("FrameFieldInfoPresentFlag",      m_frameFieldInfoPresentFlag,          0, "Indicates that pic_struct and field coding related values are present in picture timing SEI messages")
+    ("PocProportionalToTimingFlag",    m_pocProportionalToTimingFlag,        0, "Indicates that the POC value is proportional to the output time w.r.t. first picture in CVS")
+    ("NumTicksPocDiffOneMinus1",       m_numTicksPocDiffOneMinus1,           0, "Number of ticks minus 1 that for a POC difference of one")
+    ("BitstreamRestriction",           m_bitstreamRestrictionFlag,           0, "Signals whether bitstream restriction parameters are present")
+    ("MotionVectorsOverPicBoundaries", m_motionVectorsOverPicBoundariesFlag, 0, "Indicates that no samples outside the picture boundaries are used for inter prediction")
+    ("MaxBytesPerPicDenom",            m_maxBytesPerPicDenom,                2, "Indicates a number of bytes not exceeded by the sum of the sizes of the VCL NAL units associated with any coded picture")
+    ("MaxBitsPerMinCuDenom",           m_maxBitsPerMinCuDenom,               1, "Indicates an upper bound for the number of bits of coding_unit() data")
+    ("Log2MaxMvLengthHorizontal",      m_log2MaxMvLengthHorizontal,         15, "Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units")
+    ("Log2MaxMvLengthVertical",        m_log2MaxMvLengthVertical,           15, "Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units")
+    ("SEIRecoveryPoint",               m_recoveryPointSEIEnabled,            0, "Control generation of recovery point SEI messages")
+    ("SEIBufferingPeriod",             m_bufferingPeriodSEIEnabled,          0, "Control generation of buffering period SEI messages")
+    ("SEIPictureTiming",               m_pictureTimingSEIEnabled,            0, "Control generation of picture timing SEI messages")
 #if J0149_TONE_MAPPING_SEI
-        ("SEIToneMappingInfo",             m_toneMappingInfoSEIEnabled,        0, "Control generation of Tone Mapping SEI messages")
-        ("SEIToneMapId",                   m_toneMapId,                        0, "Specifies Id of Tone Mapping SEI message for a given session")
-        ("SEIToneMapCancelFlag",           m_toneMapCancelFlag,                0, "Indicates that Tone Mapping SEI message cancels the persistance or follows")
-        ("SEIToneMapPersistenceFlag",      m_toneMapPersistenceFlag,           1, "Specifies the persistence of the Tone Mapping SEI message")
-        ("SEIToneMapCodedDataBitDepth",    m_toneMapCodedDataBitDepth,         8, "Specifies Coded Data BitDepth of Tone Mapping SEI messages")
-        ("SEIToneMapTargetBitDepth",       m_toneMapTargetBitDepth,            8, "Specifies Output BitDepth of Tome mapping function")
-        ("SEIToneMapModelId",              m_toneMapModelId,                   0, "Specifies Model utilized for mapping coded data into target_bit_depth range\n"
-        "\t0:  linear mapping with clipping\n"
-        "\t1:  sigmoidal mapping\n"
-        "\t2:  user-defined table mapping\n"
-        "\t3:  piece-wise linear mapping\n"
-        "\t4:  luminance dynamic range information ")
-        ("SEIToneMapMinValue",                              m_toneMapMinValue,                          0, "Specifies the minimum value in mode 0")
-        ("SEIToneMapMaxValue",                              m_toneMapMaxValue,                       1023, "Specifies the maxmum value in mode 0")
-        ("SEIToneMapSigmoidMidpoint",                       m_sigmoidMidpoint,                        512, "Specifies the centre point in mode 1")
-        ("SEIToneMapSigmoidWidth",                          m_sigmoidWidth,                           960, "Specifies the distance between 5% and 95% values of the target_bit_depth in mode 1")
-        ("SEIToneMapStartOfCodedInterval",                  cfg_startOfCodedInterval,          string(""), "Array of user-defined mapping table")
-        ("SEIToneMapNumPivots",                             m_numPivots,                                0, "Specifies the number of pivot points in mode 3")
-        ("SEIToneMapCodedPivotValue",                       cfg_codedPivotValue,               string(""), "Array of pivot point")
-        ("SEIToneMapTargetPivotValue",                      cfg_targetPivotValue,              string(""), "Array of pivot point")
-        ("SEIToneMapCameraIsoSpeedIdc",                     m_cameraIsoSpeedIdc,                        0, "Indicates the camera ISO speed for daylight illumination")
-        ("SEIToneMapCameraIsoSpeedValue",                   m_cameraIsoSpeedValue,                    400, "Specifies the camera ISO speed for daylight illumination of Extended_ISO")
-        ("SEIToneMapExposureCompensationValueSignFlag",     m_exposureCompensationValueSignFlag,        0, "Specifies the sign of ExposureCompensationValue")
-        ("SEIToneMapExposureCompensationValueNumerator",    m_exposureCompensationValueNumerator,       0, "Specifies the numerator of ExposureCompensationValue")
-        ("SEIToneMapExposureCompensationValueDenomIdc",     m_exposureCompensationValueDenomIdc,        2, "Specifies the denominator of ExposureCompensationValue")
-        ("SEIToneMapRefScreenLuminanceWhite",               m_refScreenLuminanceWhite,                350, "Specifies reference screen brightness setting in units of candela per square metre")
-        ("SEIToneMapExtendedRangeWhiteLevel",               m_extendedRangeWhiteLevel,                800, "Indicates the luminance dynamic range")
-        ("SEIToneMapNominalBlackLevelLumaCodeValue",        m_nominalBlackLevelLumaCodeValue,          16, "Specifies luma sample value of the nominal black level assigned decoded pictures")
-        ("SEIToneMapNominalWhiteLevelLumaCodeValue",        m_nominalWhiteLevelLumaCodeValue,         235, "Specifies luma sample value of the nominal white level assigned decoded pictures")
-        ("SEIToneMapExtendedWhiteLevelLumaCodeValue",       m_extendedWhiteLevelLumaCodeValue,        300, "Specifies luma sample value of the extended dynamic range assigned decoded pictures")
+    ("SEIToneMappingInfo",             m_toneMappingInfoSEIEnabled,        0, "Control generation of Tone Mapping SEI messages")
+    ("SEIToneMapId",                   m_toneMapId,                        0, "Specifies Id of Tone Mapping SEI message for a given session")
+    ("SEIToneMapCancelFlag",           m_toneMapCancelFlag,                0, "Indicates that Tone Mapping SEI message cancels the persistance or follows")
+    ("SEIToneMapPersistenceFlag",      m_toneMapPersistenceFlag,           1, "Specifies the persistence of the Tone Mapping SEI message")
+    ("SEIToneMapCodedDataBitDepth",    m_toneMapCodedDataBitDepth,         8, "Specifies Coded Data BitDepth of Tone Mapping SEI messages")
+    ("SEIToneMapTargetBitDepth",       m_toneMapTargetBitDepth,            8, "Specifies Output BitDepth of Tome mapping function")
+    ("SEIToneMapModelId",              m_toneMapModelId,                   0, "Specifies Model utilized for mapping coded data into target_bit_depth range\n"
+    "\t0:  linear mapping with clipping\n"
+    "\t1:  sigmoidal mapping\n"
+    "\t2:  user-defined table mapping\n"
+    "\t3:  piece-wise linear mapping\n"
+    "\t4:  luminance dynamic range information ")
+    ("SEIToneMapMinValue",                              m_toneMapMinValue,                          0, "Specifies the minimum value in mode 0")
+    ("SEIToneMapMaxValue",                              m_toneMapMaxValue,                       1023, "Specifies the maxmum value in mode 0")
+    ("SEIToneMapSigmoidMidpoint",                       m_sigmoidMidpoint,                        512, "Specifies the centre point in mode 1")
+    ("SEIToneMapSigmoidWidth",                          m_sigmoidWidth,                           960, "Specifies the distance between 5% and 95% values of the target_bit_depth in mode 1")
+    ("SEIToneMapStartOfCodedInterval",                  cfg_startOfCodedInterval,          string(""), "Array of user-defined mapping table")
+    ("SEIToneMapNumPivots",                             m_numPivots,                                0, "Specifies the number of pivot points in mode 3")
+    ("SEIToneMapCodedPivotValue",                       cfg_codedPivotValue,               string(""), "Array of pivot point")
+    ("SEIToneMapTargetPivotValue",                      cfg_targetPivotValue,              string(""), "Array of pivot point")
+    ("SEIToneMapCameraIsoSpeedIdc",                     m_cameraIsoSpeedIdc,                        0, "Indicates the camera ISO speed for daylight illumination")
+    ("SEIToneMapCameraIsoSpeedValue",                   m_cameraIsoSpeedValue,                    400, "Specifies the camera ISO speed for daylight illumination of Extended_ISO")
+    ("SEIToneMapExposureCompensationValueSignFlag",     m_exposureCompensationValueSignFlag,        0, "Specifies the sign of ExposureCompensationValue")
+    ("SEIToneMapExposureCompensationValueNumerator",    m_exposureCompensationValueNumerator,       0, "Specifies the numerator of ExposureCompensationValue")
+    ("SEIToneMapExposureCompensationValueDenomIdc",     m_exposureCompensationValueDenomIdc,        2, "Specifies the denominator of ExposureCompensationValue")
+    ("SEIToneMapRefScreenLuminanceWhite",               m_refScreenLuminanceWhite,                350, "Specifies reference screen brightness setting in units of candela per square metre")
+    ("SEIToneMapExtendedRangeWhiteLevel",               m_extendedRangeWhiteLevel,                800, "Indicates the luminance dynamic range")
+    ("SEIToneMapNominalBlackLevelLumaCodeValue",        m_nominalBlackLevelLumaCodeValue,          16, "Specifies luma sample value of the nominal black level assigned decoded pictures")
+    ("SEIToneMapNominalWhiteLevelLumaCodeValue",        m_nominalWhiteLevelLumaCodeValue,         235, "Specifies luma sample value of the nominal white level assigned decoded pictures")
+    ("SEIToneMapExtendedWhiteLevelLumaCodeValue",       m_extendedWhiteLevelLumaCodeValue,        300, "Specifies luma sample value of the extended dynamic range assigned decoded pictures")
 #endif // if J0149_TONE_MAPPING_SEI
-        ("SEIFramePacking",                m_framePackingSEIEnabled,                 0, "Control generation of frame packing SEI messages")
-        ("SEIFramePackingType",            m_framePackingSEIType,                    0, "Define frame packing arrangement\n"
-        "\t0: checkerboard - pixels alternatively represent either frames\n"
-        "\t1: column alternation - frames are interlaced by column\n"
-        "\t2: row alternation - frames are interlaced by row\n"
-        "\t3: side by side - frames are displayed horizontally\n"
-        "\t4: top bottom - frames are displayed vertically\n"
-        "\t5: frame alternation - one frame is alternated with the other")
-        ("SEIFramePackingId",              m_framePackingSEIId,                      0, "Id of frame packing SEI message for a given session")
-        ("SEIFramePackingQuincunx",        m_framePackingSEIQuincunx,                0, "Indicate the presence of a Quincunx type video frame")
-        ("SEIFramePackingInterpretation",  m_framePackingSEIInterpretation,          0, "Indicate the interpretation of the frame pair\n"
-        "\t0: unspecified\n"
-        "\t1: stereo pair, frame0 represents left view\n"
-        "\t2: stereo pair, frame0 represents right view")
-        ("SEIDisplayOrientation",          m_displayOrientationSEIAngle,             0, "Control generation of display orientation SEI messages\n"
-        "\tN: 0 < N < (2^16 - 1) enable display orientation SEI message with anticlockwise_rotation = N and display_orientation_repetition_period = 1\n"
-        "\t0: disable")
-        ("SEITemporalLevel0Index",         m_temporalLevel0IndexSEIEnabled,          0, "Control generation of temporal level 0 index SEI messages")
-        ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
-        ("SEIDecodingUnitInfo",            m_decodingUnitInfoSEIEnabled,             0, "Control generation of decoding unit information SEI message.")
-        ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,               0, "Control generation of SOP description SEI messages")
-        ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
+    ("SEIFramePacking",                m_framePackingSEIEnabled,                 0, "Control generation of frame packing SEI messages")
+    ("SEIFramePackingType",            m_framePackingSEIType,                    0, "Define frame packing arrangement\n"
+    "\t0: checkerboard - pixels alternatively represent either frames\n"
+    "\t1: column alternation - frames are interlaced by column\n"
+    "\t2: row alternation - frames are interlaced by row\n"
+    "\t3: side by side - frames are displayed horizontally\n"
+    "\t4: top bottom - frames are displayed vertically\n"
+    "\t5: frame alternation - one frame is alternated with the other")
+    ("SEIFramePackingId",              m_framePackingSEIId,                      0, "Id of frame packing SEI message for a given session")
+    ("SEIFramePackingQuincunx",        m_framePackingSEIQuincunx,                0, "Indicate the presence of a Quincunx type video frame")
+    ("SEIFramePackingInterpretation",  m_framePackingSEIInterpretation,          0, "Indicate the interpretation of the frame pair\n"
+    "\t0: unspecified\n"
+    "\t1: stereo pair, frame0 represents left view\n"
+    "\t2: stereo pair, frame0 represents right view")
+    ("SEIDisplayOrientation",          m_displayOrientationSEIAngle,             0, "Control generation of display orientation SEI messages\n"
+    "\tN: 0 < N < (2^16 - 1) enable display orientation SEI message with anticlockwise_rotation = N and display_orientation_repetition_period = 1\n"
+    "\t0: disable")
+    ("SEITemporalLevel0Index",         m_temporalLevel0IndexSEIEnabled,          0, "Control generation of temporal level 0 index SEI messages")
+    ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
+    ("SEIDecodingUnitInfo",            m_decodingUnitInfoSEIEnabled,             0, "Control generation of decoding unit information SEI message.")
+    ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,               0, "Control generation of SOP description SEI messages")
+    ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
     ;
 
     for (Int i = 1; i < MAX_GOP + 1; i++)
