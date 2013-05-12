@@ -126,7 +126,7 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
         xWriteSEIRecoveryPoint(*static_cast<const SEIRecoveryPoint*>(&sei));
         break;
     case SEI::FRAME_PACKING:
-        xWriteSEIFramePacking(*static_cast<const SEIFramePacking*>(&sei));
+        /*xWriteSEIFramePacking(*static_cast<const SEIFramePacking*>(&sei));*/
         break;
     case SEI::DISPLAY_ORIENTATION:
         xWriteSEIDisplayOrientation(*static_cast<const SEIDisplayOrientation*>(&sei));
@@ -388,42 +388,6 @@ Void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
     WRITE_SVLC(sei.m_recoveryPocCnt,    "recovery_poc_cnt");
     WRITE_FLAG(sei.m_exactMatchingFlag, "exact_matching_flag");
     WRITE_FLAG(sei.m_brokenLinkFlag,    "broken_link_flag");
-    xWriteByteAlign();
-}
-
-Void SEIWriter::xWriteSEIFramePacking(const SEIFramePacking& sei)
-{
-    WRITE_UVLC(sei.m_arrangementId,                  "frame_packing_arrangement_id");
-    WRITE_FLAG(sei.m_arrangementCancelFlag,          "frame_packing_arrangement_cancel_flag");
-
-    if (sei.m_arrangementCancelFlag == 0)
-    {
-        WRITE_CODE(sei.m_arrangementType, 7,           "frame_packing_arrangement_type");
-
-        WRITE_FLAG(sei.m_quincunxSamplingFlag,         "quincunx_sampling_flag");
-        WRITE_CODE(sei.m_contentInterpretationType, 6, "content_interpretation_type");
-        WRITE_FLAG(sei.m_spatialFlippingFlag,          "spatial_flipping_flag");
-        WRITE_FLAG(sei.m_frame0FlippedFlag,            "frame0_flipped_flag");
-        WRITE_FLAG(sei.m_fieldViewsFlag,               "field_views_flag");
-        WRITE_FLAG(sei.m_currentFrameIsFrame0Flag,     "current_frame_is_frame0_flag");
-
-        WRITE_FLAG(sei.m_frame0SelfContainedFlag,      "frame0_self_contained_flag");
-        WRITE_FLAG(sei.m_frame1SelfContainedFlag,      "frame1_self_contained_flag");
-
-        if (sei.m_quincunxSamplingFlag == 0 && sei.m_arrangementType != 5)
-        {
-            WRITE_CODE(sei.m_frame0GridPositionX, 4,     "frame0_grid_position_x");
-            WRITE_CODE(sei.m_frame0GridPositionY, 4,     "frame0_grid_position_y");
-            WRITE_CODE(sei.m_frame1GridPositionX, 4,     "frame1_grid_position_x");
-            WRITE_CODE(sei.m_frame1GridPositionY, 4,     "frame1_grid_position_y");
-        }
-
-        WRITE_CODE(sei.m_arrangementReservedByte, 8,   "frame_packing_arrangement_reserved_byte");
-        WRITE_FLAG(sei.m_arrangementPersistenceFlag,   "frame_packing_arrangement_persistence_flag");
-    }
-
-    WRITE_FLAG(sei.m_upsampledAspectRatio,           "upsampled_aspect_ratio");
-
     xWriteByteAlign();
 }
 

@@ -200,11 +200,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setBufferingPeriodSEIEnabled(m_bufferingPeriodSEIEnabled);
     m_cTEncTop.setPictureTimingSEIEnabled(m_pictureTimingSEIEnabled);
     
-    m_cTEncTop.setFramePackingArrangementSEIEnabled(m_framePackingSEIEnabled);
-    m_cTEncTop.setFramePackingArrangementSEIType(m_framePackingSEIType);
-    m_cTEncTop.setFramePackingArrangementSEIId(m_framePackingSEIId);
-    m_cTEncTop.setFramePackingArrangementSEIQuincunx(m_framePackingSEIQuincunx);
-    m_cTEncTop.setFramePackingArrangementSEIInterpretation(m_framePackingSEIInterpretation);
     m_cTEncTop.setDisplayOrientationSEIAngle(m_displayOrientationSEIAngle);
     m_cTEncTop.setTemporalLevel0IndexSEIEnabled(m_temporalLevel0IndexSEIEnabled);
     m_cTEncTop.setGradualDecodingRefreshInfoEnabled(m_gradualDecodingRefreshInfoEnabled);

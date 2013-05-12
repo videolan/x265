@@ -197,11 +197,6 @@ typedef struct
     int       m_bufferingPeriodSEIEnabled;
     int       m_pictureTimingSEIEnabled;
 
-    int       m_framePackingSEIEnabled;
-    int       m_framePackingSEIType;
-    int       m_framePackingSEIId;
-    int       m_framePackingSEIQuincunx;
-    int       m_framePackingSEIInterpretation;
     int       m_displayOrientationSEIAngle;
     int       m_temporalLevel0IndexSEIEnabled;
     int       m_gradualDecodingRefreshInfoEnabled;

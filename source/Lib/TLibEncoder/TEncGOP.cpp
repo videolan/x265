@@ -171,32 +171,6 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
     return seiActiveParameterSets;
 }
 
-SEIFramePacking* TEncGOP::xCreateSEIFramePacking()
-{
-    SEIFramePacking *seiFramePacking = new SEIFramePacking();
-
-    seiFramePacking->m_arrangementId = m_pcCfg->getFramePackingArrangementSEIId();
-    seiFramePacking->m_arrangementCancelFlag = 0;
-    seiFramePacking->m_arrangementType = m_pcCfg->getFramePackingArrangementSEIType();
-    assert((seiFramePacking->m_arrangementType > 2) && (seiFramePacking->m_arrangementType < 6));
-    seiFramePacking->m_quincunxSamplingFlag = m_pcCfg->getFramePackingArrangementSEIQuincunx();
-    seiFramePacking->m_contentInterpretationType = m_pcCfg->getFramePackingArrangementSEIInterpretation();
-    seiFramePacking->m_spatialFlippingFlag = 0;
-    seiFramePacking->m_frame0FlippedFlag = 0;
-    seiFramePacking->m_fieldViewsFlag = (seiFramePacking->m_arrangementType == 2);
-    seiFramePacking->m_currentFrameIsFrame0Flag = ((seiFramePacking->m_arrangementType == 5) && m_iNumPicCoded & 1);
-    seiFramePacking->m_frame0SelfContainedFlag = 0;
-    seiFramePacking->m_frame1SelfContainedFlag = 0;
-    seiFramePacking->m_frame0GridPositionX = 0;
-    seiFramePacking->m_frame0GridPositionY = 0;
-    seiFramePacking->m_frame1GridPositionX = 0;
-    seiFramePacking->m_frame1GridPositionY = 0;
-    seiFramePacking->m_arrangementReservedByte = 0;
-    seiFramePacking->m_arrangementPersistenceFlag = true;
-    seiFramePacking->m_upsampledAspectRatio = 0;
-    return seiFramePacking;
-}
-
 SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
 {
     SEIDisplayOrientation *seiDisplayOrientation = new SEIDisplayOrientation();
@@ -225,17 +199,6 @@ Void TEncGOP::xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit
         m_activeParameterSetSEIPresentInAU = true;
     }
 
-    if (m_pcCfg->getFramePackingArrangementSEIEnabled())
-    {
-        SEIFramePacking *sei = xCreateSEIFramePacking();
-
-        nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
-    }
     if (m_pcCfg->getDisplayOrientationSEIAngle())
     {
         SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();

@@ -206,11 +206,6 @@ protected:
     Int       m_bufferingPeriodSEIEnabled;
     Int       m_pictureTimingSEIEnabled;
     Int       m_recoveryPointSEIEnabled;
-    Int       m_framePackingSEIEnabled;
-    Int       m_framePackingSEIType;
-    Int       m_framePackingSEIId;
-    Int       m_framePackingSEIQuincunx;
-    Int       m_framePackingSEIInterpretation;
     Int       m_displayOrientationSEIAngle;
     Int       m_temporalLevel0IndexSEIEnabled;
     Int       m_gradualDecodingRefreshInfoEnabled;
@@ -559,26 +554,6 @@ public:
     Void  setRecoveryPointSEIEnabled(Int b)                { m_recoveryPointSEIEnabled = b; }
 
     Int   getRecoveryPointSEIEnabled()                     { return m_recoveryPointSEIEnabled; }
-
-    Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
-
-    Int   getFramePackingArrangementSEIEnabled()           { return m_framePackingSEIEnabled; }
-
-    Void  setFramePackingArrangementSEIType(Int b)         { m_framePackingSEIType = b; }
-
-    Int   getFramePackingArrangementSEIType()              { return m_framePackingSEIType; }
-
-    Void  setFramePackingArrangementSEIId(Int b)           { m_framePackingSEIId = b; }
-
-    Int   getFramePackingArrangementSEIId()                { return m_framePackingSEIId; }
-
-    Void  setFramePackingArrangementSEIQuincunx(Int b)     { m_framePackingSEIQuincunx = b; }
-
-    Int   getFramePackingArrangementSEIQuincunx()          { return m_framePackingSEIQuincunx; }
-
-    Void  setFramePackingArrangementSEIInterpretation(Int b)  { m_framePackingSEIInterpretation = b; }
-
-    Int   getFramePackingArrangementSEIInterpretation()    { return m_framePackingSEIInterpretation; }
 
     Void  setDisplayOrientationSEIAngle(Int b)             { m_displayOrientationSEIAngle = b; }
 

@@ -162,7 +162,6 @@ protected:
     Double xCalculateRVM();
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
-    SEIFramePacking*        xCreateSEIFramePacking();
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
     Void xCreateLeadingSEIMessages( /*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
