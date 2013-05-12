@@ -8,7 +8,6 @@
 
 	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE ^) >> cacheoutput.txt
 	echo SET(HIGH_BIT_DEPTH OFF CACHE BOOL "Use 8bit pixels internally" FORCE ^) >> cacheoutput.txt
-	echo SET(ENABLE_PRIMITIVES ON CACHE BOOL "Enable use of optimized encoder primitives" FORCE ^) >> cacheoutput.txt
 	
 	cmake -G %makefile%  -C cacheoutput.txt ..\..\..\source 
 
@@ -38,7 +37,6 @@
    	 
 	echo SET(ENABLE_TESTS OFF CACHE BOOL "Enable Unit Tests" FORCE^) >> cacheoutput.txt
 	echo SET(HIGH_BIT_DEPTH OFF CACHE BOOL "Use 8bit pixels internally" FORCE ^) >> cacheoutput.txt
-	echo SET(ENABLE_PRIMITIVES OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> cacheoutput.txt
 
 	cmake -G %makefile% -C cacheoutput.txt ..\..\..\source 
 
@@ -69,7 +67,6 @@ cd "%builddir%"
 	
 	echo SET(ENABLE_TESTS ON CACHE BOOL "Enable Unit Tests" FORCE ^) >> cacheoutput.txt
 	echo SET(HIGH_BIT_DEPTH ON CACHE BOOL "Use 16bit pixels internally" FORCE ^) >> cacheoutput.txt
-	echo SET(ENABLE_PRIMITIVES ON CACHE BOOL "Enable use of optimized encoder primitives" FORCE ^) >> cacheoutput.txt
 	
 	cmake -G %makefile%  -C cacheoutput.txt ..\..\..\source 
 
@@ -99,7 +96,6 @@ cd "%builddir%"
    	
 	echo SET(ENABLE_TESTS OFF CACHE BOOL "Enable Unit Tests" FORCE^) >> cacheoutput.txt
 	echo SET(HIGH_BIT_DEPTH ON CACHE BOOL "Use 16bit pixels internally" FORCE ^) >> cacheoutput.txt
-	echo SET(ENABLE_PRIMITIVES OFF CACHE BOOL "Enable use of optimized encoder primitives" FORCE^) >> cacheoutput.txt
 	
 	cmake -G %makefile% -C cacheoutput.txt ..\..\..\source 
 

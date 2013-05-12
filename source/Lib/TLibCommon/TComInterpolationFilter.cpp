@@ -167,7 +167,6 @@ Void TComInterpolationFilter::filterCopy(Int bitDepth, Short *src, Int srcStride
 template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
 Void TComInterpolationFilter::filter(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Short const *coeff)
 {
-#if ENABLE_PRIMITIVES
     if (!isVertical)
     {
         if (N == 8 && !isFirst && !isLast)
@@ -269,8 +268,6 @@ Void TComInterpolationFilter::filter(Int bitDepth, Short *src, Int srcStride, Sh
             return;
         }
     }
-
-#endif     // if ENABLE_PRIMITIVES
 
     Short c[8];
 

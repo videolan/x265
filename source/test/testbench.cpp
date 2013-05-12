@@ -64,7 +64,6 @@ void TestHarness::alignedFree(void *ptr)
 
 int main(int argc, char *argv[])
 {
-#if ENABLE_PRIMITIVES
     int cpuid = CpuIDDetect();
 
     for (int i = 1; i < argc - 1; i += 2)
@@ -151,9 +150,5 @@ int main(int argc, char *argv[])
     }
 
     printf("\n");
-#else // if ENABLE_PRIMITIVES
-    argc = 0;
-    printf("%s is configured without performance primitives, nothing to test\n", argv[argc]);
-#endif // if ENABLE_PRIMITIVES
     return 0;
 }

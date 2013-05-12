@@ -27,7 +27,6 @@
 
 using namespace x265;
 
-#if ENABLE_PRIMITIVES
 void MotionEstimate::setSourcePU(int offset, int width, int height)
 {
     int size = PartitionFromSizes(width, height);
@@ -203,4 +202,3 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     outQMv = bmv;
     return bcost >> 4;
 }
-#endif

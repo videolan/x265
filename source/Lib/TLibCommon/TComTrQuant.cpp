@@ -642,33 +642,18 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_8](block, tmp, shift_1st, iHeight);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_8](tmp, coeff, shift_2nd, iWidth);
-#else
-        partialButterfly8(block, tmp, shift_1st, iHeight);
-        partialButterfly8(tmp, coeff, shift_2nd, iWidth);
-#endif
     }
     else if (iWidth == 16 && iHeight == 16)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, iHeight);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, iWidth);
-#else
-        partialButterfly16(block, tmp, shift_1st, iHeight);
-        partialButterfly16(tmp, coeff, shift_2nd, iWidth);
-#endif
     }
     else if (iWidth == 32 && iHeight == 32)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, iHeight);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, iWidth);
-#else
-        partialButterfly32(block, tmp, shift_1st, iHeight);
-        partialButterfly32(tmp, coeff, shift_2nd, iWidth);
-#endif
     }
 }
 
@@ -689,54 +674,29 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     {
         if (uiMode != REG_DCT)
         {
-#ifdef ENABLE_PRIMITIVES
             x265::primitives.inversedst(coeff, tmp, shift_1st);
             x265::primitives.inversedst(tmp, block, shift_2nd);
-#else
-            fastInverseDst(coeff, tmp, shift_1st); // Inverse DST by FAST Algorithm, coeff input, tmp output
-            fastInverseDst(tmp, block, shift_2nd); // Inverse DST by FAST Algorithm, tmp input, coeff output
-#endif
         }
         else
         {
-#ifdef ENABLE_PRIMITIVES
             x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](coeff, tmp, shift_1st, iWidth);
             x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](tmp, block, shift_2nd, iHeight);
-#else
-            partialButterflyInverse4(coeff, tmp, shift_1st, iWidth);
-            partialButterflyInverse4(tmp, block, shift_2nd, iHeight);
-#endif
         }
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](coeff, tmp, shift_1st, iWidth);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](tmp, block, shift_2nd, iHeight);
-#else
-        partialButterflyInverse8(coeff, tmp, shift_1st, iWidth);
-        partialButterflyInverse8(tmp, block, shift_2nd, iHeight);
-#endif
     }
     else if (iWidth == 16 && iHeight == 16)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_16](coeff, tmp, shift_1st, iWidth);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_16](tmp, block, shift_2nd, iHeight);
-#else
-        partialButterflyInverse16(coeff, tmp, shift_1st, iWidth);
-        partialButterflyInverse16(tmp, block, shift_2nd, iHeight);
-#endif
     }
     else if (iWidth == 32 && iHeight == 32)
     {
-#ifdef ENABLE_PRIMITIVES
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](coeff, tmp, shift_1st, iWidth);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](tmp, block, shift_2nd, iHeight);
-#else
-        partialButterflyInverse32(coeff, tmp, shift_1st, iWidth);
-        partialButterflyInverse32(tmp, block, shift_2nd, iHeight);
-#endif
     }
 }
 

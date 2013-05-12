@@ -328,7 +328,11 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     Int  iStrideCur = m_cDistParam.iStrideCur * iSubStep;
     Int  iStrideOrg = m_cDistParam.iStrideOrg * iSubStep;
 
-#if ENABLE_PRIMITIVES
+    // TODO: SJB - I have left this path enabled for the short term so we do not see
+    // a performance loss before ME is completely replaced.  But when we begin to
+    // implement weighted prediction we must disable our primitive here and fall back
+    // to DistFunc() and its weighted functions
+#if 1
     int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
     uiSad = (x265::primitives.sad[part]((pixel*)m_fencbuf, FENC_STRIDE * iSubStep, (pixel*)piCur, iStrideCur) << iSubShift) >>
         DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
@@ -2349,7 +2353,6 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Bool  bAboveAvail = false;
     Bool  bLeftAvail  = false;
 
-#if ENABLE_PRIMITIVES
     x265::pixelcmp sa8d;
     switch (uiWidth)
     {
@@ -2372,7 +2375,6 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     }
 
     assert(uiWidth == uiHeight);
-#endif // if ENABLE_PRIMITIVES
 
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
     pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
@@ -2391,13 +2393,8 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         predIntraChromaAng(pPatChromaV, uiMode, piPredV, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
 
         //--- get SAD ---
-#if ENABLE_PRIMITIVES
         UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
-            sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
-#else
-        UInt uiSAD   = m_pcRdCost->calcHAD(g_bitDepthC, piOrgU, uiStride, piPredU, uiStride, uiWidth, uiHeight);
-        uiSAD       += m_pcRdCost->calcHAD(g_bitDepthC, piOrgV, uiStride, piPredV, uiStride, uiWidth, uiHeight);
-#endif
+                     sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
 
         //--- check ---
         if (uiSAD < uiMinSAD)
@@ -2431,7 +2428,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     UInt    CandNum;
     Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
-#if ENABLE_PRIMITIVES
     x265::pixelcmp sa8d;
     switch (uiWidth)
     {
@@ -2457,7 +2453,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     }
 
     assert(uiWidth == uiHeight);
-#endif // if ENABLE_PRIMITIVES
 
     //===== set QP and clear Cbf =====
     if (pcCU->getSlice()->getPPS()->getUseDQP() == true)
@@ -2506,11 +2501,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
 
                 // use hadamard transform here
-#if ENABLE_PRIMITIVES
                 UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
-#else
-                UInt uiSad = m_pcRdCost->calcHAD(g_bitDepthY, piOrg, uiStride, piPred, uiStride, uiWidth, uiHeight);
-#endif
 
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
                 Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();
@@ -3175,10 +3166,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     UInt          biPDistTemp = MAX_INT;
 
     /* TODO: this could be as high as TEncSlice::compressSlice() */
-#if ENABLE_PRIMITIVES
     TComPicYuv *fenc = pcCU->getSlice()->getPic()->getPicYuvOrg();
     m_me.setSourcePlanes((pixel*)fenc->getLumaAddr(), (pixel*)fenc->getCbAddr(), (pixel*)fenc->getCrAddr(), fenc->getStride(), fenc->getCStride());
-#endif
 
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
@@ -3211,13 +3200,12 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
 
-#if ENABLE_PRIMITIVES
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
 
-        // m_fencbuf can go away when HM SAD is removed
+        // TODO: m_fencbuf can go away when HM SAD is removed
         x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)PU, fenc->getStride());
-#endif
+
         Bool bTestNormalMC = true;
 
         if (bUseMRG && pcCU->getWidth(0) > 8 && iNumPart == 2)
@@ -3899,7 +3887,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     else
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
-#if ENABLE_PRIMITIVES
+    // TODO: MotionReference should be a member of TComPicYUV
     x265::MotionReference ref;
     TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
     for (int y = 0; y < 4; y++)
@@ -3925,7 +3913,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
         return;
     }
-#endif // if ENABLE_PRIMITIVES
 
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setPredictor(*pcMvPred);
@@ -5447,47 +5434,24 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
     primitives.cpyblock(width, height, (pixel*)dstPtr, dstStride, (pixel*)(srcPtr + halfFilterSize * srcStride + 1), srcStride);
 
     intPtr = filteredBlockTmp[0].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr,
                                    intStride, width + 1, height + filterSize);
-#else
-    filterConvertPelToShort(g_bitDepthY, srcPtr, srcStride, intPtr,
-                            intStride, width + 1, height + filterSize);
-#endif
 
     intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
     dstPtr = m_filteredBlock[2][0].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr,
                                             dstStride, width, height + 1, m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr,
-                                         dstStride, width, height + 1, m_lumaFilter[2]);
-#endif
 
     intPtr = filteredBlockTmp[2].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + 1, height + filterSize,  m_lumaFilter[2]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + 1,
-                                           height + filterSize,  m_lumaFilter[2]);
-#endif
 
     intPtr = filteredBlockTmp[2].getLumaAddr() + halfFilterSize * intStride;
     dstPtr = m_filteredBlock[0][2].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + 1, height + 0);
-#else
-    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 0);
-#endif
 
     intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[2][2].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + 1, height + 1, m_lumaFilter[2]);
-#endif
 }
 
 /**
@@ -5529,11 +5493,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         srcPtr += 1;
     }
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[1]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[1]);
-#endif
 
     // Horizontal filter 3/4
     srcPtr = pattern->getROIY() - halfFilterSize * srcStride - 1;
@@ -5546,11 +5506,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         srcPtr += 1;
     }
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[3]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width, extHeight, m_lumaFilter[3]);
-#endif
 
     // Generate @ 1,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
@@ -5559,20 +5515,12 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         intPtr += intStride;
     }
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[3][1].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#endif
 
     if (halfPelRef.getVer() != 0)
     {
@@ -5583,11 +5531,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[2]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[2]);
-#endif
 
         // Generate @ 2,3
         intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
@@ -5596,31 +5540,19 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[2]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[2]);
-#endif
     }
     else
     {
         // Generate @ 0,1
         intPtr = filteredBlockTmp[1].getLumaAddr() + halfFilterSize * intStride;
         dstPtr = m_filteredBlock[0][1].getLumaAddr();
-#if ENABLE_PRIMITIVES
         primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height);
-#else
-        filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height);
-#endif
 
         // Generate @ 0,3
         intPtr = filteredBlockTmp[3].getLumaAddr() + halfFilterSize * intStride;
         dstPtr = m_filteredBlock[0][3].getLumaAddr();
-#if ENABLE_PRIMITIVES
         primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height);
-#else
-        filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height);
-#endif
     }
 
     if (halfPelRef.getHor() != 0)
@@ -5637,11 +5569,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
             intPtr += intStride;
         }
 
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#endif
 
         // Generate @ 3,2
         intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
@@ -5654,11 +5582,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#endif
     }
     else
     {
@@ -5669,11 +5593,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#endif
 
         // Generate @ 3,0
         intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
@@ -5682,11 +5602,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
         {
             intPtr += intStride;
         }
-#if ENABLE_PRIMITIVES
         primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#else
-        filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#endif
     }
 
     // Generate @ 1,3
@@ -5696,20 +5612,12 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Boo
     {
         intPtr += intStride;
     }
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,3
     intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[3][3].getLumaAddr();
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width, height, m_lumaFilter[3]);
-#endif
 }
 
 /** set wp tables

@@ -344,173 +344,94 @@ Void TComPicYuv::generateLumaHQpel()
     /* No need to calculate m_filteredBlock[0][0]. Entire Luma block is copied to it in extendPicBorder() */
 
     intPtr = filteredBlockTmp[0] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr,
                                    intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
-#else
-    filterConvertPelToShort(g_bitDepthY, srcPtr, srcStride, intPtr,
-                            intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
-#endif
 
     intPtr = filteredBlockTmp[0] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[2][0] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr,
                                             dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr,
-                                         dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#endif
 
     intPtr = filteredBlockTmp[2] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8,  TComPrediction::m_lumaFilter[2]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8,  TComPrediction::m_lumaFilter[2]);
-#endif
 
     intPtr = filteredBlockTmp[2] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[0][2] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#else
-    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#endif
 
     intPtr = filteredBlockTmp[2] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[2][2] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#endif
 
     /* Generate QPels */
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     intPtr = filteredBlockTmp[1] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[1]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[1]);
-#endif
 
     srcPtr = getLumaAddr() - (tmpMarginY + 4) * srcStride - (tmpMarginX + 4);
     intPtr = filteredBlockTmp[3] + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[3]);
-#else
-    filterHorizontal_pel_short<NTAPS_LUMA>(g_bitDepthY, srcPtr, srcStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[3]);
-#endif
 
     // Generate @ 1,1
     intPtr = filteredBlockTmp[1]  + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[1][1] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,1
     intPtr = filteredBlockTmp[1] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[3][1] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#endif
 
     // Generate @ 2,1
     intPtr = filteredBlockTmp[1] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[2][1] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#endif
 
     // Generate @ 2,3
     intPtr = filteredBlockTmp[3] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[2][3] - tmpMarginY * dstStride - tmpMarginX;
 
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-#endif
 
     // Generate @ 0,1
     intPtr = filteredBlockTmp[1]  + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[0][1]  - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#else
-    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#endif
 
     // Generate @ 0,3
     intPtr = filteredBlockTmp[3] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[0][3] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#else
-    filterConvertShortToPel(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-#endif
 
     // Generate @ 1,2
     intPtr = filteredBlockTmp[2] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[1][2] - tmpMarginY * dstStride - tmpMarginX;
-
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,2
     intPtr = filteredBlockTmp[2] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[3][2] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#endif
+
     // Generate @ 1,0
     intPtr = filteredBlockTmp[0] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[1][0] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,0
     intPtr = filteredBlockTmp[0] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[3][0] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#endif
 
-// Generate @ 1,3
+    // Generate @ 1,3
     intPtr = filteredBlockTmp[3] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[1][3] - tmpMarginY * dstStride - tmpMarginX;
-
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-#endif
 
     // Generate @ 3,3
     intPtr = filteredBlockTmp[3] + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
     dstPtr = m_filteredBlockOrgY[3][3] - tmpMarginY * dstStride - tmpMarginX;
-#if ENABLE_PRIMITIVES
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#else
-    filterVertical_short_pel<NTAPS_LUMA>(g_bitDepthY, intPtr, intStride, dstPtr, dstStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-#endif
 
     for (int i = 0; i < 4; i++)
     {

@@ -69,12 +69,10 @@ private:
 
     x265::MotionEstimate m_me;
     x265::BitCost        m_bc;
-#if ENABLE_PRIMITIVES
 #if _M_X64
     ALIGN_VAR_32(pixel, m_fencbuf[64 * FENC_STRIDE]);
 #else
     ALIGN_VAR_16(pixel, m_fencbuf[64 * FENC_STRIDE]);
-#endif
 #endif
 
     TCoeff**        m_ppcQTTempCoeffY;

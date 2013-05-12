@@ -33,7 +33,6 @@
 namespace x265 {
 // x265 private namespace
 
-#if ENABLE_PRIMITIVES
 //                           4   8  12  16/48   24     32/64
 static int8_t psize[16] = {  0,  1,  2,  3, -1,  4, -1, 5,
                             -1, -1, -1,  6, -1, -1, -1, 7 };
@@ -69,8 +68,6 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_IPredPrimitives(p);      // IntraPred.cpp
 }
 
-#endif // if ENABLE_PRIMITIVES
-
 /* cpuid == 0 - auto-detect CPU type, else
  * cpuid > 0 -  force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
@@ -78,11 +75,9 @@ void SetupPrimitives(int cpuid)
 {
     if (cpuid < 0)
     {
-#if ENABLE_PRIMITIVES
         if (primitives.sad[0])
             return;
         else
-#endif
             cpuid = 0;
     }
     if (cpuid == 0)
@@ -92,7 +87,6 @@ void SetupPrimitives(int cpuid)
 
     fprintf(stdout, "x265: performance primitives:");
 
-#if ENABLE_PRIMITIVES
     Setup_C_Primitives(primitives);
 
 #if ENABLE_VECTOR_PRIMITIVES
@@ -104,10 +98,6 @@ void SetupPrimitives(int cpuid)
     Setup_Assembly_Primitives(primitives, cpuid);
     fprintf(stdout, " assembly");
 #endif
-
-#else // if ENABLE_PRIMITIVES
-    fprintf(stdout, " disabled!");
-#endif // if ENABLE_PRIMITIVES
 
     fprintf(stdout, "\n");
 }
