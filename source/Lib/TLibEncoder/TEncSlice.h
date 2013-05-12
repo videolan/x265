@@ -93,9 +93,6 @@ private:
     UInt64                  m_uiPicTotalBits;                   ///< total bits for the picture
     UInt64                  m_uiPicDist;                        ///< total distortion for the picture
     Double                  m_dPicRdCost;                       ///< picture-level RD cost
-    Double*                 m_pdRdPicLambda;                    ///< array of lambda candidates
-    Double*                 m_pdRdPicQp;                        ///< array of picture QP candidates (double-type for lambda)
-    Int*                    m_piRdPicQp;                        ///< array of picture QP candidates (Int-type)
     TEncBinCABAC*           m_pcBufferBinCoderCABACs;           ///< line of bin coder CABAC
     TEncSbac*               m_pcBufferSbacCoders;               ///< line to store temporary contexts
     TEncBinCABAC*           m_pcBufferLowLatBinCoderCABACs;     ///< dependent tiles: line of bin coder CABAC
