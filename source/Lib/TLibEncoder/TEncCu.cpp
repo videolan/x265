@@ -402,12 +402,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     UInt uiTPelY   = rpcBestCU->getCUPelY();
     UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
 
-    Int iMinQP = rpcTempCU->getQP(0);
-    if (m_pcEncCfg->getUseRateCtrl())
-    {
-        iMinQP = m_pcRateCtrl->getRCQP();
-    }
-    Int iQP = iMinQP;
+    Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
