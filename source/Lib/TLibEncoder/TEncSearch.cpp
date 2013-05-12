@@ -768,7 +768,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
         m_cDistParam.pCur = piRefPos;
         m_cDistParam.bitDepth = g_bitDepthY;
         uiDist = m_cDistParam.DistFunc(&m_cDistParam);
-        x264_cpu_emms();
         uiDist += m_pcRdCost->getCost(cMvTest.getHor(), cMvTest.getVer());
 
         if (uiDist < uiDistBest)
@@ -3025,7 +3024,6 @@ Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, I
                              m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride(),
                              iWidth, iHeight, m_pcEncCfg->getUseHADME());
     ruiErr = cDistParam.DistFunc(&cDistParam);
-    x264_cpu_emms();
 }
 
 /** estimation of best merge coding
