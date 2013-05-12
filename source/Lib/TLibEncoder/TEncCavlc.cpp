@@ -572,9 +572,6 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
         bitsSliceSegmentAddress++;
     }
 
-    Int ctuAddress;
-        // Calculate slice address
-        ctuAddress = 0;
     //write slice address
     Int sliceSegmentAddress = 0;
 

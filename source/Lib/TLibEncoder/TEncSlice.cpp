@@ -765,20 +765,16 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
     UInt uiTileCol      = 0;
-    UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
-    uiTileStartLCU = 0;
-
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
          uiEncCUOrder < (uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
          uiCUAddr = (++uiEncCUOrder))
     {
         uiTileCol = 0; // what column of tiles are we in?
-        uiTileStartLCU = 0;
         uiTileLCUX = 0;
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
         uiCol     = uiCUAddr % uiWidthInLCUs;
@@ -916,11 +912,9 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
 
     UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
 
-    uiBoundingCUAddrSlice     = uiNumberOfCUsInFrame;
+    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame;
     {
-        UInt uiCUAddrIncrement;
-        uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-        uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+        uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
         // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
         pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
@@ -930,9 +924,7 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     UInt boundingCUAddrSliceSegment;
     boundingCUAddrSliceSegment = uiNumberOfCUsInFrame;
     {
-        UInt uiCUAddrIncrement;
-        uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
-        boundingCUAddrSliceSegment    = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+        boundingCUAddrSliceSegment = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
         // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
         pcSlice->setSliceSegmentCurEndCUAddr(boundingCUAddrSliceSegment);
@@ -943,26 +935,6 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
         boundingCUAddrSliceSegment = uiBoundingCUAddrSlice;
         pcSlice->setSliceSegmentCurEndCUAddr(uiBoundingCUAddrSlice);
     }
-
-    //calculate real dependent slice start address
-    UInt uiInternalAddress = 0;
-    UInt uiExternalAddress = 0;
-    UInt uiPosX = 0;
-    UInt uiPosY = 0;
-    UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
-    UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
-
-    UInt uiRealStartAddress = 0;
-
-    //calculate real slice start address
-    uiInternalAddress = 0;
-    uiExternalAddress = 0;
-    uiPosX = 0;
-    uiPosY = 0;
-    uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
-    uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
-
-    uiRealStartAddress = 0;
 
     // Make a joint decision based on reconstruction and dependent slice bounds
     startCUAddr    = 0;

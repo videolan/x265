@@ -3358,20 +3358,18 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
     Bool bLCURBoundary = false, bLCUBBoundary = false, bLCUTBoundary = false, bLCULBoundary = false;
     Bool* pbAvailBorder;
     Bool* pbAvail;
-    UInt rTLSU, rBRSU, widthSU, heightSU;
+    UInt rTLSU, rBRSU, widthSU;
     UInt rTRefSU = 0, rBRefSU = 0, rLRefSU = 0, rRRefSU = 0;
     Int* pRRefMapLCU = NULL;
     Int* pLRefMapLCU = NULL;
     Int* pTRefMapLCU = NULL;
     Int* pBRefMapLCU = NULL;
-    Int  sliceID;
     UInt numSGU = (UInt)m_vNDFBlock.size();
 
     for (Int i = 0; i < numSGU; i++)
     {
         NDBFBlockInfo& rSGU = m_vNDFBlock[i];
 
-        sliceID = rSGU.sliceID;
         uiLPelX = rSGU.posX;
         uiTPelY = rSGU.posY;
         width   = rSGU.width;
@@ -3379,7 +3377,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
         rTLSU     = g_auiZscanToRaster[rSGU.startSU];
         rBRSU     = g_auiZscanToRaster[rSGU.endSU];
         widthSU   = rSGU.widthSU;
-        heightSU  = rSGU.heightSU;
 
         pbAvailBorder = rSGU.isBorderAvailable;
 
