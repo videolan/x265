@@ -438,7 +438,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 rpcTempCU->initEstData(uiDepth, iQP);
 
                 // fast encoder decision for early skip
-                if (m_pcEncCfg->getUseFastEnc())
                 {
                     Int iIdx = g_aucConvertToBit[rpcBestCU->getWidth(0)];
                     if (aiNum[iIdx] > 5 && fRD_Skip < EARLY_SKIP_THRES * afCost[iIdx] / aiNum[iIdx])
@@ -653,7 +652,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         rpcBestCU->getTotalCost()  = CALCRDCOST(rpcBestCU->getTotalBits(), rpcBestCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 
         // accumulate statistics for early skip
-        if (m_pcEncCfg->getUseFastEnc())
         {
             if (rpcBestCU->isSkipped(0))
             {

@@ -397,7 +397,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
         "\t0: disable")
         ("SEIpictureDigest",            m_decodedPictureHashSEIEnabled, 0, "deprecated alias for SEIDecodedPictureHash")
         ("TMVPMode", m_TMVPModeId, 1, "TMVP mode 0: TMVP disable for all slices. 1: TMVP enable for all slices (default) 2: TMVP enable for certain slices only")
-        ("FEN", m_bUseFastEnc, 0, "fast encoder setting")
         ("ECU", m_bUseEarlyCU, 0, "Early CU setting")
         ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
         ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
@@ -1275,7 +1274,6 @@ Void TAppEncCfg::xPrintParameter()
     printf("RDQTS:%d ", m_useRDOQTS);
     printf("RDpenalty:%d ", m_rdPenalty);
     printf("ASR:%d ", m_bUseASR);
-    printf("FEN:%d ", m_bUseFastEnc);
     printf("ECU:%d ", m_bUseEarlyCU);
     printf("FDM:%d ", m_useFastDecisionForMerge);
     printf("CFM:%d ", m_bUseCbfFastMode);

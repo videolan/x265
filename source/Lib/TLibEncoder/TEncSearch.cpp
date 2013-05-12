@@ -309,7 +309,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     m_cDistParam.iSubShift = 0;
 
     // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
-    if (m_pcEncCfg->getUseFastEnc())
     {
         if (m_cDistParam.iRows > 12)
         {
@@ -3371,7 +3370,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                 Int iNumIter = 4;
 
                 // fast encoder setting: only one iteration
-                if (m_pcEncCfg->getUseFastEnc() || pcCU->getSlice()->getMvdL1ZeroFlag())
+                if (1 || pcCU->getSlice()->getMvdL1ZeroFlag())
                 {
                     iNumIter = 1;
                 }
@@ -3379,7 +3378,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                 for (Int iIter = 0; iIter < iNumIter; iIter++)
                 {
                     Int         iRefList    = iIter % 2;
-                    if (m_pcEncCfg->getUseFastEnc())
+                    if (1) // fast encode
                     {
                         if (uiCost[0] <= uiCost[1])
                         {
@@ -4010,9 +4009,8 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
 
     // fast encoder decision: use subsampled SAD for integer ME
-    if (m_pcEncCfg->getUseFastEnc())
     {
-        if (m_cDistParam.iRows > 8)
+        if (m_cDistParam.iRows > 12)
         {
             m_cDistParam.iSubShift = 1;
         }
@@ -4031,7 +4029,6 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
 
             m_cDistParam.bitDepth = g_bitDepthY;
             uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-            x264_cpu_emms();
 
             // motion cost
             uiSad += m_pcRdCost->getCost(x, y);
