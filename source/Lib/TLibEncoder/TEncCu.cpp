@@ -475,7 +475,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 {
                     if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
                     {
-                        if (1)     //uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu) // use commented condition for normal flow
+#if !EARLY_PARTITION_DECISION
+                        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
+#endif
                         {
                             xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
                             rpcTempCU->initEstData(uiDepth, iQP);
@@ -608,7 +610,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
                     rpcTempCU->initEstData(uiDepth, iQP);
 
-                    if (1)     //uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)// use commented condition for normal flow
+#if !EARLY_PARTITION_DECISION
+                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+#endif
                     {
                         if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                         {
@@ -675,12 +679,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     //The following if condition compares the cost of 2Nx2N Cu block with NxN Cu block and abort recursion if 2Nx2N is lower.
     //comment this below if condition block for normal flow
 
+#if EARLY_PARTITION_DECISION
     if (_2Nx2NCost < (LAMBDA_PARTITION_SELECT * _NxNCost))              // checking if BestCU is of size_2NX2N
     {
         rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
         xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
         return;
     }
+#endif
 
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
@@ -715,13 +721,13 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 {
                     xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                 }
-#if 0          //enable this for normal flow
+#if EARLY_PARTITION_DECISION          
                 if (m_abortFlag)
+#endif
                 {
                     rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                     xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
                 }
-#endif
             }
             else if (bInSlice)
             {
@@ -730,9 +736,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
+#if EARLY_PARTITION_DECISION
         m_abortFlag = true;
-    }
-#if 0      //enable this for normal flow
+#endif
+
+#if !EARLY_PARTITION_DECISION
     if (!bBoundary)
     {
         m_pcEntropyCoder->resetBits();
@@ -781,14 +789,16 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
 }                                                                                      // with sub partitioned prediction.
 
-#endif // if 0
+#endif//EARLY_PARTITION
 
+#if EARLY_PARTITION_DECISION
     if (!m_abortFlag)
+#endif
     {
         rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
-
         xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
     }
+
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
