@@ -568,9 +568,10 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiBoundingCUAddr % rpcPic->getNumPartInCU()) == 0);
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
+    assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
     // for every CU in slice
-    for(uiLin = 0; uiLin < (uiTotalCUs / uiWidthInLCUs); uiLin++)
+    for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
     {
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
         for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
