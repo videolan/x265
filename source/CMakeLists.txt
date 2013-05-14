@@ -13,6 +13,7 @@ include(version)
 
 if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     set(X64 1)
+    add_definitions(-DX86_64)
 endif()
 
 # Enforce coding standards.  Full warnings and warnings as errors
