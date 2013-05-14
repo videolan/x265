@@ -475,9 +475,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 {
                     if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
                     {
-#if !EARLY_PARTITION_DECISION
                         if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
-#endif
                         {
                             xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
                             rpcTempCU->initEstData(uiDepth, iQP);
@@ -610,9 +608,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
                     rpcTempCU->initEstData(uiDepth, iQP);
 
-#if !EARLY_PARTITION_DECISION
                     if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
-#endif
                     {
                         if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                         {
@@ -721,9 +717,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 {
                     xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                 }
-#if EARLY_PARTITION_DECISION          
-                if (m_abortFlag)
-#endif
                 {
                     rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                     xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
@@ -736,11 +729,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-#if EARLY_PARTITION_DECISION
-        m_abortFlag = true;
-#endif
-
-#if !EARLY_PARTITION_DECISION
     if (!bBoundary)
     {
         m_pcEntropyCoder->resetBits();
@@ -788,18 +776,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
                                                                                 // with sub partitioned prediction.
-
-#endif//EARLY_PARTITION
     }
-
-#if EARLY_PARTITION_DECISION
-    if (!m_abortFlag)
-#endif
-    {
-        rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
-        xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    }
-
+    
+    rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
+    xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
+    
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
