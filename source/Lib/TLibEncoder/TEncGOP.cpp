@@ -1016,8 +1016,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                 pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
                 pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
-                UInt uiDummyBoundingCUAddr;
-                m_pcSliceEncoder->xDetermineStartAndBoundingCUAddr(uiDummyBoundingCUAddr, pcPic, true);
+                m_pcSliceEncoder->xDetermineStartAndBoundingCUAddr(pcPic, true);
 
                 uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
                 uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();

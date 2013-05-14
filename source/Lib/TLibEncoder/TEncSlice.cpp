@@ -478,14 +478,13 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
     UInt  uiCUAddr;
-    UInt   uiBoundingCUAddr;
 
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
     TEncBinCABAC* pppcRDSbacCoder = NULL;
     TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
-    xDetermineStartAndBoundingCUAddr(uiBoundingCUAddr, rpcPic, false);
+    xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
     // initialize cost values
     m_uiPicTotalBits  = 0;
@@ -564,9 +563,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    const UInt uiTotalCUs = (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
+    const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
-    assert((uiBoundingCUAddr % rpcPic->getNumPartInCU()) == 0);
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
     assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
@@ -898,23 +896,17 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
  * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
  * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
  */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& boundingCUAddr, TComPic* rpcPic, Bool bEncodeSlice)
+Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice)
 {
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     UInt uiBoundingCUAddrSlice;
 
     UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
 
-    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame;
-    {
-        uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
-        // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-        pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
-    }
-
-    // Make a joint decision based on reconstruction and dependent slice bounds
-    boundingCUAddr = uiBoundingCUAddrSlice;
+    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
+    pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
 
     if (!bEncodeSlice)
     {
