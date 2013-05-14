@@ -546,6 +546,134 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
+void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
+{
+    typedef uint32_t UInt32;
+    typedef uint64_t UInt64;
+    line = 4;
+    nshift = 2 - 1;
+
+    // Const
+    __m128i c_1         = _mm_set1_epi32(1);
+    __m128i c16_64_64   = _mm_set1_epi32(0x00400040);
+    __m128i c16_n64_64  = _mm_set1_epi32(0xFFC00040);
+    __m128i c16_36_83   = _mm_set1_epi32(0x00240053);
+    __m128i c16_n83_36  = _mm_set1_epi32(0xFFAD0024);
+    __m128i c32_128     = _mm_set1_epi32(128);
+    __m128i c32_64      = _mm_set1_epi32(64);
+    __m128i c32_83_36   = _mm_set_epi32(36, 83, 36, 83);
+    __m128i c32_64_n64   = _mm_set_epi32(-64, 64, -64, 64);
+    __m128i c32_36_n83   = _mm_set_epi32(-83, 36, -83, 36);
+
+    __m128i T20  = _mm_cvtsi64_si128(*(UInt64*)&src[0 * line]);   // [03 02 01 00]
+    __m128i T21  = _mm_cvtsi64_si128(*(UInt64*)&src[1 * line]);   // [13 12 11 10]
+    __m128i T22 = _mm_cvtsi64_si128(*(UInt64*)&src[2 * line]);    // [23 22 21 20]
+    __m128i T23 = _mm_cvtsi64_si128(*(UInt64*)&src[3 * line]);    // [33 32 31 30]
+
+    // DCT1
+    __m128i T30  = _mm_unpacklo_epi32(T20, T21);        // [13 12 03 02 11 10 01 00]
+    __m128i T31  = _mm_unpacklo_epi32(T22, T23);        // [33 32 23 22 31 30 21 20]
+    __m128i T32  = _mm_shufflehi_epi16(T30, 0xB1);      // [12 13 02 03 11 10 01 00]
+    __m128i T33  = _mm_shufflehi_epi16(T31, 0xB1);      // [32 33 22 23 31 30 21 20]
+    __m128i T40  = _mm_unpacklo_epi64(T32, T33);        // [31 30 21 20 11 10 01 00]
+    __m128i T41  = _mm_unpackhi_epi64(T32, T33);        // [32 33 22 23 12 13 02 03]
+    __m128i T50  = _mm_add_epi16(T40, T41);             // [1+2 0+3]
+    __m128i T51  = _mm_sub_epi16(T40, T41);             // [1-2 0-3]
+    __m128i T60  = _mm_madd_epi16(c16_64_64,  T50);     // [ 64*s12 + 64*s03] = [03 02 01 00]
+    __m128i T61  = _mm_madd_epi16(c16_36_83,  T51);     // [ 36*d12 + 83*d03] = [13 12 11 10]
+    __m128i T62  = _mm_madd_epi16(c16_n64_64, T50);     // [-64*s12 + 64*s03] = [23 22 21 20]
+    __m128i T63  = _mm_madd_epi16(c16_n83_36, T51);     // [-83*d12 + 36*d03] = [33 32 31 30]
+    __m128i T70  = _mm_srai_epi32(_mm_add_epi32(c_1, T60), nshift);  // [03 02 01 00]
+    __m128i T71  = _mm_srai_epi32(_mm_add_epi32(c_1, T61), nshift);  // [13 12 11 10]
+    __m128i T72  = _mm_srai_epi32(_mm_add_epi32(c_1, T62), nshift);  // [23 22 21 20]
+    __m128i T73  = _mm_srai_epi32(_mm_add_epi32(c_1, T63), nshift);  // [33 32 31 30]
+
+    // DCT2
+    nshift = 2 + 6;
+    int T70_tmp0 = (short)_mm_extract_epi16(T70, 0);
+    int T70_tmp1 = (short)_mm_extract_epi16(T70, 2);
+    int T70_tmp2  = (short)_mm_extract_epi16(T70, 4);
+    int T70_tmp3  = (short)_mm_extract_epi16(T70, 6);
+
+    int T71_tmp0 =  (short)_mm_extract_epi16(T71, 0);
+    int T71_tmp1  = (short)_mm_extract_epi16(T71, 2);
+    int T71_tmp2  = (short)_mm_extract_epi16(T71, 4);
+    int T71_tmp3  = (short)_mm_extract_epi16(T71, 6);
+
+    int T72_tmp0 = (short)_mm_extract_epi16(T72, 0);
+    int T72_tmp1 = (short)_mm_extract_epi16(T72, 2);
+    int T72_tmp2 = (short)_mm_extract_epi16(T72, 4);
+    int T72_tmp3 = (short)_mm_extract_epi16(T72, 6);
+
+    int T73_tmp0 = (short)_mm_extract_epi16(T73, 0);
+    int T73_tmp1 = (short)_mm_extract_epi16(T73, 2);
+    int T73_tmp2 = (short)_mm_extract_epi16(T73, 4);
+    int T73_tmp3 = (short)_mm_extract_epi16(T73, 6);
+
+    // 32- packing for DCT1 result.
+    __m128i Coeff1_0101  = _mm_set_epi32(T71_tmp1, T71_tmp0, T70_tmp1, T70_tmp0);
+    __m128i Coeff1_2323  = _mm_set_epi32(T71_tmp2, T71_tmp3, T70_tmp2, T70_tmp3);
+    __m128i Coeff2_0101  = _mm_set_epi32(T73_tmp1, T73_tmp0, T72_tmp1, T72_tmp0);
+    __m128i Coeff2_2323  = _mm_set_epi32(T73_tmp2, T73_tmp3, T72_tmp2, T72_tmp3);
+
+    __m128i E0123 = _mm_add_epi32(Coeff1_0101, Coeff1_2323);
+    __m128i O0123 = _mm_sub_epi32(Coeff1_0101, Coeff1_2323);
+    __m128i E4567 = _mm_add_epi32(Coeff2_0101, Coeff2_2323);
+    __m128i O4567 = _mm_sub_epi32(Coeff2_0101, Coeff2_2323);
+
+    //Co-effs 0-3
+    __m128i E_0_3 = _mm_mullo_epi32(E0123, c32_64);   //  [ E0*64 E1*64 E2*64 E3*64]
+    __m128i E_4_7 = _mm_mullo_epi32(E4567, c32_64);   //  [ E4*64 E5*64 E6*64 E7*64]
+    __m128i Coeff_0_3 = _mm_hadd_epi32(E_0_3, E_4_7);
+    Coeff_0_3 = _mm_add_epi32(Coeff_0_3, c32_128);
+    Coeff_0_3 = _mm_srai_epi32(Coeff_0_3, nshift);
+
+    // Store back the DCT results
+    dst[0] = (short)_mm_extract_epi32(Coeff_0_3, 0);
+    dst[1] = (short)_mm_extract_epi32(Coeff_0_3, 1);
+    dst[2] = (short)_mm_extract_epi32(Coeff_0_3, 2);
+    dst[3] = (short)_mm_extract_epi32(Coeff_0_3, 3);
+
+    //Co-effs 4-7
+    __m128i O_0_3 = _mm_mullo_epi32(O0123, c32_83_36); //	[O0*36 O1*83 O2*36 O3*83]
+    __m128i O_4_7 = _mm_mullo_epi32(O4567, c32_83_36); //	[O4*36 O5*83 O6*36 O7*83]
+    __m128i Coeff_4_7 = _mm_hadd_epi32(O_0_3, O_4_7);
+    Coeff_4_7 = _mm_add_epi32(Coeff_4_7, c32_128);
+    Coeff_4_7 = _mm_srai_epi32(Coeff_4_7, nshift);
+
+    // Store back the DCT results
+    dst[4] = (short)_mm_extract_epi32(Coeff_4_7, 0);
+    dst[5] = (short)_mm_extract_epi32(Coeff_4_7, 1);
+    dst[6] = (short)_mm_extract_epi32(Coeff_4_7, 2);
+    dst[7] = (short)_mm_extract_epi32(Coeff_4_7, 3);
+
+    //Co-effs 8-11
+    __m128i E_8_11  = _mm_mullo_epi32(E0123, c32_64_n64); //	[ E0*-64 E1*64 E2*-64 E3*64]
+    __m128i E_12_15 = _mm_mullo_epi32(E4567, c32_64_n64); //	[ E4*-64 E5*64 E6*-64 E7*64]
+    __m128i Coeff_8_11 = _mm_hadd_epi32(E_8_11, E_12_15);
+    Coeff_8_11 = _mm_add_epi32(Coeff_8_11, c32_128);
+    Coeff_8_11 = _mm_srai_epi32(Coeff_8_11, nshift);
+
+    // Store back the DCT results
+    dst[8] = (short)_mm_extract_epi32(Coeff_8_11, 0);
+    dst[9] = (short)_mm_extract_epi32(Coeff_8_11, 1);
+    dst[10] = (short)_mm_extract_epi32(Coeff_8_11, 2);
+    dst[11] = (short)_mm_extract_epi32(Coeff_8_11, 3);
+
+    //Co-effs 12-15
+    __m128i O_8_11  = _mm_mullo_epi32(O0123, c32_36_n83); //	[O0*-83 O1*36 O2*-83 O3*36]
+    __m128i O_12_15 = _mm_mullo_epi32(O4567, c32_36_n83); //	[O4*-83 O5*36 O6*-83 O7*36]
+    __m128i Coeff_12_15 = _mm_hadd_epi32(O_8_11, O_12_15);
+    Coeff_12_15 = _mm_add_epi32(Coeff_12_15, c32_128);
+    Coeff_12_15 = _mm_srai_epi32(Coeff_12_15, nshift);
+
+    // Store back the DCT results
+    dst[12] = (short)_mm_extract_epi32(Coeff_12_15, 0);
+    dst[13] = (short)_mm_extract_epi32(Coeff_12_15, 1);
+    dst[14] = (short)_mm_extract_epi32(Coeff_12_15, 2);
+    dst[15] = (short)_mm_extract_epi32(Coeff_12_15, 3);
+}
+
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -900,16 +1028,16 @@ void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line
         int EO_three = 70 * src[2 * line] + (-43) * src[6 * line] + (-87) * src[10 * line] + (9) * src[14 * line] +
             (90) * src[18 * line] + (25) * src[22 * line] + (-80) * src[26 * line] + (-57) * src[30 * line];
 
-        int EO_four = 57 * src[2 * line] + (-80) * src[6 * line] + (-25) * src[10 * line] + (90) * src[14 * line] +
+        int EO_four = 57 * src[2 * line]  + (-80) * src[6 * line] + (-25) * src[10 * line] + (90) * src[14 * line] +
             (-9) * src[18 * line] + (-87) * src[22 * line] + (43) * src[26 * line] + (70) * src[30 * line];
 
-        int EO_five = 43 * src[2 * line] + (-90) * src[6 * line] + (57) * src[10 * line] + (25) * src[14 * line] +
+        int EO_five = 43 * src[2 * line]  + (-90) * src[6 * line] + (57) * src[10 * line] + (25) * src[14 * line] +
             (-87) * src[18 * line] + (70) * src[22 * line] + (9) * src[26 * line] + (-80) * src[30 * line];
 
-        int EO_six = 25 * src[2 * line] + (-70) * src[6 * line] + (90) * src[10 * line] + (-80) * src[14 * line] +
+        int EO_six = 25 * src[2 * line]  + (-70) * src[6 * line] + (90) * src[10 * line] + (-80) * src[14 * line] +
             (43) * src[18 * line] + (9) * src[22 * line] + (-57) * src[26 * line] + (87) * src[30 * line];
 
-        int EO_seven = 9 * src[2 * line] + (-25) * src[6 * line] + (43) * src[10 * line] + (-57) * src[14 * line] +
+        int EO_seven = 9 * src[2 * line]  + (-25) * src[6 * line] + (43) * src[10 * line] + (-57) * src[14 * line] +
             (70) * src[18 * line] + (-80) * src[22 * line] + (87) * src[26 * line] + (-90) * src[30 * line];
 
         Vec4i EO_first_half(EO_zero, EO_one, EO_two, EO_three);
@@ -1002,4 +1130,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
+    p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
 }
