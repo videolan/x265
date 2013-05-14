@@ -39,8 +39,7 @@ set vcvars=""
 ::Build the solution and applications for VS 11
 
 if  not "%VS110COMNTOOLS%" == "" ( 
-	
-	echo Regression Test	-	VS 11 Compiler found >> "%LOG%"
+		echo Regression Test	-	VS 11 Compiler found >> "%LOG%"
 	set builddir="%currentworkingdir%"\build\vc11-x86_64
 	set makefile="Visual Studio 11 Win64"
 	set vcvars="%VS110COMNTOOLS%\..\..\VC\vcvarsall.bat"
