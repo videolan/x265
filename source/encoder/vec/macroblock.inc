@@ -546,6 +546,7 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
+#if X86_64
 void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
 {
     typedef uint32_t UInt32;
@@ -673,6 +674,7 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     dst[14] = (short)_mm_extract_epi32(Coeff_12_15, 2);
     dst[15] = (short)_mm_extract_epi32(Coeff_12_15, 3);
 }
+#endif
 
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
