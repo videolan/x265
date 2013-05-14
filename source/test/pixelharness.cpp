@@ -339,7 +339,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
     ALIGN_VAR_16(int, cres[16]);
     int iters = 2000000;
 
@@ -448,6 +447,4 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             opt.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE),
             ref.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE));
     }
-
-    t->Release();
 }

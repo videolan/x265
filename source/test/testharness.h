@@ -64,25 +64,6 @@ public:
     static void alignedFree(void *ptr);
 };
 
-class Timer
-{
-public:
-
-    Timer() {}
-
-    virtual ~Timer() {}
-
-    static Timer *CreateTimer();
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
-
-    virtual uint64_t Elapsed() = 0;
-
-    virtual void Release() = 0;
-};
-
 #define BENCH_RUNS 1000
 
 // Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc

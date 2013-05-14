@@ -161,8 +161,6 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
 
 void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
-
     int width = 64;
     short srcStride = 96;
     int blkAboveAvailable = 1;
@@ -209,6 +207,4 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                            );
         }
     }
-
-    t->Release();
 }

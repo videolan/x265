@@ -355,8 +355,6 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
 void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
-
     if (opt.inversedst)
     {
         printf("InverseDST");
@@ -377,6 +375,4 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
                            ref.partial_butterfly[value](mbuf1, mbuf2, 3, 10));
         }
     }
-
-    t->Release();
 }

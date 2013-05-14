@@ -323,8 +323,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
 void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
-
     int height = 64;
     int width = 64;
     short val = 2;
@@ -437,6 +435,4 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                                                height)
                        );
     }
-
-    t->Release();
 }
