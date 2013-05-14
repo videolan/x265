@@ -40,6 +40,7 @@ protected:
     int ip_t_size;
 
     bool check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt);
+    bool check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref, x265::getIPredPlanar_p opt);
 
 public:
 
