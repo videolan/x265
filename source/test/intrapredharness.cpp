@@ -102,7 +102,7 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
 {
     int j = ADI_BUF_STRIDE;
 
-    for (int width = 4; width <= 8; width <<= 1)
+    for (int width = 4; width <= 16; width <<= 1)
     {
         for (int i = 0; i <= 100; i++)
         {
@@ -195,7 +195,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     if (opt.getIPredPlanar)
     {
-        for (int ii = 4; ii <= 8; ii <<= 1)
+        for (int ii = 4; ii <= 16; ii <<= 1)
         {
             width = ii;
             printf("IPred_getIPredPlanar[width=%d]", ii);
