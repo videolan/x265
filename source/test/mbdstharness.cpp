@@ -41,19 +41,6 @@ const char *ButterflyConf_names[] =
     "Inverse32"
 };
 
-enum Butterflies
-{
-    butterfly_4,
-    butterfly_inverse_4,
-    butterfly_8,
-    butterfly_inverse_8,
-    butterfly_16,
-    butterfly_inverse_16,
-    butterfly_32,
-    butterfly_inverse_32,
-    num_butterflies
-};
-
 MBDstHarness::MBDstHarness()
 {
     mb_t_size = 6400;
@@ -289,74 +276,74 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.partial_butterfly[butterfly_16])
+    if (opt.partial_butterfly[BUTTERFLY_16])
     {
-        if (!check_butterfly16_primitive(ref.partial_butterfly[butterfly_16], opt.partial_butterfly[butterfly_16]))
+        if (!check_butterfly16_primitive(ref.partial_butterfly[BUTTERFLY_16], opt.partial_butterfly[BUTTERFLY_16]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_16]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_16]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_32])
+    if (opt.partial_butterfly[BUTTERFLY_32])
     {
-        if (!check_butterfly32_primitive(ref.partial_butterfly[butterfly_32], opt.partial_butterfly[butterfly_32]))
+        if (!check_butterfly32_primitive(ref.partial_butterfly[BUTTERFLY_32], opt.partial_butterfly[BUTTERFLY_32]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_32]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_32]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_8])
+    if (opt.partial_butterfly[BUTTERFLY_8])
     {
-        if (!check_butterfly8_primitive(ref.partial_butterfly[butterfly_8], opt.partial_butterfly[butterfly_8]))
+        if (!check_butterfly8_primitive(ref.partial_butterfly[BUTTERFLY_8], opt.partial_butterfly[BUTTERFLY_8]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_8]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_8]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_inverse_4])
+    if (opt.partial_butterfly[BUTTERFLY_INVERSE_4])
     {
-        if (!check_butterfly4_inverse_primitive(ref.partial_butterfly[butterfly_inverse_4], opt.partial_butterfly[butterfly_inverse_4]))
+        if (!check_butterfly4_inverse_primitive(ref.partial_butterfly[BUTTERFLY_INVERSE_4], opt.partial_butterfly[BUTTERFLY_INVERSE_4]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_4]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_INVERSE_4]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_inverse_8])
+    if (opt.partial_butterfly[BUTTERFLY_INVERSE_8])
     {
-        if (!check_butterfly8_inverse_primitive(ref.partial_butterfly[butterfly_inverse_8], opt.partial_butterfly[butterfly_inverse_8]))
+        if (!check_butterfly8_inverse_primitive(ref.partial_butterfly[BUTTERFLY_INVERSE_8], opt.partial_butterfly[BUTTERFLY_INVERSE_8]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_8]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_INVERSE_8]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_inverse_16])
+    if (opt.partial_butterfly[BUTTERFLY_INVERSE_16])
     {
-        if (!check_butterfly16_inverse_primitive(ref.partial_butterfly[butterfly_inverse_16], opt.partial_butterfly[butterfly_inverse_16]))
+        if (!check_butterfly16_inverse_primitive(ref.partial_butterfly[BUTTERFLY_INVERSE_16], opt.partial_butterfly[BUTTERFLY_INVERSE_16]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_16]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_INVERSE_16]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_inverse_32])
+    if (opt.partial_butterfly[BUTTERFLY_INVERSE_32])
     {
-        if (!check_butterfly32_inverse_primitive(ref.partial_butterfly[butterfly_inverse_32], opt.partial_butterfly[butterfly_inverse_32]))
+        if (!check_butterfly32_inverse_primitive(ref.partial_butterfly[BUTTERFLY_INVERSE_32], opt.partial_butterfly[BUTTERFLY_INVERSE_32]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_32]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_INVERSE_32]);
             return false;
         }
     }
 
-    if (opt.partial_butterfly[butterfly_4])
+    if (opt.partial_butterfly[BUTTERFLY_4])
     {
-        if (!check_butterfly4_primitive(ref.partial_butterfly[butterfly_4], opt.partial_butterfly[butterfly_4]))
+        if (!check_butterfly4_primitive(ref.partial_butterfly[BUTTERFLY_4], opt.partial_butterfly[BUTTERFLY_4]))
         {
-            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_4]);
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_4]);
             return false;
         }
     }
