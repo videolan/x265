@@ -381,7 +381,7 @@ void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStrid
             iSum += horizontal_add(extend_low(pix));
             break;
         case 8:
-#if _WIN64
+#if X86_64
             pix.fromUint64(*(uint64_t*)pSrcAbove);
 #else
             pix.load_partial(8, pSrcAbove);
