@@ -340,111 +340,80 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     ALIGN_VAR_16(int, cres[16]);
-    int iters = 2000000;
+    pixel *fref = pbuf2 + 2 * INCR;
 
     for (int curpar = 0; curpar < NUM_PARTITIONS; curpar++)
     {
         if (opt.satd[curpar])
         {
             printf("  satd[%s]", FuncNames[curpar]);
-            REPORT_SPEEDUP(iters,
-                           opt.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
-                           ref.satd[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
+            REPORT_SPEEDUP(opt.satd[curpar], ref.satd[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
         if (opt.sad[curpar])
         {
             printf("   sad[%s]", FuncNames[curpar]);
-            REPORT_SPEEDUP(iters,
-                opt.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE),
-                ref.sad[curpar](pbuf1, STRIDE, pbuf2, STRIDE));
+            REPORT_SPEEDUP(opt.sad[curpar], ref.sad[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
         if (opt.sad_x3[curpar])
         {
-            pbuf2 += 1;
             printf("sad_x3[%s]", FuncNames[curpar]);
-            REPORT_SPEEDUP(iters/3,
-                opt.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, FENC_STRIDE + 5, &cres[0]),
-                ref.sad_x3[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, FENC_STRIDE + 5, &cres[0]));
-            pbuf2 -= 1;
+            REPORT_SPEEDUP(opt.sad_x3[curpar], ref.sad_x3[curpar], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
         }
 
         if (opt.sad_x4[curpar])
         {
-            pbuf2 += INCR;
             printf("sad_x4[%s]", FuncNames[curpar]);
-            REPORT_SPEEDUP(iters/4,
-                opt.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, FENC_STRIDE + 5, &cres[0]),
-                ref.sad_x4[curpar](pbuf1, pbuf2, pbuf2 + 1, pbuf2 - 1, pbuf2 - INCR, FENC_STRIDE + 5, &cres[0]));
-            pbuf2 -= INCR;
+            REPORT_SPEEDUP(opt.sad_x4[curpar], ref.sad_x4[curpar], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
         }
-
-        // adaptive iteration count, reduce as partition size increases
-        if ((curpar & 15) == 15) iters >>= 1;
     }
 
     if (opt.sa8d_8x8)
     {
         printf("sa8d_8x8");
-        REPORT_SPEEDUP(iters,
-            opt.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_8x8(pbuf1, STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.sa8d_8x8, ref.sa8d_8x8, pbuf1, STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.sa8d_16x16)
     {
         printf("sa8d_16x16");
-        REPORT_SPEEDUP(iters,
-            opt.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_16x16(pbuf1, STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.sa8d_16x16, ref.sa8d_16x16, pbuf1, STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.sa8d_32x32)
     {
         printf("sa8d_32x32");
-        REPORT_SPEEDUP(iters,
-            opt.sa8d_32x32(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_32x32(pbuf1, STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.sa8d_32x32, ref.sa8d_32x32, pbuf1, STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.sa8d_64x64)
     {
         printf("sa8d_64x64");
-        REPORT_SPEEDUP(iters,
-            opt.sa8d_64x64(pbuf1, STRIDE, pbuf2, STRIDE),
-            ref.sa8d_64x64(pbuf1, STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.sa8d_64x64, ref.sa8d_64x64, pbuf1, STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.cpyblock)
     {
         printf("block cpy");
-        REPORT_SPEEDUP(iters,
-            opt.cpyblock(64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE),
-            ref.cpyblock(64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.cpyblock, ref.cpyblock, 64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.cpyblock_p_s)
     {
         printf("p_s   cpy");
-        REPORT_SPEEDUP(iters,
-            opt.cpyblock_p_s(64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE),
-            ref.cpyblock_p_s(64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.cpyblock_p_s, ref.cpyblock_p_s, 64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE);
     }
 
     if (opt.cpyblock_s_p)
     {
         printf("s_p   cpy");
-        REPORT_SPEEDUP(iters,
-            opt.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE),
-            ref.cpyblock_s_p(64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.cpyblock_s_p, ref.cpyblock_s_p, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
     if (opt.cpyblock_s_c)
     {
         printf("s_c   cpy");
-        REPORT_SPEEDUP(iters,
-            opt.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE),
-            ref.cpyblock_s_c(64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE));
+        REPORT_SPEEDUP(opt.cpyblock_s_c, ref.cpyblock_s_c, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
     }
 }

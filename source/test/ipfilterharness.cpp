@@ -319,8 +319,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     return true;
 }
 
-#define FILTER_ITERATIONS   50000
-
 void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     int height = 64;
@@ -334,21 +332,8 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         if (opt.ipFilter_p_p[value])
         {
             printf("%s", IPFilterPPNames[value]);
-            REPORT_SPEEDUP(FILTER_ITERATIONS,
-                           opt.ipFilter_p_p[value](8, pixel_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_vec_output_p,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]),
-                           ref.ipFilter_p_p[value](8, pixel_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_C_output_p,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]
-                                                   )
-                           );
+            REPORT_SPEEDUP(opt.ipFilter_p_p[value], ref.ipFilter_p_p[value],
+                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
         }
     }
 
@@ -357,21 +342,8 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         if (opt.ipFilter_p_s[value])
         {
             printf("filterHorizontal_pel_short_%d", 8 / (value + 1));
-            REPORT_SPEEDUP(FILTER_ITERATIONS,
-                           opt.ipFilter_p_s[value](8, pixel_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_vec_output_s,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]),
-                           ref.ipFilter_p_s[value](8, pixel_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_C_output_s,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]
-                                                   )
-                           );
+            REPORT_SPEEDUP(opt.ipFilter_p_s[value], ref.ipFilter_p_s[value],
+                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, m_lumaFilter[val]);
         }
     }
 
@@ -380,59 +352,22 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         if (opt.ipFilter_s_p[value])
         {
             printf("filterVertical_short_pel_%d", 8 / (value + 1));
-            REPORT_SPEEDUP(FILTER_ITERATIONS,
-                           opt.ipFilter_s_p[value](8, short_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_vec_output_p,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]),
-                           ref.ipFilter_s_p[value](8, short_buff + 3 * srcStride,
-                                                   srcStride,
-                                                   IPF_C_output_p,
-                                                   dstStride,
-                                                   width,
-                                                   height,  m_lumaFilter[val]
-                                                   )
-                           );
+            REPORT_SPEEDUP(opt.ipFilter_s_p[value], ref.ipFilter_s_p[value],
+                           8, short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
         }
     }
 
     if (opt.ipfilterConvert_p_s)
     {
         printf("filterConvertPeltoShort\t");
-        REPORT_SPEEDUP(FILTER_ITERATIONS,
-                       opt.ipfilterConvert_p_s(8, pixel_buff,
-                                               srcStride,
-                                               IPF_vec_output_s,
-                                               dstStride,
-                                               width,
-                                               height),
-                       ref.ipfilterConvert_p_s(8, pixel_buff,
-                                               srcStride,
-                                               IPF_C_output_s,
-                                               dstStride,
-                                               width,
-                                               height)
-                       );
+        REPORT_SPEEDUP(opt.ipfilterConvert_p_s, ref.ipfilterConvert_p_s,
+                8, pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
     if (opt.ipfilterConvert_s_p)
     {
         printf("filterConvertShorttoPel\t");
-        REPORT_SPEEDUP(FILTER_ITERATIONS,
-                       opt.ipfilterConvert_s_p(8, short_buff,
-                                               srcStride,
-                                               IPF_vec_output_p,
-                                               dstStride,
-                                               width,
-                                               height),
-                       ref.ipfilterConvert_s_p(8, short_buff,
-                                               srcStride,
-                                               IPF_C_output_p,
-                                               dstStride,
-                                               width,
-                                               height)
-                       );
+        REPORT_SPEEDUP(opt.ipfilterConvert_s_p, ref.ipfilterConvert_s_p,
+                8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
 }

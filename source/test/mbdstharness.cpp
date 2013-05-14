@@ -351,16 +351,12 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     return true;
 }
 
-#define MBDST_ITERATIONS 100000
-
 void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.inversedst)
     {
         printf("InverseDST");
-        REPORT_SPEEDUP(MBDST_ITERATIONS,
-                       opt.inversedst(mbuf1, mbuf2, 16),
-                       ref.inversedst(mbuf1, mbuf2, 16));
+        REPORT_SPEEDUP(opt.inversedst, ref.inversedst, mbuf1, mbuf2, 16);
     }
 
     for (int value = 0; value < 8; value++)
@@ -370,9 +366,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.partial_butterfly[value])
         {
             printf("partialButterfly%s", ButterflyConf_names[value]);
-            REPORT_SPEEDUP(MBDST_ITERATIONS,
-                           opt.partial_butterfly[value](mbuf1, mbuf2, 3, 10),
-                           ref.partial_butterfly[value](mbuf1, mbuf2, 3, 10));
+            REPORT_SPEEDUP(opt.partial_butterfly[value], ref.partial_butterfly[value], mbuf1, mbuf2, 3, 10);
         }
     }
 }

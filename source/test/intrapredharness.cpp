@@ -157,8 +157,6 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     return true;
 }
 
-#define INTRAPRED_ITERATIONS   50000
-
 void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     int width = 64;
@@ -169,27 +167,11 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     if (opt.getIPredDC)
     {
         printf("IPred_getIPredDC_pel[filter=0]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 0);
         printf("IPred_getIPredDC_pel[filter=1]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 1);
     }
     if (opt.getIPredPlanar)
     {
@@ -197,14 +179,8 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
         {
             width = ii;
             printf("IPred_getIPredPlanar[width=%d]", ii);
-            REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                           opt.getIPredPlanar(pixel_buff + srcStride, srcStride,
-                                              pixel_out_Vec, FENC_STRIDE,
-                                              width, 0),
-                           ref.getIPredPlanar(pixel_buff + srcStride, srcStride,
-                                              pixel_out_C, FENC_STRIDE,
-                                              width, 0)
-                           );
+            REPORT_SPEEDUP(opt.getIPredPlanar, ref.getIPredPlanar,
+                           pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
         }
     }
 }
