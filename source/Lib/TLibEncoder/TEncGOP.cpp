@@ -670,36 +670,17 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_storedStartCUAddrForEncodingSlice.push_back(nextCUAddr);
         startCUAddrSliceIdx++;
 
-        while (nextCUAddr < uiRealEndAddress) // determine slice boundaries
+        // CHECK_ME: we are only once because there have only one slice
+        //while (nextCUAddr < uiRealEndAddress) // determine slice boundaries
         {
             pcSlice->setNextSlice(false);
             assert(pcPic->getNumAllocatedSlice() == startCUAddrSliceIdx);
             m_pcSliceEncoder->compressSlice(pcPic);
 
             Bool bNoBinBitConstraintViolated = (!pcSlice->isNextSlice());
-            if (pcSlice->isNextSlice())
-            {
-                startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
-                // Reconstruction slice
-                m_storedStartCUAddrForEncodingSlice.push_back(startCUAddrSlice);
-                startCUAddrSliceIdx++;
 
-                if (startCUAddrSlice < uiRealEndAddress)
-                {
-                    pcPic->allocateNewSlice();
-                    pcPic->setCurrSliceIdx(startCUAddrSliceIdx - 1);
-                    m_pcSliceEncoder->setSliceIdx(startCUAddrSliceIdx - 1);
-                    pcSlice = pcPic->getSlice(startCUAddrSliceIdx - 1);
-                    pcSlice->copySliceInfo(pcPic->getSlice(0));
-                    pcSlice->setSliceIdx(startCUAddrSliceIdx - 1);
-                    pcSlice->setSliceBits(0);
-                    uiNumSlices++;
-                }
-            }
-            else
-            {
-                startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
-            }
+            startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
+            assert(startCUAddrSlice >= uiRealEndAddress);
 
             nextCUAddr = startCUAddrSlice;
         }
