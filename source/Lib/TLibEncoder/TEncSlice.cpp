@@ -478,7 +478,6 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
     UInt  uiCUAddr;
-    UInt   uiStartCUAddr;
     UInt   uiBoundingCUAddr;
 
     PPAScopeEvent(TEncSlice_compressSlice);
@@ -486,7 +485,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
     TEncBinCABAC* pppcRDSbacCoder = NULL;
     TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
-    xDetermineStartAndBoundingCUAddr(uiStartCUAddr, uiBoundingCUAddr, rpcPic, false);
+    xDetermineStartAndBoundingCUAddr(uiBoundingCUAddr, rpcPic, false);
 
     // initialize cost values
     m_uiPicTotalBits  = 0;
@@ -563,11 +562,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiTileCol      = 0;
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
-    uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
+    uiCUAddr = 0;
     uiTileStartLCU = 0;
     // for every CU in slice
     UInt uiEncCUOrder;
-    for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
+    for (uiEncCUOrder = 0;
          uiEncCUOrder < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
          uiCUAddr = (++uiEncCUOrder))
     {
@@ -905,7 +904,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
  * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
  * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
  */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundingCUAddr, TComPic* rpcPic, Bool bEncodeSlice)
+Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& boundingCUAddr, TComPic* rpcPic, Bool bEncodeSlice)
 {
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     UInt uiBoundingCUAddrSlice;
@@ -937,7 +936,6 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundi
     }
 
     // Make a joint decision based on reconstruction and dependent slice bounds
-    startCUAddr    = 0;
     boundingCUAddr = min(uiBoundingCUAddrSlice, boundingCUAddrSliceSegment);
 
     if (!bEncodeSlice)
