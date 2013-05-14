@@ -676,11 +676,20 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     //comment this below if condition block for normal flow
 
 #if EARLY_PARTITION_DECISION
-    if ((rpcBestCU->getSlice()->getSliceType() != I_SLICE) && (rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N))              // checking if BestCU is of size_2NX2N
+    
+    if ((rpcBestCU->getSlice()->getSliceType() != I_SLICE))
     {
-        rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
-        xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
-        return;
+        if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
+        {
+            xCheckRDCostInter(rpcTempCU, rpcTempCU, SIZE_NxN, _NxNCost);
+            rpcTempCU->initEstData(uiDepth, iQP);
+        }
+        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) &&(rpcBestCU->getTotalCost()<_NxNCost))              // checking if BestCU is of size_2NX2N
+        {
+            rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
+            xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
+            return;
+        }
     }
 #endif
 
