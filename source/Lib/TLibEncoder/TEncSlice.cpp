@@ -559,11 +559,20 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
+    const UInt uiTotalCUs = (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
+    // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
+    assert((uiBoundingCUAddr % rpcPic->getNumPartInCU()) == 0);
+    assert((uiTotalCUs % uiWidthInLCUs) == 0);
+
     // for every CU in slice
-    for (uiCUAddr = 0;
-         uiCUAddr < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
-         uiCUAddr++)
+    for(uiLin = 0; uiLin < (uiTotalCUs / uiWidthInLCUs); uiLin++)
     {
+        const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
+    for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
+    {
+
+        uiCUAddr = uiCurLineCUAddr + uiCol;
+
         // initialize CU encoder
         TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
         pcCU->initCU(rpcPic, uiCUAddr);
@@ -688,6 +697,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         m_dPicRdCost     += pcCU->getTotalCost();
         m_uiPicDist      += pcCU->getTotalDistortion();
     }
+    } // end of for(uiLin
 
     if (pcSlice->getPPS()->getNumSubstreams() > 1)
     {
