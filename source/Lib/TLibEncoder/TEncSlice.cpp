@@ -570,7 +570,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
         for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
-
             uiCUAddr = uiCurLineCUAddr + uiCol;
 
             // initialize CU encoder
@@ -578,8 +577,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             pcCU->initCU(rpcPic, uiCUAddr);
 
             // inherit from TR if necessary, select substream to use.
-            uiCol     = uiCUAddr % uiWidthInLCUs;
-            uiLin     = uiCUAddr / uiWidthInLCUs;
             uiSubStrm = uiLin % iNumSubstreams;
             if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 0) && m_pcCfg->getWaveFrontsynchro())
             {
