@@ -787,9 +787,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
-}                                                                                      // with sub partitioned prediction.
+                                                                                // with sub partitioned prediction.
 
 #endif//EARLY_PARTITION
+    }
 
 #if EARLY_PARTITION_DECISION
     if (!m_abortFlag)
