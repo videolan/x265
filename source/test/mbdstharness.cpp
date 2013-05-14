@@ -59,10 +59,11 @@ MBDstHarness::MBDstHarness()
     mb_t_size = 6400;
 
     mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
-    mbuf2 = (short*)TestHarness::alignedMalloc(mb_t_size, 1, 32);
-    mbuf3 = (short*)TestHarness::alignedMalloc(mb_t_size, 1, 32);
+    mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
+    mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
+    mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
 
-    if (!mbuf1 || !mbuf2 || !mbuf3)
+    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -75,6 +76,7 @@ MBDstHarness::MBDstHarness()
 
     memset(mbuf2, 0, mb_t_size);
     memset(mbuf3, 0, mb_t_size);
+    memset(mbuf4, 0, mb_t_size);
 }
 
 MBDstHarness::~MBDstHarness()
@@ -82,6 +84,7 @@ MBDstHarness::~MBDstHarness()
     TestHarness::alignedFree(mbuf1);
     TestHarness::alignedFree(mbuf2);
     TestHarness::alignedFree(mbuf3);
+    TestHarness::alignedFree(mbuf4);
 }
 
 bool MBDstHarness::check_mbdst_primitive(mbdst ref, mbdst opt)
@@ -154,8 +157,8 @@ bool MBDstHarness::check_butterfly8_primitive(butterfly ref, butterfly opt)
 
     for (int i = 0; i <= 100; i++)
     {
-        opt(mbuf1 + j, mbuf2, 3, 10);
-        ref(mbuf1 + j, mbuf3, 3, 10);
+        opt(mbuf1 + j, mbuf2, 3, 8);
+        ref(mbuf1 + j, mbuf3, 3, 8);
 
         if (memcmp(mbuf2, mbuf3, mem_cmp_size))
             return false;
@@ -163,6 +166,29 @@ bool MBDstHarness::check_butterfly8_primitive(butterfly ref, butterfly opt)
         j += 16;
         memset(mbuf2, 0, mem_cmp_size);
         memset(mbuf3, 0, mem_cmp_size);
+    }
+
+    return true;
+}
+
+bool MBDstHarness::check_butterfly4_primitive(butterfly ref, butterfly opt)
+{
+    int j = 0;
+    int mem_cmp_size = 32; // 2*4*4 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(mbuf1 + j, mbuf2, 1, 4);
+        ref(mbuf1 + j, mbuf3, 1, 4);
+        ref(mbuf3, mbuf4, 8, 4);
+
+        if (memcmp(mbuf2, mbuf4, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0, mem_cmp_size);
+        memset(mbuf3, 0, mem_cmp_size);
+        memset(mbuf4, 0, mem_cmp_size);
     }
 
     return true;
@@ -322,6 +348,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_butterfly32_inverse_primitive(ref.partial_butterfly[butterfly_inverse_32], opt.partial_butterfly[butterfly_inverse_32]))
         {
             printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_inverse_32]);
+            return false;
+        }
+    }
+
+    if (opt.partial_butterfly[butterfly_4])
+    {
+        if (!check_butterfly4_primitive(ref.partial_butterfly[butterfly_4], opt.partial_butterfly[butterfly_4]))
+        {
+            printf("\npartialButterfly%s failed\n", ButterflyConf_names[butterfly_4]);
             return false;
         }
     }
