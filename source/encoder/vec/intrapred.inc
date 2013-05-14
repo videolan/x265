@@ -755,6 +755,176 @@ void predIntraPlanar8(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 #endif
 
+#if HIGH_BIT_DEPTH
+#define COMP_PRED_PLANAR_ROW(X) {\
+    v_horPred_lo = permute8s<X,X,X,X,X,X,X,X>(v_horPred4);\
+    v_horPred_hi = v_horPred_lo;\
+    v_rightColumnN_lo = permute8s<X,X,X,X,X,X,X,X>(v_rightColumn);\
+    v_rightColumnN_hi = v_rightColumnN_lo;\
+    v_rightColumnN_lo *= v_multi_lo;\
+    v_rightColumnN_hi *= v_multi_hi;\
+    v_horPred_lo = v_horPred_lo + v_rightColumnN_lo;\
+    v_horPred_hi = v_horPred_hi + v_rightColumnN_hi;\
+    v_topRow_lo = v_topRow_lo + v_bottomRow_lo;\
+    v_topRow_hi = v_topRow_hi + v_bottomRow_hi;\
+    v_im4_lo = (Vec8s)(v_horPred_lo + v_topRow_lo) >> (3 + shift);\
+    v_im4_hi = (Vec8s)(v_horPred_hi + v_topRow_hi) >> (3 + shift);\
+    v_im4_lo.store(&rpDst[X * dstStride]);\
+    v_im4_hi.store(&rpDst[X * dstStride + 8]);\
+}
+
+void predIntraPlanar16(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride)
+{
+    int k;
+    pixel bottomLeft, topRight;
+    int16_t leftColumn[16];
+
+    // Get left and above reference column and row
+    Vec16uc im0 = (Vec16uc)load_partial(const_int(16), &pSrc[-srcStride]); // topRow
+    Vec8s v_topRow_lo, v_topRow_hi;
+    v_topRow_lo.load(&pSrc[-srcStride]);
+    v_topRow_hi.load(&pSrc[-srcStride + 8]);
+    
+    for (k = 0; k < 16; k++)
+    {
+        leftColumn[k] = pSrc[k * srcStride - 1];
+    }
+    Vec8s v_leftColumn;
+    v_leftColumn.load(leftColumn);   // leftColumn
+
+    // Prepare intermediate variables used in interpolation
+    bottomLeft = pSrc[16 * srcStride - 1];
+    topRight   = pSrc[16 - srcStride];
+
+    Vec8s v_bottomLeft(bottomLeft);
+    Vec8s v_topRight(topRight);
+
+    Vec8s v_bottomRow_lo = v_bottomLeft - v_topRow_lo;
+    Vec8s v_bottomRow_hi = v_bottomLeft - v_topRow_hi;
+    Vec8s v_rightColumn = v_topRight - v_leftColumn;
+
+    int shift = g_aucConvertToBit[16];         // Using value corresponding to width = 8
+    v_topRow_lo = v_topRow_lo << (2 + shift);
+    v_topRow_hi = v_topRow_hi << (2 + shift);
+    v_leftColumn = v_leftColumn << (2 + shift);
+
+    Vec8s v_horPred4 = v_leftColumn + Vec8s(16);
+    const Vec8s v_multi_lo(1, 2, 3, 4, 5, 6, 7, 8);
+    const Vec8s v_multi_hi(9, 10, 11, 12, 13, 14, 15, 16);
+    Vec8s v_horPred_lo, v_horPred_hi, v_rightColumnN_lo, v_rightColumnN_hi;
+    Vec8s v_im4_lo, v_im4_hi;
+    Vec16uc v_im5;
+
+    COMP_PRED_PLANAR_ROW(0);     // row 0
+    COMP_PRED_PLANAR_ROW(1);
+    COMP_PRED_PLANAR_ROW(2);
+    COMP_PRED_PLANAR_ROW(3);
+    COMP_PRED_PLANAR_ROW(4);
+    COMP_PRED_PLANAR_ROW(5);
+    COMP_PRED_PLANAR_ROW(6);
+    COMP_PRED_PLANAR_ROW(7);     // row 7
+
+    v_leftColumn.load(leftColumn+8);   // leftColumn lower 8 rows
+    v_rightColumn = v_topRight - v_leftColumn;
+    v_leftColumn = v_leftColumn << (2 + shift);
+    v_horPred4 = v_leftColumn + Vec8s(16);
+
+    COMP_PRED_PLANAR_ROW(8);     // row 0
+    COMP_PRED_PLANAR_ROW(9);
+    COMP_PRED_PLANAR_ROW(10);
+    COMP_PRED_PLANAR_ROW(11);
+    COMP_PRED_PLANAR_ROW(12);
+    COMP_PRED_PLANAR_ROW(13);
+    COMP_PRED_PLANAR_ROW(14);
+    COMP_PRED_PLANAR_ROW(15); 
+}
+#undef COMP_PRED_PLANAR_ROW
+
+#else
+#define COMP_PRED_PLANAR_ROW(X) {\
+    v_horPred_lo = permute8s<X,X,X,X,X,X,X,X>(v_horPred4);\
+    v_horPred_hi = v_horPred_lo;\
+    v_rightColumnN_lo = permute8s<X,X,X,X,X,X,X,X>(v_rightColumn);\
+    v_rightColumnN_hi = v_rightColumnN_lo;\
+    v_rightColumnN_lo *= v_multi_lo;\
+    v_rightColumnN_hi *= v_multi_hi;\
+    v_horPred_lo = v_horPred_lo + v_rightColumnN_lo;\
+    v_horPred_hi = v_horPred_hi + v_rightColumnN_hi;\
+    v_topRow_lo = v_topRow_lo + v_bottomRow_lo;\
+    v_topRow_hi = v_topRow_hi + v_bottomRow_hi;\
+    v_im4_lo = (Vec8s)(v_horPred_lo + v_topRow_lo) >> (3 + shift);\
+    v_im4_hi = (Vec8s)(v_horPred_hi + v_topRow_hi) >> (3 + shift);\
+    v_im5 = compress(v_im4_lo, v_im4_hi);\
+    store_partial(const_int(16), &rpDst[X * dstStride], v_im5);\
+}
+
+void predIntraPlanar16(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride)
+{
+    int k;
+    pixel bottomLeft, topRight;
+    int16_t leftColumn[16];
+
+    // Get left and above reference column and row
+    Vec16uc im0 = (Vec16uc)load_partial(const_int(16), &pSrc[-srcStride]); // topRow
+    Vec8s v_topRow_lo = extend_low(im0);
+    Vec8s v_topRow_hi = extend_high(im0);
+
+    for (k = 0; k < 16; k++)
+    {
+        leftColumn[k] = pSrc[k * srcStride - 1];
+    }
+    Vec8s v_leftColumn;
+    v_leftColumn.load(leftColumn);   // leftColumn
+
+    // Prepare intermediate variables used in interpolation
+    bottomLeft = pSrc[16 * srcStride - 1];
+    topRight   = pSrc[16 - srcStride];
+
+    Vec8s v_bottomLeft(bottomLeft);
+    Vec8s v_topRight(topRight);
+
+    Vec8s v_bottomRow_lo = v_bottomLeft - v_topRow_lo;
+    Vec8s v_bottomRow_hi = v_bottomLeft - v_topRow_hi;
+    Vec8s v_rightColumn = v_topRight - v_leftColumn;
+
+    int shift = g_aucConvertToBit[16];         // Using value corresponding to width = 8
+    v_topRow_lo = v_topRow_lo << (2 + shift);
+    v_topRow_hi = v_topRow_hi << (2 + shift);
+    v_leftColumn = v_leftColumn << (2 + shift);
+
+    Vec8s v_horPred4 = v_leftColumn + Vec8s(16);
+    const Vec8s v_multi_lo(1, 2, 3, 4, 5, 6, 7, 8);
+    const Vec8s v_multi_hi(9, 10, 11, 12, 13, 14, 15, 16);
+    Vec8s v_horPred_lo, v_horPred_hi, v_rightColumnN_lo, v_rightColumnN_hi;
+    Vec8s v_im4_lo, v_im4_hi;
+    Vec16uc v_im5;
+
+    COMP_PRED_PLANAR_ROW(0);     // row 0
+    COMP_PRED_PLANAR_ROW(1);
+    COMP_PRED_PLANAR_ROW(2);
+    COMP_PRED_PLANAR_ROW(3);
+    COMP_PRED_PLANAR_ROW(4);
+    COMP_PRED_PLANAR_ROW(5);
+    COMP_PRED_PLANAR_ROW(6);
+    COMP_PRED_PLANAR_ROW(7);     // row 7
+
+    v_leftColumn.load(leftColumn+8);   // leftColumn lower 8 rows
+    v_rightColumn = v_topRight - v_leftColumn;
+    v_leftColumn = v_leftColumn << (2 + shift);
+    v_horPred4 = v_leftColumn + Vec8s(16);
+
+    COMP_PRED_PLANAR_ROW(8);     // row 0
+    COMP_PRED_PLANAR_ROW(9);
+    COMP_PRED_PLANAR_ROW(10);
+    COMP_PRED_PLANAR_ROW(11);
+    COMP_PRED_PLANAR_ROW(12);
+    COMP_PRED_PLANAR_ROW(13);
+    COMP_PRED_PLANAR_ROW(14);
+    COMP_PRED_PLANAR_ROW(15); 
+}
+#undef COMP_PRED_PLANAR_ROW
+#endif
+
 void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
 {
     //assert(width == height);
@@ -777,6 +947,10 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
     }
     if ( width == 8) {
         predIntraPlanar8(pSrc, srcStride, rpDst, dstStride);
+        return;
+    }
+    if ( width == 16) {
+        predIntraPlanar16(pSrc, srcStride, rpDst, dstStride);
         return;
     }
 
