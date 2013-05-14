@@ -717,7 +717,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
 
     uiStartCUAddr = 0;
-    uiBoundingCUAddr = pcSlice->getSliceSegmentCurEndCUAddr();
+    uiBoundingCUAddr = pcSlice->getSliceCurEndCUAddr();
     // choose entropy coder
     {
         m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
@@ -908,24 +908,8 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& boundingCUAddr, TComPic* 
         pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
     }
 
-    // Dependent slice
-    UInt boundingCUAddrSliceSegment;
-    boundingCUAddrSliceSegment = uiNumberOfCUsInFrame;
-    {
-        boundingCUAddrSliceSegment = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
-
-        // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
-        pcSlice->setSliceSegmentCurEndCUAddr(boundingCUAddrSliceSegment);
-    }
-
-    if (boundingCUAddrSliceSegment > uiBoundingCUAddrSlice)
-    {
-        boundingCUAddrSliceSegment = uiBoundingCUAddrSlice;
-        pcSlice->setSliceSegmentCurEndCUAddr(uiBoundingCUAddrSlice);
-    }
-
     // Make a joint decision based on reconstruction and dependent slice bounds
-    boundingCUAddr = min(uiBoundingCUAddrSlice, boundingCUAddrSliceSegment);
+    boundingCUAddr = uiBoundingCUAddrSlice;
 
     if (!bEncodeSlice)
     {

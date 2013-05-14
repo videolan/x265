@@ -977,7 +977,7 @@ Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
     {
         UInt* pSubstreamSizes               = pSlice->getSubstreamSizes();
         Int maxNumParts                       = pSlice->getPic()->getNumPartInCU();
-        Int  numZeroSubstreamsAtEndOfSlice    = pSlice->getPic()->getFrameHeightInCU() - 1 - ((pSlice->getSliceSegmentCurEndCUAddr() - 1) / maxNumParts / pSlice->getPic()->getFrameWidthInCU());
+        Int  numZeroSubstreamsAtEndOfSlice    = pSlice->getPic()->getFrameHeightInCU() - 1 - ((pSlice->getSliceCurEndCUAddr() - 1) / maxNumParts / pSlice->getPic()->getFrameWidthInCU());
         numEntryPointOffsets                  = pSlice->getPPS()->getNumSubstreams() - numZeroSubstreamsAtEndOfSlice - 1;
         pSlice->setNumEntryPointOffsets(numEntryPointOffsets);
         entryPointOffset           = new UInt[numEntryPointOffsets];
