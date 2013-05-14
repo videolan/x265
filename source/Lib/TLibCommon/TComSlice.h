@@ -1429,7 +1429,6 @@ private:
     UInt        m_sliceCurEndCUAddr;
     UInt        m_sliceIdx;
     Bool        m_nextSlice;
-    Bool        m_nextSliceSegment;
     UInt        m_sliceBits;
     UInt        m_sliceSegmentBits;
     Bool        m_bFinalized;
@@ -1678,10 +1677,6 @@ public:
     Void setNextSlice(Bool b)          { m_nextSlice = b;                           }
 
     Bool isNextSlice()                  { return m_nextSlice;                        }
-
-    Void setNextSliceSegment(Bool b)          { m_nextSliceSegment = b;                    }
-
-    Bool isNextSliceSegment()                  { return m_nextSliceSegment;                 }
 
     Void setSliceBits(UInt uiVal)      { m_sliceBits = uiVal;                      }
 

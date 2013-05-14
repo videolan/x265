@@ -916,7 +916,6 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& boundingCUAddr, TComPic* 
         // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice
         // first. Set the flags accordingly.
         pcSlice->setNextSlice(false);
-        pcSlice->setNextSliceSegment(false);
     }
 }
 
