@@ -562,13 +562,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     UInt uiTileCol      = 0;
     UInt uiTileStartLCU = 0;
     UInt uiTileLCUX     = 0;
-    uiCUAddr = 0;
     uiTileStartLCU = 0;
     // for every CU in slice
-    UInt uiEncCUOrder;
-    for (uiEncCUOrder = 0;
-         uiEncCUOrder < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
-         uiCUAddr = (++uiEncCUOrder))
+    for (uiCUAddr = 0;
+         uiCUAddr < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
+         uiCUAddr++)
     {
         // initialize CU encoder
         TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
