@@ -664,15 +664,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         UInt startCUAddrSlice    = 0; // used to keep track of current slice's starting CU addr.
         m_storedStartCUAddrForEncodingSlice.clear();
 
-        UInt startCUAddrSliceSegmentIdx = 0; // used to index "m_uiStoredStartCUAddrForEntropyEncodingSlice" containing locations of slice boundaries
-        UInt startCUAddrSliceSegment    = 0; // used to keep track of current Dependent slice's starting CU addr.
-
-        m_storedStartCUAddrForEncodingSliceSegment.clear();
         UInt nextCUAddr = 0;
         m_storedStartCUAddrForEncodingSlice.push_back(nextCUAddr);
         startCUAddrSliceIdx++;
-        m_storedStartCUAddrForEncodingSliceSegment.push_back(nextCUAddr);
-        startCUAddrSliceSegmentIdx++;
 
         while (nextCUAddr < uiRealEndAddress) // determine slice boundaries
         {
@@ -687,12 +681,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 // Reconstruction slice
                 m_storedStartCUAddrForEncodingSlice.push_back(startCUAddrSlice);
                 startCUAddrSliceIdx++;
-                // Dependent slice
-                if (startCUAddrSliceSegmentIdx > 0 && m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx - 1] != startCUAddrSlice)
-                {
-                    m_storedStartCUAddrForEncodingSliceSegment.push_back(startCUAddrSlice);
-                    startCUAddrSliceSegmentIdx++;
-                }
 
                 if (startCUAddrSlice < uiRealEndAddress)
                 {
@@ -708,17 +696,14 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             }
             else
             {
-                startCUAddrSlice                                                            = pcSlice->getSliceCurEndCUAddr();
-                startCUAddrSliceSegment                                                     = pcSlice->getSliceCurEndCUAddr();
+                startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
             }
 
-            nextCUAddr = (startCUAddrSlice > startCUAddrSliceSegment) ? startCUAddrSlice : startCUAddrSliceSegment;
+            nextCUAddr = startCUAddrSlice;
         }
 
         m_storedStartCUAddrForEncodingSlice.push_back(pcSlice->getSliceCurEndCUAddr());
         startCUAddrSliceIdx++;
-        m_storedStartCUAddrForEncodingSliceSegment.push_back(pcSlice->getSliceCurEndCUAddr());
-        startCUAddrSliceSegmentIdx++;
 
         pcSlice = pcPic->getSlice(0);
 
@@ -998,8 +983,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         startCUAddrSliceIdx = 0;
         startCUAddrSlice    = 0;
 
-        startCUAddrSliceSegmentIdx = 0;
-        startCUAddrSliceSegment    = 0;
         nextCUAddr                 = 0;
         pcSlice = pcPic->getSlice(startCUAddrSliceIdx);
 
@@ -1023,13 +1006,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     assert(startCUAddrSliceIdx == pcSlice->getSliceIdx());
                     // Reconstruction slice
                     pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx + 1]);
-                    // Dependent slice
-                    pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx + 1]);
 
                     pcSlice->setNextSlice(true);
 
                     startCUAddrSliceIdx++;
-                    startCUAddrSliceSegmentIdx++;
                 }
 
                 pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
@@ -1186,10 +1166,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     }
                 }
 
-                UInt boundingAddrSlice, boundingAddrSliceSegment;
+                UInt boundingAddrSlice;
                 boundingAddrSlice        = m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx];
-                boundingAddrSliceSegment = m_storedStartCUAddrForEncodingSliceSegment[startCUAddrSliceSegmentIdx];
-                nextCUAddr               = min(boundingAddrSlice, boundingAddrSliceSegment);
+                nextCUAddr               = boundingAddrSlice;
                 // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
                 // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
                 Bool bNALUAlignedWrittenToList    = false; // used to ensure current NALU is not written more than once to the NALU list.
