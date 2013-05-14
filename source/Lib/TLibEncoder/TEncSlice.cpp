@@ -559,10 +559,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    UInt uiTileCol      = 0;
-    UInt uiTileStartLCU = 0;
-    UInt uiTileLCUX     = 0;
-    uiTileStartLCU = 0;
     // for every CU in slice
     for (uiCUAddr = 0;
          uiCUAddr < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
@@ -573,14 +569,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         pcCU->initCU(rpcPic, uiCUAddr);
 
         // inherit from TR if necessary, select substream to use.
-        uiTileCol = 0; // what column of tiles are we in?
-        uiTileStartLCU = 0;
-        uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
         uiCol     = uiCUAddr % uiWidthInLCUs;
         uiLin     = uiCUAddr / uiWidthInLCUs;
         uiSubStrm = uiLin % iNumSubstreams;
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 0) && m_pcCfg->getWaveFrontsynchro())
         {
             // We'll sync if the TR is available.
             TComDataCU *pcCUUp = pcCU->getCUAbove();
@@ -598,7 +591,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             else
             {
                 // TR is available, we use it.
-                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiTileCol]);
+                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
             }
         }
         m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
@@ -686,9 +679,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
         //Store probabilties of second LCU in line into buffer
-        if ((uiCol == uiTileLCUX + 1) && (pcSlice->getPPS()->getNumSubstreams() > 1) && m_pcCfg->getWaveFrontsynchro())
+        if ((uiCol == 1) && (pcSlice->getPPS()->getNumSubstreams() > 1) && m_pcCfg->getWaveFrontsynchro())
         {
-            m_pcBufferSbacCoders[uiTileCol].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
+            m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
         }
 
         m_uiPicTotalBits += pcCU->getTotalBits();
@@ -742,27 +735,18 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
     UInt uiBitsOriginallyInSubstreams = 0;
     {
-        UInt uiTilesAcross = 1;
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferSbacCoders[ui].load(m_pcSbacCoder); //init. state
-        }
+        m_pcBufferSbacCoders[0].load(m_pcSbacCoder); //init. state
 
         for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }
 
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferLowLatSbacCoders[ui].load(m_pcSbacCoder); //init. state
-        }
+        m_pcBufferLowLatSbacCoders[0].load(m_pcSbacCoder); //init. state
     }
 
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    UInt uiTileCol      = 0;
-    UInt uiTileLCUX     = 0;
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
@@ -771,8 +755,6 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
          uiEncCUOrder < (uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
          uiCUAddr = (++uiEncCUOrder))
     {
-        uiTileCol = 0; // what column of tiles are we in?
-        uiTileLCUX = 0;
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
         uiCol     = uiCUAddr % uiWidthInLCUs;
         uiLin     = uiCUAddr / uiWidthInLCUs;
@@ -780,7 +762,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
         m_pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 0) && m_pcCfg->getWaveFrontsynchro())
         {
             // We'll sync if the TR is available.
             TComDataCU *pcCUUp = rpcPic->getCU(uiCUAddr)->getCUAbove();
@@ -798,7 +780,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             else
             {
                 // TR is available, we use it.
-                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[uiTileCol]);
+                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[0]);
             }
         }
         m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
@@ -882,9 +864,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         pcSbacCoders[uiSubStrm].load(m_pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
         //Store probabilities of second LCU in line into buffer
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX + 1) && m_pcCfg->getWaveFrontsynchro())
+        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 1) && m_pcCfg->getWaveFrontsynchro())
         {
-            m_pcBufferSbacCoders[uiTileCol].loadContexts(&pcSbacCoders[uiSubStrm]);
+            m_pcBufferSbacCoders[0].loadContexts(&pcSbacCoders[uiSubStrm]);
         }
     }
 
