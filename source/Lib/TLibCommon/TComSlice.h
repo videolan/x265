@@ -1178,8 +1178,6 @@ private:
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
 
-    Int      m_iNumSubstreams;
-
     Int      m_signHideFlag;
 
     Bool     m_cabacInitPresentFlag;
@@ -1281,10 +1279,6 @@ public:
     Bool    getEntropyCodingSyncEnabledFlag() const          { return m_entropyCodingSyncEnabledFlag; }
 
     Void    setEntropyCodingSyncEnabledFlag(Bool val)        { m_entropyCodingSyncEnabledFlag = val; }
-
-    Void     setNumSubstreams(Int iNumSubstreams)               { m_iNumSubstreams = iNumSubstreams; }
-
-    Int      getNumSubstreams()                                 { return m_iNumSubstreams; }
 
     Void      setSignHideFlag(Int signHideFlag) { m_signHideFlag = signHideFlag; }
 

@@ -569,7 +569,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
             fclose(fpt);
         }
     }
-    m_iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
 
     // check validity of input parameters
     xCheckParameter();
@@ -1017,8 +1016,6 @@ Void TAppEncCfg::xCheckParameter()
         }
     }
     xConfirmPara(m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
-    xConfirmPara(m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive");
-    xConfirmPara(m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1");
 
     xConfirmPara(m_decodedPictureHashSEIEnabled < 0 || m_decodedPictureHashSEIEnabled > 3, "this hash type is not correct!\n");
 
@@ -1143,7 +1140,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("WPB:%d ", (Int)m_useWeightedBiPred);
     printf("PME:%d ", m_log2ParallelMergeLevel);
     printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
-           m_iWaveFrontSynchro, m_iWaveFrontSubstreams);
+           m_iWaveFrontSynchro, (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight);
     printf(" ScalingList:%d ", m_useScalingListId);
     printf("TMVPMode:%d ", m_TMVPModeId);
     printf("AQpS:%d", m_bUseAdaptQpSelect);

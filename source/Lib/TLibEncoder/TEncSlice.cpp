@@ -536,7 +536,13 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
     TComBitCounter* pcBitCounters     = pcEncTop->getBitCounters();
-    Int  iNumSubstreams               = pcSlice->getPPS()->getNumSubstreams();
+    const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
+    const UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
+    const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
+    const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
+
+    // CHECK_ME: there seems WPP always start at every LCU line
+    //assert( iNumSubstreams == pcSlice->getPPS()->getNumSubstreams() );
 
     delete[] m_pcBufferSbacCoders;
     delete[] m_pcBufferBinCoderCABACs;
@@ -557,7 +563,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
     m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
-    UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
     const UInt uiTotalCUs = (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
@@ -578,16 +583,15 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
             // inherit from TR if necessary, select substream to use.
             uiSubStrm = uiLin % iNumSubstreams;
-            if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 0) && m_pcCfg->getWaveFrontsynchro())
+            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
             {
                 // We'll sync if the TR is available.
                 TComDataCU *pcCUUp = pcCU->getCUAbove();
-                UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
-                UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
                 TComDataCU *pcCUTR = NULL;
-                if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
+                // CHECK_ME: we are here only (uiCol == 0), why HM use this complex statement to check
+                if (pcCUUp/* && ((uiCUAddr % uiWidthInLCUs + 1) < uiWidthInLCUs)*/)
                 {
-                    pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
+                    pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInLCUs + 1);
                 }
                 if ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
                 {
@@ -684,7 +688,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
             //Store probabilties of second LCU in line into buffer
-            if ((uiCol == 1) && (pcSlice->getPPS()->getNumSubstreams() > 1) && m_pcCfg->getWaveFrontsynchro())
+            if ((uiCol == 1) && (iNumSubstreams > 1) && m_pcCfg->getWaveFrontsynchro())
             {
                 m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
             }
@@ -695,7 +699,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         } // end of for(uiCol...
     } // end of for(uiLin...
 
-    if (pcSlice->getPPS()->getNumSubstreams() > 1)
+    if (iNumSubstreams > 1)
     {
         pcSlice->setNextSlice(true);
     }
@@ -738,7 +742,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac* pcSbacCoders = pcEncTop->getSbacCoders(); //coder for each substream
-    Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
+    const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
+    const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
+    const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
     UInt uiBitsOriginallyInSubstreams = 0;
     {
         m_pcBufferSbacCoders[0].load(m_pcSbacCoder); //init. state
@@ -768,13 +774,14 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
         m_pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 0) && m_pcCfg->getWaveFrontsynchro())
+        if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
             TComDataCU *pcCUUp = rpcPic->getCU(uiCUAddr)->getCUAbove();
             UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
             UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
             TComDataCU *pcCUTR = NULL;
+            // CHECK_ME: here can br optimize a little, do it later
             if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
             {
                 pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
@@ -870,7 +877,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         pcSbacCoders[uiSubStrm].load(m_pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
         //Store probabilities of second LCU in line into buffer
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == 1) && m_pcCfg->getWaveFrontsynchro())
+        if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)
         {
             m_pcBufferSbacCoders[0].loadContexts(&pcSbacCoders[uiSubStrm]);
         }

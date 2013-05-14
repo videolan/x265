@@ -653,7 +653,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         Int  j;
 
         // Allocate some coders, now we know how many tiles there are.
-        Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
+        const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
+        const UInt uiHeightInLCUs = pcPic->getPicSym()->getFrameHeightInCU();
+        const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
 
         // Allocate some coders, now we know how many tiles there are.
         m_pcEncTop->createWPPCoders(iNumSubstreams);
@@ -1075,7 +1077,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
                     m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
                     m_pcEntropyCoder->resetEntropy();
-                    for (UInt ui = 0; ui < pcSlice->getPPS()->getNumSubstreams(); ui++)
+                    for (UInt ui = 0; ui < iNumSubstreams; ui++)
                     {
                         m_pcEntropyCoder->setEntropyCoder(&pcSbacCoders[ui], pcSlice);
                         m_pcEntropyCoder->resetEntropy();
@@ -1087,7 +1089,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     // set entropy coder for writing
                     m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
                     {
-                        for (UInt ui = 0; ui < pcSlice->getPPS()->getNumSubstreams(); ui++)
+                        for (UInt ui = 0; ui < iNumSubstreams; ui++)
                         {
                             m_pcEntropyCoder->setEntropyCoder(&pcSbacCoders[ui], pcSlice);
                             m_pcEntropyCoder->resetEntropy();
@@ -1141,7 +1143,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                         {
                             pcSlice->setTileLocation(ui / uiNumSubstreamsPerTile, pcSlice->getTileOffstForMultES() + (uiTotalCodedSize >> 3));
                         }
-                        if (ui + 1 < pcSlice->getPPS()->getNumSubstreams())
+                        if (ui + 1 < iNumSubstreams)
                         {
                             puiSubstreamSizes[ui] = pcSubstreamsOut[ui].getNumberOfWrittenBits() + (pcSubstreamsOut[ui].countStartCodeEmulations() << 3);
                         }
@@ -1154,7 +1156,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                     // Substreams...
                     TComOutputBitstream *pcOut = pcBitstreamRedirect;
-                    Int nss = pcSlice->getPPS()->getNumSubstreams();
+                    Int nss = iNumSubstreams;
                     if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
                     {
                         // 1st line present for WPP.
