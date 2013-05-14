@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
     };
 
     EncoderPrimitives cprim;
+    memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
     for (int i = 1; i <= cpuid; i++)
