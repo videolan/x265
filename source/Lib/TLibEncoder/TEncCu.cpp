@@ -657,7 +657,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     TComDataCU* pcSubBestPartCU[4], *pcSubTempPartCU[4];
     UInt uiPartUnitIdx = 0;
     
-#if EARLY_PARTITION_DECISION
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
@@ -668,6 +667,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
         }
     }
+
+#if EARLY_PARTITION_DECISION
+    
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
     {        
         if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) &&(rpcBestCU->getTotalCost()<_NxNCost))              // checking if BestCU is of size_2NX2N
