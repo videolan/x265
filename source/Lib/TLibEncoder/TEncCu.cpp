@@ -627,7 +627,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         }
 
         // Early CU determination
-        if (m_pcEncCfg->getUseEarlyCU() && rpcBestCU->isSkipped(0))
+        if (rpcBestCU->isSkipped(0))
         {
             bSubBranch = false;
         }

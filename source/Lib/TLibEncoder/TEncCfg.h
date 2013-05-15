@@ -180,7 +180,6 @@ protected:
     Bool      m_useRDOQ;
     Bool      m_useRDOQTS;
     UInt      m_rdPenalty;
-    Bool      m_bUseEarlyCU;
     Bool      m_useFastDecisionForMerge;
     Bool      m_bUseCbfFastMode;
     Bool      m_useEarlySkipDetection;
@@ -449,8 +448,6 @@ public:
 
     Void      setRDpenalty(UInt b)     { m_rdPenalty  = b; }
 
-    Void      setUseEarlyCU(Bool b)     { m_bUseEarlyCU = b; }
-
     Void      setUseFastDecisionForMerge(Bool b)     { m_useFastDecisionForMerge = b; }
 
     Void      setUseCbfFastMode(Bool b)     { m_bUseCbfFastMode = b; }
@@ -480,8 +477,6 @@ public:
     Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
 
     Int       getRDpenalty()      { return m_rdPenalty;  }
-
-    Bool      getUseEarlyCU()      { return m_bUseEarlyCU; }
 
     Bool      getUseFastDecisionForMerge()      { return m_useFastDecisionForMerge; }
 
