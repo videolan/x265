@@ -562,7 +562,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
     m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
-    UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
+    UInt uiCol = 0, uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
@@ -581,7 +581,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             pcCU->initCU(rpcPic, uiCUAddr);
 
             // inherit from TR if necessary, select substream to use.
-            uiSubStrm = uiLin % iNumSubstreams;
+            const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
             if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
             {
                 // We'll sync if the TR is available.
