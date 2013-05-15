@@ -94,7 +94,7 @@ private:
     UInt64                  m_uiPicDist;                        ///< total distortion for the picture
     Double                  m_dPicRdCost;                       ///< picture-level RD cost
     TEncBinCABAC*           m_pcBufferBinCoderCABACs;           ///< line of bin coder CABAC
-    TEncSbac*               m_pcBufferSbacCoders;               ///< line to store temporary contexts
+    TEncSbac*               m_pcBufferSbacCoders;               ///< lines to store temporary contexts for every WPP line
     TEncBinCABAC*           m_pcBufferLowLatBinCoderCABACs;     ///< dependent tiles: line of bin coder CABAC
     TEncSbac*               m_pcBufferLowLatSbacCoders;         ///< dependent tiles: line to store temporary contexts
     TEncRateCtrl*           m_pcRateCtrl;                       ///< Rate control manager

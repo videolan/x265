@@ -543,13 +543,14 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     delete[] m_pcBufferSbacCoders;
     delete[] m_pcBufferBinCoderCABACs;
-    m_pcBufferSbacCoders     = new TEncSbac[1];
-    m_pcBufferBinCoderCABACs = new TEncBinCABAC[1];
-    m_pcBufferSbacCoders[0].init(&m_pcBufferBinCoderCABACs[0]);
-    m_pcBufferSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+    m_pcBufferSbacCoders     = new TEncSbac[iNumSubstreams];
+    m_pcBufferBinCoderCABACs = new TEncBinCABAC[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++) //init all sbac coders for RD optimization
     {
+        m_pcBufferSbacCoders[ui].init(&m_pcBufferBinCoderCABACs[0]);
+        m_pcBufferSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
 
@@ -586,7 +587,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro && (uiLin > 0))
             {
                 // TR is available, we use it.
-                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
+                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
             }
             m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
 
@@ -676,7 +677,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             // CHECK_ME: I don't known why both check numSubStreams and bWaveFrontsynchro, I guess we always see them both except encode Nx64 video
             if ((uiCol == 1) && (iNumSubstreams > 1) && bWaveFrontsynchro)
             {
-                m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
+                m_pcBufferSbacCoders[uiLin].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
             }
 
             m_uiPicTotalBits += pcCU->getTotalBits();
@@ -733,10 +734,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
     UInt uiBitsOriginallyInSubstreams = 0;
     {
-        m_pcBufferSbacCoders[0].load(m_pcSbacCoder); //init. state
-
         for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
+            m_pcBufferSbacCoders[iSubstrmIdx].load(m_pcSbacCoder); //init. state
+
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }
 
@@ -779,7 +780,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             else
             {
                 // TR is available, we use it.
-                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[0]);
+                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
             }
         }
         m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
@@ -865,7 +866,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         //Store probabilities of second LCU in line into buffer
         if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)
         {
-            m_pcBufferSbacCoders[0].loadContexts(&pcSbacCoders[uiSubStrm]);
+            m_pcBufferSbacCoders[uiLin].loadContexts(&pcSbacCoders[uiSubStrm]);
         }
     }
 
