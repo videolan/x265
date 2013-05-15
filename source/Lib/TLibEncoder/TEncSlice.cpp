@@ -477,8 +477,6 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
  */
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
-    UInt  uiCUAddr;
-
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
@@ -574,7 +572,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
         for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
-            uiCUAddr = uiCurLineCUAddr + uiCol;
+            UInt uiCUAddr = uiCurLineCUAddr + uiCol;
 
             // initialize CU encoder
             TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
