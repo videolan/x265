@@ -685,7 +685,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
             //Store probabilties of second LCU in line into buffer
-            if ((uiCol == 1) && (iNumSubstreams > 1) && m_pcCfg->getWaveFrontsynchro())
+            // CHECK_ME: I don't known why both check numSubStreams and bWaveFrontsynchro, I guess we always see them both except encode Nx64 video
+            if ((uiCol == 1) && (iNumSubstreams > 1) && bWaveFrontsynchro)
             {
                 m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
             }
