@@ -716,53 +716,53 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-    if (!bBoundary)
-    {
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
-
-        rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // split bits
-        rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    }
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
-    if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
-    {
-        Bool hasResidual = false;
-        for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
+        if (!bBoundary)
         {
-            if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+            m_pcEntropyCoder->resetBits();
+            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
+
+            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        }
+        rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        {
+            Bool hasResidual = false;
+            for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
             {
-                hasResidual = true;
-                break;
+                if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+                {
+                    hasResidual = true;
+                    break;
+                }
+            }
+
+            UInt uiTargetPartIdx;
+            uiTargetPartIdx = 0;
+            if (hasResidual)
+            {
+    #if !RDO_WITHOUT_DQP_BITS
+                m_pcEntropyCoder->resetBits();
+                m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
+                rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // dQP bits
+                rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+                rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+    #endif
+
+                Bool foundNonZeroCbf = false;
+                rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
+                assert(foundNonZeroCbf);
+            }
+            else
+            {
+                rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);         // set QP to default QP
             }
         }
 
-        UInt uiTargetPartIdx;
-        uiTargetPartIdx = 0;
-        if (hasResidual)
-        {
-#if !RDO_WITHOUT_DQP_BITS
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // dQP bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-            rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-#endif
-
-            Bool foundNonZeroCbf = false;
-            rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
-            assert(foundNonZeroCbf);
-        }
-        else
-        {
-            rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);         // set QP to default QP
-        }
-    }
-
-    m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-    xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
-                                                                                // with sub partitioned prediction.
+        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+        xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
+                                                                                    // with sub partitioned prediction.
     }
     
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
