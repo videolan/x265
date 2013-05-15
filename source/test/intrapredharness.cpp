@@ -106,23 +106,15 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
     {
         for (int i = 0; i <= 100; i++)
         {
-            int blkAboveAvailable = rand() & 1;
-            int blkLeftAvailable = rand() & 1;
-            int rand_width = width;
-
-            // The Left and Above can't both be false
-            if (!blkLeftAvailable)
-                blkAboveAvailable = 1;
-
             memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
             memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
 
-            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, 0);
-            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, 0);
+            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0);
+            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width, 0);
 
-            for (int k = 0; k < rand_width; k++)
+            for (int k = 0; k < width; k++)
             {
-                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, rand_width))
+                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
                 {
                     return false;
                 }
