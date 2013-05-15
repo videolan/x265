@@ -376,8 +376,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     // variables for fast encoder decision
     Bool    bEarlySkip  = false;
     Bool    bTrySplit    = true;
-    Double  fRD_Skip    = MAX_DOUBLE;
-
+    
     // variable for Early CU determination
     Bool    bSubBranch = true;
 
@@ -415,8 +414,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // variables for fast encoder decision
         bEarlySkip  = false;
         bTrySplit    = true;
-        fRD_Skip    = MAX_DOUBLE;
-
+        
         rpcTempCU->initEstData(uiDepth, iQP);
 
         // do inter modes, SKIP and 2Nx2N
@@ -431,14 +429,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             // SKIP
             xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
             rpcTempCU->initEstData(uiDepth, iQP);
-
-            // fast encoder decision for early skip
-            Int iIdx = g_aucConvertToBit[rpcBestCU->getWidth(0)];
-            if (aiNum[iIdx] > 5 && fRD_Skip < EARLY_SKIP_THRES * afCost[iIdx] / aiNum[iIdx])
-            {
-                bEarlySkip = true;
-                bTrySplit  = false;
-            }
 
             if (!m_pcEncCfg->getUseEarlySkipDetection())
             {

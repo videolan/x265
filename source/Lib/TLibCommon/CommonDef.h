@@ -175,9 +175,6 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 
 #define CLIP_TO_709_RANGE           0
 
-// Early-skip threshold (encoder)
-#define EARLY_SKIP_THRES            1.50        ///< if RD < thres*avg[BestSkipRD]
-
 #define MAX_CHROMA_FORMAT_IDC      3
 
 // TODO: Existing names used for the different NAL unit types can be altered to better reflect the names in the spec.
