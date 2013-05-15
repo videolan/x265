@@ -1178,8 +1178,6 @@ private:
 
     Bool     m_loopFilterAcrossTilesEnabledFlag;
 
-    Int      m_iNumSubstreams;
-
     Int      m_signHideFlag;
 
     Bool     m_cabacInitPresentFlag;
@@ -1281,10 +1279,6 @@ public:
     Bool    getEntropyCodingSyncEnabledFlag() const          { return m_entropyCodingSyncEnabledFlag; }
 
     Void    setEntropyCodingSyncEnabledFlag(Bool val)        { m_entropyCodingSyncEnabledFlag = val; }
-
-    Void     setNumSubstreams(Int iNumSubstreams)               { m_iNumSubstreams = iNumSubstreams; }
-
-    Int      getNumSubstreams()                                 { return m_iNumSubstreams; }
 
     Void      setSignHideFlag(Int signHideFlag) { m_signHideFlag = signHideFlag; }
 
@@ -1428,9 +1422,7 @@ private:
 
     UInt        m_sliceCurEndCUAddr;
     UInt        m_sliceIdx;
-    UInt        m_sliceSegmentCurEndCUAddr;
     Bool        m_nextSlice;
-    Bool        m_nextSliceSegment;
     UInt        m_sliceBits;
     UInt        m_sliceSegmentBits;
     Bool        m_bFinalized;
@@ -1676,17 +1668,9 @@ public:
 
     Void copySliceInfo(TComSlice *pcSliceSrc);
 
-    Void setSliceSegmentCurEndCUAddr(UInt uiAddr)     { m_sliceSegmentCurEndCUAddr = uiAddr;      }
-
-    UInt getSliceSegmentCurEndCUAddr()                  { return m_sliceSegmentCurEndCUAddr;        }
-
     Void setNextSlice(Bool b)          { m_nextSlice = b;                           }
 
     Bool isNextSlice()                  { return m_nextSlice;                        }
-
-    Void setNextSliceSegment(Bool b)          { m_nextSliceSegment = b;                    }
-
-    Bool isNextSliceSegment()                  { return m_nextSliceSegment;                 }
 
     Void setSliceBits(UInt uiVal)      { m_sliceBits = uiVal;                      }
 

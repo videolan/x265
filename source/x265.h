@@ -164,7 +164,6 @@ typedef struct
     int       m_useEarlySkipDetection;            ///< flag for using Early SKIP Detection
 
     int       m_iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-    int       m_iWaveFrontSubstreams;             ///< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 
     int       m_bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
 

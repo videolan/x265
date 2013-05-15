@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
     };
 
     EncoderPrimitives cprim;
+    memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
     for (int i = 1; i <= cpuid; i++)
@@ -111,7 +112,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
 #endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
 #endif // if ENABLE_ASM_PRIMITIVES
     }
 

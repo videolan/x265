@@ -86,13 +86,50 @@ bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::
         opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
         ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
 
-        for( int k=0; k<rand_width; k++ )
+        for (int k = 0; k < rand_width; k++)
         {
             if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, rand_width))
                 return false;
         }
 
         j += FENC_STRIDE;
+    }
+
+    return true;
+}
+
+bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref, x265::getIPredPlanar_p opt)
+{
+    int j = ADI_BUF_STRIDE;
+
+    for (int width = 4; width <= 16; width <<= 1)
+    {
+        for (int i = 0; i <= 100; i++)
+        {
+            int blkAboveAvailable = rand() & 1;
+            int blkLeftAvailable = rand() & 1;
+            int rand_width = width;
+
+            // The Left and Above can't both be false
+            if (!blkLeftAvailable)
+                blkAboveAvailable = 1;
+
+            memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
+            memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
+
+            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, 0);
+            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, 0);
+
+            for (int k = 0; k < rand_width; k++)
+            {
+                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, rand_width))
+                {
+                    return false;
+                }
+            }
+
+            j += FENC_STRIDE;
+        }
     }
 
     return true;
@@ -108,16 +145,20 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
             return false;
         }
     }
+    if (opt.getIPredPlanar)
+    {
+        if (!check_getIPredPlanar_primitive(ref.getIPredPlanar, opt.getIPredPlanar))
+        {
+            printf("intrapred_planar_pel failed\n");
+            return false;
+        }
+    }
 
     return true;
 }
 
-#define INTRAPRED_ITERATIONS   50000
-
 void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
-
     int width = 64;
     short srcStride = 96;
     int blkAboveAvailable = 1;
@@ -126,28 +167,20 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     if (opt.getIPredDC)
     {
         printf("IPred_getIPredDC_pel[filter=0]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 0);
         printf("IPred_getIPredDC_pel[filter=1]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 1);
     }
-
-    t->Release();
+    if (opt.getIPredPlanar)
+    {
+        for (int ii = 4; ii <= 16; ii <<= 1)
+        {
+            width = ii;
+            printf("IPred_getIPredPlanar[width=%d]", ii);
+            REPORT_SPEEDUP(opt.getIPredPlanar, ref.getIPredPlanar,
+                           pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
+        }
+    }
 }
