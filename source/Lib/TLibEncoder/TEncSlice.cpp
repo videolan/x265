@@ -580,25 +580,13 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
             // inherit from TR if necessary, select substream to use.
             const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
-            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
+
+            // CHECK_ME: since there only one slice, the TR alway avail except line-0
+            // TODO: In MultiThread environment, we MUST modify code to waiting previous line to finish!
+            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro && (uiLin > 0))
             {
-                // We'll sync if the TR is available.
-                TComDataCU *pcCUUp = pcCU->getCUAbove();
-                TComDataCU *pcCUTR = NULL;
-                // CHECK_ME: we are here only (uiCol == 0), why HM use this complex statement to check
-                if (pcCUUp/* && ((uiCUAddr % uiWidthInLCUs + 1) < uiWidthInLCUs)*/)
-                {
-                    pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInLCUs + 1);
-                }
-                if ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
-                {
-                    // TR not available.
-                }
-                else
-                {
-                    // TR is available, we use it.
-                    ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
-                }
+                // TR is available, we use it.
+                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
             }
             m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
 
