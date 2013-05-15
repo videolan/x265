@@ -478,15 +478,13 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
     UInt  uiCUAddr;
-    UInt   uiStartCUAddr;
-    UInt   uiBoundingCUAddr;
 
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
     TEncBinCABAC* pppcRDSbacCoder = NULL;
     TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
-    xDetermineStartAndBoundingCUAddr(uiStartCUAddr, uiBoundingCUAddr, rpcPic, false);
+    xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
     // initialize cost values
     m_uiPicTotalBits  = 0;
@@ -537,7 +535,13 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
     TComBitCounter* pcBitCounters     = pcEncTop->getBitCounters();
-    Int  iNumSubstreams               = pcSlice->getPPS()->getNumSubstreams();
+    const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
+    const UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
+    const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
+    const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
+
+    // CHECK_ME: there seems WPP always start at every LCU line
+    //assert( iNumSubstreams == pcSlice->getPPS()->getNumSubstreams() );
 
     delete[] m_pcBufferSbacCoders;
     delete[] m_pcBufferBinCoderCABACs;
@@ -558,148 +562,143 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
     m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
-    UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    UInt uiTileCol      = 0;
-    UInt uiTileStartLCU = 0;
-    UInt uiTileLCUX     = 0;
-    uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU());
-    uiTileStartLCU = 0;
+    const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
+    // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
+    assert((uiTotalCUs % uiWidthInLCUs) == 0);
+    assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
+
     // for every CU in slice
-    UInt uiEncCUOrder;
-    for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
-         uiEncCUOrder < (uiBoundingCUAddr + (rpcPic->getNumPartInCU() - 1)) / rpcPic->getNumPartInCU();
-         uiCUAddr = (++uiEncCUOrder))
+    for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
     {
-        // initialize CU encoder
-        TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
-        pcCU->initCU(rpcPic, uiCUAddr);
-
-        // inherit from TR if necessary, select substream to use.
-        uiTileCol = 0; // what column of tiles are we in?
-        uiTileStartLCU = 0;
-        uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-        //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
-        uiCol     = uiCUAddr % uiWidthInLCUs;
-        uiLin     = uiCUAddr / uiWidthInLCUs;
-        uiSubStrm = uiLin % iNumSubstreams;
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+        const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
+        for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
-            // We'll sync if the TR is available.
-            TComDataCU *pcCUUp = pcCU->getCUAbove();
-            UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
-            UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
-            TComDataCU *pcCUTR = NULL;
-            if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
+            uiCUAddr = uiCurLineCUAddr + uiCol;
+
+            // initialize CU encoder
+            TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
+            pcCU->initCU(rpcPic, uiCUAddr);
+
+            // inherit from TR if necessary, select substream to use.
+            uiSubStrm = uiLin % iNumSubstreams;
+            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
             {
-                pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
-            }
-            if ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
-            {
-                // TR not available.
-            }
-            else
-            {
-                // TR is available, we use it.
-                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiTileCol]);
-            }
-        }
-        m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
-
-        // set go-on entropy coder
-        m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
-        m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
-
-        ((TEncBinCABAC*)m_pcRDGoOnSbacCoder->getEncBinIf())->setBinCountingEnableFlag(true);
-
-        Double oldLambda = m_pcRdCost->getLambda();
-        if (m_pcCfg->getUseRateCtrl())
-        {
-            Int estQP        = pcSlice->getSliceQp();
-            Double estLambda = -1.0;
-            Double bpp       = -1.0;
-
-            if (rpcPic->getSlice(0)->getSliceType() == I_SLICE || !m_pcCfg->getLCULevelRC())
-            {
-                estQP = pcSlice->getSliceQp();
-            }
-            else
-            {
-                bpp       = m_pcRateCtrl->getRCPic()->getLCUTargetBpp();
-                estLambda = m_pcRateCtrl->getRCPic()->getLCUEstLambda(bpp);
-                estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP(estLambda, pcSlice->getSliceQp());
-                estQP     = Clip3(-pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, estQP);
-
-                m_pcRdCost->setLambda(estLambda);
-            }
-
-            m_pcRateCtrl->setRCQP(estQP);
-            pcCU->getSlice()->setSliceQpBase(estQP);
-        }
-
-        // run CU encoder
-        m_pcCuEncoder->compressCU(pcCU);
-
-        if (m_pcCfg->getUseRateCtrl())
-        {
-            UInt SAD    = m_pcCuEncoder->getLCUPredictionSAD();
-            Int height  = min(pcSlice->getSPS()->getMaxCUHeight(), pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight());
-            Int width   = min(pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth());
-            Double MAD = (Double)SAD / (Double)(height * width);
-            MAD = MAD * MAD;
-            (m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr)).m_MAD = MAD;
-
-            Int actualQP        = g_RCInvalidQPValue;
-            Double actualLambda = m_pcRdCost->getLambda();
-            Int actualBits      = pcCU->getTotalBits();
-            Int numberOfEffectivePixels    = 0;
-            for (Int idx = 0; idx < rpcPic->getNumPartInCU(); idx++)
-            {
-                if (pcCU->getPredictionMode(idx) != MODE_NONE && (!pcCU->isSkipped(idx)))
+                // We'll sync if the TR is available.
+                TComDataCU *pcCUUp = pcCU->getCUAbove();
+                TComDataCU *pcCUTR = NULL;
+                // CHECK_ME: we are here only (uiCol == 0), why HM use this complex statement to check
+                if (pcCUUp/* && ((uiCUAddr % uiWidthInLCUs + 1) < uiWidthInLCUs)*/)
                 {
-                    numberOfEffectivePixels = numberOfEffectivePixels + 16;
-                    break;
+                    pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInLCUs + 1);
+                }
+                if ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
+                {
+                    // TR not available.
+                }
+                else
+                {
+                    // TR is available, we use it.
+                    ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
                 }
             }
+            m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
 
-            if (numberOfEffectivePixels == 0)
+            // set go-on entropy coder
+            m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
+            m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
+
+            ((TEncBinCABAC*)m_pcRDGoOnSbacCoder->getEncBinIf())->setBinCountingEnableFlag(true);
+
+            Double oldLambda = m_pcRdCost->getLambda();
+            if (m_pcCfg->getUseRateCtrl())
             {
-                actualQP = g_RCInvalidQPValue;
+                Int estQP        = pcSlice->getSliceQp();
+                Double estLambda = -1.0;
+                Double bpp       = -1.0;
+
+                if (rpcPic->getSlice(0)->getSliceType() == I_SLICE || !m_pcCfg->getLCULevelRC())
+                {
+                    estQP = pcSlice->getSliceQp();
+                }
+                else
+                {
+                    bpp       = m_pcRateCtrl->getRCPic()->getLCUTargetBpp();
+                    estLambda = m_pcRateCtrl->getRCPic()->getLCUEstLambda(bpp);
+                    estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP(estLambda, pcSlice->getSliceQp());
+                    estQP     = Clip3(-pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, estQP);
+
+                    m_pcRdCost->setLambda(estLambda);
+                }
+
+                m_pcRateCtrl->setRCQP(estQP);
+                pcCU->getSlice()->setSliceQpBase(estQP);
             }
-            else
+
+            // run CU encoder
+            m_pcCuEncoder->compressCU(pcCU);
+
+            if (m_pcCfg->getUseRateCtrl())
             {
-                actualQP = pcCU->getQP(0);
+                UInt SAD    = m_pcCuEncoder->getLCUPredictionSAD();
+                Int height  = min(pcSlice->getSPS()->getMaxCUHeight(), pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight());
+                Int width   = min(pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth());
+                Double MAD = (Double)SAD / (Double)(height * width);
+                MAD = MAD * MAD;
+                (m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr)).m_MAD = MAD;
+
+                Int actualQP        = g_RCInvalidQPValue;
+                Double actualLambda = m_pcRdCost->getLambda();
+                Int actualBits      = pcCU->getTotalBits();
+                Int numberOfEffectivePixels    = 0;
+                for (Int idx = 0; idx < rpcPic->getNumPartInCU(); idx++)
+                {
+                    if (pcCU->getPredictionMode(idx) != MODE_NONE && (!pcCU->isSkipped(idx)))
+                    {
+                        numberOfEffectivePixels = numberOfEffectivePixels + 16;
+                        break;
+                    }
+                }
+
+                if (numberOfEffectivePixels == 0)
+                {
+                    actualQP = g_RCInvalidQPValue;
+                }
+                else
+                {
+                    actualQP = pcCU->getQP(0);
+                }
+                m_pcRdCost->setLambda(oldLambda);
+
+                m_pcRateCtrl->getRCPic()->updateAfterLCU(m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda, m_pcCfg->getLCULevelRC());
             }
-            m_pcRdCost->setLambda(oldLambda);
 
-            m_pcRateCtrl->getRCPic()->updateAfterLCU(m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda, m_pcCfg->getLCULevelRC());
-        }
+            // restore entropy coder to an initial stage
+            m_pcEntropyCoder->setEntropyCoder(m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice);
+            m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
+            m_pcCuEncoder->setBitCounter(&pcBitCounters[uiSubStrm]);
+            m_pcBitCounter = &pcBitCounters[uiSubStrm];
+            pppcRDSbacCoder->setBinCountingEnableFlag(true);
+            m_pcBitCounter->resetBits();
+            pppcRDSbacCoder->setBinsCoded(0);
+            m_pcCuEncoder->encodeCU(pcCU);
 
-        // restore entropy coder to an initial stage
-        m_pcEntropyCoder->setEntropyCoder(m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice);
-        m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
-        m_pcCuEncoder->setBitCounter(&pcBitCounters[uiSubStrm]);
-        m_pcBitCounter = &pcBitCounters[uiSubStrm];
-        pppcRDSbacCoder->setBinCountingEnableFlag(true);
-        m_pcBitCounter->resetBits();
-        pppcRDSbacCoder->setBinsCoded(0);
-        m_pcCuEncoder->encodeCU(pcCU);
+            pppcRDSbacCoder->setBinCountingEnableFlag(false);
+            ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
-        pppcRDSbacCoder->setBinCountingEnableFlag(false);
-        ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
+            //Store probabilties of second LCU in line into buffer
+            if ((uiCol == 1) && (iNumSubstreams > 1) && m_pcCfg->getWaveFrontsynchro())
+            {
+                m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
+            }
 
-        //Store probabilties of second LCU in line into buffer
-        if ((uiCol == uiTileLCUX + 1) && (pcSlice->getPPS()->getNumSubstreams() > 1) && m_pcCfg->getWaveFrontsynchro())
-        {
-            m_pcBufferSbacCoders[uiTileCol].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
-        }
+            m_uiPicTotalBits += pcCU->getTotalBits();
+            m_dPicRdCost     += pcCU->getTotalCost();
+            m_uiPicDist      += pcCU->getTotalDistortion();
+        } // end of for(uiCol...
+    } // end of for(uiLin...
 
-        m_uiPicTotalBits += pcCU->getTotalBits();
-        m_dPicRdCost     += pcCU->getTotalCost();
-        m_uiPicDist      += pcCU->getTotalDistortion();
-    }
-
-    if (pcSlice->getPPS()->getNumSubstreams() > 1)
+    if (iNumSubstreams > 1)
     {
         pcSlice->setNextSlice(true);
     }
@@ -718,7 +717,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
 
     uiStartCUAddr = 0;
-    uiBoundingCUAddr = pcSlice->getSliceSegmentCurEndCUAddr();
+    uiBoundingCUAddr = pcSlice->getSliceCurEndCUAddr();
     // choose entropy coder
     {
         m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
@@ -742,30 +741,23 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac* pcSbacCoders = pcEncTop->getSbacCoders(); //coder for each substream
-    Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
+    const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
+    const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
+    const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
     UInt uiBitsOriginallyInSubstreams = 0;
     {
-        UInt uiTilesAcross = 1;
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferSbacCoders[ui].load(m_pcSbacCoder); //init. state
-        }
+        m_pcBufferSbacCoders[0].load(m_pcSbacCoder); //init. state
 
         for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }
 
-        for (UInt ui = 0; ui < uiTilesAcross; ui++)
-        {
-            m_pcBufferLowLatSbacCoders[ui].load(m_pcSbacCoder); //init. state
-        }
+        m_pcBufferLowLatSbacCoders[0].load(m_pcSbacCoder); //init. state
     }
 
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    UInt uiTileCol      = 0;
-    UInt uiTileLCUX     = 0;
     uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
@@ -774,8 +766,6 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
          uiEncCUOrder < (uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
          uiCUAddr = (++uiEncCUOrder))
     {
-        uiTileCol = 0; // what column of tiles are we in?
-        uiTileLCUX = 0;
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
         uiCol     = uiCUAddr % uiWidthInLCUs;
         uiLin     = uiCUAddr / uiWidthInLCUs;
@@ -783,13 +773,14 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
         m_pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
+        if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
             TComDataCU *pcCUUp = rpcPic->getCU(uiCUAddr)->getCUAbove();
             UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
             UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
             TComDataCU *pcCUTR = NULL;
+            // CHECK_ME: here can br optimize a little, do it later
             if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
             {
                 pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
@@ -801,7 +792,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             else
             {
                 // TR is available, we use it.
-                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[uiTileCol]);
+                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[0]);
             }
         }
         m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
@@ -885,9 +876,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         pcSbacCoders[uiSubStrm].load(m_pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
         //Store probabilities of second LCU in line into buffer
-        if ((pcSlice->getPPS()->getNumSubstreams() > 1) && (uiCol == uiTileLCUX + 1) && m_pcCfg->getWaveFrontsynchro())
+        if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)
         {
-            m_pcBufferSbacCoders[uiTileCol].loadContexts(&pcSbacCoders[uiSubStrm]);
+            m_pcBufferSbacCoders[0].loadContexts(&pcSbacCoders[uiSubStrm]);
         }
     }
 
@@ -905,47 +896,23 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
  * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
  * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
  */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(UInt& startCUAddr, UInt& boundingCUAddr, TComPic* rpcPic, Bool bEncodeSlice)
+Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice)
 {
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     UInt uiBoundingCUAddrSlice;
 
     UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
 
-    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame;
-    {
-        uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
 
-        // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-        pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
-    }
-
-    // Dependent slice
-    UInt boundingCUAddrSliceSegment;
-    boundingCUAddrSliceSegment = uiNumberOfCUsInFrame;
-    {
-        boundingCUAddrSliceSegment = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
-
-        // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
-        pcSlice->setSliceSegmentCurEndCUAddr(boundingCUAddrSliceSegment);
-    }
-
-    if (boundingCUAddrSliceSegment > uiBoundingCUAddrSlice)
-    {
-        boundingCUAddrSliceSegment = uiBoundingCUAddrSlice;
-        pcSlice->setSliceSegmentCurEndCUAddr(uiBoundingCUAddrSlice);
-    }
-
-    // Make a joint decision based on reconstruction and dependent slice bounds
-    startCUAddr    = 0;
-    boundingCUAddr = min(uiBoundingCUAddrSlice, boundingCUAddrSliceSegment);
+    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
+    pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);
 
     if (!bEncodeSlice)
     {
         // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice
         // first. Set the flags accordingly.
         pcSlice->setNextSlice(false);
-        pcSlice->setNextSliceSegment(false);
     }
 }
 

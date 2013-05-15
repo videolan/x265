@@ -27,19 +27,6 @@
 #include "primitives.h"
 #include <stddef.h>
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#elif defined(__GNUC__)
-
-static inline uint32_t __rdtsc(void) 
-{ 
-    uint32_t a = 0;
-    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
-    return a;
-} 
-
-#endif
-
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
 #else
@@ -64,45 +51,43 @@ public:
     static void alignedFree(void *ptr);
 };
 
-class Timer
-{
-public:
-
-    Timer() {}
-
-    virtual ~Timer() {}
-
-    static Timer *CreateTimer();
-
-    virtual void Start() = 0;
-
-    virtual void Stop() = 0;
-
-    virtual uint64_t Elapsed() = 0;
-
-    virtual void Release() = 0;
-};
+#ifdef _MSC_VER
+#include <intrin.h>
+#elif defined(__GNUC__)
+static inline uint32_t __rdtsc(void) 
+{ 
+    uint32_t a = 0;
+    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
+    return a;
+} 
+#endif
 
 #define BENCH_RUNS 1000
 
 // Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc
 // and discards invalid times.  Repeats 1000 times to get a good average.  Then measures
 // the C reference with fewer runs and reports X factor and average cycles.
-#define REPORT_SPEEDUP(ITERATIONS, RUNOPT, RUNREF) \
+#define REPORT_SPEEDUP(RUNOPT, RUNREF, ...) \
 { \
     uint32_t cycles = 0; int runs = 0;\
-    RUNOPT;\
+    RUNOPT(__VA_ARGS__);\
     for (int ti = 0; ti < BENCH_RUNS; ti++) {\
       uint32_t t0 = (uint32_t)__rdtsc();\
-      RUNOPT; RUNOPT; RUNOPT; RUNOPT;\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
       uint32_t t1 = (uint32_t)__rdtsc() - t0;\
       if (t1*runs <= cycles*4 && ti > 0) { cycles += t1; runs++; }\
     }\
     uint32_t refcycles = 0; int refruns = 0;\
-    RUNREF;\
+    RUNREF(__VA_ARGS__);\
     for (int ti = 0; ti < BENCH_RUNS/4; ti++) {\
       uint32_t t0 = (uint32_t)__rdtsc();\
-      RUNREF; RUNREF; RUNREF; RUNREF;\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
       uint32_t t1 = (uint32_t)__rdtsc() - t0;\
       if (t1*refruns <= refcycles*4 && ti > 0) { refcycles += t1; refruns++; }\
     }\

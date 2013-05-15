@@ -395,6 +395,30 @@ void CDECL partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line
         dst += 32;
     }
 }
+
+void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
+{
+    Int j;
+    Int E[2], O[2];
+    Int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        /* E and O */
+        E[0] = src[0] + src[3];
+        O[0] = src[0] - src[3];
+        E[1] = src[1] + src[2];
+        O[1] = src[1] - src[2];
+
+        dst[0] = (short)((g_aiT4[0][0] * E[0] + g_aiT4[0][1] * E[1] + add) >> shift);
+        dst[2 * line] = (short)((g_aiT4[2][0] * E[0] + g_aiT4[2][1] * E[1] + add) >> shift);
+        dst[line] = (short)((g_aiT4[1][0] * O[0] + g_aiT4[1][1] * O[1] + add) >> shift);
+        dst[3 * line] = (short)((g_aiT4[3][0] * O[0] + g_aiT4[3][1] * O[1] + add) >> shift);
+
+        src += 4;
+        dst++;
+    }
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -411,5 +435,6 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
+    p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
 }
 }

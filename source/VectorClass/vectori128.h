@@ -5491,10 +5491,15 @@ template <int32_t d>
 static inline Vec8us broadcast_by_i(Vec8us const& a) {
     Static_error_check<(d<8)> not_support;
     const int dL = d & 3;
-    const int dH = (d >> 2) & 3;
-    Vec8us _tmp = _mm_shufflelo_epi16(a, dL * 0x55);
-    if (d>4) {
-        _tmp = _mm_shufflelo_epi16(_tmp, dH * 0x55);
+    const int dH = (d-4) & 3;
+    Vec8us _tmp;
+    if (d>=4) {
+        _tmp = _mm_shufflehi_epi16(a, dH * 0x55);
+        _tmp = _mm_unpackhi_epi64(_tmp, _tmp);
+    }
+    else {
+        _tmp = _mm_shufflelo_epi16(a, dL * 0x55);
+        _tmp = _mm_unpacklo_epi64(_tmp, _tmp);
     }
     return _tmp;
 }

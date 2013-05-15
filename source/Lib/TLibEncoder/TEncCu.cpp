@@ -405,7 +405,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
-    Bool bSliceEnd = (pcSlice->getSliceSegmentCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceSegmentCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
+    Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
     if (!bSliceEnd && bInsidePicture)
@@ -683,7 +683,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
-            Bool bInSlice = pcSubBestPartCU->getSCUAddr() < pcSlice->getSliceSegmentCurEndCUAddr();
+            Bool bInSlice = pcSubBestPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (pcSubBestPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubBestPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
@@ -794,8 +794,8 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     //Calculate end address
     UInt uiCUAddr = pcCU->getSCUAddr() + uiAbsPartIdx;
 
-    UInt uiInternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
-    UInt uiExternalAddress = (pcSlice->getSliceSegmentCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
+    UInt uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
+    UInt uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
     UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
     UInt uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
     UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
@@ -930,7 +930,7 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
         {
             uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]];
             uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
-            Bool bInSlice = pcCU->getSCUAddr() + uiAbsPartIdx < pcSlice->getSliceSegmentCurEndCUAddr();
+            Bool bInSlice = pcCU->getSCUAddr() + uiAbsPartIdx < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (uiLPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 xEncodeCU(pcCU, uiAbsPartIdx, uiDepth + 1);
@@ -1334,8 +1334,8 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
     UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
     TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
-    Bool bSliceEnd   = pcSlice->getSliceSegmentCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
-        pcSlice->getSliceSegmentCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
+    Bool bSliceEnd   = pcSlice->getSliceCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
+        pcSlice->getSliceCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
 
     if (!bSliceEnd && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
@@ -1356,7 +1356,7 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
             UInt uiSubCULPelX   = uiLPelX + (g_uiMaxCUWidth >> (uiDepth + 1)) * (uiPartUnitIdx &  1);
             UInt uiSubCUTPelY   = uiTPelY + (g_uiMaxCUHeight >> (uiDepth + 1)) * (uiPartUnitIdx >> 1);
 
-            Bool bInSlice = pcCU->getAddr() * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx < pcSlice->getSliceSegmentCurEndCUAddr();
+            Bool bInSlice = pcCU->getAddr() * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (uiSubCULPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiSubCUTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 xCopyYuv2Pic(rpcPic, uiCUAddr, uiAbsPartIdx, uiDepth + 1, uiSrcDepth, pcCU, uiSubCULPelX, uiSubCUTPelY); // Copy Yuv data to picture Yuv

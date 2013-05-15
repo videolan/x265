@@ -12,8 +12,7 @@ if(ENABLE_TEST_THREADPOOL)
 endif()
 
 add_executable(TestBench
-    testbench.cpp 
-    timer.cpp testharness.h
+    testbench.cpp testharness.h
     pixelharness.cpp pixelharness.h
     mbdstharness.cpp mbdstharness.h
     ipfilterharness.cpp ipfilterharness.h

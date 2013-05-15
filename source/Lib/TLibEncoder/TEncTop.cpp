@@ -606,7 +606,6 @@ Void TEncTop::xInitPPS()
     m_cPPS.setChromaCbQpOffset(m_chromaCbQpOffset);
     m_cPPS.setChromaCrQpOffset(m_chromaCrQpOffset);
 
-    m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams);
     m_cPPS.setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
     m_cPPS.setUseWP(m_useWeightedPred);
     m_cPPS.setWPBiPred(m_useWeightedBiPred);
@@ -904,12 +903,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
 Void  TEncTop::xInitPPSforTiles()
 {
     m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
-
-    // # substreams is "per tile" when tiles are independent.
-    if (m_iWaveFrontSynchro)
-    {
-        m_cPPS.setNumSubstreams(m_iWaveFrontSubstreams);
-    }
 }
 
 //! \}

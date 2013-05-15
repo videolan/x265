@@ -102,7 +102,7 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
 {
     int j = ADI_BUF_STRIDE;
 
-    for (int width = 4; width <= 8; width <<= 1)
+    for (int width = 4; width <= 16; width <<= 1)
     {
         for (int i = 0; i <= 100; i++)
         {
@@ -157,12 +157,8 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     return true;
 }
 
-#define INTRAPRED_ITERATIONS   50000
-
 void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    Timer *t = Timer::CreateTimer();
-
     int width = 64;
     short srcStride = 96;
     int blkAboveAvailable = 1;
@@ -171,44 +167,20 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     if (opt.getIPredDC)
     {
         printf("IPred_getIPredDC_pel[filter=0]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 0)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 0);
         printf("IPred_getIPredDC_pel[filter=1]");
-        REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                       opt.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_Vec, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1),
-                       ref.getIPredDC(pixel_buff + srcStride, srcStride,
-                                      pixel_out_C, FENC_STRIDE,
-                                      width, width,
-                                      blkAboveAvailable, blkLeftAvailable, 1)
-                       );
+        REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 1);
     }
     if (opt.getIPredPlanar)
     {
-        for (int ii = 4; ii <= 8; ii <<= 1)
+        for (int ii = 4; ii <= 16; ii <<= 1)
         {
             width = ii;
             printf("IPred_getIPredPlanar[width=%d]", ii);
-            REPORT_SPEEDUP(INTRAPRED_ITERATIONS,
-                           opt.getIPredPlanar(pixel_buff + srcStride, srcStride,
-                                              pixel_out_Vec, FENC_STRIDE,
-                                              width, 0),
-                           ref.getIPredPlanar(pixel_buff + srcStride, srcStride,
-                                              pixel_out_C, FENC_STRIDE,
-                                              width, 0)
-                           );
+            REPORT_SPEEDUP(opt.getIPredPlanar, ref.getIPredPlanar,
+                           pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
         }
     }
-
-    t->Release();
 }

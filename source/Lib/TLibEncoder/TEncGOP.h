@@ -108,7 +108,6 @@ private:
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
     std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
-    std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
 
     std::vector<Int> m_vRVM_RP;
     UInt                    m_lastBPSEI;
