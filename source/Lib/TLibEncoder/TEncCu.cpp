@@ -374,7 +374,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
-    Bool    bEarlySkip  = false;
     Bool    bTrySplit    = true;
     
     // variable for Early CU determination
@@ -412,7 +411,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
-        bEarlySkip  = false;
         bTrySplit    = true;
         
         rpcTempCU->initEstData(uiDepth, iQP);
@@ -433,14 +431,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             if (!m_pcEncCfg->getUseEarlySkipDetection())
             {
                 // 2Nx2N, NxN
-                if (!bEarlySkip)
+                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
+                rpcTempCU->initEstData(uiDepth, iQP);
+                if (m_pcEncCfg->getUseCbfFastMode())
                 {
-                    xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
-                    rpcTempCU->initEstData(uiDepth, iQP);
-                    if (m_pcEncCfg->getUseCbfFastMode())
-                    {
-                        doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                    }
+                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                 }
             }
         }
@@ -461,18 +456,15 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
             {
                 // 2Nx2N, NxN
-                if (!bEarlySkip)
+                if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
                 {
-                    if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
+                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
                     {
-                        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
-                        {
-                            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
-                            rpcTempCU->initEstData(uiDepth, iQP);
-                        }
+                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
+                        rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
-
+            
                 if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
                 {
                     // 2NxN, Nx2N
@@ -587,28 +579,24 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
 
             // do normal intra modes
-            if (!bEarlySkip)
+            // speedup for inter frames
+            if (rpcBestCU->getSlice()->getSliceType() == I_SLICE ||
+                rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
+                rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
+                rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
             {
-                // speedup for inter frames
-                if (rpcBestCU->getSlice()->getSliceType() == I_SLICE ||
-                    rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
-                    rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
-                    rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
-                {
-                    xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
-                    rpcTempCU->initEstData(uiDepth, iQP);
+                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
+                rpcTempCU->initEstData(uiDepth, iQP);
 
-                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+                if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+                {
+                    if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                     {
-                        if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
-                        {
-                            xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
-                            rpcTempCU->initEstData(uiDepth, iQP);
-                        }
+                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
+                        rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
             }
-
             // test PCM
             if (pcPic->getSlice(0)->getSPS()->getUsePCM()
                 && rpcTempCU->getWidth(0) <= (1 << pcPic->getSlice(0)->getSPS()->getPCMLog2MaxSize())
