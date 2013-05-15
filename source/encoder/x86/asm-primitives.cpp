@@ -207,7 +207,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_32x48] = cmp<32, 48, 16, 16, x264_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_32x64] = cmp<32, 64, 16, 16, x264_pixel_satd_16x16_sse2>;
 
-        p.satd[PARTITION_48x4] = cmp<48, 4, 8, 4, x264_pixel_satd_16x8_sse2>;
+        p.satd[PARTITION_48x4] = cmp<48, 4, 8, 4, x264_pixel_satd_8x4_sse2>;
         p.satd[PARTITION_48x8] = cmp<48, 8, 16, 8, x264_pixel_satd_16x8_sse2>;
         p.satd[PARTITION_48x12] = cmp<48, 12, 8, 4, x264_pixel_satd_8x4_sse2>;
         p.satd[PARTITION_48x16] = cmp<48, 16, 16, 16, x264_pixel_satd_16x16_sse2>;
