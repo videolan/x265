@@ -453,13 +453,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         {
             rpcTempCU->initEstData(uiDepth, iQP);
 
-            // do inter modes, NxN, 2NxN, and Nx2N
-            if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
-            {                    
-                //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-             
-            }
-
             // do normal intra modes
             // speedup for inter frames
             if (rpcBestCU->getSlice()->getSliceType() == I_SLICE ||
