@@ -48,8 +48,10 @@ void *TestHarness::alignedMalloc(size_t size, int count, int alignment)
     return _aligned_malloc(count * size, alignment);
 #else
     void *ptr;
-    posix_memalign((void**)&ptr, alignment, count * size);
-    return ptr;
+    if (posix_memalign((void**)&ptr, alignment, count * size) == 0)
+        return ptr;
+    else
+        return NULL;
 #endif
 }
 

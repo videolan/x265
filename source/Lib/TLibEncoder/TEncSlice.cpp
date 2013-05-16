@@ -477,8 +477,6 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
  */
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
-    UInt  uiCUAddr;
-
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
@@ -545,13 +543,14 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     delete[] m_pcBufferSbacCoders;
     delete[] m_pcBufferBinCoderCABACs;
-    m_pcBufferSbacCoders     = new TEncSbac[1];
-    m_pcBufferBinCoderCABACs = new TEncBinCABAC[1];
-    m_pcBufferSbacCoders[0].init(&m_pcBufferBinCoderCABACs[0]);
-    m_pcBufferSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+    m_pcBufferSbacCoders     = new TEncSbac[iNumSubstreams];
+    m_pcBufferBinCoderCABACs = new TEncBinCABAC[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++) //init all sbac coders for RD optimization
     {
+        m_pcBufferSbacCoders[ui].init(&m_pcBufferBinCoderCABACs[0]);
+        m_pcBufferSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
 
@@ -562,7 +561,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
     m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
-    UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
+    UInt uiCol = 0, uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
@@ -574,33 +573,21 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
         for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
-            uiCUAddr = uiCurLineCUAddr + uiCol;
+            UInt uiCUAddr = uiCurLineCUAddr + uiCol;
 
             // initialize CU encoder
             TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
             pcCU->initCU(rpcPic, uiCUAddr);
 
             // inherit from TR if necessary, select substream to use.
-            uiSubStrm = uiLin % iNumSubstreams;
-            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
+            const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
+
+            // CHECK_ME: since there only one slice, the TR alway avail except line-0
+            // TODO: In MultiThread environment, we MUST modify code to waiting previous line to finish!
+            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro && (uiLin > 0))
             {
-                // We'll sync if the TR is available.
-                TComDataCU *pcCUUp = pcCU->getCUAbove();
-                TComDataCU *pcCUTR = NULL;
-                // CHECK_ME: we are here only (uiCol == 0), why HM use this complex statement to check
-                if (pcCUUp/* && ((uiCUAddr % uiWidthInLCUs + 1) < uiWidthInLCUs)*/)
-                {
-                    pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInLCUs + 1);
-                }
-                if ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL))
-                {
-                    // TR not available.
-                }
-                else
-                {
-                    // TR is available, we use it.
-                    ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[0]);
-                }
+                // TR is available, we use it.
+                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
             }
             m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
 
@@ -687,9 +674,10 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
             //Store probabilties of second LCU in line into buffer
-            if ((uiCol == 1) && (iNumSubstreams > 1) && m_pcCfg->getWaveFrontsynchro())
+            // CHECK_ME: I don't known why both check numSubStreams and bWaveFrontsynchro, I guess we always see them both except encode Nx64 video
+            if ((uiCol == 1) && (iNumSubstreams > 1) && bWaveFrontsynchro)
             {
-                m_pcBufferSbacCoders[0].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
+                m_pcBufferSbacCoders[uiLin].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
             }
 
             m_uiPicTotalBits += pcCU->getTotalBits();
@@ -746,10 +734,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
     UInt uiBitsOriginallyInSubstreams = 0;
     {
-        m_pcBufferSbacCoders[0].load(m_pcSbacCoder); //init. state
-
         for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
+            m_pcBufferSbacCoders[iSubstrmIdx].load(m_pcSbacCoder); //init. state
+
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }
 
@@ -792,7 +780,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             else
             {
                 // TR is available, we use it.
-                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[0]);
+                pcSbacCoders[uiSubStrm].loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
             }
         }
         m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
@@ -878,7 +866,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         //Store probabilities of second LCU in line into buffer
         if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)
         {
-            m_pcBufferSbacCoders[0].loadContexts(&pcSbacCoders[uiSubStrm]);
+            m_pcBufferSbacCoders[uiLin].loadContexts(&pcSbacCoders[uiSubStrm]);
         }
     }
 
