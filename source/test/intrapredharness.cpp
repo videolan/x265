@@ -127,6 +127,44 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
     return true;
 }
 
+bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt)
+{
+    int j = ADI_BUF_STRIDE;
+
+    int pmode;
+    Bool bFilter;
+
+    for (int width = 4; width <= 16; width <<= 1)
+    {
+        bFilter  = (width <= 16);
+        for (int i = 0; i <= 100; i++)
+        {
+            pmode = (rand() % 33) + 2;
+
+            memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
+            memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
+            pixel * refAbove = pixel_buff + j;
+            pixel * refLeft = refAbove + 3*width; 
+            refLeft[0] = refAbove[0];
+
+            opt(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
+            ref(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
+
+            for (int k = 0; k < width; k++)
+            {
+                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
+                {
+                    return false;
+                }
+            }
+
+            j += FENC_STRIDE;
+        }
+    }
+
+    return true;
+}
+
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.getIPredDC)
@@ -142,6 +180,14 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
         if (!check_getIPredPlanar_primitive(ref.getIPredPlanar, opt.getIPredPlanar))
         {
             printf("intrapred_planar_pel failed\n");
+            return false;
+        }
+    }
+    if(opt.getIPredAng)
+    {
+        if (!check_getIPredAng_primitive(ref.getIPredAng, opt.getIPredAng))
+        {
+            printf("intrapred_angular_pel failed\n");
             return false;
         }
     }
@@ -175,4 +221,19 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                            pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
         }
     }
+    if (opt.getIPredAng)
+    {
+        for (int ii = 4; ii <= 16; ii <<= 1)
+        {
+            width = ii;
+            bool bFilter  = (width <= 16);
+            pixel * refAbove = pixel_buff + srcStride;
+            pixel * refLeft = refAbove + 3*width; 
+            refLeft[0] = refAbove[0];
+            printf("IPred_getIPredAng[width=%d]", ii);
+            REPORT_SPEEDUP(opt.getIPredAng, ref.getIPredAng,
+                           BIT_DEPTH, pixel_buff + srcStride, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0, (rand()%33)+2, bFilter, refAbove, refLeft);
+        }
+    }
+
 }
