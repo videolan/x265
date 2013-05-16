@@ -237,7 +237,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     string cfg_InputFile;
     string cfg_ReconFile;
-    string cfg_BitstreamFile;
+    string cfg_BitstreamFile("hevc.bin");
     string cfg_dQPFile;
     string cfg_ScalingListFile;
 
