@@ -38,8 +38,6 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    TAppEncTop  cTAppEncTop;
-
 #if HAVE_VLD
     VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER, NULL);
 #endif
@@ -58,22 +56,26 @@ int main(int argc, char *argv[])
 #endif
     fprintf(stdout, "\n");
 
-    cTAppEncTop.create();
+    TAppEncTop *app = new TAppEncTop();
 
-    if (!cTAppEncTop.parseCfg(argc, argv))
+    app->create();
+
+    if (!app->parseCfg(argc, argv))
     {
-        cTAppEncTop.destroy();
+        app->destroy();
         return 1;
     }
  
     clock_t lBefore = clock();
 
-    cTAppEncTop.encode();
+    app->encode();
 
     double dResult = (double)(clock() - lBefore) / CLOCKS_PER_SEC;
     printf("\n Total Time: %12.3f sec.\n", dResult);
 
-    cTAppEncTop.destroy();
+    app->destroy();
+
+    delete app;
 
     x265_cleanup();
 
