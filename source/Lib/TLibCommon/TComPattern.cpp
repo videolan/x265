@@ -54,7 +54,6 @@ const UChar TComPattern::m_aucIntraFilter[5] =
     0, //32x32
     10, //64x64
 };
-
 // ====================================================================================================================
 // Public member functions (TComPatternParam)
 // ====================================================================================================================
@@ -260,6 +259,7 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
             piFilterBufN[0] = piFilterBuf[0];
             piFilterBufN[uiCuHeight2] = piFilterBuf[uiCuHeight2];
             piFilterBufN[iBufSize - 1] = piFilterBuf[iBufSize - 1];
+            //TODO: Performance Primitive???
             for (i = 1; i < uiCuHeight2; i++)
             {
                 piFilterBufN[i] = ((uiCuHeight2 - i) * bottomLeft + i * topLeft + uiCuHeight) >> shift;
@@ -300,7 +300,32 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     }
 
     piFilteredBuf1[0] = piFilterBufN[l++];
-    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));
+    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));    
+}
+
+//Overloaded initialiation of ADI buffers to support buffered references for xpredIntraAngBufRef
+Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
+{
+    initAdiPattern(pcCU, uiZorderIdxInPart, uiPartDepth, piAdiBuf, iOrgBufStride,iOrgBufHeight,bAbove, bLeft);
+    UInt  uiCuWidth   = pcCU->getWidth(0) >> uiPartDepth;        
+    UInt  uiCuHeight  = pcCU->getHeight(0) >> uiPartDepth;
+    UInt  uiCuWidth2  = uiCuWidth << 1;
+    UInt  uiCuHeight2 = uiCuHeight << 1;
+
+    refAbove+=uiCuWidth-1;
+    refAboveFlt+=uiCuWidth-1;
+    refLeft+=uiCuWidth-1;
+    refLeftFlt+=uiCuWidth-1;
+
+    //  ADI_BUF_STRIDE * (2 * height + 1);
+    memcpy(refAbove, piAdiBuf, (uiCuWidth2+1)*sizeof(Pel));
+    memcpy(refAboveFlt, piAdiBuf + ADI_BUF_STRIDE * (2 * uiCuHeight + 1), (uiCuWidth2+1)*sizeof(Pel));
+
+    for (int k = 0; k < uiCuHeight2 + 1; k++)
+    {
+        refLeft[k ] = piAdiBuf[k*ADI_BUF_STRIDE]; 
+        refLeftFlt[k] = (piAdiBuf+ADI_BUF_STRIDE*(uiCuHeight2+1))[k*ADI_BUF_STRIDE];   // Smoothened
+    }
 }
 
 Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)

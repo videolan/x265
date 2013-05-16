@@ -1057,7 +1057,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     if (default0Save1Load2 != 2)
     {
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
-        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(pcCU->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
         // save prediction
@@ -1066,6 +1066,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
             Pel*  pPred   = piPred;
             Pel*  pPredBuf = m_pSharedPredTransformSkip[0];
             Int k = 0;
+            //TODO : performance primitive?
             for (UInt uiY = 0; uiY < uiHeight; uiY++)
             {
                 for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1083,6 +1084,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         Pel*  pPred   = piPred;
         Pel*  pPredBuf = m_pSharedPredTransformSkip[0];
         Int k = 0;
+        //TODO : performance primitive?
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1099,6 +1101,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         Pel*  pOrg    = piOrg;
         Pel*  pPred   = piPred;
         Short*  pResi   = piResi;
+        //TODO : performance primitive?
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1157,6 +1160,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         Pel* pReco      = piReco;
         Short* pRecQt     = piRecQt;
         Pel* pRecIPred  = piRecIPred;
+        //TODO : performance primitive?
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1251,6 +1255,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
             Pel*  pPred   = piPred;
             Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];
             Int k = 0;
+            //TODO : performance primitive???
             for (UInt uiY = 0; uiY < uiHeight; uiY++)
             {
                 for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1268,6 +1273,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         Pel*  pPred   = piPred;
         Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];
         Int k = 0;
+        //TODO : performance primitive???
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1284,6 +1290,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         Pel*  pOrg    = piOrg;
         Pel*  pPred   = piPred;
         Short*  pResi   = piResi;
+        //TODO : performance primitive???
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -1350,6 +1357,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         Pel* pReco      = piReco;
         Short* pRecQt     = piRecQt;
         Pel* pRecIPred  = piRecIPred;
+        //TODO : performance primitive???
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
             for (UInt uiX = 0; uiX < uiWidth; uiX++)
@@ -2473,7 +2481,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         Bool bAboveAvail = false;
         Bool bLeftAvail  = false;
         pcCU->getPattern()->initPattern(pcCU, uiInitTrDepth, uiPartOffset);
-        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+        // Reference sample smoothing
+        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         Int numModesAvailable     = 35; //total number of Intra modes
@@ -2494,7 +2503,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             }
 
             CandNum = 0;
-
+           
             for (Int modeIdx = 0; modeIdx < numModesAvailable; modeIdx++)
             {
                 UInt uiMode = modeIdx;
@@ -2508,8 +2517,9 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
                 Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();
 
-                CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);
-            }
+                CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
+            }       
+
 
 #if FAST_UDI_USE_MPM
             Int uiPreds[3] = { -1, -1, -1 };
