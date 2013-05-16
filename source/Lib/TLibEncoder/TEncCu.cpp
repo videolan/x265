@@ -265,7 +265,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_temporalSAD      = 0;
 
     // analysis of CU
-    xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], m_ppcBestCU[0], 0);
+    xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -363,7 +363,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *- for loop of QP value to compress the current CU with all possible QP
 */
 
-Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
+Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcTempCUNxN, UInt uiDepth, PartSize eParentPartSize)
 {
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
@@ -371,7 +371,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     PPAScopeEvent(TEncCu_xCompressCU);
 
     // get Original YUV data from picture
-    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    //if(uiDepth == 0)
+        m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -665,22 +666,19 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
+            m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), pcSubBestPartCU[uiPartUnitIdx]->getAddr(), pcSubBestPartCU[uiPartUnitIdx] ->getZorderIdxInCU());
         }
     }
 
-#if EARLY_PARTITION_DECISION
-    
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
     {        
-        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) &&(rpcBestCU->getTotalCost()<_NxNCost))              // checking if BestCU is of size_2NX2N
+        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N))              // checking if BestCU is of size_2NX2N
         {
         rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
         xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
         return;
-        }
-        
+        }        
     }
-#endif
 
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
