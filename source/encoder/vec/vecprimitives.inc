@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <smmintrin.h>
 
 #define MAX_CU_SIZE 64
 extern char g_aucConvertToBit[];

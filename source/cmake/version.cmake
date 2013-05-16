@@ -1,4 +1,4 @@
-find_package(Hg)
+find_program(HG_EXECUTABLE hg)
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     # read the lines of the archive summary file to extract the version
@@ -23,7 +23,7 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
     set(X265_VERSION ${HG_REVISION} CACHE STRING "x265 version string.")
 elseif(DEFINED ENV{X265_VERSION})
     set(X265_VERSION $ENV{X265_VERSION} CACHE STRING "x265 version string.")
-elseif(HG_FOUND)
+elseif(HG_EXECUTABLE)
     execute_process(COMMAND
         ${HG_EXECUTABLE} log -r. --template "{latesttag}"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -68,4 +68,4 @@ else()
     set(X265_VERSION "unknown" CACHE STRING "x265 version string.")
 endif()
 
-message("xhevc version ${X265_VERSION}")
+message(STATUS "xhevc version ${X265_VERSION}")

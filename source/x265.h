@@ -158,7 +158,6 @@ typedef struct
     int       m_iFastSearch;                      ///< ME mode, 0 = full, 1 = diamond, 2 = PMVFAST
     int       m_iSearchRange;                     ///< ME search range
     int       m_bipredSearchRange;                ///< ME search range for bipred refinement
-    int       m_bUseEarlyCU;                      ///< flag for using Early CU setting
     int       m_useFastDecisionForMerge;          ///< flag for using Fast Decision Merge RD-Cost
     int       m_bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
     int       m_useEarlySkipDetection;            ///< flag for using Early SKIP Detection

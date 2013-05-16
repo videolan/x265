@@ -1132,7 +1132,7 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
-#if 0  // Cannot enable a perf primitive before it has a C ref, it crashes test bench
+#if X86_64
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
 #endif
 }

@@ -307,7 +307,7 @@ public:
     void fromUint32(uint32_t i) {
         xmm = _mm_cvtsi32_si128(i);
     }
-#if _WIN64
+#if X86_64
     void fromUint64(uint64_t i) {
         xmm = _mm_cvtsi64_si128(i);
     }
