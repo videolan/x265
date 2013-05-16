@@ -40,6 +40,10 @@ int main(int argc, char *argv[])
 {
     TAppEncTop  cTAppEncTop;
 
+#if HAVE_VLD
+    VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER, NULL);
+#endif
+
     PPA_INIT();
 
     fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
