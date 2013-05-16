@@ -112,6 +112,15 @@ if(ENABLE_CLI)
 
     file(GLOB APPCOMMON  Lib/TAppCommon/*.h Lib/TAppCommon/*.cpp)
 
+    # Visual leak detector
+    find_package(VLD)
+    if(VLD_FOUND)
+        add_definitions(-DHAVE_VLD)
+        include_directories(${VLD_INCLUDE_DIRS})
+        set(PLATFORM_LIBS ${PLATFORM_LIBS} ${VLD_LIBRARIES})
+        link_directories(${VLD_LIBRARY_DIRS})
+    endif()
+
     add_executable(x265-cli
         x265main.cpp ${EXTRAS} ${APPCOMMON}
         x265cfg.cpp x265cfg.h

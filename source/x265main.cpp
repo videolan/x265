@@ -26,6 +26,11 @@
 #include "x265enc.h"
 #include "PPA/ppa.h"
 
+#if HAVE_VLD
+/* Visual Leak Detector */
+#include <vld.h>
+#endif
+
 using namespace std;
 
 #define XSTR(x) STR(x)
