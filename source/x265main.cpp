@@ -79,5 +79,9 @@ int main(int argc, char *argv[])
 
     x265_cleanup();
 
+#if HAVE_VLD
+    assert(VLDReportLeaks() == 0);
+#endif
+
     return 0;
 }
