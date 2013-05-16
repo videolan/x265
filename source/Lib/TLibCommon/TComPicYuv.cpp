@@ -243,19 +243,24 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
 
 Void TComPicYuv::extendPicBorder()
 {
-    if (m_bIsBorderExtended) return;
+    if (m_bIsBorderExtended)
+        return;
+
     PPAScopeEvent(TComPicYUV_extendPicBorder);
     xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(),     getHeight(),      m_iLumaMarginX,   m_iLumaMarginY);
     xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
 
     /* Create buffers for Hpel/Qpel Planes */
-    for (int i = 0; i < 4; i++)
+    if (m_filteredBlockBufY[0][0] == NULL)
     {
-        for (int j = 0; j < 4; j++)
+        for (int i = 0; i < 4; i++)
         {
-            m_filteredBlockBufY[i][j]      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-            m_filteredBlockOrgY[i][j]      = m_filteredBlockBufY[i][j] + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
+            for (int j = 0; j < 4; j++)
+            {
+                m_filteredBlockBufY[i][j] = (Pel*)xMalloc(Pel, (m_iPicWidth + (m_iLumaMarginX << 1)) * (m_iPicHeight + (m_iLumaMarginY << 1)));
+                m_filteredBlockOrgY[i][j] = m_filteredBlockBufY[i][j] + m_iLumaMarginY * getStride() + m_iLumaMarginX;
+            }
         }
     }
 
