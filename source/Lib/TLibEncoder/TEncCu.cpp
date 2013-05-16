@@ -455,17 +455,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
             // do inter modes, NxN, 2NxN, and Nx2N
             if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
-            {
-                // 2Nx2N, NxN
-                if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
-                {
-                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                    }
-                }
-            
+            {                           
                 if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
                 {
                     // 2NxN, Nx2N
@@ -698,17 +688,18 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 _NxNCost += cost;
             }
         }
-
-        if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
-        {        
-            if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) && rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
-            {
-                rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
-                xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
-                return;
-            }        
-        }
     }
+
+    if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
+    {        
+        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) && rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
+        {
+            rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
+            xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
+            return;
+        }        
+    }
+    
 
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
