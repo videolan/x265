@@ -455,30 +455,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
             // do inter modes, NxN, 2NxN, and Nx2N
             if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
-            {                           
-                if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
-                {
-                    // 2NxN, Nx2N
-                    if (doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N, cost);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
-                    }
-                    if (doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN, cost);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
-                    }
-                }
-
+            {                    
                 //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
                 if (pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth))
                 {
@@ -697,7 +674,30 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
             xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
             return;
-        }        
+        }
+
+        if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
+        {
+            // 2NxN, Nx2N
+            if (doNotBlockPu)
+            {
+                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N, cost);
+                rpcTempCU->initEstData(uiDepth, iQP);
+                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
+                {
+                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
+                }
+            }
+            if (doNotBlockPu)
+            {
+                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN, cost);
+                rpcTempCU->initEstData(uiDepth, iQP);
+                if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
+                {
+                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
+                }
+            }
+        }
     }
     
 
