@@ -149,25 +149,25 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
 #define CROSS(start, x_max, y_max) \
     { \
         int16_t i = start; \
-        if ((x_max) <= X265_MIN(mv_x_max - omv.x, omv.x - mv_x_min)) \
+        if ((x_max) <= X265_MIN(mvmax.x - omv.x, omv.x - mvmin.x)) \
             for (; i < (x_max) - 2; i += 4) { \
                 COST_MV_X4(i, 0, -i, 0, i + 2, 0, -i - 2, 0); } \
         for (; i < (x_max); i += 2) \
         { \
-            if (omv.x + i <= mv_x_max) \
+            if (omv.x + i <= mvmax.x) \
                 COST_MV(omv.x + i, omv.y); \
-            if (omv.x - i >= mv_x_min) \
+            if (omv.x - i >= mvmin.x) \
                 COST_MV(omv.x - i, omv.y); \
         } \
         i = start; \
-        if ((y_max) <= X265_MIN(mv_y_max - omv.y, omv.y - mv_y_min)) \
+        if ((y_max) <= X265_MIN(mvmax.y - omv.y, omv.y - mvmin.y)) \
             for (; i < (y_max) - 2; i += 4) { \
                 COST_MV_X4(0, i, 0, -i, 0, i + 2, 0, -i - 2); } \
         for (; i < (y_max); i += 2) \
         { \
-            if (omv.y + i <= mv_y_max) \
+            if (omv.y + i <= mvmax.y) \
                 COST_MV(omv.x, omv.y + i); \
-            if (omv.y - i >= mv_y_min) \
+            if (omv.y - i >= mvmin.y) \
                 COST_MV(omv.x, omv.y - i); \
         } \
     }
@@ -227,11 +227,6 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV pmv = qmvp; // this needs to be confirmation pridictor Motion vector
     MV omv = bmv;
 
-    //this will configure min and max motion vector
-    int16_t mv_x_min = mvmin.x;
-    int16_t mv_y_min = mvmin.y;
-    int16_t mv_x_max = mvmax.x;
-    int16_t mv_y_max = mvmax.y;
     int16_t i_me_range = (int16_t)merange;
     omv.x = bmv.x;
     omv.y = bmv.y;
@@ -448,8 +443,8 @@ me_hex2:
                 { -4, 2 }, { 4, 2 }, { -2, 3 }, { 2, 3 },
             };
 
-            if (4 * i > X265_MIN4(mv_x_max - omv.x, omv.x - mv_x_min,
-                                  mv_y_max - omv.y, omv.y - mv_y_min))
+            if (4 * i > X265_MIN4(mvmax.x - omv.x, omv.x - mvmin.x,
+                                  mvmax.y - omv.y, omv.y - mvmin.y))
             {
                 for (int j = 0; j < 16; j++)
                 {
@@ -525,7 +520,7 @@ me_hex2:
             //printf("RUNNING .....\n");
         }
         while (++i <= i_me_range >> 2);
-        if (bmv.y <= mv_y_max && bmv.y >= mv_y_min && bmv.x <= mv_x_max && bmv.x >= mv_x_min)
+        if (bmv.y <= mvmax.y && bmv.y >= mvmin.y && bmv.x <= mvmax.x && bmv.x >= mvmin.x)
             goto me_hex2;
         break;
     }     // case 1 End - UMH
