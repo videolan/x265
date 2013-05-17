@@ -322,8 +322,7 @@ me_hex2:
 
         /* refine predictors */
         ucost1 = bcost;
-        omv.x = bmv.x;
-        omv.y = bmv.y;
+        omv = bmv;
 
         pixel *pix_base = fref + omv.x + omv.y * ref->lumaStride;
         DIA1_ITER(pmv.x, pmv.y);
@@ -339,8 +338,7 @@ me_hex2:
         if (bcost == ucost2)
             cross_start = 3;
 
-        omv.x = bmv.x;
-        omv.y = bmv.y;
+        omv = bmv;
 
         /* Early Termination */
 
