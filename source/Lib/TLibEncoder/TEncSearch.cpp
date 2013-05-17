@@ -3908,7 +3908,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     if (0 && m_cDistParam.bApplyWeight == false && !bBi)
     {
-        int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 0, NULL, iSrchRng, rcMv);
+        int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
         UInt mvbits = m_me.bitcost(rcMv);
         ruiBits += mvbits;

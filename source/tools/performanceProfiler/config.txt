@@ -4,9 +4,10 @@ DecoderApplicationPath=D:\\sumalatha\projects\hevc\HM_original\bin\vc10\Win32\Re
 encoderApplicationPath=D:\\sumalatha\projects\hevc\HM_sumalatha_may_16\build\vc11-x86_64\Release
 fileCfgPath=D:\\sumalatha\projects\hevc\hevc_samples
 psnrApplicationPath=D:\\sumalatha\projects\hevc\HM_original\bin\vc10\Win32\Release
+ffmpegPath=D:\\softwares\
 frames=20
-testFile1=FourPeople_1280x720_60
-testFile2=BasketballDrive_1920x1080_50
+testFile1=RaceHorses_416x240_30.y4m
+testFile2=FourPeople_1280x720_60.yuv
 
 
 

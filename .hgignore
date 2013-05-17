@@ -5,3 +5,4 @@ build/
 **.hevc
 **.yuv
 **.y4m
+**.out
