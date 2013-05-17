@@ -43,17 +43,14 @@ static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };
 static const int8_t hex2[8][2] = { { -1, -2 }, { -2, 0 }, { -1, 2 }, { 1, 2 }, { 2, 0 }, { 1, -2 }, { -1, -2 }, { -2, 0 } };
 static const int8_t square1[9][2] = { { 0, 0 }, { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } };
 
-#define x265_predictor_difference x265_predictor_difference
-
-static __inline int x265_predictor_difference(const  MV *mvc, intptr_t i_mvc)
+static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandidates)
 {
     int sum = 0;
-    //static const uint64_t pw_1 = 0x0001000100010001ULL;
 
-    for (int i = 0; i < i_mvc - 1; i++)
+    for (int i = 0; i < numCandidates - 1; i++)
     {
         sum += abs(mvc[i].x - mvc[i + 1].y)
-            + abs(mvc[i].x - mvc[i + 1].y);
+            +  abs(mvc[i].x - mvc[i + 1].y);
     }
 
     return sum;
@@ -383,15 +380,13 @@ me_hex2:
 
             int16_t mvd;
             int16_t sad_ctx, mvd_ctx;
-            int16_t denom = 1;
-            int16_t i_mvc = (int16_t)numCandidates;
+            int denom = 1;
 
             if (numCandidates == 1)
             {
                 if (blockWidth == 16 && blockHeight == 16)
                     /* mvc is probably the same as mvp, so the difference isn't meaningful.
                      * but prediction usually isn't too bad, so just use medium range */
-
                     mvd = 25;
                 else
                     mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
@@ -403,7 +398,7 @@ me_hex2:
                 /* in 16x16, mvc includes all the neighbors used to make mvp,
                  * so don't count mvp separately. */
 
-                denom = i_mvc - 1;
+                denom = numCandidates - 1;
                 mvd = 0;
                 if (i_pixel != PARTITION_16x16)
                 {
@@ -411,7 +406,7 @@ me_hex2:
                                     + abs(qmvp.y - mvc[0].y));
                     denom++;
                 }
-                mvd += (int16_t)x265_predictor_difference(mvc, i_mvc);
+                mvd += (int16_t)x265_predictor_difference(mvc, numCandidates);
             }
 
             sad_ctx = SAD_THRESH(1000 * THRESH_MUL) ? 0
