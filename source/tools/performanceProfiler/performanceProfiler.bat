@@ -8,6 +8,7 @@ if %%a==ScriptPath set ScriptPath=%%b
 if %%a==encoderApplicationPath set encoderApplicationPath=%%b
 if %%a==fileCfgPath set fileCfgPath=%%b
 if %%a==psnrApplicationPath set psnrApplicationPath=%%b
+if %%a==ffmpegPath set ffmpegPath=%%b
 if %%a==frames set frames=%%b
 if %%a==testFile1 set testFile1=%%b
 if %%a==testFile2 set testFile2=%%b
