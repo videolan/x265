@@ -225,7 +225,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     /* Measure full pel SAD at MVP */
     bmv = bmv.roundToFPel();
     bcost = fpelSad(fref, bmv) + mvcost(bmv.toQPel());
-    MV pmv = qmvp; // this needs to be confirmation pridictor Motion vector
+    MV pmv = qmvp.toFPel();
     MV omv = bmv;
 
     omv.x = bmv.x;
