@@ -557,7 +557,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
     {        
-        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) && rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
+        if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
         {
             rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
             xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
