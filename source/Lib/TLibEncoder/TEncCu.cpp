@@ -556,7 +556,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         }
     }
 
-    if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
+    if (rpcBestCU->getSlice()->getSliceType() != I_SLICE && !bSliceEnd && bInsidePicture) 
     {       
 
         if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
