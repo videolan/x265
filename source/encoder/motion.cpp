@@ -330,8 +330,7 @@ me_hex2:
         if (pmv.x | pmv.y)
             DIA1_ITER(0, 0);
 
-        if (PARTITION_4x4 == partEnum)
-            goto me_hex2;
+        assert(PARTITION_4x4 != partEnum);
 
         ucost2 = bcost;
         if ((bmv.x | bmv.y) && ((bmv.x - pmv.x) | (bmv.y - pmv.y)))
