@@ -24,8 +24,10 @@
 #include "primitives.h"
 #include "common.h"
 #include "motion.h"
+
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 using namespace x265;
 
