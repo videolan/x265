@@ -62,10 +62,10 @@ namespace po = df::program_options_lite;
 // ====================================================================================================================
 
 TAppEncCfg::TAppEncCfg()
-    : m_pchBitstreamFile()
+    : m_poolHandle(NULL)
+    , m_pchBitstreamFile()
     , m_pchdQPFile()
     , m_scalingListFile()
-    , m_poolHandle(NULL)
 {
     m_aidQP = NULL;
     m_input = NULL;

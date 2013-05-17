@@ -754,7 +754,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 
         int EEEO0 = _mm_extract_epi32(EEEO, 0);
         int EEEO1 = _mm_extract_epi32(EEEO, 1);
-        EEEO0, EEEO1;
 
         dst[0] = (64 * EEEE0 + 64 * EEEE1 + add) >> nshift;
         dst[16 * line] = (64 * EEEE0 + (-64) * EEEE1 + add) >> nshift;
@@ -815,7 +814,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_6xline_hi = _mm_cvtsi128_si32(dst_tmp7);
 
         int dst_6xline =  dst_6xline_lo + dst_6xline_hi;
-        dst_6xline;
 
         __m128i dst_tmp8 = _mm_mullo_epi32(c32_80_9_n70_n87, EO_0_3);
         __m128i dst_tmp9 = _mm_mullo_epi32(c32_n25_57_90_43, EO_4_7);
@@ -829,7 +827,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_10xline_hi = _mm_cvtsi128_si32(dst_tmp9);
 
         int dst_10xline =  dst_10xline_lo + dst_10xline_hi;
-        dst_10xline;
 
         __m128i dst_tmp10 = _mm_mullo_epi32(c32_9_n87_n43_70, EO_0_3);
         __m128i dst_tmp11 = _mm_mullo_epi32(c32_90_25_n80_n57, EO_4_7);
@@ -843,7 +840,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_14xline_hi = _mm_cvtsi128_si32(dst_tmp11);
 
         int dst_14xline =  dst_14xline_lo + dst_14xline_hi;
-        dst_14xline;
 
         __m128i dst_2_6_10_14 = _mm_set_epi32(dst_14xline, dst_10xline, dst_6xline, dst_2xline);
         dst_2_6_10_14  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_2_6_10_14), nshift);
@@ -865,7 +861,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_18xline_hi = _mm_cvtsi128_si32(dst_tmp13);
 
         int dst_18xline =  dst_18xline_lo + dst_18xline_hi;
-        dst_18xline;
 
         __m128i dst_tmp14 = _mm_mullo_epi32(c32_43_n90_57_25, EO_0_3);
         __m128i dst_tmp15 = _mm_mullo_epi32(c32_n87_70_9_n80, EO_4_7);
@@ -879,7 +874,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_22xline_hi = _mm_cvtsi128_si32(dst_tmp15);
 
         int dst_22xline =  dst_22xline_lo + dst_22xline_hi;
-        dst_22xline;
 
         __m128i dst_tmp16 = _mm_mullo_epi32(c32_25_n70_90_n80, EO_0_3);
         __m128i dst_tmp17 = _mm_mullo_epi32(c32_43_9_n57_87, EO_4_7);
@@ -893,7 +887,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_26xline_hi = _mm_cvtsi128_si32(dst_tmp17);
 
         int dst_26xline =  dst_26xline_lo + dst_26xline_hi;
-        dst_26xline;
 
         __m128i dst_tmp18 = _mm_mullo_epi32(c32_9_n25_43_n57, EO_0_3);
         __m128i dst_tmp19 = _mm_mullo_epi32(c32_70_n80_87_n90, EO_4_7);
@@ -907,7 +900,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         int dst_30xline_hi = _mm_cvtsi128_si32(dst_tmp19);
 
         int dst_30xline =  dst_30xline_lo + dst_30xline_hi;
-        dst_30xline;
 
         __m128i dst_18_22_26_30 = _mm_set_epi32(dst_30xline, dst_26xline, dst_22xline, dst_18xline);
         dst_18_22_26_30  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_18_22_26_30), nshift);

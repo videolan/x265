@@ -47,7 +47,7 @@ static const int8_t square1[9][2] = { { 0, 0 }, { 0, -1 }, { 0, 1 }, { -1, 0 }, 
 static __inline int x265_predictor_difference(const  MV *mvc, intptr_t i_mvc)
 {
     int sum = 0;
-    static const uint64_t pw_1 = 0x0001000100010001ULL;
+    //static const uint64_t pw_1 = 0x0001000100010001ULL;
 
     for (int i = 0; i < i_mvc - 1; i++)
     {
@@ -488,17 +488,17 @@ me_hex2:
             {
                 int16_t dir = 0;
                 size_t stride = ref->lumaStride;
-                pixel *pix_base = fref + omv.x + (omv.y - 4 * i) * stride;
+                pixel *fref_base = fref + omv.x + (omv.y - 4 * i) * stride;
                 int dy = (int)(i * stride);
 
 #define SADS(k, x0, y0, x1, y1, x2, y2, x3, y3) \
     sad_x4(fenc, \
-           pix_base x0 * i + (y0 - 2 * k + 4) * dy, \
-           pix_base x1 * i + (y1 - 2 * k + 4) * dy, \
-           pix_base x2 * i + (y2 - 2 * k + 4) * dy, \
-           pix_base x3 * i + (y3 - 2 * k + 4) * dy, \
+           fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
+           fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
+           fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
+           fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
            stride, costs + 4 * k); \
-    pix_base += 2 * dy;
+    fref_base += 2 * dy;
 #define ADD_MVCOST(k, x, y) costs[k] += p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
 #define MIN_MV(k, x, y)     COPY2_IF_LT(bcost, costs[k], dir, x * 16 + (y & 15))
 
