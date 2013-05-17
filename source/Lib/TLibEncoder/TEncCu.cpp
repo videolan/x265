@@ -529,6 +529,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             UInt uiTSubPelY   = pcSubBestPartCU[uiPartUnitIdx]->getCUPelY();
             UInt uiBSubPelY   = uiTSubPelY + pcSubBestPartCU[uiPartUnitIdx]->getHeight(0) - 1;
 
+            TComPic* pcSubPic = pcSubBestPartCU[uiPartUnitIdx]->getPic();
+            m_ppcOrigYuv[uhNextDepth]->copyFromPicYuv(pcSubPic->getPicYuvOrg(), pcSubBestPartCU[uiPartUnitIdx]->getAddr(), pcSubBestPartCU[uiPartUnitIdx] ->getZorderIdxInCU());
+
             TComSlice * pcSubSlice = pcSubBestPartCU[uiPartUnitIdx]->getPic()->getSlice(pcSubBestPartCU[uiPartUnitIdx]->getPic()->getCurrSliceIdx());
             Bool bInSlice = pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() < pcSubSlice->getSliceCurEndCUAddr();
             Bool bSubSliceEnd = (bInSlice && pcSubSlice->getSliceCurEndCUAddr() < pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() + pcSubBestPartCU[uiPartUnitIdx]->getTotalNumPart());
@@ -536,9 +539,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 (uiBSubPelY < pcSubBestPartCU[uiPartUnitIdx]->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
             if(rpcBestCU->getSlice()->getSliceType() != I_SLICE && bSubInsidePicture && !bSubSliceEnd)
-            {
-                TComPic* pcSubPic = pcSubBestPartCU[uiPartUnitIdx]->getPic();
-                m_ppcOrigYuv[uhNextDepth]->copyFromPicYuv(pcSubPic->getPicYuvOrg(), pcSubBestPartCU[uiPartUnitIdx]->getAddr(), pcSubBestPartCU[uiPartUnitIdx] ->getZorderIdxInCU());
+            {                
                 pcSubTempPartCU[uiPartUnitIdx]->initEstData(uhNextDepth, iQP);
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
@@ -556,7 +557,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     }
 
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE) 
-    {        
+    {       
+
         if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
         {
             rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
@@ -585,7 +587,15 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                 }
             }
-        }       
+        }
+        
+        if(rpcBestCU->getPartitionSize(0)== SIZE_2Nx2N && rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)
+        {
+            rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
+            xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
+            return;
+        }
+
     }
 
     // further split
