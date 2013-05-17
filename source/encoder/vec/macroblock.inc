@@ -212,7 +212,7 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
+/*void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j;
     int add = 1 << (shift - 1);
@@ -487,7 +487,7 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
         src += 32;
         dst++;
     }
-}
+}*/
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 {
@@ -546,7 +546,781 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
-#if X86_64
+//#if X86_64
+
+/*void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
+{
+    int j;
+
+  Vec4i g_aiT8_zero_row(64, 64, 0, 0);
+    Vec4i g_aiT8_two_row(64, -64, 0, 0);
+    Vec4i g_aiT8_one_row(83, 36, 0, 0);
+    Vec4i g_aiT8_three_row(36, -83, 0, 0);
+
+    int add = 1 << (shift - 1);
+
+    for (j = 0; j < line; j++)
+    {
+        // E and O
+      int E0 = src[0] + src[3];
+      int O0 = src[0] - src[3];
+      int E1 = src[1] + src[2];
+      int O1 = src[1] - src[2];
+
+    Vec4i E_vec(E0, E1, 0, 0);
+
+    Vec4i O_vec(O0, O1, 0, 0);
+
+    int tmpE1 = horizontal_add(g_aiT8_zero_row * E_vec);
+    int tmpO1 = horizontal_add(g_aiT8_one_row * O_vec);
+    int tmpE2 = horizontal_add(g_aiT8_two_row * E_vec);
+    int tmpO2 = horizontal_add(g_aiT8_three_row * O_vec);
+
+     short dst0 = (short)((tmpE1 + add) >> shift);
+     short dst2 = (short)((tmpE2 + add) >> shift);
+     short dst_line = (short)((tmpO1 + add) >> shift);
+     short dst3 = (short)((tmpO2 + add) >> shift);
+
+    dst[0] = dst0;
+        dst[2 * line] = dst2;
+        dst[line] = dst_line;
+        dst[3 * line] = dst3;
+
+        src += 4;
+        dst++;
+    }
+}*/
+
+void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
+{
+    int add = 1 << (nshift - 1);
+    __m128i c32_add   = _mm_set1_epi32(add);
+
+    __m128i c32_89_75_50_18 = _mm_set_epi32(18, 50, 75, 89);  //for the first loop
+    __m128i c32_75_n18_n89_n50 = _mm_set_epi32(-50, -89, -18, 75);
+    __m128i c32_50_n89_18_75 = _mm_set_epi32(75, 18, -89, 50);
+    __m128i c32_18_n50_75_n89 = _mm_set_epi32(-89, 75, -50, 18);
+
+    __m128i c32_90_87_80_70 = _mm_set_epi32(70, 80, 87, 90);  //for the second loop
+    __m128i c32_57_43_25_9 = _mm_set_epi32(9, 25, 43, 57);
+    __m128i c32_87_57_9_n43 = _mm_set_epi32(-43, 9, 57, 87);
+    __m128i c32_n80_n90_n70_n25 = _mm_set_epi32(-25, -70, -90, -80);
+    __m128i c32_80_9_n70_n87 = _mm_set_epi32(-87, -70, 9, 80);
+    __m128i c32_n25_57_90_43 = _mm_set_epi32(43, 90, 57, -25);
+    __m128i c32_9_n87_n43_70 = _mm_set_epi32(9, -87, -43, 70);
+    __m128i c32_90_25_n80_n57 = _mm_set_epi32(-57, -80, 25, 90);
+    __m128i c32_57_n80_n25_90 = _mm_set_epi32(90, -25, -80, 57);
+    __m128i c32_n9_n87_43_70 = _mm_set_epi32(70, 43, -87, -9);
+    __m128i c32_43_n90_57_25 = _mm_set_epi32(25, 57, -90, 43);
+    __m128i c32_n87_70_9_n80 = _mm_set_epi32(-80, 9, 70, -87);
+    __m128i c32_25_n70_90_n80 = _mm_set_epi32(-80, 90, -70, 25);
+    __m128i c32_43_9_n57_87 = _mm_set_epi32(87, -57, 9, 43);
+    __m128i c32_9_n25_43_n57 = _mm_set_epi32(-57, 43, -25, 9);
+    __m128i c32_70_n80_87_n90 = _mm_set_epi32(-90, 87, -80, 70);
+
+    __m128i c32_90_90_88_85 = _mm_set_epi32(85, 88, 90, 90); //for the third loop
+    __m128i c32_82_78_73_67 = _mm_set_epi32(67, 73, 78, 82);
+    __m128i c32_61_54_46_38 = _mm_set_epi32(38, 46, 54, 61);
+    __m128i c32_4_13_22_31  = _mm_set_epi32(4, 13, 22, 31);
+
+    __m128i c32_90_82_67_46   = _mm_set_epi32(46, 67, 82, 90);
+    __m128i c32_22_n4_n31_n54 = _mm_set_epi32(-54, -31, -4, 22);
+    __m128i c32_n73_n85_n90_n88 = _mm_set_epi32(-88, -90, -85, -73);
+    __m128i c32_n78_n61_n38_n13 = _mm_set_epi32(-13, -38, -61, -78);
+
+    __m128i c32_88_67_31_n13 = _mm_set_epi32(-13, 31, 67, 88);
+    __m128i c32_n54_n82_n90_n78 = _mm_set_epi32(-78, -90, -82, -54);
+    __m128i c32_73_38_n4_n46 = _mm_set_epi32(73, 38, -4, -46);
+    __m128i c32_22_61_85_90 = _mm_set_epi32(22, 61, 85, 90);
+
+    __m128i c32_n67_n13_46_85 = _mm_set_epi32(-67, -13, 46, 85);
+    __m128i c32_38_n22_n73_n90 = _mm_set_epi32(38, -22, -73, -90);
+    __m128i c32_n4_54_88_82 = _mm_set_epi32(-4, 54, 88, 82);
+    __m128i c32_n31_n78_n90_n61 = _mm_set_epi32(-31, -78, -90, -61);
+
+    __m128i c32_n90_n54_22_82 = _mm_set_epi32(-90, -54, 22, 82);
+    __m128i c32_85_78_13_n61 = _mm_set_epi32(85, 78, 13, -61);
+    __m128i c32_n67_n90_n46_31 = _mm_set_epi32(-67, -90, -46, 31);
+    __m128i c32_38_88_73_4 = _mm_set_epi32(38, 88, 73, 4);
+
+    __m128i c32_n73_n82_n4_78 = _mm_set_epi32(-73, -82, -4, 78);
+    __m128i c32_n22_67_85_13 = _mm_set_epi32(-22, 67, 85, 13);
+    __m128i c32_90_31_n61_n88 = _mm_set_epi32(90, 31, -61, -88);
+    __m128i c32_n46_n90_n38_54 = _mm_set_epi32(-46, -90, -38, 54);
+
+    __m128i c32_n22_n90_n31_73 = _mm_set_epi32(-22, -90, -31, 73);
+    __m128i c32_n90_n38_67_78 = _mm_set_epi32(-90, -38, 67, 78);
+    __m128i c32_n46_61_82_n13 = _mm_set_epi32(-46, 61, 82, -13);
+    __m128i c32_54_85_n4_n88 = _mm_set_epi32(54, 85, -4, -88);
+
+    __m128i c32_38_n78_n54_67 = _mm_set_epi32(38, -78, -54, 67);
+    __m128i c32_4_n90_n22_85 = _mm_set_epi32(4, -90, -22, 85);
+    __m128i c32_n31_n88_13_90 = _mm_set_epi32(-31, -88, 13, 90);
+    __m128i c32_n61_n73_46_82 = _mm_set_epi32(-61, -73, 46, 82);
+
+    __m128i c32_82_n46_n73_61 = _mm_set_epi32(82, -46, -73, 61);
+    __m128i c32_90_n13_n88_31 = _mm_set_epi32(90, -13, -88, 31);
+    __m128i c32_85_22_n90_n4 = _mm_set_epi32(85, 22, -90, -4);
+    __m128i c32_67_54_n78_n38 = _mm_set_epi32(67, 54, -78, -38);
+
+    __m128i c32_88_n4_n85_54 = _mm_set_epi32(88, -4, -85, 54);
+    __m128i c32_13_82_n61_n46 = _mm_set_epi32(13, 82, -61, -46);
+    __m128i c32_n78_67_38_n90 = _mm_set_epi32(-78, 67, 38, -90);
+    __m128i c32_n73_n31_90_n22 = _mm_set_epi32(-73, -31, 90, -22);
+
+    __m128i c32_54_38_n90_46 = _mm_set_epi32(54, 38, -90, 46);
+    __m128i c32_n88_61_31_n90 = _mm_set_epi32(-88, 61, 31, -90);
+    __m128i c32_13_n85_67_22 = _mm_set_epi32(13, -85, 67, 22);
+    __m128i c32_73_n82_4_78 = _mm_set_epi32(78, 4, -82, 73);
+
+    __m128i c32_n4_73_n88_38 = _mm_set_epi32(-4, 73, -88, 38);
+    __m128i c32_n31_n46_90_n67 = _mm_set_epi32(-31, -46, 90, -67);
+    __m128i c32_61_13_n78_85 = _mm_set_epi32(61, 13, -78, 85);
+    __m128i c32_n82_22_54_n90 = _mm_set_epi32(-82, 22, 54, -90);
+
+    __m128i c32_n61_90_n78_31 = _mm_set_epi32(-61, 90, -78, 31);
+    __m128i c32_82_n88_54_4 = _mm_set_epi32(82, -88, 54, 4);
+    __m128i c32_n90_73_n22_n38 = _mm_set_epi32(-90, 73, -22, -38);
+    __m128i c32_85_n46_n13_67 = _mm_set_epi32(85, -46, -13, 67);
+
+    __m128i c32_n90_85_n61_22 = _mm_set_epi32(-90, 85, -61, 22);
+    __m128i c32_46_n4_n38_73 = _mm_set_epi32(46, -4, -38, 73);
+    __m128i c32_54_n82_90_n78 = _mm_set_epi32(54, -82, 90, -78);
+    __m128i c32_n88_67_n31_n13 = _mm_set_epi32(-88, 67, -31, -13);
+
+    __m128i c32_n78_61_n38_13 = _mm_set_epi32(-78, 61, -38, 13);
+    __m128i c32_88_n90_85_n73 = _mm_set_epi32(-73, 85, -90, 88);
+    __m128i c32_22_4_n31_54 = _mm_set_epi32(22, 4, -31, 54);
+    __m128i c32_90_n82_67_n46 = _mm_set_epi32(90, -82, 67, -46);
+
+    __m128i c32_n31_22_n13_4 = _mm_set_epi32(-31, 22, -13, 4);
+    __m128i c32_n61_54_n46_38 = _mm_set_epi32(-61, 54, -46, 38);
+    __m128i c32_n82_78_n73_67 = _mm_set_epi32(-82, 78, -73, 67);
+    __m128i c32_n90_90_n88_85 = _mm_set_epi32(-90, 90, -88, 85);
+
+    for (int j = 0; j < line; j++)
+    {
+        __m128i src_tmp0 = _mm_load_si128((const __m128i*)src);
+        __m128i T20 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
+        __m128i T21 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
+
+        src_tmp0 = _mm_load_si128((const __m128i*)(src + 8));
+        __m128i T22 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
+        __m128i T23 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
+
+        src_tmp0 = _mm_load_si128((const __m128i*)(src + 16));
+        __m128i T33 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
+        T33 = _mm_shuffle_epi32(T33, 0x1b);
+        __m128i T32 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
+        T32 = _mm_shuffle_epi32(T32, 0x1b);
+
+        src_tmp0 = _mm_load_si128((const __m128i*)(src + 24));
+        __m128i T31 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
+        T31 = _mm_shuffle_epi32(T31, 0x1b);
+        __m128i T30 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
+        T30 = _mm_shuffle_epi32(T30, 0x1b);
+
+        __m128i E_0_3 = _mm_add_epi32(T20, T30);
+        __m128i E_4_7 = _mm_add_epi32(T21, T31);
+        __m128i E_8_11 = _mm_add_epi32(T22, T32);
+        __m128i E_12_15 = _mm_add_epi32(T23, T33);
+
+        __m128i E_8_11_rev = _mm_shuffle_epi32(E_8_11, 0x1b);
+        __m128i E_12_15_rev = _mm_shuffle_epi32(E_12_15, 0x1b);
+
+        __m128i O_0_3 = _mm_sub_epi32(T20, T30);
+        __m128i O_4_7 = _mm_sub_epi32(T21, T31);
+        __m128i O_8_11 = _mm_sub_epi32(T22, T32);
+        __m128i O_12_15 = _mm_sub_epi32(T23, T33);
+
+        __m128i EE_0_3 = _mm_add_epi32(E_0_3, E_12_15_rev);
+        __m128i EE_4_7 = _mm_add_epi32(E_4_7, E_8_11_rev);
+
+        __m128i EO_0_3 = _mm_sub_epi32(E_0_3, E_12_15_rev);
+        __m128i EO_4_7 = _mm_sub_epi32(E_4_7, E_8_11_rev);
+
+        __m128i EE_7_4 = _mm_shuffle_epi32(EE_4_7, 0x1b);
+
+        __m128i EEE = _mm_add_epi32(EE_0_3,  EE_7_4);
+        __m128i EEO = _mm_sub_epi32(EE_0_3,  EE_7_4);
+
+        __m128i EEE_rev = _mm_shuffle_epi32(EEE, 0x1b);
+
+        __m128i EEEE = _mm_add_epi32(EEE, EEE_rev);
+        __m128i EEEO = _mm_sub_epi32(EEE, EEE_rev);
+
+        int EEEE0 = _mm_extract_epi32(EEEE, 0);
+        int EEEE1 = _mm_extract_epi32(EEEE, 1);
+
+        int EEEO0 = _mm_extract_epi32(EEEO, 0);
+        int EEEO1 = _mm_extract_epi32(EEEO, 1);
+        EEEO0, EEEO1;
+
+        dst[0] = (64 * EEEE0 + 64 * EEEE1 + add) >> nshift;
+        dst[16 * line] = (64 * EEEE0 + (-64) * EEEE1 + add) >> nshift;
+        dst[8 * line] = (83 * EEEO0 + 36 * EEEO1 + add) >> nshift;
+        dst[24 * line] = (36 * EEEO0 + (-83) * EEEO1 + add) >> nshift;
+
+        __m128i dst_tmp0 = _mm_mullo_epi32(c32_89_75_50_18, EEO);
+        __m128i dst_tmp1 = _mm_mullo_epi32(c32_75_n18_n89_n50, EEO);
+        __m128i dst_tmp2 = _mm_mullo_epi32(c32_50_n89_18_75, EEO);
+        __m128i dst_tmp3 = _mm_mullo_epi32(c32_18_n50_75_n89, EEO);
+
+        dst_tmp0 = _mm_add_epi32(dst_tmp0, _mm_srli_si128(dst_tmp0, 8));
+        dst_tmp0 = _mm_add_epi32(dst_tmp0, _mm_srli_si128(dst_tmp0, 4));
+        int dst_4xline = _mm_cvtsi128_si32(dst_tmp0);
+
+        dst_tmp1 = _mm_add_epi32(dst_tmp1, _mm_srli_si128(dst_tmp1, 8));
+        dst_tmp1 = _mm_add_epi32(dst_tmp1, _mm_srli_si128(dst_tmp1, 4));
+        int dst_12xline = _mm_cvtsi128_si32(dst_tmp1);
+
+        dst_tmp2 = _mm_add_epi32(dst_tmp2, _mm_srli_si128(dst_tmp2, 8));
+        dst_tmp2 = _mm_add_epi32(dst_tmp2, _mm_srli_si128(dst_tmp2, 4));
+        int dst_20xline = _mm_cvtsi128_si32(dst_tmp2);
+
+        dst_tmp3 = _mm_add_epi32(dst_tmp3, _mm_srli_si128(dst_tmp3, 8));
+        dst_tmp3 = _mm_add_epi32(dst_tmp3, _mm_srli_si128(dst_tmp3, 4));
+        int dst_28xline = _mm_cvtsi128_si32(dst_tmp3);
+
+        __m128i dst_4_12_20_28 = _mm_set_epi32(dst_28xline, dst_20xline, dst_12xline, dst_4xline);
+        dst_4_12_20_28  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_4_12_20_28), nshift);
+
+        dst[4 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 0);
+        dst[12 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 1);
+        dst[20 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 2);
+        dst[28 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 3);
+
+        __m128i dst_tmp4 = _mm_mullo_epi32(c32_90_87_80_70, EO_0_3);
+        __m128i dst_tmp5 = _mm_mullo_epi32(c32_57_43_25_9, EO_4_7);
+
+        dst_tmp4 = _mm_add_epi32(dst_tmp4, _mm_srli_si128(dst_tmp4, 8));
+        dst_tmp4 = _mm_add_epi32(dst_tmp4, _mm_srli_si128(dst_tmp4, 4));
+        int dst_2xline_lo = _mm_cvtsi128_si32(dst_tmp4);
+
+        dst_tmp5 = _mm_add_epi32(dst_tmp5, _mm_srli_si128(dst_tmp5, 8));
+        dst_tmp5 = _mm_add_epi32(dst_tmp5, _mm_srli_si128(dst_tmp5, 4));
+        int dst_12xline_hi = _mm_cvtsi128_si32(dst_tmp5);
+
+        int dst_2xline =  dst_2xline_lo + dst_12xline_hi;
+
+        __m128i dst_tmp6 = _mm_mullo_epi32(c32_87_57_9_n43, EO_0_3);
+        __m128i dst_tmp7 = _mm_mullo_epi32(c32_n80_n90_n70_n25, EO_4_7);
+
+        dst_tmp6 = _mm_add_epi32(dst_tmp6, _mm_srli_si128(dst_tmp6, 8));
+        dst_tmp6 = _mm_add_epi32(dst_tmp6, _mm_srli_si128(dst_tmp6, 4));
+        int dst_6xline_lo = _mm_cvtsi128_si32(dst_tmp6);
+
+        dst_tmp7 = _mm_add_epi32(dst_tmp7, _mm_srli_si128(dst_tmp7, 8));
+        dst_tmp7 = _mm_add_epi32(dst_tmp7, _mm_srli_si128(dst_tmp7, 4));
+        int dst_6xline_hi = _mm_cvtsi128_si32(dst_tmp7);
+
+        int dst_6xline =  dst_6xline_lo + dst_6xline_hi;
+        dst_6xline;
+
+        __m128i dst_tmp8 = _mm_mullo_epi32(c32_80_9_n70_n87, EO_0_3);
+        __m128i dst_tmp9 = _mm_mullo_epi32(c32_n25_57_90_43, EO_4_7);
+
+        dst_tmp8 = _mm_add_epi32(dst_tmp8, _mm_srli_si128(dst_tmp8, 8));
+        dst_tmp8 = _mm_add_epi32(dst_tmp8, _mm_srli_si128(dst_tmp8, 4));
+        int dst_10xline_lo = _mm_cvtsi128_si32(dst_tmp8);
+
+        dst_tmp9 = _mm_add_epi32(dst_tmp9, _mm_srli_si128(dst_tmp9, 8));
+        dst_tmp9 = _mm_add_epi32(dst_tmp9, _mm_srli_si128(dst_tmp9, 4));
+        int dst_10xline_hi = _mm_cvtsi128_si32(dst_tmp9);
+
+        int dst_10xline =  dst_10xline_lo + dst_10xline_hi;
+        dst_10xline;
+
+        __m128i dst_tmp10 = _mm_mullo_epi32(c32_9_n87_n43_70, EO_0_3);
+        __m128i dst_tmp11 = _mm_mullo_epi32(c32_90_25_n80_n57, EO_4_7);
+
+        dst_tmp10 = _mm_add_epi32(dst_tmp10, _mm_srli_si128(dst_tmp10, 8));
+        dst_tmp10 = _mm_add_epi32(dst_tmp10, _mm_srli_si128(dst_tmp10, 4));
+        int dst_14xline_lo = _mm_cvtsi128_si32(dst_tmp10);
+
+        dst_tmp11 = _mm_add_epi32(dst_tmp11, _mm_srli_si128(dst_tmp11, 8));
+        dst_tmp11 = _mm_add_epi32(dst_tmp11, _mm_srli_si128(dst_tmp11, 4));
+        int dst_14xline_hi = _mm_cvtsi128_si32(dst_tmp11);
+
+        int dst_14xline =  dst_14xline_lo + dst_14xline_hi;
+        dst_14xline;
+
+        __m128i dst_2_6_10_14 = _mm_set_epi32(dst_14xline, dst_10xline, dst_6xline, dst_2xline);
+        dst_2_6_10_14  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_2_6_10_14), nshift);
+
+        dst[2 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 0);
+        dst[6 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 1);
+        dst[10 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 2);
+        dst[14 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 3);
+
+        __m128i dst_tmp12 = _mm_mullo_epi32(c32_57_n80_n25_90, EO_0_3);
+        __m128i dst_tmp13 = _mm_mullo_epi32(c32_n9_n87_43_70, EO_4_7);
+
+        dst_tmp12 = _mm_add_epi32(dst_tmp12, _mm_srli_si128(dst_tmp12, 8));
+        dst_tmp12 = _mm_add_epi32(dst_tmp12, _mm_srli_si128(dst_tmp12, 4));
+        int dst_18xline_lo = _mm_cvtsi128_si32(dst_tmp12);
+
+        dst_tmp13 = _mm_add_epi32(dst_tmp13, _mm_srli_si128(dst_tmp13, 8));
+        dst_tmp13 = _mm_add_epi32(dst_tmp13, _mm_srli_si128(dst_tmp13, 4));
+        int dst_18xline_hi = _mm_cvtsi128_si32(dst_tmp13);
+
+        int dst_18xline =  dst_18xline_lo + dst_18xline_hi;
+        dst_18xline;
+
+        __m128i dst_tmp14 = _mm_mullo_epi32(c32_43_n90_57_25, EO_0_3);
+        __m128i dst_tmp15 = _mm_mullo_epi32(c32_n87_70_9_n80, EO_4_7);
+
+        dst_tmp14 = _mm_add_epi32(dst_tmp14, _mm_srli_si128(dst_tmp14, 8));
+        dst_tmp14 = _mm_add_epi32(dst_tmp14, _mm_srli_si128(dst_tmp14, 4));
+        int dst_22xline_lo = _mm_cvtsi128_si32(dst_tmp14);
+
+        dst_tmp15 = _mm_add_epi32(dst_tmp15, _mm_srli_si128(dst_tmp15, 8));
+        dst_tmp15 = _mm_add_epi32(dst_tmp15, _mm_srli_si128(dst_tmp15, 4));
+        int dst_22xline_hi = _mm_cvtsi128_si32(dst_tmp15);
+
+        int dst_22xline =  dst_22xline_lo + dst_22xline_hi;
+        dst_22xline;
+
+        __m128i dst_tmp16 = _mm_mullo_epi32(c32_25_n70_90_n80, EO_0_3);
+        __m128i dst_tmp17 = _mm_mullo_epi32(c32_43_9_n57_87, EO_4_7);
+
+        dst_tmp16 = _mm_add_epi32(dst_tmp16, _mm_srli_si128(dst_tmp16, 8));
+        dst_tmp16 = _mm_add_epi32(dst_tmp16, _mm_srli_si128(dst_tmp16, 4));
+        int dst_26xline_lo = _mm_cvtsi128_si32(dst_tmp16);
+
+        dst_tmp17 = _mm_add_epi32(dst_tmp17, _mm_srli_si128(dst_tmp17, 8));
+        dst_tmp17 = _mm_add_epi32(dst_tmp17, _mm_srli_si128(dst_tmp17, 4));
+        int dst_26xline_hi = _mm_cvtsi128_si32(dst_tmp17);
+
+        int dst_26xline =  dst_26xline_lo + dst_26xline_hi;
+        dst_26xline;
+
+        __m128i dst_tmp18 = _mm_mullo_epi32(c32_9_n25_43_n57, EO_0_3);
+        __m128i dst_tmp19 = _mm_mullo_epi32(c32_70_n80_87_n90, EO_4_7);
+
+        dst_tmp18 = _mm_add_epi32(dst_tmp18, _mm_srli_si128(dst_tmp18, 8));
+        dst_tmp18 = _mm_add_epi32(dst_tmp18, _mm_srli_si128(dst_tmp18, 4));
+        int dst_30xline_lo = _mm_cvtsi128_si32(dst_tmp18);
+
+        dst_tmp19 = _mm_add_epi32(dst_tmp19, _mm_srli_si128(dst_tmp19, 8));
+        dst_tmp19 = _mm_add_epi32(dst_tmp19, _mm_srli_si128(dst_tmp19, 4));
+        int dst_30xline_hi = _mm_cvtsi128_si32(dst_tmp19);
+
+        int dst_30xline =  dst_30xline_lo + dst_30xline_hi;
+        dst_30xline;
+
+        __m128i dst_18_22_26_30 = _mm_set_epi32(dst_30xline, dst_26xline, dst_22xline, dst_18xline);
+        dst_18_22_26_30  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_18_22_26_30), nshift);
+
+        dst[18 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 0);
+        dst[22 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 1);
+        dst[26 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 2);
+        dst[30 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 3);
+
+        __m128i dst_tmp20 = _mm_mullo_epi32(c32_90_90_88_85, O_0_3);
+        __m128i dst_tmp21 = _mm_mullo_epi32(c32_82_78_73_67, O_4_7);
+        __m128i dst_tmp22 = _mm_mullo_epi32(c32_61_54_46_38, O_8_11);
+        __m128i dst_tmp23 = _mm_mullo_epi32(c32_4_13_22_31, O_12_15);
+
+        dst_tmp20 = _mm_add_epi32(dst_tmp20, _mm_srli_si128(dst_tmp20, 8));
+        dst_tmp20 = _mm_add_epi32(dst_tmp20, _mm_srli_si128(dst_tmp20, 4));
+        int dst_1xline_lo1 = _mm_cvtsi128_si32(dst_tmp20);
+
+        dst_tmp21 = _mm_add_epi32(dst_tmp21, _mm_srli_si128(dst_tmp21, 8));
+        dst_tmp21 = _mm_add_epi32(dst_tmp21, _mm_srli_si128(dst_tmp21, 4));
+        int dst_1xline_lo2 = _mm_cvtsi128_si32(dst_tmp21);
+
+        dst_tmp22 = _mm_add_epi32(dst_tmp22, _mm_srli_si128(dst_tmp22, 8));
+        dst_tmp22 = _mm_add_epi32(dst_tmp22, _mm_srli_si128(dst_tmp22, 4));
+        int dst_1xline_hi1 = _mm_cvtsi128_si32(dst_tmp22);
+
+        dst_tmp23 = _mm_add_epi32(dst_tmp23, _mm_srli_si128(dst_tmp23, 8));
+        dst_tmp23 = _mm_add_epi32(dst_tmp23, _mm_srli_si128(dst_tmp23, 4));
+        int dst_1xline_hi2 = _mm_cvtsi128_si32(dst_tmp23);
+
+        int dst_1xline =  dst_1xline_lo1 + dst_1xline_lo2 + dst_1xline_hi1 + dst_1xline_hi2;
+
+        __m128i dst_tmp24 = _mm_mullo_epi32(c32_90_82_67_46, O_0_3);
+        __m128i dst_tmp25 = _mm_mullo_epi32(c32_22_n4_n31_n54, O_4_7);
+        __m128i dst_tmp26 = _mm_mullo_epi32(c32_n73_n85_n90_n88, O_8_11);
+        __m128i dst_tmp27 = _mm_mullo_epi32(c32_n78_n61_n38_n13, O_12_15);
+
+        dst_tmp24 = _mm_add_epi32(dst_tmp24, _mm_srli_si128(dst_tmp24, 8));
+        dst_tmp24 = _mm_add_epi32(dst_tmp24, _mm_srli_si128(dst_tmp24, 4));
+        int dst_3xline_lo1 = _mm_cvtsi128_si32(dst_tmp24);
+
+        dst_tmp25 = _mm_add_epi32(dst_tmp25, _mm_srli_si128(dst_tmp25, 8));
+        dst_tmp25 = _mm_add_epi32(dst_tmp25, _mm_srli_si128(dst_tmp25, 4));
+        int dst_3xline_lo2 = _mm_cvtsi128_si32(dst_tmp25);
+
+        dst_tmp26 = _mm_add_epi32(dst_tmp26, _mm_srli_si128(dst_tmp26, 8));
+        dst_tmp26 = _mm_add_epi32(dst_tmp26, _mm_srli_si128(dst_tmp26, 4));
+        int dst_3xline_hi1 = _mm_cvtsi128_si32(dst_tmp26);
+
+        dst_tmp27 = _mm_add_epi32(dst_tmp27, _mm_srli_si128(dst_tmp27, 8));
+        dst_tmp27 = _mm_add_epi32(dst_tmp27, _mm_srli_si128(dst_tmp27, 4));
+        int dst_3xline_hi2 = _mm_cvtsi128_si32(dst_tmp27);
+
+        int dst_3xline =  dst_3xline_lo1 + dst_3xline_lo2 + dst_3xline_hi1 + dst_3xline_hi2;
+
+        __m128i dst_tmp28 = _mm_mullo_epi32(c32_88_67_31_n13, O_0_3);
+        __m128i dst_tmp29 = _mm_mullo_epi32(c32_n54_n82_n90_n78, O_4_7);
+        __m128i dst_tmp30 = _mm_mullo_epi32(c32_73_38_n4_n46, O_8_11);
+        __m128i dst_tmp31 = _mm_mullo_epi32(c32_22_61_85_90, O_12_15);
+
+        dst_tmp28 = _mm_add_epi32(dst_tmp28, _mm_srli_si128(dst_tmp28, 8));
+        dst_tmp28 = _mm_add_epi32(dst_tmp28, _mm_srli_si128(dst_tmp28, 4));
+        int dst_5xline_lo1 = _mm_cvtsi128_si32(dst_tmp28);
+
+        dst_tmp29 = _mm_add_epi32(dst_tmp29, _mm_srli_si128(dst_tmp29, 8));
+        dst_tmp29 = _mm_add_epi32(dst_tmp29, _mm_srli_si128(dst_tmp29, 4));
+        int dst_5xline_lo2 = _mm_cvtsi128_si32(dst_tmp29);
+
+        dst_tmp30 = _mm_add_epi32(dst_tmp30, _mm_srli_si128(dst_tmp30, 8));
+        dst_tmp30 = _mm_add_epi32(dst_tmp30, _mm_srli_si128(dst_tmp30, 4));
+        int dst_5xline_hi1 = _mm_cvtsi128_si32(dst_tmp30);
+
+        dst_tmp31 = _mm_add_epi32(dst_tmp31, _mm_srli_si128(dst_tmp31, 8));
+        dst_tmp31 = _mm_add_epi32(dst_tmp31, _mm_srli_si128(dst_tmp31, 4));
+        int dst_5xline_hi2 = _mm_cvtsi128_si32(dst_tmp31);
+
+        int dst_5xline =  dst_5xline_lo1 + dst_5xline_lo2 + dst_5xline_hi1 + dst_5xline_hi2;
+
+        __m128i dst_tmp32 = _mm_mullo_epi32(c32_n67_n13_46_85, O_0_3);
+        __m128i dst_tmp33 = _mm_mullo_epi32(c32_38_n22_n73_n90, O_4_7);
+        __m128i dst_tmp34 = _mm_mullo_epi32(c32_n4_54_88_82, O_8_11);
+        __m128i dst_tmp35 = _mm_mullo_epi32(c32_n31_n78_n90_n61, O_12_15);
+
+        dst_tmp32 = _mm_add_epi32(dst_tmp32, _mm_srli_si128(dst_tmp32, 8));
+        dst_tmp32 = _mm_add_epi32(dst_tmp32, _mm_srli_si128(dst_tmp32, 4));
+        int dst_7xline_lo1 = _mm_cvtsi128_si32(dst_tmp32);
+
+        dst_tmp33 = _mm_add_epi32(dst_tmp33, _mm_srli_si128(dst_tmp33, 8));
+        dst_tmp33 = _mm_add_epi32(dst_tmp33, _mm_srli_si128(dst_tmp33, 4));
+        int dst_7xline_lo2 = _mm_cvtsi128_si32(dst_tmp33);
+
+        dst_tmp34 = _mm_add_epi32(dst_tmp34, _mm_srli_si128(dst_tmp34, 8));
+        dst_tmp34 = _mm_add_epi32(dst_tmp34, _mm_srli_si128(dst_tmp34, 4));
+        int dst_7xline_hi1 = _mm_cvtsi128_si32(dst_tmp34);
+
+        dst_tmp35 = _mm_add_epi32(dst_tmp35, _mm_srli_si128(dst_tmp35, 8));
+        dst_tmp35 = _mm_add_epi32(dst_tmp35, _mm_srli_si128(dst_tmp35, 4));
+        int dst_7xline_hi2 = _mm_cvtsi128_si32(dst_tmp35);
+
+        int dst_7xline =  dst_7xline_lo1 + dst_7xline_lo2 + dst_7xline_hi1 + dst_7xline_hi2;
+
+        __m128i dst_1_3_5_7 = _mm_set_epi32(dst_7xline, dst_5xline, dst_3xline, dst_1xline);
+        dst_1_3_5_7  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_1_3_5_7), nshift);
+
+        dst[1 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 0);
+        dst[3 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 1);
+        dst[5 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 2);
+        dst[7 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 3);
+
+        __m128i dst_tmp36 = _mm_mullo_epi32(c32_n90_n54_22_82, O_0_3);
+        __m128i dst_tmp37 = _mm_mullo_epi32(c32_85_78_13_n61, O_4_7);
+        __m128i dst_tmp38 = _mm_mullo_epi32(c32_n67_n90_n46_31, O_8_11);
+        __m128i dst_tmp39 = _mm_mullo_epi32(c32_38_88_73_4, O_12_15);
+
+        dst_tmp36 = _mm_add_epi32(dst_tmp36, _mm_srli_si128(dst_tmp36, 8));
+        dst_tmp36 = _mm_add_epi32(dst_tmp36, _mm_srli_si128(dst_tmp36, 4));
+        int dst_9xline_lo1 = _mm_cvtsi128_si32(dst_tmp36);
+
+        dst_tmp37 = _mm_add_epi32(dst_tmp37, _mm_srli_si128(dst_tmp37, 8));
+        dst_tmp37 = _mm_add_epi32(dst_tmp37, _mm_srli_si128(dst_tmp37, 4));
+        int dst_9xline_lo2 = _mm_cvtsi128_si32(dst_tmp37);
+
+        dst_tmp38 = _mm_add_epi32(dst_tmp38, _mm_srli_si128(dst_tmp38, 8));
+        dst_tmp38 = _mm_add_epi32(dst_tmp38, _mm_srli_si128(dst_tmp38, 4));
+        int dst_9xline_hi1 = _mm_cvtsi128_si32(dst_tmp38);
+
+        dst_tmp39 = _mm_add_epi32(dst_tmp39, _mm_srli_si128(dst_tmp39, 8));
+        dst_tmp39 = _mm_add_epi32(dst_tmp39, _mm_srli_si128(dst_tmp39, 4));
+        int dst_9xline_hi2 = _mm_cvtsi128_si32(dst_tmp39);
+
+        int dst_9xline =  dst_9xline_lo1 + dst_9xline_lo2 + dst_9xline_hi1 + dst_9xline_hi2;
+
+        __m128i dst_tmp40 = _mm_mullo_epi32(c32_n73_n82_n4_78, O_0_3);
+        __m128i dst_tmp41 = _mm_mullo_epi32(c32_n22_67_85_13, O_4_7);
+        __m128i dst_tmp42 = _mm_mullo_epi32(c32_90_31_n61_n88, O_8_11);
+        __m128i dst_tmp43 = _mm_mullo_epi32(c32_n46_n90_n38_54, O_12_15);
+
+        dst_tmp40 = _mm_add_epi32(dst_tmp40, _mm_srli_si128(dst_tmp40, 8));
+        dst_tmp40 = _mm_add_epi32(dst_tmp40, _mm_srli_si128(dst_tmp40, 4));
+        int dst_11xline_lo1 = _mm_cvtsi128_si32(dst_tmp40);
+
+        dst_tmp41 = _mm_add_epi32(dst_tmp41, _mm_srli_si128(dst_tmp41, 8));
+        dst_tmp41 = _mm_add_epi32(dst_tmp41, _mm_srli_si128(dst_tmp41, 4));
+        int dst_11xline_lo2 = _mm_cvtsi128_si32(dst_tmp41);
+
+        dst_tmp42 = _mm_add_epi32(dst_tmp42, _mm_srli_si128(dst_tmp42, 8));
+        dst_tmp42 = _mm_add_epi32(dst_tmp42, _mm_srli_si128(dst_tmp42, 4));
+        int dst_11xline_hi1 = _mm_cvtsi128_si32(dst_tmp42);
+
+        dst_tmp43 = _mm_add_epi32(dst_tmp43, _mm_srli_si128(dst_tmp43, 8));
+        dst_tmp43 = _mm_add_epi32(dst_tmp43, _mm_srli_si128(dst_tmp43, 4));
+        int dst_11xline_hi2 = _mm_cvtsi128_si32(dst_tmp43);
+
+        int dst_11xline =  dst_11xline_lo1 + dst_11xline_lo2 + dst_11xline_hi1 + dst_11xline_hi2;
+
+        __m128i dst_tmp44 = _mm_mullo_epi32(c32_n22_n90_n31_73, O_0_3);
+        __m128i dst_tmp45 = _mm_mullo_epi32(c32_n90_n38_67_78, O_4_7);
+        __m128i dst_tmp46 = _mm_mullo_epi32(c32_n46_61_82_n13, O_8_11);
+        __m128i dst_tmp47 = _mm_mullo_epi32(c32_54_85_n4_n88, O_12_15);
+
+        dst_tmp44 = _mm_add_epi32(dst_tmp44, _mm_srli_si128(dst_tmp44, 8));
+        dst_tmp44 = _mm_add_epi32(dst_tmp44, _mm_srli_si128(dst_tmp44, 4));
+        int dst_13xline_lo1 = _mm_cvtsi128_si32(dst_tmp44);
+
+        dst_tmp45 = _mm_add_epi32(dst_tmp45, _mm_srli_si128(dst_tmp45, 8));
+        dst_tmp45 = _mm_add_epi32(dst_tmp45, _mm_srli_si128(dst_tmp45, 4));
+        int dst_13xline_lo2 = _mm_cvtsi128_si32(dst_tmp45);
+
+        dst_tmp46 = _mm_add_epi32(dst_tmp46, _mm_srli_si128(dst_tmp46, 8));
+        dst_tmp46 = _mm_add_epi32(dst_tmp46, _mm_srli_si128(dst_tmp46, 4));
+        int dst_13xline_hi1 = _mm_cvtsi128_si32(dst_tmp46);
+
+        dst_tmp47 = _mm_add_epi32(dst_tmp47, _mm_srli_si128(dst_tmp47, 8));
+        dst_tmp47 = _mm_add_epi32(dst_tmp47, _mm_srli_si128(dst_tmp47, 4));
+        int dst_13xline_hi2 = _mm_cvtsi128_si32(dst_tmp47);
+
+        int dst_13xline =  dst_13xline_lo1 + dst_13xline_lo2 + dst_13xline_hi1 + dst_13xline_hi2;
+        __m128i dst_tmp48 = _mm_mullo_epi32(c32_38_n78_n54_67, O_0_3);
+        __m128i dst_tmp49 = _mm_mullo_epi32(c32_4_n90_n22_85, O_4_7);
+        __m128i dst_tmp50 = _mm_mullo_epi32(c32_n31_n88_13_90, O_8_11);
+        __m128i dst_tmp51 = _mm_mullo_epi32(c32_n61_n73_46_82, O_12_15);
+
+        dst_tmp48 = _mm_add_epi32(dst_tmp48, _mm_srli_si128(dst_tmp48, 8));
+        dst_tmp48 = _mm_add_epi32(dst_tmp48, _mm_srli_si128(dst_tmp48, 4));
+        int dst_15xline_lo1 = _mm_cvtsi128_si32(dst_tmp48);
+
+        dst_tmp49 = _mm_add_epi32(dst_tmp49, _mm_srli_si128(dst_tmp49, 8));
+        dst_tmp49 = _mm_add_epi32(dst_tmp49, _mm_srli_si128(dst_tmp49, 4));
+        int dst_15xline_lo2 = _mm_cvtsi128_si32(dst_tmp49);
+
+        dst_tmp50 = _mm_add_epi32(dst_tmp50, _mm_srli_si128(dst_tmp50, 8));
+        dst_tmp50 = _mm_add_epi32(dst_tmp50, _mm_srli_si128(dst_tmp50, 4));
+        int dst_15xline_hi1 = _mm_cvtsi128_si32(dst_tmp50);
+
+        dst_tmp51 = _mm_add_epi32(dst_tmp51, _mm_srli_si128(dst_tmp51, 8));
+        dst_tmp51 = _mm_add_epi32(dst_tmp51, _mm_srli_si128(dst_tmp51, 4));
+        int dst_15xline_hi2 = _mm_cvtsi128_si32(dst_tmp51);
+
+        int dst_15xline =  dst_15xline_lo1 + dst_15xline_lo2 + dst_15xline_hi1 + dst_15xline_hi2;
+
+        __m128i dst_9_11_13_15 = _mm_set_epi32(dst_15xline, dst_13xline, dst_11xline, dst_9xline);
+        dst_9_11_13_15  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_9_11_13_15), nshift);
+
+        dst[9 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 0);
+        dst[11 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 1);
+        dst[13 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 2);
+        dst[15 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 3);
+
+        __m128i dst_tmp52 = _mm_mullo_epi32(c32_82_n46_n73_61, O_0_3);
+        __m128i dst_tmp53 = _mm_mullo_epi32(c32_90_n13_n88_31, O_4_7);
+        __m128i dst_tmp54 = _mm_mullo_epi32(c32_85_22_n90_n4, O_8_11);
+        __m128i dst_tmp55 = _mm_mullo_epi32(c32_67_54_n78_n38, O_12_15);
+
+        dst_tmp52 = _mm_add_epi32(dst_tmp52, _mm_srli_si128(dst_tmp52, 8));
+        dst_tmp52 = _mm_add_epi32(dst_tmp52, _mm_srli_si128(dst_tmp52, 4));
+        int dst_17xline_lo1 = _mm_cvtsi128_si32(dst_tmp52);
+
+        dst_tmp53 = _mm_add_epi32(dst_tmp53, _mm_srli_si128(dst_tmp53, 8));
+        dst_tmp53 = _mm_add_epi32(dst_tmp53, _mm_srli_si128(dst_tmp53, 4));
+        int dst_17xline_lo2 = _mm_cvtsi128_si32(dst_tmp53);
+
+        dst_tmp54 = _mm_add_epi32(dst_tmp54, _mm_srli_si128(dst_tmp54, 8));
+        dst_tmp54 = _mm_add_epi32(dst_tmp54, _mm_srli_si128(dst_tmp54, 4));
+        int dst_17xline_hi1 = _mm_cvtsi128_si32(dst_tmp54);
+
+        dst_tmp55 = _mm_add_epi32(dst_tmp55, _mm_srli_si128(dst_tmp55, 8));
+        dst_tmp55 = _mm_add_epi32(dst_tmp55, _mm_srli_si128(dst_tmp55, 4));
+        int dst_17xline_hi2 = _mm_cvtsi128_si32(dst_tmp55);
+
+        int dst_17xline =  dst_17xline_lo1 + dst_17xline_lo2 + dst_17xline_hi1 + dst_17xline_hi2;
+
+        __m128i dst_tmp56 = _mm_mullo_epi32(c32_88_n4_n85_54, O_0_3);
+        __m128i dst_tmp57 = _mm_mullo_epi32(c32_13_82_n61_n46, O_4_7);
+        __m128i dst_tmp58 = _mm_mullo_epi32(c32_n78_67_38_n90, O_8_11);
+        __m128i dst_tmp59 = _mm_mullo_epi32(c32_n73_n31_90_n22, O_12_15);
+
+        dst_tmp56 = _mm_add_epi32(dst_tmp56, _mm_srli_si128(dst_tmp56, 8));
+        dst_tmp56 = _mm_add_epi32(dst_tmp56, _mm_srli_si128(dst_tmp56, 4));
+        int dst_19xline_lo1 = _mm_cvtsi128_si32(dst_tmp56);
+
+        dst_tmp57 = _mm_add_epi32(dst_tmp57, _mm_srli_si128(dst_tmp57, 8));
+        dst_tmp57 = _mm_add_epi32(dst_tmp57, _mm_srli_si128(dst_tmp57, 4));
+        int dst_19xline_lo2 = _mm_cvtsi128_si32(dst_tmp57);
+
+        dst_tmp58 = _mm_add_epi32(dst_tmp58, _mm_srli_si128(dst_tmp58, 8));
+        dst_tmp58 = _mm_add_epi32(dst_tmp58, _mm_srli_si128(dst_tmp58, 4));
+        int dst_19xline_hi1 = _mm_cvtsi128_si32(dst_tmp58);
+
+        dst_tmp59 = _mm_add_epi32(dst_tmp59, _mm_srli_si128(dst_tmp59, 8));
+        dst_tmp59 = _mm_add_epi32(dst_tmp59, _mm_srli_si128(dst_tmp59, 4));
+        int dst_19xline_hi2 = _mm_cvtsi128_si32(dst_tmp59);
+
+        int dst_19xline =  dst_19xline_lo1 + dst_19xline_lo2 + dst_19xline_hi1 + dst_19xline_hi2;
+
+        __m128i dst_tmp60 = _mm_mullo_epi32(c32_54_38_n90_46, O_0_3);
+        __m128i dst_tmp61 = _mm_mullo_epi32(c32_n88_61_31_n90, O_4_7);
+        __m128i dst_tmp62 = _mm_mullo_epi32(c32_13_n85_67_22, O_8_11);
+        __m128i dst_tmp63 = _mm_mullo_epi32(c32_73_n82_4_78, O_12_15);
+
+        dst_tmp60 = _mm_add_epi32(dst_tmp60, _mm_srli_si128(dst_tmp60, 8));
+        dst_tmp60 = _mm_add_epi32(dst_tmp60, _mm_srli_si128(dst_tmp60, 4));
+        int dst_21xline_lo1 = _mm_cvtsi128_si32(dst_tmp60);
+
+        dst_tmp61 = _mm_add_epi32(dst_tmp61, _mm_srli_si128(dst_tmp61, 8));
+        dst_tmp61 = _mm_add_epi32(dst_tmp61, _mm_srli_si128(dst_tmp61, 4));
+        int dst_21xline_lo2 = _mm_cvtsi128_si32(dst_tmp61);
+
+        dst_tmp62 = _mm_add_epi32(dst_tmp62, _mm_srli_si128(dst_tmp62, 8));
+        dst_tmp62 = _mm_add_epi32(dst_tmp62, _mm_srli_si128(dst_tmp62, 4));
+        int dst_21xline_hi1 = _mm_cvtsi128_si32(dst_tmp62);
+
+        dst_tmp63 = _mm_add_epi32(dst_tmp63, _mm_srli_si128(dst_tmp63, 8));
+        dst_tmp63 = _mm_add_epi32(dst_tmp63, _mm_srli_si128(dst_tmp63, 4));
+        int dst_21xline_hi2 = _mm_cvtsi128_si32(dst_tmp63);
+
+        int dst_21xline =  dst_21xline_lo1 + dst_21xline_lo2 + dst_21xline_hi1 + dst_21xline_hi2;
+
+        __m128i dst_tmp64 = _mm_mullo_epi32(c32_n4_73_n88_38, O_0_3);
+        __m128i dst_tmp65 = _mm_mullo_epi32(c32_n31_n46_90_n67, O_4_7);
+        __m128i dst_tmp66 = _mm_mullo_epi32(c32_61_13_n78_85, O_8_11);
+        __m128i dst_tmp67 = _mm_mullo_epi32(c32_n82_22_54_n90, O_12_15);
+
+        dst_tmp64 = _mm_add_epi32(dst_tmp64, _mm_srli_si128(dst_tmp64, 8));
+        dst_tmp64 = _mm_add_epi32(dst_tmp64, _mm_srli_si128(dst_tmp64, 4));
+        int dst_23xline_lo1 = _mm_cvtsi128_si32(dst_tmp64);
+
+        dst_tmp65 = _mm_add_epi32(dst_tmp65, _mm_srli_si128(dst_tmp65, 8));
+        dst_tmp65 = _mm_add_epi32(dst_tmp65, _mm_srli_si128(dst_tmp65, 4));
+        int dst_23xline_lo2 = _mm_cvtsi128_si32(dst_tmp65);
+
+        dst_tmp66 = _mm_add_epi32(dst_tmp66, _mm_srli_si128(dst_tmp66, 8));
+        dst_tmp66 = _mm_add_epi32(dst_tmp66, _mm_srli_si128(dst_tmp66, 4));
+        int dst_23xline_hi1 = _mm_cvtsi128_si32(dst_tmp66);
+
+        dst_tmp67 = _mm_add_epi32(dst_tmp67, _mm_srli_si128(dst_tmp67, 8));
+        dst_tmp67 = _mm_add_epi32(dst_tmp67, _mm_srli_si128(dst_tmp67, 4));
+        int dst_23xline_hi2 = _mm_cvtsi128_si32(dst_tmp67);
+
+        int dst_23xline =  dst_23xline_lo1 + dst_23xline_lo2 + dst_23xline_hi1 + dst_23xline_hi2;
+
+        __m128i dst_17_19_21_23 = _mm_set_epi32(dst_23xline, dst_21xline, dst_19xline, dst_17xline);
+        dst_17_19_21_23  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_17_19_21_23), nshift);
+
+        dst[17 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 0);
+        dst[19 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 1);
+        dst[21 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 2);
+        dst[23 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 3);
+
+        __m128i dst_tmp68 = _mm_mullo_epi32(c32_n61_90_n78_31, O_0_3);
+        __m128i dst_tmp69 = _mm_mullo_epi32(c32_82_n88_54_4, O_4_7);
+        __m128i dst_tmp70 = _mm_mullo_epi32(c32_n90_73_n22_n38, O_8_11);
+        __m128i dst_tmp71 = _mm_mullo_epi32(c32_85_n46_n13_67, O_12_15);
+
+        dst_tmp68 = _mm_add_epi32(dst_tmp68, _mm_srli_si128(dst_tmp68, 8));
+        dst_tmp68 = _mm_add_epi32(dst_tmp68, _mm_srli_si128(dst_tmp68, 4));
+        int dst_25xline_lo1 = _mm_cvtsi128_si32(dst_tmp68);
+
+        dst_tmp69 = _mm_add_epi32(dst_tmp69, _mm_srli_si128(dst_tmp69, 8));
+        dst_tmp69 = _mm_add_epi32(dst_tmp69, _mm_srli_si128(dst_tmp69, 4));
+        int dst_25xline_lo2 = _mm_cvtsi128_si32(dst_tmp69);
+
+        dst_tmp70 = _mm_add_epi32(dst_tmp70, _mm_srli_si128(dst_tmp70, 8));
+        dst_tmp70 = _mm_add_epi32(dst_tmp70, _mm_srli_si128(dst_tmp70, 4));
+        int dst_25xline_hi1 = _mm_cvtsi128_si32(dst_tmp70);
+
+        dst_tmp71 = _mm_add_epi32(dst_tmp71, _mm_srli_si128(dst_tmp71, 8));
+        dst_tmp71 = _mm_add_epi32(dst_tmp71, _mm_srli_si128(dst_tmp71, 4));
+        int dst_25xline_hi2 = _mm_cvtsi128_si32(dst_tmp71);
+
+        int dst_25xline =  dst_25xline_lo1 + dst_25xline_lo2 + dst_25xline_hi1 + dst_25xline_hi2;
+
+        __m128i dst_tmp72 = _mm_mullo_epi32(c32_n90_85_n61_22, O_0_3);
+        __m128i dst_tmp73 = _mm_mullo_epi32(c32_46_n4_n38_73, O_4_7);
+        __m128i dst_tmp74 = _mm_mullo_epi32(c32_54_n82_90_n78, O_8_11);
+        __m128i dst_tmp75 = _mm_mullo_epi32(c32_n88_67_n31_n13, O_12_15);
+
+        dst_tmp72 = _mm_add_epi32(dst_tmp72, _mm_srli_si128(dst_tmp72, 8));
+        dst_tmp72 = _mm_add_epi32(dst_tmp72, _mm_srli_si128(dst_tmp72, 4));
+        int dst_27xline_lo1 = _mm_cvtsi128_si32(dst_tmp72);
+
+        dst_tmp73 = _mm_add_epi32(dst_tmp73, _mm_srli_si128(dst_tmp73, 8));
+        dst_tmp73 = _mm_add_epi32(dst_tmp73, _mm_srli_si128(dst_tmp73, 4));
+        int dst_27xline_lo2 = _mm_cvtsi128_si32(dst_tmp73);
+
+        dst_tmp74 = _mm_add_epi32(dst_tmp74, _mm_srli_si128(dst_tmp74, 8));
+        dst_tmp74 = _mm_add_epi32(dst_tmp74, _mm_srli_si128(dst_tmp74, 4));
+        int dst_27xline_hi1 = _mm_cvtsi128_si32(dst_tmp74);
+
+        dst_tmp75 = _mm_add_epi32(dst_tmp75, _mm_srli_si128(dst_tmp75, 8));
+        dst_tmp75 = _mm_add_epi32(dst_tmp75, _mm_srli_si128(dst_tmp75, 4));
+        int dst_27xline_hi2 = _mm_cvtsi128_si32(dst_tmp75);
+
+        int dst_27xline =  dst_27xline_lo1 + dst_27xline_lo2 + dst_27xline_hi1 + dst_27xline_hi2;
+
+        __m128i dst_tmp76 = _mm_mullo_epi32(c32_n78_61_n38_13, O_0_3);
+        __m128i dst_tmp77 = _mm_mullo_epi32(c32_88_n90_85_n73, O_4_7);
+        __m128i dst_tmp78 = _mm_mullo_epi32(c32_22_4_n31_54, O_8_11);
+        __m128i dst_tmp79 = _mm_mullo_epi32(c32_90_n82_67_n46, O_12_15);
+
+        dst_tmp76 = _mm_add_epi32(dst_tmp76, _mm_srli_si128(dst_tmp76, 8));
+        dst_tmp76 = _mm_add_epi32(dst_tmp76, _mm_srli_si128(dst_tmp76, 4));
+        int dst_29xline_lo1 = _mm_cvtsi128_si32(dst_tmp76);
+
+        dst_tmp77 = _mm_add_epi32(dst_tmp77, _mm_srli_si128(dst_tmp77, 8));
+        dst_tmp77 = _mm_add_epi32(dst_tmp77, _mm_srli_si128(dst_tmp77, 4));
+        int dst_29xline_lo2 = _mm_cvtsi128_si32(dst_tmp77);
+
+        dst_tmp78 = _mm_add_epi32(dst_tmp78, _mm_srli_si128(dst_tmp78, 8));
+        dst_tmp78 = _mm_add_epi32(dst_tmp78, _mm_srli_si128(dst_tmp78, 4));
+        int dst_29xline_hi1 = _mm_cvtsi128_si32(dst_tmp78);
+
+        dst_tmp79 = _mm_add_epi32(dst_tmp79, _mm_srli_si128(dst_tmp79, 8));
+        dst_tmp79 = _mm_add_epi32(dst_tmp79, _mm_srli_si128(dst_tmp79, 4));
+        int dst_29xline_hi2 = _mm_cvtsi128_si32(dst_tmp79);
+
+        int dst_29xline =  dst_29xline_lo1 + dst_29xline_lo2 + dst_29xline_hi1 + dst_29xline_hi2;
+
+        __m128i dst_tmp80 = _mm_mullo_epi32(c32_n31_22_n13_4, O_0_3);
+        __m128i dst_tmp81 = _mm_mullo_epi32(c32_n61_54_n46_38, O_4_7);
+        __m128i dst_tmp82 = _mm_mullo_epi32(c32_n82_78_n73_67, O_8_11);
+        __m128i dst_tmp83 = _mm_mullo_epi32(c32_n90_90_n88_85, O_12_15);
+
+        dst_tmp80 = _mm_add_epi32(dst_tmp80, _mm_srli_si128(dst_tmp80, 8));
+        dst_tmp80 = _mm_add_epi32(dst_tmp80, _mm_srli_si128(dst_tmp80, 4));
+        int dst_31xline_lo1 = _mm_cvtsi128_si32(dst_tmp80);
+
+        dst_tmp81 = _mm_add_epi32(dst_tmp81, _mm_srli_si128(dst_tmp81, 8));
+        dst_tmp81 = _mm_add_epi32(dst_tmp81, _mm_srli_si128(dst_tmp81, 4));
+        int dst_31xline_lo2 = _mm_cvtsi128_si32(dst_tmp81);
+
+        dst_tmp82 = _mm_add_epi32(dst_tmp82, _mm_srli_si128(dst_tmp82, 8));
+        dst_tmp82 = _mm_add_epi32(dst_tmp82, _mm_srli_si128(dst_tmp82, 4));
+        int dst_31xline_hi1 = _mm_cvtsi128_si32(dst_tmp82);
+
+        dst_tmp83 = _mm_add_epi32(dst_tmp83, _mm_srli_si128(dst_tmp83, 8));
+        dst_tmp83 = _mm_add_epi32(dst_tmp83, _mm_srli_si128(dst_tmp83, 4));
+        int dst_31xline_hi2 = _mm_cvtsi128_si32(dst_tmp83);
+
+        int dst_31xline =  dst_31xline_lo1 + dst_31xline_lo2 + dst_31xline_hi1 + dst_31xline_hi2;
+
+        __m128i dst_25_27_29_31 = _mm_set_epi32(dst_31xline, dst_29xline, dst_27xline, dst_25xline);
+        dst_25_27_29_31  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_25_27_29_31), nshift);
+
+        dst[25 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 0);
+        dst[27 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 1);
+        dst[29 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 2);
+        dst[31 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 3);
+
+        src += 32;
+        dst++;
+    }
+}
+
 void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
 {
     typedef uint32_t UInt32;
@@ -674,7 +1448,8 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     dst[14] = (short)_mm_extract_epi32(Coeff_12_15, 2);
     dst[15] = (short)_mm_extract_epi32(Coeff_12_15, 3);
 }
-#endif
+
+//#endif
 
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
@@ -1132,7 +1907,7 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
-#if X86_64
+#if 0  // Cannot enable a perf primitive before it has a C ref, it crashes test bench
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
 #endif
 }
