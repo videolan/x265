@@ -26,6 +26,7 @@
 #include "motion.h"
 #include <string.h>
 #include <stdio.h>
+
 using namespace x265;
 
 static int size_scale[NUM_PARTITIONS];
@@ -517,7 +518,6 @@ me_hex2:
                     bmv.y = omv.y + i * ((dir << 28) >> 28);
                 }
             }
-            //printf("RUNNING .....\n");
         }
         while (++i <= i_me_range >> 2);
         if (bmv.y <= mvmax.y && bmv.y >= mvmin.y && bmv.x <= mvmax.x && bmv.x >= mvmin.x)
@@ -533,7 +533,6 @@ me_hex2:
 
     /* bmv has the best full pel motion vector found by SAD search or motion candidates */
 
-    // TODO: add chroma satd costs
     bcost = qpelSatd(bmv) + mvcost(bmv); // remeasure BMV using SATD
 
     /* HPEL refinement followed by QPEL refinement */
@@ -542,7 +541,6 @@ me_hex2:
     int16_t res = 2;
     do
     {
-        /* TODO: include chroma satd costs */
         MV mv = bmv + MV(0, -res);
         int cost = qpelSatd(mv) + mvcost(mv);
         COPY1_IF_LT(bcost, (cost << 4) + 1);
