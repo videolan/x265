@@ -204,7 +204,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     if (numCandidates != 0)
     {
-        printf("\n\n numCandidates = %d \n", numCandidates);
+        //printf("\n\n numCandidates = %d \n", numCandidates);
     }
 
     MV qmvmin = mvmin.toQPel();
