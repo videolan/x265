@@ -1881,9 +1881,12 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
            uibits);
 
     printf(" [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", dYPSNR, dUPSNR, dVPSNR);
-    printf(" [ET %5.0f ]", dEncTime);
+    //printf(" [ET %5.0f ]", dEncTime);
 
-    for (Int iRefList = 0; iRefList < 2; iRefList++)
+    if (pcSlice->isIntra())
+        return;
+    Int numLists = pcSlice->isInterP() ? 1 : 2;
+    for (Int iRefList = 0; iRefList < numLists; iRefList++)
     {
         printf(" [L%d ", iRefList);
         for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)

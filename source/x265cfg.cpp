@@ -65,6 +65,7 @@ TAppEncCfg::TAppEncCfg()
     : m_pchBitstreamFile()
     , m_pchdQPFile()
     , m_scalingListFile()
+    , m_poolHandle(NULL)
 {
     m_aidQP = NULL;
     m_input = NULL;
@@ -84,6 +85,10 @@ TAppEncCfg::~TAppEncCfg()
     if (m_aidQP)
     {
         delete[] m_aidQP;
+    }
+    if (m_poolHandle)
+    {
+        m_poolHandle->Release();
     }
     free(m_pchBitstreamFile);
     free(m_pchdQPFile);
@@ -237,7 +242,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     string cfg_InputFile;
     string cfg_ReconFile;
-    string cfg_BitstreamFile;
+    string cfg_BitstreamFile("hevc.bin");
     string cfg_dQPFile;
     string cfg_ScalingListFile;
 
@@ -465,7 +470,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     }
 
     x265::SetupPrimitives(cpuid);
-    x265::ThreadPool::AllocThreadPool(threadcount);
+    m_poolHandle = x265::ThreadPool::AllocThreadPool(threadcount);
 
     /*
      * Set any derived parameters

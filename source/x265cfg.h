@@ -41,6 +41,7 @@
 #include "TLibCommon/CommonDef.h"
 #include "input/input.h"
 #include "output/output.h"
+#include "threadpool.h"
 #include "x265.h"
 #include <sstream>
 
@@ -57,6 +58,7 @@ class TAppEncCfg : public x265_params
 protected:
     x265::Input*  m_input;
     x265::Output* m_recon;
+    x265::ThreadPool *m_poolHandle;
 
     int       m_inputBitDepth;                  ///< bit-depth of input file
     int       m_outputBitDepth;                 ///< bit-depth of output file
