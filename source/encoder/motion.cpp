@@ -179,11 +179,6 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     setMVP(qmvp);
 
-    if (numCandidates != 0)
-    {
-        //printf("\n\n numCandidates = %d \n", numCandidates);
-    }
-
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
 
@@ -578,7 +573,3 @@ me_hex2:
     outQMv = bmv;
     return bcost >> 4;
 }
-
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional  expression is constant
-#endif
