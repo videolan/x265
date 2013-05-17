@@ -362,7 +362,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
-#if 1//EARLY_PARTITION_DECISION
+#if EARLY_PARTITION_DECISION
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcTempCUNxN, UInt uiDepth, PartSize eParentPartSize)
 {
     m_abortFlag = false;
@@ -504,12 +504,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         m_addSADDepth++;
     }
 
-    // copy original YUV samples to PCM buffer
-    if (rpcBestCU->isLosslessCoded(0) && (rpcBestCU->getIPCMFlag(0) == false))
-    {
-        xFillPCMBuffer(rpcBestCU, m_ppcOrigYuv[uiDepth]);
-    }
-
     rpcTempCU->initEstData(uiDepth, iQP);
 
     //The following if condition compares the cost of 2Nx2N Cu block with NxN Cu block and abort recursion if 2Nx2N is lower.
@@ -531,9 +525,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
                     
             UInt uiLSubPelX   = pcSubBestPartCU[uiPartUnitIdx]->getCUPelX();
-            UInt uiRSubPelX   = uiLPelX + pcSubBestPartCU[uiPartUnitIdx]->getWidth(0)  - 1;
+            UInt uiRSubPelX   = uiLSubPelX + pcSubBestPartCU[uiPartUnitIdx]->getWidth(0)  - 1;
             UInt uiTSubPelY   = pcSubBestPartCU[uiPartUnitIdx]->getCUPelY();
-            UInt uiBSubPelY   = uiTPelY + pcSubBestPartCU[uiPartUnitIdx]->getHeight(0) - 1;
+            UInt uiBSubPelY   = uiTSubPelY + pcSubBestPartCU[uiPartUnitIdx]->getHeight(0) - 1;
 
             TComSlice * pcSubSlice = pcSubBestPartCU[uiPartUnitIdx]->getPic()->getSlice(pcSubBestPartCU[uiPartUnitIdx]->getPic()->getCurrSliceIdx());
             Bool bInSlice = pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() < pcSubSlice->getSliceCurEndCUAddr();
