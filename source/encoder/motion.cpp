@@ -516,7 +516,7 @@ me_hex2:
             }
         }
         while (++i <= merange >> 2);
-        if (bmv.y <= mvmax.y && bmv.y >= mvmin.y && bmv.x <= mvmax.x && bmv.x >= mvmin.x)
+        if (bmv.checkRange(mvmin, mvmax))
             goto me_hex2;
         break;
     }     // case 1 End - UMH
