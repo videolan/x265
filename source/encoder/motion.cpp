@@ -418,16 +418,14 @@ me_hex2:
         /* FIXME if the above DIA2/OCT2/CROSS found a new mv, it has not updated omx/omy.
          * we are still centered on the same place as the DIA2. is this desirable? */
 
-        omv.x = bmv.x;
-        omv.y = bmv.y;
+        omv = bmv;
 
         CROSS(cross_start, blockWidth, blockHeight >> 1);
 
         COST_MV_X4(-2, -2, -2, 2, 2, -2, 2, 2);
 
         /* hexagon grid */
-        omv.x = bmv.x;
-        omv.y = bmv.y;
+        omv = bmv;
 
         const uint16_t *p_cost_omvx = m_cost_mvx + omv.x * 4;
         const uint16_t *p_cost_omvy = m_cost_mvy + omv.y * 4;
