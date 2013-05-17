@@ -20,7 +20,9 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
+
 #include "common.h"
+#include <stdio.h>
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
 {

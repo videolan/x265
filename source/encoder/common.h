@@ -25,7 +25,27 @@
 #define __COMMON__
 
 #include <stdlib.h>
-#include <fstream>
+
+#define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define COPY1_IF_LT(x, y) if ((y) < (x)) (x) = (y);
+#define COPY2_IF_LT(x, y, a, b) \
+    if ((y) < (x)) \
+    { \
+    (x) = (y); \
+    (a) = (b); \
+    }
+#define COPY3_IF_LT(x, y, a, b, c, d) \
+    if ((y) < (x)) \
+    { \
+    (x) = (y); \
+    (a) = (b); \
+    (c) = (d); \
+    }
+#define X265_MIN3(a, b, c) X265_MIN((a), X265_MIN((b), (c)))
+#define X265_MAX3(a, b, c) X265_MAX((a), X265_MAX((b), (c)))
+#define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
+#define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
 

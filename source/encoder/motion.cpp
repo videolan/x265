@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include "common.h"
 #include "motion.h"
 #include <string.h>
 #include <stdio.h>
@@ -76,29 +77,8 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 }
 
-#define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
-#define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define BITS_MVD(mx, my) (mvcost(MV(mx, my).toQPel()))
 #define SAD_THRESH(v) (bcost < ((v * size_scale[i_pixel]) / 9))
-#define X265_MIN3(a, b, c) X265_MIN((a), X265_MIN((b), (c)))
-#define X265_MAX3(a, b, c) X265_MAX((a), X265_MAX((b), (c)))
-#define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
-#define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
-
-#define COPY1_IF_LT(x, y) if ((y) < (x)) (x) = (y);
-#define COPY2_IF_LT(x, y, a, b) \
-    if ((y) < (x)) \
-    { \
-        (x) = (y); \
-        (a) = (b); \
-    }
-#define COPY3_IF_LT(x, y, a, b, c, d) \
-    if ((y) < (x)) \
-    { \
-        (x) = (y); \
-        (a) = (b); \
-        (c) = (d); \
-    }
 
 #define COST_MV(mx, my) \
     do \
@@ -390,7 +370,7 @@ me_hex2:
             }
         }
 
-        //Start Adaptive search range
+        // Start Adaptive search range
         if (numCandidates)
         {
             static const uint8_t range_mul[4][4] =
@@ -414,8 +394,7 @@ me_hex2:
 
                     mvd = 25;
                 else
-                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x)
-                                    + abs(qmvp.y - mvc[0].y));
+                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
             }
             else
             {
