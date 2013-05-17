@@ -328,7 +328,7 @@ me_hex2:
 
         pixel *pix_base = fref + omv.x + omv.y * ref->lumaStride;
         DIA1_ITER(pmv.x, pmv.y);
-        if (pmv.x | pmv.y)
+        if (pmv.word)
             DIA1_ITER(0, 0);
 
         assert(PARTITION_4x4 != partEnum);
