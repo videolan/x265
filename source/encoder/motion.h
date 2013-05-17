@@ -77,6 +77,7 @@ protected:
     int blockWidth;
     int blockHeight;
     int blockOffset;
+    int partEnum;
 
     MotionEstimate& operator=(const MotionEstimate&);
 

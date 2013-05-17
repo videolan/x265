@@ -233,7 +233,6 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     int16_t mv_x_max = mvmax.x;
     int16_t mv_y_max = mvmax.y;
     int16_t i_me_range = (int16_t)merange;
-    int16_t i_pixel = (int16_t)PartitionFromSizes(blockWidth, blockHeight);
     omv.x = bmv.x;
     omv.y = bmv.y;
 
@@ -336,7 +335,7 @@ me_hex2:
         if (pmv.x | pmv.y)
             DIA1_ITER(0, 0);
 
-        if (PARTITION_4x4 == i_pixel)
+        if (PARTITION_4x4 == partEnum)
             goto me_hex2;
 
         ucost2 = bcost;
@@ -386,7 +385,7 @@ me_hex2:
 
             if (numCandidates == 1)
             {
-                if (blockWidth == 16 && blockHeight == 16)
+                if (PARTITION_16x16 == partEnum)
                     /* mvc is probably the same as mvp, so the difference isn't meaningful.
                      * but prediction usually isn't too bad, so just use medium range */
                     mvd = 25;
@@ -402,7 +401,7 @@ me_hex2:
 
                 denom = numCandidates - 1;
                 mvd = 0;
-                if (i_pixel != PARTITION_16x16)
+                if (partEnum != PARTITION_16x16)
                 {
                     mvd = (int16_t)(abs(qmvp.x - mvc[0].x)
                                     + abs(qmvp.y - mvc[0].y));
