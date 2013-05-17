@@ -228,7 +228,6 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV pmv = qmvp; // this needs to be confirmation pridictor Motion vector
     MV omv = bmv;
 
-    int16_t i_me_range = (int16_t)merange;
     omv.x = bmv.x;
     omv.y = bmv.y;
 
@@ -279,7 +278,7 @@ me_hex2:
             bmv.y += hex2[dir + 1][1];
 
             /* half hexagon, not overlapping the previous iteration */
-            for (int i = (i_me_range >> 1) - 1; i > 0 && bmv.checkRange(mvmin, mvmax); i--)
+            for (int i = (merange >> 1) - 1; i > 0 && bmv.checkRange(mvmin, mvmax); i--)
             {
                 COST_MV_X3_DIR(hex2[dir + 0][0], hex2[dir + 0][1],
                                hex2[dir + 1][0], hex2[dir + 1][1],
@@ -413,7 +412,7 @@ me_hex2:
                 : mvd < 20 * denom ? 1
                 : mvd < 40 * denom ? 2 : 3;
 
-            i_me_range = i_me_range * range_mul[mvd_ctx][sad_ctx] >> 2;
+            merange = merange * range_mul[mvd_ctx][sad_ctx] >> 2;
         }
 
         /* FIXME if the above DIA2/OCT2/CROSS found a new mv, it has not updated omx/omy.
@@ -519,7 +518,7 @@ me_hex2:
                 }
             }
         }
-        while (++i <= i_me_range >> 2);
+        while (++i <= merange >> 2);
         if (bmv.y <= mvmax.y && bmv.y >= mvmin.y && bmv.x <= mvmax.x && bmv.x >= mvmin.x)
             goto me_hex2;
         break;
