@@ -49,8 +49,8 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
 
     for (int i = 0; i < numCandidates - 1; i++)
     {
-        sum += abs(mvc[i].x - mvc[i + 1].y)
-            +  abs(mvc[i].x - mvc[i + 1].y);
+        sum += abs(mvc[i].x - mvc[i + 1].x)
+            +  abs(mvc[i].y - mvc[i + 1].y);
     }
 
     return sum;
