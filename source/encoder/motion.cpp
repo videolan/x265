@@ -28,14 +28,40 @@
 #include <stdio.h>
 using namespace x265;
 
-#define THRESH_MUL 64
+static int size_scale[NUM_PARTITIONS];
 
-static int size_scale[] =
+#define SAD_THRESH(v) (bcost < (((v>>4) * size_scale[partEnum])))
+
+static void init_scales(void)
 {
-    2304, 1152, 768, 576, 384, 288, 192, 144, 1152, 576, 384, 288, 192, 144, 96, 72, 768, 384, 256, 192, 128, 96, 64, 48, 576,
-    288, 192, 144, 96, 72, 48, 36, 384, 192, 128, 96, 64, 48, 32, 24, 288, 144, 96, 72, 48, 36, 24, 18, 192, 96, 64, 48, 32,
-    24, 16, 12, 144, 72, 48, 36, 24, 18, 12, 9
-};
+    int dims[] = {4, 8, 12, 16, 24, 32, 48, 64};
+
+    int i = 0;
+    for (int h = 0; h < sizeof(dims)/sizeof(int); h++)
+        for (int w = 0; w < sizeof(dims)/sizeof(int); w++)
+            size_scale[i++] = (dims[h] * dims[w]) >> 4;
+}
+
+void MotionEstimate::setSourcePU(int offset, int width, int height)
+{
+    if (size_scale[0] == 0)
+        init_scales();
+
+    partEnum = PartitionFromSizes(width, height);
+
+    sad = primitives.sad[partEnum];
+    satd = primitives.satd[partEnum];
+    sad_x3 = primitives.sad_x3[partEnum];
+    sad_x4 = primitives.sad_x4[partEnum];
+
+    blockWidth = width;
+    blockHeight = height;
+    blockOffset = offset;
+
+    /* copy block into local buffer */
+    pixel *fencblock = fencplanes[0] + offset;
+    primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
+}
 
 /* (x-1)%6 */
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };
@@ -56,26 +82,7 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
     return sum;
 }
 
-void MotionEstimate::setSourcePU(int offset, int width, int height)
-{
-    int size = PartitionFromSizes(width, height);
-
-    sad = primitives.sad[size];
-    satd = primitives.satd[size];
-    sad_x3 = primitives.sad_x3[size];
-    sad_x4 = primitives.sad_x4[size];
-
-    blockWidth = width;
-    blockHeight = height;
-    blockOffset = offset;
-
-    /* copy block into local buffer */
-    pixel *fencblock = fencplanes[0] + offset;
-    primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
-}
-
-#define BITS_MVD(mx, my) (mvcost(MV(mx, my).toQPel()))
-#define SAD_THRESH(v) (bcost < ((v * size_scale[i_pixel]) / 9))
+#define BITS_MVD(mx, my) (mvcost(MV(mx, my) << 2))
 
 #define COST_MV(mx, my) \
     do \
@@ -344,11 +351,11 @@ me_hex2:
 
         /* Early Termination */
 
-        if (bcost == ucost2 && SAD_THRESH(2000 * THRESH_MUL))
+        if (bcost == ucost2 && SAD_THRESH(2000))
         {
             COST_MV_X4(0, -2, -1, -1, 1, -1, -2, 0);
             COST_MV_X4(2, 0, -1, 1, 1, 1,  0, 2);
-            if (bcost == ucost1 && SAD_THRESH(500 * THRESH_MUL))
+            if (bcost == ucost1 && SAD_THRESH(500))
                 break;
             if (bcost == ucost2)
             {
@@ -404,9 +411,9 @@ me_hex2:
                 mvd += (int16_t)x265_predictor_difference(mvc, numCandidates);
             }
 
-            sad_ctx = SAD_THRESH(1000 * THRESH_MUL) ? 0
-                : SAD_THRESH(2000 * THRESH_MUL) ? 1
-                : SAD_THRESH(4000 * THRESH_MUL) ? 2 : 3;
+            sad_ctx = SAD_THRESH(1000) ? 0
+                : SAD_THRESH(2000) ? 1
+                : SAD_THRESH(4000) ? 2 : 3;
             mvd_ctx = mvd < 10 * denom ? 0
                 : mvd < 20 * denom ? 1
                 : mvd < 40 * denom ? 2 : 3;
