@@ -96,7 +96,6 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
-        size_t stride = ref->lumaStride; \
         pixel *pix_base = fref + bmv.x + bmv.y * stride; \
         sad_x3(fenc, \
                pix_base + (m0x) + (m0y) * stride, \
@@ -110,7 +109,6 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
 
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
     { \
-        size_t stride = ref->lumaStride; \
         sad_x4(fenc, \
                pix_base + (m0x) + (m0y) * stride, \
                pix_base + (m1x) + (m1y) * stride, \
@@ -129,7 +127,6 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
     { \
-        size_t stride = ref->lumaStride; \
         pixel *pix_base = fref + bmv.x + bmv.y * stride; \
         sad_x4(fenc, \
                pix_base + (m0x) + (m0y) * stride, \
@@ -185,6 +182,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
                                    MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
+    size_t stride = ref->lumaStride;
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
     setMVP(qmvp);
@@ -326,7 +324,7 @@ me_hex2:
         ucost1 = bcost;
         omv = bmv;
 
-        pixel *pix_base = fref + omv.x + omv.y * ref->lumaStride;
+        pixel *pix_base = fref + omv.x + omv.y * stride;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.word)
             DIA1_ITER(0, 0);
@@ -454,7 +452,6 @@ me_hex2:
             else
             {
                 int16_t dir = 0;
-                size_t stride = ref->lumaStride;
                 pixel *fref_base = fref + omv.x + (omv.y - 4 * i) * stride;
                 int dy = (int)(i * stride);
 
