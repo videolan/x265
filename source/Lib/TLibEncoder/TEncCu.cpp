@@ -362,7 +362,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *
  *- for loop of QP value to compress the current CU with all possible QP
 */
-#if EARLY_PARTITION_DECISION
+#if 1//EARLY_PARTITION_DECISION
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcTempCUNxN, UInt uiDepth, PartSize eParentPartSize)
 {
     m_abortFlag = false;
@@ -471,20 +471,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                         rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
-            }
-            // test PCM
-            if (pcPic->getSlice(0)->getSPS()->getUsePCM()
-                && rpcTempCU->getWidth(0) <= (1 << pcPic->getSlice(0)->getSPS()->getPCMLog2MaxSize())
-                && rpcTempCU->getWidth(0) >= (1 << pcPic->getSlice(0)->getSPS()->getPCMLog2MinSize()))
-            {
-                UInt uiRawBits = (2 * g_bitDepthY + g_bitDepthC) * rpcBestCU->getWidth(0) * rpcBestCU->getHeight(0) / 2;
-                UInt uiBestBits = rpcBestCU->getTotalBits();
-                if ((uiBestBits > uiRawBits) || (rpcBestCU->getTotalCost() > CALCRDCOST(uiRawBits, 0, m_pcRdCost->m_dLambda)))
-                {
-                    xCheckIntraPCM(rpcBestCU, rpcTempCU);
-                    rpcTempCU->initEstData(uiDepth, iQP);
-                }
-            }
+            }          
         }
 
         m_pcEntropyCoder->resetBits();
