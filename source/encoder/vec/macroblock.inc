@@ -212,7 +212,7 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-/*void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
+void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j;
     int add = 1 << (shift - 1);
@@ -487,7 +487,7 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
         src += 32;
         dst++;
     }
-}*/
+}
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 {
@@ -547,7 +547,7 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 }
 
 
-/*
+
 void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -589,8 +589,9 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
         src += 4;
         dst++;
     }
-}*/
+}
 
+#if 0
 void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 {
     int add = 1 << (nshift - 1);
@@ -1313,7 +1314,6 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
     }
 }
 
-#if X86_64
 void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
 {
     typedef uint32_t UInt32;
