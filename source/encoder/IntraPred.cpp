@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "primitives.h"
-#include "Lib\TLibCommon\TComPrediction.h"
+#include "Lib/TLibCommon/TComPrediction.h"
 #include <cstring>
 #include <assert.h>
 
