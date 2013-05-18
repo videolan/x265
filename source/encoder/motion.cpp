@@ -120,10 +120,10 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
         costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
         costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
         costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
-        COPY3_IF_LT(bcost, costs[0], bmv.x, omv.x + (m0x), bmv.y, omv.y + (m0y)); \
-        COPY3_IF_LT(bcost, costs[1], bmv.x, omv.x + (m1x), bmv.y, omv.y + (m1y)); \
-        COPY3_IF_LT(bcost, costs[2], bmv.x, omv.x + (m2x), bmv.y, omv.y + (m2y)); \
-        COPY3_IF_LT(bcost, costs[3], bmv.x, omv.x + (m3x), bmv.y, omv.y + (m3y)); \
+        COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
+        COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
+        COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
+        COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
     }
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
