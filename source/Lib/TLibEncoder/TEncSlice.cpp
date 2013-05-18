@@ -531,9 +531,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++) //init all sbac coders for RD optimization
     {
-        m_pcBufferSbacCoders[ui].loadContexts(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+        m_pcBufferSbacCoders[ui].loadContexts(m_pcSbacCoder); //init. state
 
-        ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
+        ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pcSbacCoder);
     }
 
     UInt uiCol = 0, uiLin = 0;
