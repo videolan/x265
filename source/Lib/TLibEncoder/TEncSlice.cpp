@@ -474,7 +474,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-    TEncBinCABAC* pppcRDSbacCoder = NULL;
     TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
     xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
@@ -488,9 +487,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
     m_pcEntropyCoder->resetEntropy();
     m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(m_pcSbacCoder);
-    pppcRDSbacCoder = (TEncBinCABAC*)m_pppcRDSbacCoder[0][CI_CURR_BEST]->getEncBinIf();
-    pppcRDSbacCoder->setBinCountingEnableFlag(false);
-    pppcRDSbacCoder->setBinsCoded(0);
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -568,6 +564,10 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
             // inherit from TR if necessary, select substream to use.
             const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
+
+            TEncBinCABAC* pppcRDSbacCoder = (TEncBinCABAC*)m_pppcRDSbacCoder[0][CI_CURR_BEST]->getEncBinIf();
+            pppcRDSbacCoder->setBinCountingEnableFlag(false);
+            pppcRDSbacCoder->setBinsCoded(0);
 
             // CHECK_ME: since there only one slice, the TR alway avail except line-0
             // TODO: In MultiThread environment, we MUST modify code to waiting previous line to finish!
