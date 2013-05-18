@@ -172,8 +172,7 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
                       TComTrQuant* pcTrQuant,
                       Int          iSearchRange,
                       Int          bipredSearchRange,
-                      Int          iFastSearch,
-                      Int          iMaxDeltaQP,
+                      Int          iSearchMothod,
                       TEncEntropy* pcEntropyCoder,
                       TComRdCost*  pcRdCost,
                       TEncSbac***  pppcRDSbacCoder,
@@ -184,10 +183,11 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
     m_pcTrQuant            = pcTrQuant;
     m_iSearchRange         = iSearchRange;
     m_bipredSearchRange    = bipredSearchRange;
-    m_iFastSearch          = iFastSearch;
-    m_iMaxDeltaQP          = iMaxDeltaQP;
+    m_iSearchMethod        = iSearchMothod;
     m_pcEntropyCoder       = pcEntropyCoder;
     m_pcRdCost             = pcRdCost;
+
+    m_me.setSearchMethod(iSearchMothod);
 
     m_pppcRDSbacCoder     = pppcRDSbacCoder;
     m_pcRDGoOnSbacCoder   = pcRDGoOnSbacCoder;
@@ -3916,7 +3916,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
-    if (0 && m_cDistParam.bApplyWeight == false && !bBi)
+    if (m_iSearchMethod < 3 && m_cDistParam.bApplyWeight == false && !bBi)
     {
         int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
@@ -3937,7 +3937,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
 
     //  Do integer search
-    if (!m_iFastSearch || bBi)
+    if (bBi)
     {
         xPatternSearch(pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost);
     }
@@ -4045,16 +4045,7 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
     pcCU->getMvPredLeft(m_acMvPredictors[0]);
     pcCU->getMvPredAbove(m_acMvPredictors[1]);
     pcCU->getMvPredAboveRight(m_acMvPredictors[2]);
-
-    switch (m_iFastSearch)
-    {
-    case 1:
-        xTZSearch(pcCU, pcPatternKey, piRefY, iRefStride, pcMvSrchRngLT, pcMvSrchRngRB, rcMv, ruiSAD);
-        break;
-
-    default:
-        break;
-    }
+    xTZSearch(pcCU, pcPatternKey, piRefY, iRefStride, pcMvSrchRngLT, pcMvSrchRngRB, rcMv, ruiSAD);
 }
 
 Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
@@ -4325,7 +4316,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     }
 
     //  Residual coding.
-    Int    qp, qpBest = 0, qpMin, qpMax;
+    Int     qp, qpBest = 0;
     Double  dCost, dCostBest = MAX_DOUBLE;
 
     UInt uiTrLevel = 0;
@@ -4343,96 +4334,74 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
         uiMaxTrMode--;
     }
 
-    qpMin =  bHighPass ? Clip3(-pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP) : pcCU->getQP(0);
-    qpMax =  bHighPass ? Clip3(-pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP) : pcCU->getQP(0);
+    qp = bHighPass ? Clip3(-pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (Int)pcCU->getQP(0)) : pcCU->getQP(0);
 
     rpcYuvResi->subtract(pcYuvOrg, pcYuvPred, 0, uiWidth);
 
-    // TODO: HM does not allow qpMin != qpMax, simplify this!
-    for (qp = qpMin; qp <= qpMax; qp++)
+    dCost = 0.;
+    uiBits = 0;
+    uiDistortion = 0;
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
+
+    UInt uiZeroDistortion = 0;
+    xEstimateResidualQT(pcCU, 0, 0, 0, rpcYuvResi,  pcCU->getDepth(0), dCost, uiBits, uiDistortion, &uiZeroDistortion);
+
+    m_pcEntropyCoder->resetBits();
+    m_pcEntropyCoder->encodeQtRootCbfZero(pcCU);
+    UInt zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+    Double dZeroCost = CALCRDCOST(zeroResiBits, uiZeroDistortion, m_pcRdCost->m_dLambda);
+    if (pcCU->isLosslessCoded(0))
     {
-        dCost = 0.;
-        uiBits = 0;
-        uiDistortion = 0;
-        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
+        dZeroCost = dCost + 1;
+    }
+    if (dZeroCost < dCost)
+    {
+        dCost        = dZeroCost;
+        uiBits       = 0;
+        uiDistortion = uiZeroDistortion;
 
-        UInt uiZeroDistortion = 0;
-        xEstimateResidualQT(pcCU, 0, 0, 0, rpcYuvResi,  pcCU->getDepth(0), dCost, uiBits, uiDistortion, &uiZeroDistortion);
+        const UInt uiQPartNum = pcCU->getPic()->getNumPartInCU() >> (pcCU->getDepth(0) << 1);
+        ::memset(pcCU->getTransformIdx(), 0, uiQPartNum * sizeof(UChar));
+        ::memset(pcCU->getCbf(TEXT_LUMA), 0, uiQPartNum * sizeof(UChar));
+        ::memset(pcCU->getCbf(TEXT_CHROMA_U), 0, uiQPartNum * sizeof(UChar));
+        ::memset(pcCU->getCbf(TEXT_CHROMA_V), 0, uiQPartNum * sizeof(UChar));
+        ::memset(pcCU->getCoeffY(), 0, uiWidth * uiHeight * sizeof(TCoeff));
+        ::memset(pcCU->getCoeffCb(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
+        ::memset(pcCU->getCoeffCr(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
+        pcCU->setTransformSkipSubParts(0, 0, 0, 0, pcCU->getDepth(0));
+    }
+    else
+    {
+        xSetResidualQTData(pcCU, 0, 0, 0, NULL, pcCU->getDepth(0), false);
+    }
 
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeQtRootCbfZero(pcCU);
-        UInt zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
-        Double dZeroCost = CALCRDCOST(zeroResiBits, uiZeroDistortion, m_pcRdCost->m_dLambda);
-        if (pcCU->isLosslessCoded(0))
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
+
+    uiBits = 0;
+    {
+        TShortYUV *pDummy = NULL;
+        xAddSymbolBitsInter(pcCU, 0, 0, uiBits, pDummy, NULL, pDummy);
+    }
+
+    Double dExactCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
+    dCost = dExactCost;
+
+    if (dCost < dCostBest)
+    {
+        if (!pcCU->getQtRootCbf(0))
         {
-            dZeroCost = dCost + 1;
-        }
-        if (dZeroCost < dCost)
-        {
-            dCost        = dZeroCost;
-            uiBits       = 0;
-            uiDistortion = uiZeroDistortion;
-
-            const UInt uiQPartNum = pcCU->getPic()->getNumPartInCU() >> (pcCU->getDepth(0) << 1);
-            ::memset(pcCU->getTransformIdx(), 0, uiQPartNum * sizeof(UChar));
-            ::memset(pcCU->getCbf(TEXT_LUMA), 0, uiQPartNum * sizeof(UChar));
-            ::memset(pcCU->getCbf(TEXT_CHROMA_U), 0, uiQPartNum * sizeof(UChar));
-            ::memset(pcCU->getCbf(TEXT_CHROMA_V), 0, uiQPartNum * sizeof(UChar));
-            ::memset(pcCU->getCoeffY(), 0, uiWidth * uiHeight * sizeof(TCoeff));
-            ::memset(pcCU->getCoeffCb(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
-            ::memset(pcCU->getCoeffCr(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
-            pcCU->setTransformSkipSubParts(0, 0, 0, 0, pcCU->getDepth(0));
+            rpcYuvResiBest->clear();
         }
         else
         {
-            xSetResidualQTData(pcCU, 0, 0, 0, NULL, pcCU->getDepth(0), false);
+            xSetResidualQTData(pcCU, 0, 0, 0, rpcYuvResiBest, pcCU->getDepth(0), true);
         }
 
-        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
-
-        uiBits = 0;
-        {
-            TShortYUV *pDummy = NULL;
-            xAddSymbolBitsInter(pcCU, 0, 0, uiBits, pDummy, NULL, pDummy);
-        }
-
-        Double dExactCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
-        dCost = dExactCost;
-
-        if (dCost < dCostBest)
-        {
-            if (!pcCU->getQtRootCbf(0))
-            {
-                rpcYuvResiBest->clear();
-            }
-            else
-            {
-                xSetResidualQTData(pcCU, 0, 0, 0, rpcYuvResiBest, pcCU->getDepth(0), true);
-            }
-
-            if (qpMin != qpMax && qp != qpMax)
-            {
-                const UInt uiQPartNum = pcCU->getPic()->getNumPartInCU() >> (pcCU->getDepth(0) << 1);
-                ::memcpy(m_puhQTTempTrIdx, pcCU->getTransformIdx(),        uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[0], pcCU->getCbf(TEXT_LUMA),     uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[1], pcCU->getCbf(TEXT_CHROMA_U), uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[2], pcCU->getCbf(TEXT_CHROMA_V), uiQPartNum * sizeof(UChar));
-                ::memcpy(m_pcQTTempCoeffY,  pcCU->getCoeffY(),  uiWidth * uiHeight * sizeof(TCoeff));
-                ::memcpy(m_pcQTTempCoeffCb, pcCU->getCoeffCb(), uiWidth * uiHeight * sizeof(TCoeff) >> 2);
-                ::memcpy(m_pcQTTempCoeffCr, pcCU->getCoeffCr(), uiWidth * uiHeight * sizeof(TCoeff) >> 2);
-                ::memcpy(m_pcQTTempArlCoeffY,  pcCU->getArlCoeffY(),  uiWidth * uiHeight * sizeof(Int));
-                ::memcpy(m_pcQTTempArlCoeffCb, pcCU->getArlCoeffCb(), uiWidth * uiHeight * sizeof(Int) >> 2);
-                ::memcpy(m_pcQTTempArlCoeffCr, pcCU->getArlCoeffCr(), uiWidth * uiHeight * sizeof(Int) >> 2);
-                ::memcpy(m_puhQTTempTransformSkipFlag[0], pcCU->getTransformSkip(TEXT_LUMA),     uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[1], pcCU->getTransformSkip(TEXT_CHROMA_U), uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[2], pcCU->getTransformSkip(TEXT_CHROMA_V), uiQPartNum * sizeof(UChar));
-            }
-            uiBitsBest       = uiBits;
-            uiDistortionBest = uiDistortion;
-            dCostBest        = dCost;
-            qpBest           = qp;
-            m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
-        }
+        uiBitsBest       = uiBits;
+        uiDistortionBest = uiDistortion;
+        dCostBest        = dCost;
+        qpBest           = qp;
+        m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
     }
 
     assert(dCostBest != MAX_DOUBLE);

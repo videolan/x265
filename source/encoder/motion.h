@@ -78,14 +78,17 @@ protected:
     int blockHeight;
     int blockOffset;
     int partEnum;
+    int searchMethod;
 
     MotionEstimate& operator=(const MotionEstimate&);
 
 public:
 
-    MotionEstimate() {}
+    MotionEstimate() : searchMethod(2) {}
 
     ~MotionEstimate() {}
+
+    void setSearchMethod(int i) { searchMethod = i; }
 
     /* Methods called at slice setup */
 

@@ -188,6 +188,14 @@ static const struct MapStrToLevel
     { "6.2", Level::LEVEL6_2 },
 };
 
+static const Char *MotionEstimateMethodNames[] =
+{
+    "DIA",
+    "HEX",
+    "UMH",
+    "HM",
+};
+
 template<typename T, typename P>
 static istream& readStrToEnum(P map[], unsigned long mapLen, istream &in, T &val)
 {
@@ -298,7 +306,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
     ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
     // motion options
-    ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
+    ("SearchMethod,-me",        m_searchMethod,               2, "0:DIA 1:HEX 2:UMH 3: UMH")
     ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
     ("BipredSearchRange",       m_bipredSearchRange,          4, "Motion search range for bipred refinement")
     ("HadamardME",              m_bUseHADME,                  1, "Hadamard ME for fractional-pel")
@@ -612,7 +620,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                 "Decoding Refresh Type must be equal to 0, 1 or 2");
     xConfirmPara(m_loopFilterBetaOffsetDiv2 < -13 || m_loopFilterBetaOffsetDiv2 > 13,      "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
     xConfirmPara(m_loopFilterTcOffsetDiv2 < -13 || m_loopFilterTcOffsetDiv2 > 13,          "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
-    xConfirmPara(m_iFastSearch < 0 || m_iFastSearch > 2,                                   "Fast Search Mode is not supported value (0:Full search  1:Diamond  2:PMVFAST)");
+    xConfirmPara(m_searchMethod < 0 || m_searchMethod > 3,                                 "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM)");
     xConfirmPara(m_iSearchRange < 0,                                                       "Search Range must be more than 0");
     xConfirmPara(m_bipredSearchRange < 0,                                                  "Search Range must be more than 0");
     xConfirmPara(m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                    "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
@@ -1088,6 +1096,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);
     printf("Max RQT depth intra          : %d\n", m_uiQuadtreeTUMaxDepthIntra);
     printf("Min PCM size                 : %d\n", 1 << m_uiPCMLog2MinSize);
+    printf("Motion search method         : %s\n", MotionEstimateMethodNames[m_searchMethod] );
     printf("Motion search range          : %d\n", m_iSearchRange);
     printf("Intra period                 : %d\n", m_iIntraPeriod);
     printf("Decoding refresh type        : %d\n", m_iDecodingRefreshType);

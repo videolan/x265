@@ -159,7 +159,7 @@ protected:
     Bool      m_useLossless;
 
     //====== Motion search ========
-    Int       m_iFastSearch;                    //  0:Full search  1:Diamond  2:PMVFAST
+    Int       m_iSearchMethod;
     Int       m_iSearchRange;                   //  0:Full frame
     Int       m_bipredSearchRange;
 
@@ -345,10 +345,8 @@ public:
     Void      setDeblockingFilterMetric(Bool b)      { m_DeblockingFilterMetric = b; }
 
     //====== Motion search ========
-    Void      setFastSearch(Int i)      { m_iFastSearch = i; }
-
+    Void      setSearchMethod(Int i)     { m_iSearchMethod = i; }
     Void      setSearchRange(Int i)      { m_iSearchRange = i; }
-
     Void      setBipredSearchRange(Int i)      { m_bipredSearchRange = i; }
 
     //====== Quality control ========
@@ -422,8 +420,6 @@ public:
     Bool      getDeblockingFilterMetric()      { return m_DeblockingFilterMetric; }
 
     //==== Motion search ========
-    Int       getFastSearch()      { return m_iFastSearch; }
-
     Int       getSearchRange()      { return m_iSearchRange; }
 
     //==== Quality control ========

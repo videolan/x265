@@ -231,8 +231,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV pmv = qmvp.toFPel();
     MV omv = bmv;
 
-    int meMethod = 2;
-    switch (meMethod)
+    switch (searchMethod)
     {
     case 0:
     {

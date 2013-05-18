@@ -115,7 +115,7 @@ protected:
     // ME parameters
     Int             m_iSearchRange;
     Int             m_bipredSearchRange; // Search range for bi-prediction
-    Int             m_iFastSearch;
+    Int             m_iSearchMethod;
     Int             m_aaiAdaptSR[2][33];
     TComMv          m_cSrchRngLT;
     TComMv          m_cSrchRngRB;
@@ -129,10 +129,8 @@ protected:
     // Misc.
     Pel*            m_pTempPel;
     const UInt*     m_puiDFilter;
-    Int             m_iMaxDeltaQP;
 
     // AMVP cost computation
-    // UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS];
     UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1]; //th array bounds
 
 public:
@@ -144,8 +142,7 @@ public:
               TComTrQuant* pcTrQuant,
               Int          iSearchRange,
               Int          bipredSearchRange,
-              Int          iFastSearch,
-              Int          iMaxDeltaQP,
+              Int          iSearchMethod,
               TEncEntropy* pcEntropyCoder,
               TComRdCost*  pcRdCost,
               TEncSbac***  pppcRDSbacCoder,

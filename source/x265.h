@@ -42,6 +42,14 @@ typedef struct
 }
 x265_picture;
 
+typedef enum
+{
+    X265_DIA_SEARCH,
+    X265_HEX_SEARCH,
+    X265_UMH_SEARCH,
+    X265_HM_SEARCH,  // original HM fast-ME method (*deprecated*)
+} X265_ME_METHODS;
+
 /***
  * Pass cpuid 0 to auto-detect.  If not called, first encoder allocated will
  * auto-detect the CPU and initialize performance primitives */
@@ -155,12 +163,13 @@ typedef struct
     int       m_useRDOQ;                          ///< flag for using RD optimized quantization
     int       m_useRDOQTS;                        ///< flag for using RD optimized quantization for transform skip
     int       m_rdPenalty;                        ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
-    int       m_iFastSearch;                      ///< ME mode, 0 = full, 1 = diamond, 2 = PMVFAST
-    int       m_iSearchRange;                     ///< ME search range
-    int       m_bipredSearchRange;                ///< ME search range for bipred refinement
     int       m_useFastDecisionForMerge;          ///< flag for using Fast Decision Merge RD-Cost
     int       m_bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
     int       m_useEarlySkipDetection;            ///< flag for using Early SKIP Detection
+
+    int       m_searchMethod;                     ///< ME search method (DIA, HEX, UMH, HM)
+    int       m_iSearchRange;                     ///< ME search range
+    int       m_bipredSearchRange;                ///< ME search range for bipred refinement
 
     int       m_iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
 
