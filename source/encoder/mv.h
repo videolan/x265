@@ -86,6 +86,7 @@ public:
         return cl.mvmax(_min);
     }
 
+    // returns true if MV is within range (inclusive)
     bool checkRange(const MV& _min, const MV& _max) const
     {
         return x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y;
