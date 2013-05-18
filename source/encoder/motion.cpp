@@ -531,7 +531,10 @@ me_hex2:
         if (bmv.checkRange(mvmin, mvmax))
             goto me_hex2;
         break;
-    }     // case 1 End - UMH
+    }
+    default:
+        assert(0);
+        break;
     }
 
     if (bprecost < bcost)
