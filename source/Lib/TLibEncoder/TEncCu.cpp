@@ -728,15 +728,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     Bool bTrySplitDQP  = true;
 
-    static  Double  afCost[MAX_CU_DEPTH];
-    static  Int      aiNum[MAX_CU_DEPTH];
-
-    if (rpcBestCU->getAddr() == 0)
-    {
-        ::memset(afCost, 0, sizeof(afCost));
-        ::memset(aiNum,  0, sizeof(aiNum));
-    }
-
     Bool bBoundary = false;
     UInt uiLPelX   = rpcBestCU->getCUPelX();
     UInt uiRPelX   = uiLPelX + rpcBestCU->getWidth(0)  - 1;
@@ -960,14 +951,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         rpcBestCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits(); // split bits
         rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         rpcBestCU->getTotalCost()  = CALCRDCOST(rpcBestCU->getTotalBits(), rpcBestCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
-        // accumulate statistics for early skip
-        if (rpcBestCU->isSkipped(0))
-        {
-            Int iIdx = g_aucConvertToBit[rpcBestCU->getWidth(0)];
-            afCost[iIdx] += rpcBestCU->getTotalCost();
-            aiNum[iIdx]++;
-        }
 
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
