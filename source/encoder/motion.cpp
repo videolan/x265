@@ -257,7 +257,24 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     case 1:
     {
 me_hex2:
-        /* hexagon */
+        /* hexagon search, radius 2 */
+#if 1
+        for (int i = 0; i < merange/2; i++)
+        {
+            omv = bmv;
+            COST_MV( omv.x-2, omv.y   );
+            COST_MV( omv.x-1, omv.y+2 );
+            COST_MV( omv.x+1, omv.y+2 );
+            COST_MV( omv.x+2, omv.y   );
+            COST_MV( omv.x+1, omv.y-2 );
+            COST_MV( omv.x-1, omv.y-2 );
+            if( omv == bmv )
+                break;
+            if(!bmv.checkRange(mvmin, mvmax))
+                break;
+        }
+#else
+        /* equivalent to the above, but eliminates duplicate candidates */
         COST_MV_X3_DIR(-2, 0, -1, 2,  1, 2, costs);
         COST_MV_X3_DIR(2, 0,  1, -2, -1, -2, costs + 3);
         bcost <<= 3;
@@ -294,6 +311,7 @@ me_hex2:
             }
         }
         bcost >>= 3;
+#endif
 
         /* square refine */
         int dir = 0;
