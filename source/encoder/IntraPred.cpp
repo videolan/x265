@@ -70,9 +70,8 @@ pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWi
     return pDcVal;
 }
 
-void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t iDstStride, int iWidth, int iHeight)
+void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* pDst, intptr_t iDstStride, int iWidth, int iHeight)
 {
-    pixel* pDst = rpDst;
     intptr_t x, y, iDstStride2, iSrcStride2;
 
     // boundary pixels processing
@@ -89,11 +88,10 @@ void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t i
     }
 }
 
-void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int height, int blkAboveAvailable, int blkLeftAvailable, int bFilter)
+void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int height, int blkAboveAvailable, int blkLeftAvailable, int bFilter)
 {
     int k, l;
-    int blkSize        = width;
-    pixel* pDst          = rpDst;
+    int blkSize = width;
 
     // Do the DC prediction
     pixel dcval = (pixel) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
@@ -111,7 +109,7 @@ void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStr
     }
 }
 
-void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
+void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/)
 {
     //assert(width == height);
 
@@ -153,16 +151,15 @@ void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t ds
         {
             horPred += rightColumn[k];
             topRow[l] += bottomRow[l];
-            rpDst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
+            pDst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
         }
     }
 }
 
-void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel*& rpDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel* pDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
     int k, l;
-    int blkSize        = width;
-    pixel* pDst          = rpDst;
+    int blkSize  = width;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
