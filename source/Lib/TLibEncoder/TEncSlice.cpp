@@ -53,8 +53,6 @@ TEncSlice::TEncSlice()
     m_apcPicYuvResi = NULL;
     m_pcBufferSbacCoders = NULL;
     m_pcBufferBinCoderCABACs = NULL;
-    m_pcBufferLowLatSbacCoders = NULL;
-    m_pcBufferLowLatBinCoderCABACs = NULL;
 }
 
 TEncSlice::~TEncSlice()
@@ -119,10 +117,6 @@ Void TEncSlice::destroy()
     {
         delete[] m_pcBufferBinCoderCABACs;
     }
-    if (m_pcBufferLowLatSbacCoders)
-        delete[] m_pcBufferLowLatSbacCoders;
-    if (m_pcBufferLowLatBinCoderCABACs)
-        delete[] m_pcBufferLowLatBinCoderCABACs;
 }
 
 Void TEncSlice::init(TEncTop* pcEncTop)
@@ -554,13 +548,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
 
-    delete[] m_pcBufferLowLatSbacCoders;
-    delete[] m_pcBufferLowLatBinCoderCABACs;
-    m_pcBufferLowLatSbacCoders     = new TEncSbac[1];
-    m_pcBufferLowLatBinCoderCABACs = new TEncBinCABAC[1];
-    m_pcBufferLowLatSbacCoders[0].init(&m_pcBufferLowLatBinCoderCABACs[0]);
-    m_pcBufferLowLatSbacCoders[0].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
-
     UInt uiCol = 0, uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
@@ -740,8 +727,6 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }
-
-        m_pcBufferLowLatSbacCoders[0].load(m_pcSbacCoder); //init. state
     }
 
     UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
