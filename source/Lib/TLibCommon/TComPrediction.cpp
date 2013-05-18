@@ -44,6 +44,16 @@ using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
+const UChar m_aucIntraFilter[5] =
+{
+    10, //4x4
+    7, //8x8
+    1, //16x16
+    0, //32x32
+    10, //64x64
+};
+
+
 const short TComPrediction::m_lumaFilter[4][8] =
 {
     {  0, 0,   0, 64,  0,   0, 0,  0 },
@@ -78,6 +88,11 @@ TComPrediction::TComPrediction()
 TComPrediction::~TComPrediction()
 {
     delete[] m_piPredBuf;
+
+    xFree(refAbove);
+    xFree(refAboveFlt);
+    xFree(refLeft);
+    xFree(refLeftFlt);
 
     m_acYuvPred[0].destroy();
     m_acYuvPred[1].destroy();
@@ -120,6 +135,11 @@ Void TComPrediction::initTempBuff()
         m_iPredBufHeight  = ((MAX_CU_SIZE + 2) << 4);
         m_iPredBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_piPredBuf = new Pel[m_iPredBufStride * m_iPredBufHeight];
+
+        refAbove = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refAboveFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeft = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeftFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
 
         // new structure
         m_acYuvPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
@@ -299,16 +319,153 @@ Void xPredIntraAng(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     }
 }
 
+//This implementation uses buffered reference samples(topRow and leftColumn)
+Void xPredIntraAngBufRef(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, UInt dirMode, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter, Pel *refLeft, Pel *refAbove)
+{
+    Int k, l;
+    Int blkSize        = width;
+    Pel* pDst          = rpDst;
+
+    // Map the mode index to main prediction direction and angle
+    assert(dirMode > 1); //no planar and dc
+    Bool modeHor       = (dirMode < 18);
+    Bool modeVer       = !modeHor;
+    Int intraPredAngle = modeVer ? (Int)dirMode - VER_IDX : modeHor ? -((Int)dirMode - HOR_IDX) : 0;
+    Int absAng         = abs(intraPredAngle);
+    Int signAng        = intraPredAngle < 0 ? -1 : 1;
+
+    // Set bitshifts and scale the angle parameter to block size
+    Int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    Int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    Int invAngle       = invAngTable[absAng];
+    absAng             = angTable[absAng];
+    intraPredAngle     = signAng * absAng;
+
+    // Do angular predictions
+    {
+        Pel* refMain;
+        Pel* refSide;
+ 
+        // Initialise the Main and Left reference array.
+        if (intraPredAngle < 0)
+        {
+            refMain = (modeVer ? refAbove : refLeft);// + (blkSize - 1);
+            refSide = (modeVer ? refLeft : refAbove);// + (blkSize - 1);
+
+            // Extend the Main reference to the left.
+            Int invAngleSum    = 128; // rounding for (shift by 8)
+            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+            {
+                invAngleSum += invAngle;
+                refMain[k] = refSide[invAngleSum >> 8];
+            }
+        }
+        else
+        {
+            refMain = modeVer ? refAbove : refLeft;
+            refSide = modeVer ? refLeft  : refAbove;
+        }
+
+        if (intraPredAngle == 0)
+        {
+            for (k = 0; k < blkSize; k++)
+            {
+                for (l = 0; l < blkSize; l++)
+                {
+                    pDst[k * dstStride + l] = refMain[l + 1];
+                }
+            }
+
+            if (bFilter)
+            {
+                for (k = 0; k < blkSize; k++)
+                {
+                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, static_cast<Short>(pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
+                }
+            }
+        }
+        else
+        {
+            Int deltaPos = 0;
+            Int deltaInt;
+            Int deltaFract;
+            Int refMainIndex;
+
+            for (k = 0; k < blkSize; k++)
+            {
+                deltaPos += intraPredAngle;
+                deltaInt   = deltaPos >> 5;
+                deltaFract = deltaPos & (32 - 1);
+
+                if (deltaFract)
+                {
+                    // Do linear filtering
+                    for (l = 0; l < blkSize; l++)
+                    {
+                        refMainIndex        = l + deltaInt + 1;
+                        pDst[k * dstStride + l] = (Pel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
+                    }
+                }
+                else
+                {
+                    // Just copy the integer samples
+                    for (l = 0; l < blkSize; l++)
+                    {
+                        pDst[k * dstStride + l] = refMain[l + deltaInt + 1];
+                    }
+                }
+            }
+        }
+
+        // Flip the block if this is the horizontal mode
+        if (modeHor)
+        {
+            Pel  tmp;
+            for (k = 0; k < blkSize - 1; k++)
+            {
+                for (l = k + 1; l < blkSize; l++)
+                {
+                    tmp                 = pDst[k * dstStride + l];
+                    pDst[k * dstStride + l] = pDst[l * dstStride + k];
+                    pDst[l * dstStride + k] = tmp;
+                }
+            }
+        }
+    }
+}
+
 Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
 {
     Pel *pDst = piPred;
     Pel *ptrSrc;
+    Pel *refLft, *refAbv;
 
     assert(g_aucConvertToBit[iWidth] >= 0);   //   4x  4
     assert(g_aucConvertToBit[iWidth] <= 5);   // 128x128
     assert(iWidth == iHeight);
 
-    ptrSrc = pcTComPattern->getPredictorPtr(uiDirMode, g_aucConvertToBit[iWidth] + 2, m_piPredBuf);
+    char log2BlkSize = g_aucConvertToBit[iWidth] + 2;
+
+    ptrSrc = m_piPredBuf;
+    assert(log2BlkSize >= 2 && log2BlkSize < 7);
+    Int diff = min<Int>(abs((Int)uiDirMode - HOR_IDX), abs((Int)uiDirMode - VER_IDX));
+    UChar ucFiltIdx = diff > m_aucIntraFilter[log2BlkSize - 2] ? 1 : 0;
+    if (uiDirMode == DC_IDX)
+    {
+        ucFiltIdx = 0; //no smoothing for DC or LM chroma
+    }
+
+    assert(ucFiltIdx <= 1);
+
+    refLft = refLeft+iWidth-1;
+    refAbv = refAbove +iWidth-1;
+
+    if (ucFiltIdx)
+    {
+        ptrSrc += ADI_BUF_STRIDE * (2 * iHeight + 1);
+        refLft = refLeftFlt +iWidth-1;
+        refAbv = refAboveFlt +iWidth-1;
+    }
 
     // get starting pixel in block
     Int sw = ADI_BUF_STRIDE;
@@ -325,7 +482,8 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-        xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, bFilter);
+//        xPredIntraAngBufRef(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, bFilter, refLft, refAbv);
+        primitives.getIPredAng(g_bitDepthY, (pixel *)ptrSrc + sw + 1, sw, (pixel *)pDst, uiStride, iWidth, iHeight, uiDirMode, bFilter, refLft, refAbv);
     }
 }
 

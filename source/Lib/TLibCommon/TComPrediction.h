@@ -62,6 +62,9 @@ protected:
     Int       m_iPredBufStride;
     Int       m_iPredBufHeight;
 
+    //reference sample for IntraPrediction
+    Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
+
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
     /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
@@ -85,6 +88,7 @@ protected:
 
     Bool xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr);
 
+    
 public:
 
     TComPrediction();
