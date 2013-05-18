@@ -40,8 +40,8 @@ static void init_scales(void)
     int dims[] = {4, 8, 12, 16, 24, 32, 48, 64};
 
     int i = 0;
-    for (int h = 0; h < sizeof(dims)/sizeof(int); h++)
-        for (int w = 0; w < sizeof(dims)/sizeof(int); w++)
+    for (size_t h = 0; h < sizeof(dims)/sizeof(int); h++)
+        for (size_t w = 0; w < sizeof(dims)/sizeof(int); w++)
             size_scale[i++] = (dims[h] * dims[w]) >> 4;
 }
 
@@ -69,7 +69,9 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 /* (x-1)%6 */
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
+#if !SIMPLE_HEX
 static const MV hex2[8] = { MV( -1, -2 ), MV( -2, 0 ), MV( -1, 2 ), MV( 1, 2 ), MV( 2, 0 ), MV( 1, -2 ), MV( -1, -2 ), MV( -2, 0 ) };
+#endif
 static const MV square1[9] = { MV( 0, 0 ), MV( 0, -1 ), MV( 0, 1 ), MV( -1, 0 ), MV( 1, 0 ), MV( -1, -1 ), MV( -1, 1 ), MV( 1, -1 ), MV( 1, 1 ) };
 
 static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandidates)
@@ -259,7 +261,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     {
 me_hex2:
         /* hexagon search, radius 2 */
-#if 1
+#if SIMPLE_HEX
         for (int i = 0; i < merange/2; i++)
         {
             omv = bmv;
