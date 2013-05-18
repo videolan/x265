@@ -328,16 +328,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     Int  iStrideCur = m_cDistParam.iStrideCur * iSubStep;
     Int  iStrideOrg = m_cDistParam.iStrideOrg * iSubStep;
 
-    // TODO: SJB - I have left this path enabled for the short term so we do not see
-    // a performance loss before ME is completely replaced.  But when we begin to
-    // implement weighted prediction we must disable our primitive here and fall back
-    // to DistFunc() and its weighted functions
-#if 1
-    int part = x265::PartitionFromSizes(m_cDistParam.iCols, m_cDistParam.iRows >> iSubShift);
-    uiSad = (x265::primitives.sad[part]((pixel*)m_fencbuf, FENC_STRIDE * iSubStep, (pixel*)piCur, iStrideCur) << iSubShift) >>
-        DISTORTION_PRECISION_ADJUSTMENT(m_cDistParam.bitDepth - 8);
-    x265_emms();
-#else
     FpDistFunc  *m_afpDistortFunc;
     m_afpDistortFunc =  m_pcRdCost->getSadFunctions();
     m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
@@ -354,7 +344,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
         m_cDistParam.DistFunc = m_afpDistortFunc[45];
     }
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-#endif // if ENABLE_PRIMITIVES
 
     //UInt mvcost_hm = m_pcRdCost->getCost(iSearchX, iSearchY);
     UInt mvcost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
@@ -3214,9 +3203,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
-
-        // TODO: m_fencbuf can go away when HM SAD is removed
-        x265::primitives.cpyblock(iRoiWidth, iRoiHeight, m_fencbuf, FENC_STRIDE, (pixel*)PU, fenc->getStride());
 
         Bool bTestNormalMC = true;
 
