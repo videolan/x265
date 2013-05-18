@@ -392,8 +392,7 @@ me_hex2:
                 mvd = 0;
                 if (partEnum != PARTITION_16x16)
                 {
-                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x)
-                                    + abs(qmvp.y - mvc[0].y));
+                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
                     denom++;
                 }
                 mvd += (int16_t)x265_predictor_difference(mvc, numCandidates);
