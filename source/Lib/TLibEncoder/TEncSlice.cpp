@@ -52,7 +52,6 @@ TEncSlice::TEncSlice()
     m_apcPicYuvPred = NULL;
     m_apcPicYuvResi = NULL;
     m_pcBufferSbacCoders = NULL;
-    m_pcBufferBinCoderCABACs = NULL;
 }
 
 TEncSlice::~TEncSlice()
@@ -112,10 +111,6 @@ Void TEncSlice::destroy()
     if (m_pcBufferSbacCoders)
     {
         delete[] m_pcBufferSbacCoders;
-    }
-    if (m_pcBufferBinCoderCABACs)
-    {
-        delete[] m_pcBufferBinCoderCABACs;
     }
 }
 
@@ -532,14 +527,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     //assert( iNumSubstreams == pcSlice->getPPS()->getNumSubstreams() );
 
     delete[] m_pcBufferSbacCoders;
-    delete[] m_pcBufferBinCoderCABACs;
     m_pcBufferSbacCoders     = new TEncSbac[iNumSubstreams];
-    m_pcBufferBinCoderCABACs = new TEncBinCABAC[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++) //init all sbac coders for RD optimization
     {
-        m_pcBufferSbacCoders[ui].init(&m_pcBufferBinCoderCABACs[0]);
-        m_pcBufferSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
+        m_pcBufferSbacCoders[ui].loadContexts(m_pppcRDSbacCoder[0][CI_CURR_BEST]); //init. state
 
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
@@ -723,7 +715,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     {
         for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
-            m_pcBufferSbacCoders[iSubstrmIdx].load(m_pcSbacCoder); //init. state
+            m_pcBufferSbacCoders[iSubstrmIdx].loadContexts(m_pcSbacCoder); //init. state
 
             uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
         }

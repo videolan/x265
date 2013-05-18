@@ -93,7 +93,6 @@ private:
     UInt64                  m_uiPicTotalBits;                   ///< total bits for the picture
     UInt64                  m_uiPicDist;                        ///< total distortion for the picture
     Double                  m_dPicRdCost;                       ///< picture-level RD cost
-    TEncBinCABAC*           m_pcBufferBinCoderCABACs;           ///< line of bin coder CABAC
     TEncSbac*               m_pcBufferSbacCoders;               ///< lines to store temporary contexts for every WPP line
     TEncRateCtrl*           m_pcRateCtrl;                       ///< Rate control manager
     UInt                    m_uiSliceIdx;
