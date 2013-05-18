@@ -574,7 +574,7 @@ me_hex2:
 
         res >>= 1;
     }
-    while (res);
+    while (res && bmv.checkRange(qmvmin, qmvmax));
 
     x265_emms();
     outQMv = bmv;
