@@ -44,6 +44,16 @@ using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
+const UChar m_aucIntraFilter[5] =
+{
+    10, //4x4
+    7, //8x8
+    1, //16x16
+    0, //32x32
+    10, //64x64
+};
+
+
 const short TComPrediction::m_lumaFilter[4][8] =
 {
     {  0, 0,   0, 64,  0,   0, 0,  0 },
@@ -78,6 +88,11 @@ TComPrediction::TComPrediction()
 TComPrediction::~TComPrediction()
 {
     delete[] m_piPredBuf;
+
+    xFree(refAbove);
+    xFree(refAboveFlt);
+    xFree(refLeft);
+    xFree(refLeftFlt);
 
     m_acYuvPred[0].destroy();
     m_acYuvPred[1].destroy();
@@ -121,6 +136,11 @@ Void TComPrediction::initTempBuff()
         m_iPredBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_piPredBuf = new Pel[m_iPredBufStride * m_iPredBufHeight];
 
+        refAbove = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refAboveFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeft = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeftFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+
         // new structure
         m_acYuvPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
         m_acYuvPred[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
@@ -143,6 +163,7 @@ Void TComPrediction::initTempBuff()
 // ====================================================================================================================
 Void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int height);
 Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
+void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel*& rpDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 
 /** Function for deriving the simplified angular intra predictions.
  * \param pSrc pointer to reconstructed sample array
@@ -303,12 +324,34 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
 {
     Pel *pDst = piPred;
     Pel *ptrSrc;
+    Pel *refLft, *refAbv;
 
     assert(g_aucConvertToBit[iWidth] >= 0);   //   4x  4
     assert(g_aucConvertToBit[iWidth] <= 5);   // 128x128
     assert(iWidth == iHeight);
 
-    ptrSrc = pcTComPattern->getPredictorPtr(uiDirMode, g_aucConvertToBit[iWidth] + 2, m_piPredBuf);
+    char log2BlkSize = g_aucConvertToBit[iWidth] + 2;
+
+    ptrSrc = m_piPredBuf;
+    assert(log2BlkSize >= 2 && log2BlkSize < 7);
+    Int diff = min<Int>(abs((Int)uiDirMode - HOR_IDX), abs((Int)uiDirMode - VER_IDX));
+    UChar ucFiltIdx = diff > m_aucIntraFilter[log2BlkSize - 2] ? 1 : 0;
+    if (uiDirMode == DC_IDX)
+    {
+        ucFiltIdx = 0; //no smoothing for DC or LM chroma
+    }
+
+    assert(ucFiltIdx <= 1);
+
+    refLft = refLeft+iWidth-1;
+    refAbv = refAbove +iWidth-1;
+
+    if (ucFiltIdx)
+    {
+        ptrSrc += ADI_BUF_STRIDE * (2 * iHeight + 1);
+        refLft = refLeftFlt +iWidth-1;
+        refAbv = refAboveFlt +iWidth-1;
+    }
 
     // get starting pixel in block
     Int sw = ADI_BUF_STRIDE;
@@ -325,7 +368,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-        xPredIntraAng(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, bFilter);
+        primitives.getIPredAng(g_bitDepthY, (pixel *)ptrSrc + sw + 1, sw, (pixel *)pDst, uiStride, iWidth, iHeight, uiDirMode, bFilter, refLft, refAbv);
     }
 }
 

@@ -2911,7 +2911,7 @@ Bool TComDataCU::isSkipped(UInt uiPartIdx)
 Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
-    UInt uiIdx;
+    UInt uiIdx = 0;
 
     switch (eDir)
     {
@@ -2996,7 +2996,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
 Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
-    UInt uiIdx;
+    UInt uiIdx = 0;
 
     switch (eDir)
     {
