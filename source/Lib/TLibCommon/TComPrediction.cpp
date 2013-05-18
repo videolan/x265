@@ -163,6 +163,7 @@ Void TComPrediction::initTempBuff()
 // ====================================================================================================================
 Void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int height);
 Void xDCPredFiltering(Pel* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight);
+void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel*& rpDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 
 /** Function for deriving the simplified angular intra predictions.
  * \param pSrc pointer to reconstructed sample array
@@ -319,121 +320,6 @@ Void xPredIntraAng(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     }
 }
 
-//This implementation uses buffered reference samples(topRow and leftColumn)
-Void xPredIntraAngBufRef(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstStride, UInt width, UInt height, UInt dirMode, Bool blkAboveAvailable, Bool blkLeftAvailable, Bool bFilter, Pel *refLeft, Pel *refAbove)
-{
-    Int k, l;
-    Int blkSize        = width;
-    Pel* pDst          = rpDst;
-
-    // Map the mode index to main prediction direction and angle
-    assert(dirMode > 1); //no planar and dc
-    Bool modeHor       = (dirMode < 18);
-    Bool modeVer       = !modeHor;
-    Int intraPredAngle = modeVer ? (Int)dirMode - VER_IDX : modeHor ? -((Int)dirMode - HOR_IDX) : 0;
-    Int absAng         = abs(intraPredAngle);
-    Int signAng        = intraPredAngle < 0 ? -1 : 1;
-
-    // Set bitshifts and scale the angle parameter to block size
-    Int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    Int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    Int invAngle       = invAngTable[absAng];
-    absAng             = angTable[absAng];
-    intraPredAngle     = signAng * absAng;
-
-    // Do angular predictions
-    {
-        Pel* refMain;
-        Pel* refSide;
- 
-        // Initialise the Main and Left reference array.
-        if (intraPredAngle < 0)
-        {
-            refMain = (modeVer ? refAbove : refLeft);// + (blkSize - 1);
-            refSide = (modeVer ? refLeft : refAbove);// + (blkSize - 1);
-
-            // Extend the Main reference to the left.
-            Int invAngleSum    = 128; // rounding for (shift by 8)
-            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
-            {
-                invAngleSum += invAngle;
-                refMain[k] = refSide[invAngleSum >> 8];
-            }
-        }
-        else
-        {
-            refMain = modeVer ? refAbove : refLeft;
-            refSide = modeVer ? refLeft  : refAbove;
-        }
-
-        if (intraPredAngle == 0)
-        {
-            for (k = 0; k < blkSize; k++)
-            {
-                for (l = 0; l < blkSize; l++)
-                {
-                    pDst[k * dstStride + l] = refMain[l + 1];
-                }
-            }
-
-            if (bFilter)
-            {
-                for (k = 0; k < blkSize; k++)
-                {
-                    pDst[k * dstStride] = Clip3(0, (1 << bitDepth) - 1, static_cast<Short>(pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
-                }
-            }
-        }
-        else
-        {
-            Int deltaPos = 0;
-            Int deltaInt;
-            Int deltaFract;
-            Int refMainIndex;
-
-            for (k = 0; k < blkSize; k++)
-            {
-                deltaPos += intraPredAngle;
-                deltaInt   = deltaPos >> 5;
-                deltaFract = deltaPos & (32 - 1);
-
-                if (deltaFract)
-                {
-                    // Do linear filtering
-                    for (l = 0; l < blkSize; l++)
-                    {
-                        refMainIndex        = l + deltaInt + 1;
-                        pDst[k * dstStride + l] = (Pel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
-                    }
-                }
-                else
-                {
-                    // Just copy the integer samples
-                    for (l = 0; l < blkSize; l++)
-                    {
-                        pDst[k * dstStride + l] = refMain[l + deltaInt + 1];
-                    }
-                }
-            }
-        }
-
-        // Flip the block if this is the horizontal mode
-        if (modeHor)
-        {
-            Pel  tmp;
-            for (k = 0; k < blkSize - 1; k++)
-            {
-                for (l = k + 1; l < blkSize; l++)
-                {
-                    tmp                 = pDst[k * dstStride + l];
-                    pDst[k * dstStride + l] = pDst[l * dstStride + k];
-                    pDst[l * dstStride + k] = tmp;
-                }
-            }
-        }
-    }
-}
-
 Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
 {
     Pel *pDst = piPred;
@@ -482,7 +368,6 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-//        xPredIntraAngBufRef(g_bitDepthY, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, bFilter, refLft, refAbv);
         primitives.getIPredAng(g_bitDepthY, (pixel *)ptrSrc + sw + 1, sw, (pixel *)pDst, uiStride, iWidth, iHeight, uiDirMode, bFilter, refLft, refAbv);
     }
 }
