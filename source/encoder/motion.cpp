@@ -69,8 +69,8 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 /* (x-1)%6 */
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
-static const int8_t hex2[8][2] = { { -1, -2 }, { -2, 0 }, { -1, 2 }, { 1, 2 }, { 2, 0 }, { 1, -2 }, { -1, -2 }, { -2, 0 } };
-static const int8_t square1[9][2] = { { 0, 0 }, { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } };
+static const MV hex2[8] = { MV( -1, -2 ), MV( -2, 0 ), MV( -1, 2 ), MV( 1, 2 ), MV( 2, 0 ), MV( 1, -2 ), MV( -1, -2 ), MV( -2, 0 ) };
+static const MV square1[9] = { MV( 0, 0 ), MV( 0, -1 ), MV( 0, 1 ), MV( -1, 0 ), MV( 1, 0 ), MV( -1, -1 ), MV( -1, 1 ), MV( 1, -1 ), MV( 1, 1 ) };
 
 static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandidates)
 {
@@ -289,15 +289,14 @@ me_hex2:
         if (bcost & 7)
         {
             int dir = (bcost & 7) - 2;
-            bmv.x += hex2[dir + 1][0];
-            bmv.y += hex2[dir + 1][1];
+            bmv += hex2[dir + 1];
 
             /* half hexagon, not overlapping the previous iteration */
             for (int i = (merange >> 1) - 1; i > 0 && bmv.checkRange(mvmin, mvmax); i--)
             {
-                COST_MV_X3_DIR(hex2[dir + 0][0], hex2[dir + 0][1],
-                               hex2[dir + 1][0], hex2[dir + 1][1],
-                               hex2[dir + 2][0], hex2[dir + 2][1],
+                COST_MV_X3_DIR(hex2[dir + 0].x, hex2[dir + 0].y,
+                               hex2[dir + 1].x, hex2[dir + 1].y,
+                               hex2[dir + 2].x, hex2[dir + 2].y,
                                costs);
                 bcost &= ~7;
                 COPY1_IF_LT(bcost, (costs[0] << 3) + 1);
@@ -307,8 +306,7 @@ me_hex2:
                     break;
                 dir += (bcost & 7) - 2;
                 dir = mod6m1[dir + 1];
-                bmv.x += hex2[dir + 1][0];
-                bmv.y += hex2[dir + 1][1];
+                bmv += hex2[dir + 1];
             }
         }
         bcost >>= 3;
@@ -326,8 +324,7 @@ me_hex2:
         COPY2_IF_LT(bcost, costs[1], dir, 6);
         COPY2_IF_LT(bcost, costs[2], dir, 7);
         COPY2_IF_LT(bcost, costs[3], dir, 8);
-        bmv.x += square1[dir][0];
-        bmv.y += square1[dir][1];
+        bmv += square1[dir];
         break;
     }
 
