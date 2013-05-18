@@ -257,7 +257,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     {
 me_hex2:
         /* hexagon search, radius 2 */
-#if 1
+#if 0
         for (int i = 0; i < merange/2; i++)
         {
             omv = bmv;
