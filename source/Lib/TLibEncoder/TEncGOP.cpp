@@ -1201,7 +1201,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 {
                     m_pcEntropyCoder->resetEntropy();
                     m_pcEntropyCoder->setBitstream(m_pcBitCounter);
-                    m_pcSAO->startSaoEnc(pcPic, m_pcEntropyCoder, m_pcEncTop->getRDSbacCoder(), m_pcEncTop->getRDGoOnSbacCoder());
+                    // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
+                    m_pcSAO->startSaoEnc(pcPic, m_pcEntropyCoder, m_pcEncTop->getRDSbacCoders()[0], m_pcEncTop->getRDGoOnSbacCoder());
                     SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
 #if SAO_CHROMA_LAMBDA

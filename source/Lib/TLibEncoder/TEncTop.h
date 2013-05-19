@@ -103,9 +103,7 @@ private:
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
     TComRdCost              m_cRdCost;                    ///< RD cost computation class
-    TEncSbac***             m_pppcRDSbacCoder;            ///< temporal storage for RD computation
     TEncSbac                m_cRDGoOnSbacCoder;           ///< going on SBAC model for RD stage
-    TEncBinCABACCounter***  m_pppcBinCoderCABAC;          ///< temporal CABAC state storage for RD computation
     TEncBinCABACCounter     m_cRDGoOnBinCoderCABAC;       ///< going on bin coder CABAC for RD stage
 
     Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
@@ -113,7 +111,7 @@ private:
     TComRdCost*             m_pcRdCosts;                  ///< RD cost computation class per substream
     TEncSbac****            m_ppppcRDSbacCoders;          ///< temporal storage for RD computation per substream
     TEncSbac*               m_pcRDGoOnSbacCoders;         ///< going on SBAC model for RD stage per substream
-    TEncBinCABAC****        m_ppppcBinCodersCABAC;        ///< temporal CABAC state storage for RD computation per substream
+    TEncBinCABACCounter**** m_ppppcBinCodersCABAC;        ///< temporal CABAC state storage for RD computation per substream
     TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;     ///< going on bin coder CABAC for RD stage per substream
 
     // quality control
@@ -179,8 +177,6 @@ public:
     TComBitCounter*         getBitCounter() { return &m_cBitCounter;          }
 
     TComRdCost*             getRdCost() { return &m_cRdCost;              }
-
-    TEncSbac***             getRDSbacCoder() { return m_pppcRDSbacCoder;       }
 
     TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder;     }
 

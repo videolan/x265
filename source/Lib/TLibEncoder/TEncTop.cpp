@@ -55,8 +55,6 @@ TEncTop::TEncTop()
     m_iPOCLast          = -1;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
-    m_pppcRDSbacCoder   =  NULL;
-    m_pppcBinCoderCABAC =  NULL;
     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
@@ -117,23 +115,6 @@ Void TEncTop::create()
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
-
-    // if SBAC-based RD optimization is used
-    m_pppcRDSbacCoder = new TEncSbac * *[g_uiMaxCUDepth + 1];
-    m_pppcBinCoderCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
-
-    for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-    {
-        m_pppcRDSbacCoder[iDepth] = new TEncSbac*[CI_NUM];
-        m_pppcBinCoderCABAC[iDepth] = new TEncBinCABACCounter*[CI_NUM];
-
-        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-        {
-            m_pppcRDSbacCoder[iDepth][iCIIdx] = new TEncSbac;
-            m_pppcBinCoderCABAC[iDepth][iCIIdx] = new TEncBinCABACCounter;
-            m_pppcRDSbacCoder[iDepth][iCIIdx]->init(m_pppcBinCoderCABAC[iDepth][iCIIdx]);
-        }
-    }
 }
 
 /**
@@ -163,21 +144,21 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     }
 
     m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
-    m_ppppcBinCodersCABAC    = new TEncBinCABAC * **[iNumSubstreams];
+    m_ppppcBinCodersCABAC    = new TEncBinCABACCounter * **[iNumSubstreams];
     for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
         m_ppppcRDSbacCoders[ui]  = new TEncSbac * *[g_uiMaxCUDepth + 1];
-        m_ppppcBinCodersCABAC[ui] = new TEncBinCABAC * *[g_uiMaxCUDepth + 1];
+        m_ppppcBinCodersCABAC[ui] = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
 
         for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
             m_ppppcRDSbacCoders[ui][iDepth]  = new TEncSbac*[CI_NUM];
-            m_ppppcBinCodersCABAC[ui][iDepth] = new TEncBinCABAC*[CI_NUM];
+            m_ppppcBinCodersCABAC[ui][iDepth] = new TEncBinCABACCounter*[CI_NUM];
 
             for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
             {
                 m_ppppcRDSbacCoders[ui][iDepth][iCIIdx] = new TEncSbac;
-                m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx] = new TEncBinCABAC;
+                m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx] = new TEncBinCABACCounter;
                 m_ppppcRDSbacCoders[ui][iDepth][iCIIdx]->init(m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx]);
             }
         }
@@ -199,23 +180,6 @@ Void TEncTop::destroy()
     m_cRateCtrl.destroy();
     // SBAC RD
     Int iDepth;
-    for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-    {
-        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-        {
-            delete m_pppcRDSbacCoder[iDepth][iCIIdx];
-            delete m_pppcBinCoderCABAC[iDepth][iCIIdx];
-        }
-    }
-
-    for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-    {
-        delete [] m_pppcRDSbacCoder[iDepth];
-        delete [] m_pppcBinCoderCABAC[iDepth];
-    }
-
-    delete [] m_pppcRDSbacCoder;
-    delete [] m_pppcBinCoderCABAC;
 
     for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
     {
@@ -286,7 +250,7 @@ Void TEncTop::init()
                     );
 
     // initialize encoder search class
-    m_cSearch.init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder());
+    m_cSearch.init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cEntropyCoder, &m_cRdCost, NULL/*getRDSbacCoder()*/, getRDGoOnSbacCoder());
 
     m_iMaxRefPicNum = 0;
 }

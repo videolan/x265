@@ -105,6 +105,7 @@ private:
     Bool                    m_abortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
 
 public:
+    Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
 
     /// copy parameters from encoder class
     Void  init(TEncTop* pcEncTop);

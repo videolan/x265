@@ -131,7 +131,6 @@ Void TEncSlice::init(TEncTop* pcEncTop)
 
     m_pcBitCounter      = pcEncTop->getBitCounter();
     m_pcRdCost          = pcEncTop->getRdCost();
-    m_pppcRDSbacCoder   = pcEncTop->getRDSbacCoder();
     m_pcRDGoOnSbacCoder = pcEncTop->getRDGoOnSbacCoder();
 
     m_pcRateCtrl        = pcEncTop->getRateCtrl();
@@ -481,7 +480,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     m_pcSbacCoder->init(m_pcBinCABAC);
     m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
     m_pcEntropyCoder->resetEntropy();
-    m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(m_pcSbacCoder);
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -557,7 +555,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             // inherit from TR if necessary, select substream to use.
             const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
 
-            TEncBinCABAC* pppcRDSbacCoder = (TEncBinCABAC*)m_pppcRDSbacCoder[0][CI_CURR_BEST]->getEncBinIf();
+            TEncBinCABAC* pppcRDSbacCoder = (TEncBinCABAC*)ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->getEncBinIf();
             pppcRDSbacCoder->setBinCountingEnableFlag(false);
             pppcRDSbacCoder->setBinsCoded(0);
 
@@ -568,7 +566,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
                 // TR is available, we use it.
                 ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
             }
-            m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]); //this load is used to simplify the code
 
             // set go-on entropy coder
             m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
@@ -601,6 +598,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
                 pcCU->getSlice()->setSliceQpBase(estQP);
             }
 
+            m_pcCuEncoder->set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
             // run CU encoder
             m_pcCuEncoder->compressCU(pcCU);
 
@@ -640,7 +638,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             }
 
             // restore entropy coder to an initial stage
-            m_pcEntropyCoder->setEntropyCoder(m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice);
+            m_pcEntropyCoder->setEntropyCoder(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST], pcSlice);
             m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
             m_pcCuEncoder->setBitCounter(&pcBitCounters[uiSubStrm]);
             m_pcBitCounter = &pcBitCounters[uiSubStrm];
@@ -650,7 +648,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pcCuEncoder->encodeCU(pcCU);
 
             pppcRDSbacCoder->setBinCountingEnableFlag(false);
-            ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
 
             //Store probabilties of second LCU in line into buffer
             // CHECK_ME: I don't known why both check numSubStreams and bWaveFrontsynchro, I guess we always see them both except encode Nx64 video

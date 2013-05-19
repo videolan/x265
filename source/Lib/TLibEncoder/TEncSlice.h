@@ -88,7 +88,6 @@ private:
     // RD optimization
     TComBitCounter*         m_pcBitCounter;                     ///< bit counter
     TComRdCost*             m_pcRdCost;                         ///< RD cost computation
-    TEncSbac***             m_pppcRDSbacCoder;                  ///< storage for SBAC-based RD optimization
     TEncSbac*               m_pcRDGoOnSbacCoder;                ///< go-on SBAC encoder
     UInt64                  m_uiPicTotalBits;                   ///< total bits for the picture
     UInt64                  m_uiPicDist;                        ///< total distortion for the picture

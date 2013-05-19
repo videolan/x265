@@ -242,7 +242,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
     m_pcSbacCoder        = pcEncTop->getSbacCoder();
     m_pcBinCABAC         = pcEncTop->getBinCABAC();
 
-    m_pppcRDSbacCoder   = pcEncTop->getRDSbacCoder();
+    m_pppcRDSbacCoder   = NULL;
     m_pcRDGoOnSbacCoder = pcEncTop->getRDGoOnSbacCoder();
 
     m_pcRateCtrl        = pcEncTop->getRateCtrl();
@@ -263,6 +263,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_addSADDepth      = 0;
     m_LCUPredictionSAD = 0;
     m_temporalSAD      = 0;
+
+    m_pcPredSearch->set_pppcRDSbacCoder(m_pppcRDSbacCoder);
 
     // analysis of CU
     xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
@@ -363,6 +365,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
  *- for loop of QP value to compress the current CU with all possible QP
 */
 #if EARLY_PARTITION_DECISION
+// NOTO: Min had change some code in xCompressCU, so you need sync it yourself
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcTempCUNxN, UInt uiDepth, PartSize eParentPartSize)
 {
     m_abortFlag = false;

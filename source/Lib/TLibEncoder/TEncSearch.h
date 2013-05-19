@@ -129,6 +129,7 @@ protected:
     UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1]; //th array bounds
 
 public:
+    Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
 
     TEncSearch();
     virtual ~TEncSearch();
