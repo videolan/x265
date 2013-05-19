@@ -218,7 +218,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     for (int i = 0; i < numCandidates; i++)
     {
         MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m.notZero() && m != pmv) // check already measured
+        if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
             int cost = qpelSad(m) + mvcost(m);
             if (cost < bprecost)
