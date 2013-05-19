@@ -383,8 +383,8 @@ me_hex2:
                 { 4, 4, 5, 6 },
             };
 
-            int16_t mvd;
-            int16_t sad_ctx, mvd_ctx;
+            int mvd;
+            int sad_ctx, mvd_ctx;
             int denom = 1;
 
             if (numCandidates == 1)
@@ -394,7 +394,7 @@ me_hex2:
                      * but prediction usually isn't too bad, so just use medium range */
                     mvd = 25;
                 else
-                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
+                    mvd = abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y);
             }
             else
             {
@@ -407,10 +407,10 @@ me_hex2:
                 mvd = 0;
                 if (partEnum != PARTITION_64x64)
                 {
-                    mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
+                    mvd = abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y);
                     denom++;
                 }
-                mvd += (int16_t)x265_predictor_difference(mvc, numCandidates);
+                mvd += x265_predictor_difference(mvc, numCandidates);
             }
 
             sad_ctx = SAD_THRESH(1000) ? 0
@@ -453,7 +453,7 @@ me_hex2:
             {
                 int16_t dir = 0;
                 pixel *fref_base = fref + omv.x + (omv.y - 4 * i) * stride;
-                int dy = (int)(i * stride);
+                size_t dy = (size_t)i * stride;
 
 #define SADS(k, x0, y0, x1, y1, x2, y2, x3, y3) \
     sad_x4(fenc, \
