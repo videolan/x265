@@ -130,6 +130,8 @@ protected:
 
 public:
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
+    
 
     TEncSearch();
     virtual ~TEncSearch();

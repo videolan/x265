@@ -89,7 +89,7 @@ private:
     TEncSlice*              m_pcSliceEncoder;
     TComList<TComPic*>*     m_pcListPic;
 
-    TEncEntropy*            m_pcEntropyCoder;
+    TEncEntropy*            m_pcEntropyCoders;
     TEncCavlc*              m_pcCavlcCoder;
     TEncSbac*               m_pcSbacCoder;
     TEncBinCABAC*           m_pcBinCABAC;

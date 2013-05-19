@@ -123,7 +123,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcCuEncoder       = pcEncTop->getCuEncoder();
     m_pcPredSearch      = pcEncTop->getPredSearch();
 
-    m_pcEntropyCoder    = pcEncTop->getEntropyCoder();
+    m_pcEntropyCoders   = pcEncTop->getEntropyCoders();
     m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
     m_pcSbacCoder       = pcEncTop->getSbacCoder();
     m_pcBinCABAC        = pcEncTop->getBinCABAC();
@@ -478,8 +478,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     // set entropy coder
     m_pcSbacCoder->init(m_pcBinCABAC);
-    m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
-    m_pcEntropyCoder->resetEntropy();
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -521,6 +519,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
     const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
 
+    for (UInt ui = 0; ui < iNumSubstreams; ui++)
+    {
+        m_pcEntropyCoders[ui].setEntropyCoder(m_pcSbacCoder, pcSlice);
+        m_pcEntropyCoders[ui].resetEntropy();
+    }
     // CHECK_ME: there seems WPP always start at every LCU line
     //assert( iNumSubstreams == pcSlice->getPPS()->getNumSubstreams() );
 
@@ -559,6 +562,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             pppcRDSbacCoder->setBinCountingEnableFlag(false);
             pppcRDSbacCoder->setBinsCoded(0);
 
+            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(m_pcSbacCoder, pcSlice);
+            m_pcEntropyCoders[uiSubStrm].resetEntropy();
+
             // CHECK_ME: since there only one slice, the TR alway avail except line-0
             // TODO: In MultiThread environment, we MUST modify code to waiting previous line to finish!
             if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro && (uiLin > 0))
@@ -568,8 +574,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             }
 
             // set go-on entropy coder
-            m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
-            m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
+            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
+            m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
 
             ((TEncBinCABAC*)m_pcRDGoOnSbacCoder->getEncBinIf())->setBinCountingEnableFlag(true);
 
@@ -599,6 +605,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             }
 
             m_pcCuEncoder->set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
+            m_pcCuEncoder->set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
+
             // run CU encoder
             m_pcCuEncoder->compressCU(pcCU);
 
@@ -638,8 +646,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             }
 
             // restore entropy coder to an initial stage
-            m_pcEntropyCoder->setEntropyCoder(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST], pcSlice);
-            m_pcEntropyCoder->setBitstream(&pcBitCounters[uiSubStrm]);
+            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST], pcSlice);
+            m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
             m_pcCuEncoder->setBitCounter(&pcBitCounters[uiSubStrm]);
             m_pcBitCounter = &pcBitCounters[uiSubStrm];
             pppcRDSbacCoder->setBinCountingEnableFlag(true);
@@ -683,10 +691,8 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     uiStartCUAddr = 0;
     uiBoundingCUAddr = pcSlice->getSliceCurEndCUAddr();
     // choose entropy coder
-    {
-        m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
-        m_pcEntropyCoder->setEntropyCoder(m_pcSbacCoder, pcSlice);
-    }
+    m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
+    m_pcEntropyCoders[0].setEntropyCoder(m_pcSbacCoder, pcSlice);
 
     m_pcCuEncoder->setBitCounter(NULL);
     m_pcBitCounter = NULL;
@@ -733,7 +739,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
         uiLin     = uiCUAddr / uiWidthInLCUs;
         uiSubStrm = uiLin % iNumSubstreams;
 
-        m_pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
+        m_pcEntropyCoders[0].setBitstream(&pcSubstreams[uiSubStrm]);
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
         {
@@ -779,7 +785,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
                 Int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
                 if (allowMergeLeft)
                 {
-                    m_pcEntropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
+                    m_pcEntropyCoders[0].m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
                 }
                 else
                 {
@@ -789,7 +795,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
                 {
                     if (allowMergeUp)
                     {
-                        m_pcEntropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
+                        m_pcEntropyCoders[0].m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
                     }
                     else
                     {
@@ -801,7 +807,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
                         {
                             if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
                             {
-                                m_pcEntropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
+                                m_pcEntropyCoders[0].encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
                             }
                         }
                     }
@@ -831,6 +837,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
+        m_pcCuEncoder->set_pcEntropyCoder(&m_pcEntropyCoders[0]);
         m_pcCuEncoder->encodeCU(pcCU);
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
@@ -850,7 +857,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {
-        m_pcEntropyCoder->determineCabacInitIdx();
+        m_pcEntropyCoders[0].determineCabacInitIdx();
     }
 }
 

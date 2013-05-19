@@ -79,7 +79,7 @@ private:
     TEncSearch*             m_pcPredSearch;                     ///< encoder search class
 
     // coding tools
-    TEncEntropy*            m_pcEntropyCoder;                   ///< entropy encoder
+    TEncEntropy*            m_pcEntropyCoders;                  ///< entropy encoder
     TEncCavlc*              m_pcCavlcCoder;                     ///< CAVLC encoder
     TEncSbac*               m_pcSbacCoder;                      ///< SBAC encoder
     TEncBinCABAC*           m_pcBinCABAC;                       ///< Bin encoder CABAC

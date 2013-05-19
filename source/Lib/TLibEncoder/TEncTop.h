@@ -77,14 +77,13 @@ private:
 
     // encoder search
     TEncSearch              m_cSearch;                    ///< encoder search class
-    TEncEntropy*            m_pcEntropyCoder;             ///< entropy encoder
+    TEncEntropy*            m_pcEntropyCoders;            ///< entropy encoder
     TEncCavlc*              m_pcCavlcCoder;               ///< CAVLC encoder
 
     // coding tool
     TComTrQuant             m_cTrQuant;                   ///< transform & quantization class
     TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
     TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
-    TEncEntropy             m_cEntropyCoder;              ///< entropy encoder
     TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
     TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
     TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
@@ -162,7 +161,7 @@ public:
 
     TEncCu*                 getCuEncoder() { return &m_cCuEncoder;           }
 
-    TEncEntropy*            getEntropyCoder() { return &m_cEntropyCoder;        }
+    TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders;       }
 
     TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder;          }
 

@@ -106,6 +106,7 @@ private:
 
 public:
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
 
     /// copy parameters from encoder class
     Void  init(TEncTop* pcEncTop);
