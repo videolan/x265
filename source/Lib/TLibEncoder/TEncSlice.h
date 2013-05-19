@@ -76,7 +76,7 @@ private:
     TEncCu*                 m_pcCuEncoder;                      ///< CU encoder
 
     // encoder search
-    TEncSearch*             m_pcPredSearch;                     ///< encoder search class
+    TEncSearch*             m_pcPredSearchs;                    ///< encoder search class
 
     // coding tools
     TEncEntropy*            m_pcEntropyCoders;                  ///< entropy encoder

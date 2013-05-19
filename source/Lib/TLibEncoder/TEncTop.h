@@ -76,7 +76,7 @@ private:
     TComList<TComPic*>      m_cListPic;                   ///< dynamic list of pictures
 
     // encoder search
-    TEncSearch              m_cSearch;                    ///< encoder search class
+    TEncSearch*             m_pcSearchs;                  ///< encoder search class
     TEncEntropy*            m_pcEntropyCoders;            ///< entropy encoder
     TEncCavlc*              m_pcCavlcCoder;               ///< CAVLC encoder
 
@@ -119,6 +119,7 @@ private:
     TComScalingList         m_scalingList;                ///< quantization matrix information
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
     x265::ThreadPool       *m_threadPool;
+    UInt                    m_uiNumSubstreams;
 
 protected:
 
@@ -145,9 +146,11 @@ public:
     // member access functions
     // -------------------------------------------------------------------------------------------------------------------
 
+    UInt                    getNumSubstreams() { return m_uiNumSubstreams; }
+
     TComList<TComPic*>*     getListPic() { return &m_cListPic;             }
 
-    TEncSearch*             getPredSearch() { return &m_cSearch;              }
+    TEncSearch*             getPredSearchs() { return m_pcSearchs;         }
 
     TComTrQuant*            getTrQuant() { return &m_cTrQuant;             }
 

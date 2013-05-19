@@ -173,9 +173,7 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
                       Int          iSearchRange,
                       Int          bipredSearchRange,
                       Int          iSearchMothod,
-                      TEncEntropy* pcEntropyCoder,
                       TComRdCost*  pcRdCost,
-                      TEncSbac***  pppcRDSbacCoder,
                       TEncSbac*    pcRDGoOnSbacCoder
                       )
 {
@@ -184,12 +182,12 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
     m_iSearchRange         = iSearchRange;
     m_bipredSearchRange    = bipredSearchRange;
     m_iSearchMethod        = iSearchMothod;
-    m_pcEntropyCoder       = pcEntropyCoder;
+    m_pcEntropyCoder       = NULL;
     m_pcRdCost             = pcRdCost;
 
     m_me.setSearchMethod(iSearchMothod);
 
-    m_pppcRDSbacCoder     = pppcRDSbacCoder;
+    m_pppcRDSbacCoder     = NULL;
     m_pcRDGoOnSbacCoder   = pcRDGoOnSbacCoder;
 
     for (Int iDir = 0; iDir < 2; iDir++)

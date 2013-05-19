@@ -232,7 +232,7 @@ Void TEncCu::destroy()
 Void TEncCu::init(TEncTop* pcEncTop)
 {
     m_pcEncCfg           = pcEncTop;
-    m_pcPredSearch       = pcEncTop->getPredSearch();
+    m_pcPredSearch       = NULL;
     m_pcTrQuant          = pcEncTop->getTrQuant();
     m_pcBitCounter       = pcEncTop->getBitCounter();
     m_pcRdCost           = pcEncTop->getRdCost();

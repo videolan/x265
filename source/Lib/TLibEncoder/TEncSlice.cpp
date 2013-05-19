@@ -121,7 +121,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
 
     m_pcGOPEncoder      = pcEncTop->getGOPEncoder();
     m_pcCuEncoder       = pcEncTop->getCuEncoder();
-    m_pcPredSearch      = pcEncTop->getPredSearch();
+    m_pcPredSearchs     = pcEncTop->getPredSearchs();
 
     m_pcEntropyCoders   = pcEncTop->getEntropyCoders();
     m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
@@ -447,6 +447,7 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
     Int iOffset = (iGOPSize >> 1);
     Int iMaxSR = m_pcCfg->getSearchRange();
     Int iNumPredDir = pcSlice->isInterP() ? 1 : 2;
+    UInt uiNumSubstreams = ((TEncTop*)m_pcCfg)->getNumSubstreams();
 
     for (Int iDir = 0; iDir <= iNumPredDir; iDir++)
     {
@@ -456,7 +457,11 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
         {
             iRefPOC = pcSlice->getRefPic(e, iRefIdx)->getPOC();
             Int iNewSR = Clip3(8, iMaxSR, (iMaxSR * ADAPT_SR_SCALE * abs(iCurrPOC - iRefPOC) + iOffset) / iGOPSize);
-            m_pcPredSearch->setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
+
+            for( UInt ui=0; ui<uiNumSubstreams; ui++)
+            {
+                m_pcPredSearchs[ui].setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
+            }
         }
     }
 }
@@ -606,6 +611,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
             m_pcCuEncoder->set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
             m_pcCuEncoder->set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
+            m_pcCuEncoder->set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
 
             // run CU encoder
             m_pcCuEncoder->compressCU(pcCU);

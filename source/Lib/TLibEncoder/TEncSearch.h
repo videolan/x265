@@ -141,9 +141,7 @@ public:
               Int          iSearchRange,
               Int          bipredSearchRange,
               Int          iSearchMethod,
-              TEncEntropy* pcEntropyCoder,
               TComRdCost*  pcRdCost,
-              TEncSbac***  pppcRDSbacCoder,
               TEncSbac*    pcRDGoOnSbacCoder);
 
 protected:

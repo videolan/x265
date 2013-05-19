@@ -137,6 +137,7 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     m_pcBitCounters          = new TComBitCounter[iNumSubstreams];
     m_pcRdCosts              = new TComRdCost[iNumSubstreams];
     m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
+    m_pcSearchs              = new TEncSearch[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
@@ -203,6 +204,7 @@ Void TEncTop::destroy()
         delete[] m_ppppcBinCodersCABAC[ui];
     }
 
+    delete[] m_pcSearchs;
     delete[] m_pcEntropyCoders;
     delete[] m_ppppcRDSbacCoders;
     delete[] m_ppppcBinCodersCABAC;
@@ -237,6 +239,7 @@ Void TEncTop::init()
 
     // initialize processing unit classes
     Int iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
+    m_uiNumSubstreams = iNumSubstreams;
     createWPPCoders(iNumSubstreams);
     m_cGOPEncoder.init(this);
     m_cSliceEncoder.init(this);
@@ -254,7 +257,10 @@ Void TEncTop::init()
                     );
 
     // initialize encoder search class
-    m_cSearch.init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, NULL, &m_cRdCost, NULL/*getRDSbacCoder()*/, getRDGoOnSbacCoder());
+    for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
+    {
+        m_pcSearchs[ui].init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, getRDGoOnSbacCoder());
+    }
 
     m_iMaxRefPicNum = 0;
 }
