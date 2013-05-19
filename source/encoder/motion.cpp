@@ -386,7 +386,7 @@ me_hex2:
 
             if (numCandidates == 1)
             {
-                if (PARTITION_16x16 == partEnum)
+                if (PARTITION_64x64 == partEnum)
                     /* mvc is probably the same as mvp, so the difference isn't meaningful.
                      * but prediction usually isn't too bad, so just use medium range */
                     mvd = 25;
@@ -402,7 +402,7 @@ me_hex2:
 
                 denom = numCandidates - 1;
                 mvd = 0;
-                if (partEnum != PARTITION_16x16)
+                if (partEnum != PARTITION_64x64)
                 {
                     mvd = (int16_t)(abs(qmvp.x - mvc[0].x) + abs(qmvp.y - mvc[0].y));
                     denom++;
