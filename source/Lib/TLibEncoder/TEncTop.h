@@ -93,7 +93,7 @@ private:
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
     TEncSlice               m_cSliceEncoder;              ///< slice encoder
-    TEncCu                  m_cCuEncoder;                 ///< CU encoder
+    TEncCu*                 m_pcCuEncoders;               ///< CU encoder
 
     // SPS
     TComSPS                 m_cSPS;                       ///< SPS
@@ -162,7 +162,7 @@ public:
 
     TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder;        }
 
-    TEncCu*                 getCuEncoder() { return &m_cCuEncoder;           }
+    TEncCu*                 getCuEncoders() { return m_pcCuEncoders;      }
 
     TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders;       }
 

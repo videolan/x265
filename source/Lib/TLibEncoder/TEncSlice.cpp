@@ -120,7 +120,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcListPic         = pcEncTop->getListPic();
 
     m_pcGOPEncoder      = pcEncTop->getGOPEncoder();
-    m_pcCuEncoder       = pcEncTop->getCuEncoder();
+    m_pcCuEncoders      = pcEncTop->getCuEncoders();
     m_pcPredSearchs     = pcEncTop->getPredSearchs();
 
     m_pcEntropyCoders   = pcEncTop->getEntropyCoders();
@@ -609,16 +609,16 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
                 pcCU->getSlice()->setSliceQpBase(estQP);
             }
 
-            m_pcCuEncoder->set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
-            m_pcCuEncoder->set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
-            m_pcCuEncoder->set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
 
             // run CU encoder
-            m_pcCuEncoder->compressCU(pcCU);
+            m_pcCuEncoders[uiSubStrm].compressCU(pcCU);
 
             if (m_pcCfg->getUseRateCtrl())
             {
-                UInt SAD    = m_pcCuEncoder->getLCUPredictionSAD();
+                UInt SAD    = m_pcCuEncoders[uiSubStrm].getLCUPredictionSAD();
                 Int height  = min(pcSlice->getSPS()->getMaxCUHeight(), pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight());
                 Int width   = min(pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth());
                 Double MAD = (Double)SAD / (Double)(height * width);
@@ -654,12 +654,12 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             // restore entropy coder to an initial stage
             m_pcEntropyCoders[uiSubStrm].setEntropyCoder(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST], pcSlice);
             m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
-            m_pcCuEncoder->setBitCounter(&pcBitCounters[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].setBitCounter(&pcBitCounters[uiSubStrm]);
             m_pcBitCounter = &pcBitCounters[uiSubStrm];
             pppcRDSbacCoder->setBinCountingEnableFlag(true);
             m_pcBitCounter->resetBits();
             pppcRDSbacCoder->setBinsCoded(0);
-            m_pcCuEncoder->encodeCU(pcCU);
+            m_pcCuEncoders[uiSubStrm].encodeCU(pcCU);
 
             pppcRDSbacCoder->setBinCountingEnableFlag(false);
 
@@ -700,7 +700,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
     m_pcEntropyCoders[0].setEntropyCoder(m_pcSbacCoder, pcSlice);
 
-    m_pcCuEncoder->setBitCounter(NULL);
+    m_pcCuEncoders[0].setBitCounter(NULL);
     m_pcBitCounter = NULL;
     // Appropriate substream bitstream is switched later.
     // for every CU
@@ -843,8 +843,8 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        m_pcCuEncoder->set_pcEntropyCoder(&m_pcEntropyCoders[0]);
-        m_pcCuEncoder->encodeCU(pcCU);
+        m_pcCuEncoders[0].set_pcEntropyCoder(&m_pcEntropyCoders[0]);
+        m_pcCuEncoders[0].encodeCU(pcCU);
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
 #endif

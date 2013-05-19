@@ -73,7 +73,7 @@ private:
 
     // processing units
     TEncGOP*                m_pcGOPEncoder;                     ///< GOP encoder
-    TEncCu*                 m_pcCuEncoder;                      ///< CU encoder
+    TEncCu*                 m_pcCuEncoders;                     ///< CU encoder
 
     // encoder search
     TEncSearch*             m_pcPredSearchs;                    ///< encoder search class
@@ -118,7 +118,7 @@ public:
     Void    setSearchRange(TComSlice* pcSlice);                                         ///< set ME range adaptively
     UInt64  getTotalBits()  { return m_uiPicTotalBits; }
 
-    TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                      ///< CU encoder
+//     TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                      ///< CU encoder
 
     Void    xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice);
     UInt    getSliceIdx()         { return m_uiSliceIdx;                    }

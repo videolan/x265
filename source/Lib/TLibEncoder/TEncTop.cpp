@@ -95,7 +95,6 @@ Void TEncTop::create()
     // create processing unit classes
     m_cGOPEncoder.create();
     m_cSliceEncoder.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
-    m_cCuEncoder.create(g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
     if (m_bUseSAO)
     {
         m_cEncSAO.setSaoLcuBoundary(getSaoLcuBoundary());
@@ -138,11 +137,15 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     m_pcRdCosts              = new TComRdCost[iNumSubstreams];
     m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
     m_pcSearchs              = new TEncSearch[iNumSubstreams];
+    m_pcCuEncoders           = new TEncCu[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
         m_pcRDGoOnSbacCoders[ui].init(&m_pcRDGoOnBinCodersCABAC[ui]);
         m_pcSbacCoders[ui].init(&m_pcBinCoderCABACs[ui]);
+
+        m_pcCuEncoders[ui].create(g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
+        m_pcCuEncoders[ui].init(this);
     }
 
     m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
@@ -172,7 +175,6 @@ Void TEncTop::destroy()
     // destroy processing unit classes
     m_cGOPEncoder.destroy();
     m_cSliceEncoder.destroy();
-    m_cCuEncoder.destroy();
     if (m_cSPS.getUseSAO())
     {
         m_cEncSAO.destroy();
@@ -204,6 +206,7 @@ Void TEncTop::destroy()
         delete[] m_ppppcBinCodersCABAC[ui];
     }
 
+    delete[] m_pcCuEncoders;
     delete[] m_pcSearchs;
     delete[] m_pcEntropyCoders;
     delete[] m_ppppcRDSbacCoders;
@@ -243,7 +246,6 @@ Void TEncTop::init()
     createWPPCoders(iNumSubstreams);
     m_cGOPEncoder.init(this);
     m_cSliceEncoder.init(this);
-    m_cCuEncoder.init(this);
 
     // initialize transform & quantization class
     m_pcCavlcCoder = getCavlcCoder();
