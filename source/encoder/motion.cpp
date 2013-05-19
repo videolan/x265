@@ -88,8 +88,6 @@ static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandid
     return sum;
 }
 
-#define BITS_MVD(mx, my) (mvcost(MV(mx, my) << 2))
-
 #define COST_MV(mx, my) \
     do \
     { \
