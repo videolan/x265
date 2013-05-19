@@ -24,7 +24,7 @@
 ;* For more information, contact us at licensing@x264.com.
 ;*****************************************************************************
 
-%assign FENC_STRIDE 16
+%assign FENC_STRIDE 64
 %assign FDEC_STRIDE 32
 
 %assign SIZEOF_PIXEL 1
