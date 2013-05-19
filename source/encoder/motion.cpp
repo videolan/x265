@@ -433,9 +433,6 @@ me_hex2:
 
         /* FIXME if the above DIA2/OCT2/CROSS found a new mv, it has not updated omx/omy.
          * we are still centered on the same place as the DIA2. is this desirable? */
-
-        omv = bmv;
-
         CROSS(cross_start, merange, merange >> 1);
         COST_MV_X4(-2, -2, -2, 2, 2, -2, 2, 2);
 
