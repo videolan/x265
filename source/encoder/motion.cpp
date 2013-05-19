@@ -70,6 +70,14 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 static const MV hex2[8] = { MV( -1, -2 ), MV( -2, 0 ), MV( -1, 2 ), MV( 1, 2 ), MV( 2, 0 ), MV( 1, -2 ), MV( -1, -2 ), MV( -2, 0 ) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
 static const MV square1[9] = { MV( 0, 0 ), MV( 0, -1 ), MV( 0, 1 ), MV( -1, 0 ), MV( 1, 0 ), MV( -1, -1 ), MV( -1, 1 ), MV( 1, -1 ), MV( 1, 1 ) };
+static const MV hex4[16] =
+{
+    MV(0,-4),  MV(0,4),  MV(-2,-3), MV(2,-3),
+    MV(-4,-2), MV(4,-2), MV(-4,-1), MV(4,-1),
+    MV(-4,0),  MV(4,0),  MV(-4,1),  MV(4,1),
+    MV(-4, 2), MV(4, 2), MV(-2, 3), MV(2, 3),
+};
+
 
 static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandidates)
 {
@@ -431,30 +439,19 @@ me_hex2:
 
         /* hexagon grid */
         omv = bmv;
-
         const uint16_t *p_cost_omvx = m_cost_mvx + omv.x * 4;
         const uint16_t *p_cost_omvy = m_cost_mvy + omv.y * 4;
         int16_t i = 1;
-
         do
         {
-            static const int8_t hex4[16][2] =
-            {
-                { 0, -4 }, { 0, 4 }, { -2, -3 }, { 2, -3 },
-                { -4, -2 }, { 4, -2 }, { -4, -1 }, { 4, -1 },
-                { -4, 0 }, { 4, 0 }, { -4, 1 }, { 4, 1 },
-                { -4, 2 }, { 4, 2 }, { -2, 3 }, { 2, 3 },
-            };
-
             if (4 * i > X265_MIN4(mvmax.x - omv.x, omv.x - mvmin.x,
                                   mvmax.y - omv.y, omv.y - mvmin.y))
             {
                 for (int j = 0; j < 16; j++)
                 {
-                    int16_t mx = omv.x + hex4[j][0] * i;
-                    int16_t my = omv.y + hex4[j][1] * i;
-                    if (bmv.checkRange(mvmin, mvmax))
-                        COST_MV(mx, my);
+                    MV tmv = omv + (hex4[j] * i);
+                    if (tmv.checkRange(mvmin, mvmax))
+                        COST_MV(tmv.x, tmv.y);
                 }
             }
             else

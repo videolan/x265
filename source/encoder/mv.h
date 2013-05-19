@@ -61,6 +61,8 @@ public:
 
     MV operator <<(int i) const                { return MV(x << i, y << i); }
 
+    MV operator *(int16_t i) const             { return MV(x * i, y * i); }
+
     const MV operator -(const MV& other) const { return MV(x - other.x, y - other.y); }
 
     const MV operator +(const MV& other) const { return MV(x + other.x, y + other.y); }
