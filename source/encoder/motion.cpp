@@ -374,9 +374,15 @@ me_hex2:
             }
         }
 
-        // Start Adaptive search range
+        // TODO: Need to study x264's logic for building mvc list to understand why they
+        //       have special cases here for 16x16, and whether they apply to HEVC CTU
+
+        // adaptive search range based on mvc variability
         if (numCandidates)
         {
+            /* range multipliers based on casual inspection of some statistics of
+             * average distance between current predictor and final mv found by ESA.
+             * these have not been tuned much by actual encoding. */
             static const uint8_t range_mul[4][4] =
             {
                 { 3, 3, 4, 4 },
@@ -402,7 +408,7 @@ me_hex2:
             {
                 /* calculate the degree of agreement between predictors. */
 
-                /* in 16x16, mvc includes all the neighbors used to make mvp,
+                /* in 64x64, mvc includes all the neighbors used to make mvp,
                  * so don't count mvp separately. */
 
                 denom = numCandidates - 1;
@@ -422,7 +428,7 @@ me_hex2:
                 : mvd < 20 * denom ? 1
                 : mvd < 40 * denom ? 2 : 3;
 
-            merange = merange * range_mul[mvd_ctx][sad_ctx] >> 2;
+            merange = (merange * range_mul[mvd_ctx][sad_ctx]) >> 2;
         }
 
         /* FIXME if the above DIA2/OCT2/CROSS found a new mv, it has not updated omx/omy.
@@ -431,7 +437,6 @@ me_hex2:
         omv = bmv;
 
         CROSS(cross_start, merange, merange >> 1);
-
         COST_MV_X4(-2, -2, -2, 2, 2, -2, 2, 2);
 
         /* hexagon grid */
