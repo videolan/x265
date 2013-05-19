@@ -24,6 +24,7 @@
 #include "primitives.h"
 #include "common.h"
 #include "motion.h"
+#include "x265.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -236,7 +237,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     switch (searchMethod)
     {
-    case 0:
+    case X265_DIA_SEARCH:
     {
         /* diamond search, radius 1 */
         bcost <<= 4;
@@ -259,7 +260,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         break;
     }
 
-    case 1:
+    case X265_HEX_SEARCH:
     {
 me_hex2:
         /* hexagon search, radius 2 */
@@ -332,7 +333,7 @@ me_hex2:
         break;
     }
 
-    case 2:
+    case X265_UMH_SEARCH:
     {
         int ucost1, ucost2;
         int16_t cross_start = 1;
