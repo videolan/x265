@@ -66,12 +66,8 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 }
 
-#define SIMPLE_HEX 1
-#if !SIMPLE_HEX
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
 static const MV hex2[8] = { MV( -1, -2 ), MV( -2, 0 ), MV( -1, 2 ), MV( 1, 2 ), MV( 2, 0 ), MV( 1, -2 ), MV( -1, -2 ), MV( -2, 0 ) };
-#endif
-
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
 static const MV square1[9] = { MV( 0, 0 ), MV( 0, -1 ), MV( 0, 1 ), MV( -1, 0 ), MV( 1, 0 ), MV( -1, -1 ), MV( -1, 1 ), MV( 1, -1 ), MV( 1, 1 ) };
 
@@ -259,7 +255,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     {
 me_hex2:
         /* hexagon search, radius 2 */
-#if SIMPLE_HEX
+#if 0
         for (int i = 0; i < merange/2; i++)
         {
             omv = bmv;
