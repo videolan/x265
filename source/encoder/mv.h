@@ -81,6 +81,8 @@ public:
 
     bool inline notZero() const                { return this->word != 0; }
 
+    bool inline isSubpel() const               { return (this->word & 0x00030003) != 0; }
+
     MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
     MV mvmax(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
 

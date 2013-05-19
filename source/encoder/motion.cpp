@@ -203,6 +203,11 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     int bprecost = qpelSad(pmv); // ignore MVD cost for clipped MVP
     MV bestpre = pmv;
 
+    /* re-measure full pel rounded MVP with SAD as search start point */
+    MV bmv = pmv.roundToFPel();
+    MV omv = bmv;
+    int bcost = pmv.isSubpel() ? fpelSad(fref, bmv) + mvcost(bmv << 2) : bprecost;
+
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
@@ -229,12 +234,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    /* re-measure full pel rounded MVP with SAD as search start point */
-    MV bmv = pmv.roundToFPel();
     pmv = pmv.toFPel();
-
-    int bcost = fpelSad(fref, bmv) + mvcost(bmv << 2);
-    MV omv = bmv;
 
     switch (searchMethod)
     {
