@@ -425,7 +425,7 @@ me_hex2:
 
         omv = bmv;
 
-        CROSS(cross_start, blockWidth, blockHeight >> 1);
+        CROSS(cross_start, merange, merange >> 1);
 
         COST_MV_X4(-2, -2, -2, 2, 2, -2, 2, 2);
 
