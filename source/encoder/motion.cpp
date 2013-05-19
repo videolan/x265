@@ -234,7 +234,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    pmv = pmv.toFPel();
+    pmv = pmv.roundToFPel();
 
     switch (searchMethod)
     {
