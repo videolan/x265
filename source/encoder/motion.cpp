@@ -198,42 +198,42 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
 
-    // measure SAD cost at MVP
-    MV bmv = qmvp.clipped(qmvmin, qmvmax);
-    MV bestpre = bmv;
-    int bcost = qpelSad(bmv);
+    // measure SAD cost at clipped QPEL MVP
+    MV pmv = qmvp.clipped(qmvmin, qmvmax);
+    int bprecost = qpelSad(pmv); // ignore MVD cost for clipped MVP
+    MV bestpre = pmv;
 
-    /* measure SAD cost at each candidate */
-    for (int i = 0; i < numCandidates; i++)
+    // measure SAD cost at MV(0) if MVP is not zero
+    if (pmv.notZero())
     {
-        MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m == 0) // zero is measured later
-            continue;
-
-        int cost = qpelSad(m) + mvcost(m);
-        if (cost < bcost)
+        int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
+        if (cost < bprecost)
         {
-            bcost = cost;
-            bestpre = m;
-        }
-    }
-
-    if (bmv.notZero())
-    {
-        int cost = fpelSad(fref, 0) + mvcost(0);
-        if (cost < bcost)
-        {
-            bcost = cost;
+            bprecost = cost;
             bestpre = 0;
         }
     }
-    /* remember the best SAD cost of motion candidates */
-    int bprecost = bcost;
 
-    /* Measure full pel SAD at MVP */
-    bmv = bmv.roundToFPel();
-    bcost = fpelSad(fref, bmv) + mvcost(bmv.toQPel());
-    MV pmv = qmvp.toFPel();
+    // measure SAD cost at each QPEL motion vector candidate
+    for (int i = 0; i < numCandidates; i++)
+    {
+        MV m = mvc[i].clipped(qmvmin, qmvmax);
+        if (m.notZero() && m != pmv) // check already measured
+        {
+            int cost = qpelSad(m) + mvcost(m);
+            if (cost < bprecost)
+            {
+                bprecost = cost;
+                bestpre = m;
+            }
+        }
+    }
+
+    /* re-measure full pel rounded MVP with SAD as search start point */
+    MV bmv = pmv.roundToFPel();
+    pmv = pmv.toFPel();
+
+    int bcost = fpelSad(fref, bmv) + mvcost(bmv << 2);
     MV omv = bmv;
 
     switch (searchMethod)
