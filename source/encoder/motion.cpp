@@ -336,29 +336,24 @@ me_hex2:
     {
         int ucost1, ucost2;
         int16_t cross_start = 1;
+        assert(PARTITION_4x4 != partEnum);
 
         /* refine predictors */
-        ucost1 = bcost;
         omv = bmv;
-
         pixel *pix_base = fref + omv.x + omv.y * stride;
+        ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.word)
             DIA1_ITER(0, 0);
 
-        assert(PARTITION_4x4 != partEnum);
-
         ucost2 = bcost;
-        if ((bmv.x | bmv.y) && ((bmv.x - pmv.x) | (bmv.y - pmv.y)))
+        if (bmv.word && bmv != pmv)
             DIA1_ITER(bmv.x, bmv.y);
-
         if (bcost == ucost2)
             cross_start = 3;
 
-        omv = bmv;
-
         /* Early Termination */
-
+        omv = bmv;
         if (bcost == ucost2 && SAD_THRESH(2000))
         {
             COST_MV_X4(0, -2, -1, -1, 1, -1, -2, 0);
