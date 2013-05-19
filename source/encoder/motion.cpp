@@ -447,9 +447,9 @@ me_hex2:
             {
                 for (int j = 0; j < 16; j++)
                 {
-                    MV tmv = omv + (hex4[j] * i);
-                    if (tmv.checkRange(mvmin, mvmax))
-                        COST_MV(tmv.x, tmv.y);
+                    MV mv = omv + (hex4[j] * i);
+                    if (mv.checkRange(mvmin, mvmax))
+                        COST_MV(mv.x, mv.y);
                 }
             }
             else
