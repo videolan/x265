@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <assert.h>
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional  expression is constant (macros use this construct)
+#endif
+
 using namespace x265;
 
 static int size_scale[NUM_PARTITIONS];
@@ -179,9 +183,6 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         } \
     }
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional  expression is constant
-#endif
 int MotionEstimate::motionEstimate(const MV &qmvp,
                                    int       numCandidates,
                                    const MV *mvc,
