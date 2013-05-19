@@ -537,27 +537,30 @@ me_hex2:
     int16_t res = 2;
     do
     {
-        MV mv = bmv + MV(0, -res);
-        int cost = qpelSatd(mv) + mvcost(mv);
-        COPY1_IF_LT(bcost, (cost << 4) + 1);
-
-        mv = bmv + MV(0,  res);
-        cost = qpelSatd(mv) + mvcost(mv);
-        COPY1_IF_LT(bcost, (cost << 4) + 3);
-
-        mv = bmv + MV(-res, 0);
-        cost = qpelSatd(mv) + mvcost(mv);
-        COPY1_IF_LT(bcost, (cost << 4) + 4);
-
-        mv = bmv + MV(res,  0);
-        cost = qpelSatd(mv) + mvcost(mv);
-        COPY1_IF_LT(bcost, (cost << 4) + 12);
-
-        if (bcost & 15)
+        for (int iter = 0; iter < 2; iter++)
         {
-            bmv.x -= res * ((bcost << 28) >> 30);
-            bmv.y -= res * ((bcost << 30) >> 30);
-            bcost &= ~15;
+            MV mv = bmv + MV(0, -res);
+            int cost = qpelSatd(mv) + mvcost(mv);
+            COPY1_IF_LT(bcost, (cost << 4) + 1);
+
+            mv = bmv + MV(0,  res);
+            cost = qpelSatd(mv) + mvcost(mv);
+            COPY1_IF_LT(bcost, (cost << 4) + 3);
+
+            mv = bmv + MV(-res, 0);
+            cost = qpelSatd(mv) + mvcost(mv);
+            COPY1_IF_LT(bcost, (cost << 4) + 4);
+
+            mv = bmv + MV(res,  0);
+            cost = qpelSatd(mv) + mvcost(mv);
+            COPY1_IF_LT(bcost, (cost << 4) + 12);
+
+            if (bcost & 15)
+            {
+                bmv.x -= res * ((bcost << 28) >> 30);
+                bmv.y -= res * ((bcost << 30) >> 30);
+                bcost &= ~15;
+            }
         }
 
         res >>= 1;
