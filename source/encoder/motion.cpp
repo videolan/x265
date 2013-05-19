@@ -216,7 +216,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    if (bmv != 0)
+    if (bmv.notZero())
     {
         int cost = fpelSad(fref, 0) + mvcost(0);
         if (cost < bcost)
@@ -343,11 +343,11 @@ me_hex2:
         pixel *pix_base = fref + omv.x + omv.y * stride;
         ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
-        if (pmv.word)
+        if (pmv.notZero())
             DIA1_ITER(0, 0);
 
         ucost2 = bcost;
-        if (bmv.word && bmv != pmv)
+        if (bmv.notZero() && bmv != pmv)
             DIA1_ITER(bmv.x, bmv.y);
         if (bcost == ucost2)
             cross_start = 3;

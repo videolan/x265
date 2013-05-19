@@ -79,6 +79,8 @@ public:
     // Scale up an FPEL mv to QPEL by shifting up two bits
     MV toQPel() const                          { return *this << 2; }
 
+    bool inline notZero() const                { return this->word != 0; }
+
     MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
     MV mvmax(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
 
