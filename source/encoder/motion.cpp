@@ -79,7 +79,7 @@ static const MV hex4[16] =
 };
 
 
-static __inline int x265_predictor_difference(const  MV *mvc, intptr_t numCandidates)
+static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidates)
 {
     int sum = 0;
 
