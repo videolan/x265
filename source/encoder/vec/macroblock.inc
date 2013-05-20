@@ -546,13 +546,13 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
-
+#if 0   //partialButterfly4 vector code
 
 void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
 {
     int j;
 
-  Vec4i g_aiT8_zero_row(64, 64, 0, 0);
+    Vec4i g_aiT8_zero_row(64, 64, 0, 0);
     Vec4i g_aiT8_two_row(64, -64, 0, 0);
     Vec4i g_aiT8_one_row(83, 36, 0, 0);
     Vec4i g_aiT8_three_row(36, -83, 0, 0);
@@ -562,26 +562,26 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
     for (j = 0; j < line; j++)
     {
         // E and O
-      int E0 = src[0] + src[3];
-      int O0 = src[0] - src[3];
-      int E1 = src[1] + src[2];
-      int O1 = src[1] - src[2];
+        int E0 = src[0] + src[3];
+        int O0 = src[0] - src[3];
+        int E1 = src[1] + src[2];
+        int O1 = src[1] - src[2];
 
-    Vec4i E_vec(E0, E1, 0, 0);
+        Vec4i E_vec(E0, E1, 0, 0);
 
-    Vec4i O_vec(O0, O1, 0, 0);
+        Vec4i O_vec(O0, O1, 0, 0);
 
-    int tmpE1 = horizontal_add(g_aiT8_zero_row * E_vec);
-    int tmpO1 = horizontal_add(g_aiT8_one_row * O_vec);
-    int tmpE2 = horizontal_add(g_aiT8_two_row * E_vec);
-    int tmpO2 = horizontal_add(g_aiT8_three_row * O_vec);
+        int tmpE1 = horizontal_add(g_aiT8_zero_row * E_vec);
+        int tmpO1 = horizontal_add(g_aiT8_one_row * O_vec);
+        int tmpE2 = horizontal_add(g_aiT8_two_row * E_vec);
+        int tmpO2 = horizontal_add(g_aiT8_three_row * O_vec);
 
-     short dst0 = (short)((tmpE1 + add) >> shift);
-     short dst2 = (short)((tmpE2 + add) >> shift);
-     short dst_line = (short)((tmpO1 + add) >> shift);
-     short dst3 = (short)((tmpO2 + add) >> shift);
+        short dst0 = (short)((tmpE1 + add) >> shift);
+        short dst2 = (short)((tmpE2 + add) >> shift);
+        short dst_line = (short)((tmpO1 + add) >> shift);
+        short dst3 = (short)((tmpO2 + add) >> shift);
 
-    dst[0] = dst0;
+        dst[0] = dst0;
         dst[2 * line] = dst2;
         dst[line] = dst_line;
         dst[3 * line] = dst3;
@@ -591,7 +591,10 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
     }
 }
 
-#if 0
+#endif  //partialButterfly4 vector code
+
+#if 0     // partialButterfly32 intrinsic code
+
 void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 {
     int add = 1 << (nshift - 1);
@@ -1314,6 +1317,8 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
     }
 }
 
+#endif    // partialButterfly32 intrinsic code
+
 void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
 {
     typedef uint32_t UInt32;
@@ -1333,10 +1338,19 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     __m128i c32_64_n64   = _mm_set_epi32(-64, 64, -64, 64);
     __m128i c32_36_n83   = _mm_set_epi32(-83, 36, -83, 36);
 
-    __m128i T20  = _mm_cvtsi64_si128(*(UInt64*)&src[0 * line]);   // [03 02 01 00]
-    __m128i T21  = _mm_cvtsi64_si128(*(UInt64*)&src[1 * line]);   // [13 12 11 10]
-    __m128i T22 = _mm_cvtsi64_si128(*(UInt64*)&src[2 * line]);    // [23 22 21 20]
-    __m128i T23 = _mm_cvtsi64_si128(*(UInt64*)&src[3 * line]);    // [33 32 31 30]
+    // _mm_cvtsi64_si128 not supported on 32bit build
+
+    /*
+      __m128i T20  = _mm_cvtsi64_si128(*(UInt64*)&src[0 * line]);   // [03 02 01 00]
+      __m128i T21  = _mm_cvtsi64_si128(*(UInt64*)&src[1 * line]);   // [13 12 11 10]
+      __m128i T22 = _mm_cvtsi64_si128(*(UInt64*)&src[2 * line]);    // [23 22 21 20]
+      __m128i T23 = _mm_cvtsi64_si128(*(UInt64*)&src[3 * line]);    // [33 32 31 30]
+    */
+
+    __m128i T20  = _mm_loadl_epi64((const __m128i*)(src + 0)); // [03 02 01 00]
+    __m128i T21  = _mm_loadl_epi64((const __m128i*)(src + 4)); // [13 12 11 10]
+    __m128i T22  = _mm_loadl_epi64((const __m128i*)(src + 8)); // [23 22 21 20]
+    __m128i T23  = _mm_loadl_epi64((const __m128i*)(src + 12)); // [33 32 31 30]
 
     // DCT1
     __m128i T30  = _mm_unpacklo_epi32(T20, T21);        // [13 12 03 02 11 10 01 00]
@@ -1396,12 +1410,6 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     Coeff_0_3 = _mm_add_epi32(Coeff_0_3, c32_128);
     Coeff_0_3 = _mm_srai_epi32(Coeff_0_3, nshift);
 
-    // Store back the DCT results
-    dst[0] = (short)_mm_extract_epi32(Coeff_0_3, 0);
-    dst[1] = (short)_mm_extract_epi32(Coeff_0_3, 1);
-    dst[2] = (short)_mm_extract_epi32(Coeff_0_3, 2);
-    dst[3] = (short)_mm_extract_epi32(Coeff_0_3, 3);
-
     //Co-effs 4-7
     __m128i O_0_3 = _mm_mullo_epi32(O0123, c32_83_36); //	[O0*36 O1*83 O2*36 O3*83]
     __m128i O_4_7 = _mm_mullo_epi32(O4567, c32_83_36); //	[O4*36 O5*83 O6*36 O7*83]
@@ -1410,10 +1418,8 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     Coeff_4_7 = _mm_srai_epi32(Coeff_4_7, nshift);
 
     // Store back the DCT results
-    dst[4] = (short)_mm_extract_epi32(Coeff_4_7, 0);
-    dst[5] = (short)_mm_extract_epi32(Coeff_4_7, 1);
-    dst[6] = (short)_mm_extract_epi32(Coeff_4_7, 2);
-    dst[7] = (short)_mm_extract_epi32(Coeff_4_7, 3);
+    __m128i Coeff_0_7 = _mm_packs_epi32(Coeff_0_3, Coeff_4_7);  //Coeffs 0-7
+    _mm_store_si128((__m128i*)dst, Coeff_0_7);
 
     //Co-effs 8-11
     __m128i E_8_11  = _mm_mullo_epi32(E0123, c32_64_n64); //	[ E0*-64 E1*64 E2*-64 E3*64]
@@ -1421,12 +1427,6 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     __m128i Coeff_8_11 = _mm_hadd_epi32(E_8_11, E_12_15);
     Coeff_8_11 = _mm_add_epi32(Coeff_8_11, c32_128);
     Coeff_8_11 = _mm_srai_epi32(Coeff_8_11, nshift);
-
-    // Store back the DCT results
-    dst[8] = (short)_mm_extract_epi32(Coeff_8_11, 0);
-    dst[9] = (short)_mm_extract_epi32(Coeff_8_11, 1);
-    dst[10] = (short)_mm_extract_epi32(Coeff_8_11, 2);
-    dst[11] = (short)_mm_extract_epi32(Coeff_8_11, 3);
 
     //Co-effs 12-15
     __m128i O_8_11  = _mm_mullo_epi32(O0123, c32_36_n83); //	[O0*-83 O1*36 O2*-83 O3*36]
@@ -1436,12 +1436,9 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     Coeff_12_15 = _mm_srai_epi32(Coeff_12_15, nshift);
 
     // Store back the DCT results
-    dst[12] = (short)_mm_extract_epi32(Coeff_12_15, 0);
-    dst[13] = (short)_mm_extract_epi32(Coeff_12_15, 1);
-    dst[14] = (short)_mm_extract_epi32(Coeff_12_15, 2);
-    dst[15] = (short)_mm_extract_epi32(Coeff_12_15, 3);
+    __m128i Coeff_8_15 = _mm_packs_epi32(Coeff_8_11, Coeff_12_15);   //Coeffs 8-15
+    _mm_store_si128((__m128i*)(dst + 8), Coeff_8_15);
 }
-#endif
 
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
@@ -1892,14 +1889,12 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
 
+    p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
     p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
     p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
-    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
     p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
-#if X86_64
-    //p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
-#endif
 }
