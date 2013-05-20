@@ -56,15 +56,17 @@ typedef struct x265_picture_t
     int   stride[3];
 
     int   bitDepth;
-} x265_picture_t;
+}
+x265_picture_t;
 
-typedef enum X265_ME_METHODS
+typedef enum
 {
     X265_DIA_SEARCH,
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
     X265_HM_SEARCH,  // adapted HM fast-ME method
-};
+}
+X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", 0 };
 

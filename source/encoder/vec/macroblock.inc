@@ -1319,11 +1319,11 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 
 #endif    // partialButterfly32 intrinsic code
 
-void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
+void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
 {
     typedef uint32_t UInt32;
     typedef uint64_t UInt64;
-    line = 4;
+    //line = 4;
     nshift = 2 - 1;
 
     // Const
