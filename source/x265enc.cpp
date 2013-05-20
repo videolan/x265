@@ -308,7 +308,7 @@ Void TAppEncTop::encode()
     list<AccessUnit> outputAccessUnits; ///< list of access units to write out.  is populated by the encoding process
 
     // allocate original YUV buffer
-    pcPicYuvOrg->create(m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth);
+    pcPicYuvOrg->create(m_iSourceWidth, m_iSourceHeight, m_uiMaxCUSize, m_uiMaxCUSize, m_uiMaxCUDepth);
 
     while (!bEos)
     {
@@ -385,7 +385,7 @@ Void TAppEncTop::xGetBuffer(TComPicYuv*& rpcPicYuvRec)
     {
         rpcPicYuvRec = new TComPicYuv;
 
-        rpcPicYuvRec->create(m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth);
+        rpcPicYuvRec->create(m_iSourceWidth, m_iSourceHeight, m_uiMaxCUSize, m_uiMaxCUSize, m_uiMaxCUDepth);
     }
 
     m_cListPicYuvRec.pushBack(rpcPicYuvRec);

@@ -81,8 +81,7 @@ typedef struct x265_param_t
     int       m_iSourceHeight;                    ///< source height in pixel
 
     // coding unit (CU) definition
-    uint32_t  m_uiMaxCUWidth;                     ///< max. CU width in pixel
-    uint32_t  m_uiMaxCUHeight;                    ///< max. CU height in pixel
+    uint32_t  m_uiMaxCUSize;                      ///< max. CU width and height in pixels
     uint32_t  m_uiMaxCUDepth;                     ///< max. CU depth
 
     // transform unit (TU) definition

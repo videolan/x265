@@ -39,8 +39,7 @@ void x265_param_default( x265_param_t *param )
     param->m_searchMethod = X265_UMH_SEARCH;
     param->m_iSearchRange = 64;
     param->m_internalBitDepth = 8;
-    param->m_uiMaxCUWidth = 64;
-    param->m_uiMaxCUHeight = 64;
+    param->m_uiMaxCUSize = 64;
     param->m_uiMaxCUDepth = 4;
     param->m_uiQuadtreeTULog2MaxSize = 6;
     param->m_uiQuadtreeTULog2MinSize = 2;
