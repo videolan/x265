@@ -92,9 +92,6 @@ typedef struct x265_param_t
 
     // coding structure
     int       m_iIntraPeriod;                     ///< period of I-slice (random access period)
-    int       m_iDecodingRefreshType;             ///< random access type
-    int       m_iGOPSize;                         ///< GOP size of hierarchical structure
-    int       m_extraRPSs;                        ///< extra RPSs added to handle CRA
 
     int       m_useTransformSkip;                 ///< flag for enabling intra transform skipping
     int       m_useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
@@ -103,11 +100,10 @@ typedef struct x265_param_t
 
     // coding quality
     int       m_iQP;                              ///< QP value of key-picture (integer)
-    int       m_iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
-
     int       m_cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)
     int       m_crQpOffset;                       ///< Chroma Cr QP Offset (0:default)
 
+    int       m_iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
     int       m_bUseAdaptQpSelect;                ///< TODO: What does this flag enable?
     int       m_bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
     int       m_iQPAdaptationRange;               ///< dQP range by QP adaptation
@@ -118,7 +114,7 @@ typedef struct x265_param_t
     // coding tool (lossless)
     int       m_useLossless;                      ///< flag for using lossless coding
     int       m_bUseSAO;                          ///< Enable SAO filter
-    int       m_maxNumOffsetsPerPic;              ///< SAO maximun number of offset per picture
+    int       m_maxNumOffsetsPerPic;              ///< SAO maximum number of offset per picture
     int       m_saoLcuBoundary;                   ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     int       m_saoLcuBasedOptimization;          ///< SAO LCU-based optimization
 
@@ -173,9 +169,7 @@ typedef struct x265_param_t
     int       m_TransquantBypassEnableFlag;       ///< transquant_bypass_enable_flag setting in PPS.
     int       m_CUTransquantBypassFlagValue;      ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
 
-    int       m_recalculateQPAccordingToLambda;   ///< recalculate QP value according to the lambda value
     int       m_useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
-    int       m_log2MaxMvLengthVertical;          ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 }
 x265_param_t;
 
@@ -194,7 +188,7 @@ void x265_init_threading( int threadcount );
 /***
  * Initialize an x265_param_t structure to default values
  */
-void x265_default_params( x265_param_t *param );
+void x265_param_default( x265_param_t *param );
 
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */

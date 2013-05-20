@@ -84,6 +84,10 @@ protected:
     GOPEntry  m_GOPList[MAX_GOP];               ///< the coding structure entries from the config file
     Int       m_numReorderPics[MAX_TLAYER];     ///< total number of reorder pictures
     Int       m_maxDecPicBuffering[MAX_TLAYER]; ///< total number of pictures in the decoded picture buffer
+    int       m_iGOPSize;                       ///< GOP size of hierarchical structure
+
+    int       m_iDecodingRefreshType;           ///< random access type
+    int       m_extraRPSs;                      ///< extra RPSs added to handle CRA
 
     // coding quality
     Double    m_fQP;                            ///< QP value of key-picture (floating point)
@@ -100,6 +104,9 @@ protected:
     // TODO: Death row configuration settings, we will want to configure these similar to x264
     int       m_bUseASR;                          ///< flag for using adaptive motion search range
     int       m_bUseHADME;                        ///< flag for using HAD in sub-pel ME
+
+    int       m_recalculateQPAccordingToLambda;   ///< recalculate QP value according to the lambda value
+    int       m_log2MaxMvLengthVertical;          ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
     int       m_decodedPictureHashSEIEnabled;     ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     int       m_activeParameterSetsSEIEnabled;
