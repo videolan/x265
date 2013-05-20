@@ -250,7 +250,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     string cfg_InputFile;
     string cfg_ReconFile;
-    string cfg_BitstreamFile("hevc.bin");
+    string cfg_BitstreamFile;
     string cfg_dQPFile;
     string cfg_ScalingListFile;
 
@@ -264,7 +264,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     // File, I/O and source parameters
     ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
-    ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
+    ("BitstreamFile,b",       cfg_BitstreamFile, string("hevc.bin"), "Bitstream output file name")
     ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
     ("SourceWidth,-wdt",      m_iSourceWidth,      0, "Source picture width")
     ("SourceHeight,-hgt",     m_iSourceHeight,     0, "Source picture height")
