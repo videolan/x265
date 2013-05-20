@@ -131,7 +131,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
 
     m_pcBitCounter      = pcEncTop->getBitCounter();
     m_pcRdCost          = pcEncTop->getRdCost();
-    m_pcRDGoOnSbacCoder = pcEncTop->getRDGoOnSbacCoder();
+    m_pcRDGoOnSbacCoders= pcEncTop->getRDGoOnSbacCoders();
 
     m_pcRateCtrl        = pcEncTop->getRateCtrl();
 }
@@ -579,10 +579,10 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             }
 
             // set go-on entropy coder
-            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(m_pcRDGoOnSbacCoder, pcSlice);
+            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(&m_pcRDGoOnSbacCoders[uiSubStrm], pcSlice);
             m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
 
-            ((TEncBinCABAC*)m_pcRDGoOnSbacCoder->getEncBinIf())->setBinCountingEnableFlag(true);
+            ((TEncBinCABAC*)m_pcRDGoOnSbacCoders[uiSubStrm].getEncBinIf())->setBinCountingEnableFlag(true);
 
             Double oldLambda = m_pcRdCost->getLambda();
             if (m_pcCfg->getUseRateCtrl())
@@ -612,6 +612,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pcCuEncoders[uiSubStrm].set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&m_pcRDGoOnSbacCoders[uiSubStrm]);
 
             // run CU encoder
             m_pcCuEncoders[uiSubStrm].compressCU(pcCU);

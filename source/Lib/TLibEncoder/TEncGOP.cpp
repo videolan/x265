@@ -1202,7 +1202,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     m_pcEntropyCoders[0].resetEntropy();
                     m_pcEntropyCoders[0].setBitstream(m_pcBitCounter);
                     // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                    m_pcSAO->startSaoEnc(pcPic, &m_pcEntropyCoders[0], m_pcEncTop->getRDSbacCoders()[0], m_pcEncTop->getRDGoOnSbacCoder());
+                    m_pcSAO->startSaoEnc(pcPic, &m_pcEntropyCoders[0], m_pcEncTop->getRDSbacCoders()[0], &m_pcEncTop->getRDGoOnSbacCoders()[0]);
                     SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
 #if SAO_CHROMA_LAMBDA
@@ -1582,7 +1582,7 @@ Void TEncGOP::preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBi
     m_pcLoopFilter->setCfg(m_pcCfg->getLFCrossTileBoundaryFlag());
     m_pcLoopFilter->loopFilterPic(pcPic);
 
-    m_pcEntropyCoders[0].setEntropyCoder(m_pcEncTop->getRDGoOnSbacCoder(), pcSlice);
+    m_pcEntropyCoders[0].setEntropyCoder(&m_pcEncTop->getRDGoOnSbacCoders()[0], pcSlice);
     m_pcEntropyCoders[0].resetEntropy();
     m_pcEntropyCoders[0].setBitstream(m_pcBitCounter);
     pcSlice = pcPic->getSlice(0);

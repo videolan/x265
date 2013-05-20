@@ -102,7 +102,7 @@ private:
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
     TComRdCost              m_cRdCost;                    ///< RD cost computation class
-    TEncSbac                m_cRDGoOnSbacCoder;           ///< going on SBAC model for RD stage
+//     TEncSbac                m_cRDGoOnSbacCoder;           ///< going on SBAC model for RD stage
     TEncBinCABACCounter     m_cRDGoOnBinCoderCABAC;       ///< going on bin coder CABAC for RD stage
 
     Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
@@ -180,7 +180,7 @@ public:
 
     TComRdCost*             getRdCost() { return &m_cRdCost;              }
 
-    TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder;     }
+//     TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder;     }
 
     TComBitCounter*         getBitCounters() { return m_pcBitCounters;         }
 

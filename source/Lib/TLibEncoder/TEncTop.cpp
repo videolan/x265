@@ -55,7 +55,7 @@ TEncTop::TEncTop()
     m_iPOCLast          = -1;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
-    m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
+//     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
@@ -132,7 +132,7 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     m_pcSbacCoders           = new TEncSbac[iNumSubstreams];
     m_pcBinCoderCABACs       = new TEncBinCABAC[iNumSubstreams];
     m_pcRDGoOnSbacCoders     = new TEncSbac[iNumSubstreams];
-    m_pcRDGoOnBinCodersCABAC = new TEncBinCABAC[iNumSubstreams];
+    m_pcRDGoOnBinCodersCABAC = new TEncBinCABACCounter[iNumSubstreams];
     m_pcBitCounters          = new TComBitCounter[iNumSubstreams];
     m_pcRdCosts              = new TComRdCost[iNumSubstreams];
     m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
@@ -264,7 +264,7 @@ Void TEncTop::init()
     // initialize encoder search class
     for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
     {
-        m_pcSearchs[ui].init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, getRDGoOnSbacCoder());
+        m_pcSearchs[ui].init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
     }
 
     m_iMaxRefPicNum = 0;

@@ -243,7 +243,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
     m_pcBinCABAC         = pcEncTop->getBinCABAC();
 
     m_pppcRDSbacCoder   = NULL;
-    m_pcRDGoOnSbacCoder = pcEncTop->getRDGoOnSbacCoder();
+    m_pcRDGoOnSbacCoder = NULL;
 
     m_pcRateCtrl        = pcEncTop->getRateCtrl();
 }
@@ -266,6 +266,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
 
     m_pcPredSearch->set_pppcRDSbacCoder(m_pppcRDSbacCoder);
     m_pcPredSearch->set_pcEntropyCoder(m_pcEntropyCoder);
+    m_pcPredSearch->set_pcRDGoOnSbacCoder(m_pcRDGoOnSbacCoder);
 
     // analysis of CU
     xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
