@@ -21,8 +21,6 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include <time.h>
-#include <iostream>
 #include "x265enc.h"
 #include "PPA/ppa.h"
 
@@ -30,6 +28,9 @@
 /* Visual Leak Detector */
 #include <vld.h>
 #endif
+
+#include <time.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -41,7 +42,6 @@ int main(int argc, char *argv[])
 #if HAVE_VLD
     VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER, NULL);
 #endif
-
     PPA_INIT();
 
     fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
