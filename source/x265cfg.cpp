@@ -188,14 +188,6 @@ static const struct MapStrToLevel
     { "6.2", Level::LEVEL6_2 },
 };
 
-static const Char *MotionEstimateMethodNames[] =
-{
-    "DIA",
-    "HEX",
-    "UMH",
-    "HM",
-};
-
 template<typename T, typename P>
 static istream& readStrToEnum(P map[], unsigned long mapLen, istream &in, T &val)
 {
@@ -1098,7 +1090,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);
     printf("Max RQT depth intra          : %d\n", m_uiQuadtreeTUMaxDepthIntra);
     printf("Min PCM size                 : %d\n", 1 << m_uiPCMLog2MinSize);
-    printf("Motion search method         : %s\n", MotionEstimateMethodNames[m_searchMethod] );
+    printf("Motion search method         : %s\n", x265_motion_est_names[m_searchMethod] );
     printf("Motion search range          : %d\n", m_iSearchRange);
     printf("Intra period                 : %d\n", m_iIntraPeriod);
     printf("Decoding refresh type        : %d\n", m_iDecodingRefreshType);
@@ -1153,13 +1145,13 @@ Void TAppEncCfg::xPrintParameter()
     printf("WPP:%d ", (Int)m_useWeightedPred);
     printf("WPB:%d ", (Int)m_useWeightedBiPred);
     printf("PME:%d ", m_log2ParallelMergeLevel);
-    printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
+    printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d ",
            m_iWaveFrontSynchro, (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight);
-    printf(" ScalingList:%d ", m_useScalingListId);
+    printf("ScalingList:%d ", m_useScalingListId);
     printf("TMVPMode:%d ", m_TMVPModeId);
-    printf("AQpS:%d", m_bUseAdaptQpSelect);
+    printf("AQpS:%d ", m_bUseAdaptQpSelect);
 
-    printf(" SignBitHidingFlag:%d ", m_signHideFlag);
+    printf("SignBitHidingFlag:%d ", m_signHideFlag);
     printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0);
     printf("\n\n");
 
