@@ -52,8 +52,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
             c[0] = (uint16_t)lambda;
             for (int i = 1; i < BC_MAX_MV; i++)
             {
-                c[i]  = std::min<uint16_t>(max16, (uint16_t)(s_logs[i<<1] * lambda + 0.5));
-                c[-i] = std::min<uint16_t>(max16, (uint16_t)(s_logs[(i<<1)+1] * lambda + 0.5));
+                c[i]  = std::min<uint16_t>(max16, (uint16_t)(s_bitsizes[i<<1] * lambda + 0.5));
+                c[-i] = std::min<uint16_t>(max16, (uint16_t)(s_bitsizes[(i<<1)+1] * lambda + 0.5));
             }
 #endif
         }
@@ -68,24 +68,36 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
 uint16_t *BitCost::s_costs[BC_MAX_QP];
 
-float *BitCost::s_logs;
+uint16_t *BitCost::s_bitsizes;
 
 Lock BitCost::s_costCalcLock;
 
 void BitCost::CalculateLogs()
 {
-    if (!s_logs)
+    if (!s_bitsizes)
     {
-        s_logs = new float[2*BC_MAX_MV + 1];
-        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
-        s_logs[0] = 0.718f;
+        s_bitsizes = new uint16_t[2*BC_MAX_MV + 1];
+        s_bitsizes[0] = 1;
 #if X264_APPROACH
+        float log2_2 = (float)(2.0/log(2.0));  // 2 x 1/log(2)
         for( int i = 1; i <= 2*BC_MAX_MV; i++ )
-            s_logs[i] = log((float)(i+1)) * log2_2 + 1.718f;
+            s_bitsizes[i] = (uint16_t)(log((float)(i+1)) * log2_2 + 1.718f);
 #else
-        s_logs[1] = 0.718f;
+        s_bitsizes[1] = 1;
         for( int i = 2; i <= 2*BC_MAX_MV; i++ )
-            s_logs[i] = log((float)(i+1)) * log2_2 + 0.718f;
+        {
+            // TODO: should be possible to replace this loop with a log() and
+            //       match the outputs.  Not a priority since this only runs once.
+            int temp = i;
+            uint16_t len = 1;
+            while (1 != temp)
+            {
+                temp >>= 1;
+                len += 2;
+            }
+
+            s_bitsizes[i] = len;
+        }
 #endif
     }
 }
@@ -101,10 +113,10 @@ void BitCost::destroy()
             s_costs[i] = 0;
         }
     }
-    if (s_logs)
+    if (s_bitsizes)
     {
-        delete [] s_logs;
+        delete [] s_bitsizes;
 
-        s_logs = 0;
+        s_bitsizes = 0;
     }
 }
