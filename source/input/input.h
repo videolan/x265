@@ -55,7 +55,7 @@ public:
 
     virtual void skipFrames(int numFrames) = 0;
 
-    virtual bool readPicture(x265_picture& pic) = 0;
+    virtual bool readPicture(x265_picture_t& pic) = 0;
 
     virtual bool isEof() const = 0;
 

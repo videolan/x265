@@ -43,7 +43,7 @@ YUVOutput::~YUVOutput()
     if (buf) delete [] buf;
 }
 
-bool YUVOutput::writePicture(const x265_picture& pic)
+bool YUVOutput::writePicture(const x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     int pixelbytes = (depth > 8) ? 2 : 1;

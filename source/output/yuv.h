@@ -55,7 +55,7 @@ public:
 
     void release()                                { delete this; }
 
-    bool writePicture(const x265_picture& pic);
+    bool writePicture(const x265_picture_t& pic);
 };
 }
 

@@ -182,7 +182,7 @@ int Y4MInput::guessFrameCount()
 
 void Y4MInput::skipFrames(int numFrames)
 {
-    x265_picture pic;
+    x265_picture_t pic;
 
     for (int i = 0; i < numFrames; i++)
     {
@@ -190,7 +190,7 @@ void Y4MInput::skipFrames(int numFrames)
     }
 }
 
-bool Y4MInput::readPicture(x265_picture& pic)
+bool Y4MInput::readPicture(x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
 

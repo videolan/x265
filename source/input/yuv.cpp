@@ -64,7 +64,7 @@ void YUVInput::skipFrames(int numFrames)
 }
 
 // TODO: only supports 4:2:0 chroma sampling
-bool YUVInput::readPicture(x265_picture& pic)
+bool YUVInput::readPicture(x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(read_yuv);
 

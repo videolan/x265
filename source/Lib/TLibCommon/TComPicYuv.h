@@ -174,7 +174,7 @@ public:
     Void  copyToPicLuma(TComPicYuv* pcPicYuvDst);
     Void  copyToPicCb(TComPicYuv* pcPicYuvDst);
     Void  copyToPicCr(TComPicYuv* pcPicYuvDst);
-    Void  copyFromPicture(const x265_picture&);
+    Void  copyFromPicture(const x265_picture_t&);
 
     //  Extend function of picture buffer
     Void  extendPicBorder();

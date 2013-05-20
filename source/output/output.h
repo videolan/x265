@@ -46,7 +46,7 @@ public:
 
     virtual void release() = 0;
 
-    virtual bool writePicture(const x265_picture& pic) = 0;
+    virtual bool writePicture(const x265_picture_t& pic) = 0;
 };
 }
 

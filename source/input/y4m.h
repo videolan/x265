@@ -74,7 +74,7 @@ public:
 
     void skipFrames(int numFrames);
 
-    bool readPicture(x265_picture&);
+    bool readPicture(x265_picture_t&);
 };
 }
 

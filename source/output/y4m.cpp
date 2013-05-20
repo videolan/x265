@@ -46,7 +46,7 @@ Y4MOutput::~Y4MOutput()
     if (buf) delete [] buf;
 }
 
-bool Y4MOutput::writePicture(const x265_picture& pic)
+bool Y4MOutput::writePicture(const x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
     ofs << "FRAME\n";

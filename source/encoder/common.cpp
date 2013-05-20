@@ -21,8 +21,15 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "x265.h"
 #include "common.h"
 #include <stdio.h>
+
+#if HIGH_BIT_DEPTH
+const int x265_bit_depth = 10;
+#else
+const int x265_bit_depth = 8;
+#endif
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
 {

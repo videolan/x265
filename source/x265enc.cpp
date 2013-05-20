@@ -316,7 +316,7 @@ Void TAppEncTop::encode()
         xGetBuffer(pcPicYuvRec);
 
         // read input YUV file
-        x265_picture pic;
+        x265_picture_t pic;
         Bool flush = false;
         if (m_input->readPicture(pic))
         {
@@ -420,7 +420,7 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
         --iterPicYuvRec;
     }
 
-    x265_picture pic;
+    x265_picture_t pic;
     for (i = 0; i < iNumEncoded; i++)
     {
         if (m_recon)
