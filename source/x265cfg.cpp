@@ -329,7 +329,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("CbQpOffset,-cbqpofs",  m_cbQpOffset,           0, "Chroma Cb QP Offset")
     ("CrQpOffset,-crqpofs",  m_crQpOffset,           0, "Chroma Cr QP Offset")
 
-    ("AdaptiveQpSelection,-aqps",   m_bUseAdaptQpSelect,           0, "AdaptiveQpSelection")
+    ("AdaptiveQpSelection,-aqps",     m_bUseAdaptQpSelect,        0, "AdaptiveQpSelection")
 
     ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
     ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,       6, "QP adaptation range")
@@ -386,6 +386,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("FDM", m_useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
     ("CFM", m_bUseCbfFastMode, 0, "Cbf fast mode setting")
     ("ESD", m_useEarlySkipDetection, 0, "Early SKIP detection setting")
+
     ("RateControl",         m_RCEnableRateControl,       0, "Rate control: enable rate control")
     ("TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate")
     ("KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
