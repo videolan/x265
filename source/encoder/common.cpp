@@ -51,7 +51,7 @@ void x265_param_default( x265_param_t *param )
     param->uiQuadtreeTUMaxDepthInter = 2;
     param->uiQuadtreeTUMaxDepthIntra = 1;
     param->enableAMP = 1;
-    param->enableAMPRefine = 1;
+    param->enableRectInter = 1;
     param->iQP = 30;
     param->iQPAdaptationRange = 6;
     param->bUseSAO = 1;
