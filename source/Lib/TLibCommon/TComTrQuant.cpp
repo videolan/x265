@@ -625,7 +625,7 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     Int shift_1st = g_aucConvertToBit[iWidth]  + 1 + bitDepth - 8; // log2(iWidth) - 1 + g_bitDepth - 8
     Int shift_2nd = g_aucConvertToBit[iHeight]  + 8;                 // log2(iHeight) + 6
 
-    Short tmp[64 * 64];
+    ALIGN_VAR_32(Short, tmp[64 * 64]);
 
     if (iWidth == 4 && iHeight == 4)
     {
@@ -636,6 +636,7 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
         }
         else
         {
+
             partialButterfly4(block, tmp, shift_1st, iHeight);
             partialButterfly4(tmp, coeff, shift_2nd, iWidth);
         }
