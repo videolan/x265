@@ -253,7 +253,6 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     pmv = pmv.roundToFPel();
     // TODO: HM will use bmv=0 if cheaper than pmv cost
 
-    searchMethod = 3;
     switch (searchMethod)
     {
     case X265_DIA_SEARCH:
