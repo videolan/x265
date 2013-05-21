@@ -311,7 +311,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     /* Quantization parameters */
     ("QP,q",                m_fQP,              30.0, "Qp value, if value is float, QP is switched once during encoding")
-    ("MaxCuDQPDepth,-dqd",  iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
+    ("MaxCuDQPDepth,-dqd",  iMaxCuDQPDepth,       0u, "max depth for a minimum CuDQP")
 
     ("CbQpOffset,-cbqpofs",  cbQpOffset,           0, "Chroma Cb QP Offset")
     ("CrQpOffset,-crqpofs",  crQpOffset,           0, "Chroma Cr QP Offset")

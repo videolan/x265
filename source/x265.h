@@ -104,7 +104,7 @@ typedef struct x265_param_t
     int       cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)
     int       crQpOffset;                       ///< Chroma Cr QP Offset (0:default)
 
-    int       iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
+    uint32_t  iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
     int       bUseAdaptQpSelect;                ///< TODO: What does this flag enable?
     int       bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
     int       iQPAdaptationRange;               ///< dQP range by QP adaptation
