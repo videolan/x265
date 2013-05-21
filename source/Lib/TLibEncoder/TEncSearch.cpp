@@ -3914,7 +3914,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
-        int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 3, m_acMvPredictors, iSrchRng, rcMv);
+        int satd = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
         UInt mvbits = m_me.bitcost(rcMv);
         ruiBits += mvbits;
@@ -3928,7 +3928,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     // Configure the MV bit cost calculator  (TODO: m_bc will go away)
     m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
-    m_bc.setMVP(m_pcRdCost->m_mvPredictor);
+    m_bc.setMVP(*pcMvPred);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);
 
