@@ -39,7 +39,7 @@ extern "C"
 void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->searchMethod = X265_UMH_SEARCH;
+    param->searchMethod = X265_ORIG_SEARCH;
     param->iSearchRange = 96;
     param->bipredSearchRange = 4;
     param->iIntraPeriod = -1; // default to open GOP
@@ -143,8 +143,8 @@ int x265_check_params(x265_param_t *param)
         "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
     CONFIRM(param->loopFilterTcOffsetDiv2 < -13 || param->loopFilterTcOffsetDiv2 > 13,
         "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
-    CONFIRM(param->searchMethod < 0 || param->searchMethod > 3,
-        "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM)");
+    CONFIRM(param->searchMethod < 0 || param->searchMethod > X265_ORIG_SEARCH,
+        "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG)");
     CONFIRM(param->iSearchRange < 0,
         "Search Range must be more than 0");
     CONFIRM(param->bipredSearchRange < 0,

@@ -64,11 +64,12 @@ typedef enum
     X265_DIA_SEARCH,
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
-    X265_HM_SEARCH,  // adapted HM fast-ME method
+    X265_HM_SEARCH,    // adapted HM fast-ME method
+    X265_ORIG_SEARCH,  // original HM functions (deprecated)
 }
 X265_ME_METHODS;
 
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", "orig", 0 };
 
 typedef struct x265_param_t
 {
