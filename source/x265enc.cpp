@@ -173,7 +173,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseLossless(useLossless);
 
     m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
-    m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
     int nullpad[2] = { 0, 0 };
     m_cTEncTop.setPad(nullpad);
 
@@ -294,7 +293,6 @@ Void TAppEncTop::encode()
     xInitLib();
 
     // main encoder loop
-    Int   iNumEncoded = 0;
     Bool  bEos = false;
 
     list<AccessUnit> outputAccessUnits; ///< list of access units to write out.  is populated by the encoding process
@@ -309,7 +307,7 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         x265_picture_t pic;
-        Bool flush = false;
+        Bool nopic = false;
         if (m_input->readPicture(pic))
         {
             m_iFrameRcvd++;
@@ -317,23 +315,18 @@ Void TAppEncTop::encode()
         }
         else
         {
-            flush = true;
+            nopic = true;
             bEos = true;
-            m_cTEncTop.setFramesToBeEncoded(m_iFrameRcvd);
         }
 
         // call encoding function for one frame
-        PPAStartCpuEventFunc(encode_frame);
-        m_cTEncTop.encode(bEos, flush ? 0 : &pic, m_cListPicYuvRec, outputAccessUnits, iNumEncoded);
-        PPAStopCpuEventFunc(encode_frame);
+        int iNumEncoded = m_cTEncTop.encode(bEos, nopic ? 0 : &pic, m_cListPicYuvRec, outputAccessUnits);
 
         // write bistream to file if necessary
         if (iNumEncoded > 0)
         {
-            PPAStartCpuEventFunc(bitstream_write);
             xWriteOutput(bitstreamFile, iNumEncoded, outputAccessUnits);
             outputAccessUnits.clear();
-            PPAStopCpuEventFunc(bitstream_write);
         }
     }
 
@@ -402,6 +395,7 @@ Void TAppEncTop::xDeleteBuffer()
  */
 Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits)
 {
+    PPAStartCpuEventFunc(bitstream_write);
     Int i;
 
     TComList<TComPicYuv *>::iterator iterPicYuvRec = m_cListPicYuvRec.end();
@@ -429,6 +423,7 @@ Void TAppEncTop::xWriteOutput(std::ostream &bitstreamFile, Int iNumEncoded, cons
         const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
         rateStatsAccum(au, stats);
     }
+    PPAStopCpuEventFunc(bitstream_write);
 }
 
 /**

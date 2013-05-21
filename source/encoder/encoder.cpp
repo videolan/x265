@@ -131,7 +131,6 @@ void Encoder::configure(x265_param_t *param)
     setUseStrongIntraSmoothing(param->useStrongIntraSmoothing);
 
     //====== Settings derived from user configuration ======
-    setFramesToBeEncoded(m_framesToBeEncoded);
     setProfile(m_profile);
     setLevel(m_levelTier, m_level);
 
@@ -373,7 +372,7 @@ void new_main(int argc, char **argv)
 
     // main encoder loop
     uint32_t iFrameRcvd = 0;
-    bool  bEos = false;
+    bool bEos = false;
     while (!bEos)
     {
         if (cListPicYuvRec.size() == (UInt)encoder->m_iGOPSize)
@@ -391,7 +390,7 @@ void new_main(int argc, char **argv)
 
         // read input YUV file
         x265_picture_t pic;
-        bool flush = false;
+        bool nopic = false;
         if (cliopt.input->readPicture(pic))
         {
             iFrameRcvd++;
@@ -399,15 +398,11 @@ void new_main(int argc, char **argv)
         }
         else
         {
-            flush = true;
+            nopic = true;
             bEos = true;
-            encoder->setFramesToBeEncoded(iFrameRcvd);
         }
 
-        PPAStartCpuEventFunc(encode_frame);
-        Int iNumEncoded = 0;
-        encoder->encode(bEos, flush ? 0 : &pic, cListPicYuvRec, outputAccessUnits, iNumEncoded);
-        PPAStopCpuEventFunc(encode_frame);
+        Int iNumEncoded = encoder->encode(bEos, nopic ? 0 : &pic, cListPicYuvRec, outputAccessUnits);
 
         // write bitstream to file if necessary
         if (iNumEncoded > 0)

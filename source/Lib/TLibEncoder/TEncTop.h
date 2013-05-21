@@ -207,8 +207,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// encode several number of pictures until end-of-sequence
-    Void encode(Bool bEos, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-                std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded);
+    int encode(Bool bEos, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut);
 
     void printSummary() { m_cGOPEncoder.printOutSummary(m_uiNumAllPicCoded); }
 };

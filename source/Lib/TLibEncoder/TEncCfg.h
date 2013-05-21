@@ -284,8 +284,6 @@ public:
 
     Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
 
-    Void      setFramesToBeEncoded(Int i)      { m_framesToBeEncoded = i; }
-
     //====== Coding Structure ========
     Void      setIntraPeriod(Int i)      { m_uiIntraPeriod = (UInt)i; }
 

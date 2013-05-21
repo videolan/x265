@@ -53,6 +53,7 @@
 TEncTop::TEncTop()
 {
     m_iPOCLast          = -1;
+    m_framesToBeEncoded = INT_MAX;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
 //     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
@@ -296,12 +297,14 @@ Void TEncTop::deletePicBuffer()
  \param   pcPicYuvOrg         original YUV picture
  \retval  rcListPicYuvRecOut  list of reconstruction YUV pictures
  \retval  rcListBitstreamOut  list of output bitstreams
- \retval  iNumEncoded         number of encoded pictures
+ \retval                      number of encoded pictures
  */
-Void TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded)
+int TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut)
 {
     if (pic)
     {
+        m_iNumPicRcvd++;
+        
         // get original YUV
         TComPic* pcPicCurr = NULL;
         xGetNewPicBuffer(pcPicCurr);
@@ -314,10 +317,14 @@ Void TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*
         }
     }
 
+    // Wait until we have a full GOP of pictures
     if (!m_iNumPicRcvd || (!flush && m_iPOCLast != 0 && m_iNumPicRcvd != m_iGOPSize && m_iGOPSize))
     {
-        iNumEncoded = 0;
-        return;
+        return 0;
+    }
+    if (flush)
+    {
+        m_framesToBeEncoded = m_iNumPicRcvd + m_uiNumAllPicCoded;
     }
 
     if (m_RCEnableRateControl)
@@ -333,9 +340,11 @@ Void TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*
         m_cRateCtrl.destroyRCGOP();
     }
 
-    iNumEncoded         = m_iNumPicRcvd;
-    m_iNumPicRcvd       = 0;
-    m_uiNumAllPicCoded += iNumEncoded;
+    m_uiNumAllPicCoded += m_iNumPicRcvd;
+
+    Int iNumEncoded = m_iNumPicRcvd;
+    m_iNumPicRcvd = 0;
+    return iNumEncoded;
 }
 
 // ====================================================================================================================
@@ -391,7 +400,6 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
     rpcPic->setReconMark(false);
 
     m_iPOCLast++;
-    m_iNumPicRcvd++;
 
     rpcPic->getSlice(0)->setPOC(m_iPOCLast);
     // mark it should be extended
