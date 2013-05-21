@@ -152,9 +152,7 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
                 opt(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
                 ref(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
 
-            for (int k = 0; k < width; k++)
-            {
-                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
+                for (int k = 0; k < width; k++)
                 {
                     if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
                     {

@@ -1009,8 +1009,655 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
     }
 }
 
+void xPredIntraAng4x4(int /*bitDepth*/, pixel* /*pSrc*/, int /*srcStride*/, pixel*& rpDst, int dstStride, int width, int /*height*/, int dirMode, bool /*bFilter*/, pixel *refLeft, pixel *refAbove)
+{
+    int k;
+    int blkSize        = width;
+    pixel* pDst          = rpDst;
+
+    // Map the mode index to main prediction direction and angle
+    assert(dirMode > 1); //no planar and dc
+    bool modeHor       = (dirMode < 18);
+    bool modeVer       = !modeHor;
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
+    int absAng         = abs(intraPredAngle);
+    int signAng        = intraPredAngle < 0 ? -1 : 1;
+
+    // Set bitshifts and scale the angle parameter to block size
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    int invAngle       = invAngTable[absAng];
+    absAng             = angTable[absAng];
+    intraPredAngle     = signAng * absAng;
+
+    // Do angular predictions
+
+    pixel* refMain;
+    pixel* refSide;
+
+    // Initialise the Main and Left reference array.
+    if (intraPredAngle < 0)
+    {
+        refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
+        refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
+
+        // Extend the Main reference to the left.
+        int invAngleSum    = 128;     // rounding for (shift by 8)
+        for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+        {
+            invAngleSum += invAngle;
+            refMain[k] = refSide[invAngleSum >> 8];
+        }
+    }
+    else
+    {
+        refMain = modeVer ? refAbove : refLeft;
+        refSide = modeVer ? refLeft  : refAbove;
+    }
+
+    // bfilter will always be true for exactly vertical/horizontal modes
+    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    {
+        if (modeHor)
+        {
+            Vec16uc v_temp;
+            Vec8s v_side_0; // refSide[0] value in a vector
+            v_temp = load_partial(const_int(8), (void*)refSide);
+            v_side_0 = broadcast(const_int(0), (Vec8s)v_temp);
+            v_side_0 = v_side_0 & 0x00FF;
+
+            //shift v_side by 1 element (1 byte)
+            Vec2uq tmp = reinterpret_i(v_temp);
+            tmp = tmp >> 8;
+            v_temp = reinterpret_i(tmp);
+            Vec8s v_side = extend_low(v_temp);
+
+            Vec16uc v_main;
+            v_main = load_partial(const_int(4), (void*)(refMain + 1));
+
+            Vec16uc tmp16;
+            tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(v_main, v_main);
+            tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(tmp16, tmp16);
+
+            Vec8s row0 = extend_low(tmp16);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row0 += v_side;
+            row0 = min(max(0, row0), 255);
+            Vec16uc v_res = compress(row0, 0);
+            store_partial(const_int(4), pDst, v_res);
+
+            tmp = (Vec2uq)tmp16;
+            tmp >>= 32;
+            store_partial(const_int(4), pDst + dstStride, tmp);
+
+            tmp = blend2q<1, 3>(reinterpret_i(tmp16), reinterpret_i(tmp16));
+            store_partial(const_int(4), pDst + (2 * dstStride), tmp);
+
+            tmp >>= 32;
+            store_partial(const_int(4), pDst + (3 * dstStride), tmp);
+        }
+        else
+        {
+            Vec16uc v_main;
+            v_main = load_partial(const_int(4), refMain + 1);
+            store_partial(const_int(4), pDst, v_main);
+            store_partial(const_int(4), pDst + dstStride, v_main);
+            store_partial(const_int(4), pDst + (2 * dstStride), v_main);
+            store_partial(const_int(4), pDst + (3 * dstStride), v_main);
+
+            int k;
+            for (k = 0; k < 4; k++)
+            {
+                pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << 8) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+            }
+        }
+    }
+    else
+    {
+        Vec8s row11, row12, row21, row22, row31, row32, row41, row42;
+        Vec16uc tmp16_1, tmp16_2;
+        Vec2uq tmp2uq;
+        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
+        switch (intraPredAngle)
+        {
+        case -32:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);    //-1,0,1,2
+            store_partial(const_int(4), pDst, tmp16_1);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 1); //-2,-1,0,1
+            store_partial(const_int(4), pDst + dstStride, tmp16_2);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+            store_partial(const_int(4), pDst + 2 * dstStride, tmp16_2);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 3);
+            store_partial(const_int(4), pDst + 3 * dstStride, tmp16_2);
+            return;
+
+        case -26:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 3);
+            row41 = extend_low(tmp16_1);    //offsets(-4,-3,-2,-1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(-3,-2,-1,0)
+
+            row31 = row42;                  //offsets(-3,-2,-1,0)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row32 = extend_low(tmp16_2);    //offsets(-2,-1,0,1)
+
+            row21 = row32;                  //offsets(-2,-1,0,1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row22 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row11 = row22;                  //offsets(-1,0,1,2)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 32;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(0,1,2,3)
+
+            v_deltaPos = v_ipAngle = -26;
+            break;
+
+        case -21:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+            row41 = extend_low(tmp16_1);    //offsets(-3,-2,-1,0)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(-2,-1,0,1)
+
+            row31 = row42;                  //offsets(-2,-1,0,1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row32 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row21 = row31;                  //offsets(-2,-1,0,1)
+            row22 = row32;
+
+            row11 = row32;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            v_deltaPos = v_ipAngle = -21;
+            break;
+
+        case -17:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+            row41 = extend_low(tmp16_1);    //offsets(-3,-2,-1,0)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(-2,-1,0,1)
+
+            row31 = row42;                  //offsets(-2,-1,0,1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row32 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row21 = row31;                  //offsets(-2,-1,0,1)
+            row22 = row32;
+
+            row11 = row32;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            v_deltaPos = v_ipAngle = -17;
+            break;
+
+        case -13:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+            row41 = extend_low(tmp16_1);    //offsets(-2,-1,0,1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row11 = row42;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row21 = row42;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row41;
+            row32 = row42;
+
+            v_deltaPos = v_ipAngle = -13;
+            break;
+
+        case -9:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+            row41 = extend_low(tmp16_1);    //offsets(-2,-1,0,1)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row11 = row42;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
+
+            row21 = row42;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row42;
+            row32 = row12;
+
+            v_deltaPos = v_ipAngle = -9;
+            break;
+
+        case -5:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row11;
+            row32 = row12;
+            row41 = row11;
+            row42 = row12;
+
+            v_deltaPos = v_ipAngle = -5;
+            break;
+
+        case -2:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row11;
+            row32 = row12;
+            row41 = row11;
+            row42 = row12;
+
+            v_deltaPos = v_ipAngle = -2;
+            break;
+
+        case 2:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row11;
+            row32 = row12;
+            row41 = row11;
+            row42 = row12;
+
+            v_deltaPos = v_ipAngle = 2;
+            break;
+
+        case 5:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row11;
+            row32 = row12;
+            row41 = row11;
+            row42 = row12;
+
+            v_deltaPos = v_ipAngle = 5;
+            break;
+
+        case 9:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row11;
+            row32 = row12;
+            row41 = row12;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);
+
+            v_deltaPos = v_ipAngle = 9;
+            break;
+
+        case 13:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+
+            row21 = row11;                  //offsets(0,1,2,3)
+            row22 = row12;
+            row31 = row12;                  //offsets(1,2,3,4)
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row32 = extend_low(tmp16_2);    //offsets(2,3,4,5)
+
+            row41 = row31;                  //offsets(1,2,3,4)
+            row42 = row32;
+
+            v_deltaPos = v_ipAngle = 13;
+            break;
+
+        case 17:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+
+            row21 = row12;
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row22 = extend_low(tmp16_2);    //offsets(2,3,4,5)
+
+            row31 = row21;
+            row32 = row22;
+
+            row41 = row22;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(3,4,5,6)
+
+            v_deltaPos = v_ipAngle = 17;
+            break;
+
+        case 21:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+
+            row21 = row12;
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row22 = extend_low(tmp16_2);    //offsets(2,3,4,5)
+
+            row31 = row21;
+            row32 = row22;
+
+            row41 = row22;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(3,4,5,6)
+
+            v_deltaPos = v_ipAngle = 21;
+            break;
+
+        case 26:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
+            row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 8;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row12 = extend_low(tmp16_2);    //offsets(1,2,3,4)
+
+            row21 = row12;
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 16;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row22 = extend_low(tmp16_2);    //offsets(2,3,4,5)
+
+            row31 = row22;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 24;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row32 = extend_low(tmp16_2);    //offsets(3,4,5,6)
+
+            row41 = row32;
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq = tmp2uq >> 32;
+            tmp16_2 = reinterpret_i(tmp2uq);
+            row42 = extend_low(tmp16_2);    //offsets(4,5,6,7)
+
+            v_deltaPos = v_ipAngle = 26;
+            break;
+
+        case 32:
+            tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 2);
+            store_partial(const_int(4), pDst, tmp16_1);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain + 3);
+            store_partial(const_int(4), pDst + dstStride, tmp16_2);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain + 4);
+            store_partial(const_int(4), pDst + 2 * dstStride, tmp16_2);
+            tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain + 5);
+            store_partial(const_int(4), pDst + 3 * dstStride, tmp16_2);
+            return;
+        }
+
+        //row1
+        v_deltaFract = v_deltaPos & thirty1;
+        row11 = ((thirty2 - v_deltaFract) * row11 + (v_deltaFract * row12) + 16) >> 5;
+
+        //row2
+        v_deltaPos += v_ipAngle;
+        v_deltaFract = v_deltaPos & thirty1;
+        row21 = ((thirty2 - v_deltaFract) * row21 + (v_deltaFract * row22) + 16) >> 5;
+
+        //row3
+        v_deltaPos += v_ipAngle;
+        v_deltaFract = v_deltaPos & thirty1;
+        row31 = ((thirty2 - v_deltaFract) * row31 + (v_deltaFract * row32) + 16) >> 5;
+
+        //row4
+        v_deltaPos += v_ipAngle;
+        v_deltaFract = v_deltaPos & thirty1;
+        row41 = ((thirty2 - v_deltaFract) * row41 + (v_deltaFract * row42) + 16) >> 5;
+
+        // Flip the block
+
+        if (modeHor)
+        {
+            Vec8s tmp1, tmp2, tmp3, tmp4;
+
+            tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row11, row31);
+            tmp2 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(row21, row41);
+
+            tmp3 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(tmp1, tmp2);
+            tmp4 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp2);
+
+            tmp16_1 = compress(tmp3, tmp3);
+            store_partial(const_int(4), pDst, tmp16_1);
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq >>= 32;
+            store_partial(const_int(4), pDst + dstStride, tmp2uq);
+
+            tmp16_1 = compress(tmp4, tmp4);
+            store_partial(const_int(4), pDst + (2 * dstStride), tmp16_1);
+
+            tmp2uq = reinterpret_i(tmp16_1);
+            tmp2uq >>= 32;
+            store_partial(const_int(4), pDst + (3 * dstStride), tmp2uq);
+        }
+        else
+        {
+            store_partial(const_int(4), pDst, compress(row11, row11));
+            store_partial(const_int(4), pDst + (dstStride), compress(row21, row21));
+            store_partial(const_int(4), pDst + (2 * dstStride), compress(row31, row31));
+            store_partial(const_int(4), pDst + (3 * dstStride), compress(row41, row41));
+        }
+    }
+}
+
+void xPredIntraAngBufRef(int bitDepth, pixel* pSrc, int srcStride, pixel* rpDst, int dstStride, int width, int height, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+{
+    if (width == 4)
+    {
+#if HIGH_BIT_DEPTH
+        //TODO:
+#else
+        xPredIntraAng4x4(bitDepth, pSrc, srcStride, rpDst, dstStride, width, height, dirMode, bFilter, refLeft, refAbove);
+        return;
+#endif
+    }
+
+    int k, l;
+    int blkSize        = width;
+    pixel* pDst          = rpDst;
+
+    // Map the mode index to main prediction direction and angle
+    assert(dirMode > 1); //no planar and dc
+    bool modeHor       = (dirMode < 18);
+    bool modeVer       = !modeHor;
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
+    int absAng         = abs(intraPredAngle);
+    int signAng        = intraPredAngle < 0 ? -1 : 1;
+
+    // Set bitshifts and scale the angle parameter to block size
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    int invAngle       = invAngTable[absAng];
+    absAng             = angTable[absAng];
+    intraPredAngle     = signAng * absAng;
+
+    // Do angular predictions
+    {
+        pixel* refMain;
+        pixel* refSide;
+
+        // Initialise the Main and Left reference array.
+        if (intraPredAngle < 0)
+        {
+            refMain = (modeVer ? refAbove : refLeft); // + (blkSize - 1);
+            refSide = (modeVer ? refLeft : refAbove); // + (blkSize - 1);
+
+            // Extend the Main reference to the left.
+            int invAngleSum    = 128; // rounding for (shift by 8)
+            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+            {
+                invAngleSum += invAngle;
+                refMain[k] = refSide[invAngleSum >> 8];
+            }
+        }
+        else
+        {
+            refMain = modeVer ? refAbove : refLeft;
+            refSide = modeVer ? refLeft  : refAbove;
+        }
+
+        if (intraPredAngle == 0)
+        {
+            for (k = 0; k < blkSize; k++)
+            {
+                for (l = 0; l < blkSize; l++)
+                {
+                    pDst[k * dstStride + l] = refMain[l + 1];
+                }
+            }
+
+            if (bFilter)
+            {
+                for (k = 0; k < blkSize; k++)
+                {
+                    pDst[k * dstStride] = (pixel)Clip3(0, (1 << bitDepth) - 1, static_cast<short>(pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
+                }
+            }
+        }
+        else
+        {
+            int deltaPos = 0;
+            int deltaInt;
+            int deltaFract;
+            int refMainIndex;
+
+            //printf("\nIntrapred Angle: %d\t::>\t", intraPredAngle);
+
+            for (k = 0; k < blkSize; k++)
+            {
+                deltaPos += intraPredAngle;
+                deltaInt   = deltaPos >> 5;
+                deltaFract = deltaPos & (32 - 1);
+
+                // printf(" %d", deltaInt);
+                //printf(" %d", (bool)(deltaFract!=0));
+                if (deltaFract)
+                {
+                    // Do linear filtering
+                    for (l = 0; l < blkSize; l++)
+                    {
+                        refMainIndex        = l + deltaInt + 1;
+                        pDst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
+                    }
+                }
+                else
+                {
+                    // Just copy the integer samples
+                    for (l = 0; l < blkSize; l++)
+                    {
+                        pDst[k * dstStride + l] = refMain[l + deltaInt + 1];
+                    }
+                }
+            }
+        }
+
+        // Flip the block if this is the horizontal mode
+        if (modeHor)
+        {
+            pixel  tmp;
+            for (k = 0; k < blkSize - 1; k++)
+            {
+                for (l = k + 1; l < blkSize; l++)
+                {
+                    tmp                 = pDst[k * dstStride + l];
+                    pDst[k * dstStride + l] = pDst[l * dstStride + k];
+                    pDst[l * dstStride + k] = tmp;
+                }
+            }
+        }
+    }
+}
+
 void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
 {
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
+    p.getIPredAng = xPredIntraAngBufRef;
 }

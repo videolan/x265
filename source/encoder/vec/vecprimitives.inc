@@ -29,8 +29,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <smmintrin.h>
+#include "Lib\TLibCommon\TComPrediction.h"
+#include <algorithm>
 
-#define MAX_CU_SIZE 64
+//#define MAX_CU_SIZE 64
 extern char g_aucConvertToBit[];
 
 using namespace x265;
