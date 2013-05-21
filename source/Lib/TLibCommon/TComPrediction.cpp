@@ -490,10 +490,10 @@ Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, Re
 
 Void TComPrediction::xPredInterUni(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Bool bi)
 {
-    Int         iRefIdx     = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+    Int iRefIdx = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
 
     assert(iRefIdx >= 0);
-    TComMv      cMv         = pcCU->getCUMvField(eRefPicList)->getMv(uiPartAddr);
+    TComMv cMv = pcCU->getCUMvField(eRefPicList)->getMv(uiPartAddr);
 
     pcCU->clipMv(cMv);
     xPredInterLumaBlk(pcCU, pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);

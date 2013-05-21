@@ -56,120 +56,121 @@ typedef struct x265_picture_t
     int   stride[3];
 
     int   bitDepth;
-} x265_picture_t;
+}
+x265_picture_t;
 
-typedef enum X265_ME_METHODS
+typedef enum
 {
     X265_DIA_SEARCH,
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
     X265_HM_SEARCH,  // adapted HM fast-ME method
-};
+}
+X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", 0 };
 
 typedef struct x265_param_t
 {
     // coding tools (bit-depth)
-    int       m_internalBitDepth;                 ///< bit-depth codec operates at
+    int       internalBitDepth;                 ///< bit-depth codec operates at
 
     // source specification
-    int       m_iFrameRate;                       ///< source frame-rates (Hz)
-    int       m_iSourceWidth;                     ///< source width in pixel
-    int       m_iSourceHeight;                    ///< source height in pixel
+    int       iFrameRate;                       ///< source frame-rates (Hz)
+    int       iSourceWidth;                     ///< source width in pixel
+    int       iSourceHeight;                    ///< source height in pixel
 
     // coding unit (CU) definition
-    uint32_t  m_uiMaxCUWidth;                     ///< max. CU width in pixel
-    uint32_t  m_uiMaxCUHeight;                    ///< max. CU height in pixel
-    uint32_t  m_uiMaxCUDepth;                     ///< max. CU depth
+    uint32_t  uiMaxCUSize;                      ///< max. CU width and height in pixels
+    uint32_t  uiMaxCUDepth;                     ///< max. CU depth
 
     // transform unit (TU) definition
-    uint32_t  m_uiQuadtreeTULog2MaxSize;
-    uint32_t  m_uiQuadtreeTULog2MinSize;
+    uint32_t  uiQuadtreeTULog2MaxSize;
+    uint32_t  uiQuadtreeTULog2MinSize;
 
-    uint32_t  m_uiQuadtreeTUMaxDepthInter;
-    uint32_t  m_uiQuadtreeTUMaxDepthIntra;
+    uint32_t  uiQuadtreeTUMaxDepthInter;
+    uint32_t  uiQuadtreeTUMaxDepthIntra;
 
     // coding structure
-    int       m_iIntraPeriod;                     ///< period of I-slice (random access period)
+    int       iIntraPeriod;                     ///< period of I-slice (random access period)
 
-    int       m_useTransformSkip;                 ///< flag for enabling intra transform skipping
-    int       m_useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
-    int       m_enableAMP;                        ///< flag for enabling asymmetrical motion predictions
-    int       m_enableAMPRefine;                  ///< mis-named, disables rectangular modes 2NxN, Nx2N
+    int       useTransformSkip;                 ///< flag for enabling intra transform skipping
+    int       useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
+    int       enableAMP;                        ///< flag for enabling asymmetrical motion predictions
+    int       enableAMPRefine;                  ///< mis-named, disables rectangular modes 2NxN, Nx2N
 
     // coding quality
-    int       m_iQP;                              ///< QP value of key-picture (integer)
-    int       m_cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)
-    int       m_crQpOffset;                       ///< Chroma Cr QP Offset (0:default)
+    int       iQP;                              ///< QP value of key-picture (integer)
+    int       cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)
+    int       crQpOffset;                       ///< Chroma Cr QP Offset (0:default)
 
-    int       m_iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
-    int       m_bUseAdaptQpSelect;                ///< TODO: What does this flag enable?
-    int       m_bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
-    int       m_iQPAdaptationRange;               ///< dQP range by QP adaptation
+    uint32_t  iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
+    int       bUseAdaptQpSelect;                ///< TODO: What does this flag enable?
+    int       bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
+    int       iQPAdaptationRange;               ///< dQP range by QP adaptation
 
     // coding tools (PCM bit-depth)
-    int       m_bPCMInputBitDepthFlag;            ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
+    int       bPCMInputBitDepthFlag;            ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
 
     // coding tool (lossless)
-    int       m_useLossless;                      ///< flag for using lossless coding
-    int       m_bUseSAO;                          ///< Enable SAO filter
-    int       m_maxNumOffsetsPerPic;              ///< SAO maximum number of offset per picture
-    int       m_saoLcuBoundary;                   ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    int       m_saoLcuBasedOptimization;          ///< SAO LCU-based optimization
+    int       useLossless;                      ///< flag for using lossless coding
+    int       bUseSAO;                          ///< Enable SAO filter
+    int       maxNumOffsetsPerPic;              ///< SAO maximum number of offset per picture
+    int       saoLcuBoundary;                   ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+    int       saoLcuBasedOptimization;          ///< SAO LCU-based optimization
 
     // coding tools (loop filter)
-    int       m_bLoopFilterDisable;               ///< flag for using deblocking filter
-    int       m_loopFilterOffsetInPPS;            ///< offset for deblocking filter in 0 = slice header, 1 = PPS
-    int       m_loopFilterBetaOffsetDiv2;         ///< beta offset for deblocking filter
-    int       m_loopFilterTcOffsetDiv2;           ///< tc offset for deblocking filter
-    int       m_DeblockingFilterControlPresent;   ///< deblocking filter control present flag in PPS
-    int       m_DeblockingFilterMetric;           ///< blockiness metric in encoder
+    int       bLoopFilterDisable;               ///< flag for using deblocking filter
+    int       loopFilterOffsetInPPS;            ///< offset for deblocking filter in 0 = slice header, 1 = PPS
+    int       loopFilterBetaOffsetDiv2;         ///< beta offset for deblocking filter
+    int       loopFilterTcOffsetDiv2;           ///< tc offset for deblocking filter
+    int       DeblockingFilterControlPresent;   ///< deblocking filter control present flag in PPS
+    int       DeblockingFilterMetric;           ///< blockiness metric in encoder
 
     // coding tools (PCM)
-    int       m_usePCM;                           ///< flag for using IPCM
-    uint32_t  m_pcmLog2MaxSize;                   ///< log2 of maximum PCM block size
-    uint32_t  m_uiPCMLog2MinSize;                 ///< log2 of minimum PCM block size
-    int       m_bPCMFilterDisableFlag;            ///< PCM filter disable flag
+    int       usePCM;                           ///< flag for using IPCM
+    uint32_t  pcmLog2MaxSize;                   ///< log2 of maximum PCM block size
+    uint32_t  uiPCMLog2MinSize;                 ///< log2 of minimum PCM block size
+    int       bPCMFilterDisableFlag;            ///< PCM filter disable flag
 
     // coding tools
-    int       m_useRDOQ;                          ///< flag for using RD optimized quantization
-    int       m_useRDOQTS;                        ///< flag for using RD optimized quantization for transform skip
-    int       m_rdPenalty;                        ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
-    int       m_signHideFlag;
-    int       m_useFastDecisionForMerge;          ///< flag for using Fast Decision Merge RD-Cost
-    int       m_bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
-    int       m_useEarlySkipDetection;            ///< flag for using Early SKIP Detection
+    int       useRDOQ;                          ///< flag for using RD optimized quantization
+    int       useRDOQTS;                        ///< flag for using RD optimized quantization for transform skip
+    int       rdPenalty;                        ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
+    int       signHideFlag;
+    int       useFastDecisionForMerge;          ///< flag for using Fast Decision Merge RD-Cost
+    int       bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
+    int       useEarlySkipDetection;            ///< flag for using Early SKIP Detection
 
-    int       m_searchMethod;                     ///< ME search method (DIA, HEX, UMH, HM)
-    int       m_iSearchRange;                     ///< ME search range
-    int       m_bipredSearchRange;                ///< ME search range for bipred refinement
+    int       searchMethod;                     ///< ME search method (DIA, HEX, UMH, HM)
+    int       iSearchRange;                     ///< ME search range
+    int       bipredSearchRange;                ///< ME search range for bipred refinement
 
-    int       m_iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+    int       iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
 
-    int       m_bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
+    int       bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
 
     // weighted prediction
-    int       m_useWeightedPred;                  ///< Use of weighted prediction in P slices
-    int       m_useWeightedBiPred;                ///< Use of bi-directional weighted prediction in B slices
+    int       useWeightedPred;                  ///< Use of weighted prediction in P slices
+    int       useWeightedBiPred;                ///< Use of bi-directional weighted prediction in B slices
 
-    uint32_t  m_log2ParallelMergeLevel;           ///< Parallel merge estimation region
-    uint32_t  m_maxNumMergeCand;                  ///< Max number of merge candidates
+    uint32_t  log2ParallelMergeLevel;           ///< Parallel merge estimation region
+    uint32_t  maxNumMergeCand;                  ///< Max number of merge candidates
 
-    int       m_TMVPModeId;                       ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
+    int       TMVPModeId;                       ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
 
-    int       m_RCEnableRateControl;              ///< enable rate control or not
-    int       m_RCTargetBitrate;                  ///< target bitrate when rate control is enabled
-    int       m_RCKeepHierarchicalBit;            ///< whether keeping hierarchical bit allocation structure or not
-    int       m_RCLCULevelRC;                     ///< true: LCU level rate control; false: picture level rate control
-    int       m_RCUseLCUSeparateModel;            ///< use separate R-lambda model at LCU level
-    int       m_RCInitialQP;                      ///< inital QP for rate control
-    int       m_RCForceIntraQP;                   ///< force all intra picture to use initial QP or not
+    int       RCEnableRateControl;              ///< enable rate control or not
+    int       RCTargetBitrate;                  ///< target bitrate when rate control is enabled
+    int       RCKeepHierarchicalBit;            ///< whether keeping hierarchical bit allocation structure or not
+    int       RCLCULevelRC;                     ///< true: LCU level rate control; false: picture level rate control
+    int       RCUseLCUSeparateModel;            ///< use separate R-lambda model at LCU level
+    int       RCInitialQP;                      ///< inital QP for rate control
+    int       RCForceIntraQP;                   ///< force all intra picture to use initial QP or not
 
-    int       m_TransquantBypassEnableFlag;       ///< transquant_bypass_enable_flag setting in PPS.
-    int       m_CUTransquantBypassFlagValue;      ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
+    int       TransquantBypassEnableFlag;       ///< transquant_bypass_enable_flag setting in PPS.
+    int       CUTransquantBypassFlagValue;      ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
 
-    int       m_useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
+    int       useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
 }
 x265_param_t;
 

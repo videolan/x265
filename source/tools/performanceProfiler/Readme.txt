@@ -1,16 +1,13 @@
 1.Set the following in the config file
 
-ScriptPath - path where the batch scripts (Profiler.bat)are saved.
-DecoderApplicationPath - path where the decoder application is present (TAppDecoder.exe)
-encoderApplicationPath - path where encoder application is present (x265-cli.exe)
-fileCfgPath  -  Path where input files and cfg files are present. Both input testsequence file name and cfg filename should be same
-psnrApplicationPath - Path where the ds_psnr application is present (dr_psnr.exe)
-ffmpegPath  -  Path where ffmeg tool is installed. This is required only for testing y4m file
-frames -- no:of frames to encode
-testFile1= filename without the extension
-
+workingdir  -- set the working drive
+buildVersion -- set the build version(fro example vc11-x86_64)
+ffmpegPath   -- set the path for ffmpeg application path
+inputFilePath -- set the path where input y4m/yuv files are present
+frames        -- set the frmae number to encode and decode
+inputFileName1 -- set the input fles to encode
 
 2. Run performanceProfiler.bat
 
-3. Check the results in Result.txt under the path <encoderApplicationPath >
+3. Check the results in Result.txt under the path <"build\buildVersion\Release\results.txt">
 

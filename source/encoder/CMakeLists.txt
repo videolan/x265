@@ -24,6 +24,7 @@ add_library(x265 ../../COPYING ../x265.h
     md5.cpp md5.h
     bitcost.cpp bitcost.h mv.h
     motion.cpp motion.h
+    encoder.cpp encoder.h
     TShortYUV.cpp TShortYUV.h
     common.cpp common.h)
     

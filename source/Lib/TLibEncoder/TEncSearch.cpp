@@ -3754,6 +3754,7 @@ Void TEncSearch::xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst)
     }
 }
 
+/* Check if using an alternative MVP would result in a smaller MVD + signal bits */
 Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, TComMv cMv, TComMv& rcMvPred, Int& riMVPIdx, UInt& ruiBits, UInt& ruiCost)
 {
     AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
@@ -3767,19 +3768,17 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, TComMv 
 
     Int iBestMVPIdx = riMVPIdx;
 
-    m_pcRdCost->setPredictor(rcMvPred);
-    Int iOrgMvBits  = m_pcRdCost->getBits(cMv.getHor(), cMv.getVer());
-    iOrgMvBits += m_auiMVPIdxCost[riMVPIdx][AMVP_MAX_NUM_CANDS];
+    m_me.setMVP(rcMvPred);
+    Int iOrgMvBits = m_me.bitcost(cMv) + m_auiMVPIdxCost[riMVPIdx][AMVP_MAX_NUM_CANDS];
     Int iBestMvBits = iOrgMvBits;
 
     for (Int iMVPIdx = 0; iMVPIdx < pcAMVPInfo->iN; iMVPIdx++)
     {
-        if (iMVPIdx == riMVPIdx) continue;
+        if (iMVPIdx == riMVPIdx)
+            continue;
 
-        m_pcRdCost->setPredictor(pcAMVPInfo->m_acMvCand[iMVPIdx]);
-
-        Int iMvBits = m_pcRdCost->getBits(cMv.getHor(), cMv.getVer());
-        iMvBits += m_auiMVPIdxCost[iMVPIdx][AMVP_MAX_NUM_CANDS];
+        m_me.setMVP(pcAMVPInfo->m_acMvCand[iMVPIdx]);
+        Int iMvBits = m_me.bitcost(cMv) + m_auiMVPIdxCost[iMVPIdx][AMVP_MAX_NUM_CANDS];
 
         if (iMvBits < iBestMvBits)
         {
@@ -3788,7 +3787,7 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, TComMv 
         }
     }
 
-    if (iBestMVPIdx != riMVPIdx) //if changed
+    if (iBestMVPIdx != riMVPIdx) // if changed
     {
         rcMvPred = pcAMVPInfo->m_acMvCand[iBestMVPIdx];
 
