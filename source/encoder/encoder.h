@@ -51,10 +51,8 @@ protected:
     // coding structure
     GOPEntry  m_GOPList[MAX_GOP];               ///< the coding structure entries from the config file
     int       m_maxTempLayer;                   ///< Max temporal layer
-    double    m_adLambdaModifier[MAX_TLAYER];   ///< Lambda modifier array for each temporal layer
     int       m_numReorderPics[MAX_TLAYER];     ///< total number of reorder pictures
     int       m_maxDecPicBuffering[MAX_TLAYER]; ///< total number of pictures in the decoded picture buffer
-    int       m_minSpatialSegmentationIdc;      ///< Indicates the maximum size of the spatial segments in the pictures in the coded video sequence
 
     // internal member functions
     void      xSetGlobal();                     ///< set global variables

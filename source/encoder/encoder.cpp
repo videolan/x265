@@ -130,7 +130,6 @@ void Encoder::configure(x265_param_t *param)
     setCUTransquantBypassFlagValue(param->CUTransquantBypassFlagValue);
     setUseStrongIntraSmoothing(param->useStrongIntraSmoothing);
 
-
     //====== Settings derived from user configuration ======
     setFramesToBeEncoded(m_framesToBeEncoded);
     setFrameSkip(m_FrameSkip);
@@ -144,9 +143,8 @@ void Encoder::configure(x265_param_t *param)
     {
         setNumReorderPics(m_numReorderPics[i], i);
         setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        setLambdaModifier(i, m_adLambdaModifier[i]);
+        setLambdaModifier(i, 1.0);
     }
-    setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
 
     TComVPS vps;
     vps.setMaxTLayers(m_maxTempLayer);
@@ -188,17 +186,18 @@ void Encoder::configure(x265_param_t *param)
     setUseRecalculateQPAccordingToLambda(0);
     setActiveParameterSetsSEIEnabled(0);
     setVuiParametersPresentFlag(0);
+    setMinSpatialSegmentationIdc(0);
     setAspectRatioIdc(0);
     setSarWidth(0);
     setSarHeight(0);
     setOverscanInfoPresentFlag(0);
     setOverscanAppropriateFlag(0);
     setVideoSignalTypePresentFlag(0);
-    setVideoFormat(0);
+    setVideoFormat(5);
     setVideoFullRangeFlag(0);
     setColourDescriptionPresentFlag(0);
-    setColourPrimaries(0);
-    setTransferCharacteristics(0);
+    setColourPrimaries(2);
+    setTransferCharacteristics(2);
     setMatrixCoefficients(2);
     setChromaLocInfoPresentFlag(0);
     setChromaSampleLocTypeTopField(0);
