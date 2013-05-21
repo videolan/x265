@@ -290,11 +290,12 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("QuadtreeTUMaxDepthInter", uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
 
     // Coding structure parameters
-    ("IntraPeriod,-ip",         iIntraPeriod,                -1, "Intra period in frames, (-1: only first frame)")
-    ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
-    ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
+    ("IntraPeriod,-ip",         iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
+    ("DecodingRefreshType,-dr", m_iDecodingRefreshType,     0, "Intra refresh type (0:none 1:CRA 2:IDR)")
+    ("GOPSize,g",               m_iGOPSize,                 1, "GOP size of temporal structure")
+
     // motion options
-    ("SearchMethod,-me",        searchMethod,               3, "0:DIA 1:HEX 2:UMH 3: UMH")
+    ("SearchMethod,-me",        searchMethod,               3, "0:DIA 1:HEX 2:UMH 3:HM 4:ORIG")
     ("SearchRange,-sr",         iSearchRange,              96, "Motion search range")
     ("BipredSearchRange",       bipredSearchRange,          4, "Motion search range for bipred refinement")
     ("HadamardME",              m_bUseHADME,                1, "Hadamard ME for fractional-pel")
