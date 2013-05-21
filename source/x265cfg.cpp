@@ -46,6 +46,7 @@
 #include "primitives.h"
 #include "threadpool.h"
 #include "x265cfg.h"
+#include "common.h"
 
 static istream& operator >>(istream &, Level::Name &);
 static istream& operator >>(istream &, Level::Tier &);
@@ -311,7 +312,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     /* Quantization parameters */
     ("QP,q",                m_fQP,              30.0, "Qp value, if value is float, QP is switched once during encoding")
-    ("MaxCuDQPDepth,-dqd",  iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
+    ("MaxCuDQPDepth,-dqd",  iMaxCuDQPDepth,       0u, "max depth for a minimum CuDQP")
 
     ("CbQpOffset,-cbqpofs",  cbQpOffset,           0, "Chroma Cb QP Offset")
     ("CrQpOffset,-crqpofs",  crQpOffset,           0, "Chroma Cr QP Offset")
@@ -574,10 +575,15 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     xCheckParameter();
 
     // set global variables
-    xSetGlobal();
+    x265_set_globals(this, m_inputBitDepth);
 
     // print-out parameters
-    xPrintParameter();
+    printf("Bitstream File               : %s\n", m_pchBitstreamFile);
+    printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
+    printf("GOP size                     : %d\n", m_iGOPSize);
+    x265_print_params(this);
+    printf("\n\n");
+    fflush(stdout);
 
     return true;
 }
@@ -593,84 +599,25 @@ static inline Bool confirmPara(Bool bflag, const Char* message)
 
 Void TAppEncCfg::xCheckParameter()
 {
-    Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a, b) check_failed |= confirmPara(a, b)
-    // check range of parameters
+    Bool check_failed = x265_check_params(this) ? true : false;
+
+    // validate (or in some instances generate) internally calculated parameters
 #if HIGH_BIT_DEPTH
     xConfirmPara(m_inputBitDepth < 8,                                                      "InputBitDepth must be at least 8");
 #else
     xConfirmPara(m_inputBitDepth != 8,                                                     "InputBitDepth must be 8");
-    xConfirmPara(internalBitDepth != 8,                                                    "InternalBitDepth must be 8");
 #endif
     xConfirmPara(m_outputBitDepth > internalBitDepth,                                      "OutputBitDepth must be less than or equal to InternalBitDepth");
-    xConfirmPara(iQP <  -6 * (internalBitDepth - 8) || iQP > 51,                           "QP exceeds supported range (-QpBDOffsety to 51)");
-    xConfirmPara(iFrameRate <= 0,                                                          "Frame rate must be more than 1");
     xConfirmPara(m_framesToBeEncoded <= 0,                                                 "Total Number Of Frames encoded must be more than 0");
     xConfirmPara(m_iGOPSize < 1,                                                           "GOP Size must be greater or equal to 1");
     xConfirmPara(m_iGOPSize > 1 &&  m_iGOPSize % 2,                                        "GOP Size must be a multiple of 2, if GOP Size is greater than 1");
     xConfirmPara(m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                 "Decoding Refresh Type must be equal to 0, 1 or 2");
     xConfirmPara((iIntraPeriod > 0 && iIntraPeriod < m_iGOPSize) || iIntraPeriod == 0,     "Intra period must be more than GOP size, or -1 , not 0");
-    xConfirmPara(loopFilterBetaOffsetDiv2 < -13 || loopFilterBetaOffsetDiv2 > 13,          "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
-    xConfirmPara(loopFilterTcOffsetDiv2 < -13 || loopFilterTcOffsetDiv2 > 13,              "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
-    xConfirmPara(searchMethod < 0 || searchMethod > 3,                                     "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM)");
-    xConfirmPara(iSearchRange < 0,                                                         "Search Range must be more than 0");
-    xConfirmPara(bipredSearchRange < 0,                                                    "Search Range must be more than 0");
-    xConfirmPara(iMaxCuDQPDepth > uiMaxCUDepth - 1,                                        "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
-    xConfirmPara(cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12");
-    xConfirmPara(cbQpOffset >  12,   "Max. Chroma Cb QP Offset is  12");
-    xConfirmPara(crQpOffset < -12,   "Min. Chroma Cr QP Offset is -12");
-    xConfirmPara(crQpOffset >  12,   "Max. Chroma Cr QP Offset is  12");
-
-    xConfirmPara(iQPAdaptationRange <= 0,                                                  "QP Adaptation Range must be more than 0");
     if (m_iDecodingRefreshType == 2)
     {
         xConfirmPara(iIntraPeriod > 0 && iIntraPeriod <= m_iGOPSize,                       "Intra period must be larger than GOP size for periodic IDR pictures");
-    }
-    xConfirmPara((uiMaxCUSize >> uiMaxCUDepth) < 4,                                        "Minimum partition width size should be larger than or equal to 8");
-    xConfirmPara(uiMaxCUSize < 16,                                                         "Maximum partition width size should be larger than or equal to 16");
-    xConfirmPara((iSourceWidth  % (uiMaxCUSize >> (uiMaxCUDepth - 1))) != 0,               "Resulting coded frame width must be a multiple of the minimum CU size");
-    xConfirmPara((iSourceHeight % (uiMaxCUSize >> (uiMaxCUDepth - 1))) != 0,               "Resulting coded frame height must be a multiple of the minimum CU size");
-
-    xConfirmPara(uiQuadtreeTULog2MinSize < 2,                                              "QuadtreeTULog2MinSize must be 2 or greater.");
-    xConfirmPara(uiQuadtreeTULog2MaxSize > 5,                                              "QuadtreeTULog2MaxSize must be 5 or smaller.");
-    xConfirmPara((1 << uiQuadtreeTULog2MaxSize) > uiMaxCUSize,                             "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
-
-    xConfirmPara(uiQuadtreeTULog2MaxSize < uiQuadtreeTULog2MinSize,                "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
-    xConfirmPara((1 << uiQuadtreeTULog2MinSize) > (uiMaxCUSize >> (uiMaxCUDepth - 1)), "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    xConfirmPara((1 << uiQuadtreeTULog2MinSize) > (uiMaxCUSize >> (uiMaxCUDepth - 1)), "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    xConfirmPara((1 << uiQuadtreeTULog2MinSize) > (uiMaxCUSize >> uiMaxCUDepth), "Minimum CU width must be greater than minimum transform size.");
-    xConfirmPara((1 << uiQuadtreeTULog2MinSize) > (uiMaxCUSize >> uiMaxCUDepth), "Minimum CU height must be greater than minimum transform size.");
-    xConfirmPara(uiQuadtreeTUMaxDepthInter < 1,                                                         "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
-    xConfirmPara(uiMaxCUSize < (1 << (uiQuadtreeTULog2MinSize + uiQuadtreeTUMaxDepthInter - 1)), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-    xConfirmPara(uiQuadtreeTUMaxDepthIntra < 1,                                                         "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
-    xConfirmPara(uiMaxCUSize < (1 << (uiQuadtreeTULog2MinSize + uiQuadtreeTUMaxDepthIntra - 1)), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-
-    xConfirmPara(maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
-    xConfirmPara(maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
-
-    xConfirmPara(bUseAdaptQpSelect && iQP < 0,                              "AdaptiveQpSelection must be disabled when QP < 0.");
-    xConfirmPara(bUseAdaptQpSelect && (cbQpOffset != 0 || crQpOffset != 0), "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
-
-    if (usePCM)
-    {
-        xConfirmPara(uiPCMLog2MinSize < 3,                                      "PCMLog2MinSize must be 3 or greater.");
-        xConfirmPara(uiPCMLog2MinSize > 5,                                      "PCMLog2MinSize must be 5 or smaller.");
-        xConfirmPara(pcmLog2MaxSize > 5,                                        "PCMLog2MaxSize must be 5 or smaller.");
-        xConfirmPara(pcmLog2MaxSize < uiPCMLog2MinSize,                         "PCMLog2MaxSize must be equal to or greater than m_uiPCMLog2MinSize.");
-    }
-
-    //TODO:ChromaFmt assumes 4:2:0 below
-    xConfirmPara(iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
-    xConfirmPara(iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
-
-    // max CU size should be power of 2
-    UInt ui = uiMaxCUSize;
-    while (ui)
-    {
-        ui >>= 1;
-        if ((ui & 1) == 1)
-            xConfirmPara(ui != 1, "Width should be 2^n");
     }
 
     /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
@@ -982,7 +929,7 @@ Void TAppEncCfg::xCheckParameter()
         {
             m_maxDecPicBuffering[i] = m_numReorderPics[i] + 1;
         }
-       // a lower layer can not have higher value of m_uiMaxDecPicBuffering than a higher layer
+        // a lower layer can not have higher value of m_uiMaxDecPicBuffering than a higher layer
         if (m_maxDecPicBuffering[i + 1] < m_maxDecPicBuffering[i])
         {
             m_maxDecPicBuffering[i + 1] = m_maxDecPicBuffering[i];
@@ -1007,142 +954,14 @@ Void TAppEncCfg::xCheckParameter()
             m_minSpatialSegmentationIdc = 0;
         }
     }
-    xConfirmPara(iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
 
     xConfirmPara(m_decodedPictureHashSEIEnabled < 0 || m_decodedPictureHashSEIEnabled > 3, "this hash type is not correct!\n");
-
-    if (RCEnableRateControl)
-    {
-        if (RCForceIntraQP)
-        {
-            if (RCInitialQP == 0)
-            {
-                printf("\nInitial QP for rate control is not specified. Reset not to use force intra QP!");
-                RCForceIntraQP = false;
-            }
-        }
-    }
-
-    xConfirmPara(!TransquantBypassEnableFlag && CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
-
-    xConfirmPara(log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
 
 #undef xConfirmPara
     if (check_failed)
     {
         exit(EXIT_FAILURE);
     }
-}
-
-/** \todo use of global variables should be removed later
- */
-Void TAppEncCfg::xSetGlobal()
-{
-    // set max CU width & height
-    g_uiMaxCUWidth  = uiMaxCUSize;
-    g_uiMaxCUHeight = uiMaxCUSize;
-
-    // compute actual CU depth with respect to config depth and max transform size
-    g_uiAddCUDepth  = 0;
-    while ((uiMaxCUSize >> uiMaxCUDepth) > (1 << (uiQuadtreeTULog2MinSize + g_uiAddCUDepth)))
-    {
-        g_uiAddCUDepth++;
-    }
-
-    uiMaxCUDepth += g_uiAddCUDepth;
-    g_uiAddCUDepth++;
-    g_uiMaxCUDepth = uiMaxCUDepth;
-
-    // set internal bit-depth and constants
-#if HIGH_BIT_DEPTH
-    g_bitDepthY = internalBitDepth;
-    g_bitDepthC = internalBitDepth;
-
-    g_uiPCMBitDepthLuma = bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
-    g_uiPCMBitDepthChroma = bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
-#else
-    g_bitDepthY = g_bitDepthC = 8;
-    g_uiPCMBitDepthLuma = g_uiPCMBitDepthChroma = 8;
-#endif
-}
-
-Void TAppEncCfg::xPrintParameter()
-{
-    printf("Bitstream File               : %s\n", m_pchBitstreamFile);
-    printf("Format                       : %dx%d %dHz\n", iSourceWidth, iSourceHeight, iFrameRate);
-    printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
-    printf("CU size / depth              : %d / %d\n", uiMaxCUSize, uiMaxCUDepth);
-    printf("RQT trans. size (min / max)  : %d / %d\n", 1 << uiQuadtreeTULog2MinSize, 1 << uiQuadtreeTULog2MaxSize);
-    printf("Max RQT depth inter          : %d\n", uiQuadtreeTUMaxDepthInter);
-    printf("Max RQT depth intra          : %d\n", uiQuadtreeTUMaxDepthIntra);
-    printf("Min PCM size                 : %d\n", 1 << uiPCMLog2MinSize);
-    printf("Motion search / range        : %s / %d\n", x265_motion_est_names[searchMethod], iSearchRange );
-    printf("Intra period                 : %d\n", iIntraPeriod);
-    printf("Decoding refresh type        : %d\n", m_iDecodingRefreshType);
-    printf("QP                           : %5.2f\n", m_fQP);
-    printf("Max dQP signaling depth      : %d\n", iMaxCuDQPDepth);
-
-    if (cbQpOffset || crQpOffset)
-    {
-        printf("Cb QP Offset                 : %d\n", cbQpOffset);
-        printf("Cr QP Offset                 : %d\n", crQpOffset);
-    }
-
-    printf("QP adaptation                : %d (range=%d)\n", bUseAdaptiveQP, (bUseAdaptiveQP ? iQPAdaptationRange : 0));
-    printf("GOP size                     : %d\n", m_iGOPSize);
-#if HIGH_BIT_DEPTH
-    printf("Internal bit depth           : %d\n", internalBitDepth);
-#endif
-    printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
-
-    if (RCEnableRateControl)
-    {
-        printf("RateControl                  : %d\n", RCEnableRateControl);
-        printf("TargetBitrate                : %d\n", RCTargetBitrate);
-        printf("KeepHierarchicalBit          : %d\n", RCKeepHierarchicalBit);
-        printf("LCULevelRC                   : %d\n", RCLCULevelRC);
-        printf("UseLCUSeparateModel          : %d\n", RCUseLCUSeparateModel);
-        printf("InitialQP                    : %d\n", RCInitialQP);
-        printf("ForceIntraQP                 : %d\n", RCForceIntraQP);
-    }
-
-    printf("Max Num Merge Candidates     : %d\n", maxNumMergeCand);
-    printf("\n");
-
-    printf("TOOL CFG: ");
-#if HIGH_BIT_DEPTH
-    printf("IBD:%d ", g_bitDepthY > m_inputBitDepth || g_bitDepthC > m_inputBitDepth);
-#endif
-    printf("HAD:%d ", m_bUseHADME);
-    printf("RDQ:%d ", useRDOQ);
-    printf("RDQTS:%d ", useRDOQTS);
-    printf("RDpenalty:%d ", rdPenalty);
-    printf("ASR:%d ", m_bUseASR);
-    printf("FDM:%d ", useFastDecisionForMerge);
-    printf("CFM:%d ", bUseCbfFastMode);
-    printf("ESD:%d ", useEarlySkipDetection);
-    printf("TransformSkip:%d ",     useTransformSkip);
-    printf("TransformSkipFast:%d ", useTransformSkipFast);
-    printf("CIP:%d ", bUseConstrainedIntraPred);
-    printf("SAO:%d ", (bUseSAO) ? (1) : (0));
-    printf("PCM:%d ", (usePCM && (1 << uiPCMLog2MinSize) <= uiMaxCUSize) ? 1 : 0);
-    printf("SAOLcuBasedOptimization:%d ", (saoLcuBasedOptimization) ? (1) : (0));
-
-    printf("LosslessCuEnabled:%d ", (useLossless) ? 1 : 0);
-    printf("WPP:%d ", useWeightedPred);
-    printf("WPB:%d ", useWeightedBiPred);
-    printf("PME:%d ", log2ParallelMergeLevel);
-    printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d ",
-           iWaveFrontSynchro, (iSourceHeight + uiMaxCUSize - 1) / uiMaxCUSize);
-    printf("ScalingList:%d ", m_useScalingListId);
-    printf("TMVPMode:%d ", TMVPModeId);
-    printf("AQpS:%d ", bUseAdaptQpSelect);
-
-    printf("SignBitHidingFlag:%d ", signHideFlag);
-    printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0);
-    printf("\n\n");
-
-    fflush(stdout);
 }
 
 //! \}

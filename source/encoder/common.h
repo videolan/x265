@@ -25,6 +25,7 @@
 #define __COMMON__
 
 #include <stdlib.h>
+#include "x265.h"
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -46,6 +47,10 @@
 #define X265_MAX3(a, b, c) X265_MAX((a), X265_MAX((b), (c)))
 #define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
 #define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
+
+int  x265_check_params(x265_param_t *param);
+void x265_print_params(x265_param_t *param);
+void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth);
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
 
