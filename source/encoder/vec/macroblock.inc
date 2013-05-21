@@ -1401,8 +1401,8 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     Coeff_0_3 = _mm_srai_epi32(Coeff_0_3, nshift);
 
     //Co-effs 4-7
-    __m128i O_0_3 = _mm_mullo_epi32(O0123, c32_83_36); //	[O0*36 O1*83 O2*36 O3*83]
-    __m128i O_4_7 = _mm_mullo_epi32(O4567, c32_83_36); //	[O4*36 O5*83 O6*36 O7*83]
+    __m128i O_0_3 = _mm_mullo_epi32(O0123, c32_83_36); // [O0*36 O1*83 O2*36 O3*83]
+    __m128i O_4_7 = _mm_mullo_epi32(O4567, c32_83_36); // [O4*36 O5*83 O6*36 O7*83]
     __m128i Coeff_4_7 = _mm_hadd_epi32(O_0_3, O_4_7);
     Coeff_4_7 = _mm_add_epi32(Coeff_4_7, c32_128);
     Coeff_4_7 = _mm_srai_epi32(Coeff_4_7, nshift);
@@ -1412,15 +1412,15 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     _mm_store_si128((__m128i*)dst, Coeff_0_7);
 
     //Co-effs 8-11
-    __m128i E_8_11  = _mm_mullo_epi32(E0123, c32_64_n64); //	[ E0*-64 E1*64 E2*-64 E3*64]
-    __m128i E_12_15 = _mm_mullo_epi32(E4567, c32_64_n64); //	[ E4*-64 E5*64 E6*-64 E7*64]
+    __m128i E_8_11  = _mm_mullo_epi32(E0123, c32_64_n64); // [ E0*-64 E1*64 E2*-64 E3*64]
+    __m128i E_12_15 = _mm_mullo_epi32(E4567, c32_64_n64); // [ E4*-64 E5*64 E6*-64 E7*64]
     __m128i Coeff_8_11 = _mm_hadd_epi32(E_8_11, E_12_15);
     Coeff_8_11 = _mm_add_epi32(Coeff_8_11, c32_128);
     Coeff_8_11 = _mm_srai_epi32(Coeff_8_11, nshift);
 
     //Co-effs 12-15
-    __m128i O_8_11  = _mm_mullo_epi32(O0123, c32_36_n83); //	[O0*-83 O1*36 O2*-83 O3*36]
-    __m128i O_12_15 = _mm_mullo_epi32(O4567, c32_36_n83); //	[O4*-83 O5*36 O6*-83 O7*36]
+    __m128i O_8_11  = _mm_mullo_epi32(O0123, c32_36_n83); // [O0*-83 O1*36 O2*-83 O3*36]
+    __m128i O_12_15 = _mm_mullo_epi32(O4567, c32_36_n83); // [O4*-83 O5*36 O6*-83 O7*36]
     __m128i Coeff_12_15 = _mm_hadd_epi32(O_8_11, O_12_15);
     Coeff_12_15 = _mm_add_epi32(Coeff_12_15, c32_128);
     Coeff_12_15 = _mm_srai_epi32(Coeff_12_15, nshift);
@@ -1430,7 +1430,7 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     _mm_store_si128((__m128i*)(dst + 8), Coeff_8_15);
 }
 
-#if 0	// partialButterflyInverse4 vector code
+#if 0 // partialButterflyInverse4 vector code
 
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
