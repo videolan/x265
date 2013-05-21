@@ -251,6 +251,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     }
 
     pmv = pmv.roundToFPel();
+    // TODO: HM will use bmv=0 if cheaper than pmv cost
 
     searchMethod = 3;
     switch (searchMethod)
@@ -547,10 +548,12 @@ me_hex2:
         int bPointNr = 0;
         int bDistance = 0;
         int rounds = 0;
+
+        omv = bmv;
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
-            ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist);
+            ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             // Break early if we go earlyStopRound without an improved
             // prediction
@@ -559,6 +562,10 @@ me_hex2:
             else if (++rounds >= earlyStopRound)
                 break;
         }
+        /* Here, HM optionally checks if zero cost is cheaper than bmv, and if it
+         * is it repeats the above search from there (perhaps a slow option).  No
+         * point in doing this if we check zero as starting prediction above */
+
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points
@@ -572,15 +579,17 @@ me_hex2:
             MV tmv;
             for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
-                    COST_MV(tmv.x, tmv.y); // TODO: use sad_x4 here
+                    COST_MV(omv.x + tmv.x, omv.y + tmv.y); // TODO: use sad_x4 here
         }
 
         while (bDistance > 0)
         {
+            // center a new search around current best
+            omv = bmv;
             bDistance = 0;
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
-                ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist);
+                ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             if (bDistance == 1)
             {
@@ -646,17 +655,16 @@ me_hex2:
     return bcost >> 4;
 }
 
-void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist)
+void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-    MV omv = bmv;
 
     if (dist == 1)
     {
-        const int16_t iTop    = bmv.y - dist;
-        const int16_t iBottom = bmv.y + dist;
-        const int16_t iLeft   = bmv.x - dist;
-        const int16_t iRight  = bmv.x + dist;
+        const int16_t iTop    = omv.y - dist;
+        const int16_t iBottom = omv.y + dist;
+        const int16_t iLeft   = omv.x - dist;
+        const int16_t iRight  = omv.x + dist;
 
         if (iTop >= mvmin.y) // check top
         {
@@ -677,14 +685,14 @@ void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, i
     }
     else if (dist <= 8)
     {
-        const int16_t iTop      = bmv.y - dist;
-        const int16_t iBottom   = bmv.y + dist;
-        const int16_t iLeft     = bmv.x - dist;
-        const int16_t iRight    = bmv.x + dist;
-        const int16_t iTop_2    = bmv.y - (dist >> 1);
-        const int16_t iBottom_2 = bmv.y + (dist >> 1);
-        const int16_t iLeft_2   = bmv.x - (dist >> 1);
-        const int16_t iRight_2  = bmv.x + (dist >> 1);
+        const int16_t iTop      = omv.y - dist;
+        const int16_t iBottom   = omv.y + dist;
+        const int16_t iLeft     = omv.x - dist;
+        const int16_t iRight    = omv.x + dist;
+        const int16_t iTop_2    = omv.y - (dist >> 1);
+        const int16_t iBottom_2 = omv.y + (dist >> 1);
+        const int16_t iLeft_2   = omv.x - (dist >> 1);
+        const int16_t iRight_2  = omv.x + (dist >> 1);
 
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
@@ -745,10 +753,10 @@ void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, i
     }
     else
     {
-        const int16_t iTop    = bmv.y - dist;
-        const int16_t iBottom = bmv.y + dist;
-        const int16_t iLeft   = bmv.x - dist;
-        const int16_t iRight  = bmv.x + dist;
+        const int16_t iTop    = omv.y - dist;
+        const int16_t iBottom = omv.y + dist;
+        const int16_t iLeft   = omv.x - dist;
+        const int16_t iRight  = omv.x + dist;
 
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border

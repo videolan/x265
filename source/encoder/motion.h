@@ -121,7 +121,7 @@ public:
 protected:
 
     /* HM Motion Search */
-    void ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist);
+    void ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
     void TwoPointSearch(MV &bmv, int &bcost, int bPointNr);
 
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
