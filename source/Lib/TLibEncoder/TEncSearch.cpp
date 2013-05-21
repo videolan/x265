@@ -3996,6 +3996,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
 
     // fast encoder decision: use subsampled SAD for integer ME
+    if (0)
     {
         if (m_cDistParam.iRows > 12)
         {
