@@ -565,12 +565,12 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
         if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
         {
-            rpcBestCU->copyToPic(uiDepth);                                                        // Copy Best data to Picture for next partition prediction.
+            rpcBestCU->copyToPic(uiDepth);                                            // Copy Best data to Picture for next partition prediction.
             xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
             return;
         }
 
-        if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
+        if (m_pcEncCfg->getUseRectInter())
         {
             // 2NxN, Nx2N
             if (doNotBlockPu)
@@ -803,7 +803,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     }
                 }
             
-                if (pcPic->getSlice(0)->getSPS()->getAMPRefineAcc(uiDepth))
+                if (m_pcEncCfg->getUseRectInter())
                 {
                     // 2NxN, Nx2N
                     if (doNotBlockPu)

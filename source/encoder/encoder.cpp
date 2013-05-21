@@ -50,7 +50,7 @@ void Encoder::configure(x265_param_t *param)
     setIntraPeriod(param->iIntraPeriod);
     setQP(param->iQP);
     setUseAMP(param->enableAMP);
-    setUseAMPRefine(param->enableAMPRefine);
+    setUseRectInter(param->enableRectInter);
 
     //====== Loop/Deblock Filter ========
     setLoopFilterDisable(param->bLoopFilterDisable);

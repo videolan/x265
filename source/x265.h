@@ -97,7 +97,7 @@ typedef struct x265_param_t
     int       useTransformSkip;                 ///< flag for enabling intra transform skipping
     int       useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
     int       enableAMP;                        ///< flag for enabling asymmetrical motion predictions
-    int       enableAMPRefine;                  ///< mis-named, disables rectangular modes 2NxN, Nx2N
+    int       enableRectInter;                  ///< flag for enabling rectangular modes 2NxN, Nx2N
 
     // coding quality
     int       iQP;                              ///< QP value of key-picture (integer)

@@ -97,7 +97,8 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setIntraPeriod(iIntraPeriod);
     m_cTEncTop.setQP(iQP);
     m_cTEncTop.setUseAMP(enableAMP);
-    m_cTEncTop.setUseAMPRefine(enableAMPRefine);
+    m_cTEncTop.setUseRectInter(enableRectInter);
+
     //====== Loop/Deblock Filter ========
     m_cTEncTop.setLoopFilterDisable(bLoopFilterDisable);
     m_cTEncTop.setLoopFilterOffsetInPPS(loopFilterOffsetInPPS);
