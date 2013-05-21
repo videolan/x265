@@ -1432,8 +1432,6 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
     _mm_store_si128((__m128i*)(dst + 8), Coeff_8_15);
 }
 
-#if 0 // partialButterflyInverse4 vector code
-
 void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -1472,66 +1470,6 @@ void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
         dst += 4;
     }
 }
-
-#endif  // partialButterflyInverse4 vector code
-
-#if 1 // partialButterflyInverse4 intrinsic code
-
-void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
-{
-    int j;
-    int add = 1 << (shift - 1);
-    __m128i c_add = _mm_set1_epi32(add);
-
-    for (j = 0; j < (line / 2); j++)
-    {
-        int src_line = src[line];
-        int src_line3 = src[3 * line];
-        int src_line2_shift = (src[2 * line] << 6);
-        int src_zero_shift = (src[0] << 6);
-
-        int O_first_value = 83 * src_line + 36 * src_line3;
-        int O_second_value = 36 * src_line - 83 * src_line3;
-        int E_first_value = src_zero_shift + src_line2_shift;
-        int E_second_value = src_zero_shift - src_line2_shift;
-
-        int first_value = E_first_value + O_first_value;
-        int second_value = E_second_value + O_second_value;
-        int third_value = E_second_value - O_second_value;
-        int fourth_value = E_first_value - O_first_value;
-
-        __m128i sum_diff_value = _mm_set_epi32(fourth_value, third_value, second_value, first_value);
-        __m128i dst_third = _mm_srai_epi32(_mm_add_epi32(c_add, sum_diff_value), shift);
-
-        src++;
-
-        src_line = src[line];
-        src_line3 = src[3 * line];
-        src_line2_shift = (src[2 * line] << 6);
-        src_zero_shift = (src[0] << 6);
-
-        O_first_value = 83 * src_line + 36 * src_line3;
-        O_second_value = 36 * src_line - 83 * src_line3;
-        E_first_value = src_zero_shift + src_line2_shift;
-        E_second_value = src_zero_shift - src_line2_shift;
-
-        first_value = E_first_value + O_first_value;
-        second_value = E_second_value + O_second_value;
-        third_value = E_second_value - O_second_value;
-        fourth_value = E_first_value - O_first_value;
-
-        sum_diff_value = _mm_set_epi32(fourth_value, third_value, second_value, first_value);
-        __m128i dst_third1 = _mm_srai_epi32(_mm_add_epi32(c_add, sum_diff_value), shift);
-
-        __m128i dst_tmp_final = _mm_packs_epi32(dst_third, dst_third1);
-        _mm_store_si128((__m128i*)(dst), dst_tmp_final);
-
-        src++;
-        dst += 8;
-    }
-}
-
-#endif  // partialButterflyInverse4 intrinsic code
 
 void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
 {

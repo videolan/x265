@@ -90,7 +90,6 @@ int main(int argc, char *argv[])
     TestHarness *harness[] =
     {
         &HPixel,
-     //   &HFilter,
         &HMBDist,
         &HIPFilter,
         &HIPred
