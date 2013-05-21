@@ -423,17 +423,17 @@ void new_main(int argc, char **argv)
                 --iterPicYuvRec;
             }
 
-            x265_picture_t pic;
             for (i = 0; i < iNumEncoded; i++)
             {
                 if (cliopt.recon)
                 {
-                    TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
-                    pic.planes[0] = pcPicYuvRec->getLumaAddr(); pic.stride[0] = pcPicYuvRec->getStride();
-                    pic.planes[1] = pcPicYuvRec->getCbAddr();   pic.stride[1] = pcPicYuvRec->getCStride();
-                    pic.planes[2] = pcPicYuvRec->getCrAddr();   pic.stride[2] = pcPicYuvRec->getCStride();
-                    pic.bitDepth = sizeof(Pel)*8;
-                    cliopt.recon->writePicture(pic);
+                    x265_picture_t rpic;
+                    TComPicYuv  *recpic  = *(iterPicYuvRec++);
+                    rpic.planes[0] = recpic->getLumaAddr(); rpic.stride[0] = recpic->getStride();
+                    rpic.planes[1] = recpic->getCbAddr();   rpic.stride[1] = recpic->getCStride();
+                    rpic.planes[2] = recpic->getCrAddr();   rpic.stride[2] = recpic->getCStride();
+                    rpic.bitDepth = sizeof(Pel)*8;
+                    cliopt.recon->writePicture(rpic);
                 }
 
                 const AccessUnit &au = *(iterBitstream++);
