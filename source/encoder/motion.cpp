@@ -234,17 +234,20 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    // measure SAD cost at each QPEL motion vector candidate
-    for (int i = 0; i < numCandidates; i++)
+    if (searchMethod != X265_HM_SEARCH)
     {
-        MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m.notZero() && m != pmv && m != bestpre) // check already measured
+        // measure SAD cost at each QPEL motion vector candidate
+        for (int i = 0; i < numCandidates; i++)
         {
-            int cost = qpelSad(m) + mvcost(m);
-            if (cost < bprecost)
+            MV m = mvc[i].clipped(qmvmin, qmvmax);
+            if (m.notZero() && m != pmv && m != bestpre) // check already measured
             {
-                bprecost = cost;
-                bestpre = m;
+                int cost = qpelSad(m) + mvcost(m);
+                if (cost < bprecost)
+                {
+                    bprecost = cost;
+                    bestpre = m;
+                }
             }
         }
     }
