@@ -280,7 +280,7 @@ public:
 
     Void      setSourceHeight(Int i)      { m_iSourceHeight = i; }
 
-    Window   &getConformanceWindow()                           { return m_conformanceWindow; }
+    Window   &getConformanceWindow()      { return m_conformanceWindow; }
 
     Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
 
