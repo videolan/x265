@@ -118,11 +118,11 @@ public:
     /* returns SATD QPEL cost of best outMV for this PU */
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
-    /*HM Motion Search*/
-    void ExtendedDiamondSearch(MV &omv, int &bcost, int iDist);
-    void ExtendedPointSearch(MV &omv, int &bcost);
-
 protected:
+
+    /* HM Motion Search */
+    void ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist);
+    void TwoPointSearch(MV &bmv, int &bcost, int bPointNr);
 
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
     inline int fpelSad(pixel *fref, const MV& fmv)

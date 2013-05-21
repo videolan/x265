@@ -42,12 +42,6 @@ public:
         int32_t word;
     };
 
-    // These variables are added  for HM motion search algorithm imlplementation
-    // this is need to to implement HM ME
-    unsigned char ucPointNr;
-    unsigned int uiDistance;
-    unsigned int uiBestRound;
-
     MV() : word(0)                             {}
 
     MV(int32_t _w) : word(_w)                  {}
