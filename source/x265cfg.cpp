@@ -1067,7 +1067,7 @@ Void TAppEncCfg::xSetGlobal()
 
 Void TAppEncCfg::xPrintParameter()
 {
-    printf("Bitstream      File          : %s\n", m_pchBitstreamFile);
+    printf("Bitstream File               : %s\n", m_pchBitstreamFile);
     printf("Format                       : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate);
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
     printf("CU size / depth              : %d / %d\n", m_uiMaxCUSize, m_uiMaxCUDepth);
@@ -1075,8 +1075,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);
     printf("Max RQT depth intra          : %d\n", m_uiQuadtreeTUMaxDepthIntra);
     printf("Min PCM size                 : %d\n", 1 << m_uiPCMLog2MinSize);
-    printf("Motion search method         : %s\n", x265_motion_est_names[m_searchMethod] );
-    printf("Motion search range          : %d\n", m_iSearchRange);
+    printf("Motion search / range        : %s / %d\n", x265_motion_est_names[m_searchMethod], m_iSearchRange );
     printf("Intra period                 : %d\n", m_iIntraPeriod);
     printf("Decoding refresh type        : %d\n", m_iDecodingRefreshType);
     printf("QP                           : %5.2f\n", m_fQP);
@@ -1094,9 +1093,10 @@ Void TAppEncCfg::xPrintParameter()
     printf("Internal bit depth           : %d\n", m_internalBitDepth);
 #endif
     printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
-    printf("RateControl                  : %d\n", m_RCEnableRateControl);
+
     if (m_RCEnableRateControl)
     {
+        printf("RateControl                  : %d\n", m_RCEnableRateControl);
         printf("TargetBitrate                : %d\n", m_RCTargetBitrate);
         printf("KeepHierarchicalBit          : %d\n", m_RCKeepHierarchicalBit);
         printf("LCULevelRC                   : %d\n", m_RCLCULevelRC);
@@ -1104,6 +1104,7 @@ Void TAppEncCfg::xPrintParameter()
         printf("InitialQP                    : %d\n", m_RCInitialQP);
         printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP);
     }
+
     printf("Max Num Merge Candidates     : %d\n", m_maxNumMergeCand);
     printf("\n");
 
@@ -1127,8 +1128,8 @@ Void TAppEncCfg::xPrintParameter()
     printf("SAOLcuBasedOptimization:%d ", (m_saoLcuBasedOptimization) ? (1) : (0));
 
     printf("LosslessCuEnabled:%d ", (m_useLossless) ? 1 : 0);
-    printf("WPP:%d ", (Int)m_useWeightedPred);
-    printf("WPB:%d ", (Int)m_useWeightedBiPred);
+    printf("WPP:%d ", m_useWeightedPred);
+    printf("WPB:%d ", m_useWeightedBiPred);
     printf("PME:%d ", m_log2ParallelMergeLevel);
     printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d ",
            m_iWaveFrontSynchro, (m_iSourceHeight + m_uiMaxCUSize - 1) / m_uiMaxCUSize);
