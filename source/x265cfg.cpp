@@ -1058,8 +1058,8 @@ Void TAppEncCfg::xSetGlobal()
     g_bitDepthY = internalBitDepth;
     g_bitDepthC = internalBitDepth;
 
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
+    g_uiPCMBitDepthLuma = bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
+    g_uiPCMBitDepthChroma = bPCMInputBitDepthFlag ? m_inputBitDepth : internalBitDepth;
 #else
     g_bitDepthY = g_bitDepthC = 8;
     g_uiPCMBitDepthLuma = g_uiPCMBitDepthChroma = 8;
@@ -1091,7 +1091,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("QP adaptation                : %d (range=%d)\n", bUseAdaptiveQP, (bUseAdaptiveQP ? iQPAdaptationRange : 0));
     printf("GOP size                     : %d\n", m_iGOPSize);
 #if HIGH_BIT_DEPTH
-    printf("Internal bit depth           : %d\n", m_internalBitDepth);
+    printf("Internal bit depth           : %d\n", internalBitDepth);
 #endif
     printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma);
 
