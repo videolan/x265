@@ -221,17 +221,16 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
-    MV omv = bmv;
     int bcost = pmv.isSubpel() ? fpelSad(fref, bmv) + mvcost(bmv << 2) : bprecost;
 
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
         int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
-        if (cost < bprecost)
+        if (cost < bcost)
         {
-            bprecost = cost;
-            bestpre = 0;
+            bcost = cost;
+            bmv = 0;
         }
     }
 
@@ -251,7 +250,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     }
 
     pmv = pmv.roundToFPel();
-    // TODO: HM will use bmv=0 if cheaper than pmv cost
+    MV omv = bmv;  // current search origin or starting point
 
     switch (searchMethod)
     {
@@ -542,29 +541,22 @@ me_hex2:
 
     case X265_HM_SEARCH: // extendedDiamondSearch - HM Search Algorithm
     {
-        const int earlyStopRound = 3;
-        const int rasterDistance = 5;
         int bPointNr = 0;
         int bDistance = 0;
         int rounds = 0;
 
-        omv = bmv;
+        const int earlyStopRounds = 3;
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
             ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
-            // Break early if we go earlyStopRound without an improved
-            // prediction
+            // Break if we go earlyStopRounds without an improved prediction
             if (bcost < saved)
                 rounds = 0;
-            else if (++rounds >= earlyStopRound)
+            else if (++rounds >= earlyStopRounds)
                 break;
         }
-        /* Here, HM optionally checks if zero cost is cheaper than bmv, and if it
-         * is it repeats the above search from there (perhaps a slow option).  No
-         * point in doing this if we check zero as starting prediction above */
-
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points
@@ -572,6 +564,7 @@ me_hex2:
             break;
         }
 
+        const int rasterDistance = 5;
         if (bDistance > rasterDistance)
         {
             // raster search refinement if distance was too big
