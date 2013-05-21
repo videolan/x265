@@ -50,7 +50,7 @@ void Encoder::configure(x265_param_t *param)
     setIntraPeriod(param->iIntraPeriod);
     setQP(param->iQP);
     setUseAMP(param->enableAMP);
-    setUseAMPRefine(param->enableAMPRefine);
+    setUseRectInter(param->enableRectInter);
 
     //====== Loop/Deblock Filter ========
     setLoopFilterDisable(param->bLoopFilterDisable);
@@ -423,17 +423,17 @@ void new_main(int argc, char **argv)
                 --iterPicYuvRec;
             }
 
-            x265_picture_t pic;
             for (i = 0; i < iNumEncoded; i++)
             {
                 if (cliopt.recon)
                 {
-                    TComPicYuv  *pcPicYuvRec  = *(iterPicYuvRec++);
-                    pic.planes[0] = pcPicYuvRec->getLumaAddr(); pic.stride[0] = pcPicYuvRec->getStride();
-                    pic.planes[1] = pcPicYuvRec->getCbAddr();   pic.stride[1] = pcPicYuvRec->getCStride();
-                    pic.planes[2] = pcPicYuvRec->getCrAddr();   pic.stride[2] = pcPicYuvRec->getCStride();
-                    pic.bitDepth = sizeof(Pel)*8;
-                    cliopt.recon->writePicture(pic);
+                    x265_picture_t rpic;
+                    TComPicYuv  *recpic  = *(iterPicYuvRec++);
+                    rpic.planes[0] = recpic->getLumaAddr(); rpic.stride[0] = recpic->getStride();
+                    rpic.planes[1] = recpic->getCbAddr();   rpic.stride[1] = recpic->getCStride();
+                    rpic.planes[2] = recpic->getCrAddr();   rpic.stride[2] = recpic->getCStride();
+                    rpic.bitDepth = sizeof(Pel)*8;
+                    cliopt.recon->writePicture(rpic);
                 }
 
                 const AccessUnit &au = *(iterBitstream++);
@@ -456,8 +456,8 @@ void new_main(int argc, char **argv)
     size_t iSize = cListPicYuvRec.size();
     for (size_t i = 0; i < iSize; i++)
     {
-        TComPicYuv *pcPicYuvRec = *(iterPicYuvRec++);
-        pcPicYuvRec->destroy();
-        delete pcPicYuvRec;
+        TComPicYuv *recpic = *(iterPicYuvRec++);
+        recpic->destroy();
+        delete recpic;
     }
 }

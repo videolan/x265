@@ -1323,10 +1323,8 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 
 #endif    // partialButterfly32 intrinsic code
 
-void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
+void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
 {
-    line = 4;
-
     // Const
     __m128i c_1         = _mm_set1_epi32(1);
     __m128i c16_64_64   = _mm_set1_epi32(0x00400040);

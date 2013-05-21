@@ -37,17 +37,21 @@
 using namespace x265;
 
 static int size_scale[NUM_PARTITIONS];
-
-#define SAD_THRESH(v) (bcost < (((v>>4) * size_scale[partEnum])))
+#define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
 
 static void init_scales(void)
 {
-    int dims[] = {4, 8, 12, 16, 24, 32, 48, 64};
+    int dims[] = { 4, 8, 12, 16, 24, 32, 48, 64 };
 
     int i = 0;
-    for (size_t h = 0; h < sizeof(dims)/sizeof(int); h++)
-        for (size_t w = 0; w < sizeof(dims)/sizeof(int); w++)
+
+    for (size_t h = 0; h < sizeof(dims) / sizeof(int); h++)
+    {
+        for (size_t w = 0; w < sizeof(dims) / sizeof(int); w++)
+        {
             size_scale[i++] = (dims[h] * dims[w]) >> 4;
+        }
+    }
 }
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
@@ -72,17 +76,16 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
-static const MV hex2[8] = { MV( -1, -2 ), MV( -2, 0 ), MV( -1, 2 ), MV( 1, 2 ), MV( 2, 0 ), MV( 1, -2 ), MV( -1, -2 ), MV( -2, 0 ) };
+static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
-static const MV square1[9] = { MV( 0, 0 ), MV( 0, -1 ), MV( 0, 1 ), MV( -1, 0 ), MV( 1, 0 ), MV( -1, -1 ), MV( -1, 1 ), MV( 1, -1 ), MV( 1, 1 ) };
+static const MV square1[9] = { MV(0, 0), MV(0, -1), MV(0, 1), MV(-1, 0), MV(1, 0), MV(-1, -1), MV(-1, 1), MV(1, -1), MV(1, 1) };
 static const MV hex4[16] =
 {
-    MV(0,-4),  MV(0,4),  MV(-2,-3), MV(2,-3),
-    MV(-4,-2), MV(4,-2), MV(-4,-1), MV(4,-1),
-    MV(-4,0),  MV(4,0),  MV(-4,1),  MV(4,1),
+    MV(0, -4),  MV(0, 4),  MV(-2, -3), MV(2, -3),
+    MV(-4, -2), MV(4, -2), MV(-4, -1), MV(4, -1),
+    MV(-4, 0),  MV(4, 0),  MV(-4, 1),  MV(4, 1),
     MV(-4, 2), MV(4, 2), MV(-2, 3), MV(2, 3),
 };
-
 
 static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidates)
 {
@@ -97,11 +100,24 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     return sum;
 }
 
+#define COST_MV_HM(mx, my, point, dist) \
+    do \
+    { \
+        MV tmv(mx, my); \
+        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
+        if (cost < bcost) { \
+            bcost = cost;\
+            bmv = tmv;\
+            bPointNr = point;\
+            bDistance = dist;\
+        }\
+    } while (0)
+
 #define COST_MV(mx, my) \
     do \
     { \
         MV tmv(mx, my); \
-        int cost = fpelSad(fref, tmv) + mvcost(tmv<<2); \
+        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
         COPY2_IF_LT(bcost, cost, bmv, tmv); \
     } while (0)
 
@@ -205,36 +221,39 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
-    MV omv = bmv;
     int bcost = pmv.isSubpel() ? fpelSad(fref, bmv) + mvcost(bmv << 2) : bprecost;
 
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
         int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
-        if (cost < bprecost)
+        if (cost < bcost)
         {
-            bprecost = cost;
-            bestpre = 0;
+            bcost = cost;
+            bmv = 0;
         }
     }
 
-    // measure SAD cost at each QPEL motion vector candidate
-    for (int i = 0; i < numCandidates; i++)
+    if (searchMethod != X265_HM_SEARCH)
     {
-        MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m.notZero() && m != pmv && m != bestpre) // check already measured
+        // measure SAD cost at each QPEL motion vector candidate
+        for (int i = 0; i < numCandidates; i++)
         {
-            int cost = qpelSad(m) + mvcost(m);
-            if (cost < bprecost)
+            MV m = mvc[i].clipped(qmvmin, qmvmax);
+            if (m.notZero() && m != pmv && m != bestpre) // check already measured
             {
-                bprecost = cost;
-                bestpre = m;
+                int cost = qpelSad(m) + mvcost(m);
+                if (cost < bprecost)
+                {
+                    bprecost = cost;
+                    bestpre = m;
+                }
             }
         }
     }
 
     pmv = pmv.roundToFPel();
+    MV omv = bmv;  // current search origin or starting point
 
     switch (searchMethod)
     {
@@ -266,22 +285,23 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 me_hex2:
         /* hexagon search, radius 2 */
 #if 0
-        for (int i = 0; i < merange/2; i++)
+        for (int i = 0; i < merange / 2; i++)
         {
             omv = bmv;
-            COST_MV( omv.x-2, omv.y   );
-            COST_MV( omv.x-1, omv.y+2 );
-            COST_MV( omv.x+1, omv.y+2 );
-            COST_MV( omv.x+2, omv.y   );
-            COST_MV( omv.x+1, omv.y-2 );
-            COST_MV( omv.x-1, omv.y-2 );
-            if( omv == bmv )
+            COST_MV(omv.x - 2, omv.y);
+            COST_MV(omv.x - 1, omv.y + 2);
+            COST_MV(omv.x + 1, omv.y + 2);
+            COST_MV(omv.x + 2, omv.y);
+            COST_MV(omv.x + 1, omv.y - 2);
+            COST_MV(omv.x - 1, omv.y - 2);
+            if (omv == bmv)
                 break;
-            if(!bmv.checkRange(mvmin, mvmax))
+            if (!bmv.checkRange(mvmin, mvmax))
                 break;
         }
-#else
-        /* equivalent to the above, but eliminates duplicate candidates */
+
+#else // if 0
+      /* equivalent to the above, but eliminates duplicate candidates */
         COST_MV_X3_DIR(-2, 0, -1, 2,  1, 2, costs);
         COST_MV_X3_DIR(2, 0,  1, -2, -1, -2, costs + 3);
         bcost <<= 3;
@@ -316,7 +336,7 @@ me_hex2:
             }
         }
         bcost >>= 3;
-#endif
+#endif // if 0
 
         /* square refine */
         int dir = 0;
@@ -521,6 +541,60 @@ me_hex2:
             goto me_hex2;
         break;
     }
+
+    case X265_HM_SEARCH: // extendedDiamondSearch - HM Search Algorithm
+    {
+        int bPointNr = 0;
+        int bDistance = 0;
+        int rounds = 0;
+
+        const int earlyStopRounds = 3;
+        for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
+        {
+            int saved = bcost;
+            ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+
+            // Break if we go earlyStopRounds without an improved prediction
+            if (bcost < saved)
+                rounds = 0;
+            else if (++rounds >= earlyStopRounds)
+                break;
+        }
+        if (bDistance == 1)
+        {
+            // if best distance was only 1, check two missing points
+            TwoPointSearch(bmv, bcost, bPointNr);
+            break;
+        }
+
+        const int rasterDistance = 5;
+        if (bDistance > rasterDistance)
+        {
+            // raster search refinement if distance was too big
+            MV tmv;
+            for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
+                for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
+                    COST_MV(omv.x + tmv.x, omv.y + tmv.y); // TODO: use sad_x4 here
+        }
+
+        while (bDistance > 0)
+        {
+            // center a new search around current best
+            omv = bmv;
+            bDistance = 0;
+            bPointNr = 0;
+            for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
+                ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+
+            if (bDistance == 1)
+            {
+                TwoPointSearch(bmv, bcost, bPointNr);
+                break;
+            }
+        }
+    }
+    break;
+
     default:
         assert(0);
         break;
@@ -574,4 +648,299 @@ me_hex2:
     x265_emms();
     outQMv = bmv;
     return bcost >> 4;
+}
+
+void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+{
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+
+    if (dist == 1)
+    {
+        const int16_t iTop    = omv.y - dist;
+        const int16_t iBottom = omv.y + dist;
+        const int16_t iLeft   = omv.x - dist;
+        const int16_t iRight  = omv.x + dist;
+
+        if (iTop >= mvmin.y) // check top
+        {
+            COST_MV_HM(omv.x, iTop, 2, dist);
+        }
+        if (iLeft >= mvmin.x) // check middle left
+        {
+            COST_MV_HM(iLeft, omv.y, 4, dist);
+        }
+        if (iRight <= mvmax.x) // check middle right
+        {
+            COST_MV_HM(iRight, omv.y, 5, dist);
+        }
+        if (iBottom <= mvmax.y) // check bottom
+        {
+            COST_MV_HM(omv.x, iBottom, 7, dist);
+        }
+    }
+    else if (dist <= 8)
+    {
+        const int16_t iTop      = omv.y - dist;
+        const int16_t iBottom   = omv.y + dist;
+        const int16_t iLeft     = omv.x - dist;
+        const int16_t iRight    = omv.x + dist;
+        const int16_t iTop_2    = omv.y - (dist >> 1);
+        const int16_t iBottom_2 = omv.y + (dist >> 1);
+        const int16_t iLeft_2   = omv.x - (dist >> 1);
+        const int16_t iRight_2  = omv.x + (dist >> 1);
+
+        if (iTop >= mvmin.y && iLeft >= mvmin.x &&
+            iRight <= mvmax.x && iBottom <= mvmax.y) // check border
+        {
+            // TODO: Use sad_x4 here
+            COST_MV_HM(omv.x, iTop, 2, dist);
+            COST_MV_HM(iLeft_2, iTop_2, 1, dist >> 1);
+            COST_MV_HM(iRight_2, iTop_2, 3, dist >> 1);
+            COST_MV_HM(iLeft, omv.y, 4, dist);
+
+            // TODO: Use sad_x4 here
+            COST_MV_HM(iRight, omv.y, 5, dist);
+            COST_MV_HM(iLeft_2, iBottom_2, 6, dist >> 1);
+            COST_MV_HM(iRight_2, iBottom_2, 8, dist >> 1);
+            COST_MV_HM(omv.x, iBottom, 7, dist);
+        }
+        else // check border for each mv
+        {
+            if (iTop >= mvmin.y) // check top
+            {
+                COST_MV_HM(omv.x, iTop, 2, dist);
+            }
+            if (iTop_2 >= mvmin.y) // check half top
+            {
+                if (iLeft_2 >= mvmin.x) // check half left
+                {
+                    COST_MV_HM(iLeft_2, iTop_2, 1, (dist >> 1));
+                }
+                if (iRight_2 <= mvmax.x) // check half right
+                {
+                    COST_MV_HM(iRight_2, iTop_2, 3, (dist >> 1));
+                }
+            } // check half top
+            if (iLeft >= mvmin.x) // check left
+            {
+                COST_MV_HM(iLeft, omv.y, 4, dist);
+            }
+            if (iRight <= mvmax.x) // check right
+            {
+                COST_MV_HM(iRight, omv.y, 5, dist);
+            }
+            if (iBottom_2 <= mvmax.y) // check half bottom
+            {
+                if (iLeft_2 >= mvmin.x) // check half left
+                {
+                    COST_MV_HM(iLeft_2, iBottom_2, 6, (dist >> 1));
+                }
+                if (iRight_2 <= mvmax.x) // check half right
+                {
+                    COST_MV_HM(iRight_2, iBottom_2, 8, (dist >> 1));
+                }
+            } // check half bottom
+            if (iBottom <= mvmax.y) // check bottom
+            {
+                COST_MV_HM(omv.x, iBottom, 7, dist);
+            }
+        } // check border for each mv
+    }
+    else
+    {
+        const int16_t iTop    = omv.y - dist;
+        const int16_t iBottom = omv.y + dist;
+        const int16_t iLeft   = omv.x - dist;
+        const int16_t iRight  = omv.x + dist;
+
+        if (iTop >= mvmin.y && iLeft >= mvmin.x &&
+            iRight <= mvmax.x && iBottom <= mvmax.y) // check border
+        {
+            // TODO; Use sad_x4
+            COST_MV_HM(omv.x, iTop, 0, dist);
+            COST_MV_HM(iLeft, omv.y, 0, dist);
+            COST_MV_HM(iRight, omv.y, 0, dist);
+            COST_MV_HM(omv.x, iBottom, 0, dist);
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t iPosYT = iTop    + ((dist >> 2) * index);
+                int16_t iPosYB = iBottom - ((dist >> 2) * index);
+                int16_t iPosXL = omv.x - ((dist >> 2) * index);
+                int16_t iPosXR = omv.x + ((dist >> 2) * index);
+                // TODO; Use sad_x4
+                COST_MV_HM(iPosXL, iPosYT, 0, dist);
+                COST_MV_HM(iPosXR, iPosYT, 0, dist);
+                COST_MV_HM(iPosXL, iPosYB, 0, dist);
+                COST_MV_HM(iPosXR, iPosYB, 0, dist);
+            }
+        }
+        else // check border for each mv
+        {
+            if (iTop >= mvmin.y) // check top
+            {
+                COST_MV_HM(omv.x, iTop, 0, dist);
+            }
+            if (iLeft >= mvmin.x) // check left
+            {
+                COST_MV_HM(iLeft, omv.y, 0, dist);
+            }
+            if (iRight <= mvmax.x) // check right
+            {
+                COST_MV_HM(iRight, omv.y, 0, dist);
+            }
+            if (iBottom <= mvmax.y) // check bottom
+            {
+                COST_MV_HM(omv.x, iBottom, 0, dist);
+            }
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t iPosYT = iTop    + ((dist >> 2) * index);
+                int16_t iPosYB = iBottom - ((dist >> 2) * index);
+                int16_t iPosXL = omv.x - ((dist >> 2) * index);
+                int16_t iPosXR = omv.x + ((dist >> 2) * index);
+
+                if (iPosYT >= mvmin.y) // check top
+                {
+                    if (iPosXL >= mvmin.x) // check left
+                    {
+                        COST_MV_HM(iPosXL, iPosYT, 0, dist);
+                    }
+                    if (iPosXR <= mvmax.x) // check right
+                    {
+                        COST_MV_HM(iPosXR, iPosYT, 0, dist);
+                    }
+                } // check top
+                if (iPosYB <= mvmax.y) // check bottom
+                {
+                    if (iPosXL >= mvmin.x) // check left
+                    {
+                        COST_MV_HM(iPosXL, iPosYB, 0, dist);
+                    }
+                    if (iPosXR <= mvmax.x) // check right
+                    {
+                        COST_MV_HM(iPosXR, iPosYB, 0, dist);
+                    }
+                } // check bottom
+            } // for ...
+        } // check border for each mv
+    } // dist > 8
+}
+
+void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
+{
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    MV omv = bmv;
+
+    /* TODO: turn into a table lookup with per-point offset pairs */
+    switch (bPointNr)
+    {
+    case 1:
+    {
+        if ((omv.x - 1) >= mvmin.x)
+        {
+            COST_MV(omv.x - 1, omv.y);
+        }
+        if ((omv.y - 1) >= mvmin.y)
+        {
+            COST_MV(omv.x, omv.y - 1);
+        }
+    }
+    break;
+    case 2:
+    {
+        if ((omv.y - 1) >= mvmin.y)
+        {
+            if ((omv.x - 1) >= mvmin.x)
+            {
+                COST_MV(omv.x - 1, omv.y - 1);
+            }
+            if ((omv.x + 1) <= mvmax.x)
+            {
+                COST_MV(omv.x + 1, omv.y - 1);
+            }
+        }
+    }
+    break;
+    case 3:
+    {
+        if ((omv.y - 1) >= mvmin.y)
+        {
+            COST_MV(omv.x, omv.y - 1);
+        }
+        if ((omv.x + 1) <= mvmax.x)
+        {
+            COST_MV(omv.x + 1, omv.y);
+        }
+    }
+    break;
+    case 4:
+    {
+        if ((omv.x - 1) >= mvmin.x)
+        {
+            if ((omv.y + 1) <= mvmax.y)
+            {
+                COST_MV(omv.x - 1, omv.y + 1);
+            }
+            if ((omv.y - 1) >= mvmin.y)
+            {
+                COST_MV(omv.x - 1, omv.y - 1);
+            }
+        }
+    }
+    break;
+    case 5:
+    {
+        if ((omv.x + 1) <= mvmax.x)
+        {
+            if ((omv.y - 1) >= mvmin.y)
+            {
+                COST_MV(omv.x + 1, omv.y - 1);
+            }
+            if ((omv.y + 1) <= mvmax.y)
+            {
+                COST_MV(omv.x + 1, omv.y + 1);
+            }
+        }
+    }
+    break;
+    case 6:
+    {
+        if ((omv.x - 1) >= mvmin.x)
+        {
+            COST_MV(omv.x - 1, omv.y);
+        }
+        if ((omv.y + 1) <= mvmax.y)
+        {
+            COST_MV(omv.x, omv.y + 1);
+        }
+    }
+    break;
+    case 7:
+    {
+        if ((omv.y + 1) <= mvmax.y)
+        {
+            if ((omv.x - 1) >= mvmin.x)
+            {
+                COST_MV(omv.x - 1, omv.y + 1);
+            }
+            if ((omv.x + 1) <= mvmax.x)
+            {
+                COST_MV(omv.x + 1, omv.y + 1);
+            }
+        }
+    }
+    break;
+    case 8:
+    {
+        if ((omv.x + 1) <= mvmax.x)
+        {
+            COST_MV(omv.x + 1, omv.y);
+        }
+        if ((omv.y + 1) <= mvmax.y)
+        {
+            COST_MV(omv.x, omv.y + 1);
+        }
+    }
+    break;
+    }
 }

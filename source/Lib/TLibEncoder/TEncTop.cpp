@@ -462,17 +462,13 @@ Void TEncTop::xInitSPS()
     for (i = 0; i < g_uiMaxCUDepth - g_uiAddCUDepth; i++)
     {
         m_cSPS.setAMPAcc(i, m_useAMP);
-        m_cSPS.setAMPRefineAcc(i, m_useAMPRefine);
-        //m_cSPS.setAMPAcc( i, 1 );
     }
 
     m_cSPS.setUseAMP(m_useAMP);
-    m_cSPS.setUseAMPRefine(m_useAMPRefine);
 
     for (i = g_uiMaxCUDepth - g_uiAddCUDepth; i < g_uiMaxCUDepth; i++)
     {
         m_cSPS.setAMPAcc(i, 0);
-        m_cSPS.setAMPRefineAcc(i, 1);
     }
 
     m_cSPS.setBitDepthY(g_bitDepthY);

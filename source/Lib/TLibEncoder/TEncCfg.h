@@ -135,7 +135,7 @@ protected:
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
-    Bool      m_useAMPRefine;
+    Bool      m_useRectInter;
 
     //======= Transform =============
     UInt      m_uiQuadtreeTULog2MaxSize;
@@ -327,10 +327,6 @@ public:
 
     Void      setQuadtreeTUMaxDepthIntra(UInt u)      { m_uiQuadtreeTUMaxDepthIntra = u; }
 
-    Void setUseAMP(Bool b) { m_useAMP = b; }
-
-    Void setUseAMPRefine(Bool b) { m_useAMPRefine = b; }
-
     //====== Loop/Deblock Filter ========
     Void      setLoopFilterDisable(Bool b)      { m_bLoopFilterDisable       = b; }
 
@@ -347,7 +343,10 @@ public:
     //====== Motion search ========
     Void      setSearchMethod(Int i)     { m_iSearchMethod = i; }
     Void      setSearchRange(Int i)      { m_iSearchRange = i; }
-    Void      setBipredSearchRange(Int i)      { m_bipredSearchRange = i; }
+    Void      setBipredSearchRange(Int i){ m_bipredSearchRange = i; }
+    Void      setUseRectInter(Bool b)    { m_useRectInter = b; }
+    Bool      getUseRectInter() const    { return m_useRectInter; }
+    Void      setUseAMP(Bool b)          { m_useAMP = b; }
 
     //====== Quality control ========
     Void      setMaxCuDQPDepth(Int i)      { m_iMaxCuDQPDepth = i; }
@@ -360,9 +359,9 @@ public:
 
     Bool      getUseAdaptQpSelect()           { return m_bUseAdaptQpSelect; }
 
-    Void      setUseAdaptiveQP(Bool b)      { m_bUseAdaptiveQP = b; }
+    Void      setUseAdaptiveQP(Bool b)        { m_bUseAdaptiveQP = b; }
 
-    Void      setQPAdaptationRange(Int i)      { m_iQPAdaptationRange = i; }
+    Void      setQPAdaptationRange(Int i)     { m_iQPAdaptationRange = i; }
 
     //====== Lossless ========
     Void      setUseLossless(Bool b)        { m_useLossless = b;  }

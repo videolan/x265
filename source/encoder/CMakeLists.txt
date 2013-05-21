@@ -3,6 +3,8 @@ if(GCC)
         # force gcc to generate code for sync primitives
         set_source_files_properties(threadpool.cpp PROPERTIES COMPILE_FLAGS -march=i686)
     endif()
+    # encoder.cpp must include HM headers which are not careful about named parameters
+    set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
 endif(GCC)
 
 set(CPRIMITIVES pixel.cpp macroblock.cpp ipfilter.cpp IntraPred.cpp)

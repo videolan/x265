@@ -64,11 +64,12 @@ typedef enum
     X265_DIA_SEARCH,
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
-    X265_HM_SEARCH,  // adapted HM fast-ME method
+    X265_HM_SEARCH,    // adapted HM fast-ME method
+    X265_ORIG_SEARCH,  // original HM functions (deprecated)
 }
 X265_ME_METHODS;
 
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "hm", "orig", 0 };
 
 typedef struct x265_param_t
 {
@@ -97,7 +98,7 @@ typedef struct x265_param_t
     int       useTransformSkip;                 ///< flag for enabling intra transform skipping
     int       useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
     int       enableAMP;                        ///< flag for enabling asymmetrical motion predictions
-    int       enableAMPRefine;                  ///< mis-named, disables rectangular modes 2NxN, Nx2N
+    int       enableRectInter;                  ///< flag for enabling rectangular modes 2NxN, Nx2N
 
     // coding quality
     int       iQP;                              ///< QP value of key-picture (integer)
