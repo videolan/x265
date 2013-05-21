@@ -283,27 +283,27 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 void x265_print_params(x265_param_t *param)
 {
     printf("Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
+#if HIGH_BIT_DEPTH
+    printf("Internal bit depth           : %d\n", param->internalBitDepth);
+#endif
     printf("CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
     printf("RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
-    printf("Max RQT depth inter          : %d\n", param->uiQuadtreeTUMaxDepthInter);
-    printf("Max RQT depth intra          : %d\n", param->uiQuadtreeTUMaxDepthIntra);
+    printf("Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
     printf("Min PCM size                 : %d\n", 1 << param->uiPCMLog2MinSize);
     printf("Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
+    printf("Max Num Merge Candidates     : %d\n", param->maxNumMergeCand);
     printf("Intra period                 : %d\n", param->iIntraPeriod);
     printf("QP                           : %d\n", param->iQP);
     printf("Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
-
     if (param->cbQpOffset || param->crQpOffset)
     {
         printf("Cb QP Offset                 : %d\n", param->cbQpOffset);
         printf("Cr QP Offset                 : %d\n", param->crQpOffset);
     }
-
-    printf("QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, (param->bUseAdaptiveQP ? param->iQPAdaptationRange : 0));
-#if HIGH_BIT_DEPTH
-    printf("Internal bit depth           : %d\n", param->internalBitDepth);
-#endif
-
+    if (param->bUseAdaptiveQP)
+    {
+        printf("QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, (param->bUseAdaptiveQP ? param->iQPAdaptationRange : 0));
+    }
     if (param->RCEnableRateControl)
     {
         printf("RateControl                  : %d\n", param->RCEnableRateControl);
@@ -314,8 +314,6 @@ void x265_print_params(x265_param_t *param)
         printf("InitialQP                    : %d\n", param->RCInitialQP);
         printf("ForceIntraQP                 : %d\n", param->RCForceIntraQP);
     }
-
-    printf("Max Num Merge Candidates     : %d\n", param->maxNumMergeCand);
     printf("\n");
 
     printf("TOOL CFG: ");
