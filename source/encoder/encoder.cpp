@@ -456,8 +456,8 @@ void new_main(int argc, char **argv)
     size_t iSize = cListPicYuvRec.size();
     for (size_t i = 0; i < iSize; i++)
     {
-        TComPicYuv *pcPicYuvRec = *(iterPicYuvRec++);
-        pcPicYuvRec->destroy();
-        delete pcPicYuvRec;
+        TComPicYuv *recpic = *(iterPicYuvRec++);
+        recpic->destroy();
+        delete recpic;
     }
 }
