@@ -212,6 +212,8 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
+#if 0    //partialButterfly32 vector code
+
 void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -489,6 +491,8 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
+#endif  //partialButterfly32 vector code
+
 void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -593,7 +597,7 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly4 vector code
 
-#if 0    //partialButterfly32 intrinsic code
+#if 1   //partialButterfly32 intrisic code
 
 void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 {
@@ -704,21 +708,21 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 
     for (int j = 0; j < line; j++)
     {
-        __m128i src_tmp0 = _mm_load_si128((const __m128i*)src);
+        __m128i src_tmp0 = _mm_loadu_si128((const __m128i*)src);
         __m128i T20 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
         __m128i T21 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
 
-        src_tmp0 = _mm_load_si128((const __m128i*)(src + 8));
+        src_tmp0 = _mm_loadu_si128((const __m128i*)(src + 8));
         __m128i T22 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
         __m128i T23 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
 
-        src_tmp0 = _mm_load_si128((const __m128i*)(src + 16));
+        src_tmp0 = _mm_loadu_si128((const __m128i*)(src + 16));
         __m128i T33 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
         T33 = _mm_shuffle_epi32(T33, 0x1b);
         __m128i T32 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
         T32 = _mm_shuffle_epi32(T32, 0x1b);
 
-        src_tmp0 = _mm_load_si128((const __m128i*)(src + 24));
+        src_tmp0 = _mm_loadu_si128((const __m128i*)(src + 24));
         __m128i T31 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
         T31 = _mm_shuffle_epi32(T31, 0x1b);
         __m128i T30 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
