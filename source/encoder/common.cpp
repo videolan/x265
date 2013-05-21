@@ -36,26 +36,35 @@ extern "C"
 void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->m_searchMethod = X265_UMH_SEARCH;
-    param->m_iSearchRange = 64;
-    param->m_internalBitDepth = 8;
-    param->m_uiMaxCUSize = 64;
-    param->m_uiMaxCUDepth = 4;
-    param->m_uiQuadtreeTULog2MaxSize = 6;
-    param->m_uiQuadtreeTULog2MinSize = 2;
-    param->m_uiQuadtreeTUMaxDepthInter = 3;
-    param->m_uiQuadtreeTUMaxDepthIntra = 3;
-    param->m_enableAMP = 1;
-    param->m_enableAMPRefine = 1;
-    param->m_iQP = 30;
-    param->m_bUseSAO = 1;
-    param->m_maxNumOffsetsPerPic = 2048;
-    param->m_saoLcuBasedOptimization = 1;
-    param->m_log2ParallelMergeLevel = 2;
-    param->m_maxNumMergeCand = 5;
-    param->m_TMVPModeId = 1;
-    param->m_useFastDecisionForMerge = 1;
-    param->m_useStrongIntraSmoothing = 1;
+    param->searchMethod = X265_UMH_SEARCH;
+    param->iSearchRange = 96;
+    param->bipredSearchRange = 4;
+    param->iIntraPeriod = -1; // default to open GOP
+    param->internalBitDepth = 8;
+    param->uiMaxCUSize = 64;
+    param->uiMaxCUDepth = 4;
+    param->uiQuadtreeTULog2MaxSize = 6;
+    param->uiQuadtreeTULog2MinSize = 2;
+    param->uiQuadtreeTUMaxDepthInter = 2;
+    param->uiQuadtreeTUMaxDepthIntra = 1;
+    param->enableAMP = 1;
+    param->enableAMPRefine = 1;
+    param->iQP = 30;
+    param->iQPAdaptationRange = 6;
+    param->bUseSAO = 1;
+    param->maxNumOffsetsPerPic = 2048;
+    param->saoLcuBasedOptimization = 1;
+    param->log2ParallelMergeLevel = 2;
+    param->maxNumMergeCand = 5u;
+    param->TMVPModeId = 1;
+    param->signHideFlag = 1;
+    param->useFastDecisionForMerge = 1;
+    param->useStrongIntraSmoothing = 1;
+    param->useRDOQ = 1;
+    param->useRDOQTS = 1;
+    param->pcmLog2MaxSize = 5u;
+    param->uiPCMLog2MinSize = 3u;
+    param->bPCMInputBitDepthFlag = 1;
 }
 
 extern "C"
@@ -65,13 +74,13 @@ int x265_param_apply_profile( x265_param_t *param, const char *profile )
         return 0;
     if (!strcmp(profile, "main"))
     {
-        param->m_iIntraPeriod = 15;
+        param->iIntraPeriod = 15;
     }
     else if (!strcmp(profile, "main10"))
     {
-        param->m_iIntraPeriod = 15;
+        param->iIntraPeriod = 15;
 #if HIGH_BIT_DEPTH
-        param->m_internalBitDepth = 10;
+        param->internalBitDepth = 10;
 #else
         fprintf(stderr, "x265: ERROR. not compiled for 16bpp. Falling back to main profile.\n");
         return -1;
@@ -79,7 +88,7 @@ int x265_param_apply_profile( x265_param_t *param, const char *profile )
     }
     else if (!strcmp(profile, "mainstillpicture"))
     {
-        param->m_iIntraPeriod = 1;
+        param->iIntraPeriod = 1;
     }
     else
     {
