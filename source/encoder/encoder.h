@@ -41,8 +41,6 @@ namespace x265 {
 class Encoder : public TEncTop
 {
 protected:
-    x265_param_t *m_param;
-
     // profile/level
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
@@ -54,16 +52,10 @@ protected:
     int       m_numReorderPics[MAX_TLAYER];     ///< total number of reorder pictures
     int       m_maxDecPicBuffering[MAX_TLAYER]; ///< total number of pictures in the decoded picture buffer
 
-    // internal member functions
-    void      xSetGlobal();                     ///< set global variables
-    void      xCheckParameter();                ///< check validity of configuration values
-    void      xPrintParameter();                ///< print configuration values
-    void      xPrintUsage();                    ///< print usage
-
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
 
-    Encoder() : m_param(NULL) {};
+    Encoder() : m_profile(Profile::Name::MAIN), m_levelTier(Level::Tier::MAIN), m_level(Level::Name::NONE) {};
 
     virtual ~Encoder() {}
 
