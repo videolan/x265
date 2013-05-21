@@ -593,7 +593,7 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly4 vector code
 
-#if 0     // partialButterfly32 intrinsic code
+#if 0    //partialButterfly32 intrinsic code
 
 void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 {
@@ -1319,12 +1319,9 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 
 #endif    // partialButterfly32 intrinsic code
 
-void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
+void CDECL partialButterfly4(short *src, short *dst, int nshift, int line)
 {
-    //typedef uint32_t UInt32;
-    //typedef uint64_t UInt64;
-    //line = 4;
-    nshift = 2 - 1;
+    line = 4;
 
     // Const
     __m128i c_1         = _mm_set1_epi32(1);
@@ -1337,15 +1334,6 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     __m128i c32_83_36   = _mm_set_epi32(36, 83, 36, 83);
     __m128i c32_64_n64   = _mm_set_epi32(-64, 64, -64, 64);
     __m128i c32_36_n83   = _mm_set_epi32(-83, 36, -83, 36);
-
-    // _mm_cvtsi64_si128 not supported on 32bit build
-
-    /*
-      __m128i T20  = _mm_cvtsi64_si128(*(UInt64*)&src[0 * line]);   // [03 02 01 00]
-      __m128i T21  = _mm_cvtsi64_si128(*(UInt64*)&src[1 * line]);   // [13 12 11 10]
-      __m128i T22 = _mm_cvtsi64_si128(*(UInt64*)&src[2 * line]);    // [23 22 21 20]
-      __m128i T23 = _mm_cvtsi64_si128(*(UInt64*)&src[3 * line]);    // [33 32 31 30]
-    */
 
     __m128i T20  = _mm_loadl_epi64((const __m128i*)(src + 0)); // [03 02 01 00]
     __m128i T21  = _mm_loadl_epi64((const __m128i*)(src + 4)); // [13 12 11 10]
