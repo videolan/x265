@@ -204,9 +204,12 @@ Void TEncTop::destroy()
 
         delete[] m_ppppcRDSbacCoders[ui];
         delete[] m_ppppcBinCodersCABAC[ui];
+
+        m_pcCuEncoders[ui].destroy();
     }
 
     delete[] m_pcCuEncoders;
+
     delete[] m_pcSearchs;
     delete[] m_pcEntropyCoders;
     delete[] m_ppppcRDSbacCoders;
