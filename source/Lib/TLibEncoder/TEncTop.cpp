@@ -182,12 +182,10 @@ Void TEncTop::destroy()
     }
     m_cLoopFilter.destroy();
     m_cRateCtrl.destroy();
-    // SBAC RD
-    Int iDepth;
 
     for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
     {
-        for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
             for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
             {
@@ -196,7 +194,7 @@ Void TEncTop::destroy()
             }
         }
 
-        for (iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
         {
             delete [] m_ppppcRDSbacCoders[ui][iDepth];
             delete [] m_ppppcBinCodersCABAC[ui][iDepth];
