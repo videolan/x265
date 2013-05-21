@@ -172,7 +172,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseStrongIntraSmoothing(useStrongIntraSmoothing);
     m_cTEncTop.setUseLossless(useLossless);
 
-    m_cTEncTop.setFrameSkip(m_FrameSkip);
     m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
     m_cTEncTop.setFramesToBeEncoded(m_framesToBeEncoded);
     int nullpad[2] = { 0, 0 };

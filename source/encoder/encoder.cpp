@@ -132,7 +132,6 @@ void Encoder::configure(x265_param_t *param)
 
     //====== Settings derived from user configuration ======
     setFramesToBeEncoded(m_framesToBeEncoded);
-    setFrameSkip(m_FrameSkip);
     setProfile(m_profile);
     setLevel(m_levelTier, m_level);
 

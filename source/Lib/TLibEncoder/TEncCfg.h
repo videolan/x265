@@ -100,7 +100,6 @@ protected:
 
     //==== File I/O ========
     Int       m_iFrameRate;
-    Int       m_FrameSkip;
     Int       m_iSourceWidth;
     Int       m_iSourceHeight;
     Int       m_conformanceMode;
@@ -277,8 +276,6 @@ public:
 
     Void      setFrameRate(Int i)      { m_iFrameRate = i; }
 
-    Void      setFrameSkip(UInt i) { m_FrameSkip = i; }
-
     Void      setSourceWidth(Int i)      { m_iSourceWidth = i; }
 
     Void      setSourceHeight(Int i)      { m_iSourceHeight = i; }
@@ -368,8 +365,6 @@ public:
 
     //====== Sequence ========
     Int       getFrameRate()      { return m_iFrameRate; }
-
-    UInt      getFrameSkip()      { return m_FrameSkip; }
 
     Int       getSourceWidth()      { return m_iSourceWidth; }
 
