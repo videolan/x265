@@ -249,6 +249,8 @@ void x265_encoder_close(x265_t *encoder)
 /*======= Everything below here will become the new x265main.cpp ==========*/
 
 #include "TLibEncoder/AnnexBwrite.h"
+#include "input/input.h"
+#include "output/output.h"
 #include <getopt.h>
 #include <list>
 #include <ostream>

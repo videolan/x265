@@ -25,15 +25,8 @@
 #define __ENCODER__
 
 #include "TLibEncoder/TEncTop.h"
-
-#include "input/input.h"
-#include "output/output.h"
-#include "threadpool.h"
 #include "common.h"
 #include "x265.h"
-
-#include <list>
-#include <ostream>
 
 namespace x265 {
 // private namespace
