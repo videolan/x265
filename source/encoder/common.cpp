@@ -338,5 +338,7 @@ void x265_print_params(x265_param_t *param)
     printf("TMVPMode:%d ", param->TMVPModeId);
     printf("AQpS:%d ", param->bUseAdaptQpSelect);
     printf("SignBitHidingFlag:%d ", param->signHideFlag);
+    printf("\n\n");
     fflush(stdout);
+
 }

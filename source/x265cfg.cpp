@@ -583,8 +583,6 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip + m_framesToBeEncoded - 1, m_framesToBeEncoded);
     printf("GOP size                     : %d\n", m_iGOPSize);
     x265_print_params(this);
-    printf("\n\n");
-    fflush(stdout);
 
     return true;
 }

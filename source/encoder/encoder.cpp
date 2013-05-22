@@ -262,8 +262,8 @@ struct CLIOptions
 {
     x265::Input*  input;
     x265::Output* recon;
-    char* outputFileName;               ///< output bit-stream file
     x265::ThreadPool *threadPool;
+    fstream bitstreamFile;
 
     uint32_t inputBitDepth;             ///< bit-depth of input file
     uint32_t outputBitDepth;            ///< bit-depth of output file
@@ -276,7 +276,6 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
-        outputFileName = NULL;
         threadPool = NULL;
         inputBitDepth = outputBitDepth = 8;
         framesToBeEncoded = frameSkip = 0;
@@ -339,7 +338,192 @@ struct CLIOptions
 
 bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 {
-    return true;
+    bool do_help = false;
+    int cpuid = 0;
+    int threadcount = 0;
+    const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
+
+#if 0
+    ("help", do_help, false, "this help text")
+    ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
+    ("threads",               threadcount,         0, "Number of threads for thread pool (default:CPU HT core count)")
+    // File, I/O and source parameters
+    ("InputFile,i",           inputfn,                 "", "Original YUV input file name")
+    ("BitstreamFile,b",       bitstreamfn,     "hevc.bin", "Bitstream output file name")
+    ("ReconFile,o",           reconfn,                 "", "Reconstructed YUV output file name")
+    ("InputBitDepth",         cliopt->inputBitDepth,     8, "Bit-depth of input file")
+    ("OutputBitDepth",        cliopt->outputBitDepth,    0, "Bit-depth of output file (default:InternalBitDepth)")
+    ("FrameSkip,-fs",         cliopt->frameSkip,         0u, "Number of frames to skip at start of input YUV")
+    ("FramesToBeEncoded,f",   cliopt->framesToBeEncoded, 0, "Number of frames to be encoded (default=all)")
+
+
+    ("SourceWidth,-wdt",      param->iSourceWidth,      0, "Source picture width")
+    ("SourceHeight,-hgt",     param->iSourceHeight,     0, "Source picture height")
+    ("FrameRate,-fr",         param->iFrameRate,        0, "Frame rate")
+    ("InternalBitDepth",      param->internalBitDepth,  0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+    "If different to InputBitDepth, source data will be converted")
+
+    ("MaxCUSize,s",             param->uiMaxCUSize,              64u, "Maximum CU size")
+    ("MaxPartitionDepth,h",     param->uiMaxCUDepth,              4u, "CU depth")
+
+    ("QuadtreeTULog2MaxSize",   param->uiQuadtreeTULog2MaxSize,   6u, "Maximum TU size in logarithm base 2")
+    ("QuadtreeTULog2MinSize",   param->uiQuadtreeTULog2MinSize,   2u, "Minimum TU size in logarithm base 2")
+
+    ("QuadtreeTUMaxDepthIntra", param->uiQuadtreeTUMaxDepthIntra, 1u, "Depth of TU tree for intra CUs")
+    ("QuadtreeTUMaxDepthInter", param->uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
+
+    // Coding structure parameters
+    ("IntraPeriod,-ip",         param->iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
+
+    // motion options
+    ("SearchMethod,-me",        param->searchMethod,               3, "0:DIA 1:HEX 2:UMH 3:HM 4:ORIG")
+    ("SearchRange,-sr",         param->iSearchRange,              96, "Motion search range")
+    ("BipredSearchRange",       param->bipredSearchRange,          4, "Motion search range for bipred refinement")
+
+    /* Quantization parameters */
+    ("MaxCuDQPDepth,-dqd",   param->iMaxCuDQPDepth,    0u, "max depth for a minimum CuDQP")
+
+    ("CbQpOffset,-cbqpofs",  param->cbQpOffset,        0, "Chroma Cb QP Offset")
+    ("CrQpOffset,-crqpofs",  param->crQpOffset,        0, "Chroma Cr QP Offset")
+
+    ("AdaptiveQpSelection,-aqps",     param->bUseAdaptQpSelect,        0, "AdaptiveQpSelection")
+
+    ("AdaptiveQP,-aq",                param->bUseAdaptiveQP,           0, "QP adaptation based on a psycho-visual model")
+    ("MaxQPAdaptationRange,-aqr",     param->iQPAdaptationRange,       6, "QP adaptation range")
+    ("RDOQ",                          param->useRDOQ,                  1)
+    ("RDOQTS",                        param->useRDOQTS,                1)
+    ("RDpenalty",                     param->rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
+
+    // Deblocking filter parameters
+    ("LoopFilterDisable",              param->bLoopFilterDisable,             0)
+    ("LoopFilterOffsetInPPS",          param->loopFilterOffsetInPPS,          0)
+    ("LoopFilterBetaOffset_div2",      param->loopFilterBetaOffsetDiv2,       0)
+    ("LoopFilterTcOffset_div2",        param->loopFilterTcOffsetDiv2,         0)
+    ("DeblockingFilterControlPresent", param->DeblockingFilterControlPresent, 0)
+    ("DeblockingFilterMetric",         param->DeblockingFilterMetric,         0)
+
+    // Coding tools
+    ("AMP",                      param->enableAMP,                 1,  "Enable asymmetric motion partitions")
+    ("RectInter",                param->enableRectInter,           1,  "Enable rectangular motion partitions Nx2N and 2NxN, disabling also disables AMP")
+    ("TransformSkip",            param->useTransformSkip,          0,  "Intra transform skipping")
+    ("TransformSkipFast",        param->useTransformSkipFast,      0,  "Fast intra transform skipping")
+    ("SAO",                      param->bUseSAO,                   1,  "Enable Sample Adaptive Offset")
+    ("MaxNumOffsetsPerPic",      param->maxNumOffsetsPerPic,    2048,  "Max number of SAO offset per picture (Default: 2048)")
+    ("SAOLcuBoundary",           param->saoLcuBoundary,            0,  "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
+    ("SAOLcuBasedOptimization",  param->saoLcuBasedOptimization,   1,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
+
+    ("ConstrainedIntraPred",     param->bUseConstrainedIntraPred,  0, "Constrained Intra Prediction")
+
+    ("PCMEnabledFlag",           param->usePCM,                    0)
+    ("PCMLog2MaxSize",           param->pcmLog2MaxSize,            5u)
+    ("PCMLog2MinSize",           param->uiPCMLog2MinSize,          3u)
+    ("PCMInputBitDepthFlag",     param->bPCMInputBitDepthFlag,     1)
+    ("PCMFilterDisableFlag",     param->bPCMFilterDisableFlag,     0)
+
+    ("LosslessCuEnabled",        param->useLossless,               0)
+
+    ("WeightedPredP,-wpP",       param->useWeightedPred,               0,          "Use weighted prediction in P slices")
+    ("WeightedPredB,-wpB",       param->useWeightedBiPred,             0,          "Use weighted (bidirectional) prediction in B slices")
+    ("Log2ParallelMergeLevel",   param->log2ParallelMergeLevel,       2u,          "Parallel merge estimation region")
+    ("WaveFrontSynchro",         param->iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+    ("SignHideFlag,-SBH",        param->signHideFlag, 1)
+    ("MaxNumMergeCand",          param->maxNumMergeCand,               5u,         "Maximum number of merge candidates")
+
+    ("TMVPMode", param->TMVPModeId, 1, "TMVP mode 0: TMVP disable for all slices. 1: TMVP enable for all slices (default) 2: TMVP enable for certain slices only")
+    ("FDM", param->useFastDecisionForMerge, 1, "Fast decision for Merge RD Cost")
+    ("CFM", param->bUseCbfFastMode, 0, "Cbf fast mode setting")
+    ("ESD", param->useEarlySkipDetection, 0, "Early SKIP detection setting")
+
+    ("RateControl",         param->RCEnableRateControl,       0, "Rate control: enable rate control")
+    ("TargetBitrate",       param->RCTargetBitrate,           0, "Rate control: target bitrate")
+    ("KeepHierarchicalBit", param->RCKeepHierarchicalBit,     0, "Rate control: keep hierarchical bit allocation in rate control algorithm")
+    ("LCULevelRateControl", param->RCLCULevelRC,              1, "Rate control: true: LCU level RC; false: picture level RC")
+    ("RCLCUSeparateModel",  param->RCUseLCUSeparateModel,     1, "Rate control: use LCU level separate R-lambda model")
+    ("InitialQP",           param->RCInitialQP,               0, "Rate control: initial QP")
+    ("RCForceIntraQP",      param->RCForceIntraQP,            0, "Rate control: force intra QP to be equal to initial QP")
+
+    ("TransquantBypassEnableFlag",     param->TransquantBypassEnableFlag,         0, "transquant_bypass_enable_flag indicator in PPS")
+    ("CUTransquantBypassFlagValue",    param->CUTransquantBypassFlagValue,        0, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
+    ("StrongIntraSmoothing,-sis",      param->useStrongIntraSmoothing,            1, "Enable strong intra smoothing for 32x32 blocks")
+    ;
+#endif
+    if (argc == 1 || do_help)
+    {
+        /* argc == 1: no options have been specified */
+        return false;
+    }
+
+    x265::SetupPrimitives(cpuid);
+    cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
+
+    /* parse the width, height, frame rate from the y4m files if it is not given in the configuration file */
+    cliopt->input = x265::Input::Open(inputfn);
+    if (!cliopt->input || cliopt->input->isFail())
+    {
+        printf("Unable to open source file\n");
+        return true;
+    }
+    if (cliopt->input->getWidth())
+    {
+        param->iSourceWidth = cliopt->input->getWidth();
+        param->iSourceHeight = cliopt->input->getHeight();
+        param->iFrameRate = (int)cliopt->input->getRate();
+        cliopt->inputBitDepth = 8;
+    }
+    else
+    {
+        cliopt->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
+        cliopt->input->setBitDepth(cliopt->inputBitDepth);
+    }
+
+    /* rules for input, output and internal bitdepths as per help text */
+    if (!param->internalBitDepth) { param->internalBitDepth = cliopt->inputBitDepth; }
+    if (!cliopt->outputBitDepth) { cliopt->outputBitDepth = param->internalBitDepth; }
+
+    uint32_t numRemainingFrames = (uint32_t)cliopt->input->guessFrameCount();
+
+    if (cliopt->frameSkip)
+    {
+        cliopt->input->skipFrames(cliopt->frameSkip);
+    }
+
+    cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+
+    printf("Input File                   : %s (%d total frames)\n", inputfn, numRemainingFrames);
+
+    if (reconfn)
+    {
+        printf("Reconstruction File          : %s\n", reconfn);
+        cliopt->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, cliopt->outputBitDepth, param->iFrameRate);
+        if (cliopt->recon->isFail())
+        {
+            printf("Unable to write reconstruction file\n");
+            cliopt->recon->release();
+            cliopt->recon = 0;
+        }
+    }
+
+#if !HIGH_BIT_DEPTH
+    if (cliopt->inputBitDepth != 8 || cliopt->outputBitDepth != 8 || param->internalBitDepth != 8)
+    {
+        printf("x265 not compiled for bit depths greater than 8\n");
+        return true;
+    }
+#endif
+
+    printf("Bitstream File               : %s\n", bitstreamfn);
+    printf("Frame index                  : %u - %d (%d frames)\n", cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, cliopt->framesToBeEncoded);
+
+    //    printf("GOP size                     : %d\n", m_iGOPSize);
+
+    cliopt->bitstreamFile.open(bitstreamfn, fstream::binary | fstream::out);
+    if (!cliopt->bitstreamFile)
+    {
+        fprintf(stderr, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
+        return true;
+    }
+
+    return false;
 }
 
 void new_main(int argc, char **argv)
@@ -352,16 +536,12 @@ void new_main(int argc, char **argv)
     if (parse(argc, argv, &param, &cliopt))
         exit(1);
 
-    fstream bitstreamFile(cliopt.outputFileName, fstream::binary | fstream::out);
-    if (!bitstreamFile)
-    {
-        fprintf(stderr, "failed to open bitstream file <%s> for writing\n", cliopt.outputFileName);
-        exit(1);
-    }
+    x265_set_globals(&param, cliopt.inputBitDepth);
 
-    TComPicYuv *pcPicYuvRec = NULL;
-    TComList<TComPicYuv *> cListPicYuvRec; ///< list of reconstructed YUV files
-    list<AccessUnit> outputAccessUnits;    ///< list of access units to write out, populated by the encoder5_t
+    if (x265_check_params(&param))
+        exit(1);
+
+    x265_print_params(&param);
 
     x265_t *encoder = x265_encoder_open(&param);
     if (!encoder)
@@ -370,11 +550,15 @@ void new_main(int argc, char **argv)
         exit(1);
     }
 
+    TComList<TComPicYuv *> cListPicYuvRec; ///< list of reconstructed YUV files
+    list<AccessUnit> outputAccessUnits;    ///< list of access units to write out, populated by the encoder5_t
+
     // main encoder loop
     uint32_t iFrameRcvd = 0;
     bool bEos = false;
     while (!bEos)
     {
+        TComPicYuv *pcPicYuvRec = NULL;
         if (cListPicYuvRec.size() == (UInt)encoder->m_iGOPSize)
         {
             pcPicYuvRec = cListPicYuvRec.popFront();
@@ -432,7 +616,7 @@ void new_main(int argc, char **argv)
                 }
 
                 const AccessUnit &au = *(iterBitstream++);
-                const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
+                const vector<UInt>& stats = writeAnnexB(cliopt.bitstreamFile, au);
                 cliopt.rateStatsAccum(au, stats);
             }
             outputAccessUnits.clear();
@@ -441,6 +625,7 @@ void new_main(int argc, char **argv)
     }
 
     encoder->printSummary();
+    cliopt.bitstreamFile.close();
 
     double time = (double)iFrameRcvd / param.iFrameRate;
     printf("Bytes written to file: %u (%.3f kbps)\n", cliopt.totalBytes, 0.008 * cliopt.totalBytes / time);
