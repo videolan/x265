@@ -157,7 +157,7 @@ void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dst
     }
 }
 
-void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel* pDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
     int k, l;
     int blkSize  = width;

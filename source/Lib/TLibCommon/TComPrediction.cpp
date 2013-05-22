@@ -368,7 +368,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-        primitives.getIPredAng(g_bitDepthY, (pixel *)ptrSrc + sw + 1, sw, (pixel *)pDst, uiStride, iWidth, iHeight, uiDirMode, bFilter, (pixel *) refLft, (pixel *) refAbv);
+        primitives.getIPredAng(g_bitDepthY, (pixel *)pDst, uiStride, iWidth, uiDirMode, bFilter, (pixel *) refLft, (pixel *) refAbv);
     }
 }
 
