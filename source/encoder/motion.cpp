@@ -234,7 +234,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    if (searchMethod != X265_HM_SEARCH)
+    if (searchMethod != X265_STAR_SEARCH)
     {
         // measure SAD cost at each QPEL motion vector candidate
         for (int i = 0; i < numCandidates; i++)
@@ -542,7 +542,7 @@ me_hex2:
         break;
     }
 
-    case X265_HM_SEARCH: // extendedDiamondSearch - HM Search Algorithm
+    case X265_STAR_SEARCH: // Adapted from HM ME
     {
         int bPointNr = 0;
         int bDistance = 0;
@@ -552,7 +552,7 @@ me_hex2:
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
-            ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+            StarSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             // Break if we go earlyStopRounds without an improved prediction
             if (bcost < saved)
@@ -586,7 +586,7 @@ me_hex2:
             bDistance = 0;
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
-                ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+                StarSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             if (bDistance == 1)
             {
@@ -633,7 +633,7 @@ me_hex2:
     return bcost;
 }
 
-void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 

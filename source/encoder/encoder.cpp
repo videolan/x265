@@ -359,7 +359,7 @@ OPT("TULog2MinSize",   param->uiQuadtreeTULog2MinSize,   required_argument, 0, "
 OPT("TUMaxDepthIntra", param->uiQuadtreeTUMaxDepthIntra, required_argument, 0, "Depth of TU tree for intra CUs")
 OPT("TUMaxDepthInter", param->uiQuadtreeTUMaxDepthInter, required_argument, 0, "Depth of TU tree for inter CUs")
 OPT("keyint",          param->iIntraPeriod,              required_argument, 0, "Intra period in frames, (-1: only first frame)")
-OPT("me",              param->searchMethod,              required_argument, 0, "0:dia 1:hex 2:umh 3:tss 4:hm-orig")
+OPT("me",              param->searchMethod,              required_argument, 0, "0:dia 1:hex 2:umh 3:star 4:hm-orig")
 OPT("merange",         param->iSearchRange,              required_argument, 0, "Motion search range (default: 96)")
 OPT("bpredrange",      param->bipredSearchRange,         required_argument, 0, "Motion search range for bipred refinement (default:4)")
 OPT("MaxCuDQPDepth",   param->iMaxCuDQPDepth,            required_argument, 0, "Max depth for a minimum CU dQP")

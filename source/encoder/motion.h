@@ -122,7 +122,7 @@ protected:
     static const int COST_MAX = 1 << 28;
 
     /* HM Motion Search */
-    void ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
+    void StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
 
     void TwoPointSearch(MV &bmv, int &bcost, int bPointNr);
 

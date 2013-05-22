@@ -295,7 +295,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     ("GOPSize,g",               m_iGOPSize,                 1, "GOP size of temporal structure")
 
     // motion options
-    ("SearchMethod,-me",        searchMethod,               3, "0:DIA 1:HEX 2:UMH 3:HM 4:ORIG")
+    ("SearchMethod,-me",        searchMethod,               3, "0:DIA 1:HEX 2:UMH 3:STAR 4:ORIG")
     ("SearchRange,-sr",         iSearchRange,              96, "Motion search range")
     ("BipredSearchRange",       bipredSearchRange,          4, "Motion search range for bipred refinement")
     ("HadamardME",              m_bUseHADME,                1, "Hadamard ME for fractional-pel")
