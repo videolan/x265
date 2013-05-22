@@ -1909,18 +1909,6 @@ static inline Vec2d snan2d() {
 *
 *****************************************************************************/
 
-static inline __m128i reinterpret_i (__m128i const & x) {
-    return x;
-}
-
-static inline __m128i reinterpret_i (__m128  const & x) {
-    return _mm_castps_si128(x);
-}
-
-static inline __m128i reinterpret_i (__m128d const & x) {
-    return _mm_castpd_si128(x);
-}
-
 static inline __m128  reinterpret_f (__m128i const & x) {
     return _mm_castsi128_ps(x);
 }

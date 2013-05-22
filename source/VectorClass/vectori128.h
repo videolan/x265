@@ -5533,6 +5533,18 @@ Vec8s broadcast(Const_int_t<d>, Vec8s const& a) {
     return broadcast_by_i<d>((Vec8us)a);
 }
 
+static inline __m128i reinterpret_i (__m128i const & x) {
+    return x;
+}
+
+static inline __m128i reinterpret_i (__m128  const & x) {
+    return _mm_castps_si128(x);
+}
+
+static inline __m128i reinterpret_i (__m128d const & x) {
+    return _mm_castpd_si128(x);
+}
+
 
 #if _MSC_VER
 #pragma warning(pop)

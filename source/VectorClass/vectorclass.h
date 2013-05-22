@@ -36,16 +36,16 @@
 #else
 
 #include "vectori128.h"      // 128-bit integer vectors
-#include "vectorf128.h"      // 128-bit floating point vectors
+//#include "vectorf128.h"      // 128-bit floating point vectors
 #if INSTRSET >= 8
   #include "vectori256.h"    // 256-bit integer vectors, requires AVX2 instruction set
 #else
   #include "vectori256e.h"   // 256-bit integer vectors, emulated
 #endif  // INSTRSET >= 8
 #if INSTRSET >= 7
-  #include "vectorf256.h"    // 256-bit floating point vectors, requires AVX instruction set
+//  #include "vectorf256.h"    // 256-bit floating point vectors, requires AVX instruction set
 #else
-  #include "vectorf256e.h"   // 256-bit floating point vectors, emulated
+//  #include "vectorf256e.h"   // 256-bit floating point vectors, emulated
 #endif  // INSTRSET >= 7
 
 #endif  // INSTRSET < 2
