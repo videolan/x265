@@ -100,12 +100,12 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseRectInter(enableRectInter);
 
     //====== Loop/Deblock Filter ========
-    m_cTEncTop.setLoopFilterDisable(bLoopFilterDisable);
-    m_cTEncTop.setLoopFilterOffsetInPPS(loopFilterOffsetInPPS);
-    m_cTEncTop.setLoopFilterBetaOffset(loopFilterBetaOffsetDiv2);
-    m_cTEncTop.setLoopFilterTcOffset(loopFilterTcOffsetDiv2);
-    m_cTEncTop.setDeblockingFilterControlPresent(DeblockingFilterControlPresent);
-    m_cTEncTop.setDeblockingFilterMetric(DeblockingFilterMetric);
+    m_cTEncTop.setLoopFilterDisable(m_bLoopFilterDisable);
+    m_cTEncTop.setLoopFilterOffsetInPPS(m_loopFilterOffsetInPPS);
+    m_cTEncTop.setLoopFilterBetaOffset(m_loopFilterBetaOffsetDiv2);
+    m_cTEncTop.setLoopFilterTcOffset(m_loopFilterTcOffsetDiv2);
+    m_cTEncTop.setDeblockingFilterControlPresent(m_DeblockingFilterControlPresent);
+    m_cTEncTop.setDeblockingFilterMetric(m_DeblockingFilterMetric);
 
     //====== Motion search ========
     m_cTEncTop.setSearchMethod(searchMethod);
@@ -119,7 +119,7 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setUseAdaptQpSelect(bUseAdaptQpSelect);
     Int lowestQP = -6 * (g_bitDepthY - 8); // XXX: check
-    if ((iQP == lowestQP) && useLossless)
+    if ((iQP == lowestQP) && m_useLossless)
     {
         bUseAdaptiveQP = 0;
     }
@@ -138,9 +138,6 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setUseTransformSkip(useTransformSkip);
     m_cTEncTop.setUseTransformSkipFast(useTransformSkipFast);
     m_cTEncTop.setUseConstrainedIntraPred(bUseConstrainedIntraPred);
-    m_cTEncTop.setPCMLog2MinSize(uiPCMLog2MinSize);
-    m_cTEncTop.setUsePCM(usePCM);
-    m_cTEncTop.setPCMLog2MaxSize(pcmLog2MaxSize);
     m_cTEncTop.setMaxNumMergeCand(maxNumMergeCand);
 
     //====== Weighted Prediction ========
@@ -155,22 +152,9 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setSaoLcuBoundary(saoLcuBoundary);
     m_cTEncTop.setSaoLcuBasedOptimization(saoLcuBasedOptimization);
-    m_cTEncTop.setPCMInputBitDepthFlag(bPCMInputBitDepthFlag);
-    m_cTEncTop.setPCMFilterDisableFlag(bPCMFilterDisableFlag);
     m_cTEncTop.setWaveFrontSynchro(iWaveFrontSynchro);
     m_cTEncTop.setTMVPModeId(TMVPModeId);
     m_cTEncTop.setSignHideFlag(signHideFlag);
-    m_cTEncTop.setUseRateCtrl(RCEnableRateControl);
-    m_cTEncTop.setTargetBitrate(RCTargetBitrate);
-    m_cTEncTop.setKeepHierBit(RCKeepHierarchicalBit);
-    m_cTEncTop.setLCULevelRC(RCLCULevelRC);
-    m_cTEncTop.setUseLCUSeparateModel(RCUseLCUSeparateModel);
-    m_cTEncTop.setInitialQP(RCInitialQP);
-    m_cTEncTop.setForceIntraQP(RCForceIntraQP);
-    m_cTEncTop.setTransquantBypassEnableFlag(TransquantBypassEnableFlag);
-    m_cTEncTop.setCUTransquantBypassFlagValue(CUTransquantBypassFlagValue);
-    m_cTEncTop.setUseStrongIntraSmoothing(useStrongIntraSmoothing);
-    m_cTEncTop.setUseLossless(useLossless);
 
     m_cTEncTop.setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
@@ -192,9 +176,26 @@ Void TAppEncTop::xInitLibCfg()
         m_cTEncTop.setLambdaModifier(uiLoop, m_adLambdaModifier[uiLoop]);
     }
     m_cTEncTop.setMaxTempLayer(m_maxTempLayer);
-
+    m_cTEncTop.setUseStrongIntraSmoothing(useStrongIntraSmoothing);
 
     //====== Tool list ========
+    m_cTEncTop.setPCMInputBitDepthFlag(m_bPCMInputBitDepthFlag);
+    m_cTEncTop.setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
+    m_cTEncTop.setUseRateCtrl(m_RCEnableRateControl);
+    m_cTEncTop.setTargetBitrate(m_RCTargetBitrate);
+    m_cTEncTop.setKeepHierBit(m_RCKeepHierarchicalBit);
+    m_cTEncTop.setLCULevelRC(m_RCLCULevelRC);
+    m_cTEncTop.setUseLCUSeparateModel(m_RCUseLCUSeparateModel);
+    m_cTEncTop.setInitialQP(m_RCInitialQP);
+    m_cTEncTop.setForceIntraQP(m_RCForceIntraQP);
+    m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
+    m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
+    m_cTEncTop.setUseLossless(m_useLossless);
+
+    m_cTEncTop.setUsePCM(m_usePCM);
+    m_cTEncTop.setPCMLog2MinSize(m_uiPCMLog2MinSize);
+    m_cTEncTop.setPCMLog2MaxSize(m_pcmLog2MaxSize);
+
     m_cTEncTop.setUseASR(m_bUseASR);
     m_cTEncTop.setUseHADME(m_bUseHADME);
     m_cTEncTop.setdQPs(m_aidQP);

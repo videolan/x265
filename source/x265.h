@@ -76,6 +76,8 @@ typedef struct x265_param_t
     // coding tools (bit-depth)
     int       internalBitDepth;                 ///< bit-depth codec operates at
 
+    int       iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+
     // source specification
     int       iFrameRate;                       ///< source frame-rates (Hz)
     int       iSourceWidth;                     ///< source width in pixel
@@ -110,29 +112,11 @@ typedef struct x265_param_t
     int       bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
     int       iQPAdaptationRange;               ///< dQP range by QP adaptation
 
-    // coding tools (PCM bit-depth)
-    int       bPCMInputBitDepthFlag;            ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
-
     // coding tool (lossless)
-    int       useLossless;                      ///< flag for using lossless coding
     int       bUseSAO;                          ///< Enable SAO filter
     int       maxNumOffsetsPerPic;              ///< SAO maximum number of offset per picture
     int       saoLcuBoundary;                   ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     int       saoLcuBasedOptimization;          ///< SAO LCU-based optimization
-
-    // coding tools (loop filter)
-    int       bLoopFilterDisable;               ///< flag for using deblocking filter
-    int       loopFilterOffsetInPPS;            ///< offset for deblocking filter in 0 = slice header, 1 = PPS
-    int       loopFilterBetaOffsetDiv2;         ///< beta offset for deblocking filter
-    int       loopFilterTcOffsetDiv2;           ///< tc offset for deblocking filter
-    int       DeblockingFilterControlPresent;   ///< deblocking filter control present flag in PPS
-    int       DeblockingFilterMetric;           ///< blockiness metric in encoder
-
-    // coding tools (PCM)
-    int       usePCM;                           ///< flag for using IPCM
-    uint32_t  pcmLog2MaxSize;                   ///< log2 of maximum PCM block size
-    uint32_t  uiPCMLog2MinSize;                 ///< log2 of minimum PCM block size
-    int       bPCMFilterDisableFlag;            ///< PCM filter disable flag
 
     // coding tools
     int       useRDOQ;                          ///< flag for using RD optimized quantization
@@ -146,9 +130,6 @@ typedef struct x265_param_t
     int       searchMethod;                     ///< ME search method (DIA, HEX, UMH, HM)
     int       iSearchRange;                     ///< ME search range
     int       bipredSearchRange;                ///< ME search range for bipred refinement
-
-    int       iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-
     int       bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
 
     // weighted prediction
@@ -159,18 +140,6 @@ typedef struct x265_param_t
     uint32_t  maxNumMergeCand;                  ///< Max number of merge candidates
 
     int       TMVPModeId;                       ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
-
-    int       RCEnableRateControl;              ///< enable rate control or not
-    int       RCTargetBitrate;                  ///< target bitrate when rate control is enabled
-    int       RCKeepHierarchicalBit;            ///< whether keeping hierarchical bit allocation structure or not
-    int       RCLCULevelRC;                     ///< true: LCU level rate control; false: picture level rate control
-    int       RCUseLCUSeparateModel;            ///< use separate R-lambda model at LCU level
-    int       RCInitialQP;                      ///< inital QP for rate control
-    int       RCForceIntraQP;                   ///< force all intra picture to use initial QP or not
-
-    int       TransquantBypassEnableFlag;       ///< transquant_bypass_enable_flag setting in PPS.
-    int       CUTransquantBypassFlagValue;      ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-
     int       useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
 }
 x265_param_t;
