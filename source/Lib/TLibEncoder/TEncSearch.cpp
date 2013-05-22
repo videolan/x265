@@ -2361,6 +2361,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Bool  bLeftAvail  = false;
 
     x265::pixelcmp sa8d;
+
     switch (uiWidth)
     {
     case 32:
@@ -2401,7 +2402,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
 
         //--- get SAD ---
         UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
-                     sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
+            sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
         x265_emms();
 
         //--- check ---
@@ -2437,6 +2438,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
     x265::pixelcmp sa8d;
+
     switch (uiWidth)
     {
     case 64:
@@ -2502,7 +2504,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             }
 
             CandNum = 0;
-           
+
             for (Int modeIdx = 0; modeIdx < numModesAvailable; modeIdx++)
             {
                 UInt uiMode = modeIdx;
@@ -2517,8 +2519,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();
 
                 CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
-            }       
-
+            }
 
 #if FAST_UDI_USE_MPM
             Int uiPreds[3] = { -1, -1, -1 };
@@ -3911,7 +3912,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
-    if ( 1 && m_iSearchMethod < 4 && m_cDistParam.bApplyWeight == false && !bBi)
+    if (m_iSearchMethod < 4 && m_cDistParam.bApplyWeight == false && !bBi)
     {
         int satd = m_me.motionEstimate(m_pcRdCost->m_mvPredictor, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);

@@ -38,18 +38,16 @@ public:
 
     union {
         struct { int16_t x, y; };
-        int32_t word;
 
+        int32_t word;
     };
 
-    
-        // These variables are added  for HM motion search algorithm imlplementation
-        // this is need to to implement HM ME 
-        unsigned char ucPointNr;
-        unsigned int uiDistance;
-        unsigned int uiBestRound;
+    // These variables are added  for HM motion search algorithm imlplementation
+    // this is need to to implement HM ME
+    unsigned char ucPointNr;
+    unsigned int uiDistance;
+    unsigned int uiBestRound;
 
-   
     MV() : word(0)                             {}
 
     MV(int32_t _w) : word(_w)                  {}
@@ -93,11 +91,13 @@ public:
     bool inline isSubpel() const               { return (this->word & 0x00030003) != 0; }
 
     MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
+
     MV mvmax(const MV& m) const                { return MV(x < m.x ? m.x : x, y < m.y ? m.y : y); }
 
     MV clipped(const MV& _min, const MV& _max) const
     {
         MV cl = mvmin(_max);
+
         return cl.mvmax(_min);
     }
 

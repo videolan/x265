@@ -42,7 +42,7 @@ struct MotionReference
 
 protected:
 
-    MotionReference& operator=(const MotionReference&);
+    MotionReference& operator =(const MotionReference&);
 };
 
 class MotionEstimate : public BitCost
@@ -80,7 +80,7 @@ protected:
     int partEnum;
     int searchMethod;
 
-    MotionEstimate& operator=(const MotionEstimate&);
+    MotionEstimate& operator =(const MotionEstimate&);
 
 public:
 
@@ -120,7 +120,7 @@ public:
 
     /*HM Motion Search*/
     void ExtendedDiamondSearch(MV &omv, int &bcost, int iDist);
-     void ExtendedPointSearch(MV &omv, int &bcost);
+    void ExtendedPointSearch(MV &omv, int &bcost);
 
 protected:
 
@@ -136,6 +136,7 @@ protected:
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
@@ -145,12 +146,12 @@ protected:
     {
         MV fmv = qmv >> 2;
         pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+
         return satd(fenc, FENC_STRIDE,
                     qfref + fmv.y * ref->lumaStride + fmv.x,
                     ref->lumaStride);
     }
-    
-  };
+};
 }
 
 #endif // ifndef __MOTIONESTIMATE__
