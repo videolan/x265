@@ -134,27 +134,30 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     int pmode;
     Bool bFilter;
 
-    for (int width = 4; width <= 16; width <<= 1)
+    for (int width = 4; width <= 4; width <<= 1)
     {
         bFilter  = (width <= 16);
         for (int i = 0; i <= 100; i++)
         {
-            pmode = (rand() % 33) + 2;
-
-            memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
-            memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
-            pixel * refAbove = pixel_buff + j;
-            pixel * refLeft = refAbove + 3*width; 
-            refLeft[0] = refAbove[0];
-
-            opt(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
-            ref(BIT_DEPTH, pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C, FENC_STRIDE, width, 0, pmode, bFilter, refAbove, refLeft);
-
-            for (int k = 0; k < width; k++)
+            for (int p = 2; p <= 34; p++)
             {
-                if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
+                pmode = p;
+
+                memset(pixel_out_Vec, 0xCD, ip_t_size);      // Initialize output buffer to zero
+                memset(pixel_out_C, 0xCD, ip_t_size);        // Initialize output buffer to zero
+                pixel * refAbove = pixel_buff + j;
+                pixel * refLeft = refAbove + 3 * width;
+                refLeft[0] = refAbove[0];
+
+                opt(BIT_DEPTH, pixel_out_Vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+                ref(BIT_DEPTH, pixel_out_C, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+
+                for (int k = 0; k < width; k++)
                 {
-                    return false;
+                    if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
+                    {
+                        return false;
+                    }
                 }
             }
 
@@ -183,7 +186,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
             return false;
         }
     }
-    if(opt.getIPredAng)
+    if (opt.getIPredAng)
     {
         if (!check_getIPredAng_primitive(ref.getIPredAng, opt.getIPredAng))
         {
@@ -223,17 +226,20 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     if (opt.getIPredAng)
     {
-        for (int ii = 4; ii <= 16; ii <<= 1)
+        for (int ii = 4; ii <= 4; ii <<= 1)
         {
-            width = ii;
-            bool bFilter  = (width <= 16);
-            pixel * refAbove = pixel_buff + srcStride;
-            pixel * refLeft = refAbove + 3*width; 
-            refLeft[0] = refAbove[0];
-            printf("IPred_getIPredAng[width=%d]", ii);
-            REPORT_SPEEDUP(opt.getIPredAng, ref.getIPredAng,
-                           BIT_DEPTH, pixel_buff + srcStride, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0, (rand()%33)+2, bFilter, refAbove, refLeft);
+            for (int k = 2; k <= 34; k++)
+            {
+                width = ii;
+                bool bFilter  = (width <= 16);
+                pixel * refAbove = pixel_buff + srcStride;
+                pixel * refLeft = refAbove + 3 * width;
+                refLeft[0] = refAbove[0];
+                int pmode = k;  //(rand()%33)+2;
+                printf("IPred_getIPredAng[width=%d][mode=%d]", ii, pmode);
+                REPORT_SPEEDUP(opt.getIPredAng, ref.getIPredAng,
+                               BIT_DEPTH, pixel_out_Vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+            }
         }
     }
-
 }
