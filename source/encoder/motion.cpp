@@ -116,9 +116,9 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        MV tmv(mx, my); \
-        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
-        COPY2_IF_LT(bcost, cost, bmv, tmv); \
+        MV _tmv(mx, my); \
+        int cost = fpelSad(fref, _tmv) + mvcost(_tmv << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, _tmv); \
     } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
