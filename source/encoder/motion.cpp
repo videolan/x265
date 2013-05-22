@@ -641,6 +641,8 @@ me_hex2:
                 omv = bmv;
                 bcost &= ~15;
             }
+            else
+                break;
         }
 
         res >>= 1;
