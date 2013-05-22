@@ -612,7 +612,6 @@ me_hex2:
     /* HPEL refinement followed by QPEL refinement */
 
     omv = bmv;
-    bcost <<= 4;
     int16_t res = 2;
     do
     {
@@ -620,29 +619,24 @@ me_hex2:
         {
             MV mv = omv + MV(0, -res);
             int cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 1);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
             mv = omv + MV(0,  res);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 3);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
             mv = omv + MV(-res, 0);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 4);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
             mv = omv + MV(res,  0);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 12);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
-            if (bcost & 15)
-            {
-                bmv.x -= res * ((bcost << 28) >> 30);
-                bmv.y -= res * ((bcost << 30) >> 30);
-                omv = bmv;
-                bcost &= ~15;
-            }
-            else
+            if (omv == bmv)
                 break;
+
+            omv = bmv;
         }
 
         res >>= 1;
@@ -651,7 +645,7 @@ me_hex2:
 
     x265_emms();
     outQMv = bmv;
-    return bcost >> 4;
+    return bcost;
 }
 
 void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
