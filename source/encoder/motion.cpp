@@ -116,9 +116,9 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        MV tmv(mx, my); \
-        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
-        COPY2_IF_LT(bcost, cost, bmv, tmv); \
+        MV _tmv(mx, my); \
+        int cost = fpelSad(fref, _tmv) + mvcost(_tmv << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, _tmv); \
     } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
@@ -611,34 +611,32 @@ me_hex2:
 
     /* HPEL refinement followed by QPEL refinement */
 
-    bcost <<= 4;
+    omv = bmv;
     int16_t res = 2;
     do
     {
         for (int iter = 0; iter < 2; iter++)
         {
-            MV mv = bmv + MV(0, -res);
+            MV mv = omv + MV(0, -res);
             int cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 1);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
-            mv = bmv + MV(0,  res);
+            mv = omv + MV(0,  res);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 3);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
-            mv = bmv + MV(-res, 0);
+            mv = omv + MV(-res, 0);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 4);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
-            mv = bmv + MV(res,  0);
+            mv = omv + MV(res,  0);
             cost = qpelSatd(mv) + mvcost(mv);
-            COPY1_IF_LT(bcost, (cost << 4) + 12);
+            COPY2_IF_LT(bcost, cost, bmv, mv);
 
-            if (bcost & 15)
-            {
-                bmv.x -= res * ((bcost << 28) >> 30);
-                bmv.y -= res * ((bcost << 30) >> 30);
-                bcost &= ~15;
-            }
+            if (omv == bmv)
+                break;
+
+            omv = bmv;
         }
 
         res >>= 1;
@@ -647,7 +645,7 @@ me_hex2:
 
     x265_emms();
     outQMv = bmv;
-    return bcost >> 4;
+    return bcost;
 }
 
 void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)

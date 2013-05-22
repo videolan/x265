@@ -48,7 +48,7 @@ protected:
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
 
-    Encoder() : m_profile(Profile::Name::MAIN), m_levelTier(Level::Tier::MAIN), m_level(Level::Name::NONE) {};
+    Encoder() : m_profile(Profile::MAIN), m_levelTier(Level::MAIN), m_level(Level::NONE) {};
 
     virtual ~Encoder() {}
 

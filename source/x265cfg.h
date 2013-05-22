@@ -121,6 +121,28 @@ protected:
     int       m_SOPDescriptionSEIEnabled;
     int       m_scalableNestingSEIEnabled;
 
+    int m_bLoopFilterDisable;
+    int m_loopFilterOffsetInPPS;
+    int m_loopFilterBetaOffsetDiv2;
+    int m_loopFilterTcOffsetDiv2;
+    int m_DeblockingFilterControlPresent;
+    int m_DeblockingFilterMetric;
+    int m_useLossless;
+    int m_uiPCMLog2MinSize;
+    int m_usePCM;
+    int m_pcmLog2MaxSize;
+    int m_bPCMInputBitDepthFlag;
+    int m_bPCMFilterDisableFlag;
+    int m_RCEnableRateControl;
+    int m_RCTargetBitrate;
+    int m_RCKeepHierarchicalBit;
+    int m_RCLCULevelRC;
+    int m_RCUseLCUSeparateModel;
+    int m_RCInitialQP;
+    int m_RCForceIntraQP;
+    int m_TransquantBypassEnableFlag;
+    int m_CUTransquantBypassFlagValue;
+
     int       m_vuiParametersPresentFlag;         ///< enable generation of VUI parameters
     int       m_aspectRatioInfoPresentFlag;       ///< Signals whether aspect_ratio_idc is present
     int       m_aspectRatioIdc;                   ///< aspect_ratio_idc

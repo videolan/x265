@@ -65,9 +65,6 @@ void x265_param_default( x265_param_t *param )
     param->useStrongIntraSmoothing = 1;
     param->useRDOQ = 1;
     param->useRDOQTS = 1;
-    param->pcmLog2MaxSize = 5u;
-    param->uiPCMLog2MinSize = 3u;
-    param->bPCMInputBitDepthFlag = 1;
 }
 
 extern "C"
@@ -139,10 +136,6 @@ int x265_check_params(x265_param_t *param)
         "QP exceeds supported range (-QpBDOffsety to 51)");
     CONFIRM(param->iFrameRate <= 0,
         "Frame rate must be more than 1");
-    CONFIRM(param->loopFilterBetaOffsetDiv2 < -13 || param->loopFilterBetaOffsetDiv2 > 13,
-        "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
-    CONFIRM(param->loopFilterTcOffsetDiv2 < -13 || param->loopFilterTcOffsetDiv2 > 13,
-        "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
     CONFIRM(param->searchMethod < 0 || param->searchMethod > X265_ORIG_SEARCH,
         "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG)");
     CONFIRM(param->iSearchRange < 0,
@@ -202,18 +195,6 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->bUseAdaptQpSelect && (param->cbQpOffset != 0 || param->crQpOffset != 0),
         "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
 
-    if (param->usePCM)
-    {
-        CONFIRM(param->uiPCMLog2MinSize < 3,
-            "PCMLog2MinSize must be 3 or greater.");
-        CONFIRM(param->uiPCMLog2MinSize > 5,
-            "PCMLog2MinSize must be 5 or smaller.");
-        CONFIRM(param->pcmLog2MaxSize > 5,
-            "PCMLog2MaxSize must be 5 or smaller.");
-        CONFIRM(param->pcmLog2MaxSize < param->uiPCMLog2MinSize,
-            "PCMLog2MaxSize must be equal to or greater than m_uiPCMLog2MinSize.");
-    }
-
     //TODO:ChromaFmt assumes 4:2:0 below
     CONFIRM(param->iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
         "Picture width must be an integer multiple of the specified chroma subsampling");
@@ -230,20 +211,6 @@ int x265_check_params(x265_param_t *param)
     }
 
     CONFIRM(param->iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
-
-    if (param->RCEnableRateControl)
-    {
-        if (param->RCForceIntraQP)
-        {
-            if (param->RCInitialQP == 0)
-            {
-                printf("\nInitial QP for rate control is not specified. Reset not to use force intra QP!");
-                param->RCForceIntraQP = false;
-            }
-        }
-    }
-
-    CONFIRM(!param->TransquantBypassEnableFlag && param->CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
 
     CONFIRM(param->log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
 
@@ -276,8 +243,8 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
     g_uiPCMBitDepthLuma = g_uiPCMBitDepthChroma = 8;
 #endif
 
-    g_uiPCMBitDepthLuma = param->bPCMInputBitDepthFlag ? inputBitDepth : g_bitDepthY;
-    g_uiPCMBitDepthChroma = param->bPCMInputBitDepthFlag ? inputBitDepth : g_bitDepthC;
+    g_uiPCMBitDepthLuma = inputBitDepth;
+    g_uiPCMBitDepthChroma = inputBitDepth;
 }
 
 void x265_print_params(x265_param_t *param)
@@ -289,7 +256,6 @@ void x265_print_params(x265_param_t *param)
     printf("CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
     printf("RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
     printf("Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
-    printf("Min PCM size                 : %d\n", 1 << param->uiPCMLog2MinSize);
     printf("Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
     printf("Max Num Merge Candidates     : %d\n", param->maxNumMergeCand);
     printf("Intra period                 : %d\n", param->iIntraPeriod);
@@ -304,16 +270,6 @@ void x265_print_params(x265_param_t *param)
     {
         printf("QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, (param->bUseAdaptiveQP ? param->iQPAdaptationRange : 0));
     }
-    if (param->RCEnableRateControl)
-    {
-        printf("RateControl                  : %d\n", param->RCEnableRateControl);
-        printf("TargetBitrate                : %d\n", param->RCTargetBitrate);
-        printf("KeepHierarchicalBit          : %d\n", param->RCKeepHierarchicalBit);
-        printf("LCULevelRC                   : %d\n", param->RCLCULevelRC);
-        printf("UseLCUSeparateModel          : %d\n", param->RCUseLCUSeparateModel);
-        printf("InitialQP                    : %d\n", param->RCInitialQP);
-        printf("ForceIntraQP                 : %d\n", param->RCForceIntraQP);
-    }
     printf("\n");
 
     printf("TOOL CFG: ");
@@ -327,9 +283,7 @@ void x265_print_params(x265_param_t *param)
     printf("TransformSkipFast:%d ", param->useTransformSkipFast);
     printf("CIP:%d ", param->bUseConstrainedIntraPred);
     printf("SAO:%d ", (param->bUseSAO) ? (1) : (0));
-    printf("PCM:%d ", (param->usePCM && (1u << param->uiPCMLog2MinSize) <= param->uiMaxCUSize) ? 1 : 0);
     printf("SAOLcuBasedOptimization:%d ", (param->saoLcuBasedOptimization) ? (1) : (0));
-    printf("LosslessCuEnabled:%d ", (param->useLossless) ? 1 : 0);
     printf("WPP:%d ", param->useWeightedPred);
     printf("WPB:%d ", param->useWeightedBiPred);
     printf("PME:%d ", param->log2ParallelMergeLevel);
