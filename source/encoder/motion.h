@@ -119,9 +119,11 @@ public:
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
 protected:
+    static const int COST_MAX = 1 << 28;
 
     /* HM Motion Search */
     void ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
+
     void TwoPointSearch(MV &bmv, int &bcost, int bPointNr);
 
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
