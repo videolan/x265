@@ -611,25 +611,26 @@ me_hex2:
 
     /* HPEL refinement followed by QPEL refinement */
 
+    omv = bmv;
     bcost <<= 4;
     int16_t res = 2;
     do
     {
         for (int iter = 0; iter < 2; iter++)
         {
-            MV mv = bmv + MV(0, -res);
+            MV mv = omv + MV(0, -res);
             int cost = qpelSatd(mv) + mvcost(mv);
             COPY1_IF_LT(bcost, (cost << 4) + 1);
 
-            mv = bmv + MV(0,  res);
+            mv = omv + MV(0,  res);
             cost = qpelSatd(mv) + mvcost(mv);
             COPY1_IF_LT(bcost, (cost << 4) + 3);
 
-            mv = bmv + MV(-res, 0);
+            mv = omv + MV(-res, 0);
             cost = qpelSatd(mv) + mvcost(mv);
             COPY1_IF_LT(bcost, (cost << 4) + 4);
 
-            mv = bmv + MV(res,  0);
+            mv = omv + MV(res,  0);
             cost = qpelSatd(mv) + mvcost(mv);
             COPY1_IF_LT(bcost, (cost << 4) + 12);
 
@@ -637,6 +638,7 @@ me_hex2:
             {
                 bmv.x -= res * ((bcost << 28) >> 30);
                 bmv.y -= res * ((bcost << 30) >> 30);
+                omv = bmv;
                 bcost &= ~15;
             }
         }
