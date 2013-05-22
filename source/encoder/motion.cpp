@@ -639,6 +639,11 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
 
     if (dist == 1)
     {
+        /* bPointNr
+              2
+            4 * 5
+              7
+         */
         const int16_t iTop    = omv.y - dist;
         const int16_t iBottom = omv.y + dist;
         const int16_t iLeft   = omv.x - dist;
@@ -663,6 +668,15 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
     }
     else if (dist <= 8)
     {
+        /* bPointNr
+              2
+             1 3
+            4 * 5
+             6 8
+              7
+         Points 2, 4, 5, 7 are dist
+         Points 1, 3, 6, 8 are dist>>1
+         */
         const int16_t iTop      = omv.y - dist;
         const int16_t iBottom   = omv.y + dist;
         const int16_t iLeft     = omv.x - dist;
@@ -739,6 +753,17 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
         {
+            /* index
+                  0
+                  3
+                  2
+                  1
+          0 3 2 1 * 1 2 3 0
+                  1
+                  2
+                  3
+                  0
+            */
             // TODO; Use sad_x4
             COST_MV_HM(omv.x, iTop, 0, dist);
             COST_MV_HM(iLeft, omv.y, 0, dist);
@@ -813,6 +838,14 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
     MV omv = bmv;
+
+    /* For a given direction 1 to 8, check nearest 2 outer X pixels
+         X   X
+       X 1 2 3 X
+         4 * 5
+       X 6 7 8 X
+         X   X
+    */
 
     /* TODO: turn into a table lookup with per-point offset pairs */
     switch (bPointNr)
