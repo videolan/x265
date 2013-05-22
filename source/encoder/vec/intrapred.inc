@@ -1265,7 +1265,6 @@ void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int d
 #else /* if HIGH_BIT_DEPTH */
 void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
-    int k;
     int blkSize        = width;
 
     // Map the mode index to main prediction direction and angle
@@ -1296,7 +1295,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
 
         // Extend the Main reference to the left.
         int invAngleSum    = 128;     // rounding for (shift by 8)
-        for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+        for (int k = -1; k > blkSize * intraPredAngle >> 5; k--)
         {
             invAngleSum += invAngle;
             refMain[k] = refSide[invAngleSum >> 8];
@@ -1337,7 +1336,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
             v_side = v_side >> 1;
             row0 += v_side;
             row0 = min(max(0, row0), 255);
-            Vec16uc v_res = compress(row0, 0);
+            Vec16uc v_res(compress(row0, 0));
             store_partial(const_int(4), pDst, v_res);
 
             tmp = (Vec2uq)tmp16;
@@ -1359,8 +1358,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
             store_partial(const_int(4), pDst + (2 * dstStride), v_main);
             store_partial(const_int(4), pDst + (3 * dstStride), v_main);
 
-            int k;
-            for (k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++)
             {
                 pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << 8) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
             }
