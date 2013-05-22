@@ -43,6 +43,8 @@
 #include "primitives.h"
 #include "threadpool.h"
 
+#include <limits.h>
+
 //! \ingroup TLibEncoder
 //! \{
 
