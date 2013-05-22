@@ -556,10 +556,8 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 
 #if 1 //partialButterfly8 intrinsic code
 
-void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
+void CDECL partialButterfly8(short *src, short *dst, int shift, int /* line */)
 {
-    //int j;
-    line;
     int add = 1 << (shift - 1);
     __m128i c32_add   = _mm_set1_epi32(add);
 
@@ -568,8 +566,6 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
     __m128i c32_50_n89_18_75 = _mm_set_epi32(75, 18, -89, 50);
     __m128i c32_18_n50_75_n89 = _mm_set_epi32(-89, 75, -50, 18);
 
-    //  for (j = 0; j < (line/4); j++)
-    //  {
     __m128i src_tmp0 = _mm_load_si128((const __m128i*)src);
     __m128i T20 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
     __m128i T21 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
