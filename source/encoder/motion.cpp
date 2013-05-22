@@ -605,45 +605,28 @@ me_hex2:
     if (bprecost < bcost)
         bmv = bestpre;
     else
-        bmv = bmv.toQPel(); // promote bmv to qpel
+        bmv = bmv.toQPel(); // promote search bmv to qpel
 
-    /* bmv has the best full pel motion vector found by SAD search or motion candidates */
-
-    bcost = qpelSatd(bmv) + mvcost(bmv); // remeasure BMV using SATD
-
-    /* HPEL refinement followed by QPEL refinement */
-
-    omv = bmv;
-    int16_t res = 2;
-    do
+    /* HPEL square refinement, dir 0 has no offset - remeasures bmv with SATD */
+    int bdir = 0;
+    bcost = COST_MAX;
+    for (int i = 0; i < 9; i++)
     {
-        for (int iter = 0; iter < 2; iter++)
-        {
-            MV mv = omv + MV(0, -res);
-            int cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(0,  res);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(-res, 0);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(res,  0);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            if (omv == bmv)
-                break;
-
-            omv = bmv;
-        }
-
-        res >>= 1;
+        MV mv = bmv + square1[i] * 2;
+        int cost = qpelSatd(mv) + mvcost(mv);
+        COPY2_IF_LT(bcost, cost, bdir, i);
     }
-    while (res && bmv.checkRange(qmvmin, qmvmax));
+    bmv += square1[bdir] * 2;
+
+    /* QPEL square refinement, do not remeasure 0 offset */
+    bdir = 0;
+    for (int i = 1; i < 9; i++)
+    {
+        MV mv = bmv + square1[i];
+        int cost = qpelSatd(mv) + mvcost(mv);
+        COPY2_IF_LT(bcost, cost, bdir, i);
+    }
+    bmv += square1[bdir];
 
     x265_emms();
     outQMv = bmv;
