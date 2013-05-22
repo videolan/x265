@@ -562,9 +562,11 @@ me_hex2:
         }
         if (bDistance == 1)
         {
-            // if best distance was only 1, check two missing points
+            // if best distance was only 1, check two missing points.  If no new point is found, stop
+            int saved = bcost;
             TwoPointSearch(bmv, bcost, bPointNr);
-            break;
+            if (bcost == saved)
+                break;
         }
 
         const int rasterDistance = 5;
