@@ -36,8 +36,32 @@
 
 using namespace x265;
 
-static int size_scale[NUM_PARTITIONS];
 
+#if FASTME_SMOOTHER_MV
+#define FIRSTSEARCHSTOP     1
+#else
+#define FIRSTSEARCHSTOP     0
+#endif
+
+#define TZ_SEARCH_CONFIGURATION                                                                                 \
+    const int  iRaster                  = 5; /* TZ soll von aussen ?ergeben werden */                            \
+    /*const bool bTestOtherPredictedMV    = 0;*/                                                                      \
+    /*const bool bTestZeroVector          = 1; */                                                                     \
+    /*const bool bTestZeroVectorStart     = 0;*/                                                                      \
+    /*const bool bTestZeroVectorStop      = 0;*/                                                                      \
+    /*const bool bFirstSearchDiamond      = 1;*/ /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
+    const bool bFirstSearchStop         = FIRSTSEARCHSTOP;                                                        \
+    const unsigned int uiFirstSearchRounds      = 3; /* first search stop X rounds after best match (must be >=1) */     \
+    const bool bEnableRasterSearch      = 1;                                                                      \
+    const bool bAlwaysRasterSearch      = 0; /* ===== 1: BETTER but factor 2 slower ===== */                     \
+    /*const bool bRasterRefinementEnable  = 0;*/ /* enable either raster refinement or star refinement */            \
+    /*const bool bRasterRefinementDiamond = 0;*/ /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
+    const bool bStarRefinementEnable    = 1; /* enable either star refinement or raster refinement */            \
+    const bool bStarRefinementDiamond   = 1; /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
+    const bool bStarRefinementStop      = 0;                                                                      \
+    const unsigned int uiStarRefinementRounds   = 2; /* star refinement stop X rounds after best match (must be >=1) */  \
+
+static int size_scale[NUM_PARTITIONS];
 #define SAD_THRESH(v) (bcost < (((v>>4) * size_scale[partEnum])))
 
 static void init_scales(void)
@@ -96,6 +120,18 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 
     return sum;
 }
+
+#define COST_MV_HM(mx, my, ucPoint, uiDist ) \
+    do \
+    { \
+        MV tmv(mx, my); \
+        tmv.ucPointNr = ucPoint; \
+        tmv.uiDistance = uiDist; \
+        tmv.uiBestRound = 0; \
+        int cost = fpelSad(fref, tmv) + mvcost(tmv<<2); \
+        COPY2_IF_LT(bcost, cost, bmv, tmv); \
+    } while (0)
+
 
 #define COST_MV(mx, my) \
     do \
@@ -236,6 +272,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     pmv = pmv.roundToFPel();
 
+    searchMethod = 3;
     switch (searchMethod)
     {
     case X265_DIA_SEARCH:
@@ -521,6 +558,98 @@ me_hex2:
             goto me_hex2;
         break;
     }
+    case X265_HM_SEARCH: //extendedDiamondSearch - HM Search Algorithm
+        {
+            int iDist = 0;
+            bmv.uiBestRound = 0;
+            omv = bmv;
+            TZ_SEARCH_CONFIGURATION
+            
+            int16_t  iStartX = bmv.x;
+            int16_t  iStartY = bmv.y;
+
+            int16_t   iSrchRngHorLeft   = mvmin.getHor();
+            int16_t   iSrchRngHorRight  = mvmax.getHor();
+            int16_t   iSrchRngVerTop    = mvmin.getVer();
+            int16_t   iSrchRngVerBottom = mvmax.getVer();
+
+            for (iDist = 1; iDist <= merange; iDist *= 2)
+            {
+                ExtendedDiamondSearch(omv, bcost, iDist);
+                if (bFirstSearchStop && (bmv.uiBestRound >= uiFirstSearchRounds)) // stop criterion
+                {
+                    break;
+                }
+            }        
+            bmv = omv;
+
+            // test whether zero Mv is a better start point than Median predictor
+            //TODO - Currently bTestZeroVectorStart set as False Default so ignored this part here 
+
+                // calculate only 2 missing points instead 8 points if cStruct.uiBestDistance == 1
+            if (bmv.uiDistance == 1)
+            {
+                bmv.uiDistance = 0;
+                omv = bmv;
+                ExtendedPointSearch(omv, bcost);
+                bmv = omv;
+            }
+
+            // raster search if distance is too big
+            if (bEnableRasterSearch && (((int)(bmv.uiDistance) > iRaster) || bAlwaysRasterSearch))
+            {
+                bmv.uiDistance = iRaster;
+                for (iStartY = iSrchRngVerTop; iStartY <= iSrchRngVerBottom; iStartY += iRaster)
+                {
+                    for (iStartX = iSrchRngHorLeft; iStartX <= iSrchRngHorRight; iStartX += iRaster)
+                    {
+                        COST_MV_HM( iStartX, iStartY, 0, (int16_t)iRaster);
+                    }
+                }
+            }
+
+            // raster refinement
+            //TODO - Currently bRasterRefinementEnable set as False Default so ignored this part here 
+
+            // start refinement
+            if (bStarRefinementEnable && bmv.uiDistance > 0)
+            {
+                while (bmv.uiDistance > 0)
+                {
+                    bmv.uiDistance = 0;
+                    bmv.ucPointNr = 0;
+                    for (iDist = 1; iDist < (int)merange + 1; iDist *= 2)
+                    {
+                        if (bStarRefinementDiamond == 1)
+                        {
+                            omv =bmv;
+                            ExtendedDiamondSearch(omv, bcost, iDist);
+                            bmv = omv;
+                        }
+                     
+                        if (bStarRefinementStop && (bmv.uiBestRound >= uiStarRefinementRounds)) // stop criterion
+                        {
+                            break;
+                        }
+                    }
+
+                    // calculate only 2 missing points instead 8 points if cStrukt.uiBestDistance == 1
+                    if (bmv.uiDistance == 1)
+                    {
+                        bmv.uiDistance = 0;
+                        if (bmv.ucPointNr != 0)
+                        {
+                            omv = bmv;
+                            ExtendedPointSearch(omv, bcost);
+                            bmv = omv;
+                        }
+                    }
+                }
+            }
+
+        }
+        break;
+
     default:
         assert(0);
         break;
@@ -575,3 +704,314 @@ me_hex2:
     outQMv = bmv;
     return bcost >> 4;
 }
+
+void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int iDist_i)
+{
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    int16_t iStartX = 0;
+    int16_t iStartY = 0;
+    int16_t iDist = (int16_t)iDist_i;
+
+    int16_t   iSrchRngHorLeft   = mvmin.getHor();
+    int16_t   iSrchRngHorRight  = mvmax.getHor();
+    int16_t   iSrchRngVerTop    = mvmin.getVer();
+    int16_t   iSrchRngVerBottom = mvmax.getVer();
+  
+    COST_MV_HM(0, 0, 0, 0);
+
+    iStartX = bmv.x;
+    iStartY = bmv.y;
+    
+    const int16_t iTop        = iStartY - iDist;
+    const int16_t iBottom     = iStartY + iDist;
+    const int16_t iLeft       = iStartX - iDist;
+    const int16_t iRight      = iStartX + iDist;
+    bmv.uiBestRound += 1;
+            
+    if(iDist == 1)
+    {
+        if (iTop >= iSrchRngVerTop) // check top
+        {   
+            COST_MV_HM(iStartX, iTop, 2, iDist);
+        }
+        if (iLeft >= iSrchRngHorLeft) // check middle left
+        {
+            COST_MV_HM(iLeft, iStartY, 4, iDist);
+        }
+        if (iRight <= iSrchRngHorRight) // check middle right
+        {
+            COST_MV_HM(iRight, iStartY, 5, iDist);
+        }
+        if (iBottom <= iSrchRngVerBottom) // check bottom
+        {
+            COST_MV_HM(iStartX, iBottom,7, iDist);
+        }   
+    }
+    else if (iDist <= 8)
+    {
+        const int16_t iTop_2      = iStartY - (iDist >> 1);
+        const int16_t iBottom_2   = iStartY + (iDist >> 1);
+        const int16_t iLeft_2     = iStartX - (iDist >> 1);
+        const int16_t iRight_2    = iStartX + (iDist >> 1);
+
+        if (iTop >= iSrchRngVerTop && iLeft >= iSrchRngHorLeft &&
+            iRight <= iSrchRngHorRight && iBottom <= iSrchRngVerBottom) // check border
+        {
+            COST_MV_HM(iStartX, iTop, 2, iDist);
+            COST_MV_HM(iLeft_2, iTop_2, 1, iDist >> 1);
+            COST_MV_HM(iRight_2, iTop_2, 3, iDist >> 1);
+            COST_MV_HM(iLeft, iStartY, 4, iDist);
+
+            COST_MV_HM(iRight, iStartY, 5, iDist);
+            COST_MV_HM(iLeft_2, iBottom_2, 6, iDist >> 1);
+            COST_MV_HM(iRight_2, iBottom_2, 8, iDist >> 1);
+            COST_MV_HM(iStartX, iBottom, 7, iDist); 
+
+        }
+        else // check border for each mv
+        {
+            if (iTop >= iSrchRngVerTop) // check top
+            {
+                COST_MV_HM(iStartX, iTop, 2, iDist);
+            }
+            if (iTop_2 >= iSrchRngVerTop) // check half top
+            {
+                if (iLeft_2 >= iSrchRngHorLeft) // check half left
+                {
+                    COST_MV_HM(iLeft_2, iTop_2, 1, (iDist >> 1));
+                }
+                if (iRight_2 <= iSrchRngHorRight) // check half right
+                {
+                    COST_MV_HM(iRight_2, iTop_2, 3, (iDist >> 1));
+                }
+            } // check half top
+            if (iLeft >= iSrchRngHorLeft) // check left
+            {
+                COST_MV_HM(iLeft, iStartY, 4, iDist);
+            }
+            if (iRight <= iSrchRngHorRight) // check right
+            {
+                COST_MV_HM(iRight, iStartY, 5, iDist);
+            }
+            if (iBottom_2 <= iSrchRngVerBottom) // check half bottom
+            {
+                if (iLeft_2 >= iSrchRngHorLeft) // check half left
+                {
+                    COST_MV_HM(iLeft_2, iBottom_2, 6, (iDist >> 1));
+                }
+                if (iRight_2 <= iSrchRngHorRight) // check half right
+                {
+                    COST_MV_HM(iRight_2, iBottom_2, 8, (iDist >> 1));
+                }
+            } // check half bottom
+            if (iBottom <= iSrchRngVerBottom) // check bottom
+            {
+                COST_MV_HM(iStartX, iBottom, 7, iDist);
+            }
+        } // check border for each mv
+    }
+    else
+    {
+        if (iTop >= iSrchRngVerTop && iLeft >= iSrchRngHorLeft &&
+            iRight <= iSrchRngHorRight && iBottom <= iSrchRngVerBottom) // check border
+        {
+            COST_MV_HM(iStartX, iTop, 0, iDist);
+            COST_MV_HM(iLeft, iStartY, 0, iDist);
+            COST_MV_HM(iRight, iStartY, 0, iDist);
+            COST_MV_HM(iStartX, iBottom, 0, iDist);
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t iPosYT = iTop    + ((iDist >> 2) * index);
+                int16_t iPosYB = iBottom - ((iDist >> 2) * index);
+                int16_t iPosXL = iStartX - ((iDist >> 2) * index);
+                int16_t iPosXR = iStartX + ((iDist >> 2) * index);
+                COST_MV_HM(iPosXL, iPosYT, 0, iDist); 
+                COST_MV_HM(iPosXR, iPosYT, 0, iDist); 
+                COST_MV_HM(iPosXL, iPosYB, 0, iDist);
+                COST_MV_HM(iPosXR, iPosYB, 0, iDist);
+            }
+        }
+        else // check border for each mv
+        {
+            if (iTop >= iSrchRngVerTop) // check top
+            {
+                COST_MV_HM(iStartX, iTop, 0, iDist);
+            }
+            if (iLeft >= iSrchRngHorLeft) // check left
+            {
+                COST_MV_HM(iLeft, iStartY, 0, iDist);
+            }
+            if (iRight <= iSrchRngHorRight) // check right
+            {
+                COST_MV_HM(iRight, iStartY, 0, iDist);
+            }
+            if (iBottom <= iSrchRngVerBottom) // check bottom
+            {
+                COST_MV_HM(iStartX, iBottom, 0, iDist);
+            }
+            for (int16_t index = 1; index < 4; index++)
+            {
+                int16_t iPosYT = iTop    + ((iDist >> 2) * index);
+                int16_t iPosYB = iBottom - ((iDist >> 2) * index);
+                int16_t iPosXL = iStartX - ((iDist >> 2) * index);
+                int16_t iPosXR = iStartX + ((iDist >> 2) * index);
+
+                if (iPosYT >= iSrchRngVerTop) // check top
+                {
+                    if (iPosXL >= iSrchRngHorLeft) // check left
+                    {
+                        COST_MV_HM(iPosXL, iPosYT, 0, iDist);
+                    }
+                    if (iPosXR <= iSrchRngHorRight) // check right
+                    {
+                        COST_MV_HM(iPosXR, iPosYT, 0, iDist);
+                    }
+                } // check top
+                if (iPosYB <= iSrchRngVerBottom) // check bottom
+                {
+                    if (iPosXL >= iSrchRngHorLeft) // check left
+                    {
+                        COST_MV_HM(iPosXL, iPosYB, 0, iDist);
+                    }
+                    if (iPosXR <= iSrchRngHorRight) // check right
+                    {
+                        COST_MV_HM(iPosXR, iPosYB, 0, iDist);
+                    }
+                } // check bottom
+            } // for ...
+        } // check border for each mv
+    } // iDist > 8
+}
+
+void MotionEstimate::ExtendedPointSearch(MV &bmv, int &bcost)
+{
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    int16_t iStartX = 0;
+    int16_t iStartY = 0;
+ 
+    int16_t   iSrchRngHorLeft   = mvmin.getHor();
+    int16_t   iSrchRngHorRight  = mvmax.getHor();
+    int16_t   iSrchRngVerTop    = mvmin.getVer();
+    int16_t   iSrchRngVerBottom = mvmax.getVer();
+
+    iStartX = bmv.x;
+    iStartY = bmv.y;
+
+    switch (bmv.ucPointNr)
+    {
+    case 1:
+        {
+            if ((iStartX - 1) >= iSrchRngHorLeft)
+            {
+                COST_MV_HM(iStartX - 1, iStartY, 0, 2);
+            }
+            if ((iStartY - 1) >= iSrchRngVerTop)
+            {
+                COST_MV_HM(iStartX, iStartY - 1, 0, 2);
+            }
+        }
+        break;
+    case 2:
+        {
+            if ((iStartY - 1) >= iSrchRngVerTop)
+            {
+                if ((iStartX - 1) >= iSrchRngHorLeft)
+                {
+                    COST_MV_HM(iStartX - 1, iStartY - 1, 0, 2);
+                }
+                if ((iStartX + 1) <= iSrchRngHorRight)
+                {
+                    COST_MV_HM(iStartX + 1, iStartY - 1, 0, 2);
+                }
+            }
+        }
+        break;
+    case 3:
+        {
+            if ((iStartY - 1) >= iSrchRngVerTop)
+            {
+                COST_MV_HM(iStartX, iStartY - 1, 0, 2);
+            }
+            if ((iStartX + 1) <= iSrchRngHorRight)
+            {
+                COST_MV_HM(iStartX + 1, iStartY, 0, 2);
+            }
+        }
+        break;
+    case 4:
+        {
+            if ((iStartX - 1) >= iSrchRngHorLeft)
+            {
+                if ((iStartY + 1) <= iSrchRngVerBottom)
+                {
+                    COST_MV_HM(iStartX - 1, iStartY + 1, 0, 2);
+                }
+                if ((iStartY - 1) >= iSrchRngVerTop)
+                {
+                    COST_MV_HM(iStartX - 1, iStartY - 1, 0, 2);
+                }
+            }
+        }
+        break;
+    case 5:
+        {
+            if ((iStartX + 1) <= iSrchRngHorRight)
+            {
+                if ((iStartY - 1) >= iSrchRngVerTop)
+                {
+                    COST_MV_HM(iStartX + 1, iStartY - 1, 0, 2);
+                }
+                if ((iStartY + 1) <= iSrchRngVerBottom)
+                {
+                    COST_MV_HM(iStartX + 1, iStartY + 1, 0, 2);
+                }
+            }
+        }
+        break;
+    case 6:
+        {
+            if ((iStartX - 1) >= iSrchRngHorLeft)
+            {
+                COST_MV_HM(iStartX - 1, iStartY, 0, 2);
+            }
+            if ((iStartY + 1) <= iSrchRngVerBottom)
+            {
+                COST_MV_HM(iStartX, iStartY + 1, 0, 2);
+            }
+        }
+        break;
+    case 7:
+        {
+            if ((iStartY + 1) <= iSrchRngVerBottom)
+            {
+                if ((iStartX - 1) >= iSrchRngHorLeft)
+                {
+                    COST_MV_HM(iStartX - 1, iStartY + 1, 0, 2);
+                }
+                if ((iStartX + 1) <= iSrchRngHorRight)
+                {
+                    COST_MV_HM(iStartX + 1, iStartY + 1, 0, 2);
+                }
+            }
+        }
+        break;
+    case 8:
+        {
+            if ((iStartX + 1) <= iSrchRngHorRight)
+            {
+                COST_MV_HM(iStartX + 1, iStartY, 0, 2);
+            }
+            if ((iStartY + 1) <= iSrchRngVerBottom)
+            {
+                COST_MV_HM(iStartX, iStartY + 1, 0, 2);
+            }
+        }
+        break;
+    default:
+        {
+            assert(false);
+        }
+        break;
+    } // switch( rcStruct.ucPointNr )
+}
+
