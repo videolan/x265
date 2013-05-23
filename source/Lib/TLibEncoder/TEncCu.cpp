@@ -1558,9 +1558,9 @@ Void TEncCu::xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU)
  * \param rpcTempCU
  * \returns Void
  */
-Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
+Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, float lambda)
 {
-    if (rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
+    if (rpcTempCU->getTotalCost() < lambda*rpcBestCU->getTotalCost())
     {
         TComYuv* pcYuv;
         // Change Information data
@@ -1584,6 +1584,7 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
         m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]);
     }
 }
+
 
 void TEncCu::swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
 {
