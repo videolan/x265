@@ -569,6 +569,7 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int /* line */)
     __m128i src_tmp0 = _mm_load_si128((const __m128i*)src);
     __m128i T20 = _mm_srai_epi32(_mm_unpacklo_epi16(src_tmp0, src_tmp0), 16);
     __m128i T21 = _mm_srai_epi32(_mm_unpackhi_epi16(src_tmp0, src_tmp0), 16);
+
     T21 = _mm_shuffle_epi32(T21, 0x1b);
 
     __m128i E = _mm_add_epi32(T20, T21);
@@ -2110,6 +2111,8 @@ void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 
 #endif  // partialButterflyInverse4 intrinsic code
 
+#if 0 // partialButterflyInverse8 vector code
+
 void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -2185,6 +2188,81 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
         dst += 8;
     }
 }
+
+#endif  // partialButterflyInverse8 vector code
+
+#if 1 // partialButterflyInverse8 vector code
+
+void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
+{
+    int j;
+    int E[4];
+    int EE[2], EO[2];
+    int add = 1 << (shift - 1);
+
+    __m128i c_add = _mm_set1_epi32(add);
+    __m128i c32_89_75_50_18 = _mm_set_epi32(18, 50, 75, 89);
+    __m128i c32_75_n18_n89_n50 = _mm_set_epi32(-50, -89, -18, 75);
+    __m128i c32_50_n89_18_75 = _mm_set_epi32(75, 18, -89, 50);
+    __m128i c32_18_n50_75_n89 = _mm_set_epi32(-89, 75, -50, 18);
+
+    for (j = 0; j < line; j++)
+    {
+        int src_line = src[line];
+        int src_3xline = src[3 * line];
+        int src_5xline = src[5 * line];
+        int src_7xline = src[7 * line];
+
+        __m128i c_src_line = _mm_set1_epi32(src_line);
+        __m128i c_src_3xline = _mm_set1_epi32(src_3xline);
+        __m128i c_src_5xline = _mm_set1_epi32(src_5xline);
+        __m128i c_src_7xline = _mm_set1_epi32(src_7xline);
+
+        __m128i c32_89_75_50_18_src_line = _mm_mullo_epi32(c32_89_75_50_18, c_src_line);
+        __m128i c32_75_n18_n89_n50_src_3xline = _mm_mullo_epi32(c32_75_n18_n89_n50, c_src_3xline);
+        __m128i c32_50_n89_18_75_src_5xline = _mm_mullo_epi32(c32_50_n89_18_75, c_src_5xline);
+        __m128i c32_18_n50_75_n89_src_7xline = _mm_mullo_epi32(c32_18_n50_75_n89, c_src_7xline);
+
+        __m128i O = _mm_add_epi32(c32_89_75_50_18_src_line, c32_75_n18_n89_n50_src_3xline);
+        O = _mm_add_epi32(O, c32_50_n89_18_75_src_5xline);
+        O = _mm_add_epi32(O, c32_18_n50_75_n89_src_7xline);
+        __m128i O_rev = _mm_shuffle_epi32(O, 0x1b);
+
+        int EO_first = src[0] << 6;
+        int EO_second = src[(line << 2)] << 6;
+
+        int sub = (line << 1);
+        sub = src[sub];
+
+        EO[0] = 83 * sub + 36 * src[6 * line];
+        EO[1] = 36 * sub  + (-83) * src[6 * line];
+
+        EE[0] = EO_first + EO_second;
+        EE[1] = EO_first - EO_second;
+
+        E[0] = EE[0] + EO[0];
+        E[3] = EE[0] - EO[0];
+        E[1] = EE[1] + EO[1];
+        E[2] = EE[1] - EO[1];
+
+        __m128i E0123 = _mm_set_epi32(E[3], E[2], E[1], E[0]);
+        __m128i E0123_rev = _mm_shuffle_epi32(E0123, 0x1b);
+
+        __m128i EO_sum = _mm_add_epi32(O, E0123);
+        __m128i EO_rev_sub = _mm_sub_epi32(E0123_rev, O_rev);
+
+        __m128i dst_tmp1 = _mm_srai_epi32(_mm_add_epi32(c_add, EO_sum), shift);
+        __m128i dst_tmp2 = _mm_srai_epi32(_mm_add_epi32(c_add, EO_rev_sub), shift);
+
+        __m128i dst_tmp_final = _mm_packs_epi32(dst_tmp1, dst_tmp2);
+        _mm_store_si128((__m128i*)(dst), dst_tmp_final);
+
+        src++;
+        dst += 8;
+    }
+}
+
+#endif  // partialButterflyInverse8 intrinsic code
 
 void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line)
 {
