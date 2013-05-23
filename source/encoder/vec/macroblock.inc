@@ -493,7 +493,7 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly32 vector code
 
-#if 0 //partialButterfly8 vector code
+#if INSTRSET <= 4    //partialButterfly8 vector code
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 {
@@ -554,7 +554,7 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly8 vector code
 
-#if 1 //partialButterfly8 intrinsic code
+#if INSTRSET > 4 //partialButterfly8 intrinsic code
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int /* line */)
 {
