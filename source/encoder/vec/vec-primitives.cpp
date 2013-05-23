@@ -30,13 +30,13 @@ namespace x265 {
  * compiler, some of them may be undefined.  The #if logic here must match the
  * file lists in CMakeLists.txt */
 #if defined(__GNUC__) || defined(_MSC_VER)
-extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse2(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
 #endif
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
+extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
@@ -50,10 +50,10 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 1) Setup_Vec_Primitives_sse2(p);
     if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
+#endif
+#if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__GNUC__)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
     if (cpuid > 5) Setup_Vec_Primitives_sse42(p);
-#endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(p);
 #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1700
