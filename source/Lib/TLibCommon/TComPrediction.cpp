@@ -618,9 +618,6 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     Int halfFilterSize = (filterSize >> 1);
 
-    Int     extStride = cxWidth;
-    Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
-
     if (yFrac == 0)
     {
         if (xFrac == 0)
@@ -637,17 +634,21 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else if (xFrac == 0)
     {
         primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
-        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
     }
     else
     {
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
+        Int     extStride = cxWidth;
+        Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
+
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
         primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
 
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
         primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY  + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+
+        xFree(extY);
     }
-    free(extY);
 }
 
 Void TComPrediction::xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv*& rpcYuvDst)
