@@ -25,7 +25,7 @@
 #pragma warning(disable: 4505) // : 'writeAnnexB' : unreferenced local function has been removed
 #endif
 
-#include "TLibEncoder/AnnexBwrite.h"
+#include "TLibCommon/AccessUnit.h"
 #include "input/input.h"
 #include "output/output.h"
 #include "threadpool.h"
@@ -86,42 +86,69 @@ struct CLIOptions
         recon = NULL;
     }
 
-    void rateStatsAccum(const AccessUnit &au, const vector<UInt>& annexBsizes)
+    void rateStatsAccum(const NALUnitEBSP &au, uint32_t annexBsize)
     {
-        AccessUnit::const_iterator it_au = au.begin();
-
-        vector<UInt>::const_iterator it_stats = annexBsizes.begin();
-
-        for (; it_au != au.end(); it_au++, it_stats++)
+        switch (au.m_nalUnitType)
         {
-            switch ((*it_au)->m_nalUnitType)
-            {
-            case NAL_UNIT_CODED_SLICE_TRAIL_R:
-            case NAL_UNIT_CODED_SLICE_TRAIL_N:
-            case NAL_UNIT_CODED_SLICE_TLA_R:
-            case NAL_UNIT_CODED_SLICE_TSA_N:
-            case NAL_UNIT_CODED_SLICE_STSA_R:
-            case NAL_UNIT_CODED_SLICE_STSA_N:
-            case NAL_UNIT_CODED_SLICE_BLA_W_LP:
-            case NAL_UNIT_CODED_SLICE_BLA_W_RADL:
-            case NAL_UNIT_CODED_SLICE_BLA_N_LP:
-            case NAL_UNIT_CODED_SLICE_IDR_W_RADL:
-            case NAL_UNIT_CODED_SLICE_IDR_N_LP:
-            case NAL_UNIT_CODED_SLICE_CRA:
-            case NAL_UNIT_CODED_SLICE_RADL_N:
-            case NAL_UNIT_CODED_SLICE_RADL_R:
-            case NAL_UNIT_CODED_SLICE_RASL_N:
-            case NAL_UNIT_CODED_SLICE_RASL_R:
-            case NAL_UNIT_VPS:
-            case NAL_UNIT_SPS:
-            case NAL_UNIT_PPS:
-                essentialBytes += *it_stats;
-                break;
-            default:
-                break;
-            }
+        case NAL_UNIT_CODED_SLICE_TRAIL_R:
+        case NAL_UNIT_CODED_SLICE_TRAIL_N:
+        case NAL_UNIT_CODED_SLICE_TLA_R:
+        case NAL_UNIT_CODED_SLICE_TSA_N:
+        case NAL_UNIT_CODED_SLICE_STSA_R:
+        case NAL_UNIT_CODED_SLICE_STSA_N:
+        case NAL_UNIT_CODED_SLICE_BLA_W_LP:
+        case NAL_UNIT_CODED_SLICE_BLA_W_RADL:
+        case NAL_UNIT_CODED_SLICE_BLA_N_LP:
+        case NAL_UNIT_CODED_SLICE_IDR_W_RADL:
+        case NAL_UNIT_CODED_SLICE_IDR_N_LP:
+        case NAL_UNIT_CODED_SLICE_CRA:
+        case NAL_UNIT_CODED_SLICE_RADL_N:
+        case NAL_UNIT_CODED_SLICE_RADL_R:
+        case NAL_UNIT_CODED_SLICE_RASL_N:
+        case NAL_UNIT_CODED_SLICE_RASL_R:
+        case NAL_UNIT_VPS:
+        case NAL_UNIT_SPS:
+        case NAL_UNIT_PPS:
+            essentialBytes += annexBsize;
+            break;
+        default:
+            break;
+        }
 
-            totalBytes += *it_stats;
+        totalBytes += annexBsize;
+    }
+
+    void writeAnnexB(const AccessUnit& au)
+    {
+        // Each access unit is a list of one or more NAL units
+        for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+        {
+            const NALUnitEBSP& nalu = **it;
+            uint32_t size = 0; /* size of annexB unit in bytes */
+
+            static const char start_code_prefix[] = { 0, 0, 0, 1 };
+            if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
+            {
+                /* From AVC, When any of the following conditions are fulfilled, the
+                 * zero_byte syntax element shall be present:
+                 *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
+                 *    parameter set) or 8 (picture parameter set),
+                 *  - the byte stream NAL unit syntax structure contains the first NAL
+                 *    unit of an access unit in decoding order, as specified by subclause
+                 *    7.4.1.2.3.
+                 */
+                bitstreamFile.write(start_code_prefix, 4);
+                size += 4;
+            }
+            else
+            {
+                bitstreamFile.write(start_code_prefix + 1, 3);
+                size += 3;
+            }
+            bitstreamFile << nalu.m_nalUnitData.str();
+            size += uint32_t(nalu.m_nalUnitData.str().size());
+
+            rateStatsAccum(nalu, size);
         }
     }
 };
