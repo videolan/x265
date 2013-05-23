@@ -40,6 +40,7 @@
 #endif
 
 #include <getopt.h>
+#include <assert.h>
 #include <list>
 #include <ostream>
 #include <fstream>
