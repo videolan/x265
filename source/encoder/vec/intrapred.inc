@@ -1914,11 +1914,30 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
             store_partial(const_int(8), pDst + (6 * dstStride), v_main);
             store_partial(const_int(8), pDst + (7 * dstStride), v_main);
 
-            int k;
-            for (k = 0; k < 8; k++)
-            {
-                pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
-            }
+            Vec16uc v_temp;
+            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+
+            v_temp.load(refSide + 1);
+            Vec8s v_side;
+            v_side = extend_low(v_temp);
+
+            v_temp.load(refMain + 1);
+            Vec8s row0;
+            row0 = permute16uc<0,-1, 0,-1, 0,-1, 0,-1, 0,-1, 0,-1, 0,-1, 0,-1>(v_temp);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row0 = row0 + v_side;
+            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+            
+            pDst[0 * dstStride] = row0[0];
+            pDst[1 * dstStride] = row0[1];
+            pDst[2 * dstStride] = row0[2];
+            pDst[3 * dstStride] = row0[3];
+            pDst[4 * dstStride] = row0[4];
+            pDst[5 * dstStride] = row0[5];
+            pDst[6 * dstStride] = row0[6];
+            pDst[7 * dstStride] = row0[7];
+
         }
     }
     else if (intraPredAngle == -32)
