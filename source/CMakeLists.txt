@@ -125,6 +125,8 @@ if(ENABLE_CLI)
         x265main.cpp ${EXTRAS} ${APPCOMMON}
         x265cfg.cpp x265cfg.h
         x265enc.cpp x265enc.h)
-
     target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
+
+    add_executable(x265s x265.cpp ${EXTRAS})
+    target_link_libraries(x265s HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 endif(ENABLE_CLI)

@@ -47,6 +47,9 @@ protected:
 
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
+    TComList<TComPicYuv *> m_cListPicYuvRec;    ///< list of reconstructed YUV files
+    TComList<TComPicYuv *> m_cListRecQueue;
+    x265_param_t *m_param;
 
     Encoder() : m_profile(Profile::MAIN), m_levelTier(Level::MAIN), m_level(Level::NONE) {};
 
