@@ -94,7 +94,7 @@ void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStri
     int blkSize = width;
 
     // Do the DC prediction
-    pixel dcval = (pixel) predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+    pixel dcval = (pixel)predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
 
     for (k = 0; k < blkSize; k++)
     {
@@ -103,6 +103,7 @@ void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStri
             pDst[k * dstStride + l] = dcval;
         }
     }
+
     if (bFilter && blkAboveAvailable && blkLeftAvailable)
     {
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
@@ -156,7 +157,7 @@ void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dst
     }
 }
 
-void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel* pDst, int dstStride, int width, int /*height*/, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
     int k, l;
     int blkSize  = width;
@@ -180,12 +181,12 @@ void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel
     {
         pixel* refMain;
         pixel* refSide;
- 
+
         // Initialise the Main and Left reference array.
         if (intraPredAngle < 0)
         {
-            refMain = (modeVer ? refAbove : refLeft);// + (blkSize - 1);
-            refSide = (modeVer ? refLeft : refAbove);// + (blkSize - 1);
+            refMain = (modeVer ? refAbove : refLeft); // + (blkSize - 1);
+            refSide = (modeVer ? refLeft : refAbove); // + (blkSize - 1);
 
             // Extend the Main reference to the left.
             int invAngleSum    = 128; // rounding for (shift by 8)
@@ -215,7 +216,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    pDst[k * dstStride] = (pixel) Clip3(0, (1 << bitDepth) - 1, static_cast<short>(pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
+                    pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
                 }
             }
         }
@@ -268,7 +269,6 @@ void xPredIntraAngBufRef(int bitDepth, pixel* /*pSrc*/, int /*srcStride*/, pixel
         }
     }
 }
-
 }
 
 namespace x265 {

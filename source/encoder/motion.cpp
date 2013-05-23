@@ -234,7 +234,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    if (searchMethod != X265_HM_SEARCH)
+    if (searchMethod != X265_STAR_SEARCH)
     {
         // measure SAD cost at each QPEL motion vector candidate
         for (int i = 0; i < numCandidates; i++)
@@ -542,7 +542,7 @@ me_hex2:
         break;
     }
 
-    case X265_HM_SEARCH: // extendedDiamondSearch - HM Search Algorithm
+    case X265_STAR_SEARCH: // Adapted from HM ME
     {
         int bPointNr = 0;
         int bDistance = 0;
@@ -552,7 +552,7 @@ me_hex2:
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
-            ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+            StarSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             // Break if we go earlyStopRounds without an improved prediction
             if (bcost < saved)
@@ -562,9 +562,11 @@ me_hex2:
         }
         if (bDistance == 1)
         {
-            // if best distance was only 1, check two missing points
+            // if best distance was only 1, check two missing points.  If no new point is found, stop
+            int saved = bcost;
             TwoPointSearch(bmv, bcost, bPointNr);
-            break;
+            if (bcost == saved)
+                break;
         }
 
         const int rasterDistance = 5;
@@ -584,7 +586,7 @@ me_hex2:
             bDistance = 0;
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
-                ExtendedDiamondSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+                StarSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
 
             if (bDistance == 1)
             {
@@ -603,57 +605,45 @@ me_hex2:
     if (bprecost < bcost)
         bmv = bestpre;
     else
-        bmv = bmv.toQPel(); // promote bmv to qpel
+        bmv = bmv.toQPel(); // promote search bmv to qpel
 
-    /* bmv has the best full pel motion vector found by SAD search or motion candidates */
-
-    bcost = qpelSatd(bmv) + mvcost(bmv); // remeasure BMV using SATD
-
-    /* HPEL refinement followed by QPEL refinement */
-
-    omv = bmv;
-    int16_t res = 2;
-    do
+    /* HPEL square refinement, dir 0 has no offset - remeasures bmv with SATD */
+    int bdir = 0;
+    bcost = COST_MAX;
+    for (int i = 0; i < 9; i++)
     {
-        for (int iter = 0; iter < 2; iter++)
-        {
-            MV mv = omv + MV(0, -res);
-            int cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(0,  res);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(-res, 0);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            mv = omv + MV(res,  0);
-            cost = qpelSatd(mv) + mvcost(mv);
-            COPY2_IF_LT(bcost, cost, bmv, mv);
-
-            if (omv == bmv)
-                break;
-
-            omv = bmv;
-        }
-
-        res >>= 1;
+        MV mv = bmv + square1[i] * 2;
+        int cost = qpelSatd(mv) + mvcost(mv);
+        COPY2_IF_LT(bcost, cost, bdir, i);
     }
-    while (res && bmv.checkRange(qmvmin, qmvmax));
+    bmv += square1[bdir] * 2;
+
+    /* QPEL square refinement, do not remeasure 0 offset */
+    bdir = 0;
+    for (int i = 1; i < 9; i++)
+    {
+        MV mv = bmv + square1[i];
+        int cost = qpelSatd(mv) + mvcost(mv);
+        COPY2_IF_LT(bcost, cost, bdir, i);
+    }
+    bmv += square1[bdir];
 
     x265_emms();
     outQMv = bmv;
     return bcost;
 }
 
-void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
 
     if (dist == 1)
     {
+        /* bPointNr
+              2
+            4 * 5
+              7
+         */
         const int16_t iTop    = omv.y - dist;
         const int16_t iBottom = omv.y + dist;
         const int16_t iLeft   = omv.x - dist;
@@ -678,6 +668,15 @@ void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, i
     }
     else if (dist <= 8)
     {
+        /* bPointNr
+              2
+             1 3
+            4 * 5
+             6 8
+              7
+         Points 2, 4, 5, 7 are dist
+         Points 1, 3, 6, 8 are dist>>1
+         */
         const int16_t iTop      = omv.y - dist;
         const int16_t iBottom   = omv.y + dist;
         const int16_t iLeft     = omv.x - dist;
@@ -754,6 +753,17 @@ void MotionEstimate::ExtendedDiamondSearch(MV &bmv, int &bcost, int &bPointNr, i
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
         {
+            /* index
+                  0
+                  3
+                  2
+                  1
+          0 3 2 1 * 1 2 3 0
+                  1
+                  2
+                  3
+                  0
+            */
             // TODO; Use sad_x4
             COST_MV_HM(omv.x, iTop, 0, dist);
             COST_MV_HM(iLeft, omv.y, 0, dist);
@@ -828,6 +838,14 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
     MV omv = bmv;
+
+    /* For a given direction 1 to 8, check nearest 2 outer X pixels
+         X   X
+       X 1 2 3 X
+         4 * 5
+       X 6 7 8 X
+         X   X
+    */
 
     /* TODO: turn into a table lookup with per-point offset pairs */
     switch (bPointNr)

@@ -560,10 +560,6 @@ __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntT
 
     if (iDist == 1) // iDist == 1
     {
-        // At distance 1, only one DIA check is possible
-        //   0
-        // 1 X 2
-        //   3
         if (iTop >= iSrchRngVerTop) // check top
         {
             xTZSearchHelp(pcPatternKey, rcStruct, iStartX, iTop, 2, iDist);
@@ -583,12 +579,6 @@ __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntT
     }
     else if (iDist <= 8)
     {
-        // At distances up to 8, perform two checks in each DIA direction
-        //     0
-        //     1
-        // 2 3 X 4 5
-        //     6
-        //     7
         const Int iTop_2      = iStartY - (iDist >> 1);
         const Int iBottom_2   = iStartY + (iDist >> 1);
         const Int iLeft_2     = iStartX - (iDist >> 1);
@@ -650,14 +640,6 @@ __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntT
     }
     else // iDist > 8
     {
-        // At distances greater than 8, perform four checks in each DIA direction
-        //      0
-        //     ...
-        //      3
-        // 4..7 X 8..11
-        //      12
-        //     ...
-        //      15
         if (iTop >= iSrchRngVerTop && iLeft >= iSrchRngHorLeft &&
             iRight <= iSrchRngHorRight && iBottom <= iSrchRngVerBottom) // check border
         {
@@ -3912,7 +3894,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
-    if (0 && m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
+    if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
         int satd = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
