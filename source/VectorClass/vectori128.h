@@ -72,27 +72,27 @@ protected:
     __m128i xmm; // Integer vector
 public:
     // Default constructor:
-    Vec128b() {
+    ALWAYSINLINE Vec128b() {
     };
     // Constructor to broadcast the same value into all elements:
-    Vec128b(int i) {
+    ALWAYSINLINE  Vec128b(int i) {
         xmm = _mm_set1_epi32(-(i & 1));
     };
     // Constructor to convert from type __m128i used in intrinsics:
-    Vec128b(__m128i const & x) {
+    ALWAYSINLINE Vec128b(__m128i const & x) {
         xmm = x;
     };
     // Assignment operator to convert from type __m128i used in intrinsics:
-    Vec128b & operator = (__m128i const & x) {
+    ALWAYSINLINE  Vec128b & operator = (__m128i const & x) {
         xmm = x;
         return *this;
     };
     // Type cast operator to convert to __m128i used in intrinsics
-    operator __m128i() const {
+    ALWAYSINLINE operator __m128i() const {
         return xmm;
     }
     // Member function to load from array (unaligned)
-    Vec128b & load(void const * p) {
+    ALWAYSINLINE Vec128b & load(void const * p) {
         xmm = _mm_loadu_si128((__m128i const*)p);
         return *this;
     }
@@ -101,11 +101,11 @@ public:
     // Merom, Wolfdale) and Atom, but not on other processors from Intel, AMD or VIA.
     // You may use load_a instead of load if you are certain that p points to an address
     // divisible by 16.
-    void load_a(void const * p) {
+    void ALWAYSINLINE load_a(void const * p) {
         xmm = _mm_load_si128((__m128i const*)p);
     }
     // Member function to store into array (unaligned)
-    void store(void * p) const {
+    void ALWAYSINLINE store(void * p) const {
         _mm_storeu_si128((__m128i*)p, xmm);
     }
     // Member function to store into array, aligned by 16
@@ -113,7 +113,7 @@ public:
     // Merom, Wolfdale) and Atom, but not on other processors from Intel, AMD or VIA.
     // You may use store_a instead of store if you are certain that p points to an address
     // divisible by 16.
-    void store_a(void * p) const {
+    void ALWAYSINLINE store_a(void * p) const {
         _mm_store_si128((__m128i*)p, xmm);
     }
     // Member function to change a single bit
@@ -312,55 +312,55 @@ static ALWAYSINLINE bool horizontal_or (Vec128b const & a) {
 class Vec16c : public Vec128b {
 public:
     // Default constructor:
-    Vec16c() {
+    ALWAYSINLINE Vec16c() {
     }
     // Constructor to broadcast the same value into all elements:
-    Vec16c(int i) {
+    ALWAYSINLINE Vec16c(int i) {
         xmm = _mm_set1_epi8(i);
     }
     // MCW Added - assign lowest 4 byte values from uint32_t
-    void fromUint32(uint32_t i) {
+    ALWAYSINLINE void fromUint32(uint32_t i) {
         xmm = _mm_cvtsi32_si128(i);
     }
 #if X86_64
-    void fromUint64(uint64_t i) {
+    ALWAYSINLINE void fromUint64(uint64_t i) {
         xmm = _mm_cvtsi64_si128(i);
     }
 #endif
     // Constructor to build from all elements:
-    Vec16c(int8_t i0, int8_t i1, int8_t i2, int8_t i3, int8_t i4, int8_t i5, int8_t i6, int8_t i7,
+    ALWAYSINLINE Vec16c(int8_t i0, int8_t i1, int8_t i2, int8_t i3, int8_t i4, int8_t i5, int8_t i6, int8_t i7,
         int8_t i8, int8_t i9, int8_t i10, int8_t i11, int8_t i12, int8_t i13, int8_t i14, int8_t i15) {
         xmm = _mm_setr_epi8(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15);
     }
     // Constructor to convert from type __m128i used in intrinsics:
-    Vec16c(__m128i const & x) {
+    ALWAYSINLINE Vec16c(__m128i const & x) {
         xmm = x;
     }
     // Assignment operator to convert from type __m128i used in intrinsics:
-    Vec16c & operator = (__m128i const & x) {
+    ALWAYSINLINE Vec16c & operator = (__m128i const & x) {
         xmm = x;
         return *this;
     }
     // Type cast operator to convert to __m128i used in intrinsics
-    operator __m128i() const {
+    ALWAYSINLINE operator __m128i() const {
         return xmm;
     }
     // MCW Added - PSADBW
-    Vec16c sad(__m128i const & x) {
+    ALWAYSINLINE Vec16c sad(__m128i const & x) {
         return _mm_sad_epu8(xmm, x);
     }
     // Member function to load from array (unaligned)
-    Vec16c & load(void const * p) {
+    ALWAYSINLINE Vec16c & load(void const * p) {
         xmm = _mm_loadu_si128((__m128i const*)p);
         return *this;
     }
     // Member function to load from array (aligned)
-    Vec16c & load_a(void const * p) {
+    ALWAYSINLINE Vec16c & load_a(void const * p) {
         xmm = _mm_load_si128((__m128i const*)p);
         return *this;
     }
     // Partial load. Load n elements and set the rest to 0
-    Vec16c & load_partial(int n, void const * p) {
+    ALWAYSINLINE Vec16c & load_partial(int n, void const * p) {
         if      (n >= 16) load(p);
         else if (n <= 0)  *this = 0;
         else if (((int)(intptr_t)p & 0xFFF) < 0xFF0) {
@@ -377,7 +377,7 @@ public:
         return *this;
     }
     // Partial store. Store n elements
-    void store_partial(int n, void * p) const {
+    ALWAYSINLINE void store_partial(int n, void * p) const {
         if (n >= 16) {
             store(p);
             return;
@@ -409,7 +409,7 @@ public:
         }
     }
     // cut off vector to n elements. The last 16-n elements are set to zero
-    Vec16c & cutoff(int n) {
+    ALWAYSINLINE Vec16c & cutoff(int n) {
         if (uint32_t(n) >= 16) return *this;
         static const char mask[32] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -418,7 +418,7 @@ public:
     }
     // Member function to change a single element in vector
     // Note: This function is inefficient. Use load function if changing more than one element
-    Vec16c const & insert(uint32_t index, int8_t value) {
+    ALWAYSINLINE Vec16c const & insert(uint32_t index, int8_t value) {
         static const int8_t maskl[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
             -1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         __m128i broad = _mm_set1_epi8(value);  // broadcast value into all elements
@@ -427,14 +427,14 @@ public:
         return *this;
     }
     // Member function extract a single element from vector
-    int8_t extract(uint32_t index) const {
+    ALWAYSINLINE int8_t extract(uint32_t index) const {
         int8_t x[16];
         store(x);
         return x[index & 0x0F];
     }
     // Extract a single element. Use store function if extracting more than one element.
     // Operator [] can only read an element, not write.
-    int8_t operator [] (uint32_t index) const {
+    ALWAYSINLINE int8_t operator [] (uint32_t index) const {
         return extract(index);
     }
 };
@@ -766,49 +766,49 @@ static ALWAYSINLINE Vec16c rotate_left(Vec16c const & a, int b) {
 class Vec16uc : public Vec16c {
 public:
     // Default constructor:
-    Vec16uc() {
+    ALWAYSINLINE Vec16uc() {
     };
     // Constructor to broadcast the same value into all elements:
-    Vec16uc(uint32_t i) {
+    ALWAYSINLINE Vec16uc(uint32_t i) {
         xmm = _mm_set1_epi8(i);
     };
     // Constructor to build from all elements:
-    Vec16uc(uint8_t i0, uint8_t i1, uint8_t i2, uint8_t i3, uint8_t i4, uint8_t i5, uint8_t i6, uint8_t i7,
+    ALWAYSINLINE Vec16uc(uint8_t i0, uint8_t i1, uint8_t i2, uint8_t i3, uint8_t i4, uint8_t i5, uint8_t i6, uint8_t i7,
         uint8_t i8, uint8_t i9, uint8_t i10, uint8_t i11, uint8_t i12, uint8_t i13, uint8_t i14, uint8_t i15) {
         xmm = _mm_setr_epi8(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15);
     };
     // Constructor to convert from type __m128i used in intrinsics:
-    Vec16uc(__m128i const & x) {
+    ALWAYSINLINE Vec16uc(__m128i const & x) {
         xmm = x;
     };
     // Assignment operator to convert from type __m128i used in intrinsics:
-    Vec16uc & operator = (__m128i const & x) {
+    ALWAYSINLINE Vec16uc & operator = (__m128i const & x) {
         xmm = x;
         return *this;
     };
     // Member function to load from array (unaligned)
-    Vec16uc & load(void const * p) {
+    ALWAYSINLINE Vec16uc & load(void const * p) {
         xmm = _mm_loadu_si128((__m128i const*)p);
         return *this;
     }
     // Member function to load from array (aligned)
-    Vec16uc & load_a(void const * p) {
+    ALWAYSINLINE Vec16uc & load_a(void const * p) {
         xmm = _mm_load_si128((__m128i const*)p);
         return *this;
     }
     // Member function to change a single element in vector
     // Note: This function is inefficient. Use load function if changing more than one element
-    Vec16uc const & insert(uint32_t index, uint8_t value) {
+    ALWAYSINLINE Vec16uc const & insert(uint32_t index, uint8_t value) {
         Vec16c::insert(index, value);
         return *this;
     }
     // Member function extract a single element from vector
-    uint8_t extract(uint32_t index) const {
+    ALWAYSINLINE uint8_t extract(uint32_t index) const {
         return Vec16c::extract(index);
     }
     // Extract a single element. Use store function if extracting more than one element.
     // Operator [] can only read an element, not write.
-    uint8_t operator [] (uint32_t index) const {
+    ALWAYSINLINE uint8_t operator [] (uint32_t index) const {
         return extract(index);
     }
 };
@@ -977,41 +977,41 @@ static ALWAYSINLINE Vec16uc min(Vec16uc const & a, Vec16uc const & b) {
 class Vec8s : public Vec128b {
 public:
     // Default constructor:
-    Vec8s() {
+    ALWAYSINLINE Vec8s() {
     };
     // Constructor to broadcast the same value into all elements:
-    Vec8s(int i) {
+    ALWAYSINLINE Vec8s(int i) {
         xmm = _mm_set1_epi16(i);
     };
     // Constructor to build from all elements:
-    Vec8s(int16_t i0, int16_t i1, int16_t i2, int16_t i3, int16_t i4, int16_t i5, int16_t i6, int16_t i7) {
+    ALWAYSINLINE Vec8s(int16_t i0, int16_t i1, int16_t i2, int16_t i3, int16_t i4, int16_t i5, int16_t i6, int16_t i7) {
         xmm = _mm_setr_epi16(i0, i1, i2, i3, i4, i5, i6, i7);
     };
     // Constructor to convert from type __m128i used in intrinsics:
-    Vec8s(__m128i const & x) {
+    ALWAYSINLINE Vec8s(__m128i const & x) {
         xmm = x;
     };
     // Assignment operator to convert from type __m128i used in intrinsics:
-    Vec8s & operator = (__m128i const & x) {
+    ALWAYSINLINE Vec8s & operator = (__m128i const & x) {
         xmm = x;
         return *this;
     };
     // Type cast operator to convert to __m128i used in intrinsics
-    operator __m128i() const {
+    ALWAYSINLINE operator __m128i() const {
         return xmm;
     };
     // Member function to load from array (unaligned)
-    Vec8s & load(void const * p) {
+    ALWAYSINLINE Vec8s & load(void const * p) {
         xmm = _mm_loadu_si128((__m128i const*)p);
         return *this;
     }
     // Member function to load from array (aligned)
-    Vec8s & load_a(void const * p) {
+    ALWAYSINLINE Vec8s & load_a(void const * p) {
         xmm = _mm_load_si128((__m128i const*)p);
         return *this;
     }
     // Partial load. Load n elements and set the rest to 0
-    Vec8s & load_partial(int n, void const * p) {
+    ALWAYSINLINE Vec8s & load_partial(int n, void const * p) {
         if      (n >= 8) load(p);
         else if (n <= 0)  *this = 0;
         else if (((int)(intptr_t)p & 0xFFF) < 0xFF0) {
@@ -1028,7 +1028,7 @@ public:
         return *this;
     }
     // Partial store. Store n elements
-    void store_partial(int n, void * p) const {
+    ALWAYSINLINE void store_partial(int n, void * p) const {
         if (n >= 8) {
             store(p);
             return;
@@ -1056,13 +1056,13 @@ public:
         }
     }
     // cut off vector to n elements. The last 8-n elements are set to zero
-    Vec8s & cutoff(int n) {
+    ALWAYSINLINE Vec8s & cutoff(int n) {
         *this = Vec16c(xmm).cutoff(n * 2);
         return *this;
     }
     // Member function to change a single element in vector
     // Note: This function is inefficient. Use load function if changing more than one element
-    Vec8s const & insert(uint32_t index, int16_t value) {
+    ALWAYSINLINE Vec8s const & insert(uint32_t index, int16_t value) {
         switch(index) {
         case 0:
             xmm = _mm_insert_epi16(xmm,value,0);  break;
@@ -1085,7 +1085,7 @@ public:
     };
     // Member function extract a single element from vector
     // Note: This function is inefficient. Use store function if extracting more than one element
-    int16_t extract(uint32_t index) const {
+    ALWAYSINLINE int16_t extract(uint32_t index) const {
         switch(index) {
         case 0:
             return _mm_extract_epi16(xmm,0);
@@ -1108,7 +1108,7 @@ public:
     }
     // Extract a single element. Use store function if extracting more than one element.
     // Operator [] can only read an element, not write.
-    int16_t operator [] (uint32_t index) const {
+    ALWAYSINLINE int16_t operator [] (uint32_t index) const {
         return extract(index);
     }
 };
@@ -5473,7 +5473,7 @@ static ALWAYSINLINE Vec128b load_partial_by_i(void const * p) {
 
 // Partial load. Load N bytes and set the rest to 0
 template <int32_t d>
-Vec128b load_partial(Const_int_t<d>, void const * p) {
+Vec128b ALWAYSINLINE load_partial(Const_int_t<d>, void const * p) {
     return load_partial_by_i<d>(p);
 }
 
@@ -5496,7 +5496,7 @@ static ALWAYSINLINE void store_partial_by_i(void const * p, Vec128b const& a) {
 
 // Partial store. Store N bytes and set the rest to 0
 template <int32_t d>
-void store_partial(Const_int_t<d>, void const * p, Vec128b const& a) {
+void ALWAYSINLINE store_partial(Const_int_t<d>, void const * p, Vec128b const& a) {
     store_partial_by_i<d>(p, a);
 }
 
