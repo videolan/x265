@@ -1369,7 +1369,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
         Vec8s row11, row12, row21, row22, row31, row32, row41, row42;
         Vec16uc tmp16_1, tmp16_2;
         Vec2uq tmp2uq;
-        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
+        Vec8s v_deltaFract, v_deltaPos(0), thirty2(32), thirty1(31), v_ipAngle(0);
         switch (intraPredAngle)
         {
         case -32:
