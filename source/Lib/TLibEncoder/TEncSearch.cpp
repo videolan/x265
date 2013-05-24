@@ -3841,6 +3841,9 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
 
 Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, TComMv* pcMvPred, Int iRefIdxPred, TComMv& rcMv, UInt& ruiBits, UInt& ruiCost, Bool bBi)
 {
+
+    unsigned long long t0 = 0;  // estimate the clock cycle
+
     UInt          uiPartAddr;
     Int           iRoiWidth;
     Int           iRoiHeight;
@@ -3911,16 +3914,29 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_me.setReference(&ref);
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
     m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
-
+    
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
+      
+#if _MSC_VER
+        t0 = __rdtsc();
+#endif 
+        me_func_calls++;
         int satd = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
         UInt mvbits = m_me.bitcost(rcMv);
         ruiBits += mvbits;
         ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
+#if _MSC_VER
+        me_cycle += __rdtsc() - t0;
+#endif 
         return;
     }
+
+#if _MSC_VER
+        t0 = __rdtsc();
+#endif 
+        me_func_calls++;
 
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setPredictor(*pcMvPred);
@@ -3957,6 +3973,11 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
+
+#if _MSC_VER
+        me_cycle += __rdtsc() - t0;
+#endif 
+
 }
 
 Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv& cMvPred, Int iSrchRng, TComMv& rcMvSrchRngLT, TComMv& rcMvSrchRngRB)

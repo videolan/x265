@@ -49,13 +49,9 @@ class MotionEstimate : public BitCost
 {
 protected:
 
-    /* Aligned copy of original pixels, in case their native alignment
-     * was insufficient (AMP) */
-#if _M_X64
-    ALIGN_VAR_32(pixel, fenc[64 * FENC_STRIDE]);
-#else
-    ALIGN_VAR_16(pixel, fenc[64 * FENC_STRIDE]);
-#endif
+    /* Aligned copy of original pixels, extra room for manual alignment */
+    pixel  fenc_buf[64 * FENC_STRIDE + 16];
+    pixel *fenc;
 
     pixel *fencplanes[3];
     intptr_t fencLumaStride;
@@ -84,7 +80,11 @@ protected:
 
 public:
 
-    MotionEstimate() : searchMethod(2) {}
+    MotionEstimate() : searchMethod(2)
+    {
+        // fenc must be 16 byte aligned
+        fenc = fenc_buf + (16 - (size_t)(&fenc_buf[0]) & 15);
+    }
 
     ~MotionEstimate() {}
 

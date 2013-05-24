@@ -838,7 +838,7 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
 {
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
     MV omv = bmv;
-
+    static const MV twopt[8][2] = { { MV(-1, 0), MV(0, -1) }, { MV( -1, -1), MV( 1, -1) }, { MV( 0,-1 ), MV( 1, 0) }, { MV( -1, 1), MV( -1, -1) }, { MV( 1, -1), MV( 1, 1) }, { MV( -1, 0), MV( 0, 1) }, { MV( -1, 1), MV( 1, 1) }, { MV( 1, 0), MV( 0, 1) }};
     /* For a given direction 1 to 8, check nearest 2 outer X pixels
          X   X
        X 1 2 3 X
