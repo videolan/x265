@@ -2242,23 +2242,310 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
         }
     }
 }
-
+#undef PREDANG_CALCROW_VER
+#undef PREDANG_CALCROW_HOR
+#undef LOADROW
+#undef CALCROW
 #endif /* if HIGH_BIT_DEPTH */
+
+#if HIGH_BIT_DEPTH
+#else
+void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+{
+    int k;
+    int blkSize        = width;
+
+    // Map the mode index to main prediction direction and angle
+    assert(dirMode > 1); //no planar and dc
+    bool modeHor       = (dirMode < 18);
+    bool modeVer       = !modeHor;
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
+    //int lookIdx = intraPredAngle;
+    int absAng         = abs(intraPredAngle);
+    int signAng        = intraPredAngle < 0 ? -1 : 1;
+
+    // Set bitshifts and scale the angle parameter to block size
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    int invAngle       = invAngTable[absAng];
+    absAng             = angTable[absAng];
+    intraPredAngle     = signAng * absAng;
+
+    // Do angular predictions
+
+    pixel* refMain;
+    pixel* refSide;
+
+    // Initialise the Main and Left reference array.
+    if (intraPredAngle < 0)
+    {
+        refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
+        refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
+        //printf("\n%d : ",intraPredAngle);
+        // Extend the Main reference to the left.
+        int invAngleSum    = 128;     // rounding for (shift by 8)
+        if(intraPredAngle!=-32)
+        for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+        {
+        //    printf("\t%d",invAngleSum >> 8);
+            invAngleSum += invAngle;
+            refMain[k] = refSide[invAngleSum >> 8];
+        }
+    }
+    else
+    {
+        refMain = modeVer ? refAbove : refLeft;
+        refSide = modeVer ? refLeft  : refAbove;
+    }
+
+    // bfilter will always be true for blocksize 8
+    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    {
+        if (modeHor)
+        {
+            Vec16uc v_temp;
+            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+
+            v_temp.load(refSide + 1);
+            Vec8s v_side;
+            v_side = extend_low(v_temp);
+
+            Vec8s row01,row02, ref(refMain[1]);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row01 = ref + v_side;
+            row01 = min(max(0, row01), (1 << bitDepth) - 1);
+
+            v_side = extend_high(v_temp);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row02 = ref + v_side;
+            row02 = min(max(0, row02), (1 << bitDepth) - 1);
+
+            Vec16uc tmp1;
+            tmp1 = compress(row01, row02);
+            tmp1.store(pDst);                //row0
+
+            v_temp.load(refMain+1);
+
+            tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
+            tmp1.store(pDst + (1 * dstStride)); //row1
+
+            tmp1 = permute16uc<2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>(v_temp);
+            tmp1.store( pDst + (2 * dstStride)); //row2
+
+            tmp1 = permute16uc<3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(v_temp);
+            tmp1.store( pDst + (3 * dstStride)); //row3
+
+            tmp1 = permute16uc<4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4>(v_temp);
+            tmp1.store( pDst + (4 * dstStride)); //row4
+
+            tmp1 = permute16uc<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>(v_temp);
+            tmp1.store( pDst + (5 * dstStride)); //row5
+
+            tmp1 = permute16uc<6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6>(v_temp);
+            tmp1.store( pDst + (6 * dstStride)); //row6
+
+            tmp1 = permute16uc<7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7>(v_temp);
+            tmp1.store( pDst + (7 * dstStride)); //row7
+
+            tmp1 = permute16uc<8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8>(v_temp);
+            tmp1.store(pDst + (8 * dstStride)); //row8
+
+            tmp1 = permute16uc<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>(v_temp);
+            tmp1.store( pDst + (9 * dstStride)); //row9
+
+            tmp1 = permute16uc<10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10>(v_temp);
+            tmp1.store( pDst + (10 * dstStride)); //row10
+
+            tmp1 = permute16uc<11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11>(v_temp);
+            tmp1.store( pDst + (11 * dstStride)); //row11
+
+            tmp1 = permute16uc<12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12>(v_temp);
+            tmp1.store( pDst + (12 * dstStride)); //row12
+
+            tmp1 = permute16uc<13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13>(v_temp);
+            tmp1.store( pDst + (13 * dstStride)); //row13
+
+            tmp1 = permute16uc<14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14>(v_temp);
+            tmp1.store( pDst + (14 * dstStride)); //row14
+
+            tmp1 = permute16uc<15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15>(v_temp);
+            tmp1.store( pDst + (15 * dstStride)); //row15
+        }
+        else
+        {
+            Vec16uc v_main;
+            v_main.load(refMain + 1);
+            v_main.store(pDst);
+            v_main.store(pDst + dstStride);
+            v_main.store(pDst + (2*dstStride));
+            v_main.store(pDst + (3*dstStride));
+            v_main.store(pDst + (4*dstStride));
+            v_main.store(pDst + (5*dstStride));
+            v_main.store(pDst + (6*dstStride));
+            v_main.store(pDst + (7*dstStride));
+            v_main.store(pDst + (8*dstStride));
+            v_main.store(pDst + (9*dstStride));
+            v_main.store(pDst + (10*dstStride));
+            v_main.store(pDst + (11*dstStride));
+            v_main.store(pDst + (12*dstStride));
+            v_main.store(pDst + (13*dstStride));
+            v_main.store(pDst + (14*dstStride));
+            v_main.store(pDst + (15*dstStride));
+
+            Vec16uc v_temp;
+            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+
+            v_temp.load(refSide + 1);
+            Vec8s v_side;
+            v_side = extend_low(v_temp);
+
+            Vec8s row0, ref(refMain[1]);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row0 = ref + v_side;
+            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+            
+            pDst[0 * dstStride] = row0[0];
+            pDst[1 * dstStride] = row0[1];
+            pDst[2 * dstStride] = row0[2];
+            pDst[3 * dstStride] = row0[3];
+            pDst[4 * dstStride] = row0[4];
+            pDst[5 * dstStride] = row0[5];
+            pDst[6 * dstStride] = row0[6];
+            pDst[7 * dstStride] = row0[7];
+
+            v_side = extend_high(v_temp);
+            v_side -= v_side_0;
+            v_side = v_side >> 1;
+            row0 = ref + v_side;
+            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+            pDst[8 * dstStride] = row0[0];
+            pDst[9 * dstStride] = row0[1];
+            pDst[10 * dstStride] = row0[2];
+            pDst[11 * dstStride] = row0[3];
+            pDst[12 * dstStride] = row0[4];
+            pDst[13 * dstStride] = row0[5];
+            pDst[14 * dstStride] = row0[6];
+            pDst[15 * dstStride] = row0[7];
+        }
+    }
+    else if (intraPredAngle == -32)
+    {
+
+        Vec16uc v_refSide;
+        v_refSide.load(refSide);
+        v_refSide = permute16uc<15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0>(v_refSide);
+        pixel refMain0 = refMain[0];
+        
+        v_refSide.store(refMain-15);
+        refMain[0] = refMain0;
+
+        //printf("\t%d\t%d\t%d", refMain[0], refMain[-1], refMain[-2]);
+
+        Vec16uc tmp;
+        tmp.load(refMain);        //-1,0,1,2
+        tmp.store(pDst);
+        tmp.load(--refMain);     //-2,-1,0,1
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        tmp.load(--refMain);
+        pDst+=dstStride;     tmp.store(pDst);
+        return;
+    }
+    else if (intraPredAngle == 32)
+    {
+        Vec8s tmp;
+
+        tmp.load(refMain + 2);
+        tmp.store(pDst);
+        tmp.load(refMain + 3);
+        pDst+=dstStride;
+        tmp.store(pDst);
+        tmp.load(refMain + 4);
+        pDst+=dstStride;
+        tmp.store(pDst);
+        tmp.load(refMain + 5);
+        pDst+=dstStride;
+        tmp.store(pDst);
+        tmp.load(refMain + 6);
+        pDst+=dstStride;
+        tmp.store(pDst);
+        tmp.load(refMain + 7);
+        pDst+=dstStride;
+        tmp.store(pDst);
+        tmp.load(refMain + 8);     
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 9);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 10);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 11);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 12);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 13);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 14);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 15);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 16);
+        pDst+=dstStride;        tmp.store(pDst);
+        tmp.load(refMain + 17);
+        pDst+=dstStride;        tmp.store(pDst);
+        return;
+    }
+    else
+    {
+
+    }
+}
+#endif
 
 void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
+#if HIGH_BIT_DEPTH
+#else
     switch (width)
     {
     case 4:
         xPredIntraAng4x4(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
     case 8:
-#if HIGH_BIT_DEPTH
-#else
         xPredIntraAng8x8(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
-#endif
+//    case 16:
+//        xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
+//        return;
     }
+#endif
 
     int k, l;
     int blkSize        = width;
