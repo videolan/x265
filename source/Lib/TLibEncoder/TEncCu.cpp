@@ -74,10 +74,10 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
     UInt uiNumPartitions;
-    for(int k=0; k<4; k++)
+    for(int k = 0; k < 4; k++)
     {
         m_NxNCU[k] = new TComDataCU;
-        m_NxNCU[k]->create(1, uiMaxWidth, uiMaxHeight, false, uiMaxWidth);
+        m_NxNCU[k]->create(1 << ((m_uhTotalDepth - 1) << 1), uiMaxWidth, uiMaxHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
     }
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
@@ -129,8 +129,12 @@ Void TEncCu::destroy()
 
     for(int k = 0; k<4; k++)
     {
-        delete m_NxNCU[k];
-        m_NxNCU[k] = NULL;
+        if(m_NxNCU[k])
+        {
+            m_NxNCU[k]->destroy();
+            delete m_NxNCU[k];
+            m_NxNCU[k] = NULL;
+        }
     }     
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
@@ -536,7 +540,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         {
             
             pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
-            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx];
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
                     
@@ -617,6 +621,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         uiPartUnitIdx = 0;
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
+            pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
+
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
