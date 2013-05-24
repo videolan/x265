@@ -1975,9 +1975,6 @@ void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i dst_first(-32768);
-    Vec4i dst_second(32767);
-
     for (j = 0; j < line; j++)
     {
         int src_line = src[line];
@@ -1997,11 +1994,10 @@ void CDECL partialButterflyInverse4(short *src, short *dst, int shift, int line)
 
         Vec4i dst_third(first_value, second_value, third_value, fourth_value);
         dst_third = (dst_third + add) >> shift;
-        dst_third = max(dst_first, dst_third);
-        dst_third = min(dst_third, dst_second);
-
         Vec4i all_zero(0);
-        Vec8s final_value = compress(dst_third, all_zero);
+
+        Vec8s final_value = compress_saturated(dst_third, all_zero);
+
         final_value.store_partial(4, dst);
 
         src++;
