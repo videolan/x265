@@ -2718,19 +2718,10 @@ void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line
         Vec4i dst_third_third_four =  (E_third_four + O_third_four + add) >> shift;
         Vec4i dst_third_four_four =  (E_four_four + O_four_four + add) >> shift;
 
-        Vec4i first_four_min_value = max(dst_first, dst_third_first_four);
-        first_four_min_value = min(first_four_min_value, dst_second);
-        Vec4i second_four_min_value = max(dst_first, dst_third_second_four);
-        second_four_min_value = min(second_four_min_value, dst_second);
-        Vec4i third_four_min_value = max(dst_first, dst_third_third_four);
-        third_four_min_value = min(third_four_min_value, dst_second);
-        Vec4i four_four_min_value = max(dst_first, dst_third_four_four);
-        four_four_min_value = min(four_four_min_value, dst_second);
-
-        Vec8s first_eight_min_value = compress(first_four_min_value, second_four_min_value);
-        first_eight_min_value.store(dst);
-        Vec8s second_eight_min_value = compress(third_four_min_value, four_four_min_value);
-        second_eight_min_value.store(dst + 8);
+        Vec8s half0 = compress_saturated(dst_third_first_four, dst_third_second_four);
+        Vec8s half1 = compress_saturated(dst_third_third_four, dst_third_four_four);
+        half0.store(dst);
+        half1.store(dst + 8);
 
         Vec4i dst_third_five_four =  (E_four_four - O_four_four + add) >> shift;
         dst_third_five_four = permute4i<3, 2, 1, 0>(dst_third_five_four);
@@ -2741,19 +2732,10 @@ void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line
         Vec4i dst_third_eight_four =  (E_first_four - O_first_four + add) >> shift;
         dst_third_eight_four = permute4i<3, 2, 1, 0>(dst_third_eight_four);
 
-        Vec4i five_four_min_value = max(dst_first, dst_third_five_four);
-        five_four_min_value = min(five_four_min_value, dst_second);
-        Vec4i six_four_min_value = max(dst_first, dst_third_six_four);
-        six_four_min_value = min(six_four_min_value, dst_second);
-        Vec4i seven_four_min_value = max(dst_first, dst_third_seven_four);
-        seven_four_min_value = min(seven_four_min_value, dst_second);
-        Vec4i eight_four_min_value = max(dst_first, dst_third_eight_four);
-        eight_four_min_value = min(eight_four_min_value, dst_second);
-
-        Vec8s third_eight_min_value = compress(five_four_min_value, six_four_min_value);
-        third_eight_min_value.store(dst + 16);
-        Vec8s four_eight_min_value = compress(seven_four_min_value, eight_four_min_value);
-        four_eight_min_value.store(dst + 24);
+        Vec8s half2 = compress_saturated(dst_third_five_four, dst_third_six_four);
+        Vec8s half3 = compress_saturated(dst_third_seven_four, dst_third_eight_four);
+        half2.store(dst + 16);
+        half3.store(dst + 24);
 
         src++;
         dst += 32;
@@ -2773,3 +2755,4 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 }
+
