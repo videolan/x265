@@ -153,66 +153,51 @@ struct CLIOptions
     }
 };
 
-#define OPT(longname, var, argreq, flag, helptext)
+static void print_version()
+{
+#define XSTR(x) STR(x)
+#define STR(x) #x
+    fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
+    fprintf(stdout, "x265: build info ");
+    fprintf(stdout, NVM_ONOS);
+    fprintf(stdout, NVM_COMPILEDBY);
+    fprintf(stdout, NVM_BITS);
+#if HIGH_BIT_DEPTH
+    fprintf(stdout, "16bpp");
+#else
+    fprintf(stdout, "8bpp");
+#endif
+    fprintf(stdout, "\n");
+}
 
-static const char short_options[] = "i:b:o:f:s:d:";
-OPT("help",            help,                            no_argument,   0, "Show help text")
-OPT("cpuid",           cpuid,                     required_argument,   0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
-OPT("threads",         threadcount,               required_argument,   0, "Number of threads for thread pool (default:CPU HT core count)")
-OPT("InputFile",       inputfn,                   required_argument, 'i', "Raw YUV or Y4M input file name")
-OPT("BitstreamFile",   bitstreamfn,               required_argument, 'b', "Bitstream output file name")
-OPT("ReconFile",       reconfn,                   required_argument, 'o', "Reconstructed YUV output file name")
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant, yes I know
+#endif
+static void do_help()
+{
+    print_version();
+    printf("Options:\n");
 
-OPT("InputBitDepth",   cliopt->inputBitDepth,     required_argument,   0, "Bit-depth of input file (default: 8)")
-OPT("OutputBitDepth",  cliopt->outputBitDepth,    required_argument,   0, "Bit-depth of output file (default:InternalBitDepth)")
-OPT("FrameSkip",       cliopt->frameSkip,         required_argument,   0, "Number of frames to skip at start of input YUV")
-OPT("frames",          cliopt->framesToBeEncoded, required_argument, 'f', "Number of frames to be encoded (default=all)")
+#define OPT(longname, var, argreq, flag, helptext)\
+    if (flag) printf("-%c/", flag); else printf("   ");\
+    printf("%-10s\t%s\n", longname, helptext);
+#define STROPT OPT
+#include "x265opts.h"
+#undef OPT
+#undef STROPT
 
-OPT("wpp",             param->iWaveFrontSynchro,        no_argument,   0, "0:no synchro 1:synchro with TR 2:TRR etc")
-OPT("width",           param->iSourceWidth,       required_argument, 'w', "Source picture width")
-OPT("height",          param->iSourceHeight,      required_argument, 'h', "Source picture height")
-OPT("rate",            param->iFrameRate,         required_argument, 'r', "Frame rate")
-OPT("depth",           param->internalBitDepth,   required_argument,   0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-                                                                          "If different to InputBitDepth, source data will be converted")
-OPT("ctu",             param->uiMaxCUSize,        required_argument, 's', "Maximum CU size (default: 64x64)")
-OPT("pdepth",          param->uiMaxCUDepth,       required_argument, 'd', "CU partition depth (default: 4)")
+    exit(0);
+}
 
-OPT("constrained-intra", param->bUseConstrainedIntraPred,      no_argument, 0, "Constrained intra prediction (use only intra coded reference pixels)")
-OPT("TULog2MaxSize",   param->uiQuadtreeTULog2MaxSize,   required_argument, 0, "Maximum TU size in logarithm base 2")
-OPT("TULog2MinSize",   param->uiQuadtreeTULog2MinSize,   required_argument, 0, "Minimum TU size in logarithm base 2")
-OPT("TUMaxDepthIntra", param->uiQuadtreeTUMaxDepthIntra, required_argument, 0, "Depth of TU tree for intra CUs")
-OPT("TUMaxDepthInter", param->uiQuadtreeTUMaxDepthInter, required_argument, 0, "Depth of TU tree for inter CUs")
-OPT("keyint",          param->iIntraPeriod,              required_argument, 0, "Intra period in frames, (-1: only first frame)")
-OPT("me",              param->searchMethod,              required_argument, 0, "0:dia 1:hex 2:umh 3:star 4:hm-orig")
-OPT("merange",         param->iSearchRange,              required_argument, 0, "Motion search range (default: 96)")
-OPT("bpredrange",      param->bipredSearchRange,         required_argument, 0, "Motion search range for bipred refinement (default:4)")
-OPT("MaxCuDQPDepth",   param->iMaxCuDQPDepth,            required_argument, 0, "Max depth for a minimum CU dQP")
-OPT("cbqpoffs",        param->cbQpOffset,                required_argument, 0, "Chroma Cb QP Offset")
-OPT("crqpoffs",        param->crQpOffset,                required_argument, 0, "Chroma Cr QP Offset")
-OPT("aqselect",        param->bUseAdaptQpSelect,               no_argument, 0, "Adaptive QP selection")
-OPT("aq",              param->bUseAdaptiveQP,                  no_argument, 0, "QP adaptation based on a psycho-visual model")
-OPT("aqrange",         param->iQPAdaptationRange,        required_argument, 0, "QP adaptation range")
-OPT("rdoq",            param->useRDOQ,                         no_argument, 0, "Use RDO quantization")
-OPT("rdoqts",          param->useRDOQTS,                       no_argument, 0, "Use RDO quantization with transform skip")
-OPT("rdpenalty",       param->rdPenalty,                 required_argument, 0, "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disabled  1:RD-penalty  2:maximum RD-penalty")
-OPT("amp",             param->enableAMP,                       no_argument, 0, "Enable asymmetric motion partitions")
-OPT("rect",            param->enableRectInter,                 no_argument, 0, "Enable rectangular motion partitions Nx2N and 2NxN, disabling also disables AMP")
-OPT("tskip",           param->useTransformSkip,                no_argument, 0, "Intra transform skipping")
-OPT("tskip-fast",      param->useTransformSkipFast,            no_argument, 0, "Fast intra transform skipping")
-OPT("sao",             param->bUseSAO,                         no_argument, 0, "Enable Sample Adaptive Offset")
-OPT("max-sao-offsets", param->maxNumOffsetsPerPic,       required_argument, 0, "Max number of SAO offset per picture (Default: 2048)")
-OPT("SAOLcuBoundary",  param->saoLcuBoundary,                  no_argument, 0, "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
-OPT("sao-lcu-opt",     param->saoLcuBasedOptimization,         no_argument, 0, "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
-OPT("weightp",         param->useWeightedPred,                 no_argument, 0, "Use weighted prediction in P slices")
-OPT("weightbp",        param->useWeightedBiPred,               no_argument, 0, "Use weighted (bidirectional) prediction in B slices")
-OPT("merge-level",     param->log2ParallelMergeLevel,    required_argument, 0, "Parallel merge estimation region")
-OPT("hidesign",        param->signHideFlag,                    no_argument, 0, "Hide sign bit of one coeff per TU (rdo)")
-OPT("MaxNumMergeCand", param->maxNumMergeCand,           required_argument, 0, "Maximum number of merge candidates")
-OPT("tmvp",            param->TMVPModeId,                required_argument, 0, "TMVP mode 0: TMVP disable for all slices. 1: TMVP enable for all slices (default) 2: TMVP enable for certain slices only")
-OPT("fdm",             param->useFastDecisionForMerge,         no_argument, 0, "Fast decision for Merge RD Cost")
-OPT("fast-cbf",        param->bUseCbfFastMode,                 no_argument, 0, "Cbf fast mode setting")
-OPT("early-skip",      param->useEarlySkipDetection,           no_argument, 0, "Early SKIP detection setting")
-OPT("strong-intra-smoothing", param->useStrongIntraSmoothing,  no_argument, 0, "Enable strong intra smoothing for 32x32 blocks")
+static const char short_options[] = "h:o:f:r:s:d:q:w:V:";
+static struct option long_options[] =
+{
+#define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
+#define STROPT OPT
+#include "x265opts.h"
+#undef OPT
+#undef STROPT
+};
 
 bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 {
@@ -221,9 +206,42 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
     int threadcount = 0;
     const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
 
+    x265_param_default(param);
+
+    for( optind = 0;; )
+    {
+        int long_options_index = -1;
+        int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
+
+        if (c == -1)
+        {
+            break;
+        }
+
+        switch( c )
+        {
+        case 'h':
+            do_help();
+        case 'V':
+            print_version();
+            exit(0);
+        }
+
+        if (long_options_index < 0)
+            ;
+#define STROPT(longname, var, argreq, flag, helptext)\
+        else if (!strcmp(long_options[long_options_index].name, longname))\
+            (var) = optarg;
+#define OPT(longname, var, argreq, flag, helptext)\
+        else if (!strcmp(long_options[long_options_index].name, longname))\
+            (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+#include "x265opts.h"
+#undef OPT
+#undef STROPT
+    }
+
     if (argc <= 1 || help)
-        // do_help();
-        return true;
+        do_help();
 
     x265::SetupPrimitives(cpuid);
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
@@ -265,7 +283,6 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 
     if (reconfn)
     {
-        printf("Reconstruction File          : %s\n", reconfn);
         cliopt->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, cliopt->outputBitDepth, param->iFrameRate);
         if (cliopt->recon->isFail())
         {
@@ -308,24 +325,7 @@ int main(int argc, char **argv)
     x265_param_t param;
     CLIOptions   cliopt;
 
-#define XSTR(x) STR(x)
-#define STR(x) #x
-    // TODO: perhaps this should only be printed when asked (x265 --version)?
     // TODO: needs proper logging file handle with log levels, etc
-    fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
-    fprintf(stdout, "x265: build info ");
-    fprintf(stdout, NVM_ONOS);
-    fprintf(stdout, NVM_COMPILEDBY);
-    fprintf(stdout, NVM_BITS);
-#if HIGH_BIT_DEPTH
-    fprintf(stdout, "16bpp");
-#else
-    fprintf(stdout, "8bpp");
-#endif
-    fprintf(stdout, "\n");
-
-    x265_param_default(&param);
-
     if (parse(argc, argv, &param, &cliopt))
         exit(1);
 
