@@ -2494,8 +2494,6 @@ void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line
 {
     int j;
 
-    Vec4i dst_first(-32768);
-    Vec4i dst_second(32767);
     int add = 1 << (shift - 1);
 
     for (j = 0; j < line; j++)
