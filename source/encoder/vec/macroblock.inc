@@ -2131,15 +2131,7 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
         E_O_diff = E_O_diff >> shift;
         E_O_diff = permute4i<3, 2, 1, 0>(E_O_diff);
 
-        Vec4i first_four_min_value;
-        first_four_min_value = max(dst_first, E_O_sum);
-        first_four_min_value = min(first_four_min_value, dst_second);
-
-        Vec4i second_four_min_value;
-        second_four_min_value = max(dst_first, E_O_diff);
-        second_four_min_value = min(second_four_min_value, dst_second);
-
-        Vec8s final_value = compress(first_four_min_value, second_four_min_value);
+        Vec8s final_value = compress_saturated(E_O_sum, E_O_diff);
         final_value.store(dst);
 
         src++;
