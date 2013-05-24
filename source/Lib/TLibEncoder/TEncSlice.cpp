@@ -41,6 +41,9 @@
 #include <math.h>
 #include <omp.h>
 
+#include "threading.h"
+using namespace x265;
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -561,13 +564,20 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
     assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
+
     // for every CU in slice
-    volatile int iFinish[100];
-    memset((void*)iFinish, 0, sizeof(iFinish));
-    iFinish[0] = INT_MAX;
+    assert(iNumSubstreams == uiHeightInLCUs);
+    Event **waitThread = new Event*[uiHeightInLCUs];
+    for(UInt ui=0; ui<uiHeightInLCUs; ui++)
+    {
+        waitThread[ui] = new Event[uiWidthInLCUs];
+    }
+
     const int numThreads = (iNumSubstreams>1) ? iNumSubstreams : 1;
-#pragma omp parallel default(none) /*private(none)*/ /*firstprivate(rpcPic)*/ shared(iFinish, rpcPic, ppppcRDSbacCoders, pcSlice, pcBitCounters) num_threads(numThreads)
-#pragma omp for schedule(dynamic, 1) /*ordered*/ nowait
+
+
+#pragma omp parallel default(none) shared(waitThread, rpcPic, ppppcRDSbacCoders, pcSlice, pcBitCounters) num_threads(numThreads)
+#pragma omp for schedule(static, 1) nowait
     for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
     {
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
@@ -575,8 +585,11 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         {
             UInt uiCUAddr = uiCurLineCUAddr + uiCol;
 
-            while(iFinish[uiLin] - 2/*((int)uiWidthInLCUs - 2)*/ < (Int)uiCol)
-                Sleep(1);
+            // waitting token
+            if ( uiLin != 0 )
+            {
+                waitThread[uiLin-1][uiCol].Wait();
+            }
 
             // initialize CU encoder
             TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
@@ -698,10 +711,20 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_dPicRdCost     += pcCU->getTotalCost();
             m_uiPicDist      += pcCU->getTotalDistortion();
 
-            iFinish[uiLin+1] = uiCol;
+            // set token for next thread
+            if ( uiLin != uiHeightInLCUs - 1)
+            {
+                Int flagId = (uiWidthInLCUs + uiCol - 1) % uiWidthInLCUs;
+                waitThread[uiLin][flagId].Trigger();
+            }
         } // end of for(uiCol...
-        iFinish[uiLin+1] = INT_MAX;
     } // end of for(uiLin...
+
+    for(UInt ui=0; ui<uiHeightInLCUs-1; ui++)
+    {
+        delete[] waitThread[ui];
+    }
+    delete [] waitThread;
 
     if (iNumSubstreams > 1)
     {
