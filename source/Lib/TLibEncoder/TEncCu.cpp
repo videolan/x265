@@ -74,6 +74,12 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
     UInt uiNumPartitions;
+    for(int k=0; k<4; k++)
+    {
+        m_NxNCU[k] = new TComDataCU;
+        m_NxNCU[k]->create(1, uiMaxWidth, uiMaxHeight, false, uiMaxWidth);
+    }
+
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
         uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
@@ -120,6 +126,12 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 Void TEncCu::destroy()
 {
     Int i;
+
+    for(int k = 0; k<4; k++)
+    {
+        delete m_NxNCU[k];
+        m_NxNCU[k] = NULL;
+    }     
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
