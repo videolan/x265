@@ -62,6 +62,10 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     Int i;
 
     m_uhTotalDepth   = uhTotalDepth + 1;
+    m_NxNCU[0]       = new TComDataCU*[m_uhTotalDepth - 1];
+    m_NxNCU[1]       = new TComDataCU*[m_uhTotalDepth - 1];
+    m_NxNCU[2]       = new TComDataCU*[m_uhTotalDepth - 1];
+    m_NxNCU[3]       = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcBestCU      = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
 
@@ -74,12 +78,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
     UInt uiNumPartitions;
-    for(int k = 0; k < 4; k++)
-    {
-        m_NxNCU[k] = new TComDataCU;
-        m_NxNCU[k]->create(1 << ((m_uhTotalDepth - 1) << 1), uiMaxWidth, uiMaxHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-    }
-
+    
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
         uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
@@ -90,6 +89,15 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
         m_ppcBestCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
         m_ppcTempCU[i] = new TComDataCU;
         m_ppcTempCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+
+        m_NxNCU[0][i] = new TComDataCU;
+        m_NxNCU[0][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_NxNCU[1][i] = new TComDataCU;
+        m_NxNCU[1][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_NxNCU[2][i] = new TComDataCU;
+        m_NxNCU[2][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_NxNCU[3][i] = new TComDataCU;
+        m_NxNCU[3][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
 
         m_ppcPredYuvBest[i] = new TComYuv;
         m_ppcPredYuvBest[i]->create(uiWidth, uiHeight);
@@ -127,18 +135,33 @@ Void TEncCu::destroy()
 {
     Int i;
 
-    for(int k = 0; k<4; k++)
-    {
-        if(m_NxNCU[k])
-        {
-            m_NxNCU[k]->destroy();
-            delete m_NxNCU[k];
-            m_NxNCU[k] = NULL;
-        }
-    }     
-
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
+        if(m_NxNCU[0][i])
+        {
+            m_NxNCU[0][i]->destroy();
+            delete m_NxNCU[0][i];
+            m_NxNCU[0][i] = NULL;
+        }
+        if(m_NxNCU[1][i])
+        {
+            m_NxNCU[1][i]->destroy();
+            delete m_NxNCU[1][i];
+            m_NxNCU[1][i] = NULL;
+        }
+        if(m_NxNCU[2][i])
+        {
+            m_NxNCU[2][i]->destroy();
+            delete m_NxNCU[2][i];
+            m_NxNCU[2][i] = NULL;
+        }
+        if(m_NxNCU[3][i])
+        {
+            m_NxNCU[3][i]->destroy();
+            delete m_NxNCU[3][i];
+            m_NxNCU[3][i] = NULL;
+        }
+
         if (m_ppcBestCU[i])
         {
             m_ppcBestCU[i]->destroy();
@@ -195,6 +218,27 @@ Void TEncCu::destroy()
         }
     }
 
+    if(m_NxNCU[0])
+    {
+        delete []m_NxNCU[0];
+        m_NxNCU[0] = NULL;
+    }
+
+    if(m_NxNCU[1])
+    {
+        delete []m_NxNCU[1];
+        m_NxNCU[1] = NULL;
+    }
+    if(m_NxNCU[2])
+    {
+        delete []m_NxNCU[2];
+        m_NxNCU[2] = NULL;
+    }
+    if(m_NxNCU[3])
+    {
+        delete []m_NxNCU[3];
+        m_NxNCU[3] = NULL;
+    }
     if (m_ppcBestCU)
     {
         delete [] m_ppcBestCU;
@@ -389,8 +433,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     PPAScopeEvent(TEncCu_xCompressCU);
 
     // get Original YUV data from picture
-    //if(uiDepth == 0)
-        m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -538,9 +581,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         _NxNCost = 0; 
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            
             pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
-            pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
                     
@@ -578,8 +620,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     }
 
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE && !bSliceEnd && bInsidePicture) 
-    {       
-
+    {
         if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
         {
             rpcBestCU->copyToPic(uiDepth);                                            // Copy Best data to Picture for next partition prediction.
@@ -622,7 +663,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
             pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
-            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
 
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
