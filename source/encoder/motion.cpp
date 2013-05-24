@@ -576,7 +576,7 @@ me_hex2:
             MV tmv;
             for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
-                    COST_MV(omv.x + tmv.x, omv.y + tmv.y); // TODO: use sad_x4 here
+                    COST_MV(tmv.x, tmv.y); // TODO: use sad_x4 here
         }
 
         while (bDistance > 0)
