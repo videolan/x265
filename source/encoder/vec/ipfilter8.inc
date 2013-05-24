@@ -485,7 +485,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
             }
             else
             {
-                vec_src0.load_partial(4, src + col);
+                vec_src0 = load_partial_by_i<4>(src + col);
             }
             vec_sum_low = extend_low(vec_src0) * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
             int sum = horizontal_add(vec_sum_low);
@@ -564,7 +564,7 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
             }
             else
             {
-                vec_src0.load_partial(4, src + col);
+                vec_src0 = load_partial_by_i<4>(src + col);
             }
             vec_sum_low = extend_low(vec_src0) * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
             int sum = horizontal_add(vec_sum_low);

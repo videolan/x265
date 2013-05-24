@@ -85,7 +85,7 @@ private:
     UChar*          m_puhQTTempTrIdx;
     UChar*          m_puhQTTempCbf[3];
 
-    TShortYUV*        m_pcQTTempTComYuv;
+    TShortYUV*      m_pcQTTempTComYuv;
     TComYuv         m_tmpYuvPred; // To be used in xGetInterPredictionError() to avoid constant memory allocation/deallocation
     Pel*            m_pSharedPredTransformSkip[3];
     TCoeff*         m_pcQTTempTUCoeffY;

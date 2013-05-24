@@ -101,30 +101,55 @@ void Encoder::configure(x265_param_t *param)
     setProfile(m_profile);
     setLevel(m_levelTier, m_level);
 
-    setGOPSize(m_iGOPSize);
+    //====== HM Settings not exposed for configuration ======
+    setGOPSize(4);
+    int offsets[] = { 3, 2, 3, 1 };
+    for (int i = 0; i < 4; i++)
+    {
+        m_GOPList[i].m_POC = i+1;
+        m_GOPList[i].m_QPFactor = 0.4624;
+        m_GOPList[i].m_QPOffset = offsets[i];
+        m_GOPList[i].m_betaOffsetDiv2 = 0;
+        m_GOPList[i].m_tcOffsetDiv2 = 0;
+        m_GOPList[i].m_numRefPicsActive = 1;
+        m_GOPList[i].m_numRefPics = 1;
+        m_GOPList[i].m_referencePics[0] = -1;
+        m_GOPList[i].m_usedByCurrPic[0] = 1;
+        m_GOPList[i].m_refPic = true;
+        m_GOPList[i].m_temporalId = 0;
+        m_GOPList[i].m_numRefIdc = 0;
+        m_GOPList[i].m_interRPSPrediction = 1;
+        m_GOPList[i].m_deltaRPS = -1;
+        m_GOPList[i].m_sliceType = 'P';
+        m_GOPList[i].m_numRefIdc = 2;
+        m_GOPList[i].m_refIdc[2] = 1;
+    }
+    m_GOPList[0].m_interRPSPrediction = 0;
+    m_GOPList[0].m_deltaRPS = 0;
+    m_GOPList[0].m_numRefIdc = 0;
+    m_GOPList[0].m_refIdc[2] = 0;
+    m_GOPList[3].m_QPFactor = 0.578;
     setGopList(m_GOPList);
-    setExtraRPSs(m_extraRPSs);
+    setExtraRPSs(0);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        setNumReorderPics(m_numReorderPics[i], i);
-        setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+        setNumReorderPics(0, i);
+        setMaxDecPicBuffering(2, i);
         setLambdaModifier(i, 1.0);
     }
 
     TComVPS vps;
-    vps.setMaxTLayers(m_maxTempLayer);
-    vps.setTemporalNestingFlag(m_maxTempLayer > 0);
+    vps.setMaxTLayers(1);
+    vps.setTemporalNestingFlag(true);
     vps.setMaxLayers(1);
     for (Int i = 0; i < MAX_TLAYER; i++)
     {
-        vps.setNumReorderPics(m_numReorderPics[i], i);
-        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+        vps.setNumReorderPics(0, i);
+        vps.setMaxDecPicBuffering(2, i);
     }
     setVPS(&vps);
-    setMaxTempLayer(m_maxTempLayer);
+    setMaxTempLayer(1);
 
-
-    //====== HM Settings not exposed for configuration ======
     setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);

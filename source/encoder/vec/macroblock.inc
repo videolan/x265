@@ -212,7 +212,7 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-#if 0    //partialButterfly32 vector code
+#if INSTRSET <= 4    //partialButterfly32 vector code
 
 void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 {
@@ -493,7 +493,7 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly32 vector code
 
-#if 0 //partialButterfly8 vector code
+#if INSTRSET <= 4    //partialButterfly8 vector code
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 {
@@ -554,7 +554,7 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly8 vector code
 
-#if 1 //partialButterfly8 intrinsic code
+#if INSTRSET > 4 //partialButterfly8 intrinsic code
 
 void CDECL partialButterfly8(short *src, short *dst, int shift, int /* line */)
 {
@@ -1177,7 +1177,7 @@ void CDECL partialButterfly4(short *src, short *dst, int shift, int line)
 
 #endif  //partialButterfly4 vector code
 
-#if 1   //partialButterfly32 intrisic code
+#if INSTRSET > 4   //partialButterfly32 intrisic code
 
 void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
 {
