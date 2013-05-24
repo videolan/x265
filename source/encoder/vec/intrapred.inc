@@ -2254,6 +2254,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
         return;
     case 8:
 #if HIGH_BIT_DEPTH
+        ; // To fix build for HIGH_BIT_DEPTH enabled
 #else
         xPredIntraAng8x8(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
