@@ -479,7 +479,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
         {
             // 2Nx2N
-            if (m_pcEncCfg->getUseEarlySkipDetection())
+            if (m_pcEncCfg->getUseEarlySkipDetection() && uiDepth==0)
             {
                 xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
@@ -490,7 +490,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
             rpcTempCU->initEstData(uiDepth, iQP);
 
-            if (!m_pcEncCfg->getUseEarlySkipDetection())
+            if (!m_pcEncCfg->getUseEarlySkipDetection() && uiDepth==0)
             {
                 // 2Nx2N, NxN
                 xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
@@ -662,10 +662,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         uiPartUnitIdx = 0;
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
-            pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
+            pcSubBestPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
 
-            pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);
+            //pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
             Bool bInSlice = pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
