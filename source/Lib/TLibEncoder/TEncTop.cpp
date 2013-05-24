@@ -106,10 +106,6 @@ Void TEncTop::create()
         m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_cEncSAO.createEncBuffer();
     }
-    if (m_bUseAdaptQpSelect)
-    {
-        m_cTrQuant.initSliceQpDelta();
-    }
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
     if (m_RCEnableRateControl)
@@ -141,6 +137,7 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
     m_pcSearchs              = new TEncSearch[iNumSubstreams];
     m_pcCuEncoders           = new TEncCu[iNumSubstreams];
+    m_pcTrQuants             = new TComTrQuant[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
@@ -149,6 +146,16 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
 
         m_pcCuEncoders[ui].create(g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_pcCuEncoders[ui].init(this);
+        if (m_bUseAdaptQpSelect)
+        {
+            m_pcTrQuants[ui].initSliceQpDelta();
+        }
+        m_pcTrQuants[ui].init(1 << m_uiQuadtreeTULog2MaxSize,
+                              m_useRDOQ,
+                              m_useRDOQTS,
+                              true,
+                              m_useTransformSkipFast,
+                              m_bUseAdaptQpSelect );
     }
 
     m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
@@ -209,6 +216,7 @@ Void TEncTop::destroy()
         m_pcCuEncoders[ui].destroy();
     }
 
+    delete[] m_pcTrQuants;
     delete[] m_pcCuEncoders;
 
     delete[] m_pcSearchs;
@@ -254,18 +262,10 @@ Void TEncTop::init()
     // initialize transform & quantization class
     m_pcCavlcCoder = getCavlcCoder();
 
-    m_cTrQuant.init(1 << m_uiQuadtreeTULog2MaxSize,
-                    m_useRDOQ,
-                    m_useRDOQTS,
-                    true,
-                    m_useTransformSkipFast,
-                    m_bUseAdaptQpSelect
-                    );
-
     // initialize encoder search class
     for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
     {
-        m_pcSearchs[ui].init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
+        m_pcSearchs[ui].init(this, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
     }
 
     m_iMaxRefPicNum = 0;

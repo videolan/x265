@@ -353,7 +353,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
 {
     m_pcEncCfg           = pcEncTop;
     m_pcPredSearch       = NULL;
-    m_pcTrQuant          = pcEncTop->getTrQuant();
+    m_pcTrQuant          = NULL;
     m_pcBitCounter       = pcEncTop->getBitCounter();
     m_pcRdCost           = pcEncTop->getRdCost();
 
@@ -384,6 +384,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_pcPredSearch->set_pppcRDSbacCoder(m_pppcRDSbacCoder);
     m_pcPredSearch->set_pcEntropyCoder(m_pcEntropyCoder);
     m_pcPredSearch->set_pcRDGoOnSbacCoder(m_pcRDGoOnSbacCoder);
+    m_pcPredSearch->set_pcTrQuant(m_pcTrQuant);
 
     // analysis of CU
     

@@ -83,7 +83,7 @@ private:
     TEncCavlc*              m_pcCavlcCoder;                     ///< CAVLC encoder
     TEncSbac*               m_pcSbacCoder;                      ///< SBAC encoder
     TEncBinCABAC*           m_pcBinCABAC;                       ///< Bin encoder CABAC
-    TComTrQuant*            m_pcTrQuant;                        ///< transform & quantization
+    TComTrQuant*            m_pcTrQuants;                       ///< transform & quantization
 
     // RD optimization
     TComBitCounter*         m_pcBitCounter;                     ///< bit counter

@@ -127,7 +127,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
     m_pcSbacCoder       = pcEncTop->getSbacCoder();
     m_pcBinCABAC        = pcEncTop->getBinCABAC();
-    m_pcTrQuant         = pcEncTop->getTrQuant();
+    m_pcTrQuants        = pcEncTop->getTrQuants();
 
     m_pcBitCounter      = pcEncTop->getBitCounter();
     m_pcRdCost          = pcEncTop->getRdCost();
@@ -306,8 +306,12 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(dLambda, dLambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(dLambda, dLambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(dLambda);
 #endif
 
@@ -422,8 +426,12 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(lambda, lambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(lambda, lambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(lambda);
 #endif
 
@@ -509,12 +517,16 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        // TODO: fix this option
+        assert(0);
+        #if 0
         m_pcTrQuant->clearSliceARLCnt();
         if (pcSlice->getSliceType() != I_SLICE)
         {
             Int qpBase = pcSlice->getSliceQpBase();
             pcSlice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
         }
+        #endif
     }
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
@@ -613,6 +625,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pcCuEncoders[uiSubStrm].set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&m_pcRDGoOnSbacCoders[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pcTrQuant(&m_pcTrQuants[uiSubStrm]);
 
             // run CU encoder
             m_pcCuEncoders[uiSubStrm].compressCU(pcCU);
@@ -860,7 +873,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        assert(0);
+        #if 0
         m_pcTrQuant->storeSliceQpNext(pcSlice);
+        #endif
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {
