@@ -979,14 +979,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
                 rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
             {
-                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
+                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 rpcTempCU->initEstData(uiDepth, iQP);
 
                 if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
                 {
                     if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                     {
-                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
+                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN);
                         rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
