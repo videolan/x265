@@ -2212,9 +2212,6 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
 void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line)
 {
     int j;
-
-    Vec4i dst_second(32767);
-    Vec4i dst_first(-32768);
     int add = 1 << (shift - 1);
 
     Vec4i coeff_const1(89, 75, 50, 18);
