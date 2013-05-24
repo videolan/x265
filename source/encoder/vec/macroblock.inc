@@ -1945,6 +1945,11 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     Coeff_4_7 = _mm_add_epi32(Coeff_4_7, c32_128);
     Coeff_4_7 = _mm_srai_epi32(Coeff_4_7, nshift);
 
+    Coeff_0_3 = _mm_slli_epi32(Coeff_0_3, 16);
+    Coeff_4_7   = _mm_slli_epi32(Coeff_4_7, 16);
+    Coeff_0_3 = _mm_srai_epi32(Coeff_0_3, 16);
+    Coeff_4_7  = _mm_srai_epi32(Coeff_4_7, 16);
+
     // Store back the DCT results
     __m128i Coeff_0_7 = _mm_packs_epi32(Coeff_0_3, Coeff_4_7);  //Coeffs 0-7
     _mm_store_si128((__m128i*)dst, Coeff_0_7);
@@ -1962,6 +1967,11 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
     __m128i Coeff_12_15 = _mm_hadd_epi32(O_8_11, O_12_15);
     Coeff_12_15 = _mm_add_epi32(Coeff_12_15, c32_128);
     Coeff_12_15 = _mm_srai_epi32(Coeff_12_15, nshift);
+
+    Coeff_8_11 = _mm_slli_epi32(Coeff_8_11, 16);
+    Coeff_12_15   = _mm_slli_epi32(Coeff_12_15, 16);
+    Coeff_8_11 = _mm_srai_epi32(Coeff_8_11, 16);
+    Coeff_12_15  = _mm_srai_epi32(Coeff_12_15, 16);
 
     // Store back the DCT results
     __m128i Coeff_8_15 = _mm_packs_epi32(Coeff_8_11, Coeff_12_15);   //Coeffs 8-15
