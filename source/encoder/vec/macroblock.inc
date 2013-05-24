@@ -961,171 +961,129 @@ void CDECL partialButterfly8(short *src, short *dst, int shift, int /* line */)
     dst_0_1_2_3 = _mm_add_epi32(dst_0_1_2_3, c32_add);
     dst_0_1_2_3 = _mm_srai_epi32(dst_0_1_2_3, shift);
 
-    dst[0] = (short)_mm_extract_epi32(dst_0_1_2_3, 0);
-    dst[1] = (short)_mm_extract_epi32(dst_0_1_2_3, 1);
-    dst[2] = (short)_mm_extract_epi32(dst_0_1_2_3, 2);
-    dst[3] = (short)_mm_extract_epi32(dst_0_1_2_3, 3);
-
     __m128i dst_4_5_6_7 = _mm_set_epi32(dst7, dst6, dst5, dst4);
     dst_4_5_6_7 = _mm_add_epi32(dst_4_5_6_7, c32_add);
     dst_4_5_6_7 = _mm_srai_epi32(dst_4_5_6_7, shift);
 
-    dst[4] = (short)_mm_extract_epi32(dst_4_5_6_7, 0);
-    dst[5] = (short)_mm_extract_epi32(dst_4_5_6_7, 1);
-    dst[6] = (short)_mm_extract_epi32(dst_4_5_6_7, 2);
-    dst[7] = (short)_mm_extract_epi32(dst_4_5_6_7, 3);
+    dst_0_1_2_3 = _mm_slli_epi32(dst_0_1_2_3, 16);
+    dst_4_5_6_7  = _mm_slli_epi32(dst_4_5_6_7, 16);
+    dst_0_1_2_3 = _mm_srai_epi32(dst_0_1_2_3, 16);
+    dst_4_5_6_7 = _mm_srai_epi32(dst_4_5_6_7, 16);
 
-    // __m128i dst_0_7 = _mm_packs_epi32 (dst_0_1_2_3, dst_4_5_6_7);
-    // _mm_store_si128((__m128i *)dst, dst_0_7);
+    __m128i dst_0_7 = _mm_packs_epi32(dst_0_1_2_3, dst_4_5_6_7);
+    _mm_store_si128((__m128i*)dst, dst_0_7);
 
     __m128i dst32_33_34_35 = _mm_set_epi32(dst35, dst34, dst33, dst32);
     dst32_33_34_35 = _mm_add_epi32(dst32_33_34_35, c32_add);
     dst32_33_34_35 = _mm_srai_epi32(dst32_33_34_35, shift);
 
-    dst[32] = (short)_mm_extract_epi32(dst32_33_34_35, 0);
-    dst[33] = (short)_mm_extract_epi32(dst32_33_34_35, 1);
-    dst[34] = (short)_mm_extract_epi32(dst32_33_34_35, 2);
-    dst[35] = (short)_mm_extract_epi32(dst32_33_34_35, 3);
-
     __m128i dst36_37_38_39 = _mm_set_epi32(dst39, dst38, dst37, dst36);
     dst36_37_38_39 = _mm_add_epi32(dst36_37_38_39, c32_add);
     dst36_37_38_39 = _mm_srai_epi32(dst36_37_38_39, shift);
 
-    dst[36] = (short)_mm_extract_epi32(dst36_37_38_39, 0);
-    dst[37] = (short)_mm_extract_epi32(dst36_37_38_39, 1);
-    dst[38] = (short)_mm_extract_epi32(dst36_37_38_39, 2);
-    dst[39] = (short)_mm_extract_epi32(dst36_37_38_39, 3);
+    dst32_33_34_35 = _mm_slli_epi32(dst32_33_34_35, 16);
+    dst36_37_38_39  = _mm_slli_epi32(dst36_37_38_39, 16);
+    dst32_33_34_35 = _mm_srai_epi32(dst32_33_34_35, 16);
+    dst36_37_38_39 = _mm_srai_epi32(dst36_37_38_39, 16);
 
-    //__m128i dst_32_39 = _mm_packs_epi32 ( dst32_33_34_35, dst36_37_38_39);
-    //_mm_store_si128((__m128i *)(dst+32), dst_32_39);
+    __m128i dst_32_39 = _mm_packs_epi32(dst32_33_34_35, dst36_37_38_39);
+    _mm_store_si128((__m128i*)(dst + 32), dst_32_39);
 
     __m128i dst16_17_18_19 = _mm_set_epi32(dst19, dst18, dst17, dst16);
     dst16_17_18_19 = _mm_add_epi32(dst16_17_18_19, c32_add);
     dst16_17_18_19 = _mm_srai_epi32(dst16_17_18_19, shift);
 
-    dst[16] = (short)_mm_extract_epi32(dst16_17_18_19, 0);
-    dst[17] = (short)_mm_extract_epi32(dst16_17_18_19, 1);
-    dst[18] = (short)_mm_extract_epi32(dst16_17_18_19, 2);
-    dst[19] = (short)_mm_extract_epi32(dst16_17_18_19, 3);
-
     __m128i dst20_21_22_23 = _mm_set_epi32(dst23, dst22, dst21, dst20);
     dst20_21_22_23 = _mm_add_epi32(dst20_21_22_23, c32_add);
     dst20_21_22_23 = _mm_srai_epi32(dst20_21_22_23, shift);
 
-    dst[20] = (short)_mm_extract_epi32(dst20_21_22_23, 0);
-    dst[21] = (short)_mm_extract_epi32(dst20_21_22_23, 1);
-    dst[22] = (short)_mm_extract_epi32(dst20_21_22_23, 2);
-    dst[23] = (short)_mm_extract_epi32(dst20_21_22_23, 3);
+    dst16_17_18_19 = _mm_slli_epi32(dst16_17_18_19, 16);
+    dst20_21_22_23  = _mm_slli_epi32(dst20_21_22_23, 16);
+    dst16_17_18_19 = _mm_srai_epi32(dst16_17_18_19, 16);
+    dst20_21_22_23 = _mm_srai_epi32(dst20_21_22_23, 16);
 
-    //__m128i dst_16_23 = _mm_packs_epi32 (dst16_17_18_19, dst20_21_22_23);
-    //_mm_store_si128((__m128i *)(dst+16), dst_16_23);
+    __m128i dst_16_23 = _mm_packs_epi32(dst16_17_18_19, dst20_21_22_23);
+    _mm_store_si128((__m128i*)(dst + 16), dst_16_23);
 
     __m128i dst48_49_50_51 = _mm_set_epi32(dst51, dst50, dst49, dst48);
     dst48_49_50_51 = _mm_add_epi32(dst48_49_50_51, c32_add);
     dst48_49_50_51 = _mm_srai_epi32(dst48_49_50_51, shift);
 
-    dst[48] = (short)_mm_extract_epi32(dst48_49_50_51, 0);
-    dst[49] = (short)_mm_extract_epi32(dst48_49_50_51, 1);
-    dst[50] = (short)_mm_extract_epi32(dst48_49_50_51, 2);
-    dst[51] = (short)_mm_extract_epi32(dst48_49_50_51, 3);
-
     __m128i dst52_53_54_55 = _mm_set_epi32(dst55, dst54, dst53, dst52);
     dst52_53_54_55 = _mm_add_epi32(dst52_53_54_55, c32_add);
     dst52_53_54_55 = _mm_srai_epi32(dst52_53_54_55, shift);
 
-    dst[52] = (short)_mm_extract_epi32(dst52_53_54_55, 0);
-    dst[53] = (short)_mm_extract_epi32(dst52_53_54_55, 1);
-    dst[54] = (short)_mm_extract_epi32(dst52_53_54_55, 2);
-    dst[55] = (short)_mm_extract_epi32(dst52_53_54_55, 3);
+    dst48_49_50_51 = _mm_slli_epi32(dst48_49_50_51, 16);
+    dst52_53_54_55  = _mm_slli_epi32(dst52_53_54_55, 16);
+    dst48_49_50_51 = _mm_srai_epi32(dst48_49_50_51, 16);
+    dst52_53_54_55 = _mm_srai_epi32(dst52_53_54_55, 16);
 
-    // __m128i dst_48_55 = _mm_packs_epi32 (dst48_49_50_51, dst52_53_54_55);
-    // _mm_store_si128((__m128i *)(dst+48),  dst_48_55);
+    __m128i dst_48_55 = _mm_packs_epi32(dst48_49_50_51, dst52_53_54_55);
+    _mm_store_si128((__m128i*)(dst + 48),  dst_48_55);
 
     __m128i dst_8_9_10_11 = _mm_set_epi32(dst11, dst10, dst9, dst8);
     dst_8_9_10_11 = _mm_add_epi32(dst_8_9_10_11, c32_add);
     dst_8_9_10_11 = _mm_srai_epi32(dst_8_9_10_11, shift);
 
-    dst[8] = (short)_mm_extract_epi32(dst_8_9_10_11, 0);
-    dst[9] = (short)_mm_extract_epi32(dst_8_9_10_11, 1);
-    dst[10] = (short)_mm_extract_epi32(dst_8_9_10_11, 2);
-    dst[11] = (short)_mm_extract_epi32(dst_8_9_10_11, 3);
-
     __m128i dst_12_13_14_15 = _mm_set_epi32(dst15, dst14, dst13, dst12);
     dst_12_13_14_15 = _mm_add_epi32(dst_12_13_14_15, c32_add);
     dst_12_13_14_15 = _mm_srai_epi32(dst_12_13_14_15, shift);
 
-    dst[12] = (short)_mm_extract_epi32(dst_12_13_14_15, 0);
-    dst[13] = (short)_mm_extract_epi32(dst_12_13_14_15, 1);
-    dst[14] = (short)_mm_extract_epi32(dst_12_13_14_15, 2);
-    dst[15] = (short)_mm_extract_epi32(dst_12_13_14_15, 3);
+    dst_8_9_10_11 = _mm_slli_epi32(dst_8_9_10_11, 16);
+    dst_12_13_14_15  = _mm_slli_epi32(dst_12_13_14_15, 16);
+    dst_8_9_10_11 = _mm_srai_epi32(dst_8_9_10_11, 16);
+    dst_12_13_14_15 = _mm_srai_epi32(dst_12_13_14_15, 16);
 
-    // __m128i dst_8_15 = _mm_packs_epi32 (dst_8_9_10_11, dst_12_13_14_15);
-    // _mm_store_si128((__m128i *)(dst+8), dst_8_15);
+    __m128i dst_8_15 = _mm_packs_epi32(dst_8_9_10_11, dst_12_13_14_15);
+    _mm_store_si128((__m128i*)(dst + 8), dst_8_15);
 
     __m128i dst24_25_26_27 = _mm_set_epi32(dst27, dst26, dst25, dst24);
     dst24_25_26_27 = _mm_add_epi32(dst24_25_26_27, c32_add);
     dst24_25_26_27 = _mm_srai_epi32(dst24_25_26_27, shift);
 
-    dst[24] = (short)_mm_extract_epi32(dst24_25_26_27, 0);
-    dst[25] = (short)_mm_extract_epi32(dst24_25_26_27, 1);
-    dst[26] = (short)_mm_extract_epi32(dst24_25_26_27, 2);
-    dst[27] = (short)_mm_extract_epi32(dst24_25_26_27, 3);
-
     __m128i dst28_29_30_31 = _mm_set_epi32(dst31, dst30, dst29, dst28);
     dst28_29_30_31 = _mm_add_epi32(dst28_29_30_31, c32_add);
     dst28_29_30_31 = _mm_srai_epi32(dst28_29_30_31, shift);
 
-    dst[28] = (short)_mm_extract_epi32(dst28_29_30_31, 0);
-    dst[29] = (short)_mm_extract_epi32(dst28_29_30_31, 1);
-    dst[30] = (short)_mm_extract_epi32(dst28_29_30_31, 2);
-    dst[31] = (short)_mm_extract_epi32(dst28_29_30_31, 3);
+    dst24_25_26_27 = _mm_slli_epi32(dst24_25_26_27, 16);
+    dst28_29_30_31  = _mm_slli_epi32(dst28_29_30_31, 16);
+    dst24_25_26_27 = _mm_srai_epi32(dst24_25_26_27, 16);
+    dst28_29_30_31 = _mm_srai_epi32(dst28_29_30_31, 16);
 
-    // __m128i dst_24_31 = _mm_packs_epi32 ( dst24_25_26_27, dst28_29_30_31);
-    // _mm_store_si128((__m128i *)(dst+24), dst_24_31);
+    __m128i dst_24_31 = _mm_packs_epi32(dst24_25_26_27, dst28_29_30_31);
+    _mm_store_si128((__m128i*)(dst + 24), dst_24_31);
 
     __m128i dst40_41_42_43 = _mm_set_epi32(dst43, dst42, dst41, dst40);
     dst40_41_42_43 = _mm_add_epi32(dst40_41_42_43, c32_add);
     dst40_41_42_43  = _mm_srai_epi32(dst40_41_42_43, shift);
 
-    dst[40] = (short)_mm_extract_epi32(dst40_41_42_43, 0);
-    dst[41] = (short)_mm_extract_epi32(dst40_41_42_43, 1);
-    dst[42] = (short)_mm_extract_epi32(dst40_41_42_43, 2);
-    dst[43] = (short)_mm_extract_epi32(dst40_41_42_43, 3);
-
     __m128i dst44_45_46_47 = _mm_set_epi32(dst47, dst46, dst45, dst44);
     dst44_45_46_47 = _mm_add_epi32(dst44_45_46_47, c32_add);
     dst44_45_46_47  = _mm_srai_epi32(dst44_45_46_47, shift);
 
-    dst[44] = (short)_mm_extract_epi32(dst44_45_46_47, 0);
-    dst[45] = (short)_mm_extract_epi32(dst44_45_46_47, 1);
-    dst[46] = (short)_mm_extract_epi32(dst44_45_46_47, 2);
-    dst[47] = (short)_mm_extract_epi32(dst44_45_46_47, 3);
+    dst40_41_42_43 = _mm_slli_epi32(dst40_41_42_43, 16);
+    dst44_45_46_47  = _mm_slli_epi32(dst44_45_46_47, 16);
+    dst40_41_42_43 = _mm_srai_epi32(dst40_41_42_43, 16);
+    dst44_45_46_47 = _mm_srai_epi32(dst44_45_46_47, 16);
 
-    //__m128i dst_40_47 = _mm_packs_epi32 (dst40_41_42_43, dst44_45_46_47);
-    //_mm_store_si128((__m128i *)(dst+40), dst_40_47);
+    __m128i dst_40_47 = _mm_packs_epi32(dst40_41_42_43, dst44_45_46_47);
+    _mm_store_si128((__m128i*)(dst + 40), dst_40_47);
 
     __m128i dst56_57_58_59 = _mm_set_epi32(dst59, dst58, dst57, dst56);
     dst56_57_58_59 = _mm_add_epi32(dst56_57_58_59, c32_add);
     dst56_57_58_59  = _mm_srai_epi32(dst56_57_58_59, shift);
 
-    dst[56] = (short)_mm_extract_epi32(dst56_57_58_59, 0);
-    dst[57] = (short)_mm_extract_epi32(dst56_57_58_59, 1);
-    dst[58] = (short)_mm_extract_epi32(dst56_57_58_59, 2);
-    dst[59] = (short)_mm_extract_epi32(dst56_57_58_59, 3);
-
     __m128i dst60_61_62_63 = _mm_set_epi32(dst63, dst62, dst61, dst60);
     dst60_61_62_63 = _mm_add_epi32(dst60_61_62_63, c32_add);
     dst60_61_62_63  = _mm_srai_epi32(dst60_61_62_63, shift);
 
-    dst[60] = (short)_mm_extract_epi32(dst60_61_62_63, 0);
-    dst[61] = (short)_mm_extract_epi32(dst60_61_62_63, 1);
-    dst[62] = (short)_mm_extract_epi32(dst60_61_62_63, 2);
-    dst[63] = (short)_mm_extract_epi32(dst60_61_62_63, 3);
+    dst56_57_58_59 = _mm_slli_epi32(dst56_57_58_59, 16);
+    dst60_61_62_63  = _mm_slli_epi32(dst60_61_62_63, 16);
+    dst56_57_58_59 = _mm_srai_epi32(dst56_57_58_59, 16);
+    dst60_61_62_63 = _mm_srai_epi32(dst60_61_62_63, 16);
 
-    //__m128i dst_56_63 = _mm_packs_epi32(dst56_57_58_59 , dst60_61_62_63);
-    //_mm_store_si128((__m128i *)(dst+56),  dst_56_63);
-
-    // }
+    __m128i dst_56_63 = _mm_packs_epi32(dst56_57_58_59, dst60_61_62_63);
+    _mm_store_si128((__m128i*)(dst + 56),  dst_56_63);
 }
 
 #endif  //partialButterfly8 intrinsic code
@@ -2755,4 +2713,3 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 }
-
