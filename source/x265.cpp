@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #if _MSC_VER
-#pragma warning(disable: 4505) // : 'writeAnnexB' : unreferenced local function has been removed
+#pragma warning(disable: 4127) // conditional expression is constant, yes I know
 #endif
 
 #include "TLibCommon/AccessUnit.h"
@@ -170,9 +170,6 @@ static void print_version()
     fprintf(stdout, "\n");
 }
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant, yes I know
-#endif
 static void do_help()
 {
     print_version();
@@ -180,7 +177,7 @@ static void do_help()
 
 #define OPT(longname, var, argreq, flag, helptext)\
     if (flag) printf("-%c/", flag); else printf("   ");\
-    printf("%-10s\t%s\n", longname, helptext);
+    printf("--%-20s\t%s\n", longname, helptext);
 #define STROPT OPT
 #include "x265opts.h"
 #undef OPT
@@ -212,32 +209,40 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
     {
         int long_options_index = -1;
         int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
-
         if (c == -1)
         {
             break;
         }
 
-        switch( c )
+        switch (c)
         {
         case 'h':
             do_help();
         case 'V':
             print_version();
             exit(0);
-        }
-
-        if (long_options_index < 0)
-            ;
+        default:
+            if (c > 0)
+            {
+                for (int i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
+                    if (long_options[i].val == c)
+                    {
+                        long_options_index = i;
+                        break;
+                    }
+            }
+            if (long_options_index < 0)
+                ;
 #define STROPT(longname, var, argreq, flag, helptext)\
-        else if (!strcmp(long_options[long_options_index].name, longname))\
+            else if (!strcmp(long_options[long_options_index].name, longname))\
             (var) = optarg;
 #define OPT(longname, var, argreq, flag, helptext)\
-        else if (!strcmp(long_options[long_options_index].name, longname))\
+            else if (!strcmp(long_options[long_options_index].name, longname))\
             (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
+        }
     }
 
     if (argc <= 1 || help)
@@ -246,15 +251,22 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
     x265::SetupPrimitives(cpuid);
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
 
-    /* parse the width, height, frame rate from the y4m files if it is not given in the configuration file */
+    if (optind < argc - 1)
+        inputfn = argv[optind];
+    if (inputfn == NULL)
+    {
+        printf("x265: no input file specified, try -V for help\n");
+        return true;
+    }
     cliopt->input = x265::Input::Open(inputfn);
     if (!cliopt->input || cliopt->input->isFail())
     {
-        printf("x265: unable to open input file\n");
+        printf("x265: unable to open input file <%s>\n", inputfn);
         return true;
     }
     if (cliopt->input->getWidth())
     {
+        /* parse the width, height, frame rate from the y4m file */
         param->iSourceWidth = cliopt->input->getWidth();
         param->iSourceHeight = cliopt->input->getHeight();
         param->iFrameRate = (int)cliopt->input->getRate();
@@ -265,6 +277,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         cliopt->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
         cliopt->input->setBitDepth(cliopt->inputBitDepth);
     }
+    assert(param->iSourceHeight && param->iSourceWidth);
 
     /* rules for input, output and internal bitdepths as per help text */
     if (!param->internalBitDepth) { param->internalBitDepth = cliopt->inputBitDepth; }

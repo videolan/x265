@@ -16,8 +16,7 @@ OPT("keyint",          param->iIntraPeriod,       required_argument, 'i', "Intra
 OPT("width",           param->iSourceWidth,       required_argument,   0, "Source picture width, auto-detect if Y4M")
 OPT("height",          param->iSourceHeight,      required_argument,   0, "Source picture height, auto-detect if Y4M")
 OPT("rate",            param->iFrameRate,         required_argument,   0, "Frame rate, auto-detect if Y4M")
-OPT("depth",           param->internalBitDepth,   required_argument,   0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-                                                                          "If different to InputBitDepth, source data will be converted")
+OPT("depth",           param->internalBitDepth,   required_argument,   0, "Bit-depth the codec operates at. (default:InputBitDepth)")
 OPT("wpp",             param->iWaveFrontSynchro,        no_argument,   0, "0:no synchro 1:synchro with TR 2:TRR etc")
 
 OPT("ctu",             param->uiMaxCUSize,               required_argument, 's', "Maximum CU size (default: 64x64)")
@@ -30,7 +29,7 @@ OPT("TUMaxDepthInter", param->uiQuadtreeTUMaxDepthInter, required_argument, 0, "
 OPT("me",              param->searchMethod,              required_argument, 0, "0:dia 1:hex 2:umh 3:star 4:hm-orig")
 OPT("merange",         param->iSearchRange,              required_argument, 0, "Motion search range (default: 96)")
 OPT("bpredrange",      param->bipredSearchRange,         required_argument, 0, "Motion search range for bipred refinement (default:4)")
-OPT("rect",            param->enableRectInter,                 no_argument, 0, "Enable rectangular motion partitions Nx2N and 2NxN, disabling rect also disables AMP")
+OPT("rect",            param->enableRectInter,                 no_argument, 0, "Enable rectangular motion partitions Nx2N and 2NxN, also disables AMP")
 OPT("amp",             param->enableAMP,                       no_argument, 0, "Enable asymmetric motion partitions")
 OPT("tskip",           param->useTransformSkip,                no_argument, 0, "Intra transform skipping")
 OPT("tskip-fast",      param->useTransformSkipFast,            no_argument, 0, "Fast intra transform skipping")
