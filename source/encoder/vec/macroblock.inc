@@ -2074,9 +2074,6 @@ void CDECL partialButterflyInverse8(short *src, short *dst, int shift, int line)
     int EE[2], EO[2];
     int add = 1 << (shift - 1);
 
-    Vec4i dst_second(32767);
-    Vec4i dst_first(-32768);
-
     Vec4i coeff_const1(89, 75, 50, 18);
     Vec4i coeff_const2(75, -18, -89, -50);
     Vec4i coeff_const3(50, -89, 18, 75);
