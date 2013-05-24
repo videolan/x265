@@ -22,6 +22,7 @@ if(MSVC)
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
     add_definitions(/MP)  # multithreaded build
+    add_definitions(/openmp)  # OpenMP
     include_directories(compat/msvc)
 endif(MSVC)
 

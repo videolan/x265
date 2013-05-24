@@ -377,6 +377,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_ppcBestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
     m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
 
+    //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
+
     m_addSADDepth      = 0;
     m_LCUPredictionSAD = 0;
     m_temporalSAD      = 0;

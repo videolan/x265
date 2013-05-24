@@ -39,6 +39,7 @@
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
 #include <math.h>
+#include <omp.h>
 
 //! \ingroup TLibEncoder
 //! \{
@@ -554,19 +555,28 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pcSbacCoder);
     }
 
-    UInt uiCol = 0, uiLin = 0;
+    Int uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
     assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
     // for every CU in slice
+    volatile int iFinish[100];
+    memset((void*)iFinish, 0, sizeof(iFinish));
+    iFinish[0] = INT_MAX;
+    const int numThreads = (iNumSubstreams>1) ? iNumSubstreams : 1;
+#pragma omp parallel default(none) /*private(none)*/ /*firstprivate(rpcPic)*/ shared(iFinish, rpcPic, ppppcRDSbacCoders, pcSlice, pcBitCounters) num_threads(numThreads)
+#pragma omp for schedule(dynamic, 1) /*ordered*/ nowait
     for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
     {
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
-        for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
+        for(UInt uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
             UInt uiCUAddr = uiCurLineCUAddr + uiCol;
+
+            while(iFinish[uiLin] - 2/*((int)uiWidthInLCUs - 2)*/ < (Int)uiCol)
+                Sleep(1);
 
             // initialize CU encoder
             TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
@@ -687,7 +697,10 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_uiPicTotalBits += pcCU->getTotalBits();
             m_dPicRdCost     += pcCU->getTotalCost();
             m_uiPicDist      += pcCU->getTotalDistortion();
+
+            iFinish[uiLin+1] = uiCol;
         } // end of for(uiCol...
+        iFinish[uiLin+1] = INT_MAX;
     } // end of for(uiLin...
 
     if (iNumSubstreams > 1)
