@@ -8,7 +8,7 @@ endif(ENABLE_PRIMITIVES_ASM)
 option(ENABLE_TEST_THREADPOOL "Enable thread pool unit test" OFF)
 if(ENABLE_TEST_THREADPOOL)
     add_executable(PoolTest testpool.cpp)
-    target_link_libraries(PoolTest encoder ${PLATFORM_LIBS})
+    target_link_libraries(PoolTest common ${PLATFORM_LIBS})
 endif()
 
 add_executable(TestBench
@@ -18,4 +18,4 @@ add_executable(TestBench
     ipfilterharness.cpp ipfilterharness.h
     intrapredharness.cpp intrapredharness.h)
 
-target_link_libraries(TestBench encoder ${PLATFORM_LIBS})
+target_link_libraries(TestBench common ${PLATFORM_LIBS})
