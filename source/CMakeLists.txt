@@ -71,8 +71,9 @@ if(ENABLE_PPA)
     endif(UNIX)
 endif(ENABLE_PPA)
 
-include_directories(. Lib encoder)
+include_directories(. Lib common encoder)
 add_subdirectory(Lib)
+add_subdirectory(common)
 add_subdirectory(encoder)
 
 # Test applications
@@ -125,9 +126,9 @@ if(ENABLE_CLI)
         x265main.cpp ${EXTRAS} ${APPCOMMON}
         x265cfg.cpp x265cfg.h
         x265enc.cpp x265enc.h)
-    target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
+    target_link_libraries(x265-cli x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 
     add_executable(x265s x265.cpp x265opts.h ${EXTRAS}
         compat/msvc/getopt.c compat/msvc/getopt.h)
-    target_link_libraries(x265s HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
+    target_link_libraries(x265s x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 endif(ENABLE_CLI)
