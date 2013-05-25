@@ -458,7 +458,13 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
-    // We need to split, so don't try these modes.
+
+    //Data for splitting
+    UChar       uhNextDepth         = uiDepth + 1;
+    UInt uiPartUnitIdx = 0;
+    TComDataCU* pcSubBestPartCU[4], *pcSubTempPartCU[4];
+
+    //We need to split; so dont try these modes
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
@@ -577,18 +583,17 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
-    {
-        UChar       uhNextDepth         = uiDepth + 1;
-        TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
-        TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
-        UInt uiPartUnitIdx = 0;
+    {                
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
-            pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
+            pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
+        
+            pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
+            pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
-            Bool bInSlice = pcSubBestPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
-            if (bInSlice && (pcSubBestPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubBestPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+            Bool bInSlice = pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
+            if (bInSlice && (pcSubBestPartCU[uiPartUnitIdx]->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubBestPartCU[uiPartUnitIdx]->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
@@ -602,21 +607,21 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                 if (rpcBestCU->isIntra(0))
                 {
-                    xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, SIZE_NONE);
+                    xCompressCU(pcSubBestPartCU[uiPartUnitIdx], pcSubTempPartCU[uiPartUnitIdx], rpcBestCU, uhNextDepth, SIZE_NONE);
                 }
                 else
                 {
-                    xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
+                    xCompressCU(pcSubBestPartCU[uiPartUnitIdx], pcSubTempPartCU[uiPartUnitIdx], rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
                 }
                 {
-                    rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
-                    xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
+                    rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
+                    xCopyYuv2Tmp(pcSubBestPartCU[uiPartUnitIdx]->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);
                 }
             }
             else if (bInSlice)
             {
-                pcSubBestPartCU->copyToPic(uhNextDepth);
-                rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth);
+                pcSubBestPartCU[uiPartUnitIdx]->copyToPic(uhNextDepth);
+                rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth);
             }
         }
 
