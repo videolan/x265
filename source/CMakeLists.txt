@@ -128,6 +128,7 @@ if(ENABLE_CLI)
         x265enc.cpp x265enc.h)
     target_link_libraries(x265-cli x265 InputFiles OutputFiles ${PLATFORM_LIBS})
 
+    set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
     add_executable(x265s x265.cpp x265opts.h ${EXTRAS}
         compat/msvc/getopt.c compat/msvc/getopt.h)
     target_link_libraries(x265s x265 InputFiles OutputFiles ${PLATFORM_LIBS})
