@@ -853,7 +853,6 @@ void predIntraPlanar16(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t d
     int16_t leftColumn[16];
 
     // Get left and above reference column and row
-    Vec16uc im0 = (Vec16uc)load_partial(const_int(16), &pSrc[-srcStride]);      // topRow
     Vec8s v_topRow_lo, v_topRow_hi;
 
     v_topRow_lo.load(&pSrc[-srcStride]);
