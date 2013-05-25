@@ -228,10 +228,10 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         default:
             if (long_options_index < 0 && c > 0)
             {
-                for (int i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
+                for (size_t i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
                     if (long_options[i].val == c)
                     {
-                        long_options_index = i;
+                        long_options_index = (int)i;
                         break;
                     }
             }
