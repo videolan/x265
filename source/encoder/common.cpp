@@ -39,14 +39,14 @@ extern "C"
 void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->searchMethod = X265_ORIG_SEARCH;
+    param->searchMethod = X265_STAR_SEARCH;
     param->iSearchRange = 96;
     param->bipredSearchRange = 4;
     param->iIntraPeriod = -1; // default to open GOP
     param->internalBitDepth = 8;
     param->uiMaxCUSize = 64;
     param->uiMaxCUDepth = 4;
-    param->uiQuadtreeTULog2MaxSize = 6;
+    param->uiQuadtreeTULog2MaxSize = 5;
     param->uiQuadtreeTULog2MinSize = 2;
     param->uiQuadtreeTUMaxDepthInter = 2;
     param->uiQuadtreeTUMaxDepthIntra = 1;
