@@ -293,7 +293,8 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 
     cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-    printf("Input File                   : %s (%d total frames)\n", inputfn, numRemainingFrames);
+    printf("Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
+        cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, numRemainingFrames);
 
     if (reconfn)
     {
@@ -320,11 +321,6 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         fprintf(stderr, "x265: failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
-
-    printf("Frame index                  : %u - %d (%d frames)\n", 
-        cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, cliopt->framesToBeEncoded);
-    printf("Bitstream File               : %s\n", bitstreamfn);
-    //printf("GOP size                     : %d\n", m_iGOPSize);
 
     return false;
 }
