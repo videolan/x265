@@ -716,11 +716,11 @@ Void TEncTop::xInitRPS()
             }
 
 #if WRITE_BACK
-            // the folowing code overwrite the deltaPOC and Used by current values read from the config file with the ones
+            // the following code overwrite the deltaPOC and Used by current values read from the config file with the ones
             // computed from the RefIdc.  A warning is printed if they are not identical.
             numNeg = 0;
             numPos = 0;
-            TComReferencePictureSet      RPSTemp; // temporary variable
+            TComReferencePictureSet RPSTemp; // temporary variable
 
             for (Int j = 0; j < ge.m_numRefIdc; j++)
             {

@@ -39,22 +39,22 @@ extern "C"
 void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
-    param->searchMethod = X265_ORIG_SEARCH;
-    param->iSearchRange = 96;
+    param->searchMethod = X265_STAR_SEARCH;
+    param->iSearchRange = 64;
     param->bipredSearchRange = 4;
-    param->iIntraPeriod = -1; // default to open GOP
+    param->iIntraPeriod = 16;
     param->internalBitDepth = 8;
     param->uiMaxCUSize = 64;
     param->uiMaxCUDepth = 4;
-    param->uiQuadtreeTULog2MaxSize = 6;
+    param->uiQuadtreeTULog2MaxSize = 5;
     param->uiQuadtreeTULog2MinSize = 2;
-    param->uiQuadtreeTUMaxDepthInter = 2;
-    param->uiQuadtreeTUMaxDepthIntra = 1;
+    param->uiQuadtreeTUMaxDepthInter = 3;
+    param->uiQuadtreeTUMaxDepthIntra = 3;
     param->enableAMP = 1;
     param->enableRectInter = 1;
-    param->iQP = 30;
+    param->iQP = 32;
     param->iQPAdaptationRange = 6;
-    param->bUseSAO = 1;
+    param->bUseSAO = 0;
     param->maxNumOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
     param->log2ParallelMergeLevel = 2;
@@ -65,6 +65,8 @@ void x265_param_default( x265_param_t *param )
     param->useStrongIntraSmoothing = 1;
     param->useRDOQ = 1;
     param->useRDOQTS = 1;
+    param->useTransformSkip = 1;
+    param->useTransformSkipFast = 1;
 }
 
 extern "C"

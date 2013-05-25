@@ -38,7 +38,8 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
-    GOPEntry      m_GOPList[MAX_GOP];
+
+    bool InitializeGOP(x265_param_t *param);
 
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
