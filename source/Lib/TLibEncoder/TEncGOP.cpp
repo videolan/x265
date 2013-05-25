@@ -1883,7 +1883,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
            pcSlice->getSliceQp(),
            uibits);
 
-    printf(" [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", dYPSNR, dUPSNR, dVPSNR);
+    printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", dYPSNR, dUPSNR, dVPSNR);
     //printf(" [ET %5.0f ]", dEncTime);
 
     if (pcSlice->isIntra())
