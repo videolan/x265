@@ -46,13 +46,13 @@ void Encoder::configure(x265_param_t *param)
     setSourceHeight(param->iSourceHeight);
     setIntraPeriod(param->iIntraPeriod);
     setQP(param->iQP);
-    setUseAMP(param->enableAMP);
-    setUseRectInter(param->enableRectInter);
 
     //====== Motion search ========
     setSearchMethod(param->searchMethod);
     setSearchRange(param->iSearchRange);
     setBipredSearchRange(param->bipredSearchRange);
+    setUseAMP(param->enableAMP);
+    setUseRectInter(param->enableRectInter);
 
     //====== Quality control ========
     setMaxCuDQPDepth(param->iMaxCuDQPDepth);
@@ -219,11 +219,6 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    bool verifiedGOP = false;
-    bool errorGOP = false;
-    int checkGOP = 1;
-    int numRefs = 1;
-    
     /* STATIC GOP structure borrowed from our config file */
     int offsets[] = { 3, 2, 3, 1 };
     for (int i = 0; i < 4; i++)
@@ -237,6 +232,11 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[i].m_usedByCurrPic[0] = 1;
     }
     m_GOPList[3].m_QPFactor = 0.578;
+
+    bool verifiedGOP = false;
+    bool errorGOP = false;
+    int checkGOP = 1;
+    int numRefs = 1;
 
     int refList[MAX_NUM_REF_PICS + 1];
     refList[0] = 0;
