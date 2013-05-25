@@ -252,7 +252,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
     x265::SetupPrimitives(cpuid);
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
 
-    if (optind < argc - 1)
+    if (optind < argc)
         inputfn = argv[optind];
     if (inputfn == NULL)
     {
