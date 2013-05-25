@@ -120,7 +120,8 @@ struct CLIOptions
 
     void writeAnnexB(const x265_nal_t* nal, int nalcount)
     {
-        // Each access unit is a list of one or more NAL units
+        PPAStartCpuEventFunc(bitstream_write);
+
         for (int i = 0; i < nalcount; i++, nal++)
         {
             uint32_t size = 0; /* size of annexB unit in bytes */
@@ -148,6 +149,8 @@ struct CLIOptions
             size += nal->i_payload;
             rateStatsAccum((NalUnitType) nal->i_type, size);
         }
+
+        PPAStopCpuEventFunc(bitstream_write);
     }
 };
 
@@ -372,16 +375,8 @@ int main(int argc, char **argv)
         int iNumEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_out);
         if (iNumEncoded && pic_out)
             cliopt.recon->writePicture(pic_recon);
-
-        /*
         if (nal)
-        {
-            PPAStartCpuEventFunc(bitstream_write);
-            const AccessUnit &au = *(iterBitstream++);
-            const vector<UInt>& stats = writeAnnexB(cliopt.bitstreamFile, au);
-            cliopt.rateStatsAccum(au, stats);
-            PPAStopCpuEventFunc(bitstream_write);
-        } */
+            cliopt.writeAnnexB(p_nal, nal);
     }
 
     /* Flush the encoder */
