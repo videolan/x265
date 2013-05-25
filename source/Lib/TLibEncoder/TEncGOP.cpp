@@ -690,7 +690,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         pcSlice = pcPic->getSlice(0);
 
-        PPAStartCpuEventFunc(LoopFilters)
+        PPAStartCpuEventFunc(LoopFilters);
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
         if (m_pcCfg->getSaoLcuBasedOptimization() && m_pcCfg->getSaoLcuBoundary())
         {
@@ -720,7 +720,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         {
             m_pcSAO->createPicSaoInfo(pcPic);
         }
-        PPAStopCpuEventFunc(LoopFilters)
+        PPAStopCpuEventFunc(LoopFilters);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////// File writing
         // Set entropy coder
