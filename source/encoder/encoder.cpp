@@ -582,7 +582,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
      * reconstructed images ordered from the middle to the end */
     TComPicYuv *pcPicYuvRec = encoder->m_cListPicYuvRec.popFront();
     encoder->m_cListPicYuvRec.pushBack(pcPicYuvRec);
-    int iNumEncoded = encoder->encode(!!pic_in, pic_in, encoder->m_cListPicYuvRec, outputAccessUnits);
+    int iNumEncoded = encoder->encode(!pic_in, pic_in, encoder->m_cListPicYuvRec, outputAccessUnits);
     if (iNumEncoded > 0)
     {
         if (pi_nal)
