@@ -739,8 +739,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             
             // do normal intra modes
             // speedup for inter frames
-            if (rpcBestCU->getSlice()->getSliceType() == I_SLICE ||
-                rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
+            if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
                 rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
                 rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
             {
