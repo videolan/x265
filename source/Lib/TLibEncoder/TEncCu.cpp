@@ -612,16 +612,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
                 }
                 xCheckRDCostInter(pcSubBestPartCU[uiPartUnitIdx], pcSubTempPartCU[uiPartUnitIdx], SIZE_2Nx2N);
-                _NxNCost += pcSubTempPartCU[uiPartUnitIdx]->getTotalCost();
-                pcSubTempPartCU[uiPartUnitIdx]->initEstData(uhNextDepth, iQP);
-                
+                _NxNCost += pcSubTempPartCU[uiPartUnitIdx]->getTotalCost();                
             }
         }
     }
 
     if (rpcBestCU->getSlice()->getSliceType() != I_SLICE && !bSliceEnd && bInsidePicture) 
     {
-        if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost)              // checking if BestCU is of size_2NX2N
+        if((rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N) && (rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT*_NxNCost))              // checking if BestCU is of size_2NX2N
         {
             rpcBestCU->copyToPic(uiDepth);                                            // Copy Best data to Picture for next partition prediction.
             xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
@@ -979,14 +977,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
                 rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
             {
-                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N, _2Nx2NCost);
+                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 rpcTempCU->initEstData(uiDepth, iQP);
 
                 if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
                 {
                     if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                     {
-                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN, _NxNCost);
+                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN);
                         rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
@@ -1510,7 +1508,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 
     xCheckDQP(rpcTempCU);
-#ifndef EARLY_PARTITION_DECISION
+#if !EARLY_PARTITION_DECISION
     xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
 #endif
 }
