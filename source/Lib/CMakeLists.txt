@@ -18,7 +18,5 @@ endif(MSVC)
 file(GLOB LIBCOMMON  TLibCommon/*.h TLibCommon/*.cpp)
 file(GLOB LIBENCODER TLibEncoder/*.h TLibEncoder/*.cpp)
 
-source_group(TLibCommon  FILES ${LIBCOMMON})
-source_group(TLibEncoder FILES ${LIBENCODER})
-
-add_library(HM ${LIBCOMMON} ${LIBENCODER})
+add_library(TLibCommon ${LIBCOMMON})
+add_library(TLibEncoder ${LIBENCODER})

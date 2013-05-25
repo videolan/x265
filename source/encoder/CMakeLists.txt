@@ -7,4 +7,4 @@ add_library(x265 ../../COPYING ../x265.h
     bitcost.cpp bitcost.h mv.h
     motion.cpp motion.h
     encoder.cpp encoder.h)
-target_link_libraries(x265 common HM)
+target_link_libraries(x265 common TLibEncoder TLibCommon)
