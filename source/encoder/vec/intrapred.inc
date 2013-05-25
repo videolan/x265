@@ -1068,7 +1068,6 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
 #if HIGH_BIT_DEPTH
 void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
-    int k;
     int blkSize        = width;
 
     // Map the mode index to main prediction direction and angle
@@ -1100,7 +1099,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int d
 
         // Extend the Main reference to the left.
         int invAngleSum    = 128;     // rounding for (shift by 8)
-        for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+        for (int k = -1; k > blkSize * intraPredAngle >> 5; k--)
         {
             invAngleSum += invAngle;
             refMain[k] = refSide[invAngleSum >> 8];
@@ -1157,8 +1156,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int d
             store_partial(const_int(8), pDst + (2 * dstStride), v_main);
             store_partial(const_int(8), pDst + (3 * dstStride), v_main);
 
-            int k;
-            for (k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++)
             {
                 pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
             }
