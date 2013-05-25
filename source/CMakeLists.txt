@@ -90,6 +90,9 @@ endif(ENABLE_TOOLS)
 # Main CLI application
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
+    add_subdirectory(input)
+    add_subdirectory(output)
+
     # x265cfg.cpp and x265enc.cpp are copied from HM sources (still have the BSD headers) and have many
     # compiler warnings we do not want to waste time fixing.  x265main.cpp includes many HM headers, so
     # they leak in there as well.
@@ -106,9 +109,6 @@ if(ENABLE_CLI)
         set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
     endif(GCC)
     set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
-
-    add_subdirectory(input)
-    add_subdirectory(output)
 
     file(GLOB APPCOMMON  Lib/TAppCommon/*.h Lib/TAppCommon/*.cpp)
 

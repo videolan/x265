@@ -51,7 +51,7 @@ int YUVInput::guessFrameCount()
     ifs.seekg (cur, ios::beg);
     int pixelbytes = depth > 8 ? 2 : 1;
 
-    return (size - cur) / (width * height * pixelbytes * 3 / 2);
+    return (int)(size - cur) / (width * height * pixelbytes * 3 / 2);
 }
 
 void YUVInput::skipFrames(int numFrames)
