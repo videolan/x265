@@ -41,6 +41,7 @@
 
 #include <getopt.h>
 #include <assert.h>
+#include <string.h>
 #include <list>
 #include <ostream>
 #include <fstream>
