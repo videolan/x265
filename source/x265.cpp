@@ -222,7 +222,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
             print_version();
             exit(0);
         default:
-            if (c > 0)
+            if (long_options_index < 0 && c > 0)
             {
                 for (int i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
                     if (long_options[i].val == c)
@@ -232,13 +232,13 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
                     }
             }
             if (long_options_index < 0)
-                ;
+                printf("x265: short option '%x' unrecognized\n", c);
 #define STROPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
-            (var) = optarg;
+                (var) = optarg;
 #define OPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
-            (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+                (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
