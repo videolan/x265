@@ -46,49 +46,6 @@
 //! \ingroup TLibCommon
 //! \{
 
-// ====================================================================================================================
-// Version information
-// ====================================================================================================================
-
-#define NV_VERSION        "10.1rc"                 ///< Current software version
-
-// ====================================================================================================================
-// Platform information
-// ====================================================================================================================
-
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#define NVM_COMPILEDBY  "[GCC %d.%d.%d]", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__
-#ifdef __IA64__
-#define NVM_ONARCH    "[on 64-bit] "
-#else
-#define NVM_ONARCH    "[on 32-bit] "
-#endif
-#endif
-
-#ifdef __INTEL_COMPILER
-#define NVM_COMPILEDBY  "[ICC %d]", __INTEL_COMPILER
-#elif  _MSC_VER
-#define NVM_COMPILEDBY  "[VS %d]", _MSC_VER
-#endif
-
-#ifndef NVM_COMPILEDBY
-#define NVM_COMPILEDBY "[Unk-CXX]"
-#endif
-
-#ifdef _WIN32
-#define NVM_ONOS        "[Windows]"
-#elif  __linux
-#define NVM_ONOS        "[Linux]"
-#elif  __CYGWIN__
-#define NVM_ONOS        "[Cygwin]"
-#elif __APPLE__
-#define NVM_ONOS        "[Mac OS X]"
-#else
-#define NVM_ONOS "[Unk-OS]"
-#endif
-
-#define NVM_BITS          "[%d bit] ", (sizeof(void*) == 8 ? 64 : 32) ///< used for checking 64-bit O/S
-
 #ifndef NULL
 #define NULL              0
 #endif

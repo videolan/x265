@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "x265enc.h"
+#include "common.h"
 #include "PPA/ppa.h"
 
 #if HAVE_VLD
