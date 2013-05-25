@@ -680,32 +680,28 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         bTrySplit    = true;
         
         rpcTempCU->initEstData(uiDepth, iQP);
-
-        // do inter modes, SKIP and 2Nx2N
-        if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
+    
+        // 2Nx2N
+        if (m_pcEncCfg->getUseEarlySkipDetection())
         {
-            // 2Nx2N
-            if (m_pcEncCfg->getUseEarlySkipDetection())
-            {
-                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-                rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
-            }
-            // SKIP
-            xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
-            rpcTempCU->initEstData(uiDepth, iQP);
+            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
+            rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
+        }
+        // SKIP
+        xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
+        rpcTempCU->initEstData(uiDepth, iQP);
 
-            if (!m_pcEncCfg->getUseEarlySkipDetection())
+        if (!m_pcEncCfg->getUseEarlySkipDetection())
+        {
+            // 2Nx2N, NxN
+            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
+            rpcTempCU->initEstData(uiDepth, iQP);
+            if (m_pcEncCfg->getUseCbfFastMode())
             {
-                // 2Nx2N, NxN
-                xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-                rpcTempCU->initEstData(uiDepth, iQP);
-                if (m_pcEncCfg->getUseCbfFastMode())
-                {
-                    doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                }
+                doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
             }
         }
-
+    
         bTrySplitDQP = bTrySplit;
 
         if (uiDepth <= m_addSADDepth)
@@ -717,34 +713,30 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         if (!earlyDetectionSkipMode)
         {
             rpcTempCU->initEstData(uiDepth, iQP);
-
-            // do inter modes, NxN, 2NxN, and Nx2N
-            if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
+                        
+            if (m_pcEncCfg->getUseRectInter())
             {
-                if (m_pcEncCfg->getUseRectInter())
+                // 2NxN, Nx2N
+                if (doNotBlockPu)
                 {
-                    // 2NxN, Nx2N
-                    if (doNotBlockPu)
+                    xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
+                    rpcTempCU->initEstData(uiDepth, iQP);
+                    if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
                     {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_Nx2N);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_Nx2N)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
+                        doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                     }
-                    if (doNotBlockPu)
+                }
+                if (doNotBlockPu)
+                {
+                    xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
+                    rpcTempCU->initEstData(uiDepth, iQP);
+                    if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
                     {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2NxN);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                        if (m_pcEncCfg->getUseCbfFastMode() && rpcBestCU->getPartitionSize(0) == SIZE_2NxN)
-                        {
-                            doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-                        }
+                        doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                     }
-                }                
-            }
-
+                }
+            }                
+            
             // do normal intra modes
             // speedup for inter frames
             if (rpcBestCU->getSlice()->getSliceType() == I_SLICE ||
