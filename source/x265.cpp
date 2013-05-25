@@ -176,6 +176,7 @@ static void do_help()
     print_version();
     printf("Options:\n");
 
+#define HELP(message) printf("\n%s\n", message);
 #define OPT(longname, var, argreq, flag, helptext)\
     if (flag) printf("-%c/", flag); else printf("   ");\
     printf("--%-20s\t%s\n", longname, helptext);
@@ -183,6 +184,8 @@ static void do_help()
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
+#undef HELP
+#define HELP(message)
 
     exit(0);
 }
