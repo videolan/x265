@@ -44,6 +44,7 @@
 #include "CommonDef.h"
 #include "TComRom.h"
 #include "TComList.h"
+#include "x265.h"
 
 //! \ingroup TLibCommon
 //! \{

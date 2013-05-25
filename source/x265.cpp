@@ -87,9 +87,9 @@ struct CLIOptions
         recon = NULL;
     }
 
-    void rateStatsAccum(const NALUnitEBSP &au, uint32_t annexBsize)
+    void rateStatsAccum(NalUnitType nalUnitType, uint32_t annexBsize)
     {
-        switch (au.m_nalUnitType)
+        switch (nalUnitType)
         {
         case NAL_UNIT_CODED_SLICE_TRAIL_R:
         case NAL_UNIT_CODED_SLICE_TRAIL_N:
@@ -119,16 +119,15 @@ struct CLIOptions
         totalBytes += annexBsize;
     }
 
-    void writeAnnexB(const AccessUnit& au)
+    void writeAnnexB(const x265_nal_t* nal, int nalcount)
     {
         // Each access unit is a list of one or more NAL units
-        for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+        for (int i = 0; i < nalcount; i++, nal++)
         {
-            const NALUnitEBSP& nalu = **it;
             uint32_t size = 0; /* size of annexB unit in bytes */
 
             static const char start_code_prefix[] = { 0, 0, 0, 1 };
-            if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
+            if (i == 0 || nal->i_type == NAL_UNIT_SPS || nal->i_type == NAL_UNIT_PPS)
             {
                 /* From AVC, When any of the following conditions are fulfilled, the
                  * zero_byte syntax element shall be present:
@@ -146,10 +145,9 @@ struct CLIOptions
                 bitstreamFile.write(start_code_prefix + 1, 3);
                 size += 3;
             }
-            bitstreamFile << nalu.m_nalUnitData.str();
-            size += uint32_t(nalu.m_nalUnitData.str().size());
-
-            rateStatsAccum(nalu, size);
+            bitstreamFile.write((const char*) nal->p_payload, nal->i_payload);
+            size += nal->i_payload;
+            rateStatsAccum((NalUnitType) nal->i_type, size);
         }
     }
 };
