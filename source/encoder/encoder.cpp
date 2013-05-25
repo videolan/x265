@@ -622,3 +622,9 @@ void x265_encoder_close(x265_t *encoder)
     encoder->destroy();
     delete encoder;
 }
+
+extern "C"
+void x265_cleanup(void)
+{
+    x265::BitCost::destroy();
+}

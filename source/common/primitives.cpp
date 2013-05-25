@@ -148,12 +148,6 @@ void x265_init_primitives(int cpuid)
     x265::SetupPrimitives(cpuid);
 }
 
-extern "C"
-void x265_cleanup(void)
-{
-    x265::BitCost::destroy();
-}
-
 #if !defined(ENABLE_ASM_PRIMITIVES)
 extern "C"
 void x264_cpu_emms(void)
