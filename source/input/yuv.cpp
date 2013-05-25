@@ -45,9 +45,9 @@ YUVInput::~YUVInput()
 
 int YUVInput::guessFrameCount()
 {
-    long cur = ifs.tellg();
+    ifstream::pos_type cur = ifs.tellg();
     ifs.seekg (0, ios::end);
-    long size = ifs.tellg();
+    ifstream::pos_type size = ifs.tellg();
     ifs.seekg (cur, ios::beg);
     int pixelbytes = depth > 8 ? 2 : 1;
 
