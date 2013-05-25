@@ -506,16 +506,6 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             // do inter modes, NxN, 2NxN, and Nx2N
             if (rpcBestCU->getSlice()->getSliceType() != I_SLICE)
             {
-                // 2Nx2N, NxN
-                if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
-                {
-                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
-                    {
-                        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                    }
-                }
-            
                 if (m_pcEncCfg->getUseRectInter())
                 {
                     // 2NxN, Nx2N
