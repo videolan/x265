@@ -118,13 +118,14 @@ struct CLIOptions
         totalBytes += annexBsize;
     }
 
-    void writeAnnexB(const x265_nal_t* nal, int nalcount)
+    void writeNALs(const x265_nal_t* nal, int nalcount)
     {
         PPAStartCpuEventFunc(bitstream_write);
-        for (int i = 0; i < nalcount; i++, nal++)
+        for (int i = 0; i < nalcount; i++)
         {
             bitstreamFile.write((const char*) nal->p_payload, nal->i_payload);
             rateStatsAccum((NalUnitType) nal->i_type, nal->i_payload);
+            nal++;
         }
         PPAStopCpuEventFunc(bitstream_write);
     }
@@ -352,7 +353,7 @@ int main(int argc, char **argv)
         if (iNumEncoded && pic_out)
             cliopt.recon->writePicture(pic_recon);
         if (nal)
-            cliopt.writeAnnexB(p_nal, nal);
+            cliopt.writeNALs(p_nal, nal);
     }
 
     /* Flush the encoder */
@@ -361,7 +362,7 @@ int main(int argc, char **argv)
         if (pic_out)
             cliopt.recon->writePicture(pic_recon);
         if (nal)
-            cliopt.writeAnnexB(p_nal, nal);
+            cliopt.writeNALs(p_nal, nal);
     }
 
     x265_encoder_close(encoder);

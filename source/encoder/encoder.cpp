@@ -577,6 +577,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
 {
     /* A boat-load of ugly hacks here until we have a proper lookahead */
     list<AccessUnit> outputAccessUnits;
+    if (pi_nal) *pi_nal = 0;
 
     /* TEncTop::encode uses this strange mechanism of pushing frames to the back of the list and then returning
      * reconstructed images ordered from the middle to the end */
@@ -585,8 +586,6 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     int iNumEncoded = encoder->encode(!pic_in, pic_in, encoder->m_cListPicYuvRec, outputAccessUnits);
     if (iNumEncoded > 0)
     {
-        if (pi_nal)
-            *pi_nal = (int)outputAccessUnits.size();
         if (pp_nal)
         {
             /* Copy NAL output packets into x265_nal_t structures */
@@ -629,11 +628,21 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                     x265_nal_t nal;
                     nal.i_type = nalu.m_nalUnitType;
                     nal.i_payload = size;
-                    nal.p_payload = (uint8_t*) &encoder->m_packetData.str().back() - (size-1);
                     encoder->m_nals.push_back(nal);
                 }
             }
+            
+            /* Setup payload pointers, now that we're done adding content to m_packetData */
+            size_t offset = 0;
+            for (size_t i = 0; i < encoder->m_nals.size(); i++)
+            {
+                x265_nal_t& nal = encoder->m_nals[i];
+                nal.p_payload = (uint8_t*) &encoder->m_packetData.str()[0] + offset;
+                offset += nal.i_payload;
+            }
+
             *pp_nal = &encoder->m_nals[0];
+            if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
         }
 
         /* push these recon output frame pointers onto m_cListRecQueue */
@@ -643,8 +652,6 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         for (int i = 0; i < iNumEncoded; i++)
             encoder->m_cListRecQueue.pushBack(*(iterPicYuvRec++));
     }
-    else if (pi_nal)
-        *pi_nal = 0;
 
     if (pic_out && encoder->m_cListRecQueue.size())
     {
