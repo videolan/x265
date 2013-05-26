@@ -1781,8 +1781,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
     iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
 
-    Int   iSize   = iWidth * iHeight;
-
+    Int iSize = iWidth * iHeight;
+    // TODO: Add SSD intrinsic
     for (y = 0; y < iHeight; y++)
     {
         for (x = 0; x < iWidth; x++)

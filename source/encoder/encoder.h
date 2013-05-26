@@ -50,7 +50,7 @@ public:
     std::ostringstream      m_packetData;
 
     Encoder()
-        : m_profile(Profile::MAIN)
+        : m_profile(Profile::NONE)
         , m_levelTier(Level::MAIN)
         , m_level(Level::NONE)
         , m_iGOPSize(4)

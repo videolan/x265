@@ -126,7 +126,7 @@ void Encoder::configure(x265_param_t *param)
     setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
-    setProgressiveSourceFlag(1);
+    setProgressiveSourceFlag(0);
     setInterlacedSourceFlag(0);
     setNonPackedConstraintFlag(0);
     setFrameOnlyConstraintFlag(0);
