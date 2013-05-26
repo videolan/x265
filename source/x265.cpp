@@ -56,11 +56,12 @@ struct CLIOptions
     fstream bitstreamFile;
 
     uint32_t inputBitDepth;             ///< bit-depth of input file
-    uint32_t outputBitDepth;            ///< bit-depth of output file
-    uint32_t frameSkip;                 ///< number of skipped frames from the beginning
-    uint32_t framesToBeEncoded;         ///< number of encoded frames
-    uint32_t essentialBytes;
-    uint32_t totalBytes;
+    uint32_t outputBitDepth;            ///< bit-depth of output reconstructed images file
+    uint32_t frameSkip;                 ///< number of frames to skip from the beginning
+    uint32_t framesToBeEncoded;         ///< number of frames to encode
+
+    uint32_t essentialBytes;            ///< total essential NAL bytes written to bitstream
+    uint32_t totalBytes;                ///< total bytes written to bitstream
 
     CLIOptions()
     {
