@@ -121,35 +121,11 @@ struct CLIOptions
     void writeAnnexB(const x265_nal_t* nal, int nalcount)
     {
         PPAStartCpuEventFunc(bitstream_write);
-
         for (int i = 0; i < nalcount; i++, nal++)
         {
-            uint32_t size = 0; /* size of annexB unit in bytes */
-
-            static const char start_code_prefix[] = { 0, 0, 0, 1 };
-            if (i == 0 || nal->i_type == NAL_UNIT_SPS || nal->i_type == NAL_UNIT_PPS)
-            {
-                /* From AVC, When any of the following conditions are fulfilled, the
-                 * zero_byte syntax element shall be present:
-                 *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
-                 *    parameter set) or 8 (picture parameter set),
-                 *  - the byte stream NAL unit syntax structure contains the first NAL
-                 *    unit of an access unit in decoding order, as specified by subclause
-                 *    7.4.1.2.3.
-                 */
-                bitstreamFile.write(start_code_prefix, 4);
-                size += 4;
-            }
-            else
-            {
-                bitstreamFile.write(start_code_prefix + 1, 3);
-                size += 3;
-            }
             bitstreamFile.write((const char*) nal->p_payload, nal->i_payload);
-            size += nal->i_payload;
-            rateStatsAccum((NalUnitType) nal->i_type, size);
+            rateStatsAccum((NalUnitType) nal->i_type, nal->i_payload);
         }
-
         PPAStopCpuEventFunc(bitstream_write);
     }
 };
@@ -384,16 +360,8 @@ int main(int argc, char **argv)
     {
         if (pic_out)
             cliopt.recon->writePicture(pic_recon);
-
-        /*
         if (nal)
-        {
-            PPAStartCpuEventFunc(bitstream_write);
-            const AccessUnit &au = *(iterBitstream++);
-            const vector<UInt>& stats = writeAnnexB(cliopt.bitstreamFile, au);
-            cliopt.rateStatsAccum(au, stats);
-            PPAStopCpuEventFunc(bitstream_write);
-        } */
+            cliopt.writeAnnexB(p_nal, nal);
     }
 
     x265_encoder_close(encoder);

@@ -587,7 +587,54 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     {
         if (pi_nal)
             *pi_nal = (int)outputAccessUnits.size();
-        //if (pp_nal) *pp_nal = reinterpret_cast<x265_nal_t*>(outputAccessUnits.begin());
+        if (pp_nal)
+        {
+            /* Copy NAL output packets into x265_nal_t structures */
+            encoder->m_nals.clear();
+            encoder->m_nals.reserve(*pi_nal);
+            encoder->m_packetData.clear();
+
+            list<AccessUnit>::const_iterator iterBitstream = outputAccessUnits.begin();
+            for (int i = 0; i < iNumEncoded; i++)
+            {
+                const AccessUnit &au = *(iterBitstream++);
+
+                for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+                {
+                    const NALUnitEBSP& nalu = **it;
+                    UInt size = 0; /* size of annexB unit in bytes */
+
+                    static const Char start_code_prefix[] = { 0, 0, 0, 1 };
+                    if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
+                    {
+                        /* From AVC, When any of the following conditions are fulfilled, the
+                         * zero_byte syntax element shall be present:
+                         *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
+                         *    parameter set) or 8 (picture parameter set),
+                         *  - the byte stream NAL unit syntax structure contains the first NAL
+                         *    unit of an access unit in decoding order, as specified by subclause
+                         *    7.4.1.2.3.
+                         */
+                        encoder->m_packetData.write(start_code_prefix, 4);
+                        size += 4;
+                    }
+                    else
+                    {
+                        encoder->m_packetData.write(start_code_prefix + 1, 3);
+                        size += 3;
+                    }
+                    encoder->m_packetData << nalu.m_nalUnitData;
+                    size += UInt(nalu.m_nalUnitData.str().size());
+
+                    x265_nal_t nal;
+                    nal.i_type = nalu.m_nalUnitType;
+                    nal.i_payload = size;
+                    nal.p_payload = (uint8_t*) &encoder->m_packetData.str().back() - (size-1);
+                    encoder->m_nals.push_back(nal);
+                }
+            }
+            *pp_nal = &encoder->m_nals[0];
+        }
 
         /* push these recon output frame pointers onto m_cListRecQueue */
         TComList<TComPicYuv *>::iterator iterPicYuvRec = encoder->m_cListPicYuvRec.end();
