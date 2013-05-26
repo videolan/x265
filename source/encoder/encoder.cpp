@@ -102,26 +102,27 @@ void Encoder::configure(x265_param_t *param)
     setLevel(m_levelTier, m_level);
 
     //====== HM Settings not exposed for configuration ======
+    m_iGOPSize = X265_MIN(param->iIntraPeriod, m_iGOPSize);
     InitializeGOP(param);
     setGOPSize(m_iGOPSize);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        setNumReorderPics(0, i);
-        setMaxDecPicBuffering(2, i);
+        setNumReorderPics(m_numReorderPics[i], i);
+        setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
         setLambdaModifier(i, 1.0);
     }
 
     TComVPS vps;
-    vps.setMaxTLayers(1);
+    vps.setMaxTLayers(m_maxTempLayer);
     vps.setTemporalNestingFlag(true);
     vps.setMaxLayers(1);
     for (Int i = 0; i < MAX_TLAYER; i++)
     {
-        vps.setNumReorderPics(0, i);
-        vps.setMaxDecPicBuffering(2, i);
+        vps.setNumReorderPics(m_numReorderPics[i], i);
+        vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }
     setVPS(&vps);
-    setMaxTempLayer(1);
+    setMaxTempLayer(m_maxTempLayer);
 
     setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
@@ -219,27 +220,39 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    /* STATIC GOP structure borrowed from our config file */
-    int offsets[] = { 3, 2, 3, 1 };
-    for (int i = 0; i < 4; i++)
+    if (param->iIntraPeriod == 1)
     {
-        m_GOPList[i].m_POC = i+1;
-        m_GOPList[i].m_QPFactor = 0.4624;
-        m_GOPList[i].m_QPOffset = offsets[i];
-        m_GOPList[i].m_numRefPicsActive = 1;
-        m_GOPList[i].m_numRefPics = 1;
-        m_GOPList[i].m_referencePics[0] = -1;
-        m_GOPList[i].m_usedByCurrPic[0] = 1;
-        if (i > 0)
-        {
-            m_GOPList[i].m_interRPSPrediction = 1;
-            m_GOPList[i].m_deltaRPS = -1;
-            m_GOPList[i].m_numRefIdc = 2;
-            m_GOPList[i].m_refIdc[0] = 0;
-            m_GOPList[i].m_refIdc[1] = 1;
-        }
+        m_GOPList[0] = GOPEntry();
+        m_GOPList[0].m_QPFactor = 1;
+        m_GOPList[0].m_betaOffsetDiv2 = 0;
+        m_GOPList[0].m_tcOffsetDiv2 = 0;
+        m_GOPList[0].m_POC = 1;
+        m_GOPList[0].m_numRefPicsActive = 4;
     }
-    m_GOPList[3].m_QPFactor = 0.578;
+    else
+    {
+        /* STATIC GOP structure borrowed from our config file */
+        int offsets[] = { 3, 2, 3, 1 };
+        for (int i = 0; i < 4; i++)
+        {
+            m_GOPList[i].m_POC = i+1;
+            m_GOPList[i].m_QPFactor = 0.4624;
+            m_GOPList[i].m_QPOffset = offsets[i];
+            m_GOPList[i].m_numRefPicsActive = 1;
+            m_GOPList[i].m_numRefPics = 1;
+            m_GOPList[i].m_referencePics[0] = -1;
+            m_GOPList[i].m_usedByCurrPic[0] = 1;
+            if (i > 0)
+            {
+                m_GOPList[i].m_interRPSPrediction = 1;
+                m_GOPList[i].m_deltaRPS = -1;
+                m_GOPList[i].m_numRefIdc = 2;
+                m_GOPList[i].m_refIdc[0] = 0;
+                m_GOPList[i].m_refIdc[1] = 1;
+            }
+        }
+        m_GOPList[3].m_QPFactor = 0.578;
+    }
 
     bool verifiedGOP = false;
     bool errorGOP = false;

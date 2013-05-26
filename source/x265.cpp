@@ -168,7 +168,7 @@ static void do_help()
     exit(0);
 }
 
-static const char short_options[] = "h:o:f:r:s:d:q:w:V:";
+static const char short_options[] = "h:o:f:r:i:s:d:q:w:V:";
 static struct option long_options[] =
 {
 #define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
