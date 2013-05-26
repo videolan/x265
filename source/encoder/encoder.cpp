@@ -230,6 +230,14 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[i].m_numRefPics = 1;
         m_GOPList[i].m_referencePics[0] = -1;
         m_GOPList[i].m_usedByCurrPic[0] = 1;
+        if (i > 0)
+        {
+            m_GOPList[i].m_interRPSPrediction = 1;
+            m_GOPList[i].m_deltaRPS = -1;
+            m_GOPList[i].m_numRefIdc = 2;
+            m_GOPList[i].m_refIdc[0] = 0;
+            m_GOPList[i].m_refIdc[1] = 1;
+        }
     }
     m_GOPList[3].m_QPFactor = 0.578;
 
