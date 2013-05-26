@@ -1637,6 +1637,40 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 
 }
 
+Void TEncCu::xCalcRDCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG)
+{
+    UChar uhDepth = rpcTempCU->getDepth(0);
+
+    rpcTempCU->setDepthSubParts(uhDepth, 0);
+
+    rpcTempCU->setSkipFlagSubParts(false, 0, uhDepth);
+
+    rpcTempCU->setPartSizeSubParts(ePartSize,  0, uhDepth);
+    rpcTempCU->setPredModeSubParts(MODE_INTER, 0, uhDepth);
+    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(),      0, uhDepth);
+
+    rpcTempCU->setMergeAMP(true);
+    m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], false, bUseMRG);
+
+    if (!rpcTempCU->getMergeAMP())
+    {
+        return;
+    }
+
+    if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
+    {
+        UInt SAD = m_pcRdCost->getSADPart(g_bitDepthY, m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride(),
+                                          m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+                                          rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+        m_temporalSAD = (Int)SAD;
+    }
+
+    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
+    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+    xCheckDQP(rpcTempCU);
+}
+
 Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize)
 {
     UInt uiDepth = rpcTempCU->getDepth(0);
