@@ -143,6 +143,7 @@ protected:
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
     Void  xCalcRDCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
+    Void  xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckDQP(TComDataCU* pcCU);
 
     Void  xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);

@@ -669,17 +669,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     //Data for splitting
-    UChar       uhNextDepth         = uiDepth + 1;
-    TComDataCU* pcSubBestPartCU[4], *pcSubTempPartCU[4];
-
-    int numPartitions = 1 << ((m_uhTotalDepth - uiDepth - 1) << 1);
-    if(uiDepth == 0)
-        m_NxNCU[PartitionIndex][uiDepth]->initCU(rpcParentCU->getPic(), rpcParentCU->getAddr());
-    else
-        m_NxNCU[PartitionIndex][uiDepth]->initSubCU(rpcParentCU, PartitionIndex, uiDepth, iQP);
-
-
-    m_NxNCU[PartitionIndex][uiDepth]->initEstData(uiDepth, iQP);
+    
     //We need to split; so dont try these modes
     if (!bSliceEnd && bInsidePicture)
     {
@@ -701,8 +691,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         if (!m_pcEncCfg->getUseEarlySkipDetection())
         {
             // 2Nx2N, NxN
-            xCalcRDCostInter(m_NxNCU[PartitionIndex][uiDepth], SIZE_2Nx2N);
-            xChooseBestMode(rpcBestCU, m_NxNCU[PartitionIndex][uiDepth], uiDepth);
+            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
             rpcTempCU->initEstData(uiDepth, iQP);
             if (m_pcEncCfg->getUseCbfFastMode())
             {
@@ -789,6 +778,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     rpcTempCU->initEstData(uiDepth, iQP);
     UInt uiPartUnitIdx = 0;
+    UChar       uhNextDepth         = uiDepth + 1;
+    TComDataCU* pcSubBestPartCU[4], *pcSubTempPartCU[4];
+
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {                
@@ -1728,6 +1720,56 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     xCheckDQP(rpcTempCU);
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
 }
+
+Void TEncCu::xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize eSize)
+{
+    UInt uiDepth = rpcTempCU->getDepth(0);
+
+    PPAScopeEvent(TEncCU_xCheckRDCostIntra);
+
+    rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
+
+    rpcTempCU->setPartSizeSubParts(eSize, 0, uiDepth);
+    rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
+    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
+
+    Bool bSeparateLumaChroma = true; // choose estimation mode
+    UInt uiPreCalcDistC      = 0;
+    if (!bSeparateLumaChroma)
+    {
+        m_pcPredSearch->preestChromaPredMode(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth]);
+    }
+    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, bSeparateLumaChroma);
+
+    m_ppcRecoYuvTemp[uiDepth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
+
+    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC);
+
+    m_pcEntropyCoder->resetBits();
+    if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    {
+        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
+    }
+    m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodePartSize(rpcTempCU, 0, uiDepth, true);
+    m_pcEntropyCoder->encodePredInfo(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
+
+    // Encode Coefficients
+    Bool bCodeDQP = getdQPFlag();
+    m_pcEntropyCoder->encodeCoeff(rpcTempCU, 0, uiDepth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
+    setdQPFlag(bCodeDQP);
+
+    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+
+    rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
+    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    rpcTempCU->getTotalCost() = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+    xCheckDQP(rpcTempCU);
+}
+
 
 /** Check R-D costs for a CU with PCM mode.
  * \param rpcBestCU pointer to best mode CU data structure
