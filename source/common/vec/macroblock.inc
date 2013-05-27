@@ -1900,31 +1900,25 @@ void CDECL partialButterfly4(short *src, short *dst, int nshift, int /* line */)
 
     // DCT2
     nshift = 2 + 6;
-    int T70_tmp0 = (short)_mm_extract_epi16(T70, 0);
-    int T70_tmp1 = (short)_mm_extract_epi16(T70, 2);
-    int T70_tmp2  = (short)_mm_extract_epi16(T70, 4);
-    int T70_tmp3  = (short)_mm_extract_epi16(T70, 6);
 
-    int T71_tmp0 =  (short)_mm_extract_epi16(T71, 0);
-    int T71_tmp1  = (short)_mm_extract_epi16(T71, 2);
-    int T71_tmp2  = (short)_mm_extract_epi16(T71, 4);
-    int T71_tmp3  = (short)_mm_extract_epi16(T71, 6);
+    __m128i c32_temp1 = _mm_slli_epi32(T70, 16);
+    c32_temp1 = _mm_srai_epi32(c32_temp1, 16);
 
-    int T72_tmp0 = (short)_mm_extract_epi16(T72, 0);
-    int T72_tmp1 = (short)_mm_extract_epi16(T72, 2);
-    int T72_tmp2 = (short)_mm_extract_epi16(T72, 4);
-    int T72_tmp3 = (short)_mm_extract_epi16(T72, 6);
+    __m128i c32_temp2 = _mm_slli_epi32(T71, 16);
+    c32_temp2 = _mm_srai_epi32(c32_temp2, 16);
 
-    int T73_tmp0 = (short)_mm_extract_epi16(T73, 0);
-    int T73_tmp1 = (short)_mm_extract_epi16(T73, 2);
-    int T73_tmp2 = (short)_mm_extract_epi16(T73, 4);
-    int T73_tmp3 = (short)_mm_extract_epi16(T73, 6);
+    __m128i c32_temp3 = _mm_slli_epi32(T72, 16);
+    c32_temp3 = _mm_srai_epi32(c32_temp3, 16);
 
-    // 32- packing for DCT1 result.
-    __m128i Coeff1_0101  = _mm_set_epi32(T71_tmp1, T71_tmp0, T70_tmp1, T70_tmp0);
-    __m128i Coeff1_2323  = _mm_set_epi32(T71_tmp2, T71_tmp3, T70_tmp2, T70_tmp3);
-    __m128i Coeff2_0101  = _mm_set_epi32(T73_tmp1, T73_tmp0, T72_tmp1, T72_tmp0);
-    __m128i Coeff2_2323  = _mm_set_epi32(T73_tmp2, T73_tmp3, T72_tmp2, T72_tmp3);
+    __m128i c32_temp4 = _mm_slli_epi32(T73, 16);
+    c32_temp4 = _mm_srai_epi32(c32_temp4, 16);
+
+    __m128i Coeff1_0101 = _mm_unpacklo_epi64(c32_temp1, c32_temp2);
+    __m128i Coeff1_2323 = _mm_unpackhi_epi64(c32_temp1, c32_temp2);
+    Coeff1_2323 = _mm_shuffle_epi32(Coeff1_2323, 0xb1);
+    __m128i Coeff2_0101 = _mm_unpacklo_epi64(c32_temp3, c32_temp4);
+    __m128i Coeff2_2323 = _mm_unpackhi_epi64(c32_temp3, c32_temp4);
+    Coeff2_2323 = _mm_shuffle_epi32(Coeff2_2323, 0xb1);
 
     __m128i E0123 = _mm_add_epi32(Coeff1_0101, Coeff1_2323);
     __m128i O0123 = _mm_sub_epi32(Coeff1_0101, Coeff1_2323);
