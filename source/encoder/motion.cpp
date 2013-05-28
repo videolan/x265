@@ -584,7 +584,8 @@ me_hex2:
         {
             // if best distance was only 1, check two missing points.  If no new point is found, stop
             int saved = bcost;
-            TwoPointSearch(bmv, bcost, bPointNr);
+            if (bPointNr)
+                TwoPointSearch(bmv, bcost, bPointNr);
             if (bcost == saved)
                 break;
         }
@@ -616,7 +617,8 @@ me_hex2:
 
             if (bDistance == 1)
             {
-                TwoPointSearch(bmv, bcost, bPointNr);
+                if (bPointNr)
+                    TwoPointSearch(bmv, bcost, bPointNr);
                 break;
             }
         }
@@ -864,9 +866,6 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
 
 void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
 {
-    if (bPointNr == 0)
-        return;
-
     /* For a given direction 1 to 8, check nearest 2 outer X pixels
          X   X
        X 1 2 3 X
