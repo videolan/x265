@@ -609,11 +609,10 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     {
         if (pp_nal)
         {
-            /* Copy NAL output packets into x265_nal_t structures */
             encoder->m_nals.clear();
-            encoder->m_nals.reserve(*pi_nal);
             encoder->m_packetData.clear();
 
+            /* Copy NAL output packets into x265_nal_t structures */
             list<AccessUnit>::const_iterator iterBitstream = outputAccessUnits.begin();
             for (int i = 0; i < iNumEncoded; i++)
             {
@@ -622,7 +621,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                 for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
                 {
                     const NALUnitEBSP& nalu = **it;
-                    UInt size = 0; /* size of annexB unit in bytes */
+                    int size = 0; /* size of annexB unit in bytes */
 
                     static const Char start_code_prefix[] = { 0, 0, 0, 1 };
                     if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
@@ -643,8 +642,9 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                         encoder->m_packetData.write(start_code_prefix + 1, 3);
                         size += 3;
                     }
-                    encoder->m_packetData << nalu.m_nalUnitData;
-                    size += UInt(nalu.m_nalUnitData.str().size());
+                    size_t nalSize = nalu.m_nalUnitData.str().size();
+                    encoder->m_packetData.write(nalu.m_nalUnitData.str().c_str(), nalSize);
+                    size += (int)nalSize;
 
                     x265_nal_t nal;
                     nal.i_type = nalu.m_nalUnitType;
