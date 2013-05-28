@@ -4,6 +4,7 @@ if(GCC)
 endif(GCC)
 
 file(GLOB LIBENCODER  ../Lib/TLibEncoder/*.h ../Lib/TLibEncoder/*.cpp)
+file(GLOB LIBENCODER_SRC  ../Lib/TLibEncoder/*.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER})
 if(GCC)
     set_source_files_properties(${LIBENCODER} PROPERTIES COMPILE_FLAGS 
@@ -19,7 +20,7 @@ if(MSVC)
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
     # /wd4800 performance warning: bool coersion
-    set_source_files_properties(${LIBENCODER} PROPERTIES COMPILE_FLAGS 
+    set_source_files_properties(${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4100 /wd4189 /wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 

@@ -15,6 +15,7 @@ endif(ENABLE_PRIMITIVES_ASM)
 include_directories(../VectorClass)
 
 file(GLOB LIBCOMMON  ../Lib/TLibCommon/*.h ../Lib/TLibCommon/*.cpp)
+file(GLOB LIBCOMMON_SRC ../Lib/TLibCommon/*.cpp)
 source_group(TLibCommon FILES ${LIBCOMMON})
 if(GCC)
     set_source_files_properties(${LIBCOMMON} PROPERTIES COMPILE_FLAGS 
@@ -30,7 +31,7 @@ if(MSVC)
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
     # /wd4800 performance warning: bool coersion
-    set_source_files_properties(${LIBCOMMON} PROPERTIES COMPILE_FLAGS 
+    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4100 /wd4189 /wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
