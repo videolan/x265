@@ -57,7 +57,7 @@
 #if defined(__GNUC__)
 #define ALWAYSINLINE  inline
 #elif defined(_MSC_VER)
-#define ALWAYSINLINE  __forceinline
+#define ALWAYSINLINE  __inline
 #endif
 
 

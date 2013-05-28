@@ -14,10 +14,11 @@ endif(ENABLE_PRIMITIVES_ASM)
 
 include_directories(../VectorClass)
 
-file(GLOB LIBCOMMON  ../Lib/TLibCommon/*.h ../Lib/TLibCommon/*.cpp)
-source_group(TLibCommon FILES ${LIBCOMMON})
+file(GLOB LIBCOMMON_HDR ../Lib/TLibCommon/*.h)
+file(GLOB LIBCOMMON_SRC ../Lib/TLibCommon/*.cpp)
+source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
-    set_source_files_properties(${LIBCOMMON} PROPERTIES COMPILE_FLAGS 
+    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare")
 endif(GCC)
 if(MSVC)
@@ -30,12 +31,12 @@ if(MSVC)
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
     # /wd4800 performance warning: bool coersion
-    set_source_files_properties(${LIBCOMMON} PROPERTIES COMPILE_FLAGS 
+    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "/wd4100 /wd4189 /wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
 add_library(common
-    ${LIBCOMMON}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp macroblock.cpp ipfilter.cpp IntraPred.cpp
     ../VectorClass/instrset_detect.cpp
