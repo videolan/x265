@@ -687,10 +687,14 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     return pp_nal ? 0 : 0;  // just to avoid unused parameter warning
 }
 
+EXTERN_CYCLE_COUNTER(ME);
+
 extern "C"
 void x265_encoder_close(x265_t *encoder)
 {
     encoder->printSummary();
+
+    REPORT_CYCLE_COUNTER(ME);
 
     // delete used buffers in encoder class
     encoder->deletePicBuffer();

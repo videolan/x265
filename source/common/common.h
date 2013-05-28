@@ -93,23 +93,27 @@
 #define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
 #define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
 
+#define ENABLE_CYCLE_COUNTERS 0
+#if ENABLE_CYCLE_COUNTERS
+#include <intrin.h>
+#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME) uint64_t SUBSYSTEM_NAME ## _cycle_count, SUBSYSTEM_NAME ## _num_calls
+#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)   uint64_t start_time = __rdtsc(); SUBSYSTEM_NAME ## _num_calls++
+#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)    SUBSYSTEM_NAME ## _cycle_count += __rdtsc() - start_time
+#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)  extern DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
+#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)  printf("Subsystem: %s\tAve Cycles: %lf Num Calls: %ld\n", #SUBSYSTEM_NAME, \
+    (double)SUBSYSTEM_NAME##_cycle_count / SUBSYSTEM_NAME##_num_calls, SUBSYSTEM_NAME##_num_calls);
+#else
+#define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
+#define CYCLE_COUNTER_START(SUBSYSTEM_NAME)
+#define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)
+#define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)
+#define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)
+#endif
+
 int  x265_check_params(x265_param_t *param);
 void x265_print_params(x265_param_t *param);
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth);
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
-
-#ifdef _MSC_VER
-#include <intrin.h>
-#elif defined(__GNUC__)
-static inline uint32_t __rdtsc(void)
-{
-    uint32_t a = 0;
-
-    asm volatile("rdtsc" : "=a" (a) ::"edx");
-    return a;
-}
-
-#endif // ifdef _MSC_VER
 
 #endif // ifndef __COMMON__
