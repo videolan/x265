@@ -70,15 +70,23 @@
 #define COPY2_IF_LT(x, y, a, b) \
     if ((y) < (x)) \
     { \
-    (x) = (y); \
-    (a) = (b); \
+        (x) = (y); \
+        (a) = (b); \
     }
 #define COPY3_IF_LT(x, y, a, b, c, d) \
     if ((y) < (x)) \
     { \
-    (x) = (y); \
-    (a) = (b); \
-    (c) = (d); \
+        (x) = (y); \
+        (a) = (b); \
+        (c) = (d); \
+    }
+#define COPY4_HM_IF_LT(x, y, a, b, c, d) \
+    if ((y) < (x)) \
+    { \
+        (x) = (y); \
+        (a) = (b); \
+        (bPointNr) = (c); \
+        (bDistance) = (d); \
     }
 #define X265_MIN3(a, b, c) X265_MIN((a), X265_MIN((b), (c)))
 #define X265_MAX3(a, b, c) X265_MAX((a), X265_MAX((b), (c)))
@@ -91,4 +99,4 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth);
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
 
-#endif
+#endif // ifndef __COMMON__

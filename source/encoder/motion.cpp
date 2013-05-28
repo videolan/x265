@@ -106,11 +106,11 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         MV tmv(mx, my); \
         int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
         if (cost < bcost) { \
-            bcost = cost;\
-            bmv = tmv;\
-            bPointNr = point;\
-            bDistance = dist;\
-        }\
+            bcost = cost; \
+            bmv = tmv; \
+            bPointNr = point; \
+            bDistance = dist; \
+        } \
     } while (0)
 
 #define COST_MV(mx, my) \
@@ -132,6 +132,27 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
         (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
         (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
+    }
+
+#define COST_MV_HM_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, p0, d0, p1, d1, p2, d2, p3, d3) \
+    { \
+        ALIGN_VAR_16(int, costs[16]); \
+        size_t stride = ref->lumaStride; \
+        pixel *pix_base = fref + omv.x + omv.y * stride; \
+        sad_x4(fenc, \
+               pix_base + (m0x) + (m0y) * stride, \
+               pix_base + (m1x) + (m1y) * stride, \
+               pix_base + (m2x) + (m2y) * stride, \
+               pix_base + (m3x) + (m3y) * stride, \
+               stride, costs); \
+        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
+        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
+        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
+        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
+        COPY4_HM_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y), p0, d0); \
+        COPY4_HM_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y), p1, d1); \
+        COPY4_HM_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y), p2, d2); \
+        COPY4_HM_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y), p3, d3); \
     }
 
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
@@ -560,6 +581,7 @@ me_hex2:
             else if (++rounds >= earlyStopRounds)
                 break;
         }
+
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points.  If no new point is found, stop
@@ -575,8 +597,12 @@ me_hex2:
             // raster search refinement if distance was too big
             MV tmv;
             for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
+            {
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
+                {
                     COST_MV(tmv.x, tmv.y); // TODO: use sad_x4 here
+                }
+            }
         }
 
         while (bDistance > 0)
@@ -586,7 +612,9 @@ me_hex2:
             bDistance = 0;
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
+            {
                 StarSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+            }
 
             if (bDistance == 1)
             {
@@ -616,6 +644,7 @@ me_hex2:
         int cost = qpelSatd(mv) + mvcost(mv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
+
     bmv += square1[bdir] * 2;
 
     /* QPEL square refinement, do not remeasure 0 offset */
@@ -626,6 +655,7 @@ me_hex2:
         int cost = qpelSatd(mv) + mvcost(mv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
+
     bmv += square1[bdir];
 
     x265_emms();
@@ -689,13 +719,15 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
         {
-            // TODO: Use sad_x4 here
+            //sad_x4 for Star Search
+            //COST_MV_HM_X4(omv.x, iTop, iLeft_2, iTop_2, iRight_2, iTop_2, iLeft, omv.y, 2, dist, 1, dist >> 1, 3, dist >> 1, 4, dist)
+            //COST_MV_HM_X4(iRight, omv.y, iLeft_2, iBottom_2, iRight_2, iBottom_2, omv.x, iBottom, 5, dist,  6, dist >> 1, 8, dist >> 1, 7, dist)
+
             COST_MV_HM(omv.x, iTop, 2, dist);
             COST_MV_HM(iLeft_2, iTop_2, 1, dist >> 1);
             COST_MV_HM(iRight_2, iTop_2, 3, dist >> 1);
             COST_MV_HM(iLeft, omv.y, 4, dist);
 
-            // TODO: Use sad_x4 here
             COST_MV_HM(iRight, omv.y, 5, dist);
             COST_MV_HM(iLeft_2, iBottom_2, 6, dist >> 1);
             COST_MV_HM(iRight_2, iBottom_2, 8, dist >> 1);
@@ -764,18 +796,25 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
                   3
                   0
             */
-            // TODO; Use sad_x4
+
+            //sad_x4 for Star search
+            //COST_MV_HM_X4(omv.x, iTop, iLeft, omv.y, iRight, omv.y, omv.x, iBottom, 0, dist, 0, dist, 0, dist, 0, dist);
+
             COST_MV_HM(omv.x, iTop, 0, dist);
             COST_MV_HM(iLeft, omv.y, 0, dist);
             COST_MV_HM(iRight, omv.y, 0, dist);
             COST_MV_HM(omv.x, iBottom, 0, dist);
+
             for (int16_t index = 1; index < 4; index++)
             {
                 int16_t iPosYT = iTop    + ((dist >> 2) * index);
                 int16_t iPosYB = iBottom - ((dist >> 2) * index);
                 int16_t iPosXL = omv.x - ((dist >> 2) * index);
                 int16_t iPosXR = omv.x + ((dist >> 2) * index);
-                // TODO; Use sad_x4
+
+                //sad_x4 for start search
+                //COST_MV_HM_X4(iPosXL, iPosYT, iPosXR, iPosYT, iPosXL, iPosYB, iPosXR, iPosYB, 0, dist, 0, dist, 0, dist, 0, dist);
+
                 COST_MV_HM(iPosXL, iPosYT, 0, dist);
                 COST_MV_HM(iPosXR, iPosYT, 0, dist);
                 COST_MV_HM(iPosXL, iPosYB, 0, dist);
