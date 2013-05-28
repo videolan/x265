@@ -864,8 +864,8 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
 
 void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
 {
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-    MV omv = bmv;
+    if (bPointNr == 0)
+        return;
 
     /* For a given direction 1 to 8, check nearest 2 outer X pixels
          X   X
@@ -874,117 +874,26 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
        X 6 7 8 X
          X   X
     */
-
-    /* TODO: turn into a table lookup with per-point offset pairs */
-    switch (bPointNr)
+    static const MV offsets[] = {
+        MV(-1, 0), MV(0, -1),
+        MV(-1, -1), MV(1, -1),
+        MV(-1, 0), MV(1, 0),
+        MV(-1, 1), MV(-1, -1),
+        MV(1, -1), MV(1, 1),
+        MV(-1, 0), MV(0, 1),
+        MV(-1, 1), MV(1, 1),
+        MV(1, 0), MV(0, 1),
+    };
+    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    MV omv = bmv;
+    const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
+    const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+    if (mv1.checkRange(mvmin, mvmax))
     {
-    case 1:
-    {
-        if ((omv.x - 1) >= mvmin.x)
-        {
-            COST_MV(omv.x - 1, omv.y);
-        }
-        if ((omv.y - 1) >= mvmin.y)
-        {
-            COST_MV(omv.x, omv.y - 1);
-        }
+        COST_MV(mv1.x, mv1.y);
     }
-    break;
-    case 2:
+    if (mv2.checkRange(mvmin, mvmax))
     {
-        if ((omv.y - 1) >= mvmin.y)
-        {
-            if ((omv.x - 1) >= mvmin.x)
-            {
-                COST_MV(omv.x - 1, omv.y - 1);
-            }
-            if ((omv.x + 1) <= mvmax.x)
-            {
-                COST_MV(omv.x + 1, omv.y - 1);
-            }
-        }
-    }
-    break;
-    case 3:
-    {
-        if ((omv.y - 1) >= mvmin.y)
-        {
-            COST_MV(omv.x, omv.y - 1);
-        }
-        if ((omv.x + 1) <= mvmax.x)
-        {
-            COST_MV(omv.x + 1, omv.y);
-        }
-    }
-    break;
-    case 4:
-    {
-        if ((omv.x - 1) >= mvmin.x)
-        {
-            if ((omv.y + 1) <= mvmax.y)
-            {
-                COST_MV(omv.x - 1, omv.y + 1);
-            }
-            if ((omv.y - 1) >= mvmin.y)
-            {
-                COST_MV(omv.x - 1, omv.y - 1);
-            }
-        }
-    }
-    break;
-    case 5:
-    {
-        if ((omv.x + 1) <= mvmax.x)
-        {
-            if ((omv.y - 1) >= mvmin.y)
-            {
-                COST_MV(omv.x + 1, omv.y - 1);
-            }
-            if ((omv.y + 1) <= mvmax.y)
-            {
-                COST_MV(omv.x + 1, omv.y + 1);
-            }
-        }
-    }
-    break;
-    case 6:
-    {
-        if ((omv.x - 1) >= mvmin.x)
-        {
-            COST_MV(omv.x - 1, omv.y);
-        }
-        if ((omv.y + 1) <= mvmax.y)
-        {
-            COST_MV(omv.x, omv.y + 1);
-        }
-    }
-    break;
-    case 7:
-    {
-        if ((omv.y + 1) <= mvmax.y)
-        {
-            if ((omv.x - 1) >= mvmin.x)
-            {
-                COST_MV(omv.x - 1, omv.y + 1);
-            }
-            if ((omv.x + 1) <= mvmax.x)
-            {
-                COST_MV(omv.x + 1, omv.y + 1);
-            }
-        }
-    }
-    break;
-    case 8:
-    {
-        if ((omv.x + 1) <= mvmax.x)
-        {
-            COST_MV(omv.x + 1, omv.y);
-        }
-        if ((omv.y + 1) <= mvmax.y)
-        {
-            COST_MV(omv.x, omv.y + 1);
-        }
-    }
-    break;
+        COST_MV(mv2.x, mv2.y);
     }
 }
