@@ -80,13 +80,13 @@
         (a) = (b); \
         (c) = (d); \
     }
-#define COPY4_HM_IF_LT(x, y, a, b, c, d) \
+#define COPY4_IF_LT(x, y, a, b, c, d, e, f) \
     if ((y) < (x)) \
     { \
         (x) = (y); \
         (a) = (b); \
-        (bPointNr) = (c); \
-        (bDistance) = (d); \
+        (c) = (d); \
+        (e) = (f); \
     }
 #define X265_MIN3(a, b, c) X265_MIN((a), X265_MIN((b), (c)))
 #define X265_MAX3(a, b, c) X265_MAX((a), X265_MAX((b), (c)))
