@@ -14,11 +14,11 @@ endif(ENABLE_PRIMITIVES_ASM)
 
 include_directories(../VectorClass)
 
-file(GLOB LIBCOMMON  ../Lib/TLibCommon/*.h ../Lib/TLibCommon/*.cpp)
+file(GLOB LIBCOMMON_HDR ../Lib/TLibCommon/*.h)
 file(GLOB LIBCOMMON_SRC ../Lib/TLibCommon/*.cpp)
-source_group(TLibCommon FILES ${LIBCOMMON})
+source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
-    set_source_files_properties(${LIBCOMMON} PROPERTIES COMPILE_FLAGS 
+    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare")
 endif(GCC)
 if(MSVC)
@@ -36,7 +36,7 @@ if(MSVC)
 endif(MSVC)
 
 add_library(common
-    ${LIBCOMMON}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
     pixel.cpp macroblock.cpp ipfilter.cpp IntraPred.cpp
     ../VectorClass/instrset_detect.cpp
