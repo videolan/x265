@@ -275,7 +275,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 
     cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-    printf("Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
+    printf("x265: Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
         cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, numRemainingFrames);
 
     if (reconfn)

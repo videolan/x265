@@ -76,11 +76,11 @@ int x265_param_apply_profile( x265_param_t *param, const char *profile )
         return 0;
     if (!strcmp(profile, "main"))
     {
-        param->iIntraPeriod = 15;
+        param->iIntraPeriod = 16;
     }
     else if (!strcmp(profile, "main10"))
     {
-        param->iIntraPeriod = 15;
+        param->iIntraPeriod = 16;
 #if HIGH_BIT_DEPTH
         param->internalBitDepth = 10;
 #else
@@ -251,50 +251,59 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 
 void x265_print_params(x265_param_t *param)
 {
-    printf("Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
+    printf("x265: Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
 #if HIGH_BIT_DEPTH
-    printf("Internal bit depth           : %d\n", param->internalBitDepth);
+    printf("x265: Internal bit depth           : %d\n", param->internalBitDepth);
 #endif
-    printf("CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
-    printf("RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
-    printf("Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
-    printf("Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
-    printf("Max Num Merge Candidates     : %d\n", param->maxNumMergeCand);
-    printf("Intra period                 : %d\n", param->iIntraPeriod);
-    printf("QP                           : %d\n", param->iQP);
-    printf("Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
+    printf("x265: CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
+    printf("x265: RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
+    printf("x265: Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
+
+    printf("x265: Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
+    printf("x265: Max Num Merge Candidates     : %d ", param->maxNumMergeCand);
+    printf("PME:%d ", param->log2ParallelMergeLevel);
+    printf("TMVPMode:%d\n", param->TMVPModeId);
+    printf("x265: Intra period                 : %d\n", param->iIntraPeriod);
+    if (param->iWaveFrontSynchro)
+    {
+        printf("x265: WaveFrontSubstreams          : %d\n", (param->iSourceHeight + param->uiMaxCUSize - 1) / param->uiMaxCUSize);
+    }
+    printf("x265: QP                           : %d\n", param->iQP);
+    if (param->iMaxCuDQPDepth)
+    {
+        printf("x265: Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
+    }
     if (param->cbQpOffset || param->crQpOffset)
     {
-        printf("Cb QP Offset                 : %d\n", param->cbQpOffset);
-        printf("Cr QP Offset                 : %d\n", param->crQpOffset);
+        printf("x265: Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
     }
     if (param->bUseAdaptiveQP)
     {
-        printf("QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, (param->bUseAdaptiveQP ? param->iQPAdaptationRange : 0));
+        printf("x265: QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, param->iQPAdaptationRange);
     }
-    printf("\n");
-
-    printf("TOOL CFG: ");
-    printf("RDQ:%d ", param->useRDOQ);
-    printf("RDQTS:%d ", param->useRDOQTS);
-    printf("RDpenalty:%d ", param->rdPenalty);
-    printf("FDM:%d ", param->useFastDecisionForMerge);
-    printf("CFM:%d ", param->bUseCbfFastMode);
-    printf("ESD:%d ", param->useEarlySkipDetection);
-    printf("TransformSkip:%d ", param->useTransformSkip);
-    printf("TransformSkipFast:%d ", param->useTransformSkipFast);
-    printf("CIP:%d ", param->bUseConstrainedIntraPred);
-    printf("SAO:%d ", (param->bUseSAO) ? (1) : (0));
-    printf("SAOLcuBasedOptimization:%d ", (param->saoLcuBasedOptimization) ? (1) : (0));
-    printf("WPP:%d ", param->useWeightedPred);
-    printf("WPB:%d ", param->useWeightedBiPred);
-    printf("PME:%d ", param->log2ParallelMergeLevel);
-    printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d ",
-           param->iWaveFrontSynchro, (param->iSourceHeight + param->uiMaxCUSize - 1) / param->uiMaxCUSize);
-    printf("TMVPMode:%d ", param->TMVPModeId);
-    printf("AQpS:%d ", param->bUseAdaptQpSelect);
-    printf("SignBitHidingFlag:%d ", param->signHideFlag);
+    if (param->rdPenalty)
+    {
+        printf("x265: RDpenalty                    : %d\n", param->rdPenalty);
+    }
+    printf("x265: enabled coding tools: ");
+#define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
+    TOOLOPT(param->useRDOQ, "rdq");
+    TOOLOPT(param->useRDOQTS, "rdqts");
+    TOOLOPT(param->useFastDecisionForMerge, "fdm");
+    TOOLOPT(param->bUseCbfFastMode, "cfm");
+    TOOLOPT(param->useEarlySkipDetection, "esd");
+    TOOLOPT(param->useTransformSkip, "tskip");
+    TOOLOPT(param->useTransformSkipFast, "tskip-fast");
+    if (param->bUseSAO)
+    {
+        TOOLOPT(param->bUseSAO, "sao");
+        TOOLOPT(param->saoLcuBasedOptimization, "sao-lcu");
+    }
+    TOOLOPT(param->useWeightedPred, "weightp");
+    TOOLOPT(param->useWeightedBiPred, "weightbp");
+    TOOLOPT(param->bUseAdaptQpSelect, "aq");
+    TOOLOPT(param->signHideFlag, "sign-hide");
+    TOOLOPT(param->bUseConstrainedIntraPred, "cip");
     printf("\n\n");
     fflush(stdout);
-
 }
