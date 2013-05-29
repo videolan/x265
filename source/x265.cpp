@@ -221,7 +221,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
                 (var) = optarg;
 #define OPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
-                (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+                (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
