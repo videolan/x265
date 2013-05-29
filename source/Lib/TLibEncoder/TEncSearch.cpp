@@ -3836,8 +3836,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     TComYuv*      pcYuv = pcYuvOrg;
 
-    PPAScopeEvent(TEncSearch_xMotionEstimation);
-
     m_iSearchRange = m_aaiAdaptSR[eRefPicList][iRefIdxPred];
 
     Int           iSrchRng      = (bBi ? m_bipredSearchRange : m_iSearchRange);
@@ -3846,6 +3844,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     Double        fWeight       = 1.0;
 
     pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
+    //PPAScopeEvent(TEncSearch_xMotionEstimation + pcCU->getDepth(iPartIdx));
 
     if (bBi)
     {
