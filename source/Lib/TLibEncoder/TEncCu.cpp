@@ -1823,7 +1823,7 @@ Void TEncCu::xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize eSize)
 {
     UInt uiDepth = rpcTempCU->getDepth(0);
 
-    PPAScopeEvent(TEncCU_xCheckRDCostIntra);
+    PPAScopeEvent(TEncCU_xCalcRDCostIntra);
 
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
 
