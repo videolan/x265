@@ -377,6 +377,8 @@ int main(int argc, char **argv)
     printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
         cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
 
+	x265_cleanup(); /* Free library singletons */
+
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
 #endif
