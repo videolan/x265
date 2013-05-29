@@ -137,7 +137,6 @@ protected:
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, float lambda = 1.0);
-    Void  xChooseBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, UInt PartitionIndex, float lambda = 1.0);
     Void swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
