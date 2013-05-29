@@ -99,4 +99,17 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth);
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#elif defined(__GNUC__)
+static inline uint32_t __rdtsc(void)
+{
+    uint32_t a = 0;
+
+    asm volatile("rdtsc" : "=a" (a) ::"edx");
+    return a;
+}
+
+#endif // ifdef _MSC_VER
+
 #endif // ifndef __COMMON__

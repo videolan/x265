@@ -42,7 +42,7 @@
 #include <memory.h>
 #include <assert.h>
 #include "TLibCommon/CommonDef.h"
-
+#include <TLibCommon/TComRom.h>
 //! \ingroup TLibEncoder
 //! \{
 
@@ -96,6 +96,9 @@ public:
     {
         Double dFps     =   m_dFrmRate; //--CFG_KDY
         Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
+
+        if (cDelim == 'a')
+            printf("Motion Estimation Cycle Count = %lld \n", Cycle_Count);
 
         printf("\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n");
         //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );

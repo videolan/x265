@@ -42,7 +42,7 @@
 #include "primitives.h"
 #include "PPA/ppa.h"
 #include <math.h>
-
+#include <common/common.h>
 using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
@@ -3830,6 +3830,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     TComMv        cMvHalf, cMvQter;
     TComMv        cMvSrchRngLT;
     TComMv        cMvSrchRngRB;
+    unsigned long long t0 = 0;
 
     TComYuv*      pcYuv = pcYuvOrg;
 
@@ -3896,14 +3897,17 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
+        t0 = __rdtsc();
         int satd = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
         UInt mvcost = m_me.mvcost(rcMv);
         UInt mvbits = m_me.bitcost(rcMv);
         ruiBits += mvbits;
         ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
+        Cycle_Count += __rdtsc() - t0; //Optimized Motion Search
         return;
     }
 
+    t0 = __rdtsc();
     m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
@@ -3939,6 +3943,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
+    Cycle_Count += __rdtsc() - t0; //For HM Motionsearch
 }
 
 Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv& cMvPred, Int iSrchRng, TComMv& rcMvSrchRngLT, TComMv& rcMvSrchRngRB)
