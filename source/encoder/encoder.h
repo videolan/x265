@@ -48,6 +48,7 @@ public:
     TComList<TComPicYuv *>  m_cListRecQueue;
     std::vector<x265_nal_t> m_nals;
     std::ostringstream      m_packetData;
+    std::string             m_data;
 
     Encoder()
         : m_profile(Profile::NONE)
