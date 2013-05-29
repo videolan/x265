@@ -599,7 +599,29 @@ me_hex2:
             {
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
                 {
-                    COST_MV(tmv.x, tmv.y); // TODO: use sad_x4 here
+                    if (tmv.x + (rasterDistance * 3) <= mvmax.x)
+                    {
+                        pixel *pix_base = fref + tmv.y * stride + tmv.x;
+                        sad_x4(fenc,
+                            pix_base,
+                            pix_base + rasterDistance,
+                            pix_base + rasterDistance * 2,
+                            pix_base + rasterDistance * 3,
+                            stride, costs);
+                        costs[0] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[0], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[1] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[1], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[2] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[2], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[3] += mvcost(tmv << 3);
+                        COPY2_IF_LT(bcost, costs[3], bmv, tmv);
+                    }
+                    else
+                        COST_MV(tmv.x, tmv.y);
                 }
             }
         }
