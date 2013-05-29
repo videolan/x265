@@ -32,8 +32,9 @@ class MBDstHarness : public TestHarness
 protected:
 
     short *mbuf1, *mbuf2, *mbuf3, *mbuf4;
-
     int mb_t_size;
+
+    int *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4;
 
     bool check_mbdst_primitive(x265::mbdst ref, x265::mbdst opt);
     bool check_butterfly16_primitive(x265::butterfly ref, x265::butterfly opt);
@@ -44,6 +45,7 @@ protected:
     bool check_butterfly16_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_butterfly32_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_butterfly4_primitive(x265::butterfly ref, x265::butterfly opt);
+    bool check_xdequant_primitive(x265::quant ref, x265::quant opt);
 
 public:
 
