@@ -78,6 +78,7 @@ private:
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
+    TComYuv**               m_RecoYuvNxN[4];
     TComYuv**               m_ppcOrigYuv;   ///< Original Yuv for each depth
 
     //  Data : encoder control
@@ -130,19 +131,19 @@ public:
 protected:
 
     Void  finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
-    Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, PartSize eParentPartSize = SIZE_NONE);
+    Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, UInt uiPartUnitIdx, PartSize eParentPartSize = SIZE_NONE);
     Void  xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, PartSize eParentPartSize = SIZE_NONE);
     Void  xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, float lambda = 1.0);
-
     Void swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
-    Void  xCalcRDCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
+    Void  xCalcRDCostInter(TComDataCU*& rpcTempCU, UInt PartitionIndex, PartSize ePartSize, Bool bUseMRG = false);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
+    Void  xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckDQP(TComDataCU* pcCU);
 
     Void  xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
