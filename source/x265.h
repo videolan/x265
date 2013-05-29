@@ -241,6 +241,9 @@ typedef struct x265_param_t
 
     int       TMVPModeId;                       ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
     int       useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
+
+    // DecodedPictureHashSEI
+    int       useDecodedPictureHashSEI;         ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }
 x265_param_t;
 

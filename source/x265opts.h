@@ -71,3 +71,4 @@ OPT("sao",             param->bUseSAO,                         no_argument, 0, "
 OPT("max-sao-offsets", param->maxNumOffsetsPerPic,       required_argument, 0, "Max number of SAO offset per picture (Default: 2048)")
 OPT("sao-lcu-bounds",  param->saoLcuBoundary,                  no_argument, 0, "0: right/bottom boundary areas skipped  1: non-deblocked pixels are used")
 OPT("sao-lcu-opt",     param->saoLcuBasedOptimization,         no_argument, 0, "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
+OPT("hash",            param->useDecodedPictureHashSEI,  required_argument, 0, "0: disable, 1: MD5, 2: CRC, 3: Checksum ")

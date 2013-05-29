@@ -135,7 +135,7 @@ void Encoder::configure(x265_param_t *param)
     setUseASR(0);
     setUseHADME(1);
     setdQPs(NULL);
-    setDecodedPictureHashSEIEnabled(0);
+    setDecodedPictureHashSEIEnabled(param->useDecodedPictureHashSEI);
     setRecoveryPointSEIEnabled(0);
     setBufferingPeriodSEIEnabled(0);
     setPictureTimingSEIEnabled(0);
