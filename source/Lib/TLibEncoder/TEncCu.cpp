@@ -387,12 +387,10 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
 
     // analysis of CU
     
-#if EARLY_PARTITION_DECISION
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else
-#endif
-    xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
+        xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
 
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
@@ -693,7 +691,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);
 }
 
-#if EARLY_PARTITION_DECISION
+#if 0//EARLY_PARTITION_DECISION - This snippet of code works only temporarily. TComDataCU needs to be revamped to measure costs across partitions reliably. 
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU, UInt uiDepth, UInt PartitionIndex, PartSize eParentPartSize)
 {
     m_abortFlag = false;
