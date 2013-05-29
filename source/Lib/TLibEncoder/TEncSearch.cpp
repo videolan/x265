@@ -3167,9 +3167,10 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
-
+    pcCU->getTotalDistortion() = 0;
+    pcCU->getTotalBits() = 0;
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
-    {
+    {    
         UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
         UInt          uiCostBi  =   MAX_UINT;
         UInt          uiCostTemp;
@@ -3581,6 +3582,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         //  MC
         motionCompensation(pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx);
+        pcCU->getTotalDistortion() += uiCost[0];
+        pcCU->getTotalBits() += uiBits[0];
     } //  end of for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
 
     setWpScalingDistParam(pcCU, -1, REF_PIC_LIST_X);
