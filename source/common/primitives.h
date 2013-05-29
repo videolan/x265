@@ -62,7 +62,7 @@ extern "C" void x264_cpu_emms(void);
 #ifndef CDECL
 #define CDECL                _cdecl
 #endif
-#endif
+#endif // if defined(__GNUC__)
 
 #if HIGH_BIT_DEPTH
 typedef uint16_t pixel;
@@ -177,7 +177,7 @@ typedef void (CDECL * blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride
 typedef void (CDECL * getIPredDC_p)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/, int blkAboveAvailable, int blkLeftAvailable, int bFilter);
 typedef void (CDECL * getIPredPlanar_p)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/);
 typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
-
+typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -208,6 +208,7 @@ struct EncoderPrimitives
     getIPredDC_p getIPredDC;
     getIPredPlanar_p getIPredPlanar;
     getIPredAng_p getIPredAng;
+    quant deQuant;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
