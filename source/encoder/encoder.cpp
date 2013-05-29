@@ -611,7 +611,6 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         {
             encoder->m_nals.clear();
             encoder->m_packetData.clear();
-            encoder->m_packetData.str("");
 
             /* Copy NAL output packets into x265_nal_t structures */
             list<AccessUnit>::const_iterator iterBitstream = outputAccessUnits.begin();
@@ -635,16 +634,16 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                          *    unit of an access unit in decoding order, as specified by subclause
                          *    7.4.1.2.3.
                          */
-                        encoder->m_packetData.write(start_code_prefix, 4);
+                        encoder->m_packetData.append(start_code_prefix, 4);
                         size += 4;
                     }
                     else
                     {
-                        encoder->m_packetData.write(start_code_prefix + 1, 3);
+                        encoder->m_packetData.append(start_code_prefix + 1, 3);
                         size += 3;
                     }
                     size_t nalSize = nalu.m_nalUnitData.str().size();
-                    encoder->m_packetData.write(nalu.m_nalUnitData.str().c_str(), nalSize);
+                    encoder->m_packetData.append(nalu.m_nalUnitData.str().c_str(), nalSize);
                     size += (int)nalSize;
 
                     x265_nal_t nal;
@@ -656,13 +655,10 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             
             /* Setup payload pointers, now that we're done adding content to m_packetData */
             size_t offset = 0;
-            encoder->m_data.clear();
-            encoder->m_data = encoder->m_packetData.str();
-            const uint8_t *tmp = (uint8_t*)encoder->m_data.c_str();
             for (size_t i = 0; i < encoder->m_nals.size(); i++)
             {
                 x265_nal_t& nal = encoder->m_nals[i];
-                nal.p_payload = (uint8_t*) &tmp[offset];
+                nal.p_payload = (uint8_t *) encoder->m_packetData.c_str() + offset;
                 offset += nal.i_payload;
             }
 
