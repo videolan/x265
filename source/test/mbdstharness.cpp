@@ -50,7 +50,18 @@ MBDstHarness::MBDstHarness()
     mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
     mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
 
+    mintbuf1 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
+    mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
+    mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
+    mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
+
     if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4)
+    {
+        fprintf(stderr, "malloc failed, unable to initiate tests!\n");
+        exit(1);
+    }
+
+    if (!mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -61,9 +72,18 @@ MBDstHarness::MBDstHarness()
         mbuf1[i] = rand() & PIXEL_MAX;
     }
 
+    for (int i = 0; i < 64 * 100; i++)
+    {
+        mintbuf1[i] = rand() & PIXEL_MAX;
+        mintbuf2[i] = rand() & PIXEL_MAX;
+    }
+
     memset(mbuf2, 0, mb_t_size);
     memset(mbuf3, 0, mb_t_size);
     memset(mbuf4, 0, mb_t_size);
+
+    memset(mintbuf3, 0, mb_t_size);
+    memset(mintbuf4, 0, mb_t_size);
 }
 
 MBDstHarness::~MBDstHarness()
@@ -72,6 +92,11 @@ MBDstHarness::~MBDstHarness()
     TestHarness::alignedFree(mbuf2);
     TestHarness::alignedFree(mbuf3);
     TestHarness::alignedFree(mbuf4);
+
+    TestHarness::alignedFree(mintbuf1);
+    TestHarness::alignedFree(mintbuf2);
+    TestHarness::alignedFree(mintbuf3);
+    TestHarness::alignedFree(mintbuf4);
 }
 
 bool MBDstHarness::check_mbdst_primitive(mbdst ref, mbdst opt)
@@ -140,7 +165,7 @@ bool MBDstHarness::check_butterfly32_primitive(butterfly ref, butterfly opt)
 bool MBDstHarness::check_butterfly8_primitive(butterfly ref, butterfly opt)
 {
     int j = 0;
-    int mem_cmp_size = 160; // 2*8*10 -> sizeof(short)*number of elements*number of lines
+    int mem_cmp_size = 128; // 2*8*8 -> sizeof(short)*number of elements*number of lines
 
     for (int i = 0; i <= 100; i++)
     {
@@ -265,6 +290,27 @@ bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
+bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
+{
+    int j = 0;
+    int mem_cmp_size = 1024; // 32*32
+
+    for (int i = 0; i <= 5; i++)
+    {
+        opt(8, mintbuf1 + j, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2 + j);
+        ref(8, mintbuf1 + j, mintbuf4, 32, 32, 5, 2, false, 5, mintbuf2 + j);
+
+        if (memcmp(mintbuf3, mintbuf4, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mintbuf3, 0, mem_cmp_size);
+        memset(mintbuf4, 0, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.inversedst)
@@ -348,6 +394,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.deQuant)
+    {
+        if (!check_xdequant_primitive(ref.deQuant, opt.deQuant))
+        {
+            printf("XDeQuant: Failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -368,5 +423,11 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             printf("partialButterfly%s", ButterflyConf_names[value]);
             REPORT_SPEEDUP(opt.partial_butterfly[value], ref.partial_butterfly[value], mbuf1, mbuf2, 3, 10);
         }
+    }
+
+    if (opt.deQuant)
+    {
+        printf("xDeQuant\t\t");
+        REPORT_SPEEDUP(opt.deQuant, ref.deQuant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 }
