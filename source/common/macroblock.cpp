@@ -420,7 +420,7 @@ void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
     int* piCoef = pDes;
@@ -446,14 +446,14 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
         iShift += 4;
         int *piDequantCoef = piDequantCoefOrig;
 
-        if (iShift > mcqp_miper)
+        if (iShift > iPer)
         {
-            iAdd = 1 << (iShift - mcqp_miper - 1);
+            iAdd = 1 << (iShift - iPer - 1);
 
             for (int n = 0; n < iWidth * iHeight; n++)
             {
                 clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-                iCoeffQ = ((clipQCoef * piDequantCoef[n]) + iAdd) >> (iShift -  mcqp_miper);
+                iCoeffQ = ((clipQCoef * piDequantCoef[n]) + iAdd) >> (iShift - iPer);
                 piCoef[n] = Clip3(-32768, 32767, iCoeffQ);
             }
         }
@@ -463,14 +463,14 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
             {
                 clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
                 iCoeffQ   = Clip3(-32768, 32767, clipQCoef * piDequantCoef[n]);
-                piCoef[n] = Clip3(-32768, 32767, iCoeffQ << (mcqp_miper - iShift));
+                piCoef[n] = Clip3(-32768, 32767, iCoeffQ << (iPer - iShift));
             }
         }
     }
     else
     {
         iAdd = 1 << (iShift - 1);
-        int scale = g_invQuantScales[mcqp_mirem] << mcqp_miper;
+        int scale = g_invQuantScales[iRem] << iPer;
 
         for (int n = 0; n < iWidth * iHeight; n++)
         {

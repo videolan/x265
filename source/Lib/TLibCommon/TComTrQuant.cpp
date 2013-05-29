@@ -1088,13 +1088,13 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
 
 #if 1
     // Values need to pass as input parameter in xDeQuant
-    Int mcqp_miper = m_cQP.m_iPer;
-    Int mcqp_mirem = m_cQP.m_iRem;
+    Int iPer = m_cQP.m_iPer;
+    Int iRem = m_cQP.m_iRem;
     Bool useScalingList = getUseScalingList();
     UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
     Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
 
-    x265::primitives.deQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, mcqp_miper, mcqp_mirem, useScalingList, uiLog2TrSize, piDequantCoef);
+    x265::primitives.deQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
 #endif
 
     if (useTransformSkip == true)
