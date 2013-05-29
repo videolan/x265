@@ -566,15 +566,16 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
 
     // for every CU in slice
-    assert(iNumSubstreams == uiHeightInLCUs);
-    Event **waitThread = new Event*[uiHeightInLCUs];
-    for(UInt ui=0; ui<uiHeightInLCUs; ui++)
-    {
-        waitThread[ui] = new Event[uiWidthInLCUs];
-    }
-
+    Event **waitThread = NULL;
     const int numThreads = (iNumSubstreams>1) ? iNumSubstreams : 1;
-
+    if (numThreads > 1)
+    {
+        waitThread = new Event*[uiHeightInLCUs];
+        for(UInt ui=0; ui<uiHeightInLCUs; ui++)
+        {
+            waitThread[ui] = new Event[uiWidthInLCUs];
+        }
+    }
 
 #pragma omp parallel default(none) shared(waitThread, rpcPic, ppppcRDSbacCoders, pcSlice, pcBitCounters) num_threads(numThreads)
 #pragma omp for schedule(static, 1) nowait
@@ -585,8 +586,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         {
             UInt uiCUAddr = uiCurLineCUAddr + uiCol;
 
-            // waitting token
-            if ( uiLin != 0 )
+            // wait for above row to reach URR
+            if (numThreads > 1 && uiLin != 0)
             {
                 waitThread[uiLin-1][uiCol].Wait();
             }
@@ -712,24 +713,26 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_uiPicDist      += pcCU->getTotalDistortion();
 
             // set token for next thread
-            if ( uiLin != uiHeightInLCUs - 1)
+            if (numThreads > 1 && uiLin != uiHeightInLCUs - 1)
             {
                 Int flagId = (uiWidthInLCUs + uiCol - 1) % uiWidthInLCUs;
                 waitThread[uiLin][flagId].Trigger();
             }
+
         } // end of for(uiCol...
     } // end of for(uiLin...
 
-    for(UInt ui=0; ui<uiHeightInLCUs-1; ui++)
+    if (numThreads > 1)
     {
-        delete[] waitThread[ui];
-    }
-    delete [] waitThread;
+        for (UInt ui = 0; ui < uiHeightInLCUs - 1; ui++)
+        {
+            delete[] waitThread[ui];
+        }
+        delete [] waitThread;
 
-    if (iNumSubstreams > 1)
-    {
         pcSlice->setNextSlice(true);
     }
+
     xRestoreWPparam(pcSlice);
 }
 
