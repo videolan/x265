@@ -700,6 +700,7 @@ void x265_encoder_close(x265_t *encoder)
     while (!encoder->m_cListPicYuvRec.empty())
     {
         TComPicYuv *yuv = encoder->m_cListPicYuvRec.popBack();
+        yuv->destroy();
         delete yuv;
     }
     encoder->deletePicBuffer();
