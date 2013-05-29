@@ -156,19 +156,19 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
     { \
         sad_x4(fenc, \
-               pix_base + (m0x) + (m0y) * stride, \
-               pix_base + (m1x) + (m1y) * stride, \
-               pix_base + (m2x) + (m2y) * stride, \
-               pix_base + (m3x) + (m3y) * stride, \
+               fref + (m0x) + (m0y) * stride, \
+               fref + (m1x) + (m1y) * stride, \
+               fref + (m2x) + (m2y) * stride, \
+               fref + (m3x) + (m3y) * stride, \
                stride, costs); \
-        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
-        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
-        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
-        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
-        COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
-        COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
-        COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
-        COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
+        costs[0] += mvcost(MV(m0x, m0y) << 2); \
+        costs[1] += mvcost(MV(m1x, m1y) << 2); \
+        costs[2] += mvcost(MV(m2x, m2y) << 2); \
+        costs[3] += mvcost(MV(m3x, m3y) << 2); \
+        COPY2_IF_LT(bcost, costs[0], bmv, MV(m0x, m0y)); \
+        COPY2_IF_LT(bcost, costs[1], bmv, MV(m1x, m1y)); \
+        COPY2_IF_LT(bcost, costs[2], bmv, MV(m2x, m2y)); \
+        COPY2_IF_LT(bcost, costs[3], bmv, MV(m3x, m3y)); \
     }
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
@@ -381,7 +381,6 @@ me_hex2:
 
         /* refine predictors */
         omv = bmv;
-        pixel *pix_base = fref + omv.x + omv.y * stride;
         ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.notZero())
@@ -591,6 +590,8 @@ me_hex2:
         }
 
         const int rasterDistance = 5;
+        const int iteration = 15;
+        int16_t x1, x2, x3, x4;
         if (bDistance > rasterDistance)
         {
             // raster search refinement if distance was too big
@@ -599,7 +600,27 @@ me_hex2:
             {
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
                 {
-                    COST_MV(tmv.x, tmv.y); // TODO: use sad_x4 here
+                    //check valid for to run sad_x4 - for example if search range is 32 then number of iteration is 13
+                    //in this case sad_x4 will run only three times (3 * 4 = 13) and reamaing one (13 -12 = 1) call need to run COST_MV alone
+                    if ((tmv.x + iteration) <= mvmax.x)
+                    {
+                        x1 = tmv.x;
+                        tmv.x += rasterDistance;
+                        x2 = tmv.x;
+                        tmv.x += rasterDistance;
+                        x3 = tmv.x;
+                        tmv.x += rasterDistance;
+                        x4 = tmv.x;
+
+                        COST_MV_X4(x1, tmv.y,
+                                   x2, tmv.y,
+                                   x3, tmv.y,
+                                   x4, tmv.y);
+
+                        x1 = x2 = x3 = x4 = 0;
+                    }
+                    else
+                        COST_MV(tmv.x, tmv.y);
                 }
             }
         }
@@ -727,7 +748,7 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
                                iLeft,    omv.y,     4, dist);
             COST_MV_PT_DIST_X4(iRight,   omv.y,     5, dist,
                                iLeft_2,  iBottom_2, 6, dist >> 1,
-                               iRight_2, iBottom_2, 8, dist >> 1, 
+                               iRight_2, iBottom_2, 8, dist >> 1,
                                omv.x,    iBottom,   7, dist);
         }
         else // check border for each mv
@@ -873,7 +894,8 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
        X 6 7 8 X
          X   X
     */
-    static const MV offsets[] = {
+    static const MV offsets[] =
+    {
         MV(-1, 0), MV(0, -1),
         MV(-1, -1), MV(1, -1),
         MV(-1, 0), MV(1, 0),
@@ -887,6 +909,7 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
     MV omv = bmv;
     const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
     const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+
     if (mv1.checkRange(mvmin, mvmax))
     {
         COST_MV(mv1.x, mv1.y);
