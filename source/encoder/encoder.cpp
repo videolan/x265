@@ -697,6 +697,11 @@ void x265_encoder_close(x265_t *encoder)
     REPORT_CYCLE_COUNTER(ME);
 
     // delete used buffers in encoder class
+    while (!encoder->m_cListPicYuvRec.empty())
+    {
+        TComPicYuv *yuv = encoder->m_cListPicYuvRec.popBack();
+        delete yuv;
+    }
     encoder->deletePicBuffer();
     encoder->destroy();
     delete encoder;
