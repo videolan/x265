@@ -41,6 +41,7 @@
 #include <getopt.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 #include <list>
 #include <ostream>
 #include <fstream>
@@ -274,7 +275,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 
     cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-    printf("Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
+    printf("x265: Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
         cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, numRemainingFrames);
 
     if (reconfn)
@@ -340,6 +341,8 @@ int main(int argc, char **argv)
     x265_nal_t *p_nal;
     int nal;
 
+    clock_t start = clock();
+
     // main encoder loop
     uint32_t frameCount = 0;
     while (pic_in)
@@ -369,8 +372,10 @@ int main(int argc, char **argv)
     x265_encoder_close(encoder);
     cliopt.bitstreamFile.close();
 
+    double elapsed = (double)(clock() - start) / CLOCKS_PER_SEC;
     double vidtime = (double)frameCount / param.iFrameRate;
-    printf("Bytes written to file: %u (%.3f kbps)\n", cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime);
+    printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
+        cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
