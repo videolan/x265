@@ -418,7 +418,7 @@ cglobal pixel_ssd_%1x%2, 0,0,0
     mov     al, %1*%2/mmsize/2
 
 %if %1 != %2
-    jmp mangle(x264_pixel_ssd_%1x%1 %+ SUFFIX %+ .startloop)
+    jmp mangle(x265_pixel_ssd_%1x%1 %+ SUFFIX %+ .startloop)
 %else
 
 .startloop:

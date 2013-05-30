@@ -41,7 +41,7 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
-option(FAST_MODE_DECISION "Use 16bit pixels internally" OFF)
+option(FAST_MODE_DECISION "Disable RDO in CU analysis" OFF)
 if(FAST_MODE_DECISION)
     add_definitions(-DFAST_MODE_DECISION=1)
 else(FAST_MODE_DECISION)

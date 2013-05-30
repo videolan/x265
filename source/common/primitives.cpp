@@ -150,7 +150,7 @@ void x265_init_primitives(int cpuid)
 
 #if !defined(ENABLE_ASM_PRIMITIVES)
 extern "C"
-void x264_cpu_emms(void)
+void x265_cpu_emms(void)
 {
 }
 #endif
