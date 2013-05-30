@@ -73,7 +73,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         satd = primitives.satd[partEnum];
     }
     else
-#else // if SUBSAMPLE_SAD
+#endif // if SUBSAMPLE_SAD
     {
         partEnum = PartitionFromSizes(width, height);
         sad = primitives.sad[partEnum];
@@ -81,7 +81,6 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         sad_x3 = primitives.sad_x3[partEnum];
         sad_x4 = primitives.sad_x4[partEnum];
     }
-#endif // if SUBSAMPLE_SAD
 
     blockOffset = offset;
 
