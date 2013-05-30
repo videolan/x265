@@ -46,6 +46,13 @@
 #include <ostream>
 #include <fstream>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#define GetConsoleTitle(t,n)
+#define SetConsoleTitle(t)
+#endif
+
 using namespace x265;
 using namespace std;
 
@@ -64,6 +71,9 @@ struct CLIOptions
     uint32_t essentialBytes;            ///< total essential NAL bytes written to bitstream
     uint32_t totalBytes;                ///< total bytes written to bitstream
 
+    int64_t i_start;
+    int64_t i_previous;
+
     CLIOptions()
     {
         input = NULL;
@@ -73,6 +83,8 @@ struct CLIOptions
         framesToBeEncoded = frameSkip = 0;
         essentialBytes = 0;
         totalBytes = 0;
+        i_start = x265_mdate();
+        i_previous = 0;
     }
 
     void destroy()
@@ -131,6 +143,36 @@ struct CLIOptions
         }
         PPAStopCpuEventFunc(bitstream_write);
     }
+    
+    /* in microseconds */
+    static const int UPDATE_INTERVAL = 250000;
+
+    void printStatus(int i_frame, x265_param_t *param)
+    {
+        char buf[200];
+        int64_t i_time = x265_mdate();
+        if( i_previous && i_time - i_previous < UPDATE_INTERVAL )
+            return;
+        int64_t i_elapsed = i_time - i_start;
+        double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
+        double bitrate = (double) totalBytes * 8 / ( (double) 1000 * param->iFrameRate );
+        if( framesToBeEncoded )
+        {
+            int eta = i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000);
+            sprintf( buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
+                100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
+                eta/3600, (eta/60)%60, eta%60 );
+        }
+        else
+        {
+            sprintf( buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate );
+        }
+        fprintf( stderr, "%s  \r", buf+5 );
+        SetConsoleTitle( buf );
+        fflush( stderr ); // needed in windows
+        i_previous = i_time;
+    }
+
 };
 
 static void print_version()
@@ -368,8 +410,6 @@ int main(int argc, char **argv)
     x265_nal_t *p_nal;
     int nal;
 
-    clock_t start = clock();
-
     // main encoder loop
     uint32_t frameCount = 0;
     while (pic_in)
@@ -385,6 +425,8 @@ int main(int argc, char **argv)
             cliopt.recon->writePicture(pic_recon);
         if (nal)
             cliopt.writeNALs(p_nal, nal);
+        // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
+        cliopt.printStatus(frameCount, &param);
     }
 
     /* Flush the encoder */
@@ -394,12 +436,13 @@ int main(int argc, char **argv)
             cliopt.recon->writePicture(pic_recon);
         if (nal)
             cliopt.writeNALs(p_nal, nal);
+        cliopt.printStatus(frameCount, &param);
     }
 
     x265_encoder_close(encoder);
     cliopt.bitstreamFile.close();
 
-    double elapsed = (double)(clock() - start) / CLOCKS_PER_SEC;
+    double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)frameCount / param.iFrameRate;
     printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
         cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);

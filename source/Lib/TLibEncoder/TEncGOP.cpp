@@ -1533,10 +1533,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_bFirst = false;
         m_iNumPicCoded++;
         m_totalCoded++;
+#if ENABLE_PER_SLICE_LOGGING
         /* logging: insert a newline at end of picture period */
         printf("\n");
         fflush(stdout);
-
+#endif
         delete[] pcSubstreamsOut;
     }
 
@@ -1879,10 +1880,11 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
         m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
 
+#if ENABLE_PER_SLICE_LOGGING
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
     if (!pcSlice->isReferenced()) c += 32;
 
-    printf("POC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
+    printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            pcSlice->getPOC(),
            pcSlice->getTLayer(),
            c,
@@ -1891,7 +1893,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
            uibits);
 
     printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", dYPSNR, dUPSNR, dVPSNR);
-    //printf(" [ET %5.0f ]", dEncTime);
 
     if (pcSlice->isIntra())
         return;
@@ -1906,6 +1907,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
         printf("]");
     }
+#endif
 }
 
 /** Function for deciding the nal_unit_type.
