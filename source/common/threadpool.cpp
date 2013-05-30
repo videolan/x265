@@ -174,6 +174,8 @@ public:
         return this;
     }
 
+    int GetThreadCount() const { return m_numThreads; }
+
     void Release();
 
     void Stop();
@@ -251,7 +253,6 @@ void ThreadPoolImpl::Release()
 ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     : m_ok(false)
     , m_referenceCount(1)
-    , m_numThreads(numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
 {
@@ -260,6 +261,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
 
     char *buffer = new char[sizeof(PoolThread) * numThreads];
     m_threads = reinterpret_cast<PoolThread*>(buffer);
+    m_numThreads = numThreads;
 
     if (m_threads)
     {

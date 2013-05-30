@@ -258,6 +258,10 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         threadcount = 1;
     }
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
+    if (threadcount != 1)
+    {
+        printf("x265: thread pool initialized with %d threads\n", cliopt->threadPool->GetThreadCount());
+    }
 
     if (inputfn == NULL || bitstreamfn == NULL)
     {

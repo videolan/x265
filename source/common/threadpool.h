@@ -131,6 +131,8 @@ public:
     virtual void DequeueJobProvider(JobProvider &) = 0;
 
     virtual void PokeIdleThreads() = 0;
+
+    virtual int  GetThreadCount() const = 0;
 };
 } // end namespace x265
 
