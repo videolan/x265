@@ -153,6 +153,9 @@ static void print_version()
 static void do_help()
 {
     print_version();
+    printf("Syntax: x265 [options] infile [-o] outfile\n");
+    printf("    infile can be YUV or Y4M\n");
+    printf("    outfile is raw HEVC stream only\n");
     printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
