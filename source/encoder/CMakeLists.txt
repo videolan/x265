@@ -28,5 +28,6 @@ add_library(encoder ../../COPYING ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
     encoder.cpp encoder.h
     bitcost.cpp bitcost.h mv.h
-    motion.cpp motion.h)
+    motion.cpp motion.h
+    wavefront.cpp wavefront.h)
 target_link_libraries(encoder common)
