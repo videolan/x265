@@ -28,6 +28,8 @@
 #include "mv.h"
 #include "bitcost.h"
 
+#define SUBSAMPLE_SAD 0  /* Disabled while under construction */
+
 namespace x265 {
 // private x265 namespace
 
@@ -50,8 +52,15 @@ class MotionEstimate : public BitCost
 protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
+#if SUBSAMPLE_SAD
+    pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
+    pixel *fenc;
+    pixel *fencSad;
+    int    subsample;
+#else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
+#endif
 
     pixel *fencplanes[3];
     intptr_t fencLumaStride;

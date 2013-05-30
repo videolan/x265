@@ -22,15 +22,16 @@ if(MSVC)
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
     add_definitions(/MP)  # multithreaded build
+    add_definitions(/openmp)  # OpenMP
     include_directories(compat/msvc)
 endif(MSVC)
 
 if("$ENV{CXX}" STREQUAL "icpc")
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Werror -Wshadow -no-vec)
+    add_definitions(-Wall -Wextra -Werror -Wshadow -no-vec -openmp)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Werror -Wshadow)
+    add_definitions(-Wall -Wextra -Werror -Wshadow -fopenmp)
 endif()
 
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
@@ -52,7 +53,11 @@ if(YASM_FOUND)
 endif(YASM_FOUND)
 
 if(UNIX)
-    SET(PLATFORM_LIBS pthread rt m)
+	if("$ENV{CXX}" STREQUAL "icpc")
+		SET(PLATFORM_LIBS pthread rt m iomp5)
+	elseif(CMAKE_COMPILER_IS_GNUCXX)
+		SET(PLATFORM_LIBS pthread rt m gomp)
+	endif()
 endif(UNIX)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)

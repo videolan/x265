@@ -336,8 +336,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
-            m_pcEncTop->getTrQuant()->setFlatScalingList();
-            m_pcEncTop->getTrQuant()->setUseScalingList(false);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setFlatScalingList();
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(false);
+            }
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
         }
@@ -346,8 +349,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->setDefaultScalingList();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
-            m_pcEncTop->getTrQuant()->setUseScalingList(true);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setScalingList(pcSlice->getScalingList());
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(true);
+            }
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
         {
@@ -358,8 +364,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->getScalingList()->checkDcOfMatrix();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
-            m_pcEncTop->getTrQuant()->setUseScalingList(true);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setScalingList(pcSlice->getScalingList());
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(true);
+            }
         }
         else
         {
@@ -464,8 +473,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         refPicListModification->setRefPicListModificationFlagL1(false);
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
-
-        pcSlice->setTrQuant(m_pcEncTop->getTrQuant());
 
         //  Set reference list
         pcSlice->setRefPicList(rcListPic);

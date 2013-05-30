@@ -135,7 +135,7 @@ void Encoder::configure(x265_param_t *param)
     setUseASR(0);
     setUseHADME(1);
     setdQPs(NULL);
-    setDecodedPictureHashSEIEnabled(0);
+    setDecodedPictureHashSEIEnabled(param->useDecodedPictureHashSEI);
     setRecoveryPointSEIEnabled(0);
     setBufferingPeriodSEIEnabled(0);
     setPictureTimingSEIEnabled(0);
@@ -634,16 +634,16 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                          *    unit of an access unit in decoding order, as specified by subclause
                          *    7.4.1.2.3.
                          */
-                        encoder->m_packetData.write(start_code_prefix, 4);
+                        encoder->m_packetData.append(start_code_prefix, 4);
                         size += 4;
                     }
                     else
                     {
-                        encoder->m_packetData.write(start_code_prefix + 1, 3);
+                        encoder->m_packetData.append(start_code_prefix + 1, 3);
                         size += 3;
                     }
                     size_t nalSize = nalu.m_nalUnitData.str().size();
-                    encoder->m_packetData.write(nalu.m_nalUnitData.str().c_str(), nalSize);
+                    encoder->m_packetData.append(nalu.m_nalUnitData.str().c_str(), nalSize);
                     size += (int)nalSize;
 
                     x265_nal_t nal;
@@ -658,7 +658,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             for (size_t i = 0; i < encoder->m_nals.size(); i++)
             {
                 x265_nal_t& nal = encoder->m_nals[i];
-                nal.p_payload = (uint8_t*) &encoder->m_packetData.str()[0] + offset;
+                nal.p_payload = (uint8_t *) encoder->m_packetData.c_str() + offset;
                 offset += nal.i_payload;
             }
 
@@ -697,6 +697,12 @@ void x265_encoder_close(x265_t *encoder)
     REPORT_CYCLE_COUNTER(ME);
 
     // delete used buffers in encoder class
+    while (!encoder->m_cListPicYuvRec.empty())
+    {
+        TComPicYuv *yuv = encoder->m_cListPicYuvRec.popBack();
+        yuv->destroy();
+        delete yuv;
+    }
     encoder->deletePicBuffer();
     encoder->destroy();
     delete encoder;

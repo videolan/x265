@@ -39,6 +39,10 @@
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
 #include <math.h>
+#include <omp.h>
+
+#include "threading.h"
+using namespace x265;
 
 //! \ingroup TLibEncoder
 //! \{
@@ -127,7 +131,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
     m_pcSbacCoder       = pcEncTop->getSbacCoder();
     m_pcBinCABAC        = pcEncTop->getBinCABAC();
-    m_pcTrQuant         = pcEncTop->getTrQuant();
+    m_pcTrQuants        = pcEncTop->getTrQuants();
 
     m_pcBitCounter      = pcEncTop->getBitCounter();
     m_pcRdCost          = pcEncTop->getRdCost();
@@ -306,8 +310,12 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(dLambda, dLambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(dLambda, dLambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(dLambda);
 #endif
 
@@ -422,8 +430,12 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(lambda, lambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(lambda, lambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(lambda);
 #endif
 
@@ -509,12 +521,16 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        // TODO: fix this option
+        assert(0);
+        #if 0
         m_pcTrQuant->clearSliceARLCnt();
         if (pcSlice->getSliceType() != I_SLICE)
         {
             Int qpBase = pcSlice->getSliceQpBase();
             pcSlice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
         }
+        #endif
     }
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
@@ -542,19 +558,39 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pcSbacCoder);
     }
 
-    UInt uiCol = 0, uiLin = 0;
+    Int uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
     assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
+
     // for every CU in slice
+    Event **waitThread = NULL;
+    const int numThreads = (iNumSubstreams>1) ? iNumSubstreams : 1;
+    if (numThreads > 1)
+    {
+        waitThread = new Event*[uiHeightInLCUs];
+        for(UInt ui=0; ui<uiHeightInLCUs; ui++)
+        {
+            waitThread[ui] = new Event[uiWidthInLCUs];
+        }
+    }
+
+#pragma omp parallel default(none) shared(waitThread, rpcPic, ppppcRDSbacCoders, pcSlice, pcBitCounters) num_threads(numThreads)
+#pragma omp for schedule(static, 1) nowait
     for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
     {
         const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
-        for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
+        for(UInt uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
         {
             UInt uiCUAddr = uiCurLineCUAddr + uiCol;
+
+            // wait for above row to reach URR
+            if (numThreads > 1 && uiLin != 0)
+            {
+                waitThread[uiLin-1][uiCol].Wait();
+            }
 
             // initialize CU encoder
             TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
@@ -613,6 +649,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_pcCuEncoders[uiSubStrm].set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
             m_pcCuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&m_pcRDGoOnSbacCoders[uiSubStrm]);
+            m_pcCuEncoders[uiSubStrm].set_pcTrQuant(&m_pcTrQuants[uiSubStrm]);
 
             // run CU encoder
             m_pcCuEncoders[uiSubStrm].compressCU(pcCU);
@@ -674,13 +711,28 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
             m_uiPicTotalBits += pcCU->getTotalBits();
             m_dPicRdCost     += pcCU->getTotalCost();
             m_uiPicDist      += pcCU->getTotalDistortion();
+
+            // set token for next thread
+            if (numThreads > 1 && uiLin != uiHeightInLCUs - 1)
+            {
+                Int flagId = (uiWidthInLCUs + uiCol - 1) % uiWidthInLCUs;
+                waitThread[uiLin][flagId].Trigger();
+            }
+
         } // end of for(uiCol...
     } // end of for(uiLin...
 
-    if (iNumSubstreams > 1)
+    if (numThreads > 1)
     {
+        for (UInt ui = 0; ui < uiHeightInLCUs - 1; ui++)
+        {
+            delete[] waitThread[ui];
+        }
+        delete [] waitThread;
+
         pcSlice->setNextSlice(true);
     }
+
     xRestoreWPparam(pcSlice);
 }
 
@@ -860,7 +912,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        assert(0);
+        #if 0
         m_pcTrQuant->storeSliceQpNext(pcSlice);
+        #endif
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {
