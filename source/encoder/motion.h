@@ -79,8 +79,6 @@ protected:
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
 
-    int blockWidth;
-    int blockHeight;
     int blockOffset;
     int partEnum;
     int searchMethod;

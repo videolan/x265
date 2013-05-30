@@ -83,8 +83,6 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     }
 #endif // if SUBSAMPLE_SAD
 
-        blockWidth = width;
-    blockHeight = height;
     blockOffset = offset;
 
     /* copy block into local buffer */
