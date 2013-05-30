@@ -59,12 +59,29 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     if (size_scale[0] == 0)
         init_scales();
 
-    partEnum = PartitionFromSizes(width, height);
+#if SUBSAMPLE_SAD
+    subsample = 0;
+    if (height > 12)
+    {
+        partEnum = PartitionFromSizes(width, height / 2);
+        sad = primitives.sad[partEnum];
+        sad_x3 = primitives.sad_x3[partEnum];
+        sad_x4 = primitives.sad_x4[partEnum];
+        subsample = 1;
 
-    sad = primitives.sad[partEnum];
-    satd = primitives.satd[partEnum];
-    sad_x3 = primitives.sad_x3[partEnum];
-    sad_x4 = primitives.sad_x4[partEnum];
+        partEnum = PartitionFromSizes(width, height);
+        satd = primitives.satd[partEnum];
+    }
+    else
+#else
+    {
+        partEnum = PartitionFromSizes(width, height);
+        sad = primitives.sad[partEnum];
+        satd = primitives.satd[partEnum];
+        sad_x3 = primitives.sad_x3[partEnum];
+        sad_x4 = primitives.sad_x4[partEnum];
+    }
+#endif
 
     blockWidth = width;
     blockHeight = height;
@@ -73,6 +90,19 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     /* copy block into local buffer */
     pixel *fencblock = fencplanes[0] + offset;
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
+#if SUBSAMPLE_SAD
+    if (subsample)
+    {
+        /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
+        fencSad = fenc + 64 * FENC_STRIDE;
+        primitives.cpyblock(width, height/2, fencSad, FENC_STRIDE, fenc, FENC_STRIDE * 2);
+    }
+    else
+    {
+        /* Else use non-sub-sampled fenc block for SAD */
+        fencSad = fenc;
+    }
+#endif
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
