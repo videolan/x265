@@ -213,9 +213,17 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
                         long_options_index = (int)i;
                         break;
                     }
+                if (long_options_index < 0)
+                {
+                    /* getopt_long already printed an error message */
+                    return true;
+                }
             }
             if (long_options_index < 0)
+            {
                 printf("x265: short option '%x' unrecognized\n", c);
+                return true;
+            }
 #define STROPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
                 (var) = optarg;
@@ -228,17 +236,25 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         }
     }
 
+    if (optind < argc && !inputfn)
+        inputfn = argv[optind++];
+    if (optind < argc && !bitstreamfn)
+        bitstreamfn = argv[optind++];
+    if (optind < argc)
+    {
+        fprintf(stderr, "x265: extra unused command arguments given <%s>\n", argv[optind]);
+        return true;
+    }
+
     if (argc <= 1 || help)
         do_help();
 
     x265::SetupPrimitives(cpuid);
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
 
-    if (optind < argc)
-        inputfn = argv[optind];
-    if (inputfn == NULL)
+    if (inputfn == NULL || bitstreamfn == NULL)
     {
-        printf("x265: no input file specified, try -V for help\n");
+        printf("x265: input or output file not specified, try -V for help\n");
         return true;
     }
     cliopt->input = x265::Input::Open(inputfn);
