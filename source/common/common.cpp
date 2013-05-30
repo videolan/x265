@@ -294,6 +294,9 @@ void x265_print_params(x265_param_t *param)
         printf("x265: RDpenalty                    : %d\n", param->rdPenalty);
     }
     printf("x265: enabled coding tools: ");
+#if FAST_MODE_DECISION
+    printf("fmd ");
+#endif
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
     TOOLOPT(param->enableRectInter, "rect");
     TOOLOPT(param->enableAMP, "amp");
