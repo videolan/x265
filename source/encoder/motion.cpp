@@ -620,6 +620,7 @@ me_hex2:
     fref_base += 2 * dy;
 #define ADD_MVCOST(k, x, y) costs[k] = (costs[k] << subsample) + p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
 #else
+#define SADS(k, x0, y0, x1, y1, x2, y2, x3, y3) \
     sad_x4(fenc, \
         fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
         fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
