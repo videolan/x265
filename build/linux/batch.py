@@ -42,7 +42,10 @@ seq = ['BQMall_832x480_60.y4m',
 'vidyo3_720p_60.y4m',
 'vidyo4_720p_60.y4m']
 
-seq = seq[:int(limit)]
+if '--all' in sys.argv:
+    sys.argv.remove('--all')
+else:
+    seq = seq[:int(limit)]
 
 fullpath = [os.path.join(tsfolder, f) for f in seq]
 for f in fullpath:
@@ -60,14 +63,10 @@ procs = []
 for i, path in enumerate(fullpath):
     base, ext = os.path.splitext(seq[i])
     bitstream = os.path.join(outfolder, base + '.hevc')
-    cmdline = ['./x265-cli', '-c', '../../cfg/encoder_I_15P.cfg',
-               '-i', path, '-b', bitstream]
+    cmdline = ['./x265', path, '-o', bitstream]
     if saverecon in ('1', 'Y'):
-        cmdline.append('-o')
+        cmdline.append('-r')
         cmdline.append(base + '_recon.y4m')
-    else:
-        cmdline.append('-o')
-        cmdline.append('')
     cmdline += sys.argv[1:]
     procs.append([bitstream, subprocess.Popen(cmdline, shell=False,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)])

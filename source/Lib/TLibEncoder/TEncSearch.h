@@ -132,12 +132,12 @@ public:
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
     Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
+    Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
 
     TEncSearch();
     virtual ~TEncSearch();
 
     Void init(TEncCfg*     pcEncCfg,
-              TComTrQuant* pcTrQuant,
               Int          iSearchRange,
               Int          bipredSearchRange,
               Int          iSearchMethod,

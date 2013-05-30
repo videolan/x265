@@ -44,10 +44,10 @@ protected:
 
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
-    TComList<TComPicYuv *>  m_cListPicYuvRec;    ///< list of reconstructed YUV files
+    TComList<TComPicYuv *>  m_cListPicYuvRec;   ///< list of reconstructed YUV files
     TComList<TComPicYuv *>  m_cListRecQueue;
     std::vector<x265_nal_t> m_nals;
-    std::ostringstream      m_packetData;
+    std::string             m_packetData;
 
     Encoder()
         : m_profile(Profile::NONE)
@@ -55,6 +55,9 @@ public:
         , m_level(Level::NONE)
         , m_iGOPSize(4)
     {
+        // preallocate these containers
+        m_packetData.reserve(4096);
+        m_nals.reserve(4);
     }
 
     virtual ~Encoder() {}

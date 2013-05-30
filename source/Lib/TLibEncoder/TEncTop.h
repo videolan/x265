@@ -81,7 +81,7 @@ private:
     TEncCavlc*              m_pcCavlcCoder;               ///< CAVLC encoder
 
     // coding tool
-    TComTrQuant             m_cTrQuant;                   ///< transform & quantization class
+    TComTrQuant*            m_pcTrQuants;                 ///< transform & quantization class
     TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
     TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
     TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
@@ -152,7 +152,7 @@ public:
 
     TEncSearch*             getPredSearchs() { return m_pcSearchs;         }
 
-    TComTrQuant*            getTrQuant() { return &m_cTrQuant;             }
+    TComTrQuant*            getTrQuants() { return m_pcTrQuants;           }
 
     TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter;          }
 

@@ -41,6 +41,7 @@
 #include <getopt.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 #include <list>
 #include <ostream>
 #include <fstream>
@@ -152,6 +153,9 @@ static void print_version()
 static void do_help()
 {
     print_version();
+    printf("Syntax: x265 [options] infile [-o] outfile\n");
+    printf("    infile can be YUV or Y4M\n");
+    printf("    outfile is raw HEVC stream only\n");
     printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
@@ -212,19 +216,37 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
                         long_options_index = (int)i;
                         break;
                     }
+                if (long_options_index < 0)
+                {
+                    /* getopt_long already printed an error message */
+                    return true;
+                }
             }
             if (long_options_index < 0)
+            {
                 printf("x265: short option '%x' unrecognized\n", c);
+                return true;
+            }
 #define STROPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
                 (var) = optarg;
 #define OPT(longname, var, argreq, flag, helptext)\
             else if (!strcmp(long_options[long_options_index].name, longname))\
-                (var) = (flag == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+                (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
         }
+    }
+
+    if (optind < argc && !inputfn)
+        inputfn = argv[optind++];
+    if (optind < argc && !bitstreamfn)
+        bitstreamfn = argv[optind++];
+    if (optind < argc)
+    {
+        fprintf(stderr, "x265: extra unused command arguments given <%s>\n", argv[optind]);
+        return true;
     }
 
     if (argc <= 1 || help)
@@ -233,11 +255,9 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
     x265::SetupPrimitives(cpuid);
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
 
-    if (optind < argc)
-        inputfn = argv[optind];
-    if (inputfn == NULL)
+    if (inputfn == NULL || bitstreamfn == NULL)
     {
-        printf("x265: no input file specified, try -V for help\n");
+        printf("x265: input or output file not specified, try -V for help\n");
         return true;
     }
     cliopt->input = x265::Input::Open(inputfn);
@@ -274,7 +294,7 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
 
     cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-    printf("Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
+    printf("x265: Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
         cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, numRemainingFrames);
 
     if (reconfn)
@@ -340,6 +360,8 @@ int main(int argc, char **argv)
     x265_nal_t *p_nal;
     int nal;
 
+    clock_t start = clock();
+
     // main encoder loop
     uint32_t frameCount = 0;
     while (pic_in)
@@ -369,8 +391,14 @@ int main(int argc, char **argv)
     x265_encoder_close(encoder);
     cliopt.bitstreamFile.close();
 
+    double elapsed = (double)(clock() - start) / CLOCKS_PER_SEC;
     double vidtime = (double)frameCount / param.iFrameRate;
-    printf("Bytes written to file: %u (%.3f kbps)\n", cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime);
+    printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
+        cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
+
+    x265_cleanup(); /* Free library singletons */
+
+    cliopt.destroy();
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
