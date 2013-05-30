@@ -295,24 +295,24 @@ bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
     int j = 0;
     int mem_cmp_size = 1024; // 32*32
 
-    int iWidth = (rand() % 4 + 1) * 4;
-
-    if (iWidth == 12)
-    {
-        iWidth = 32;
-    }
-    int iHeight = iWidth;
-
-    int tmp = rand() % 58;
-    int iPer = tmp / 6;
-    int iRem = tmp % 6;
-
-    bool useScalingList = (tmp % 2 == 0) ? false : true;
-
-    unsigned int uiLog2TrSize = (rand() % 4) + 2;
-
     for (int i = 0; i <= 5; i++)
     {
+        int iWidth = (rand() % 4 + 1) * 4;
+
+        if (iWidth == 12)
+        {
+            iWidth = 32;
+        }
+        int iHeight = iWidth;
+
+        int tmp = rand() % 58;
+        int iPer = tmp / 6;
+        int iRem = tmp % 6;
+
+        bool useScalingList = (tmp % 2 == 0) ? false : true;
+
+        unsigned int uiLog2TrSize = (rand() % 4) + 2;
+
         opt(8, mintbuf1 + j, mintbuf3, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);  // g_bitDepthY  = 8, g_bitDepthC = 8
         ref(8, mintbuf1 + j, mintbuf3, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);
 
