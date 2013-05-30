@@ -419,6 +419,67 @@ void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
         dst++;
     }
 }
+
+void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+{
+    const int* piQCoef = pSrc;
+    int* piCoef = pDes;
+
+    int g_invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+
+    if (iWidth > 32)
+    {
+        iWidth  = 32;
+        iHeight = 32;
+    }
+
+    int iShift, iAdd, iCoeffQ;
+
+    int iTransformShift = 15 - bitDepth - uiLog2TrSize;
+
+    iShift = 20 - 14 - iTransformShift;
+
+    int clipQCoef;
+
+    if (useScalingList)
+    {
+        iShift += 4;
+        int *piDequantCoef = piDequantCoefOrig;
+
+        if (iShift > iPer)
+        {
+            iAdd = 1 << (iShift - iPer - 1);
+
+            for (int n = 0; n < iWidth * iHeight; n++)
+            {
+                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
+                iCoeffQ = ((clipQCoef * piDequantCoef[n]) + iAdd) >> (iShift - iPer);
+                piCoef[n] = Clip3(-32768, 32767, iCoeffQ);
+            }
+        }
+        else
+        {
+            for (int n = 0; n < iWidth * iHeight; n++)
+            {
+                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
+                iCoeffQ   = Clip3(-32768, 32767, clipQCoef * piDequantCoef[n]);
+                piCoef[n] = Clip3(-32768, 32767, iCoeffQ << (iPer - iShift));
+            }
+        }
+    }
+    else
+    {
+        iAdd = 1 << (iShift - 1);
+        int scale = g_invQuantScales[iRem] << iPer;
+
+        for (int n = 0; n < iWidth * iHeight; n++)
+        {
+            clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
+            iCoeffQ = (clipQCoef * scale + iAdd) >> iShift;
+            piCoef[n] = Clip3(-32768, 32767, iCoeffQ);
+        }
+    }
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -436,5 +497,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+
+    p.deQuant = xDeQuant;
 }
 }
