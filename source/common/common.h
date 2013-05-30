@@ -113,6 +113,7 @@
 int  x265_check_params(x265_param_t *param);
 void x265_print_params(x265_param_t *param);
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth);
+int64_t x265_mdate(void);
 
 int dumpBuffer(void * pbuf, size_t bufsize, const char * filename);
 

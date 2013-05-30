@@ -29,6 +29,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#if _WIN32
+#include <sys/types.h>
+#include <sys/timeb.h>
+#else
+#include <sys/time.h>
+#endif
+#include <time.h>
+
 #if HIGH_BIT_DEPTH
 const int x265_bit_depth = 10;
 #else
@@ -287,8 +295,8 @@ void x265_print_params(x265_param_t *param)
     }
     printf("x265: enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
-    TOOLOPT(param->useRDOQ, "rdq");
-    TOOLOPT(param->useRDOQTS, "rdqts");
+    TOOLOPT(param->useRDOQ, "rdoq");
+    TOOLOPT(param->useRDOQTS, "rdoqts");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
@@ -306,4 +314,17 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bUseConstrainedIntraPred, "cip");
     printf("\n\n");
     fflush(stdout);
+}
+
+int64_t x265_mdate(void)
+{
+#if _WIN32
+    struct timeb tb;
+    ftime( &tb );
+    return ((int64_t)tb.time * 1000 + (int64_t)tb.millitm) * 1000;
+#else
+    struct timeval tv_date;
+    gettimeofday( &tv_date, NULL );
+    return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
+#endif
 }
