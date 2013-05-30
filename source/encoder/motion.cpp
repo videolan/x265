@@ -91,7 +91,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     if (subsample)
     {
         /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
-        fencSad = fenc + 64 * FENC_STRIDE;
+        fencSad = fenc + height * FENC_STRIDE;
         primitives.cpyblock(width, height / 2, fencSad, FENC_STRIDE, fenc, FENC_STRIDE * 2);
     }
     else

@@ -56,7 +56,6 @@ protected:
     pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
     pixel *fenc;
     pixel *fencSad;
-    int    subsample;
 #else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
@@ -82,12 +81,13 @@ protected:
     int blockOffset;
     int partEnum;
     int searchMethod;
+    int subsample;
 
     MotionEstimate& operator =(const MotionEstimate&);
 
 public:
 
-    MotionEstimate() : searchMethod(2)
+    MotionEstimate() : searchMethod(3), subsample(0)
     {
         // fenc must be 16 byte aligned
         fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
@@ -116,7 +116,11 @@ public:
 
     /* Methods called for searches */
 
+#if SUBSAMPLE_SAD
+    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample; }
+#else
     int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
+#endif
 
     int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
