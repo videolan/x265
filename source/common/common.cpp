@@ -295,13 +295,16 @@ void x265_print_params(x265_param_t *param)
     }
     printf("x265: enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
-    TOOLOPT(param->useRDOQ, "rdoq");
-    TOOLOPT(param->useRDOQTS, "rdoqts");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
-    TOOLOPT(param->useTransformSkip, "tskip");
-    TOOLOPT(param->useTransformSkipFast, "tskip-fast");
+    TOOLOPT(param->useRDOQ, "rdoq");
+    if (param->useTransformSkip)
+    {
+        TOOLOPT(param->useTransformSkip, "tskip");
+        TOOLOPT(param->useTransformSkipFast, "tskip-fast");
+        TOOLOPT(param->useRDOQTS, "rdoqts");
+    }
     if (param->bUseSAO)
     {
         TOOLOPT(param->bUseSAO, "sao");
