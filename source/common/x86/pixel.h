@@ -25,18 +25,18 @@
  * For more information, contact us at licensing@x264.com.
  *****************************************************************************/
 
-#ifndef X264_I386_PIXEL_H
-#define X264_I386_PIXEL_H
+#ifndef X265_I386_PIXEL_H
+#define X265_I386_PIXEL_H
 
 #define DECL_PIXELS( ret, name, suffix, args ) \
-    ret x264_pixel_##name##_16x16_##suffix args;\
-    ret x264_pixel_##name##_16x8_##suffix args;\
-    ret x264_pixel_##name##_8x16_##suffix args;\
-    ret x264_pixel_##name##_8x8_##suffix args;\
-    ret x264_pixel_##name##_8x4_##suffix args;\
-    ret x264_pixel_##name##_4x16_##suffix args;\
-    ret x264_pixel_##name##_4x8_##suffix args;\
-    ret x264_pixel_##name##_4x4_##suffix args;\
+    ret x265_pixel_##name##_16x16_##suffix args;\
+    ret x265_pixel_##name##_16x8_##suffix args;\
+    ret x265_pixel_##name##_8x16_##suffix args;\
+    ret x265_pixel_##name##_8x8_##suffix args;\
+    ret x265_pixel_##name##_8x4_##suffix args;\
+    ret x265_pixel_##name##_4x16_##suffix args;\
+    ret x265_pixel_##name##_4x8_##suffix args;\
+    ret x265_pixel_##name##_4x4_##suffix args;\
 
 #define DECL_X1( name, suffix ) \
     DECL_PIXELS( int, name, suffix, ( pixel *, intptr_t, pixel *, intptr_t ) )
@@ -107,91 +107,91 @@ DECL_PIXELS( uint64_t, hadamard_ac, xop,   ( pixel *pix, intptr_t i_stride ))
 DECL_PIXELS( uint64_t, hadamard_ac, avx2,  ( pixel *pix, intptr_t i_stride ))
 
 
-void x264_intra_satd_x3_4x4_mmx2   ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_4x4_mmx2    ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_4x4_sse2    ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_4x4_ssse3   ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_4x4_avx     ( pixel   *, pixel   *, int * );
-void x264_intra_satd_x3_8x8c_mmx2  ( pixel   *, pixel   *, int * );
-void x264_intra_satd_x3_8x8c_ssse3 ( uint8_t *, uint8_t *, int * );
-void x264_intra_sad_x3_8x8c_mmx2   ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_8x8c_sse2   ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_8x8c_ssse3  ( pixel   *, pixel   *, int * );
-void x264_intra_satd_x3_16x16_mmx2 ( pixel   *, pixel   *, int * );
-void x264_intra_satd_x3_16x16_ssse3( uint8_t *, uint8_t *, int * );
-void x264_intra_sad_x3_16x16_mmx2  ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_16x16_sse2  ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_16x16_ssse3 ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_16x16_avx2  ( pixel   *, pixel   *, int * );
-void x264_intra_sa8d_x3_8x8_mmx2   ( uint8_t *, uint8_t *, int * );
-void x264_intra_sa8d_x3_8x8_sse2   ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_8x8_mmx2    ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_8x8_sse2    ( pixel   *, pixel   *, int * );
-void x264_intra_sad_x3_8x8_ssse3   ( pixel   *, pixel   *, int * );
-int x264_intra_satd_x9_4x4_ssse3( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_satd_x9_4x4_sse4 ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_satd_x9_4x4_avx  ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_satd_x9_4x4_xop  ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_sad_x9_4x4_ssse3 ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_sad_x9_4x4_sse4  ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_sad_x9_4x4_avx   ( uint8_t *, uint8_t *, uint16_t * );
-int x264_intra_sa8d_x9_8x8_ssse3( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sa8d_x9_8x8_sse4 ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sa8d_x9_8x8_avx  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sad_x9_8x8_ssse3 ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sad_x9_8x8_sse4  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sad_x9_8x8_avx   ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
-int x264_intra_sad_x9_8x8_avx2  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+void x265_intra_satd_x3_4x4_mmx2   ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_4x4_mmx2    ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_4x4_sse2    ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_4x4_ssse3   ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_4x4_avx     ( pixel   *, pixel   *, int * );
+void x265_intra_satd_x3_8x8c_mmx2  ( pixel   *, pixel   *, int * );
+void x265_intra_satd_x3_8x8c_ssse3 ( uint8_t *, uint8_t *, int * );
+void x265_intra_sad_x3_8x8c_mmx2   ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_8x8c_sse2   ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_8x8c_ssse3  ( pixel   *, pixel   *, int * );
+void x265_intra_satd_x3_16x16_mmx2 ( pixel   *, pixel   *, int * );
+void x265_intra_satd_x3_16x16_ssse3( uint8_t *, uint8_t *, int * );
+void x265_intra_sad_x3_16x16_mmx2  ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_16x16_sse2  ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_16x16_ssse3 ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_16x16_avx2  ( pixel   *, pixel   *, int * );
+void x265_intra_sa8d_x3_8x8_mmx2   ( uint8_t *, uint8_t *, int * );
+void x265_intra_sa8d_x3_8x8_sse2   ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_8x8_mmx2    ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_8x8_sse2    ( pixel   *, pixel   *, int * );
+void x265_intra_sad_x3_8x8_ssse3   ( pixel   *, pixel   *, int * );
+int x265_intra_satd_x9_4x4_ssse3( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_satd_x9_4x4_sse4 ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_satd_x9_4x4_avx  ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_satd_x9_4x4_xop  ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_sad_x9_4x4_ssse3 ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_sad_x9_4x4_sse4  ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_sad_x9_4x4_avx   ( uint8_t *, uint8_t *, uint16_t * );
+int x265_intra_sa8d_x9_8x8_ssse3( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sa8d_x9_8x8_sse4 ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sa8d_x9_8x8_avx  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sad_x9_8x8_ssse3 ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sad_x9_8x8_sse4  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sad_x9_8x8_avx   ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
+int x265_intra_sad_x9_8x8_avx2  ( uint8_t *, uint8_t *, uint8_t *, uint16_t *, uint16_t * );
 
-void x264_pixel_ssd_nv12_core_mmx2( pixel *pixuv1, intptr_t stride1,
+void x265_pixel_ssd_nv12_core_mmx2( pixel *pixuv1, intptr_t stride1,
                                     pixel *pixuv2, intptr_t stride2, int width,
                                     int height, uint64_t *ssd_u, uint64_t *ssd_v );
-void x264_pixel_ssd_nv12_core_sse2( pixel *pixuv1, intptr_t stride1,
+void x265_pixel_ssd_nv12_core_sse2( pixel *pixuv1, intptr_t stride1,
                                     pixel *pixuv2, intptr_t stride2, int width,
                                     int height, uint64_t *ssd_u, uint64_t *ssd_v );
-void x264_pixel_ssd_nv12_core_avx ( pixel *pixuv1, intptr_t stride1,
+void x265_pixel_ssd_nv12_core_avx ( pixel *pixuv1, intptr_t stride1,
                                     pixel *pixuv2, intptr_t stride2, int width,
                                     int height, uint64_t *ssd_u, uint64_t *ssd_v );
-void x264_pixel_ssd_nv12_core_avx2( pixel *pixuv1, intptr_t stride1,
+void x265_pixel_ssd_nv12_core_avx2( pixel *pixuv1, intptr_t stride1,
                                     pixel *pixuv2, intptr_t stride2, int width,
                                     int height, uint64_t *ssd_u, uint64_t *ssd_v );
-void x264_pixel_ssim_4x4x2_core_mmx2( const uint8_t *pix1, intptr_t stride1,
+void x265_pixel_ssim_4x4x2_core_mmx2( const uint8_t *pix1, intptr_t stride1,
                                       const uint8_t *pix2, intptr_t stride2, int sums[2][4] );
-void x264_pixel_ssim_4x4x2_core_sse2( const pixel *pix1, intptr_t stride1,
+void x265_pixel_ssim_4x4x2_core_sse2( const pixel *pix1, intptr_t stride1,
                                       const pixel *pix2, intptr_t stride2, int sums[2][4] );
-void x264_pixel_ssim_4x4x2_core_avx ( const pixel *pix1, intptr_t stride1,
+void x265_pixel_ssim_4x4x2_core_avx ( const pixel *pix1, intptr_t stride1,
                                       const pixel *pix2, intptr_t stride2, int sums[2][4] );
-float x264_pixel_ssim_end4_sse2( int sum0[5][4], int sum1[5][4], int width );
-float x264_pixel_ssim_end4_avx ( int sum0[5][4], int sum1[5][4], int width );
-int  x264_pixel_var2_8x8_mmx2  ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
-int  x264_pixel_var2_8x8_sse2  ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
-int  x264_pixel_var2_8x8_ssse3 ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_var2_8x8_xop   ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_var2_8x8_avx2  ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_var2_8x16_mmx2 ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
-int  x264_pixel_var2_8x16_sse2 ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
-int  x264_pixel_var2_8x16_ssse3( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_var2_8x16_xop  ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_var2_8x16_avx2 ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
-int  x264_pixel_vsad_mmx2 ( pixel *src, intptr_t stride, int height );
-int  x264_pixel_vsad_sse2 ( pixel *src, intptr_t stride, int height );
-int  x264_pixel_vsad_ssse3( pixel *src, intptr_t stride, int height );
-int  x264_pixel_vsad_xop  ( pixel *src, intptr_t stride, int height );
-int  x264_pixel_vsad_avx2 ( uint16_t *src, intptr_t stride, int height );
-int x264_pixel_asd8_sse2 ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
-int x264_pixel_asd8_ssse3( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
-int x264_pixel_asd8_xop  ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
-uint64_t x264_pixel_sa8d_satd_16x16_sse2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_ssse3     ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_ssse3_atom( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_sse4      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_avx       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_xop       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
-uint64_t x264_pixel_sa8d_satd_16x16_avx2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+float x265_pixel_ssim_end4_sse2( int sum0[5][4], int sum1[5][4], int width );
+float x265_pixel_ssim_end4_avx ( int sum0[5][4], int sum1[5][4], int width );
+int  x265_pixel_var2_8x8_mmx2  ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
+int  x265_pixel_var2_8x8_sse2  ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
+int  x265_pixel_var2_8x8_ssse3 ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_var2_8x8_xop   ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_var2_8x8_avx2  ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_var2_8x16_mmx2 ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
+int  x265_pixel_var2_8x16_sse2 ( pixel *,   intptr_t, pixel *,   intptr_t, int * );
+int  x265_pixel_var2_8x16_ssse3( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_var2_8x16_xop  ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_var2_8x16_avx2 ( uint8_t *, intptr_t, uint8_t *, intptr_t, int * );
+int  x265_pixel_vsad_mmx2 ( pixel *src, intptr_t stride, int height );
+int  x265_pixel_vsad_sse2 ( pixel *src, intptr_t stride, int height );
+int  x265_pixel_vsad_ssse3( pixel *src, intptr_t stride, int height );
+int  x265_pixel_vsad_xop  ( pixel *src, intptr_t stride, int height );
+int  x265_pixel_vsad_avx2 ( uint16_t *src, intptr_t stride, int height );
+int x265_pixel_asd8_sse2 ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
+int x265_pixel_asd8_ssse3( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
+int x265_pixel_asd8_xop  ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int height );
+uint64_t x265_pixel_sa8d_satd_16x16_sse2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_ssse3     ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_ssse3_atom( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_sse4      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_avx       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_xop       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
+uint64_t x265_pixel_sa8d_satd_16x16_avx2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
 
 
 #define DECL_ADS( size, suffix ) \
-int x264_pixel_ads##size##_##suffix( int enc_dc[size], uint16_t *sums, int delta,\
+int x265_pixel_ads##size##_##suffix( int enc_dc[size], uint16_t *sums, int delta,\
                                      uint16_t *cost_mvx, int16_t *mvs, int width, int thresh );
 DECL_ADS( 4, mmx2 )
 DECL_ADS( 2, mmx2 )
