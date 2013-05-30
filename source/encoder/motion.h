@@ -128,6 +128,7 @@ public:
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
 protected:
+
     static const int COST_MAX = 1 << 28;
 
     /* HM Motion Search */
@@ -138,9 +139,15 @@ protected:
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
     inline int fpelSad(pixel *fref, const MV& fmv)
     {
+#if SUBSAMPLE_SAD
+        return sad(fencSad, FENC_STRIDE,
+                   fref + fmv.y * ref->lumaStride  + fmv.x,
+                   ref->lumaStride << subsample) << subsample;
+#else
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
+#endif
     }
 
     inline int qpelSad(const MV& qmv)
@@ -148,9 +155,15 @@ protected:
         MV fmv = qmv >> 2;
         pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
+#if SUBSAMPLE_SAD
+        return sad(fencSad, FENC_STRIDE,
+                   qfref + fmv.y * ref->lumaStride  + fmv.x,
+                   ref->lumaStride << subsample) << subsample;
+#else
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
+#endif
     }
 
     inline int qpelSatd(const MV& qmv)

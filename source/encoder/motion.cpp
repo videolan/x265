@@ -73,7 +73,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         satd = primitives.satd[partEnum];
     }
     else
-#else
+#else // if SUBSAMPLE_SAD
     {
         partEnum = PartitionFromSizes(width, height);
         sad = primitives.sad[partEnum];
@@ -81,9 +81,9 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         sad_x3 = primitives.sad_x3[partEnum];
         sad_x4 = primitives.sad_x4[partEnum];
     }
-#endif
+#endif // if SUBSAMPLE_SAD
 
-    blockWidth = width;
+        blockWidth = width;
     blockHeight = height;
     blockOffset = offset;
 
@@ -95,14 +95,14 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     {
         /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
         fencSad = fenc + 64 * FENC_STRIDE;
-        primitives.cpyblock(width, height/2, fencSad, FENC_STRIDE, fenc, FENC_STRIDE * 2);
+        primitives.cpyblock(width, height / 2, fencSad, FENC_STRIDE, fenc, FENC_STRIDE * 2);
     }
     else
     {
         /* Else use non-sub-sampled fenc block for SAD */
         fencSad = fenc;
     }
-#endif
+#endif // if SUBSAMPLE_SAD
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
@@ -151,6 +151,89 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         int cost = fpelSad(fref, _tmv) + mvcost(_tmv << 2); \
         COPY2_IF_LT(bcost, cost, bmv, _tmv); \
     } while (0)
+
+#if SUBSAMPLE_SAD
+
+#define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
+    { \
+        pixel *pix_base = fref + bmv.x + bmv.y * stride; \
+        sad_x3(fencSad, \
+               pix_base + (m0x) + (m0y) * stride, \
+               pix_base + (m1x) + (m1y) * stride, \
+               pix_base + (m2x) + (m2y) * stride, \
+               stride << subsample, costs); \
+        (costs)[0] <<= subsample; \
+        (costs)[1] <<= subsample; \
+        (costs)[2] <<= subsample; \
+        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
+        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
+        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
+    }
+
+#define COST_MV_PT_DIST_X4(m0x, m0y, p0, d0, m1x, m1y, p1, d1, m2x, m2y, p2, d2, m3x, m3y, p3, d3) \
+    { \
+        sad_x4(fencSad, \
+               fref + (m0x) + (m0y) * stride, \
+               fref + (m1x) + (m1y) * stride, \
+               fref + (m2x) + (m2y) * stride, \
+               fref + (m3x) + (m3y) * stride, \
+               stride << subsample, costs); \
+        costs[0] <<= subsample; \
+        costs[1] <<= subsample; \
+        costs[2] <<= subsample; \
+        costs[3] <<= subsample; \
+        costs[0] += mvcost(MV(m0x, m0y) << 2); \
+        costs[1] += mvcost(MV(m1x, m1y) << 2); \
+        costs[2] += mvcost(MV(m2x, m2y) << 2); \
+        costs[3] += mvcost(MV(m3x, m3y) << 2); \
+        COPY4_IF_LT(bcost, costs[0], bmv, MV(m0x, m0y), bPointNr, p0, bDistance, d0); \
+        COPY4_IF_LT(bcost, costs[1], bmv, MV(m1x, m1y), bPointNr, p1, bDistance, d1); \
+        COPY4_IF_LT(bcost, costs[2], bmv, MV(m2x, m2y), bPointNr, p2, bDistance, d2); \
+        COPY4_IF_LT(bcost, costs[3], bmv, MV(m3x, m3y), bPointNr, p3, bDistance, d3); \
+    }
+
+#define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
+    { \
+        sad_x4(fencSad, \
+               pix_base + (m0x) + (m0y) * stride, \
+               pix_base + (m1x) + (m1y) * stride, \
+               pix_base + (m2x) + (m2y) * stride, \
+               pix_base + (m3x) + (m3y) * stride, \
+               stride << subsample, costs); \
+        costs[0] <<= subsample; \
+        costs[1] <<= subsample; \
+        costs[2] <<= subsample; \
+        costs[3] <<= subsample; \
+        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
+        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
+        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
+        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
+        COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
+        COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
+        COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
+        COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
+    }
+
+#define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
+    { \
+        pixel *pix_base = fref + bmv.x + bmv.y * stride; \
+        sad_x4(fencSad, \
+               pix_base + (m0x) + (m0y) * stride, \
+               pix_base + (m1x) + (m1y) * stride, \
+               pix_base + (m2x) + (m2y) * stride, \
+               pix_base + (m3x) + (m3y) * stride, \
+               stride << subsample, costs); \
+        (costs)[0] <<= subsample; \
+        (costs)[1] <<= subsample; \
+        (costs)[2] <<= subsample; \
+        (costs)[3] <<= subsample; \
+        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
+        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
+        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
+        (costs)[3] += mvcost((bmv + MV(m3x, m3y)) << 2); \
+    }
+
+#else // if SUBSAMPLE_SAD
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
@@ -215,6 +298,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
         (costs)[3] += mvcost((bmv + MV(m3x, m3y)) << 2); \
     }
+#endif // if SUBSAMPLE_SAD
 
 #define DIA1_ITER(mx, my) \
     { \
@@ -630,11 +714,11 @@ me_hex2:
                     {
                         pixel *pix_base = fref + tmv.y * stride + tmv.x;
                         sad_x4(fenc,
-                            pix_base,
-                            pix_base + rasterDistance,
-                            pix_base + rasterDistance * 2,
-                            pix_base + rasterDistance * 3,
-                            stride, costs);
+                               pix_base,
+                               pix_base + rasterDistance,
+                               pix_base + rasterDistance * 2,
+                               pix_base + rasterDistance * 3,
+                               stride, costs);
                         costs[0] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
                         tmv.x += rasterDistance;
@@ -776,7 +860,7 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
                                iLeft,    omv.y,     4, dist);
             COST_MV_PT_DIST_X4(iRight,   omv.y,     5, dist,
                                iLeft_2,  iBottom_2, 6, dist >> 1,
-                               iRight_2, iBottom_2, 8, dist >> 1, 
+                               iRight_2, iBottom_2, 8, dist >> 1,
                                omv.x,    iBottom,   7, dist);
         }
         else // check border for each mv
@@ -922,7 +1006,8 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
        X 6 7 8 X
          X   X
     */
-    static const MV offsets[] = {
+    static const MV offsets[] =
+    {
         MV(-1, 0), MV(0, -1),
         MV(-1, -1), MV(1, -1),
         MV(-1, 0), MV(1, 0),
@@ -936,6 +1021,7 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
     MV omv = bmv;
     const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
     const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+
     if (mv1.checkRange(mvmin, mvmax))
     {
         COST_MV(mv1.x, mv1.y);
