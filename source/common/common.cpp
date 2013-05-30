@@ -295,6 +295,8 @@ void x265_print_params(x265_param_t *param)
     }
     printf("x265: enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
+    TOOLOPT(param->enableRectInter, "rect");
+    TOOLOPT(param->enableAMP, "amp");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
