@@ -222,7 +222,11 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
 
-    CONFIRM(param->log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
+    CONFIRM(param->log2ParallelMergeLevel < 2,
+        "Log2ParallelMergeLevel should be larger than or equal to 2");
+
+    CONFIRM(param->iWaveFrontSynchro && param->bUseAdaptQpSelect,
+        "Adaptive QP Select cannot be used together with WPP");
 
     return check_failed;
 }
@@ -294,14 +298,22 @@ void x265_print_params(x265_param_t *param)
         printf("x265: RDpenalty                    : %d\n", param->rdPenalty);
     }
     printf("x265: enabled coding tools: ");
+#if FAST_MODE_DECISION
+    printf("fmd ");
+#endif
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
-    TOOLOPT(param->useRDOQ, "rdoq");
-    TOOLOPT(param->useRDOQTS, "rdoqts");
+    TOOLOPT(param->enableRectInter, "rect");
+    TOOLOPT(param->enableAMP, "amp");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
-    TOOLOPT(param->useTransformSkip, "tskip");
-    TOOLOPT(param->useTransformSkipFast, "tskip-fast");
+    TOOLOPT(param->useRDOQ, "rdoq");
+    if (param->useTransformSkip)
+    {
+        TOOLOPT(param->useTransformSkip, "tskip");
+        TOOLOPT(param->useTransformSkipFast, "tskip-fast");
+        TOOLOPT(param->useRDOQTS, "rdoqts");
+    }
     if (param->bUseSAO)
     {
         TOOLOPT(param->bUseSAO, "sao");

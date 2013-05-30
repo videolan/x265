@@ -4,8 +4,11 @@ HELP("Standalone Executable Options:")
 OPT("help",            help,                            no_argument, 'h', "Show this help text")
 OPT("cpuid",           cpuid,                     required_argument,   0, "Limit SIMD instructions 2:SSE2 .. 8:AVX2 (default:0-auto)")
 OPT("threads",         threadcount,               required_argument,   0, "Number of threads for thread pool (default:CPU core count)")
+#if HIGH_BIT_DEPTH
 OPT("depth",           param->internalBitDepth,   required_argument,   0, "Bit-depth of pixels within encoder (default:input-depth)")
-OPT("wpp",             param->iWaveFrontSynchro,  required_argument,   0, "0:disabled 1:sync with TR 2:TRR etc")
+#endif
+OPT("wpp",             param->iWaveFrontSynchro,        no_argument,   0, "Enable Wavefront Parallel Processing")
+OPT("no-wpp",          param->iWaveFrontSynchro,        no_argument,   0, "Disable Wavefront Parallel Processing")
 STROPT("output",       bitstreamfn,               required_argument, 'o', "Bitstream output file name")
 
 HELP("Input Options:")
