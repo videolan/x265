@@ -2672,6 +2672,130 @@ void CDECL partialButterflyInverse32(short *src, short *dst, int shift, int line
     }
 }
 
+void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+{
+    const int* piQCoef = pSrc;
+    int* piCoef = pDes;
+
+    int g_invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
+
+    if (iWidth > 32)
+    {
+        iWidth  = 32;
+        iHeight = 32;
+    }
+
+    int iShift, iAdd;
+
+    int iTransformShift = 15 - bitDepth - uiLog2TrSize;
+
+    iShift = 6 - iTransformShift;
+
+    if (useScalingList)
+    {
+        iShift += 4;
+        int *piDequantCoef = piDequantCoefOrig;
+
+        if (iShift > iPer)
+        {
+            iAdd = 1 << (iShift - iPer - 1);
+            Vec4i IAdd(iAdd);
+
+            for (int n = 0; n < iWidth * iHeight; n = n + 8)
+            {
+                Vec4i qCoef1, qCoef2, deQuantCoef1, deQuantCoef2;
+
+                qCoef1.load(piQCoef + n);
+                qCoef2.load(piQCoef + n + 4);
+
+                deQuantCoef1.load(piDequantCoef + n);
+                deQuantCoef2.load(piDequantCoef + n + 4);
+
+                Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+                qCoef1 = extend_low(qCoef12);
+                qCoef2 = extend_high(qCoef12);
+
+                qCoef1 =  (qCoef1 *  deQuantCoef1 + IAdd) >> (iShift - iPer);
+                qCoef2 =  (qCoef2 *  deQuantCoef2 + IAdd) >> (iShift - iPer);
+
+                qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+                qCoef1 = extend_low(qCoef12);
+                qCoef1.store(piCoef + n);
+                qCoef2 = extend_high(qCoef12);
+                qCoef2.store(piCoef + n + 4);
+            }
+        }
+        else
+        {
+            for (int n = 0; n < iWidth * iHeight; n = n + 8)
+            {
+                Vec4i qCoef1, qCoef2, deQuantCoef1, deQuantCoef2;
+
+                qCoef1.load(piQCoef + n);
+                qCoef2.load(piQCoef + n + 4);
+
+                deQuantCoef1.load(piDequantCoef + n);
+                deQuantCoef2.load(piDequantCoef + n + 4);
+
+                Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+                qCoef1 = extend_low(qCoef12);
+                qCoef2 = extend_high(qCoef12);
+
+                qCoef1 = qCoef1 * deQuantCoef1;
+                qCoef2 = qCoef2 * deQuantCoef2;
+
+                qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+                qCoef1 = extend_low(qCoef12);
+                qCoef2 = extend_high(qCoef12);
+
+                qCoef1 = qCoef1 << (iPer - iShift);
+                qCoef2 = qCoef2 << (iPer - iShift);
+
+                qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+                qCoef1 = extend_low(qCoef12);
+                qCoef1.store(piCoef + n);
+                qCoef2 = extend_high(qCoef12);
+                qCoef2.store(piCoef + n + 4);
+            }
+        }
+    }
+    else
+    {
+        iAdd = 1 << (iShift - 1);
+        int scale = g_invQuantScales[iRem] << iPer;
+
+        Vec4i Scale(scale);
+        Vec4i IAdd(iAdd);
+
+        for (int n = 0; n < iWidth * iHeight; n = n + 8)
+        {
+            Vec4i qCoef1, qCoef2;
+            qCoef1.load(piQCoef + n);
+            qCoef2.load(piQCoef + n + 4);
+
+            Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+            qCoef1 = extend_low(qCoef12);
+            qCoef2 = extend_high(qCoef12);
+
+            qCoef1 = (qCoef1 * Scale + IAdd) >> iShift;
+            qCoef2 = (qCoef2 * Scale + IAdd) >> iShift;
+
+            qCoef12 = compress_saturated(qCoef1, qCoef2);
+
+            qCoef1 = extend_low(qCoef12);
+            qCoef1.store(piCoef + n);
+            qCoef2 = extend_high(qCoef12);
+            qCoef2.store(piCoef + n + 4);
+        }
+    }
+}
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -2684,4 +2808,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
+
+    p.deQuant = xDeQuant;
 }

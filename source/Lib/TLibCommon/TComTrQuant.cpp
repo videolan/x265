@@ -636,7 +636,6 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
         }
         else
         {
-
             partialButterfly4(block, tmp, shift_1st, iHeight);
             partialButterfly4(tmp, coeff, shift_2nd, iWidth);
         }
@@ -1082,7 +1081,22 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
         return;
     }
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
+
+#if 0
     xDeQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, scalingListType);
+#endif
+
+#if 1
+    // Values need to pass as input parameter in xDeQuant
+    Int iPer = m_cQP.m_iPer;
+    Int iRem = m_cQP.m_iRem;
+    Bool useScalingList = getUseScalingList();
+    UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
+    Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
+
+    x265::primitives.deQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
+#endif
+
     if (useTransformSkip == true)
     {
         xITransformSkip(bitDepth, m_plTempCoeff, rpcResidual, uiStride, uiWidth, uiHeight);
@@ -2030,7 +2044,7 @@ __inline Double TComTrQuant::xGetICRateCost(UInt uiAbsLevel,
     return xGetICost(iRate);
 }
 
-__inline Int TComTrQuant::xGetICRate(UInt uiAbsLevel,
+__inline Int TComTrQuant::xGetICRate(UInt   uiAbsLevel,
                                      UShort ui16CtxNumOne,
                                      UShort ui16CtxNumAbs,
                                      UShort ui16AbsGoRice,
