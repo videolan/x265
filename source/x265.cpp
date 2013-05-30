@@ -253,6 +253,10 @@ bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
         do_help();
 
     x265::SetupPrimitives(cpuid);
+    if (param->iWaveFrontSynchro == 0)
+    {
+        threadcount = 1;
+    }
     cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
 
     if (inputfn == NULL || bitstreamfn == NULL)

@@ -468,6 +468,10 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
     }
 
     x265::SetupPrimitives(cpuid);
+    if (iWaveFrontSynchro == 0)
+    {
+        threadcount = 1;
+    }
     m_poolHandle = x265::ThreadPool::AllocThreadPool(threadcount);
 
     /*
