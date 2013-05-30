@@ -356,7 +356,11 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
+#if SUBSAMPLE_SAD
+        int cost = (sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample) + mvcost(0);
+#else
         int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
+#endif
         if (cost < bcost)
         {
             bcost = cost;
