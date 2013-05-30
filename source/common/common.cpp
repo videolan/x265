@@ -222,7 +222,11 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
 
-    CONFIRM(param->log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
+    CONFIRM(param->log2ParallelMergeLevel < 2,
+        "Log2ParallelMergeLevel should be larger than or equal to 2");
+
+    CONFIRM(param->iWaveFrontSynchro && param->bUseAdaptQpSelect,
+        "Adaptive QP Select cannot be used together with WPP");
 
     return check_failed;
 }
