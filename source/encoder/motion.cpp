@@ -59,12 +59,29 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     if (size_scale[0] == 0)
         init_scales();
 
-    partEnum = PartitionFromSizes(width, height);
+#if SUBSAMPLE_SAD
+    subsample = 0;
+    if (height > 12)
+    {
+        partEnum = PartitionFromSizes(width, height / 2);
+        sad = primitives.sad[partEnum];
+        sad_x3 = primitives.sad_x3[partEnum];
+        sad_x4 = primitives.sad_x4[partEnum];
+        subsample = 1;
 
-    sad = primitives.sad[partEnum];
-    satd = primitives.satd[partEnum];
-    sad_x3 = primitives.sad_x3[partEnum];
-    sad_x4 = primitives.sad_x4[partEnum];
+        partEnum = PartitionFromSizes(width, height);
+        satd = primitives.satd[partEnum];
+    }
+    else
+#else
+    {
+        partEnum = PartitionFromSizes(width, height);
+        sad = primitives.sad[partEnum];
+        satd = primitives.satd[partEnum];
+        sad_x3 = primitives.sad_x3[partEnum];
+        sad_x4 = primitives.sad_x4[partEnum];
+    }
+#endif
 
     blockWidth = width;
     blockHeight = height;
@@ -73,6 +90,19 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     /* copy block into local buffer */
     pixel *fencblock = fencplanes[0] + offset;
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
+#if SUBSAMPLE_SAD
+    if (subsample)
+    {
+        /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
+        fencSad = fenc + 64 * FENC_STRIDE;
+        primitives.cpyblock(width, height/2, fencSad, FENC_STRIDE, fenc, FENC_STRIDE * 2);
+    }
+    else
+    {
+        /* Else use non-sub-sampled fenc block for SAD */
+        fencSad = fenc;
+    }
+#endif
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
@@ -156,19 +186,19 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV_X4(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y) \
     { \
         sad_x4(fenc, \
-               fref + (m0x) + (m0y) * stride, \
-               fref + (m1x) + (m1y) * stride, \
-               fref + (m2x) + (m2y) * stride, \
-               fref + (m3x) + (m3y) * stride, \
+               pix_base + (m0x) + (m0y) * stride, \
+               pix_base + (m1x) + (m1y) * stride, \
+               pix_base + (m2x) + (m2y) * stride, \
+               pix_base + (m3x) + (m3y) * stride, \
                stride, costs); \
-        costs[0] += mvcost(MV(m0x, m0y) << 2); \
-        costs[1] += mvcost(MV(m1x, m1y) << 2); \
-        costs[2] += mvcost(MV(m2x, m2y) << 2); \
-        costs[3] += mvcost(MV(m3x, m3y) << 2); \
-        COPY2_IF_LT(bcost, costs[0], bmv, MV(m0x, m0y)); \
-        COPY2_IF_LT(bcost, costs[1], bmv, MV(m1x, m1y)); \
-        COPY2_IF_LT(bcost, costs[2], bmv, MV(m2x, m2y)); \
-        COPY2_IF_LT(bcost, costs[3], bmv, MV(m3x, m3y)); \
+        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
+        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
+        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
+        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
+        COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
+        COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
+        COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
+        COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
     }
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
@@ -253,20 +283,17 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         }
     }
 
-    if (searchMethod != X265_STAR_SEARCH)
+    // measure SAD cost at each QPEL motion vector candidate
+    for (int i = 0; i < numCandidates; i++)
     {
-        // measure SAD cost at each QPEL motion vector candidate
-        for (int i = 0; i < numCandidates; i++)
+        MV m = mvc[i].clipped(qmvmin, qmvmax);
+        if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            MV m = mvc[i].clipped(qmvmin, qmvmax);
-            if (m.notZero() && m != pmv && m != bestpre) // check already measured
+            int cost = qpelSad(m) + mvcost(m);
+            if (cost < bprecost)
             {
-                int cost = qpelSad(m) + mvcost(m);
-                if (cost < bprecost)
-                {
-                    bprecost = cost;
-                    bestpre = m;
-                }
+                bprecost = cost;
+                bestpre = m;
             }
         }
     }
@@ -381,6 +408,7 @@ me_hex2:
 
         /* refine predictors */
         omv = bmv;
+        pixel *pix_base = fref + omv.x + omv.y * stride;
         ucost1 = bcost;
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.notZero())
@@ -590,8 +618,6 @@ me_hex2:
         }
 
         const int rasterDistance = 5;
-        const int iteration = 15;
-        int16_t x1, x2, x3, x4;
         if (bDistance > rasterDistance)
         {
             // raster search refinement if distance was too big
@@ -600,24 +626,26 @@ me_hex2:
             {
                 for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
                 {
-                    //check valid for to run sad_x4 - for example if search range is 32 then number of iteration is 13
-                    //in this case sad_x4 will run only three times (3 * 4 = 13) and reamaing one (13 -12 = 1) call need to run COST_MV alone
-                    if ((tmv.x + iteration) <= mvmax.x)
+                    if (tmv.x + (rasterDistance * 3) <= mvmax.x)
                     {
-                        x1 = tmv.x;
+                        pixel *pix_base = fref + tmv.y * stride + tmv.x;
+                        sad_x4(fenc,
+                            pix_base,
+                            pix_base + rasterDistance,
+                            pix_base + rasterDistance * 2,
+                            pix_base + rasterDistance * 3,
+                            stride, costs);
+                        costs[0] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[0], bmv, tmv);
                         tmv.x += rasterDistance;
-                        x2 = tmv.x;
+                        costs[1] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[1], bmv, tmv);
                         tmv.x += rasterDistance;
-                        x3 = tmv.x;
+                        costs[2] += mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[2], bmv, tmv);
                         tmv.x += rasterDistance;
-                        x4 = tmv.x;
-
-                        COST_MV_X4(x1, tmv.y,
-                                   x2, tmv.y,
-                                   x3, tmv.y,
-                                   x4, tmv.y);
-
-                        x1 = x2 = x3 = x4 = 0;
+                        costs[3] += mvcost(tmv << 3);
+                        COPY2_IF_LT(bcost, costs[3], bmv, tmv);
                     }
                     else
                         COST_MV(tmv.x, tmv.y);
@@ -748,7 +776,7 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
                                iLeft,    omv.y,     4, dist);
             COST_MV_PT_DIST_X4(iRight,   omv.y,     5, dist,
                                iLeft_2,  iBottom_2, 6, dist >> 1,
-                               iRight_2, iBottom_2, 8, dist >> 1,
+                               iRight_2, iBottom_2, 8, dist >> 1, 
                                omv.x,    iBottom,   7, dist);
         }
         else // check border for each mv
@@ -894,8 +922,7 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
        X 6 7 8 X
          X   X
     */
-    static const MV offsets[] =
-    {
+    static const MV offsets[] = {
         MV(-1, 0), MV(0, -1),
         MV(-1, -1), MV(1, -1),
         MV(-1, 0), MV(1, 0),
@@ -909,7 +936,6 @@ void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
     MV omv = bmv;
     const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
     const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
-
     if (mv1.checkRange(mvmin, mvmax))
     {
         COST_MV(mv1.x, mv1.y);
