@@ -609,16 +609,26 @@ me_hex2:
                 int16_t dir = 0;
                 pixel *fref_base = fref + omv.x + (omv.y - 4 * i) * stride;
                 size_t dy = (size_t)i * stride;
-
+#if SUBSAMPLE_SAD
 #define SADS(k, x0, y0, x1, y1, x2, y2, x3, y3) \
-    sad_x4(fenc, \
+    sad_x4(fencSad, \
            fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
            fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
            fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
            fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
-           stride, costs + 4 * k); \
+           stride << subsample, costs + 4 * k); \
     fref_base += 2 * dy;
+#define ADD_MVCOST(k, x, y) costs[k] = (costs[k] << subsample) + p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
+#else
+    sad_x4(fenc, \
+        fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
+        fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
+        fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
+        fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
+        stride, costs + 4 * k); \
+        fref_base += 2 * dy;
 #define ADD_MVCOST(k, x, y) costs[k] += p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
+#endif
 #define MIN_MV(k, x, y)     COPY2_IF_LT(bcost, costs[k], dir, x * 16 + (y & 15))
 
                 SADS(0, +0, -4, +0, +4, -2, -3, +2, -3);
@@ -714,12 +724,31 @@ me_hex2:
                     if (tmv.x + (rasterDistance * 3) <= mvmax.x)
                     {
                         pixel *pix_base = fref + tmv.y * stride + tmv.x;
-                        sad_x4(fenc,
+#if SUBSAMPLE_SAD
+                        sad_x4(fencSad,
                                pix_base,
                                pix_base + rasterDistance,
                                pix_base + rasterDistance * 2,
                                pix_base + rasterDistance * 3,
-                               stride, costs);
+                               stride << subsample, costs);
+                        costs[0] = (costs[0] << subsample) + mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[0], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[1] = (costs[1] << subsample) + mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[1], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[2] = (costs[2] << subsample) + mvcost(tmv << 2);
+                        COPY2_IF_LT(bcost, costs[2], bmv, tmv);
+                        tmv.x += rasterDistance;
+                        costs[3] = (costs[3] << subsample) + mvcost(tmv << 3);
+                        COPY2_IF_LT(bcost, costs[3], bmv, tmv);
+#else
+                        sad_x4(fenc,
+                            pix_base,
+                            pix_base + rasterDistance,
+                            pix_base + rasterDistance * 2,
+                            pix_base + rasterDistance * 3,
+                            stride, costs);
                         costs[0] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
                         tmv.x += rasterDistance;
@@ -731,6 +760,7 @@ me_hex2:
                         tmv.x += rasterDistance;
                         costs[3] += mvcost(tmv << 3);
                         COPY2_IF_LT(bcost, costs[3], bmv, tmv);
+#endif
                     }
                     else
                         COST_MV(tmv.x, tmv.y);
