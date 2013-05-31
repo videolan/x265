@@ -5037,7 +5037,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             memcpy(bestArlCoeffU, pcArlCoeffCurrU, sizeof(TCoeff) * uiNumSamplesChro);
             memcpy(bestArlCoeffV, pcArlCoeffCurrV, sizeof(TCoeff) * uiNumSamplesChro);
 
-            Pel bestResiU[32 * 32], bestResiV[32 * 32];
+            Short bestResiU[32 * 32], bestResiV[32 * 32];
             for (Int i = 0; i < trHeightC; ++i)
             {
                 memcpy(&bestResiU[i * trWidthC], pcResiCurrU + i * resiCStride, sizeof(Short) * trWidthC);
