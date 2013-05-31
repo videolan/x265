@@ -249,6 +249,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
             m_GOPList[i].m_numRefPics = 1;
             m_GOPList[i].m_referencePics[0] = -1;
             m_GOPList[i].m_usedByCurrPic[0] = 1;
+            m_GOPList[i].m_sliceType = 'P';
             if (i > 0)
             {
                 m_GOPList[i].m_interRPSPrediction = 1;
