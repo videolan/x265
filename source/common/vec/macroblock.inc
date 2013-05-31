@@ -1244,6 +1244,9 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
     __m128i c32_n82_78_n73_67 = _mm_set_epi32(-82, 78, -73, 67);
     __m128i c32_n90_90_n88_85 = _mm_set_epi32(-90, 90, -88, 85);
 
+    // to avoid VC9-x64 compiler bugs
+    int tmp;
+
     for (int j = 0; j < line; j++)
     {
         __m128i src_tmp0 = _mm_load_si128((const __m128i*)src);
@@ -1330,10 +1333,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_4_12_20_28 = _mm_set_epi32(dst_28xline, dst_20xline, dst_12xline, dst_4xline);
         dst_4_12_20_28  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_4_12_20_28), nshift);
 
-        dst[4 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 0);
-        dst[12 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 1);
-        dst[20 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 2);
-        dst[28 * line] = (short)_mm_extract_epi32(dst_4_12_20_28, 3);
+        tmp = _mm_extract_epi32(dst_4_12_20_28, 0);
+        dst[4 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_4_12_20_28, 1);
+        dst[12 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_4_12_20_28, 2);
+        dst[20 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_4_12_20_28, 3);
+        dst[28 * line] = (short)tmp;
 
         __m128i dst_tmp4 = _mm_mullo_epi32(c32_90_87_80_70, EO_0_3);
         __m128i dst_tmp5 = _mm_mullo_epi32(c32_57_43_25_9, EO_4_7);
@@ -1390,10 +1397,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_2_6_10_14 = _mm_set_epi32(dst_14xline, dst_10xline, dst_6xline, dst_2xline);
         dst_2_6_10_14  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_2_6_10_14), nshift);
 
-        dst[2 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 0);
-        dst[6 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 1);
-        dst[10 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 2);
-        dst[14 * line] = (short)_mm_extract_epi32(dst_2_6_10_14, 3);
+        tmp = _mm_extract_epi32(dst_2_6_10_14, 0);
+        dst[2 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_2_6_10_14, 1);
+        dst[6 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_2_6_10_14, 2);
+        dst[10 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_2_6_10_14, 3);
+        dst[14 * line] = (short)tmp;
 
         __m128i dst_tmp12 = _mm_mullo_epi32(c32_57_n80_n25_90, EO_0_3);
         __m128i dst_tmp13 = _mm_mullo_epi32(c32_n9_n87_43_70, EO_4_7);
@@ -1450,10 +1461,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_18_22_26_30 = _mm_set_epi32(dst_30xline, dst_26xline, dst_22xline, dst_18xline);
         dst_18_22_26_30  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_18_22_26_30), nshift);
 
-        dst[18 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 0);
-        dst[22 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 1);
-        dst[26 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 2);
-        dst[30 * line] = (short)_mm_extract_epi32(dst_18_22_26_30, 3);
+        tmp = _mm_extract_epi32(dst_18_22_26_30, 0);
+        dst[18 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_18_22_26_30, 1);
+        dst[22 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_18_22_26_30, 2);
+        dst[26 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_18_22_26_30, 3);
+        dst[30 * line] = (short)tmp;
 
         __m128i dst_tmp20 = _mm_mullo_epi32(c32_90_90_88_85, O_0_3);
         __m128i dst_tmp21 = _mm_mullo_epi32(c32_82_78_73_67, O_4_7);
@@ -1550,10 +1565,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_1_3_5_7 = _mm_set_epi32(dst_7xline, dst_5xline, dst_3xline, dst_1xline);
         dst_1_3_5_7  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_1_3_5_7), nshift);
 
-        dst[1 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 0);
-        dst[3 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 1);
-        dst[5 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 2);
-        dst[7 * line] = (short)_mm_extract_epi32(dst_1_3_5_7, 3);
+        tmp = _mm_extract_epi32(dst_1_3_5_7, 0);
+        dst[1 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_1_3_5_7, 1);
+        dst[3 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_1_3_5_7, 2);
+        dst[5 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_1_3_5_7, 3);
+        dst[7 * line] = (short)tmp;
 
         __m128i dst_tmp36 = _mm_mullo_epi32(c32_n90_n54_22_82, O_0_3);
         __m128i dst_tmp37 = _mm_mullo_epi32(c32_85_78_13_n61, O_4_7);
@@ -1649,10 +1668,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_9_11_13_15 = _mm_set_epi32(dst_15xline, dst_13xline, dst_11xline, dst_9xline);
         dst_9_11_13_15  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_9_11_13_15), nshift);
 
-        dst[9 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 0);
-        dst[11 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 1);
-        dst[13 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 2);
-        dst[15 * line] = (short)_mm_extract_epi32(dst_9_11_13_15, 3);
+        tmp = _mm_extract_epi32(dst_9_11_13_15, 0);
+        dst[9 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_9_11_13_15, 1);
+        dst[11 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_9_11_13_15, 2);
+        dst[13 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_9_11_13_15, 3);
+        dst[15 * line] = (short)tmp;
 
         __m128i dst_tmp52 = _mm_mullo_epi32(c32_82_n46_n73_61, O_0_3);
         __m128i dst_tmp53 = _mm_mullo_epi32(c32_90_n13_n88_31, O_4_7);
@@ -1749,10 +1772,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_17_19_21_23 = _mm_set_epi32(dst_23xline, dst_21xline, dst_19xline, dst_17xline);
         dst_17_19_21_23  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_17_19_21_23), nshift);
 
-        dst[17 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 0);
-        dst[19 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 1);
-        dst[21 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 2);
-        dst[23 * line] = (short)_mm_extract_epi32(dst_17_19_21_23, 3);
+        tmp = _mm_extract_epi32(dst_17_19_21_23, 0);
+        dst[17 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_17_19_21_23, 1);
+        dst[19 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_17_19_21_23, 2);
+        dst[21 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_17_19_21_23, 3);
+        dst[23 * line] = (short)tmp;
 
         __m128i dst_tmp68 = _mm_mullo_epi32(c32_n61_90_n78_31, O_0_3);
         __m128i dst_tmp69 = _mm_mullo_epi32(c32_82_n88_54_4, O_4_7);
@@ -1849,10 +1876,14 @@ void CDECL partialButterfly32(short *src, short *dst, int nshift, int line)
         __m128i dst_25_27_29_31 = _mm_set_epi32(dst_31xline, dst_29xline, dst_27xline, dst_25xline);
         dst_25_27_29_31  = _mm_srai_epi32(_mm_add_epi32(c32_add, dst_25_27_29_31), nshift);
 
-        dst[25 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 0);
-        dst[27 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 1);
-        dst[29 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 2);
-        dst[31 * line] = (short)_mm_extract_epi32(dst_25_27_29_31, 3);
+        tmp = _mm_extract_epi32(dst_25_27_29_31, 0);
+        dst[25 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_25_27_29_31, 1);
+        dst[27 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_25_27_29_31, 2);
+        dst[29 * line] = (short)tmp;
+        tmp = _mm_extract_epi32(dst_25_27_29_31, 3);
+        dst[31 * line] = (short)tmp;
 
         src += 32;
         dst++;
