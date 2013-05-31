@@ -84,8 +84,6 @@ struct CLIOptions
     fstream bitstreamFile;
     int cli_log_level;
 
-    uint32_t inputBitDepth;             ///< bit-depth of input file
-    uint32_t outputBitDepth;            ///< bit-depth of output reconstructed images file
     uint32_t frameSkip;                 ///< number of frames to skip from the beginning
     uint32_t framesToBeEncoded;         ///< number of frames to encode
 
@@ -99,7 +97,6 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
-        inputBitDepth = outputBitDepth = 8;
         framesToBeEncoded = frameSkip = 0;
         essentialBytes = 0;
         totalBytes = 0;
@@ -263,6 +260,8 @@ struct CLIOptions
     {
         int help = 0;
         int cpuid = 0;
+        uint32_t inputBitDepth = 8;
+        uint32_t outputBitDepth = 8;
         const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
 
         x265_param_default(param);
@@ -349,18 +348,18 @@ struct CLIOptions
             param->iSourceWidth = this->input->getWidth();
             param->iSourceHeight = this->input->getHeight();
             param->iFrameRate = (int)this->input->getRate();
-            this->inputBitDepth = 8;
+            inputBitDepth = 8;
         }
         else
         {
             this->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
-            this->input->setBitDepth(this->inputBitDepth);
+            this->input->setBitDepth(inputBitDepth);
         }
         assert(param->iSourceHeight && param->iSourceWidth);
 
         /* rules for input, output and internal bitdepths as per help text */
-        if (!param->internalBitDepth) { param->internalBitDepth = this->inputBitDepth; }
-        if (!this->outputBitDepth) { this->outputBitDepth = param->internalBitDepth; }
+        if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
+        if (!outputBitDepth) { outputBitDepth = param->internalBitDepth; }
 
         uint32_t numRemainingFrames = (uint32_t)this->input->guessFrameCount();
 
@@ -376,7 +375,7 @@ struct CLIOptions
 
         if (reconfn)
         {
-            this->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, this->outputBitDepth, param->iFrameRate);
+            this->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, outputBitDepth, param->iFrameRate);
             if (this->recon->isFail())
             {
                 log(X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -386,7 +385,7 @@ struct CLIOptions
         }
 
 #if !HIGH_BIT_DEPTH
-        if (this->inputBitDepth != 8 || this->outputBitDepth != 8 || param->internalBitDepth != 8)
+        if (inputBitDepth != 8 || outputBitDepth != 8 || param->internalBitDepth != 8)
         {
             log(X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
             return true;
@@ -399,6 +398,8 @@ struct CLIOptions
             log(X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
             return true;
         }
+
+        x265_set_globals(param, inputBitDepth);
 
         return false;
     }
@@ -418,8 +419,6 @@ int main(int argc, char **argv)
     // TODO: needs proper logging file handle with log levels, etc
     if (cliopt.parse(argc, argv, &param))
         exit(1);
-
-    x265_set_globals(&param, cliopt.inputBitDepth);
 
     if (x265_check_params(&param))
         exit(1);

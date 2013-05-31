@@ -12,7 +12,7 @@ OPT("depth",           param->internalBitDepth,   required_argument,   0, "Bit-d
 
 HELP("Input Options:")
 STROPT("input",        inputfn,                   required_argument,   0, "Raw YUV or Y4M input file name")
-OPT("input-depth",     this->inputBitDepth,       required_argument,   0, "Bit-depth of input file (YUV only) (default: 8)")
+OPT("input-depth",     inputBitDepth,             required_argument,   0, "Bit-depth of input file (YUV only) (default: 8)")
 OPT("width",           param->iSourceWidth,       required_argument,   0, "Source picture width, auto-detect if Y4M")
 OPT("height",          param->iSourceHeight,      required_argument,   0, "Source picture height, auto-detect if Y4M")
 OPT("rate",            param->iFrameRate,         required_argument,   0, "Frame rate, auto-detect if Y4M")
@@ -21,7 +21,7 @@ OPT("frames",          this->framesToBeEncoded,   required_argument, 'f', "Numbe
 
 HELP("Reconstructed video options (debugging):")
 STROPT("recon",        reconfn,                   required_argument, 'r', "Reconstructed image YUV or Y4M output file name")
-OPT("recon-depth",     this->outputBitDepth,      required_argument,   0, "Bit-depth of output file (default:InternalBitDepth)")
+OPT("recon-depth",     outputBitDepth,            required_argument,   0, "Bit-depth of output file (default:InternalBitDepth)")
 
 HELP("Quad-Tree analysis:")
 OPT("wpp",             param->iWaveFrontSynchro,               no_argument, 0, "Enable Wavefront Parallel Processing")
