@@ -12,7 +12,7 @@ if (MSVC_VERSION EQUAL 1700) # VC11
     set(PRIMITIVES ${PRIMITIVES} sse41.cpp sse42.cpp avx.cpp avx2.cpp)
     if (NOT X64)
         # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
-        set_source_files_properties(sse41.cpp sse42.cpp /arch:SSE2)
+        set_source_files_properties(sse41.cpp sse42.cpp PROPERTIES COMPILE_FLAGS /arch:SSE2)
     endif()
     set_source_files_properties(avx.cpp avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
 endif()
