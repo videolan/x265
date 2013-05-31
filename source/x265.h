@@ -158,7 +158,7 @@ typedef struct x265_param_t
     // coding tools (bit-depth)
     int       internalBitDepth;                 ///< bit-depth codec operates at
 
-    int       iWaveFrontSynchro;                ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+    int       iWaveFrontSynchro;                ///< Enable Wavefront Parallel Processing
 
     // source specification
     int       iFrameRate;                       ///< source frame-rates (Hz)
