@@ -4263,8 +4263,11 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     }
 
     Bool      bHighPass    = pcCU->getSlice()->getDepth() ? true : false;
-    UInt      uiBits       = 0, uiBitsBest = 0;
-    UInt      uiDistortion = 0, uiDistortionBest = 0;
+    UInt      uiBits       = 0;
+    UInt      uiDistortion = 0;
+
+    //UInt      uiBitsBest = 0;
+    //UInt      uiDistortionBest = 0;
 
     UInt      uiWidth      = pcCU->getWidth(0);
     UInt      uiHeight     = pcCU->getHeight(0);
@@ -4387,8 +4390,8 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
             xSetResidualQTData(pcCU, 0, 0, 0, rpcYuvResiBest, pcCU->getDepth(0), true);
         }
 
-        uiBitsBest       = uiBits;
-        uiDistortionBest = uiDistortion;
+        //uiBitsBest       = uiBits;
+        //uiDistortionBest = uiDistortion;
         dCostBest        = dCost;
         qpBest           = qp;
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
