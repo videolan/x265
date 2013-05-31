@@ -47,6 +47,7 @@ void Encoder::configure(x265_param_t *param)
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
     x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads\n", getThreadPool()->GetThreadCount());
 
+    setLogLevel(param->logLevel);
     setFrameRate(param->iFrameRate);
     setSourceWidth(param->iSourceWidth);
     setSourceHeight(param->iSourceHeight);

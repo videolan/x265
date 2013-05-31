@@ -97,6 +97,7 @@ std::istringstream &operator >>(std::istringstream &in, GOPEntry &entry);     //
 class TEncCfg
 {
 protected:
+    Int       m_logLevel;
 
     //==== File I/O ========
     Int       m_iFrameRate;
@@ -273,6 +274,10 @@ public:
     Void      setProfile(Profile::Name profile) { m_profile = profile; }
 
     Void      setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
+
+    Void      setLogLevel(Int l)       { m_logLevel = l; }
+
+    Int       getLogLevel() const      { return m_logLevel; }
 
     Void      setFrameRate(Int i)      { m_iFrameRate = i; }
 

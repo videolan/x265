@@ -1533,11 +1533,13 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_bFirst = false;
         m_iNumPicCoded++;
         m_totalCoded++;
-#if ENABLE_PER_SLICE_LOGGING
-        /* logging: insert a newline at end of picture period */
-        printf("\n");
-        fflush(stdout);
-#endif
+
+        if (m_pcCfg->getLogLevel() >= X265_LOG_DEBUG)
+        {
+            /* logging: insert a newline at end of picture period */
+            printf("\n");
+            fflush(stdout);
+        }
         delete[] pcSubstreamsOut;
     }
 
@@ -1880,7 +1882,9 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
         m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
 
-#if ENABLE_PER_SLICE_LOGGING
+    if (m_pcCfg->getLogLevel() < X265_LOG_DEBUG)
+        return;
+
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
     if (!pcSlice->isReferenced()) c += 32;
 
@@ -1907,7 +1911,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
         printf("]");
     }
-#endif
 }
 
 /** Function for deciding the nal_unit_type.
