@@ -36,6 +36,7 @@
 #include <vld.h>
 #endif
 
+#include <signal.h>
 #include <getopt.h>
 #include <assert.h>
 #include <string.h>
@@ -65,6 +66,16 @@ static struct option long_options[] =
 #undef STROPT
 #undef HELP
 };
+
+/* Ctrl-C handler */
+static volatile int b_ctrl_c = 0;
+static int          b_exit_on_ctrl_c = 0;
+static void sigint_handler( int a )
+{
+    if( b_exit_on_ctrl_c )
+        exit(0);
+    b_ctrl_c = 1;
+}
 
 struct CLIOptions
 {
@@ -418,9 +429,12 @@ int main(int argc, char **argv)
     x265_t *encoder = x265_encoder_open(&param);
     if (!encoder)
     {
-        fprintf(stderr, "x265: failed to open encoder\n");
+        cliopt.log(X265_LOG_ERROR, "failed to open encoder\n");
         exit(1);
     }
+
+    /* Control-C handler */
+    signal( SIGINT, sigint_handler );
 
     x265_picture_t pic_orig, pic_recon;
     x265_picture_t *pic_in = &pic_orig;
@@ -430,7 +444,8 @@ int main(int argc, char **argv)
 
     // main encoder loop
     uint32_t frameCount = 0;
-    while (pic_in)
+    uint32_t outFrameCount = 0;
+    while (pic_in && !b_ctrl_c)
     {
         // read input YUV file
         if (frameCount < cliopt.framesToBeEncoded && cliopt.input->readPicture(pic_orig))
@@ -440,7 +455,10 @@ int main(int argc, char **argv)
 
         int iNumEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_out);
         if (iNumEncoded && pic_out)
+        {
             cliopt.recon->writePicture(pic_recon);
+            outFrameCount++;
+        }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
         // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
@@ -448,17 +466,27 @@ int main(int argc, char **argv)
     }
 
     /* Flush the encoder */
-    while (x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_out))
+    while (!b_ctrl_c && x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_out))
     {
         if (pic_out)
+        {
             cliopt.recon->writePicture(pic_recon);
+            outFrameCount++;
+        }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
         cliopt.printStatus(frameCount, &param);
     }
 
+    /* clear progress report */
+    fprintf(stderr, "                                                                               \r");
+    fprintf(stderr, "\n");
+
     x265_encoder_close(encoder);
     cliopt.bitstreamFile.close();
+
+    if (b_ctrl_c)
+        fprintf(stderr, "aborted at input frame %d, output frame %d\n", cliopt.frameSkip + frameCount, outFrameCount);
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)frameCount / param.iFrameRate;
