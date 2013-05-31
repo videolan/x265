@@ -155,7 +155,7 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 
 typedef struct x265_param_t
 {
-    // coding tools (bit-depth)
+    int       logLevel;
     int       internalBitDepth;                 ///< bit-depth codec operates at
 
     int       iWaveFrontSynchro;                ///< Enable Wavefront Parallel Processing

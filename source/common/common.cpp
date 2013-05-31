@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #if _WIN32
 #include <sys/types.h>
@@ -43,10 +44,41 @@ const int x265_bit_depth = 10;
 const int x265_bit_depth = 8;
 #endif
 
+void x265_log( x265_param_t *param, int i_level, const char *fmt, ...)
+{
+    if( i_level > param->logLevel )
+        return;
+    char *s_level;
+    switch( i_level )
+    {
+    case X265_LOG_ERROR:
+        s_level = "error";
+        break;
+    case X265_LOG_WARNING:
+        s_level = "warning";
+        break;
+    case X265_LOG_INFO:
+        s_level = "info";
+        break;
+    case X265_LOG_DEBUG:
+        s_level = "debug";
+        break;
+    default:
+        s_level = "unknown";
+        break;
+    }
+    fprintf( stderr, "x265 [%s]: ", s_level );
+    va_list arg;
+    va_start( arg, fmt );
+    vfprintf( stderr, fmt, arg );
+    va_end( arg );
+}
+
 extern "C"
 void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
+    param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
     param->iSearchRange = 64;
     param->bipredSearchRange = 4;
@@ -92,7 +124,7 @@ int x265_param_apply_profile( x265_param_t *param, const char *profile )
 #if HIGH_BIT_DEPTH
         param->internalBitDepth = 10;
 #else
-        fprintf(stderr, "x265: ERROR. not compiled for 16bpp. Falling back to main profile.\n");
+        x265_log(param, X265_LOG_WARNING, "not compiled for 16bpp. Falling back to main profile.\n");
         return -1;
 #endif
     }
@@ -102,40 +134,25 @@ int x265_param_apply_profile( x265_param_t *param, const char *profile )
     }
     else
     {
-        fprintf(stderr, "x265: ERROR. unknown profile <%s>\n", profile);
+        x265_log(param, X265_LOG_ERROR, "unknown profile <%s>\n", profile);
         return -1;
     }
 
     return 0;
 }
 
-int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
-{
-    const char * mode = "wb";
-
-    FILE * fp = fopen(filename, mode);
-    if(!fp)
-    {
-        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", filename, mode); return -1;
-    }
-    fwrite(pbuf, 1, bufsize, fp);
-    fclose(fp);
-    printf("dumpBuffer: dumped %8ld bytes into %s\n", (long)bufsize, filename);
-    return 0;
-}
-
-static inline int _confirm(bool bflag, const char* message)
+static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
 {
     if (!bflag)
         return 0;
 
-    printf("Error: %s\n", message);
+    x265_log(param, X265_LOG_ERROR, "%s\n", message);
     return 1;
 }
 
 int x265_check_params(x265_param_t *param)
 {
-#define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
+#define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
 #if !HIGH_BIT_DEPTH
@@ -263,41 +280,43 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 
 void x265_print_params(x265_param_t *param)
 {
-    printf("x265: Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
+    if (param->logLevel < X265_LOG_INFO)
+        return;
+    x265_log(param, X265_LOG_INFO, "Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
 #if HIGH_BIT_DEPTH
-    printf("x265: Internal bit depth           : %d\n", param->internalBitDepth);
+    x265_log(param, X265_LOG_INFO, "Internal bit depth           : %d\n", param->internalBitDepth);
 #endif
-    printf("x265: CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
-    printf("x265: RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
-    printf("x265: Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
+    x265_log(param, X265_LOG_INFO, "CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
+    x265_log(param, X265_LOG_INFO, "RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
+    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
 
-    printf("x265: Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
-    printf("x265: Max Num Merge Candidates     : %d ", param->maxNumMergeCand);
+    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
+    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d ", param->maxNumMergeCand);
     printf("PME:%d ", param->log2ParallelMergeLevel);
     printf("TMVPMode:%d\n", param->TMVPModeId);
-    printf("x265: Intra period                 : %d\n", param->iIntraPeriod);
+    x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->iIntraPeriod);
     if (param->iWaveFrontSynchro)
     {
-        printf("x265: WaveFrontSubstreams          : %d\n", (param->iSourceHeight + param->uiMaxCUSize - 1) / param->uiMaxCUSize);
+        x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->iSourceHeight + param->uiMaxCUSize - 1) / param->uiMaxCUSize);
     }
-    printf("x265: QP                           : %d\n", param->iQP);
+    x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->iQP);
     if (param->iMaxCuDQPDepth)
     {
-        printf("x265: Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
+        x265_log(param, X265_LOG_INFO, "Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
     }
     if (param->cbQpOffset || param->crQpOffset)
     {
-        printf("x265: Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
+        x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
     }
     if (param->bUseAdaptiveQP)
     {
-        printf("x265: QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, param->iQPAdaptationRange);
+        x265_log(param, X265_LOG_INFO, "QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, param->iQPAdaptationRange);
     }
     if (param->rdPenalty)
     {
-        printf("x265: RDpenalty                    : %d\n", param->rdPenalty);
+        x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
-    printf("x265: enabled coding tools: ");
+    x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
 #if FAST_MODE_DECISION
     printf("fmd ");
 #endif
@@ -324,8 +343,8 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bUseAdaptQpSelect, "aq");
     TOOLOPT(param->signHideFlag, "sign-hide");
     TOOLOPT(param->bUseConstrainedIntraPred, "cip");
-    printf("\n\n");
-    fflush(stdout);
+    printf("\n");
+    fflush(stderr);
 }
 
 int64_t x265_mdate(void)
@@ -339,4 +358,19 @@ int64_t x265_mdate(void)
     gettimeofday( &tv_date, NULL );
     return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
 #endif
+}
+
+int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
+{
+    const char * mode = "wb";
+
+    FILE * fp = fopen(filename, mode);
+    if(!fp)
+    {
+        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", filename, mode); return -1;
+    }
+    fwrite(pbuf, 1, bufsize, fp);
+    fclose(fp);
+    printf("dumpBuffer: dumped %8ld bytes into %s\n", (long)bufsize, filename);
+    return 0;
 }

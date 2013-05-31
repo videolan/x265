@@ -313,6 +313,7 @@ struct CLIOptions
             }
         }
 
+        cli_log_level = param->logLevel;
         if (optind < argc && !inputfn)
             inputfn = argv[optind++];
         if (optind < argc && !bitstreamfn)
