@@ -72,7 +72,7 @@ static struct option long_options[] =
 /* Ctrl-C handler */
 static volatile int b_ctrl_c = 0;
 static int          b_exit_on_ctrl_c = 0;
-static void sigint_handler( int a )
+static void sigint_handler( int )
 {
     if( b_exit_on_ctrl_c )
         exit(0);
@@ -175,7 +175,7 @@ struct CLIOptions
         double bitrate = (double) totalBytes * 8 / ( (double) 1000 * param->iFrameRate );
         if( framesToBeEncoded )
         {
-            int eta = i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000);
+            int eta = (int) (i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
             sprintf( buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
                 100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
                 eta/3600, (eta/60)%60, eta%60 );
