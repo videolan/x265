@@ -1177,10 +1177,7 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
     Int j;
     for (j = 0; j < iHeight; j++)
     {
-        for (int i = 0; i < iWidth; i++)
-        {
-            block[j * iWidth + i] = piBlkResi[j * uiStride + i];
-        }
+        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short) );
     }
 
     xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
@@ -1209,14 +1206,10 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
     }
 
     xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+
+    for (j = 0; j < iHeight; j++)
     {
-        for (j = 0; j < iHeight; j++)
-        {
-            for (int i = 0; i < iWidth; i++)
-            {
-                pResidual[j * uiStride + i] = block[j * iWidth + i];
-            }
-        }
+        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short)*iWidth);
     }
 }
 
