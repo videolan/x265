@@ -39,7 +39,9 @@
 #include <signal.h>
 #include <getopt.h>
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
+#include <string>
 #include <time.h>
 #include <list>
 #include <ostream>
@@ -192,7 +194,7 @@ struct CLIOptions
     {
         if( i_level > cli_log_level )
             return;
-        char *s_level;
+        std::string s_level;
         switch( i_level )
         {
             case X265_LOG_ERROR:
@@ -211,7 +213,7 @@ struct CLIOptions
                 s_level = "unknown";
                 break;
         }
-        fprintf( stderr, "x265 [%s]: ", s_level );
+        fprintf( stderr, "x265 [%s]: ", s_level.c_str() );
         va_list arg;
         va_start( arg, fmt );
         vfprintf( stderr, fmt, arg );
