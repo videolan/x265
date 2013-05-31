@@ -43,16 +43,9 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << bitDepth) - 1;
-    int cm[8][4];
+    Vec4i cm0(coeff[0]), cm1(coeff[1]), cm2(coeff[2]), cm3(coeff[3]), cm4(coeff[4]), cm5(coeff[5]), cm6(coeff[6]), cm7(coeff[7]);
     Vec16uc sum_uc;
     Vec8s vec_zero(0);
-    for (int i = 0; i < N; i++)
-    {
-        cm[i][0] = coeff[i];
-        cm[i][1] = coeff[i];
-        cm[i][2] = coeff[i];
-        cm[i][3] = coeff[i];
-    }
 
     for (row = 0; row < block_height; row++)
     {
@@ -65,8 +58,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             row0.load(&src[col]);
             row1.load(&src[col + cstride]);
 
-            c0.load(cm[0]);
-            c1.load(cm[1]);
+            c0 = cm0;
+            c1 = cm1;
 
             row0_first = extend_low(row0);
             row1_first = extend_low(row1);
@@ -84,8 +77,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             row2.load(&src[col + 2 * cstride]);
             row3.load(&src[col + 3 * cstride]);
 
-            c2.load(cm[2]);
-            c3.load(cm[3]);
+            c2 = cm2;
+            c3 = cm3;
 
             row0_first = extend_low(row2);
             row0_last = extend_high(row2);
@@ -103,8 +96,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
                 row4.load(&src[col + 4 * cstride]);
                 row5.load(&src[col + 5 * cstride]);
 
-                c4.load(cm[4]);
-                c5.load(cm[5]);
+                c4 = cm4;
+                c5 = cm5;
 
                 row0_first = extend_low(row4);
                 row0_last = extend_high(row4);
@@ -120,8 +113,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
                 row6.load(&src[col + 6 * cstride]);
                 row7.load(&src[col + 7 * cstride]);
 
-                c6.load(cm[6]);
-                c7.load(cm[7]);
+                c6 = cm6;
+                c7 = cm7;
 
                 row0_first = extend_low(row6);
                 row0_last = extend_high(row6);
@@ -155,8 +148,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             row0.load(&src[col]);
             row1.load(&src[col + cstride]);
 
-            c0.load(cm[0]);
-            c1.load(cm[1]);
+            c0 = cm0;
+            c1 = cm1;
 
             row0_first = extend_low(row0);
             row1_first = extend_low(row1);
@@ -168,8 +161,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             row2.load(&src[col + 2 * cstride]);
             row3.load(&src[col + 3 * cstride]);
 
-            c2.load(cm[2]);
-            c3.load(cm[3]);
+            c2 = cm2;
+            c3 = cm3;
 
             row0_first = extend_low(row2);
             row0_first = row0_first * c2;
@@ -181,8 +174,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
                 row4.load(&src[col + 4 * cstride]);
                 row5.load(&src[col + 5 * cstride]);
 
-                c4.load(cm[4]);
-                c5.load(cm[5]);
+                c4 = cm4;
+                c5 = cm5;
 
                 row0_first = extend_low(row4);
                 row0_first = row0_first * c4;
@@ -193,8 +186,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
                 row6.load(&src[col + 6 * cstride]);
                 row7.load(&src[col + 7 * cstride]);
 
-                c6.load(cm[6]);
-                c7.load(cm[7]);
+                c6 = cm6;
+                c7 = cm7;
 
                 row0_first = extend_low(row6);
                 row0_first = row0_first * c6;
@@ -234,17 +227,23 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
     offset = 1 << (shift - 1);
     maxVal = (1 << bitDepth) - 1;
 
-    short cm[8][8];
-    for (int i = 0; i < N; i++)
+    Vec8s im0;
+    im0.load(coeff);
+
+    Vec8s cm[8];
+
+    assert((N == 4) || (N == 8));
+    cm[0] = broadcast(const_int(0), im0);
+    cm[1] = broadcast(const_int(1), im0);
+    cm[2] = broadcast(const_int(2), im0);
+    cm[3] = broadcast(const_int(3), im0);
+
+    if (N == 8)
     {
-        cm[i][0] = coeff[i];
-        cm[i][1] = coeff[i];
-        cm[i][2] = coeff[i];
-        cm[i][3] = coeff[i];
-        cm[i][4] = coeff[i];
-        cm[i][5] = coeff[i];
-        cm[i][6] = coeff[i];
-        cm[i][7] = coeff[i];
+        cm[4] = broadcast(const_int(4), im0);
+        cm[5] = broadcast(const_int(5), im0);
+        cm[6] = broadcast(const_int(6), im0);
+        cm[7] = broadcast(const_int(7), im0);
     }
 
     for (row = 0; row < block_height; row++)
@@ -259,8 +258,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
             row0.load(&src[col]);
             row1.load(&src[col + cstride]);
 
-            c0.load(cm[0]);
-            c1.load(cm[1]);
+            c0 = cm[0];
+            c1 = cm[1];
 
             row0_first = extend_low(row0);
             row1_first = extend_low(row1);
@@ -278,8 +277,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
             row2.load(&src[col + 2 * cstride]);
             row3.load(&src[col + 3 * cstride]);
 
-            c2.load(cm[2]);
-            c3.load(cm[3]);
+            c2 = cm[2];
+            c3 = cm[3];
 
             row0_first = extend_low(row2);
             row0_last = extend_high(row2);
@@ -297,8 +296,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
                 row4.load(&src[col + 4 * cstride]);
                 row5.load(&src[col + 5 * cstride]);
 
-                c4.load(cm[4]);
-                c5.load(cm[5]);
+                c4 = cm[4];
+                c5 = cm[5];
 
                 row0_first = extend_low(row4);
                 row0_last = extend_high(row4);
@@ -314,8 +313,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
                 row6.load(&src[col + 6 * cstride]);
                 row7.load(&src[col + 7 * cstride]);
 
-                c6.load(cm[6]);
-                c7.load(cm[7]);
+                c6 = cm[6];
+                c7 = cm[7];
 
                 row0_first = extend_low(row6);
                 row0_last = extend_high(row6);
@@ -354,8 +353,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
             row0.load(&src[col]);
             row1.load(&src[col + cstride]);
 
-            c0.load(cm[0]);
-            c1.load(cm[1]);
+            c0 = cm[0];
+            c1 = cm[1];
 
             row0_first = extend_low(row0);
             row1_first = extend_low(row1);
@@ -367,8 +366,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
             row2.load(&src[col + 2 * cstride]);
             row3.load(&src[col + 3 * cstride]);
 
-            c2.load(cm[2]);
-            c3.load(cm[3]);
+            c2 = cm[2];
+            c3 = cm[3];
 
             row0_first = extend_low(row2);
             row0_first = row0_first * c2;
@@ -382,8 +381,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
                 row4.load(&src[col + 4 * cstride]);
                 row5.load(&src[col + 5 * cstride]);
 
-                c4.load(cm[4]);
-                c5.load(cm[5]);
+                c4 = cm[4];
+                c5 = cm[5];
 
                 row0_first = extend_low(row4);
                 row0_first = row0_first * c4;
@@ -394,8 +393,8 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
                 row6.load(&src[col + 6 * cstride]);
                 row7.load(&src[col + 7 * cstride]);
 
-                c6.load(cm[6]);
-                c7.load(cm[7]);
+                c6 = cm[6];
+                c7 = cm[7];
 
                 row0_first = extend_low(row6);
                 row0_first = row0_first * c6;
