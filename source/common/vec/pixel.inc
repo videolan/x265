@@ -100,6 +100,25 @@ void CDECL convert32to16(int *psOrg, short *piDst, int num)
     }
 }
 
+void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
+{
+    int i;
+    Vec4i round = _mm_set1_epi32(1 << (shift-1));
+    for( i=0; i<num; i+=4 )
+    {
+        Vec4i im32;
+        Vec8s im16;
+
+        im32.load(psOrg);
+        im32 = (im32 + round) >> shift;
+        im16 = compress_saturated(im32, im32);
+        store_partial(const_int(8), piDst, im16);
+
+        psOrg += 4;
+        piDst += 4;
+    }
+}
+
 void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
     // sad
@@ -328,7 +347,8 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_16x4] = satd<16, 4>;
     //p.sa8d_8x8 = sa8d_8x8;
 #endif
-    p.cvt16to32 = convert16to32;
+    p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
-    p.cvt32to16 = convert32to16;
+    p.cvt32to16     = convert32to16;
+    p.cvt32to16_shr = convert32to16_shr;
 }
