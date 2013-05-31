@@ -247,6 +247,7 @@ Bool TAppEncCfg::parseCfg(Int argc, Char* argv[])
 
     ("cpuid",                 cpuid,               0, "SIMD architecture. 2:MMX2 .. 8:AVX2 (default:0-auto)")
     ("threads",               poolNumThreads,      0, "Number of threads for thread pool (default:CPU HT core count)")
+    ("log",                   logLevel,            3, "Logging level 0:ERROR 1:WARNING 2:INFO(default) 3:DEBUG -1:NONE")
 
     // File, I/O and source parameters
     ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
