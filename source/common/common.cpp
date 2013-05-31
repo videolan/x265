@@ -30,6 +30,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <string>
+
 #if _WIN32
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -48,7 +50,7 @@ void x265_log( x265_param_t *param, int i_level, const char *fmt, ...)
 {
     if( i_level > param->logLevel )
         return;
-    char *s_level;
+    std::string s_level;
     switch( i_level )
     {
     case X265_LOG_ERROR:
@@ -67,7 +69,7 @@ void x265_log( x265_param_t *param, int i_level, const char *fmt, ...)
         s_level = "unknown";
         break;
     }
-    fprintf( stderr, "x265 [%s]: ", s_level );
+    fprintf( stderr, "x265 [%s]: ", s_level.c_str() );
     va_list arg;
     va_start( arg, fmt );
     vfprintf( stderr, fmt, arg );
