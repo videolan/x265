@@ -146,6 +146,13 @@ X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", 0 };
 
+/* Log level */
+#define X265_LOG_NONE          (-1)
+#define X265_LOG_ERROR          0
+#define X265_LOG_WARNING        1
+#define X265_LOG_INFO           2
+#define X265_LOG_DEBUG          3
+
 typedef struct x265_param_t
 {
     // coding tools (bit-depth)

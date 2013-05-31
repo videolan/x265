@@ -56,12 +56,25 @@
 using namespace x265;
 using namespace std;
 
+static const char short_options[] = "h:o:f:r:i:s:d:q:w:V:";
+static struct option long_options[] =
+{
+#define HELP(message)
+#define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
+#define STROPT OPT
+#include "x265opts.h"
+#undef OPT
+#undef STROPT
+#undef HELP
+};
+
 struct CLIOptions
 {
     x265::Input*  input;
     x265::Output* recon;
     x265::ThreadPool *threadPool;
     fstream bitstreamFile;
+    int cli_log_level;
 
     uint32_t inputBitDepth;             ///< bit-depth of input file
     uint32_t outputBitDepth;            ///< bit-depth of output reconstructed images file
@@ -85,6 +98,7 @@ struct CLIOptions
         totalBytes = 0;
         i_start = x265_mdate();
         i_previous = 0;
+        cli_log_level = X265_LOG_INFO;
     }
 
     void destroy()
@@ -173,208 +187,228 @@ struct CLIOptions
         i_previous = i_time;
     }
 
-};
+    void log(int i_level, const char *fmt, ...)
+    {
+        if( i_level > cli_log_level )
+            return;
+        char *s_level;
+        switch( i_level )
+        {
+            case X265_LOG_ERROR:
+                s_level = "error";
+                break;
+            case X265_LOG_WARNING:
+                s_level = "warning";
+                break;
+            case X265_LOG_INFO:
+                s_level = "info";
+                break;
+            case X265_LOG_DEBUG:
+                s_level = "debug";
+                break;
+            default:
+                s_level = "unknown";
+                break;
+        }
+        fprintf( stderr, "x265 [%s]: ", s_level );
+        va_list arg;
+        va_start( arg, fmt );
+        vfprintf( stderr, fmt, arg );
+        va_end( arg );
+    }
 
-static void print_version()
-{
+    void print_version()
+    {
 #define XSTR(x) STR(x)
 #define STR(x) #x
-    fprintf(stdout, "x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
-    fprintf(stdout, "x265: build info ");
-    fprintf(stdout, NVM_ONOS);
-    fprintf(stdout, NVM_COMPILEDBY);
-    fprintf(stdout, NVM_BITS);
+        printf("x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
+        printf("x265: build info ");
+        printf(NVM_ONOS);
+        printf(NVM_COMPILEDBY);
+        printf(NVM_BITS);
 #if HIGH_BIT_DEPTH
-    fprintf(stdout, "16bpp");
+        printf("16bpp");
 #else
-    fprintf(stdout, "8bpp");
+        printf("8bpp");
 #endif
-    fprintf(stdout, "\n");
-}
+        printf("\n");
+    }
 
-static void do_help()
-{
-    print_version();
-    printf("Syntax: x265 [options] infile [-o] outfile\n");
-    printf("    infile can be YUV or Y4M\n");
-    printf("    outfile is raw HEVC stream only\n");
-    printf("Options:\n");
+    void do_help()
+    {
+        print_version();
+        printf("Syntax: x265 [options] infile [-o] outfile\n");
+        printf("    infile can be YUV or Y4M\n");
+        printf("    outfile is raw HEVC stream only\n");
+        printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
 #define OPT(longname, var, argreq, flag, helptext)\
-    if (flag) printf("-%c/", flag); else printf("   ");\
-    printf("--%-20s\t%s\n", longname, helptext);
+        if (flag) printf("-%c/", flag); else printf("   ");\
+        printf("--%-20s\t%s\n", longname, helptext);
 #define STROPT OPT
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
 #undef HELP
-#define HELP(message)
 
-    exit(0);
-}
+        exit(0);
+    }
 
-static const char short_options[] = "h:o:f:r:i:s:d:q:w:V:";
-static struct option long_options[] =
-{
-#define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
-#define STROPT OPT
-#include "x265opts.h"
-#undef OPT
-#undef STROPT
-};
-
-bool parse(int argc, char **argv, x265_param_t* param, CLIOptions* cliopt)
-{
-    int help = 0;
-    int cpuid = 0;
-    int threadcount = 0;
-    const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
-
-    x265_param_default(param);
-
-    for( optind = 0;; )
+    bool parse(int argc, char **argv, x265_param_t* param)
     {
-        int long_options_index = -1;
-        int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
-        if (c == -1)
-        {
-            break;
-        }
+        int help = 0;
+        int cpuid = 0;
+        int threadcount = 0;
+        const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
 
-        switch (c)
+        x265_param_default(param);
+
+        for( optind = 0;; )
         {
-        case 'h':
-            do_help();
-        case 'V':
-            print_version();
-            exit(0);
-        default:
-            if (long_options_index < 0 && c > 0)
+            int long_options_index = -1;
+            int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
+            if (c == -1)
             {
-                for (size_t i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
-                    if (long_options[i].val == c)
+                break;
+            }
+
+            switch (c)
+            {
+            case 'h':
+                do_help();
+            case 'V':
+                print_version();
+                exit(0);
+            default:
+                if (long_options_index < 0 && c > 0)
+                {
+                    for (size_t i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
+                        if (long_options[i].val == c)
+                        {
+                            long_options_index = (int)i;
+                            break;
+                        }
+                    if (long_options_index < 0)
                     {
-                        long_options_index = (int)i;
-                        break;
+                        /* getopt_long already printed an error message */
+                        return true;
                     }
+                }
                 if (long_options_index < 0)
                 {
-                    /* getopt_long already printed an error message */
+                    log(X265_LOG_WARNING, "short option '%x' unrecognized\n", c);
                     return true;
                 }
-            }
-            if (long_options_index < 0)
-            {
-                printf("x265: short option '%x' unrecognized\n", c);
-                return true;
-            }
+#define HELP(message)
 #define STROPT(longname, var, argreq, flag, helptext)\
-            else if (!strcmp(long_options[long_options_index].name, longname))\
-                (var) = optarg;
+                else if (!strcmp(long_options[long_options_index].name, longname))\
+                    (var) = optarg;
 #define OPT(longname, var, argreq, flag, helptext)\
-            else if (!strcmp(long_options[long_options_index].name, longname))\
-                (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+                else if (!strcmp(long_options[long_options_index].name, longname))\
+                    (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
+            }
         }
-    }
 
-    if (optind < argc && !inputfn)
-        inputfn = argv[optind++];
-    if (optind < argc && !bitstreamfn)
-        bitstreamfn = argv[optind++];
-    if (optind < argc)
-    {
-        fprintf(stderr, "x265: extra unused command arguments given <%s>\n", argv[optind]);
-        return true;
-    }
-
-    if (argc <= 1 || help)
-        do_help();
-
-    x265::SetupPrimitives(cpuid);
-    if (param->iWaveFrontSynchro == 0)
-    {
-        threadcount = 1;
-    }
-    cliopt->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
-    if (threadcount != 1)
-    {
-        printf("x265: thread pool initialized with %d threads\n", cliopt->threadPool->GetThreadCount());
-    }
-
-    if (inputfn == NULL || bitstreamfn == NULL)
-    {
-        printf("x265: input or output file not specified, try -V for help\n");
-        return true;
-    }
-    cliopt->input = x265::Input::Open(inputfn);
-    if (!cliopt->input || cliopt->input->isFail())
-    {
-        printf("x265: unable to open input file <%s>\n", inputfn);
-        return true;
-    }
-    if (cliopt->input->getWidth())
-    {
-        /* parse the width, height, frame rate from the y4m file */
-        param->iSourceWidth = cliopt->input->getWidth();
-        param->iSourceHeight = cliopt->input->getHeight();
-        param->iFrameRate = (int)cliopt->input->getRate();
-        cliopt->inputBitDepth = 8;
-    }
-    else
-    {
-        cliopt->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
-        cliopt->input->setBitDepth(cliopt->inputBitDepth);
-    }
-    assert(param->iSourceHeight && param->iSourceWidth);
-
-    /* rules for input, output and internal bitdepths as per help text */
-    if (!param->internalBitDepth) { param->internalBitDepth = cliopt->inputBitDepth; }
-    if (!cliopt->outputBitDepth) { cliopt->outputBitDepth = param->internalBitDepth; }
-
-    uint32_t numRemainingFrames = (uint32_t)cliopt->input->guessFrameCount();
-
-    if (cliopt->frameSkip)
-    {
-        cliopt->input->skipFrames(cliopt->frameSkip);
-    }
-
-    cliopt->framesToBeEncoded = cliopt->framesToBeEncoded ? min(cliopt->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
-
-    printf("x265: Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
-        cliopt->frameSkip, cliopt->frameSkip + cliopt->framesToBeEncoded - 1, numRemainingFrames);
-
-    if (reconfn)
-    {
-        cliopt->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, cliopt->outputBitDepth, param->iFrameRate);
-        if (cliopt->recon->isFail())
+        if (optind < argc && !inputfn)
+            inputfn = argv[optind++];
+        if (optind < argc && !bitstreamfn)
+            bitstreamfn = argv[optind++];
+        if (optind < argc)
         {
-            printf("x265: unable to write reconstruction file\n");
-            cliopt->recon->release();
-            cliopt->recon = 0;
+            log(X265_LOG_WARNING, "extra unused command arguments given <%s>\n", argv[optind]);
+            return true;
         }
-    }
+
+        if (argc <= 1 || help)
+            do_help();
+
+        x265::SetupPrimitives(cpuid);
+        if (param->iWaveFrontSynchro == 0)
+        {
+            threadcount = 1;
+        }
+        this->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
+        if (threadcount != 1)
+        {
+            log(X265_LOG_INFO, "thread pool initialized with %d threads\n", this->threadPool->GetThreadCount());
+        }
+
+        if (inputfn == NULL || bitstreamfn == NULL)
+        {
+            log(X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
+            return true;
+        }
+        this->input = x265::Input::Open(inputfn);
+        if (!this->input || this->input->isFail())
+        {
+            log(X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
+            return true;
+        }
+        if (this->input->getWidth())
+        {
+            /* parse the width, height, frame rate from the y4m file */
+            param->iSourceWidth = this->input->getWidth();
+            param->iSourceHeight = this->input->getHeight();
+            param->iFrameRate = (int)this->input->getRate();
+            this->inputBitDepth = 8;
+        }
+        else
+        {
+            this->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
+            this->input->setBitDepth(this->inputBitDepth);
+        }
+        assert(param->iSourceHeight && param->iSourceWidth);
+
+        /* rules for input, output and internal bitdepths as per help text */
+        if (!param->internalBitDepth) { param->internalBitDepth = this->inputBitDepth; }
+        if (!this->outputBitDepth) { this->outputBitDepth = param->internalBitDepth; }
+
+        uint32_t numRemainingFrames = (uint32_t)this->input->guessFrameCount();
+
+        if (this->frameSkip)
+        {
+            this->input->skipFrames(this->frameSkip);
+        }
+
+        this->framesToBeEncoded = this->framesToBeEncoded ? min(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
+
+        log(X265_LOG_INFO, "Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
+            this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+
+        if (reconfn)
+        {
+            this->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, this->outputBitDepth, param->iFrameRate);
+            if (this->recon->isFail())
+            {
+                log(X265_LOG_WARNING, "unable to write reconstruction file\n");
+                this->recon->release();
+                this->recon = 0;
+            }
+        }
 
 #if !HIGH_BIT_DEPTH
-    if (cliopt->inputBitDepth != 8 || cliopt->outputBitDepth != 8 || param->internalBitDepth != 8)
-    {
-        printf("x265: not compiled for bit depths greater than 8\n");
-        return true;
-    }
+        if (this->inputBitDepth != 8 || this->outputBitDepth != 8 || param->internalBitDepth != 8)
+        {
+            log(X265_LOG_ERROR, "not compiled for bit depths greater than 8\n");
+            return true;
+        }
 #endif
 
-    cliopt->bitstreamFile.open(bitstreamfn, fstream::binary | fstream::out);
-    if (!cliopt->bitstreamFile)
-    {
-        fprintf(stderr, "x265: failed to open bitstream file <%s> for writing\n", bitstreamfn);
-        return true;
+        this->bitstreamFile.open(bitstreamfn, fstream::binary | fstream::out);
+        if (!this->bitstreamFile)
+        {
+            log(X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
+            return true;
+        }
+
+        return false;
     }
 
-    return false;
-}
+};
 
 int main(int argc, char **argv)
 {
@@ -387,7 +421,7 @@ int main(int argc, char **argv)
     CLIOptions   cliopt;
 
     // TODO: needs proper logging file handle with log levels, etc
-    if (parse(argc, argv, &param, &cliopt))
+    if (cliopt.parse(argc, argv, &param))
         exit(1);
 
     x265_set_globals(&param, cliopt.inputBitDepth);
