@@ -97,15 +97,20 @@ void EncodingFrame::ProcessRow(int irow)
             this->data->sbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&this->data->bufferSbacCoders[irow-1]);
         }
 
-        this->data->entropyCoders[uiSubStrm].setEntropyCoder(&this->data->goOnSbacCoders[uiSubStrm], this->data->slice);
+        UInt uiGoOnIdx = 0;
+        if (m_pool->GetThreadCount() > 1)
+        {
+            uiGoOnIdx = uiSubStrm;
+        }
+        this->data->entropyCoders[uiSubStrm].setEntropyCoder(&this->data->goOnSbacCoders[uiGoOnIdx], this->data->slice);
         this->data->entropyCoders[uiSubStrm].setBitstream(&this->data->bitCounters[uiSubStrm]);
 
-        ((TEncBinCABAC*)this->data->goOnSbacCoders[uiSubStrm].getEncBinIf())->setBinCountingEnableFlag(true);
+        ((TEncBinCABAC*)this->data->goOnSbacCoders[uiGoOnIdx].getEncBinIf())->setBinCountingEnableFlag(true);
 
         this->data->cuEncoders[uiSubStrm].set_pppcRDSbacCoder(this->data->sbacCoders[uiSubStrm]);
         this->data->cuEncoders[uiSubStrm].set_pcEntropyCoder(&this->data->entropyCoders[uiSubStrm]);
         this->data->cuEncoders[uiSubStrm].set_pcPredSearch(&this->data->predSearches[uiSubStrm]);
-        this->data->cuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&this->data->goOnSbacCoders[uiSubStrm]);
+        this->data->cuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&this->data->goOnSbacCoders[uiGoOnIdx]);
         this->data->cuEncoders[uiSubStrm].set_pcTrQuant(&this->data->trQuants[uiSubStrm]);
 
         this->data->cuEncoders[uiSubStrm].compressCU(pcCU);
