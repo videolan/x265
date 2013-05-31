@@ -26,17 +26,6 @@
 
 #include <stdint.h>
 
-/* Application developers planning to link against a shared library version of
- * libx265 from a Microsoft Visual Studio or similar development environment
- * will need to define X265_API_IMPORTS before including this header.
- * This clause does not apply to MinGW, similar development environments, or non
- * Windows platforms. */
-#ifdef X265_API_IMPORTS
-#define X265_API __declspec(dllimport)
-#else
-#define X265_API
-#endif
-
 #if __cplusplus
 extern "C" {
 #endif
@@ -125,36 +114,22 @@ enum NalUnitType
     NAL_UNIT_INVALID,
 };
 
-enum nal_priority_e
-{
-    NAL_PRIORITY_DISPOSABLE = 0,
-    NAL_PRIORITY_LOW        = 1,
-    NAL_PRIORITY_HIGH       = 2,
-    NAL_PRIORITY_HIGHEST    = 3,
-};
-
-/* The data within the payload is already NAL-encapsulated; the ref_idc and type
- * are merely in the struct for easy access by the calling application.
+/* The data within the payload is already NAL-encapsulated; the type
+ * is merely in the struct for easy access by the calling application.
  * All data returned in an x265_nal_t, including the data in p_payload, is no longer
  * valid after the next call to x265_encoder_encode.  Thus it must be used or copied
  * before calling x265_encoder_encode again. */
 typedef struct
 {
-    int i_ref_idc;  /* nal_priority_e */
-    int i_type;     /* NalUnitType */
-    int b_long_startcode;
-
-    /* Size of payload in bytes. */
-    int     i_payload;
+    int     i_type;      /* NalUnitType */
+    int     i_payload;   /* size in bytes */
     uint8_t *p_payload;
 } x265_nal_t;
 
 typedef struct x265_picture_t
 {
     void *planes[3];
-
     int   stride[3];
-
     int   bitDepth;
 }
 x265_picture_t;
@@ -275,9 +250,9 @@ int x265_param_apply_profile( x265_param_t *, const char *profile );
 /* x265_bit_depth:
  *      Specifies the number of bits per pixel that x265 uses. This is also the
  *      max bit depth that x265 encodes in. x265 will accept pixel bit depths up
- *      to x265_bit_depth. m_internalBitDepth can be either 8 or x265_bit_depth.
+ *      to x265_bit_depth. param.internalBitDepth can be either 8 or x265_bit_depth.
  *      x265_picture_t.bitDepth may be 8 or x265_bit_depth */
-X265_API extern const int x265_bit_depth;
+extern const int x265_bit_depth;
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */
