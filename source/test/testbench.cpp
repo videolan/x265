@@ -64,9 +64,11 @@ void TestHarness::alignedFree(void *ptr)
 #endif
 }
 
+extern int instrset_detect();
+
 int main(int argc, char *argv[])
 {
-    int cpuid = CpuIDDetect();
+    int cpuid = instrset_detect(); // Detect supported instruction set
 
     for (int i = 1; i < argc - 1; i += 2)
     {

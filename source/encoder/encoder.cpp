@@ -26,6 +26,7 @@
 #include "TLibCommon/TComPicYuv.h"
 #include "x265.h"
 #include "common.h"
+#include "threadpool.h"
 #include "encoder.h"
 
 #include <stdio.h>
@@ -41,6 +42,11 @@ using namespace x265;
 
 void Encoder::configure(x265_param_t *param)
 {
+    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+
+    setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
+    x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads\n", getThreadPool()->GetThreadCount());
+
     setFrameRate(param->iFrameRate);
     setSourceWidth(param->iSourceWidth);
     setSourceHeight(param->iSourceHeight);

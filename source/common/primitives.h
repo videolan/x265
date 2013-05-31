@@ -215,9 +215,6 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 
-void SetupPrimitives(int cpuid = 0);
-int CpuIDDetect(void);
-
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid);
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid);

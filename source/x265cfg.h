@@ -58,7 +58,6 @@ class TAppEncCfg : public x265_param_t
 protected:
     x265::Input*  m_input;
     x265::Output* m_recon;
-    x265::ThreadPool *m_poolHandle;
 
     int       m_inputBitDepth;                  ///< bit-depth of input file
     int       m_outputBitDepth;                 ///< bit-depth of output file

@@ -155,6 +155,9 @@ int x265_check_params(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
+    if (param->iWaveFrontSynchro == 0)
+        param->poolNumThreads = 1;
+
 #if !HIGH_BIT_DEPTH
     CONFIRM(param->internalBitDepth != 8,
         "InternalBitDepth must be 8");

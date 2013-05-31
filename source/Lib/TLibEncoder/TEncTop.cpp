@@ -88,10 +88,6 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create()
 {
-    x265::SetupPrimitives(-1);  // -1 means auto-detect if uninitialized
-
-    m_threadPool = x265::ThreadPool::AllocThreadPool(0);
-
     // initialize global variables
     initROM();
 

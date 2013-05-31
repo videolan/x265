@@ -3,7 +3,7 @@
 HELP("Standalone Executable Options:")
 OPT("help",            help,                            no_argument, 'h', "Show this help text")
 OPT("cpuid",           cpuid,                     required_argument,   0, "Limit SIMD instructions 2:SSE2 .. 8:AVX2 (default:0-auto)")
-OPT("threads",         threadcount,               required_argument,   0, "Number of threads for thread pool (default:CPU core count)")
+OPT("threads",         param->poolNumThreads,     required_argument,   0, "Number of threads for thread pool (default:CPU core count)")
 OPT("log",             param->logLevel,           required_argument,   0, "Logging level 0:ERROR 1:WARNING 2:INFO(default) 3:DEBUG -1:NONE")
 STROPT("output",       bitstreamfn,               required_argument, 'o', "Bitstream output file name")
 #if HIGH_BIT_DEPTH

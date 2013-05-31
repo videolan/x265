@@ -203,6 +203,8 @@ public:
     TComScalingList*        getScalingList() { return &m_scalingList;         }
 
     x265::ThreadPool*       getThreadPool() { return m_threadPool; }
+    
+    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function

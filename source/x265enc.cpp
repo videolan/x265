@@ -84,6 +84,7 @@ Void TAppEncTop::xInitLibCfg()
 
     m_cTEncTop.setVPS(&vps);
 
+    m_cTEncTop.setThreadPool(x265::ThreadPool::AllocThreadPool(poolNumThreads));
     m_cTEncTop.setProfile(m_profile);
     m_cTEncTop.setLevel(m_levelTier, m_level);
     m_cTEncTop.setProgressiveSourceFlag(m_progressiveSourceFlag);

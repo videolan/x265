@@ -23,7 +23,8 @@
 
 #include "primitives.h"
 #include "instrset.h"
-#include "bitcost.h"
+#include "common.h"
+
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -67,45 +68,12 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_IPFilterPrimitives(p);   // InterpolationFilter.cpp
     Setup_C_IPredPrimitives(p);      // IntraPred.cpp
 }
-
-/* cpuid == 0 - auto-detect CPU type, else
- * cpuid > 0 -  force CPU type
- * cpuid < 0  - auto-detect if uninitialized */
-void SetupPrimitives(int cpuid)
-{
-    if (cpuid < 0)
-    {
-        if (primitives.sad[0])
-            return;
-        else
-            cpuid = 0;
-    }
-    if (cpuid == 0)
-    {
-        cpuid = CpuIDDetect();
-    }
-
-    fprintf(stdout, "x265: performance primitives:");
-
-    Setup_C_Primitives(primitives);
-
-#if ENABLE_VECTOR_PRIMITIVES
-    Setup_Vector_Primitives(primitives, cpuid);
-    fprintf(stdout, " vector");
-#endif
-
-#if ENABLE_ASM_PRIMITIVES
-    Setup_Assembly_Primitives(primitives, cpuid);
-    fprintf(stdout, " assembly");
-#endif
-
-    fprintf(stdout, "\n");
 }
 
 static const char *CpuType[] =
 {
-    "auto-detect (80386)",
-    "SSE XMM",
+    "",
+    "",
     "SSE2",
     "SSE3",
     "SSSE3",
@@ -116,36 +84,51 @@ static const char *CpuType[] =
     0
 };
 
-int CpuIDDetect(void)
-{
-    int iset = instrset_detect(); // Detect supported instruction set
-
-    if (iset < 1)
-    {
-        fprintf(stderr, "\nError: Instruction set detect is not supported on this computer");
-        return 0;
-    }
-    else
-    {
-        fprintf(stdout, "x265: detected SIMD architectures ");
-        for (int i = 1; i <= iset; i++)
-        {
-            fprintf(stdout, "%s ", CpuType[i]);
-        }
-        if (hasXOP())  fprintf(stdout, "XOP ");
-        if (hasFMA3()) fprintf(stdout, "FMA3 ");
-        if (hasFMA4()) fprintf(stdout, "FMA4 ");
-
-        fprintf(stdout, "\n");
-        return iset;
-    }
-}
-}
-
+/* cpuid == 0 - auto-detect CPU type, else
+ * cpuid > 0 -  force CPU type
+ * cpuid < 0  - auto-detect if uninitialized */
 extern "C"
-void x265_init_primitives(int cpuid)
+void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
-    x265::SetupPrimitives(cpuid);
+    if (cpuid < 0)
+    {
+        if (x265::primitives.sad[0])
+            return;
+        else
+            cpuid = 0;
+    }
+    if (cpuid == 0)
+    {
+        cpuid = instrset_detect(); // Detect supported instruction set
+        if (param->logLevel >= X265_LOG_INFO)
+        {
+            x265_log(param, X265_LOG_INFO, "detected SIMD architectures ");
+            for (int i = 1; i <= cpuid; i++)
+            {
+                fprintf(stderr, "%s ", CpuType[i]);
+            }
+            if (hasXOP())  fprintf(stderr, "XOP ");
+            if (hasFMA3()) fprintf(stderr, "FMA3 ");
+            if (hasFMA4()) fprintf(stderr, "FMA4 ");
+            fprintf(stderr, "\n");
+        }
+    }
+
+    x265_log(param, X265_LOG_INFO, "performance primitives:");
+
+    x265::Setup_C_Primitives(x265::primitives);
+
+#if ENABLE_VECTOR_PRIMITIVES
+    x265::Setup_Vector_Primitives(x265::primitives, cpuid);
+    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " vector");
+#endif
+
+#if ENABLE_ASM_PRIMITIVES
+    x265::Setup_Assembly_Primitives(x265::primitives, cpuid);
+    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " assembly");
+#endif
+
+    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, "\n");
 }
 
 #if !defined(ENABLE_ASM_PRIMITIVES)

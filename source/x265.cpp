@@ -27,8 +27,6 @@
 
 #include "input/input.h"
 #include "output/output.h"
-#include "threadpool.h"
-#include "primitives.h"
 #include "common.h"
 #include "PPA/ppa.h"
 #include "x265.h"
@@ -72,7 +70,6 @@ struct CLIOptions
 {
     x265::Input*  input;
     x265::Output* recon;
-    x265::ThreadPool *threadPool;
     fstream bitstreamFile;
     int cli_log_level;
 
@@ -91,7 +88,6 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
-        threadPool = NULL;
         inputBitDepth = outputBitDepth = 8;
         framesToBeEncoded = frameSkip = 0;
         essentialBytes = 0;
@@ -103,9 +99,6 @@ struct CLIOptions
 
     void destroy()
     {
-        if (threadPool)
-            threadPool->Release();
-        threadPool = NULL;
         if (input)
             input->release();
         input = NULL;
@@ -259,7 +252,6 @@ struct CLIOptions
     {
         int help = 0;
         int cpuid = 0;
-        int threadcount = 0;
         const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
 
         x265_param_default(param);
@@ -327,16 +319,7 @@ struct CLIOptions
         if (argc <= 1 || help)
             do_help();
 
-        x265::SetupPrimitives(cpuid);
-        if (param->iWaveFrontSynchro == 0)
-        {
-            threadcount = 1;
-        }
-        this->threadPool = x265::ThreadPool::AllocThreadPool(threadcount);
-        if (threadcount != 1)
-        {
-            log(X265_LOG_INFO, "thread pool initialized with %d threads\n", this->threadPool->GetThreadCount());
-        }
+        x265_setup_primitives(param, cpuid);
 
         if (inputfn == NULL || bitstreamfn == NULL)
         {

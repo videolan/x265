@@ -155,10 +155,11 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 
 typedef struct x265_param_t
 {
-    int       logLevel;
     int       internalBitDepth;                 ///< bit-depth codec operates at
 
+    int       logLevel;
     int       iWaveFrontSynchro;                ///< Enable Wavefront Parallel Processing
+    int       poolNumThreads;                   ///< if WPP enabled, number of threads in pool
 
     // source specification
     int       iFrameRate;                       ///< source frame-rates (Hz)
@@ -232,14 +233,7 @@ x265_param_t;
 /***
  * Pass cpuid 0 to auto-detect.  If not called, first encoder allocated will
  * auto-detect the CPU and initialize performance primitives, which are process global */
-void x265_init_primitives( int cpuid );
-
-/***
- * Call to explicitly set the number of threads x265 allocates for its thread pool.
- * The thread pool is a singleton resource for the process and the first time an
- * encoder is created it will allocate a default thread pool if necessary.  Default
- * is one thread per CPU core (counting hyper-threading). */
-void x265_init_threading( int threadcount );
+void x265_setup_primitives( x265_param_t *param, int cpuid );
 
 /***
  * Initialize an x265_param_t structure to default values
