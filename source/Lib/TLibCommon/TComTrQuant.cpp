@@ -83,6 +83,7 @@ TComTrQuant::TComTrQuant()
     m_cQP.clear();
 
     // allocate temporary buffers
+    // OPT_ME: I may reduce this to short and output matched, bug I am not sure it is right.
     m_plTempCoeff  = new Int[MAX_CU_SIZE * MAX_CU_SIZE];
 
     // allocate bit estimation class  (for RDOQ)
@@ -1183,10 +1184,10 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
     }
 
     xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
-    for (j = 0; j < iHeight * iWidth; j++)
-    {
-        psCoeff[j] = coeff[j];
-    }
+
+    assert(iWidth == iHeight);
+    assert(((iWidth*iHeight) % 8) == 0);
+    x265::primitives.cvt16to32(coeff, psCoeff, iWidth*iHeight);
 }
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)

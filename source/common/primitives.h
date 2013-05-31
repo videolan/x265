@@ -178,6 +178,8 @@ typedef void (CDECL * getIPredDC_p)(pixel* pSrc, intptr_t srcStride, pixel* pDst
 typedef void (CDECL * getIPredPlanar_p)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/);
 typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
+typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
+
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -209,6 +211,7 @@ struct EncoderPrimitives
     getIPredPlanar_p getIPredPlanar;
     getIPredAng_p getIPredAng;
     quant deQuant;
+    cvt16to32_t cvt16to32;
 };
 
 /* This copy of the table is what gets used by all by the encoder.

@@ -46,6 +46,25 @@ int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stride
 }
 #endif
 
+void CDECL convert16to32(short *psOrg, int *piDst, int num)
+{
+    int i;
+    for( i=0; i<num; i+=8 )
+    {
+        Vec8s im16;
+        Vec4i im32L, im32H;
+
+        im16.load(psOrg);
+        im32L = extend_low (im16);
+        im32H = extend_high(im16);
+        im32L.store(piDst  );
+        im32H.store(piDst+4);
+
+        psOrg += 8;
+        piDst += 8;
+    }
+}
+
 void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
 {
     // sad
@@ -274,4 +293,5 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_16x4] = satd<16, 4>;
     //p.sa8d_8x8 = sa8d_8x8;
 #endif
+    p.cvt16to32 = convert16to32;
 }
