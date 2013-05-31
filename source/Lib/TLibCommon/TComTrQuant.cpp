@@ -1225,14 +1225,25 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, 
     Int  j, k;
     if (shift >= 0)
     {
-        transformSkipShift = shift;
+#if 1
         for (j = 0; j < height; j++)
         {
-            for (k = 0; k < width; k++)
+            x265::primitives.cvt16to32_shl(&psCoeff[j * height], &piBlkResi[j * uiStride], shift, width);
+        }
+#else
+        // faster but use intrinsic
+        for (j = 0; j < height; j++)
+        {
+            for (k = 0; k < width; k+=4)
             {
-                psCoeff[j * height + k] = piBlkResi[j * uiStride + k] << transformSkipShift;
+                __m128i T00 = _mm_loadl_epi64((__m128i*)&piBlkResi[j * uiStride + k]);
+                __m128i T01 = _mm_srai_epi32(_mm_unpacklo_epi16(T00, T00), 16);
+                __m128i T02 = _mm_slli_epi32(T01, shift);
+
+                _mm_storeu_si128((__m128i*)&psCoeff[j * height + k], T02);
             }
         }
+#endif
     }
     else
     {

@@ -65,6 +65,23 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
     }
 }
 
+void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
+{
+    int i;
+    for( i=0; i<num; i+=8 )
+    {
+        Vec8s im16;
+        Vec4i im32;
+
+        im16 = load_partial(const_int(8), psOrg);
+        im32 = extend_low(im16) << shift;
+        im32.store(piDst);
+
+        psOrg += 4;
+        piDst += 4;
+    }
+}
+
 void CDECL convert32to16(int *psOrg, short *piDst, int num)
 {
     int i;
@@ -312,5 +329,6 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     //p.sa8d_8x8 = sa8d_8x8;
 #endif
     p.cvt16to32 = convert16to32;
+    p.cvt16to32_shl = convert16to32_shl;
     p.cvt32to16 = convert32to16;
 }
