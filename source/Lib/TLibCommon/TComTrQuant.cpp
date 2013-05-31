@@ -1200,10 +1200,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
     ALIGN_VAR_32(Short, coeff[64 * 64]);
     Int j;
 
-    for (j = 0; j < iHeight * iWidth; j++)
-    {
-        coeff[j] = (Short)plCoef[j];
-    }
+    x265::primitives.cvt32to16(plCoef, coeff, iWidth*iHeight);
 
     xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
 
