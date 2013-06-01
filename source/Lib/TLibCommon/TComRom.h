@@ -86,7 +86,6 @@ extern       UInt g_uiMaxCUHeight;
 extern       UInt g_uiMaxCUDepth;
 extern       UInt g_uiAddCUDepth;
 extern       unsigned long long int Cycle_Count;
-extern       unsigned long long int Cycle_Count;
 
 #define MAX_TS_WIDTH  4
 #define MAX_TS_HEIGHT 4
