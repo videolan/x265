@@ -42,7 +42,6 @@
 #include <memory.h>
 #include <assert.h>
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComRom.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -97,14 +96,7 @@ public:
     {
         Double dFps     =   m_dFrmRate; //--CFG_KDY
         Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-#if _MSC_VER  
-        if(cDelim == 'a') 
-        {
-             printf("\nTotal clock cycles for motion estimation = %lld \n" ,  me_cycle);
-             printf("\nTotal Number of times ME Calls = %d \n \n", me_func_calls);
-             
-        }
-#endif 
+
         printf("\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n");
         //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
         printf("\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
@@ -113,8 +105,6 @@ public:
                getPsnrY() / (Double)getNumPic(),
                getPsnrU() / (Double)getNumPic(),
                getPsnrV() / (Double)getNumPic());
-
-        //me_cycle = 0;
     }
 
     Void    printSummaryOut()
