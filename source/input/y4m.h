@@ -54,9 +54,9 @@ public:
 
     virtual ~Y4MInput();
 
-    void setDimensions(int w, int h)              { /* ignore, warn */ }
+    void setDimensions(int, int)                  { /* ignore, warn */ }
 
-    void setBitDepth(int bitDepth)                { /* ignore, warn */ }
+    void setBitDepth(int)                         { /* ignore, warn */ }
 
     float getRate() const                         { return ((float)rateNum) / rateDenom; }
 

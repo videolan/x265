@@ -34,17 +34,18 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
-option(EARLY_PARTITION_DECISION "Early decision on partition sizes" OFF)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
 else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
-if(EARLY_PARTITION_DECISION)
-    add_definitions(-DEARLY_PARTITION_DECISION=1)
-else(EARLY_PARTITION_DECISION)
-    add_definitions(-DEARLY_PARTITION_DECISION=0)
-endif(EARLY_PARTITION_DECISION)
+
+option(FAST_MODE_DECISION "Disable RDO in CU analysis" OFF)
+if(FAST_MODE_DECISION)
+    add_definitions(-DFAST_MODE_DECISION=1)
+else(FAST_MODE_DECISION)
+    add_definitions(-DFAST_MODE_DECISION=0)
+endif(FAST_MODE_DECISION)
 
 option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
 find_package(Yasm)
@@ -71,8 +72,8 @@ if(ENABLE_PPA)
     endif(UNIX)
 endif(ENABLE_PPA)
 
-include_directories(. Lib encoder)
-add_subdirectory(Lib)
+include_directories(. Lib common encoder)
+add_subdirectory(common)
 add_subdirectory(encoder)
 
 # Test applications
@@ -87,32 +88,9 @@ if(ENABLE_TOOLS)
     add_subdirectory(tools)
 endif(ENABLE_TOOLS)
 
-# Main CLI application
-option(ENABLE_CLI "Build standalone CLI application" ON)
-if(ENABLE_CLI)
-    # x265cfg.cpp and x265enc.cpp are copied from HM sources (still have the BSD headers) and have many
-    # compiler warnings we do not want to waste time fixing.  x265main.cpp includes many HM headers, so
-    # they leak in there as well.
-    if(MSVC)
-        add_definitions(/wd4100) # unreferenced formal parameter
-        add_definitions(/wd4244) # type conversion, possible loss of data
-        add_definitions(/wd4512) # assignment operator could not be generated
-        add_definitions(/wd4800) # performance warning: bool coersion
-        set_source_files_properties(x265cfg.cpp PROPERTIES COMPILE_FLAGS "/D_CRT_NONSTDC_NO_DEPRECATE /wd4018")
-    endif(MSVC)
-    if(GCC)
-        add_definitions(-Wno-sign-compare)
-        add_definitions(-Wno-unused-parameter)
-        set_source_files_properties(x265cfg.cpp  PROPERTIES COMPILE_FLAGS -D_CRT_NONSTDC_NO_DEPRECATE)
-    endif(GCC)
-    set_source_files_properties(x265main.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
-    add_subdirectory(input)
-    add_subdirectory(output)
-
-    file(GLOB APPCOMMON  Lib/TAppCommon/*.h Lib/TAppCommon/*.cpp)
-
-    # Visual leak detector
+# Visual leak detector
+if (WIN32)
     find_package(VLD)
     if(VLD_FOUND)
         add_definitions(-DHAVE_VLD)
@@ -120,13 +98,22 @@ if(ENABLE_CLI)
         set(PLATFORM_LIBS ${PLATFORM_LIBS} ${VLD_LIBRARIES})
         link_directories(${VLD_LIBRARY_DIRS})
     endif()
+endif()
 
-    add_executable(x265-cli
-        x265main.cpp ${EXTRAS} ${APPCOMMON}
-        x265cfg.cpp x265cfg.h
-        x265enc.cpp x265enc.h)
-    target_link_libraries(x265-cli HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
+# Main CLI application
+option(ENABLE_CLI "Build standalone CLI application" ON)
+if(ENABLE_CLI)
+    add_subdirectory(input)
+    add_subdirectory(output)
+    if (MSVC)
+        set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "/wd4100")
+    elseif(GCC)
+        set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+    endif()
 
-    add_executable(x265s x265.cpp ${EXTRAS})
-    target_link_libraries(x265s HM x265 InputFiles OutputFiles ${PLATFORM_LIBS})
+    set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
+    add_executable(x265 ${EXTRAS} ../COPYING
+        x265.cpp x265opts.h
+        compat/msvc/getopt.c compat/msvc/getopt.h)
+    target_link_libraries(x265 InputFiles OutputFiles encoder ${PLATFORM_LIBS})
 endif(ENABLE_CLI)

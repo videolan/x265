@@ -83,6 +83,7 @@ TComTrQuant::TComTrQuant()
     m_cQP.clear();
 
     // allocate temporary buffers
+    // OPT_ME: I may reduce this to short and output matched, bug I am not sure it is right.
     m_plTempCoeff  = new Int[MAX_CU_SIZE * MAX_CU_SIZE];
 
     // allocate bit estimation class  (for RDOQ)
@@ -636,7 +637,6 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
         }
         else
         {
-
             partialButterfly4(block, tmp, shift_1st, iHeight);
             partialButterfly4(tmp, coeff, shift_2nd, iWidth);
         }
@@ -1082,7 +1082,22 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
         return;
     }
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
+
+#if 0
     xDeQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, scalingListType);
+#endif
+
+#if 1
+    // Values need to pass as input parameter in xDeQuant
+    Int iPer = m_cQP.m_iPer;
+    Int iRem = m_cQP.m_iRem;
+    Bool useScalingList = getUseScalingList();
+    UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
+    Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
+
+    x265::primitives.deQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
+#endif
+
     if (useTransformSkip == true)
     {
         xITransformSkip(bitDepth, m_plTempCoeff, rpcResidual, uiStride, uiWidth, uiHeight);
@@ -1162,17 +1177,14 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
     Int j;
     for (j = 0; j < iHeight; j++)
     {
-        for (int i = 0; i < iWidth; i++)
-        {
-            block[j * iWidth + i] = piBlkResi[j * uiStride + i];
-        }
+        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short) );
     }
 
     xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
-    for (j = 0; j < iHeight * iWidth; j++)
-    {
-        psCoeff[j] = coeff[j];
-    }
+
+    assert(iWidth == iHeight);
+    assert(((iWidth*iHeight) % 8) == 0);
+    x265::primitives.cvt16to32(coeff, psCoeff, iWidth*iHeight);
 }
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
@@ -1188,20 +1200,13 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
     ALIGN_VAR_32(Short, coeff[64 * 64]);
     Int j;
 
-    for (j = 0; j < iHeight * iWidth; j++)
-    {
-        coeff[j] = (Short)plCoef[j];
-    }
+    x265::primitives.cvt32to16(plCoef, coeff, iWidth*iHeight);
 
     xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+
+    for (j = 0; j < iHeight; j++)
     {
-        for (j = 0; j < iHeight; j++)
-        {
-            for (int i = 0; i < iWidth; i++)
-            {
-                pResidual[j * uiStride + i] = block[j * iWidth + i];
-            }
-        }
+        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short)*iWidth);
     }
 }
 
@@ -1220,14 +1225,25 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, 
     Int  j, k;
     if (shift >= 0)
     {
-        transformSkipShift = shift;
+#if 1
         for (j = 0; j < height; j++)
         {
-            for (k = 0; k < width; k++)
+            x265::primitives.cvt16to32_shl(&psCoeff[j * height], &piBlkResi[j * uiStride], shift, width);
+        }
+#else
+        // faster but use intrinsic
+        for (j = 0; j < height; j++)
+        {
+            for (k = 0; k < width; k+=4)
             {
-                psCoeff[j * height + k] = piBlkResi[j * uiStride + k] << transformSkipShift;
+                __m128i T00 = _mm_loadl_epi64((__m128i*)&piBlkResi[j * uiStride + k]);
+                __m128i T01 = _mm_srai_epi32(_mm_unpacklo_epi16(T00, T00), 16);
+                __m128i T02 = _mm_slli_epi32(T01, shift);
+
+                _mm_storeu_si128((__m128i*)&psCoeff[j * height + k], T02);
             }
         }
+#endif
     }
     else
     {
@@ -1260,15 +1276,10 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, U
     Int  j, k;
     if (shift > 0)
     {
-        Int offset;
         transformSkipShift = shift;
-        offset = (1 << (transformSkipShift - 1));
         for (j = 0; j < height; j++)
         {
-            for (k = 0; k < width; k++)
-            {
-                pResidual[j * uiStride + k] =  (plCoef[j * width + k] + offset) >> transformSkipShift;
-            }
+            x265::primitives.cvt32to16_shr(&pResidual[j * uiStride], &plCoef[j * width], shift, width);
         }
     }
     else
@@ -2030,7 +2041,7 @@ __inline Double TComTrQuant::xGetICRateCost(UInt uiAbsLevel,
     return xGetICost(iRate);
 }
 
-__inline Int TComTrQuant::xGetICRate(UInt uiAbsLevel,
+__inline Int TComTrQuant::xGetICRate(UInt   uiAbsLevel,
                                      UShort ui16CtxNumOne,
                                      UShort ui16CtxNumAbs,
                                      UShort ui16AbsGoRice,

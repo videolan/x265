@@ -44,6 +44,7 @@
 #include "CommonDef.h"
 #include "TComRom.h"
 #include "TComList.h"
+#include "x265.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -1393,7 +1394,6 @@ private:
     TComSPS*    m_pcSPS;
     TComPPS*    m_pcPPS;
     TComPic*    m_pcPic;
-    TComTrQuant* m_pcTrQuant;
     UInt        m_colFromL0Flag; // collocated picture from List0 flag
 
     UInt        m_colRefIdx;
@@ -1450,10 +1450,6 @@ public:
     Void      setPPS(TComPPS* pcPPS)         { assert(pcPPS != NULL); m_pcPPS = pcPPS; m_iPPSId = pcPPS->getPPSId(); }
 
     TComPPS*  getPPS() { return m_pcPPS; }
-
-    Void          setTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
-
-    TComTrQuant*  getTrQuant() { return m_pcTrQuant; }
 
     Void      setPPSId(Int PPSId)         { m_iPPSId = PPSId; }
 

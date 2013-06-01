@@ -54,7 +54,7 @@ enum PPACpuEventEnum
 #define PPA_INIT()               initializePPA()
 #define PPAStartCpuEventFunc(e)  if (ppabase) ppabase->triggerStartEvent(ppabase->getEventId(e))
 #define PPAStopCpuEventFunc(e)   if (ppabase) ppabase->triggerEndEvent(ppabase->getEventId(e))
-#define PPAScopeEvent(e)         _PPAScope __scope_ ## e(e)
+#define PPAScopeEvent(e)         _PPAScope __scope_(e)
 
 #include "ppaApi.h"
 

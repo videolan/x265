@@ -336,8 +336,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
-            m_pcEncTop->getTrQuant()->setFlatScalingList();
-            m_pcEncTop->getTrQuant()->setUseScalingList(false);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setFlatScalingList();
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(false);
+            }
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
         }
@@ -346,8 +349,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->setDefaultScalingList();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
-            m_pcEncTop->getTrQuant()->setUseScalingList(true);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setScalingList(pcSlice->getScalingList());
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(true);
+            }
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
         {
@@ -358,8 +364,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->getScalingList()->checkDcOfMatrix();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
-            m_pcEncTop->getTrQuant()->setUseScalingList(true);
+            for(UInt ui=0; ui<m_pcEncTop->getNumSubstreams(); ui++)
+            {
+                m_pcEncTop->getTrQuants()[ui].setScalingList(pcSlice->getScalingList());
+                m_pcEncTop->getTrQuants()[ui].setUseScalingList(true);
+            }
         }
         else
         {
@@ -464,8 +473,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         refPicListModification->setRefPicListModificationFlagL1(false);
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive, pcSlice->getRPS()->getNumberOfPictures()));
-
-        pcSlice->setTrQuant(m_pcEncTop->getTrQuant());
 
         //  Set reference list
         pcSlice->setRefPicList(rcListPic);
@@ -690,6 +697,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         pcSlice = pcPic->getSlice(0);
 
+        PPAStartCpuEventFunc(LoopFilters);
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
         if (m_pcCfg->getSaoLcuBasedOptimization() && m_pcCfg->getSaoLcuBoundary())
         {
@@ -719,6 +727,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         {
             m_pcSAO->createPicSaoInfo(pcPic);
         }
+        PPAStopCpuEventFunc(LoopFilters);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////// File writing
         // Set entropy coder
@@ -1524,10 +1533,13 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_bFirst = false;
         m_iNumPicCoded++;
         m_totalCoded++;
-        /* logging: insert a newline at end of picture period */
-        printf("\n");
-        fflush(stdout);
 
+        if (m_pcCfg->getLogLevel() >= X265_LOG_DEBUG)
+        {
+            /* logging: insert a newline at end of picture period */
+            printf("\n");
+            fflush(stdout);
+        }
         delete[] pcSubstreamsOut;
     }
 
@@ -1779,8 +1791,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
     iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
 
-    Int   iSize   = iWidth * iHeight;
-
+    Int iSize = iWidth * iHeight;
+    // TODO: Add SSD intrinsic
     for (y = 0; y < iHeight; y++)
     {
         for (x = 0; x < iWidth; x++)
@@ -1870,10 +1882,13 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
         m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
 
+    if (m_pcCfg->getLogLevel() < X265_LOG_DEBUG)
+        return;
+
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
     if (!pcSlice->isReferenced()) c += 32;
 
-    printf("POC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
+    printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            pcSlice->getPOC(),
            pcSlice->getTLayer(),
            c,
@@ -1881,8 +1896,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
            pcSlice->getSliceQp(),
            uibits);
 
-    printf(" [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", dYPSNR, dUPSNR, dVPSNR);
-    //printf(" [ET %5.0f ]", dEncTime);
+    printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", dYPSNR, dUPSNR, dVPSNR);
 
     if (pcSlice->isIntra())
         return;

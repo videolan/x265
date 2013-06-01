@@ -88,10 +88,6 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create()
 {
-    x265::SetupPrimitives(-1);  // -1 means auto-detect if uninitialized
-
-    m_threadPool = x265::ThreadPool::AllocThreadPool(0);
-
     // initialize global variables
     initROM();
 
@@ -105,10 +101,6 @@ Void TEncTop::create()
         m_cEncSAO.setMaxNumOffsetsPerPic(getMaxNumOffsetsPerPic());
         m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_cEncSAO.createEncBuffer();
-    }
-    if (m_bUseAdaptQpSelect)
-    {
-        m_cTrQuant.initSliceQpDelta();
     }
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
@@ -141,6 +133,7 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
     m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
     m_pcSearchs              = new TEncSearch[iNumSubstreams];
     m_pcCuEncoders           = new TEncCu[iNumSubstreams];
+    m_pcTrQuants             = new TComTrQuant[iNumSubstreams];
 
     for (UInt ui = 0; ui < iNumSubstreams; ui++)
     {
@@ -149,6 +142,16 @@ Void TEncTop::createWPPCoders(Int iNumSubstreams)
 
         m_pcCuEncoders[ui].create(g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_pcCuEncoders[ui].init(this);
+        if (m_bUseAdaptQpSelect)
+        {
+            m_pcTrQuants[ui].initSliceQpDelta();
+        }
+        m_pcTrQuants[ui].init(1 << m_uiQuadtreeTULog2MaxSize,
+                              m_useRDOQ,
+                              m_useRDOQTS,
+                              true,
+                              m_useTransformSkipFast,
+                              m_bUseAdaptQpSelect );
     }
 
     m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
@@ -209,6 +212,7 @@ Void TEncTop::destroy()
         m_pcCuEncoders[ui].destroy();
     }
 
+    delete[] m_pcTrQuants;
     delete[] m_pcCuEncoders;
 
     delete[] m_pcSearchs;
@@ -254,18 +258,10 @@ Void TEncTop::init()
     // initialize transform & quantization class
     m_pcCavlcCoder = getCavlcCoder();
 
-    m_cTrQuant.init(1 << m_uiQuadtreeTULog2MaxSize,
-                    m_useRDOQ,
-                    m_useRDOQTS,
-                    true,
-                    m_useTransformSkipFast,
-                    m_bUseAdaptQpSelect
-                    );
-
     // initialize encoder search class
     for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
     {
-        m_pcSearchs[ui].init(this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
+        m_pcSearchs[ui].init(this, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
     }
 
     m_iMaxRefPicNum = 0;
@@ -716,11 +712,11 @@ Void TEncTop::xInitRPS()
             }
 
 #if WRITE_BACK
-            // the folowing code overwrite the deltaPOC and Used by current values read from the config file with the ones
+            // the following code overwrite the deltaPOC and Used by current values read from the config file with the ones
             // computed from the RefIdc.  A warning is printed if they are not identical.
             numNeg = 0;
             numPos = 0;
-            TComReferencePictureSet      RPSTemp; // temporary variable
+            TComReferencePictureSet RPSTemp; // temporary variable
 
             for (Int j = 0; j < ge.m_numRefIdc; j++)
             {

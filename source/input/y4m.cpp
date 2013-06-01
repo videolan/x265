@@ -53,7 +53,7 @@ void Y4MInput::parseHeader()
     while (ifs)
     {
         // Skip Y4MPEG string
-        char byte = ifs.get();
+        int byte = ifs.get();
         while (!ifs.eof() && (byte != ' ') && (byte != '\n'))
             byte = ifs.get();
 
@@ -172,9 +172,9 @@ static const char header[] = "FRAME";
 
 int Y4MInput::guessFrameCount()
 {
-    long cur = ifs.tellg();
+    istream::pos_type cur = ifs.tellg();
     ifs.seekg (0, ios::end);
-    long size = ifs.tellg();
+    istream::pos_type size = ifs.tellg();
     ifs.seekg (cur, ios::beg);
 
     return (int) ((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
@@ -204,7 +204,7 @@ bool Y4MInput::readPicture(x265_picture_t& pic)
     }
 
     /* consume bytes up to line feed */
-    char byte = ifs.get();
+    int byte = ifs.get();
     while (byte != '\n' && !ifs)
         byte = ifs.get();
 

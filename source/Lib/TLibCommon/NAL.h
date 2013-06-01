@@ -37,6 +37,7 @@
 #include <vector>
 #include <sstream>
 #include "CommonDef.h"
+#include "x265.h"
 
 class TComOutputBitstream;
 

@@ -39,6 +39,11 @@
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
 #include <math.h>
+#include <omp.h>
+
+#include "threading.h"
+#include "wavefront.h"
+using namespace x265;
 
 //! \ingroup TLibEncoder
 //! \{
@@ -127,7 +132,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
     m_pcSbacCoder       = pcEncTop->getSbacCoder();
     m_pcBinCABAC        = pcEncTop->getBinCABAC();
-    m_pcTrQuant         = pcEncTop->getTrQuant();
+    m_pcTrQuants        = pcEncTop->getTrQuants();
 
     m_pcBitCounter      = pcEncTop->getBitCounter();
     m_pcRdCost          = pcEncTop->getRdCost();
@@ -306,8 +311,12 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(dLambda, dLambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(dLambda, dLambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(dLambda);
 #endif
 
@@ -422,8 +431,12 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    m_pcTrQuant->setLambda(lambda, lambda / weight);
+    for(UInt ui=0; ui<((TEncTop*)m_pcCfg)->getNumSubstreams(); ui++)
+    {
+        ((TEncTop*)m_pcCfg)->getTrQuants()[ui].setLambda(lambda, lambda / weight);
+    }
 #else
+    #error please fix me
     m_pcTrQuant->setLambda(lambda);
 #endif
 
@@ -509,12 +522,16 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        // TODO: fix this option
+        assert(0);
+        #if 0
         m_pcTrQuant->clearSliceARLCnt();
         if (pcSlice->getSliceType() != I_SLICE)
         {
             Int qpBase = pcSlice->getSliceQpBase();
             pcSlice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
         }
+        #endif
     }
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
@@ -542,145 +559,38 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pcSbacCoder);
     }
 
-    UInt uiCol = 0, uiLin = 0;
+    Int uiLin = 0;
     const UInt uiTotalCUs = rpcPic->getNumCUsInFrame();
     // CHECK_ME: in here, uiCol running uiWidthInLCUs times since "m_uiNumCUsInFrame = m_uiWidthInCU * m_uiHeightInCU;"
     assert((uiTotalCUs % uiWidthInLCUs) == 0);
     assert((uiTotalCUs / uiWidthInLCUs) == uiHeightInLCUs);
 
-    // for every CU in slice
-    for(uiLin = 0; uiLin < uiHeightInLCUs; uiLin++)
-    {
-        const UInt uiCurLineCUAddr = uiLin * uiWidthInLCUs;
-        for(uiCol = 0; uiCol < uiWidthInLCUs; uiCol++)
-        {
-            UInt uiCUAddr = uiCurLineCUAddr + uiCol;
+    CUComputeData computeData(
+        rpcPic,
+        ppppcRDSbacCoders,
+        pcSlice,
+        pcBitCounters,
+        m_pcEntropyCoders,
+        m_pcSbacCoder,
+        m_pcBufferSbacCoders,
+        m_pcRDGoOnSbacCoders,
+        m_pcRdCost,
+        m_pcCuEncoders,
+        m_pcPredSearchs,
+        m_pcTrQuants,
+        bWaveFrontsynchro
+    );
 
-            // initialize CU encoder
-            TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
-            pcCU->initCU(rpcPic, uiCUAddr);
-
-            // inherit from TR if necessary, select substream to use.
-            const UInt uiSubStrm = (bWaveFrontsynchro ? uiLin : 0);
-
-            TEncBinCABAC* pppcRDSbacCoder = (TEncBinCABAC*)ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->getEncBinIf();
-            pppcRDSbacCoder->setBinCountingEnableFlag(false);
-            pppcRDSbacCoder->setBinsCoded(0);
-
-            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(m_pcSbacCoder, pcSlice);
-            m_pcEntropyCoders[uiSubStrm].resetEntropy();
-
-            // CHECK_ME: since there only one slice, the TR alway avail except line-0
-            // TODO: In MultiThread environment, we MUST modify code to waiting previous line to finish!
-            if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro && (uiLin > 0))
-            {
-                // TR is available, we use it.
-                ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts(&m_pcBufferSbacCoders[uiLin-1]);
-            }
-
-            // set go-on entropy coder
-            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(&m_pcRDGoOnSbacCoders[uiSubStrm], pcSlice);
-            m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
-
-            ((TEncBinCABAC*)m_pcRDGoOnSbacCoders[uiSubStrm].getEncBinIf())->setBinCountingEnableFlag(true);
-
-            Double oldLambda = m_pcRdCost->getLambda();
-            if (m_pcCfg->getUseRateCtrl())
-            {
-                Int estQP        = pcSlice->getSliceQp();
-                Double estLambda = -1.0;
-                Double bpp       = -1.0;
-
-                if (rpcPic->getSlice(0)->getSliceType() == I_SLICE || !m_pcCfg->getLCULevelRC())
-                {
-                    estQP = pcSlice->getSliceQp();
-                }
-                else
-                {
-                    bpp       = m_pcRateCtrl->getRCPic()->getLCUTargetBpp();
-                    estLambda = m_pcRateCtrl->getRCPic()->getLCUEstLambda(bpp);
-                    estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP(estLambda, pcSlice->getSliceQp());
-                    estQP     = Clip3(-pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, estQP);
-
-                    m_pcRdCost->setLambda(estLambda);
-                }
-
-                m_pcRateCtrl->setRCQP(estQP);
-                pcCU->getSlice()->setSliceQpBase(estQP);
-            }
-
-            m_pcCuEncoders[uiSubStrm].set_pppcRDSbacCoder(ppppcRDSbacCoders[uiSubStrm]);
-            m_pcCuEncoders[uiSubStrm].set_pcEntropyCoder(&m_pcEntropyCoders[uiSubStrm]);
-            m_pcCuEncoders[uiSubStrm].set_pcPredSearch(&m_pcPredSearchs[uiSubStrm]);
-            m_pcCuEncoders[uiSubStrm].set_pcRDGoOnSbacCoder(&m_pcRDGoOnSbacCoders[uiSubStrm]);
-
-            // run CU encoder
-            m_pcCuEncoders[uiSubStrm].compressCU(pcCU);
-
-            if (m_pcCfg->getUseRateCtrl())
-            {
-                UInt SAD    = m_pcCuEncoders[uiSubStrm].getLCUPredictionSAD();
-                Int height  = min(pcSlice->getSPS()->getMaxCUHeight(), pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight());
-                Int width   = min(pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth());
-                Double MAD = (Double)SAD / (Double)(height * width);
-                MAD = MAD * MAD;
-                (m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr)).m_MAD = MAD;
-
-                Int actualQP        = g_RCInvalidQPValue;
-                Double actualLambda = m_pcRdCost->getLambda();
-                Int actualBits      = pcCU->getTotalBits();
-                Int numberOfEffectivePixels    = 0;
-                for (Int idx = 0; idx < rpcPic->getNumPartInCU(); idx++)
-                {
-                    if (pcCU->getPredictionMode(idx) != MODE_NONE && (!pcCU->isSkipped(idx)))
-                    {
-                        numberOfEffectivePixels = numberOfEffectivePixels + 16;
-                        break;
-                    }
-                }
-
-                if (numberOfEffectivePixels == 0)
-                {
-                    actualQP = g_RCInvalidQPValue;
-                }
-                else
-                {
-                    actualQP = pcCU->getQP(0);
-                }
-                m_pcRdCost->setLambda(oldLambda);
-
-                m_pcRateCtrl->getRCPic()->updateAfterLCU(m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda, m_pcCfg->getLCULevelRC());
-            }
-
-            // restore entropy coder to an initial stage
-            m_pcEntropyCoders[uiSubStrm].setEntropyCoder(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST], pcSlice);
-            m_pcEntropyCoders[uiSubStrm].setBitstream(&pcBitCounters[uiSubStrm]);
-            m_pcCuEncoders[uiSubStrm].setBitCounter(&pcBitCounters[uiSubStrm]);
-            m_pcBitCounter = &pcBitCounters[uiSubStrm];
-            pppcRDSbacCoder->setBinCountingEnableFlag(true);
-            m_pcBitCounter->resetBits();
-            pppcRDSbacCoder->setBinsCoded(0);
-            m_pcCuEncoders[uiSubStrm].encodeCU(pcCU);
-
-            pppcRDSbacCoder->setBinCountingEnableFlag(false);
-
-            //Store probabilties of second LCU in line into buffer
-            // CHECK_ME: I don't known why both check numSubStreams and bWaveFrontsynchro, I guess we always see them both except encode Nx64 video
-            if ((uiCol == 1) && (iNumSubstreams > 1) && bWaveFrontsynchro)
-            {
-                m_pcBufferSbacCoders[uiLin].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
-            }
-
-            m_uiPicTotalBits += pcCU->getTotalBits();
-            m_dPicRdCost     += pcCU->getTotalCost();
-            m_uiPicDist      += pcCU->getTotalDistortion();
-        } // end of for(uiCol...
-    } // end of for(uiLin...
+    ThreadPool* pool = dynamic_cast<TEncTop*>(this->m_pcCfg)->getThreadPool();
+    EncodingFrame frame(uiHeightInLCUs, uiWidthInLCUs, pool);
+    frame.Initialize(&computeData);
+    frame.Encode();
 
     if (iNumSubstreams > 1)
     {
         pcSlice->setNextSlice(true);
     }
+
     xRestoreWPparam(pcSlice);
 }
 
@@ -860,7 +770,10 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     if (m_pcCfg->getUseAdaptQpSelect())
     {
+        assert(0);
+        #if 0
         m_pcTrQuant->storeSliceQpNext(pcSlice);
+        #endif
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {

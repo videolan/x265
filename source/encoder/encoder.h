@@ -27,6 +27,7 @@
 #include "TLibEncoder/TEncTop.h"
 #include "common.h"
 #include "x265.h"
+#include <vector>
 
 namespace x265 {
 // private namespace
@@ -38,19 +39,25 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
-    GOPEntry      m_GOPList[MAX_GOP];
+
+    bool InitializeGOP(x265_param_t *param);
 
 public:
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
-    TComList<TComPicYuv *> m_cListPicYuvRec;    ///< list of reconstructed YUV files
-    TComList<TComPicYuv *> m_cListRecQueue;
+    TComList<TComPicYuv *>  m_cListPicYuvRec;   ///< list of reconstructed YUV files
+    TComList<TComPicYuv *>  m_cListRecQueue;
+    std::vector<x265_nal_t> m_nals;
+    std::string             m_packetData;
 
     Encoder()
-        : m_profile(Profile::MAIN)
+        : m_profile(Profile::NONE)
         , m_levelTier(Level::MAIN)
         , m_level(Level::NONE)
         , m_iGOPSize(4)
     {
+        // preallocate these containers
+        m_packetData.reserve(4096);
+        m_nals.reserve(4);
     }
 
     virtual ~Encoder() {}
