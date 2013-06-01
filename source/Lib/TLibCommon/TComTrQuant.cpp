@@ -1276,9 +1276,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, U
     Int  j, k;
     if (shift > 0)
     {
-        Int offset;
         transformSkipShift = shift;
-        offset = (1 << (transformSkipShift - 1));
         for (j = 0; j < height; j++)
         {
             x265::primitives.cvt32to16_shr(&pResidual[j * uiStride], &plCoef[j * width], shift, width);
