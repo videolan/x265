@@ -37,18 +37,6 @@
 using namespace x265;
 
 static int size_scale[NUM_PARTITIONS];
-static const MV offsets[] =
-{
-    MV(-1, 0), MV(0, -1),
-    MV(-1, -1), MV(1, -1),
-    MV(-1, 0), MV(1, 0),
-    MV(-1, 1), MV(-1, -1),
-    MV(1, -1), MV(1, 1),
-    MV(-1, 0), MV(0, 1),
-    MV(-1, 1), MV(1, 1),
-    MV(1, 0), MV(0, 1),
-}; // offsets for Two Point Search
-
 #define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
 
 static void init_scales(void)
@@ -125,6 +113,18 @@ static const MV hex4[16] =
     MV(-4, 0),  MV(4, 0),  MV(-4, 1),  MV(4, 1),
     MV(-4, 2), MV(4, 2), MV(-2, 3), MV(2, 3),
 };
+static const MV offsets[] =
+{
+    MV(-1, 0), MV(0, -1),
+    MV(-1, -1), MV(1, -1),
+    MV(-1, 0), MV(1, 0),
+    MV(-1, 1), MV(-1, -1),
+    MV(1, -1), MV(1, 1),
+    MV(-1, 0), MV(0, 1),
+    MV(-1, 1), MV(1, 1),
+    MV(1, 0), MV(0, 1),
+}; // offsets for Two Point Search
+
 
 /* sum of absolute differences between MV candidates */
 static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidates)
@@ -171,12 +171,9 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m1x) + (m1y) * stride, \
                pix_base + (m2x) + (m2y) * stride, \
                sadStride, costs); \
-        (costs)[0] <<= subsample; \
-        (costs)[1] <<= subsample; \
-        (costs)[2] <<= subsample; \
-        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
-        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
-        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
+        (costs)[0] = ((costs)[0] << subsample) + mvcost((bmv + MV(m0x, m0y)) << 2); \
+        (costs)[1] = ((costs)[1] << subsample) + mvcost((bmv + MV(m1x, m1y)) << 2); \
+        (costs)[2] = ((costs)[2] << subsample) + mvcost((bmv + MV(m2x, m2y)) << 2); \
     }
 
 #define COST_MV_PT_DIST_X4(m0x, m0y, p0, d0, m1x, m1y, p1, d1, m2x, m2y, p2, d2, m3x, m3y, p3, d3) \
@@ -187,14 +184,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                fref + (m2x) + (m2y) * stride, \
                fref + (m3x) + (m3y) * stride, \
                sadStride, costs); \
-        costs[0] <<= subsample; \
-        costs[1] <<= subsample; \
-        costs[2] <<= subsample; \
-        costs[3] <<= subsample; \
-        costs[0] += mvcost(MV(m0x, m0y) << 2); \
-        costs[1] += mvcost(MV(m1x, m1y) << 2); \
-        costs[2] += mvcost(MV(m2x, m2y) << 2); \
-        costs[3] += mvcost(MV(m3x, m3y) << 2); \
+        costs[0] = (costs[0] << subsample) + mvcost(MV(m0x, m0y) << 2); \
+        costs[1] = (costs[1] << subsample) + mvcost(MV(m1x, m1y) << 2); \
+        costs[2] = (costs[2] << subsample) + mvcost(MV(m2x, m2y) << 2); \
+        costs[3] = (costs[3] << subsample) + mvcost(MV(m3x, m3y) << 2); \
         COPY4_IF_LT(bcost, costs[0], bmv, MV(m0x, m0y), bPointNr, p0, bDistance, d0); \
         COPY4_IF_LT(bcost, costs[1], bmv, MV(m1x, m1y), bPointNr, p1, bDistance, d1); \
         COPY4_IF_LT(bcost, costs[2], bmv, MV(m2x, m2y), bPointNr, p2, bDistance, d2); \
@@ -209,14 +202,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
                sadStride, costs); \
-        costs[0] <<= subsample; \
-        costs[1] <<= subsample; \
-        costs[2] <<= subsample; \
-        costs[3] <<= subsample; \
-        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
-        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
-        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
-        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
+        costs[0] = (costs[0] << subsample) + mvcost((omv + MV(m0x, m0y)) << 2); \
+        costs[1] = (costs[1] << subsample) + mvcost((omv + MV(m1x, m1y)) << 2); \
+        costs[2] = (costs[2] << subsample) + mvcost((omv + MV(m2x, m2y)) << 2); \
+        costs[3] = (costs[3] << subsample) + mvcost((omv + MV(m3x, m3y)) << 2); \
         COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
         COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
         COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
@@ -232,14 +221,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
                sadStride, costs); \
-        (costs)[0] <<= subsample; \
-        (costs)[1] <<= subsample; \
-        (costs)[2] <<= subsample; \
-        (costs)[3] <<= subsample; \
-        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
-        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
-        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
-        (costs)[3] += mvcost((bmv + MV(m3x, m3y)) << 2); \
+        (costs)[0] = ((costs)[0] << subsample) + mvcost((bmv + MV(m0x, m0y)) << 2); \
+        (costs)[1] = ((costs)[1] << subsample) + mvcost((bmv + MV(m1x, m1y)) << 2); \
+        (costs)[2] = ((costs)[2] << subsample) + mvcost((bmv + MV(m2x, m2y)) << 2); \
+        (costs)[3] = ((costs)[3] << subsample) + mvcost((bmv + MV(m3x, m3y)) << 2); \
     }
 
 #else // if SUBSAMPLE_SAD
@@ -722,21 +707,18 @@ me_hex2:
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points.  If no new point is found, stop
-            int saved = bcost;
             if (bPointNr)
             {
-                //TwoPointSearch(bmv, bcost, bPointNr);
-
-                /* For a given direction 1 to 8, check nearest 2 outer X pixels
-                   X   X
+                /* For a given direction 1 to 8, check nearest two outer X pixels
+                     X   X
                    X 1 2 3 X
-                   4 * 5
+                     4 * 5
                    X 6 7 8 X
-                   X   X
+                     X   X
                 */
-                MV omv = bmv;
-                const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
-                const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+                int saved = bcost;
+                const MV mv1 = bmv + offsets[(bPointNr - 1) * 2];
+                const MV mv2 = bmv + offsets[(bPointNr - 1) * 2 + 1];
                 if (mv1.checkRange(mvmin, mvmax))
                 {
                     COST_MV(mv1.x, mv1.y);
@@ -745,15 +727,17 @@ me_hex2:
                 {
                     COST_MV(mv2.x, mv2.y);
                 }
+                if (bcost == saved)
+                    break;
             }
-            if (bcost == saved)
+            else
                 break;
         }
 
         const int rasterDistance = 5;
         if (bDistance > rasterDistance)
         {
-            // raster search refinement if distance was too big
+            // raster search refinement if original search distance was too big
             MV tmv;
             for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
             {
@@ -821,18 +805,15 @@ me_hex2:
             {
                 if (bPointNr)
                 {
-                    //TwoPointSearch(bmv, bcost, bPointNr);
-
                     /* For a given direction 1 to 8, check nearest 2 outer X pixels
-                       X   X
+                         X   X
                        X 1 2 3 X
-                       4 * 5
+                         4 * 5
                        X 6 7 8 X
-                       X   X
+                         X   X
                     */
-                    MV omv = bmv;
-                    const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
-                    const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+                    const MV mv1 = bmv + offsets[(bPointNr - 1) * 2];
+                    const MV mv2 = bmv + offsets[(bPointNr - 1) * 2 + 1];
                     if (mv1.checkRange(mvmin, mvmax))
                     {
                         COST_MV(mv1.x, mv1.y);
@@ -904,33 +885,32 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
         const int16_t iLeft   = omv.x - dist;
         const int16_t iRight  = omv.x + dist;
 
-		if(iTop >= mvmin.y && iLeft >= mvmin.x &&
-			iRight <= mvmax.x && iBottom <= mvmax.y)
-		{
-			COST_MV_PT_DIST_X4(omv.x, iTop, 2, dist,
-							   iLeft, omv.y, 4, dist,
-							   iRight, omv.y, 5, dist,
-							   omv.x, iBottom, 7, dist);
-		}
-		else
-		{
-			if (iTop >= mvmin.y) // check top
-			{
-				COST_MV_PT_DIST(omv.x, iTop, 2, dist);
-			}
-			if (iLeft >= mvmin.x) // check middle left
-			{
-				COST_MV_PT_DIST(iLeft, omv.y, 4, dist);
-			}
-			if (iRight <= mvmax.x) // check middle right
-			{
-				COST_MV_PT_DIST(iRight, omv.y, 5, dist);
-			}
-			if (iBottom <= mvmax.y) // check bottom
-			{
-				COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
-			}
-		}
+        if (iTop >= mvmin.y && iLeft >= mvmin.x && iRight <= mvmax.x && iBottom <= mvmax.y)
+        {
+            COST_MV_PT_DIST_X4(omv.x,  iTop,    2, dist,
+                               iLeft,  omv.y,   4, dist,
+                               iRight, omv.y,   5, dist,
+                               omv.x,  iBottom, 7, dist);
+        }
+        else
+        {
+            if (iTop >= mvmin.y) // check top
+            {
+                COST_MV_PT_DIST(omv.x, iTop, 2, dist);
+            }
+            if (iLeft >= mvmin.x) // check middle left
+            {
+                COST_MV_PT_DIST(iLeft, omv.y, 4, dist);
+            }
+            if (iRight <= mvmax.x) // check middle right
+            {
+                COST_MV_PT_DIST(iRight, omv.y, 5, dist);
+            }
+            if (iBottom <= mvmax.y) // check bottom
+            {
+                COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
+            }
+        }
     }
     else if (dist <= 8)
     {
