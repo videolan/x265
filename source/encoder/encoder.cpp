@@ -110,6 +110,7 @@ void Encoder::configure(x265_param_t *param)
 
     //====== HM Settings not exposed for configuration ======
     m_iGOPSize = X265_MIN(param->iIntraPeriod, m_iGOPSize);
+    m_iGOPSize = X265_MAX(1, m_iGOPSize);
     InitializeGOP(param);
     setGOPSize(m_iGOPSize);
     for (int i = 0; i < MAX_TLAYER; i++)
