@@ -158,7 +158,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m0x) + (m0y) * stride, \
                pix_base + (m1x) + (m1y) * stride, \
                pix_base + (m2x) + (m2y) * stride, \
-               stride << subsample, costs); \
+               sadStride, costs); \
         (costs)[0] <<= subsample; \
         (costs)[1] <<= subsample; \
         (costs)[2] <<= subsample; \
@@ -174,7 +174,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                fref + (m1x) + (m1y) * stride, \
                fref + (m2x) + (m2y) * stride, \
                fref + (m3x) + (m3y) * stride, \
-               stride << subsample, costs); \
+               sadStride, costs); \
         costs[0] <<= subsample; \
         costs[1] <<= subsample; \
         costs[2] <<= subsample; \
@@ -196,7 +196,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m1x) + (m1y) * stride, \
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
-               stride << subsample, costs); \
+               sadStride, costs); \
         costs[0] <<= subsample; \
         costs[1] <<= subsample; \
         costs[2] <<= subsample; \
@@ -219,7 +219,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
                pix_base + (m1x) + (m1y) * stride, \
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
-               stride << subsample, costs); \
+               sadStride, costs); \
         (costs)[0] <<= subsample; \
         (costs)[1] <<= subsample; \
         (costs)[2] <<= subsample; \
@@ -338,6 +338,10 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->lumaStride;
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+		
+#if SUBSAMPLE_SAD
+	sadStride = ref->lumaStride << subsample;
+#endif
 
     setMVP(qmvp);
 
@@ -357,7 +361,7 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     if (pmv.notZero())
     {
 #if SUBSAMPLE_SAD
-        int cost = (sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample) + mvcost(0);
+        int cost = (sad(fencSad, FENC_STRIDE, fref, sadStride) << subsample) + mvcost(0);
 #else
         int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
 #endif
@@ -616,7 +620,7 @@ me_hex2:
            fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
            fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
            fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
-           stride << subsample, costs + 4 * k); \
+           sadStride, costs + 4 * k); \
     fref_base += 2 * dy;
 #define ADD_MVCOST(k, x, y) costs[k] = (costs[k] << subsample) + p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
 #else
@@ -731,7 +735,7 @@ me_hex2:
                                pix_base + rasterDistance,
                                pix_base + rasterDistance * 2,
                                pix_base + rasterDistance * 3,
-                               stride << subsample, costs);
+                               sadStride, costs);
                         costs[0] = (costs[0] << subsample) + mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
                         tmv.x += rasterDistance;

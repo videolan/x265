@@ -56,6 +56,7 @@ protected:
     pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
     pixel *fenc;
     pixel *fencSad;
+    intptr_t sadStride;
 #else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
