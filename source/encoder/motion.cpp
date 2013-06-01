@@ -37,6 +37,18 @@
 using namespace x265;
 
 static int size_scale[NUM_PARTITIONS];
+static const MV offsets[] =
+{
+    MV(-1, 0), MV(0, -1),
+    MV(-1, -1), MV(1, -1),
+    MV(-1, 0), MV(1, 0),
+    MV(-1, 1), MV(-1, -1),
+    MV(1, -1), MV(1, 1),
+    MV(-1, 0), MV(0, 1),
+    MV(-1, 1), MV(1, 1),
+    MV(1, 0), MV(0, 1),
+}; // offsets for Two Point Search
+
 #define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
 
 static void init_scales(void)
@@ -338,9 +350,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->lumaStride;
     pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-		
+
 #if SUBSAMPLE_SAD
-	sadStride = ref->lumaStride << subsample;
+    sadStride = ref->lumaStride << subsample;
 #endif
 
     setMVP(qmvp);
@@ -626,14 +638,14 @@ me_hex2:
 #else
 #define SADS(k, x0, y0, x1, y1, x2, y2, x3, y3) \
     sad_x4(fenc, \
-        fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
-        fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
-        fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
-        fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
-        stride, costs + 4 * k); \
-        fref_base += 2 * dy;
+           fref_base x0 * i + (y0 - 2 * k + 4) * dy, \
+           fref_base x1 * i + (y1 - 2 * k + 4) * dy, \
+           fref_base x2 * i + (y2 - 2 * k + 4) * dy, \
+           fref_base x3 * i + (y3 - 2 * k + 4) * dy, \
+           stride, costs + 4 * k); \
+    fref_base += 2 * dy;
 #define ADD_MVCOST(k, x, y) costs[k] += p_cost_omvx[x * 4 * i] + p_cost_omvy[y * 4 * i]
-#endif
+#endif // if SUBSAMPLE_SAD
 #define MIN_MV(k, x, y)     COPY2_IF_LT(bcost, costs[k], dir, x * 16 + (y & 15))
 
                 SADS(0, +0, -4, +0, +4, -2, -3, +2, -3);
@@ -712,7 +724,28 @@ me_hex2:
             // if best distance was only 1, check two missing points.  If no new point is found, stop
             int saved = bcost;
             if (bPointNr)
-                TwoPointSearch(bmv, bcost, bPointNr);
+            {
+                //TwoPointSearch(bmv, bcost, bPointNr);
+
+                /* For a given direction 1 to 8, check nearest 2 outer X pixels
+                   X   X
+                   X 1 2 3 X
+                   4 * 5
+                   X 6 7 8 X
+                   X   X
+                */
+                MV omv = bmv;
+                const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
+                const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+                if (mv1.checkRange(mvmin, mvmax))
+                {
+                    COST_MV(mv1.x, mv1.y);
+                }
+                if (mv2.checkRange(mvmin, mvmax))
+                {
+                    COST_MV(mv2.x, mv2.y);
+                }
+            }
             if (bcost == saved)
                 break;
         }
@@ -747,13 +780,13 @@ me_hex2:
                         tmv.x += rasterDistance;
                         costs[3] = (costs[3] << subsample) + mvcost(tmv << 3);
                         COPY2_IF_LT(bcost, costs[3], bmv, tmv);
-#else
+#else // if SUBSAMPLE_SAD
                         sad_x4(fenc,
-                            pix_base,
-                            pix_base + rasterDistance,
-                            pix_base + rasterDistance * 2,
-                            pix_base + rasterDistance * 3,
-                            stride, costs);
+                               pix_base,
+                               pix_base + rasterDistance,
+                               pix_base + rasterDistance * 2,
+                               pix_base + rasterDistance * 3,
+                               stride, costs);
                         costs[0] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
                         tmv.x += rasterDistance;
@@ -765,7 +798,7 @@ me_hex2:
                         tmv.x += rasterDistance;
                         costs[3] += mvcost(tmv << 3);
                         COPY2_IF_LT(bcost, costs[3], bmv, tmv);
-#endif
+#endif // if SUBSAMPLE_SAD
                     }
                     else
                         COST_MV(tmv.x, tmv.y);
@@ -787,7 +820,28 @@ me_hex2:
             if (bDistance == 1)
             {
                 if (bPointNr)
-                    TwoPointSearch(bmv, bcost, bPointNr);
+                {
+                    //TwoPointSearch(bmv, bcost, bPointNr);
+
+                    /* For a given direction 1 to 8, check nearest 2 outer X pixels
+                       X   X
+                       X 1 2 3 X
+                       4 * 5
+                       X 6 7 8 X
+                       X   X
+                    */
+                    MV omv = bmv;
+                    const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
+                    const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
+                    if (mv1.checkRange(mvmin, mvmax))
+                    {
+                        COST_MV(mv1.x, mv1.y);
+                    }
+                    if (mv2.checkRange(mvmin, mvmax))
+                    {
+                        COST_MV(mv2.x, mv2.y);
+                    }
+                }
                 break;
             }
         }
@@ -1031,39 +1085,4 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
             } // for ...
         } // check border for each mv
     } // dist > 8
-}
-
-void MotionEstimate::TwoPointSearch(MV &bmv, int &bcost, int bPointNr)
-{
-    /* For a given direction 1 to 8, check nearest 2 outer X pixels
-         X   X
-       X 1 2 3 X
-         4 * 5
-       X 6 7 8 X
-         X   X
-    */
-    static const MV offsets[] =
-    {
-        MV(-1, 0), MV(0, -1),
-        MV(-1, -1), MV(1, -1),
-        MV(-1, 0), MV(1, 0),
-        MV(-1, 1), MV(-1, -1),
-        MV(1, -1), MV(1, 1),
-        MV(-1, 0), MV(0, 1),
-        MV(-1, 1), MV(1, 1),
-        MV(1, 0), MV(0, 1),
-    };
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-    MV omv = bmv;
-    const MV mv1 = omv + offsets[(bPointNr - 1) * 2];
-    const MV mv2 = omv + offsets[(bPointNr - 1) * 2 + 1];
-
-    if (mv1.checkRange(mvmin, mvmax))
-    {
-        COST_MV(mv1.x, mv1.y);
-    }
-    if (mv2.checkRange(mvmin, mvmax))
-    {
-        COST_MV(mv2.x, mv2.y);
-    }
 }

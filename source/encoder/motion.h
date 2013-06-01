@@ -28,7 +28,7 @@
 #include "mv.h"
 #include "bitcost.h"
 
-#define SUBSAMPLE_SAD 0  /* Disabled while under construction */
+#define SUBSAMPLE_SAD 1  /* Skip Rows feature for SAD calculation */
 
 namespace x265 {
 // private x265 namespace
@@ -119,8 +119,10 @@ public:
 
 #if SUBSAMPLE_SAD
     int bufSAD(pixel *fref, intptr_t stride)  { return sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample; }
+
 #else
     int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
+
 #endif
 
     int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
@@ -136,8 +138,6 @@ protected:
 
     /* HM Motion Search */
     void StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
-
-    void TwoPointSearch(MV &bmv, int &bcost, int bPointNr);
 
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
     inline int fpelSad(pixel *fref, const MV& fmv)
