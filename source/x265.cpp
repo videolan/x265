@@ -173,7 +173,7 @@ struct CLIOptions
         int64_t i_elapsed = i_time - i_start;
         double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
         double bitrate = (double) totalBytes * 8 / ( (double) 1000 * param->iFrameRate );
-        if( framesToBeEncoded )
+        if( framesToBeEncoded && i_frame )
         {
             int eta = (int) (i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
             sprintf( buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
@@ -444,39 +444,35 @@ int main(int argc, char **argv)
     int nal;
 
     // main encoder loop
-    uint32_t frameCount = 0;
+    uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     while (pic_in && !b_ctrl_c)
     {
         // read input YUV file
-        if (frameCount < cliopt.framesToBeEncoded && cliopt.input->readPicture(pic_orig))
-            frameCount++;
+        if (inFrameCount < cliopt.framesToBeEncoded && cliopt.input->readPicture(pic_orig))
+            inFrameCount++;
         else
             pic_in = NULL;
 
         int iNumEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_out);
         if (iNumEncoded && pic_out)
-        {
             cliopt.recon->writePicture(pic_recon);
-            outFrameCount++;
-        }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
+        outFrameCount += iNumEncoded;
         // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
-        cliopt.printStatus(frameCount, &param);
+        cliopt.printStatus(outFrameCount, &param);
     }
 
     /* Flush the encoder */
     while (!b_ctrl_c && x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_out))
     {
         if (pic_out)
-        {
             cliopt.recon->writePicture(pic_recon);
-            outFrameCount++;
-        }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
-        cliopt.printStatus(frameCount, &param);
+        outFrameCount++;
+        cliopt.printStatus(outFrameCount, &param);
     }
 
     /* clear progress report */
@@ -487,10 +483,10 @@ int main(int argc, char **argv)
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
-        fprintf(stderr, "aborted at input frame %d, output frame %d\n", cliopt.frameSkip + frameCount, outFrameCount);
+        fprintf(stderr, "aborted at input frame %d, output frame %d\n", cliopt.frameSkip + inFrameCount, outFrameCount);
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
-    double vidtime = (double)frameCount / param.iFrameRate;
+    double vidtime = (double)inFrameCount / param.iFrameRate;
     printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
         cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
 
