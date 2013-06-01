@@ -726,17 +726,20 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             encoder->m_cListRecQueue.pushBack(*(iterPicYuvRec++));
     }
 
-    if (pic_out && encoder->m_cListRecQueue.size())
+    if (encoder->m_cListRecQueue.size())
     {
         TComPicYuv *recpic = encoder->m_cListRecQueue.popFront();
-        pic_out->planes[0] = recpic->getLumaAddr(); pic_out->stride[0] = recpic->getStride();
-        pic_out->planes[1] = recpic->getCbAddr();   pic_out->stride[1] = recpic->getCStride();
-        pic_out->planes[2] = recpic->getCrAddr();   pic_out->stride[2] = recpic->getCStride();
-        pic_out->bitDepth = sizeof(Pel)*8;
+        if (pic_out)
+        {
+            pic_out->planes[0] = recpic->getLumaAddr(); pic_out->stride[0] = recpic->getStride();
+            pic_out->planes[1] = recpic->getCbAddr();   pic_out->stride[1] = recpic->getCStride();
+            pic_out->planes[2] = recpic->getCrAddr();   pic_out->stride[2] = recpic->getCStride();
+            pic_out->bitDepth = sizeof(Pel)*8;
+        }
         return 1;
     }
 
-    return pp_nal ? 0 : 0;  // just to avoid unused parameter warning
+    return 0;
 }
 
 EXTERN_CYCLE_COUNTER(ME);
