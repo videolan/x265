@@ -229,6 +229,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 
     if (param->iIntraPeriod == 1)
     {
+        /* encoder_all_I */
         m_GOPList[0] = GOPEntry();
         m_GOPList[0].m_QPFactor = 1;
         m_GOPList[0].m_betaOffsetDiv2 = 0;
@@ -236,9 +237,51 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[0].m_POC = 1;
         m_GOPList[0].m_numRefPicsActive = 4;
     }
+    else if (param->iIntraPeriod == 32) // hacky temporary way to select random access
+    {
+        /* encoder_randomaccess_main */
+        setDecodingRefreshType(1);
+        int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
+        double factors[] = { 0, 0.442, 0.3536, 0.3536, 0.68 };
+        int pocs[] = { 8, 4, 2, 1, 3, 6, 5, 7 };
+        int rps[] = { 0, 4, 2, 1, -2, -3, 1, -2 };
+        for (int i = 0; i < 8; i++)
+        {
+            m_GOPList[i].m_POC = pocs[i];
+            m_GOPList[i].m_QPFactor = factors[offsets[i]];
+            m_GOPList[i].m_QPOffset = offsets[i];
+            m_GOPList[i].m_deltaRPS = rps[i];
+            m_GOPList[i].m_sliceType = 'B';
+            m_GOPList[i].m_numRefPicsActive = i ? 2 : 4;
+            m_GOPList[i].m_numRefPics = i == 1 ? 3 : 4;
+            m_GOPList[i].m_interRPSPrediction = i ? 1 : 0;
+            m_GOPList[i].m_numRefIdc = i == 2 ? 4 : 5;
+        }
+#define SET4(id, VAR, a, b, c, d) \
+    m_GOPList[id].VAR[0] = a; m_GOPList[id].VAR[1] = b; m_GOPList[id].VAR[2] = c; m_GOPList[id].VAR[3] = d;
+#define SET5(id, VAR, a, b, c, d, e) \
+    m_GOPList[id].VAR[0] = a; m_GOPList[id].VAR[1] = b; m_GOPList[id].VAR[2] = c; m_GOPList[id].VAR[3] = d; m_GOPList[id].VAR[4] = e;
+
+        SET4(0, m_referencePics, -8, -10, -12, -16);
+        SET4(1, m_referencePics, -4, -6, 4, 0);
+        SET4(2, m_referencePics, -2, -4, 2, 6);
+        SET4(3, m_referencePics, -1, 1, 3, 7);
+        SET4(4, m_referencePics, -1, -3, 1, 5);
+        SET4(5, m_referencePics, -2, -4, -6, 2);
+        SET4(6, m_referencePics, -1, -5, 1, 3);
+        SET4(7, m_referencePics, -1, -3, -7, 1);
+        SET5(1, m_refIdc, 1, 1, 0, 0, 1);
+        SET5(2, m_refIdc, 1, 1, 1, 1, 0);
+        SET5(3, m_refIdc, 1, 0, 1, 1, 1);
+        SET5(4, m_refIdc, 1, 1, 1, 1, 0);
+        SET5(5, m_refIdc, 1, 1, 1, 1, 0);
+        SET5(6, m_refIdc, 1, 0, 1, 1, 1);
+        SET5(7, m_refIdc, 1, 1, 1, 1, 0);
+        m_iGOPSize = 8;
+    }
     else
     {
-        /* STATIC GOP structure borrowed from our config file */
+        /* encoder_I_15P */
         int offsets[] = { 3, 2, 3, 1 };
         for (int i = 0; i < 4; i++)
         {
