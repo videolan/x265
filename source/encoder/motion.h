@@ -28,6 +28,8 @@
 #include "mv.h"
 #include "bitcost.h"
 
+#define SUBSAMPLE_SAD 0  /* Disabled while under construction */
+
 namespace x265 {
 // private x265 namespace
 
@@ -50,8 +52,14 @@ class MotionEstimate : public BitCost
 protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
+#if SUBSAMPLE_SAD
+    pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
+    pixel *fenc;
+    pixel *fencSad;
+#else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
+#endif
 
     pixel *fencplanes[3];
     intptr_t fencLumaStride;
@@ -70,20 +78,19 @@ protected:
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
 
-    int blockWidth;
-    int blockHeight;
     int blockOffset;
     int partEnum;
     int searchMethod;
+    int subsample;
 
     MotionEstimate& operator =(const MotionEstimate&);
 
 public:
 
-    MotionEstimate() : searchMethod(2)
+    MotionEstimate() : searchMethod(3), subsample(0)
     {
         // fenc must be 16 byte aligned
-        fenc = fenc_buf + (16 - (size_t)(&fenc_buf[0]) & 15);
+        fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
     }
 
     ~MotionEstimate() {}
@@ -109,7 +116,11 @@ public:
 
     /* Methods called for searches */
 
+#if SUBSAMPLE_SAD
+    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample; }
+#else
     int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
+#endif
 
     int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
@@ -119,6 +130,7 @@ public:
     int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
 
 protected:
+
     static const int COST_MAX = 1 << 28;
 
     /* HM Motion Search */
@@ -129,9 +141,15 @@ protected:
     /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
     inline int fpelSad(pixel *fref, const MV& fmv)
     {
+#if SUBSAMPLE_SAD
+        return sad(fencSad, FENC_STRIDE,
+                   fref + fmv.y * ref->lumaStride  + fmv.x,
+                   ref->lumaStride << subsample) << subsample;
+#else
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
+#endif
     }
 
     inline int qpelSad(const MV& qmv)
@@ -139,9 +157,15 @@ protected:
         MV fmv = qmv >> 2;
         pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
+#if SUBSAMPLE_SAD
+        return sad(fencSad, FENC_STRIDE,
+                   qfref + fmv.y * ref->lumaStride  + fmv.x,
+                   ref->lumaStride << subsample) << subsample;
+#else
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
                    ref->lumaStride);
+#endif
     }
 
     inline int qpelSatd(const MV& qmv)
