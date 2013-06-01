@@ -145,7 +145,7 @@ protected:
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride  + fmv.x,
-                   ref->lumaStride << subsample) << subsample;
+                   sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
                    fref + fmv.y * ref->lumaStride + fmv.x,
@@ -161,7 +161,7 @@ protected:
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride  + fmv.x,
-                   ref->lumaStride << subsample) << subsample;
+                   sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
                    qfref + fmv.y * ref->lumaStride + fmv.x,
