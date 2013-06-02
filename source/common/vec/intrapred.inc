@@ -986,6 +986,13 @@ void predIntraPlanar16(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t d
 #undef COMP_PRED_PLANAR_ROW
 #endif /* if HIGH_BIT_DEPTH */
 
+typedef void predIntraPlanar_t(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride);
+predIntraPlanar_t *intraPlanarN[] = {
+    predIntraPlanar4,
+    predIntraPlanar8,
+    predIntraPlanar16,
+};
+
 void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
 {
     //assert(width == height);
@@ -998,23 +1005,13 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
     int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     int blkSize = width;
     int offset2D = width;
-    int shift1D = g_aucConvertToBit[width] + 2;
+    int nLog2Size = g_aucConvertToBit[width] + 2;
+    int shift1D = nLog2Size;
     int shift2D = shift1D + 1;
 
-    // TODO: Use function pointer array here when all of size optimize code finished
-    if (width == 4)
+    if (width < 32)
     {
-        predIntraPlanar4(pSrc, srcStride, rpDst, dstStride);
-        return;
-    }
-    if (width == 8)
-    {
-        predIntraPlanar8(pSrc, srcStride, rpDst, dstStride);
-        return;
-    }
-    if (width == 16)
-    {
-        predIntraPlanar16(pSrc, srcStride, rpDst, dstStride);
+        intraPlanarN[nLog2Size-2](pSrc, srcStride, rpDst, dstStride);
         return;
     }
 
