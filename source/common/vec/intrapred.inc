@@ -2,6 +2,9 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Min Chen <chenm003@163.com>
+ *          Deepthi Devaki <deepthidevaki@multicorewareinc.com>
+ *          Steve Borho <steve@borho.org> 
+ *          ShinYee Chung <shinyee@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
