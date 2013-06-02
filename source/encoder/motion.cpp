@@ -904,22 +904,33 @@ void MotionEstimate::StarSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistan
         const int16_t iLeft   = omv.x - dist;
         const int16_t iRight  = omv.x + dist;
 
-        if (iTop >= mvmin.y) // check top
-        {
-            COST_MV_PT_DIST(omv.x, iTop, 2, dist);
-        }
-        if (iLeft >= mvmin.x) // check middle left
-        {
-            COST_MV_PT_DIST(iLeft, omv.y, 4, dist);
-        }
-        if (iRight <= mvmax.x) // check middle right
-        {
-            COST_MV_PT_DIST(iRight, omv.y, 5, dist);
-        }
-        if (iBottom <= mvmax.y) // check bottom
-        {
-            COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
-        }
+		if(iTop >= mvmin.y && iLeft >= mvmin.x &&
+			iRight <= mvmax.x && iBottom <= mvmax.y)
+		{
+			COST_MV_PT_DIST_X4(omv.x, iTop, 2, dist,
+							   iLeft, omv.y, 4, dist,
+							   iRight, omv.y, 5, dist,
+							   omv.x, iBottom, 7, dist);
+		}
+		else
+		{
+			if (iTop >= mvmin.y) // check top
+			{
+				COST_MV_PT_DIST(omv.x, iTop, 2, dist);
+			}
+			if (iLeft >= mvmin.x) // check middle left
+			{
+				COST_MV_PT_DIST(iLeft, omv.y, 4, dist);
+			}
+			if (iRight <= mvmax.x) // check middle right
+			{
+				COST_MV_PT_DIST(iRight, omv.y, 5, dist);
+			}
+			if (iBottom <= mvmax.y) // check bottom
+			{
+				COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
+			}
+		}
     }
     else if (dist <= 8)
     {
