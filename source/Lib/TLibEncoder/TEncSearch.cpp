@@ -1389,7 +1389,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
         // if maximum RD-penalty don't check TU size 32x32
         if (m_pcEncCfg->getRDpenalty() == 2)
         {
-            bCheckFull    = (uiLog2TrSize  <= min(maxTuSize, 4));
+            bCheckFull = (uiLog2TrSize  <= min(maxTuSize, 4));
         }
     }
     if (bCheckFirst && noSplitIntraMaxTuSize)
@@ -1408,12 +1408,13 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
     UInt    heightTransformSkip = pcCU->getHeight(0) >> uiTrDepth;
     Int     bestModeId    = 0;
     Int     bestModeIdUV[2] = { 0, 0 };
-    checkTransformSkip         &= (widthTransformSkip == 4 && heightTransformSkip == 4);
-    checkTransformSkip         &= (!pcCU->getCUTransquantBypass(0));
-    checkTransformSkip         &= (!((pcCU->getQP(0) == 0) && (pcCU->getSlice()->getSPS()->getUseLossless())));
+
+    checkTransformSkip &= (widthTransformSkip == 4 && heightTransformSkip == 4);
+    checkTransformSkip &= (!pcCU->getCUTransquantBypass(0));
+    checkTransformSkip &= (!((pcCU->getQP(0) == 0) && (pcCU->getSlice()->getSPS()->getUseLossless())));
     if (m_pcEncCfg->getUseTransformSkipFast())
     {
-        checkTransformSkip       &= (pcCU->getPartitionSize(uiAbsPartIdx) == SIZE_NxN);
+        checkTransformSkip &= (pcCU->getPartitionSize(uiAbsPartIdx) == SIZE_NxN);
     }
     if (bCheckFull)
     {
@@ -1565,7 +1566,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
             {
                 uiSingleBits = uiSingleBits * 4;
             }
-            dSingleCost       = CALCRDCOST(uiSingleBits, uiSingleDistY + uiSingleDistC, m_pcRdCost->m_dLambda);
+            dSingleCost = CALCRDCOST(uiSingleBits, uiSingleDistY + uiSingleDistC, m_pcRdCost->m_dLambda);
         }
     }
 
@@ -1655,7 +1656,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
         UInt  uiHeight    = pcCU->getHeight(0) >> uiTrDepth;
         UInt  uiQTLayer   = pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrSize;
         UInt  uiZOrder    = pcCU->getZorderIdxInCU() + uiAbsPartIdx;
-        Short*  piSrc       = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
+        Short*  piSrc     = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
         UInt  uiSrcStride = m_pcQTTempTComYuv[uiQTLayer].getStride();
         Pel*  piDes       = pcCU->getPic()->getPicYuvRec()->getLumaAddr(pcCU->getAddr(), uiZOrder);
         UInt  uiDesStride = pcCU->getPic()->getPicYuvRec()->getStride();
@@ -1683,8 +1684,8 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                 }
             }
 
-            piSrc       = m_pcQTTempTComYuv[uiQTLayer].getCrAddr(uiAbsPartIdx);
-            piDes       = pcCU->getPic()->getPicYuvRec()->getCrAddr(pcCU->getAddr(), uiZOrder);
+            piSrc = m_pcQTTempTComYuv[uiQTLayer].getCrAddr(uiAbsPartIdx);
+            piDes = pcCU->getPic()->getPicYuvRec()->getCrAddr(pcCU->getAddr(), uiZOrder);
             for (UInt uiY = 0; uiY < uiHeight; uiY++, piSrc += uiSrcStride, piDes += uiDesStride)
             {
                 for (UInt uiX = 0; uiX < uiWidth; uiX++)
