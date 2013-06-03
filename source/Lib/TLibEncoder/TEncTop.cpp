@@ -716,7 +716,6 @@ Void TEncTop::xInitRPS()
                 rps->setRefIdc(j, ge.m_refIdc[j]);
             }
 
-#if WRITE_BACK
             // the following code overwrite the deltaPOC and Used by current values read from the config file with the ones
             // computed from the RefIdc.  A warning is printed if they are not identical.
             numNeg = 0;
@@ -771,8 +770,6 @@ Void TEncTop::xInitRPS()
                     rps->setUsed(j, RPSTemp.getUsed(j));
                 }
             }
-
-#endif // if WRITE_BACK
         }
     }
 }

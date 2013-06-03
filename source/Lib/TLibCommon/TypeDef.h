@@ -109,7 +109,6 @@
 #define LM_CHROMA_IDX  35
 #endif
 
-#define WRITE_BACK                                1 ///< Enable/disable the encoder to replace the deltaPOC and Used by current from the config file with the values derived by the refIdc parameter.
 #define PRINT_RPS_INFO                            0 ///< Enable/disable the printing of bits used to send the RPS.
                                                     // using one nearest frame as reference frame, and the other frames are high quality (POC%4==0) frames (1+X)
                                                     // this should be done with encoder only decision
