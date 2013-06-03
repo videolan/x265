@@ -150,61 +150,61 @@ public:
 
     Int                     getNumSubstreams() { return m_iNumSubstreams; }
 
-    TComList<TComPic*>*     getListPic() { return &m_cListPic;             }
+    TComList<TComPic*>*     getListPic() { return &m_cListPic; }
 
-    TEncSearch*             getPredSearchs() { return m_pcSearchs;         }
+    TEncSearch*             getPredSearchs() { return m_pcSearchs; }
 
-    TComTrQuant*            getTrQuants() { return m_pcTrQuants;           }
+    TComTrQuant*            getTrQuants() { return m_pcTrQuants; }
 
-    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter;          }
+    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
 
-    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO;              }
+    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
 
-    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder;          }
+    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
 
-    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder;        }
+    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
 
-    TEncCu*                 getCuEncoders() { return m_pcCuEncoders;      }
+    TEncCu*                 getCuEncoders() { return m_pcCuEncoders; }
 
-    TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders;       }
+    TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders; }
 
-    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder;          }
+    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
 
-    TEncSbac*               getSbacCoder() { return &m_cSbacCoder;           }
+    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
 
-    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC;       }
+    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
 
-    TEncSbac*               getSbacCoders() { return m_pcSbacCoders;      }
+    TEncSbac*               getSbacCoders() { return m_pcSbacCoders; }
 
-    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs;      }
+    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs; }
 
-    TComBitCounter*         getBitCounter() { return &m_cBitCounter;          }
+    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
 
-    TComRdCost*             getRdCost() { return &m_cRdCost;              }
+    TComRdCost*             getRdCost() { return &m_cRdCost; }
 
-    TComBitCounter*         getBitCounters() { return m_pcBitCounters;         }
+    TComBitCounter*         getBitCounters() { return m_pcBitCounters; }
 
-    TComRdCost*             getRdCosts() { return m_pcRdCosts;             }
+    TComRdCost*             getRdCosts() { return m_pcRdCosts; }
 
-    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders;     }
+    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders; }
 
-    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders;   }
+    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders; }
 
-    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl;             }
+    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
 
-    TComSPS*                getSPS() { return &m_cSPS;                 }
+    TComSPS*                getSPS() { return &m_cSPS; }
 
-    TComPPS*                getPPS() { return &m_cPPS;                 }
+    TComPPS*                getPPS() { return &m_cPPS; }
+
+    TComScalingList*        getScalingList() { return &m_scalingList; }
+
+    x265::ThreadPool*       getThreadPool() { return m_threadPool; }
+
+    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
-
-    TComScalingList*        getScalingList() { return &m_scalingList;         }
-
-    x265::ThreadPool*       getThreadPool() { return m_threadPool; }
-    
-    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function
