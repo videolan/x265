@@ -486,7 +486,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-    TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
     // initialize cost values
