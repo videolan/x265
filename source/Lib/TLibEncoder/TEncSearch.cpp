@@ -276,15 +276,12 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
     const Bool bTestZeroVector          = 1;                                                                      \
     const Bool bTestZeroVectorStart     = 0;                                                                      \
     const Bool bTestZeroVectorStop      = 0;                                                                      \
-    const Bool bFirstSearchDiamond      = 1; /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
     const Bool bFirstSearchStop         = FIRSTSEARCHSTOP;                                                        \
     const UInt uiFirstSearchRounds      = 3; /* first search stop X rounds after best match (must be >=1) */     \
     const Bool bEnableRasterSearch      = 1;                                                                      \
     const Bool bAlwaysRasterSearch      = 0; /* ===== 1: BETTER but factor 2 slower ===== */                     \
     const Bool bRasterRefinementEnable  = 0; /* enable either raster refinement or star refinement */            \
-    const Bool bRasterRefinementDiamond = 0; /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
     const Bool bStarRefinementEnable    = 1; /* enable either star refinement or raster refinement */            \
-    const Bool bStarRefinementDiamond   = 1; /* 1 = xTZ8PointDiamondSearch   0 = xTZ8PointSquareSearch */        \
     const Bool bStarRefinementStop      = 0;                                                                      \
     const UInt uiStarRefinementRounds   = 2; /* star refinement stop X rounds after best match (must be >=1) */  \
 
@@ -488,61 +485,6 @@ __inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearch
     }
     break;
     } // switch( rcStruct.ucPointNr )
-}
-
-__inline Void TEncSearch::xTZ8PointSquareSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist)
-{
-    Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
-    Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
-    Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
-    Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
-
-    // 8 point search,                   //   1 2 3
-    // search around the start point     //   4 0 5
-    // with the required  distance       //   6 7 8
-    assert(iDist != 0);
-    const Int iTop        = iStartY - iDist;
-    const Int iBottom     = iStartY + iDist;
-    const Int iLeft       = iStartX - iDist;
-    const Int iRight      = iStartX + iDist;
-    rcStruct.uiBestRound += 1;
-
-    if (iTop >= iSrchRngVerTop) // check top
-    {
-        if (iLeft >= iSrchRngHorLeft) // check top left
-        {
-            xTZSearchHelp(pcPatternKey, rcStruct, iLeft, iTop, 1, iDist);
-        }
-        // top middle
-        xTZSearchHelp(pcPatternKey, rcStruct, iStartX, iTop, 2, iDist);
-
-        if (iRight <= iSrchRngHorRight) // check top right
-        {
-            xTZSearchHelp(pcPatternKey, rcStruct, iRight, iTop, 3, iDist);
-        }
-    } // check top
-    if (iLeft >= iSrchRngHorLeft) // check middle left
-    {
-        xTZSearchHelp(pcPatternKey, rcStruct, iLeft, iStartY, 4, iDist);
-    }
-    if (iRight <= iSrchRngHorRight) // check middle right
-    {
-        xTZSearchHelp(pcPatternKey, rcStruct, iRight, iStartY, 5, iDist);
-    }
-    if (iBottom <= iSrchRngVerBottom) // check bottom
-    {
-        if (iLeft >= iSrchRngHorLeft) // check bottom left
-        {
-            xTZSearchHelp(pcPatternKey, rcStruct, iLeft, iBottom, 6, iDist);
-        }
-        // check bottom middle
-        xTZSearchHelp(pcPatternKey, rcStruct, iStartX, iBottom, 7, iDist);
-
-        if (iRight <= iSrchRngHorRight) // check bottom right
-        {
-            xTZSearchHelp(pcPatternKey, rcStruct, iRight, iBottom, 8, iDist);
-        }
-    } // check bottom
 }
 
 __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist)
@@ -4032,14 +3974,7 @@ Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piR
     // first search
     for (iDist = 1; iDist <= (Int)uiSearchRange; iDist *= 2)
     {
-        if (bFirstSearchDiamond == 1)
-        {
-            xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-        }
-        else
-        {
-            xTZ8PointSquareSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-        }
+        xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
 
         if (bFirstSearchStop && (cStruct.uiBestRound >= uiFirstSearchRounds)) // stop criterion
         {
@@ -4095,14 +4030,7 @@ Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piR
             if (cStruct.uiBestDistance > 1)
             {
                 iDist = cStruct.uiBestDistance >>= 1;
-                if (bRasterRefinementDiamond == 1)
-                {
-                    xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-                }
-                else
-                {
-                    xTZ8PointSquareSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-                }
+                xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
             }
 
             // calculate only 2 missing points instead 8 points if cStruct.uiBestDistance == 1
@@ -4128,14 +4056,7 @@ Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piR
             cStruct.ucPointNr = 0;
             for (iDist = 1; iDist < (Int)uiSearchRange + 1; iDist *= 2)
             {
-                if (bStarRefinementDiamond == 1)
-                {
-                    xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-                }
-                else
-                {
-                    xTZ8PointSquareSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
-                }
+                xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, iStartX, iStartY, iDist);
                 if (bStarRefinementStop && (cStruct.uiBestRound >= uiStarRefinementRounds)) // stop criterion
                 {
                     break;
