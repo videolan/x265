@@ -93,6 +93,10 @@ const __m128i v_multiL = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
 const __m128i v_multiH = _mm_setr_epi16(9,10,11,12,13,14,15,16);
 const __m128i v_multiH2 = _mm_setr_epi16(17,18,19,20,21,22,23,24);
 const __m128i v_multiH3 = _mm_setr_epi16(25,26,27,28,29,30,31,32);
+const __m128i v_multiH4 = _mm_setr_epi16(33,34,35,36,37,38,39,40);
+const __m128i v_multiH5 = _mm_setr_epi16(41,42,43,44,45,46,47,48);
+const __m128i v_multiH6 = _mm_setr_epi16(49,50,51,52,53,54,55,56);
+const __m128i v_multiH7 = _mm_setr_epi16(57,58,59,60,61,62,63,64);
 
 static inline
 void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t iDstStride, int iWidth, int /*iHeight*/)
@@ -1268,6 +1272,115 @@ void predIntraPlanar32_sse4(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr
 }
 #endif // INSTRSET >= 5
 
+#if INSTRSET >= 5
+void predIntraPlanar64_sse4(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride)
+{
+    pixel bottomLeft, topRight;
+    __m128i v_topRow[8];
+    __m128i v_bottomRow[8];
+
+    // Get left and above reference column and row
+    __m128i im0 = _mm_loadu_si128((__m128i*)&pSrc[ 0-srcStride]); // topRow
+    __m128i im1 = _mm_loadu_si128((__m128i*)&pSrc[16-srcStride]); // topRow
+    __m128i im2 = _mm_loadu_si128((__m128i*)&pSrc[32-srcStride]); // topRow
+    __m128i im3 = _mm_loadu_si128((__m128i*)&pSrc[48-srcStride]); // topRow
+    v_topRow[0] = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
+    v_topRow[1] = _mm_unpackhi_epi8(im0, _mm_setzero_si128());
+    v_topRow[2] = _mm_unpacklo_epi8(im1, _mm_setzero_si128());
+    v_topRow[3] = _mm_unpackhi_epi8(im1, _mm_setzero_si128());
+    v_topRow[4] = _mm_unpacklo_epi8(im2, _mm_setzero_si128());
+    v_topRow[5] = _mm_unpackhi_epi8(im2, _mm_setzero_si128());
+    v_topRow[6] = _mm_unpacklo_epi8(im3, _mm_setzero_si128());
+    v_topRow[7] = _mm_unpackhi_epi8(im3, _mm_setzero_si128());
+
+    // Prepare intermediate variables used in interpolation
+    bottomLeft = pSrc[64 * srcStride - 1];
+    topRight   = pSrc[64 - srcStride];
+
+    __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
+
+    v_bottomRow[0] = _mm_sub_epi16(v_bottomLeft, v_topRow[0]);
+    v_bottomRow[1] = _mm_sub_epi16(v_bottomLeft, v_topRow[1]);
+    v_bottomRow[2] = _mm_sub_epi16(v_bottomLeft, v_topRow[2]);
+    v_bottomRow[3] = _mm_sub_epi16(v_bottomLeft, v_topRow[3]);
+    v_bottomRow[4] = _mm_sub_epi16(v_bottomLeft, v_topRow[4]);
+    v_bottomRow[5] = _mm_sub_epi16(v_bottomLeft, v_topRow[5]);
+    v_bottomRow[6] = _mm_sub_epi16(v_bottomLeft, v_topRow[6]);
+    v_bottomRow[7] = _mm_sub_epi16(v_bottomLeft, v_topRow[7]);
+
+    v_topRow[0] = _mm_slli_epi16(v_topRow[0], 6);
+    v_topRow[1] = _mm_slli_epi16(v_topRow[1], 6);
+    v_topRow[2] = _mm_slli_epi16(v_topRow[2], 6);
+    v_topRow[3] = _mm_slli_epi16(v_topRow[3], 6);
+    v_topRow[4] = _mm_slli_epi16(v_topRow[4], 6);
+    v_topRow[5] = _mm_slli_epi16(v_topRow[5], 6);
+    v_topRow[6] = _mm_slli_epi16(v_topRow[6], 6);
+    v_topRow[7] = _mm_slli_epi16(v_topRow[7], 6);
+
+    __m128i v_horPred, v_horPredN[8], v_rightColumnN[8];
+    __m128i v_im4[8];
+    __m128i v_im5[4];
+
+#define COMP_PRED_PLANAR_ROW(Y) { \
+    v_horPred = _mm_cvtsi32_si128((pSrc[(Y) * srcStride - 1]<<6) + 64); \
+    v_horPred = _mm_shufflelo_epi16(v_horPred, 0); \
+    v_horPred = _mm_shuffle_epi32(v_horPred, 0); \
+    __m128i _tmp = _mm_cvtsi32_si128(topRight - pSrc[(Y) * srcStride - 1]); \
+    _tmp = _mm_shufflelo_epi16(_tmp, 0); \
+    _tmp = _mm_shuffle_epi32(_tmp, 0); \
+    v_rightColumnN[0] = _mm_mullo_epi16(_tmp, v_multiL); \
+    v_rightColumnN[1] = _mm_mullo_epi16(_tmp, v_multiH); \
+    v_rightColumnN[2] = _mm_mullo_epi16(_tmp, v_multiH2); \
+    v_rightColumnN[3] = _mm_mullo_epi16(_tmp, v_multiH3); \
+    v_rightColumnN[4] = _mm_mullo_epi16(_tmp, v_multiH4); \
+    v_rightColumnN[5] = _mm_mullo_epi16(_tmp, v_multiH5); \
+    v_rightColumnN[6] = _mm_mullo_epi16(_tmp, v_multiH6); \
+    v_rightColumnN[7] = _mm_mullo_epi16(_tmp, v_multiH7); \
+    v_horPredN[0] = _mm_add_epi16(v_horPred, v_rightColumnN[0]); \
+    v_horPredN[1] = _mm_add_epi16(v_horPred, v_rightColumnN[1]); \
+    v_horPredN[2] = _mm_add_epi16(v_horPred, v_rightColumnN[2]); \
+    v_horPredN[3] = _mm_add_epi16(v_horPred, v_rightColumnN[3]); \
+    v_horPredN[4] = _mm_add_epi16(v_horPred, v_rightColumnN[4]); \
+    v_horPredN[5] = _mm_add_epi16(v_horPred, v_rightColumnN[5]); \
+    v_horPredN[6] = _mm_add_epi16(v_horPred, v_rightColumnN[6]); \
+    v_horPredN[7] = _mm_add_epi16(v_horPred, v_rightColumnN[7]); \
+    v_topRow[0] = _mm_add_epi16(v_topRow[0], v_bottomRow[0]); \
+    v_topRow[1] = _mm_add_epi16(v_topRow[1], v_bottomRow[1]); \
+    v_topRow[2] = _mm_add_epi16(v_topRow[2], v_bottomRow[2]); \
+    v_topRow[3] = _mm_add_epi16(v_topRow[3], v_bottomRow[3]); \
+    v_topRow[4] = _mm_add_epi16(v_topRow[4], v_bottomRow[4]); \
+    v_topRow[5] = _mm_add_epi16(v_topRow[5], v_bottomRow[5]); \
+    v_topRow[6] = _mm_add_epi16(v_topRow[6], v_bottomRow[6]); \
+    v_topRow[7] = _mm_add_epi16(v_topRow[7], v_bottomRow[7]); \
+    v_im4[0] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[0], v_topRow[0]), 7); \
+    v_im4[1] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[1], v_topRow[1]), 7); \
+    v_im4[2] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[2], v_topRow[2]), 7); \
+    v_im4[3] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[3], v_topRow[3]), 7); \
+    v_im4[4] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[4], v_topRow[4]), 7); \
+    v_im4[5] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[5], v_topRow[5]), 7); \
+    v_im4[6] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[6], v_topRow[6]), 7); \
+    v_im4[7] = _mm_srai_epi16(_mm_add_epi16(v_horPredN[7], v_topRow[7]), 7); \
+    v_im5[0] = _mm_packus_epi16(v_im4[0], v_im4[1]); \
+    v_im5[1] = _mm_packus_epi16(v_im4[2], v_im4[3]); \
+    v_im5[2] = _mm_packus_epi16(v_im4[4], v_im4[5]); \
+    v_im5[3] = _mm_packus_epi16(v_im4[6], v_im4[7]); \
+    _mm_storeu_si128((__m128i*)&pDst[(Y) * dstStride   ], v_im5[0]); \
+    _mm_storeu_si128((__m128i*)&pDst[(Y) * dstStride+16], v_im5[1]); \
+    _mm_storeu_si128((__m128i*)&pDst[(Y) * dstStride+32], v_im5[2]); \
+    _mm_storeu_si128((__m128i*)&pDst[(Y) * dstStride+48], v_im5[3]); \
+}
+
+    int i;
+    for( i=0; i<64; i++ )
+    {
+        COMP_PRED_PLANAR_ROW(i+0);
+        //COMP_PRED_PLANAR_ROW(i+1);
+    }
+
+#undef COMP_PRED_PLANAR_ROW
+}
+#endif // INSTRSET >= 5
+
 #endif /* if HIGH_BIT_DEPTH */
 
 typedef void predIntraPlanar_t(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride);
@@ -1277,6 +1390,7 @@ predIntraPlanar_t *intraPlanarN[] = {
     predIntraPlanar8_sse4,
     predIntraPlanar16_sse4,
     predIntraPlanar32_sse4,
+    predIntraPlanar64_sse4,
 #else
     predIntraPlanar4,
     predIntraPlanar8,
@@ -1288,6 +1402,12 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
 {
     //assert(width == height);
 
+    int nLog2Size = g_aucConvertToBit[width] + 2;
+
+#if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5)
+    intraPlanarN[nLog2Size-2](pSrc, srcStride, rpDst, dstStride);
+    return;
+#else
     int k, l, bottomLeft, topRight;
     int horPred;
     // OPT_ME: when width is 64, the shift1D is 8, then the dynamic range is [-65280, 65280], so we have to use 32 bits here
@@ -1296,15 +1416,10 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
     int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     int blkSize = width;
     int offset2D = width;
-    int nLog2Size = g_aucConvertToBit[width] + 2;
     int shift1D = nLog2Size;
     int shift2D = shift1D + 1;
 
-#if !HIGH_BIT_DEPTH && INSTRSET >= 5
-    if (width < 64)
-#else
     if (width < 32)
-#endif
     {
         intraPlanarN[nLog2Size-2](pSrc, srcStride, rpDst, dstStride);
         return;
@@ -1339,6 +1454,7 @@ void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dst
             rpDst[k * dstStride + l] = ((horPred + topRow[l]) >> shift2D);
         }
     }
+#endif
 }
 
 #if HIGH_BIT_DEPTH
