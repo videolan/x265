@@ -5361,6 +5361,7 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
     {
         pcCU->setSkipFlagSubParts(true, 0, pcCU->getDepth(0));
 
+#if !FAST_MODE_DECISION
         m_pcEntropyCoder->resetBits();
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
@@ -5369,6 +5370,13 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
         m_pcEntropyCoder->encodeSkipFlag(pcCU, 0, true);
         m_pcEntropyCoder->encodeMergeIndex(pcCU, 0, true);
         ruiBits += m_pcEntropyCoder->getNumberOfWrittenBits();
+#else
+        if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+            ruiBits++; //TransquantBypassFlag, FL = 1
+        ruiBits++; //Skip Flag, fixed length = 1
+        ruiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index 
+#endif
+
     }
     else
     {
