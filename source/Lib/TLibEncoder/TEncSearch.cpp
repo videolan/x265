@@ -184,7 +184,6 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
     m_iSearchMethod        = iSearchMothod;
     m_pcEntropyCoder       = NULL;
     m_pcRdCost             = pcRdCost;
-    m_pcRdCost->m_searchMethod = iSearchMothod;
 
     m_me.setSearchMethod(iSearchMothod);
 

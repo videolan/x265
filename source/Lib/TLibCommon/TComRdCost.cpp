@@ -39,9 +39,7 @@
 #include <assert.h>
 #include "TComRom.h"
 #include "TComRdCost.h"
-#include "primitives.h"
 
-using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
@@ -242,6 +240,7 @@ Void TComRdCost::setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, D
     rcDistParam.iCols    = uiBlkWidth;
     rcDistParam.iRows    = uiBlkHeight;
     rcDistParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[rcDistParam.iCols] + 1];
+
     // initialize
     rcDistParam.iSubShift  = 0;
 }
@@ -379,40 +378,29 @@ UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iSt
 UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
 {
     DistParam cDtParam;
-    UInt sad_cost;
-    UInt primitive = eDFunc + g_aucConvertToBit[uiBlkWidth] + 1;    
-    // If it is calling SAD function then use x265 primitives for SAD
-    if ((m_searchMethod != X265_ORIG_SEARCH) && (primitive != 14) && (((primitive > 7) && (primitive < 21)) || ((primitive > 42) && (primitive < 49))))
-    {
-        UInt partEnum = PartitionFromSizes(uiBlkWidth, uiBlkHeight);
-        sad_cost = primitives.sad[partEnum](piOrg, iOrgStride, piCur, iCurStride);
-    }
-    else
-    {
-        setDistParam(uiBlkWidth, uiBlkHeight, eDFunc, cDtParam);
 
-        cDtParam.pOrg       = piOrg;
-        cDtParam.pCur       = piCur;
-        cDtParam.iStrideOrg = iOrgStride;
-        cDtParam.iStrideCur = iCurStride;
-        cDtParam.iStep      = 1;
+    setDistParam(uiBlkWidth, uiBlkHeight, eDFunc, cDtParam);
+    cDtParam.pOrg       = piOrg;
+    cDtParam.pCur       = piCur;
+    cDtParam.iStrideOrg = iOrgStride;
+    cDtParam.iStrideCur = iCurStride;
+    cDtParam.iStep      = 1;
 
-        cDtParam.bApplyWeight = false;
-        cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
-        cDtParam.bitDepth = bitDepth;
-        sad_cost = cDtParam.DistFunc(&cDtParam);
-    }
+    cDtParam.bApplyWeight = false;
+    cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
+    cDtParam.bitDepth = bitDepth;
+
     if (eText == TEXT_CHROMA_U)
     {
-        return (Int)(m_cbDistortionWeight * sad_cost);
+        return (Int)(m_cbDistortionWeight * cDtParam.DistFunc(&cDtParam));
     }
     else if (eText == TEXT_CHROMA_V)
     {
-        return (Int)(m_crDistortionWeight * sad_cost);
+        return (Int)(m_crDistortionWeight * cDtParam.DistFunc(&cDtParam));
     }
     else
     {
-        return sad_cost;
+        return cDtParam.DistFunc(&cDtParam);
     }
 }
 
@@ -420,92 +408,72 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piO
 UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
 {
     DistParamSSE cDtParam;
-    UInt sad_cost;
-    UInt primitive = eDFunc + g_aucConvertToBit[uiBlkWidth] + 1;    
-    // If it is calling SAD function then use x265 primitives for SAD
-    if ((m_searchMethod != X265_ORIG_SEARCH) && (primitive != 14) && (((primitive > 7) && (primitive < 21)) || ((primitive > 42) && (primitive < 49))))
-    {
-        UInt partEnum = PartitionFromSizes(uiBlkWidth, uiBlkHeight);
-        sad_cost = primitives.sad[partEnum]((pixel *)piOrg, iOrgStride, piCur, iCurStride);
-    }
-    else
-    {
-        cDtParam.iCols    = uiBlkWidth;
-        cDtParam.iRows    = uiBlkHeight;
-        cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
-        cDtParam.iSubShift  = 0;
-    
-        cDtParam.pOrg       = NULL;
-        cDtParam.pCur       = piCur;
-        cDtParam.ptr1       = piOrg;
-        cDtParam.ptr2       = NULL;
-        cDtParam.iStrideOrg = iOrgStride;
-        cDtParam.iStrideCur = iCurStride;
-        cDtParam.iStep      = 1;
 
-        cDtParam.bApplyWeight = false;
-        cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
-        cDtParam.bitDepth = bitDepth;
-        DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
-        sad_cost = DtParam->DistFunc(DtParam);
-    }    
+    cDtParam.iCols    = uiBlkWidth;
+    cDtParam.iRows    = uiBlkHeight;
+    cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
+    cDtParam.iSubShift  = 0;
+    
+    cDtParam.pOrg       = NULL;
+    cDtParam.pCur       = piCur;
+    cDtParam.ptr1       = piOrg;
+    cDtParam.ptr2       = NULL;
+    cDtParam.iStrideOrg = iOrgStride;
+    cDtParam.iStrideCur = iCurStride;
+    cDtParam.iStep      = 1;
+
+    cDtParam.bApplyWeight = false;
+    cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
+    cDtParam.bitDepth = bitDepth;
+
+    DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
     if (eText == TEXT_CHROMA_U)
     {
-        return (Int)(m_cbDistortionWeight * sad_cost);
+        return (Int)(m_cbDistortionWeight * DtParam->DistFunc(DtParam));
     }
     else if (eText == TEXT_CHROMA_V)
     {
-        return (Int)(m_crDistortionWeight * sad_cost);
+        return (Int)(m_crDistortionWeight * DtParam->DistFunc(DtParam));
     }
     else
     {
-        return sad_cost;
+        return DtParam->DistFunc(DtParam);
     }
 }
 
 UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText, DFunc eDFunc)
 {
     DistParamSSE cDtParam;
-    UInt sad_cost;
-    UInt primitive = eDFunc + g_aucConvertToBit[uiBlkWidth] + 1;    
-    // If it is calling SAD function then use x265 primitives for SAD
-    if ((m_searchMethod != X265_ORIG_SEARCH) && (primitive != 14) && (((primitive > 7) && (primitive < 21)) || ((primitive > 42) && (primitive < 49))))
-    {
-        UInt partEnum = PartitionFromSizes(uiBlkWidth, uiBlkHeight);
-        sad_cost = primitives.sad[partEnum]((pixel *)piOrg, iOrgStride, (pixel *)piCur, iCurStride);
-    }
-    else
-    {
-        cDtParam.iCols    = uiBlkWidth;
-        cDtParam.iRows    = uiBlkHeight;
-        cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
-        cDtParam.iSubShift  = 0;
-    
-        cDtParam.pOrg       = NULL;
-        cDtParam.pCur       = NULL;
-        cDtParam.ptr1       = piOrg;
-        cDtParam.ptr2       = piCur;
-        cDtParam.iStrideOrg = iOrgStride;
-        cDtParam.iStrideCur = iCurStride;
-        cDtParam.iStep      = 1;
 
-        cDtParam.bApplyWeight = false;
-        cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
-        cDtParam.bitDepth = bitDepth;
-        DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
-        sad_cost = DtParam->DistFunc(DtParam);
-    }    
+    cDtParam.iCols    = uiBlkWidth;
+    cDtParam.iRows    = uiBlkHeight;
+    cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
+    cDtParam.iSubShift  = 0;
+    
+    cDtParam.pOrg       = NULL;
+    cDtParam.pCur       = NULL;
+    cDtParam.ptr1       = piOrg;
+    cDtParam.ptr2       = piCur;
+    cDtParam.iStrideOrg = iOrgStride;
+    cDtParam.iStrideCur = iCurStride;
+    cDtParam.iStep      = 1;
+
+    cDtParam.bApplyWeight = false;
+    cDtParam.uiComp       = 255;  // just for assert: to be sure it was set before use, since only values 0,1 or 2 are allowed.
+    cDtParam.bitDepth = bitDepth;
+
+    DistParam* DtParam = dynamic_cast<DistParam*>(&cDtParam);
     if (eText == TEXT_CHROMA_U)
     {
-        return (Int)(m_cbDistortionWeight * sad_cost);
+        return (Int)(m_cbDistortionWeight * DtParam->DistFunc(DtParam));
     }
     else if (eText == TEXT_CHROMA_V)
     {
-        return (Int)(m_crDistortionWeight * sad_cost);
+        return (Int)(m_crDistortionWeight * DtParam->DistFunc(DtParam));
     }
     else
     {
-        return sad_cost;
+        return DtParam->DistFunc(DtParam);
     }
 }
 #endif
