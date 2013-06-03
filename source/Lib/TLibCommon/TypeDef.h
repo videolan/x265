@@ -88,13 +88,6 @@
 #define ARL_C_PRECISION                           7 ///< G382: 7-bit arithmetic precision
 #define LEVEL_RANGE                              30 ///< G382: max coefficient level in statistics collection
 
-#define HHI_RQT_INTRA_SPEEDUP                     1 ///< tests one best mode with full rqt
-#define HHI_RQT_INTRA_SPEEDUP_MOD                 0 ///< tests two best modes with full rqt
-
-#if HHI_RQT_INTRA_SPEEDUP_MOD && !HHI_RQT_INTRA_SPEEDUP
-#error
-#endif
-
 #define VERBOSE_RATE                              0 ///< Print additional rate information in encoder
 
 #define AMVP_DECIMATION_FACTOR                    4

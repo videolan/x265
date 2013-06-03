@@ -272,12 +272,10 @@ protected:
                               Bool         bLumaOnly,
                               TComYuv *     pcOrgYuv,
                               TComYuv *     pcPredYuv,
-                              TShortYUV *     pcResiYuv,
+                              TShortYUV *   pcResiYuv,
                               UInt &        ruiDistY,
                               UInt &        ruiDistC,
-#if HHI_RQT_INTRA_SPEEDUP
-                              Bool         bCheckFirst,
-#endif
+                              Bool          bCheckFirst,
                               Double &      dRDCost);
 
     Void  xSetIntraResultQT(TComDataCU* pcCU,

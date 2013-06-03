@@ -1369,9 +1369,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                                      TShortYUV*  pcResiYuv,
                                      UInt&       ruiDistY,
                                      UInt&       ruiDistC,
-#if HHI_RQT_INTRA_SPEEDUP
                                      Bool        bCheckFirst,
-#endif
                                      Double&     dRDCost)
 {
     UInt    uiFullDepth   = pcCU->getDepth(0) +  uiTrDepth;
@@ -1379,7 +1377,6 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
     Bool    bCheckFull    = (uiLog2TrSize  <= pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
     Bool    bCheckSplit   = (uiLog2TrSize  >  pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
 
-#if HHI_RQT_INTRA_SPEEDUP
     Int maxTuSize = pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     Int isIntraSlice = (pcCU->getSlice()->getSliceType() == I_SLICE);
     // don't check split if TU size is less or equal to max TU size
@@ -1399,15 +1396,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
     {
         bCheckSplit = false;
     }
-#else // if HHI_RQT_INTRA_SPEEDUP
-    Int maxTuSize = pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
-    Int isIntraSlice = (pcCU->getSlice()->getSliceType() == I_SLICE);
-    // if maximum RD-penalty don't check TU size 32x32
-    if ((m_pcEncCfg->getRDpenalty() == 2)  && !isIntraSlice)
-    {
-        bCheckFull    = (uiLog2TrSize  <= min(maxTuSize, 4));
-    }
-#endif // if HHI_RQT_INTRA_SPEEDUP
+
     Double  dSingleCost   = MAX_DOUBLE;
     UInt    uiSingleDistY = 0;
     UInt    uiSingleDistC = 0;
@@ -1606,11 +1595,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
 
         for (UInt uiPart = 0; uiPart < 4; uiPart++, uiAbsPartIdxSub += uiQPartsDiv)
         {
-#if HHI_RQT_INTRA_SPEEDUP
-            xRecurIntraCodingQT(pcCU, uiTrDepth + 1, uiAbsPartIdxSub, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiSplitDistY, uiSplitDistC, bCheckFirst, dSplitCost);
-#else
             xRecurIntraCodingQT(pcCU, uiTrDepth + 1, uiAbsPartIdxSub, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiSplitDistY, uiSplitDistC, dSplitCost);
-#endif
 
             uiSplitCbfY |= pcCU->getCbf(uiAbsPartIdxSub, TEXT_LUMA, uiTrDepth + 1);
             if (!bLumaOnly)
@@ -2536,11 +2521,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         }
 
         //===== check modes (using r-d costs) =====
-#if HHI_RQT_INTRA_SPEEDUP_MOD
-        UInt   uiSecondBestMode  = MAX_UINT;
-        Double dSecondBestPUCost = MAX_DOUBLE;
-#endif
-
         UInt    uiBestPUMode  = 0;
         UInt    uiBestPUDistY = 0;
         UInt    uiBestPUDistC = 0;
@@ -2559,19 +2539,11 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             UInt   uiPUDistY = 0;
             UInt   uiPUDistC = 0;
             Double dPUCost   = 0.0;
-#if HHI_RQT_INTRA_SPEEDUP
             xRecurIntraCodingQT(pcCU, uiInitTrDepth, uiPartOffset, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, true, dPUCost);
-#else
-            xRecurIntraCodingQT(pcCU, uiInitTrDepth, uiPartOffset, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, dPUCost);
-#endif
 
             // check r-d cost
             if (dPUCost < dBestPUCost)
             {
-#if HHI_RQT_INTRA_SPEEDUP_MOD
-                uiSecondBestMode  = uiBestPUMode;
-                dSecondBestPUCost = dBestPUCost;
-#endif
                 uiBestPUMode  = uiOrgMode;
                 uiBestPUDistY = uiPUDistY;
                 uiBestPUDistC = uiPUDistC;
@@ -2588,29 +2560,10 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 ::memcpy(m_puhQTTempTransformSkipFlag[1], pcCU->getTransformSkip(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
                 ::memcpy(m_puhQTTempTransformSkipFlag[2], pcCU->getTransformSkip(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
             }
-#if HHI_RQT_INTRA_SPEEDUP_MOD
-            else if (dPUCost < dSecondBestPUCost)
-            {
-                uiSecondBestMode  = uiOrgMode;
-                dSecondBestPUCost = dPUCost;
-            }
-#endif
         } // Mode loop
 
-#if HHI_RQT_INTRA_SPEEDUP
-#if HHI_RQT_INTRA_SPEEDUP_MOD
-        for (UInt ui = 0; ui < 2; ++ui)
-#endif
         {
-#if HHI_RQT_INTRA_SPEEDUP_MOD
-            UInt uiOrgMode   = ui ? uiSecondBestMode  : uiBestPUMode;
-            if (uiOrgMode == MAX_UINT)
-            {
-                break;
-            }
-#else
             UInt uiOrgMode = uiBestPUMode;
-#endif
 
             pcCU->setLumaIntraDirSubParts(uiOrgMode, uiPartOffset, uiDepth + uiInitTrDepth);
 
@@ -2643,8 +2596,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 ::memcpy(m_puhQTTempTransformSkipFlag[2], pcCU->getTransformSkip(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
             }
         } // Mode loop
-
-#endif // if HHI_RQT_INTRA_SPEEDUP
 
         //--- update overall distortion ---
         uiOverallDistY += uiBestPUDistY;
