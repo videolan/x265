@@ -673,8 +673,7 @@ Void TEncTop::xInitRPS()
         rps->setNumberOfNegativePictures(numNeg);
         rps->setNumberOfPositivePictures(numPos);
 
-        // handle inter RPS intialization from the config file.
-#if AUTO_INTER_RPS
+        // handle inter RPS initialization from the config file.
         rps->setInterRPSPrediction(ge.m_interRPSPrediction > 0); // not very clean, converting anything > 0 to true.
         rps->setDeltaRIdxMinus1(0);                           // index to the Reference RPS is always the previous one.
         TComReferencePictureSet*     RPSRef = rpsList->getReferencePictureSet(i - 1); // get the reference RPS
@@ -775,49 +774,6 @@ Void TEncTop::xInitRPS()
 
 #endif // if WRITE_BACK
         }
-#else // if AUTO_INTER_RPS
-        rps->setInterRPSPrediction(ge.m_interRPSPrediction);
-        if (ge.m_interRPSPrediction)
-        {
-            rps->setDeltaRIdxMinus1(0);
-            rps->setDeltaRPS(ge.m_deltaRPS);
-            rps->setNumRefIdc(ge.m_numRefIdc);
-            for (Int j = 0; j < ge.m_numRefIdc; j++)
-            {
-                rps->setRefIdc(j, ge.m_refIdc[j]);
-            }
-
-#if WRITE_BACK
-            // the folowing code overwrite the deltaPOC and Used by current values read from the config file with the ones
-            // computed from the RefIdc.  This is not necessary if both are identical. Currently there is no check to see if they are identical.
-            numNeg = 0;
-            numPos = 0;
-            TComReferencePictureSet*     RPSRef = m_RPSList.getReferencePictureSet(i - 1);
-
-            for (Int j = 0; j < ge.m_numRefIdc; j++)
-            {
-                if (ge.m_refIdc[j])
-                {
-                    Int deltaPOC = ge.m_deltaRPS + ((j < RPSRef->getNumberOfPictures()) ? RPSRef->getDeltaPOC(j) : 0);
-                    rps->setDeltaPOC((numNeg + numPos), deltaPOC);
-                    rps->setUsed((numNeg + numPos), ge.m_refIdc[j] == 1 ? 1 : 0);
-                    if (deltaPOC < 0)
-                    {
-                        numNeg++;
-                    }
-                    else
-                    {
-                        numPos++;
-                    }
-                }
-            }
-
-            rps->setNumberOfNegativePictures(numNeg);
-            rps->setNumberOfPositivePictures(numPos);
-            rps->sortDeltaPOC();
-#endif // if WRITE_BACK
-        }
-#endif //INTER_RPS_AUTO
     }
 }
 
