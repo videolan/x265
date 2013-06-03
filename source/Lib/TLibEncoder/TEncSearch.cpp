@@ -3245,8 +3245,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                             uiCostTemp -= m_pcRdCost->getCost(uiBitsTempL0[pcCU->getSlice()->getList1IdxToList0Idx(iRefIdxTemp)]);
 
                             /* correct the bit-rate part of the current ref */
-                            m_pcRdCost->setPredictor(cMvPred[iRefList][iRefIdxTemp]);
-                            uiBitsTemp += m_bc.mvcost(x265::MV(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer()));
+                            m_me.setMVP(cMvPred[iRefList][iRefIdxTemp]);
+                            uiBitsTemp += m_me.bitcost(x265::MV(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer()));
 
                             /* calculate the correct cost */
                             uiCostTemp += m_pcRdCost->getCost(uiBitsTemp);
