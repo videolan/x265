@@ -29,7 +29,7 @@ endif()
 if(GCC)
     set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp
         pixel-sse2.cpp pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp pixel-avx.cpp
-        ipfilter-sse2.cpp ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
+        ipfilter-sse2.cpp ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp ipfilter-avx.cpp
         intra-sse2.cpp intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp intra-avx.cpp)
     set_source_files_properties(sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
         pixel-sse2.cpp pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
