@@ -1549,7 +1549,7 @@ void CDECL sad_64_x4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 template<int ly>
 int sse_4(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff(0);
     Vec4i sum(0);
@@ -1569,7 +1569,7 @@ int sse_4(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 template<int ly>
 int sse_8(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff(0);
     Vec4i sum(0);
@@ -1589,7 +1589,7 @@ int sse_8(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 template<int ly>
 int sse_16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff_low(0), diff_high(0);
     Vec4i sum_low(0), sum_high(0);
@@ -1612,7 +1612,7 @@ int sse_16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 template<int ly>
 int sse_32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff_low(0), diff_high(0);
     Vec4i sum_low(0), sum_high(0);
@@ -1644,7 +1644,7 @@ int sse_32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 template<int ly>
 int sse_48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff_low(0), diff_high(0);
     Vec4i sum_low(0), sum_high(0);
@@ -1685,7 +1685,7 @@ int sse_48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 template<int ly>
 int sse_64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
-    Int iRows = ly;
+    int iRows = ly;
     Vec16uc m1, n1;
     Vec8us diff_low(0), diff_high(0);
     Vec4i sum_low(0), sum_high(0);
