@@ -26,6 +26,7 @@
 
 #include "primitives.h"
 #include "Lib/TLibCommon/TComPrediction.h"
+#include <smmintrin.h>
 
 using namespace x265;
 
