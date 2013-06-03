@@ -58,7 +58,7 @@ TEncTop::TEncTop()
     m_framesToBeEncoded = INT_MAX;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
-//     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
+
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
@@ -88,6 +88,12 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create()
 {
+    if (x265::primitives.sad[0] == NULL)
+    {
+        printf("Primitives must be initialized before encoder is created\n");
+        exit(1);
+    }
+
     // initialize global variables
     initROM();
 
