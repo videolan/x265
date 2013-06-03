@@ -64,6 +64,7 @@ static struct option long_options[] =
 #define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
 #define STROPT OPT
 #include "x265opts.h"
+{0, 0, 0, 0}
 #undef OPT
 #undef STROPT
 #undef HELP
