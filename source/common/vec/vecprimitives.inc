@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <smmintrin.h>
-#include "Lib/TLibCommon/TComPrediction.h"
 #include <algorithm>
 #include "utils.h"
 
@@ -48,22 +47,22 @@ namespace {
 #include "ipfilter.inc"
 #include "macroblock.inc"
 #include "blockcopy.inc"
-#include "intrapred.inc"
 }
 
 namespace x265 {
 // private x265 namespace
 
 void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);
+void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);
 
 /* initialize function table with functions compiled for this vector
  * architecture.  This is the only symbol exported from each file. */
 void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
 {
     NAME(Setup_Vec_PixelPrimitives)(p);
+    NAME(Setup_Vec_IPredPrimitives)(p);
     Setup_Vec_MacroblockPrimitives(p);
     Setup_Vec_IPFilterPrimitives(p);
     Setup_Vec_BlockCopyPrimitives(p);
-    Setup_Vec_IPredPrimitives(p);
 }
 }

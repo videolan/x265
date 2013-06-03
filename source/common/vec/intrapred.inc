@@ -24,6 +24,13 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "primitives.h"
+#include "Lib/TLibCommon/TComPrediction.h"
+
+using namespace x265;
+
+namespace {
+
 const int angAP[17][64] =
 {
     {
@@ -2849,10 +2856,17 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
         }
     }
 }
+}
 
-void Setup_Vec_IPredPrimitives(EncoderPrimitives& p)
+#include "utils.h"
+
+namespace x265 {
+
+void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
 {
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
+}
+
 }
