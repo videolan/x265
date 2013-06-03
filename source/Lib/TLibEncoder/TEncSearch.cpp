@@ -2503,7 +2503,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
             }
 
-#if FAST_UDI_USE_MPM
             Int uiPreds[3] = { -1, -1, -1 };
             Int iMode = -1;
             Int numCand = pcCU->getIntraDirLumaPredictor(uiPartOffset, uiPreds, &iMode);
@@ -2527,8 +2526,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                     uiRdModeList[numModesForFullRD++] = mostProbableMode;
                 }
             }
-
-#endif // FAST_UDI_USE_MPM
         }
         else
         {
