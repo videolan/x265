@@ -25,26 +25,9 @@
 
 // Vector class versions of pixel comparison performance primitives
 
+namespace {
+
 /* File for pixels type-neutral code */
-
-#if HIGH_BIT_DEPTH
-template<int lx, int ly>
-int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
-{
-    int uiSum = 0;
-
-    for (int row = 0; row < ly; row += 4)
-    {
-        for (int col = 0; col < lx; col += 4)
-        {
-            uiSum += satd_4x4(piOrg + strideOrg * row + col, strideOrg,
-                              piCur + strideCur * row + col, strideCur);
-        }
-    }
-
-    return uiSum;
-}
-#endif
 
 void CDECL convert16to32(short *psOrg, int *piDst, int num)
 {
@@ -118,8 +101,14 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
         piDst += 4;
     }
 }
+}
 
-void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
+#include "utils.h"
+
+namespace x265 {
+// private x265 namespace
+
+void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 {
     // sad
     p.sad[PARTITION_4x4] = sad_4<4>;
@@ -351,4 +340,5 @@ void Setup_Vec_PixelPrimitives(EncoderPrimitives &p)
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
+}
 }

@@ -1,5 +1,6 @@
 if (MSVC)
-    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp )
+    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+        pixel-sse2.cpp pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp)
     if (NOT X64)
         # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
         set_source_files_properties(sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp PROPERTIES COMPILE_FLAGS /arch:SSE2)
@@ -9,14 +10,16 @@ if (MSVC)
 endif()
 # VC9 and VC10 tend to generate buggy SSE4 code, so leaving them out to dry
 if (MSVC_VERSION EQUAL 1700) # VC11
-    set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp)
-    set_source_files_properties(avx.cpp avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
+    set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp pixel-avx.cpp pixel-avx2.cpp)
+    set_source_files_properties(avx.cpp avx2.cpp pixel-avx.cpp pixel-avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
 endif()
 if(GCC)
-    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp)
+    set(PRIMITIVES sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp
+        pixel-sse2.cpp pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp pixel-avx.cpp)
     set_source_files_properties(sse2.cpp sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+        pixel-sse2.cpp pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
                                 PROPERTIES COMPILE_FLAGS -msse4)
-    set_source_files_properties(avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
+    set_source_files_properties(avx.cpp pixel-avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
 endif(GCC)
 
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)

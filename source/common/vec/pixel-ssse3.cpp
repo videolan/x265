@@ -18,52 +18,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-/* This header is included into the per-architecture CPP files.  Each
- * one will define ARCH to a different value. */
+/* this file instantiates SSSE3 versions of the vectorized primitives */
 
 #include "primitives.h"
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
-#include <smmintrin.h>
-#include "Lib/TLibCommon/TComPrediction.h"
-#include <algorithm>
-#include "utils.h"
 
-extern char g_aucConvertToBit[];
+#define INSTRSET 4
+#include "vectorclass.h"
 
+#define ARCH ssse3
 using namespace x265;
 
 namespace {
 // each of these headers implements a portion of the performance
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
 #if HIGH_BIT_DEPTH
-    #include "ipfilter16.inc"
+    #include "pixel16.inc"
 #else
-    #include "ipfilter8.inc"
+    #include "pixel8.inc"
 #endif
-#include "ipfilter.inc"
-#include "macroblock.inc"
-#include "blockcopy.inc"
-#include "intrapred.inc"
 }
 
-namespace x265 {
-// private x265 namespace
-
-void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);
-
-/* initialize function table with functions compiled for this vector
- * architecture.  This is the only symbol exported from each file. */
-void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
-{
-    NAME(Setup_Vec_PixelPrimitives)(p);
-    Setup_Vec_MacroblockPrimitives(p);
-    Setup_Vec_IPFilterPrimitives(p);
-    Setup_Vec_BlockCopyPrimitives(p);
-    Setup_Vec_IPredPrimitives(p);
-}
-}
+#include "pixel.inc"
