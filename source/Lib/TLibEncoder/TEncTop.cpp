@@ -252,8 +252,6 @@ Void TEncTop::init()
     xInitPPS();
     xInitRPS();
 
-    xInitPPSforTiles();
-
     // initialize processing unit classes
     Int iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_iNumSubstreams = iNumSubstreams;
@@ -638,6 +636,7 @@ Void TEncTop::xInitPPS()
     m_cPPS.setNumRefIdxL1DefaultActive(bestPos);
     m_cPPS.setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     m_cPPS.setUseTransformSkip(m_useTransformSkip);
+    m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
@@ -836,11 +835,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
     }
 
     return rpsIdx;
-}
-
-Void  TEncTop::xInitPPSforTiles()
-{
-    m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 //! \}

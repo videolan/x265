@@ -130,9 +130,7 @@ protected:
     Void  xGetNewPicBuffer(TComPic*& rpcPic);             ///< get picture buffer which will be processed
     Void  xInitSPS();                                     ///< initialize SPS from encoder options
     Void  xInitPPS();                                     ///< initialize PPS from encoder options
-
-    Void  xInitPPSforTiles();
-    Void  xInitRPS();                                     ///< initialize PPS from encoder options
+    Void  xInitRPS();                                     ///< initialize RPS from encoder options
 
 public:
 
