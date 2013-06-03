@@ -78,7 +78,6 @@ private:
     // Per-Slice
     TEncSlice               m_cSliceEncoder;              ///< slice encoder
 
-    UInt                    m_uiNumSubstreams;            // why two of these?
     Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
 
     // Per CTU row
@@ -101,9 +100,6 @@ private:
 
     TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
     TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
-    TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
-    TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
-    TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
 
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
@@ -111,6 +107,11 @@ private:
     // SPS
     TComSPS                 m_cSPS;                       ///< SPS
     TComPPS                 m_cPPS;                       ///< PPS
+
+    /* TODO: How are these still used? */
+    TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
+    TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
+    TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
 
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
@@ -149,7 +150,7 @@ public:
     // member access functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    UInt                    getNumSubstreams() { return m_uiNumSubstreams; }
+    Int                     getNumSubstreams() { return m_iNumSubstreams; }
 
     TComList<TComPic*>*     getListPic() { return &m_cListPic;             }
 

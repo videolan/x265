@@ -256,7 +256,7 @@ Void TEncTop::init()
 
     // initialize processing unit classes
     Int iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
-    m_uiNumSubstreams = iNumSubstreams;
+    m_iNumSubstreams = iNumSubstreams;
     createWPPCoders(iNumSubstreams);
     m_cGOPEncoder.init(this);
     m_cSliceEncoder.init(this);
@@ -265,7 +265,7 @@ Void TEncTop::init()
     m_pcCavlcCoder = getCavlcCoder();
 
     // initialize encoder search class
-    for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
+    for(Int ui=0; ui<m_iNumSubstreams; ui++)
     {
         m_pcSearchs[ui].init(this, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
     }
