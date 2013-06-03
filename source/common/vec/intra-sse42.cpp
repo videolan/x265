@@ -22,6 +22,9 @@
  *****************************************************************************/
 
 /* this file instantiates SSE4.2 versions of the vectorized primitives */
+#if defined(_MSC_VER)
+#define ALWAYSINLINE  __forceinline
+#endif
 
 #define INSTRSET 6
 #include "vectorclass.h"
