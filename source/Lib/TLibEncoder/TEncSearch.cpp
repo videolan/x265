@@ -2405,7 +2405,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
     x265::pixelcmp sa8d;
-
+    // TODO: Use a table lookup here
     switch (uiWidth)
     {
     case 64:
