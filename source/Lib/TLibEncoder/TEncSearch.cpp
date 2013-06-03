@@ -1595,7 +1595,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
 
         for (UInt uiPart = 0; uiPart < 4; uiPart++, uiAbsPartIdxSub += uiQPartsDiv)
         {
-            xRecurIntraCodingQT(pcCU, uiTrDepth + 1, uiAbsPartIdxSub, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiSplitDistY, uiSplitDistC, dSplitCost);
+            xRecurIntraCodingQT(pcCU, uiTrDepth + 1, uiAbsPartIdxSub, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiSplitDistY, uiSplitDistC, bCheckFirst, dSplitCost);
 
             uiSplitCbfY |= pcCU->getCbf(uiAbsPartIdxSub, TEXT_LUMA, uiTrDepth + 1);
             if (!bLumaOnly)
