@@ -413,7 +413,9 @@ public:
     Bool      getDeblockingFilterMetric()      { return m_DeblockingFilterMetric; }
 
     //==== Motion search ========
-    Int       getSearchRange()      { return m_iSearchRange; }
+    Int       getSearchMethod()      { return m_iSearchMethod; }
+    Int       getSearchRange()       { return m_iSearchRange; }
+    Int       getBipredSearchRange() { return m_bipredSearchRange; }
 
     //==== Quality control ========
     Int       getMaxCuDQPDepth()      { return m_iMaxCuDQPDepth; }
