@@ -4664,8 +4664,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
         if (checkTransformSkipY)
         {
-            UInt uiNonzeroDistY, uiAbsSumTransformSkipY;
-            Double dSingleCostY;
+            UInt uiNonzeroDistY = 0, uiAbsSumTransformSkipY;
+            Double dSingleCostY = MAX_DOUBLE;
 
             Short *pcResiCurrY = m_pcQTTempTComYuv[uiQTTempAccessLayer].getLumaAddr(absTUPartIdx);
             UInt resiYStride = m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride();
@@ -4742,8 +4742,9 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
         if (bCodeChroma && checkTransformSkipUV)
         {
-            UInt uiNonzeroDistU, uiNonzeroDistV, uiAbsSumTransformSkipU, uiAbsSumTransformSkipV;
-            Double dSingleCostU, dSingleCostV;
+            UInt uiNonzeroDistU = 0, uiNonzeroDistV = 0, uiAbsSumTransformSkipU, uiAbsSumTransformSkipV;
+            Double dSingleCostU = MAX_DOUBLE;
+            Double dSingleCostV = MAX_DOUBLE;
 
             Short *pcResiCurrU = m_pcQTTempTComYuv[uiQTTempAccessLayer].getCbAddr(absTUPartIdxC);
             Short *pcResiCurrV = m_pcQTTempTComYuv[uiQTTempAccessLayer].getCrAddr(absTUPartIdxC);
