@@ -95,7 +95,7 @@ private:
     TEncSbac*               m_pcBufferSbacCoders;               ///< lines to store temporary contexts for every WPP line
     TEncRateCtrl*           m_pcRateCtrl;                       ///< Rate control manager
     UInt                    m_uiSliceIdx;
-    std::vector<TEncSbac*> CTXMem;
+    std::vector<TEncSbac*>  CTXMem;
 
 public:
 
@@ -108,7 +108,7 @@ public:
 
     /// preparation of slice encoding (reference marking, QP and lambda)
     Void    initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                         Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS);
+                         Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS);
     Void    resetQP(TComPic* pic, Int sliceQP, Double lambda);
     // compress and encode slice
     Void    compressSlice(TComPic* rpcPic);                                            ///< analysis stage of slice
@@ -121,12 +121,12 @@ public:
 //     TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                      ///< CU encoder
 
     Void    xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice);
-    UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
+    UInt    getSliceIdx()         { return m_uiSliceIdx; }
 
-    Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
+    Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i; }
 
-    Void      initCtxMem(UInt i);
-    Void      setCtxMem(TEncSbac* sb, Int b)   { CTXMem[b] = sb; }
+    Void    initCtxMem(UInt i);
+    Void    setCtxMem(TEncSbac* sb, Int b)   { CTXMem[b] = sb; }
 
 private:
 
