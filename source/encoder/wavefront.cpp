@@ -90,11 +90,11 @@ void CTURow::destroy()
 
 EncodeFrame::EncodeFrame(ThreadPool* pool)
     : QueueFrame(pool)
-    , m_rows(NULL)
     , m_pcSbacCoder(NULL)
     , m_pcBinCABAC(NULL)
     , m_pcSlice(NULL)
     , m_pic(NULL)
+    , m_rows(NULL)
 {
 }
 
