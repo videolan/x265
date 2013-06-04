@@ -158,9 +158,6 @@ public:
 #define CALCRDCOST(uiBits, uiDistortion, m_dLambda) \
     (Double)floor((Double)uiDistortion + (Double)((uiBits * m_dLambda + .5))) \
 
-#define CALCRDCOST_SAD(uiBits, uiDistortion, m_dLambda) \
-    (Double)floor((Double)uiDistortion + (Double)((Int)(uiBits * m_dLambda + .5) >> 16)) \
-
 /// RD cost computation class
 class TComRdCost
     : public TComRdCostWeightPrediction
@@ -275,8 +272,6 @@ public:
     UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA, DFunc eDFunc = DF_SSE);
     UInt   getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA, DFunc eDFunc = DF_SSE);
 #endif
-
-    UInt   getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height);
 }; // END CLASS DEFINITION TComRdCost
 
 //! \}
