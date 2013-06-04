@@ -32,8 +32,6 @@
 #include <algorithm>
 #include "utils.h"
 
-extern char g_aucConvertToBit[];
-
 using namespace x265;
 
 namespace {

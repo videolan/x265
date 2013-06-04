@@ -28,6 +28,8 @@
 #include "Lib/TLibCommon/TComPrediction.h"
 #include <smmintrin.h>
 
+extern char g_aucConvertToBit[];
+
 using namespace x265;
 
 namespace {
