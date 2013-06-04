@@ -188,8 +188,6 @@ public:
     TComRdCost();
     virtual ~TComRdCost();
 
-    Double  calcRdCost64(UInt64 uiBits, UInt64 uiDistortion, Bool bFlag = false, DFunc eDFunc = DF_DEFAULT);
-
     Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = cbDistortionWeight; }
 
     Void    setCrDistortionWeight(Double crDistortionWeight) { m_crDistortionWeight = crDistortionWeight; }

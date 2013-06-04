@@ -51,61 +51,6 @@ TComRdCost::TComRdCost()
 TComRdCost::~TComRdCost()
 {}
 
-// Calculate RD functions
-Double TComRdCost::calcRdCost64(UInt64 uiBits, UInt64 uiDistortion, Bool bFlag, DFunc eDFunc)
-{
-    Double dRdCost = 0.0;
-    Double dLambda = 0.0;
-
-    switch (eDFunc)
-    {
-    case DF_SSE:
-        assert(0);
-        break;
-    case DF_SAD:
-        dLambda = (Double)m_uiLambdaMotionSAD;
-        break;
-    case DF_DEFAULT:
-        dLambda =         m_dLambda;
-        break;
-    case DF_SSE_FRAME:
-        dLambda =         m_dFrameLambda;
-        break;
-    default:
-        assert(0);
-        break;
-    }
-
-    if (bFlag)
-    {
-        // Intra8x8, Intra4x4 Block only...
-#if SEQUENCE_LEVEL_LOSSLESS
-        dRdCost = (Double)(uiBits);
-#else
-        dRdCost = (((Double)(Int64)uiDistortion) + ((Double)(Int64)uiBits * dLambda));
-#endif
-    }
-    else
-    {
-        if (eDFunc == DF_SAD)
-        {
-            dRdCost = ((Double)(Int64)uiDistortion + (Double)((Int)((Int64)uiBits * dLambda + .5) >> 16));
-            dRdCost = (Double)(UInt)floor(dRdCost);
-        }
-        else
-        {
-#if SEQUENCE_LEVEL_LOSSLESS
-            dRdCost = (Double)(uiBits);
-#else
-            dRdCost = ((Double)(Int64)uiDistortion + (Double)((Int)((Int64)uiBits * dLambda + .5)));
-            dRdCost = (Double)(UInt)floor(dRdCost);
-#endif
-        }
-    }
-
-    return dRdCost;
-}
-
 Void TComRdCost::setLambda(Double dLambda)
 {
     m_dLambda           = dLambda;
