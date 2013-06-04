@@ -39,10 +39,10 @@
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
 #include <math.h>
-#include <omp.h>
 
 #include "threading.h"
 #include "wavefront.h"
+
 using namespace x265;
 
 //! \ingroup TLibEncoder
