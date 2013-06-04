@@ -2054,3 +2054,360 @@ int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stride
 
     return uiSum;
 }
+
+
+template<int ly>
+int sse_4(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_8(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_12(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_24(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 24);
+        n1.load(piCur + 24);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 24);
+        n1.load(piCur + 24);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 32);
+        n1.load(piCur + 32);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 40);
+        n1.load(piCur + 40);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
+int sse_64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec4i diff(0);
+    Vec8s m1, n1;
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 8);
+        n1.load(piCur + 8);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 24);
+        n1.load(piCur + 24);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 32);
+        n1.load(piCur + 32);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 40);
+        n1.load(piCur + 40);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 48);
+        n1.load(piCur + 48);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        m1.load_a(piOrg + 56);
+        n1.load(piCur + 56);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += diff;
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += diff;
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}

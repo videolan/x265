@@ -3707,8 +3707,8 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
     }
 
     // calc distortion
-    uiCost = m_pcRdCost->getDistPart(g_bitDepthY, pcTemplateCand->getLumaAddr(uiPartAddr), pcTemplateCand->getStride(), pcOrgYuv->getLumaAddr(uiPartAddr), pcOrgYuv->getStride(), iSizeX, iSizeY, TEXT_LUMA, DF_SAD);
-    uiCost = (UInt)CALCRDCOST_SAD(m_auiMVPIdxCost[iMVPIdx][iMVPNum], uiCost, (Double)m_pcRdCost->m_uiLambdaMotionSAD);
+    uiCost = m_me.bufSAD((pixel*)pcTemplateCand->getLumaAddr(uiPartAddr), pcTemplateCand->getStride());
+    uiCost =  (UInt)((Double)floor((Double)uiCost + (Double)((Int)(m_auiMVPIdxCost[iMVPIdx][iMVPNum] * (Double)m_pcRdCost->m_uiLambdaMotionSAD + .5) >> 16)));
     return uiCost;
 }
 

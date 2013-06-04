@@ -351,14 +351,14 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.sse[PARTITION_8x48] = sse_8<48>;
     p.sse[PARTITION_8x64] = sse_8<64>;
 
-    /*p.sse[PARTITION_12x4] = sse_12<4>;
+    p.sse[PARTITION_12x4] = sse_12<4>;
     p.sse[PARTITION_12x8] = sse_12<8>;
     p.sse[PARTITION_12x12] = sse_12<12>;
     p.sse[PARTITION_12x16] = sse_12<16>;
     p.sse[PARTITION_12x24] = sse_12<24>;
     p.sse[PARTITION_12x32] = sse_12<32>;
     p.sse[PARTITION_12x48] = sse_12<48>;
-    p.sse[PARTITION_12x64] = sse_12<64>;*/
+    p.sse[PARTITION_12x64] = sse_12<64>;
 
     p.sse[PARTITION_16x4] = sse_16<4>;
     p.sse[PARTITION_16x8] = sse_16<8>;
@@ -369,14 +369,14 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.sse[PARTITION_16x48] = sse_16<48>;
     p.sse[PARTITION_16x64] = sse_16<64>;
 
-    /*p.sse[PARTITION_24x4] = sse_24<4>;
+    p.sse[PARTITION_24x4] = sse_24<4>;
     p.sse[PARTITION_24x8] = sse_24<8>;
     p.sse[PARTITION_24x12] = sse_24<12>;
     p.sse[PARTITION_24x16] = sse_24<16>;
     p.sse[PARTITION_24x24] = sse_24<24>;
     p.sse[PARTITION_24x32] = sse_24<32>;
     p.sse[PARTITION_24x48] = sse_24<48>;
-    p.sse[PARTITION_24x64] = sse_24<64>;*/
+    p.sse[PARTITION_24x64] = sse_24<64>;
 
     p.sse[PARTITION_32x4] = sse_32<4>;
     p.sse[PARTITION_32x8] = sse_32<8>;

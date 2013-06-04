@@ -1731,6 +1731,34 @@ int sse_8(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 }
 
 template<int ly>
+int sse_12(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec16uc m1, n1;
+
+    Vec8us diff(0);
+    Vec4i sum(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        m1.cutoff(12);
+        n1.load(piCur);
+        n1.cutoff(12);
+        diff = extend_low(m1) - extend_low(n1);
+        diff = diff * diff;
+        sum += (extend_low(diff) + (extend_high(diff)));
+
+        diff = extend_high(m1) - extend_high(n1);
+        diff = diff * diff;
+        sum += (extend_low(diff) + (extend_high(diff)));
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
+    return horizontal_add(sum);
+}
+
+template<int ly>
 int sse_16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
     int iRows = ly;
@@ -1752,6 +1780,37 @@ int sse_16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
         piCur += iStrideCur;
     }
 
+    return horizontal_add(sum_low) + horizontal_add(sum_high);
+}
+
+template<int ly>
+int sse_24(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
+{
+    int iRows = ly;
+    Vec16uc m1, n1;
+    Vec8us diff_low(0), diff_high(0);
+    Vec4i sum_low(0), sum_high(0);
+    for (; iRows != 0; iRows--)
+    {
+        m1.load_a(piOrg);
+        n1.load(piCur);
+        diff_low = extend_low(m1) - extend_low(n1);
+        diff_high = extend_high(m1) - extend_high(n1);
+        diff_low = diff_low * diff_low;
+        diff_high = diff_high * diff_high;
+        sum_low += (extend_low(diff_low) + extend_low(diff_high));
+        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+
+        m1.load_a(piOrg + 16);
+        n1.load(piCur + 16);
+        diff_low = extend_low(m1) - extend_low(n1);
+        diff_low = diff_low * diff_low;
+        sum_low += extend_low(diff_low);
+        sum_high += extend_high(diff_low);
+
+        piOrg += iStrideOrg;
+        piCur += iStrideCur;
+    }
     return horizontal_add(sum_low) + horizontal_add(sum_high);
 }
 
