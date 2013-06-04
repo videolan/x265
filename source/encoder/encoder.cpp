@@ -770,7 +770,6 @@ void x265_encoder_close(x265_t *encoder)
         delete yuv;
     }
 
-    encoder->deletePicBuffer();
     encoder->destroy();
     delete encoder;
 }

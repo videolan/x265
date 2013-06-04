@@ -73,27 +73,13 @@ private:
 
     // processing units
     TEncGOP*                m_pcGOPEncoder;                     ///< GOP encoder
-    TEncCu*                 m_pcCuEncoders;                     ///< CU encoder
-
-    // encoder search
-    TEncSearch*             m_pcPredSearchs;                    ///< encoder search class
-
-    // coding tools
-    TEncEntropy*            m_pcEntropyCoders;                  ///< entropy encoder
-    TEncCavlc*              m_pcCavlcCoder;                     ///< CAVLC encoder
-    TEncSbac*               m_pcSbacCoder;                      ///< SBAC encoder
-    TEncBinCABAC*           m_pcBinCABAC;                       ///< Bin encoder CABAC
-    TComTrQuant*            m_pcTrQuants;                       ///< transform & quantization
 
     // RD optimization
-    TComBitCounter*         m_pcBitCounter;                     ///< bit counter
     TComRdCost*             m_pcRdCost;                         ///< RD cost computation
-    TEncSbac*               m_pcRDGoOnSbacCoders;               ///< go-on SBAC encoder
+
     UInt64                  m_uiPicTotalBits;                   ///< total bits for the picture
     UInt64                  m_uiPicDist;                        ///< total distortion for the picture
     Double                  m_dPicRdCost;                       ///< picture-level RD cost
-    TEncSbac*               m_pcBufferSbacCoders;               ///< lines to store temporary contexts for every WPP line
-    TEncRateCtrl*           m_pcRateCtrl;                       ///< Rate control manager
     UInt                    m_uiSliceIdx;
     std::vector<TEncSbac*>  CTXMem;
 

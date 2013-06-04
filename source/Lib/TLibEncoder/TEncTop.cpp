@@ -65,18 +65,10 @@ TEncTop::TEncTop()
     g_nSymbolCounter = 0;
 #endif
 
-    m_iMaxRefPicNum     = 0;
+    m_iMaxRefPicNum  = 0;
+    m_cFrameEncoders = 0;
 
     ContextModel::buildNextStateTable();
-
-    m_pcSbacCoders           = NULL;
-    m_pcBinCoderCABACs       = NULL;
-    m_ppppcRDSbacCoders      = NULL;
-    m_ppppcBinCodersCABAC    = NULL;
-    m_pcRDGoOnSbacCoders     = NULL;
-    m_pcRDGoOnBinCodersCABAC = NULL;
-    m_pcBitCounters          = NULL;
-    m_pcRdCosts              = NULL;
 }
 
 TEncTop::~TEncTop()
@@ -117,71 +109,6 @@ Void TEncTop::create()
     }
 }
 
-/**
- - Allocate coders required for wavefront for the nominated number of substreams.
- .
- \param iNumSubstreams Determines how much information to allocate.
- */
-Void TEncTop::createWPPCoders(Int iNumSubstreams)
-{
-    if (m_pcSbacCoders != NULL)
-    {
-        return; // already generated.
-    }
-
-    m_iNumSubstreams         = iNumSubstreams;
-    m_pcSbacCoders           = new TEncSbac[iNumSubstreams];
-    m_pcBinCoderCABACs       = new TEncBinCABAC[iNumSubstreams];
-    m_pcRDGoOnSbacCoders     = new TEncSbac[iNumSubstreams];
-    m_pcRDGoOnBinCodersCABAC = new TEncBinCABACCounter[iNumSubstreams];
-    m_pcBitCounters          = new TComBitCounter[iNumSubstreams];
-    m_pcRdCosts              = new TComRdCost[iNumSubstreams];
-    m_pcEntropyCoders        = new TEncEntropy[iNumSubstreams];
-    m_pcSearchs              = new TEncSearch[iNumSubstreams];
-    m_pcCuEncoders           = new TEncCu[iNumSubstreams];
-    m_pcTrQuants             = new TComTrQuant[iNumSubstreams];
-
-    for (UInt ui = 0; ui < iNumSubstreams; ui++)
-    {
-        m_pcRDGoOnSbacCoders[ui].init(&m_pcRDGoOnBinCodersCABAC[ui]);
-        m_pcSbacCoders[ui].init(&m_pcBinCoderCABACs[ui]);
-
-        m_pcCuEncoders[ui].create(g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
-        m_pcCuEncoders[ui].init(this);
-        if (m_bUseAdaptQpSelect)
-        {
-            m_pcTrQuants[ui].initSliceQpDelta();
-        }
-        m_pcTrQuants[ui].init(1 << m_uiQuadtreeTULog2MaxSize,
-                              m_useRDOQ,
-                              m_useRDOQTS,
-                              true,
-                              m_useTransformSkipFast,
-                              m_bUseAdaptQpSelect );
-    }
-
-    m_ppppcRDSbacCoders      = new TEncSbac * **[iNumSubstreams];
-    m_ppppcBinCodersCABAC    = new TEncBinCABACCounter * **[iNumSubstreams];
-    for (UInt ui = 0; ui < iNumSubstreams; ui++)
-    {
-        m_ppppcRDSbacCoders[ui]  = new TEncSbac * *[g_uiMaxCUDepth + 1];
-        m_ppppcBinCodersCABAC[ui] = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
-
-        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-        {
-            m_ppppcRDSbacCoders[ui][iDepth]  = new TEncSbac*[CI_NUM];
-            m_ppppcBinCodersCABAC[ui][iDepth] = new TEncBinCABACCounter*[CI_NUM];
-
-            for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-            {
-                m_ppppcRDSbacCoders[ui][iDepth][iCIIdx] = new TEncSbac;
-                m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx] = new TEncBinCABACCounter;
-                m_ppppcRDSbacCoders[ui][iDepth][iCIIdx]->init(m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx]);
-            }
-        }
-    }
-}
-
 Void TEncTop::destroy()
 {
     // destroy processing unit classes
@@ -195,42 +122,13 @@ Void TEncTop::destroy()
     m_cLoopFilter.destroy();
     m_cRateCtrl.destroy();
 
-    for (UInt ui = 0; ui < m_iNumSubstreams; ui++)
+    if (m_cFrameEncoders)
     {
-        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-        {
-            for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
-            {
-                delete m_ppppcRDSbacCoders[ui][iDepth][iCIIdx];
-                delete m_ppppcBinCodersCABAC[ui][iDepth][iCIIdx];
-            }
-        }
-
-        for (Int iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
-        {
-            delete [] m_ppppcRDSbacCoders[ui][iDepth];
-            delete [] m_ppppcBinCodersCABAC[ui][iDepth];
-        }
-
-        delete[] m_ppppcRDSbacCoders[ui];
-        delete[] m_ppppcBinCodersCABAC[ui];
-
-        m_pcCuEncoders[ui].destroy();
+        m_cFrameEncoders->destroy();
+        delete m_cFrameEncoders;
     }
-
-    delete[] m_pcTrQuants;
-    delete[] m_pcCuEncoders;
-
-    delete[] m_pcSearchs;
-    delete[] m_pcEntropyCoders;
-    delete[] m_ppppcRDSbacCoders;
-    delete[] m_ppppcBinCodersCABAC;
-    delete[] m_pcSbacCoders;
-    delete[] m_pcBinCoderCABACs;
-    delete[] m_pcRDGoOnSbacCoders;
-    delete[] m_pcRDGoOnBinCodersCABAC;
-    delete[] m_pcBitCounters;
-    delete[] m_pcRdCosts;
+    
+    deletePicBuffer();
 
     // destroy ROM
     destroyROM();
@@ -253,20 +151,11 @@ Void TEncTop::init()
     xInitRPS();
 
     // initialize processing unit classes
-    Int iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
-    m_iNumSubstreams = iNumSubstreams;
-    createWPPCoders(iNumSubstreams);
+    m_iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cGOPEncoder.init(this);
     m_cSliceEncoder.init(this);
-
-    // initialize transform & quantization class
-    m_pcCavlcCoder = getCavlcCoder();
-
-    // initialize encoder search class
-    for(Int ui=0; ui<m_iNumSubstreams; ui++)
-    {
-        m_pcSearchs[ui].init(this, &m_cRdCost);
-    }
+    m_cFrameEncoders = new x265::EncodeFrame(m_threadPool);
+    m_cFrameEncoders->create(this);
 
     m_iMaxRefPicNum = 0;
 }

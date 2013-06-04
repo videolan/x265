@@ -26,104 +26,140 @@
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
-#include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSbac.h"
+#include "TLibEncoder/TEncBinCoderCABAC.h"
 
 #include "threadpool.h"
+
+class TEncTop;
 
 namespace x265 {
 // private x265 namespace
 
-typedef struct CUComputeData
+class CTURow
 {
-    CUComputeData(TComPic*          rpcPic,
-                  TEncSbac****      ppppcRDSbacCoders,
-                  TComSlice*        pcSlice,
-                  TComBitCounter*   pcBitCounters,
-                  TEncEntropy*      pcEntropyCoders,
-                  TEncSbac*         pcSbacCoder,
-                  TEncSbac*         pcBufferSbacCoders,
-                  TEncSbac*         pcRDGoOnSbacCoders,
-                  TComRdCost*       pcRdCost,
-                  TEncCu*           pcCuEncoders,
-                  TEncSearch*       pcPredSearches,
-                  TComTrQuant*      pcTrQuants,
-                  Bool              bWaveFrontsynchro)
+public:
+    TEncSbac               m_cSbacCoder;
+    TEncSbac               m_cRDGoOnSbacCoder;
+    TEncBinCABAC           m_cBinCoderCABAC;
+    TEncBinCABACCounter    m_cRDGoOnBinCodersCABAC;
+    TComBitCounter         m_cBitCounter;
+    TComRdCost             m_cRdCost;
+    TEncEntropy            m_cEntropyCoder;
+    TEncSearch             m_cSearch;
+    TEncCu                 m_cCuEncoder;
+    TComTrQuant            m_cTrQuant;
+    TEncSbac            ***m_pppcRDSbacCoders;
+    TEncBinCABACCounter ***m_pppcBinCodersCABAC;
 
-        : pic(rpcPic),
-          sbacCoders(ppppcRDSbacCoders),
-          slice(pcSlice),
-          bitCounters(pcBitCounters),
-          entropyCoders(pcEntropyCoders),
-          sbacCoder(pcSbacCoder),
-          bufferSbacCoders(pcBufferSbacCoders),
-          goOnSbacCoders(pcRDGoOnSbacCoders),
-          rdCost(pcRdCost),
-          cuEncoders(pcCuEncoders),
-          predSearches(pcPredSearches),
-          trQuants(pcTrQuants),
-          waveFrontSynchro(bWaveFrontsynchro) {}
+    void create(TEncTop* top);
 
-    TComPic* pic;
-    TEncSbac**** sbacCoders;
-    TComSlice* slice;
-    TComBitCounter* bitCounters;
+    void destroy();
 
-    TEncEntropy* entropyCoders;
-    TEncSbac* sbacCoder;
-    TEncSbac* bufferSbacCoders;
-    TEncSbac* goOnSbacCoders;
-    TComRdCost* rdCost;
-    TEncCu* cuEncoders;
-    TEncSearch* predSearches;
-    TComTrQuant* trQuants;
-
-    Bool waveFrontSynchro;
-} CUComputeData;
-
-
-struct CURowState
-{
-    CURowState() : active(false), curCol(0) {}
-
-    void Initialize()
+    void init()
     {
-        this->active = false;
-        this->curCol = 0;
-
-        // FIXME: How to initialize lock?
-        // ...
+        m_active = 0;
+        m_curCol = 0;
     }
 
-    Lock lock;
-    volatile bool active;
-    volatile int curCol;
+    /* Threading */
+    Lock                m_lock;
+    volatile bool       m_active;
+    volatile int        m_curCol;
 };
 
-
-class EncodingFrame : public QueueFrame
+class EncodeFrame : public QueueFrame
 {
 public:
 
-    EncodingFrame(int nrows_, int ncols_, ThreadPool *pool);
+    EncodeFrame(ThreadPool *);
 
-    virtual ~EncodingFrame();
+    virtual ~EncodeFrame();
 
-    void Initialize(CUComputeData* cdata);
+    void create(TEncTop *top);
 
-    void Encode();
+    void destroy();
+
+    void Encode(TComPic *pic, TComSlice* pcSlice);
 
     void ProcessRow(int irow);
 
-private:
+    /* Config broadcast methods */
+    void setAdaptiveSearchRange(int iDir, int iRefIdx, int iNewSR)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cSearch.setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
+        }
+    }
+
+    void setLambda(Double dLambdaLuma, Double dLambdaChroma)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cTrQuant.setLambda(dLambdaLuma, dLambdaChroma);
+        }
+    }
+
+    void setFlatScalingList()
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cTrQuant.setFlatScalingList();
+        }
+    }
+
+    void setUseScalingList(bool flag)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cTrQuant.setUseScalingList(flag);
+        }
+    }
+
+    void setScalingList(TComScalingList *list)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            this->rows[i].m_cTrQuant.setScalingList(list);
+        }
+    }
+
+    TEncEntropy* getEntropyEncoder(int row)    { return &this->rows[row].m_cEntropyCoder; }
+    TEncSbac*    getSbacCoder(int row)         { return &this->rows[row].m_cSbacCoder; }
+    TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->rows[row].m_cRDGoOnSbacCoder; }
+    TEncSbac***  getRDSbacCoders(int row)      { return this->rows[row].m_pppcRDSbacCoders; }
+    TEncSbac*    getBufferSBac(int row)        { return &this->m_pcBufferSbacCoders[row]; }
+    TEncCu*      getCuEncoder(int row)         { return &this->rows[row].m_cCuEncoder; }
+
+    void resetEntropy(TComSlice *pcSlice)
+    {
+        for (int i = 0; i < this->nrows; i++)
+        {
+            this->rows[i].m_cEntropyCoder.setEntropyCoder(&this->rows[i].m_cSbacCoder, pcSlice);
+            this->rows[i].m_cEntropyCoder.resetEntropy();
+        }
+    }
+
+    // Storage for passing CABAC state between rows: TODO merge with CTURow
+    TEncSbac*     m_pcBufferSbacCoders;
+
+    // Pointers to global singletons in TEncTop. Prevents frame parallelism
+    TEncSbac*     m_pcSbacCoder;
+    TEncBinCABAC* m_pcBinCABAC;
+
+    // Hold pointers to live encode data
+    TComSlice*    m_pcSlice;
+    TComPic*      m_pic;
 
     int nrows;
     int ncols;
+    bool enableWpp;
 
-    CUComputeData* data;
-    CURowState* rows;
-    Event complete;
+    CTURow* rows;
+    x265::Event complete;
 };
+
 }
 
 #endif // ifndef __WAVEFRONT__
