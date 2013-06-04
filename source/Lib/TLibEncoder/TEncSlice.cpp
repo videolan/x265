@@ -681,7 +681,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 #endif
         frame->getSbacCoder(uiSubStrm)->load(pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
-        //Store probabilities of second LCU in line into buffer
+        // Store probabilities of second LCU in line into buffer
         if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)
         {
             frame->getBufferSBac(uiLin)->loadContexts(frame->getSbacCoder(uiSubStrm));
