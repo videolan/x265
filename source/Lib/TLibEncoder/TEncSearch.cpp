@@ -4679,7 +4679,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             Short bestResiY[32 * 32];
             for (Int i = 0; i < trHeight; ++i)
             {
-                memcpy(bestResiY + i*trHeight, pcResiCurrY + i*resiYStride, sizeof(Short)*trWidth); 
+                memcpy(bestResiY + i*trWidth, pcResiCurrY + i*resiYStride, sizeof(Short)*trWidth); 
             }
 
             m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_QT_TRAFO_ROOT]);
