@@ -374,4 +374,4 @@ public:
 
 //! \}
 
-#endif
+#endif // ifndef _SEI_

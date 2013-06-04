@@ -58,7 +58,7 @@ TEncTop::TEncTop()
     m_framesToBeEncoded = INT_MAX;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
-//     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCoderCABAC);
+
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
@@ -88,6 +88,12 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create()
 {
+    if (x265::primitives.sad[0] == NULL)
+    {
+        printf("Primitives must be initialized before encoder is created\n");
+        exit(1);
+    }
+
     // initialize global variables
     initROM();
 
@@ -246,11 +252,9 @@ Void TEncTop::init()
     xInitPPS();
     xInitRPS();
 
-    xInitPPSforTiles();
-
     // initialize processing unit classes
     Int iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
-    m_uiNumSubstreams = iNumSubstreams;
+    m_iNumSubstreams = iNumSubstreams;
     createWPPCoders(iNumSubstreams);
     m_cGOPEncoder.init(this);
     m_cSliceEncoder.init(this);
@@ -259,9 +263,9 @@ Void TEncTop::init()
     m_pcCavlcCoder = getCavlcCoder();
 
     // initialize encoder search class
-    for(UInt ui=0; ui<m_uiNumSubstreams; ui++)
+    for(Int ui=0; ui<m_iNumSubstreams; ui++)
     {
-        m_pcSearchs[ui].init(this, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
+        m_pcSearchs[ui].init(this, &m_cRdCost);
     }
 
     m_iMaxRefPicNum = 0;
@@ -632,6 +636,7 @@ Void TEncTop::xInitPPS()
     m_cPPS.setNumRefIdxL1DefaultActive(bestPos);
     m_cPPS.setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     m_cPPS.setUseTransformSkip(m_useTransformSkip);
+    m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
@@ -667,8 +672,7 @@ Void TEncTop::xInitRPS()
         rps->setNumberOfNegativePictures(numNeg);
         rps->setNumberOfPositivePictures(numPos);
 
-        // handle inter RPS intialization from the config file.
-#if AUTO_INTER_RPS
+        // handle inter RPS initialization from the config file.
         rps->setInterRPSPrediction(ge.m_interRPSPrediction > 0); // not very clean, converting anything > 0 to true.
         rps->setDeltaRIdxMinus1(0);                           // index to the Reference RPS is always the previous one.
         TComReferencePictureSet*     RPSRef = rpsList->getReferencePictureSet(i - 1); // get the reference RPS
@@ -711,7 +715,6 @@ Void TEncTop::xInitRPS()
                 rps->setRefIdc(j, ge.m_refIdc[j]);
             }
 
-#if WRITE_BACK
             // the following code overwrite the deltaPOC and Used by current values read from the config file with the ones
             // computed from the RefIdc.  A warning is printed if they are not identical.
             numNeg = 0;
@@ -766,52 +769,7 @@ Void TEncTop::xInitRPS()
                     rps->setUsed(j, RPSTemp.getUsed(j));
                 }
             }
-
-#endif // if WRITE_BACK
         }
-#else // if AUTO_INTER_RPS
-        rps->setInterRPSPrediction(ge.m_interRPSPrediction);
-        if (ge.m_interRPSPrediction)
-        {
-            rps->setDeltaRIdxMinus1(0);
-            rps->setDeltaRPS(ge.m_deltaRPS);
-            rps->setNumRefIdc(ge.m_numRefIdc);
-            for (Int j = 0; j < ge.m_numRefIdc; j++)
-            {
-                rps->setRefIdc(j, ge.m_refIdc[j]);
-            }
-
-#if WRITE_BACK
-            // the folowing code overwrite the deltaPOC and Used by current values read from the config file with the ones
-            // computed from the RefIdc.  This is not necessary if both are identical. Currently there is no check to see if they are identical.
-            numNeg = 0;
-            numPos = 0;
-            TComReferencePictureSet*     RPSRef = m_RPSList.getReferencePictureSet(i - 1);
-
-            for (Int j = 0; j < ge.m_numRefIdc; j++)
-            {
-                if (ge.m_refIdc[j])
-                {
-                    Int deltaPOC = ge.m_deltaRPS + ((j < RPSRef->getNumberOfPictures()) ? RPSRef->getDeltaPOC(j) : 0);
-                    rps->setDeltaPOC((numNeg + numPos), deltaPOC);
-                    rps->setUsed((numNeg + numPos), ge.m_refIdc[j] == 1 ? 1 : 0);
-                    if (deltaPOC < 0)
-                    {
-                        numNeg++;
-                    }
-                    else
-                    {
-                        numPos++;
-                    }
-                }
-            }
-
-            rps->setNumberOfNegativePictures(numNeg);
-            rps->setNumberOfPositivePictures(numPos);
-            rps->sortDeltaPOC();
-#endif // if WRITE_BACK
-        }
-#endif //INTER_RPS_AUTO
     }
 }
 
@@ -877,11 +835,6 @@ Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
     }
 
     return rpsIdx;
-}
-
-Void  TEncTop::xInitPPSforTiles()
-{
-    m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 //! \}

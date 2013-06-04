@@ -132,6 +132,7 @@ typedef struct x265_picture_t
     int   stride[3];
     int   bitDepth;
 }
+
 x265_picture_t;
 
 typedef enum
@@ -142,6 +143,7 @@ typedef enum
     X265_STAR_SEARCH,
     X265_ORIG_SEARCH, // original HM functions (deprecated)
 }
+
 X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", 0 };
@@ -228,17 +230,18 @@ typedef struct x265_param_t
     // DecodedPictureHashSEI
     int       useDecodedPictureHashSEI;         ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }
+
 x265_param_t;
 
 /***
  * Pass cpuid 0 to auto-detect.  If not called, first encoder allocated will
  * auto-detect the CPU and initialize performance primitives, which are process global */
-void x265_setup_primitives( x265_param_t *param, int cpuid );
+void x265_setup_primitives(x265_param_t *param, int cpuid);
 
 /***
  * Initialize an x265_param_t structure to default values
  */
-void x265_param_default( x265_param_t *param );
+void x265_param_default(x265_param_t *param);
 
 /* x265_param_apply_profile:
  *      Applies the restrictions of the given profile. (one of below) */
@@ -246,7 +249,7 @@ static const char * const x265_profile_names[] = { "main", "main10", "mainstillp
 
 /*      (can be NULL, in which case the function will do nothing)
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
-int x265_param_apply_profile( x265_param_t *, const char *profile );
+int x265_param_apply_profile(x265_param_t *, const char *profile);
 
 /* x265_bit_depth:
  *      Specifies the number of bits per pixel that x265 uses. This is also the
@@ -257,7 +260,7 @@ extern const int x265_bit_depth;
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */
-x265_t *x265_encoder_open( x265_param_t * );
+x265_t *x265_encoder_open(x265_param_t *);
 
 /* x265_encoder_encode:
  *      encode one picture.
@@ -268,7 +271,7 @@ int     x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x
 
 /* x265_encoder_close:
  *      close an encoder handler */
-void    x265_encoder_close( x265_t * );
+void    x265_encoder_close(x265_t *);
 
 /***
  * Release library static allocations
@@ -276,7 +279,7 @@ void    x265_encoder_close( x265_t * );
 void x265_cleanup(void);
 
 #if __cplusplus
-};
+}
 #endif
 
 #endif // _X265_H_

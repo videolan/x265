@@ -48,6 +48,53 @@
 //! \ingroup TLibCommon
 //! \{
 
+/// distortion function index
+enum DFunc
+{
+    DF_DEFAULT  = 0,
+    DF_SSE      = 1,    ///< general size SSE
+    DF_SSE4     = 2,    ///<   4xM SSE
+    DF_SSE8     = 3,    ///<   8xM SSE
+    DF_SSE16    = 4,    ///<  16xM SSE
+    DF_SSE32    = 5,    ///<  32xM SSE
+    DF_SSE64    = 6,    ///<  64xM SSE
+    DF_SSE16N   = 7,    ///< 16NxM SSE
+
+    DF_SAD      = 8,    ///< general size SAD
+    DF_SAD4     = 9,    ///<   4xM SAD
+    DF_SAD8     = 10,   ///<   8xM SAD
+    DF_SAD16    = 11,   ///<  16xM SAD
+    DF_SAD32    = 12,   ///<  32xM SAD
+    DF_SAD64    = 13,   ///<  64xM SAD
+    DF_SAD16N   = 14,   ///< 16NxM SAD
+
+    DF_SADS     = 15,   ///< general size SAD with step
+    DF_SADS4    = 16,   ///<   4xM SAD with step
+    DF_SADS8    = 17,   ///<   8xM SAD with step
+    DF_SADS16   = 18,   ///<  16xM SAD with step
+    DF_SADS32   = 19,   ///<  32xM SAD with step
+    DF_SADS64   = 20,   ///<  64xM SAD with step
+    DF_SADS16N  = 21,   ///< 16NxM SAD with step
+
+    DF_HADS     = 22,   ///< general size Hadamard with step
+    DF_HADS4    = 23,   ///<   4xM HAD with step
+    DF_HADS8    = 24,   ///<   8xM HAD with step
+    DF_HADS16   = 25,   ///<  16xM HAD with step
+    DF_HADS32   = 26,   ///<  32xM HAD with step
+    DF_HADS64   = 27,   ///<  64xM HAD with step
+    DF_HADS16N  = 28,   ///< 16NxM HAD with step
+
+    DF_SAD12    = 43,
+    DF_SAD24    = 44,
+    DF_SAD48    = 45,
+
+    DF_SADS12   = 46,
+    DF_SADS24   = 47,
+    DF_SADS48   = 48,
+
+    DF_SSE_FRAME = 50   ///< Frame-based SSE
+};
+
 class DistParam;
 class TComPattern;
 

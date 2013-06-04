@@ -70,4 +70,4 @@ public: ~AccessUnit()
 
 //! \}
 
-#endif
+#endif // ifndef _ACCESS_UNIT_

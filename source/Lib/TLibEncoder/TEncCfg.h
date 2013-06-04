@@ -56,11 +56,7 @@ struct GOPEntry
     Int m_numRefPics;
     Int m_referencePics[MAX_NUM_REF_PICS];
     Int m_usedByCurrPic[MAX_NUM_REF_PICS];
-#if AUTO_INTER_RPS
     Int m_interRPSPrediction;
-#else
-    Bool m_interRPSPrediction;
-#endif
     Int m_deltaRPS;
     Int m_numRefIdc;
     Int m_refIdc[MAX_NUM_REF_PICS + 1];
@@ -97,6 +93,7 @@ std::istringstream &operator >>(std::istringstream &in, GOPEntry &entry);     //
 class TEncCfg
 {
 protected:
+
     Int       m_logLevel;
 
     //==== File I/O ========
@@ -342,10 +339,15 @@ public:
 
     //====== Motion search ========
     Void      setSearchMethod(Int i)     { m_iSearchMethod = i; }
+
     Void      setSearchRange(Int i)      { m_iSearchRange = i; }
-    Void      setBipredSearchRange(Int i){ m_bipredSearchRange = i; }
+
+    Void      setBipredSearchRange(Int i) { m_bipredSearchRange = i; }
+
     Void      setUseRectInter(Bool b)    { m_useRectInter = b; }
+
     Bool      getUseRectInter() const    { return m_useRectInter; }
+
     Void      setUseAMP(Bool b)          { m_useAMP = b; }
 
     //====== Quality control ========
@@ -417,7 +419,11 @@ public:
     Bool      getDeblockingFilterMetric()      { return m_DeblockingFilterMetric; }
 
     //==== Motion search ========
-    Int       getSearchRange()      { return m_iSearchRange; }
+    Int       getSearchMethod()      { return m_iSearchMethod; }
+
+    Int       getSearchRange()       { return m_iSearchRange; }
+
+    Int       getBipredSearchRange() { return m_bipredSearchRange; }
 
     //==== Quality control ========
     Int       getMaxCuDQPDepth()      { return m_iMaxCuDQPDepth; }

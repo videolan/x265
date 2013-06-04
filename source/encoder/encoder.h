@@ -35,6 +35,7 @@ namespace x265 {
 class Encoder : public TEncTop
 {
 protected:
+
     // profile/level
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
@@ -43,6 +44,7 @@ protected:
     bool InitializeGOP(x265_param_t *param);
 
 public:
+
     int       m_iGOPSize;                       ///< GOP size of hierarchical structure
     TComList<TComPicYuv *>  m_cListPicYuvRec;   ///< list of reconstructed YUV files
     TComList<TComPicYuv *>  m_cListRecQueue;
@@ -65,4 +67,4 @@ public:
     void configure(x265_param_t *param);
 };
 }
-#endif
+#endif // ifndef __ENCODER__

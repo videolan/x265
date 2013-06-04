@@ -53,7 +53,6 @@ const UChar m_aucIntraFilter[5] =
     10, //64x64
 };
 
-
 const short TComPrediction::m_lumaFilter[4][8] =
 {
     {  0, 0,   0, 64,  0,   0, 0,  0 },
@@ -136,10 +135,10 @@ Void TComPrediction::initTempBuff()
         m_iPredBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_piPredBuf = new Pel[m_iPredBufStride * m_iPredBufHeight];
 
-        refAbove = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refAboveFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refLeft = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refLeftFlt = (Pel *) xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refAbove = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refAboveFlt = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeft = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refLeftFlt = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
 
         // new structure
         m_acYuvPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
@@ -343,14 +342,14 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
 
     assert(ucFiltIdx <= 1);
 
-    refLft = refLeft+iWidth-1;
-    refAbv = refAbove +iWidth-1;
+    refLft = refLeft + iWidth - 1;
+    refAbv = refAbove + iWidth - 1;
 
     if (ucFiltIdx)
     {
         ptrSrc += ADI_BUF_STRIDE * (2 * iHeight + 1);
-        refLft = refLeftFlt +iWidth-1;
-        refAbv = refAboveFlt +iWidth-1;
+        refLft = refLeftFlt + iWidth - 1;
+        refAbv = refAboveFlt + iWidth - 1;
     }
 
     // get starting pixel in block
@@ -368,7 +367,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     }
     else
     {
-        primitives.getIPredAng(g_bitDepthY, (pixel *)pDst, uiStride, iWidth, uiDirMode, bFilter, (pixel *) refLft, (pixel *) refAbv);
+        primitives.getIPredAng(g_bitDepthY, (pixel*)pDst, uiStride, iWidth, uiDirMode, bFilter, (pixel*)refLft, (pixel*)refAbv);
     }
 }
 

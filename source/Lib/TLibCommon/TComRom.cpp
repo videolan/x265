@@ -272,7 +272,6 @@ const Short g_as_DST_MAT_4[4][4] =
 // ADI
 // ====================================================================================================================
 
-#if FAST_UDI_USE_MPM
 const UChar g_aucIntraModeNumFast[7] =
 {
     3, //   2x2
@@ -283,18 +282,6 @@ const UChar g_aucIntraModeNumFast[7] =
     3, //  64x64
     3 // 128x128
 };
-#else // FAST_UDI_USE_MPM
-const UChar g_aucIntraModeNumFast[7] =
-{
-    3, //   2x2
-    9, //   4x4
-    9, //   8x8
-    4, //  16x16   33
-    4, //  32x32   33
-    5, //  64x64   33
-    4 // 128x128  33
-};
-#endif // FAST_UDI_USE_MPM
 
 // chroma
 

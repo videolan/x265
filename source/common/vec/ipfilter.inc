@@ -24,7 +24,10 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
+#include "utils.h"
+
+namespace x265 {
+void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 {
     p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
     p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
@@ -36,4 +39,5 @@ void Setup_Vec_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
     p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
     p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+}
 }

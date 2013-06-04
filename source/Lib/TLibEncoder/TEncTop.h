@@ -75,37 +75,21 @@ private:
     UInt                    m_uiNumAllPicCoded;           ///< number of coded pictures
     TComList<TComPic*>      m_cListPic;                   ///< dynamic list of pictures
 
+    // Per-Slice
+    TEncSlice               m_cSliceEncoder;              ///< slice encoder
+
+    Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
+
+    // Per CTU row
+    TEncCu*                 m_pcCuEncoders;               ///< CU encoder
     // encoder search
     TEncSearch*             m_pcSearchs;                  ///< encoder search class
     TEncEntropy*            m_pcEntropyCoders;            ///< entropy encoder
     TEncCavlc*              m_pcCavlcCoder;               ///< CAVLC encoder
-
     // coding tool
     TComTrQuant*            m_pcTrQuants;                 ///< transform & quantization class
-    TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
-    TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
-    TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
-    TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
-    TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
     TEncSbac*               m_pcSbacCoders;               ///< SBAC encoders (to encode substreams )
     TEncBinCABAC*           m_pcBinCoderCABACs;           ///< bin coders CABAC (one per substream)
-
-    // processing unit
-    TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
-    TEncSlice               m_cSliceEncoder;              ///< slice encoder
-    TEncCu*                 m_pcCuEncoders;               ///< CU encoder
-
-    // SPS
-    TComSPS                 m_cSPS;                       ///< SPS
-    TComPPS                 m_cPPS;                       ///< PPS
-
-    // RD cost computation
-    TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
-    TComRdCost              m_cRdCost;                    ///< RD cost computation class
-//     TEncSbac                m_cRDGoOnSbacCoder;           ///< going on SBAC model for RD stage
-    TEncBinCABACCounter     m_cRDGoOnBinCoderCABAC;       ///< going on bin coder CABAC for RD stage
-
-    Int                     m_iNumSubstreams;             ///< # of top-level elements allocated.
     TComBitCounter*         m_pcBitCounters;              ///< bit counters for RD optimization per substream
     TComRdCost*             m_pcRdCosts;                  ///< RD cost computation class per substream
     TEncSbac****            m_ppppcRDSbacCoders;          ///< temporal storage for RD computation per substream
@@ -113,22 +97,39 @@ private:
     TEncBinCABACCounter**** m_ppppcBinCodersCABAC;        ///< temporal CABAC state storage for RD computation per substream
     TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;     ///< going on bin coder CABAC for RD stage per substream
 
+    TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
+    TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
+
+    // processing unit
+    TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
+
+    // SPS
+    TComSPS                 m_cSPS;                       ///< SPS
+    TComPPS                 m_cPPS;                       ///< PPS
+
+    /* TODO: How are these still used? */
+    TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
+    TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
+    TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
+
+    // RD cost computation
+    TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
+    TComRdCost              m_cRdCost;                    ///< RD cost computation class
+
     // quality control
     TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
 
     TComScalingList         m_scalingList;                ///< quantization matrix information
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
+
     x265::ThreadPool       *m_threadPool;
-    UInt                    m_uiNumSubstreams;
 
 protected:
 
     Void  xGetNewPicBuffer(TComPic*& rpcPic);             ///< get picture buffer which will be processed
     Void  xInitSPS();                                     ///< initialize SPS from encoder options
     Void  xInitPPS();                                     ///< initialize PPS from encoder options
-
-    Void  xInitPPSforTiles();
-    Void  xInitRPS();                                     ///< initialize PPS from encoder options
+    Void  xInitRPS();                                     ///< initialize RPS from encoder options
 
 public:
 
@@ -146,65 +147,63 @@ public:
     // member access functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    UInt                    getNumSubstreams() { return m_uiNumSubstreams; }
+    Int                     getNumSubstreams() { return m_iNumSubstreams; }
 
-    TComList<TComPic*>*     getListPic() { return &m_cListPic;             }
+    TComList<TComPic*>*     getListPic() { return &m_cListPic; }
 
-    TEncSearch*             getPredSearchs() { return m_pcSearchs;         }
+    TEncSearch*             getPredSearchs() { return m_pcSearchs; }
 
-    TComTrQuant*            getTrQuants() { return m_pcTrQuants;           }
+    TComTrQuant*            getTrQuants() { return m_pcTrQuants; }
 
-    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter;          }
+    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
 
-    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO;              }
+    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
 
-    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder;          }
+    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
 
-    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder;        }
+    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
 
-    TEncCu*                 getCuEncoders() { return m_pcCuEncoders;      }
+    TEncCu*                 getCuEncoders() { return m_pcCuEncoders; }
 
-    TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders;       }
+    TEncEntropy*            getEntropyCoders() { return m_pcEntropyCoders; }
 
-    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder;          }
+    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
 
-    TEncSbac*               getSbacCoder() { return &m_cSbacCoder;           }
+    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
 
-    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC;       }
+    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
 
-    TEncSbac*               getSbacCoders() { return m_pcSbacCoders;      }
+    TEncSbac*               getSbacCoders() { return m_pcSbacCoders; }
 
-    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs;      }
+    TEncBinCABAC*           getBinCABACs() { return m_pcBinCoderCABACs; }
 
-    TComBitCounter*         getBitCounter() { return &m_cBitCounter;          }
+    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
 
-    TComRdCost*             getRdCost() { return &m_cRdCost;              }
+    TComRdCost*             getRdCost() { return &m_cRdCost; }
 
-//     TEncSbac*               getRDGoOnSbacCoder() { return &m_cRDGoOnSbacCoder;     }
+    TComBitCounter*         getBitCounters() { return m_pcBitCounters; }
 
-    TComBitCounter*         getBitCounters() { return m_pcBitCounters;         }
+    TComRdCost*             getRdCosts() { return m_pcRdCosts; }
 
-    TComRdCost*             getRdCosts() { return m_pcRdCosts;             }
+    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders; }
 
-    TEncSbac****            getRDSbacCoders() { return m_ppppcRDSbacCoders;     }
+    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders; }
 
-    TEncSbac*               getRDGoOnSbacCoders() { return m_pcRDGoOnSbacCoders;   }
+    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
 
-    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl;             }
+    TComSPS*                getSPS() { return &m_cSPS; }
 
-    TComSPS*                getSPS() { return &m_cSPS;                 }
+    TComPPS*                getPPS() { return &m_cPPS; }
 
-    TComPPS*                getPPS() { return &m_cPPS;                 }
+    TComScalingList*        getScalingList() { return &m_scalingList; }
+
+    x265::ThreadPool*       getThreadPool() { return m_threadPool; }
+
+    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
-
-    TComScalingList*        getScalingList() { return &m_scalingList;         }
-
-    x265::ThreadPool*       getThreadPool() { return m_threadPool; }
-    
-    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function

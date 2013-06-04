@@ -241,7 +241,7 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     piFilterBuf[l++] = piAdiTemp[0];
 
     // above border from left to right
-    memcpy(&piFilterBuf[l], &piAdiTemp[1], uiCuWidth2*sizeof(*piFilterBuf));
+    memcpy(&piFilterBuf[l], &piAdiTemp[1], uiCuWidth2 * sizeof(*piFilterBuf));
 
     if (pcCU->getSlice()->getSPS()->getUseStrongIntraSmoothing())
     {
@@ -300,31 +300,31 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     }
 
     piFilteredBuf1[0] = piFilterBufN[l++];
-    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));    
+    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));
 }
 
 //Overloaded initialiation of ADI buffers to support buffered references for xpredIntraAngBufRef
 Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
 {
-    initAdiPattern(pcCU, uiZorderIdxInPart, uiPartDepth, piAdiBuf, iOrgBufStride,iOrgBufHeight,bAbove, bLeft);
-    UInt  uiCuWidth   = pcCU->getWidth(0) >> uiPartDepth;        
+    initAdiPattern(pcCU, uiZorderIdxInPart, uiPartDepth, piAdiBuf, iOrgBufStride, iOrgBufHeight, bAbove, bLeft);
+    UInt  uiCuWidth   = pcCU->getWidth(0) >> uiPartDepth;
     UInt  uiCuHeight  = pcCU->getHeight(0) >> uiPartDepth;
     UInt  uiCuWidth2  = uiCuWidth << 1;
     UInt  uiCuHeight2 = uiCuHeight << 1;
 
-    refAbove+=uiCuWidth-1;
-    refAboveFlt+=uiCuWidth-1;
-    refLeft+=uiCuWidth-1;
-    refLeftFlt+=uiCuWidth-1;
+    refAbove += uiCuWidth - 1;
+    refAboveFlt += uiCuWidth - 1;
+    refLeft += uiCuWidth - 1;
+    refLeftFlt += uiCuWidth - 1;
 
     //  ADI_BUF_STRIDE * (2 * height + 1);
-    memcpy(refAbove, piAdiBuf, (uiCuWidth2+1)*sizeof(Pel));
-    memcpy(refAboveFlt, piAdiBuf + ADI_BUF_STRIDE * (2 * uiCuHeight + 1), (uiCuWidth2+1)*sizeof(Pel));
+    memcpy(refAbove, piAdiBuf, (uiCuWidth2 + 1) * sizeof(Pel));
+    memcpy(refAboveFlt, piAdiBuf + ADI_BUF_STRIDE * (2 * uiCuHeight + 1), (uiCuWidth2 + 1) * sizeof(Pel));
 
     for (int k = 0; k < uiCuHeight2 + 1; k++)
     {
-        refLeft[k ] = piAdiBuf[k*ADI_BUF_STRIDE]; 
-        refLeftFlt[k] = (piAdiBuf+ADI_BUF_STRIDE*(uiCuHeight2+1))[k*ADI_BUF_STRIDE];   // Smoothened
+        refLeft[k] = piAdiBuf[k * ADI_BUF_STRIDE];
+        refLeftFlt[k] = (piAdiBuf + ADI_BUF_STRIDE * (uiCuHeight2 + 1))[k * ADI_BUF_STRIDE];   // Smoothened
     }
 }
 
@@ -425,7 +425,7 @@ Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAd
         // Fill top border with rec. samples
         // Fill top right border with rec. samples
         piRoiTemp = piRoiOrigin - iPicStride;
-        memcpy(&piAdiTemp[1], piRoiTemp, 2*uiCuWidth * sizeof(*piAdiTemp));
+        memcpy(&piAdiTemp[1], piRoiTemp, 2 * uiCuWidth * sizeof(*piAdiTemp));
     }
     else // reference samples are partially available
     {
