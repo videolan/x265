@@ -31,6 +31,7 @@ using namespace x265;
 Output* Output::Open(const char *fname, int width, int height, int bitdepth, int rate)
 {
     const char * s = strrchr(fname, '.');
+
     if (s && !strcmp(s, ".y4m"))
         return new Y4MOutput(fname, width, height, rate);
     else

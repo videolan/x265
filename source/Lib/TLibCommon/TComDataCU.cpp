@@ -502,31 +502,31 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 
     for (UInt ui = 0; ui < m_uiNumPartition; ui++)
     {
-            m_apiMVPIdx[0][ui] = -1;
-            m_apiMVPIdx[1][ui] = -1;
-            m_apiMVPNum[0][ui] = -1;
-            m_apiMVPNum[1][ui] = -1;
-            m_puhDepth[ui] = uiDepth;
-            m_puhWidth[ui] = uhWidth;
-            m_puhHeight[ui] = uhHeight;
-            m_puhTrIdx[ui] = 0;
-            m_puhTransformSkip[0][ui] = 0;
-            m_puhTransformSkip[1][ui] = 0;
-            m_puhTransformSkip[2][ui] = 0;
-            m_skipFlag[ui]   = false;
-            m_pePartSize[ui] = SIZE_NONE;
-            m_pePredMode[ui] = MODE_NONE;
-            m_CUTransquantBypass[ui] = false;
-            m_pbIPCMFlag[ui] = 0;
-            m_phQP[ui] = qp;
-            m_pbMergeFlag[ui] = 0;
-            m_puhMergeIndex[ui] = 0;
-            m_puhLumaIntraDir[ui] = DC_IDX;
-            m_puhChromaIntraDir[ui] = 0;
-            m_puhInterDir[ui] = 0;
-            m_puhCbf[0][ui] = 0;
-            m_puhCbf[1][ui] = 0;
-            m_puhCbf[2][ui] = 0;
+        m_apiMVPIdx[0][ui] = -1;
+        m_apiMVPIdx[1][ui] = -1;
+        m_apiMVPNum[0][ui] = -1;
+        m_apiMVPNum[1][ui] = -1;
+        m_puhDepth[ui] = uiDepth;
+        m_puhWidth[ui] = uhWidth;
+        m_puhHeight[ui] = uhHeight;
+        m_puhTrIdx[ui] = 0;
+        m_puhTransformSkip[0][ui] = 0;
+        m_puhTransformSkip[1][ui] = 0;
+        m_puhTransformSkip[2][ui] = 0;
+        m_skipFlag[ui]   = false;
+        m_pePartSize[ui] = SIZE_NONE;
+        m_pePredMode[ui] = MODE_NONE;
+        m_CUTransquantBypass[ui] = false;
+        m_pbIPCMFlag[ui] = 0;
+        m_phQP[ui] = qp;
+        m_pbMergeFlag[ui] = 0;
+        m_puhMergeIndex[ui] = 0;
+        m_puhLumaIntraDir[ui] = DC_IDX;
+        m_puhChromaIntraDir[ui] = 0;
+        m_puhInterDir[ui] = 0;
+        m_puhCbf[0][ui] = 0;
+        m_puhCbf[1][ui] = 0;
+        m_puhCbf[2][ui] = 0;
     }
 
     UInt uiTmp = uhWidth * uhHeight;
@@ -1694,7 +1694,7 @@ Void TComDataCU::setQPSubParts(Int qp, UInt uiAbsPartIdx, UInt uiDepth)
 
     for (UInt uiSCUIdx = uiAbsPartIdx; uiSCUIdx < uiAbsPartIdx + uiCurrPartNumb; uiSCUIdx++)
     {
-            m_phQP[uiSCUIdx] = qp;
+        m_phQP[uiSCUIdx] = qp;
     }
 }
 

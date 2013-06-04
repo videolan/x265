@@ -486,7 +486,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-    TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
     // initialize cost values
@@ -546,9 +546,8 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
         m_pcEntropyCoders[ui].setEntropyCoder(m_pcSbacCoder, pcSlice);
         m_pcEntropyCoders[ui].resetEntropy();
     }
-    // CHECK_ME: there seems WPP always start at every LCU line
-    //assert( iNumSubstreams == pcSlice->getPPS()->getNumSubstreams() );
 
+    // TODO: Is this really necessary?  We load contexts just below
     delete[] m_pcBufferSbacCoders;
     m_pcBufferSbacCoders     = new TEncSbac[iNumSubstreams];
 

@@ -30,7 +30,8 @@
 namespace x265 {
 //private x265 namespace
 
-typedef struct MD5Context {
+typedef struct MD5Context
+{
     uint32_t buf[4];
     uint32_t bits[2];
     unsigned char in[64];
@@ -73,7 +74,6 @@ private:
 
     MD5Context m_state;
 };
-
 }
 
 #endif /* __MD5_H__ */

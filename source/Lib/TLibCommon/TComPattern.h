@@ -144,14 +144,13 @@ public:
 
     /// set luma parameters from CU data for accessing ADI data
     Void  initAdiPattern(TComDataCU* pcCU,
-                         UInt uiZorderIdxInPart,
-                         UInt uiPartDepth,
-                         Pel* piAdiBuf,
-                         Int iOrgBufStride,
-                         Int iOrgBufHeight,
-                         Bool& bAbove,
-                         Bool& bLeft
-                         );
+                         UInt        uiZorderIdxInPart,
+                         UInt        uiPartDepth,
+                         Pel*        piAdiBuf,
+                         Int         iOrgBufStride,
+                         Int         iOrgBufHeight,
+                         Bool&       bAbove,
+                         Bool&       bLeft);
 
     /// set chroma parameters from CU data for accessing ADI data
     Void  initAdiPatternChroma(TComDataCU* pcCU,

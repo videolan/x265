@@ -101,14 +101,14 @@
 #define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)    SUBSYSTEM_NAME ## _cycle_count += __rdtsc() - start_time
 #define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)  extern DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
 #define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)  printf("Subsystem: %s\tTotal Cycles: %lld Ave Cycles: %lf Num Calls: %ld\n", #SUBSYSTEM_NAME, \
-    SUBSYSTEM_NAME##_cycle_count, (double)SUBSYSTEM_NAME##_cycle_count / SUBSYSTEM_NAME##_num_calls, SUBSYSTEM_NAME##_num_calls);
+                                                     SUBSYSTEM_NAME ## _cycle_count, (double)SUBSYSTEM_NAME ## _cycle_count / SUBSYSTEM_NAME ## _num_calls, SUBSYSTEM_NAME ## _num_calls);
 #else
 #define DECLARE_CYCLE_COUNTER(SUBSYSTEM_NAME)
 #define CYCLE_COUNTER_START(SUBSYSTEM_NAME)
 #define CYCLE_COUNTER_STOP(SUBSYSTEM_NAME)
 #define EXTERN_CYCLE_COUNTER(SUBSYSTEM_NAME)
 #define REPORT_CYCLE_COUNTER(SUBSYSTEM_NAME)
-#endif
+#endif // if ENABLE_CYCLE_COUNTERS
 
 /* defined in common.cpp */
 void x265_log(x265_param_t *param, int level, const char *fmt, ...);

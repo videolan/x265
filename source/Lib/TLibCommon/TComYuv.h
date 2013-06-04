@@ -134,10 +134,9 @@ public:
     Void    copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
     Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
     Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    
+
     Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId);
     Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId);
-    
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
