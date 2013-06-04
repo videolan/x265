@@ -143,8 +143,6 @@ void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
     this->ncols = pic->getFrameWidthInCU();
 
     // reset entropy coders
-    delete[] this->m_pcBufferSbacCoders;
-    this->m_pcBufferSbacCoders = new TEncSbac[this->nrows];
     this->m_pcSbacCoder->init(m_pcBinCABAC);
     for (int i = 0; i < this->nrows; i++)
     {
