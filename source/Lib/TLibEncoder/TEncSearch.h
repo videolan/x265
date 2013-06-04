@@ -137,12 +137,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    Void init(TEncCfg*     pcEncCfg,
-              Int          iSearchRange,
-              Int          bipredSearchRange,
-              Int          iSearchMethod,
-              TComRdCost*  pcRdCost,
-              TEncSbac*    pcRDGoOnSbacCoder);
+    Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost);
 
 protected:
 

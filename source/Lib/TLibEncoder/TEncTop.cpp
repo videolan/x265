@@ -265,7 +265,7 @@ Void TEncTop::init()
     // initialize encoder search class
     for(Int ui=0; ui<m_iNumSubstreams; ui++)
     {
-        m_pcSearchs[ui].init(this, m_iSearchRange, m_bipredSearchRange, m_iSearchMethod, &m_cRdCost, NULL/*getRDGoOnSbacCoder()*/);
+        m_pcSearchs[ui].init(this, &m_cRdCost);
     }
 
     m_iMaxRefPicNum = 0;

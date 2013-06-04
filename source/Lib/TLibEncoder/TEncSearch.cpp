@@ -169,32 +169,26 @@ TEncSearch::~TEncSearch()
     m_tmpYuvPred.destroy();
 }
 
-void TEncSearch::init(TEncCfg*     pcEncCfg,
-                      Int          iSearchRange,
-                      Int          bipredSearchRange,
-                      Int          iSearchMothod,
-                      TComRdCost*  pcRdCost,
-                      TEncSbac*    pcRDGoOnSbacCoder
-                      )
+Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost)
 {
     m_pcEncCfg             = pcEncCfg;
     m_pcTrQuant            = NULL;
-    m_iSearchRange         = iSearchRange;
-    m_bipredSearchRange    = bipredSearchRange;
-    m_iSearchMethod        = iSearchMothod;
+    m_iSearchRange         = pcEncCfg->getSearchRange();
+    m_bipredSearchRange    = pcEncCfg->getBipredSearchRange();
+    m_iSearchMethod        = pcEncCfg->getSearchMethod();
     m_pcEntropyCoder       = NULL;
     m_pcRdCost             = pcRdCost;
 
-    m_me.setSearchMethod(iSearchMothod);
+    m_me.setSearchMethod(m_iSearchMethod);
 
     m_pppcRDSbacCoder     = NULL;
-    m_pcRDGoOnSbacCoder   = pcRDGoOnSbacCoder;
+    m_pcRDGoOnSbacCoder   = NULL;
 
     for (Int iDir = 0; iDir < 2; iDir++)
     {
         for (Int iRefIdx = 0; iRefIdx < 33; iRefIdx++)
         {
-            m_aaiAdaptSR[iDir][iRefIdx] = iSearchRange;
+            m_aaiAdaptSR[iDir][iRefIdx] = m_iSearchRange;
         }
     }
 
