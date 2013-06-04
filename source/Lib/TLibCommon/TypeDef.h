@@ -61,8 +61,6 @@
 
 #define SBH_THRESHOLD                             4 ///< I0156: value of the fixed SBH controlling threshold
 
-#define SEQUENCE_LEVEL_LOSSLESS                   0 ///< H0530: used only for sequence or frame-level lossless coding
-
 #define DISABLING_CLIP_FOR_BIPREDME               1  ///< Ticket #175
 
 #define C1FLAG_NUMBER                             8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
