@@ -379,6 +379,38 @@ void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b,
         b += strideb;
     }
 }
+
+void CDECL convert16to32(short *psOrg, int *piDst, int num)
+{
+    for (int i = 0; i < num; i++)
+    {
+        piDst[i] = (int)psOrg[i];
+    }
+}
+
+void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
+{
+    for (int i = 0; i < num; i++)
+    {
+        piDst[i] = ((int)psOrg[i]) << shift;
+    }
+}
+
+void CDECL convert32to16(int *psOrg, short *piDst, int num)
+{
+    for (int i = 0; i < num; i++)
+    {
+        piDst[i] = (short)psOrg[i];
+    }
+}
+
+void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
+{
+    for (int i = 0; i < num; i++)
+    {
+        piDst[i] = (short)(psOrg[i] >> shift);
+    }
+}
 }  // end anonymous namespace
 
 namespace x265 {
@@ -752,13 +784,18 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sse[PARTITION_64x48] = sse<64, 48>;
     p.sse[PARTITION_64x64] = sse<64, 64>;
 
-    p.cpyblock = blockcopy_p_p;
+    p.cpyblock     = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;
     p.cpyblock_p_s = blockcopy_p_s;
     p.cpyblock_s_c = blockcopy_s_c;
 
+    p.cvt16to32     = convert16to32;
+    p.cvt16to32_shl = convert16to32_shl;
+    p.cvt32to16     = convert32to16;
+    p.cvt32to16_shr = convert32to16_shr;
+
     // sa8d
-    p.sa8d_8x8 = pixel_sa8d_8x8;
+    p.sa8d_8x8   = pixel_sa8d_8x8;
     p.sa8d_16x16 = pixel_sa8d_16x16;
     p.sa8d_32x32 = pixel_sa8d_32x32;
     p.sa8d_64x64 = pixel_sa8d_64x64;
