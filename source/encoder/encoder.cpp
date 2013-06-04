@@ -45,7 +45,15 @@ void Encoder::configure(x265_param_t *param)
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
 
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
-    x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads\n", getThreadPool()->GetThreadCount());
+
+    // Disable param->iWaveFrontSynchro if one thread was instantiated
+    if (getThreadPool()->GetThreadCount() == 1 && param->iWaveFrontSynchro)
+        param->iWaveFrontSynchro = 0;
+    setWaveFrontSynchro(param->iWaveFrontSynchro);
+    if (param->iWaveFrontSynchro)
+        x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads\n", getThreadPool()->GetThreadCount());
+    else
+        x265_log(param, X265_LOG_INFO, "Wavefront Parallel Processing disabled, single thread mode\n");
 
     setLogLevel(param->logLevel);
     setFrameRate(param->iFrameRate);
@@ -96,8 +104,6 @@ void Encoder::configure(x265_param_t *param)
     //====== Weighted Prediction ========
     setUseWP(param->useWeightedPred);
     setWPBiPred(param->useWeightedBiPred);
-
-    setWaveFrontSynchro(param->iWaveFrontSynchro);
 
     setTMVPModeId(param->TMVPModeId);
     setSignHideFlag(param->signHideFlag);
