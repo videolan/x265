@@ -93,11 +93,28 @@ public:
         }
     }
 
-    void setLambda(Double dLambdaLuma, Double dLambdaChroma)
+    void setLambda(double dLambdaLuma, double dLambdaChroma)
     {
         for (int i = 0; i < nrows; i++)
         {
+            rows[i].m_cRdCost.setLambda(dLambdaLuma);
             rows[i].m_cTrQuant.setLambda(dLambdaLuma, dLambdaChroma);
+        }
+    }
+
+    void setCbDistortionWeight(double weight)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cRdCost.setCbDistortionWeight(weight);
+        }
+    }
+
+    void setCrDistortionWeight(double weight)
+    {
+        for (int i = 0; i < nrows; i++)
+        {
+            rows[i].m_cRdCost.setCrDistortionWeight(weight);
         }
     }
 

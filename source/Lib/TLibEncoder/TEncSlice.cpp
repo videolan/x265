@@ -270,6 +270,7 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
         dLambda *= m_pcCfg->getLambdaModifier(m_pcCfg->getGOPEntry(iGOPid).m_temporalId);
     }
 
+    x265::EncodeFrame *frame = ((TEncTop*)m_pcCfg)->getFrameEncoder(0);
     // store lambda
     m_pcRdCost->setLambda(dLambda);
 
@@ -283,15 +284,17 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     m_pcRdCost->setCbDistortionWeight(weight);
+    frame->setCbDistortionWeight(weight);
 
     chromaQPOffset = rpcSlice->getPPS()->getChromaCrQpOffset() + rpcSlice->getSliceQpDeltaCr();
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     m_pcRdCost->setCrDistortionWeight(weight);
+    frame->setCrDistortionWeight(weight);
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    ((TEncTop*)m_pcCfg)->getFrameEncoder(0)->setLambda(dLambda, dLambda / weight);
+    frame->setLambda(dLambda, dLambda / weight);
 #else
     #error please fix me
     m_pcTrQuant->setLambda(dLambda);
