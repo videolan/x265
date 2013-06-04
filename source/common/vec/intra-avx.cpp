@@ -23,7 +23,7 @@
 
 /* this file instantiates AVX versions of the vectorized primitives */
 
-#if defined(_MSC_VER)
+#if 0 // defined(_MSC_VER)
 #define ALWAYSINLINE  __forceinline
 #endif
 
