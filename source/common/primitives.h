@@ -193,6 +193,7 @@ struct EncoderPrimitives
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
+    pixelcmp sse[NUM_PARTITIONS];   // SSE for each size
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;

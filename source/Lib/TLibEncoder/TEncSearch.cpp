@@ -184,6 +184,7 @@ void TEncSearch::init(TEncCfg*     pcEncCfg,
     m_iSearchMethod        = iSearchMothod;
     m_pcEntropyCoder       = NULL;
     m_pcRdCost             = pcRdCost;
+    m_pcRdCost->m_searchMethod = iSearchMothod;
 
     m_me.setSearchMethod(iSearchMothod);
 
@@ -341,8 +342,9 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     {
         m_cDistParam.DistFunc = m_afpDistortFunc[45];
     }
-    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
 
+    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+    
     //UInt mvcost_hm = m_pcRdCost->getCost(iSearchX, iSearchY);
     UInt mvcost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
     uiSad += mvcost;
@@ -720,7 +722,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
     UInt  uiDist;
     UInt  uiDistBest  = MAX_UINT;
     UInt  uiDirecBest = 0;
-
     Pel*  piRefPos;
     Int iRefStride = refPic->getStride();
 
@@ -2988,7 +2989,6 @@ Void TEncSearch::IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPr
 Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, UInt& ruiErr, Bool bHadamard)
 {
     motionCompensation(pcCU, &m_tmpYuvPred, REF_PIC_LIST_X, iPartIdx);
-
     UInt uiAbsPartIdx = 0;
     Int iWidth = 0;
     Int iHeight = 0;
@@ -3247,7 +3247,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
                             /* correct the bit-rate part of the current ref */
                             m_pcRdCost->setPredictor(cMvPred[iRefList][iRefIdxTemp]);
-                            uiBitsTemp += m_pcRdCost->getBits(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer());
+                            uiBitsTemp += m_bc.mvcost(x265::MV(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer()));
 
                             /* calculate the correct cost */
                             uiCostTemp += m_pcRdCost->getCost(uiBitsTemp);
@@ -3944,7 +3944,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     rcMv += (cMvHalf <<= 1);
     rcMv +=  cMvQter;
 
-    UInt uiMvBits = m_pcRdCost->getBits(rcMv.getHor(), rcMv.getVer());
+    UInt uiMvBits = m_bc.mvcost(x265::MV(rcMv.getHor(), rcMv.getVer()));
 
     ruiBits      += uiMvBits;
     ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));

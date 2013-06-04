@@ -140,6 +140,7 @@ public:
     Int                     m_iCostScale;
     Double                  m_dLambda;
     UInt                    m_uiLambdaMotionSAD;
+    UInt                    m_searchMethod;
 
     TComRdCost();
     virtual ~TComRdCost();

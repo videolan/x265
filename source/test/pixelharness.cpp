@@ -244,6 +244,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
+        if (opt.sse[curpar])
+        {
+            if (!check_pixel_primitive(ref.sse[curpar], opt.sse[curpar]))
+            {
+                printf("sse[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
         if (opt.sad_x3[curpar])
         {
             if (!check_pixel_primitive_x3(ref.sad_x3[curpar], opt.sad_x3[curpar]))
@@ -354,6 +363,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("   sad[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(opt.sad[curpar], ref.sad[curpar], pbuf1, STRIDE, fref, STRIDE);
+        }
+
+        if (opt.sse[curpar])
+        {
+            printf("   sse[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sse[curpar], ref.sse[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
         if (opt.sad_x3[curpar])
