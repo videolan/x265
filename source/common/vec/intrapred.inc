@@ -2717,6 +2717,887 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         }
     }
 }
+#undef PREDANG_CALCROW_VER
+#undef PREDANG_CALCROW_HOR
+#undef LOADROW
+#undef CALCROW
+#undef BLND2_16
+#undef BLND2_2
+#undef BLND2_4
+#undef MB16
+#undef MB8
+#undef MB4
+#endif /* if HIGH_BIT_DEPTH */
+
+#if HIGH_BIT_DEPTH
+#else
+#define PREDANG_CALCROW_VER(X) { \
+        v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1; \
+        LOADROW(row11L, row11H, GETAP(lookIdx, X)); \
+        LOADROW(row12L, row12H, GETAP(lookIdx, X) + 1); \
+        CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
+        compress(row11L, row11H).store(pDst + ((X)*dstStride)); \
+        LOADROW(row11L, row11H, GETAP(lookIdx, X) + 16); \
+        LOADROW(row12L, row12H, GETAP(lookIdx, X) + 17); \
+        CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
+        compress(row11L, row11H).store(pDst + ((X)*dstStride)+16); \
+}
+
+#define PREDANG_CALCROW_VER_MODE2(X) { \
+        v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1; \
+        CALCROW(res1, res2, row11, row12, row21, row22); \
+        compress(res1, res2).store(pDst + ((X)*dstStride)); \
+        CALCROW(res1, res2, row13, row14, row23, row24); \
+        compress(res1, res2).store(pDst + ((X)*dstStride) + 16); \
+    }
+
+#define PREDANG_CALCROW_HOR(X, rowx) { \
+        LOADROW(row11L, row11H, GETAP(lookIdx, (X))); \
+        LOADROW(row12L, row12H, GETAP(lookIdx, (X)) + 1); \
+        v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1; \
+        CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
+        rowx = compress(row11L, row11H); \
+}
+
+// ROWL/H is a Vec8s variable, X is the index in of data to be loaded
+#define LOADROW(ROWL, ROWH, X) { \
+        tmp.load(refMain + 1 + (X)); \
+        ROWL = extend_low(tmp); \
+        ROWH = extend_high(tmp); \
+}
+
+#define CALCROW(RESL, RESH, ROW1L, ROW1H, ROW2L, ROW2H) { \
+        RESL = ((thirty2 - v_deltaFract) * ROW1L + (v_deltaFract * ROW2L) + 16) >> 5; \
+        RESH = ((thirty2 - v_deltaFract) * ROW1H + (v_deltaFract * ROW2H) + 16) >> 5; \
+}
+
+#define  BLND2_16(R1, R2) { \
+        tmp1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(R1, R2); \
+        tmp2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(R1, R2); \
+        R1 = tmp1; \
+        R2 = tmp2; \
+}
+
+#define MB4(R1, R2, R3, R4) { \
+        BLND2_16(R1, R2) \
+        BLND2_16(R3, R4) \
+        tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>((Vec8s)R1, (Vec8s)R3); \
+        tmp2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>((Vec8s)R1, (Vec8s)R3); \
+        R1 = tmp1; \
+        R3 = tmp2; \
+        tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>((Vec8s)R2, (Vec8s)R4); \
+        tmp2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>((Vec8s)R2, (Vec8s)R4); \
+        R2 = tmp1; \
+        R4 = tmp2; \
+}
+
+#define BLND2_4(R1, R2) { \
+        tmp1 = blend4i<0, 4, 1, 5>((Vec4i)R1, (Vec4i)R2); \
+        tmp2 = blend4i<2, 6, 3, 7>((Vec4i)R1, (Vec4i)R2); \
+        R1 = tmp1; \
+        R2 = tmp2; \
+}
+
+#define BLND2_2(R1, R2) { \
+        tmp1 = blend2q<0, 2>((Vec2q)R1, (Vec2q)R2); \
+        tmp2 = blend2q<1, 3>((Vec2q)R1, (Vec2q)R2); \
+        tmp1.store(pDst);   pDst += dstStride; \
+        tmp2.store(pDst);   pDst += dstStride; \
+}
+
+#define MB8(R1, R2, R3, R4, R5, R6, R7, R8) { \
+        MB4(R1, R2, R3, R4) \
+        MB4(R5, R6, R7, R8) \
+        BLND2_4(R1, R5); \
+        BLND2_4(R2, R6); \
+        BLND2_4(R3, R7); \
+        BLND2_4(R4, R8); \
+}
+
+#define CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, X) { \
+        PREDANG_CALCROW_HOR(0 + X, R1) \
+        PREDANG_CALCROW_HOR(1 + X, R2) \
+        PREDANG_CALCROW_HOR(2 + X, R3) \
+        PREDANG_CALCROW_HOR(3 + X, R4) \
+        PREDANG_CALCROW_HOR(4 + X, R5) \
+        PREDANG_CALCROW_HOR(5 + X, R6) \
+        PREDANG_CALCROW_HOR(6 + X, R7) \
+}
+
+#define MB16 { \
+        CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0) \
+        PREDANG_CALCROW_HOR(7 + 0, R8) \
+        MB8(R1, R2, R3, R4, R5, R6, R7, R8) \
+        CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 8) \
+        PREDANG_CALCROW_HOR(7 + 8, R16) \
+        MB8(R9, R10, R11, R12, R13, R14, R15, R16) \
+        BLND2_2(R1, R9) \
+        BLND2_2(R5, R13) \
+        BLND2_2(R3, R11) \
+        BLND2_2(R7, R15) \
+        BLND2_2(R2, R10) \
+        BLND2_2(R6, R14) \
+        BLND2_2(R4, R12) \
+        BLND2_2(R8, R16) \
+}
+
+#define MB16RESCUE { \
+        CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 16) \
+        PREDANG_CALCROW_HOR(7 + 16, R8) \
+        MB8(R1, R2, R3, R4, R5, R6, R7, R8) \
+        CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 24) \
+        R16.load(refMain + 1 + GETAP(lookIdx, 31));\
+        MB8(R9, R10, R11, R12, R13, R14, R15, R16) \
+        BLND2_2(R1, R9) \
+        BLND2_2(R5, R13) \
+        BLND2_2(R3, R11) \
+        BLND2_2(R7, R15) \
+        BLND2_2(R2, R10) \
+        BLND2_2(R6, R14) \
+        BLND2_2(R4, R12) \
+        BLND2_2(R8, R16) \
+}
+
+
+#define BROADSTORE(X) { \
+            tmp1 = permute16uc<X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X>(v_temp);\
+            tmp1.store(pDst + (X * dstStride)); /*rowX*/\
+            tmp1.store(pDst + (X * dstStride) + 16); \
+    }
+
+#define BROADSTORE16ROWS { \
+           BROADSTORE(0)\
+           BROADSTORE(1)\
+           BROADSTORE(2)\
+           BROADSTORE(3)\
+           BROADSTORE(4)\
+           BROADSTORE(5)\
+           BROADSTORE(6)\
+           BROADSTORE(7)\
+           BROADSTORE(8)\
+           BROADSTORE(9)\
+           BROADSTORE(10)\
+           BROADSTORE(11)\
+           BROADSTORE(12)\
+           BROADSTORE(13)\
+           BROADSTORE(14)\
+           BROADSTORE(15)\
+}
+
+void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+{
+    int k;
+    int blkSize        = width;
+
+    // Map the mode index to main prediction direction and angle
+    assert(dirMode > 1); //no planar and dc
+    bool modeHor       = (dirMode < 18);
+    bool modeVer       = !modeHor;
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
+    int lookIdx = intraPredAngle;
+    int absAng         = abs(intraPredAngle);
+    int signAng        = intraPredAngle < 0 ? -1 : 1;
+
+    // Set bitshifts and scale the angle parameter to block size
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
+    int invAngle       = invAngTable[absAng];
+    absAng             = angTable[absAng];
+    intraPredAngle     = signAng * absAng;
+
+    // Do angular predictions
+
+    pixel* refMain;
+    pixel* refSide;
+
+    // Initialise the Main and Left reference array.
+    if (intraPredAngle < 0)
+    {
+        refMain = (modeVer ? refAbove : refLeft);     // + (blkSize - 1);
+        refSide = (modeVer ? refLeft : refAbove);     // + (blkSize - 1);
+
+        // Extend the Main reference to the left.
+        int invAngleSum    = 128;     // rounding for (shift by 8)
+        if (intraPredAngle != -32)
+            for (k = -1; k > blkSize * intraPredAngle >> 5; k--)
+            {
+                invAngleSum += invAngle;
+                refMain[k] = refSide[invAngleSum >> 8];
+            }
+    }
+    else
+    {
+        refMain = modeVer ? refAbove : refLeft;
+        refSide = modeVer ? refLeft  : refAbove;
+    }
+
+    // bfilter will always be true for blocksize 8
+    if (intraPredAngle == 0)  // Exactly hotizontal/vertical angles
+    {
+        if (modeHor)
+        {
+            Vec16uc v_temp, tmp1;         
+
+            v_temp.load(refMain + 1);
+            BROADSTORE16ROWS;
+            pDst+=16*dstStride;
+            v_temp.load(refMain + 1 + 16);
+            BROADSTORE16ROWS;
+            
+        }
+        else
+        {
+            Vec16uc v_main;
+            v_main.load(refMain + 1);
+            v_main.store(pDst);
+            v_main.store(pDst + dstStride);
+            v_main.store(pDst + (2 * dstStride));
+            v_main.store(pDst + (3 * dstStride));
+            v_main.store(pDst + (4 * dstStride));
+            v_main.store(pDst + (5 * dstStride));
+            v_main.store(pDst + (6 * dstStride));
+            v_main.store(pDst + (7 * dstStride));
+            v_main.store(pDst + (8 * dstStride));
+            v_main.store(pDst + (9 * dstStride));
+            v_main.store(pDst + (10 * dstStride));
+            v_main.store(pDst + (11 * dstStride));
+            v_main.store(pDst + (12 * dstStride));
+            v_main.store(pDst + (13 * dstStride));
+            v_main.store(pDst + (14 * dstStride));
+            v_main.store(pDst + (15 * dstStride));
+            v_main.store(pDst + (16 * dstStride));
+            v_main.store(pDst + (17 * dstStride));
+            v_main.store(pDst + (18 * dstStride));
+            v_main.store(pDst + (19 * dstStride));
+            v_main.store(pDst + (20 * dstStride));
+            v_main.store(pDst + (21 * dstStride));
+            v_main.store(pDst + (22 * dstStride));
+            v_main.store(pDst + (23 * dstStride));
+            v_main.store(pDst + (24 * dstStride));
+            v_main.store(pDst + (25 * dstStride));
+            v_main.store(pDst + (26 * dstStride));
+            v_main.store(pDst + (27 * dstStride));
+            v_main.store(pDst + (28 * dstStride));
+            v_main.store(pDst + (29 * dstStride));
+            v_main.store(pDst + (30 * dstStride));
+            v_main.store(pDst + (31 * dstStride));
+
+            v_main.load(refMain + 17);
+            pDst+=16;
+            v_main.store(pDst);
+            v_main.store(pDst + dstStride);
+            v_main.store(pDst + (2 * dstStride));
+            v_main.store(pDst + (3 * dstStride));
+            v_main.store(pDst + (4 * dstStride));
+            v_main.store(pDst + (5 * dstStride));
+            v_main.store(pDst + (6 * dstStride));
+            v_main.store(pDst + (7 * dstStride));
+            v_main.store(pDst + (8 * dstStride));
+            v_main.store(pDst + (9 * dstStride));
+            v_main.store(pDst + (10 * dstStride));
+            v_main.store(pDst + (11 * dstStride));
+            v_main.store(pDst + (12 * dstStride));
+            v_main.store(pDst + (13 * dstStride));
+            v_main.store(pDst + (14 * dstStride));
+            v_main.store(pDst + (15 * dstStride));
+            v_main.store(pDst + (16 * dstStride));
+            v_main.store(pDst + (17 * dstStride));
+            v_main.store(pDst + (18 * dstStride));
+            v_main.store(pDst + (19 * dstStride));
+            v_main.store(pDst + (20 * dstStride));
+            v_main.store(pDst + (21 * dstStride));
+            v_main.store(pDst + (22 * dstStride));
+            v_main.store(pDst + (23 * dstStride));
+            v_main.store(pDst + (24 * dstStride));
+            v_main.store(pDst + (25 * dstStride));
+            v_main.store(pDst + (26 * dstStride));
+            v_main.store(pDst + (27 * dstStride));
+            v_main.store(pDst + (28 * dstStride));
+            v_main.store(pDst + (29 * dstStride));
+            v_main.store(pDst + (30 * dstStride));
+            v_main.store(pDst + (31 * dstStride));
+
+
+        }
+    }
+    else if (intraPredAngle == -32)
+    {
+        Vec16uc v_refSide;
+        pixel refMain0 = refMain[0];
+
+        v_refSide.load(refSide);
+        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
+        v_refSide.store(refMain - 15);
+
+        v_refSide.load(refSide+16);
+        v_refSide = permute16uc<15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0>(v_refSide);
+        v_refSide.store(refMain - 31);
+
+        refMain[0] = refMain0;
+
+        Vec16uc tmp;
+        tmp.load(refMain);        //-1,0,1,2
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+        
+
+        tmp.load(--refMain);     //-2,-1,0,1
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);     //-8
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst + (16*dstStride) + 16);
+        tmp.load(refMain+16);
+        tmp.store(pDst+16);
+
+
+
+        tmp.load(--refMain);        //-1,0,1,2
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);     //-2,-1,0,1
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);     //-8
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(--refMain);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+
+        return;
+    }
+    else if (intraPredAngle == 32)
+    {
+        Vec8s tmp;
+        refMain+=2;
+
+        tmp.load(refMain++);
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+
+
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        tmp.load(refMain++);
+        pDst += dstStride;
+        tmp.store(pDst);
+        tmp.store(pDst - (16*dstStride)+16);
+        tmp.load(refMain+15);
+        tmp.store(pDst + 16);
+
+        return;
+    }
+    else
+    {
+        if (modeHor)
+        {
+            Vec8s row11L, row12L, row11H, row12H;
+            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
+            Vec16uc tmp;
+            Vec16uc R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
+            Vec16uc tmp1, tmp2;
+            Pel * original_pDst = pDst;
+            v_deltaPos = 0;
+            v_ipAngle = intraPredAngle;
+            MB16;
+            pDst = original_pDst + 16;
+            MB16RESCUE;
+            
+            pDst = original_pDst + (16*dstStride);
+            refMain += 16;
+            v_deltaPos = 0;
+            v_ipAngle = intraPredAngle;
+            MB16;
+            pDst = original_pDst + (16*dstStride) + 16;
+            MB16RESCUE;
+
+
+
+        }
+        else
+        {
+            Vec8s row11L, row12L, row11H, row12H;
+            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
+            Vec8s row11, row12, row13, row14, row21, row22, row23, row24;
+            Vec16uc tmp;
+            Vec8s tmp1, tmp2, res1, res2;
+            v_deltaPos = 0;
+            v_ipAngle = intraPredAngle;
+
+            switch(intraPredAngle)
+            {
+            case -2:
+            LOADROW(row11,row12, -1)
+            LOADROW(row21,row22,  0)
+            LOADROW(row13,row14, 15)
+            LOADROW(row23,row24, 16)
+            PREDANG_CALCROW_VER_MODE2(0);
+            PREDANG_CALCROW_VER_MODE2(1);
+            PREDANG_CALCROW_VER_MODE2(2);
+            PREDANG_CALCROW_VER_MODE2(3);
+            PREDANG_CALCROW_VER_MODE2(4);
+            PREDANG_CALCROW_VER_MODE2(5);
+            PREDANG_CALCROW_VER_MODE2(6);
+            PREDANG_CALCROW_VER_MODE2(7);
+            PREDANG_CALCROW_VER_MODE2(8);
+            PREDANG_CALCROW_VER_MODE2(9);
+            PREDANG_CALCROW_VER_MODE2(10);
+            PREDANG_CALCROW_VER_MODE2(11);
+            PREDANG_CALCROW_VER_MODE2(12);
+            PREDANG_CALCROW_VER_MODE2(13);
+            PREDANG_CALCROW_VER_MODE2(14);
+
+            //deltaFract == 0 for 16th row
+            v_deltaPos += v_ipAngle; 
+            v_deltaFract = v_deltaPos & thirty1;
+            compress(row11,row12).store(pDst + (15*dstStride));
+            compress(row13,row14).store(pDst + (15*dstStride) + 16);
+
+            row21 = row11;
+            row22 = row12;
+            row23 = row13;
+            row24 = row14;
+            
+            LOADROW(row11, row12, -2)
+            LOADROW(row13, row14, 14)
+
+            PREDANG_CALCROW_VER_MODE2(16);
+            PREDANG_CALCROW_VER_MODE2(17);
+            PREDANG_CALCROW_VER_MODE2(18);
+            PREDANG_CALCROW_VER_MODE2(19);
+            PREDANG_CALCROW_VER_MODE2(20);
+            PREDANG_CALCROW_VER_MODE2(21);
+            PREDANG_CALCROW_VER_MODE2(22);
+            PREDANG_CALCROW_VER_MODE2(23);
+            PREDANG_CALCROW_VER_MODE2(24);
+            PREDANG_CALCROW_VER_MODE2(25);
+            PREDANG_CALCROW_VER_MODE2(26);
+            PREDANG_CALCROW_VER_MODE2(27);
+            PREDANG_CALCROW_VER_MODE2(28);
+            PREDANG_CALCROW_VER_MODE2(29);
+            PREDANG_CALCROW_VER_MODE2(30);
+
+            compress(row11,row12).store(pDst + (31*dstStride));
+            compress(row13,row14).store(pDst + (31*dstStride) + 16);
+
+            return;
+
+            case  2:
+
+            LOADROW(row11,row12, 0)
+            LOADROW(row21,row22, 1)
+            LOADROW(row13,row14, 16)
+            LOADROW(row23,row24, 17)
+            PREDANG_CALCROW_VER_MODE2(0);
+            PREDANG_CALCROW_VER_MODE2(1);
+            PREDANG_CALCROW_VER_MODE2(2);
+            PREDANG_CALCROW_VER_MODE2(3);
+            PREDANG_CALCROW_VER_MODE2(4);
+            PREDANG_CALCROW_VER_MODE2(5);
+            PREDANG_CALCROW_VER_MODE2(6);
+            PREDANG_CALCROW_VER_MODE2(7);
+            PREDANG_CALCROW_VER_MODE2(8);
+            PREDANG_CALCROW_VER_MODE2(9);
+            PREDANG_CALCROW_VER_MODE2(10);
+            PREDANG_CALCROW_VER_MODE2(11);
+            PREDANG_CALCROW_VER_MODE2(12);
+            PREDANG_CALCROW_VER_MODE2(13);
+            PREDANG_CALCROW_VER_MODE2(14);
+
+            //deltaFract == 0 for 16th row
+            v_deltaPos += v_ipAngle;
+            v_deltaFract = v_deltaPos & thirty1;
+            compress(row21,row22).store(pDst + (15*dstStride));
+            compress(row23,row24).store(pDst + (15*dstStride) + 16);
+
+            row11 = row21;
+            row12 = row22;
+            row13 = row23;
+            row14 = row24;
+            
+            LOADROW(row21, row22, 2)
+            LOADROW(row23, row24, 18)
+
+            PREDANG_CALCROW_VER_MODE2(16);
+            PREDANG_CALCROW_VER_MODE2(17);
+            PREDANG_CALCROW_VER_MODE2(18);
+            PREDANG_CALCROW_VER_MODE2(19);
+            PREDANG_CALCROW_VER_MODE2(20);
+            PREDANG_CALCROW_VER_MODE2(21);
+            PREDANG_CALCROW_VER_MODE2(22);
+            PREDANG_CALCROW_VER_MODE2(23);
+            PREDANG_CALCROW_VER_MODE2(24);
+            PREDANG_CALCROW_VER_MODE2(25);
+            PREDANG_CALCROW_VER_MODE2(26);
+            PREDANG_CALCROW_VER_MODE2(27);
+            PREDANG_CALCROW_VER_MODE2(28);
+            PREDANG_CALCROW_VER_MODE2(29);
+            PREDANG_CALCROW_VER_MODE2(30);
+
+            compress(row21,row22).store(pDst + (31*dstStride));
+            compress(row23,row24).store(pDst + (31*dstStride) + 16);
+
+            return;
+
+            }
+
+            PREDANG_CALCROW_VER(0);
+            PREDANG_CALCROW_VER(1);
+            PREDANG_CALCROW_VER(2);
+            PREDANG_CALCROW_VER(3);
+            PREDANG_CALCROW_VER(4);
+            PREDANG_CALCROW_VER(5);
+            PREDANG_CALCROW_VER(6);
+            PREDANG_CALCROW_VER(7);
+            PREDANG_CALCROW_VER(8);
+            PREDANG_CALCROW_VER(9);
+            PREDANG_CALCROW_VER(10);
+            PREDANG_CALCROW_VER(11);
+            PREDANG_CALCROW_VER(12);
+            PREDANG_CALCROW_VER(13);
+            PREDANG_CALCROW_VER(14);
+            PREDANG_CALCROW_VER(15);
+            PREDANG_CALCROW_VER(16);
+            PREDANG_CALCROW_VER(17);
+            PREDANG_CALCROW_VER(18);
+            PREDANG_CALCROW_VER(19);
+            PREDANG_CALCROW_VER(20);
+            PREDANG_CALCROW_VER(21);
+            PREDANG_CALCROW_VER(22);
+            PREDANG_CALCROW_VER(23);
+            PREDANG_CALCROW_VER(24);
+            PREDANG_CALCROW_VER(25);
+            PREDANG_CALCROW_VER(26);
+            PREDANG_CALCROW_VER(27);
+            PREDANG_CALCROW_VER(28);
+            PREDANG_CALCROW_VER(29);
+            PREDANG_CALCROW_VER(30);
+
+            tmp.load(refMain+GETAP(lookIdx, 31)+1);
+            tmp.store(pDst + 31 * dstStride);
+            tmp.load(refMain+GETAP(lookIdx, 31)+17);
+            tmp.store(pDst + 31 * dstStride + 16);
+
+        }
+    }
+}
 
 #endif /* if HIGH_BIT_DEPTH */
 
