@@ -96,7 +96,15 @@ EncodeFrame::EncodeFrame(ThreadPool* pool) : QueueFrame(pool)
 
 EncodeFrame::~EncodeFrame()
 {
+}
+
+void EncodeFrame::destroy()
+{
     this->Flush();
+    for (int i = 0; i < this->nrows; ++i)
+    {
+        this->rows[i].destroy();
+    }
     if (this->rows)
     {
         delete[] this->rows;
@@ -104,14 +112,6 @@ EncodeFrame::~EncodeFrame()
     if (this->m_pcBufferSbacCoders)
     {
         delete[] this->m_pcBufferSbacCoders;
-    }
-}
-
-void EncodeFrame::destroy()
-{
-    for (int i = 0; i < this->nrows; ++i)
-    {
-        this->rows[i].destroy();
     }
 }
 
