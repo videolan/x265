@@ -118,7 +118,6 @@ Void TEncSlice::init(TEncTop* pcEncTop)
     m_pcCfg             = pcEncTop;
     m_pcListPic         = pcEncTop->getListPic();
     m_pcGOPEncoder      = pcEncTop->getGOPEncoder();
-    m_pcRdCost          = pcEncTop->getRdCost();
 }
 
 /**
@@ -271,8 +270,6 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     }
 
     x265::EncodeFrame *frame = ((TEncTop*)m_pcCfg)->getFrameEncoder(0);
-    // store lambda
-    m_pcRdCost->setLambda(dLambda);
 
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
@@ -283,13 +280,11 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     chromaQPOffset = rpcSlice->getPPS()->getChromaCbQpOffset() + rpcSlice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCbDistortionWeight(weight);
     frame->setCbDistortionWeight(weight);
 
     chromaQPOffset = rpcSlice->getPPS()->getChromaCrQpOffset() + rpcSlice->getSliceQpDeltaCr();
     qpc = Clip3(0, 57, iQP + chromaQPOffset);
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCrDistortionWeight(weight);
     frame->setCrDistortionWeight(weight);
 
 #if RDOQ_CHROMA_LAMBDA
@@ -392,7 +387,8 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     // store lambda
     slice->setSliceQp(sliceQP);
     slice->setSliceQpBase(sliceQP);
-    m_pcRdCost->setLambda(lambda);
+    EncodeFrame *frame = ((TEncTop*)m_pcCfg)->getFrameEncoder(0);
+
     // for RDO
     // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
     Double weight;
@@ -402,16 +398,16 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     qpc = Clip3(0, 57, sliceQP + chromaQPOffset);
     weight = pow(2.0, (sliceQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCbDistortionWeight(weight);
+    frame->setCbDistortionWeight(weight);
 
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     qpc = Clip3(0, 57, sliceQP + chromaQPOffset);
     weight = pow(2.0, (sliceQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCrDistortionWeight(weight);
+    frame->setCrDistortionWeight(weight);
 
 #if RDOQ_CHROMA_LAMBDA
     // for RDOQ
-    ((TEncTop*)m_pcCfg)->getFrameEncoder(0)->setLambda(lambda, lambda / weight);
+    frame->setLambda(lambda, lambda / weight);
 #else
     #error please fix me
     m_pcTrQuant->setLambda(lambda);

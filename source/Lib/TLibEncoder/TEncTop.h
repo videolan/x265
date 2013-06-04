@@ -93,7 +93,6 @@ private:
 
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
-    TComRdCost              m_cRdCost;                    ///< RD cost computation class
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
 
     // quality control
@@ -149,8 +148,6 @@ public:
     TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
 
     TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
-
-    TComRdCost*             getRdCost() { return &m_cRdCost; }
 
     TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
 
