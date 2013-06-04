@@ -521,17 +521,18 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     UInt       uiStartCUAddr;
     UInt       uiBoundingCUAddr;
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
+
+    // choose entropy coder
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
     EncodeFrame *frame = pcEncTop->getFrameEncoder(0);
     TEncEntropy *pcEntropyCoder = frame->getEntropyEncoder(0);
+    TEncSbac *pcSbacCoder = frame->getSingletonSbac();
+    frame->resetEncoder();
+    frame->getCuEncoder(0)->setBitCounter(NULL);
+    pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
 
     uiStartCUAddr = 0;
     uiBoundingCUAddr = pcSlice->getSliceCurEndCUAddr();
-
-    // choose entropy coder
-    frame->m_pcSbacCoder->init((TEncBinIf*)frame->m_pcBinCABAC);
-    pcEntropyCoder->setEntropyCoder(frame->m_pcSbacCoder, pcSlice);
-    frame->getCuEncoder(0)->setBitCounter(NULL);
 
     // Appropriate substream bitstream is switched later.
     // for every CU
@@ -553,7 +554,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 
     for (Int iSubstrmIdx = 0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
     {
-        frame->getBufferSBac(iSubstrmIdx)->loadContexts(frame->m_pcSbacCoder); //init. state
+        frame->getBufferSBac(iSubstrmIdx)->loadContexts(pcSbacCoder); //init. state
         uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
     }
 
@@ -598,7 +599,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
                 frame->getSbacCoder(uiSubStrm)->loadContexts(frame->getBufferSBac(uiLin-1));
             }
         }
-        frame->m_pcSbacCoder->load(frame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
+        pcSbacCoder->load(frame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
 
         TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
         if (pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma()))
@@ -678,7 +679,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
-        frame->getSbacCoder(uiSubStrm)->load(frame->m_pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
+        frame->getSbacCoder(uiSubStrm)->load(pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
         //Store probabilities of second LCU in line into buffer
         if ((iNumSubstreams > 1) && (uiCol == 1) && bWaveFrontsynchro)

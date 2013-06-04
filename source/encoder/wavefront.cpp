@@ -42,7 +42,7 @@ void CTURow::create(TEncTop* top)
         m_cTrQuant.initSliceQpDelta();
     }
     m_cTrQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(), true,
-        top->getUseTransformSkipFast(), top->getUseAdaptQpSelect() );
+                    top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
 
     m_pppcRDSbacCoders = new TEncSbac**[g_uiMaxCUDepth + 1];
     m_pppcBinCodersCABAC = new TEncBinCABACCounter**[g_uiMaxCUDepth + 1];
@@ -88,47 +88,44 @@ void CTURow::destroy()
     m_cCuEncoder.destroy();
 }
 
-EncodeFrame::EncodeFrame(ThreadPool* pool) : QueueFrame(pool)
-{
-    m_pcBufferSbacCoders = NULL;
-}
-
-
-EncodeFrame::~EncodeFrame()
+EncodeFrame::EncodeFrame(ThreadPool* pool)
+    : QueueFrame(pool)
+    , m_rows(NULL)
+    , m_pcSbacCoder(NULL)
+    , m_pcBinCABAC(NULL)
+    , m_pcSlice(NULL)
+    , m_pic(NULL)
 {
 }
 
 void EncodeFrame::destroy()
 {
-    this->Flush();
-    for (int i = 0; i < this->nrows; ++i)
+    JobProvider::Flush();
+
+    if (m_rows)
     {
-        this->rows[i].destroy();
-    }
-    if (this->rows)
-    {
-        delete[] this->rows;
-    }
-    if (this->m_pcBufferSbacCoders)
-    {
-        delete[] this->m_pcBufferSbacCoders;
+        for (int i = 0; i < m_nrows; ++i)
+        {
+            m_rows[i].destroy();
+        }
+        delete[] m_rows;
     }
 }
 
 void EncodeFrame::create(TEncTop *top)
 {
-    this->nrows = top->getNumSubstreams();
-    this->enableWpp = top->getWaveFrontsynchro() ? true : false;
-    this->m_pcSbacCoder = top->getSbacCoder();
-    this->m_pcBinCABAC = top->getBinCABAC();
+    m_nrows = top->getNumSubstreams();
+    m_enableWpp = top->getWaveFrontsynchro() ? true : false;
+    m_pcSbacCoder = top->getSbacCoder();
+    m_pcBinCABAC = top->getBinCABAC();
 
-    this->rows = new CTURow[this->nrows];
-    for (int i = 0; i < this->nrows; ++i)
+    m_rows = new CTURow[m_nrows];
+    for (int i = 0; i < m_nrows; ++i)
     {
-        this->rows[i].create(top);
+        m_rows[i].create(top);
     }
 
-    if (!this->InitJobQueue(this->nrows))
+    if (!QueueFrame::InitJobQueue(m_nrows))
     {
         assert(!"Unable to initialize job queue.");
         throw;
@@ -138,41 +135,41 @@ void EncodeFrame::create(TEncTop *top)
 
 void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
 {
-    this->m_pic = pic;
-    this->m_pcSlice = pcSlice;
-    this->ncols = pic->getFrameWidthInCU();
+    m_pic = pic;
+    m_pcSlice = pcSlice;
 
     // reset entropy coders
-    this->m_pcSbacCoder->init(m_pcBinCABAC);
-    for (int i = 0; i < this->nrows; i++)
+    m_pcSbacCoder->init(m_pcBinCABAC);
+    for (int i = 0; i < this->m_nrows; i++)
     {
-        rows[i].init();
-        rows[i].m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, pcSlice);
-        rows[i].m_cEntropyCoder.resetEntropy();
-        this->m_pcBufferSbacCoders[i].loadContexts(m_pcSbacCoder);
-        rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(m_pcSbacCoder);
+        m_rows[i].init();
+        m_rows[i].m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, pcSlice);
+        m_rows[i].m_cEntropyCoder.resetEntropy();
+        m_rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(m_pcSbacCoder);
     }
 
-    this->Enqueue();
+    QueueFrame::Enqueue();
 
-    this->EnqueueRow(0);
-    this->complete.Wait();
+    // Enqueue first row, then block until worker threads complete the frame
+    QueueFrame::EnqueueRow(0);
+    m_completionEvent.Wait();
 
-    this->Dequeue();
+    QueueFrame::Dequeue();
 }
 
 
 void EncodeFrame::ProcessRow(int irow)
 {
-    const UInt uiWidthInLCUs  = m_pic->getPicSym()->getFrameWidthInCU();
-    const UInt uiCurLineCUAddr = irow * uiWidthInLCUs;
+    // Called by worker threads
+    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
+    const uint32_t lineStartCUAddr = irow * numCols;
 
-    CTURow& curRow = this->rows[irow];
-    CTURow& codeRow = this->rows[this->enableWpp ? irow : 0];
+    CTURow& curRow  = m_rows[irow];
+    CTURow& codeRow = m_rows[m_enableWpp ? irow : 0];
 
-    for(UInt uiCol = curRow.m_curCol; uiCol < uiWidthInLCUs; uiCol++)
+    for(UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
     {
-        const UInt uiCUAddr = uiCurLineCUAddr + uiCol;
+        const uint32_t uiCUAddr = lineStartCUAddr + uiCol;
         TComDataCU* pcCU = m_pic->getCU(uiCUAddr);
         pcCU->initCU(m_pic, uiCUAddr);
 
@@ -183,13 +180,13 @@ void EncodeFrame::ProcessRow(int irow)
         codeRow.m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.resetEntropy();
 
-        if (this->enableWpp && uiCol == 0 && irow > 0)
+        if (m_enableWpp && uiCol == 0 && irow > 0)
         {
             // Load SBAC coder context from previous row.
-            codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&this->m_pcBufferSbacCoders[irow-1]);
+            codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&m_rows[irow-1].m_cBufferSbacCoder);
         }
 
-        TEncSbac &pcGoOnSBacCoder = this->rows[(this->enableWpp && m_pool->GetThreadCount() > 1) ? irow : 0].m_cRDGoOnSbacCoder;
+        TEncSbac &pcGoOnSBacCoder = m_rows[(m_enableWpp && m_pool->GetThreadCount() > 1) ? irow : 0].m_cRDGoOnSbacCoder;
         codeRow.m_cEntropyCoder.setEntropyCoder(&pcGoOnSBacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.setBitstream(&codeRow.m_cBitCounter);
         ((TEncBinCABAC*)pcGoOnSBacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
@@ -209,10 +206,10 @@ void EncodeFrame::ProcessRow(int irow)
 
         pcRDSbacCoder->setBinCountingEnableFlag(false);
 
-        if (this->enableWpp && uiCol == 1)
+        if (m_enableWpp && uiCol == 1)
         {
             // Save CABAC state for next row
-            this->m_pcBufferSbacCoders[irow].loadContexts(codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]);
+            curRow.m_cBufferSbacCoder.loadContexts(codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]);
         }
 
         // FIXME: If needed, these counters may be added atomically to slice or this (needed for rate control?)
@@ -223,27 +220,28 @@ void EncodeFrame::ProcessRow(int irow)
         // Completed CU processing
         curRow.m_curCol++;
 
-        if (curRow.m_curCol >= 2 && irow < this->nrows - 1)
+        if (curRow.m_curCol >= 2 && irow < m_nrows - 1)
         {
-            ScopedLock below(this->rows[irow + 1].m_lock);
-            if (this->rows[irow + 1].m_active == false &&
-                this->rows[irow + 1].m_curCol + 2 <= curRow.m_curCol)
+            ScopedLock below(m_rows[irow + 1].m_lock);
+            if (m_rows[irow + 1].m_active == false &&
+                m_rows[irow + 1].m_curCol + 2 <= curRow.m_curCol)
             {
-                this->rows[irow + 1].m_active = true;
-                this->EnqueueRow(irow + 1);
+                m_rows[irow + 1].m_active = true;
+                QueueFrame::EnqueueRow(irow + 1);
             }
         }
 
         ScopedLock self(curRow.m_lock);
-        if (irow > 0 && curRow.m_curCol < this->ncols - 1 && this->rows[irow - 1].m_curCol < curRow.m_curCol + 2)
+        if (irow > 0 && curRow.m_curCol < numCols - 1 && m_rows[irow - 1].m_curCol < curRow.m_curCol + 2)
         {
             curRow.m_active = false;
             return;
         }
     }
 
-    if (irow == this->nrows - 1)
+    // this row of CTUs has been encoded
+    if (irow == m_nrows - 1)
     {
-        this->complete.Trigger();
+        m_completionEvent.Trigger();
     }
 }
