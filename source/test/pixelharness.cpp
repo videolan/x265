@@ -99,6 +99,7 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
 bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
 {
     int j = INCR;
+
     ALIGN_VAR_16(int, cres[16]);
     ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
@@ -118,6 +119,7 @@ bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
 bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
 {
     int j = INCR;
+
     ALIGN_VAR_16(int, cres[16]);
     ALIGN_VAR_16(int, vres[16]);
     for (int i = 0; i <= 100; i++)
@@ -136,8 +138,8 @@ bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
 
 bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64*64]);
-    ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -153,13 +155,14 @@ bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p o
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
+
     return true;
 }
 
 bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64*64]);
-    ALIGN_VAR_16(short, opt_dest[64*64]);
+    ALIGN_VAR_16(short, ref_dest[64 * 64]);
+    ALIGN_VAR_16(short, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -175,13 +178,14 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
+
     return true;
 }
 
 bool PixelHarness::check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s_c opt)
 {
-    ALIGN_VAR_16(short, ref_dest[64*64]);
-    ALIGN_VAR_16(short, opt_dest[64*64]);
+    ALIGN_VAR_16(short, ref_dest[64 * 64]);
+    ALIGN_VAR_16(short, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -197,13 +201,14 @@ bool PixelHarness::check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
+
     return true;
 }
 
 bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64*64]);
-    ALIGN_VAR_16(pixel, opt_dest[64*64]);
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
     int bx = 64;
     int by = 64;
     int j = 0;
@@ -219,6 +224,7 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
+
     return true;
 }
 
@@ -240,6 +246,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_pixel_primitive(ref.sad[curpar], opt.sad[curpar]))
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
+        if (opt.sse[curpar])
+        {
+            if (!check_pixel_primitive(ref.sse[curpar], opt.sse[curpar]))
+            {
+                printf("sse[%s]: failed!\n", FuncNames[curpar]);
                 return false;
             }
         }
@@ -354,6 +369,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("   sad[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(opt.sad[curpar], ref.sad[curpar], pbuf1, STRIDE, fref, STRIDE);
+        }
+
+        if (opt.sse[curpar])
+        {
+            printf("   sse[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sse[curpar], ref.sse[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
         if (opt.sad_x3[curpar])

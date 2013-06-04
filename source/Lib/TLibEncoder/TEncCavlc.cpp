@@ -554,8 +554,6 @@ Void TEncCavlc::codeVPS(TComVPS* pcVPS)
     WRITE_FLAG(0,                     "vps_extension_flag");
 
     //future extensions here..
-
-    return;
 }
 
 Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)

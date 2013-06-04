@@ -34,9 +34,9 @@ using namespace x265;
 
 namespace {
 #if HIGH_BIT_DEPTH
-    #include "ipfilter16.inc"
+#include "ipfilter16.inc"
 #else
-    #include "ipfilter8.inc"
+#include "ipfilter8.inc"
 #endif
 }
 

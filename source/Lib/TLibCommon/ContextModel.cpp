@@ -101,8 +101,6 @@ Void ContextModel::buildNextStateTable()
     }
 }
 
-
-
 const Int ContextModel::m_entropyBits[128] =
 {
     // Corrected table, most notably for last state

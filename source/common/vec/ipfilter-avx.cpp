@@ -36,9 +36,9 @@ namespace {
 // each of these headers implements a portion of the performance
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
 #if HIGH_BIT_DEPTH
-    #include "ipfilter16.inc"
+#include "ipfilter16.inc"
 #else
-    #include "ipfilter8.inc"
+#include "ipfilter8.inc"
 #endif
 }
 

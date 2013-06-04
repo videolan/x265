@@ -164,7 +164,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
     m_bIndependentTileBoundaryForNDBFilter  = (false);
 
     m_pbValidSlice = new Bool[1];
-        m_pbValidSlice[0] = true;
+    m_pbValidSlice[0] = true;
 
     m_pSliceSUMap = new Int[maxNumSUInLCU * numLCUInPic];
 

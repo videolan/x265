@@ -43,7 +43,7 @@ private:
     unsigned int height;
     unsigned int Cwidth;
     unsigned int Cheight;
-       
+
     static int getAddrOffset(unsigned int uiPartUnitIdx, unsigned int width)
     {
         int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
@@ -64,10 +64,10 @@ public:
 
     TShortYUV();
     virtual ~TShortYUV();
-    
+
     void create(unsigned int Width, unsigned int Height);
     void destroy();
-    void clear();    
+    void clear();
 
     short*    getLumaAddr()    { return YBuf; }
 
@@ -96,7 +96,7 @@ public:
     void    addClip(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
     void    addClipLuma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
     void    addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
-    
+
     void    copyPartToPartYuv(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
     void    copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
     void    copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
@@ -118,7 +118,6 @@ public:
     unsigned int    getStride()    { return width; }
 
     unsigned int    getCStride()    { return Cwidth; }
-
 };
 
 #endif //end __TSHORTYUV__
