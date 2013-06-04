@@ -33,9 +33,10 @@ void CTURow::create(TEncTop* top)
     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCodersCABAC);
     m_cSbacCoder.init(&m_cBinCoderCABAC);
     m_cSearch.init(top, &m_cRdCost);
+
     m_cCuEncoder.create((UChar) g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
     m_cCuEncoder.init(top);
-    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
+
     if (top->getUseAdaptiveQP())
     {
         m_cTrQuant.initSliceQpDelta();
@@ -58,6 +59,13 @@ void CTURow::create(TEncTop* top)
             m_pppcRDSbacCoders[iDepth][iCIIdx]->init(m_pppcBinCodersCABAC[iDepth][iCIIdx]);
         }
     }
+
+    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
+    m_cCuEncoder.set_pppcRDSbacCoder(m_pppcRDSbacCoders);
+    m_cCuEncoder.set_pcEntropyCoder(&m_cEntropyCoder);
+    m_cCuEncoder.set_pcPredSearch(&m_cSearch);
+    m_cCuEncoder.set_pcTrQuant(&m_cTrQuant);
+    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
 }
 
 void CTURow::destroy()
@@ -187,14 +195,7 @@ void EncodeFrame::ProcessRow(int irow)
         codeRow.m_cEntropyCoder.setEntropyCoder(&pcGoOnSBacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.setBitstream(&codeRow.m_cBitCounter);
         ((TEncBinCABAC*)pcGoOnSBacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
-
-        // TODO: these are probably redundant
-        codeRow.m_cCuEncoder.set_pppcRDSbacCoder(codeRow.m_pppcRDSbacCoders);
-        codeRow.m_cCuEncoder.set_pcEntropyCoder(&codeRow.m_cEntropyCoder);
-        codeRow.m_cCuEncoder.set_pcPredSearch(&codeRow.m_cSearch);
         codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&pcGoOnSBacCoder);
-        codeRow.m_cCuEncoder.set_pcTrQuant(&codeRow.m_cTrQuant);
-        codeRow.m_cCuEncoder.set_pcRdCost(&codeRow.m_cRdCost);
 
         codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
 
