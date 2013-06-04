@@ -361,13 +361,13 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         printf("filterConvertPeltoShort\t");
         REPORT_SPEEDUP(opt.ipfilterConvert_p_s, ref.ipfilterConvert_p_s,
-                       8, pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
+                8, pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
     if (opt.ipfilterConvert_s_p)
     {
         printf("filterConvertShorttoPel\t");
         REPORT_SPEEDUP(opt.ipfilterConvert_s_p, ref.ipfilterConvert_s_p,
-                       8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
+                8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
 }

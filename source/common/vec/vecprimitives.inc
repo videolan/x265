@@ -29,33 +29,45 @@
 #include <stdio.h>
 #include <assert.h>
 #include <smmintrin.h>
+#include "Lib/TLibCommon/TComPrediction.h"
 #include <algorithm>
-#include "utils.h"
 
 extern char g_aucConvertToBit[];
 
 using namespace x265;
 
 namespace {
+// each of these headers implements a portion of the performance
+// primitives and declares a Setup_Vec_FOOPrimitves() method.
+#if HIGH_BIT_DEPTH
+    #include "pixel16.inc"
+    #include "ipfilter16.inc"
+#else
+    #include "pixel8.inc"
+    #include "ipfilter8.inc"
+#endif
+#include "pixel.inc"
+#include "ipfilter.inc"
 #include "macroblock.inc"
 #include "blockcopy.inc"
+#include "intrapred.inc"
 }
+
+#define PASTER(name, val) name ## _ ## val
+#define EVALUATOR(x, y)   PASTER(x, y)
+#define NAME(func)        EVALUATOR(func, ARCH)
 
 namespace x265 {
 // private x265 namespace
-
-void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&);
 
 /* initialize function table with functions compiled for this vector
  * architecture.  This is the only symbol exported from each file. */
 void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
 {
-    NAME(Setup_Vec_PixelPrimitives)(p);
-    NAME(Setup_Vec_IPredPrimitives)(p);
-    NAME(Setup_Vec_IPFilterPrimitives)(p);
+    Setup_Vec_PixelPrimitives(p);
     Setup_Vec_MacroblockPrimitives(p);
+    Setup_Vec_IPFilterPrimitives(p);
     Setup_Vec_BlockCopyPrimitives(p);
+    Setup_Vec_IPredPrimitives(p);
 }
 }

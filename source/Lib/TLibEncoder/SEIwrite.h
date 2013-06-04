@@ -52,7 +52,6 @@ public:
     void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 
 protected:
-
     TComSPS *m_pSPS;
 
     Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
@@ -73,4 +72,4 @@ protected:
 
 //! \}
 
-#endif // ifndef _SEI_WRITE_
+#endif

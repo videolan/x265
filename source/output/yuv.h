@@ -47,7 +47,7 @@ protected:
 
 public:
 
-    YUVOutput(const char *filename, int width, int height, int bitdepth);
+    YUVOutput(const char *filename , int width, int height, int bitdepth);
 
     virtual ~YUVOutput();
 

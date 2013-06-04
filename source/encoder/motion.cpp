@@ -125,6 +125,7 @@ static const MV offsets[] =
     MV(1, 0), MV(0, 1),
 }; // offsets for Two Point Search
 
+
 /* sum of absolute differences between MV candidates */
 static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidates)
 {

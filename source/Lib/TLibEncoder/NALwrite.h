@@ -84,4 +84,4 @@ void copyNaluData(OutputNALUnit& naluDest, const OutputNALUnit& naluSrc);
 
 //! \}
 
-#endif // ifndef _NAL_WRITE_
+#endif

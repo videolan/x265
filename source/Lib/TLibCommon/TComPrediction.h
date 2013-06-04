@@ -58,7 +58,6 @@
 class TComPrediction : public TComWeightPrediction
 {
 protected:
-
     Pel*      m_piPredBuf;
     Int       m_iPredBufStride;
     Int       m_iPredBufHeight;
@@ -69,9 +68,9 @@ protected:
     TComYuv   m_acYuvPred[2];
     TComYuv   m_cYuvPredTemp;
     /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
-    TComYuv m_filteredBlock[4][4];
+    TComYuv m_filteredBlock[4][4]; 
     /*This holds intermediate values for filtering operations which need to maintain Short precision*/
-    TShortYUV filteredBlockTmp[4]; //This
+    TShortYUV filteredBlockTmp[4];//This 
 
     TComInterpolationFilter m_if;
 
@@ -89,6 +88,7 @@ protected:
 
     Bool xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr);
 
+    
 public:
 
     TComPrediction();
@@ -105,6 +105,7 @@ public:
     // Angular Intra
     Void predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
     Void predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft);
+
 
     Pel* getPredicBuf()             { return m_piPredBuf; }
 

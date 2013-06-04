@@ -244,6 +244,7 @@ Void TComYuv::copyPartToPartYuv(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth
     copyPartToPartChroma(pcYuvDst, uiPartIdx, iWidth >> 1, iHeight >> 1);
 }
 
+
 Void TComYuv::copyPartToPartLuma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
 {
     Pel* pSrc =           getLumaAddr(uiPartIdx);
@@ -272,6 +273,7 @@ Void TComYuv::copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidt
 
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDst, iDstStride, (pixel*)pSrc, iSrcStride);
 }
+
 
 Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight)
 {
@@ -307,6 +309,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstU, iDstStride, (pixel*)pSrcU, iSrcStride);
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
 }
+
 
 Void TComYuv::copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId)
 {
@@ -360,7 +363,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
     {
         Pel*    pSrcU =           getCbAddr(uiPartIdx);
         Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-
+        
         UInt   iSrcStride = getCStride();
         UInt   iDstStride = pcYuvDst->getCStride();
 
@@ -370,7 +373,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
     {
         Pel*  pSrcV =           getCrAddr(uiPartIdx);
         Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
-
+       
         UInt   iSrcStride = getCStride();
         UInt   iDstStride = pcYuvDst->getCStride();
 
@@ -390,6 +393,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
         x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
     }
 }
+
 
 Void TComYuv::addClip(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
@@ -419,7 +423,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitI
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDst[x] = ClipY(static_cast<Short>(pSrc0[x]) + static_cast<Short>(pSrc1[x]));
+            pDst[x] = ClipY(static_cast<Short> (pSrc0[x]) + static_cast<Short>(pSrc1[x]));
         }
 
         pSrc0 += iSrc0Stride;
@@ -444,7 +448,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUni
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDst[x] = ClipY(static_cast<Short>(pSrc0[x]) + pSrc1[x]);
+            pDst[x] = ClipY(static_cast<Short> (pSrc0[x]) + pSrc1[x]);
         }
 
         pSrc0 += iSrc0Stride;
@@ -452,6 +456,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUni
         pDst  += iDstStride;
     }
 }
+
 
 Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {
@@ -472,8 +477,8 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUni
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDstU[x] = ClipC(static_cast<Short>(pSrcU0[x]) + pSrcU1[x]);
-            pDstV[x] = ClipC(static_cast<Short>(pSrcV0[x]) + pSrcV1[x]);
+            pDstU[x] = ClipC(static_cast<Short> (pSrcU0[x]) + pSrcU1[x]);
+            pDstV[x] = ClipC(static_cast<Short> (pSrcV0[x]) + pSrcV1[x]);
         }
 
         pSrcU0 += iSrc0Stride;
@@ -504,8 +509,8 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrU
     {
         for (x = uiPartSize - 1; x >= 0; x--)
         {
-            pDstU[x] = ClipC(static_cast<Short>(pSrcU0[x]) + pSrcU1[x]);
-            pDstV[x] = ClipC(static_cast<Short>(pSrcV0[x]) + pSrcV1[x]);
+            pDstU[x] = ClipC(static_cast<Short> (pSrcU0[x]) + pSrcU1[x]);
+            pDstV[x] = ClipC(static_cast<Short> (pSrcV0[x]) + pSrcV1[x]);
         }
 
         pSrcU0 += iSrc0Stride;
@@ -516,6 +521,7 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrU
         pDstV  += iDstStride;
     }
 }
+
 
 Void TComYuv::subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize)
 {

@@ -54,15 +54,13 @@ public:
 #ifdef _MSC_VER
 #include <intrin.h>
 #elif defined(__GNUC__)
-static inline uint32_t __rdtsc(void)
-{
+static inline uint32_t __rdtsc(void) 
+{ 
     uint32_t a = 0;
-
-    asm volatile("rdtsc" : "=a" (a) ::"edx");
+    asm volatile( "rdtsc" :"=a"(a) ::"edx" );
     return a;
-}
-
-#endif // ifdef _MSC_VER
+} 
+#endif
 
 #define BENCH_RUNS 1000
 
@@ -70,34 +68,34 @@ static inline uint32_t __rdtsc(void)
 // and discards invalid times.  Repeats 1000 times to get a good average.  Then measures
 // the C reference with fewer runs and reports X factor and average cycles.
 #define REPORT_SPEEDUP(RUNOPT, RUNREF, ...) \
-    { \
-        uint32_t cycles = 0; int runs = 0; \
-        RUNOPT(__VA_ARGS__); \
-        for (int ti = 0; ti < BENCH_RUNS; ti++) { \
-            uint32_t t0 = (uint32_t)__rdtsc(); \
-            RUNOPT(__VA_ARGS__); \
-            RUNOPT(__VA_ARGS__); \
-            RUNOPT(__VA_ARGS__); \
-            RUNOPT(__VA_ARGS__); \
-            uint32_t t1 = (uint32_t)__rdtsc() - t0; \
-            if (t1 * runs <= cycles * 4 && ti > 0) { cycles += t1; runs++; } \
-        } \
-        uint32_t refcycles = 0; int refruns = 0; \
-        RUNREF(__VA_ARGS__); \
-        for (int ti = 0; ti < BENCH_RUNS / 4; ti++) { \
-            uint32_t t0 = (uint32_t)__rdtsc(); \
-            RUNREF(__VA_ARGS__); \
-            RUNREF(__VA_ARGS__); \
-            RUNREF(__VA_ARGS__); \
-            RUNREF(__VA_ARGS__); \
-            uint32_t t1 = (uint32_t)__rdtsc() - t0; \
-            if (t1 * refruns <= refcycles * 4 && ti > 0) { refcycles += t1; refruns++; } \
-        } \
-        x265_emms(); \
-        float optperf = (10.0f * cycles / runs) / 4; \
-        float refperf = (10.0f * refcycles / refruns) / 4; \
-        printf("\t%3.2fx ", refperf / optperf); \
-        printf("\t %-4.2lf \t %-4.2lf\n", optperf, refperf); \
-    }
+{ \
+    uint32_t cycles = 0; int runs = 0;\
+    RUNOPT(__VA_ARGS__);\
+    for (int ti = 0; ti < BENCH_RUNS; ti++) {\
+      uint32_t t0 = (uint32_t)__rdtsc();\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
+      RUNOPT(__VA_ARGS__);\
+      uint32_t t1 = (uint32_t)__rdtsc() - t0;\
+      if (t1*runs <= cycles*4 && ti > 0) { cycles += t1; runs++; }\
+    }\
+    uint32_t refcycles = 0; int refruns = 0;\
+    RUNREF(__VA_ARGS__);\
+    for (int ti = 0; ti < BENCH_RUNS/4; ti++) {\
+      uint32_t t0 = (uint32_t)__rdtsc();\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
+      RUNREF(__VA_ARGS__);\
+      uint32_t t1 = (uint32_t)__rdtsc() - t0;\
+      if (t1*refruns <= refcycles*4 && ti > 0) { refcycles += t1; refruns++; }\
+    }\
+    x265_emms();\
+    float optperf = (10.0f * cycles / runs) / 4;\
+    float refperf = (10.0f * refcycles / refruns) / 4;\
+    printf("\t%3.2fx ", refperf / optperf);\
+    printf("\t %-4.2lf \t %-4.2lf\n", optperf, refperf); \
+}
 
 #endif // ifndef _TESTHARNESS_H_

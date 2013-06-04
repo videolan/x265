@@ -88,6 +88,13 @@
 #define ARL_C_PRECISION                           7 ///< G382: 7-bit arithmetic precision
 #define LEVEL_RANGE                              30 ///< G382: max coefficient level in statistics collection
 
+#define HHI_RQT_INTRA_SPEEDUP                     1 ///< tests one best mode with full rqt
+#define HHI_RQT_INTRA_SPEEDUP_MOD                 0 ///< tests two best modes with full rqt
+
+#if HHI_RQT_INTRA_SPEEDUP_MOD && !HHI_RQT_INTRA_SPEEDUP
+#error
+#endif
+
 #define VERBOSE_RATE                              0 ///< Print additional rate information in encoder
 
 #define AMVP_DECIMATION_FACTOR                    4
@@ -102,6 +109,8 @@
 #define LM_CHROMA_IDX  35
 #endif
 
+#define WRITE_BACK                                1 ///< Enable/disable the encoder to replace the deltaPOC and Used by current from the config file with the values derived by the refIdc parameter.
+#define AUTO_INTER_RPS                            1 ///< Enable/disable the automatic generation of refIdc from the deltaPOC and Used by current from the config file.
 #define PRINT_RPS_INFO                            0 ///< Enable/disable the printing of bits used to send the RPS.
                                                     // using one nearest frame as reference frame, and the other frames are high quality (POC%4==0) frames (1+X)
                                                     // this should be done with encoder only decision
@@ -115,6 +124,8 @@
 #define DC_IDX                                    1 // index for intra DC mode
 #define NUM_CHROMA_MODE                           5 // total number of chroma modes
 #define DM_CHROMA_IDX                            36 // chroma mode index for derived from luma intra mode
+
+#define FAST_UDI_USE_MPM                          1
 
 #define RDO_WITHOUT_DQP_BITS                      0 ///< Disable counting dQP bits in RDO-based mode decision
 
@@ -327,6 +338,53 @@ enum RefPicList
     REF_PIC_LIST_0 = 0, ///< reference list 0
     REF_PIC_LIST_1 = 1, ///< reference list 1
     REF_PIC_LIST_X = 100 ///< special mark
+};
+
+/// distortion function index
+enum DFunc
+{
+    DF_DEFAULT  = 0,
+    DF_SSE      = 1,    ///< general size SSE
+    DF_SSE4     = 2,    ///<   4xM SSE
+    DF_SSE8     = 3,    ///<   8xM SSE
+    DF_SSE16    = 4,    ///<  16xM SSE
+    DF_SSE32    = 5,    ///<  32xM SSE
+    DF_SSE64    = 6,    ///<  64xM SSE
+    DF_SSE16N   = 7,    ///< 16NxM SSE
+
+    DF_SAD      = 8,    ///< general size SAD
+    DF_SAD4     = 9,    ///<   4xM SAD
+    DF_SAD8     = 10,   ///<   8xM SAD
+    DF_SAD16    = 11,   ///<  16xM SAD
+    DF_SAD32    = 12,   ///<  32xM SAD
+    DF_SAD64    = 13,   ///<  64xM SAD
+    DF_SAD16N   = 14,   ///< 16NxM SAD
+
+    DF_SADS     = 15,   ///< general size SAD with step
+    DF_SADS4    = 16,   ///<   4xM SAD with step
+    DF_SADS8    = 17,   ///<   8xM SAD with step
+    DF_SADS16   = 18,   ///<  16xM SAD with step
+    DF_SADS32   = 19,   ///<  32xM SAD with step
+    DF_SADS64   = 20,   ///<  64xM SAD with step
+    DF_SADS16N  = 21,   ///< 16NxM SAD with step
+
+    DF_HADS     = 22,   ///< general size Hadamard with step
+    DF_HADS4    = 23,   ///<   4xM HAD with step
+    DF_HADS8    = 24,   ///<   8xM HAD with step
+    DF_HADS16   = 25,   ///<  16xM HAD with step
+    DF_HADS32   = 26,   ///<  32xM HAD with step
+    DF_HADS64   = 27,   ///<  64xM HAD with step
+    DF_HADS16N  = 28,   ///< 16NxM HAD with step
+
+    DF_SAD12    = 43,
+    DF_SAD24    = 44,
+    DF_SAD48    = 45,
+
+    DF_SADS12   = 46,
+    DF_SADS24   = 47,
+    DF_SADS48   = 48,
+
+    DF_SSE_FRAME = 50   ///< Frame-based SSE
 };
 
 /// index for SBAC based RD optimization

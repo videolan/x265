@@ -1729,8 +1729,8 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
         m_temporalSAD = (Int)SAD;
     }
 
-#if !FAST_MODE_DECISION
     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
+#if !FAST_MODE_DECISION
     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 #endif
 
@@ -1929,10 +1929,6 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
 {
     if (rpcTempCU->getTotalCost() < lambda*rpcBestCU->getTotalCost())
     {
-#if FAST_MODE_DECISION
-        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvTemp[uiDepth], false);
-#endif
-
         TComYuv* pcYuv;
         // Change Information data
         TComDataCU* pcCU = rpcBestCU;

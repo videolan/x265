@@ -129,7 +129,6 @@ void Encoder::configure(x265_param_t *param)
         vps.setNumReorderPics(m_numReorderPics[i], i);
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }
-
     setVPS(&vps);
     setMaxTempLayer(m_maxTempLayer);
 
@@ -259,7 +258,6 @@ bool Encoder::InitializeGOP(x265_param_t *param)
             m_GOPList[i].m_interRPSPrediction = i ? 1 : 0;
             m_GOPList[i].m_numRefIdc = i == 2 ? 4 : 5;
         }
-
 #define SET4(id, VAR, a, b, c, d) \
     m_GOPList[id].VAR[0] = a; m_GOPList[id].VAR[1] = b; m_GOPList[id].VAR[2] = c; m_GOPList[id].VAR[3] = d;
 #define SET5(id, VAR, a, b, c, d, e) \
@@ -288,7 +286,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         int offsets[] = { 3, 2, 3, 1 };
         for (int i = 0; i < 4; i++)
         {
-            m_GOPList[i].m_POC = i + 1;
+            m_GOPList[i].m_POC = i+1;
             m_GOPList[i].m_QPFactor = 0.4624;
             m_GOPList[i].m_QPOffset = offsets[i];
             m_GOPList[i].m_numRefPicsActive = 1;
@@ -305,7 +303,6 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                 m_GOPList[i].m_refIdc[1] = 1;
             }
         }
-
         m_GOPList[3].m_QPFactor = 0.578;
     }
 
@@ -621,7 +618,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_maxDecPicBuffering[MAX_TLAYER - 1] = m_numReorderPics[MAX_TLAYER - 1] + 1;
     }
 
-    return check_failed;
+    return check_failed; 
 }
 
 extern "C"
@@ -707,13 +704,13 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
                     encoder->m_nals.push_back(nal);
                 }
             }
-
+            
             /* Setup payload pointers, now that we're done adding content to m_packetData */
             size_t offset = 0;
             for (size_t i = 0; i < encoder->m_nals.size(); i++)
             {
                 x265_nal_t& nal = encoder->m_nals[i];
-                nal.p_payload = (uint8_t*)encoder->m_packetData.c_str() + offset;
+                nal.p_payload = (uint8_t *) encoder->m_packetData.c_str() + offset;
                 offset += nal.i_payload;
             }
 
@@ -724,14 +721,9 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         /* push these recon output frame pointers onto m_cListRecQueue */
         TComList<TComPicYuv *>::iterator iterPicYuvRec = encoder->m_cListPicYuvRec.end();
         for (int i = 0; i < iNumEncoded; i++)
-        {
             --iterPicYuvRec;
-        }
-
         for (int i = 0; i < iNumEncoded; i++)
-        {
             encoder->m_cListRecQueue.pushBack(*(iterPicYuvRec++));
-        }
     }
 
     if (encoder->m_cListRecQueue.size())
@@ -739,13 +731,10 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         TComPicYuv *recpic = encoder->m_cListRecQueue.popFront();
         if (pic_out)
         {
-            pic_out->planes[0] = recpic->getLumaAddr();
-            pic_out->stride[0] = recpic->getStride();
-            pic_out->planes[1] = recpic->getCbAddr();
-            pic_out->stride[1] = recpic->getCStride();
-            pic_out->planes[2] = recpic->getCrAddr();
-            pic_out->stride[2] = recpic->getCStride();
-            pic_out->bitDepth = sizeof(Pel) * 8;
+            pic_out->planes[0] = recpic->getLumaAddr(); pic_out->stride[0] = recpic->getStride();
+            pic_out->planes[1] = recpic->getCbAddr();   pic_out->stride[1] = recpic->getCStride();
+            pic_out->planes[2] = recpic->getCrAddr();   pic_out->stride[2] = recpic->getCStride();
+            pic_out->bitDepth = sizeof(Pel)*8;
         }
         return 1;
     }
@@ -769,7 +758,6 @@ void x265_encoder_close(x265_t *encoder)
         yuv->destroy();
         delete yuv;
     }
-
     encoder->deletePicBuffer();
     encoder->destroy();
     delete encoder;

@@ -46,12 +46,12 @@ const int x265_bit_depth = 10;
 const int x265_bit_depth = 8;
 #endif
 
-void x265_log(x265_param_t *param, int i_level, const char *fmt, ...)
+void x265_log( x265_param_t *param, int i_level, const char *fmt, ...)
 {
-    if (i_level > param->logLevel)
+    if( i_level > param->logLevel )
         return;
     std::string s_level;
-    switch (i_level)
+    switch( i_level )
     {
     case X265_LOG_ERROR:
         s_level = "error";
@@ -69,16 +69,15 @@ void x265_log(x265_param_t *param, int i_level, const char *fmt, ...)
         s_level = "unknown";
         break;
     }
-
-    fprintf(stderr, "x265 [%s]: ", s_level.c_str());
+    fprintf( stderr, "x265 [%s]: ", s_level.c_str() );
     va_list arg;
-    va_start(arg, fmt);
-    vfprintf(stderr, fmt, arg);
-    va_end(arg);
+    va_start( arg, fmt );
+    vfprintf( stderr, fmt, arg );
+    va_end( arg );
 }
 
 extern "C"
-void x265_param_default(x265_param_t *param)
+void x265_param_default( x265_param_t *param )
 {
     memset(param, 0, sizeof(x265_param_t));
     param->logLevel = X265_LOG_INFO;
@@ -113,7 +112,7 @@ void x265_param_default(x265_param_t *param)
 }
 
 extern "C"
-int x265_param_apply_profile(x265_param_t *param, const char *profile)
+int x265_param_apply_profile( x265_param_t *param, const char *profile )
 {
     if (!profile)
         return 0;
@@ -163,20 +162,20 @@ int x265_check_params(x265_param_t *param)
 
 #if !HIGH_BIT_DEPTH
     CONFIRM(param->internalBitDepth != 8,
-            "InternalBitDepth must be 8");
+        "InternalBitDepth must be 8");
 #endif
     CONFIRM(param->iQP <  -6 * (param->internalBitDepth - 8) || param->iQP > 51,
-            "QP exceeds supported range (-QpBDOffsety to 51)");
+        "QP exceeds supported range (-QpBDOffsety to 51)");
     CONFIRM(param->iFrameRate <= 0,
-            "Frame rate must be more than 1");
-    CONFIRM(param->searchMethod<0 || param->searchMethod> X265_ORIG_SEARCH,
-            "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG)");
+        "Frame rate must be more than 1");
+    CONFIRM(param->searchMethod < 0 || param->searchMethod > X265_ORIG_SEARCH,
+        "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG)");
     CONFIRM(param->iSearchRange < 0,
-            "Search Range must be more than 0");
+        "Search Range must be more than 0");
     CONFIRM(param->bipredSearchRange < 0,
-            "Search Range must be more than 0");
+        "Search Range must be more than 0");
     CONFIRM(param->iMaxCuDQPDepth > param->uiMaxCUDepth - 1,
-            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
+        "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
     CONFIRM(param->cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12,   "Max. Chroma Cb QP Offset is  12");
@@ -184,55 +183,55 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->crQpOffset >  12,   "Max. Chroma Cr QP Offset is  12");
 
     CONFIRM(param->iQPAdaptationRange <= 0,
-            "QP Adaptation Range must be more than 0");
+        "QP Adaptation Range must be more than 0");
     CONFIRM((param->uiMaxCUSize >> param->uiMaxCUDepth) < 4,
-            "Minimum partition width size should be larger than or equal to 8");
+        "Minimum partition width size should be larger than or equal to 8");
     CONFIRM(param->uiMaxCUSize < 16,
-            "Maximum partition width size should be larger than or equal to 16");
+        "Maximum partition width size should be larger than or equal to 16");
     CONFIRM((param->iSourceWidth  % (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1))) != 0,
-            "Resulting coded frame width must be a multiple of the minimum CU size");
+        "Resulting coded frame width must be a multiple of the minimum CU size");
     CONFIRM((param->iSourceHeight % (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1))) != 0,
-            "Resulting coded frame height must be a multiple of the minimum CU size");
+        "Resulting coded frame height must be a multiple of the minimum CU size");
 
     CONFIRM(param->uiQuadtreeTULog2MinSize < 2,
-            "QuadtreeTULog2MinSize must be 2 or greater.");
+        "QuadtreeTULog2MinSize must be 2 or greater.");
     CONFIRM(param->uiQuadtreeTULog2MaxSize > 5,
-            "QuadtreeTULog2MaxSize must be 5 or smaller.");
+        "QuadtreeTULog2MaxSize must be 5 or smaller.");
     CONFIRM((1u << param->uiQuadtreeTULog2MaxSize) > param->uiMaxCUSize,
-            "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
+        "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
 
     CONFIRM(param->uiQuadtreeTULog2MaxSize < param->uiQuadtreeTULog2MinSize,
-            "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
+        "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
     CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1)),
-            "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
+        "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
     CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1)),
-            "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
+        "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
     CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> param->uiMaxCUDepth),
-            "Minimum CU width must be greater than minimum transform size.");
+        "Minimum CU width must be greater than minimum transform size.");
     CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> param->uiMaxCUDepth),
-            "Minimum CU height must be greater than minimum transform size.");
+        "Minimum CU height must be greater than minimum transform size.");
     CONFIRM(param->uiQuadtreeTUMaxDepthInter < 1,
-            "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
+        "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
     CONFIRM(param->uiMaxCUSize < (1u << (param->uiQuadtreeTULog2MinSize + param->uiQuadtreeTUMaxDepthInter - 1)),
-            "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
+        "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
     CONFIRM(param->uiQuadtreeTUMaxDepthIntra < 1,
-            "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
+        "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
     CONFIRM(param->uiMaxCUSize < (1u << (param->uiQuadtreeTULog2MinSize + param->uiQuadtreeTUMaxDepthIntra - 1)),
-            "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
+        "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
 
     CONFIRM(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CONFIRM(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
     CONFIRM(param->bUseAdaptQpSelect && param->iQP < 0,
-            "AdaptiveQpSelection must be disabled when QP < 0.");
+        "AdaptiveQpSelection must be disabled when QP < 0.");
     CONFIRM(param->bUseAdaptQpSelect && (param->cbQpOffset != 0 || param->crQpOffset != 0),
-            "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
+        "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
 
     //TODO:ChromaFmt assumes 4:2:0 below
     CONFIRM(param->iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
-            "Picture width must be an integer multiple of the specified chroma subsampling");
+        "Picture width must be an integer multiple of the specified chroma subsampling");
     CONFIRM(param->iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
-            "Picture height must be an integer multiple of the specified chroma subsampling");
+        "Picture height must be an integer multiple of the specified chroma subsampling");
 
     // max CU size should be power of 2
     uint32_t ui = param->uiMaxCUSize;
@@ -246,10 +245,10 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
 
     CONFIRM(param->log2ParallelMergeLevel < 2,
-            "Log2ParallelMergeLevel should be larger than or equal to 2");
+        "Log2ParallelMergeLevel should be larger than or equal to 2");
 
     CONFIRM(param->iWaveFrontSynchro && param->bUseAdaptQpSelect,
-            "Adaptive QP Select cannot be used together with WPP");
+        "Adaptive QP Select cannot be used together with WPP");
 
     return check_failed;
 }
@@ -296,7 +295,7 @@ void x265_print_params(x265_param_t *param)
     x265_log(param, X265_LOG_INFO, "RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
 
-    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange);
+    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange );
     x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d ", param->maxNumMergeCand);
     printf("PME:%d ", param->log2ParallelMergeLevel);
     printf("TMVPMode:%d\n", param->TMVPModeId);
@@ -357,11 +356,11 @@ int64_t x265_mdate(void)
 {
 #if _WIN32
     struct timeb tb;
-    ftime(&tb);
+    ftime( &tb );
     return ((int64_t)tb.time * 1000 + (int64_t)tb.millitm) * 1000;
 #else
     struct timeval tv_date;
-    gettimeofday(&tv_date, NULL);
+    gettimeofday( &tv_date, NULL );
     return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
 #endif
 }
@@ -371,11 +370,9 @@ int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
     const char * mode = "wb";
 
     FILE * fp = fopen(filename, mode);
-
-    if (!fp)
+    if(!fp)
     {
-        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", filename, mode);
-        return -1;
+        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", filename, mode); return -1;
     }
     fwrite(pbuf, 1, bufsize, fp);
     fclose(fp);

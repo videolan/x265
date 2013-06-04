@@ -6,8 +6,7 @@
 class PsnrCalculator
 {
 protected:
-
-    PsnrCalculator& operator =(const PsnrCalculator&);
+    PsnrCalculator& operator=(const PsnrCalculator&);
 
 public:
 

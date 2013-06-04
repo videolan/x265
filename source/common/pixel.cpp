@@ -62,7 +62,6 @@ void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t s
             res[1] += abs(pix1[x] - pix3[x]);
             res[2] += abs(pix1[x] - pix4[x]);
         }
-
         pix1 += FENC_STRIDE;
         pix2 += strideCur;
         pix3 += strideCur;
@@ -86,34 +85,12 @@ void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix
             res[2] += abs(pix1[x] - pix4[x]);
             res[3] += abs(pix1[x] - pix5[x]);
         }
-
         pix1 += FENC_STRIDE;
         pix2 += strideCur;
         pix3 += strideCur;
         pix4 += strideCur;
         pix5 += strideCur;
     }
-}
-
-template<int lx, int ly>
-int CDECL sse(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    int sum = 0;
-    int iTemp;
-
-    for (int y = 0; y < ly; y++)
-    {
-        for (int x = 0; x < lx; x++)
-        {
-            iTemp = pix1[x] - pix2[x];
-            sum += (iTemp * iTemp);
-        }
-
-        pix1 += stride_pix1;
-        pix2 += stride_pix2;
-    }
-
-    return sum;
 }
 
 #define BITS_PER_SUM (8 * sizeof(sum_t))
@@ -297,30 +274,18 @@ int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i
 int CDECL pixel_sa8d_32x32(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = 0;
-
     for (int y = 0; y < 32; y += 8)
-    {
         for (int x = 0; x < 32; x += 8)
-        {
             sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
-        }
-    }
-
     return (sum + 2) >> 2;
 }
 
 int CDECL pixel_sa8d_64x64(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = 0;
-
     for (int y = 0; y < 64; y += 8)
-    {
         for (int x = 0; x < 64; x += 8)
-        {
             sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
-        }
-    }
-
     return (sum + 2) >> 2;
 }
 
@@ -329,9 +294,7 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -343,9 +306,7 @@ void CDECL blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = (short)b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -357,9 +318,7 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = (pixel)b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -371,9 +330,7 @@ void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b,
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = (short)b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -596,7 +553,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_48x32] = sad_x3<48, 32>;
     p.sad_x3[PARTITION_48x48] = sad_x3<48, 48>;
     p.sad_x3[PARTITION_48x64] = sad_x3<48, 64>;
-
+    
     p.sad_x3[PARTITION_64x4]  = sad_x3<64, 4>;
     p.sad_x3[PARTITION_64x8]  = sad_x3<64, 8>;
     p.sad_x3[PARTITION_64x12] = sad_x3<64, 12>;
@@ -605,7 +562,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_64x32] = sad_x3<64, 32>;
     p.sad_x3[PARTITION_64x48] = sad_x3<64, 48>;
     p.sad_x3[PARTITION_64x64] = sad_x3<64, 64>;
-
+    
     // sad_x4
     p.sad_x4[PARTITION_4x4]   = sad_x4<4, 4>;
     p.sad_x4[PARTITION_4x8]   = sad_x4<4, 8>;
@@ -678,79 +635,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x4[PARTITION_64x32] = sad_x4<64, 32>;
     p.sad_x4[PARTITION_64x48] = sad_x4<64, 48>;
     p.sad_x4[PARTITION_64x64] = sad_x4<64, 64>;
-
-    //sse
-    p.sse[PARTITION_4x4]   = sse<4, 4>;
-    p.sse[PARTITION_4x8]   = sse<4, 8>;
-    p.sse[PARTITION_4x12]  = sse<4, 12>;
-    p.sse[PARTITION_4x16]  = sse<4, 16>;
-    p.sse[PARTITION_4x24]  = sse<4, 24>;
-    p.sse[PARTITION_4x32]  = sse<4, 32>;
-    p.sse[PARTITION_4x48]  = sse<4, 48>;
-    p.sse[PARTITION_4x64]  = sse<4, 64>;
-
-    p.sse[PARTITION_8x4]   = sse<8, 4>;
-    p.sse[PARTITION_8x8]   = sse<8, 8>;
-    p.sse[PARTITION_8x12]  = sse<8, 12>;
-    p.sse[PARTITION_8x16]  = sse<8, 16>;
-    p.sse[PARTITION_8x24]  = sse<8, 24>;
-    p.sse[PARTITION_8x32]  = sse<8, 32>;
-    p.sse[PARTITION_8x48]  = sse<8, 48>;
-    p.sse[PARTITION_8x64]  = sse<8, 64>;
-
-    p.sse[PARTITION_12x4]  = sse<12, 4>;
-    p.sse[PARTITION_12x8]  = sse<12, 8>;
-    p.sse[PARTITION_12x12] = sse<12, 12>;
-    p.sse[PARTITION_12x16] = sse<12, 16>;
-    p.sse[PARTITION_12x24] = sse<12, 24>;
-    p.sse[PARTITION_12x32] = sse<12, 32>;
-    p.sse[PARTITION_12x48] = sse<12, 48>;
-    p.sse[PARTITION_12x64] = sse<12, 64>;
-
-    p.sse[PARTITION_16x4]  = sse<16, 4>;
-    p.sse[PARTITION_16x8]  = sse<16, 8>;
-    p.sse[PARTITION_16x12] = sse<16, 12>;
-    p.sse[PARTITION_16x16] = sse<16, 16>;
-    p.sse[PARTITION_16x24] = sse<16, 24>;
-    p.sse[PARTITION_16x32] = sse<16, 32>;
-    p.sse[PARTITION_16x48] = sse<16, 48>;
-    p.sse[PARTITION_16x64] = sse<16, 64>;
-
-    p.sse[PARTITION_24x4]  = sse<24, 4>;
-    p.sse[PARTITION_24x8]  = sse<24, 8>;
-    p.sse[PARTITION_24x12] = sse<24, 12>;
-    p.sse[PARTITION_24x16] = sse<24, 16>;
-    p.sse[PARTITION_24x24] = sse<24, 24>;
-    p.sse[PARTITION_24x32] = sse<24, 32>;
-    p.sse[PARTITION_24x48] = sse<24, 48>;
-    p.sse[PARTITION_24x64] = sse<24, 64>;
-
-    p.sse[PARTITION_32x4]  = sse<32, 4>;
-    p.sse[PARTITION_32x8]  = sse<32, 8>;
-    p.sse[PARTITION_32x12] = sse<32, 12>;
-    p.sse[PARTITION_32x16] = sse<32, 16>;
-    p.sse[PARTITION_32x24] = sse<32, 24>;
-    p.sse[PARTITION_32x32] = sse<32, 32>;
-    p.sse[PARTITION_32x48] = sse<32, 48>;
-    p.sse[PARTITION_32x64] = sse<32, 64>;
-
-    p.sse[PARTITION_48x4]  = sse<48, 4>;
-    p.sse[PARTITION_48x8]  = sse<48, 8>;
-    p.sse[PARTITION_48x12] = sse<48, 12>;
-    p.sse[PARTITION_48x16] = sse<48, 16>;
-    p.sse[PARTITION_48x24] = sse<48, 24>;
-    p.sse[PARTITION_48x32] = sse<48, 32>;
-    p.sse[PARTITION_48x48] = sse<48, 48>;
-    p.sse[PARTITION_48x64] = sse<48, 64>;
-
-    p.sse[PARTITION_64x4]  = sse<64, 4>;
-    p.sse[PARTITION_64x8]  = sse<64, 8>;
-    p.sse[PARTITION_64x12] = sse<64, 12>;
-    p.sse[PARTITION_64x16] = sse<64, 16>;
-    p.sse[PARTITION_64x24] = sse<64, 24>;
-    p.sse[PARTITION_64x32] = sse<64, 32>;
-    p.sse[PARTITION_64x48] = sse<64, 48>;
-    p.sse[PARTITION_64x64] = sse<64, 64>;
 
     p.cpyblock = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;

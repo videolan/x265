@@ -102,15 +102,15 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
 {
     int j = ADI_BUF_STRIDE;
 
-    for (int width = 4; width <= 64; width <<= 1)
+    for (int width = 4; width <= 16; width <<= 1)
     {
         for (int i = 0; i <= 100; i++)
         {
             memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
             memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
 
-            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width, 0);
             opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0);
+            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width, 0);
 
             for (int k = 0; k < width; k++)
             {
@@ -134,7 +134,7 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     int pmode;
     Bool bFilter;
 
-    for (int width = 32; width <= 32; width <<= 1)
+    for (int width = 4; width <= 16; width <<= 1)
     {
         bFilter  = (width <= 16);
         for (int i = 0; i <= 100; i++)
@@ -156,7 +156,6 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
                 {
                     if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
                     {
-                        printf("\nFailed for mode %d \t", p);
                         return false;
                     }
                 }
@@ -217,7 +216,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     if (opt.getIPredPlanar)
     {
-        for (int ii = 4; ii <= 64; ii <<= 1)
+        for (int ii = 4; ii <= 16; ii <<= 1)
         {
             width = ii;
             printf("IPred_getIPredPlanar[width=%d]", ii);
@@ -227,9 +226,9 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     if (opt.getIPredAng)
     {
-        for (int ii = 32; ii <= 32; ii <<= 1)
+        for (int ii = 4; ii <= 16; ii <<= 1)
         {
-            for (int p = 2; p <= 34; p += 1)
+            for (int p = 2; p <= 34; p+=1)
             {
                 width = ii;
                 bool bFilter  = (width <= 16);

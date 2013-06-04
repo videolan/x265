@@ -31,6 +31,7 @@ namespace x265 {
 
 class Output
 {
+
 protected:
 
     virtual ~Output()  {}

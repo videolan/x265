@@ -6,8 +6,7 @@
 class SsimCalculator
 {
 protected:
-
-    SsimCalculator& operator =(const SsimCalculator&);
+    SsimCalculator& operator=(const SsimCalculator&);
 
 public:
 

@@ -32,6 +32,7 @@
 #include "TShortYUV.h"
 #include "TLibCommon/TComYuv.h"
 
+
 TShortYUV::TShortYUV()
 {
     YBuf = NULL;
@@ -77,6 +78,7 @@ void TShortYUV::subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int ui
     subtractLuma(pcYuvSrc0, pcYuvSrc1,  uiTrUnitIdx, uiPartSize);
     subtractChroma(pcYuvSrc0, pcYuvSrc1,  uiTrUnitIdx, uiPartSize >> 1);
 }
+
 
 void TShortYUV::subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize)
 {
@@ -134,6 +136,7 @@ void TShortYUV::subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned 
         pDstV  += iDstStride;
     }
 }
+
 
 void TShortYUV::addClip(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize)
 {
@@ -206,6 +209,7 @@ void TShortYUV::addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsign
 #pragma warning (default: 4244)
 #endif
 
+
 void TShortYUV::copyPartToPartYuv(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
     copyPartToPartLuma(pcYuvDst, uiPartIdx, iWidth, iHeight);
@@ -247,18 +251,16 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, un
 
     unsigned int  iSrcStride = getStride();
     unsigned int  iDstStride = pcYuvDst->getStride();
-
     for (unsigned int y = iHeight; y != 0; y--)
     {
-        for (unsigned int x = 0; x < iWidth; x++)
-        {
-            pDst[x] = (Pel)(pSrc[x]);
-        }
+        for(unsigned int x = 0; x < iWidth; x++)
+            pDst[x] = (Pel) (pSrc[x]);
 
         pSrc += iSrcStride;
         pDst += iDstStride;
     }
 }
+
 
 Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
@@ -296,21 +298,20 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
 
     unsigned int   iSrcStride = getCStride();
     unsigned int   iDstStride = pcYuvDst->getCStride();
-
     for (unsigned int y = iHeight; y != 0; y--)
     {
-        for (unsigned int x = 0; x < iWidth; x++)
-        {
-            pDstU[x] = (Pel)(pSrcU[x]);
-            pDstV[x] = (Pel)(pSrcV[x]);
-        }
-
+       for(unsigned int x = 0; x < iWidth; x++)
+       {
+           pDstU[x] = (Pel)(pSrcU[x]);
+           pDstV[x] = (Pel)(pSrcV[x]);
+       }
         pSrcU += iSrcStride;
         pSrcV += iSrcStride;
         pDstU += iDstStride;
         pDstV += iDstStride;
     }
 }
+
 
 Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId)
 {
@@ -385,11 +386,10 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for (unsigned int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstU[x] = (Pel)(pSrcU[x]);
             }
-
             pSrcU += iSrcStride;
             pDstU += iDstStride;
         }
@@ -402,11 +402,10 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for (unsigned int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstV[x] = (Pel)(pSrcV[x]);
             }
-
             pSrcV += iSrcStride;
             pDstV += iDstStride;
         }
@@ -422,12 +421,11 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
-            for (unsigned int x = 0; x < iWidth; x++)
+            for(unsigned int x = 0; x < iWidth; x++)
             {
                 pDstU[x] = (Pel)(pSrcU[x]);
                 pDstV[x] = (Pel)(pSrcV[x]);
             }
-
             pSrcU += iSrcStride;
             pSrcV += iSrcStride;
             pDstU += iDstStride;

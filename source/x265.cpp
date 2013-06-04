@@ -50,7 +50,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#define GetConsoleTitle(t, n)
+#define GetConsoleTitle(t,n)
 #define SetConsoleTitle(t)
 #endif
 
@@ -64,7 +64,6 @@ static struct option long_options[] =
 #define OPT(longname, var, argreq, flag, helptext) { longname, argreq, NULL, flag },
 #define STROPT OPT
 #include "x265opts.h"
-    { 0, 0, 0, 0 }
 #undef OPT
 #undef STROPT
 #undef HELP
@@ -73,9 +72,9 @@ static struct option long_options[] =
 /* Ctrl-C handler */
 static volatile int b_ctrl_c = 0;
 static int          b_exit_on_ctrl_c = 0;
-static void sigint_handler(int)
+static void sigint_handler( int )
 {
-    if (b_exit_on_ctrl_c)
+    if( b_exit_on_ctrl_c )
         exit(0);
     b_ctrl_c = 1;
 }
@@ -155,14 +154,13 @@ struct CLIOptions
         PPAStartCpuEventFunc(bitstream_write);
         for (int i = 0; i < nalcount; i++)
         {
-            bitstreamFile.write((const char*)nal->p_payload, nal->i_payload);
-            rateStatsAccum((NalUnitType)nal->i_type, nal->i_payload);
+            bitstreamFile.write((const char*) nal->p_payload, nal->i_payload);
+            rateStatsAccum((NalUnitType) nal->i_type, nal->i_payload);
             nal++;
         }
-
         PPAStopCpuEventFunc(bitstream_write);
     }
-
+    
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
 
@@ -170,58 +168,56 @@ struct CLIOptions
     {
         char buf[200];
         int64_t i_time = x265_mdate();
-
-        if (i_previous && i_time - i_previous < UPDATE_INTERVAL)
+        if( i_previous && i_time - i_previous < UPDATE_INTERVAL )
             return;
         int64_t i_elapsed = i_time - i_start;
         double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
-        double bitrate = (double)totalBytes * 8 / ((double)1000 * param->iFrameRate);
-        if (framesToBeEncoded && i_frame)
+        double bitrate = (double) totalBytes * 8 / ( (double) 1000 * param->iFrameRate );
+        if( framesToBeEncoded && i_frame )
         {
-            int eta = (int)(i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
-            sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
-                    100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
-                    eta / 3600, (eta / 60) % 60, eta % 60);
+            int eta = (int) (i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
+            sprintf( buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
+                100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
+                eta/3600, (eta/60)%60, eta%60 );
         }
         else
         {
-            sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate);
+            sprintf( buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate );
         }
-        fprintf(stderr, "%s  \r", buf + 5);
-        SetConsoleTitle(buf);
-        fflush(stderr); // needed in windows
+        fprintf( stderr, "%s  \r", buf+5 );
+        SetConsoleTitle( buf );
+        fflush( stderr ); // needed in windows
         i_previous = i_time;
     }
 
     void log(int i_level, const char *fmt, ...)
     {
-        if (i_level > cli_log_level)
+        if( i_level > cli_log_level )
             return;
         std::string s_level;
-        switch (i_level)
+        switch( i_level )
         {
-        case X265_LOG_ERROR:
-            s_level = "error";
-            break;
-        case X265_LOG_WARNING:
-            s_level = "warning";
-            break;
-        case X265_LOG_INFO:
-            s_level = "info";
-            break;
-        case X265_LOG_DEBUG:
-            s_level = "debug";
-            break;
-        default:
-            s_level = "unknown";
-            break;
+            case X265_LOG_ERROR:
+                s_level = "error";
+                break;
+            case X265_LOG_WARNING:
+                s_level = "warning";
+                break;
+            case X265_LOG_INFO:
+                s_level = "info";
+                break;
+            case X265_LOG_DEBUG:
+                s_level = "debug";
+                break;
+            default:
+                s_level = "unknown";
+                break;
         }
-
-        fprintf(stderr, "x265 [%s]: ", s_level.c_str());
+        fprintf( stderr, "x265 [%s]: ", s_level.c_str() );
         va_list arg;
-        va_start(arg, fmt);
-        vfprintf(stderr, fmt, arg);
-        va_end(arg);
+        va_start( arg, fmt );
+        vfprintf( stderr, fmt, arg );
+        va_end( arg );
     }
 
     void print_version()
@@ -250,9 +246,9 @@ struct CLIOptions
         printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
-#define OPT(longname, var, argreq, flag, helptext) \
-    if (flag) printf("-%c/", flag); else printf("   "); \
-    printf("--%-20s\t%s\n", longname, helptext);
+#define OPT(longname, var, argreq, flag, helptext)\
+        if (flag) printf("-%c/", flag); else printf("   ");\
+        printf("--%-20s\t%s\n", longname, helptext);
 #define STROPT OPT
 #include "x265opts.h"
 #undef OPT
@@ -272,7 +268,7 @@ struct CLIOptions
 
         x265_param_default(param);
 
-        for (optind = 0;; )
+        for( optind = 0;; )
         {
             int long_options_index = -1;
             int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
@@ -291,15 +287,12 @@ struct CLIOptions
             default:
                 if (long_options_index < 0 && c > 0)
                 {
-                    for (size_t i = 0; i < sizeof(long_options) / sizeof(long_options[0]); i++)
-                    {
+                    for (size_t i = 0; i < sizeof(long_options)/sizeof(long_options[0]); i++)
                         if (long_options[i].val == c)
                         {
                             long_options_index = (int)i;
                             break;
                         }
-                    }
-
                     if (long_options_index < 0)
                     {
                         /* getopt_long already printed an error message */
@@ -312,12 +305,12 @@ struct CLIOptions
                     return true;
                 }
 #define HELP(message)
-#define STROPT(longname, var, argreq, flag, helptext) \
-    else if (!strcmp(long_options[long_options_index].name, longname)) \
-        (var) = optarg;
-#define OPT(longname, var, argreq, flag, helptext) \
-    else if (!strcmp(long_options[long_options_index].name, longname)) \
-        (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
+#define STROPT(longname, var, argreq, flag, helptext)\
+                else if (!strcmp(long_options[long_options_index].name, longname))\
+                    (var) = optarg;
+#define OPT(longname, var, argreq, flag, helptext)\
+                else if (!strcmp(long_options[long_options_index].name, longname))\
+                    (var) = (argreq == no_argument) ? (strncmp(longname, "no-", 3) ? 1 : 0) : atoi(optarg);
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
@@ -370,7 +363,7 @@ struct CLIOptions
         if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
         if (!outputBitDepth) { outputBitDepth = param->internalBitDepth; }
 
-        uint32_t numRemainingFrames = (uint32_t) this->input->guessFrameCount();
+        uint32_t numRemainingFrames = (uint32_t)this->input->guessFrameCount();
 
         if (this->frameSkip)
         {
@@ -412,6 +405,7 @@ struct CLIOptions
 
         return false;
     }
+
 };
 
 int main(int argc, char **argv)
@@ -441,7 +435,7 @@ int main(int argc, char **argv)
     }
 
     /* Control-C handler */
-    signal(SIGINT, sigint_handler);
+    signal( SIGINT, sigint_handler );
 
     x265_picture_t pic_orig, pic_recon;
     x265_picture_t *pic_in = &pic_orig;
@@ -494,7 +488,7 @@ int main(int argc, char **argv)
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.iFrameRate;
     printf("Bytes written to file: %u (%.3f kbps) in %3.3f sec\n",
-           cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
+        cliopt.totalBytes, 0.008 * cliopt.totalBytes / vidtime, elapsed);
 
     x265_cleanup(); /* Free library singletons */
 

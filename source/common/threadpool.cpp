@@ -55,7 +55,6 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
 {
     uint32_t high32 = (uint32_t)(x64 >> 32);
     uint32_t low32 = (uint32_t)x64;
-
     if (high32)
     {
         _BitScanReverse(id, high32);
@@ -67,33 +66,30 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
     else
         return *id = 0;
 }
-
 #endif // if !_WIN64
 
 #if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 /* XP did not define this intrinsic */
-FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
-                                      __in    LONGLONG           Value
-                                      )
+FORCEINLINE LONGLONG _InterlockedOr64 (
+    __inout LONGLONG volatile *Destination,
+    __in    LONGLONG Value
+    )
 {
     LONGLONG Old;
 
-    do
-    {
+    do {
         Old = *Destination;
-    }
-    while (_InterlockedCompareExchange64(Destination,
-                                         Old | Value,
-                                         Old) != Old);
+    } while (_InterlockedCompareExchange64(Destination,
+                                          Old | Value,
+                                          Old) != Old);
 
     return Old;
 }
-
 #define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
 #pragma intrinsic(_InterlockedCompareExchange64)
-#else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
+#else
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
-#endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
+#endif
 
 #define CLZ64(id, x)                    _BitScanReverse64(&id, x)
 #define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
@@ -504,7 +500,8 @@ static int get_cpu_count()
 } // end namespace x265
 
 extern "C"
-void x265_init_threading(int threadcount)
+void x265_init_threading( int threadcount )
 {
     x265::ThreadPool::AllocThreadPool(threadcount);
 }
+

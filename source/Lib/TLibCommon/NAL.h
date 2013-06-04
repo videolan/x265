@@ -114,4 +114,4 @@ struct NALUnitEBSP : public NALUnit
 
 //! \}
 
-#endif // ifndef _NAL_
+#endif

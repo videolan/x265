@@ -64,15 +64,13 @@ extern ppa::Base *ppabase;
 class _PPAScope
 {
 protected:
-
     ppa::EventID m_id;
 
 public:
-
     _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } }
-
     ~_PPAScope()     { if (ppabase) ppabase->triggerEndEvent(m_id); }
 };
+
 
 #endif // if !defined(ENABLE_PPA)
 

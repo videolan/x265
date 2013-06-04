@@ -49,7 +49,8 @@ TComRdCost::TComRdCost()
 }
 
 TComRdCost::~TComRdCost()
-{}
+{
+}
 
 // Calculate RD functions
 Double TComRdCost::calcRdCost(UInt uiBits, UInt uiDistortion, Bool bFlag, DFunc eDFunc)
@@ -320,7 +321,8 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     rcDistParam.iSubShift  = 0;
 }
 
-Void TComRdCost::setDistParam(DistParam & rcDP, Int bitDepth, Pel * p1, Int iStride1, Pel * p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard)
+Void
+TComRdCost::setDistParam(DistParam & rcDP, Int bitDepth, Pel * p1, Int iStride1, Pel * p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard)
 {
     rcDP.pOrg       = p1;
     rcDP.pCur       = p2;
@@ -411,7 +413,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* p
     cDtParam.iRows    = uiBlkHeight;
     cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
     cDtParam.iSubShift  = 0;
-
+    
     cDtParam.pOrg       = NULL;
     cDtParam.pCur       = piCur;
     cDtParam.ptr1       = piOrg;
@@ -447,7 +449,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
     cDtParam.iRows    = uiBlkHeight;
     cDtParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[cDtParam.iCols] + 1];
     cDtParam.iSubShift  = 0;
-
+    
     cDtParam.pOrg       = NULL;
     cDtParam.pCur       = NULL;
     cDtParam.ptr1       = piOrg;
@@ -474,15 +476,13 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
         return DtParam->DistFunc(DtParam);
     }
 }
-
-#endif // if !HIGH_BIT_DEPTH
+#endif
 
 UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelOrg, Int orgStride, UInt width, UInt height)
 {
     Int shift = DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
 
     UInt SAD = 0;
-
     for (Int i = 0; i < height; i++)
     {
         for (Int j = 0; j < width; j++)
@@ -493,7 +493,6 @@ UInt TComRdCost::getSADPart(Int bitDepth, Pel* pelCur, Int curStride,  Pel* pelO
         pelCur = pelCur + curStride;
         pelOrg = pelOrg + orgStride;
     }
-
     return SAD >> shift;
 }
 
@@ -1007,12 +1006,11 @@ UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
 // SSE
 // --------------------------------------------------------------------------------------------------------------------
 
-template<typename T1, typename T2>
+template<typename T1, typename T2> 
 UInt xGetSSEHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows, Int iCols, UInt uiShift)
 {
     UInt uiSum = 0;
     Int iTemp;
-
     for (; iRows != 0; iRows--)
     {
         for (Int n = 0; n < iCols; n++)
@@ -1024,7 +1022,6 @@ UInt xGetSSEHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
 
@@ -1044,26 +1041,24 @@ UInt TComRdCost::xGetSSE(DistParam* pcDtParam)
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+ 
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
         uiSum = xGetSSEHelp<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
     }
     else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg == NULL) && (piCur == NULL))
         {
             uiSum = xGetSSEHelp<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, iCols, uiShift);
-        }
-        else
+        }else
         {
             uiSum = xGetSSEHelp<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
-        }
+        }        
     }
     return uiSum;
 }
@@ -1073,7 +1068,6 @@ UInt xGetSSE4Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
 {
     UInt uiSum = 0;
     Int iTemp;
-
     for (; iRows != 0; iRows--)
     {
         iTemp = piOrg[0] - piCur[0];
@@ -1088,7 +1082,6 @@ UInt xGetSSE4Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
 
@@ -1105,26 +1098,24 @@ UInt TComRdCost::xGetSSE4(DistParam* pcDtParam)
     Int  iStrideCur = pcDtParam->iStrideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
+    
     Pel* piOrg   = pcDtParam->pOrg;
     Pel* piCur   = pcDtParam->pCur;
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
-    {
+    
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
+    {        
         uiSum = xGetSSE4Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
     }
     else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
             uiSum = xGetSSE4Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
-        }
-        else
+        }else
         {
             uiSum = xGetSSE4Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
         }
@@ -1137,7 +1128,6 @@ UInt xGetSSE8Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
 {
     UInt uiSum = 0;
     Int iTemp;
-
     for (; iRows != 0; iRows--)
     {
         iTemp = piOrg[0] - piCur[0];
@@ -1160,7 +1150,6 @@ UInt xGetSSE8Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
 
@@ -1179,27 +1168,25 @@ UInt TComRdCost::xGetSSE8(DistParam* pcDtParam)
     Int  iStrideCur = pcDtParam->iStrideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+        
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
-        uiSum = xGetSSE8Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+        uiSum = xGetSSE8Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);    
     }
     else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
-            uiSum = xGetSSE8Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
-        }
-        else
+            uiSum = xGetSSE8Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);    
+        }else
         {
-            uiSum = xGetSSE8Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
-        }
+            uiSum = xGetSSE8Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);     
+        } 
     }
     return uiSum;
 }
@@ -1209,7 +1196,6 @@ UInt xGetSSE16Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
 {
     UInt uiSum = 0;
     Int iTemp;
-
     for (; iRows != 0; iRows--)
     {
         iTemp = piOrg[0] - piCur[0];
@@ -1248,9 +1234,9 @@ UInt xGetSSE16Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
+
 
 UInt TComRdCost::xGetSSE16(DistParam* pcDtParam)
 {
@@ -1266,29 +1252,26 @@ UInt TComRdCost::xGetSSE16(DistParam* pcDtParam)
     Int  iStrideCur = pcDtParam->iStrideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+    
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
         uiSum = xGetSSE16Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
-    }
-    else
+    }else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
-            uiSum = xGetSSE16Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
-        }
-        else
+            uiSum = xGetSSE16Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);    
+        }else
         {
-            uiSum = xGetSSE16Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+            uiSum = xGetSSE16Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);     
         }
     }
-
+    
     return uiSum;
 }
 
@@ -1297,7 +1280,6 @@ UInt xGetSSE16NHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iR
 {
     UInt uiSum = 0;
     Int iTemp;
-
     for (; iRows != 0; iRows--)
     {
         for (Int n = 0; n < iCols; n += 16)
@@ -1339,7 +1321,6 @@ UInt xGetSSE16NHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iR
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
 
@@ -1358,26 +1339,23 @@ UInt TComRdCost::xGetSSE16N(DistParam* pcDtParam)
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+    
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
         uiSum = xGetSSE16NHelp<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
-    }
-    else
+    }else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
-            uiSum = xGetSSE16NHelp<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, iCols, uiShift);
-        }
-        else
+            uiSum = xGetSSE16NHelp<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, iCols, uiShift);    
+        }else
         {
-            uiSum = xGetSSE16NHelp<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
+            uiSum = xGetSSE16NHelp<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);     
         }
     }
     return uiSum;
@@ -1459,7 +1437,6 @@ UInt xGetSSE32Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
 
@@ -1478,28 +1455,25 @@ UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+        
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
         uiSum = xGetSSE32Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
-    }
-    else
+    }else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
-            uiSum = xGetSSE32Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
-        }
-        else
+            uiSum = xGetSSE32Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);    
+        }else
         {
-            uiSum = xGetSSE32Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+            uiSum = xGetSSE32Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);     
         }
-    }
+    }   
 
     return uiSum;
 }
@@ -1644,9 +1618,10 @@ UInt xGetSSE64Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
     return uiSum;
 }
+
+
 
 UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
 {
@@ -1663,28 +1638,25 @@ UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+    
+    if((sizeof(Pel) == 2) || ((piOrg!=NULL)&&(piCur!=NULL)))
     {
         uiSum = xGetSSE64Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
-    }
-    else
+    }else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
+        Short* piOrg_s; Short* piCur_s;
+        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*> (pcDtParam);
         piOrg_s = DtParam->ptr1;
         piCur_s = DtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if((piOrg==NULL) && (piCur==NULL))
         {
-            uiSum = xGetSSE64Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
-        }
-        else
+            uiSum = xGetSSE64Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);    
+        }else
         {
-            uiSum = xGetSSE64Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+            uiSum = xGetSSE64Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);     
         }
-    }
+    }   
 
     return uiSum;
 }
@@ -1788,6 +1760,7 @@ UInt TComRdCost::xCalcHADs4x4(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 
     return satd;
 }
+
 
 UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrideCur, Int iStep)
 {
@@ -1907,7 +1880,6 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
         piOrg += iOffsetOrg;
         piCur += iOffsetCur;
     }
-
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
 

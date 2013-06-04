@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
 #endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
@@ -132,7 +131,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-
 #endif // if ENABLE_ASM_PRIMITIVES
     }
 

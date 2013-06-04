@@ -1177,14 +1177,14 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
     Int j;
     for (j = 0; j < iHeight; j++)
     {
-        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short));
+        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short) );
     }
 
     xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
 
     assert(iWidth == iHeight);
-    assert(((iWidth * iHeight) % 8) == 0);
-    x265::primitives.cvt16to32(coeff, psCoeff, iWidth * iHeight);
+    assert(((iWidth*iHeight) % 8) == 0);
+    x265::primitives.cvt16to32(coeff, psCoeff, iWidth*iHeight);
 }
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
@@ -1200,13 +1200,13 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
     ALIGN_VAR_32(Short, coeff[64 * 64]);
     Int j;
 
-    x265::primitives.cvt32to16(plCoef, coeff, iWidth * iHeight);
+    x265::primitives.cvt32to16(plCoef, coeff, iWidth*iHeight);
 
     xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
 
     for (j = 0; j < iHeight; j++)
     {
-        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short) * iWidth);
+        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short)*iWidth);
     }
 }
 
@@ -1230,12 +1230,11 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, 
         {
             x265::primitives.cvt16to32_shl(&psCoeff[j * height], &piBlkResi[j * uiStride], shift, width);
         }
-
 #else
         // faster but use intrinsic
         for (j = 0; j < height; j++)
         {
-            for (k = 0; k < width; k += 4)
+            for (k = 0; k < width; k+=4)
             {
                 __m128i T00 = _mm_loadl_epi64((__m128i*)&piBlkResi[j * uiStride + k]);
                 __m128i T01 = _mm_srai_epi32(_mm_unpacklo_epi16(T00, T00), 16);
@@ -1244,8 +1243,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, 
                 _mm_storeu_si128((__m128i*)&psCoeff[j * height + k], T02);
             }
         }
-
-#endif // if 1
+#endif
     }
     else
     {

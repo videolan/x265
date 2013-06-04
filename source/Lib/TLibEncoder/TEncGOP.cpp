@@ -139,7 +139,7 @@ Void  TEncGOP::destroy()
 
 Void TEncGOP::init(TEncTop* pcTEncTop)
 {
-    m_pcEncTop             = pcTEncTop;
+    m_pcEncTop     = pcTEncTop;
     m_pcCfg                = pcTEncTop;
     m_pcSliceEncoder       = pcTEncTop->getSliceEncoder();
     m_pcListPic            = pcTEncTop->getListPic();
@@ -154,8 +154,8 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     //--Adaptive Loop filter
     m_pcSAO                = pcTEncTop->getSAO();
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
-    m_lastBPSEI            = 0;
-    m_totalCoded           = 0;
+    m_lastBPSEI          = 0;
+    m_totalCoded         = 0;
 }
 
 SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)

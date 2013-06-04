@@ -55,9 +55,7 @@ void Y4MInput::parseHeader()
         // Skip Y4MPEG string
         int byte = ifs.get();
         while (!ifs.eof() && (byte != ' ') && (byte != '\n'))
-        {
             byte = ifs.get();
-        }
 
         while (byte == ' ' && ifs)
         {
@@ -79,7 +77,6 @@ void Y4MInput::parseHeader()
                         t_width = t_width * 10 + (byte - '0');
                     }
                 }
-
                 break;
 
             case 'H':
@@ -96,7 +93,6 @@ void Y4MInput::parseHeader()
                         t_height = t_height * 10 + (byte - '0');
                     }
                 }
-
                 break;
 
             case 'F':
@@ -144,7 +140,6 @@ void Y4MInput::parseHeader()
                         t_rateNumerator = t_rateNumerator * 10 + (byte - '0');
                     }
                 }
-
                 break;
 
             default:
@@ -155,7 +150,6 @@ void Y4MInput::parseHeader()
                     if (byte == ' ' || byte == '\n')
                         break;
                 }
-
                 break;
             }
         }
@@ -179,12 +173,11 @@ static const char header[] = "FRAME";
 int Y4MInput::guessFrameCount()
 {
     istream::pos_type cur = ifs.tellg();
-
-    ifs.seekg(0, ios::end);
+    ifs.seekg (0, ios::end);
     istream::pos_type size = ifs.tellg();
-    ifs.seekg(cur, ios::beg);
+    ifs.seekg (cur, ios::beg);
 
-    return (int)((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
+    return (int) ((size - cur) / ((width * height * 3 / 2) + strlen(header) + 1));
 }
 
 void Y4MInput::skipFrames(int numFrames)
@@ -213,9 +206,7 @@ bool Y4MInput::readPicture(x265_picture_t& pic)
     /* consume bytes up to line feed */
     int byte = ifs.get();
     while (byte != '\n' && !ifs)
-    {
         byte = ifs.get();
-    }
 
     const size_t count = width * height * 3 / 2;
 

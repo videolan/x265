@@ -183,6 +183,7 @@ typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 
+
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */
@@ -192,7 +193,6 @@ struct EncoderPrimitives
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp sse[NUM_PARTITIONS];   // SSE for each size
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;

@@ -36,7 +36,7 @@ namespace x265 {
 
 //                           4   8  12  16/48   24     32/64
 static int8_t psize[16] = {  0,  1,  2,  3, -1,  4, -1, 5,
-                             -1, -1, -1,  6, -1, -1, -1, 7 };
+                            -1, -1, -1,  6, -1, -1, -1, 7 };
 int *Motion_Cost;
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
@@ -107,8 +107,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
             {
                 fprintf(stderr, "%s ", CpuType[i]);
             }
-
-            if (hasXOP()) fprintf(stderr, "XOP ");
+            if (hasXOP())  fprintf(stderr, "XOP ");
             if (hasFMA3()) fprintf(stderr, "FMA3 ");
             if (hasFMA4()) fprintf(stderr, "FMA4 ");
             fprintf(stderr, "\n");
@@ -135,6 +134,6 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 #if !defined(ENABLE_ASM_PRIMITIVES)
 extern "C"
 void x265_cpu_emms(void)
-{}
-
+{
+}
 #endif
