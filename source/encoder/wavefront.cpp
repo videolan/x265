@@ -186,11 +186,10 @@ void EncodeFrame::ProcessRow(int irow)
             codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&m_rows[irow-1].m_cBufferSbacCoder);
         }
 
-        TEncSbac &pcGoOnSBacCoder = m_rows[(m_enableWpp && m_pool->GetThreadCount() > 1) ? irow : 0].m_cRDGoOnSbacCoder;
-        codeRow.m_cEntropyCoder.setEntropyCoder(&pcGoOnSBacCoder, m_pcSlice);
+        codeRow.m_cEntropyCoder.setEntropyCoder(&codeRow.m_cRDGoOnSbacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.setBitstream(&codeRow.m_cBitCounter);
-        ((TEncBinCABAC*)pcGoOnSBacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
-        codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&pcGoOnSBacCoder);
+        ((TEncBinCABAC*)codeRow.m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
+        codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&codeRow.m_cRDGoOnSbacCoder);
 
         codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
 
