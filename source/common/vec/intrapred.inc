@@ -25,7 +25,8 @@
  *****************************************************************************/
 
 #include "primitives.h"
-#include "Lib/TLibCommon/TComPrediction.h"
+#include "TLibCommon/TComRom.h"
+#include <assert.h>
 #include <smmintrin.h>
 
 extern char g_aucConvertToBit[];

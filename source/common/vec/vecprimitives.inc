@@ -26,8 +26,6 @@
 
 #include "primitives.h"
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
 #include <smmintrin.h>
 #include <algorithm>
 #include "utils.h"
