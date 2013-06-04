@@ -237,7 +237,6 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 {
     short c[8];
 
-
     c[0] = coeff[0];
     c[1] = coeff[1];
     if (N >= 4)
@@ -268,8 +267,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
     offset = 1 << (shift - 1);
     //offset += IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << bitDepth) - 1;
-    
-    int row, col;   
+
+    int row, col;
 
     for (row = 0; row < height; row++)
     {
@@ -295,10 +294,10 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
                 sum += src[col + 7 * cStride] * c[7];
             }
 
-            short val = (short)((sum + offset) >> shift);            
-                val = (val < 0) ? 0 : val;
-                val = (val > maxVal) ? maxVal : val;
-            
+            short val = (short)((sum + offset) >> shift);
+            val = (val < 0) ? 0 : val;
+            val = (val > maxVal) ? maxVal : val;
+
             dst[col] = (pixel)val;
         }
 
@@ -306,7 +305,6 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
         dst += dstStride;
     }
 }
-
 }
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions

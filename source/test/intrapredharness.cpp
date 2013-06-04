@@ -228,7 +228,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     {
         for (int ii = 4; ii <= 16; ii <<= 1)
         {
-            for (int p = 2; p <= 34; p+=1)
+            for (int p = 2; p <= 34; p += 1)
             {
                 width = ii;
                 bool bFilter  = (width <= 16);

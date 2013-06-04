@@ -62,6 +62,7 @@ void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t s
             res[1] += abs(pix1[x] - pix3[x]);
             res[2] += abs(pix1[x] - pix4[x]);
         }
+
         pix1 += FENC_STRIDE;
         pix2 += strideCur;
         pix3 += strideCur;
@@ -85,6 +86,7 @@ void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix
             res[2] += abs(pix1[x] - pix4[x]);
             res[3] += abs(pix1[x] - pix5[x]);
         }
+
         pix1 += FENC_STRIDE;
         pix2 += strideCur;
         pix3 += strideCur;
@@ -98,16 +100,19 @@ int CDECL sse(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pi
 {
     int sum = 0;
     int iTemp;
+
     for (int y = 0; y < ly; y++)
     {
         for (int x = 0; x < lx; x++)
         {
             iTemp = pix1[x] - pix2[x];
-            sum += (iTemp * iTemp);            
+            sum += (iTemp * iTemp);
         }
+
         pix1 += stride_pix1;
         pix2 += stride_pix2;
     }
+
     return sum;
 }
 
@@ -292,18 +297,30 @@ int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i
 int CDECL pixel_sa8d_32x32(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = 0;
+
     for (int y = 0; y < 32; y += 8)
+    {
         for (int x = 0; x < 32; x += 8)
+        {
             sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
+        }
+    }
+
     return (sum + 2) >> 2;
 }
 
 int CDECL pixel_sa8d_64x64(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = 0;
+
     for (int y = 0; y < 64; y += 8)
+    {
         for (int x = 0; x < 64; x += 8)
+        {
             sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
+        }
+    }
+
     return (sum + 2) >> 2;
 }
 
@@ -312,7 +329,9 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
+        {
             a[x] = b[x];
+        }
 
         a += stridea;
         b += strideb;
@@ -324,7 +343,9 @@ void CDECL blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
+        {
             a[x] = (short)b[x];
+        }
 
         a += stridea;
         b += strideb;
@@ -336,7 +357,9 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, i
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
+        {
             a[x] = (pixel)b[x];
+        }
 
         a += stridea;
         b += strideb;
@@ -348,7 +371,9 @@ void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b,
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
+        {
             a[x] = (short)b[x];
+        }
 
         a += stridea;
         b += strideb;
@@ -571,7 +596,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_48x32] = sad_x3<48, 32>;
     p.sad_x3[PARTITION_48x48] = sad_x3<48, 48>;
     p.sad_x3[PARTITION_48x64] = sad_x3<48, 64>;
-    
+
     p.sad_x3[PARTITION_64x4]  = sad_x3<64, 4>;
     p.sad_x3[PARTITION_64x8]  = sad_x3<64, 8>;
     p.sad_x3[PARTITION_64x12] = sad_x3<64, 12>;
@@ -580,7 +605,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x3[PARTITION_64x32] = sad_x3<64, 32>;
     p.sad_x3[PARTITION_64x48] = sad_x3<64, 48>;
     p.sad_x3[PARTITION_64x64] = sad_x3<64, 64>;
-    
+
     // sad_x4
     p.sad_x4[PARTITION_4x4]   = sad_x4<4, 4>;
     p.sad_x4[PARTITION_4x8]   = sad_x4<4, 8>;

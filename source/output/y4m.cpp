@@ -58,23 +58,34 @@ bool Y4MOutput::writePicture(const x265_picture_t& pic)
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
-                buf[j] = (char) Y[j];
+            {
+                buf[j] = (char)Y[j];
+            }
+
             ofs.write(buf, width);
             Y += pic.stride[0];
         }
+
         short *U = (short*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)
-                buf[j] = (char) U[j];
+            {
+                buf[j] = (char)U[j];
+            }
+
             ofs.write(buf, width >> 1);
             U += pic.stride[1];
         }
+
         short *V = (short*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {
             for (int j = 0; j < width >> 1; j++)
-                buf[j] = (char) V[j];
+            {
+                buf[j] = (char)V[j];
+            }
+
             ofs.write(buf, width >> 1);
             V += pic.stride[2];
         }
@@ -87,12 +98,14 @@ bool Y4MOutput::writePicture(const x265_picture_t& pic)
             ofs.write(Y, width);
             Y += pic.stride[0];
         }
+
         char *U = (char*)pic.planes[1];
         for (int i = 0; i < height >> 1; i++)
         {
             ofs.write(U, width >> 1);
             U += pic.stride[1];
         }
+
         char *V = (char*)pic.planes[2];
         for (int i = 0; i < height >> 1; i++)
         {

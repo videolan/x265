@@ -36,9 +36,9 @@ namespace {
 // each of these headers implements a portion of the performance
 // primitives and declares a Setup_Vec_FOOPrimitves() method.
 #if HIGH_BIT_DEPTH
-    #include "pixel16.inc"
+#include "pixel16.inc"
 #else
-    #include "pixel8.inc"
+#include "pixel8.inc"
 #endif
 }
 

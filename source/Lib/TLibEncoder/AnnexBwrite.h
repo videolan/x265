@@ -87,4 +87,4 @@ static std::vector<UInt> writeAnnexB(std::ostream& out, const AccessUnit& au)
 
 //! \}
 
-#endif
+#endif // ifndef _ANNEXBWRITE_

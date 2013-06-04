@@ -129,9 +129,13 @@ protected:
     UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1]; //th array bounds
 
 public:
+
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+
     Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
+
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
+
     Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
 
     TEncSearch();
@@ -260,17 +264,17 @@ protected:
                                 UInt        uiChromaId,
                                 Int         default0Save1Load2 = 0);
 
-    Void  xRecurIntraCodingQT(TComDataCU *  pcCU,
+    Void  xRecurIntraCodingQT(TComDataCU * pcCU,
                               UInt         uiTrDepth,
                               UInt         uiAbsPartIdx,
                               Bool         bLumaOnly,
-                              TComYuv *     pcOrgYuv,
-                              TComYuv *     pcPredYuv,
-                              TShortYUV *   pcResiYuv,
-                              UInt &        ruiDistY,
-                              UInt &        ruiDistC,
-                              Bool          bCheckFirst,
-                              Double &      dRDCost);
+                              TComYuv *    pcOrgYuv,
+                              TComYuv *    pcPredYuv,
+                              TShortYUV *  pcResiYuv,
+                              UInt &       ruiDistY,
+                              UInt &       ruiDistC,
+                              Bool         bCheckFirst,
+                              Double &     dRDCost);
 
     Void  xSetIntraResultQT(TComDataCU* pcCU,
                             UInt        uiTrDepth,

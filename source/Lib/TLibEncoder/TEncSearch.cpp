@@ -334,7 +334,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     }
 
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-    
+
     //UInt mvcost_hm = m_pcRdCost->getCost(iSearchX, iSearchY);
     UInt mvcost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
     uiSad += mvcost;
@@ -1317,6 +1317,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
     Int isIntraSlice = (pcCU->getSlice()->getSliceType() == I_SLICE);
     // don't check split if TU size is less or equal to max TU size
     Bool noSplitIntraMaxTuSize = bCheckFull;
+
     if (m_pcEncCfg->getRDpenalty() && !isIntraSlice)
     {
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
@@ -2342,6 +2343,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
     x265::pixelcmp sa8d;
+
     // TODO: Use a table lookup here
     switch (uiWidth)
     {
@@ -3055,7 +3057,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     pcCU->getTotalBits() = 0;
 #endif
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
-    {    
+    {
         UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
         UInt          uiCostBi  = MAX_UINT;
         UInt          uiCostTemp;
@@ -4143,7 +4145,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
             + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCbAddr(),   rpcYuvRec->getCStride(), pcYuvOrg->getCbAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1, TEXT_CHROMA_U)
             + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCrAddr(),   rpcYuvRec->getCStride(), pcYuvOrg->getCrAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1, TEXT_CHROMA_V);
 
- #if !FAST_MODE_DECISION
+#if !FAST_MODE_DECISION
         m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
         m_pcEntropyCoder->resetBits();
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
@@ -4155,13 +4157,13 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
-#else
+#else // if !FAST_MODE_DECISION
         uiBits = 0;
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             uiBits++; //TransquantBypassFlag, FL = 1
         uiBits++; //Skip Flag, fixed length = 1
-        uiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index 
-#endif
+        uiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index
+#endif // if !FAST_MODE_DECISION
 
         pcCU->getTotalBits()       = uiBits;
         pcCU->getTotalDistortion() = uiDistortion;
@@ -5236,9 +5238,8 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             ruiBits++; //TransquantBypassFlag, FL = 1
         ruiBits++; //Skip Flag, fixed length = 1
-        ruiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index 
-#endif
-
+        ruiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index
+#endif // if !FAST_MODE_DECISION
     }
     else
     {

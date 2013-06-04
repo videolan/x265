@@ -131,16 +131,16 @@ public:
 
     // transform & inverse transform functions
     Void transformNxN(TComDataCU * pcCU,
-                      Short *        pcResidual,
-                      UInt        uiStride,
+                      Short *      pcResidual,
+                      UInt         uiStride,
                       TCoeff *     rpcCoeff,
-                      Int * &rpcArlCoeff,
-                      UInt        uiWidth,
-                      UInt        uiHeight,
+                      Int * &      rpcArlCoeff,
+                      UInt         uiWidth,
+                      UInt         uiHeight,
                       UInt &       uiAbsSum,
-                      TextType    eTType,
-                      UInt        uiAbsPartIdx,
-                      Bool        useTransformSkip = false);
+                      TextType     eTType,
+                      UInt         uiAbsPartIdx,
+                      Bool         useTransformSkip = false);
 
     Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
     Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
@@ -243,24 +243,24 @@ private:
     Void xQuant(TComDataCU * pcCU,
                 Int *        pSrc,
                 TCoeff *     pDes,
-                Int *       &pArlDes,
-                Int         iWidth,
-                Int         iHeight,
-                UInt &      uiAcSum,
-                TextType    eTType,
-                UInt        uiAbsPartIdx);
+                Int * &      pArlDes,
+                Int          iWidth,
+                Int          iHeight,
+                UInt &       uiAcSum,
+                TextType     eTType,
+                UInt         uiAbsPartIdx);
 
     // RDOQ functions
 
-    Void           xRateDistOptQuant(TComDataCU *                     pcCU,
-                                     Int *                            plSrcCoeff,
-                                     TCoeff *                         piDstCoeff,
-                                     Int *                           &piArlDstCoeff,
-                                     UInt                            uiWidth,
-                                     UInt                            uiHeight,
-                                     UInt &                          uiAbsSum,
-                                     TextType                        eTType,
-                                     UInt                            uiAbsPartIdx);
+    Void           xRateDistOptQuant(TComDataCU * pcCU,
+                                     Int *        plSrcCoeff,
+                                     TCoeff *     piDstCoeff,
+                                     Int * &      piArlDstCoeff,
+                                     UInt         uiWidth,
+                                     UInt         uiHeight,
+                                     UInt &       uiAbsSum,
+                                     TextType     eTType,
+                                     UInt         uiAbsPartIdx);
 
     __inline UInt              xGetCodedLevel(Double& rd64CodedCost,
                                               Double& rd64CodedCost0,

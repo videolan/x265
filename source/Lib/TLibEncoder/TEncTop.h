@@ -97,7 +97,6 @@ private:
     TEncBinCABACCounter**** m_ppppcBinCodersCABAC;        ///< temporal CABAC state storage for RD computation per substream
     TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;     ///< going on bin coder CABAC for RD stage per substream
 
-
     TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
     TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
 

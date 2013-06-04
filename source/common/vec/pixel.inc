@@ -26,22 +26,22 @@
 // Vector class versions of pixel comparison performance primitives
 
 namespace {
-
 /* File for pixels type-neutral code */
 
 void CDECL convert16to32(short *psOrg, int *piDst, int num)
 {
     int i;
-    for( i=0; i<num; i+=8 )
+
+    for (i = 0; i < num; i += 8)
     {
         Vec8s im16;
         Vec4i im32L, im32H;
 
         im16.load(psOrg);
-        im32L = extend_low (im16);
+        im32L = extend_low(im16);
         im32H = extend_high(im16);
-        im32L.store(piDst  );
-        im32H.store(piDst+4);
+        im32L.store(piDst);
+        im32H.store(piDst + 4);
 
         psOrg += 8;
         piDst += 8;
@@ -51,7 +51,8 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
 void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
 {
     int i;
-    for( i=0; i<num; i+=8 )
+
+    for (i = 0; i < num; i += 8)
     {
         Vec8s im16;
         Vec4i im32;
@@ -68,13 +69,14 @@ void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
 void CDECL convert32to16(int *psOrg, short *piDst, int num)
 {
     int i;
-    for( i=0; i<num; i+=8 )
+
+    for (i = 0; i < num; i += 8)
     {
         Vec4i im32L, im32H;
         Vec8s im16;
 
-        im32L.load(psOrg  );
-        im32H.load(psOrg+4);
+        im32L.load(psOrg);
+        im32H.load(psOrg + 4);
         im16 = compress_saturated(im32L, im32H);
         im16.store(piDst);
 
@@ -86,8 +88,9 @@ void CDECL convert32to16(int *psOrg, short *piDst, int num)
 void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 {
     int i;
-    Vec4i round = _mm_set1_epi32(1 << (shift-1));
-    for( i=0; i<num; i+=4 )
+    Vec4i round = _mm_set1_epi32(1 << (shift - 1));
+
+    for (i = 0; i < num; i += 4)
     {
         Vec4i im32;
         Vec8s im16;

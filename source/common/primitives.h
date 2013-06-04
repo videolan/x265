@@ -183,7 +183,6 @@ typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 
-
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
  * a vectorized primitive, or a C function. */

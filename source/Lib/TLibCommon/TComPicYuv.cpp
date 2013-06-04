@@ -268,7 +268,7 @@ Void TComPicYuv::extendPicBorder()
     generateLumaHQpel();
 
     //Copy entire luma block to m_filteredBlockBufY[0][0]. No need to call filter
-    memcpy(m_filteredBlockBufY[0][0], m_apiPicBufY, ((m_iPicWidth + (m_iLumaMarginX << 1)) * (m_iPicHeight + (m_iLumaMarginY << 1)) )*sizeof(Pel));
+    memcpy(m_filteredBlockBufY[0][0], m_apiPicBufY, ((m_iPicWidth + (m_iLumaMarginX << 1)) * (m_iPicHeight + (m_iLumaMarginY << 1))) * sizeof(Pel));
 
     //Extend border.
     int tmpMargin = 4;
