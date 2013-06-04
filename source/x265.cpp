@@ -424,7 +424,6 @@ int main(int argc, char **argv)
     x265_param_t param;
     CLIOptions   cliopt;
 
-    // TODO: needs proper logging file handle with log levels, etc
     if (cliopt.parse(argc, argv, &param))
         exit(1);
 
