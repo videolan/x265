@@ -1814,7 +1814,6 @@ int sse_24(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
     return horizontal_add(sum_low) + horizontal_add(sum_high);
 }
 
-
 template<int ly>
 int sse_32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur)
 {
