@@ -35,6 +35,7 @@ void CTURow::create(TEncTop* top)
     m_cSearch.init(top, &m_cRdCost);
     m_cCuEncoder.create((UChar) g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
     m_cCuEncoder.init(top);
+    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
     if (top->getUseAdaptiveQP())
     {
         m_cTrQuant.initSliceQpDelta();
@@ -193,6 +194,7 @@ void EncodeFrame::ProcessRow(int irow)
         codeRow.m_cCuEncoder.set_pcPredSearch(&codeRow.m_cSearch);
         codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&pcGoOnSBacCoder);
         codeRow.m_cCuEncoder.set_pcTrQuant(&codeRow.m_cTrQuant);
+        codeRow.m_cCuEncoder.set_pcRdCost(&codeRow.m_cRdCost);
 
         codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
 

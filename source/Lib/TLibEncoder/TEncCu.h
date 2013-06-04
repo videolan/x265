@@ -110,6 +110,7 @@ public:
     Void set_pcPredSearch(TEncSearch* pcPredSearch) { m_pcPredSearch = pcPredSearch; }
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
     Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
+    Void set_pcRdCost(TComRdCost* pcRdCost) { m_pcRdCost = pcRdCost; }
 
     /// copy parameters from encoder class
     Void  init(TEncTop* pcEncTop);

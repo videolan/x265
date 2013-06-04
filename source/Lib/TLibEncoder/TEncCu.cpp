@@ -357,15 +357,13 @@ Void TEncCu::init(TEncTop* pcEncTop)
     m_pcEncCfg           = pcEncTop;
     m_pcPredSearch       = NULL;
     m_pcTrQuant          = NULL;
-    m_pcBitCounter       = pcEncTop->getBitCounter();
-    m_pcRdCost           = pcEncTop->getRdCost();
-
+    m_pcRdCost           = NULL;
     m_pcEntropyCoder     = NULL;
+    m_pppcRDSbacCoder    = NULL;
+    m_pcRDGoOnSbacCoder  = NULL;
 
-    m_pppcRDSbacCoder   = NULL;
-    m_pcRDGoOnSbacCoder = NULL;
-
-    m_pcRateCtrl        = pcEncTop->getRateCtrl();
+    m_pcBitCounter       = pcEncTop->getBitCounter();
+    m_pcRateCtrl         = pcEncTop->getRateCtrl();
 }
 
 // ====================================================================================================================
