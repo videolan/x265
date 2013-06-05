@@ -282,11 +282,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* p
 {
     DistParamSSE cDtParam;
 
-    cDtParam.iCols    = uiBlkWidth;
-    cDtParam.iRows    = uiBlkHeight;
-    cDtParam.DistFunc = m_afpDistortFunc[DF_SSE + g_aucConvertToBit[cDtParam.iCols] + 1];
-    cDtParam.iSubShift  = 0;
-
+    setDistParam(uiBlkWidth, uiBlkHeight, DF_SSE, cDtParam);
     cDtParam.pOrg       = NULL;
     cDtParam.pCur       = piCur;
     cDtParam.ptr1       = piOrg;
@@ -318,11 +314,7 @@ UInt TComRdCost::getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short*
 {
     DistParamSSE cDtParam;
 
-    cDtParam.iCols    = uiBlkWidth;
-    cDtParam.iRows    = uiBlkHeight;
-    cDtParam.DistFunc = m_afpDistortFunc[DF_SSE + g_aucConvertToBit[cDtParam.iCols] + 1];
-    cDtParam.iSubShift  = 0;
-
+    setDistParam(uiBlkWidth, uiBlkHeight, DF_SSE, cDtParam);
     cDtParam.pOrg       = NULL;
     cDtParam.pCur       = NULL;
     cDtParam.ptr1       = piOrg;
