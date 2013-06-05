@@ -1659,7 +1659,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     rpcTempCU->setSkipFlagSubParts(rpcTempCU->getQtRootCbf(0) == 0, 0, uhDepth);
                     Int orgQP = rpcTempCU->getQP(0);
                     xCheckDQP(rpcTempCU);
-                    xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
+                    xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth, true);
                     rpcTempCU->initEstData(uhDepth, orgQP);
 
                     if (m_pcEncCfg->getUseFastDecisionForMerge() && !bestIsSkip)
@@ -1929,12 +1929,13 @@ Void TEncCu::xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU)
  * \param rpcTempCU
  * \returns Void
  */
-Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, float lambda)
+Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, bool isMerge)
 {
-    if (rpcTempCU->getTotalCost() < lambda*rpcBestCU->getTotalCost())
+    if (rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
     {
 #if FAST_MODE_DECISION
-        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvTemp[uiDepth], false);
+        if(!isMerge)
+            m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvTemp[uiDepth], false);
 #endif
 
         TComYuv* pcYuv;
