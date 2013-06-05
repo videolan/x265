@@ -34,7 +34,7 @@ void CTURow::create(TEncTop* top)
     m_cSbacCoder.init(&m_cBinCoderCABAC);
     m_cSearch.init(top, &m_cRdCost);
 
-    m_cCuEncoder.create((UChar) g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
+    m_cCuEncoder.create((UChar)g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
     m_cCuEncoder.init(top);
 
     if (top->getUseAdaptiveQP())
@@ -44,8 +44,8 @@ void CTURow::create(TEncTop* top)
     m_cTrQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(), true,
                     top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
 
-    m_pppcRDSbacCoders = new TEncSbac**[g_uiMaxCUDepth + 1];
-    m_pppcBinCodersCABAC = new TEncBinCABACCounter**[g_uiMaxCUDepth + 1];
+    m_pppcRDSbacCoders = new TEncSbac * *[g_uiMaxCUDepth + 1];
+    m_pppcBinCodersCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
 
     for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
     {
@@ -78,11 +78,13 @@ void CTURow::destroy()
             delete m_pppcBinCodersCABAC[iDepth][iCIIdx];
         }
     }
+
     for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
     {
         delete [] m_pppcRDSbacCoders[iDepth];
         delete [] m_pppcBinCodersCABAC[iDepth];
     }
+
     delete[] m_pppcRDSbacCoders;
     delete[] m_pppcBinCodersCABAC;
     m_cCuEncoder.destroy();
@@ -95,8 +97,7 @@ EncodeFrame::EncodeFrame(ThreadPool* pool)
     , m_pcSlice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-{
-}
+{}
 
 void EncodeFrame::destroy()
 {
@@ -108,6 +109,7 @@ void EncodeFrame::destroy()
         {
             m_rows[i].destroy();
         }
+
         delete[] m_rows;
     }
 }
@@ -131,7 +133,6 @@ void EncodeFrame::create(TEncTop *top)
         throw;
     }
 }
-
 
 void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
 {
@@ -157,7 +158,6 @@ void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
     QueueFrame::Dequeue();
 }
 
-
 void EncodeFrame::ProcessRow(int irow)
 {
     // Called by worker threads
@@ -167,7 +167,7 @@ void EncodeFrame::ProcessRow(int irow)
     CTURow& curRow  = m_rows[irow];
     CTURow& codeRow = m_rows[m_enableWpp ? irow : 0];
 
-    for(UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
+    for (UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
     {
         const uint32_t uiCUAddr = lineStartCUAddr + uiCol;
         TComDataCU* pcCU = m_pic->getCU(uiCUAddr);
@@ -183,7 +183,7 @@ void EncodeFrame::ProcessRow(int irow)
         if (m_enableWpp && uiCol == 0 && irow > 0)
         {
             // Load SBAC coder context from previous row.
-            codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&m_rows[irow-1].m_cBufferSbacCoder);
+            codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&m_rows[irow - 1].m_cBufferSbacCoder);
         }
 
         codeRow.m_cEntropyCoder.setEntropyCoder(&codeRow.m_cRDGoOnSbacCoder, m_pcSlice);
