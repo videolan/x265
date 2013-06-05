@@ -91,24 +91,21 @@ const int angAP[17][64] =
 
 #define GETAP(X, Y) angAP[8 - (X)][(Y)]
 
-#if _MSC_VER
-#pragma warning(disable: 4268) // '`anonymous-namespace'::v_multiL' : 'const' static/global data initialized with compiler generated default constructor fills the object with zeros
-#endif
-const __m128i v_multiL, v_multiH, v_multiH2, v_multiH3, v_multiH4, v_multiH5, v_multiH6, v_multiH7;
+__m128i v_multiL, v_multiH, v_multiH2, v_multiH3, v_multiH4, v_multiH5, v_multiH6, v_multiH7;
 
 /* When compiled with /arch:AVX, this code is not safe to run on non-AVX CPUs and
  * thus we cannot use static initialization.  This routine is only called if the
  * detected CPU can support this SIMD architecture. */
 static void initFileStaticVars()
 {
-    *const_cast<__m128i*>(&v_multiL) = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
-    *const_cast<__m128i*>(&v_multiH) = _mm_setr_epi16(9, 10, 11, 12, 13, 14, 15, 16);
-    *const_cast<__m128i*>(&v_multiH2) = _mm_setr_epi16(17, 18, 19, 20, 21, 22, 23, 24);
-    *const_cast<__m128i*>(&v_multiH3) = _mm_setr_epi16(25, 26, 27, 28, 29, 30, 31, 32);
-    *const_cast<__m128i*>(&v_multiH4) = _mm_setr_epi16(33, 34, 35, 36, 37, 38, 39, 40);
-    *const_cast<__m128i*>(&v_multiH5) = _mm_setr_epi16(41, 42, 43, 44, 45, 46, 47, 48);
-    *const_cast<__m128i*>(&v_multiH6) = _mm_setr_epi16(49, 50, 51, 52, 53, 54, 55, 56);
-    *const_cast<__m128i*>(&v_multiH7) = _mm_setr_epi16(57, 58, 59, 60, 61, 62, 63, 64);
+    v_multiL = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
+    v_multiH = _mm_setr_epi16(9, 10, 11, 12, 13, 14, 15, 16);
+    v_multiH2 = _mm_setr_epi16(17, 18, 19, 20, 21, 22, 23, 24);
+    v_multiH3 = _mm_setr_epi16(25, 26, 27, 28, 29, 30, 31, 32);
+    v_multiH4 = _mm_setr_epi16(33, 34, 35, 36, 37, 38, 39, 40);
+    v_multiH5 = _mm_setr_epi16(41, 42, 43, 44, 45, 46, 47, 48);
+    v_multiH6 = _mm_setr_epi16(49, 50, 51, 52, 53, 54, 55, 56);
+    v_multiH7 = _mm_setr_epi16(57, 58, 59, 60, 61, 62, 63, 64);
 }
 
 static inline
