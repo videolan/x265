@@ -687,7 +687,7 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
         m_cDistParam.pCur = piRefPos;
         m_cDistParam.bitDepth = g_bitDepthY;
         uiDist = m_cDistParam.DistFunc(&m_cDistParam);
-        uiDist += m_pcRdCost->getCost(cMvTest.getHor(), cMvTest.getVer());
+        uiDist += m_bc.mvcost(cMvTest * iFrac);
 
         if (uiDist < uiDistBest)
         {
@@ -3894,9 +3894,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
 
             m_cDistParam.bitDepth = g_bitDepthY;
             uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-
-            // motion cost
-            uiSad += m_pcRdCost->getCost(x, y);
+            uiSad += m_bc.mvcost(MV(x,y)<<2);
 
             if (uiSad < uiSadBest)
             {
@@ -3911,7 +3909,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
 
     rcMv.set(iBestX, iBestY);
 
-    ruiSAD = uiSadBest - m_pcRdCost->getCost(iBestX, iBestY);
+    ruiSAD = uiSadBest - m_bc.mvcost(rcMv << 2);
 }
 
 Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
@@ -4073,7 +4071,7 @@ Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piR
 
     // write out best match
     rcMv.set(cStruct.iBestX, cStruct.iBestY);
-    ruiSAD = cStruct.uiBestSad - m_pcRdCost->getCost(cStruct.iBestX, cStruct.iBestY);
+    ruiSAD = cStruct.uiBestSad - m_bc.mvcost(rcMv << 2);
 }
 
 Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
@@ -4083,8 +4081,10 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
                                        TComMv* pcMvInt,
                                        TComMv& rcMvHalf,
                                        TComMv& rcMvQter,
-                                       UInt& ruiCost
-                                       , Bool biPred, TComPicYuv * refPic, UInt uiPartAddr
+                                       UInt& ruiCost,
+                                       Bool biPred,
+                                       TComPicYuv * refPic,
+                                       UInt uiPartAddr
                                        )
 {
     Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
