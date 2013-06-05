@@ -951,7 +951,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     UInt    uiStride          = pcOrgYuv->getStride();
     Pel*    piOrg             = pcOrgYuv->getLumaAddr(uiAbsPartIdx);
     Pel*    piPred            = pcPredYuv->getLumaAddr(uiAbsPartIdx);
-    Short*    piResi            = pcResiYuv->getLumaAddr(uiAbsPartIdx);
+    Short*  piResi            = pcResiYuv->getLumaAddr(uiAbsPartIdx);
     Pel*    piReco            = pcPredYuv->getLumaAddr(uiAbsPartIdx);
 
     UInt    uiLog2TrSize      = g_aucConvertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
@@ -960,7 +960,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     TCoeff* pcCoeff           = m_ppcQTTempCoeffY[uiQTLayer] + uiNumCoeffPerInc * uiAbsPartIdx;
 
     Int*    pcArlCoeff        = m_ppcQTTempArlCoeffY[uiQTLayer] + uiNumCoeffPerInc * uiAbsPartIdx;
-    Short*    piRecQt           = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
+    Short*  piRecQt           = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
     UInt    uiRecQtStride     = m_pcQTTempTComYuv[uiQTLayer].getStride();
 
     UInt    uiZOrder          = pcCU->getZorderIdxInCU() + uiAbsPartIdx;
@@ -1072,11 +1072,11 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     //===== reconstruction =====
     {
-        Pel* pPred      = piPred;
+        Pel*   pPred      = piPred;
         Short* pResi      = piResi;
-        Pel* pReco      = piReco;
+        Pel*   pReco      = piReco;
         Short* pRecQt     = piRecQt;
-        Pel* pRecIPred  = piRecIPred;
+        Pel*   pRecIPred  = piRecIPred;
         //TODO : performance primitive?
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
