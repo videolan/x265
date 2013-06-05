@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include "x265.h"
 
-#define CU_STAT_LOGFILE 1
+#define CU_STAT_LOGFILE 0
 
 // ====================================================================================================================
 // Platform information
