@@ -165,9 +165,6 @@ class TComRdCost
 private:
 
     // for distortion
-    Int                     m_iBlkWidth;
-    Int                     m_iBlkHeight;
-
     FpDistFunc              m_afpDistortFunc[64]; // [eDFunc]
 
     Double                  m_cbDistortionWeight;
