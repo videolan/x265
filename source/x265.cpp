@@ -512,8 +512,5 @@ int main(int argc, char **argv)
 #if CU_STAT_LOGFILE
     fclose(fp);
 #endif
-#if CU_STAT_LOGFILE
-    fclose(fp);
-#endif
     return 0;
 }
