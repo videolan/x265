@@ -373,7 +373,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
 
 /** \param  rpcCU pointer of CU data class
  */
-#if LOGGING
+#if CU_STAT_LOGFILE
 extern int totalCU;
 extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
 extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
@@ -386,7 +386,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     // initialize CU data
     m_ppcBestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
     m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
-#if LOGGING
+#if CU_STAT_LOGFILE
     totalCU++;
 #endif
     //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
@@ -505,7 +505,7 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
 
 Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
 {
-#if LOGGING
+#if CU_STAT_LOGFILE
     cntTotalCu[uiDepth]++;
     int boundaryCu = 0;
 #endif
@@ -586,7 +586,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
-#if LOGGING
+#if CU_STAT_LOGFILE
             cntSkipCu[uiDepth]++;
 #endif
             bSubBranch = false;
@@ -645,7 +645,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             {
                 pcSubBestPartCU[uiPartUnitIdx]->copyToPic(uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth);
-#if LOGGING
+#if CU_STAT_LOGFILE
                 boundaryCu++;
 #endif
             }
@@ -696,7 +696,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-#if LOGGING
+#if CU_STAT_LOGFILE
         if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
             cntIntra[uiDepth]++;
@@ -707,7 +707,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         // with sub partitioned prediction.
     }
 
-#if LOGGING
+#if CU_STAT_LOGFILE
     if (uiDepth == 3 && bSubBranch)
     {
         cntIntra[uiDepth]++;
@@ -731,7 +731,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 #if 0 //EARLY_PARTITION_DECISION - This snippet of code works only temporarily. TComDataCU needs to be revamped to measure costs across partitions reliably.
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU, UInt uiDepth, UInt PartitionIndex, PartSize eParentPartSize)
 {
-#if LOGGING
+#if CU_STAT_LOGFILE
     cntTotalCu[uiDepth]++;
     int boundaryCu = 0;
 #endif
@@ -860,7 +860,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
-#if LOGGING
+#if CU_STAT_LOGFILE
             cntSkipCu[uiDepth]++;
 #endif
             bSubBranch = false;
@@ -964,7 +964,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             {
                 pcSubBestPartCU[uiPartUnitIdx]->copyToPic(uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth);
-#if LOGGING
+#if CU_STAT_LOGFILE
                 boundaryCu++;
 #endif
             }
@@ -1015,7 +1015,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         }
 
         m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-#if LOGGING
+#if CU_STAT_LOGFILE
         if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
             cntIntra[uiDepth]++;
@@ -1026,7 +1026,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // with sub partitioned prediction.
     }
 
-#if LOGGING
+#if CU_STAT_LOGFILE
     if (uiDepth == 3 && bSubBranch)
     {
         cntIntra[uiDepth]++;
@@ -1050,7 +1050,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 #else // if 0
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, UInt /*uiPartUnitIdx*/, PartSize eParentPartSize)
 {
-#if LOGGING
+#if CU_STAT_LOGFILE
     cntTotalCu[uiDepth]++;
 #endif
     m_abortFlag = false;
@@ -1299,7 +1299,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
-#if LOGGING
+#if CU_STAT_LOGFILE
             cntSkipCu[uiDepth]++;
 #endif
             bSubBranch = false;
@@ -1413,7 +1413,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         }
 
         m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-#if  LOGGING
+#if  CU_STAT_LOGFILE
         if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
             if (rpcBestCU->getPredictionMode(0) == MODE_INTER)
@@ -1449,7 +1449,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
         // with sub partitioned prediction.
     }
-#if LOGGING
+#if CU_STAT_LOGFILE
     if (uiDepth == 3)
     {
         if (!rpcBestCU->isSkipped(0))
