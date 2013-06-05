@@ -108,22 +108,6 @@ Void TComRdCost::init()
     m_iCostScale              = 0;
 }
 
-UInt TComRdCost::xGetComponentBits(Int iVal)
-{
-    UInt uiLength = 1;
-    UInt uiTemp   = (iVal <= 0) ? (-iVal << 1) + 1 : (iVal << 1);
-
-    assert(uiTemp);
-
-    while (1 != uiTemp)
-    {
-        uiTemp >>= 1;
-        uiLength += 2;
-    }
-
-    return uiLength;
-}
-
 Void TComRdCost::setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam)
 {
     // set Block Width / Height
