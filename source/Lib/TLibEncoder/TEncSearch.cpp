@@ -333,11 +333,8 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
         m_cDistParam.DistFunc = m_afpDistortFunc[45];
     }
 
-    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-
-    //UInt mvcost_hm = m_pcRdCost->getCost(iSearchX, iSearchY);
-    UInt mvcost = m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
-    uiSad += mvcost;
+    uiSad = m_cDistParam.DistFunc(&m_cDistParam) +
+            m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
 
     if (uiSad < rcStruct.uiBestSad)
     {
