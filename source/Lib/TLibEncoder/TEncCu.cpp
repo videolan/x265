@@ -78,16 +78,16 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcPredYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
-    
+
     m_RecoYuvNxN[0] = new TComYuv*[m_uhTotalDepth - 1];
     m_RecoYuvNxN[1] = new TComYuv*[m_uhTotalDepth - 1];
     m_RecoYuvNxN[2] = new TComYuv*[m_uhTotalDepth - 1];
     m_RecoYuvNxN[3] = new TComYuv*[m_uhTotalDepth - 1];
-    
+
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
     UInt uiNumPartitions;
-    
+
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
         uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
@@ -155,25 +155,25 @@ Void TEncCu::destroy()
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
-        if(m_NxNCU[0][i])
+        if (m_NxNCU[0][i])
         {
             m_NxNCU[0][i]->destroy();
             delete m_NxNCU[0][i];
             m_NxNCU[0][i] = NULL;
         }
-        if(m_NxNCU[1][i])
+        if (m_NxNCU[1][i])
         {
             m_NxNCU[1][i]->destroy();
             delete m_NxNCU[1][i];
             m_NxNCU[1][i] = NULL;
         }
-        if(m_NxNCU[2][i])
+        if (m_NxNCU[2][i])
         {
             m_NxNCU[2][i]->destroy();
             delete m_NxNCU[2][i];
             m_NxNCU[2][i] = NULL;
         }
-        if(m_NxNCU[3][i])
+        if (m_NxNCU[3][i])
         {
             m_NxNCU[3][i]->destroy();
             delete m_NxNCU[3][i];
@@ -228,25 +228,25 @@ Void TEncCu::destroy()
             delete m_ppcRecoYuvTemp[i];
             m_ppcRecoYuvTemp[i] = NULL;
         }
-        if(m_RecoYuvNxN[0][i])
+        if (m_RecoYuvNxN[0][i])
         {
             m_RecoYuvNxN[0][i]->destroy();
             delete m_RecoYuvNxN[0][i];
             m_RecoYuvNxN[0][i] = NULL;
         }
-        if(m_RecoYuvNxN[1][i])
+        if (m_RecoYuvNxN[1][i])
         {
             m_RecoYuvNxN[1][i]->destroy();
             delete m_RecoYuvNxN[1][i];
             m_RecoYuvNxN[1][i] = NULL;
         }
-        if(m_RecoYuvNxN[2][i])
+        if (m_RecoYuvNxN[2][i])
         {
             m_RecoYuvNxN[2][i]->destroy();
             delete m_RecoYuvNxN[2][i];
             m_RecoYuvNxN[2][i] = NULL;
         }
-        if(m_RecoYuvNxN[3][i])
+        if (m_RecoYuvNxN[3][i])
         {
             m_RecoYuvNxN[3][i]->destroy();
             delete m_RecoYuvNxN[3][i];
@@ -261,25 +261,25 @@ Void TEncCu::destroy()
         }
     }
 
-    if(m_NxNCU[0])
+    if (m_NxNCU[0])
     {
-        delete []m_NxNCU[0];
+        delete [] m_NxNCU[0];
         m_NxNCU[0] = NULL;
     }
 
-    if(m_NxNCU[1])
+    if (m_NxNCU[1])
     {
-        delete []m_NxNCU[1];
+        delete [] m_NxNCU[1];
         m_NxNCU[1] = NULL;
     }
-    if(m_NxNCU[2])
+    if (m_NxNCU[2])
     {
-        delete []m_NxNCU[2];
+        delete [] m_NxNCU[2];
         m_NxNCU[2] = NULL;
     }
-    if(m_NxNCU[3])
+    if (m_NxNCU[3])
     {
-        delete []m_NxNCU[3];
+        delete [] m_NxNCU[3];
         m_NxNCU[3] = NULL;
     }
     if (m_ppcBestCU)
@@ -373,10 +373,10 @@ Void TEncCu::init(TEncTop* pcEncTop)
 /** \param  rpcCU pointer of CU data class
  */
 #if LOGGING
-extern int totalCU ;
-extern int cntInter[4], cntIntra[4] , cntSplit[4] , cntIntraNxN;
-extern  int cuInterDistribution[4][4] , cuIntraDistribution[4][3];
-extern  int cntSkipCu[4] ,  cntTotalCu[4];
+extern int totalCU;
+extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
+extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
+extern  int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
 
 #endif
@@ -400,12 +400,11 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_pcPredSearch->set_pcTrQuant(m_pcTrQuant);
 
     // analysis of CU
-    
+
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
-
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -507,7 +506,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 {
 #if LOGGING
     cntTotalCu[uiDepth]++;
-     int boundaryCu = 0;
+    int boundaryCu = 0;
 #endif
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
@@ -519,7 +518,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
-    
+
     // variable for Early CU determination
     Bool    bSubBranch = true;
 
@@ -536,7 +535,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
 
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
-    
+
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
@@ -552,9 +551,9 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     {
         // variables for fast encoder decision
         bTrySplit    = true;
-        
+
         rpcTempCU->initEstData(uiDepth, iQP);
-                
+
         bTrySplitDQP = bTrySplit;
 
         if (uiDepth <= m_addSADDepth)
@@ -562,9 +561,9 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_LCUPredictionSAD += m_temporalSAD;
             m_addSADDepth = uiDepth;
         }
-                
-        rpcTempCU->initEstData(uiDepth, iQP);                 
-            
+
+        rpcTempCU->initEstData(uiDepth, iQP);
+
         xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
         rpcTempCU->initEstData(uiDepth, iQP);
 
@@ -575,8 +574,8 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
                 xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN);
                 rpcTempCU->initEstData(uiDepth, iQP);
             }
-        }            
-        
+        }
+
         m_pcEntropyCoder->resetBits();
         m_pcEntropyCoder->encodeSplitFlag(rpcBestCU, 0, uiDepth, true);
         rpcBestCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits(); // split bits
@@ -606,12 +605,12 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
-    {                
+    {
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
             pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
             pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
-        
+
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
@@ -651,69 +650,71 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
-    if (!bBoundary)
-    {
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
-
-        rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // split bits
-        rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    }
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
-    if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
-    {
-        Bool hasResidual = false;
-        for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
+        if (!bBoundary)
         {
-            if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+            m_pcEntropyCoder->resetBits();
+            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
+
+            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        }
+        rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        {
+            Bool hasResidual = false;
+            for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
             {
-                hasResidual = true;
-                break;
+                if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+                {
+                    hasResidual = true;
+                    break;
+                }
+            }
+
+            UInt uiTargetPartIdx;
+            uiTargetPartIdx = 0;
+            if (hasResidual)
+            {
+#if !RDO_WITHOUT_DQP_BITS
+                m_pcEntropyCoder->resetBits();
+                m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
+                rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // dQP bits
+                rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+                rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+#endif
+
+                Bool foundNonZeroCbf = false;
+                rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
+                assert(foundNonZeroCbf);
+            }
+            else
+            {
+                rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);     // set QP to default QP
             }
         }
 
-        UInt uiTargetPartIdx;
-        uiTargetPartIdx = 0;
-        if (hasResidual)
+        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+#if LOGGING
+        if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
-#if !RDO_WITHOUT_DQP_BITS
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // dQP bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-            rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+            cntIntra[uiDepth]++;
+            cntIntra[uiDepth + 1] = cntIntra[uiDepth + 1] - 4 + boundaryCu;
+        }
 #endif
-
-            Bool foundNonZeroCbf = false;
-            rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
-            assert(foundNonZeroCbf);
-        }
-        else
-        {
-            rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);         // set QP to default QP
-        }
+        xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
+        // with sub partitioned prediction.
     }
 
-    m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
 #if LOGGING
-    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost()){
-        cntIntra[uiDepth]++;
-        cntIntra[uiDepth+1]= cntIntra[uiDepth+1]-4+boundaryCu; 
-    }
-#endif
-    xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
-                                                                                // with sub partitioned prediction.
-    }
-    
-#if LOGGING
-    if(uiDepth==3 && bSubBranch){
+    if (uiDepth == 3 && bSubBranch)
+    {
         cntIntra[uiDepth]++;
     }
 #endif
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    
+
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
@@ -726,7 +727,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);
 }
 
-#if 0//EARLY_PARTITION_DECISION - This snippet of code works only temporarily. TComDataCU needs to be revamped to measure costs across partitions reliably. 
+#if 0 //EARLY_PARTITION_DECISION - This snippet of code works only temporarily. TComDataCU needs to be revamped to measure costs across partitions reliably.
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU, UInt uiDepth, UInt PartitionIndex, PartSize eParentPartSize)
 {
 #if LOGGING
@@ -743,7 +744,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
-    
+
     // variable for Early CU determination
     Bool    bSubBranch = true;
 
@@ -760,25 +761,25 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
 
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
-    
+
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     //Data for splitting
-    
+
     //We need to split; so dont try these modes
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
         bTrySplit    = true;
-        
+
         rpcTempCU->initEstData(uiDepth, iQP);
-    
-        //To-do: Check effect on early skip detection enabled/disabled. 
+
+        //To-do: Check effect on early skip detection enabled/disabled.
         // 2Nx2N
-        if (uiDepth==0)
+        if (uiDepth == 0)
         {
             xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
             rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
@@ -793,7 +794,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // SKIP
         xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
         rpcTempCU->initEstData(uiDepth, iQP);
-                
+
         bTrySplitDQP = bTrySplit;
 
         if (uiDepth <= m_addSADDepth)
@@ -805,7 +806,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         if (!earlyDetectionSkipMode)
         {
             rpcTempCU->initEstData(uiDepth, iQP);
-                        
+
             if (m_pcEncCfg->getUseRectInter())
             {
                 // 2NxN, Nx2N
@@ -827,8 +828,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                         doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
                     }
                 }
-            }                
-            
+            }
+
             // do normal intra modes
             // speedup for inter frames
             if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
@@ -881,15 +882,15 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     Double _NxNCost = 0.0;
     // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
-    {                
+    {
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
             pcSubTempPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
-        
+
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
             TComPic* pcSubPic = pcSubTempPartCU[uiPartUnitIdx]->getPic();
-            m_ppcOrigYuv[uhNextDepth]->copyFromPicYuv(pcSubPic->getPicYuvOrg(), pcSubTempPartCU[uiPartUnitIdx]->getAddr(), pcSubTempPartCU[uiPartUnitIdx] ->getZorderIdxInCU());
+            m_ppcOrigYuv[uhNextDepth]->copyFromPicYuv(pcSubPic->getPicYuvOrg(), pcSubTempPartCU[uiPartUnitIdx]->getAddr(), pcSubTempPartCU[uiPartUnitIdx]->getZorderIdxInCU());
 
             Bool bInSlice = pcSubTempPartCU[uiPartUnitIdx]->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (pcSubTempPartCU[uiPartUnitIdx]->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubTempPartCU[uiPartUnitIdx]->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
@@ -909,7 +910,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     pcSubTempPartCU[uiPartUnitIdx]->initEstData(uhNextDepth, iQP);
                     xCalcRDCostInter(pcSubTempPartCU[uiPartUnitIdx], uiPartUnitIdx, SIZE_2Nx2N);
                     _NxNCost += pcSubTempPartCU[uiPartUnitIdx]->getTotalCost();
-                }                
+                }
             }
             else if (bInSlice)
             {
@@ -918,7 +919,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-        if(rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT * _NxNCost)
+        if (rpcBestCU->getTotalCost() < LAMBDA_PARTITION_SELECT * _NxNCost)
         {
             rpcBestCU->copyToPic(uiDepth);                                            // Copy Best data to Picture for next partition prediction.
             xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);        // Copy Yuv data to picture Yuv
@@ -929,9 +930,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         {
             pcSubBestPartCU[uiPartUnitIdx]     = m_NxNCU[uiPartUnitIdx][uhNextDepth];
             pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
-        
+
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
-            
+
             Bool bInSlice = pcSubBestPartCU[uiPartUnitIdx]->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (pcSubBestPartCU[uiPartUnitIdx]->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubBestPartCU[uiPartUnitIdx]->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
@@ -968,83 +969,84 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-    if (!bBoundary)
-    {
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
-
-        rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // split bits
-        rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    }
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
-    if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
-    {
-        Bool hasResidual = false;
-        for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
+        if (!bBoundary)
         {
-            if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+            m_pcEntropyCoder->resetBits();
+            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
+
+            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        }
+        rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        {
+            Bool hasResidual = false;
+            for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
             {
-                hasResidual = true;
-                break;
+                if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+                {
+                    hasResidual = true;
+                    break;
+                }
+            }
+
+            UInt uiTargetPartIdx;
+            uiTargetPartIdx = 0;
+            if (hasResidual)
+            {
+#if !RDO_WITHOUT_DQP_BITS
+                m_pcEntropyCoder->resetBits();
+                m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
+                rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // dQP bits
+                rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+                rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+#endif
+
+                Bool foundNonZeroCbf = false;
+                rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
+                assert(foundNonZeroCbf);
+            }
+            else
+            {
+                rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);     // set QP to default QP
             }
         }
 
-        UInt uiTargetPartIdx;
-        uiTargetPartIdx = 0;
-        if (hasResidual)
+        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+#if LOGGING
+        if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
-#if !RDO_WITHOUT_DQP_BITS
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // dQP bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-            rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+            cntIntra[uiDepth]++;
+            cntIntra[uiDepth + 1] = cntIntra[uiDepth + 1] - 4 + boundaryCu;
+        }
 #endif
-
-            Bool foundNonZeroCbf = false;
-            rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
-            assert(foundNonZeroCbf);
-        }
-        else
-        {
-            rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);         // set QP to default QP
-        }
+        xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
+        // with sub partitioned prediction.
     }
 
-    m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
 #if LOGGING
-    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
-    {
-        cntIntra[uiDepth]++;
-        cntIntra[uiDepth+1]= cntIntra[uiDepth+1]-4+boundaryCu; 
-    }
-#endif
-    xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
-                                                                                // with sub partitioned prediction.
-    }
-    
-#if LOGGING
-    if(uiDepth==3 && bSubBranch)
+    if (uiDepth == 3 && bSubBranch)
     {
         cntIntra[uiDepth]++;
     }
 #endif
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    
+
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
     }
-        
+
     // Assert if Best prediction mode is NONE
     // Selected mode's RD-cost must be not MAX_DOUBLE.
     assert(rpcBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(rpcBestCU->getPredictionMode(0) != MODE_NONE);
     assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);
 }
-#else
+
+#else // if 0
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, UInt /*uiPartUnitIdx*/, PartSize eParentPartSize)
 {
 #if LOGGING
@@ -1060,7 +1062,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
-    
+
     // variable for Early CU determination
     Bool    bSubBranch = true;
 
@@ -1077,7 +1079,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
 
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
-    
+
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
@@ -1087,7 +1089,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     {
         // variables for fast encoder decision
         bTrySplit    = true;
-        
+
         rpcTempCU->initEstData(uiDepth, iQP);
 
         // do inter modes, SKIP and 2Nx2N
@@ -1139,7 +1141,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                         rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
-            
+
                 if (m_pcEncCfg->getUseRectInter())
                 {
                     // 2NxN, Nx2N
@@ -1296,7 +1298,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
-#if LOGGING 
+#if LOGGING
             cntSkipCu[uiDepth]++;
 #endif
             bSubBranch = false;
@@ -1365,100 +1367,70 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-    if (!bBoundary)
-    {
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
-
-        rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // split bits
-        rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    }
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
-    if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
-    {
-        Bool hasResidual = false;
-        for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
+        if (!bBoundary)
         {
-            if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
-            {
-                hasResidual = true;
-                break;
-            }
-        }
-
-        UInt uiTargetPartIdx;
-        uiTargetPartIdx = 0;
-        if (hasResidual)
-        {
-#if !RDO_WITHOUT_DQP_BITS
             m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();         // dQP bits
+            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
+
+            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
             rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-            rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+        }
+        rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        {
+            Bool hasResidual = false;
+            for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
+            {
+                if (rpcTempCU->getCbf(uiBlkIdx, TEXT_LUMA) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_U) || rpcTempCU->getCbf(uiBlkIdx, TEXT_CHROMA_V))
+                {
+                    hasResidual = true;
+                    break;
+                }
+            }
+
+            UInt uiTargetPartIdx;
+            uiTargetPartIdx = 0;
+            if (hasResidual)
+            {
+#if !RDO_WITHOUT_DQP_BITS
+                m_pcEntropyCoder->resetBits();
+                m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
+                rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // dQP bits
+                rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+                rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 #endif
 
-            Bool foundNonZeroCbf = false;
-            rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
-            assert(foundNonZeroCbf);
+                Bool foundNonZeroCbf = false;
+                rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
+                assert(foundNonZeroCbf);
+            }
+            else
+            {
+                rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);     // set QP to default QP
+            }
         }
-        else
-        {
-            rpcTempCU->setQPSubParts(rpcTempCU->getRefQP(uiTargetPartIdx), 0, uiDepth);         // set QP to default QP
-        }
-    }
 
-    m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
 #if  LOGGING
-    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost()){   
-        if(rpcBestCU->getPredictionMode(0)==MODE_INTER){
-            cntInter[uiDepth]++;
-            if(rpcBestCU->getPartitionSize(0)<3){
-            cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
-            }
-            else{
-
-                cuInterDistribution[uiDepth][3]++;
-            }
-        }
-        else if(rpcBestCU->getPredictionMode(0)==MODE_INTRA){
-            cntIntra[uiDepth]++;
-            if(rpcBestCU->getLumaIntraDir()[0]>1){
-                cuIntraDistribution[uiDepth][2]++;
-            }
-            else{
-                cuIntraDistribution[uiDepth][rpcBestCU->getLumaIntraDir()[0]]++;
-            }
-        }
-        
-    }
-    else{
-        cntSplit[uiDepth]++;
-    }
-#endif
-    xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
-                                                                                // with sub partitioned prediction.
-    }
-#if LOGGING
-    if(uiDepth==3 ){
-         if(!rpcBestCU->isSkipped(0))
-          {
-        if(rpcBestCU->getPredictionMode(0)==MODE_INTER){
-            cntInter[uiDepth]++;
-            if(rpcBestCU->getPartitionSize(0)<3){
-            cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
-            }
-            else{
-                cuInterDistribution[uiDepth][3]++;
-            }
-        }
-        else if (rpcBestCU->getPredictionMode(0)==MODE_INTRA)
+        if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
-          cntIntra[uiDepth]++;       
-              if(rpcBestCU->getPartitionSize(0)==SIZE_2Nx2N)
-               {
-                if(rpcBestCU->getLumaIntraDir()[0]>1)
+            if (rpcBestCU->getPredictionMode(0) == MODE_INTER)
+            {
+                cntInter[uiDepth]++;
+                if (rpcBestCU->getPartitionSize(0) < 3)
+                {
+                    cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
+                }
+                else
+                {
+                    cuInterDistribution[uiDepth][3]++;
+                }
+            }
+            else if (rpcBestCU->getPredictionMode(0) == MODE_INTRA)
+            {
+                cntIntra[uiDepth]++;
+                if (rpcBestCU->getLumaIntraDir()[0] > 1)
                 {
                     cuIntraDistribution[uiDepth][2]++;
                 }
@@ -1467,18 +1439,57 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                     cuIntraDistribution[uiDepth][rpcBestCU->getLumaIntraDir()[0]]++;
                 }
             }
-          else if(rpcBestCU->getPartitionSize(0)==SIZE_NxN)
-          {
-             cntIntraNxN++;
-          }
         }
-       }   
-
+        else
+        {
+            cntSplit[uiDepth]++;
+        }
+#endif // if  LOGGING
+        xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
+        // with sub partitioned prediction.
     }
-#endif
+#if LOGGING
+    if (uiDepth == 3)
+    {
+        if (!rpcBestCU->isSkipped(0))
+        {
+            if (rpcBestCU->getPredictionMode(0) == MODE_INTER)
+            {
+                cntInter[uiDepth]++;
+                if (rpcBestCU->getPartitionSize(0) < 3)
+                {
+                    cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
+                }
+                else
+                {
+                    cuInterDistribution[uiDepth][3]++;
+                }
+            }
+            else if (rpcBestCU->getPredictionMode(0) == MODE_INTRA)
+            {
+                cntIntra[uiDepth]++;
+                if (rpcBestCU->getPartitionSize(0) == SIZE_2Nx2N)
+                {
+                    if (rpcBestCU->getLumaIntraDir()[0] > 1)
+                    {
+                        cuIntraDistribution[uiDepth][2]++;
+                    }
+                    else
+                    {
+                        cuIntraDistribution[uiDepth][rpcBestCU->getLumaIntraDir()[0]]++;
+                    }
+                }
+                else if (rpcBestCU->getPartitionSize(0) == SIZE_NxN)
+                {
+                    cntIntraNxN++;
+                }
+            }
+        }
+    }
+#endif // if LOGGING
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    
+
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
@@ -1491,8 +1502,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);
 }
 
-#endif
-
+#endif // if 0
 
 /** finish encoding a cu and handle end-of-slice conditions
  * \param pcCU
@@ -1848,8 +1858,8 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     {
         /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SAD = primitives.sad[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+        UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+                                            (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
     }
 
@@ -1861,7 +1871,6 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     xCheckDQP(rpcTempCU);
 
     xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
-
 }
 
 Void TEncCu::xCalcRDCostInter(TComDataCU*& rpcTempCU, UInt PartitionIndex, PartSize ePartSize, Bool bUseMRG)
@@ -1889,8 +1898,8 @@ Void TEncCu::xCalcRDCostInter(TComDataCU*& rpcTempCU, UInt PartitionIndex, PartS
         /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
 
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SAD = primitives.sad[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+        UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+                                            (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
     }
 
@@ -1999,7 +2008,6 @@ Void TEncCu::xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize eSize)
     xCheckDQP(rpcTempCU);
 }
 
-
 /** Check R-D costs for a CU with PCM mode.
  * \param rpcBestCU pointer to best mode CU data structure
  * \param rpcTempCU pointer to testing mode CU data structure
@@ -2056,7 +2064,7 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
     if (rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
     {
 #if FAST_MODE_DECISION
-        if(!isMerge)
+        if (!isMerge)
             m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvTemp[uiDepth], false);
 #endif
 
