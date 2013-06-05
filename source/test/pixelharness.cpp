@@ -270,7 +270,7 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p
 
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
+    for (uint16_t curpar = 0; curpar < 8; curpar++)
     {
         if (opt.satd[curpar])
         {

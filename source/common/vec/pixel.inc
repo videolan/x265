@@ -213,78 +213,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp)
 
     //sse_sp
-    //SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp)
-    p.sse_sp[PARTITION_4x4] = sse_sp4<4>;
-    p.sse_sp[PARTITION_4x8] = sse_sp4<8>;
-    p.sse_sp[PARTITION_4x12] = sse_sp4<12>;
-    p.sse_sp[PARTITION_4x16] = sse_sp4<16>;
-    p.sse_sp[PARTITION_4x24] = sse_sp4<24>;
-    p.sse_sp[PARTITION_4x32] = sse_sp4<32>;
-    p.sse_sp[PARTITION_4x48] = sse_sp4<48>;
-    p.sse_sp[PARTITION_4x64] = sse_sp4<64>;
-                                                                
-    /*p.sse_sp[PARTITION_8x4] = sse_sp8<4>;
-    p.sse_sp[PARTITION_8x8] = sse_sp8<8>;
-    p.sse_sp[PARTITION_8x12] = sse_sp8<12>;
-    p.sse_sp[PARTITION_8x16] = sse_sp8<16>;
-    p.sse_sp[PARTITION_8x24] = sse_sp8<24>;
-    p.sse_sp[PARTITION_8x32] = sse_sp8<32>;
-    p.sse_sp[PARTITION_8x48] = sse_sp8<48>;
-    p.sse_sp[PARTITION_8x64] = sse_sp8<64>;
-                                                                
-    p.sse_sp[PARTITION_12x4] = sse_sp12<4>;
-    p.sse_sp[PARTITION_12x8] = sse_sp12<8>;
-    p.sse_sp[PARTITION_12x12] = sse_sp12<12>;
-    p.sse_sp[PARTITION_12x16] = sse_sp12<16>;
-    p.sse_sp[PARTITION_12x24] = sse_sp12<24>;
-    p.sse_sp[PARTITION_12x32] = sse_sp12<32>;
-    p.sse_sp[PARTITION_12x48] = sse_sp12<48>;
-    p.sse_sp[PARTITION_12x64] = sse_sp12<64>;
-                                                                
-    p.sse_sp[PARTITION_16x4] = sse_sp16<4>;
-    p.sse_sp[PARTITION_16x8] = sse_sp16<8>;
-    p.sse_sp[PARTITION_16x12] = sse_sp16<12>;
-    p.sse_sp[PARTITION_16x16] = sse_sp16<16>;
-    p.sse_sp[PARTITION_16x24] = sse_sp16<24>;
-    p.sse_sp[PARTITION_16x32] = sse_sp16<32>;
-    p.sse_sp[PARTITION_16x48] = sse_sp16<48>;
-    p.sse_sp[PARTITION_16x64] = sse_sp16<64>;
-                                                                
-    p.sse_sp[PARTITION_24x4] = sse_sp24<4>;
-    p.sse_sp[PARTITION_24x8] = sse_sp24<8>;
-    p.sse_sp[PARTITION_24x12] = sse_sp24<12>;
-    p.sse_sp[PARTITION_24x16] = sse_sp24<16>;
-    p.sse_sp[PARTITION_24x24] = sse_sp24<24>;
-    p.sse_sp[PARTITION_24x32] = sse_sp24<32>;
-    p.sse_sp[PARTITION_24x48] = sse_sp24<48>;
-    p.sse_sp[PARTITION_24x64] = sse_sp24<64>;
-                                                                
-    p.sse_sp[PARTITION_32x4] = sse_sp32<4>;
-    p.sse_sp[PARTITION_32x8] = sse_sp32<8>;
-    p.sse_sp[PARTITION_32x12] = sse_sp32<12>;
-    p.sse_sp[PARTITION_32x16] = sse_sp32<16>;
-    p.sse_sp[PARTITION_32x24] = sse_sp32<24>;
-    p.sse_sp[PARTITION_32x32] = sse_sp32<32>;
-    p.sse_sp[PARTITION_32x48] = sse_sp32<48>;
-    p.sse_sp[PARTITION_32x64] = sse_sp32<64>;
-                                                                
-    p.sse_sp[PARTITION_48x4] = sse_sp48<4>;
-    p.sse_sp[PARTITION_48x8] = sse_sp48<8>;
-    p.sse_sp[PARTITION_48x12] = sse_sp48<12>;
-    p.sse_sp[PARTITION_48x16] = sse_sp48<16>;
-    p.sse_sp[PARTITION_48x24] = sse_sp48<24>;
-    p.sse_sp[PARTITION_48x32] = sse_sp48<32>;
-    p.sse_sp[PARTITION_48x48] = sse_sp48<48>;
-    p.sse_sp[PARTITION_48x64] = sse_sp48<64>;
-                                                                
-    p.sse_sp[PARTITION_64x4] = sse_sp64<4>;
-    p.sse_sp[PARTITION_64x8] = sse_sp64<8>;
-    p.sse_sp[PARTITION_64x12] = sse_sp64<12>;
-    p.sse_sp[PARTITION_64x16] = sse_sp64<16>;
-    p.sse_sp[PARTITION_64x24] = sse_sp64<24>;
-    p.sse_sp[PARTITION_64x32] = sse_sp64<32>;
-    p.sse_sp[PARTITION_64x48] = sse_sp64<48>;
-    p.sse_sp[PARTITION_64x64] = sse_sp64<64>;*/
+    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp)
 
     //sse_ss
     SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
