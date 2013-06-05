@@ -3302,6 +3302,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         BROADSTORE(15) \
 }
 
+#if 0 /* disable temporarily, to save MSVC build times */
 void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
@@ -4071,6 +4072,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
         }
     }
 }
+#endif /* disable temporarily */
 
 #endif /* if HIGH_BIT_DEPTH */
 
@@ -4089,9 +4091,11 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     case 16:
         xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
+#if 0 /* disable temporarily */
     case 32:
         xPredIntraAng32x32(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
+#endif
     }
 
 #endif /* if HIGH_BIT_DEPTH */
