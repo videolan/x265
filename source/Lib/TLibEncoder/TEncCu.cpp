@@ -372,12 +372,22 @@ Void TEncCu::init(TEncTop* pcEncTop)
 
 /** \param  rpcCU pointer of CU data class
  */
+#if LOGGING
+extern int totalCU ;
+extern int cntInter[4], cntIntra[4] , cntSplit[4] , cntIntraNxN;
+extern  int cuInterDistribution[4][4] , cuIntraDistribution[4][3];
+extern  int cntSkipCu[4] ,  cntTotalCu[4];
+extern FILE* fp1;
+
+#endif
 Void TEncCu::compressCU(TComDataCU* pcCu)
 {
     // initialize CU data
     m_ppcBestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
     m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
-
+#if LOGGING
+    totalCU++;
+#endif
     //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
 
     m_addSADDepth      = 0;
@@ -495,6 +505,10 @@ Void TEncCu::deriveTestModeAMP(TComDataCU *&rpcBestCU, PartSize eParentPartSize,
 
 Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, PartSize eParentPartSize)
 {
+#if LOGGING
+    cntTotalCu[uiDepth]++;
+     int boundaryCu = 0;
+#endif
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
 
@@ -572,6 +586,9 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
+#if LOGGING
+            cntSkipCu[uiDepth]++;
+#endif
             bSubBranch = false;
         }
         else
@@ -628,6 +645,9 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             {
                 pcSubBestPartCU[uiPartUnitIdx]->copyToPic(uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth);
+#if LOGGING
+                boundaryCu++;
+#endif
             }
         }
 
@@ -676,10 +696,21 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     }
 
     m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+#if LOGGING
+    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost()){
+        cntIntra[uiDepth]++;
+        cntIntra[uiDepth+1]= cntIntra[uiDepth+1]-4+boundaryCu; 
+    }
+#endif
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
                                                                                 // with sub partitioned prediction.
     }
     
+#if LOGGING
+    if(uiDepth==3 && bSubBranch){
+        cntIntra[uiDepth]++;
+    }
+#endif
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
     
@@ -698,6 +729,10 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 #if 0//EARLY_PARTITION_DECISION - This snippet of code works only temporarily. TComDataCU needs to be revamped to measure costs across partitions reliably. 
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU, UInt uiDepth, UInt PartitionIndex, PartSize eParentPartSize)
 {
+#if LOGGING
+    cntTotalCu[uiDepth]++;
+    int boundaryCu = 0;
+#endif
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
 
@@ -823,6 +858,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
+#if LOGGING
+            cntSkipCu[uiDepth]++;
+#endif
             bSubBranch = false;
         }
         else
@@ -924,6 +962,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             {
                 pcSubBestPartCU[uiPartUnitIdx]->copyToPic(uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubBestPartCU[uiPartUnitIdx], uiPartUnitIdx, uhNextDepth);
+#if LOGGING
+                boundaryCu++;
+#endif
             }
         }
 
@@ -972,10 +1013,23 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     }
 
     m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+#if LOGGING
+    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
+    {
+        cntIntra[uiDepth]++;
+        cntIntra[uiDepth+1]= cntIntra[uiDepth+1]-4+boundaryCu; 
+    }
+#endif
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
                                                                                 // with sub partitioned prediction.
     }
     
+#if LOGGING
+    if(uiDepth==3 && bSubBranch)
+    {
+        cntIntra[uiDepth]++;
+    }
+#endif
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
     
@@ -993,6 +1047,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 #else
 Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentBestCU, UInt uiDepth, UInt /*uiPartUnitIdx*/, PartSize eParentPartSize)
 {
+#if LOGGING
+    cntTotalCu[uiDepth]++;
+#endif
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
 
@@ -1239,6 +1296,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         // Early CU determination
         if (rpcBestCU->isSkipped(0))
         {
+#if LOGGING 
+            cntSkipCu[uiDepth]++;
+#endif
             bSubBranch = false;
         }
         else
@@ -1350,10 +1410,72 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     }
 
     m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+#if  LOGGING
+    if(rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost()){   
+        if(rpcBestCU->getPredictionMode(0)==MODE_INTER){
+            cntInter[uiDepth]++;
+            if(rpcBestCU->getPartitionSize(0)<3){
+            cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
+            }
+            else{
+
+                cuInterDistribution[uiDepth][3]++;
+            }
+        }
+        else if(rpcBestCU->getPredictionMode(0)==MODE_INTRA){
+            cntIntra[uiDepth]++;
+            if(rpcBestCU->getLumaIntraDir()[0]>1){
+                cuIntraDistribution[uiDepth][2]++;
+            }
+            else{
+                cuIntraDistribution[uiDepth][rpcBestCU->getLumaIntraDir()[0]]++;
+            }
+        }
+        
+    }
+    else{
+        cntSplit[uiDepth]++;
+    }
+#endif
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                     // RD compare current larger prediction
                                                                                 // with sub partitioned prediction.
     }
-    
+#if LOGGING
+    if(uiDepth==3 ){
+         if(!rpcBestCU->isSkipped(0))
+          {
+        if(rpcBestCU->getPredictionMode(0)==MODE_INTER){
+            cntInter[uiDepth]++;
+            if(rpcBestCU->getPartitionSize(0)<3){
+            cuInterDistribution[uiDepth][rpcBestCU->getPartitionSize(0)]++;
+            }
+            else{
+                cuInterDistribution[uiDepth][3]++;
+            }
+        }
+        else if (rpcBestCU->getPredictionMode(0)==MODE_INTRA)
+        {
+          cntIntra[uiDepth]++;       
+              if(rpcBestCU->getPartitionSize(0)==SIZE_2Nx2N)
+               {
+                if(rpcBestCU->getLumaIntraDir()[0]>1)
+                {
+                    cuIntraDistribution[uiDepth][2]++;
+                }
+                else
+                {
+                    cuIntraDistribution[uiDepth][rpcBestCU->getLumaIntraDir()[0]]++;
+                }
+            }
+          else if(rpcBestCU->getPartitionSize(0)==SIZE_NxN)
+          {
+             cntIntraNxN++;
+          }
+        }
+       }   
+
+    }
+#endif
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
     
