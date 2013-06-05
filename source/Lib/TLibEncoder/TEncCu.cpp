@@ -40,10 +40,11 @@
 #include "TEncCu.h"
 #include "TEncAnalyze.h"
 #include "PPA/ppa.h"
+#include "primitives.h"
+#include "common.h"
 
 #include <cmath>
 #include <algorithm>
-#include <primitives.h>
 using namespace std;
 
 using namespace x265;
@@ -378,8 +379,8 @@ extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
 extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
 extern  int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
-
 #endif
+
 Void TEncCu::compressCU(TComDataCU* pcCu)
 {
     // initialize CU data

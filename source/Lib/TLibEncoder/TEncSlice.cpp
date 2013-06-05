@@ -38,10 +38,11 @@
 #include "TEncTop.h"
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
-#include <math.h>
-
+#include "common.h"
 #include "threading.h"
 #include "wavefront.h"
+
+#include <math.h>
 
 using namespace x265;
 

@@ -33,7 +33,6 @@ extern "C" {
 /* x265_t:
  *      opaque handler for encoder */
 typedef struct x265_t x265_t;
-#define LOGGING 1
 
 // TODO: Existing names used for the different NAL unit types can be altered to better reflect the names in the spec.
 //       However, the names in the spec are not yet stable at this point. Once the names are stable, a cleanup
@@ -125,7 +124,8 @@ typedef struct
     int     i_type;      /* NalUnitType */
     int     i_payload;   /* size in bytes */
     uint8_t *p_payload;
-} x265_nal_t;
+}
+x265_nal_t;
 
 typedef struct x265_picture_t
 {
@@ -133,7 +133,6 @@ typedef struct x265_picture_t
     int   stride[3];
     int   bitDepth;
 }
-
 x265_picture_t;
 
 typedef enum
@@ -144,7 +143,6 @@ typedef enum
     X265_STAR_SEARCH,
     X265_ORIG_SEARCH, // original HM functions (deprecated)
 }
-
 X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", 0 };
@@ -231,7 +229,6 @@ typedef struct x265_param_t
     // DecodedPictureHashSEI
     int       useDecodedPictureHashSEI;         ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }
-
 x265_param_t;
 
 /***
