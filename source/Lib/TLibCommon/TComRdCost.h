@@ -197,16 +197,6 @@ public:
 
     Double  getLambda() { return m_dLambda; }
 
-    // Distortion Functions
-    Void    init();
-
-    Void    setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam);
-    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
-    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
-    Void    setDistParam(DistParam& rcDP, Int bitDepth, Pel* p1, Int iStride1, Pel* p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard = false);
-
-    UInt    calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight);
-
     // for motion cost
     Void    getMotionCost(Bool bSad, Int iAdd) { m_uiCost = (bSad ? m_uiLambdaMotionSAD + iAdd : m_uiLambdaMotionSSE + iAdd); }
 
@@ -216,7 +206,16 @@ public:
 
     UInt    getCost(UInt b)                    { return (m_uiCost * b) >> 16; }
 
+    // Distortion Functions
+    Void    init();
     FpDistFunc * getSadFunctions()             { return m_afpDistortFunc; }
+
+    Void    setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam);
+    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
+    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
+    Void    setDistParam(DistParam& rcDP, Int bitDepth, Pel* p1, Int iStride1, Pel* p2, Int iStride2, Int iWidth, Int iHeight, Bool bHadamard = false);
+
+    UInt    calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight);
 
 private:
 
