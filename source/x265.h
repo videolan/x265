@@ -33,7 +33,6 @@ extern "C" {
 /* x265_t:
  *      opaque handler for encoder */
 typedef struct x265_t x265_t;
-#define LOGGING 1
 
 // TODO: Existing names used for the different NAL unit types can be altered to better reflect the names in the spec.
 //       However, the names in the spec are not yet stable at this point. Once the names are stable, a cleanup
