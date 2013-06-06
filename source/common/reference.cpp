@@ -70,30 +70,6 @@ void MotionReference::generateReferencePlanes()
 {
     PPAScopeEvent(TComPicYUV_extendPicBorder);
 
-    /* Generate H/Q-pel for LumaBlocks  */
-    generateLumaHQpel();
-
-    // Extend borders
-    int tmpMargin = 4;
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            if (i == 0 && j == 0)
-                continue;
-
-            m_reconPic->xExtendPicCompBorder(m_lumaPlane[i][j] - tmpMargin * m_lumaStride - tmpMargin,
-                                             (int) m_lumaStride,
-                                             m_reconPic->getWidth() + 2 * tmpMargin,
-                                             m_reconPic->getHeight() + 2 * tmpMargin,
-                                             m_reconPic->m_iLumaMarginX - tmpMargin,
-                                             m_reconPic->m_iLumaMarginY - tmpMargin);
-        }
-    }
-}
-
-void MotionReference::generateLumaHQpel()
-{
     int width      = m_reconPic->getWidth();
     int height     = m_reconPic->getHeight();
 
@@ -209,4 +185,22 @@ void MotionReference::generateLumaHQpel()
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
 
     xFree(filteredBlockTmp);
+
+        // Extend borders
+    int tmpMargin = 4;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (i == 0 && j == 0)
+                continue;
+
+            m_reconPic->xExtendPicCompBorder(m_lumaPlane[i][j] - tmpMargin * m_lumaStride - tmpMargin,
+                                             (int) m_lumaStride,
+                                             m_reconPic->getWidth() + 2 * tmpMargin,
+                                             m_reconPic->getHeight() + 2 * tmpMargin,
+                                             m_reconPic->m_iLumaMarginX - tmpMargin,
+                                             m_reconPic->m_iLumaMarginY - tmpMargin);
+        }
+    }
 }

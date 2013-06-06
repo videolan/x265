@@ -50,8 +50,6 @@ public:
 
 protected:
 
-    void generateLumaHQpel();
-
     intptr_t    m_startPad;
     TComPicYuv *m_reconPic;
 
