@@ -3404,7 +3404,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         PREDANG_CALCROW_HOR_MODE2(R7) \
 }
 
-#if 0 /* disable temporarily, to save MSVC build times */
+#if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
 void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
@@ -4383,7 +4383,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     case 16:
         xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
-#if 0 /* disable temporarily */
+#if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
     case 32:
         xPredIntraAng32x32(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
