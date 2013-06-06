@@ -31,17 +31,30 @@
 
 using namespace x265;
 
-MotionReference::MotionReference(TComPicYuv* pic)
+#ifdef __GNUC__                         /* GCCs builtin atomics */
+#define ATOMIC_INC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, 1)
+#elif _MSC_VER
+#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
+#else
+#error "Must define atomic operations for this compiler"
+#endif
+
+
+MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
+    : JobProvider(pool)
 {
-    /* Create buffers for Hpel/Qpel Planes */
+    m_reconPic = pic;
+    int width = pic->getWidth();
+    int height = pic->getHeight();
     m_lumaStride = pic->getStride();
     m_startPad = pic->m_iLumaMarginY * m_lumaStride + pic->m_iLumaMarginX;
-    m_reconPic = pic;
     m_next = NULL;
 
-    size_t padwidth = pic->getWidth() + pic->m_iLumaMarginX * 2;
-    size_t padheight = pic->getHeight() + pic->m_iLumaMarginY * 2;
+    m_lumaPlane[0][0] = pic->m_apiPicBufY + m_startPad;
 
+    /* Create buffers for Hpel/Qpel Planes */
+    size_t padwidth = width + pic->m_iLumaMarginX * 2;
+    size_t padheight = height + pic->m_iLumaMarginY * 2;
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -52,19 +65,17 @@ MotionReference::MotionReference(TComPicYuv* pic)
         }
     }
 
-    m_lumaPlane[0][0] = m_reconPic->m_apiPicBufY + m_startPad;
-
-    m_width = m_reconPic->getWidth();
-    m_height = m_reconPic->getHeight();
-    m_intStride = m_width + s_tmpMarginX * 4;
+    m_intStride = width + s_tmpMarginX * 4;
     m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
     m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
-    m_filterWidth = m_width + s_tmpMarginX * 2;
-    m_filterHeight = m_height + s_tmpMarginY * 2;
+    m_filterWidth = width + s_tmpMarginX * 2;
+    m_filterHeight = height + s_tmpMarginY * 2;
 }
 
 MotionReference::~MotionReference()
 {
+    JobProvider::Flush();
+
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -81,17 +92,38 @@ MotionReference::~MotionReference()
 
 void MotionReference::generateReferencePlanes()
 {
-    generateReferencePlane(0);
-    generateReferencePlane(1);
-    generateReferencePlane(2);
-    generateReferencePlane(3);
+    m_curPlane = m_finishedPlanes = 0;
+    JobProvider::Enqueue();
+    m_pool->PokeIdleThreads();
+    m_pool->PokeIdleThreads();
+    m_pool->PokeIdleThreads();
+    m_pool->PokeIdleThreads();
+    m_completionEvent.Wait();
+    JobProvider::Dequeue();
+}
+
+bool MotionReference::FindJob()
+{
+    if (m_curPlane > 4)
+        return false;
+
+    int idx = ATOMIC_INC(&m_curPlane) - 1;
+    if (idx < 4)
+    {
+        generateReferencePlane(idx);
+        if (ATOMIC_INC(&m_finishedPlanes) == 4)
+            m_completionEvent.Trigger();
+        m_pool->PokeIdleThreads();
+        return true;
+    }
+    return false;
 }
 
 void MotionReference::generateReferencePlane(int idx)
 {
     PPAScopeEvent(GenerateReferencePlanes);
 
-    short* filteredBlockTmp = (short*)xMalloc(short, m_intStride * (m_height + s_tmpMarginY * 4));
+    short* filteredBlockTmp = (short*)xMalloc(short, m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
 
     Pel *srcPtr = m_reconPic->getLumaAddr() - s_tmpMarginY * 2 * m_lumaStride - s_tmpMarginX * 2;
     Short *intPtr = filteredBlockTmp + m_offsetToLuma - s_tmpMarginY * 2 * m_intStride - s_tmpMarginX * 2;
