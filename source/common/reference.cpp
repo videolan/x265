@@ -56,13 +56,13 @@ MotionReference::MotionReference(TComPicYuv* pic)
 
     m_width = m_reconPic->getWidth();
     m_height = m_reconPic->getHeight();
-    m_intStride = m_width + (s_tmpMarginX << 2);
+    m_intStride = m_width + s_tmpMarginX * 4;
     m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
-    m_offsetToLuma = (s_tmpMarginY << 1) * m_intStride  + (s_tmpMarginX << 1);
-    m_filterWidth = m_width + (s_tmpMarginX << 1);
-    m_filterHeight = m_height + (s_tmpMarginY << 1);
-    m_extendWidth = m_width + 2 * s_tmpMarginX;
-    m_extendHeight = m_height + 2 * s_tmpMarginY;
+    m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
+    m_filterWidth = m_width + s_tmpMarginX * 2;
+    m_filterHeight = m_height + s_tmpMarginY * 2;
+    m_extendWidth = m_width + s_tmpMarginX * 2;
+    m_extendHeight = m_height + s_tmpMarginY * 2;
 }
 
 MotionReference::~MotionReference()
@@ -93,10 +93,10 @@ void MotionReference::generateReferencePlane(int idx)
 {
     PPAScopeEvent(GenerateReferencePlanes);
 
-    short* filteredBlockTmp = (short*)xMalloc(short, m_intStride * (m_height + (s_tmpMarginY << 2)));
+    short* filteredBlockTmp = (short*)xMalloc(short, m_intStride * (m_height + s_tmpMarginY * 4));
 
-    Pel *srcPtr = m_reconPic->getLumaAddr() - (s_tmpMarginY + 4) * m_lumaStride - (s_tmpMarginX + 4);
-    Short *intPtr = filteredBlockTmp + m_offsetToLuma - (s_tmpMarginY + 4) * m_intStride - (s_tmpMarginX + 4);
+    Pel *srcPtr = m_reconPic->getLumaAddr() - s_tmpMarginY * 2 * m_lumaStride - s_tmpMarginX * 2;
+    Short *intPtr = filteredBlockTmp + m_offsetToLuma - s_tmpMarginY * 2 * m_intStride - s_tmpMarginX * 2;
     Pel *dstPtr;
 
     if (idx == 0)
