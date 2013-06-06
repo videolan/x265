@@ -46,10 +46,13 @@ MotionReference::MotionReference(TComPicYuv* pic)
     {
         for (int j = 0; j < 4; j++)
         {
-            m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight);
-            m_lumaPlane[i][j] += m_startPad;
+            if (i == 0 && j == 0)
+                continue;
+            m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight) + m_startPad;
         }
     }
+
+    m_lumaPlane[0][0] = m_reconPic->m_apiPicBufY + m_startPad;
 }
 
 MotionReference::~MotionReference()
@@ -58,6 +61,8 @@ MotionReference::~MotionReference()
     {
         for (int j = 0; j < 4; j++)
         {
+            if (i == 0 && j == 0)
+                continue;
             if (m_lumaPlane[i][j])
             { 
                 xFree(m_lumaPlane[i][j] - m_startPad);
@@ -87,10 +92,9 @@ void MotionReference::generateReferencePlanes()
     const int extendWidth = width + 2 * tmpMarginX;
     const int extendHeight = height + 2 * tmpMarginY;
 
-    /* No need to calculate m_filteredBlock[0][0], it is copied */
-    Pel *srcPtr = m_reconPic->getLumaAddr() - (tmpMarginY + 4) * m_lumaStride - (tmpMarginX + 4);
-    memcpy(m_lumaPlane[0][0] - m_startPad, m_reconPic->m_apiPicBufY, ((width + (m_reconPic->m_iLumaMarginX << 1)) * (height + (m_reconPic->m_iLumaMarginY << 1))) * sizeof(pixel));
+    /* The full-pel plane needs no interpolation, and was already extended by TComPicYuv */
 
+    Pel *srcPtr = m_reconPic->getLumaAddr() - (tmpMarginY + 4) * m_lumaStride - (tmpMarginX + 4);
     Short *intPtr;  // Intermediate results in short
     Pel *dstPtr;    // Final filtered blocks in Pel
     intPtr = filteredBlockTmp + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
