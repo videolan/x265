@@ -45,6 +45,13 @@
 #include <math.h>
 
 using namespace x265;
+
+
+#if CU_STAT_LOGFILE
+extern FILE *fp1;
+extern bool mergeFlag;
+Double    meCost;
+#endif
 //! \ingroup TLibEncoder
 //! \{
 
@@ -3405,6 +3412,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
                 uiMEBits = uiBits[1];
             }
+#if CU_STAT_LOGFILE
+        meCost += uiCost[0];
+#endif
         } // end if bTestNormalMC
 
         if (pcCU->getPartitionSize(uiPartAddr) != SIZE_2Nx2N)
@@ -3452,6 +3462,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                 pcCU->setMVPNumSubParts(-1, REF_PIC_LIST_0, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
                 pcCU->setMVPIdxSubParts(-1, REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
                 pcCU->setMVPNumSubParts(-1, REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
+#if CU_STAT_LOGFILE
+                meCost += uiMRGCost;
+#endif
             }
             else
             {
@@ -3468,8 +3481,13 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if FAST_MODE_DECISION
         pcCU->getTotalBits() += uiBits[0];
 #endif
-    } //  end of for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
-
+}
+#if CU_STAT_LOGFILE 
+       if(mergeFlag==0){
+    fprintf(fp1,"\n Width : %dx%d , partition Size : %d , SATD Cost : %.2f ",pcCU->getWidth(0), pcCU->getWidth(0),(int)pcCU->getPartitionSize(0), meCost);
+       }
+    meCost = 0;
+#endif
     setWpScalingDistParam(pcCU, -1, REF_PIC_LIST_X);
 }
 
@@ -4153,6 +4171,12 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         pcCU->getTotalBits()       = uiBits;
         pcCU->getTotalDistortion() = uiDistortion;
+#if CU_STAT_LOGFILE
+        if(mergeFlag == 0) {
+            int rdoCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
+            fprintf(fp1,",RDO Cost : %.2f ",rdoCost);
+        }
+#endif
         pcCU->getTotalCost()       = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
 
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);

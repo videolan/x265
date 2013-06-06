@@ -379,6 +379,7 @@ extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
 extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
 extern  int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
+bool mergeFlag=0;
 #endif
 
 Void TEncCu::compressCU(TComDataCU* pcCu)
@@ -388,6 +389,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
 #if CU_STAT_LOGFILE
     totalCU++;
+    if(pcCu->getSlice()->getSliceType() != I_SLICE)
+    fprintf(fp1,"CU number : %d \n", totalCU);
 #endif
     //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
 
@@ -1102,8 +1105,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
             }
+#if CU_STAT_LOGFILE
+                    mergeFlag = 1;
+#endif
             // SKIP
             xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
+#if CU_STAT_LOGFILE
+                    mergeFlag = 0;
+#endif
             rpcTempCU->initEstData(uiDepth, iQP);
 
             if (!m_pcEncCfg->getUseEarlySkipDetection())
