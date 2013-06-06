@@ -25,6 +25,7 @@
 #define __MOTIONESTIMATE__
 
 #include "primitives.h"
+#include "reference.h"
 #include "mv.h"
 #include "bitcost.h"
 
@@ -32,20 +33,6 @@
 
 namespace x265 {
 // private x265 namespace
-
-struct MotionReference
-{
-    /* indexed by [hpelx|qpelx][hpely|qpely] */
-    pixel* lumaPlane[4][4];
-
-    intptr_t lumaStride;
-
-    intptr_t chromaStride;
-
-protected:
-
-    MotionReference& operator =(const MotionReference&);
-};
 
 class MotionEstimate : public BitCost
 {
@@ -62,17 +49,11 @@ protected:
     pixel *fenc;
 #endif
 
-    pixel *fencplanes[3];
+    pixel *fencplane;
     intptr_t fencLumaStride;
-    intptr_t fencChromaStride;
-
-    short *residual[3];
-    intptr_t resLumaStride;
-    intptr_t resChromaStride;
-
-    MV mvmin, mvmax;
 
     MotionReference *ref;   // current reference frame
+    MV mvmin, mvmax;
 
     pixelcmp sad;
     pixelcmp satd;
@@ -92,6 +73,7 @@ public:
     {
         // fenc must be 16 byte aligned
         fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
+        fencSad = fenc;
     }
 
     ~MotionEstimate() {}
@@ -100,13 +82,10 @@ public:
 
     /* Methods called at slice setup */
 
-    void setSourcePlanes(pixel *Y, pixel *Cb, pixel *Cr, intptr_t luma, intptr_t chroma)
+    void setSourcePlane(pixel *Y, intptr_t luma)
     {
-        fencplanes[0] = Y;
-        fencplanes[1] = Cb;
-        fencplanes[2] = Cr;
+        fencplane = Y;
         fencLumaStride = luma;
-        fencChromaStride = chroma;
     }
 
     /* Methods called at CU setup */
@@ -143,39 +122,39 @@ protected:
     {
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
-                   fref + fmv.y * ref->lumaStride  + fmv.x,
+                   fref + fmv.y * ref->m_lumaStride  + fmv.x,
                    sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
-                   fref + fmv.y * ref->lumaStride + fmv.x,
-                   ref->lumaStride);
+                   fref + fmv.y * ref->m_lumaStride + fmv.x,
+                   ref->m_lumaStride);
 #endif
     }
 
     inline int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
-                   qfref + fmv.y * ref->lumaStride  + fmv.x,
+                   qfref + fmv.y * ref->m_lumaStride  + fmv.x,
                    sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
-                   qfref + fmv.y * ref->lumaStride + fmv.x,
-                   ref->lumaStride);
+                   qfref + fmv.y * ref->m_lumaStride + fmv.x,
+                   ref->m_lumaStride);
 #endif
     }
 
     inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
         return satd(fenc, FENC_STRIDE,
-                    qfref + fmv.y * ref->lumaStride + fmv.x,
-                    ref->lumaStride);
+                    qfref + fmv.y * ref->m_lumaStride + fmv.x,
+                    ref->m_lumaStride);
     }
 };
 }

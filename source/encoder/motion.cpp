@@ -85,7 +85,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     blockOffset = offset;
 
     /* copy block into local buffer */
-    pixel *fencblock = fencplanes[0] + offset;
+    pixel *fencblock = fencplane + offset;
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 #if SUBSAMPLE_SAD
     if (subsample)
@@ -332,11 +332,11 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
                                    MV &      outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    size_t stride = ref->lumaStride;
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
+    size_t stride = ref->m_lumaStride;
+    pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
 
 #if SUBSAMPLE_SAD
-    sadStride = ref->lumaStride << subsample;
+    sadStride = ref->m_lumaStride << subsample;
 #endif
 
     setMVP(qmvp);
@@ -869,8 +869,8 @@ me_hex2:
 void MotionEstimate::StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->lumaPlane[0][0] + blockOffset;
-    size_t stride = ref->lumaStride;
+    pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
+    size_t stride = ref->m_lumaStride;
 
     if (dist == 1)
     {

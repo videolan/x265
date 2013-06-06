@@ -38,11 +38,12 @@
 #ifndef __TCOMPICYUV__
 #define __TCOMPICYUV__
 
-#include <stdio.h>
-#include "x265.h"
 #include "CommonDef.h"
 #include "TComRom.h"
 #include "TShortYUV.h"
+
+#include "x265.h"
+#include "reference.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -68,9 +69,9 @@ private:
     Pel*  m_piPicOrgU;
     Pel*  m_piPicOrgV;
 
-    /* Pointers to Luma HPel/ QPel planes */
-    Pel* m_filteredBlockBufY[4][4];
-    Pel* m_filteredBlockOrgY[4][4];
+    // Pre-interpolated reference pictures for each QPEL offset, may be more than
+    // one if weighted references are in use
+    x265::MotionReference *m_refList;
 
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -147,6 +148,9 @@ public:
 
     Pel*  getCrAddr()     { return m_piPicOrgV; }
 
+    /* Actual weight handling TBD: this is just a placeholder.  Always pass 0 */
+    x265::MotionReference *getMotionReference(Int weightIdx) { return &m_refList[weightIdx]; }
+
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
     Pel*  getLumaAddr(Int iCuAddr) { return m_piPicOrgY + m_cuOffsetY[iCuAddr]; }
 
@@ -161,9 +165,9 @@ public:
     Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     /* Access functions for m_filteredBlock */
-    Pel* getLumaFilterBlock(int ver, int hor) { return m_filteredBlockOrgY[ver][hor]; }
+    Pel* getLumaFilterBlock(int ver, int hor) { return m_refList->m_lumaPlane[hor][ver]; }
 
-    Pel* getLumaFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_filteredBlockOrgY[ver][hor] + m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
+    Pel* getLumaFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_refList->m_lumaPlane[hor][ver] + m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     // ------------------------------------------------------------------------------------------------
     //  Miscellaneous
@@ -184,6 +188,8 @@ public:
 
     // Set border extension flag
     Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
+
+    friend class x265::MotionReference;
 }; // END CLASS DEFINITION TComPicYuv
 
 void calcChecksum(TComPicYuv & pic, UChar digest[3][16]);

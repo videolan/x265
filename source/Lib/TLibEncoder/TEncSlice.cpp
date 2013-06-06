@@ -38,10 +38,11 @@
 #include "TEncTop.h"
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
-#include <math.h>
-
+#include "common.h"
 #include "threading.h"
 #include "wavefront.h"
+
+#include <math.h>
 
 using namespace x265;
 
@@ -449,7 +450,7 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
 
 /** \param rpcPic   picture class
  */
-#if LOGGING
+#if CU_STAT_LOGFILE
 int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
 int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
 int cntSkipCu[4], cntTotalCu[4];
@@ -457,7 +458,7 @@ extern FILE * fp, * fp1;
 #endif
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
-#if LOGGING
+#if CU_STAT_LOGFILE
 
     for (int i = 0; i < 4; i++)
     {
@@ -537,7 +538,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     }
 
     xRestoreWPparam(pcSlice);
-#if LOGGING
+#if CU_STAT_LOGFILE
     if (pcSlice->getSliceType() == P_SLICE)
     {
         fprintf(fp, " FRAME  - P FRAME \n");
