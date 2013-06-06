@@ -85,7 +85,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     blockOffset = offset;
 
     /* copy block into local buffer */
-    pixel *fencblock = fencplanes[0] + offset;
+    pixel *fencblock = fencplane + offset;
     primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencblock, fencLumaStride);
 #if SUBSAMPLE_SAD
     if (subsample)

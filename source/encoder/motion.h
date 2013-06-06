@@ -49,7 +49,7 @@ protected:
     pixel *fenc;
 #endif
 
-    pixel *fencplanes[3];
+    pixel *fencplane;
     intptr_t fencLumaStride;
 
     MotionReference *ref;   // current reference frame
@@ -84,7 +84,7 @@ public:
 
     void setSourcePlane(pixel *Y, intptr_t luma)
     {
-        fencplanes[0] = Y;
+        fencplane = Y;
         fencLumaStride = luma;
     }
 
