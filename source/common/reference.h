@@ -66,8 +66,6 @@ protected:
     int         m_offsetToLuma;
     int         m_filterWidth;
     int         m_filterHeight;
-    int         m_extendWidth;
-    int         m_extendHeight;
 
     MotionReference& operator =(const MotionReference&);
 };
