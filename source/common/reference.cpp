@@ -102,7 +102,7 @@ void MotionReference::generateLumaHQpel()
     int intStride = width + (tmpMarginX << 2);
     int rows = height + (tmpMarginY << 2);
 
-    // TODO: class statics? would require locking
+    // TODO: class static? would require locking
     short* filteredBlockTmp;
     filteredBlockTmp = (short*)xMalloc(short, intStride * rows);
 
