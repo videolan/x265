@@ -3175,87 +3175,143 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
 #if HIGH_BIT_DEPTH
 #else
 #define PREDANG_CALCROW_VER(X) { \
-        v_deltaPos += v_ipAngle; \
-        v_deltaFract = v_deltaPos & thirty1; \
+        /*v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1;*/ \
+        v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
+        v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
         LOADROW(row11L, row11H, GETAP(lookIdx, X)); \
         LOADROW(row12L, row12H, GETAP(lookIdx, X) + 1); \
         CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
-        compress(row11L, row11H).store(pDst + ((X)*dstStride)); \
+/*        compress(row11L, row11H).store(pDst + ((X)*dstStride));*/ \
+        itmp = _mm_packus_epi16(row11L, row11H); \
+        _mm_storeu_si128((__m128i*)(pDst + ((X)*dstStride)), itmp); \
         LOADROW(row11L, row11H, GETAP(lookIdx, X) + 16); \
         LOADROW(row12L, row12H, GETAP(lookIdx, X) + 17); \
         CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
-        compress(row11L, row11H).store(pDst + ((X)*dstStride) + 16); \
+/*        compress(row11L, row11H).store(pDst + ((X)*dstStride) + 16);*/ \
+        itmp = _mm_packus_epi16(row11L, row11H); \
+        _mm_storeu_si128((__m128i*)(pDst + ((X)*dstStride) + 16), itmp); \
 }
 
 #define PREDANG_CALCROW_VER_MODE2(X) { \
-        v_deltaPos += v_ipAngle; \
-        v_deltaFract = v_deltaPos & thirty1; \
+        /*v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1;*/ \
+        v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
+        v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
         CALCROW(res1, res2, row11, row12, row21, row22); \
-        compress(res1, res2).store(pDst + ((X)*dstStride)); \
+/*        compress(res1, res2).store(pDst + ((X)*dstStride)); */\
+        itmp = _mm_packus_epi16(res1, res2); \
+        _mm_storeu_si128((__m128i*)(pDst + ((X)*dstStride)), itmp); \
         CALCROW(res1, res2, row13, row14, row23, row24); \
-        compress(res1, res2).store(pDst + ((X)*dstStride) + 16); \
+        /*compress(res1, res2).store(pDst + ((X)*dstStride) + 16);*/ \
+        itmp = _mm_packus_epi16(res1, res2); \
+        _mm_storeu_si128((__m128i*)(pDst + ((X)*dstStride) + 16), itmp); \
 }
 
 #define PREDANG_CALCROW_HOR(X, rowx) { \
         LOADROW(row11L, row11H, GETAP(lookIdx, (X))); \
         LOADROW(row12L, row12H, GETAP(lookIdx, (X)) + 1); \
-        v_deltaPos += v_ipAngle; \
-        v_deltaFract = v_deltaPos & thirty1; \
+/*        v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1; */\
+        v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
+        v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
         CALCROW(row11L, row11H, row11L, row11H, row12L, row12H); \
-        rowx = compress(row11L, row11H); \
+        /*rowx = compress(row11L, row11H);*/ \
+        rowx = _mm_packus_epi16(row11L, row11H); \
 }
 
 #define PREDANG_CALCROW_HOR_MODE2(rowx) { \
-        v_deltaPos += v_ipAngle; \
-        v_deltaFract = v_deltaPos & thirty1; \
+        /*v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1; */\
+        v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
+        v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
         CALCROW(res1, res2, row11L, row11H, row12L, row12H); \
-        rowx = compress(res1, res2); \
+        /*rowx = compress(res1, res2); */\
+        rowx = _mm_packus_epi16(res1, res2); \
 }
 
 // ROWL/H is a Vec8s variable, X is the index in of data to be loaded
 #define LOADROW(ROWL, ROWH, X) { \
-        tmp.load(refMain + 1 + (X)); \
+/*        tmp.load(refMain + 1 + (X)); \
         ROWL = extend_low(tmp); \
-        ROWH = extend_high(tmp); \
+        ROWH = extend_high(tmp); */\
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 1 + (X))); \
+        ROWL = _mm_unpacklo_epi8(itmp, _mm_setzero_si128()); \
+        ROWH = _mm_unpackhi_epi8(itmp, _mm_setzero_si128()); \
 }
 
 #define CALCROW(RESL, RESH, ROW1L, ROW1H, ROW2L, ROW2H) { \
-        RESL = ((thirty2 - v_deltaFract) * ROW1L + (v_deltaFract * ROW2L) + 16) >> 5; \
-        RESH = ((thirty2 - v_deltaFract) * ROW1H + (v_deltaFract * ROW2H) + 16) >> 5; \
+/*        RESL = ((thirty2 - v_deltaFract) * ROW1L + (v_deltaFract * ROW2L) + 16) >> 5; \
+        RESH = ((thirty2 - v_deltaFract) * ROW1H + (v_deltaFract * ROW2H) + 16) >> 5; */\
+        it1 = _mm_sub_epi16(thirty2, v_deltaFract); \
+        it2 = _mm_mullo_epi16(it1, ROW1L); \
+        it3 = _mm_mullo_epi16(v_deltaFract, ROW2L); \
+        it2 = _mm_add_epi16(it2, it3); \
+        i16 = _mm_set1_epi16(16); \
+        it2 = _mm_add_epi16(it2, i16); \
+        RESL = _mm_srai_epi16(it2, 5); \
+        \
+        it2 = _mm_mullo_epi16(it1, ROW1H); \
+        it3 = _mm_mullo_epi16(v_deltaFract, ROW2H); \
+        it2 = _mm_add_epi16(it2, it3); \
+        it2 = _mm_add_epi16(it2, i16); \
+        RESH = _mm_srai_epi16(it2, 5); \
 }
 
 #define  BLND2_16(R1, R2) { \
-        tmp1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(R1, R2); \
+/*        tmp1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(R1, R2); \
         tmp2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(R1, R2); \
         R1 = tmp1; \
-        R2 = tmp2; \
+        R2 = tmp2; */\
+        itmp1 = _mm_unpacklo_epi8(R1, R2); \
+        itmp2 = _mm_unpackhi_epi8(R1, R2); \
+        R1 = itmp1; \
+        R2 = itmp2; \
 }
 
 #define MB4(R1, R2, R3, R4) { \
         BLND2_16(R1, R2) \
         BLND2_16(R3, R4) \
-        tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>((Vec8s)R1, (Vec8s)R3); \
+/*        tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>((Vec8s)R1, (Vec8s)R3); \
         tmp2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>((Vec8s)R1, (Vec8s)R3); \
         R1 = tmp1; \
         R3 = tmp2; \
         tmp1 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>((Vec8s)R2, (Vec8s)R4); \
         tmp2 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>((Vec8s)R2, (Vec8s)R4); \
         R2 = tmp1; \
-        R4 = tmp2; \
+        R4 = tmp2; */\
+        itmp1 = _mm_unpacklo_epi16(R1, R3); \
+        itmp2 = _mm_unpackhi_epi16(R1, R3); \
+        R1 = itmp1; \
+        R3 = itmp2; \
+        itmp1 = _mm_unpacklo_epi16(R2, R4); \
+        itmp2 = _mm_unpackhi_epi16(R2, R4); \
+        R2 = itmp1; \
+        R4 = itmp2; \
 }
 
 #define BLND2_4(R1, R2) { \
-        tmp1 = blend4i<0, 4, 1, 5>((Vec4i)R1, (Vec4i)R2); \
+/*        tmp1 = blend4i<0, 4, 1, 5>((Vec4i)R1, (Vec4i)R2); \
         tmp2 = blend4i<2, 6, 3, 7>((Vec4i)R1, (Vec4i)R2); \
         R1 = tmp1; \
-        R2 = tmp2; \
+        R2 = tmp2; */\
+        itmp1 = _mm_unpacklo_epi32(R1, R2); \
+        itmp2 = _mm_unpackhi_epi32(R1, R2); \
+        R1 = itmp1; \
+        R2 = itmp2; \
 }
 
 #define BLND2_2(R1, R2) { \
-        tmp1 = blend2q<0, 2>((Vec2q)R1, (Vec2q)R2); \
+/*        tmp1 = blend2q<0, 2>((Vec2q)R1, (Vec2q)R2); \
         tmp2 = blend2q<1, 3>((Vec2q)R1, (Vec2q)R2); \
         tmp1.store(pDst);   pDst += dstStride; \
-        tmp2.store(pDst);   pDst += dstStride; \
+        tmp2.store(pDst);   pDst += dstStride; */\
+        itmp1 = _mm_unpacklo_epi64(R1, R2); \
+        itmp2 = _mm_unpackhi_epi64(R1, R2); \
+        _mm_storeu_si128((__m128i*)pDst, itmp1); \
+        pDst += dstStride; \
+        _mm_storeu_si128((__m128i*)pDst, itmp2); \
+        pDst += dstStride; \
 }
 
 #define MB8(R1, R2, R3, R4, R5, R6, R7, R8) { \
@@ -3309,7 +3365,8 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         PREDANG_CALCROW_HOR(7 + 16, R8) \
         MB8(R1, R2, R3, R4, R5, R6, R7, R8) \
         CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 24) \
-        R16.load(refMain + 1 + GETAP(lookIdx, 31)); \
+        /*R16.load(refMain + 1 + GETAP(lookIdx, 31)); */\
+        R16 = _mm_loadu_si128((__m128i const*)(refMain + 1 + GETAP(lookIdx, 31))); \
         MB8(R9, R10, R11, R12, R13, R14, R15, R16) \
         BLND2_2(R1, R9) \
         BLND2_2(R5, R13) \
@@ -3883,6 +3940,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             Pel * original_pDst = pDst;
             v_deltaPos = 0;
             v_ipAngle = intraPredAngle;
+            __m128i itmp, itmp1, itmp2, it1, it2, it3, i16;
 
             switch (intraPredAngle)
             {
@@ -3976,6 +4034,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             Vec8s tmp1, tmp2, res1, res2;
             v_deltaPos = 0;
             v_ipAngle = intraPredAngle;
+            __m128i itmp, it1, it2, it3, i16;
 
             switch (intraPredAngle)
             {
