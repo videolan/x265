@@ -3044,7 +3044,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
     /* TODO: this could be as high as TEncSlice::compressSlice() */
     TComPicYuv *fenc = pcCU->getSlice()->getPic()->getPicYuvOrg();
-    m_me.setSourcePlanes((pixel*)fenc->getLumaAddr(), (pixel*)fenc->getCbAddr(), (pixel*)fenc->getCrAddr(), fenc->getStride(), fenc->getCStride());
+    m_me.setSourcePlane((pixel*)fenc->getLumaAddr(), fenc->getStride());
 
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
@@ -3766,31 +3766,20 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     else
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
-    // TODO: MotionReference should be a member of TComPicYUV
-    x265::MotionReference ref;
-    TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
-    for (int y = 0; y < 4; y++)
-    {
-        for (int x = 0; x < 4; x++)
-        {
-            ref.lumaPlane[x][y] = (pixel*)refRecon->getLumaFilterBlock(y, x);
-        }
-    }
-
-    ref.chromaStride = refRecon->getCStride();
-    ref.lumaStride = refRecon->getStride();
-    m_me.setReference(&ref);
-    m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
-    m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
-
     CYCLE_COUNTER_START(ME);
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
-        int satd = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
-        UInt mvcost = m_me.mvcost(rcMv);
-        UInt mvbits = m_me.bitcost(rcMv);
-        ruiBits += mvbits;
-        ruiCost = (UInt)(floor(fWeight * ((Double)satd - mvcost)) + (Double)m_pcRdCost->getCost(ruiBits));
+        // TODO: To make motionEstimate re-entrant, most of these must be function arguments
+        TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
+        m_me.setReference(refRecon->getMotionReference(0));
+        m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
+        m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
+
+        int satdCost = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
+
+        /* Get total cost of PU, but only include MV bit cost once */
+        ruiBits += m_me.bitcost(rcMv);
+        ruiCost = (UInt)(floor(fWeight * ((Double)satdCost - m_me.mvcost(rcMv))) + (Double)m_pcRdCost->getCost(ruiBits));
         CYCLE_COUNTER_STOP(ME);
         return;
     }
