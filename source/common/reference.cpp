@@ -115,8 +115,6 @@ void MotionReference::generateLumaHQpel()
     Short *intPtr;  // Intermediate results in short
     Pel *dstPtr;    // Final filtered blocks in Pel
 
-    dstPtr = m_lumaPlane[0][0] - (tmpMarginY + 4) * m_lumaStride - (tmpMarginX + 4);
-
     /* No need to calculate m_filteredBlock[0][0], it is copied */
     memcpy(m_lumaPlane[0][0] - m_startPad, m_reconPic->m_apiPicBufY, ((width + (m_reconPic->m_iLumaMarginX << 1)) * (height + (m_reconPic->m_iLumaMarginY << 1))) * sizeof(pixel));
 
