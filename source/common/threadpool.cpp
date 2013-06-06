@@ -243,6 +243,13 @@ ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
     return ThreadPoolImpl::instance;
 }
 
+ThreadPool *ThreadPool::GetThreadPool()
+{
+    assert(ThreadPoolImpl::instance);
+    return ThreadPoolImpl::instance;
+}
+
+
 void ThreadPoolImpl::Release()
 {
     if (--m_referenceCount == 0)
