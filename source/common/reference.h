@@ -63,7 +63,7 @@ protected:
     int         m_height;
     int         m_intStride;
     intptr_t    m_extendOffset;
-    int         m_offsetToLuma;
+    intptr_t    m_offsetToLuma;
     int         m_filterWidth;
     int         m_filterHeight;
 
