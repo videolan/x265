@@ -741,7 +741,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
 
-    PPAScopeEvent(TEncCu_xCompressCU);
+    PPAScopeEvent(TEncCu_xCompressCU + uiDepth);
 
     // get Original YUV data from picture
     m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
@@ -1059,7 +1059,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
 
-    PPAScopeEvent(TEncCu_xCompressCU + uiDepth);
+    //PPAScopeEvent(TEncCu_xCompressCU + uiDepth);
 
     // get Original YUV data from picture
     m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
@@ -1905,7 +1905,7 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 {
     UInt uiDepth = rpcTempCU->getDepth(0);
 
-    PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
+    //PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
 
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
 

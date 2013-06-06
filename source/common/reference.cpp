@@ -73,7 +73,7 @@ MotionReference::~MotionReference()
 
 void MotionReference::generateReferencePlanes()
 {
-    PPAScopeEvent(TComPicYUV_extendPicBorder);
+    PPAScopeEvent(GenerateReferencePlanes);
 
     const int width      = m_reconPic->getWidth();
     const int height     = m_reconPic->getHeight();
