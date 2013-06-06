@@ -3475,6 +3475,10 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                     pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(cMEMvField[0], ePartSize, uiPartAddr, 0, iPartIdx);
                     pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMEMvField[1], ePartSize, uiPartAddr, 0, iPartIdx);
                 }
+#if CU_STAT_LOGFILE
+               meCost += uiMECost;
+#endif
+
             }
         }
         motionCompensation(pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx);
