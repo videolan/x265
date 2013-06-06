@@ -53,6 +53,20 @@ protected:
     intptr_t    m_startPad;
     TComPicYuv *m_reconPic;
 
+    // Generate subpels for entire frame with a margin of tmpMargin
+    static const int s_tmpMarginX = 4;
+    static const int s_tmpMarginY = 4;
+
+    int         m_width;
+    int         m_height;
+    int         m_intStride;
+    intptr_t    m_extendOffset;
+    int         m_offsetToLuma;
+    int         m_filterWidth;
+    int         m_filterHeight;
+    int         m_extendWidth;
+    int         m_extendHeight;
+
     MotionReference& operator =(const MotionReference&);
 };
 
