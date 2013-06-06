@@ -160,6 +160,8 @@ enum IPFilterConf_S_P
 int PartitionFromSizes(int Width, int Height);
 
 typedef int  (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
+typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride); // fenc is aligned
+typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
@@ -192,7 +194,9 @@ struct EncoderPrimitives
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp sse[NUM_PARTITIONS];   // SSE for each size
+    pixelcmp sse_pp[NUM_PARTITIONS];   // SSE (pixel, pixel)
+    pixelcmp_ss sse_ss[NUM_PARTITIONS]; // SSE (short, short)
+    pixelcmp_sp sse_sp[NUM_PARTITIONS]; // SSE (short, pixel)
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;

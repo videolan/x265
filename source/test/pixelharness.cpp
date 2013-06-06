@@ -250,11 +250,29 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
-        if (opt.sse[curpar])
+        if (opt.sse_pp[curpar])
         {
-            if (!check_pixel_primitive(ref.sse[curpar], opt.sse[curpar]))
+            if (!check_pixel_primitive((pixelcmp)ref.sse_pp[curpar], (pixelcmp)opt.sse_pp[curpar]))
             {
-                printf("sse[%s]: failed!\n", FuncNames[curpar]);
+                printf("sse_pp[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
+        if (opt.sse_sp[curpar])
+        {
+            if (!check_pixel_primitive((pixelcmp)ref.sse_pp[curpar], (pixelcmp)opt.sse_pp[curpar]))
+            {
+                printf("sse_pp[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
+        if (opt.sse_ss[curpar])
+        {
+            if (!check_pixel_primitive((pixelcmp)ref.sse_pp[curpar], (pixelcmp)opt.sse_pp[curpar]))
+            {
+                printf("sse_pp[%s]: failed!\n", FuncNames[curpar]);
                 return false;
             }
         }
@@ -371,10 +389,22 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             REPORT_SPEEDUP(opt.sad[curpar], ref.sad[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
-        if (opt.sse[curpar])
+        if (opt.sse_pp[curpar])
         {
-            printf("   sse[%s]", FuncNames[curpar]);
-            REPORT_SPEEDUP(opt.sse[curpar], ref.sse[curpar], pbuf1, STRIDE, fref, STRIDE);
+            printf("sse_pp[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sse_pp[curpar], ref.sse_pp[curpar], pbuf1, STRIDE, fref, STRIDE);
+        }
+
+        if (opt.sse_sp[curpar])
+        {
+            printf("sse_sp[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sse_sp[curpar], ref.sse_sp[curpar], (short*)pbuf1, STRIDE, fref, STRIDE);
+        }
+
+        if (opt.sse_ss[curpar])
+        {
+            printf("sse_ss[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sse_ss[curpar], ref.sse_ss[curpar], (short*)pbuf1, STRIDE, (short*)fref, STRIDE);
         }
 
         if (opt.sad_x3[curpar])

@@ -26,6 +26,79 @@
 #include "primitives.h"
 #include <stdlib.h> // abs()
 
+#define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    p. ## FUNC_PREFIX ## [PARTITION_4x4] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_4x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 4, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_8x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_8x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 8, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_12x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_12x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 12, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_16x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_16x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 16, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_24x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_24x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 24, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_32x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_32x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 32, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_48x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_48x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 48, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+                                                                                                                   \
+    p. ## FUNC_PREFIX ## [PARTITION_64x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. ## FUNC_PREFIX ## [PARTITION_64x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## < 64, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+
 namespace {
 // place functions in anonymous namespace (file static)
 
@@ -95,8 +168,8 @@ void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix
     }
 }
 
-template<int lx, int ly>
-int CDECL sse(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+template<int lx, int ly, class T1, class T2>
+int CDECL sse(T1 *pix1, intptr_t stride_pix1, T2 *pix2, intptr_t stride_pix2)
 {
     int sum = 0;
     int iTemp;
@@ -712,78 +785,15 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sad_x4[PARTITION_64x64] = sad_x4<64, 64>;
 
     //sse
-    p.sse[PARTITION_4x4]   = sse<4, 4>;
-    p.sse[PARTITION_4x8]   = sse<4, 8>;
-    p.sse[PARTITION_4x12]  = sse<4, 12>;
-    p.sse[PARTITION_4x16]  = sse<4, 16>;
-    p.sse[PARTITION_4x24]  = sse<4, 24>;
-    p.sse[PARTITION_4x32]  = sse<4, 32>;
-    p.sse[PARTITION_4x48]  = sse<4, 48>;
-    p.sse[PARTITION_4x64]  = sse<4, 64>;
-
-    p.sse[PARTITION_8x4]   = sse<8, 4>;
-    p.sse[PARTITION_8x8]   = sse<8, 8>;
-    p.sse[PARTITION_8x12]  = sse<8, 12>;
-    p.sse[PARTITION_8x16]  = sse<8, 16>;
-    p.sse[PARTITION_8x24]  = sse<8, 24>;
-    p.sse[PARTITION_8x32]  = sse<8, 32>;
-    p.sse[PARTITION_8x48]  = sse<8, 48>;
-    p.sse[PARTITION_8x64]  = sse<8, 64>;
-
-    p.sse[PARTITION_12x4]  = sse<12, 4>;
-    p.sse[PARTITION_12x8]  = sse<12, 8>;
-    p.sse[PARTITION_12x12] = sse<12, 12>;
-    p.sse[PARTITION_12x16] = sse<12, 16>;
-    p.sse[PARTITION_12x24] = sse<12, 24>;
-    p.sse[PARTITION_12x32] = sse<12, 32>;
-    p.sse[PARTITION_12x48] = sse<12, 48>;
-    p.sse[PARTITION_12x64] = sse<12, 64>;
-
-    p.sse[PARTITION_16x4]  = sse<16, 4>;
-    p.sse[PARTITION_16x8]  = sse<16, 8>;
-    p.sse[PARTITION_16x12] = sse<16, 12>;
-    p.sse[PARTITION_16x16] = sse<16, 16>;
-    p.sse[PARTITION_16x24] = sse<16, 24>;
-    p.sse[PARTITION_16x32] = sse<16, 32>;
-    p.sse[PARTITION_16x48] = sse<16, 48>;
-    p.sse[PARTITION_16x64] = sse<16, 64>;
-
-    p.sse[PARTITION_24x4]  = sse<24, 4>;
-    p.sse[PARTITION_24x8]  = sse<24, 8>;
-    p.sse[PARTITION_24x12] = sse<24, 12>;
-    p.sse[PARTITION_24x16] = sse<24, 16>;
-    p.sse[PARTITION_24x24] = sse<24, 24>;
-    p.sse[PARTITION_24x32] = sse<24, 32>;
-    p.sse[PARTITION_24x48] = sse<24, 48>;
-    p.sse[PARTITION_24x64] = sse<24, 64>;
-
-    p.sse[PARTITION_32x4]  = sse<32, 4>;
-    p.sse[PARTITION_32x8]  = sse<32, 8>;
-    p.sse[PARTITION_32x12] = sse<32, 12>;
-    p.sse[PARTITION_32x16] = sse<32, 16>;
-    p.sse[PARTITION_32x24] = sse<32, 24>;
-    p.sse[PARTITION_32x32] = sse<32, 32>;
-    p.sse[PARTITION_32x48] = sse<32, 48>;
-    p.sse[PARTITION_32x64] = sse<32, 64>;
-
-    p.sse[PARTITION_48x4]  = sse<48, 4>;
-    p.sse[PARTITION_48x8]  = sse<48, 8>;
-    p.sse[PARTITION_48x12] = sse<48, 12>;
-    p.sse[PARTITION_48x16] = sse<48, 16>;
-    p.sse[PARTITION_48x24] = sse<48, 24>;
-    p.sse[PARTITION_48x32] = sse<48, 32>;
-    p.sse[PARTITION_48x48] = sse<48, 48>;
-    p.sse[PARTITION_48x64] = sse<48, 64>;
-
-    p.sse[PARTITION_64x4]  = sse<64, 4>;
-    p.sse[PARTITION_64x8]  = sse<64, 8>;
-    p.sse[PARTITION_64x12] = sse<64, 12>;
-    p.sse[PARTITION_64x16] = sse<64, 16>;
-    p.sse[PARTITION_64x24] = sse<64, 24>;
-    p.sse[PARTITION_64x32] = sse<64, 32>;
-    p.sse[PARTITION_64x48] = sse<64, 48>;
-    p.sse[PARTITION_64x64] = sse<64, 64>;
-
+#if HIGH_BIT_DEPTH
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss, short, short)
+#else
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp, pixel, pixel)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp, short, pixel)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss, short, short)
+#endif
     p.cpyblock     = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;
     p.cpyblock_p_s = blockcopy_p_s;
