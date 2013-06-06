@@ -50,6 +50,8 @@ public:
 
 protected:
 
+    void generateReferencePlane(int idx);
+
     intptr_t    m_startPad;
     TComPicYuv *m_reconPic;
 
