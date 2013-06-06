@@ -122,39 +122,39 @@ protected:
     {
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
-                   fref + fmv.y * ref->lumaStride  + fmv.x,
+                   fref + fmv.y * ref->m_lumaStride  + fmv.x,
                    sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
-                   fref + fmv.y * ref->lumaStride + fmv.x,
-                   ref->lumaStride);
+                   fref + fmv.y * ref->m_lumaStride + fmv.x,
+                   ref->m_lumaStride);
 #endif
     }
 
     inline int qpelSad(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
 #if SUBSAMPLE_SAD
         return sad(fencSad, FENC_STRIDE,
-                   qfref + fmv.y * ref->lumaStride  + fmv.x,
+                   qfref + fmv.y * ref->m_lumaStride  + fmv.x,
                    sadStride) << subsample;
 #else
         return sad(fenc, FENC_STRIDE,
-                   qfref + fmv.y * ref->lumaStride + fmv.x,
-                   ref->lumaStride);
+                   qfref + fmv.y * ref->m_lumaStride + fmv.x,
+                   ref->m_lumaStride);
 #endif
     }
 
     inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;
-        pixel *qfref = ref->lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
 
         return satd(fenc, FENC_STRIDE,
-                    qfref + fmv.y * ref->lumaStride + fmv.x,
-                    ref->lumaStride);
+                    qfref + fmv.y * ref->m_lumaStride + fmv.x,
+                    ref->m_lumaStride);
     }
 };
 }

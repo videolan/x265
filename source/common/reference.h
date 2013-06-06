@@ -42,9 +42,9 @@ public:
     void generateReferencePlanes();
 
     /* indexed by [hpelx|qpelx][hpely|qpely] */
-    pixel* lumaPlane[4][4];
+    pixel* m_lumaPlane[4][4];
 
-    int lumaStride;
+    int m_lumaStride;
 
     MotionReference *m_next;
 
