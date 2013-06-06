@@ -2695,10 +2695,25 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
 }
 
 #define CALCROW(RESL, RESH, ROW1L, ROW1H, ROW2L, ROW2H) { \
-        v_deltaPos += v_ipAngle; \
-        v_deltaFract = v_deltaPos & thirty1; \
-        RESL = ((thirty2 - v_deltaFract) * ROW1L + (v_deltaFract * ROW2L) + 16) >> 5; \
-        RESH = ((thirty2 - v_deltaFract) * ROW1H + (v_deltaFract * ROW2H) + 16) >> 5; \
+        /*v_deltaPos += v_ipAngle; \
+        v_deltaFract = v_deltaPos & thirty1;*/ \
+        v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle); \
+        v_deltaFract = _mm_and_si128(v_deltaPos, thirty1); \
+        /*RESL = ((thirty2 - v_deltaFract) * ROW1L + (v_deltaFract * ROW2L) + 16) >> 5; \
+        RESH = ((thirty2 - v_deltaFract) * ROW1H + (v_deltaFract * ROW2H) + 16) >> 5;*/ \
+        it1 = _mm_sub_epi16(thirty2, v_deltaFract); \
+        it2 = _mm_mullo_epi16(it1, ROW1L); \
+        it3 = _mm_mullo_epi16(v_deltaFract, ROW2L); \
+        it2 = _mm_add_epi16(it2, it3); \
+        i16 = _mm_set1_epi16(16); \
+        it2 = _mm_add_epi16(it2, i16); \
+        RESL = _mm_srai_epi16(it2, 5); \
+        \
+        it2 = _mm_mullo_epi16(it1, ROW1H); \
+        it3 = _mm_mullo_epi16(v_deltaFract, ROW2H); \
+        it2 = _mm_add_epi16(it2, it3); \
+        it2 = _mm_add_epi16(it2, i16); \
+        RESH = _mm_srai_epi16(it2, 5); \
 }
 
 #define  BLND2_16(R1, R2) { \
@@ -3103,7 +3118,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
             Vec16uc tmp1, tmp2;
             v_deltaPos = 0;
             v_ipAngle = intraPredAngle;
-            __m128i itmp, itmp1, itmp2;
+            __m128i itmp, itmp1, itmp2, it1, it2, it3, i16;
 //            MB16;
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0)
             CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 8)
@@ -3124,7 +3139,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
             Vec8s tmp1, tmp2;
             v_deltaPos = 0;
             v_ipAngle = intraPredAngle;
-            __m128i itmp;
+            __m128i itmp, it1, it2, it3, i16;
 
             PREDANG_CALCROW_VER(0);
             PREDANG_CALCROW_VER(1);
