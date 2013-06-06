@@ -3055,6 +3055,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if FAST_MODE_DECISION
     pcCU->getTotalCost() = 0;
     pcCU->getTotalBits() = 0;
+    pcCU->getTotalDistortion() = 0;
 #endif
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
     {
@@ -3468,7 +3469,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         }
         motionCompensation(pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx);
 #if FAST_MODE_DECISION
-        pcCU->getTotalCost() += uiCost[0];
         pcCU->getTotalBits() += uiBits[0];
 #endif
     } //  end of for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
@@ -4281,10 +4281,11 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
         + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCbAddr(),   rpcYuvRec->getCStride(), pcYuvOrg->getCbAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1, TEXT_CHROMA_U)
         + m_pcRdCost->getDistPart(g_bitDepthC, rpcYuvRec->getCrAddr(),   rpcYuvRec->getCStride(), pcYuvOrg->getCrAddr(),   pcYuvOrg->getCStride(), uiWidth >> 1, uiHeight >> 1, TEXT_CHROMA_V);
     dCostBest = CALCRDCOST(uiBitsBest, uiDistortionBest, m_pcRdCost->m_dLambda);
-
+#if !FAST_MODE_DECISION
     pcCU->getTotalBits()       = uiBitsBest;
     pcCU->getTotalDistortion() = uiDistortionBest;
     pcCU->getTotalCost()       = dCostBest;
+#endif
 
     if (pcCU->isSkipped(0))
     {
