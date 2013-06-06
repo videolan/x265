@@ -39,6 +39,7 @@ namespace x265 {
 class CTURow
 {
 public:
+
     TEncSbac               m_cSbacCoder;
     TEncSbac               m_cRDGoOnSbacCoder;
     TEncSbac               m_cBufferSbacCoder;
@@ -144,11 +145,17 @@ public:
     }
 
     TEncEntropy* getEntropyEncoder(int row)    { return &this->m_rows[row].m_cEntropyCoder; }
+
     TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_cSbacCoder; }
+
     TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_cRDGoOnSbacCoder; }
+
     TEncSbac***  getRDSbacCoders(int row)      { return this->m_rows[row].m_pppcRDSbacCoders; }
+
     TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_cBufferSbacCoder; }
+
     TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cCuEncoder; }
+
     TEncSbac*    getSingletonSbac()            { return m_pcSbacCoder; }
 
     void resetEntropy(TComSlice *pcSlice)
@@ -182,7 +189,6 @@ protected:
     CTURow*       m_rows;
     Event         m_completionEvent;
 };
-
 }
 
 #endif // ifndef __WAVEFRONT__

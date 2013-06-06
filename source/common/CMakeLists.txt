@@ -44,6 +44,7 @@ add_library(common
     threadpool.cpp threadpool.h
     md5.cpp md5.h
     TShortYUV.cpp TShortYUV.h
+    reference.cpp reference.h
     common.cpp common.h)
     
 if(ENABLE_PRIMITIVES_VEC)

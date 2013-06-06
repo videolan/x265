@@ -50,4 +50,5 @@ add_library(PrimitivesVec vec-primitives.cpp utils.h ${PRIMITIVES} ${VECTORCLASS
             macroblock.inc
             intrapred.inc
             pixel.inc pixel8.inc pixel16.inc
+            sse.inc
             ipfilter.inc ipfilter8.inc ipfilter16.inc)

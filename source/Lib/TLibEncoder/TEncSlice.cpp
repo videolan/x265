@@ -38,10 +38,11 @@
 #include "TEncTop.h"
 #include "TEncSlice.h"
 #include "PPA/ppa.h"
-#include <math.h>
-
+#include "common.h"
 #include "threading.h"
 #include "wavefront.h"
+
+#include <math.h>
 
 using namespace x265;
 
@@ -291,7 +292,7 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     // for RDOQ
     frame->setLambda(dLambda, dLambda / weight);
 #else
-    #error please fix me
+#error please fix me
     m_pcTrQuant->setLambda(dLambda);
 #endif
 
@@ -409,7 +410,7 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     // for RDOQ
     frame->setLambda(lambda, lambda / weight);
 #else
-    #error please fix me
+#error please fix me
     m_pcTrQuant->setLambda(lambda);
 #endif
 
@@ -449,30 +450,36 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice)
 
 /** \param rpcPic   picture class
  */
-#if LOGGING
- int cntInter[4], cntIntra[4] , cntSplit[4],  totalCU ;
-  int cuInterDistribution[4][4] , cuIntraDistribution[4][3] , cntIntraNxN;
-  int cntSkipCu[4], cntTotalCu[4];
-  extern FILE * fp , * fp1;
+#if CU_STAT_LOGFILE
+int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
+int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
+int cntSkipCu[4], cntTotalCu[4];
+extern FILE * fp, * fp1;
 #endif
 Void TEncSlice::compressSlice(TComPic* rpcPic)
 {
-#if LOGGING
-   
-     for(int i=0;i<4;i++){
-         cntInter[i]=0; cntIntra[i]=0;cntSplit[i]=0;
-         cntSkipCu[i]=0;
-         cntTotalCu[i]=0;
-         for(int j=0;j<4;j++){
-             if(j<3){
-                 cuIntraDistribution[i][j]=0;
-             }
-             cuInterDistribution[i][j]=0;
-         }
+#if CU_STAT_LOGFILE
+
+    for (int i = 0; i < 4; i++)
+    {
+        cntInter[i] = 0;
+        cntIntra[i] = 0;
+        cntSplit[i] = 0;
+        cntSkipCu[i] = 0;
+        cntTotalCu[i] = 0;
+        for (int j = 0; j < 4; j++)
+        {
+            if (j < 3)
+            {
+                cuIntraDistribution[i][j] = 0;
             }
-     totalCU = 0;
-     cntIntraNxN=0;
-#endif
+            cuInterDistribution[i][j] = 0;
+        }
+    }
+
+    totalCU = 0;
+    cntIntraNxN = 0;
+#endif // if LOGGING
     PPAScopeEvent(TEncSlice_compressSlice);
 
     rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
@@ -511,14 +518,14 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     {
         // TODO: fix this option
         assert(0);
-        #if 0
+#if 0
         m_pcTrQuant->clearSliceARLCnt();
         if (pcSlice->getSliceType() != I_SLICE)
         {
             Int qpBase = pcSlice->getSliceQpBase();
             pcSlice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
         }
-        #endif
+#endif
     }
 
     TEncTop* pcEncTop = (TEncTop*)m_pcCfg;
@@ -531,25 +538,26 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     }
 
     xRestoreWPparam(pcSlice);
-#if LOGGING
- if(pcSlice->getSliceType()==P_SLICE){
-   fprintf(fp, " FRAME  - P FRAME \n");
-   fprintf(fp, "64x64 : Inter [%.2f %%  (2Nx2N %.2f %%,  Nx2N %.2f %% , 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f%% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[0]*100)/cntTotalCu[0], (double)(cuInterDistribution[0][0]*100)/cntInter[0],  (double)(cuInterDistribution[0][2]*100)/cntInter[0] , (double)(cuInterDistribution[0][1]*100)/cntInter[0], (double)(cuInterDistribution[0][3]*100)/cntInter[0] , (double)(cntIntra[0]*100)/cntTotalCu[0], (double)(cuIntraDistribution[0][0]*100)/cntIntra[0], (double)(cuIntraDistribution[0][1]*100)/cntIntra[0],(double)(cuIntraDistribution[0][2]*100)/cntIntra[0],(double)(cntSplit[0]*100)/cntTotalCu[0], (double)(cntSkipCu[0]*100)/cntTotalCu[0] ); 
-   fprintf(fp, "32x32 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f] %%\n", (double)(cntInter[1]*100)/cntTotalCu[1], (double)(cuInterDistribution[1][0]*100)/cntInter[1],  (double)(cuInterDistribution[1][2]*100)/cntInter[1] , (double)(cuInterDistribution[1][1]*100)/cntInter[1], (double)(cuInterDistribution[1][3]*100)/cntInter[1] , (double)(cntIntra[1]*100)/cntTotalCu[1], (double)(cuIntraDistribution[1][0]*100)/cntIntra[1], (double)(cuIntraDistribution[1][1]*100)/cntIntra[1],(double)(cuIntraDistribution[1][2]*100)/cntIntra[1],(double)(cntSplit[1]*100)/cntTotalCu[1],(double)(cntSkipCu[1]*100)/cntTotalCu[1] );  
-   fprintf(fp, "16x16 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[2]*100)/cntTotalCu[2], (double)(cuInterDistribution[2][0]*100)/cntInter[2],  (double)(cuInterDistribution[2][2]*100)/cntInter[2] , (double)(cuInterDistribution[2][1]*100)/cntInter[2], (double)(cuInterDistribution[2][3]*100)/cntInter[2] , (double)(cntIntra[2]*100)/cntTotalCu[2], (double)(cuIntraDistribution[2][0]*100)/cntIntra[2], (double)(cuIntraDistribution[2][1]*100)/cntIntra[2],(double)(cuIntraDistribution[2][2]*100)/cntIntra[2],(double)(cntSplit[2]*100)/cntTotalCu[2],(double)(cntSkipCu[2]*100)/cntTotalCu[2] ); 
-   fprintf(fp, "8x8 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f  %% Planar %.2f %% Ang %.2f %%) NxN[%.2f] %% ] Skipped[%.2f] %% \n \n",(double)(cntInter[3]*100)/cntTotalCu[3], (double)(cuInterDistribution[3][0]*100)/cntInter[3],  (double)(cuInterDistribution[3][2]*100)/cntInter[3] , (double)(cuInterDistribution[3][1]*100)/cntInter[3], (double)(cuInterDistribution[3][3]*100)/cntInter[3] , (double)((cntIntra[3])*100)/cntTotalCu[3], (double)(cuIntraDistribution[3][0]*100)/cntIntra[3], (double)(cuIntraDistribution[3][1]*100)/cntIntra[3],(double)(cuIntraDistribution[3][2]*100)/cntIntra[3], (double)(cntIntraNxN *100)/cntIntra[3],(double)(cntSkipCu[3]*100)/cntTotalCu[3] );  
- }
+#if CU_STAT_LOGFILE
+    if (pcSlice->getSliceType() == P_SLICE)
+    {
+        fprintf(fp, " FRAME  - P FRAME \n");
+        fprintf(fp, "64x64 : Inter [%.2f %%  (2Nx2N %.2f %%,  Nx2N %.2f %% , 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f%% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[0] * 100) / cntTotalCu[0], (double)(cuInterDistribution[0][0] * 100) / cntInter[0],  (double)(cuInterDistribution[0][2] * 100) / cntInter[0], (double)(cuInterDistribution[0][1] * 100) / cntInter[0], (double)(cuInterDistribution[0][3] * 100) / cntInter[0], (double)(cntIntra[0] * 100) / cntTotalCu[0], (double)(cuIntraDistribution[0][0] * 100) / cntIntra[0], (double)(cuIntraDistribution[0][1] * 100) / cntIntra[0], (double)(cuIntraDistribution[0][2] * 100) / cntIntra[0], (double)(cntSplit[0] * 100) / cntTotalCu[0], (double)(cntSkipCu[0] * 100) / cntTotalCu[0]);
+        fprintf(fp, "32x32 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f] %%\n", (double)(cntInter[1] * 100) / cntTotalCu[1], (double)(cuInterDistribution[1][0] * 100) / cntInter[1],  (double)(cuInterDistribution[1][2] * 100) / cntInter[1], (double)(cuInterDistribution[1][1] * 100) / cntInter[1], (double)(cuInterDistribution[1][3] * 100) / cntInter[1], (double)(cntIntra[1] * 100) / cntTotalCu[1], (double)(cuIntraDistribution[1][0] * 100) / cntIntra[1], (double)(cuIntraDistribution[1][1] * 100) / cntIntra[1], (double)(cuIntraDistribution[1][2] * 100) / cntIntra[1], (double)(cntSplit[1] * 100) / cntTotalCu[1], (double)(cntSkipCu[1] * 100) / cntTotalCu[1]);
+        fprintf(fp, "16x16 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f %% Planar %.2f %% Ang %.2f %% )] Split[%.2f] %% Skipped[%.2f]%% \n", (double)(cntInter[2] * 100) / cntTotalCu[2], (double)(cuInterDistribution[2][0] * 100) / cntInter[2],  (double)(cuInterDistribution[2][2] * 100) / cntInter[2], (double)(cuInterDistribution[2][1] * 100) / cntInter[2], (double)(cuInterDistribution[2][3] * 100) / cntInter[2], (double)(cntIntra[2] * 100) / cntTotalCu[2], (double)(cuIntraDistribution[2][0] * 100) / cntIntra[2], (double)(cuIntraDistribution[2][1] * 100) / cntIntra[2], (double)(cuIntraDistribution[2][2] * 100) / cntIntra[2], (double)(cntSplit[2] * 100) / cntTotalCu[2], (double)(cntSkipCu[2] * 100) / cntTotalCu[2]);
+        fprintf(fp, "8x8 : Inter [%.2f %% (2Nx2N %.2f %%,  Nx2N %.2f %%, 2NxN %.2f %%, AMP %.2f %%)] Intra [%.2f %%(DC %.2f  %% Planar %.2f %% Ang %.2f %%) NxN[%.2f] %% ] Skipped[%.2f] %% \n \n", (double)(cntInter[3] * 100) / cntTotalCu[3], (double)(cuInterDistribution[3][0] * 100) / cntInter[3],  (double)(cuInterDistribution[3][2] * 100) / cntInter[3], (double)(cuInterDistribution[3][1] * 100) / cntInter[3], (double)(cuInterDistribution[3][3] * 100) / cntInter[3], (double)((cntIntra[3]) * 100) / cntTotalCu[3], (double)(cuIntraDistribution[3][0] * 100) / cntIntra[3], (double)(cuIntraDistribution[3][1] * 100) / cntIntra[3], (double)(cuIntraDistribution[3][2] * 100) / cntIntra[3], (double)(cntIntraNxN * 100) / cntIntra[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
+    }
 
- else
- {
-     fprintf(fp, " FRAME - I FRAME \n");
-     fprintf(fp, "64x64 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[0]*100)/cntTotalCu[0] , (double)(cntSkipCu[0]*100)/cntTotalCu[0]);
-     fprintf(fp, "32x32 : Intra [%.2f %%] Skipped [%.2f %%] \n", (double)(cntIntra[1]*100)/cntTotalCu[1], (double)(cntSkipCu[1]*100)/cntTotalCu[1]);
-     fprintf(fp, "16x16 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[2]*100)/cntTotalCu[2], (double)(cntSkipCu[2]*100)/cntTotalCu[2]);
-     fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3]*100)/cntTotalCu[3], (double)(cntSkipCu[3]*100)/cntTotalCu[3]);
- }
- 
-#endif
+    else
+    {
+        fprintf(fp, " FRAME - I FRAME \n");
+        fprintf(fp, "64x64 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[0] * 100) / cntTotalCu[0], (double)(cntSkipCu[0] * 100) / cntTotalCu[0]);
+        fprintf(fp, "32x32 : Intra [%.2f %%] Skipped [%.2f %%] \n", (double)(cntIntra[1] * 100) / cntTotalCu[1], (double)(cntSkipCu[1] * 100) / cntTotalCu[1]);
+        fprintf(fp, "16x16 : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[2] * 100) / cntTotalCu[2], (double)(cntSkipCu[2] * 100) / cntTotalCu[2]);
+        fprintf(fp, "8x8   : Intra [%.2f %%] Skipped [%.2f %%]\n", (double)(cntIntra[3] * 100) / cntTotalCu[3], (double)(cntSkipCu[3] * 100) / cntTotalCu[3]);
+    }
+
+#endif // if LOGGING
 }
 
 /**
@@ -568,6 +576,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     EncodeFrame *frame = pcEncTop->getFrameEncoder(0);
     TEncEntropy *pcEntropyCoder = frame->getEntropyEncoder(0);
     TEncSbac *pcSbacCoder = frame->getSingletonSbac();
+
     frame->resetEncoder();
     frame->getCuEncoder(0)->setBitCounter(NULL);
     pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
@@ -637,7 +646,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
             else
             {
                 // TR is available, we use it.
-                frame->getSbacCoder(uiSubStrm)->loadContexts(frame->getBufferSBac(uiLin-1));
+                frame->getSbacCoder(uiSubStrm)->loadContexts(frame->getBufferSBac(uiLin - 1));
             }
         }
         pcSbacCoder->load(frame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
@@ -732,9 +741,9 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
     if (m_pcCfg->getUseAdaptQpSelect())
     {
         assert(0);
-        #if 0
+#if 0
         m_pcTrQuant->storeSliceQpNext(pcSlice);
-        #endif
+#endif
     }
     if (pcSlice->getPPS()->getCabacInitPresentFlag())
     {

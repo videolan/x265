@@ -3195,27 +3195,6 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
     return true;
 }
 
-UInt TComDataCU::xGetMvdBits(TComMv cMvd)
-{
-    return xGetComponentBits(cMvd.getHor()) + xGetComponentBits(cMvd.getVer());
-}
-
-UInt TComDataCU::xGetComponentBits(Int iVal)
-{
-    UInt uiLength = 1;
-    UInt uiTemp   = (iVal <= 0) ? (-iVal << 1) + 1 : (iVal << 1);
-
-    assert(uiTemp);
-
-    while (1 != uiTemp)
-    {
-        uiTemp >>= 1;
-        uiLength += 2;
-    }
-
-    return uiLength;
-}
-
 Int TComDataCU::xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, Int iColRefPOC)
 {
     Int iDiffPocD = iColPOC - iColRefPOC;

@@ -91,14 +91,24 @@ const int angAP[17][64] =
 
 #define GETAP(X, Y) angAP[8 - (X)][(Y)]
 
-const __m128i v_multiL = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
-const __m128i v_multiH = _mm_setr_epi16(9, 10, 11, 12, 13, 14, 15, 16);
-const __m128i v_multiH2 = _mm_setr_epi16(17, 18, 19, 20, 21, 22, 23, 24);
-const __m128i v_multiH3 = _mm_setr_epi16(25, 26, 27, 28, 29, 30, 31, 32);
-const __m128i v_multiH4 = _mm_setr_epi16(33, 34, 35, 36, 37, 38, 39, 40);
-const __m128i v_multiH5 = _mm_setr_epi16(41, 42, 43, 44, 45, 46, 47, 48);
-const __m128i v_multiH6 = _mm_setr_epi16(49, 50, 51, 52, 53, 54, 55, 56);
-const __m128i v_multiH7 = _mm_setr_epi16(57, 58, 59, 60, 61, 62, 63, 64);
+__m128i v_multiL, v_multiH, v_multiH2, v_multiH3, v_multiH4, v_multiH5, v_multiH6, v_multiH7;
+__m128i v_multi_2Row;
+
+/* When compiled with /arch:AVX, this code is not safe to run on non-AVX CPUs and
+ * thus we cannot use static initialization.  This routine is only called if the
+ * detected CPU can support this SIMD architecture. */
+static void initFileStaticVars()
+{
+    v_multiL = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
+    v_multiH = _mm_setr_epi16(9, 10, 11, 12, 13, 14, 15, 16);
+    v_multiH2 = _mm_setr_epi16(17, 18, 19, 20, 21, 22, 23, 24);
+    v_multiH3 = _mm_setr_epi16(25, 26, 27, 28, 29, 30, 31, 32);
+    v_multiH4 = _mm_setr_epi16(33, 34, 35, 36, 37, 38, 39, 40);
+    v_multiH5 = _mm_setr_epi16(41, 42, 43, 44, 45, 46, 47, 48);
+    v_multiH6 = _mm_setr_epi16(49, 50, 51, 52, 53, 54, 55, 56);
+    v_multiH7 = _mm_setr_epi16(57, 58, 59, 60, 61, 62, 63, 64);
+    v_multi_2Row = _mm_setr_epi16(1, 2, 3, 4, 1, 2, 3, 4);
+}
 
 static inline
 void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t iDstStride, int iWidth, int /*iHeight*/)
@@ -709,7 +719,6 @@ void predIntraPlanar4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t ds
 }
 
 #if INSTRSET >= 5
-const __m128i v_multi_2Row = _mm_setr_epi16(1, 2, 3, 4, 1, 2, 3, 4);
 void predIntraPlanar4_sse4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -3291,6 +3300,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         BROADSTORE(15) \
 }
 
+#if 0 /* disable temporarily, to save MSVC build times */
 void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
@@ -4060,6 +4070,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
         }
     }
 }
+#endif /* disable temporarily */
 
 #endif /* if HIGH_BIT_DEPTH */
 
@@ -4078,9 +4089,11 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     case 16:
         xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
+#if 0 /* disable temporarily */
     case 32:
         xPredIntraAng32x32(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
+#endif
     }
 
 #endif /* if HIGH_BIT_DEPTH */
@@ -4202,6 +4215,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
 namespace x265 {
 void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
 {
+    initFileStaticVars();
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
