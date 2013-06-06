@@ -92,6 +92,7 @@ const int angAP[17][64] =
 #define GETAP(X, Y) angAP[8 - (X)][(Y)]
 
 __m128i v_multiL, v_multiH, v_multiH2, v_multiH3, v_multiH4, v_multiH5, v_multiH6, v_multiH7;
+__m128i v_multi_2Row;
 
 /* When compiled with /arch:AVX, this code is not safe to run on non-AVX CPUs and
  * thus we cannot use static initialization.  This routine is only called if the
@@ -106,6 +107,7 @@ static void initFileStaticVars()
     v_multiH5 = _mm_setr_epi16(41, 42, 43, 44, 45, 46, 47, 48);
     v_multiH6 = _mm_setr_epi16(49, 50, 51, 52, 53, 54, 55, 56);
     v_multiH7 = _mm_setr_epi16(57, 58, 59, 60, 61, 62, 63, 64);
+    v_multi_2Row = _mm_setr_epi16(1, 2, 3, 4, 1, 2, 3, 4);
 }
 
 static inline
@@ -717,7 +719,6 @@ void predIntraPlanar4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t ds
 }
 
 #if INSTRSET >= 5
-const __m128i v_multi_2Row = _mm_setr_epi16(1, 2, 3, 4, 1, 2, 3, 4);
 void predIntraPlanar4_sse4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
