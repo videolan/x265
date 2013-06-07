@@ -499,7 +499,7 @@ int main(int argc, char **argv)
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.iFrameRate;
     printf("\nencoded %d frames, %3.2f fps, %3.2f kb/s\n", 
-        outFrameCount, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime, elapsed);
+        outFrameCount, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
 
     x265_cleanup(); /* Free library singletons */
 
