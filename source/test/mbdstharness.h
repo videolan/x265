@@ -53,6 +53,8 @@ public:
 
     virtual ~MBDstHarness();
 
+    const char *getName() const { return "transforms"; }
+
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
