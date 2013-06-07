@@ -288,13 +288,8 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     weight = pow(2.0, (iQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     frame->setCrDistortionWeight(weight);
 
-#if RDOQ_CHROMA_LAMBDA
     // for RDOQ
     frame->setLambda(dLambda, dLambda / weight);
-#else
-#error please fix me
-    m_pcTrQuant->setLambda(dLambda);
-#endif
 
 #if SAO_CHROMA_LAMBDA
     // For SAO
@@ -406,13 +401,8 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     weight = pow(2.0, (sliceQP - g_aucChromaScale[qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
     frame->setCrDistortionWeight(weight);
 
-#if RDOQ_CHROMA_LAMBDA
     // for RDOQ
     frame->setLambda(lambda, lambda / weight);
-#else
-#error please fix me
-    m_pcTrQuant->setLambda(lambda);
-#endif
 
 #if SAO_CHROMA_LAMBDA
     // For SAO

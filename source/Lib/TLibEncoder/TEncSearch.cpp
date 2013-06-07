@@ -989,9 +989,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-#if RDOQ_CHROMA_LAMBDA
     m_pcTrQuant->selectLambda(TEXT_LUMA);
-#endif
 
     m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, uiAbsSum, TEXT_LUMA, uiAbsPartIdx, useTransformSkip);
 
@@ -1188,9 +1186,8 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         }
         m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_CHROMA, pcCU->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-#if RDOQ_CHROMA_LAMBDA
         m_pcTrQuant->selectLambda(TEXT_CHROMA);
-#endif
+
         m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, uiAbsSum, eText, uiAbsPartIdx, useTransformSkipChroma);
         //--- set coded block flag ---
         pcCU->setCbfSubParts((uiAbsSum ? 1 : 0) << uiOrgTrDepth, eText, uiAbsPartIdx, pcCU->getDepth(0) + uiTrDepth);
@@ -4361,9 +4358,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
         m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-#if RDOQ_CHROMA_LAMBDA
         m_pcTrQuant->selectLambda(TEXT_LUMA);
-#endif
+
         m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->getStride(), pcCoeffCurrY,
                                   pcArlCoeffCurrY, trWidth, trHeight, uiAbsSumY, TEXT_LUMA, uiAbsPartIdx);
 
@@ -4379,9 +4375,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             Int curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_CHROMA, pcCU->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-#if RDOQ_CHROMA_LAMBDA
             m_pcTrQuant->selectLambda(TEXT_CHROMA);
-#endif
 
             m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->getCStride(), pcCoeffCurrU,
                                       pcArlCoeffCurrU, trWidthC, trHeightC, uiAbsSumU, TEXT_CHROMA_U, uiAbsPartIdx);
@@ -4671,9 +4665,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
-#if RDOQ_CHROMA_LAMBDA
             m_pcTrQuant->selectLambda(TEXT_LUMA);
-#endif
             m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->getStride(), pcCoeffCurrY,
                                       pcArlCoeffCurrY, trWidth, trHeight, uiAbsSumTransformSkipY, TEXT_LUMA, uiAbsPartIdx, true);
             pcCU->setCbfSubParts(uiAbsSumTransformSkipY ? uiSetCbf : 0, TEXT_LUMA, uiAbsPartIdx, uiDepth);
@@ -4756,9 +4748,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             Int curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_CHROMA, pcCU->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
-#if RDOQ_CHROMA_LAMBDA
             m_pcTrQuant->selectLambda(TEXT_CHROMA);
-#endif
 
             m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->getCStride(), pcCoeffCurrU,
                                       pcArlCoeffCurrU, trWidthC, trHeightC, uiAbsSumTransformSkipU, TEXT_CHROMA_U, uiAbsPartIdx, true);
