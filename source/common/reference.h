@@ -25,17 +25,19 @@
 #define __REFERENCE__
 
 #include "primitives.h"
+#include "threading.h"
+#include "threadpool.h"
 
 class TComPicYuv;
 
 namespace x265 {
 // private x265 namespace
 
-class MotionReference
+class MotionReference : public JobProvider
 {
 public:
 
-    MotionReference(TComPicYuv*);
+    MotionReference(TComPicYuv*, ThreadPool *);
 
     ~MotionReference();
 
@@ -50,10 +52,28 @@ public:
 
 protected:
 
-    void generateLumaHQpel();
+    bool FindJob();
+    void generateIntermediates(int x);
+    void generateReferencePlane(int idx);
 
-    intptr_t    m_startPad;
-    TComPicYuv *m_reconPic;
+    intptr_t     m_startPad;
+    TComPicYuv  *m_reconPic;
+    volatile int m_workerCount;
+    volatile int m_finishedPlanes;
+    volatile int m_vplanesFinished[4];
+    volatile int m_interReady[4];
+    Event        m_completionEvent;
+
+    // Generate subpels for entire frame with a margin of tmpMargin
+    static const int s_tmpMarginX = 4;
+    static const int s_tmpMarginY = 4;
+
+    int         m_intStride;
+    intptr_t    m_extendOffset;
+    intptr_t    m_offsetToLuma;
+    int         m_filterWidth;
+    int         m_filterHeight;
+    short      *m_intermediateValues;
 
     MotionReference& operator =(const MotionReference&);
 };

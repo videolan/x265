@@ -122,6 +122,8 @@ public:
     //< an existing pool but it will never shrink.
     static ThreadPool *AllocThreadPool(int numthreads = 0);
 
+    static ThreadPool *GetThreadPool();
+
     //< The pool is reference counted so all calls to AllocThreadPool() should be
     //< followed by a call to Release()
     virtual void Release() = 0;

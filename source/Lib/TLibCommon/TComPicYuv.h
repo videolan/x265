@@ -181,7 +181,7 @@ public:
     Void  copyFromPicture(const x265_picture_t&);
 
     //  Extend function of picture buffer
-    Void  extendPicBorder();
+    Void  extendPicBorder(x265::ThreadPool *pool);
 
     //  Dump picture
     Void  dump(Char* pFileName, Bool bAdd = false);
