@@ -288,59 +288,25 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost)
 
 __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance)
 {
-    UInt  uiSad = 0;
-    Pel*  piRefSrch;
+    UInt  uiSad;
 
-    // Initialise the DistParam for HM Primitives and Optimized Primitives
-    piRefSrch = rcStruct.piRefY + iSearchY * rcStruct.iYStride + iSearchX;
-    m_cDistParam.pOrg = pcPatternKey->getROIY();
-    m_cDistParam.pCur = piRefSrch;
-    m_cDistParam.iStrideOrg = pcPatternKey->getPatternLStride();
-    m_cDistParam.iStrideCur = rcStruct.iYStride;
-    m_cDistParam.iCols    = pcPatternKey->getROIYWidth();
-    m_cDistParam.iRows    = pcPatternKey->getROIYHeight();
-    m_cDistParam.iStrideOrg = pcPatternKey->getPatternLStride();
-    m_cDistParam.iStrideCur = rcStruct.iYStride;
-    m_cDistParam.iSubShift = 0;
+    Pel*  piRefSrch = rcStruct.piRefY + iSearchY * rcStruct.iYStride + iSearchX;
+    
+    m_pcRdCost->setDistParam(pcPatternKey, piRefSrch, rcStruct.iYStride, m_cDistParam);
 
-    // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
     if (m_cDistParam.iRows > 12)
     {
+        // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
         m_cDistParam.iSubShift = 1;
     }
-
-    m_cDistParam.uiComp = 0;
+    setDistParamComp(0);
 
     // distortion
     m_cDistParam.bitDepth = g_bitDepthY;
-
-    // Call the sad Primitive function if not HM sad Functions
-    Pel* piOrg   = m_cDistParam.pOrg;
-    Pel* piCur   = m_cDistParam.pCur;
-    Int  iRows   = m_cDistParam.iRows;
-    Int  iSubShift  = m_cDistParam.iSubShift;
-    Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = m_cDistParam.iStrideCur * iSubStep;
-    Int  iStrideOrg = m_cDistParam.iStrideOrg * iSubStep;
-
-    FpDistFunc  *m_afpDistortFunc;
-    m_afpDistortFunc =  m_pcRdCost->getSadFunctions();
-    m_cDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[m_cDistParam.iCols] + 1];
-    if (m_cDistParam.iCols == 12)
-    {
-        m_cDistParam.DistFunc = m_afpDistortFunc[43];
-    }
-    else if (m_cDistParam.iCols == 24)
-    {
-        m_cDistParam.DistFunc = m_afpDistortFunc[44];
-    }
-    else if (m_cDistParam.iCols == 48)
-    {
-        m_cDistParam.DistFunc = m_afpDistortFunc[45];
-    }
-
-    uiSad = m_cDistParam.DistFunc(&m_cDistParam) +
-        m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
+    uiSad = m_cDistParam.DistFunc(&m_cDistParam);
+    
+    // motion cost
+    uiSad += m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
 
     if (uiSad < rcStruct.uiBestSad)
     {

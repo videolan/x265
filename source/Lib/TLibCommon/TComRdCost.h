@@ -208,7 +208,6 @@ public:
 
     // Distortion Functions
     Void    init();
-    FpDistFunc * getSadFunctions()             { return m_afpDistortFunc; }
 
     Void    setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam);
     Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
