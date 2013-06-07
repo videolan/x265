@@ -167,9 +167,6 @@ private:
     // for distortion
     FpDistFunc              m_afpDistortFunc[64]; // [eDFunc]
 
-    Double                  m_cbDistortionWeight;
-    Double                  m_crDistortionWeight;
-
     Double                  m_sqrtLambda;
     UInt                    m_uiLambdaMotionSSE;
     Double                  m_dFrameLambda;
@@ -181,6 +178,9 @@ public:
     Int                     m_iCostScale;
     Double                  m_dLambda;
     UInt                    m_uiLambdaMotionSAD;
+
+    Double                  m_cbDistortionWeight;
+    Double                  m_crDistortionWeight;
 
     TComRdCost();
     virtual ~TComRdCost();

@@ -57,7 +57,7 @@ int sse_pp8(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -79,7 +79,7 @@ int sse_pp12(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         m1.cutoff(12);
         n1.load(piCur);
         n1.cutoff(12);
@@ -108,7 +108,7 @@ int sse_pp16(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum_low(0), sum_high(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -133,7 +133,7 @@ int sse_pp24(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum_low(0), sum_high(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -142,7 +142,7 @@ int sse_pp24(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_low = diff_low * diff_low;
@@ -166,7 +166,7 @@ int sse_pp32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum_low(0), sum_high(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -175,7 +175,7 @@ int sse_pp32(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -200,7 +200,7 @@ int sse_pp48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum_low(0), sum_high(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -209,7 +209,7 @@ int sse_pp48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -218,7 +218,7 @@ int sse_pp48(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         n1.load(piCur + 32);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -243,7 +243,7 @@ int sse_pp64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     Vec4i sum_low(0), sum_high(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -252,7 +252,7 @@ int sse_pp64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -261,7 +261,7 @@ int sse_pp64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         n1.load(piCur + 32);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -270,7 +270,7 @@ int sse_pp64(pixel* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_low += (extend_low(diff_low) + extend_low(diff_high));
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
-        m1.load_a(piOrg + 48);
+        m1.load(piOrg + 48);
         n1.load(piCur + 48);
         diff_low = extend_low(m1) - extend_low(n1);
         diff_high = extend_high(m1) - extend_high(n1);
@@ -295,7 +295,7 @@ int sse_ss4(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCur
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -317,7 +317,7 @@ int sse_ss8(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCur
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -343,7 +343,7 @@ int sse_ss12(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -352,7 +352,7 @@ int sse_ss12(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -375,7 +375,7 @@ int sse_ss16(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -384,7 +384,7 @@ int sse_ss16(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -410,7 +410,7 @@ int sse_ss24(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -419,7 +419,7 @@ int sse_ss24(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -428,7 +428,7 @@ int sse_ss24(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -454,7 +454,7 @@ int sse_ss32(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -463,7 +463,7 @@ int sse_ss32(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -472,7 +472,7 @@ int sse_ss32(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -481,7 +481,7 @@ int sse_ss32(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         n1.load(piCur + 24);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -507,7 +507,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -516,7 +516,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -525,7 +525,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -534,7 +534,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         n1.load(piCur + 24);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -543,7 +543,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         n1.load(piCur + 32);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -552,7 +552,7 @@ int sse_ss48(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 40);
+        m1.load(piOrg + 40);
         n1.load(piCur + 40);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -578,7 +578,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
     Vec4i sum(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.load(piCur);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -587,7 +587,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         n1.load(piCur + 8);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -596,7 +596,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         n1.load(piCur + 16);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -605,7 +605,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         n1.load(piCur + 24);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -614,7 +614,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         n1.load(piCur + 32);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -623,7 +623,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 40);
+        m1.load(piOrg + 40);
         n1.load(piCur + 40);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -632,7 +632,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 48);
+        m1.load(piOrg + 48);
         n1.load(piCur + 48);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -641,7 +641,7 @@ int sse_ss64(short* piOrg, intptr_t iStrideOrg, short* piCur, intptr_t iStrideCu
         diff = diff * diff;
         sum += diff;
 
-        m1.load_a(piOrg + 56);
+        m1.load(piOrg + 56);
         n1.load(piCur + 56);
         diff = extend_low(m1) - extend_low(n1);
         diff = diff * diff;
@@ -668,7 +668,7 @@ int sse_sp4(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur
     Vec4i sum_low(0);
     for (; iRows != 0; iRows--)
     {
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         n1.fromUint32(*(uint32_t*)piCur);
         diff_low = extend_low(m1) - extend_low(extend_low(n1));
         diff_low = diff_low * diff_low;
@@ -693,7 +693,7 @@ int sse_sp8(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCur
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
         diff_low = diff_low * diff_low;
         sum_low += extend_low(diff_low);
@@ -720,9 +720,9 @@ int sse_sp12(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     {
         n1.load(piCur);
         n1.cutoff(12);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         diff_high = extend_low(m1) - extend_low(extend_high(n1));
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -748,9 +748,9 @@ int sse_sp16(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -776,9 +776,9 @@ int sse_sp24(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -786,7 +786,7 @@ int sse_sp24(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 16);
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         diff_low = m1 - extend_low(n1);
         diff_low = diff_low * diff_low;
         sum_low += extend_low(diff_low);
@@ -811,9 +811,9 @@ int sse_sp32(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -821,9 +821,9 @@ int sse_sp32(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 16);
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -849,7 +849,7 @@ int sse_sp48(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
         m1.load_a(piOrg + 8);
         diff_high = m1 - extend_high(n1);
@@ -859,9 +859,9 @@ int sse_sp48(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 16);
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -869,9 +869,9 @@ int sse_sp48(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 32);
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 40);
+        m1.load(piOrg + 40);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -897,9 +897,9 @@ int sse_sp64(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
     for (; iRows != 0; iRows--)
     {
         n1.load(piCur);
-        m1.load_a(piOrg);
+        m1.load(piOrg);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 8);
+        m1.load(piOrg + 8);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -907,9 +907,9 @@ int sse_sp64(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 16);
-        m1.load_a(piOrg + 16);
+        m1.load(piOrg + 16);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 24);
+        m1.load(piOrg + 24);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -917,9 +917,9 @@ int sse_sp64(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 32);
-        m1.load_a(piOrg + 32);
+        m1.load(piOrg + 32);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 40);
+        m1.load(piOrg + 40);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
@@ -927,9 +927,9 @@ int sse_sp64(short* piOrg, intptr_t iStrideOrg, pixel* piCur, intptr_t iStrideCu
         sum_high += (extend_high(diff_low) + extend_high(diff_high));
 
         n1.load(piCur + 48);
-        m1.load_a(piOrg + 48);
+        m1.load(piOrg + 48);
         diff_low = m1 - extend_low(n1);
-        m1.load_a(piOrg + 56);
+        m1.load(piOrg + 56);
         diff_high = m1 - extend_high(n1);
         diff_low = diff_low * diff_low;
         diff_high = diff_high * diff_high;
