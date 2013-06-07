@@ -764,8 +764,7 @@ void predIntraPlanar4_sse4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr
         v_im4 = _mm_srai_epi16(_mm_add_epi16(v_horPred, v_topRow), 3); \
         v_im5 = _mm_packus_epi16(v_im4, v_im4); \
         *(uint32_t*)&rpDst[(Y)*dstStride] = _mm_cvtsi128_si32(v_im5); \
-        int _tmp = _mm_extract_epi32(v_im5, 1); \
-        *(uint32_t*)&rpDst[((Y)+1) * dstStride] = _tmp; \
+        *(uint32_t*)&rpDst[((Y)+1) * dstStride] = _mm_cvtsi128_si32(_mm_shuffle_epi32(v_im5, 0x55));; \
 }
 
     COMP_PRED_PLANAR_2ROW(0)
