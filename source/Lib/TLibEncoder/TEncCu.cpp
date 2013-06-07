@@ -1272,14 +1272,14 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
                 rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
             {
-                xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
+                xCheckRDCostIntrainInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 rpcTempCU->initEstData(uiDepth, iQP);
 
                 if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
                 {
                     if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                     {
-                        xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_NxN);
+                        xCheckRDCostIntrainInter(rpcBestCU, rpcTempCU, SIZE_NxN);
                         rpcTempCU->initEstData(uiDepth, iQP);
                     }
                 }
@@ -1951,6 +1951,55 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
 }
 
+Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize)
+{
+    UInt uiDepth = rpcTempCU->getDepth(0);
+
+    PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
+
+    rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
+
+    rpcTempCU->setPartSizeSubParts(eSize, 0, uiDepth);
+    rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
+    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
+
+    Bool bSeparateLumaChroma = true; // choose estimation mode
+    UInt uiPreCalcDistC      = 0;
+    if (!bSeparateLumaChroma)
+    {
+        m_pcPredSearch->preestChromaPredMode(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth]);
+    }
+    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, bSeparateLumaChroma);
+
+    m_ppcRecoYuvTemp[uiDepth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
+
+    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC);
+
+    m_pcEntropyCoder->resetBits();
+    if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    {
+        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
+    }
+    m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodePartSize(rpcTempCU, 0, uiDepth, true);
+    m_pcEntropyCoder->encodePredInfo(rpcTempCU, 0,          true);
+    m_pcEntropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
+
+    // Encode Coefficients
+    Bool bCodeDQP = getdQPFlag();
+    m_pcEntropyCoder->encodeCoeff(rpcTempCU, 0, uiDepth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
+    setdQPFlag(bCodeDQP);
+
+    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
+
+    rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
+    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    rpcTempCU->getTotalCost() = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+
+    xCheckDQP(rpcTempCU);
+    xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
+}
 
 /** Check R-D costs for a CU with PCM mode.
  * \param rpcBestCU pointer to best mode CU data structure
