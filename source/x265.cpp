@@ -343,8 +343,6 @@ struct CLIOptions
         if (argc <= 1 || help)
             do_help();
 
-        x265_setup_primitives(param, cpuid);
-
         if (inputfn == NULL || bitstreamfn == NULL)
         {
             log(X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
@@ -416,6 +414,8 @@ struct CLIOptions
             log(X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
             return true;
         }
+
+        x265_setup_primitives(param, cpuid);
 
         x265_set_globals(param, inputBitDepth);
 
