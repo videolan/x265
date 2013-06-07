@@ -103,7 +103,7 @@ public:
         if (cDelim == 'a')
             printf("x265 [info]: ");
         else
-            printf("x265 [info]: frame %c:%-6d  bitrate: %-8d  ", cDelim - 32, m_uiNumPic, (int)(getBits() * dScale));
+            printf("x265 [info]: frame %c:%-6d  kb/s: %-8d  ", cDelim - 32, m_uiNumPic, (int)(getBits() * dScale));
         printf("PSNR Mean: Y:%2.3lf U:%2.3lf V:%2.3lf\n",
             getPsnrY() / (Double)getNumPic(),
             getPsnrU() / (Double)getNumPic(),
