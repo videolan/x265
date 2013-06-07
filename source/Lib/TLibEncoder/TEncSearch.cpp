@@ -954,20 +954,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     }
     else
     {
-        // load prediction
-        Pel*  pPred   = piPred;
-        Pel*  pPredBuf = m_pSharedPredTransformSkip[0];
-        Int k = 0;
-        //TODO : performance primitive?
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pPred[uiX] = pPredBuf[k++];
-            }
-
-            pPred += uiStride;
-        }
+        primitives.cpyblock(uiWidth, uiHeight, piPred, uiStride, m_pSharedPredTransformSkip[0], uiWidth);
     }
 
     //===== get residual signal =====
