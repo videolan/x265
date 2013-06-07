@@ -4294,6 +4294,14 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     pcCU->getTotalDistortion() = uiDistortionBest;
     pcCU->getTotalCost()       = dCostBest;
 #endif
+#if CU_STAT_LOGFILE
+    if(mergeFlag == 0) 
+    {
+        fprintf(fp1,",RDO Cost : %.2f ",dCostBest);
+    pcCU->getTotalDistortion() = uiDistortionBest;
+    pcCU->getTotalCost()       = dCostBest;
+    }
+#endif
 
     if (pcCU->isSkipped(0))
     {

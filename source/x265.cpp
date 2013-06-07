@@ -72,6 +72,7 @@ static struct option long_options[] =
 
 #if CU_STAT_LOGFILE
 FILE* fp = NULL;
+FILE * fp1 = NULL;
 #endif
 
 /* Ctrl-C handler */
@@ -427,6 +428,7 @@ int main(int argc, char **argv)
 
 #if CU_STAT_LOGFILE
     fp = fopen("Log_CU_stats.txt", "w");
+    fp1 = fopen("LOG_CU_COST.txt","w");
 #endif
     x265_param_t param;
     CLIOptions   cliopt;
@@ -510,6 +512,7 @@ int main(int argc, char **argv)
 #endif
 #if CU_STAT_LOGFILE
     fclose(fp);
+    fclose(fp1);
 #endif
     return 0;
 }
