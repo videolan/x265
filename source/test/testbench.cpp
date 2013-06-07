@@ -83,12 +83,18 @@ extern int instrset_detect();
 int main(int argc, char *argv[])
 {
     int cpuid = instrset_detect(); // Detect supported instruction set
+    const char *testname = 0;
 
     for (int i = 1; i < argc - 1; i += 2)
     {
         if (!strcmp(argv[i], "--cpuid"))
         {
             cpuid = atoi(argv[i + 1]);
+        }
+        if (!strcmp(argv[i], "--test"))
+        {
+            testname = argv[i + 1];
+            printf("Testing only harnesses that match name <%s>\n", testname);
         }
     }
 
@@ -124,6 +130,8 @@ int main(int argc, char *argv[])
         printf("Testing vector class primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
+            if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+                continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
                 fprintf(stderr, "\nx265: vector primitive has failed. Go and fix that Right Now!\n");
@@ -139,6 +147,8 @@ int main(int argc, char *argv[])
         printf("Testing assembly primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
+            if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+                continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
                 fprintf(stderr, "\nx265: ASM primitive has failed. Go and fix that Right Now!\n");
@@ -163,6 +173,9 @@ int main(int argc, char *argv[])
 
     for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
     {
+        if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+            continue;
+        printf("== %s primitives ==\n", harness[h]->getName());
         harness[h]->measureSpeed(cprim, optprim);
     }
 
