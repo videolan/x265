@@ -4413,7 +4413,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
         xPredIntraAng8x8(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 16:
-        xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
+        xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
 #if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
     case 32:
