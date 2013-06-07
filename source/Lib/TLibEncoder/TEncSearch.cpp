@@ -962,7 +962,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         // get residual
         Pel*  pOrg    = piOrg;
         Pel*  pPred   = piPred;
-        Short*  pResi   = piResi;
+        Short* pResi  = piResi;
         //TODO : performance primitive?
         for (UInt uiY = 0; uiY < uiHeight; uiY++)
         {
