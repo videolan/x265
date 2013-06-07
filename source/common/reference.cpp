@@ -31,33 +31,56 @@
 
 using namespace x265;
 
-MotionReference::MotionReference(TComPicYuv* pic)
+#ifdef __GNUC__                         /* GCCs builtin atomics */
+#define ATOMIC_INC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, 1)
+#elif _MSC_VER
+#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
+#else
+#error "Must define atomic operations for this compiler"
+#endif
+
+
+MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
+    : JobProvider(pool)
 {
-    /* Create buffers for Hpel/Qpel Planes */
+    m_reconPic = pic;
+    int width = pic->getWidth();
+    int height = pic->getHeight();
     m_lumaStride = pic->getStride();
     m_startPad = pic->m_iLumaMarginY * m_lumaStride + pic->m_iLumaMarginX;
-    m_reconPic = pic;
+    m_intStride = width + s_tmpMarginX * 4;
+    m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
+    m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
+    m_filterWidth = width + s_tmpMarginX * 2;
+    m_filterHeight = height + s_tmpMarginY * 2;
     m_next = NULL;
 
-    size_t padwidth = pic->getWidth() + pic->m_iLumaMarginX * 2;
-    size_t padheight = pic->getHeight() + pic->m_iLumaMarginY * 2;
+    m_lumaPlane[0][0] = pic->m_apiPicBufY + m_startPad;
 
+    /* Create buffers for Hpel/Qpel Planes */
+    size_t padwidth = width + pic->m_iLumaMarginX * 2;
+    size_t padheight = height + pic->m_iLumaMarginY * 2;
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
-            m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight);
-            m_lumaPlane[i][j] += m_startPad;
+            if (i == 0 && j == 0)
+                continue;
+            m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight) + m_startPad;
         }
     }
 }
 
 MotionReference::~MotionReference()
 {
+    JobProvider::Flush();
+
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
+            if (i == 0 && j == 0)
+                continue;
             if (m_lumaPlane[i][j])
             { 
                 xFree(m_lumaPlane[i][j] - m_startPad);
@@ -68,145 +91,93 @@ MotionReference::~MotionReference()
 
 void MotionReference::generateReferencePlanes()
 {
-    PPAScopeEvent(TComPicYUV_extendPicBorder);
+    m_intermediateValues = (short*)xMalloc(short, 4 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
+    
+    m_workerCount = 0;
+    m_interReady[0] = m_interReady[1] = m_interReady[2] =  m_interReady[3] = 0;
+    m_vplanesFinished[1] = m_vplanesFinished[2] = m_vplanesFinished[3] = 0;
+    
+    m_vplanesFinished[0] = 1; /* 0, 0 needs no work */
+    m_finishedPlanes = 1;
 
-    /* Generate H/Q-pel for LumaBlocks  */
-    generateLumaHQpel();
-
-    // Extend borders
-    int tmpMargin = 4;
+    JobProvider::Enqueue();
     for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            if (i == 0 && j == 0)
-                continue;
+        m_pool->PokeIdleThreads();
+    m_completionEvent.Wait();
+    JobProvider::Dequeue();
 
-            m_reconPic->xExtendPicCompBorder(m_lumaPlane[i][j] - tmpMargin * m_lumaStride - tmpMargin,
-                                             (int) m_lumaStride,
-                                             m_reconPic->getWidth() + 2 * tmpMargin,
-                                             m_reconPic->getHeight() + 2 * tmpMargin,
-                                             m_reconPic->m_iLumaMarginX - tmpMargin,
-                                             m_reconPic->m_iLumaMarginY - tmpMargin);
+    xFree(m_intermediateValues);
+}
+
+bool MotionReference::FindJob()
+{
+    // Called by thread pool worker threads
+
+    if (m_workerCount < 4)
+    {
+        /* First four threads calculate 4 intermediate buffers */
+        int idx = ATOMIC_INC(&m_workerCount) - 1;
+        if (idx < 4)
+        {
+            generateIntermediates(idx);
+            m_interReady[idx] = 1;
+            for (int i = 0; i < 4; i++)
+                m_pool->PokeIdleThreads();
+            return true;
         }
+    }
+    else
+    {
+        /* find a plane that needs processing */
+        for (int x = 0; x < 4; x++)
+        {
+            while (m_interReady[x] && m_vplanesFinished[x] < 4)
+            {
+                /* intermediate buffer is available */
+                int y = ATOMIC_INC(&m_vplanesFinished[x]) - 1;
+                if (y < 4)
+                {
+                    generateReferencePlane(y * 4 + x);
+                    if (ATOMIC_INC(&m_finishedPlanes) == 16)
+                        m_completionEvent.Trigger();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    return false;
+}
+
+void MotionReference::generateIntermediates(int x)
+{
+    PPAScopeEvent(GenerateIntermediates);
+
+    short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
+    Pel *srcPtr = m_reconPic->getLumaAddr() - s_tmpMarginY * 2 * m_lumaStride - s_tmpMarginX * 2;
+    Short *intPtr = filteredBlockTmp + m_offsetToLuma - s_tmpMarginY * 2 * m_intStride - s_tmpMarginX * 2;
+
+    if (x == 0)
+    {
+        // no horizontal filter necessary
+        primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8);
+    }
+    else
+    {
+        // Horizontal filter into intermediate buffer
+        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8, TComPrediction::m_lumaFilter[x]);
     }
 }
 
-void MotionReference::generateLumaHQpel()
+void MotionReference::generateReferencePlane(int idx)
 {
-    int width      = m_reconPic->getWidth();
-    int height     = m_reconPic->getHeight();
+    PPAScopeEvent(GenerateReferencePlanes);
 
-    int tmpMarginX = 4; //Generate subpels for entire frame with a margin of tmpMargin
-    int tmpMarginY = 4;
-    int intStride = width + (tmpMarginX << 2);
-    int rows = height + (tmpMarginY << 2);
-
-    // TODO: class static? would require locking
-    short* filteredBlockTmp;
-    filteredBlockTmp = (short*)xMalloc(short, intStride * rows);
-
-    int offsetToLuma = (tmpMarginY << 1) * intStride  + (tmpMarginX << 1);
-    Pel *srcPtr = m_reconPic->getLumaAddr() - (tmpMarginY + 4) * m_lumaStride - (tmpMarginX + 4);
-
-    Short *intPtr;  // Intermediate results in short
-    Pel *dstPtr;    // Final filtered blocks in Pel
-
-    /* No need to calculate m_filteredBlock[0][0], it is copied */
-    memcpy(m_lumaPlane[0][0] - m_startPad, m_reconPic->m_apiPicBufY, ((width + (m_reconPic->m_iLumaMarginX << 1)) * (height + (m_reconPic->m_iLumaMarginY << 1))) * sizeof(pixel));
-
-    intPtr = filteredBlockTmp + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-    primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8);
-
-    // Generate @ 1,0
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[0][1] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[0][2] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-
-    // Generate @ 3,0
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[0][3] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-
-
-
-    intPtr = filteredBlockTmp + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[1]);
-
-    // Generate @ 0,1
-    intPtr = filteredBlockTmp  + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[1][0]  - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-
-    // Generate @ 1,1
-    intPtr = filteredBlockTmp  + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[1][1] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-
-    // Generate @ 2,1
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[1][2] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-
-    // Generate @ 3,1
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[1][3] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-
-
-
-
-    intPtr = filteredBlockTmp + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8,  TComPrediction::m_lumaFilter[2]);
-
-    // Generate @ 0,2
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[2][0] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-
-    // Generate @ 1,2
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[2][1] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-
-    // Generate @ 2,2
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[2][2] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-
-    // Generate @ 3,2
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[2][3] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride,  width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-
-
-
-    intPtr = filteredBlockTmp + offsetToLuma - (tmpMarginY + 4) * intStride - (tmpMarginX + 4);
-    primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, intStride, width + (tmpMarginX << 1) + 8, height + (tmpMarginY << 1) + 8, TComPrediction::m_lumaFilter[3]);
-
-    // Generate @ 0,3
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[3][0] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1));
-
-    // Generate @ 1,3
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[3][1] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[1]);
-
-    // Generate @ 2,3
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[3][2] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[2]);
-
-    // Generate @ 3,3
-    intPtr = filteredBlockTmp + offsetToLuma - tmpMarginY * intStride - tmpMarginX;
-    dstPtr = m_lumaPlane[3][3] - tmpMarginY * m_lumaStride - tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, m_lumaStride, width + (tmpMarginX << 1), height + (tmpMarginY << 1), TComPrediction::m_lumaFilter[3]);
-
-    xFree(filteredBlockTmp);
+    int x = idx & 3;
+    int y = idx >> 2;
+    short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
+    Short *intPtr = filteredBlockTmp  + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
+    Pel *dstPtr = m_lumaPlane[x][y]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[y]);
+    m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
 }

@@ -566,6 +566,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
  */
 Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams)
 {
+    PPAScopeEvent(TEncSlice_encodeSlice);
     UInt       uiCUAddr;
     UInt       uiStartCUAddr;
     UInt       uiBoundingCUAddr;

@@ -1535,6 +1535,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
 Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
 {
+    if (m_pcCfg->getLogLevel() < X265_LOG_INFO)
+        return;
+
     assert(uiNumAllPicCoded == m_gcAnalyzeAll.getNumPic());
 
     //--CFG_KDY
@@ -1543,18 +1546,10 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
     m_gcAnalyzeP.setFrmRate(m_pcCfg->getFrameRate());
     m_gcAnalyzeB.setFrmRate(m_pcCfg->getFrameRate());
 
-    //-- all
-    printf("\n\nSUMMARY --------------------------------------------------------\n");
-    m_gcAnalyzeAll.printOut('a');
-
-    printf("\n\nI Slices--------------------------------------------------------\n");
     m_gcAnalyzeI.printOut('i');
-
-    printf("\n\nP Slices--------------------------------------------------------\n");
     m_gcAnalyzeP.printOut('p');
-
-    printf("\n\nB Slices--------------------------------------------------------\n");
     m_gcAnalyzeB.printOut('b');
+    m_gcAnalyzeAll.printOut('a');
 
 #if _SUMMARY_OUT_
     m_gcAnalyzeAll.printSummaryOut();
@@ -1565,7 +1560,9 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
     m_gcAnalyzeB.printSummary('B');
 #endif
 
-    printf("\nRVM: %.3lf\n", xCalculateRVM());
+    Double rvm = xCalculateRVM();
+    if (rvm != 0.0)
+        printf("\nRVM: %.3lf\n", rvm);
 }
 
 Void TEncGOP::preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits)

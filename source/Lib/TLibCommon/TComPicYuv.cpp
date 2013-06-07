@@ -224,7 +224,7 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
     ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
 }
 
-Void TComPicYuv::extendPicBorder()
+Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
 {
     if (m_bIsBorderExtended)
         return;
@@ -236,7 +236,7 @@ Void TComPicYuv::extendPicBorder()
     xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
 
     if (m_refList == NULL)
-        m_refList = new x265::MotionReference(this);
+        m_refList = new x265::MotionReference(this, pool);
     m_refList->generateReferencePlanes();
 
     m_bIsBorderExtended = true;

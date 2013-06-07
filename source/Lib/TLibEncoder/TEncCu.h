@@ -139,14 +139,12 @@ protected:
     Void  xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
-    Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth, bool isMerge = false);
+    Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
     Void swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
-    Void  xCalcRDCostInter(TComDataCU*& rpcTempCU, UInt PartitionIndex, PartSize ePartSize, Bool bUseMRG = false);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
-    Void  xCalcRDCostIntra(TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckDQP(TComDataCU* pcCU);
 
     Void  xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);

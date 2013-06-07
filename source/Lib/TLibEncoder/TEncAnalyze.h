@@ -94,17 +94,20 @@ public:
 
     Void    printOut(Char cDelim)
     {
-        Double dFps     =   m_dFrmRate; //--CFG_KDY
+        Double dFps     = m_dFrmRate; //--CFG_KDY
         Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
 
-        printf("\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n");
-        //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
-        printf("\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
-               getNumPic(), cDelim,
-               getBits() * dScale,
-               getPsnrY() / (Double)getNumPic(),
-               getPsnrU() / (Double)getNumPic(),
-               getPsnrV() / (Double)getNumPic());
+        if (m_uiNumPic == 0)
+            return;
+
+        if (cDelim == 'a')
+            printf("x265 [info]: ");
+        else
+            printf("x265 [info]: frame %c:%-6d  bitrate: %-8d  ", cDelim - 32, m_uiNumPic, (int)(getBits() * dScale));
+        printf("PSNR Mean: Y:%2.3lf U:%2.3lf V:%2.3lf\n",
+            getPsnrY() / (Double)getNumPic(),
+            getPsnrU() / (Double)getNumPic(),
+            getPsnrV() / (Double)getNumPic());
     }
 
     Void    printSummaryOut()

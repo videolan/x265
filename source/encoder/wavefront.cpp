@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "TLibEncoder/TEncTop.h"
+#include "PPA/ppa.h"
 #include "wavefront.h"
 
 using namespace x265;
@@ -160,6 +161,8 @@ void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
 
 void EncodeFrame::ProcessRow(int irow)
 {
+    PPAScopeEvent(Thread_ProcessRow);
+
     // Called by worker threads
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = irow * numCols;
@@ -191,7 +194,10 @@ void EncodeFrame::ProcessRow(int irow)
         ((TEncBinCABAC*)codeRow.m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
         codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&codeRow.m_cRDGoOnSbacCoder);
 
-        codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
+        {
+            PPAScopeEvent(Thread_compressCU);
+            codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
+        }
 
         // restore entropy coder to an initial state
         codeRow.m_cEntropyCoder.setEntropyCoder(codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST], m_pcSlice);
@@ -201,7 +207,10 @@ void EncodeFrame::ProcessRow(int irow)
         codeRow.m_cBitCounter.resetBits();
         pcRDSbacCoder->setBinsCoded(0);
 
-        codeRow.m_cCuEncoder.encodeCU(pcCU);  // Output CU bitstream
+        {
+            PPAScopeEvent(Thread_encodeCU);
+            codeRow.m_cCuEncoder.encodeCU(pcCU);  // Count bits
+        }
 
         pcRDSbacCoder->setBinCountingEnableFlag(false);
 
