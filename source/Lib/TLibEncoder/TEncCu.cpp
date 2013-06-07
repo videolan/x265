@@ -1795,10 +1795,6 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
                     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-                    SATD += primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getCbAddr(), m_ppcOrigYuv[uhDepth]->getCStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getCbAddr(), m_ppcPredYuvTemp[uhDepth]->getCStride());
-                    SATD += primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getCrAddr(), m_ppcOrigYuv[uhDepth]->getCStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getCrAddr(), m_ppcPredYuvTemp[uhDepth]->getCStride());
                     rpcTempCU->getTotalDistortion() = SATD;
                     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 #endif
@@ -1891,7 +1887,6 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 #if FAST_MODE_DECISION
     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-     
     rpcTempCU->getTotalDistortion() = SATD;
 #endif
     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
@@ -1995,6 +1990,12 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
 
     rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
     rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+#if FAST_MODE_DECISION
+    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
+                                        (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
+    rpcTempCU->getTotalDistortion() = SATD;
+#endif
     rpcTempCU->getTotalCost() = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 
     xCheckDQP(rpcTempCU);
