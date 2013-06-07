@@ -75,8 +75,6 @@
 #define MAX_NUM_SPS                               16
 #define MAX_NUM_PPS                               64
 
-#define SAO_CHROMA_LAMBDA                         1 ///< F386: weighting of chroma for SAO
-
 #define MIN_SCAN_POS_CROSS                        4
 
 #define MLS_GRP_NUM                              64 ///< G644 : Max number of coefficient groups, max(16, 64)

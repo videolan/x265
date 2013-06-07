@@ -291,12 +291,8 @@ Void TEncSlice::initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumP
     // for RDOQ
     frame->setLambda(dLambda, dLambda / weight);
 
-#if SAO_CHROMA_LAMBDA
     // For SAO
     rpcSlice->setLambda(dLambda, dLambda / weight);
-#else
-    rpcSlice->setLambda(dLambda);
-#endif
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
@@ -404,12 +400,8 @@ Void TEncSlice::resetQP(TComPic* pic, Int sliceQP, Double lambda)
     // for RDOQ
     frame->setLambda(lambda, lambda / weight);
 
-#if SAO_CHROMA_LAMBDA
     // For SAO
     slice->setLambda(lambda, lambda / weight);
-#else
-    slice->setLambda(lambda);
-#endif
 }
 
 // ====================================================================================================================
