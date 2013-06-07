@@ -64,6 +64,20 @@ void TestHarness::alignedFree(void *ptr)
 #endif
 }
 
+static const char *CpuType[] =
+{
+    "",
+    "",
+    "SSE2",
+    "SSE3",
+    "SSSE3",
+    "SSE4.1",
+    "SSE4.2",
+    "AVX",
+    "AVX2",
+    0
+};
+
 extern int instrset_detect();
 
 int main(int argc, char *argv[])
@@ -101,13 +115,13 @@ int main(int argc, char *argv[])
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
-    for (int i = 1; i <= cpuid; i++)
+    for (int i = 2; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, i);
-        printf("Testing vector class primitives: CPUID %d\n", i);
+        printf("Testing vector class primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
@@ -123,7 +137,7 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, i);
-        printf("Testing assembly primitives: CPUID %d\n", i);
+        printf("Testing assembly primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (!harness[h]->testCorrectness(cprim, vecprim))
