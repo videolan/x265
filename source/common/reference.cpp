@@ -48,6 +48,11 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     int height = pic->getHeight();
     m_lumaStride = pic->getStride();
     m_startPad = pic->m_iLumaMarginY * m_lumaStride + pic->m_iLumaMarginX;
+    m_intStride = width + s_tmpMarginX * 4;
+    m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
+    m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
+    m_filterWidth = width + s_tmpMarginX * 2;
+    m_filterHeight = height + s_tmpMarginY * 2;
     m_next = NULL;
 
     m_lumaPlane[0][0] = pic->m_apiPicBufY + m_startPad;
@@ -64,12 +69,6 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
             m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight) + m_startPad;
         }
     }
-
-    m_intStride = width + s_tmpMarginX * 4;
-    m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
-    m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
-    m_filterWidth = width + s_tmpMarginX * 2;
-    m_filterHeight = height + s_tmpMarginY * 2;
 }
 
 MotionReference::~MotionReference()
@@ -92,29 +91,56 @@ MotionReference::~MotionReference()
 
 void MotionReference::generateReferencePlanes()
 {
-    m_curPlane = m_finishedPlanes = 0;
+    m_intermediateValues = (short*)xMalloc(short, 4 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
+    
+    m_startedPlanes = m_finishedPlanes = 0;
+    m_vplanesFinished[0] = m_vplanesFinished[1] = m_vplanesFinished[2] = m_vplanesFinished[3] = 0;
     JobProvider::Enqueue();
-    m_pool->PokeIdleThreads();
-    m_pool->PokeIdleThreads();
-    m_pool->PokeIdleThreads();
-    m_pool->PokeIdleThreads();
+    for (int i = 0; i < 4; i++)
+        m_pool->PokeIdleThreads();
     m_completionEvent.Wait();
     JobProvider::Dequeue();
+
+    xFree(m_intermediateValues);
 }
 
 bool MotionReference::FindJob()
 {
-    if (m_curPlane > 4)
-        return false;
-
-    int idx = ATOMIC_INC(&m_curPlane) - 1;
-    if (idx < 4)
+    if (m_startedPlanes < 4)
     {
-        generateReferencePlane(idx);
-        if (ATOMIC_INC(&m_finishedPlanes) == 4)
-            m_completionEvent.Trigger();
-        m_pool->PokeIdleThreads();
-        return true;
+        /* First four threads calculate 4 intermediate buffers
+         * and the (x, 0) planes */
+        int idx = ATOMIC_INC(&m_startedPlanes) - 1;
+        if (idx < 4)
+        {
+            generateReferencePlane(idx);
+            ATOMIC_INC(&m_finishedPlanes);
+            m_vplanesFinished[idx] = 1;
+            m_pool->PokeIdleThreads();
+            m_pool->PokeIdleThreads();
+            m_pool->PokeIdleThreads();
+            return true;
+        }
+    }
+    else
+    {
+        /* find a plane that needs processing */
+        for (int x = 0; x < 4; x++)
+        {
+            while (m_vplanesFinished[x] > 0 && m_vplanesFinished[x] < 4)
+            {
+                /* intermediate buffer is available */
+                int y = ATOMIC_INC(&m_vplanesFinished[x]) - 1;
+                if (y < 4)
+                {
+                    generateReferencePlane(y * 4 + x);
+                    if (ATOMIC_INC(&m_finishedPlanes) == 16)
+                        m_completionEvent.Trigger();
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     return false;
 }
@@ -123,46 +149,32 @@ void MotionReference::generateReferencePlane(int idx)
 {
     PPAScopeEvent(GenerateReferencePlanes);
 
-    short* filteredBlockTmp = (short*)xMalloc(short, m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
+    int x = idx & 3;
+    int y = idx >> 2;
+    short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
 
     Pel *srcPtr = m_reconPic->getLumaAddr() - s_tmpMarginY * 2 * m_lumaStride - s_tmpMarginX * 2;
     Short *intPtr = filteredBlockTmp + m_offsetToLuma - s_tmpMarginY * 2 * m_intStride - s_tmpMarginX * 2;
-    Pel *dstPtr;
 
-    if (idx == 0)
+    if (y == 0)
     {
-        // no horizontal filter necessary
-        primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8);
+        if (x == 0)
+        {
+            // no horizontal filter necessary
+            primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8);
 
-        /* The 0,0 (full-pel) plane needs no interpolation, and was already extended by TComPicYuv */
-    }
-    else
-    {
-        // Horizontal filter into intermediate buffer
-        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8, TComPrediction::m_lumaFilter[idx]);
-
-        // Generate @ 0,idx
-        intPtr = filteredBlockTmp  + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
-        dstPtr = m_lumaPlane[idx][0]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
-        primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[0]);
-        m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
+            /* The 0,0 (full-pel) plane needs no interpolation, and was already extended by TComPicYuv */
+            return;
+        }
+        else
+        {
+            // Horizontal filter into intermediate buffer
+            primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8, TComPrediction::m_lumaFilter[x]);
+        }
     }
 
-    // Generate @ 1,idx
-    intPtr = filteredBlockTmp + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
-    dstPtr = m_lumaPlane[idx][1] - m_extendOffset;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[1]);
+    intPtr = filteredBlockTmp  + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
+    Pel *dstPtr = m_lumaPlane[x][y]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[y]);
     m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
-
-    // Generate @ 2,idx
-    dstPtr = m_lumaPlane[idx][2] - m_extendOffset;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[2]);
-    m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
-
-    // Generate @ 3,idx
-    dstPtr = m_lumaPlane[idx][3] - m_extendOffset;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[3]);
-    m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
-
-    xFree(filteredBlockTmp);
 }

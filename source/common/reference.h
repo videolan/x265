@@ -57,8 +57,9 @@ protected:
 
     intptr_t     m_startPad;
     TComPicYuv  *m_reconPic;
-    volatile int m_curPlane;
+    volatile int m_startedPlanes;
     volatile int m_finishedPlanes;
+    volatile int m_vplanesFinished[4];
     Event        m_completionEvent;
 
     // Generate subpels for entire frame with a margin of tmpMargin
@@ -70,6 +71,7 @@ protected:
     intptr_t    m_offsetToLuma;
     int         m_filterWidth;
     int         m_filterHeight;
+    short      *m_intermediateValues;
 
     MotionReference& operator =(const MotionReference&);
 };
