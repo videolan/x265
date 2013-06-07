@@ -949,10 +949,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         // save prediction
         if (default0Save1Load2 == 1)
         {
-            Pel*  pPred   = piPred;
-            Pel*  pPredBuf = m_pSharedPredTransformSkip[0];
-            Int k = 0;
-            primitives.cpyblock(uiWidth, uiHeight, pPredBuf, uiWidth, pPred, uiStride);
+            primitives.cpyblock(uiWidth, uiHeight, m_pSharedPredTransformSkip[0], uiWidth, piPred, uiStride);
         }
     }
     else
@@ -972,6 +969,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
             pPred += uiStride;
         }
     }
+
     //===== get residual signal =====
     {
         // get residual
