@@ -764,8 +764,7 @@ void predIntraPlanar4_sse4(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr
         v_im4 = _mm_srai_epi16(_mm_add_epi16(v_horPred, v_topRow), 3); \
         v_im5 = _mm_packus_epi16(v_im4, v_im4); \
         *(uint32_t*)&rpDst[(Y)*dstStride] = _mm_cvtsi128_si32(v_im5); \
-        int _tmp = _mm_extract_epi32(v_im5, 1); \
-        *(uint32_t*)&rpDst[((Y)+1) * dstStride] = _tmp; \
+        *(uint32_t*)&rpDst[((Y)+1) * dstStride] = _mm_cvtsi128_si32(_mm_shuffle_epi32(v_im5, 0x55));; \
 }
 
     COMP_PRED_PLANAR_2ROW(0)
@@ -1679,7 +1678,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int d
 }
 
 #else /* if HIGH_BIT_DEPTH */
-void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int blkSize        = width;
 
@@ -1728,32 +1727,40 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
     {
         if (modeHor)
         {
-            Vec16uc v_temp;
-            Vec8s v_side_0; // refSide[0] value in a vector
-            v_temp = load_partial(const_int(8), (void*)refSide);
-            v_side_0 = broadcast(const_int(0), (Vec8s)v_temp);
-            v_side_0 = v_side_0 & 0x00FF;
-
-            //shift v_side by 1 element (1 byte)
-            Vec2uq tmp = reinterpret_i(v_temp);
-            tmp = tmp >> 8;
-            v_temp = reinterpret_i(tmp);
-            Vec8s v_side = extend_low(v_temp);
-
             Vec16uc v_main;
             v_main = load_partial(const_int(4), (void*)(refMain + 1));
 
             Vec16uc tmp16;
             tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(v_main, v_main);
             tmp16 = blend16c<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(tmp16, tmp16);
+            Vec2uq tmp;
 
-            Vec8s row0 = extend_low(tmp16);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 += v_side;
-            row0 = min(max(0, row0), 255);
-            Vec16uc v_res(compress(row0, 0));
-            store_partial(const_int(4), pDst, v_res);
+            if (bFilter)
+            {
+                Vec16uc v_temp;
+                Vec8s v_side_0; // refSide[0] value in a vector
+                v_temp = load_partial(const_int(8), (void*)refSide);
+                v_side_0 = broadcast(const_int(0), (Vec8s)v_temp);
+                v_side_0 = v_side_0 & 0x00FF;
+
+                //shift v_side by 1 element (1 byte)
+                tmp = reinterpret_i(v_temp);
+                tmp = tmp >> 8;
+                v_temp = reinterpret_i(tmp);
+                Vec8s v_side = extend_low(v_temp);
+
+                Vec8s row0 = extend_low(tmp16);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row0 += v_side;
+                row0 = min(max(0, row0), 255);
+                Vec16uc v_res(compress(row0, 0));
+                store_partial(const_int(4), pDst, v_res);
+            }
+            else
+            {
+                store_partial(const_int(4), pDst, tmp16);
+            }
 
             tmp = (Vec2uq)tmp16;
             tmp >>= 32;
@@ -1773,10 +1780,12 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
             store_partial(const_int(4), pDst + dstStride, v_main);
             store_partial(const_int(4), pDst + (2 * dstStride), v_main);
             store_partial(const_int(4), pDst + (3 * dstStride), v_main);
-
-            for (int k = 0; k < 4; k++)
+            if (bFilter)
             {
-                pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << 8) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                for (int k = 0; k < 4; k++)
+                {
+                    pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << 8) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                }
             }
         }
     }
@@ -2223,7 +2232,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
         RES = ((thirty2 - v_deltaFract) * ROW1 + (v_deltaFract * ROW2) + 16) >> 5; \
 }
 
-void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize        = width;
@@ -2275,27 +2284,35 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
         if (modeHor)
         {
             Vec16uc v_temp;
-            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
-
-            v_temp.load(refSide + 1);
-            Vec8s v_side;
-            v_side = extend_low(v_temp);
+            Vec16uc tmp1;
 
             v_temp.load(refMain + 1);
             Vec8s v_main;
             v_main = extend_low(v_temp);
 
-            Vec8s row0;
-            row0 = permute8s<0, 0, 0, 0, 0, 0, 0, 0>(v_main);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 = row0 + v_side;
-            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+            if (bFilter)
+            {
+                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+                Vec16uc v_temp16;
+                v_temp16.load(refSide + 1);
+                Vec8s v_side;
+                v_side = extend_low(v_temp16);
 
-            Vec16uc tmp1;
-            tmp1 = compress(row0, row0);
-            store_partial(const_int(8), pDst, tmp1);                //row0
+                Vec8s row0;
+                row0 = permute8s<0, 0, 0, 0, 0, 0, 0, 0>(v_main);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row0 = row0 + v_side;
+                row0 = min(max(0, row0), (1 << bitDepth) - 1);
 
+                tmp1 = compress(row0, row0);
+                store_partial(const_int(8), pDst, tmp1);            //row0
+            }
+            else
+            {
+                tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
+                store_partial(const_int(8), pDst, tmp1); //row0
+            }
             tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, -256, -256, -256, -256, -256, -256, -256, -256>(v_temp);
             store_partial(const_int(8), pDst + (1 * dstStride), tmp1); //row1
 
@@ -2330,29 +2347,32 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
             store_partial(const_int(8), pDst + (6 * dstStride), v_main);
             store_partial(const_int(8), pDst + (7 * dstStride), v_main);
 
-            Vec16uc v_temp;
-            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+            if (bFilter)
+            {
+                Vec16uc v_temp;
+                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
 
-            v_temp.load(refSide + 1);
-            Vec8s v_side;
-            v_side = extend_low(v_temp);
+                v_temp.load(refSide + 1);
+                Vec8s v_side;
+                v_side = extend_low(v_temp);
 
-            v_temp.load(refMain + 1);
-            Vec8s row0;
-            row0 = permute16uc<0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1>(v_temp);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 = row0 + v_side;
-            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                v_temp.load(refMain + 1);
+                Vec8s row0;
+                row0 = permute16uc<0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1>(v_temp);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row0 = row0 + v_side;
+                row0 = min(max(0, row0), (1 << bitDepth) - 1);
 
-            pDst[0 * dstStride] = row0[0];
-            pDst[1 * dstStride] = row0[1];
-            pDst[2 * dstStride] = row0[2];
-            pDst[3 * dstStride] = row0[3];
-            pDst[4 * dstStride] = row0[4];
-            pDst[5 * dstStride] = row0[5];
-            pDst[6 * dstStride] = row0[6];
-            pDst[7 * dstStride] = row0[7];
+                pDst[0 * dstStride] = row0[0];
+                pDst[1 * dstStride] = row0[1];
+                pDst[2 * dstStride] = row0[2];
+                pDst[3 * dstStride] = row0[3];
+                pDst[4 * dstStride] = row0[4];
+                pDst[5 * dstStride] = row0[5];
+                pDst[6 * dstStride] = row0[6];
+                pDst[7 * dstStride] = row0[7];
+            }
         }
     }
     else if (intraPredAngle == -32)
@@ -2787,7 +2807,7 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
         BLND2_4(R4, R8); \
 }
 
-void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize        = width;
@@ -2840,29 +2860,37 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         if (modeHor)
         {
             Vec16uc v_temp;
-            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
-
-            v_temp.load(refSide + 1);
-            Vec8s v_side;
-            v_side = extend_low(v_temp);
-
-            Vec8s row01, row02, ref(refMain[1]);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row01 = ref + v_side;
-            row01 = min(max(0, row01), (1 << bitDepth) - 1);
-
-            v_side = extend_high(v_temp);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row02 = ref + v_side;
-            row02 = min(max(0, row02), (1 << bitDepth) - 1);
-
             Vec16uc tmp1;
-            tmp1 = compress(row01, row02);
-            tmp1.store(pDst);                //row0
-
             v_temp.load(refMain + 1);
+
+            if (bFilter)
+            {
+                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+                Vec16uc v_temp16;
+                v_temp16.load(refSide + 1);
+                Vec8s v_side;
+                v_side = extend_low(v_temp16);
+
+                Vec8s row01, row02, ref(refMain[1]);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row01 = ref + v_side;
+                row01 = min(max(0, row01), (1 << bitDepth) - 1);
+
+                v_side = extend_high(v_temp16);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row02 = ref + v_side;
+                row02 = min(max(0, row02), (1 << bitDepth) - 1);
+
+                tmp1 = compress(row01, row02);
+                tmp1.store(pDst);            //row0
+            }
+            else
+            {
+                tmp1 = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>(v_temp);
+                tmp1.store(pDst); //row0
+            }
 
             tmp1 = permute16uc<1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>(v_temp);
             tmp1.store(pDst + (1 * dstStride)); //row1
@@ -2932,41 +2960,44 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
             _mm_storeu_si128((__m128i*)(pDst + (14 * dstStride)), v_main);
             _mm_storeu_si128((__m128i*)(pDst + (15 * dstStride)), v_main);
 
-            Vec16uc v_temp;
-            Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
+            if (bFilter)
+            {
+                Vec16uc v_temp;
+                Vec8s v_side_0(refSide[0]); // refSide[0] value in a vector
 
-            v_temp.load(refSide + 1);
-            Vec8s v_side;
-            v_side = extend_low(v_temp);
+                v_temp.load(refSide + 1);
+                Vec8s v_side;
+                v_side = extend_low(v_temp);
 
-            Vec8s row0, ref(refMain[1]);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 = ref + v_side;
-            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                Vec8s row0, ref(refMain[1]);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row0 = ref + v_side;
+                row0 = min(max(0, row0), (1 << bitDepth) - 1);
 
-            pDst[0 * dstStride] = row0[0];
-            pDst[1 * dstStride] = row0[1];
-            pDst[2 * dstStride] = row0[2];
-            pDst[3 * dstStride] = row0[3];
-            pDst[4 * dstStride] = row0[4];
-            pDst[5 * dstStride] = row0[5];
-            pDst[6 * dstStride] = row0[6];
-            pDst[7 * dstStride] = row0[7];
+                pDst[0 * dstStride] = row0[0];
+                pDst[1 * dstStride] = row0[1];
+                pDst[2 * dstStride] = row0[2];
+                pDst[3 * dstStride] = row0[3];
+                pDst[4 * dstStride] = row0[4];
+                pDst[5 * dstStride] = row0[5];
+                pDst[6 * dstStride] = row0[6];
+                pDst[7 * dstStride] = row0[7];
 
-            v_side = extend_high(v_temp);
-            v_side -= v_side_0;
-            v_side = v_side >> 1;
-            row0 = ref + v_side;
-            row0 = min(max(0, row0), (1 << bitDepth) - 1);
-            pDst[8 * dstStride] = row0[0];
-            pDst[9 * dstStride] = row0[1];
-            pDst[10 * dstStride] = row0[2];
-            pDst[11 * dstStride] = row0[3];
-            pDst[12 * dstStride] = row0[4];
-            pDst[13 * dstStride] = row0[5];
-            pDst[14 * dstStride] = row0[6];
-            pDst[15 * dstStride] = row0[7];
+                v_side = extend_high(v_temp);
+                v_side -= v_side_0;
+                v_side = v_side >> 1;
+                row0 = ref + v_side;
+                row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                pDst[8 * dstStride] = row0[0];
+                pDst[9 * dstStride] = row0[1];
+                pDst[10 * dstStride] = row0[2];
+                pDst[11 * dstStride] = row0[3];
+                pDst[12 * dstStride] = row0[4];
+                pDst[13 * dstStride] = row0[5];
+                pDst[14 * dstStride] = row0[6];
+                pDst[15 * dstStride] = row0[7];
+            }
         }
     }
     else if (intraPredAngle == -32)
@@ -4375,13 +4406,13 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     switch (width)
     {
     case 4:
-        xPredIntraAng4x4(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
+        xPredIntraAng4x4(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 8:
-        xPredIntraAng8x8(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
+        xPredIntraAng8x8(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 16:
-        xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
+        xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
 #if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
     case 32:
