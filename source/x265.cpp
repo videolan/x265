@@ -384,8 +384,12 @@ struct CLIOptions
 
         this->framesToBeEncoded = this->framesToBeEncoded ? min(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-        log(X265_LOG_INFO, "Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
-            this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+        if (this->cli_log_level >= X265_LOG_INFO)
+        {
+            fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
+                param->iSourceWidth, param->iSourceHeight, param->iFrameRate,
+                this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+        }
 
         if (reconfn)
         {
