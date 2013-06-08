@@ -83,6 +83,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 #if !HIGH_BIT_DEPTH
     if (cpuid >= 1)
     {
+#if !X86_64
+        /* x64 CPUs must have at least SSE4, so we avoid MMX altogether in order
+         * to prevent all calls to EMMS. */
         INIT8_NAME( sse_pp, ssd, _mmx );
         INIT8( sad, _mmx2 );
         INIT7( sad_x3, _mmx2 );
@@ -152,6 +155,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_mmx2>;
+#endif
     }
     if (cpuid >= 2)
     {
