@@ -2264,7 +2264,6 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
         //--- get SAD ---
         UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
             sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
-        x265_emms();
 
         //--- check ---
         if (uiSAD < uiMinSAD)
@@ -2273,6 +2272,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
             uiBestMode = uiMode;
         }
     }
+    x265_emms();
 
     //===== set chroma pred mode =====
     pcCU->setChromIntraDirSubParts(uiBestMode, 0, pcCU->getDepth(0));
