@@ -643,18 +643,18 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_8](block, tmp, shift_1st, iHeight);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_8](tmp, coeff, shift_2nd, iWidth);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_8](block, tmp, shift_1st, 8);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_8](tmp, coeff, shift_2nd, 8);
     }
     else if (iWidth == 16 && iHeight == 16)
     {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, iHeight);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, iWidth);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, 16);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, 16);
     }
     else if (iWidth == 32 && iHeight == 32)
     {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, iHeight);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, iWidth);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, 32);
+        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, 32);
     }
 }
 
