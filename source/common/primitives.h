@@ -184,6 +184,7 @@ typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
+typedef int  (CDECL * scan_coef_t)(int* pcCoef, const unsigned int *scan, const unsigned int *scanT, unsigned int *cgFlag, unsigned int uiWidth, int *piScanPosLast);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -218,6 +219,7 @@ struct EncoderPrimitives
     getIPredPlanar_p getIPredPlanar;
     getIPredAng_p getIPredAng;
     quant deQuant;
+    scan_coef_t scan_coef;
     cvt16to32_t cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_t cvt32to16;

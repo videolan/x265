@@ -63,6 +63,7 @@
 Void         initROM();
 Void         destroyROM();
 Void         initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int iHeight);
+Void         initSigLastScanT(UInt* pBuff, UInt* pBuffT, Int iWidth);
 // ====================================================================================================================
 // Data structure related table & variable
 // ====================================================================================================================
@@ -117,6 +118,7 @@ extern const UChar  g_aucChromaScale[58];
 // ====================================================================================================================
 
 extern       UInt*  g_auiSigLastScan[3][MAX_CU_DEPTH];  // raster index from scanning index (diag, hor, ver)
+extern       UInt*  g_auiSigLastScanT[3][MAX_CU_DEPTH]; // raster index from scanning index (diag, hor, ver)
 
 extern const UInt   g_uiGroupIdx[32];
 extern const UInt   g_uiMinInGroup[10];

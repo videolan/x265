@@ -203,7 +203,6 @@ public:
     Void estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
     Void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);
     Void    encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, Int ry, SaoLcuParam* saoLcuParam, Int cuAddrInSlice, Int cuAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp);
-    static Int countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize);
 }; // END CLASS DEFINITION TEncEntropy
 
 //! \}

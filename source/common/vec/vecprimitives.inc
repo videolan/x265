@@ -32,6 +32,8 @@
 
 using namespace x265;
 
+extern char g_aucConvertToBit[];
+
 namespace {
 #include "macroblock.inc"
 #include "blockcopy.inc"
