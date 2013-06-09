@@ -2929,6 +2929,280 @@ Int scanNonZeroCoeffs(TCoeff* pcCoef, const UInt *scan, const UInt *scanT, UInt 
 }
 #endif // INSTRSET >= 5
 
+#if INSTRSET < 5
+void xDCT8(short *pSrc, short *pDst)
+{
+    const int shift_1st = 2;
+    const int shift_2nd = 9;
+    ALIGN_VAR_32(Short, tmp[64 * 64]);
+
+    partialButterfly8(pSrc, tmp, shift_1st, 8);
+    partialButterfly8(tmp, pDst, shift_2nd, 8);
+}
+#endif // INSTRSET < 5
+
+#if INSTRSET >= 5
+// NOTE: code from GoogleCode project x265, DCT version 1
+void xDCT8(short *pSrc, short *pDst)
+{
+    __m128i c_rnd1   = _mm_set1_epi32(2);
+    __m128i c_rnd2   = _mm_set1_epi32(256);
+    __m128i c16_1    = _mm_set_epi16(89, 75, 50, 18, 89, 75, 50, 18);//16bit Coefficients
+    __m128i c16_3    = _mm_set_epi16(75,-18,-89,-50, 75,-18,-89,-50);
+    __m128i c16_5    = _mm_set_epi16(50,-89, 18, 75, 50,-89, 18, 75);
+    __m128i c16_7    = _mm_set_epi16(18,-50, 75,-89, 18,-50, 75,-89);
+    __m128i c16_2    = _mm_set_epi16(83, 36, 83, 36, 83, 36, 83, 36);
+    __m128i c16_6    = _mm_set_epi16(36,-83, 36,-83, 36,-83, 36,-83);
+    __m128i c16_0    = _mm_set_epi16(64, 64, 64, 64, 64, 64, 64, 64);
+    __m128i c16_4    = _mm_set_epi16(64,-64, 64,-64, 64,-64, 64,-64);
+    __m128i c32_1    = _mm_set_epi32(89, 75, 50, 18);//32bit Coefficients
+    __m128i c32_3    = _mm_set_epi32(75,-18,-89,-50);
+    __m128i c32_5    = _mm_set_epi32(50,-89, 18, 75);
+    __m128i c32_7    = _mm_set_epi32(18,-50, 75,-89);
+    __m128i c32_2    = _mm_set_epi32(83, 36, 83, 36);
+    __m128i c32_6    = _mm_set_epi32(36,-83, 36,-83);
+    __m128i c32_0    = _mm_set_epi32(64, 64, 64, 64);
+    __m128i c32_4    = _mm_set_epi32(64,-64, 64,-64);
+
+    //load data
+    __m128i P0_02_00    = _mm_loadu_si128((__m128i*)&pSrc[0 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_01    = _mm_loadu_si128((__m128i*)&pSrc[1 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_02    = _mm_loadu_si128((__m128i*)&pSrc[2 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_03    = _mm_loadu_si128((__m128i*)&pSrc[3 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_04    = _mm_loadu_si128((__m128i*)&pSrc[4 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_05    = _mm_loadu_si128((__m128i*)&pSrc[5 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_06    = _mm_loadu_si128((__m128i*)&pSrc[6 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+    __m128i P0_02_07    = _mm_loadu_si128((__m128i*)&pSrc[7 * 8]);//Resi 16bit:[07 06 05 04 03 02 01 00]
+
+    //DCT1.
+    //Part1: calculate DstRow 1,3,5,7
+    __m128i P1_00_00a   = _mm_unpacklo_epi64(P0_02_00,P0_02_01);//[13 12 11 10 03 02 01 00]
+    __m128i P1_00_00b   = _mm_shufflelo_epi16(P1_00_00a,0x1B);//[13 12 11 10 00 01 02 03]
+    __m128i P1_00_00    = _mm_shufflehi_epi16(P1_00_00b,0x1B);  //[10 11 12 13 00 01 02 03] needed
+    __m128i P1_00_01    = _mm_unpackhi_epi64(P0_02_00,P0_02_01);//[17 16 15 14 07 06 05 04] needed
+
+    __m128i P1_00_02a   = _mm_unpacklo_epi64(P0_02_02,P0_02_03);
+    __m128i P1_00_02b   = _mm_shufflelo_epi16(P1_00_02a,0x1B);
+    __m128i P1_00_02    = _mm_shufflehi_epi16(P1_00_02b,0x1B); //[30 31 32 33 20 21 22 23] needed
+    __m128i P1_00_03    = _mm_unpackhi_epi64(P0_02_02,P0_02_03);//[37 36 35 34 27 26 25 24] needed
+
+    __m128i P1_00_04a   = _mm_unpacklo_epi64(P0_02_04,P0_02_05);
+    __m128i P1_00_04b   = _mm_shufflelo_epi16(P1_00_04a,0x1B);
+    __m128i P1_00_04    = _mm_shufflehi_epi16(P1_00_04b,0x1B); //[50 51 52 53 40 41 42 43] needed
+    __m128i P1_00_05    = _mm_unpackhi_epi64(P0_02_04,P0_02_05);//[57 56 55 54 47 46 45 44] needed
+
+    __m128i P1_00_06a   = _mm_unpacklo_epi64(P0_02_06,P0_02_07);
+    __m128i P1_00_06b   = _mm_shufflelo_epi16(P1_00_06a,0x1B);
+    __m128i P1_00_06    = _mm_shufflehi_epi16(P1_00_06b,0x1B);//[70 71 72 73 60 61 62 63] needed
+    __m128i P1_00_07    = _mm_unpackhi_epi64(P0_02_06,P0_02_07);//[77 76 75 74 67 66 65 64] needed
+
+    //subtract
+    __m128i P1_01_00a   = _mm_sub_epi16(P1_00_00,P1_00_01);//[10-17 11-16 12-15 13-14 00-07 ...] needed
+    __m128i P1_01_00b   = _mm_sub_epi16(P1_00_02,P1_00_03);//needed
+    __m128i P1_01_00c   = _mm_sub_epi16(P1_00_04,P1_00_05);//needed
+    __m128i P1_01_00d   = _mm_sub_epi16(P1_00_06,P1_00_07);//[70-77 71-76 72-75 73-74 60-67 ...]needed
+
+    __m128i P1_03_00a   = _mm_hadd_epi32(_mm_madd_epi16(c16_1,P1_01_00a),_mm_madd_epi16(c16_1,P1_01_00b));//32bit: [13 12 11 10]
+    __m128i P1_03_00b   = _mm_hadd_epi32(_mm_madd_epi16(c16_1,P1_01_00c),_mm_madd_epi16(c16_1,P1_01_00d));//32bit: [17 16 15 14]
+    __m128i P1_05_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_00a), 2);//32bit: [13 12 11 10] //nShift1 = 2
+    __m128i P1_05_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_00b), 2);//32bit: [17 16 15 14] //nShift1 = 2
+
+    __m128i P1_03_01a   = _mm_hadd_epi32(_mm_madd_epi16(c16_3,P1_01_00a),_mm_madd_epi16(c16_3,P1_01_00b));
+    __m128i P1_03_01b   = _mm_hadd_epi32(_mm_madd_epi16(c16_3,P1_01_00c),_mm_madd_epi16(c16_3,P1_01_00d));
+    __m128i P1_05_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_01a), 2);
+    __m128i P1_05_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_01b), 2);
+
+    __m128i P1_03_02a   = _mm_hadd_epi32(_mm_madd_epi16(c16_5,P1_01_00a),_mm_madd_epi16(c16_5,P1_01_00b));
+    __m128i P1_03_02b   = _mm_hadd_epi32(_mm_madd_epi16(c16_5,P1_01_00c),_mm_madd_epi16(c16_5,P1_01_00d));
+    __m128i P1_05_02a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_02a), 2);
+    __m128i P1_05_02b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_02b), 2);
+
+    //DstRow07:
+    __m128i P1_03_03a   = _mm_hadd_epi32(_mm_madd_epi16(c16_7,P1_01_00a),_mm_madd_epi16(c16_7,P1_01_00b));
+    __m128i P1_03_03b   = _mm_hadd_epi32(_mm_madd_epi16(c16_7,P1_01_00c),_mm_madd_epi16(c16_7,P1_01_00d));
+    __m128i P1_05_03a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_03a), 2);
+    __m128i P1_05_03b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1,P1_03_03b), 2);
+
+    //Part2. calculate DstRow 2,6
+    __m128i P2_00_00    = _mm_add_epi16(P1_00_00,P1_00_01);//16bit: [10+17 11+16 12+15 13+14 00+07 ...] needed
+    __m128i P2_00_01    = _mm_add_epi16(P1_00_02,P1_00_03);//16bit: needed
+    __m128i P2_00_02    = _mm_add_epi16(P1_00_04,P1_00_05);//16bit: needed
+    __m128i P2_00_03    = _mm_add_epi16(P1_00_06,P1_00_07);//16bit: [70+77 71+76 72+75 73+74 60+67 ...]needed
+
+    __m128i P2_01_00a   = _mm_shufflehi_epi16(P2_00_00, 0x36); //16bit: [13+14 10+17 12+15 11+16 ...]
+    __m128i P2_01_00    = _mm_shufflelo_epi16(P2_01_00a, 0x36);//16bit: [... 03+04 00+07 02+05 01+06]
+    __m128i P2_01_01a   = _mm_shufflehi_epi16(P2_00_01, 0x36);
+    __m128i P2_01_01    = _mm_shufflelo_epi16(P2_01_01a, 0x36);
+    __m128i P2_01_02a   = _mm_shufflehi_epi16(P2_00_02, 0x36);
+    __m128i P2_01_02    = _mm_shufflelo_epi16(P2_01_02a, 0x36);
+    __m128i P2_01_03a   = _mm_shufflehi_epi16(P2_00_03, 0x36);
+    __m128i P2_01_03    = _mm_shufflelo_epi16(P2_01_03a, 0x36);
+
+    __m128i P2_02_00    = _mm_hsub_epi16(P2_01_00,P2_01_01);//16bit: [(30+37)-(33+34) (32+35)-(30+37) ...] needed
+    __m128i P2_02_01    = _mm_hsub_epi16(P2_01_02,P2_01_03);//16bit: needed
+
+    //DstRow02
+    __m128i P2_03_00a   = _mm_madd_epi16(c16_2, P2_02_00);//32bit: [23 22 21 20]
+    __m128i P2_03_00b   = _mm_madd_epi16(c16_2, P2_02_01);//32bit: [27 26 25 24]
+    __m128i P2_05_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P2_03_00a), 2);//32bit: [23 22 21 20]
+    __m128i P2_05_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P2_03_00b), 2);//32bit: [27 26 25 24]
+
+    //DstRow06
+    __m128i P2_03_01a   = _mm_madd_epi16(c16_6, P2_02_00);//32bit: [43 42 41 40]
+    __m128i P2_03_01b   = _mm_madd_epi16(c16_6, P2_02_01);//32bit: [47 46 45 44]
+    __m128i P2_05_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P2_03_01a), 2);//32bit: [43 42 41 40]
+    __m128i P2_05_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P2_03_01b), 2);//32bit: [47 46 45 44]
+
+    //Part3. calculate DstRow 0,4
+    __m128i P3_00_00    = _mm_hadd_epi16(P2_01_00,P2_01_01);//16bit: [(30+37)+(33+34) (32+35)+(31+36) ...] needed
+    __m128i P3_00_01    = _mm_hadd_epi16(P2_01_02,P2_01_03);//16bit: [ ]needed
+
+    //DstRow00
+    __m128i P3_01_00a   = _mm_madd_epi16(c16_0, P3_00_00);//32bit: [03 02 01 00]
+    __m128i P3_01_00b   = _mm_madd_epi16(c16_0, P3_00_01);//32bit: [07 06 05 04]
+    __m128i P3_03_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P3_01_00a), 2);
+    __m128i P3_03_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P3_01_00b), 2);
+
+    //DstRow04
+    __m128i P3_01_01a   = _mm_madd_epi16(c16_4, P3_00_00);//32bit: [43 42 41 40]
+    __m128i P3_01_01b   = _mm_madd_epi16(c16_4, P3_00_01);//32bit: [47 46 45 44]
+    __m128i P3_03_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P3_01_01a), 2);
+    __m128i P3_03_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd1, P3_01_01b), 2);
+
+    //Dct2.
+    //Part4. preparations for 2nd dimensional transform
+    __m128i P4_00_00    = _mm_shuffle_epi32(P3_03_00a, 0x1B);//32bit: [00 01 02 03]
+    __m128i P4_00_01    = _mm_shuffle_epi32(P1_05_00a, 0x1B);//32bit: [ ]
+    __m128i P4_00_02    = _mm_shuffle_epi32(P2_05_00a, 0x1B);//32bit: [ ]
+    __m128i P4_00_03    = _mm_shuffle_epi32(P1_05_01a, 0x1B);//32bit: [ ]
+    __m128i P4_00_04    = _mm_shuffle_epi32(P3_03_01a, 0x1B);//32bit: [ ]
+    __m128i P4_00_05    = _mm_shuffle_epi32(P1_05_02a, 0x1B);//32bit: [ ]
+    __m128i P4_00_06    = _mm_shuffle_epi32(P2_05_01a, 0x1B);//32bit: [ ]
+    __m128i P4_00_07    = _mm_shuffle_epi32(P1_05_03a, 0x1B);//32bit: [ ]
+    __m128i P4_01_00    = _mm_sub_epi32(P4_00_00, P3_03_00b);//32bit: [00-07 01-06 02-05 03-04] needed
+    __m128i P4_01_01    = _mm_sub_epi32(P4_00_01, P1_05_00b);//32bit: [ ] needed
+    __m128i P4_01_02    = _mm_sub_epi32(P4_00_02, P2_05_00b);//32bit: [ ] needed
+    __m128i P4_01_03    = _mm_sub_epi32(P4_00_03, P1_05_01b);//32bit: [ ] needed
+    __m128i P4_01_04    = _mm_sub_epi32(P4_00_04, P3_03_01b);//32bit: [ ] needed
+    __m128i P4_01_05    = _mm_sub_epi32(P4_00_05, P1_05_02b);//32bit: [ ] needed
+    __m128i P4_01_06    = _mm_sub_epi32(P4_00_06, P2_05_01b);//32bit: [ ] needed
+    __m128i P4_01_07    = _mm_sub_epi32(P4_00_07, P1_05_03b);//32bit: [ ] needed
+
+    //Part5. calculate Real DstRow 1,3,5,7
+    //RealDstRow01
+    __m128i P5_01_00a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_1, P4_01_00), _mm_mullo_epi32(c32_1, P4_01_01));//32bit: [11a 11b 10a 10b]
+    __m128i P5_01_00b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_1, P4_01_02), _mm_mullo_epi32(c32_1, P4_01_03));
+    __m128i P5_01_00c   = _mm_hadd_epi32(_mm_mullo_epi32(c32_1, P4_01_04), _mm_mullo_epi32(c32_1, P4_01_05));
+    __m128i P5_01_00d   = _mm_hadd_epi32(_mm_mullo_epi32(c32_1, P4_01_06), _mm_mullo_epi32(c32_1, P4_01_07));//32bit: [17a 17b 13a 16b]
+    __m128i P5_02_00a   = _mm_hadd_epi32(P5_01_00a, P5_01_00b);//32bit: [13 12 11 10]
+    __m128i P5_02_00b   = _mm_hadd_epi32(P5_01_00c, P5_01_00d);//32bit: [17 16 15 14]
+    __m128i P5_04_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_00a), 9);
+    __m128i P5_04_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_00b), 9);
+    __m128i RealDstRow01= _mm_packs_epi32(P5_04_00a, P5_04_00b);//16bit: [17 16 15 14 13 12 11 10]
+
+    //RealDstRow03
+    __m128i P5_01_01a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_3, P4_01_00), _mm_mullo_epi32(c32_3, P4_01_01));//32bit:
+    __m128i P5_01_01b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_3, P4_01_02), _mm_mullo_epi32(c32_3, P4_01_03));
+    __m128i P5_01_01c   = _mm_hadd_epi32(_mm_mullo_epi32(c32_3, P4_01_04), _mm_mullo_epi32(c32_3, P4_01_05));
+    __m128i P5_01_01d   = _mm_hadd_epi32(_mm_mullo_epi32(c32_3, P4_01_06), _mm_mullo_epi32(c32_3, P4_01_07));//32bit:
+    __m128i P5_02_01a   = _mm_hadd_epi32(P5_01_01a, P5_01_01b);//32bit:
+    __m128i P5_02_01b   = _mm_hadd_epi32(P5_01_01c, P5_01_01d);//32bit:
+    __m128i P5_04_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_01a), 9);
+    __m128i P5_04_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_01b), 9);
+    __m128i RealDstRow03= _mm_packs_epi32(P5_04_01a, P5_04_01b);//16bit: [  ]
+
+    //RealDstRow05
+    __m128i P5_01_02a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_5, P4_01_00), _mm_mullo_epi32(c32_5, P4_01_01));//32bit:
+    __m128i P5_01_02b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_5, P4_01_02), _mm_mullo_epi32(c32_5, P4_01_03));
+    __m128i P5_01_02c   = _mm_hadd_epi32(_mm_mullo_epi32(c32_5, P4_01_04), _mm_mullo_epi32(c32_5, P4_01_05));
+    __m128i P5_01_02d   = _mm_hadd_epi32(_mm_mullo_epi32(c32_5, P4_01_06), _mm_mullo_epi32(c32_5, P4_01_07));//32bit:
+    __m128i P5_02_02a   = _mm_hadd_epi32(P5_01_02a, P5_01_02b);//32bit:
+    __m128i P5_02_02b   = _mm_hadd_epi32(P5_01_02c, P5_01_02d);//32bit:
+    __m128i P5_04_02a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_02a), 9);
+    __m128i P5_04_02b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_02b), 9);
+    __m128i RealDstRow05= _mm_packs_epi32(P5_04_02a, P5_04_02b);//16bit: [  ]
+
+    //RealDstRow07
+    __m128i P5_01_03a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_7, P4_01_00), _mm_mullo_epi32(c32_7, P4_01_01));//32bit:
+    __m128i P5_01_03b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_7, P4_01_02), _mm_mullo_epi32(c32_7, P4_01_03));
+    __m128i P5_01_03c   = _mm_hadd_epi32(_mm_mullo_epi32(c32_7, P4_01_04), _mm_mullo_epi32(c32_7, P4_01_05));
+    __m128i P5_01_03d   = _mm_hadd_epi32(_mm_mullo_epi32(c32_7, P4_01_06), _mm_mullo_epi32(c32_7, P4_01_07));//32bit:
+    __m128i P5_02_03a   = _mm_hadd_epi32(P5_01_03a, P5_01_03b);//32bit:
+    __m128i P5_02_03b   = _mm_hadd_epi32(P5_01_03c, P5_01_03d);//32bit:
+    __m128i P5_04_03a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_03a), 9);
+    __m128i P5_04_03b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P5_02_03b), 9);
+    __m128i RealDstRow07= _mm_packs_epi32(P5_04_03a, P5_04_03b);//16bit: [  ]
+
+    //Part6. calculate Real DstRow 2,6
+    __m128i P6_00_00    = _mm_add_epi32(P4_00_00, P3_03_00b);//32bit: [00+07 01+06 02+05 03+04]
+    __m128i P6_00_01    = _mm_add_epi32(P4_00_01, P1_05_00b);//32bit: [ ]
+    __m128i P6_00_02    = _mm_add_epi32(P4_00_02, P2_05_00b);//32bit: [ ]
+    __m128i P6_00_03    = _mm_add_epi32(P4_00_03, P1_05_01b);//32bit: [ ]
+    __m128i P6_00_04    = _mm_add_epi32(P4_00_04, P3_03_01b);//32bit: [ ]
+    __m128i P6_00_05    = _mm_add_epi32(P4_00_05, P1_05_02b);//32bit: [ ]
+    __m128i P6_00_06    = _mm_add_epi32(P4_00_06, P2_05_01b);//32bit: [ ]
+    __m128i P6_00_07    = _mm_add_epi32(P4_00_07, P1_05_03b);//32bit: [ ]
+
+    __m128i P6_01_00    = _mm_shuffle_epi32(P6_00_00, 0x36);//32bit: [03+04 00+07 02+05 01+06]
+    __m128i P6_01_01    = _mm_shuffle_epi32(P6_00_01, 0x36);
+    __m128i P6_01_02    = _mm_shuffle_epi32(P6_00_02, 0x36);
+    __m128i P6_01_03    = _mm_shuffle_epi32(P6_00_03, 0x36);
+    __m128i P6_01_04    = _mm_shuffle_epi32(P6_00_04, 0x36);
+    __m128i P6_01_05    = _mm_shuffle_epi32(P6_00_05, 0x36);
+    __m128i P6_01_06    = _mm_shuffle_epi32(P6_00_06, 0x36);
+    __m128i P6_01_07    = _mm_shuffle_epi32(P6_00_07, 0x36);
+
+    __m128i P6_02_00    = _mm_hsub_epi32(P6_01_00, P6_01_01);//32bit: [1a 1b 0a 0b]
+    __m128i P6_02_01    = _mm_hsub_epi32(P6_01_02, P6_01_03);//32bit: [3a 3b 2a 2b]
+    __m128i P6_02_02    = _mm_hsub_epi32(P6_01_04, P6_01_05);//32bit: [5a 5b 4a 4b]
+    __m128i P6_02_03    = _mm_hsub_epi32(P6_01_06, P6_01_07);//32bit: [7a 7b 6a 6b]
+
+    //Real DstRow02
+    __m128i P6_04_00a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_2, P6_02_00), _mm_mullo_epi32(c32_2, P6_02_01));//32bit: [23 22 21 20]
+    __m128i P6_04_00b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_2, P6_02_02), _mm_mullo_epi32(c32_2, P6_02_03));//32bit: [27 26 25 24]
+    __m128i P6_06_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P6_04_00a), 9);
+    __m128i P6_06_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P6_04_00b), 9);
+    __m128i RealDstRow02= _mm_packs_epi32(P6_06_00a, P6_06_00b);//16bit: [27 26 25 24 23 22 21 20]
+
+    //Real DstRow06
+    __m128i P6_04_01a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_6, P6_02_00), _mm_mullo_epi32(c32_6, P6_02_01));//32bit: [23 22 21 20]
+    __m128i P6_04_01b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_6, P6_02_02), _mm_mullo_epi32(c32_6, P6_02_03));//32bit: [27 26 25 24]
+    __m128i P6_06_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P6_04_01a), 9);
+    __m128i P6_06_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P6_04_01b), 9);
+    __m128i RealDstRow06= _mm_packs_epi32(P6_06_01a, P6_06_01b);//16bit: [27 26 25 24 23 22 21 20]
+
+
+    //Part7. calculate Real DstRow 0,4
+    __m128i P7_00_00    = _mm_hadd_epi32(P6_01_00, P6_01_01);//32bit: [1a 1b 0a 0b]
+    __m128i P7_00_01    = _mm_hadd_epi32(P6_01_02, P6_01_03);//32bit: [3a 3b 2a 2b]
+    __m128i P7_00_02    = _mm_hadd_epi32(P6_01_04, P6_01_05);//32bit: [5a 5b 4a 4b]
+    __m128i P7_00_03    = _mm_hadd_epi32(P6_01_06, P6_01_07);//32bit: [7a 7b 6a 6b]
+
+    //Real DstRow00
+    __m128i P7_02_00a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_0, P7_00_00), _mm_mullo_epi32(c32_0, P7_00_01));//32bit: [03 02 01 00]
+    __m128i P7_02_00b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_0, P7_00_02), _mm_mullo_epi32(c32_0, P7_00_03));//32bit: [07 06 05 04]
+    __m128i P7_04_00a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P7_02_00a), 9);
+    __m128i P7_04_00b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P7_02_00b), 9);
+    __m128i RealDstRow00= _mm_packs_epi32(P7_04_00a,P7_04_00b);//16bit: [07 06 05 04 03 02 01 00]
+
+    //Real DstRow00
+    __m128i P7_02_01a   = _mm_hadd_epi32(_mm_mullo_epi32(c32_4, P7_00_00), _mm_mullo_epi32(c32_4, P7_00_01));//32bit:
+    __m128i P7_02_01b   = _mm_hadd_epi32(_mm_mullo_epi32(c32_4, P7_00_02), _mm_mullo_epi32(c32_4, P7_00_03));//32bit:
+    __m128i P7_04_01a   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P7_02_01a), 9);
+    __m128i P7_04_01b   = _mm_srai_epi32(_mm_add_epi32(c_rnd2, P7_02_01b), 9);
+    __m128i RealDstRow04= _mm_packs_epi32(P7_04_01a,P7_04_01b);//16bit: [47 46 45 44 43 42 41 40]
+
+    _mm_storeu_si128((__m128i*)&pDst[1 * 8], RealDstRow01);
+    _mm_storeu_si128((__m128i*)&pDst[3 * 8], RealDstRow03);
+    _mm_storeu_si128((__m128i*)&pDst[5 * 8], RealDstRow05);
+    _mm_storeu_si128((__m128i*)&pDst[7 * 8], RealDstRow07);
+    _mm_storeu_si128((__m128i*)&pDst[2 * 8], RealDstRow02);
+    _mm_storeu_si128((__m128i*)&pDst[6 * 8], RealDstRow06);
+    _mm_storeu_si128((__m128i*)&pDst[0 * 8], RealDstRow00);
+    _mm_storeu_si128((__m128i*)&pDst[4 * 8], RealDstRow04);
+}
+#endif // INSTRSET >= 5
+
 void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
@@ -2944,4 +3218,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 
     p.deQuant = xDeQuant;
     p.scan_coef = scanNonZeroCoeffs;
+    p.dct[DCT_8x8] = xDCT8;
 }
