@@ -1033,19 +1033,13 @@ Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int he
     {
         UInt uiCount = (uiGroupIdxX - 2) >> 1;
         uiPosX       = uiPosX - g_uiMinInGroup[uiGroupIdxX];
-        for (Int i = uiCount - 1; i >= 0; i--)
-        {
-            m_pcBinIf->encodeBinEP((uiPosX >> i) & 1);
-        }
+        m_pcBinIf->encodeBinsEP( uiPosX, uiCount );
     }
     if (uiGroupIdxY > 3)
     {
         UInt uiCount = (uiGroupIdxY - 2) >> 1;
         uiPosY       = uiPosY - g_uiMinInGroup[uiGroupIdxY];
-        for (Int i = uiCount - 1; i >= 0; i--)
-        {
-            m_pcBinIf->encodeBinEP((uiPosY >> i) & 1);
-        }
+        m_pcBinIf->encodeBinsEP( uiPosY, uiCount );
     }
 }
 
