@@ -2930,6 +2930,87 @@ Int scanNonZeroCoeffs(TCoeff* pcCoef, const UInt *scan, const UInt *scanT, UInt 
 #endif // INSTRSET >= 5
 
 #if INSTRSET < 5
+void xDCT4(short *pSrc, short *pDst)
+{
+    const int shift_1st = 1;
+
+    partialButterfly4(pSrc, pDst, shift_1st, 4);
+}
+#endif // INSTRSET < 5
+
+
+#if INSTRSET >= 5
+void xDCT4(short *pSrc, short *pDst)
+{
+    // Const
+    __m128i c_1         = _mm_set1_epi32(1);
+    __m128i c_128       = _mm_set1_epi32(128);
+    __m128i c16_64_64   = _mm_set1_epi32(0x00400040);
+    __m128i c16_n64_64  = _mm_set1_epi32(0xFFC00040);
+    __m128i c16_36_83   = _mm_set1_epi32(0x00240053);
+    __m128i c16_n83_36  = _mm_set1_epi32(0xFFAD0024);
+    __m128i c32_36_83   = _mm_set_epi32( 36, 83, 36, 83);
+    __m128i c32_n64_64  = _mm_set_epi32(-64, 64,-64, 64);
+    __m128i c32_n83_36  = _mm_set_epi32(-83, 36,-83, 36);
+
+    __m128i T20  = _mm_loadu_si128((__m128i *)&pSrc[0 * 4]); // [13 12 11 10 03 02 01 00]
+    __m128i T22  = _mm_loadu_si128((__m128i *)&pSrc[2 * 4]); // [33 32 31 30 23 22 21 20]
+
+    // DCT1
+    __m128i T30  = _mm_shuffle_epi32(T20, 0xD8);
+    __m128i T31  = _mm_shuffle_epi32(T22, 0xD8);
+    __m128i T32  = _mm_shufflehi_epi16(T30, 0xB1);
+    __m128i T33  = _mm_shufflehi_epi16(T31, 0xB1);
+
+    __m128i T40  = _mm_unpacklo_epi64(T32, T33);
+    __m128i T41  = _mm_unpackhi_epi64(T32, T33);
+    __m128i T50  = _mm_add_epi16(T40, T41);             // [1+2 0+3]
+    __m128i T51  = _mm_sub_epi16(T40, T41);             // [1-2 0-3]
+    __m128i T60  = _mm_madd_epi16(c16_64_64,  T50);     // [ 64*s12 + 64*s03] = [03 02 01 00]
+    __m128i T61  = _mm_madd_epi16(c16_36_83,  T51);     // [ 36*d12 + 83*d03] = [13 12 11 10]
+    __m128i T62  = _mm_madd_epi16(c16_n64_64, T50);     // [-64*s12 + 64*s03] = [23 22 21 20]
+    __m128i T63  = _mm_madd_epi16(c16_n83_36, T51);     // [-83*d12 + 36*d03] = [33 32 31 30]
+    __m128i T70  = _mm_srai_epi32(_mm_add_epi32(c_1, T60), 1);  // [03 02 01 00]
+    __m128i T71  = _mm_srai_epi32(_mm_add_epi32(c_1, T61), 1);  // [13 12 11 10]
+    __m128i T72  = _mm_srai_epi32(_mm_add_epi32(c_1, T62), 1);  // [23 22 21 20]
+    __m128i T73  = _mm_srai_epi32(_mm_add_epi32(c_1, T63), 1);  // [33 32 31 30]
+
+    // DCT2
+    __m128i T80  = _mm_unpacklo_epi64(T70, T71);
+    __m128i T81_ = _mm_unpackhi_epi64(T70, T71);
+    __m128i T81  = _mm_shuffle_epi32(T81_, 0xB1);
+    __m128i T82  = _mm_unpacklo_epi64(T72, T73);
+    __m128i T83_ = _mm_unpackhi_epi64(T72, T73);
+    __m128i T83  = _mm_shuffle_epi32(T83_, 0xB1);
+    __m128i T90A = _mm_add_epi32(T80, T81);
+    __m128i T90B = _mm_add_epi32(T82, T83);
+    __m128i T91A = _mm_sub_epi32(T80, T81);
+    __m128i T91B = _mm_sub_epi32(T82, T83);
+    __m128i TA0A = _mm_slli_epi32(T90A, 6);
+    __m128i TA0B = _mm_slli_epi32(T90B, 6);
+    __m128i TA1A = _mm_mullo_epi32(c32_36_83,  T91A);
+    __m128i TA1B = _mm_mullo_epi32(c32_36_83,  T91B);
+    __m128i TA2A = _mm_mullo_epi32(c32_n64_64, T90A);
+    __m128i TA2B = _mm_mullo_epi32(c32_n64_64, T90B);
+    __m128i TA3A = _mm_mullo_epi32(c32_n83_36, T91A);
+    __m128i TA3B = _mm_mullo_epi32(c32_n83_36, T91B);
+    __m128i TB0  = _mm_hadd_epi32(TA0A, TA0B);
+    __m128i TB1  = _mm_hadd_epi32(TA1A, TA1B);
+    __m128i TB2  = _mm_hadd_epi32(TA2A, TA2B);
+    __m128i TB3  = _mm_hadd_epi32(TA3A, TA3B);
+    __m128i TC0  = _mm_srai_epi32(_mm_add_epi32(TB0, c_128), 8);
+    __m128i TC1  = _mm_srai_epi32(_mm_add_epi32(TB1, c_128), 8);
+    __m128i TC2  = _mm_srai_epi32(_mm_add_epi32(TB2, c_128), 8);
+    __m128i TC3  = _mm_srai_epi32(_mm_add_epi32(TB3, c_128), 8);
+    __m128i TD0  = _mm_packs_epi32(TC0, TC1);       // [13 12 11 10 03 02 01 00]
+    __m128i TD1  = _mm_packs_epi32(TC2, TC3);       // [33 32 31 30 23 22 21 20]
+
+    _mm_storeu_si128((__m128i*)&pDst[0 * 4], TD0);
+    _mm_storeu_si128((__m128i*)&pDst[2 * 4], TD1);
+}
+#endif // INSTRSET >= 5
+
+#if INSTRSET < 5
 void xDCT8(short *pSrc, short *pDst)
 {
     const int shift_1st = 2;
@@ -3218,5 +3299,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
 
     p.deQuant = xDeQuant;
     p.scan_coef = scanNonZeroCoeffs;
+    p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
 }

@@ -299,6 +299,27 @@ bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
+bool MBDstHarness::check_dct4_primitive(dct_t ref, dct_t opt)
+{
+    int j = 0;
+    int mem_cmp_size = 32; // 2*4*4 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 100; i++)
+    {
+        ref(mbuf1 + j, mbuf3);
+        opt(mbuf1 + j, mbuf2);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0xCD, mem_cmp_size);
+        memset(mbuf3, 0xCD, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::check_dct8_primitive(dct_t ref, dct_t opt)
 {
     int j = 0;
@@ -436,6 +457,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_butterfly4_primitive(ref.partial_butterfly[BUTTERFLY_4], opt.partial_butterfly[BUTTERFLY_4]))
         {
             printf("\npartialButterfly%s failed\n", ButterflyConf_names[BUTTERFLY_4]);
+            return false;
+        }
+    }
+
+    if (opt.dct[DCT_4x4])
+    {
+        if (!check_dct4_primitive(ref.dct[DCT_4x4], opt.dct[DCT_4x4]))
+        {
+            printf("\n%s failed\n", DctConf_names[DCT_4x4]);
             return false;
         }
     }
