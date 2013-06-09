@@ -45,9 +45,9 @@ namespace {
 namespace x265 {
 // private x265 namespace
 
-void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&);
+void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);    // pixel-ARCH.cpp
+void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);    // intra-ARCH.cpp
+void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&); // ipfilter-ARCH.cpp
 
 /* initialize function table with functions compiled for this vector
  * architecture.  This is the only symbol exported from each file. */
