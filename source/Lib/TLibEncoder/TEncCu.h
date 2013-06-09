@@ -68,7 +68,10 @@ class TEncCu
 {
 private:
 
-    TComDataCU**            m_NxNCU[4];
+    TComDataCU**            m_InterCU_2Nx2N;
+    TComDataCU**            m_InterCU_Rect;
+    TComDataCU**            m_IntrainInterCU;
+    TComDataCU**            m_MergeCU;
     TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
     TComDataCU**            m_ppcTempCU;    ///< Temporary CUs in each depth
     UChar                   m_uhTotalDepth;
