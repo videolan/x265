@@ -25,10 +25,13 @@
  * one will define ARCH to a different value. */
 
 #include "primitives.h"
+#include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
+#include "utils.h"
+
+#include <assert.h>
 #include <string.h>
 #include <smmintrin.h>
 #include <algorithm>
-#include "utils.h"
 
 using namespace x265;
 

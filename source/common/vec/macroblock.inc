@@ -2785,9 +2785,6 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
     }
 }
 
-#include <string.h>                 // memset
-#include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
-
 #if INSTRSET < 5
 Int scanNonZeroCoeffs(TCoeff* pcCoef, const UInt *scan, const UInt *scanT, UInt *cgFlag, UInt uiWidth, Int *piScanPosLast)
 {
