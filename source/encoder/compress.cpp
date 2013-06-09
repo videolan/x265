@@ -207,11 +207,11 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                 if (rpcBestCU->isIntra(0))
                 {
-                    xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, SIZE_NONE);
+                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth);
                 }
                 else
                 {
-                    xCompressCU(pcSubBestPartCU, pcSubTempPartCU, rpcBestCU, uhNextDepth, rpcBestCU->getPartitionSize(0));
+                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth);
                 }
                 {
                     rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
