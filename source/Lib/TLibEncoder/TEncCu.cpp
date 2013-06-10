@@ -1799,6 +1799,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
                     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+                    x265_emms();
                     rpcTempCU->getTotalDistortion() = SATD;
                     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 #endif
@@ -1876,7 +1877,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
         
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
-        /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
+        /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
         UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                             (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
@@ -1989,6 +1990,7 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
+    x265_emms();
     rpcTempCU->getTotalDistortion() = SATD;
 #endif
     rpcTempCU->getTotalCost() = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
