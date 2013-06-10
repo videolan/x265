@@ -230,6 +230,7 @@ public:
 
     Void          copyToPic(UChar uiDepth);
     Void          copyToPic(UChar uiDepth, UInt uiPartIdx, UInt uiPartDepth);
+    Void          copyCU(TComDataCU* pcCU);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description
@@ -259,11 +260,15 @@ public:
 
     Void          setDepthSubParts(UInt uiDepth, UInt uiAbsPartIdx);
 
+    Bool          getDecSubCu() { return m_bDecSubCu;}
+
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU data
     // -------------------------------------------------------------------------------------------------------------------
 
     Char*         getPartitionSize()                        { return m_pePartSize; }
+
+    Int           getUnitSize()                             { return m_unitSize;   }
 
     PartSize      getPartitionSize(UInt uiIdx)            { return static_cast<PartSize>(m_pePartSize[uiIdx]); }
 
