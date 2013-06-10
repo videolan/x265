@@ -35,8 +35,8 @@
 // from cpu-a.asm, if ASM primitives are compiled.  Else primitives.cpp
 extern "C" void x265_cpu_emms(void);
 
-#if _MSC_VER && _WIN64
-#define x265_emms() x265_cpu_emms()
+#if X86_64
+#define x265_emms()
 #elif _MSC_VER
 #include <mmintrin.h>
 #define x265_emms() _mm_empty()
@@ -132,6 +132,16 @@ enum Butterflies
     NUM_BUTTERFLIES
 };
 
+enum Dcts
+{
+    DST_4x4,
+    DCT_4x4,
+    DCT_8x8,
+    DCT_16x16,
+    DCT_32x32,
+    NUM_DCTS
+};
+
 enum IPFilterConf_P_P
 {
     FILTER_H_P_P_8,
@@ -160,8 +170,8 @@ enum IPFilterConf_S_P
 int PartitionFromSizes(int Width, int Height);
 
 typedef int  (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
-typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride); // fenc is aligned
-typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
+typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
+typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
@@ -184,6 +194,8 @@ typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
+typedef int  (CDECL * scan_coef_t)(int* pcCoef, const unsigned int *scan, const unsigned int *scanT, unsigned int *cgFlag, unsigned int uiWidth, int *piScanPosLast);
+typedef void (CDECL * dct_t)(short *pSrc, short *pDst);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -194,9 +206,9 @@ struct EncoderPrimitives
     pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
     pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp sse_pp[NUM_PARTITIONS];   // SSE (pixel, pixel)
-    pixelcmp_ss sse_ss[NUM_PARTITIONS]; // SSE (short, short)
-    pixelcmp_sp sse_sp[NUM_PARTITIONS]; // SSE (short, pixel)
+    pixelcmp sse_pp[NUM_PARTITIONS];   // SSE (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss sse_ss[NUM_PARTITIONS]; // SSE (short, short) fenc alignment not assumed
+    pixelcmp_sp sse_sp[NUM_PARTITIONS]; // SSE (short, pixel) fenc alignment not assumed
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_8x8;
     pixelcmp sa8d_16x16;
@@ -218,6 +230,8 @@ struct EncoderPrimitives
     getIPredPlanar_p getIPredPlanar;
     getIPredAng_p getIPredAng;
     quant deQuant;
+    scan_coef_t scan_coef;
+    dct_t dct[NUM_DCTS];
     cvt16to32_t cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_t cvt32to16;

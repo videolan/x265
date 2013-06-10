@@ -71,6 +71,8 @@ public:
     void skipFrames(int numFrames);
 
     bool readPicture(x265_picture_t&);
+
+    const char *getName() const                   { return "yuv"; }
 };
 }
 

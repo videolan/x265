@@ -288,7 +288,6 @@ void x265_print_params(x265_param_t *param)
 {
     if (param->logLevel < X265_LOG_INFO)
         return;
-    x265_log(param, X265_LOG_INFO, "Format                       : %dx%d %dHz\n", param->iSourceWidth, param->iSourceHeight, param->iFrameRate);
 #if HIGH_BIT_DEPTH
     x265_log(param, X265_LOG_INFO, "Internal bit depth           : %d\n", param->internalBitDepth);
 #endif

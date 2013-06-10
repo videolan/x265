@@ -52,6 +52,8 @@ public:
 
     virtual ~IPFilterHarness();
 
+    const char *getName() const { return "interp"; }
+
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);

@@ -64,17 +64,37 @@ void TestHarness::alignedFree(void *ptr)
 #endif
 }
 
+static const char *CpuType[] =
+{
+    "",
+    "",
+    "SSE2",
+    "SSE3",
+    "SSSE3",
+    "SSE4.1",
+    "SSE4.2",
+    "AVX",
+    "AVX2",
+    0
+};
+
 extern int instrset_detect();
 
 int main(int argc, char *argv[])
 {
     int cpuid = instrset_detect(); // Detect supported instruction set
+    const char *testname = 0;
 
     for (int i = 1; i < argc - 1; i += 2)
     {
         if (!strcmp(argv[i], "--cpuid"))
         {
             cpuid = atoi(argv[i + 1]);
+        }
+        if (!strcmp(argv[i], "--test"))
+        {
+            testname = argv[i + 1];
+            printf("Testing only harnesses that match name <%s>\n", testname);
         }
     }
 
@@ -101,38 +121,40 @@ int main(int argc, char *argv[])
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
-    for (int i = 1; i <= cpuid; i++)
+    for (int i = 2; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, i);
-        printf("Testing vector class primitives: CPUID %d\n", i);
+        printf("Testing vector class primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
+            if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+                continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
                 fprintf(stderr, "\nx265: vector primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
         }
-
 #endif // if ENABLE_VECTOR_PRIMITIVES
 
 #if ENABLE_ASM_PRIMITIVES
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, i);
-        printf("Testing assembly primitives: CPUID %d\n", i);
+        printf("Testing assembly primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
+            if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+                continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
                 fprintf(stderr, "\nx265: ASM primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
         }
-
 #endif // if ENABLE_ASM_PRIMITIVES
     }
 
@@ -151,6 +173,9 @@ int main(int argc, char *argv[])
 
     for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
     {
+        if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
+            continue;
+        printf("== %s primitives ==\n", harness[h]->getName());
         harness[h]->measureSpeed(cprim, optprim);
     }
 

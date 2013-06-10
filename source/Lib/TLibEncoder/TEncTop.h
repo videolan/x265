@@ -75,15 +75,23 @@ private:
     Int                     m_iNumPicRcvd;                ///< number of received pictures
     UInt                    m_uiNumAllPicCoded;           ///< number of coded pictures
     TComList<TComPic*>      m_cListPic;                   ///< dynamic list of pictures
+    x265::ThreadPool       *m_threadPool;
+    Int                     m_iNumSubstreams;             ///< # of WPP capable coding rows.
+
+    // quality control
+    TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
+    TComScalingList         m_scalingList;                ///< quantization matrix information
+
+    // SPS
+    TComSPS                 m_cSPS;                       ///< SPS
+    TComPPS                 m_cPPS;                       ///< PPS
 
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
 
-    Int                     m_iNumSubstreams;             ///< # of WPP capable coding rows.
-
-    // Per-Frame/Slice  TODO: these two should be merged
+    /*==== These structures need to be per-frame or per-GOP ==== */
     TEncSlice               m_cSliceEncoder;
-    x265::EncodeFrame      *m_cFrameEncoders;
+    x265::EncodeFrame      *m_cFrameEncoders; // TODO: TEncSlice should be member of EncodeFrame
 
     TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
     TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
@@ -94,17 +102,7 @@ private:
     // RD cost computation
     TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
-
-    // quality control
-    TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
-
-    // SPS
-    TComSPS                 m_cSPS;                       ///< SPS
-    TComPPS                 m_cPPS;                       ///< PPS
-
-    TComScalingList         m_scalingList;                ///< quantization matrix information
-
-    x265::ThreadPool       *m_threadPool;
+    /*==== end per-frame or per-GOP ==== */
 
 protected:
 
@@ -131,26 +129,6 @@ public:
 
     TComList<TComPic*>*     getListPic() { return &m_cListPic; }
 
-    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
-
-    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
-
-    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
-
-    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
-
-    x265::EncodeFrame*      getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
-
-    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
-
-    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
-
-    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
-
-    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
-
-    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
-
     TComSPS*                getSPS() { return &m_cSPS; }
 
     TComPPS*                getPPS() { return &m_cPPS; }
@@ -164,6 +142,19 @@ public:
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
+
+
+    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
+    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
+    x265::EncodeFrame*      getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
+    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
+    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
+    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
+    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
+    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
+    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
+    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
+
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function

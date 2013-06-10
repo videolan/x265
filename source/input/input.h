@@ -62,6 +62,8 @@ public:
     virtual bool isFail() const = 0;
 
     virtual int  guessFrameCount() = 0;
+
+    virtual const char *getName() const = 0;
 };
 }
 

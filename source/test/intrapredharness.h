@@ -49,6 +49,8 @@ public:
 
     virtual ~IntraPredHarness();
 
+    const char *getName() const { return "intrapred"; }
+
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);

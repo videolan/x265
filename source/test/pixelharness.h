@@ -51,6 +51,8 @@ public:
 
     virtual ~PixelHarness();
 
+    const char *getName() const { return "pixel"; }
+
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 
     void measureSpeed(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);

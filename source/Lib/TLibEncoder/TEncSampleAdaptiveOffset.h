@@ -85,11 +85,7 @@ public:
     Void startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder);
     Void endSaoEnc();
     Void resetStats();
-#if SAO_CHROMA_LAMBDA
     Void SAOProcess(SAOParam *pcSaoParam, Double dLambda, Double dLambdaChroma, Int depth);
-#else
-    Void SAOProcess(SAOParam *pcSaoParam, Double dLambda);
-#endif
 
     Void runQuadTreeDecision(SAOQTPart *psQTPart, Int iPartIdx, Double &dCostFinal, Int iMaxLevel, Double dLambda, Int yCbCr);
     Void rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, Double dLambda, Int yCbCr);

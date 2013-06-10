@@ -64,6 +64,8 @@ public:
         m_curCol = 0;
     }
 
+    inline void processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferSBac, bool bSaveCabac);
+
     /* Threading */
     Lock                m_lock;
     volatile bool       m_active;

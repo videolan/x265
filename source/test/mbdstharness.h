@@ -46,12 +46,16 @@ protected:
     bool check_butterfly32_inverse_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_butterfly4_primitive(x265::butterfly ref, x265::butterfly opt);
     bool check_xdequant_primitive(x265::quant ref, x265::quant opt);
+    bool check_dct4_primitive(x265::dct_t ref, x265::dct_t opt);
+    bool check_dct8_primitive(x265::dct_t ref, x265::dct_t opt);
 
 public:
 
     MBDstHarness();
 
     virtual ~MBDstHarness();
+
+    const char *getName() const { return "transforms"; }
 
     bool testCorrectness(const x265::EncoderPrimitives& ref, const x265::EncoderPrimitives& opt);
 

@@ -36,8 +36,7 @@ namespace x265 {
 
 //                           4   8  12  16/48   24     32/64
 static int8_t psize[16] = {  0,  1,  2,  3, -1,  4, -1, 5,
-                             -1, -1, -1,  6, -1, -1, -1, 7 };
-int *Motion_Cost;
+                            -1, -1, -1,  6, -1, -1, -1, 7 };
 
 // Returns a Partitions enum if the size matches a supported performance primitive,
 // else returns -1 (in which case you should use the slow path)

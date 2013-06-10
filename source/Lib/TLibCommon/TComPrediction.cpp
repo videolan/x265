@@ -390,8 +390,19 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     }
     else
     {
-        // Create the prediction
-        xPredIntraAng(g_bitDepthC, ptrSrc + sw + 1, sw, pDst, uiStride, iWidth, iHeight, uiDirMode, bAbove, bLeft, false);
+         //Create the prediction
+        int k;
+        Pel refAbv[3 * MAX_CU_SIZE];
+        Pel refLft[3 * MAX_CU_SIZE];
+        int limit = ( uiDirMode <=25 && uiDirMode >=11 )? (iWidth + 1) : (2*iWidth+1);
+        memcpy(refAbv + iWidth - 1, ptrSrc, (limit) * sizeof(Pel));
+        for (k = 0; k < limit; k++)
+        {
+               refLft[k + iWidth - 1] = ptrSrc[k * sw];
+        }
+
+        primitives.getIPredAng(g_bitDepthC, (pixel*)pDst, uiStride, iWidth, uiDirMode, false, (pixel*)refLft + iWidth -1, (pixel*)refAbv + iWidth -1);
+  
     }
 }
 
