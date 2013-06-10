@@ -3085,6 +3085,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
+        m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
         Bool bTestNormalMC = true;
 
@@ -3785,7 +3786,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     ref.lumaStride = refRecon->getStride();
     m_me.setReference(&ref);
     m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
-    m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
     CYCLE_COUNTER_START(ME);
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
