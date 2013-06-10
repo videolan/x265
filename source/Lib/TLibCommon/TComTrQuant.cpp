@@ -688,8 +688,7 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](coeff, tmp, shift_1st, iWidth);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](tmp, block, shift_2nd, iHeight);
+        x265::primitives.dct[x265::IDCT_8x8](coeff, block);
     }
     else if (iWidth == 16 && iHeight == 16)
     {

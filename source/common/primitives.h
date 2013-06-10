@@ -139,6 +139,7 @@ enum Dcts
     DCT_4x4,
    IDCT_4x4,
     DCT_8x8,
+   IDCT_8x8,
     DCT_16x16,
     DCT_32x32,
     NUM_DCTS
