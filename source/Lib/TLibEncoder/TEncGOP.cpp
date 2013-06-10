@@ -1298,19 +1298,19 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         xCalculateAddPSNR(pcPic, pcPic->getPicYuvRec(), accessUnit, dEncTime);
 
-        if (digestStr)
+        if (digestStr && m_pcCfg->getLogLevel() >= X265_LOG_DEBUG)
         {
             if (m_pcCfg->getDecodedPictureHashSEIEnabled() == 1)
             {
-                printf(" [MD5:%s]", digestStr);
+                fprintf(stderr, " [MD5:%s]", digestStr);
             }
             else if (m_pcCfg->getDecodedPictureHashSEIEnabled() == 2)
             {
-                printf(" [CRC:%s]", digestStr);
+                fprintf(stderr, " [CRC:%s]", digestStr);
             }
             else if (m_pcCfg->getDecodedPictureHashSEIEnabled() == 3)
             {
-                printf(" [Checksum:%s]", digestStr);
+                fprintf(stderr, " [Checksum:%s]", digestStr);
             }
         }
         if (m_pcCfg->getUseRateCtrl())
@@ -1515,8 +1515,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         if (m_pcCfg->getLogLevel() >= X265_LOG_DEBUG)
         {
             /* logging: insert a newline at end of picture period */
-            printf("\n");
-            fflush(stdout);
+            fprintf(stderr, "\n");
+            fflush(stderr);
         }
         delete[] pcSubstreamsOut;
     }
@@ -1558,7 +1558,7 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
 
     Double rvm = xCalculateRVM();
     if (rvm != 0.0)
-        printf("\nRVM: %.3lf\n", rvm);
+        fprintf(stderr, "\nRVM: %.3lf\n", rvm);
 }
 
 Void TEncGOP::preLoopFilterPicAll(TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits)
