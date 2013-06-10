@@ -344,6 +344,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
 
+    /*The term cost is used here to only mean satd/sad values for that particular search. The costs used in 
+    ME search do not include any lambda weighting or bits consideration. */
+
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
     int bprecost = qpelSad(pmv); // ignore MVD cost for clipped MVP
