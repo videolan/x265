@@ -167,9 +167,6 @@ private:
     // for distortion
     FpDistFunc              m_afpDistortFunc[64]; // [eDFunc]
 
-    Double                  m_cbDistortionWeight;
-    Double                  m_crDistortionWeight;
-
     Double                  m_sqrtLambda;
     UInt                    m_uiLambdaMotionSSE;
     Double                  m_dFrameLambda;
@@ -181,6 +178,9 @@ public:
     Int                     m_iCostScale;
     Double                  m_dLambda;
     UInt                    m_uiLambdaMotionSAD;
+
+    Double                  m_cbDistortionWeight;
+    Double                  m_crDistortionWeight;
 
     TComRdCost();
     virtual ~TComRdCost();
@@ -208,7 +208,6 @@ public:
 
     // Distortion Functions
     Void    init();
-    FpDistFunc * getSadFunctions()             { return m_afpDistortFunc; }
 
     Void    setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam);
     Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
@@ -245,14 +244,6 @@ private:
 
     static UInt xCalcHADs4x4(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
     static UInt xCalcHADs8x8(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
-
-public:
-
-    UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Pel* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA);
-#if !HIGH_BIT_DEPTH
-    UInt   getDistPart(Int bitDepth, Pel* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA);
-    UInt   getDistPart(Int bitDepth, Short* piCur, Int iCurStride,  Short* piOrg, Int iOrgStride, UInt uiBlkWidth, UInt uiBlkHeight, TextType eText = TEXT_LUMA);
-#endif
 }; // END CLASS DEFINITION TComRdCost
 
 //! \}

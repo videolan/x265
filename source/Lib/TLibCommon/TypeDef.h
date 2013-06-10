@@ -75,9 +75,6 @@
 #define MAX_NUM_SPS                               16
 #define MAX_NUM_PPS                               64
 
-#define RDOQ_CHROMA_LAMBDA                        1 ///< F386: weighting of chroma for RDOQ
-#define SAO_CHROMA_LAMBDA                         1 ///< F386: weighting of chroma for SAO
-
 #define MIN_SCAN_POS_CROSS                        4
 
 #define MLS_GRP_NUM                              64 ///< G644 : Max number of coefficient groups, max(16, 64)
@@ -180,6 +177,7 @@ typedef       Short           Pel;        ///< 16-bit pixel type
 #else
 typedef       UChar           Pel;        ///< 8-bit pixel type
 #endif
+// TODO: I think we may reduce TCoeff to 16-bits when !HIGH_BIT_DEPTH
 typedef       Int             TCoeff;     ///< transform coefficient
 
 /// parameters for adaptive loop filter

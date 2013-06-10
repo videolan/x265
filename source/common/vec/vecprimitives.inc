@@ -25,12 +25,17 @@
  * one will define ARCH to a different value. */
 
 #include "primitives.h"
+#include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
+#include "utils.h"
+
+#include <assert.h>
 #include <string.h>
 #include <smmintrin.h>
 #include <algorithm>
-#include "utils.h"
 
 using namespace x265;
+
+extern char g_aucConvertToBit[];
 
 namespace {
 #include "macroblock.inc"
@@ -40,9 +45,9 @@ namespace {
 namespace x265 {
 // private x265 namespace
 
-void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);
-void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&);
+void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);    // pixel-ARCH.cpp
+void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);    // intra-ARCH.cpp
+void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&); // ipfilter-ARCH.cpp
 
 /* initialize function table with functions compiled for this vector
  * architecture.  This is the only symbol exported from each file. */

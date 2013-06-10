@@ -72,6 +72,7 @@ static struct option long_options[] =
 
 #if CU_STAT_LOGFILE
 FILE* fp = NULL;
+FILE * fp1 = NULL;
 #endif
 
 /* Ctrl-C handler */
@@ -342,8 +343,6 @@ struct CLIOptions
         if (argc <= 1 || help)
             do_help();
 
-        x265_setup_primitives(param, cpuid);
-
         if (inputfn == NULL || bitstreamfn == NULL)
         {
             log(X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
@@ -383,8 +382,12 @@ struct CLIOptions
 
         this->framesToBeEncoded = this->framesToBeEncoded ? min(this->framesToBeEncoded, numRemainingFrames) : numRemainingFrames;
 
-        log(X265_LOG_INFO, "Input File                   : %s (%u - %d of %d total frames)\n", inputfn,
-            this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+        if (this->cli_log_level >= X265_LOG_INFO)
+        {
+            fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
+                param->iSourceWidth, param->iSourceHeight, param->iFrameRate,
+                this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+        }
 
         if (reconfn)
         {
@@ -412,6 +415,8 @@ struct CLIOptions
             return true;
         }
 
+        x265_setup_primitives(param, cpuid);
+
         x265_set_globals(param, inputBitDepth);
 
         return false;
@@ -427,6 +432,7 @@ int main(int argc, char **argv)
 
 #if CU_STAT_LOGFILE
     fp = fopen("Log_CU_stats.txt", "w");
+    fp1 = fopen("LOG_CU_COST.txt","w");
 #endif
     x265_param_t param;
     CLIOptions   cliopt;
@@ -498,8 +504,8 @@ int main(int argc, char **argv)
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.iFrameRate;
-    printf("\nencoded %d frames, %3.2f fps, %3.2f kb/s\n", 
-        outFrameCount, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
+    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s\n", 
+        outFrameCount, elapsed, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
 
     x265_cleanup(); /* Free library singletons */
 
@@ -510,6 +516,7 @@ int main(int argc, char **argv)
 #endif
 #if CU_STAT_LOGFILE
     fclose(fp);
+    fclose(fp1);
 #endif
     return 0;
 }

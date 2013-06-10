@@ -1647,21 +1647,12 @@ Void TEncSampleAdaptiveOffset::resetStats()
     }
 }
 
-#if SAO_CHROMA_LAMBDA
-
 /** Sample adaptive offset process
  * \param pcSaoParam
  * \param dLambdaLuma
  * \param dLambdaChroma
  */
 Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambdaLuma, Double dLambdaChroma, Int depth)
-#else
-
-/** Sample adaptive offset process
- * \param dLambda
- */
-Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambda)
-#endif
 {
     if (m_bUseNIF)
     {

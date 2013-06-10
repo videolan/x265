@@ -1,0 +1,159 @@
+This document is intended to be read in conjunction with
+source/encoder/slicetype.cpp It explains what the key functions are,
+what they do, and how it all fits withing the larger encoder.
+
+The lookahead is a pre-encode stage that processes the input pictures
+prior to the main encode.
+
+It has one primary output, and several ancillary outputs which improve
+the compression efficiency of the main encode.  The primary output is
+the slice type to use for each input picture for the main encode, and
+the frames which it uses for motion reference.
+
+Primary outputs:
+List of decided frames, in encode order. Encode order implies references
+
+Ancillary outputs:
+1. low resolution motion candidates
+2. frame SATD cost estimate
+3. per-row SATD cost estimates, for fine rate control
+4. per-macroblock QP weights, based on motion reference mb-tree analysis
+5. Weight analysis for P frames
+
+Data Structures:
+1. x264_frame_t    ~ roughly analogous to TComPic.  Holds all the data for each picture
+2. x264_me_t       ~ roughly analogous to MotionSearch
+3. x264_analysis_t ~ TComDataCU (lookahaead uses fixed QP and lambda)
+3. h->lookahead - lookahead management data
+4. h->lookahead->next - queue of input pictures in POC (display) order
+
+
+As the user provides input pictures to the encoder, they are first
+analyzed for adaptive quantization (analyzing the variance in each MB),
+then they are appended to the lookahead queue.  A lowres (downscaled in
+X and Y directions) copy of the pictures is generated and
+border-extended.  The lookahead queue has a fixed size (configurable).
+When the queue is full x264_slicetype_decide() is called.  
+
+== x264_slicetype_decide() ==
+
+This function is the highest level lookahead function.  In each
+invocation it makes slicetype decisions (sets frame->i_type) for a
+mini-GOP of frames (usually 2 to 3), reorders those frames into encode
+order, then exits.  When enough frames arrive from the user app to fill
+the queue again, the process repeats, establishing a cadence.
+
+It performs low-res analysis using the downscaled frames.  So instead of
+16x16 macroblocks it operates on 8x8 blocks.  It does 8x8 intra analysis,
+highly optimized in assembly code, and it does 8x8 motion searches.  No
+partitions are considered.
+
+In order to decide the optimal slicetype and references for each frame,
+it first does a computationally cheap pre-encode of the frame as each
+slice type with each possible set of reference frames; then it uses a
+path-finding algorithm (vitterbi) to select the cheapest encode path.
+
+For faster speed presets, it has a mode that uses very few B-frames but
+requires very little work (--b-adapt 1 or 2).
+
+A key input parameter for lookahead is the maximum number of B frames to
+allow in a row.  This is also the maximum distance in time that a motion
+reference may go.  The lookahead load increases doubly with this value,
+as it must do motion searches this temporal distance in both directions.
+
+
+== x264_slicetype_frame_cost() ==
+
+x264_slicetype_frame_cost() is the workhorse function. Its job is to
+estimate the cost of a single frame as a particular slice type and with
+a given set of reference frames (L0 and L1).  The motion search results
+for each direction at each distance is cached in the frame itself so
+each motion search only has to be performed once.  Intra estimates are
+also cached.
+
+Key variables:
+h  - x264's main data structure.  holds everything
+frames - the current contents of the lookahead queue
+b  - index into lookahead queue for frame being estimated
+p0 - index into lookahead queue of L0 ref frame
+p1 - index into lookahead queue of L1 ref frame
+
+p0 >= b >= p1  = L0 is temporally earlier, L1 is a later frame
+if (p0 == b == p1) - indicates I slice
+if (p0 <  b == p1) - indicates P slice
+if (p0 <  b <  p1) - indicates B slice
+
+h->param.analyse.i_subpel_refine - x264 performance tuning variable
+
+x264_frame_t keeps large amounts of cached lookahead data indexed by the
+search distances.  It usually indexed by subtracting the various list
+indices.  example:
+
+    frames[b]->i_cost_est[b-p0][p1-b]
+
+    This example indexes the cost estimate for this frame using p0 and
+    p1 distances from b.  i_cost_est[0][0] is the I slice cost estimate
+    (all intra).  When p1 == b, then the cost estimages are for P slices
+    (no L1 motion search).  The structures are allocated based on the
+    maximally allowed b-frame count (16).
+
+i_cost_est[][]    - integer frame SATD cost estimate, per possible slice type
+i_cost_est_aq[][] - same as i_cost_est, except adaptive quant applied to mb costs
+i_row_satds[][]   - per row SATD cost estimates, per possible slice type
+i_intra_mbs[]     - number of intra estimated macroblocks, for P estimates only
+lowres_costs[][]  - per-MB SATD cost and list type, per possible slice type
+lowres_mvs[][][]  - per-search direction and distance motion vector
+lowres_mv_cost[][][] - per-search direction and distance inter cost
+i_inv_qscale_factor[] - per-MB adaptive quantization scale factor (input)
+
+A few items are cached per motion search direction and temporal
+distance.  These are the per-macroblock motion vectors and
+per-macroblock inter SATD cost.  These are indexed slightly differently.
+For example:
+
+    frames[b]->lowres_mvs[1][p1-b-1][0][0]
+
+    Let's break that down:
+    lowres_mvs  = lowres motion vector
+    [1]         = direction 1 (list 1, forward search)
+    [p1-b-1]    = p1-b is the search distance. subtract 1 because p1=b is I
+    [0][0]      = first [0] picks MB 0, second [0] picks X value
+
+The motion vectors from a search in the L0 direction would be referenced like this:
+frames[b]->lowres_mvs[0][b-p0-1][0][0]
+
+
+== x264_slicetype_mb_cost() ==
+
+This function is called by x264_slicetype_frame_cost() for each
+macroblock in reverse scan order (bottom to top, right to left).
+
+If estimating a P or I slice type, it calculates 11 intra SATD costs and
+keeps the cheapest SATD cost (doesn't bother remembering the actual
+mode, for a number of reasons).
+
+If estimating a P or B slice, it performs a motion search to the L0
+reference and remembers the final MV and SATD cost.
+
+If estimating a B slice, it performs a motion search to the L1 reference
+and remembers the MV and SATD cost, and it also tries three H.264
+bidirectional (L2) candidates.
+
+Finally, it picks between intra (0), L0 inter (1), L1 inter (2), or
+BIDIR inter (3) and stores the final SATD cost together with the type
+inside lowres_costs.  That is this line of code:
+
+fenc->lowres_costs[b-p0][p1-b][i_mb_xy] = X264_MIN( i_bcost, LOWRES_COST_MASK ) + (list_used << LOWRES_COST_SHIFT);
+
+
+== x264_weights_analyse() ==
+
+Tries to determine if a given frame should use weighting when it uses a
+L0 reference a given distance away.  It uses lookahead intra analysis
+from both frames to try to figure out whether the difference between the
+frames is uniform (lighting changes) or whether it is from motion.  If
+the difference appears to be uniform, it tries to find optimal weight
+function parameters using some simple heuristics.
+
+Some functions in this file are used in lookahead and during the main
+encode, this is one of them.

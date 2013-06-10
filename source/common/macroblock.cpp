@@ -420,6 +420,26 @@ void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
+void CDECL xDCT4_C(short *pSrc, short *pDst)
+{
+    const int shift_1st = 1;
+    const int shift_2nd = 8;
+    ALIGN_VAR_32(Short, tmp[4 * 4]);
+
+    partialButterfly4(pSrc, tmp, shift_1st, 4);
+    partialButterfly4(tmp, pDst, shift_2nd, 4);
+}
+
+void CDECL xDCT8_C(short *pSrc, short *pDst)
+{
+    const int shift_1st = 2;
+    const int shift_2nd = 9;
+    ALIGN_VAR_32(Short, tmp[64 * 64]);
+
+    partialButterfly8(pSrc, tmp, shift_1st, 8);
+    partialButterfly8(tmp, pDst, shift_2nd, 8);
+}
+
 void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
@@ -497,6 +517,8 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+    p.dct[DCT_4x4] = xDCT4_C;
+    p.dct[DCT_8x8] = xDCT8_C;
 
     p.deQuant = xDeQuant;
 }

@@ -232,6 +232,9 @@ cglobal pixel_ssd_%1x%2, 4,7,6
 %endif
     HADDD   m0, m5
     movd   eax, xm0
+%if (cpuflags == cpuflags_mmx)
+    emms
+%endif
     RET
 %endmacro
 
@@ -462,6 +465,9 @@ ALIGN 16
 %else
     HADDD   m0, m1
     movd   eax, m0
+%endif
+%if (cpuflags == cpuflags_mmx)
+    emms
 %endif
     RET
 %endif

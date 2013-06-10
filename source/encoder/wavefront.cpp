@@ -69,6 +69,50 @@ void CTURow::create(TEncTop* top)
     m_cCuEncoder.set_pcRdCost(&m_cRdCost);
 }
 
+void CTURow::processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferSBac, bool bSaveSBac)
+{
+    TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)m_pppcRDSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
+    pcRDSbacCoder->setBinCountingEnableFlag(false);
+    pcRDSbacCoder->setBinsCoded(0);
+
+    if (pcBufferSBac)
+    {
+        // Load SBAC coder context from previous row.
+        m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(pcBufferSBac);
+    }
+
+    m_cEntropyCoder.setEntropyCoder(&m_cRDGoOnSbacCoder, pcSlice);
+    m_cEntropyCoder.setBitstream(&m_cBitCounter);
+    ((TEncBinCABAC*)m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
+    m_cCuEncoder.set_pcRDGoOnSbacCoder(&m_cRDGoOnSbacCoder);
+
+    {
+        PPAScopeEvent(Thread_compressCU);
+        m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
+    }
+
+    // restore entropy coder to an initial state
+    m_cEntropyCoder.setEntropyCoder(m_pppcRDSbacCoders[0][CI_CURR_BEST], pcSlice);
+    m_cEntropyCoder.setBitstream(&m_cBitCounter);
+    m_cCuEncoder.setBitCounter(&m_cBitCounter);
+    pcRDSbacCoder->setBinCountingEnableFlag(true);
+    m_cBitCounter.resetBits();
+    pcRDSbacCoder->setBinsCoded(0);
+
+    {
+        PPAScopeEvent(Thread_encodeCU);
+        m_cCuEncoder.encodeCU(pcCU);  // Count bits
+    }
+
+    pcRDSbacCoder->setBinCountingEnableFlag(false);
+    
+    if (bSaveSBac)
+    {
+        // Save CABAC state for next row
+        m_cBufferSbacCoder.loadContexts(m_pppcRDSbacCoders[0][CI_CURR_BEST]);
+    }
+}
+
 void CTURow::destroy()
 {
     for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
@@ -176,49 +220,11 @@ void EncodeFrame::ProcessRow(int irow)
         TComDataCU* pcCU = m_pic->getCU(uiCUAddr);
         pcCU->initCU(m_pic, uiCUAddr);
 
-        TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
-        pcRDSbacCoder->setBinCountingEnableFlag(false);
-        pcRDSbacCoder->setBinsCoded(0);
-
         codeRow.m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.resetEntropy();
 
-        if (m_enableWpp && uiCol == 0 && irow > 0)
-        {
-            // Load SBAC coder context from previous row.
-            codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(&m_rows[irow - 1].m_cBufferSbacCoder);
-        }
-
-        codeRow.m_cEntropyCoder.setEntropyCoder(&codeRow.m_cRDGoOnSbacCoder, m_pcSlice);
-        codeRow.m_cEntropyCoder.setBitstream(&codeRow.m_cBitCounter);
-        ((TEncBinCABAC*)codeRow.m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
-        codeRow.m_cCuEncoder.set_pcRDGoOnSbacCoder(&codeRow.m_cRDGoOnSbacCoder);
-
-        {
-            PPAScopeEvent(Thread_compressCU);
-            codeRow.m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
-        }
-
-        // restore entropy coder to an initial state
-        codeRow.m_cEntropyCoder.setEntropyCoder(codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST], m_pcSlice);
-        codeRow.m_cEntropyCoder.setBitstream(&codeRow.m_cBitCounter);
-        codeRow.m_cCuEncoder.setBitCounter(&codeRow.m_cBitCounter);
-        pcRDSbacCoder->setBinCountingEnableFlag(true);
-        codeRow.m_cBitCounter.resetBits();
-        pcRDSbacCoder->setBinsCoded(0);
-
-        {
-            PPAScopeEvent(Thread_encodeCU);
-            codeRow.m_cCuEncoder.encodeCU(pcCU);  // Count bits
-        }
-
-        pcRDSbacCoder->setBinCountingEnableFlag(false);
-
-        if (m_enableWpp && uiCol == 1)
-        {
-            // Save CABAC state for next row
-            curRow.m_cBufferSbacCoder.loadContexts(codeRow.m_pppcRDSbacCoders[0][CI_CURR_BEST]);
-        }
+        TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && irow > 0) ? &m_rows[irow - 1].m_cBufferSbacCoder : NULL;
+        codeRow.processCU(pcCU, m_pcSlice, pcBufSBac, m_enableWpp && uiCol == 1);
 
         // FIXME: If needed, these counters may be added atomically to slice or this (needed for rate control?)
         //m_uiPicTotalBits += pcCU->getTotalBits();

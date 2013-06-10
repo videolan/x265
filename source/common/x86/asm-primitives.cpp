@@ -83,6 +83,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 #if !HIGH_BIT_DEPTH
     if (cpuid >= 1)
     {
+#if !X86_64
+        /* x64 CPUs must have at least SSE4, so we avoid MMX altogether in order
+         * to prevent all calls to EMMS. */
+        INIT8_NAME( sse_pp, ssd, _mmx );
         INIT8( sad, _mmx2 );
         INIT7( sad_x3, _mmx2 );
         INIT7( sad_x4, _mmx2 );
@@ -151,6 +155,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_mmx2>;
+#endif
     }
     if (cpuid >= 2)
     {
@@ -158,6 +163,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         INIT2( sad_x3, _sse2 );
         INIT2( sad_x4, _sse2 );
         INIT6( satd, _sse2 );
+        INIT5_NAME( sse_pp, ssd, _sse2 );
         p.satd[PARTITION_4x16] = x265_pixel_satd_4x16_sse2;
 
         p.sa8d_8x8 = x265_pixel_sa8d_8x8_sse2;
@@ -252,6 +258,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid == 7)
     {
+        INIT5_NAME( sse_pp, ssd, _avx );
         p.sa8d_8x8 = x265_pixel_sa8d_8x8_avx;
         p.sa8d_16x16 = x265_pixel_sa8d_16x16_avx;
         p.sa8d_32x32 = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
@@ -273,6 +280,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sa8d_64x64 = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
 
         INIT7( satd, _xop );
+        INIT5_NAME( sse_pp, ssd, _xop );
         p.satd[PARTITION_4x12] = cmp<4, 12, 4, 4, x265_pixel_satd_4x4_xop>;
         p.satd[PARTITION_4x24] = cmp<4, 24, 4, 8, x265_pixel_satd_4x8_xop>;
 
@@ -335,6 +343,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         INIT2( sad_x3, _avx2 );
         INIT2( sad_x4, _avx2 );
         INIT4( satd, _avx2 );
+        INIT2_NAME( sse_pp, ssd, _avx2 );
         p.sa8d_8x8 = x265_pixel_sa8d_8x8_avx2;
     }
 #endif
