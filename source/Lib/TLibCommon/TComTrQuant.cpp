@@ -676,8 +676,7 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     {
         if (uiMode != REG_DCT)
         {
-            x265::primitives.inversedst(coeff, tmp, shift_1st);
-            x265::primitives.inversedst(tmp, block, shift_2nd);
+            x265::primitives.dct[x265::IDST_4x4](coeff, block);
         }
         else
         {

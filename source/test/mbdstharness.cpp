@@ -44,6 +44,7 @@ const char *ButterflyConf_names[] =
 const char *DctConf_names[] =
 {
     "Dst4x4\t",
+   "IDst4x4\t",
     "Dct4x4\t",
     "Dct8x8\t",
     "Dct16x16\t",
@@ -475,6 +476,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_dct8_primitive(ref.dct[DCT_8x8], opt.dct[DCT_8x8]))
         {
             printf("\n%s failed\n", DctConf_names[DCT_8x8]);
+            return false;
+        }
+    }
+
+    if (opt.dct[IDST_4x4])
+    {
+        if (!check_dct4_primitive(ref.dct[IDST_4x4], opt.dct[IDST_4x4]))
+        {
+            printf("\n%s failed\n", DctConf_names[IDST_4x4]);
             return false;
         }
     }
