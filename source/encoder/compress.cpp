@@ -58,11 +58,12 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool 
         m_temporalSAD = (Int)SAD;
     }
     
-#if FAST_MODE_DECISION
-    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+    /* This needs to be replaced by a combination of: bit estimate for headers/partition info and MV bits from motion estimation */
+    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
+    
+    rpcTempCU->getTotalDistortion()= primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-    rpcTempCU->getTotalDistortion() = SATD;
-#endif
+    
     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
     
     xCheckDQP(rpcTempCU);    
@@ -109,8 +110,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
 
         rpcTempCU->initEstData(uiDepth, iQP);
                 
-        xComputeCostInter(rpcTempCU, SIZE_2Nx2N);
-        m_InterCU_2Nx2N[uiDepth]->copyCU(rpcTempCU);
+        xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
+        //m_InterCU_2Nx2N[uiDepth]->copyCU(rpcTempCU);
         rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
         
         // SKIP
