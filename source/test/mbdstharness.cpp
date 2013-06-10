@@ -54,6 +54,7 @@ const DctConf_t DctConf_infos[] =
    { "Dct8x8\t",    8},
    {"IDct8x8\t",    8},
    { "Dct16x16\t", 16},
+   {"IDct16x16",   16},
    { "Dct32x32\t", 32},
 };
 
@@ -84,7 +85,7 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
-    for (int i = 0; i < 64 * 100; i++)
+    for (int i = 0; i < 0x1e00; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
@@ -316,12 +317,24 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 
     for (int i = 0; i <= 100; i++)
     {
-        ref(mbufdct + j, mbuf2);
-        opt(mbufdct + j, mbuf3);
+        if (width >= 16)
+        {
+            // IDCT16x16 and IDCT32x32 may broken input buffer, so copy one
+            ALIGN_VAR_32(short, tmp[32*32]);
+            memcpy(tmp, mbufdct + j, sizeof(short)* 32 *32);
+            ref(mbufdct + j, mbuf2);
+            opt(tmp, mbuf3);
+        }
+        else
+        {
+            ref(mbufdct + j, mbuf2);
+            opt(mbufdct + j, mbuf3);
+        }
 
         if (memcmp(mbuf2, mbuf3, mem_cmp_size))
         {
             // redo for debug
+            ref(mbufdct + j, mbuf2);
             opt(mbufdct + j, mbuf3);
             return false;
         }
