@@ -344,8 +344,12 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
 
-    /*The term cost is used here to only mean satd/sad values for that particular search. The costs used in 
-    ME search do not include any lambda weighting or bits consideration. */
+    /* The term cost used here means satd/sad values for that particular search.
+     * The costs used in ME integer search only includes the SAD cost of motion
+     * residual and sqrtLambda times MVD bits.  The subpel refine steps use SATD
+     * cost of residual and sqrtLambda * MVD bits.  Mode decision will be based
+     * on video distortion cost (SSE/PSNR) plus lambda times all signaling bits
+     * (mode + MVD bits). */
 
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
