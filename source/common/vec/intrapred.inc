@@ -4178,7 +4178,6 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
         {
             __m128i row11L, row12L, row11H, row12H, res1, res2;
             __m128i v_deltaFract, v_deltaPos, thirty2, thirty1, v_ipAngle;
-//           __m128i tmp;
             __m128i R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
 
             Pel * original_pDst = pDst;
@@ -4365,7 +4364,6 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 return;
             }
 
-//            MB16;
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0)
             PREDANG_CALCROW_HOR(7 + 0, R8)
             MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4439,8 +4437,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             __m128i row11L, row12L, row11H, row12H;
             __m128i v_deltaFract, v_deltaPos, thirty2, thirty1, v_ipAngle;
             __m128i row11, row12, row13, row14, row21, row22, row23, row24;
-//           __m128i tmp;
-            __m128i /*tmp1, tmp2,*/ res1, res2;
+            __m128i res1, res2;
 
             v_deltaPos = _mm_setzero_si128(); //v_deltaPos = 0;
             v_ipAngle = _mm_set1_epi16(intraPredAngle);
