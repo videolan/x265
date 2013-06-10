@@ -300,7 +300,7 @@ bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
-bool MBDstHarness::check_dct4_primitive(dct_t ref, dct_t opt)
+bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt)
 {
     int j = 0;
     int mem_cmp_size = 32; // 2*4*4 -> sizeof(short)*number of elements*number of lines
@@ -309,27 +309,6 @@ bool MBDstHarness::check_dct4_primitive(dct_t ref, dct_t opt)
     {
         ref(mbuf1 + j, mbuf3);
         opt(mbuf1 + j, mbuf2);
-
-        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
-            return false;
-
-        j += 16;
-        memset(mbuf2, 0xCD, mem_cmp_size);
-        memset(mbuf3, 0xCD, mem_cmp_size);
-    }
-
-    return true;
-}
-
-bool MBDstHarness::check_dct8_primitive(dct_t ref, dct_t opt)
-{
-    int j = 0;
-    int mem_cmp_size = 128; // 2*8*8 -> sizeof(short)*number of elements*number of lines
-
-    for (int i = 0; i <= 100; i++)
-    {
-        opt(mbuf1 + j, mbuf2);
-        ref(mbuf1 + j, mbuf3);
 
         if (memcmp(mbuf2, mbuf3, mem_cmp_size))
             return false;
@@ -462,30 +441,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.dct[DCT_4x4])
+    for( int i=0; i<NUM_DCTS; i++ )
     {
-        if (!check_dct4_primitive(ref.dct[DCT_4x4], opt.dct[DCT_4x4]))
+        if (opt.dct[i])
         {
-            printf("\n%s failed\n", DctConf_names[DCT_4x4]);
-            return false;
-        }
-    }
-
-    if (opt.dct[DCT_8x8])
-    {
-        if (!check_dct8_primitive(ref.dct[DCT_8x8], opt.dct[DCT_8x8]))
-        {
-            printf("\n%s failed\n", DctConf_names[DCT_8x8]);
-            return false;
-        }
-    }
-
-    if (opt.dct[IDST_4x4])
-    {
-        if (!check_dct4_primitive(ref.dct[IDST_4x4], opt.dct[IDST_4x4]))
-        {
-            printf("\n%s failed\n", DctConf_names[IDST_4x4]);
-            return false;
+            if (!check_dct_primitive(ref.dct[i], opt.dct[i]))
+            {
+                printf("\n%s failed\n", DctConf_names[i]);
+                return false;
+            }
         }
     }
 
