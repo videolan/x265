@@ -75,6 +75,7 @@ protected:
     MotionReference *ref;   // current reference frame
 
     pixelcmp sad;
+    pixelcmp bufsad;
     pixelcmp satd;
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
@@ -117,15 +118,7 @@ public:
 
     /* Methods called for searches */
 
-#if SUBSAMPLE_SAD
-    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample; }
-
-#else
-    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
-
-#endif
-
-    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    int bufSAD(pixel *fref, intptr_t stride)  { return bufsad(fenc, FENC_STRIDE, fref, stride); }
 
     void setReference(MotionReference* tref)  { ref = tref; }
 

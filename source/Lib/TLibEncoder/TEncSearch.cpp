@@ -3708,6 +3708,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
 
     // calc distortion
     uiCost = m_me.bufSAD((pixel*)pcTemplateCand->getLumaAddr(uiPartAddr), pcTemplateCand->getStride());
+    x265_emms();
     uiCost =  (UInt)((Double)floor((Double)uiCost + (Double)((Int)(m_auiMVPIdxCost[iMVPIdx][iMVPNum] * (Double)m_pcRdCost->m_uiLambdaMotionSAD + .5) >> 16)));
     return uiCost;
 }

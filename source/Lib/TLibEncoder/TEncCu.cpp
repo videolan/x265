@@ -1726,11 +1726,12 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
-        /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
+        /* TODO: this needs to be tested with RC enabled, currently RC enable x265 is not working */
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
         UInt SAD = primitives.sad[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
+        x265_emms();
     }
 
 #if !FAST_MODE_DECISION
@@ -1766,12 +1767,13 @@ Void TEncCu::xCalcRDCostInter(TComDataCU*& rpcTempCU, UInt PartitionIndex, PartS
 
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
-        /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
+        /* TODO: this needs to be tested with RC enabled, currently RC enable x265 is not working */
 
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
         UInt SAD = primitives.sad[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
+        x265_emms();
     }
 
     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_RecoYuvNxN[PartitionIndex][uhDepth], false);
