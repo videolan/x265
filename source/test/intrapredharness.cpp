@@ -134,7 +134,7 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     int pmode;
     Bool bFilter;
 
-    for (int width = 4; width <= 16; width <<= 1)
+    for (int width = 4; width <= 32; width <<= 1)
     {
         for (int i = 0; i <= 100; i++)
         {
@@ -156,7 +156,7 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
                 {
                     if (memcmp(pixel_out_Vec + k * FENC_STRIDE, pixel_out_C + k * FENC_STRIDE, width))
                     {
-                        printf("\nFailed for mode %d \t", p);
+                        printf("\nFailed for width %d mode %d bfilter %d row %d \t",width, p, bFilter, k);
                         return false;
                     }
                 }
@@ -227,7 +227,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     if (opt.getIPredAng)
     {
-        for (int ii = 4; ii <= 16; ii <<= 1)
+        for (int ii = 4; ii <= 32; ii <<= 1)
         {
             for (int p = 2; p <= 34; p += 1)
             {
