@@ -20,7 +20,9 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
+
 #include "TLibEncoder/TEncCu.h"
+#include <math.h>
 
 #if _MSC_VER
 #pragma warning (disable: 4244)
