@@ -3033,6 +3033,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
+        m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
         Bool bTestNormalMC = true;
 
@@ -3679,6 +3680,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
 
     // calc distortion
     uiCost = m_me.bufSAD((pixel*)pcTemplateCand->getLumaAddr(uiPartAddr), pcTemplateCand->getStride());
+    x265_emms();
     uiCost =  (UInt)((Double)floor((Double)uiCost + (Double)((Int)(m_auiMVPIdxCost[iMVPIdx][iMVPNum] * (Double)m_pcRdCost->m_uiLambdaMotionSAD + .5) >> 16)));
     return uiCost;
 }
@@ -3747,7 +3749,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
         m_me.setReference(refRecon->getMotionReference(0));
         m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
-        m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
         int satdCost = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
 
