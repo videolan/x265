@@ -640,12 +640,12 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
         }
         else
         {
-            x265::primitives.dct[x265::DCT_4x4](block, coeff);
+            x265::primitives.dct[x265::DCT_4x4](block, coeff, iWidth);
         }
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-        x265::primitives.dct[x265::DCT_8x8](block, coeff);
+        x265::primitives.dct[x265::DCT_8x8](block, coeff, iWidth);
     }
     else if (iWidth == 16 && iHeight == 16)
     {
@@ -1154,22 +1154,16 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, block[64 * 64]);
     ALIGN_VAR_32(Short, coeff[64 * 64]);
-    Int j;
 
     x265::primitives.cvt32to16(plCoef, coeff, iWidth * iHeight);
 
-    //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
     // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
     assert( bitDepth == 8 );
-    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, block);
 
-    for (j = 0; j < iHeight; j++)
-    {
-        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short) * iWidth);
-    }
+    //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, pResidual, uiStride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping

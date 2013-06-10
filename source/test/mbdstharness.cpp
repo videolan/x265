@@ -323,20 +323,20 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
             // IDCT16x16 and IDCT32x32 may broken input buffer, so copy one
             ALIGN_VAR_32(short, tmp[32*32]);
             memcpy(tmp, mbufdct + j, sizeof(short)* 32 *32);
-            ref(mbufdct + j, mbuf2);
-            opt(tmp, mbuf3);
+            ref(mbufdct + j, mbuf2, width);
+            opt(tmp, mbuf3, width);
         }
         else
         {
-            ref(mbufdct + j, mbuf2);
-            opt(mbufdct + j, mbuf3);
+            ref(mbufdct + j, mbuf2, width);
+            opt(mbufdct + j, mbuf3, width);
         }
 
         if (memcmp(mbuf2, mbuf3, mem_cmp_size))
         {
             // redo for debug
-            ref(mbufdct + j, mbuf2);
-            opt(mbufdct + j, mbuf3);
+            ref(mbufdct + j, mbuf2, width);
+            opt(mbufdct + j, mbuf3, width);
             return false;
         }
 
@@ -518,7 +518,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.dct[value])
         {
             printf("%s\t\t", DctConf_infos[value].name);
-            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2);
+            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2, DctConf_infos[value].width);
         }
     }
 

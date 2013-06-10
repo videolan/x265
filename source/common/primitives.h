@@ -132,6 +132,7 @@ enum Butterflies
     NUM_BUTTERFLIES
 };
 
+// NOTE: All of DCT functions don't support Dest Stride
 enum Dcts
 {
     DST_4x4,
@@ -199,7 +200,7 @@ typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
-typedef void (CDECL * dct_t)(short *pSrc, short *pDst);
+typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
