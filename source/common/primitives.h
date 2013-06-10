@@ -143,6 +143,7 @@ enum Dcts
     DCT_16x16,
    IDCT_16x16,
     DCT_32x32,
+   IDCT_32x32,
     NUM_DCTS
 };
 

@@ -56,6 +56,7 @@ const DctConf_t DctConf_infos[] =
    { "Dct16x16\t", 16},
    {"IDct16x16",   16},
    { "Dct32x32\t", 32},
+   {"IDct32x32",   32},
 };
 
 MBDstHarness::MBDstHarness()

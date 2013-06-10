@@ -480,6 +480,16 @@ void CDECL xIDCT16_C(short *pSrc, short *pDst)
     partialButterflyInverse16(tmp, pDst, shift_2nd, 16);
 }
 
+void CDECL xIDCT32_C(short *pSrc, short *pDst)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[32 * 32]);
+
+    partialButterflyInverse32(pSrc, tmp, shift_1st, 32);
+    partialButterflyInverse32(tmp, pDst, shift_2nd, 32);
+}
+
 void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
@@ -563,6 +573,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.dct[IDCT_4x4] = xIDCT4_C;
     p.dct[IDCT_8x8] = xIDCT8_C;
     p.dct[IDCT_16x16] = xIDCT16_C;
+    p.dct[IDCT_32x32] = xIDCT32_C;
 
     p.deQuant = xDeQuant;
 }

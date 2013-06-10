@@ -667,11 +667,6 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
 */
 void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, UInt uiMode)
 {
-    ALIGN_VAR_32(Short, tmp[64 * 64]);
-
-    Int shift_1st = SHIFT_INV_1ST;
-    Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
-
     // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
     assert( bitDepth == 8 );
 
@@ -696,8 +691,7 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     }
     else if (iWidth == 32 && iHeight == 32)
     {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](coeff, tmp, shift_1st, iWidth);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](tmp, block, shift_2nd, iHeight);
+        x265::primitives.dct[x265::IDCT_32x32](coeff, block);
     }
 }
 
