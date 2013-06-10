@@ -408,7 +408,11 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else
+#if FAST_MODE_DECISION
+        xCompressInterCU(m_ppcBestCU[0], m_ppcTempCU[0], 0);
+#else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
+#endif
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
