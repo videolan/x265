@@ -1873,12 +1873,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     m_ppcRecoYuvTemp[uhDepth]->clear();
     m_ppcResiYuvTemp[uhDepth]->clear();
     m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], bUseMRG);
-
-    if (!rpcTempCU->getMergeAMP())
-    {
-        return;
-    }
-
+        
     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
