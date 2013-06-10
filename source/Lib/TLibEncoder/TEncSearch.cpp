@@ -2947,19 +2947,12 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* pcCU, UInt puIdx, TComMvFi
  * \param bUseRes
  * \returns Void
  */
-Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG)
+Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, Bool bUseMRG)
 {
     m_acYuvPred[0].clear();
     m_acYuvPred[1].clear();
     m_cYuvPredTemp.clear();
     rpcPredYuv->clear();
-
-    if (!bUseRes)
-    {
-        rpcResiYuv->clear();
-    }
-
-    rpcRecoYuv->clear();
 
     TComMv        cMvSrchRngLT;
     TComMv        cMvSrchRngRB;

@@ -192,9 +192,6 @@ public:
     Void predInterSearch(TComDataCU* pcCU,
                          TComYuv*    pcOrgYuv,
                          TComYuv*&   rpcPredYuv,
-                         TShortYUV*& rpcResiYuv,
-                         TComYuv*&   rpcRecoYuv,
-                         Bool        bUseRes = false,
                          Bool        bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
