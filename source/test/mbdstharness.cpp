@@ -495,7 +495,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 {
     if (opt.inversedst)
     {
-        printf("InverseDST");
+        printf("InverseDST\t\t");
         REPORT_SPEEDUP(opt.inversedst, ref.inversedst, mbuf1, mbuf2, 16);
     }
 
