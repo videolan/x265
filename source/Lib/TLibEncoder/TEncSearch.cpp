@@ -3001,7 +3001,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
-
+#if FAST_MODE_DECISION
+    pcCU->getTotalCost() = 0;
+#endif
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
     {
         UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
@@ -3406,6 +3408,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if CU_STAT_LOGFILE
                 meCost += uiMRGCost;
 #endif
+#if FAST_MODE_DECISION
+                pcCU->getTotalCost() += uiMRGCost;
+#endif
             }
             else
             {
@@ -3419,9 +3424,17 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if CU_STAT_LOGFILE
                 meCost += uiMECost;
 #endif
+#if FAST_MODE_DECISION
+                pcCU->getTotalCost() += uiMECost;
+#endif
             }
         }
+#if FAST_MODE_DECISION
+        else
+            pcCU->getTotalCost() += uiCostTemp;
+#endif
         motionCompensation(pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx);
+        
     }
 
 #if CU_STAT_LOGFILE
@@ -4237,8 +4250,9 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
     dCostBest = CALCRDCOST(uiBitsBest, uiDistortionBest, m_pcRdCost->m_dLambda);
 
-    pcCU->getTotalBits()       = uiBitsBest;
+    
 #if !FAST_MODE_DECISION
+    pcCU->getTotalBits()       = uiBitsBest;
     pcCU->getTotalDistortion() = uiDistortionBest;
     pcCU->getTotalCost()       = dCostBest;
 #endif
