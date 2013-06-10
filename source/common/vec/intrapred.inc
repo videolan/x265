@@ -3435,7 +3435,6 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
         PREDANG_CALCROW_HOR_MODE2(R7) \
 }
 
-#if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
 void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
@@ -3595,75 +3594,142 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
         }
         else
         {
-            Vec16uc v_main;
-            v_main.load(refMain + 1);
-            v_main.store(pDst);
-            v_main.store(pDst + dstStride);
-            v_main.store(pDst + (2 * dstStride));
-            v_main.store(pDst + (3 * dstStride));
-            v_main.store(pDst + (4 * dstStride));
-            v_main.store(pDst + (5 * dstStride));
-            v_main.store(pDst + (6 * dstStride));
-            v_main.store(pDst + (7 * dstStride));
-            v_main.store(pDst + (8 * dstStride));
-            v_main.store(pDst + (9 * dstStride));
-            v_main.store(pDst + (10 * dstStride));
-            v_main.store(pDst + (11 * dstStride));
-            v_main.store(pDst + (12 * dstStride));
-            v_main.store(pDst + (13 * dstStride));
-            v_main.store(pDst + (14 * dstStride));
-            v_main.store(pDst + (15 * dstStride));
-            v_main.store(pDst + (16 * dstStride));
-            v_main.store(pDst + (17 * dstStride));
-            v_main.store(pDst + (18 * dstStride));
-            v_main.store(pDst + (19 * dstStride));
-            v_main.store(pDst + (20 * dstStride));
-            v_main.store(pDst + (21 * dstStride));
-            v_main.store(pDst + (22 * dstStride));
-            v_main.store(pDst + (23 * dstStride));
-            v_main.store(pDst + (24 * dstStride));
-            v_main.store(pDst + (25 * dstStride));
-            v_main.store(pDst + (26 * dstStride));
-            v_main.store(pDst + (27 * dstStride));
-            v_main.store(pDst + (28 * dstStride));
-            v_main.store(pDst + (29 * dstStride));
-            v_main.store(pDst + (30 * dstStride));
-            v_main.store(pDst + (31 * dstStride));
+            __m128i v_main;
+            Pel *dstOriginal = pDst;
+//            v_main.load(refMain + 1);
+            v_main = _mm_loadu_si128((__m128i const*)(refMain + 1));
+//            v_main.store(pDst);
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
 
-            v_main.load(refMain + 17);
-            pDst += 16;
-            v_main.store(pDst);
-            v_main.store(pDst + dstStride);
-            v_main.store(pDst + (2 * dstStride));
-            v_main.store(pDst + (3 * dstStride));
-            v_main.store(pDst + (4 * dstStride));
-            v_main.store(pDst + (5 * dstStride));
-            v_main.store(pDst + (6 * dstStride));
-            v_main.store(pDst + (7 * dstStride));
-            v_main.store(pDst + (8 * dstStride));
-            v_main.store(pDst + (9 * dstStride));
-            v_main.store(pDst + (10 * dstStride));
-            v_main.store(pDst + (11 * dstStride));
-            v_main.store(pDst + (12 * dstStride));
-            v_main.store(pDst + (13 * dstStride));
-            v_main.store(pDst + (14 * dstStride));
-            v_main.store(pDst + (15 * dstStride));
-            v_main.store(pDst + (16 * dstStride));
-            v_main.store(pDst + (17 * dstStride));
-            v_main.store(pDst + (18 * dstStride));
-            v_main.store(pDst + (19 * dstStride));
-            v_main.store(pDst + (20 * dstStride));
-            v_main.store(pDst + (21 * dstStride));
-            v_main.store(pDst + (22 * dstStride));
-            v_main.store(pDst + (23 * dstStride));
-            v_main.store(pDst + (24 * dstStride));
-            v_main.store(pDst + (25 * dstStride));
-            v_main.store(pDst + (26 * dstStride));
-            v_main.store(pDst + (27 * dstStride));
-            v_main.store(pDst + (28 * dstStride));
-            v_main.store(pDst + (29 * dstStride));
-            v_main.store(pDst + (30 * dstStride));
-            v_main.store(pDst + (31 * dstStride));
+            pDst = dstOriginal + 16;
+            v_main = _mm_loadu_si128((__m128i const*)(refMain + 17));
+//            v_main.store(pDst);
+
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
+            pDst += dstStride;
+            _mm_storeu_si128((__m128i*)(pDst), v_main);
         }
     }
     else if (intraPredAngle == -32)
@@ -3681,363 +3747,427 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
 
         refMain[0] = refMain0;
 
-        Vec16uc tmp;
-        tmp.load(refMain);        //-1,0,1,2
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        __m128i itmp;
 
-        tmp.load(--refMain);     //-2,-1,0,1
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);     //-8
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst + (16 * dstStride) + 16);
-        tmp.load(refMain + 16);
-        tmp.store(pDst + 16);
+        refMain--;
 
-        tmp.load(--refMain);        //-1,0,1,2
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst + (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 16));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);     //-2,-1,0,1
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);     //-8
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
 
-        tmp.load(--refMain);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain--;
+
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
 
         return;
     }
     else if (intraPredAngle == 32)
     {
-        Vec8s tmp;
+        __m128i itmp;
         refMain += 2;
 
-        tmp.load(refMain++);
-        tmp.store(pDst);
-
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain++);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        _mm_storeu_si128((__m128i*)pDst, itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
+        refMain++;
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
 
-        tmp.load(refMain++);
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
         pDst += dstStride;
-        tmp.store(pDst);
-        tmp.store(pDst - (16 * dstStride) + 16);
-        tmp.load(refMain + 15);
-        tmp.store(pDst + 16);
+
+        itmp = _mm_loadu_si128((__m128i const*)refMain);
+        refMain++;
+        _mm_storeu_si128((__m128i*)pDst, itmp);
+        _mm_storeu_si128((__m128i*)(pDst - (16 * dstStride) + 16), itmp);
+        itmp = _mm_loadu_si128((__m128i const*)(refMain + 15));
+        _mm_storeu_si128((__m128i*)(pDst + 16), itmp);
+        pDst += dstStride;
 
         return;
     }
@@ -4045,14 +4175,15 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
     {
         if (modeHor)
         {
-            Vec8s row11L, row12L, row11H, row12H, res1, res2;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec16uc tmp;
-            Vec16uc R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
-            Vec16uc tmp1, tmp2;
+            __m128i row11L, row12L, row11H, row12H, res1, res2;
+            __m128i v_deltaFract, v_deltaPos, thirty2, thirty1, v_ipAngle;
+            __m128i R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16;
+
             Pel * original_pDst = pDst;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
+            v_deltaPos = _mm_setzero_si128(); //v_deltaPos = 0;
+            v_ipAngle = _mm_set1_epi16(intraPredAngle);
+            thirty2 = _mm_set1_epi16(32);
+            thirty1 = _mm_set1_epi16(31);
             __m128i itmp, itmp1, itmp2, it1, it2, it3, i16;
 
             switch (intraPredAngle)
@@ -4060,8 +4191,8 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             case -2:
                 LOADROW(row11L, row11H, -1)
                 LOADROW(row12L, row12H,  0)
-                R16 = compress(row11L, row11H);
-//                MB16MODE2
+                R16 = _mm_packus_epi16(row11L, row11H); //R16 = compress(row11L, row11H);
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4076,14 +4207,14 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 BLND2_2(R4, R12)
                 BLND2_2(R8, R16)
 
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
                 row12L = row11L;
                 row12H = row11H;
                 LOADROW(row11L, row11H, -2)
-                R16 = compress(row11L, row11H);
+                R16 = _mm_packus_epi16(row11L, row11H);
                 pDst = original_pDst + 16;
-//                MB16MODE2
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4100,12 +4231,13 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
 
                 pDst = original_pDst + (16 * dstStride);
                 refMain += 16;
-                v_deltaPos = 0;
-                v_ipAngle = intraPredAngle;
+
+                v_deltaPos = _mm_setzero_si128();
+                v_ipAngle = _mm_set1_epi16(intraPredAngle);
                 LOADROW(row11L, row11H, -1)
                 LOADROW(row12L, row12H,  0)
-                R16 = compress(row11L, row11H);
-//                MB16MODE2
+                R16 = _mm_packus_epi16(row11L, row11H);
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4120,14 +4252,14 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 BLND2_2(R4, R12)
                 BLND2_2(R8, R16)
 
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
                 row12L = row11L;
                 row12H = row11H;
                 LOADROW(row11L, row11H, -2)
-                R16 = compress(row11L, row11H);
+                R16 = _mm_packus_epi16(row11L, row11H);
                 pDst = original_pDst + (16 * dstStride) + 16;
-//                MB16MODE2
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4146,8 +4278,8 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             case  2:
                 LOADROW(row11L, row11H, 0)
                 LOADROW(row12L, row12H, 1)
-                R16 = compress(row12L, row12H);
-//                MB16MODE2
+                R16 = _mm_packus_epi16(row12L, row12H);
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4162,14 +4294,14 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 BLND2_2(R4, R12)
                 BLND2_2(R8, R16)
 
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
                 row11L = row12L;
                 row11H = row12H;
                 LOADROW(row12L, row12H, 2)
-                R16 = compress(row12L, row12H);
+                R16 = _mm_packus_epi16(row12L, row12H);
                 pDst = original_pDst + 16;
-//                MB16MODE2
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4186,12 +4318,13 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
 
                 pDst = original_pDst + (16 * dstStride);
                 refMain += 16;
-                v_deltaPos = 0;
-                v_ipAngle = intraPredAngle;
+                v_deltaPos = _mm_setzero_si128();
+
+                v_ipAngle = _mm_set1_epi16(intraPredAngle);
                 LOADROW(row11L, row11H, 0)
                 LOADROW(row12L, row12H, 1)
-                R16 = compress(row12L, row12H);
-//                MB16MODE2
+                R16 = _mm_packus_epi16(row12L, row12H);
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4206,14 +4339,14 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 BLND2_2(R4, R12)
                 BLND2_2(R8, R16)
 
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
                 row11L = row12L;
                 row11H = row12H;
                 LOADROW(row12L, row12H, 2)
-                R16 = compress(row12L, row12H);
+                R16 = _mm_packus_epi16(row12L, row12H);
                 pDst = original_pDst + (16 * dstStride) + 16;
-//                MB16MODE2
+
                 CALC_BLND_8ROWS_MODE2(R1, R2, R3, R4, R5, R6, R7, R8)
                 PREDANG_CALCROW_HOR_MODE2(R8)
                 MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4230,7 +4363,6 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 return;
             }
 
-//            MB16;
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0)
             PREDANG_CALCROW_HOR(7 + 0, R8)
             MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4247,12 +4379,11 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             BLND2_2(R8, R16)
 
             pDst = original_pDst + 16;
-//            MB16RESCUE;
+
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 16)
             PREDANG_CALCROW_HOR(7 + 16, R8)
             MB8(R1, R2, R3, R4, R5, R6, R7, R8)
             CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 24)
-            /*R16.load(refMain + 1 + GETAP(lookIdx, 31)); */
             R16 = _mm_loadu_si128((__m128i const*)(refMain + 1 + GETAP(lookIdx, 31)));
             MB8(R9, R10, R11, R12, R13, R14, R15, R16)
             BLND2_2(R1, R9)
@@ -4266,9 +4397,9 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
 
             pDst = original_pDst + (16 * dstStride);
             refMain += 16;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
-//            MB16;
+            v_deltaPos = _mm_setzero_si128();
+            v_ipAngle = _mm_set1_epi16(intraPredAngle);
+
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 0)
             PREDANG_CALCROW_HOR(7 + 0, R8)
             MB8(R1, R2, R3, R4, R5, R6, R7, R8)
@@ -4284,12 +4415,11 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
             BLND2_2(R4, R12)
             BLND2_2(R8, R16)
             pDst = original_pDst + (16 * dstStride) + 16;
-//            MB16RESCUE;
+
             CALC_BLND_8ROWS(R1, R2, R3, R4, R5, R6, R7, R8, 16)
             PREDANG_CALCROW_HOR(7 + 16, R8)
             MB8(R1, R2, R3, R4, R5, R6, R7, R8)
             CALC_BLND_8ROWS(R9, R10, R11, R12, R13, R14, R15, R16, 24)
-            /*R16.load(refMain + 1 + GETAP(lookIdx, 31)); */
             R16 = _mm_loadu_si128((__m128i const*)(refMain + 1 + GETAP(lookIdx, 31)));
             MB8(R9, R10, R11, R12, R13, R14, R15, R16)
             BLND2_2(R1, R9)
@@ -4303,13 +4433,15 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
         }
         else
         {
-            Vec8s row11L, row12L, row11H, row12H;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec8s row11, row12, row13, row14, row21, row22, row23, row24;
-            Vec16uc tmp;
-            Vec8s tmp1, tmp2, res1, res2;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
+            __m128i row11L, row12L, row11H, row12H;
+            __m128i v_deltaFract, v_deltaPos, thirty2, thirty1, v_ipAngle;
+            __m128i row11, row12, row13, row14, row21, row22, row23, row24;
+            __m128i res1, res2;
+
+            v_deltaPos = _mm_setzero_si128(); //v_deltaPos = 0;
+            v_ipAngle = _mm_set1_epi16(intraPredAngle);
+            thirty2 = _mm_set1_epi16(32);
+            thirty1 = _mm_set1_epi16(31);
             __m128i itmp, it1, it2, it3, i16;
 
             switch (intraPredAngle)
@@ -4325,10 +4457,12 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 }
 
                 //deltaFract == 0 for 16th row
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
-                compress(row11, row12).store(pDst + (15 * dstStride));
-                compress(row13, row14).store(pDst + (15 * dstStride) + 16);
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
+                itmp = _mm_packus_epi16(row11, row12);
+                _mm_storeu_si128((__m128i*)(pDst + ((15) * dstStride)), itmp);
+                itmp = _mm_packus_epi16(row13, row14);
+                _mm_storeu_si128((__m128i*)(pDst + ((15) * dstStride) + 16), itmp);
 
                 row21 = row11;
                 row22 = row12;
@@ -4342,8 +4476,10 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                     PREDANG_CALCROW_VER_MODE2(i);
                 }
 
-                compress(row11, row12).store(pDst + (31 * dstStride));
-                compress(row13, row14).store(pDst + (31 * dstStride) + 16);
+                itmp = _mm_packus_epi16(row11, row12);
+                _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride)), itmp);
+                itmp = _mm_packus_epi16(row13, row14);
+                _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride) + 16), itmp);
 
                 return;
 
@@ -4359,10 +4495,13 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 }
 
                 //deltaFract == 0 for 16th row
-                v_deltaPos += v_ipAngle;
-                v_deltaFract = v_deltaPos & thirty1;
-                compress(row21, row22).store(pDst + (15 * dstStride));
-                compress(row23, row24).store(pDst + (15 * dstStride) + 16);
+
+                v_deltaPos = _mm_add_epi16(v_deltaPos, v_ipAngle);
+                v_deltaFract = _mm_and_si128(v_deltaPos, thirty1);
+                itmp = _mm_packus_epi16(row21, row22);
+                _mm_storeu_si128((__m128i*)(pDst + ((15) * dstStride)), itmp);
+                itmp = _mm_packus_epi16(row23, row24);
+                _mm_storeu_si128((__m128i*)(pDst + ((15) * dstStride) + 16), itmp);
 
                 row11 = row21;
                 row12 = row22;
@@ -4376,8 +4515,10 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                     PREDANG_CALCROW_VER_MODE2(i);
                 }
 
-                compress(row21, row22).store(pDst + (31 * dstStride));
-                compress(row23, row24).store(pDst + (31 * dstStride) + 16);
+                itmp = _mm_packus_epi16(row21, row22);
+                _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride)), itmp);
+                itmp = _mm_packus_epi16(row23, row24);
+                _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride) + 16), itmp);
 
                 return;
             }
@@ -4387,15 +4528,13 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
                 PREDANG_CALCROW_VER(i);
             }
 
-            tmp.load(refMain + GETAP(lookIdx, 31) + 1);
-            tmp.store(pDst + 31 * dstStride);
-            tmp.load(refMain + GETAP(lookIdx, 31) + 17);
-            tmp.store(pDst + 31 * dstStride + 16);
+            itmp = _mm_loadu_si128((__m128i const*)(refMain + 1 + GETAP(lookIdx, 31)));
+            _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride)), itmp);
+            itmp = _mm_loadu_si128((__m128i const*)(refMain + 17 + GETAP(lookIdx, 31)));
+            _mm_storeu_si128((__m128i*)(pDst + ((31) * dstStride) + 16), itmp);
         }
     }
 }
-
-#endif /* disable temporarily */
 
 #endif /* if HIGH_BIT_DEPTH */
 
@@ -4414,11 +4553,9 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     case 16:
         xPredIntraAng16x16(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
-#if !defined(_MSC_VER) /* disable temporarily, to save MSVC build times */
     case 32:
         xPredIntraAng32x32(bitDepth, pDst, dstStride, width, dirMode, refLeft, refAbove);
         return;
-#endif
     }
 
 #endif /* if HIGH_BIT_DEPTH */
