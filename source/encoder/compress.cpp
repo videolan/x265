@@ -27,6 +27,48 @@
 #pragma warning (disable: 4018)
 #endif
 
+using namespace x265;
+
+Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG)
+{
+    UChar uhDepth = rpcTempCU->getDepth(0);
+
+    rpcTempCU->setDepthSubParts(uhDepth, 0);
+
+    rpcTempCU->setSkipFlagSubParts(false, 0, uhDepth);
+
+    rpcTempCU->setPartSizeSubParts(ePartSize,  0, uhDepth);
+    rpcTempCU->setPredModeSubParts(MODE_INTER, 0, uhDepth);
+    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(),      0, uhDepth);
+
+    rpcTempCU->setMergeAMP(true);
+    m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], false, bUseMRG);
+    if (!rpcTempCU->getMergeAMP())
+    {
+        return;
+    }
+
+    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+    if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
+    {
+        /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
+    
+        UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+                                            (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+        m_temporalSAD = (Int)SAD;
+    }
+    
+#if FAST_MODE_DECISION
+    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
+                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+    rpcTempCU->getTotalDistortion() = SATD;
+#endif
+    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
+    
+    xCheckDQP(rpcTempCU);    
+}
+
+
 Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
 {
     m_abortFlag = false;
@@ -66,29 +108,15 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
         bTrySplit    = true;
 
         rpcTempCU->initEstData(uiDepth, iQP);
-
-        // do inter modes, SKIP and 2Nx2N
+                
+        xComputeCostInter(rpcTempCU, SIZE_2Nx2N);
+        m_InterCU_2Nx2N[uiDepth]->copyCU(rpcTempCU);
+        rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
         
-        // 2Nx2N
-        if (m_pcEncCfg->getUseEarlySkipDetection())
-        {
-            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-            rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
-        }
         // SKIP
         xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
         rpcTempCU->initEstData(uiDepth, iQP);
-
-        if (!m_pcEncCfg->getUseEarlySkipDetection())
-        {
-            // 2Nx2N, NxN
-            xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-            rpcTempCU->initEstData(uiDepth, iQP);
-            if (m_pcEncCfg->getUseCbfFastMode())
-            {
-                doNotBlockPu = rpcBestCU->getQtRootCbf(0) != 0;
-            }
-        }
+                
         bTrySplitDQP = bTrySplit;
 
         if (uiDepth <= m_addSADDepth)
