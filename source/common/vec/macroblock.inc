@@ -3001,7 +3001,7 @@ void xIDCT4(short *pSrc, short *pDst, intptr_t stride)
         memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
     }
 }
-#endif INSTRSET < 5
+#endif // INSTRSET < 5
 
 #if INSTRSET >= 5
 ALIGN_VAR_32(static const short, tab_idct_4x4[4][8] )=

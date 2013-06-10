@@ -28,6 +28,7 @@
 #include "Lib/TLibCommon/CommonDef.h"
 #include "butterfly.h"
 #include <algorithm>
+#include <string.h>
 
 /* Used for filter */
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
