@@ -706,18 +706,6 @@ Void TEncEntropy::encodeSaoUnitInterleaving(Int compIdx, Bool saoFlag, Int rx, I
     }
 }
 
-Int TEncEntropy::countNonZeroCoeffs(TCoeff* pcCoef, UInt uiSize)
-{
-    Int count = 0;
-
-    for (Int i = 0; i < uiSize; i++)
-    {
-        count += pcCoef[i] != 0;
-    }
-
-    return count;
-}
-
 /** encode quantization matrix
  * \param scalingList quantization matrix information
  */

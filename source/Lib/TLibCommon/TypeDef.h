@@ -177,6 +177,7 @@ typedef       Short           Pel;        ///< 16-bit pixel type
 #else
 typedef       UChar           Pel;        ///< 8-bit pixel type
 #endif
+// TODO: I think we may reduce TCoeff to 16-bits when !HIGH_BIT_DEPTH
 typedef       Int             TCoeff;     ///< transform coefficient
 
 /// parameters for adaptive loop filter

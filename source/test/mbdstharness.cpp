@@ -41,6 +41,15 @@ const char *ButterflyConf_names[] =
     "Inverse32"
 };
 
+const char *DctConf_names[] =
+{
+    "Dst4x4\t",
+    "Dct4x4\t",
+    "Dct8x8\t",
+    "Dct16x16\t",
+    "Dct32x32\t",
+};
+
 MBDstHarness::MBDstHarness()
 {
     mb_t_size = 6400;
@@ -290,6 +299,48 @@ bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
+bool MBDstHarness::check_dct4_primitive(dct_t ref, dct_t opt)
+{
+    int j = 0;
+    int mem_cmp_size = 32; // 2*4*4 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 100; i++)
+    {
+        ref(mbuf1 + j, mbuf3);
+        opt(mbuf1 + j, mbuf2);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0xCD, mem_cmp_size);
+        memset(mbuf3, 0xCD, mem_cmp_size);
+    }
+
+    return true;
+}
+
+bool MBDstHarness::check_dct8_primitive(dct_t ref, dct_t opt)
+{
+    int j = 0;
+    int mem_cmp_size = 128; // 2*8*8 -> sizeof(short)*number of elements*number of lines
+
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(mbuf1 + j, mbuf2);
+        ref(mbuf1 + j, mbuf3);
+
+        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+            return false;
+
+        j += 16;
+        memset(mbuf2, 0xCD, mem_cmp_size);
+        memset(mbuf3, 0xCD, mem_cmp_size);
+    }
+
+    return true;
+}
+
 bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
 {
     int j = 0;
@@ -410,6 +461,24 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.dct[DCT_4x4])
+    {
+        if (!check_dct4_primitive(ref.dct[DCT_4x4], opt.dct[DCT_4x4]))
+        {
+            printf("\n%s failed\n", DctConf_names[DCT_4x4]);
+            return false;
+        }
+    }
+
+    if (opt.dct[DCT_8x8])
+    {
+        if (!check_dct8_primitive(ref.dct[DCT_8x8], opt.dct[DCT_8x8]))
+        {
+            printf("\n%s failed\n", DctConf_names[DCT_8x8]);
+            return false;
+        }
+    }
+
     if (opt.deQuant)
     {
         if (!check_xdequant_primitive(ref.deQuant, opt.deQuant))
@@ -438,6 +507,17 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("partialButterfly%s", ButterflyConf_names[value]);
             REPORT_SPEEDUP(opt.partial_butterfly[value], ref.partial_butterfly[value], mbuf1, mbuf2, 3, 10);
+        }
+    }
+
+    for (int value = 0; value < NUM_DCTS; value++)
+    {
+        memset(mbuf2, 0, mb_t_size); // Initialize output buffer to zero
+        memset(mbuf3, 0, mb_t_size); // Initialize output buffer to zero
+        if (opt.dct[value])
+        {
+            printf("%s\t\t", DctConf_names[value]);
+            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2);
         }
     }
 
