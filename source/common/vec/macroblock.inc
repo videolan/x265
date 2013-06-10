@@ -4170,6 +4170,7 @@ void xIDCT16(short *pSrc, short *pDst, intptr_t stride)
                 STORE_4x8( 4, m128iS4,  m128iS5,  m128iS6,  m128iS7);
                 STORE_4x8( 8, m128iS8,  m128iS9,  m128iS10, m128iS11);
                 STORE_4x8(12, m128iS12, m128iS13, m128iS14, m128iS15);
+#undef STORE_4x8
 
                 if(!i){
                     m128iS0   = _mm_load_si128( (__m128i*) ( pSrc +  16));
@@ -5606,87 +5607,38 @@ void xIDCT32(short *pSrc, short *pDst, intptr_t stride)
                 }
 
             } else {
-#if 0
-#else
-                int k, m = 0;
-                _mm_storeu_si128( (__m128i*)( pSrc     ), m128iS0 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 8 ), m128iS1 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 16 ), m128iS2 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 24), m128iS3 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 128 ), m128iS4 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 128 + 8 ), m128iS5 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 128 + 16), m128iS6 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 128 + 24), m128iS7 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 256 ), m128iS8 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 256 + 8), m128iS9 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 256 + 16), m128iS10 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 256 + 24), m128iS11 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 384 ), m128iS12 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 384 + 8), m128iS13 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 384 + 16), m128iS14 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 384 + 24), m128iS15 );
+                __m128i T00, T01, T02, T03;
+                __m128i T10, T11;
 
-                _mm_storeu_si128( (__m128i*)( pSrc + 512   ), m128iS16 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 512 + 8), m128iS17 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 512 +16 ), m128iS18 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 512 +24), m128iS19 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 640 ), m128iS20 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 640 + 8), m128iS21 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 640 + 16), m128iS22 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 640 + 24), m128iS23 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 768 ), m128iS24 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 768 + 8), m128iS25 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 768 + 16), m128iS26 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 768 + 24), m128iS27 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 896 ), m128iS28 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 896 + 8), m128iS29 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 896 + 16), m128iS30 );
-                _mm_storeu_si128( (__m128i*)( pSrc + 896 + 24), m128iS31 );
+#define STORE_4x8(_COL, A, B, C, D) \
+                T00 = _mm_unpacklo_epi16((A), (B)); \
+                T01 = _mm_unpackhi_epi16((A), (B)); \
+                T02 = _mm_unpacklo_epi16((C), (D)); \
+                T03 = _mm_unpackhi_epi16((C), (D)); \
+                T10 = _mm_unpacklo_epi32(T00, T02); \
+                T11 = _mm_unpackhi_epi32(T00, T02); \
+                _mm_storel_epi64( (__m128i*)&pDst[(i+0)*stride + (_COL)], T10 ); \
+                _mm_storeh_pi   ( (__m64*  )&pDst[(i+1)*stride + (_COL)], _mm_castsi128_ps(T10)); \
+                _mm_storel_epi64( (__m128i*)&pDst[(i+2)*stride + (_COL)], T11 ); \
+                _mm_storeh_pi   ( (__m64*  )&pDst[(i+3)*stride + (_COL)], _mm_castsi128_ps(T11)); \
+                T10 = _mm_unpacklo_epi32(T01, T03); \
+                T11 = _mm_unpackhi_epi32(T01, T03); \
+                _mm_storel_epi64( (__m128i*)&pDst[(i+4)*stride + (_COL)], T10 ); \
+                _mm_storeh_pi   ( (__m64*  )&pDst[(i+5)*stride + (_COL)], _mm_castsi128_ps(T10)); \
+                _mm_storel_epi64( (__m128i*)&pDst[(i+6)*stride + (_COL)], T11 ); \
+                _mm_storeh_pi   ( (__m64*  )&pDst[(i+7)*stride + (_COL)], _mm_castsi128_ps(T11)); \
 
-                short *dst = pDst + (i*stride);
 
-                
-                for ( k = 0; k < 8; k++) {
-                    dst[ 0] = (pSrc[m]);
-                    dst[ 1] = (pSrc[m+8]);
-                    dst[ 2] = (pSrc[m+16]);
-                    dst[ 3] = (pSrc[m+24]);
-                    dst[ 4] = (pSrc[m+128]);
-                    dst[ 5] = (pSrc[m+128+8]);
-                    dst[ 6] = (pSrc[m+128+16]);
-                    dst[ 7] = (pSrc[m+128+24]);
+                STORE_4x8( 0, m128iS0,  m128iS1,  m128iS2,  m128iS3);
+                STORE_4x8( 4, m128iS4,  m128iS5,  m128iS6,  m128iS7);
+                STORE_4x8( 8, m128iS8,  m128iS9,  m128iS10, m128iS11);
+                STORE_4x8(12, m128iS12, m128iS13, m128iS14, m128iS15);
+                STORE_4x8(16, m128iS16, m128iS17, m128iS18, m128iS19);
+                STORE_4x8(20, m128iS20, m128iS21, m128iS22, m128iS23);
+                STORE_4x8(24, m128iS24, m128iS25, m128iS26, m128iS27);
+                STORE_4x8(28, m128iS28, m128iS29, m128iS30, m128iS31);
+#undef STORE_4x8
 
-                    dst[ 8] = (pSrc[m+256]);
-                    dst[ 9] = (pSrc[m+256+8]);
-                    dst[10] = (pSrc[m+256+16]);
-                    dst[11] = (pSrc[m+256+24]);
-                    dst[12] = (pSrc[m+384]);
-                    dst[13] = (pSrc[m+384+8]);
-                    dst[14] = (pSrc[m+384+16]);
-                    dst[15] = (pSrc[m+384+24]);
-
-                    dst[16] = (pSrc[m+512]);
-                    dst[17] = (pSrc[m+512+8]);
-                    dst[18] = (pSrc[m+512+16]);
-                    dst[19] = (pSrc[m+512+24]);
-                    dst[20] = (pSrc[m+640]);
-                    dst[21] = (pSrc[m+640+8]);
-                    dst[22] = (pSrc[m+640+16]);
-                    dst[23] = (pSrc[m+640+24]);
-
-                    dst[24] = (pSrc[m+768]);
-                    dst[25] = (pSrc[m+768+8]);
-                    dst[26] = (pSrc[m+768+16]);
-                    dst[27] = (pSrc[m+768+24]);
-                    dst[28] = (pSrc[m+896]);
-                    dst[29] = (pSrc[m+896+8]);
-                    dst[30] = (pSrc[m+896+16]);
-                    dst[31] = (pSrc[m+896+24]);
-
-                    m +=1;
-                    dst += stride;
-                }
-#endif
                 if(i<=16){
                     int k = (i+8)*4;
                     m128iS0   = _mm_load_si128( (__m128i*)( pSrc + k) );
