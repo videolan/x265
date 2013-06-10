@@ -6,7 +6,6 @@
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
- *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2786,147 +2785,6 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
 }
 
 #if INSTRSET < 5
-Int scanNonZeroCoeffs(TCoeff* pcCoef, const UInt *scan, const UInt *scanT, UInt *cgFlag, UInt uiWidth, Int *piScanPosLast)
-{
-    UInt uiSize = uiWidth * uiWidth;
-    const UInt   uiLog2BlockSize = g_aucConvertToBit[uiWidth] + 2;
-    static const UInt uiShift = MLS_CG_SIZE >> 1;
-    const UInt uiNumBlkSide = uiWidth >> uiShift;
-
-    // Avoid warning, I pass two pointer because I can't detect CPUID in main source
-    scanT = scanT;
-
-    // countNonZeroCoeffs(pcCoef, uiWidth*uiWidth)
-    Int count = 0;
-
-    for (Int i = 0; i < (Int)uiSize; i++)
-    {
-        count += (pcCoef[i] != 0);
-    }
-
-
-    // Find position of last coefficient
-    UInt uiNumSig = count;
-    UInt *uiSigCoeffGroupFlag = cgFlag;
-    Int posLast;
-    Int scanPosLast = -1;
-
-    ::memset(uiSigCoeffGroupFlag, 0, sizeof(UInt) * (uiSize >> 4));
-
-    do
-    {
-        posLast = scan[++scanPosLast];
-
-        // get L1 sig map
-        UInt uiPosY    = posLast >> uiLog2BlockSize;
-        UInt uiPosX    = posLast - (uiPosY << uiLog2BlockSize);
-        UInt uiBlkIdx  = uiNumBlkSide * (uiPosY >> uiShift) + (uiPosX >> uiShift);
-        if (pcCoef[posLast])
-        {
-            uiSigCoeffGroupFlag[uiBlkIdx] = 1;
-        }
-
-        uiNumSig -= (pcCoef[posLast] != 0);
-    }
-    while (uiNumSig > 0);
-
-    *piScanPosLast = scanPosLast;
-
-    return count;
-}
-#endif
-
-#if INSTRSET >= 5
-Int scanNonZeroCoeffs(TCoeff* pcCoef, const UInt *scan, const UInt *scanT, UInt *cgFlag, UInt uiWidth, Int *piScanPosLast)
-{
-    // TODO: nonZero may get in Quant stage, please optimize it
-    //assert((uiSize % 16) == 0);
-    assert(sizeof(TCoeff) == 4);
-
-    // Avoid warning, I pass two pointer because I can't detect CPUID in main source
-    scan = scan;
-
-    UInt i, j;
-    __m128i inp[4];
-    __m128i msk[4];
-    __m128i cnt[2];
-    __m128i pos[4], maxpos;
-    __m128i tmp[2];
-
-    cnt[0] = _mm_setzero_si128();
-    cnt[1] = _mm_setzero_si128();
-    maxpos = _mm_setzero_si128();
-
-    for(i=0; i<uiWidth; i+=4)
-    {
-        const TCoeff *pcCoef1 = pcCoef + i * uiWidth;
-        const UInt   *scanT1  = scanT + i * uiWidth;
-        for(j=0; j<uiWidth; j+=4)
-        {
-            // Load four 32-bits coef
-            inp[0] = _mm_loadu_si128((__m128i*)&pcCoef1[0 * uiWidth]);
-            inp[1] = _mm_loadu_si128((__m128i*)&pcCoef1[1 * uiWidth]);
-            inp[2] = _mm_loadu_si128((__m128i*)&pcCoef1[2 * uiWidth]);
-            inp[3] = _mm_loadu_si128((__m128i*)&pcCoef1[3 * uiWidth]);
-
-            // Check is it zero
-            msk[0] = _mm_cmpeq_epi32(inp[0], _mm_setzero_si128());
-            msk[1] = _mm_cmpeq_epi32(inp[1], _mm_setzero_si128());
-            msk[2] = _mm_cmpeq_epi32(inp[2], _mm_setzero_si128());
-            msk[3] = _mm_cmpeq_epi32(inp[3], _mm_setzero_si128());
-
-            cnt[0] = _mm_add_epi16(cnt[0], _mm_packs_epi32(msk[0], msk[1]));
-            cnt[1] = _mm_add_epi16(cnt[1], _mm_packs_epi32(msk[2], msk[3]));
-
-            // Load pos table
-            pos[0] = _mm_load_si128((__m128i*)&scanT1[0 * uiWidth]);
-            pos[1] = _mm_load_si128((__m128i*)&scanT1[1 * uiWidth]);
-            pos[2] = _mm_load_si128((__m128i*)&scanT1[2 * uiWidth]);
-            pos[3] = _mm_load_si128((__m128i*)&scanT1[3 * uiWidth]);
-
-            pos[0] = _mm_andnot_si128(msk[0], pos[0]);
-            pos[1] = _mm_andnot_si128(msk[1], pos[1]);
-            pos[2] = _mm_andnot_si128(msk[2], pos[2]);
-            pos[3] = _mm_andnot_si128(msk[3], pos[3]);
-
-            pos[0] = _mm_max_epi32(pos[0], pos[1]);
-            pos[2] = _mm_max_epi32(pos[2], pos[3]);
-            pos[0] = _mm_max_epi32(pos[0], pos[2]);
-            maxpos = _mm_max_epi32(maxpos, pos[0]);
-
-
-            tmp[0] = _mm_packs_epi32(msk[0], msk[1]);
-            tmp[1] = _mm_packs_epi32(msk[2], msk[3]);
-            tmp[0] = _mm_packs_epi16(tmp[0], tmp[1]);
-            *cgFlag++ = (_mm_movemask_epi8(tmp[0]) != 0xFFFF);
-
-            pcCoef1 += 4;
-            scanT1  += 4;
-        } // end of j
-    } // end of i
-
-    // OPT_ME: We don't need output accuracy number of non-zero coef
-    cnt[0] = _mm_add_epi16(cnt[0], cnt[1]);
-    cnt[0] = _mm_hadd_epi16(cnt[0], cnt[0]);
-    cnt[0] = _mm_hadd_epi16(cnt[0], cnt[0]);
-    cnt[0] = _mm_hadd_epi16(cnt[0], cnt[0]);
-
-    // Negative of Zeros
-    int zeros_n = (Short)_mm_cvtsi128_si32(cnt[0]);
-
-    // last pos
-    maxpos = _mm_max_epi32(maxpos, _mm_shuffle_epi32(maxpos, 0xEE));
-    maxpos = _mm_max_epi32(maxpos, _mm_shuffle_epi32(maxpos, 0x55));
-
-    *piScanPosLast = _mm_cvtsi128_si32(maxpos);
-
-    UInt uiSize = uiWidth * uiWidth;
-
-    return uiSize + zeros_n;
-}
-#endif // INSTRSET >= 5
-
-#if INSTRSET < 5
 void xDCT4(short *pSrc, short *pDst)
 {
     const int shift_1st = 1;
@@ -3295,7 +3153,6 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 
     p.deQuant = xDeQuant;
-    p.scan_coef = scanNonZeroCoeffs;
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
 }
