@@ -659,42 +659,6 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     }
 }
 
-/** MxN inverse transform (2D)
-*  \param coeff input data (transform coefficients)
-*  \param block output data (residual)
-*  \param iWidth input data (width of transform)
-*  \param iHeight input data (height of transform)
-*/
-void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, UInt uiMode)
-{
-    // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
-    assert( bitDepth == 8 );
-
-    if (iWidth == 4 && iHeight == 4)
-    {
-        if (uiMode != REG_DCT)
-        {
-            x265::primitives.dct[x265::IDST_4x4](coeff, block);
-        }
-        else
-        {
-            x265::primitives.dct[x265::IDCT_4x4](coeff, block);
-        }
-    }
-    else if (iWidth == 8 && iHeight == 8)
-    {
-        x265::primitives.dct[x265::IDCT_8x8](coeff, block);
-    }
-    else if (iWidth == 16 && iHeight == 16)
-    {
-        x265::primitives.dct[x265::IDCT_16x16](coeff, block);
-    }
-    else if (iWidth == 32 && iHeight == 32)
-    {
-        x265::primitives.dct[x265::IDCT_32x32](coeff, block);
-    }
-}
-
 // To minimize the distortion only. No rate is considered.
 Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
@@ -1196,7 +1160,11 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
 
     x265::primitives.cvt32to16(plCoef, coeff, iWidth * iHeight);
 
-    xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
+    assert( bitDepth == 8 );
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, block);
 
     for (j = 0; j < iHeight; j++)
     {
