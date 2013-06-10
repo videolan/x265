@@ -440,6 +440,16 @@ void CDECL xDCT4_C(short *pSrc, short *pDst)
     partialButterfly4(tmp, pDst, shift_2nd, 4);
 }
 
+void CDECL xIDCT4_C(short *pSrc, short *pDst)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[4 * 4]);
+
+    partialButterflyInverse4(pSrc, tmp, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, tmp output
+    partialButterflyInverse4(tmp, pDst, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+}
+
 void CDECL xDCT8_C(short *pSrc, short *pDst)
 {
     const int shift_1st = 2;
@@ -530,6 +540,7 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
     p.dct[IDST_4x4] = xIDST4_C;
+    p.dct[IDCT_4x4] = xIDCT4_C;
 
     p.deQuant = xDeQuant;
 }

@@ -46,6 +46,7 @@ const char *DctConf_names[] =
     "Dst4x4\t",
    "IDst4x4\t",
     "Dct4x4\t",
+   "IDct4x4\t",
     "Dct8x8\t",
     "Dct16x16\t",
     "Dct32x32\t",

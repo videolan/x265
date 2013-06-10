@@ -2980,6 +2980,108 @@ void xDCT4(short *pSrc, short *pDst)
 #endif // INSTRSET >= 5
 
 #if INSTRSET < 5
+void xIDCT4(short *pSrc, short *pDst)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[4 * 4]);
+
+    partialButterflyInverse4(pSrc, tmp, shift_1st, 4);
+    partialButterflyInverse4(tmp, pDst, shift_2nd, 4);
+}
+#endif INSTRSET < 5
+
+#if INSTRSET >= 5
+ALIGN_VAR_32(static const short, tab_idct_4x4[4][8] )=
+{
+    { 64,  64, 64,  64, 64,  64, 64,  64 },
+    { 64, -64, 64, -64, 64, -64, 64, -64 },
+    { 83,  36, 83,  36, 83,  36, 83,  36 },
+    { 36, -83, 36, -83, 36, -83, 36, -83 },
+};
+void xIDCT4(short *pSrc, short *pDst)
+{
+    __m128i S0, S8, m128iAdd, m128Tmp1, m128Tmp2, E1, E2, O1, O2, m128iA, m128iD;
+    S0   = _mm_load_si128( (__m128i*)( pSrc     ) );
+    S8   = _mm_load_si128( (__m128i*)( pSrc + 8 ) );
+    m128iAdd  = _mm_set1_epi32( 64 );
+
+    m128Tmp1 = _mm_unpacklo_epi16(  S0, S8 );
+    E1 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[0] ) ) );
+    E1 = _mm_add_epi32( E1, m128iAdd );
+
+    E2 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[1] ) ) );
+    E2 = _mm_add_epi32( E2, m128iAdd );
+
+
+    m128Tmp1 = _mm_unpackhi_epi16(  S0, S8 );
+    O1 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[2] ) ) );
+    O2 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[3] ) ) );
+
+    m128iA  = _mm_add_epi32( E1, O1 );
+    m128iA  = _mm_srai_epi32( m128iA, 7  );        // Sum = Sum >> iShiftNum
+    m128Tmp1 = _mm_add_epi32( E2, O2 );
+    m128Tmp1 = _mm_srai_epi32( m128Tmp1, 7  );       // Sum = Sum >> iShiftNum
+    m128iA = _mm_packs_epi32( m128iA, m128Tmp1);
+
+
+
+
+    m128iD = _mm_sub_epi32( E2, O2 );
+    m128iD = _mm_srai_epi32( m128iD, 7  );         // Sum = Sum >> iShiftNum
+
+    m128Tmp1 = _mm_sub_epi32( E1, O1 );
+    m128Tmp1 = _mm_srai_epi32( m128Tmp1, 7  );       // Sum = Sum >> iShiftNum
+
+    m128iD = _mm_packs_epi32( m128iD, m128Tmp1 );
+
+    S0 =_mm_unpacklo_epi16(  m128iA, m128iD );
+    S8 =_mm_unpackhi_epi16(  m128iA, m128iD );
+
+    m128iA =_mm_unpacklo_epi16(  S0, S8 );
+    m128iD =_mm_unpackhi_epi16(  S0, S8 );
+
+    /*  ##########################  */
+
+
+    m128iAdd  = _mm_set1_epi32( 2048 );
+    m128Tmp1 = _mm_unpacklo_epi16(  m128iA, m128iD );
+    E1 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[0] ) ) );
+    E1 = _mm_add_epi32( E1, m128iAdd );
+
+    E2 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[1] ) ) );
+    E2 = _mm_add_epi32( E2, m128iAdd );
+
+
+    m128Tmp1 = _mm_unpackhi_epi16(  m128iA, m128iD );
+    O1 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[2] ) ) );
+    O2 = _mm_madd_epi16( m128Tmp1, _mm_load_si128( (__m128i*)( tab_idct_4x4[3] ) ) );
+
+    m128iA   = _mm_add_epi32( E1, O1 );
+    m128iA   = _mm_srai_epi32( m128iA, 12  );
+    m128Tmp1 = _mm_add_epi32( E2, O2 );
+    m128Tmp1 = _mm_srai_epi32( m128Tmp1, 12  );
+    m128iA   = _mm_packs_epi32( m128iA, m128Tmp1);
+
+    m128iD = _mm_sub_epi32( E2, O2 );
+    m128iD = _mm_srai_epi32( m128iD, 12  );
+
+    m128Tmp1 = _mm_sub_epi32( E1, O1 );
+    m128Tmp1 = _mm_srai_epi32( m128Tmp1, 12  );
+
+    m128iD = _mm_packs_epi32( m128iD, m128Tmp1 );
+
+    m128Tmp1 = _mm_unpacklo_epi16(m128iA, m128iD);   // [32 30 22 20 12 10 02 00]
+    m128Tmp2 = _mm_unpackhi_epi16(m128iA, m128iD);   // [33 31 23 21 13 11 03 01]
+    m128iA   = _mm_unpacklo_epi16(m128Tmp1, m128Tmp2);
+    m128iD   = _mm_unpackhi_epi16(m128Tmp1, m128Tmp2);
+
+    _mm_storeu_si128( (__m128i*)( pDst     ), m128iA );
+    _mm_storeu_si128( (__m128i*)( pDst + 8 ), m128iD );
+}
+#endif // INSTRSET >= 5
+
+#if INSTRSET < 5
 void xDCT8(short *pSrc, short *pDst)
 {
     const int shift_1st = 2;
@@ -3270,4 +3372,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
     p.dct[IDST_4x4] = xIDST4;
+    p.dct[IDCT_4x4] = xIDCT4;
 }

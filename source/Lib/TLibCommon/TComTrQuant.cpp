@@ -672,6 +672,9 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
     Int shift_1st = SHIFT_INV_1ST;
     Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
 
+    // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
+    assert( bitDepth == 8 );
+
     if (iWidth == 4 && iHeight == 4)
     {
         if (uiMode != REG_DCT)
@@ -680,8 +683,7 @@ void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, 
         }
         else
         {
-            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](coeff, tmp, shift_1st, iWidth);
-            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](tmp, block, shift_2nd, iHeight);
+            x265::primitives.dct[x265::IDCT_4x4](coeff, block);
         }
     }
     else if (iWidth == 8 && iHeight == 8)
