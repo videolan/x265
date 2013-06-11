@@ -151,21 +151,21 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 
+#pragma warning(disable: 4100)
+
 template< int size >
-__forceinline void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad, int i)
+__forceinline void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
-    unrollFunc_16< 1 >(piOrg, strideOrg, piCur, strideCur, sad, i);
-    unrollFunc_16< size - 1 >(piOrg, strideOrg, piCur, strideCur, sad, ++i);
+    unrollFunc_16< 1 >(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_16< size - 1 >(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
 }
 
 template<>
-__forceinline void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad, int i)
+__forceinline void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
     Vec16uc m1, n1;
-    pixel *piOrg1 = piOrg + strideOrg*i;
-    pixel *piCur1 = piCur + strideCur*i;
-    m1.load_a(piOrg1);
-    n1.load(piCur1);
+    m1.load_a(piOrg);
+    n1.load(piCur);
     sad[0].addSumAbsDiff(m1, n1);
 } 
 
@@ -180,13 +180,13 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 
     if (ly < 16)
     {
-        unrollFunc_16< ly >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
+        unrollFunc_16< ly >(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);
         return horizontal_add(sum);
     }
     for (row = 0; row < main_iters; row += 16)
     {
-        unrollFunc_16< 16 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
+        unrollFunc_16< 16 >(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);  
         sad = 0;
         piOrg += strideOrg*16;
@@ -194,7 +194,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     }
     if (ly == 24)
     {
-        unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
+        unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);  
         return horizontal_add(sum);
     }
