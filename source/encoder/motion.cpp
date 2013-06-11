@@ -365,7 +365,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         } \
     }
 
-int MotionEstimate::motionEstimate(const MV &qmvp,
+int MotionEstimate::motionEstimate(MotionReference *ref,
+                                   const MV &mvmin,
+                                   const MV &mvmax,
+                                   const MV &qmvp,
                                    int       numCandidates,
                                    const MV *mvc,
                                    int       merange,
@@ -752,7 +755,7 @@ me_hex2:
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
-            StarPatternSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
 
             // Break if we go earlyStopRounds without an improved prediction
             if (bcost < saved)
@@ -855,7 +858,7 @@ me_hex2:
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
             {
-                StarPatternSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+                StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
             }
 
             if (bDistance == 1)
@@ -928,7 +931,7 @@ me_hex2:
     return bcost;
 }
 
-void MotionEstimate::StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, const MV &mvmax, MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;

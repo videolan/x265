@@ -3745,12 +3745,15 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     CYCLE_COUNTER_START(ME);
     if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
     {
-        // TODO: To make motionEstimate re-entrant, most of these must be function arguments
         TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
-        m_me.setReference(refRecon->getMotionReference(0));
-        m_me.setSearchLimits(cMvSrchRngLT, cMvSrchRngRB);
-
-        int satdCost = m_me.motionEstimate(*pcMvPred, 3, m_acMvPredictors, iSrchRng, rcMv);
+        int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
+                                           cMvSrchRngLT,
+                                           cMvSrchRngRB,
+                                           *pcMvPred,
+                                           3,
+                                           m_acMvPredictors,
+                                           iSrchRng,
+                                           rcMv);
 
         /* Get total cost of PU, but only include MV bit cost once */
         ruiBits += m_me.bitcost(rcMv);

@@ -52,9 +52,6 @@ protected:
     pixel *fencplane;
     intptr_t fencLumaStride;
 
-    MotionReference *ref;   // current reference frame
-    MV mvmin, mvmax;
-
     pixelcmp sad;
     pixelcmp bufsad;
     pixelcmp satd;
@@ -88,26 +85,35 @@ public:
         fencLumaStride = luma;
     }
 
-    /* Methods called at CU setup */
+    /* Methods called at CU setup.  bufSAD() and motionEstimate() both require
+     * setSourcePU() to be called before they may be called. */
 
     void setSourcePU(int offset, int pwidth, int pheight);
 
-    void setSearchLimits(MV& min, MV& max)    { mvmin = min; mvmax = max; }
-
-    /* Methods called for searches */
-
     int bufSAD(pixel *fref, intptr_t stride)  { return bufsad(fenc, FENC_STRIDE, fref, stride); }
 
-    void setReference(MotionReference* tref)  { ref = tref; }
-
-    /* returns SATD QPEL cost of best outMV for this PU */
-    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
+    int motionEstimate(MotionReference *ref,
+                       const MV &mvmin,
+                       const MV &mvmax,
+                       const MV &qmvp,
+                       int numCandidates,
+                       const MV *mvc,
+                       int merange,
+                       MV &outQMv);
 
 protected:
 
     static const int COST_MAX = 1 << 28;
 
-    inline void StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
+    inline void StarPatternSearch(MotionReference *ref,
+                                  const MV &mvmin,
+                                  const MV &mvmax,
+                                  MV &bmv,
+                                  int &bcost,
+                                  int &bPointNr,
+                                  int &bDistance,
+                                  int16_t dist,
+                                  const MV& omv);
 };
 }
 
