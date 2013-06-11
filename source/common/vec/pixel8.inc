@@ -192,21 +192,11 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
         piOrg += strideOrg*16;
         piCur += strideCur*16;
     }
-    if (ly == 24)
+    if (ly & 8)
     {
         unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);  
         return horizontal_add(sum);
-    }
-
-    while (row++ < ly)
-    {
-        m1.load_a(piOrg);
-        n1.load(piCur);
-        sad.addSumAbsDiff(m1, n1);
-
-        piOrg += strideOrg;
-        piCur += strideCur;
     }
     sum += extend_low(sad) + extend_high(sad);
     return horizontal_add(sum);    
