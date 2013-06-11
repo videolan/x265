@@ -101,10 +101,10 @@ public:
             return;
 
         if (cDelim == 'a')
-            printf("x265 [info]: global:        ");
+            fprintf(stderr, "x265 [info]: global:        ");
         else
-            printf("x265 [info]: frame %c:%-6d ", cDelim - 32, m_uiNumPic);
-        printf("kb/s: %-8.2lf PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf\n",
+            fprintf(stderr, "x265 [info]: frame %c:%-6d ", cDelim - 32, m_uiNumPic);
+        fprintf(stderr, "kb/s: %-8.2lf PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf\n",
             getBits() * dScale,
             getPsnrY() / (Double)getNumPic(),
             getPsnrU() / (Double)getNumPic(),

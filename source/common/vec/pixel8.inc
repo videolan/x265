@@ -150,44 +150,59 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     return horizontal_add(sum);
 }
 
+#if defined(_MSC_VER)
+#undef ALWAYSINLINE
+#define ALWAYSINLINE  __forceinline
+#pragma warning(disable: 4100) // unused formal parameters
+#endif
+
+template< int size >
+ALWAYSINLINE void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    unrollFunc_16< 1 >(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_16< size - 1 >(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    Vec16uc m1, n1;
+    m1.load_a(piOrg);
+    n1.load(piCur);
+    sad[0].addSumAbsDiff(m1, n1);
+} 
+
 template<int ly>
 int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec16uc m1, n1;
-
     Vec4i sum(0);
     Vec8us sad(0);
     int main_iters = (ly >> 4) << 4;
-    int row;
+    int row = 0;
 
+    if (ly < 16)
+    {
+        unrollFunc_16< ly >(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
+    }
     for (row = 0; row < main_iters; row += 16)
     {
-        for (int i = 0; i < 16; i++)
-        {
-            m1.load_a(piOrg);
-            n1.load(piCur);
-            sad.addSumAbsDiff(m1, n1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
-        sum += extend_low(sad) + extend_high(sad);
+        unrollFunc_16< 16 >(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);  
         sad = 0;
+        piOrg += strideOrg*16;
+        piCur += strideCur*16;
     }
-
-    while (row++ < ly)
+    if (ly & 8)
     {
-        m1.load_a(piOrg);
-        n1.load(piCur);
-        sad.addSumAbsDiff(m1, n1);
-
-        piOrg += strideOrg;
-        piCur += strideCur;
+        unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);  
+        return horizontal_add(sum);
     }
-
     sum += extend_low(sad) + extend_high(sad);
-    return horizontal_add(sum);
+    return horizontal_add(sum);    
 }
 
 template<int ly>

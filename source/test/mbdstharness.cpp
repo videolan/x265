@@ -41,13 +41,22 @@ const char *ButterflyConf_names[] =
     "Inverse32"
 };
 
-const char *DctConf_names[] =
+struct DctConf_t {
+    const char *name;
+    int width;
+};
+const DctConf_t DctConf_infos[] =
 {
-    "Dst4x4\t",
-    "Dct4x4\t",
-    "Dct8x8\t",
-    "Dct16x16\t",
-    "Dct32x32\t",
+   { "Dst4x4\t",    4},
+   { "Dct4x4\t",    4},
+   { "Dct8x8\t",    8},
+   { "Dct16x16\t", 16},
+   { "Dct32x32\t", 32},
+   {"IDst4x4\t",    4},
+   {"IDct4x4\t",    4},
+   {"IDct8x8\t",    8},
+   {"IDct16x16",   16},
+   {"IDct32x32",   32},
 };
 
 MBDstHarness::MBDstHarness()
@@ -58,13 +67,14 @@ MBDstHarness::MBDstHarness()
     mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
     mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
     mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
+    mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
 
     mintbuf1 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
     mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
     mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
     mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
 
-    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4)
+    if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -76,9 +86,10 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
-    for (int i = 0; i < 64 * 100; i++)
+    for (int i = 0; i < 0x1e00; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
+        mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
     }
 
     for (int i = 0; i < 64 * 100; i++)
@@ -101,6 +112,7 @@ MBDstHarness::~MBDstHarness()
     TestHarness::alignedFree(mbuf2);
     TestHarness::alignedFree(mbuf3);
     TestHarness::alignedFree(mbuf4);
+    TestHarness::alignedFree(mbufdct);
 
     TestHarness::alignedFree(mintbuf1);
     TestHarness::alignedFree(mintbuf2);
@@ -299,39 +311,34 @@ bool MBDstHarness::check_butterfly32_inverse_primitive(butterfly ref, butterfly 
     return true;
 }
 
-bool MBDstHarness::check_dct4_primitive(dct_t ref, dct_t opt)
+bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 {
     int j = 0;
-    int mem_cmp_size = 32; // 2*4*4 -> sizeof(short)*number of elements*number of lines
+    int mem_cmp_size = 2 * width * width; // -> sizeof(short)*number of elements*number of lines
 
     for (int i = 0; i <= 100; i++)
     {
-        ref(mbuf1 + j, mbuf3);
-        opt(mbuf1 + j, mbuf2);
+        if (width >= 16)
+        {
+            // IDCT16x16 and IDCT32x32 may broken input buffer, so copy one
+            ALIGN_VAR_32(short, tmp[32*32]);
+            memcpy(tmp, mbufdct + j, sizeof(short)* 32 *32);
+            ref(mbufdct + j, mbuf2, width);
+            opt(tmp, mbuf3, width);
+        }
+        else
+        {
+            ref(mbufdct + j, mbuf2, width);
+            opt(mbufdct + j, mbuf3, width);
+        }
 
         if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+        {
+            // redo for debug
+            ref(mbufdct + j, mbuf2, width);
+            opt(mbufdct + j, mbuf3, width);
             return false;
-
-        j += 16;
-        memset(mbuf2, 0xCD, mem_cmp_size);
-        memset(mbuf3, 0xCD, mem_cmp_size);
-    }
-
-    return true;
-}
-
-bool MBDstHarness::check_dct8_primitive(dct_t ref, dct_t opt)
-{
-    int j = 0;
-    int mem_cmp_size = 128; // 2*8*8 -> sizeof(short)*number of elements*number of lines
-
-    for (int i = 0; i <= 100; i++)
-    {
-        opt(mbuf1 + j, mbuf2);
-        ref(mbuf1 + j, mbuf3);
-
-        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
-            return false;
+        }
 
         j += 16;
         memset(mbuf2, 0xCD, mem_cmp_size);
@@ -461,21 +468,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.dct[DCT_4x4])
+    for( int i=0; i<NUM_DCTS; i++ )
     {
-        if (!check_dct4_primitive(ref.dct[DCT_4x4], opt.dct[DCT_4x4]))
+        if (opt.dct[i])
         {
-            printf("\n%s failed\n", DctConf_names[DCT_4x4]);
-            return false;
-        }
-    }
-
-    if (opt.dct[DCT_8x8])
-    {
-        if (!check_dct8_primitive(ref.dct[DCT_8x8], opt.dct[DCT_8x8]))
-        {
-            printf("\n%s failed\n", DctConf_names[DCT_8x8]);
-            return false;
+            if (!check_dct_primitive(ref.dct[i], opt.dct[i], DctConf_infos[i].width))
+            {
+                printf("\n%s failed\n", DctConf_infos[i].name);
+                return false;
+            }
         }
     }
 
@@ -495,7 +496,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 {
     if (opt.inversedst)
     {
-        printf("InverseDST");
+        printf("InverseDST\t\t");
         REPORT_SPEEDUP(opt.inversedst, ref.inversedst, mbuf1, mbuf2, 16);
     }
 
@@ -516,8 +517,8 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(mbuf3, 0, mb_t_size); // Initialize output buffer to zero
         if (opt.dct[value])
         {
-            printf("%s\t\t", DctConf_names[value]);
-            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2);
+            printf("%s\t\t", DctConf_infos[value].name);
+            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2, DctConf_infos[value].width);
         }
     }
 

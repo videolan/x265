@@ -56,14 +56,14 @@ int PartitionFromSizes(int Width, int Height)
 EncoderPrimitives primitives;
 
 void Setup_C_PixelPrimitives(EncoderPrimitives &p);
-void Setup_C_MacroblockPrimitives(EncoderPrimitives &p);
+void Setup_C_DCTPrimitives(EncoderPrimitives &p);
 void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
 void Setup_C_IPredPrimitives(EncoderPrimitives &p);
 
 void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
-    Setup_C_MacroblockPrimitives(p); // macroblock.cpp
+    Setup_C_DCTPrimitives(p);        // dct.cpp
     Setup_C_IPFilterPrimitives(p);   // InterpolationFilter.cpp
     Setup_C_IPredPrimitives(p);      // IntraPred.cpp
 }

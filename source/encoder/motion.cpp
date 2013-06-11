@@ -70,13 +70,14 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         subsample = 1;
 
         partEnum = PartitionFromSizes(width, height);
+        bufsad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
     }
     else
 #endif // if SUBSAMPLE_SAD
     {
         partEnum = PartitionFromSizes(width, height);
-        sad = primitives.sad[partEnum];
+        bufsad = sad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
         sad_x3 = primitives.sad_x3[partEnum];
         sad_x4 = primitives.sad_x4[partEnum];
@@ -139,11 +140,22 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     return sum;
 }
 
+#if SUBSAMPLE_SAD
+
+#define COST_QMV(cost, qmv) \
+    do \
+    { \
+        MV fmv = qmv >> 2; \
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
+        (cost) = sad(fencSad, FENC_STRIDE, qfref + fmv.y * stride  + fmv.x, sadStride) << subsample; \
+    } while (0)
+
 #define COST_MV_PT_DIST(mx, my, point, dist) \
     do \
     { \
         MV tmv(mx, my); \
-        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
+        int cost = sad(fencSad, FENC_STRIDE, fref + mx + my * stride, sadStride) << subsample; \
+        cost += mvcost(tmv << 2); \
         if (cost < bcost) { \
             bcost = cost; \
             bmv = tmv; \
@@ -155,12 +167,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        MV _tmv(mx, my); \
-        int cost = fpelSad(fref, _tmv) + mvcost(_tmv << 2); \
-        COPY2_IF_LT(bcost, cost, bmv, _tmv); \
+        int cost = sad(fencSad, FENC_STRIDE, fref + mx + my * stride, sadStride) << subsample; \
+        cost += mvcost(MV(mx, my) << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
     } while (0)
-
-#if SUBSAMPLE_SAD
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
@@ -227,6 +237,36 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     }
 
 #else // if SUBSAMPLE_SAD
+
+#define COST_MV_PT_DIST(mx, my, point, dist) \
+    do \
+    { \
+        MV tmv(mx, my); \
+        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        cost += mvcost(tmv << 2); \
+        if (cost < bcost) { \
+            bcost = cost; \
+            bmv = tmv; \
+            bPointNr = point; \
+            bDistance = dist; \
+        } \
+    } while (0)
+
+#define COST_MV(mx, my) \
+    do \
+    { \
+        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        cost += mvcost(MV(mx, my) << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
+    } while (0)
+
+#define COST_QMV(cost, qmv) \
+    do \
+    { \
+        MV fmv = qmv >> 2; \
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
+        (cost) = sad(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride); \
+    } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
@@ -325,7 +365,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         } \
     }
 
-int MotionEstimate::motionEstimate(const MV &qmvp,
+int MotionEstimate::motionEstimate(MotionReference *ref,
+                                   const MV &mvmin,
+                                   const MV &mvmax,
+                                   const MV &qmvp,
                                    int       numCandidates,
                                    const MV *mvc,
                                    int       merange,
@@ -334,9 +377,8 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->m_lumaStride;
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
-
 #if SUBSAMPLE_SAD
-    sadStride = ref->m_lumaStride << subsample;
+    size_t sadStride = ref->m_lumaStride << subsample;
 #endif
 
     setMVP(qmvp);
@@ -344,14 +386,30 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
     MV qmvmin = mvmin.toQPel();
     MV qmvmax = mvmax.toQPel();
 
+    /* The term cost used here means satd/sad values for that particular search.
+     * The costs used in ME integer search only includes the SAD cost of motion
+     * residual and sqrtLambda times MVD bits.  The subpel refine steps use SATD
+     * cost of residual and sqrtLambda * MVD bits.  Mode decision will be based
+     * on video distortion cost (SSE/PSNR) plus lambda times all signaling bits
+     * (mode + MVD bits). */
+
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
-    int bprecost = qpelSad(pmv); // ignore MVD cost for clipped MVP
+    int bprecost;
     MV bestpre = pmv;
+    COST_QMV(bprecost, pmv); // ignore MVD cost for clipped MVP
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
-    int bcost = pmv.isSubpel() ? fpelSad(fref, bmv) + mvcost(bmv << 2) : bprecost;
+    int bcost = bprecost;
+    if (pmv.isSubpel())
+    {
+#if SUBSAMPLE_SAD
+        bcost = (sad(fencSad, FENC_STRIDE, fref + bmv.x + bmv.y * stride, sadStride) << subsample) + mvcost(bmv << 2);
+#else
+        bcost = sad(fenc, FENC_STRIDE, fref + bmv.x + bmv.y * stride, stride) + mvcost(bmv << 2);
+#endif
+    }
 
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
@@ -374,7 +432,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost = qpelSad(m) + mvcost(m);
+            int cost;
+            COST_QMV(cost, m);
+            cost += mvcost(m);
             if (cost < bprecost)
             {
                 bprecost = cost;
@@ -694,7 +754,7 @@ me_hex2:
         for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
         {
             int saved = bcost;
-            StarPatternSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
 
             // Break if we go earlyStopRounds without an improved prediction
             if (bcost < saved)
@@ -797,7 +857,7 @@ me_hex2:
             bPointNr = 0;
             for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
             {
-                StarPatternSearch(bmv, bcost, bPointNr, bDistance, dist, omv);
+                StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
             }
 
             if (bDistance == 1)
@@ -843,8 +903,10 @@ me_hex2:
     bcost = COST_MAX;
     for (int i = 0; i < 9; i++)
     {
-        MV mv = bmv + square1[i] * 2;
-        int cost = qpelSatd(mv) + mvcost(mv);
+        MV qmv = bmv + square1[i] * 2;
+        MV fmv = qmv >> 2;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -854,8 +916,10 @@ me_hex2:
     bdir = 0;
     for (int i = 1; i < 9; i++)
     {
-        MV mv = bmv + square1[i];
-        int cost = qpelSatd(mv) + mvcost(mv);
+        MV qmv = bmv + square1[i];
+        MV fmv = qmv >> 2;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -866,11 +930,14 @@ me_hex2:
     return bcost;
 }
 
-void MotionEstimate::StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, const MV &mvmax, MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
     size_t stride = ref->m_lumaStride;
+#if SUBSAMPLE_SAD
+    size_t sadStride = ref->m_lumaStride << subsample;
+#endif
 
     if (dist == 1)
     {

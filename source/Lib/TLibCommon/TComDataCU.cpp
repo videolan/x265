@@ -727,6 +727,97 @@ Void TComDataCU::copySubCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     m_acCUMvField[1].linkToWithOffset(pcCU->getCUMvField(REF_PIC_LIST_1), uiPart);
 }
 
+/*Copy all structures from one object to another: to store the results of block matching search*/
+
+Void TComDataCU::copyCU(TComDataCU* pcCU)
+{
+    TComPic* pcPic       = pcCU->getPic();
+    UInt iCUAddr         = pcCU->getAddr();
+    m_pcPic              = pcCU->getPic();;
+    m_pcSlice            = pcCU->getSlice();
+    m_uiCUAddr           = pcCU->getAddr();
+    m_uiCUPelX           = pcCU->getCUPelX();
+    m_uiCUPelY           = pcCU->getCUPelY();
+    m_uiAbsIdxInLCU      = pcCU->getZorderIdxInCU();
+    m_dTotalCost         = pcCU->getTotalCost();
+    m_uiTotalDistortion  = pcCU->getTotalDistortion();
+    m_uiTotalBits        = pcCU->getTotalBits();
+    m_uiTotalBins        = pcCU->getTotalBins();
+    m_uiNumPartition     = pcCU->getTotalNumPart();
+    m_unitSize           = pcCU->getUnitSize();
+
+    m_piSliceSUMap       = pcCU->getSliceSUMap();
+
+    Int numElements = m_uiNumPartition;
+    for (Int ui = 0; ui < numElements; ui++)
+    {
+        m_skipFlag[ui]   = pcCU->getSkipFlag(ui);
+        m_pePartSize[ui] = pcCU->getPartitionSize(ui);
+        m_pePredMode[ui] = pcCU->getPredictionMode(ui);
+        m_CUTransquantBypass[ui] = pcCU->getCUTransquantBypass(ui);
+        m_puhDepth[ui] = pcCU->getDepth(ui);
+        m_puhWidth[ui] = pcCU->getWidth(ui);
+        m_puhHeight[ui] = pcCU->getHeight(ui);
+        m_puhTrIdx[ui] = pcCU->getTransformIdx(ui);
+        m_puhTransformSkip[0][ui] = pcCU->getTransformSkip(ui, TEXT_LUMA);
+        m_puhTransformSkip[1][ui] = pcCU->getTransformSkip(ui, TEXT_CHROMA_U);
+        m_puhTransformSkip[2][ui] = pcCU->getTransformSkip(ui, TEXT_CHROMA_V);
+        m_apiMVPIdx[0][ui] = pcCU->m_apiMVPIdx[0][ui];
+        m_apiMVPIdx[1][ui] = pcCU->m_apiMVPIdx[1][ui];
+        m_apiMVPNum[0][ui] = pcCU->m_apiMVPNum[0][ui];
+        m_apiMVPNum[1][ui] = pcCU->m_apiMVPNum[1][ui];
+        m_phQP[ui] = pcCU->m_phQP[ui];
+        m_pbMergeFlag[ui] = pcCU->m_pbMergeFlag[ui];
+        m_puhMergeIndex[ui] = pcCU->m_puhMergeIndex[ui];
+        m_puhLumaIntraDir[ui] = pcCU->m_puhLumaIntraDir[ui];
+        m_puhChromaIntraDir[ui] = pcCU->m_puhChromaIntraDir[ui];
+        m_puhInterDir[ui] = pcCU->m_puhInterDir[ui];
+        m_puhCbf[0][ui] = pcCU->m_puhCbf[0][ui];
+        m_puhCbf[1][ui] = pcCU->m_puhCbf[1][ui];
+        m_puhCbf[2][ui] = pcCU->m_puhCbf[2][ui];
+        m_pbIPCMFlag[ui] = pcCU->m_pbIPCMFlag[ui];
+    }
+        
+    /*MVFieldA/B/C referenced only during search. Stored as empty here, since this function copies 
+    the results of block matching search. These fields need to be initialised if copyCU is to be used
+    before search.
+    mvPred never referenced anywhere*/
+
+    m_bIsMergeAMP = pcCU->getMergeAMP();
+    m_bDecSubCu = pcCU->getDecSubCu();
+
+    UInt uiTmp = g_uiMaxCUWidth * g_uiMaxCUHeight;
+    m_acCUMvField[0].copyFrom(&pcCU->m_acCUMvField[0], m_uiNumPartition, 0);
+    m_acCUMvField[1].copyFrom(&pcCU->m_acCUMvField[1], m_uiNumPartition, 0);
+    for (Int i = 0; i < uiTmp; i++)
+    {
+        m_pcTrCoeffY[i] = pcCU->m_pcTrCoeffY[i];
+        m_pcArlCoeffY[i] = pcCU->m_pcArlCoeffY[i];
+        m_pcIPCMSampleY[i] = pcCU->m_pcIPCMSampleY[i];
+    }
+
+    for (Int i = 0; i < (uiTmp >> 2); i++)
+    {
+        m_pcTrCoeffCb[i] = pcCU->m_pcTrCoeffCb[i];
+        m_pcTrCoeffCr[i] = pcCU->m_pcTrCoeffCr[i];
+        m_pcArlCoeffCb[i] = pcCU->m_pcArlCoeffCb[i];
+        m_pcArlCoeffCr[i] = pcCU->m_pcArlCoeffCr[i];
+        m_pcIPCMSampleCb[i] = pcCU->m_pcIPCMSampleCb[i];
+        m_pcIPCMSampleCr[i] = pcCU->m_pcIPCMSampleCr[i];
+    }
+    
+
+    // Setting neighbor CU
+    m_pcCULeft        = pcCU->getCULeft();
+    m_pcCUAbove       = pcCU->getCUAbove();
+    m_pcCUAboveLeft   = pcCU->getCUAboveLeft();
+    m_pcCUAboveRight  = pcCU->getCUAboveRight();
+
+    m_apcCUColocated[0] = pcCU->getCUColocated(REF_PIC_LIST_0);
+    m_apcCUColocated[1] = pcCU->getCUColocated(REF_PIC_LIST_1);    
+}
+
+
 // Copy inter prediction info from the biggest CU
 Void TComDataCU::copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList)
 {

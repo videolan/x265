@@ -1043,7 +1043,7 @@ Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int he
     }
 }
 
-Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt /*uiHeight*/, UInt uiDepth, TextType eTType)
+Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType)
 {
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
@@ -1073,29 +1073,27 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
     if (uiWidth > m_pcSlice->getSPS()->getMaxTrSize())
     {
         uiWidth  = m_pcSlice->getSPS()->getMaxTrSize();
+        uiHeight = m_pcSlice->getSPS()->getMaxTrSize();
     }
 
-    const UInt   uiLog2BlockSize = g_aucConvertToBit[uiWidth] + 2;
-    UInt uiScanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, uiWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
-    const UInt *scan = g_auiSigLastScan[uiScanIdx][uiLog2BlockSize - 1];
-    const UInt *scanT= g_auiSigLastScanT[uiScanIdx][uiLog2BlockSize - 1];
-
-    UInt uiSigCoeffGroupFlag[MLS_GRP_NUM];
     UInt uiNumSig = 0;
 
     // compute number of significant coefficients
-    Int scanPosLast;
-    uiNumSig = x265::primitives.scan_coef(pcCoef, scan, scanT, uiSigCoeffGroupFlag, uiWidth, &scanPosLast);
+    uiNumSig = TEncEntropy::countNonZeroCoeffs(pcCoef, uiWidth * uiHeight);
 
     if (uiNumSig == 0)
         return;
     if (pcCU->getSlice()->getPPS()->getUseTransformSkip())
     {
-        codeTransformSkipFlags(pcCU, uiAbsPartIdx, uiWidth, uiWidth, eTType);
+        codeTransformSkipFlags(pcCU, uiAbsPartIdx, uiWidth, uiHeight, eTType);
     }
     eTType = eTType == TEXT_LUMA ? TEXT_LUMA : (eTType == TEXT_NONE ? TEXT_NONE : TEXT_CHROMA);
 
     //----- encode significance map -----
+    const UInt   uiLog2BlockSize = g_aucConvertToBit[uiWidth] + 2;
+    UInt uiScanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, uiWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
+    const UInt *scan = g_auiSigLastScan[uiScanIdx][uiLog2BlockSize - 1];
+
     Bool beValid;
     if (pcCU->getCUTransquantBypass(uiAbsPartIdx))
     {
@@ -1107,6 +1105,8 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
     }
 
     // Find position of last coefficient
+    Int scanPosLast = -1;
+    Int posLast;
 
     const UInt * scanCG;
     {
@@ -1120,16 +1120,33 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
             scanCG = g_sigLastScanCG32x32;
         }
     }
-
+    UInt uiSigCoeffGroupFlag[MLS_GRP_NUM];
     static const UInt uiShift = MLS_CG_SIZE >> 1;
     const UInt uiNumBlkSide = uiWidth >> uiShift;
-    Int posLast;
-    posLast = scan[scanPosLast];
+
+    ::memset(uiSigCoeffGroupFlag, 0, sizeof(UInt) * MLS_GRP_NUM);
+
+    do
+    {
+        posLast = scan[++scanPosLast];
+
+        // get L1 sig map
+        UInt uiPosY    = posLast >> uiLog2BlockSize;
+        UInt uiPosX    = posLast - (uiPosY << uiLog2BlockSize);
+        UInt uiBlkIdx  = uiNumBlkSide * (uiPosY >> uiShift) + (uiPosX >> uiShift);
+        if (pcCoef[posLast])
+        {
+            uiSigCoeffGroupFlag[uiBlkIdx] = 1;
+        }
+
+        uiNumSig -= (pcCoef[posLast] != 0);
+    }
+    while (uiNumSig > 0);
 
     // Code position of last coefficient
     Int posLastY = posLast >> uiLog2BlockSize;
     Int posLastX = posLast - (posLastY << uiLog2BlockSize);
-    codeLastSignificantXY(posLastX, posLastY, uiWidth, uiWidth, eTType, uiScanIdx);
+    codeLastSignificantXY(posLastX, posLastY, uiWidth, uiHeight, eTType, uiScanIdx);
 
     //===== code significance flag =====
     ContextModel * const baseCoeffGroupCtx = m_cCUSigCoeffGroupSCModel.get(0, eTType);
@@ -1171,14 +1188,14 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
         else
         {
             UInt uiSigCoeffGroup   = (uiSigCoeffGroupFlag[iCGBlkPos] != 0);
-            UInt uiCtxSig  = TComTrQuant::getSigCoeffGroupCtxInc(uiSigCoeffGroupFlag, iCGPosX, iCGPosY, uiWidth, uiWidth);
+            UInt uiCtxSig  = TComTrQuant::getSigCoeffGroupCtxInc(uiSigCoeffGroupFlag, iCGPosX, iCGPosY, uiWidth, uiHeight);
             m_pcBinIf->encodeBin(uiSigCoeffGroup, baseCoeffGroupCtx[uiCtxSig]);
         }
 
         // encode significant_coeff_flag
         if (uiSigCoeffGroupFlag[iCGBlkPos])
         {
-            Int patternSigCtx = TComTrQuant::calcPatternSigCtx(uiSigCoeffGroupFlag, iCGPosX, iCGPosY, uiWidth, uiWidth);
+            Int patternSigCtx = TComTrQuant::calcPatternSigCtx(uiSigCoeffGroupFlag, iCGPosX, iCGPosY, uiWidth, uiHeight);
             UInt uiBlkPos, uiPosY, uiPosX, uiSig, uiCtxSig;
             for (; iScanPosSig >= iSubPos; iScanPosSig--)
             {
@@ -1252,8 +1269,14 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
                 }
             }
 
-            int off = (beValid && signHidden) ? 1 : 0;
-            m_pcBinIf->encodeBinsEP((coeffSigns >> off), numNonZero - off);
+            if (beValid && signHidden)
+            {
+                m_pcBinIf->encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
+            }
+            else
+            {
+                m_pcBinIf->encodeBinsEP(coeffSigns, numNonZero);
+            }
 
             Int iFirstCoeff2 = 1;
             if (c1 == 0 || numNonZero > C1FLAG_NUMBER)

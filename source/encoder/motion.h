@@ -43,7 +43,6 @@ protected:
     pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
     pixel *fenc;
     pixel *fencSad;
-    intptr_t sadStride;
 #else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
@@ -52,15 +51,13 @@ protected:
     pixel *fencplane;
     intptr_t fencLumaStride;
 
-    MotionReference *ref;   // current reference frame
-    MV mvmin, mvmax;
-
     pixelcmp sad;
+    pixelcmp bufsad;
     pixelcmp satd;
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
 
-    int blockOffset;
+    intptr_t blockOffset;
     int partEnum;
     int searchMethod;
     int subsample;
@@ -73,7 +70,6 @@ public:
     {
         // fenc must be 16 byte aligned
         fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
-        fencSad = fenc;
     }
 
     ~MotionEstimate() {}
@@ -88,74 +84,35 @@ public:
         fencLumaStride = luma;
     }
 
-    /* Methods called at CU setup */
+    /* Methods called at CU setup.  bufSAD() and motionEstimate() both require
+     * setSourcePU() to be called before they may be called. */
 
     void setSourcePU(int offset, int pwidth, int pheight);
 
-    void setSearchLimits(MV& min, MV& max)    { mvmin = min; mvmax = max; }
+    int bufSAD(pixel *fref, intptr_t stride)  { return bufsad(fenc, FENC_STRIDE, fref, stride); }
 
-    /* Methods called for searches */
-
-#if SUBSAMPLE_SAD
-    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fencSad, FENC_STRIDE, fref, stride << subsample) << subsample; }
-
-#else
-    int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
-
-#endif
-
-    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
-
-    void setReference(MotionReference* tref)  { ref = tref; }
-
-    /* returns SATD QPEL cost of best outMV for this PU */
-    int motionEstimate(const MV &qmvp, int numCandidates, const MV *mvc, int merange, MV &outQMv);
+    int motionEstimate(MotionReference *ref,
+                       const MV &mvmin,
+                       const MV &mvmax,
+                       const MV &qmvp,
+                       int numCandidates,
+                       const MV *mvc,
+                       int merange,
+                       MV &outQMv);
 
 protected:
 
     static const int COST_MAX = 1 << 28;
 
-    inline void StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
-
-    /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
-    inline int fpelSad(pixel *fref, const MV& fmv)
-    {
-#if SUBSAMPLE_SAD
-        return sad(fencSad, FENC_STRIDE,
-                   fref + fmv.y * ref->m_lumaStride  + fmv.x,
-                   sadStride) << subsample;
-#else
-        return sad(fenc, FENC_STRIDE,
-                   fref + fmv.y * ref->m_lumaStride + fmv.x,
-                   ref->m_lumaStride);
-#endif
-    }
-
-    inline int qpelSad(const MV& qmv)
-    {
-        MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
-
-#if SUBSAMPLE_SAD
-        return sad(fencSad, FENC_STRIDE,
-                   qfref + fmv.y * ref->m_lumaStride  + fmv.x,
-                   sadStride) << subsample;
-#else
-        return sad(fenc, FENC_STRIDE,
-                   qfref + fmv.y * ref->m_lumaStride + fmv.x,
-                   ref->m_lumaStride);
-#endif
-    }
-
-    inline int qpelSatd(const MV& qmv)
-    {
-        MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
-
-        return satd(fenc, FENC_STRIDE,
-                    qfref + fmv.y * ref->m_lumaStride + fmv.x,
-                    ref->m_lumaStride);
-    }
+    inline void StarPatternSearch(MotionReference *ref,
+                                  const MV &mvmin,
+                                  const MV &mvmax,
+                                  MV &bmv,
+                                  int &bcost,
+                                  int &bPointNr,
+                                  int &bDistance,
+                                  int16_t dist,
+                                  const MV& omv);
 };
 }
 

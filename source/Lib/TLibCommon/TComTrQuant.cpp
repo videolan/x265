@@ -640,12 +640,12 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
         }
         else
         {
-            x265::primitives.dct[x265::DCT_4x4](block, coeff);
+            x265::primitives.dct[x265::DCT_4x4](block, coeff, iWidth);
         }
     }
     else if (iWidth == 8 && iHeight == 8)
     {
-        x265::primitives.dct[x265::DCT_8x8](block, coeff);
+        x265::primitives.dct[x265::DCT_8x8](block, coeff, iWidth);
     }
     else if (iWidth == 16 && iHeight == 16)
     {
@@ -656,49 +656,6 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     {
         x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, 32);
         x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, 32);
-    }
-}
-
-/** MxN inverse transform (2D)
-*  \param coeff input data (transform coefficients)
-*  \param block output data (residual)
-*  \param iWidth input data (width of transform)
-*  \param iHeight input data (height of transform)
-*/
-void xITrMxN(Int bitDepth, Short *coeff, Short *block, Int iWidth, Int iHeight, UInt uiMode)
-{
-    ALIGN_VAR_32(Short, tmp[64 * 64]);
-
-    Int shift_1st = SHIFT_INV_1ST;
-    Int shift_2nd = SHIFT_INV_2ND - (bitDepth - 8);
-
-    if (iWidth == 4 && iHeight == 4)
-    {
-        if (uiMode != REG_DCT)
-        {
-            x265::primitives.inversedst(coeff, tmp, shift_1st);
-            x265::primitives.inversedst(tmp, block, shift_2nd);
-        }
-        else
-        {
-            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](coeff, tmp, shift_1st, iWidth);
-            x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_4](tmp, block, shift_2nd, iHeight);
-        }
-    }
-    else if (iWidth == 8 && iHeight == 8)
-    {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](coeff, tmp, shift_1st, iWidth);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_8](tmp, block, shift_2nd, iHeight);
-    }
-    else if (iWidth == 16 && iHeight == 16)
-    {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_16](coeff, tmp, shift_1st, iWidth);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_16](tmp, block, shift_2nd, iHeight);
-    }
-    else if (iWidth == 32 && iHeight == 32)
-    {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](coeff, tmp, shift_1st, iWidth);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_INVERSE_32](tmp, block, shift_2nd, iHeight);
     }
 }
 
@@ -1197,18 +1154,16 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, block[64 * 64]);
     ALIGN_VAR_32(Short, coeff[64 * 64]);
-    Int j;
 
     x265::primitives.cvt32to16(plCoef, coeff, iWidth * iHeight);
 
-    xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
+    assert( bitDepth == 8 );
 
-    for (j = 0; j < iHeight; j++)
-    {
-        memcpy(&pResidual[j * uiStride], &block[j * iWidth], sizeof(short) * iWidth);
-    }
+    //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, pResidual, uiStride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping

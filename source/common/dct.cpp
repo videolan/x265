@@ -28,6 +28,7 @@
 #include "Lib/TLibCommon/CommonDef.h"
 #include "butterfly.h"
 #include <algorithm>
+#include <string.h>
 
 /* Used for filter */
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
@@ -420,7 +421,22 @@ void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL xDCT4_C(short *pSrc, short *pDst)
+void CDECL xIDST4_C(short *pSrc, short *pDst, intptr_t stride)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[4 * 4]);
+    ALIGN_VAR_32(Short, tmp2[4 * 4]);
+
+    inversedst(pSrc, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
+    inversedst(tmp, tmp2, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+    for(int i=0; i<4; i++)
+    {
+        memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
+    }
+}
+
+void CDECL xDCT4_C(short *pSrc, short *pDst, intptr_t)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -430,7 +446,22 @@ void CDECL xDCT4_C(short *pSrc, short *pDst)
     partialButterfly4(tmp, pDst, shift_2nd, 4);
 }
 
-void CDECL xDCT8_C(short *pSrc, short *pDst)
+void CDECL xIDCT4_C(short *pSrc, short *pDst, intptr_t stride)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[4 * 4]);
+    ALIGN_VAR_32(Short, tmp2[4 * 4]);
+
+    partialButterflyInverse4(pSrc, tmp, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, tmp output
+    partialButterflyInverse4(tmp, tmp2, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+    for(int i=0; i<4; i++)
+    {
+        memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
+    }
+}
+
+void CDECL xDCT8_C(short *pSrc, short *pDst, intptr_t)
 {
     const int shift_1st = 2;
     const int shift_2nd = 9;
@@ -439,6 +470,52 @@ void CDECL xDCT8_C(short *pSrc, short *pDst)
     partialButterfly8(pSrc, tmp, shift_1st, 8);
     partialButterfly8(tmp, pDst, shift_2nd, 8);
 }
+
+void CDECL xIDCT8_C(short *pSrc, short *pDst, intptr_t stride)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[8 * 8]);
+    ALIGN_VAR_32(Short, tmp2[8 * 8]);
+
+    partialButterflyInverse8(pSrc, tmp, shift_1st, 8);
+    partialButterflyInverse8(tmp, tmp2, shift_2nd, 8);
+    for(int i=0; i<8; i++)
+    {
+        memcpy(&pDst[i * stride], &tmp2[i * 8], 8 * sizeof(short));
+    }
+}
+
+void CDECL xIDCT16_C(short *pSrc, short *pDst, intptr_t stride)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[16 * 16]);
+    ALIGN_VAR_32(Short, tmp2[16 * 16]);
+
+    partialButterflyInverse16(pSrc, tmp, shift_1st, 16);
+    partialButterflyInverse16(tmp, tmp2, shift_2nd, 16);
+    for(int i=0; i<16; i++)
+    {
+        memcpy(&pDst[i * stride], &tmp2[i * 16], 16 * sizeof(short));
+    }
+}
+
+void CDECL xIDCT32_C(short *pSrc, short *pDst, intptr_t stride)
+{
+    const int shift_1st = 7;
+    const int shift_2nd = 12;
+    ALIGN_VAR_32(Short, tmp[32 * 32]);
+    ALIGN_VAR_32(Short, tmp2[32 * 32]);
+
+    partialButterflyInverse32(pSrc, tmp, shift_1st, 32);
+    partialButterflyInverse32(tmp, tmp2, shift_2nd, 32);
+    for(int i=0; i<32; i++)
+    {
+        memcpy(&pDst[i * stride], &tmp2[i * 32], 32 * sizeof(short));
+    }
+}
+
 
 void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
@@ -505,7 +582,7 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
 namespace x265 {
 // x265 private namespace
 
-void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
+void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
@@ -519,6 +596,11 @@ void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
+    p.dct[IDST_4x4] = xIDST4_C;
+    p.dct[IDCT_4x4] = xIDCT4_C;
+    p.dct[IDCT_8x8] = xIDCT8_C;
+    p.dct[IDCT_16x16] = xIDCT16_C;
+    p.dct[IDCT_32x32] = xIDCT32_C;
 
     p.deQuant = xDeQuant;
 }

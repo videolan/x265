@@ -65,11 +65,11 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 {
     Int i;
 
-    m_uhTotalDepth   = uhTotalDepth + 1;
-    m_NxNCU[0]       = new TComDataCU*[m_uhTotalDepth - 1];
-    m_NxNCU[1]       = new TComDataCU*[m_uhTotalDepth - 1];
-    m_NxNCU[2]       = new TComDataCU*[m_uhTotalDepth - 1];
-    m_NxNCU[3]       = new TComDataCU*[m_uhTotalDepth - 1];
+    m_uhTotalDepth          = uhTotalDepth + 1;
+    m_InterCU_2Nx2N         = new TComDataCU*[m_uhTotalDepth - 1];
+    m_InterCU_Rect          = new TComDataCU*[m_uhTotalDepth - 1];
+    m_IntrainInterCU        = new TComDataCU*[m_uhTotalDepth - 1];
+    m_MergeCU               = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcBestCU      = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
 
@@ -100,14 +100,14 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
         m_ppcTempCU[i] = new TComDataCU;
         m_ppcTempCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
 
-        m_NxNCU[0][i] = new TComDataCU;
-        m_NxNCU[0][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_NxNCU[1][i] = new TComDataCU;
-        m_NxNCU[1][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_NxNCU[2][i] = new TComDataCU;
-        m_NxNCU[2][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_NxNCU[3][i] = new TComDataCU;
-        m_NxNCU[3][i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_InterCU_2Nx2N[i] = new TComDataCU;
+        m_InterCU_2Nx2N[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_InterCU_Rect[i] = new TComDataCU;
+        m_InterCU_Rect[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_IntrainInterCU[i] = new TComDataCU;
+        m_IntrainInterCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_MergeCU[i] = new TComDataCU;
+        m_MergeCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
 
         m_ppcPredYuvBest[i] = new TComYuv;
         m_ppcPredYuvBest[i]->create(uiWidth, uiHeight);
@@ -156,29 +156,29 @@ Void TEncCu::destroy()
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
-        if (m_NxNCU[0][i])
+        if (m_InterCU_2Nx2N[i])
         {
-            m_NxNCU[0][i]->destroy();
-            delete m_NxNCU[0][i];
-            m_NxNCU[0][i] = NULL;
+            m_InterCU_2Nx2N[i]->destroy();
+            delete m_InterCU_2Nx2N[i];
+            m_InterCU_2Nx2N[i] = NULL;
         }
-        if (m_NxNCU[1][i])
+        if (m_InterCU_Rect[i])
         {
-            m_NxNCU[1][i]->destroy();
-            delete m_NxNCU[1][i];
-            m_NxNCU[1][i] = NULL;
+            m_InterCU_Rect[i]->destroy();
+            delete m_InterCU_Rect[i];
+            m_InterCU_Rect[i] = NULL;
         }
-        if (m_NxNCU[2][i])
+        if (m_IntrainInterCU[i])
         {
-            m_NxNCU[2][i]->destroy();
-            delete m_NxNCU[2][i];
-            m_NxNCU[2][i] = NULL;
+            m_IntrainInterCU[i]->destroy();
+            delete m_IntrainInterCU[i];
+            m_IntrainInterCU[i] = NULL;
         }
-        if (m_NxNCU[3][i])
+        if (m_MergeCU[i])
         {
-            m_NxNCU[3][i]->destroy();
-            delete m_NxNCU[3][i];
-            m_NxNCU[3][i] = NULL;
+            m_MergeCU[i]->destroy();
+            delete m_MergeCU[i];
+            m_MergeCU[i] = NULL;
         }
 
         if (m_ppcBestCU[i])
@@ -262,26 +262,26 @@ Void TEncCu::destroy()
         }
     }
 
-    if (m_NxNCU[0])
+    if (m_InterCU_2Nx2N)
     {
-        delete [] m_NxNCU[0];
-        m_NxNCU[0] = NULL;
+        delete [] m_InterCU_2Nx2N;
+        m_InterCU_2Nx2N = NULL;
     }
 
-    if (m_NxNCU[1])
+    if (m_InterCU_Rect)
     {
-        delete [] m_NxNCU[1];
-        m_NxNCU[1] = NULL;
+        delete [] m_InterCU_Rect;
+        m_InterCU_Rect = NULL;
     }
-    if (m_NxNCU[2])
+    if (m_IntrainInterCU)
     {
-        delete [] m_NxNCU[2];
-        m_NxNCU[2] = NULL;
+        delete [] m_IntrainInterCU;
+        m_IntrainInterCU = NULL;
     }
-    if (m_NxNCU[3])
+    if (m_MergeCU)
     {
-        delete [] m_NxNCU[3];
-        m_NxNCU[3] = NULL;
+        delete [] m_MergeCU;
+        m_MergeCU = NULL;
     }
     if (m_ppcBestCU)
     {
@@ -408,7 +408,11 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else
+#if FAST_MODE_DECISION
+        xCompressInterCU(m_ppcBestCU[0], m_ppcTempCU[0], 0);
+#else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
+#endif
 
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -1795,6 +1799,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
                     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+                    x265_emms();
                     rpcTempCU->getTotalDistortion() = SATD;
                     rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
 #endif
@@ -1866,30 +1871,21 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(),      0, uhDepth);
 
     rpcTempCU->setMergeAMP(true);
-    m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], false, bUseMRG);
-
-    if (!rpcTempCU->getMergeAMP())
-    {
-        return;
-    }
-
-    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+    m_ppcRecoYuvTemp[uhDepth]->clear();
+    m_ppcResiYuvTemp[uhDepth]->clear();
+    m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], bUseMRG);
+        
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
-        /* TODO: this needs tobe tested with RC enable, currently RC enable x265 is not working */
-    
+        /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
+        UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
         UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
                                             (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
+        x265_emms();
     }
 
     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
-#if FAST_MODE_DECISION
-    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-    rpcTempCU->getTotalDistortion() = SATD;
-#endif
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
     
     xCheckDQP(rpcTempCU);
 
@@ -1994,6 +1990,7 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
     UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
     UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
                                         (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
+    x265_emms();
     rpcTempCU->getTotalDistortion() = SATD;
 #endif
     rpcTempCU->getTotalCost() = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
