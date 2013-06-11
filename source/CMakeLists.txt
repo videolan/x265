@@ -30,7 +30,7 @@ if("$ENV{CXX}" STREQUAL "icpc")
     add_definitions(-Wall -Wextra -Werror -Wshadow -no-vec)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     set(GCC 1)
-    add_definitions(-Wall -Wextra -Werror -Wshadow)
+    add_definitions(-Wall -Wextra -Werror -Wshadow -mstackrealign)
 endif()
 
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
