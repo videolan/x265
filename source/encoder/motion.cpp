@@ -377,9 +377,8 @@ int MotionEstimate::motionEstimate(MotionReference *ref,
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->m_lumaStride;
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
-
 #if SUBSAMPLE_SAD
-    sadStride = ref->m_lumaStride << subsample;
+    size_t sadStride = ref->m_lumaStride << subsample;
 #endif
 
     setMVP(qmvp);
@@ -936,6 +935,9 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
     size_t stride = ref->m_lumaStride;
+#if SUBSAMPLE_SAD
+    size_t sadStride = ref->m_lumaStride << subsample;
+#endif
 
     if (dist == 1)
     {
