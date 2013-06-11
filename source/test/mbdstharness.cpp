@@ -42,7 +42,7 @@ const char *ButterflyConf_names[] =
 };
 
 struct DctConf_t {
-    char *name;
+    const char *name;
     int width;
 };
 const DctConf_t DctConf_infos[] =

@@ -154,14 +154,14 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 #pragma warning(disable: 4100)
 
 template< int size >
-__forceinline void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+ALWAYSINLINE void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
     unrollFunc_16< 1 >(piOrg, strideOrg, piCur, strideCur, sad);
     unrollFunc_16< size - 1 >(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
 }
 
 template<>
-__forceinline void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+ALWAYSINLINE void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
     Vec16uc m1, n1;
     m1.load_a(piOrg);
