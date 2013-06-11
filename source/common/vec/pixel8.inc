@@ -178,25 +178,12 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     int main_iters = (ly >> 4) << 4;
     int row = 0;
 
-    if(ly == 4)
+    if (ly < 16)
     {
-        unrollFunc_16< 4 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
+        unrollFunc_16< ly >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
         sum += extend_low(sad) + extend_high(sad);
         return horizontal_add(sum);
     }
-    if(ly == 8)
-    {
-        unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
-        sum += extend_low(sad) + extend_high(sad);
-        return horizontal_add(sum);
-    }
-    if(ly == 12)
-    {
-        unrollFunc_16< 12 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
-        sum += extend_low(sad) + extend_high(sad);
-        return horizontal_add(sum);
-    }
-
     for (row = 0; row < main_iters; row += 16)
     {
         unrollFunc_16< 16 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
@@ -205,7 +192,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
         piOrg += strideOrg*16;
         piCur += strideCur*16;
     }
-    if(ly==24)
+    if (ly == 24)
     {
         unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad, 0);
         sum += extend_low(sad) + extend_high(sad);  
