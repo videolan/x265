@@ -26,6 +26,12 @@
 // Vector class versions of pixel comparison performance primitives
 /* intrinsics for when pixel type is uint8_t */
 
+#if defined(_MSC_VER)
+#undef ALWAYSINLINE
+#define ALWAYSINLINE  __forceinline
+#pragma warning(disable: 4100) // unused formal parameters
+#endif
+
 template<int ly>
 int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
@@ -66,43 +72,52 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
     return horizontal_add(sum);
 }
 
+template<int size>
+ALWAYSINLINE void unrollFunc_8(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    unrollFunc_8<1>(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_8<size - 1>(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_8<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    Vec16uc m1, n1;
+    m1.load_a(piOrg);
+    n1.load(piCur);
+    sad[0].addSumAbsDiff(m1, n1);
+}
+
 template<int ly>
 int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16uc m1, n1;
-
     Vec4i sum(0);
-    Vec8us sad(0);
-    int main_iters = (ly >> 4) << 4;
+    Vec8us sad;
+    int main_iters = (ly >> 3) << 3;
     int row;
 
-    for (row = 0; row < main_iters; row += 16)
+    if (ly < 8)
     {
-        for (int i = 0; i < 16; i++)
-        {
-            m1.load_a(piOrg);
-            n1.load(piCur);
-            sad.addSumAbsDiff(m1, n1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
-        sum += extend_low(sad);
         sad = 0;
+        unrollFunc_8<ly>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad);
+        return horizontal_add(sum);
     }
-
-    while (row++ < ly)
+    for (row = 0; row < main_iters; row += 8)
     {
-        m1.load_a(piOrg);
-        n1.load(piCur);
-        sad.addSumAbsDiff(m1, n1);
-
-        piOrg += strideOrg;
-        piCur += strideCur;
+        sad = 0;
+        unrollFunc_8<8>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad);
+        piOrg += strideOrg * 8;
+        piCur += strideCur * 8;
     }
 
-    sum += extend_low(sad);
+    if (ly & 4)
+    {
+        sad = 0;
+        unrollFunc_8<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad);
+    }
     return horizontal_add(sum);
 }
 
@@ -150,32 +165,26 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     return horizontal_add(sum);
 }
 
-#if defined(_MSC_VER)
-#undef ALWAYSINLINE
-#define ALWAYSINLINE  __forceinline
-#pragma warning(disable: 4100) // unused formal parameters
-#endif
-
-template< int size >
+template<int size>
 ALWAYSINLINE void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
-    unrollFunc_16< 1 >(piOrg, strideOrg, piCur, strideCur, sad);
-    unrollFunc_16< size - 1 >(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+    unrollFunc_16<1>(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_16<size - 1>(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_16< 1 >(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+ALWAYSINLINE void unrollFunc_16<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
     Vec16uc m1, n1;
+
     m1.load_a(piOrg);
     n1.load(piCur);
     sad[0].addSumAbsDiff(m1, n1);
-} 
+}
 
 template<int ly>
 int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16uc m1, n1;
     Vec4i sum(0);
     Vec8us sad(0);
     int main_iters = (ly >> 4) << 4;
@@ -183,27 +192,28 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 
     if (ly < 16)
     {
-        unrollFunc_16< ly >(piOrg, strideOrg, piCur, strideCur, &sad);
+        unrollFunc_16<ly>(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);
         return horizontal_add(sum);
     }
     for (row = 0; row < main_iters; row += 16)
     {
-        unrollFunc_16< 16 >(piOrg, strideOrg, piCur, strideCur, &sad);
-        sum += extend_low(sad) + extend_high(sad);  
+        unrollFunc_16<16>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
         sad = 0;
-        piOrg += strideOrg*16;
-        piCur += strideCur*16;
+        piOrg += strideOrg * 16;
+        piCur += strideCur * 16;
     }
+
     if (ly & 8)
     {
-        unrollFunc_16< 8 >(piOrg, strideOrg, piCur, strideCur, &sad);
-        sum += extend_low(sad) + extend_high(sad);  
+        unrollFunc_16<8>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
         return horizontal_add(sum);
     }
-    sum += extend_low(sad) + extend_high(sad);
-    return horizontal_add(sum);    
+    return horizontal_add(sum);
 }
+
 
 template<int ly>
 int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
@@ -257,146 +267,151 @@ int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t stride
     return horizontal_add(sum);
 }
 
-template<int ly>
-int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+template<int size>
+ALWAYSINLINE void unrollFunc_32(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    unrollFunc_32<1>(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_32<size - 1>(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_32<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
 {
     Vec16uc m1, n1;
 
+    m1.load_a(piOrg);
+    n1.load(piCur);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 16);
+    n1.load(piCur + 16);
+    sad[0].addSumAbsDiff(m1, n1);
+}
+
+template<int ly>
+int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+{
     Vec4i sum(0);
-    Vec8us sad(0);
-    int main_iters = (ly >> 3) << 3;
+    Vec8us sad;
+    int main_iters = (ly >> 2) << 2;
     int row;
-
-    for (row = 0; row < main_iters; row += 8)
+    if (ly == 4)
     {
-        for (int i = 0; i < 8; i++)
-        {
-            m1.load_a(piOrg);
-            n1.load(piCur);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 16);
-            n1.load(piCur + 16);
-            sad.addSumAbsDiff(m1, n1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
-        sum += extend_low(sad) + extend_high(sad);
         sad = 0;
+        unrollFunc_32<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
     }
-
-    while (row++ < ly)
+    for (row = 0; row < main_iters; row += 4)
     {
-        m1.load_a(piOrg);
-        n1.load(piCur);
-        sad.addSumAbsDiff(m1, n1);
-
-        m1.load_a(piOrg + 16);
-        n1.load(piCur + 16);
-        sad.addSumAbsDiff(m1, n1);
-
-        piOrg += strideOrg;
-        piCur += strideCur;
+        sad = 0;
+        unrollFunc_32<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
+        piOrg += strideOrg * 4;
+        piCur += strideCur * 4;
     }
 
-    sum += extend_low(sad) + extend_high(sad);
     return horizontal_add(sum);
+}
+
+template<int size>
+ALWAYSINLINE void unrollFunc_48(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    unrollFunc_48<1>(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_48<size - 1>(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_48<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    Vec16uc m1, n1;
+
+    m1.load_a(piOrg);
+    n1.load(piCur);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 16);
+    n1.load(piCur + 16);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 32);
+    n1.load(piCur + 32);
+    sad[0].addSumAbsDiff(m1, n1);
 }
 
 template<int ly>
 int CDECL sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16uc m1, n1;
-
     Vec4i sum(0);
     Vec8us sad(0);
     int main_iters = (ly >> 3) << 3;
     int row;
-
+    if (ly == 4)
+    {
+        unrollFunc_48<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
+    }
     for (row = 0; row < main_iters; row += 8)
     {
-        for (int i = 0; i < 8; i++)
-        {
-            m1.load_a(piOrg);
-            n1.load(piCur);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 16);
-            n1.load(piCur + 16);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 32);
-            n1.load(piCur + 32);
-            sad.addSumAbsDiff(m1, n1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
+        unrollFunc_48<8>(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad) + extend_high(sad);
         sad = 0;
+        piOrg += strideOrg * 8;
+        piCur += strideCur * 8;
     }
 
-    while (row++ < ly)
+    if (ly & 4)
     {
-        m1.load_a(piOrg);
-        n1.load(piCur);
-        sad.addSumAbsDiff(m1, n1);
-
-        m1.load_a(piOrg + 16);
-        n1.load(piCur + 16);
-        sad.addSumAbsDiff(m1, n1);
-
-        m1.load_a(piOrg + 32);
-        n1.load(piCur + 32);
-        sad.addSumAbsDiff(m1, n1);
-
-        piOrg += strideOrg;
-        piCur += strideCur;
+        unrollFunc_48<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
     }
-
-    sum += extend_low(sad) + extend_high(sad);
     return horizontal_add(sum);
+}
+
+template<int size>
+ALWAYSINLINE void unrollFunc_64(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    unrollFunc_64<1>(piOrg, strideOrg, piCur, strideCur, sad);
+    unrollFunc_64<size - 1>(piOrg + strideOrg, strideOrg, piCur + strideCur, strideCur, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_64<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
+{
+    Vec16uc m1, n1;
+
+    m1.load_a(piOrg);
+    n1.load(piCur);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 16);
+    n1.load(piCur + 16);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 32);
+    n1.load(piCur + 32);
+    sad[0].addSumAbsDiff(m1, n1);
+
+    m1.load_a(piOrg + 48);
+    n1.load(piCur + 48);
+    sad[0].addSumAbsDiff(m1, n1);
 }
 
 template<int ly>
 int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
-    Vec16uc m1, n1;
-
     Vec4i sum(0);
-    Vec8us sad(0);
+    Vec8us sad;
     int main_iters = (ly >> 2) << 2;
     int row;
-
     for (row = 0; row < main_iters; row += 4)
     {
-        for (int i = 0; i < 4; i++)
-        {
-            m1.load_a(piOrg);
-            n1.load(piCur);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 16);
-            n1.load(piCur + 16);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 32);
-            n1.load(piCur + 32);
-            sad.addSumAbsDiff(m1, n1);
-
-            m1.load_a(piOrg + 48);
-            n1.load(piCur + 48);
-            sad.addSumAbsDiff(m1, n1);
-
-            piOrg += strideOrg;
-            piCur += strideCur;
-        }
-
-        sum += extend_low(sad) + extend_high(sad);
         sad = 0;
+        unrollFunc_64<4>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad) + extend_high(sad);
+        piOrg += strideOrg * 4;
+        piCur += strideCur * 4;
     }
 
     return horizontal_add(sum);
