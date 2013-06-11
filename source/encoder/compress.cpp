@@ -257,14 +257,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
             uiTargetPartIdx = 0;
             if (hasResidual)
             {
-#if !RDO_WITHOUT_DQP_BITS
-                m_pcEntropyCoder->resetBits();
-                m_pcEntropyCoder->encodeQP(rpcTempCU, uiTargetPartIdx, false);
-                rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // dQP bits
-                rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-                rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-#endif
-
                 Bool foundNonZeroCbf = false;
                 rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
                 assert(foundNonZeroCbf);
