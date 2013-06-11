@@ -86,10 +86,7 @@ void CTURow::processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferS
     ((TEncBinCABAC*)m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
     m_cCuEncoder.set_pcRDGoOnSbacCoder(&m_cRDGoOnSbacCoder);
 
-    {
-        PPAScopeEvent(Thread_compressCU);
-        m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
-    }
+    m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
 
     // restore entropy coder to an initial state
     m_cEntropyCoder.setEntropyCoder(m_pppcRDSbacCoders[0][CI_CURR_BEST], pcSlice);
@@ -99,10 +96,7 @@ void CTURow::processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferS
     m_cBitCounter.resetBits();
     pcRDSbacCoder->setBinsCoded(0);
 
-    {
-        PPAScopeEvent(Thread_encodeCU);
-        m_cCuEncoder.encodeCU(pcCU);  // Count bits
-    }
+    m_cCuEncoder.encodeCU(pcCU);  // Count bits
 
     pcRDSbacCoder->setBinCountingEnableFlag(false);
     
@@ -137,6 +131,8 @@ void CTURow::destroy()
 
 EncodeFrame::EncodeFrame(ThreadPool* pool)
     : QueueFrame(pool)
+    , m_pcCfg(NULL)
+    , m_pcSlice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
