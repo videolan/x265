@@ -109,22 +109,6 @@ protected:
 
     inline void StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
 
-    inline int qpelSad(const MV& qmv)
-    {
-        MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
-
-#if SUBSAMPLE_SAD
-        return sad(fencSad, FENC_STRIDE,
-                   qfref + fmv.y * ref->m_lumaStride  + fmv.x,
-                   sadStride) << subsample;
-#else
-        return sad(fenc, FENC_STRIDE,
-                   qfref + fmv.y * ref->m_lumaStride + fmv.x,
-                   ref->m_lumaStride);
-#endif
-    }
-
     inline int qpelSatd(const MV& qmv)
     {
         MV fmv = qmv >> 2;

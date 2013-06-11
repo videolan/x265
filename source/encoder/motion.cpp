@@ -142,6 +142,14 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 
 #if SUBSAMPLE_SAD
 
+#define COST_QMV(cost, qmv) \
+    do \
+    { \
+        MV fmv = qmv >> 2; \
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
+        (cost) = sad(fencSad, FENC_STRIDE, qfref + fmv.y * stride  + fmv.x, sadStride) << subsample; \
+    } while (0)
+
 #define COST_MV_PT_DIST(mx, my, point, dist) \
     do \
     { \
@@ -250,6 +258,14 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
         cost += mvcost(MV(mx, my) << 2); \
         COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
+    } while (0)
+
+#define COST_QMV(cost, qmv) \
+    do \
+    { \
+        MV fmv = qmv >> 2; \
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset; \
+        (cost) = sad(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride); \
     } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
@@ -377,8 +393,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     // measure SAD cost at clipped QPEL MVP
     MV pmv = qmvp.clipped(qmvmin, qmvmax);
-    int bprecost = qpelSad(pmv); // ignore MVD cost for clipped MVP
+    int bprecost;
     MV bestpre = pmv;
+    COST_QMV(bprecost, pmv); // ignore MVD cost for clipped MVP
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
@@ -413,7 +430,9 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
         MV m = mvc[i].clipped(qmvmin, qmvmax);
         if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            int cost = qpelSad(m) + mvcost(m);
+            int cost;
+            COST_QMV(cost, m);
+            cost += mvcost(m);
             if (cost < bprecost)
             {
                 bprecost = cost;
