@@ -38,7 +38,7 @@ endif(MSVC)
 add_library(common
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
     primitives.cpp primitives.h
-    pixel.cpp macroblock.cpp ipfilter.cpp IntraPred.cpp
+    pixel.cpp dct.cpp ipfilter.cpp IntraPred.cpp
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h

@@ -27,6 +27,16 @@
 
 // Vector class versions of macroblock performance primitives
 
+#include "primitives.h"
+#include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
+
+#include <assert.h>
+#include <string.h>
+#include <smmintrin.h>
+#include <algorithm>
+
+namespace {
+
 /* Used for filter */
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
@@ -5678,9 +5688,14 @@ void xIDCT32(short *pSrc, short *pDst, intptr_t stride)
         }
     }
 }
+}
 
+#include "utils.h"
 
-void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
+namespace x265 {
+// private x265 namespace
+
+void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 {
     p.inversedst = inversedst;
 
@@ -5701,4 +5716,5 @@ void Setup_Vec_MacroblockPrimitives(EncoderPrimitives &p)
     p.dct[IDCT_8x8] = xIDCT8;
     p.dct[IDCT_16x16] = xIDCT16;
     p.dct[IDCT_32x32] = xIDCT32;
+}
 }

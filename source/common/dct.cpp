@@ -582,7 +582,7 @@ void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iH
 namespace x265 {
 // x265 private namespace
 
-void Setup_C_MacroblockPrimitives(EncoderPrimitives& p)
+void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
     p.inversedst = inversedst;
 
