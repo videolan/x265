@@ -958,24 +958,8 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     }
 
     //===== get residual signal =====
-    {
-        // get residual
-        Pel*  pOrg    = piOrg;
-        Pel*  pPred   = piPred;
-        Short* pResi  = piResi;
-        //TODO : performance primitive?
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pResi[uiX] = static_cast<Short>(pOrg[uiX]) - static_cast<Short>(pPred[uiX]);
-            }
 
-            pOrg  += uiStride;
-            pResi += uiStride;
-            pPred += uiStride;
-        }
-    }
+    primitives.getResidue((pixel*)piOrg,(pixel*)piPred,piResi, uiHeight, uiWidth, uiStride);
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
@@ -1013,30 +997,9 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         }
     }
 
-    //===== reconstruction =====
-    {
-        Pel*   pPred      = piPred;
-        Short* pResi      = piResi;
-        Pel*   pReco      = piReco;
-        Short* pRecQt     = piRecQt;
-        Pel*   pRecIPred  = piRecIPred;
-        //TODO : performance primitive?
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pReco[uiX] = ClipY(static_cast<Short>(pPred[uiX]) + pResi[uiX]);
-                pRecQt[uiX] = (Short)pReco[uiX];
-                pRecIPred[uiX] = pReco[uiX];
-            }
+    //===== reconstruction =====  
 
-            pPred     += uiStride;
-            pResi     += uiStride;
-            pReco     += uiStride;
-            pRecQt    += uiRecQtStride;
-            pRecIPred += uiRecIPredStride;
-        }
-    }
+    primitives.calcRecons((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride, uiHeight, uiWidth);
 
     //===== update distortion =====
     int Part = PartitionFromSizes(uiWidth, uiHeight);
@@ -1114,18 +1077,9 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         if (default0Save1Load2 == 1)
         {
             Pel*  pPred   = piPred;
-            Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];
-            Int k = 0;
-            //TODO : performance primitive???
-            for (UInt uiY = 0; uiY < uiHeight; uiY++)
-            {
-                for (UInt uiX = 0; uiX < uiWidth; uiX++)
-                {
-                    pPredBuf[k++] = pPred[uiX];
-                }
-
-                pPred += uiStride;
-            }
+            Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];            
+            
+            primitives.cpyblock(uiWidth,uiHeight,pPredBuf,uiWidth, pPred, uiStride);
         }
     }
     else
@@ -1133,37 +1087,12 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         // load prediction
         Pel*  pPred   = piPred;
         Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];
-        Int k = 0;
-        //TODO : performance primitive???
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pPred[uiX] = pPredBuf[k++];
-            }
-
-            pPred += uiStride;
-        }
+        
+        primitives.cpyblock(uiWidth,uiHeight,pPred,uiStride,pPredBuf,uiWidth);
     }
-    //===== get residual signal =====
-    {
-        // get residual
-        Pel*  pOrg    = piOrg;
-        Pel*  pPred   = piPred;
-        Short*  pResi   = piResi;
-        //TODO : performance primitive???
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pResi[uiX] = static_cast<Short>(pOrg[uiX]) - static_cast<Short>(pPred[uiX]);
-            }
+    //===== get residual signal =====    
 
-            pOrg  += uiStride;
-            pResi += uiStride;
-            pPred += uiStride;
-        }
-    }
+    primitives.getResidue((pixel*)piOrg,(pixel*)piPred,piResi, uiHeight, uiWidth, uiStride);
 
     //===== transform and quantization =====
     {
@@ -1211,29 +1140,8 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
     }
 
     //===== reconstruction =====
-    {
-        Pel* pPred      = piPred;
-        Short* pResi      = piResi;
-        Pel* pReco      = piReco;
-        Short* pRecQt     = piRecQt;
-        Pel* pRecIPred  = piRecIPred;
-        //TODO : performance primitive???
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pReco[uiX] = ClipC(static_cast<Short>(pPred[uiX]) + pResi[uiX]);
-                pRecQt[uiX] = (Short)pReco[uiX];
-                pRecIPred[uiX] = pReco[uiX];
-            }
-
-            pPred     += uiStride;
-            pResi     += uiStride;
-            pReco     += uiStride;
-            pRecQt    += uiRecQtStride;
-            pRecIPred += uiRecIPredStride;
-        }
-    }
+    
+    primitives.calcRecons((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride, uiHeight, uiWidth);
 
     //===== update distortion =====
     int Part = x265::PartitionFromSizes(uiWidth, uiHeight);
