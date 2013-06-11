@@ -468,11 +468,6 @@ Void TEncSlice::compressSlice(TComPic* rpcPic)
     TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
     xDetermineStartAndBoundingCUAddr(rpcPic, false);
 
-    // initialize cost values
-    m_uiPicTotalBits  = 0;
-    m_dPicRdCost      = 0;
-    m_uiPicDist       = 0;
-
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
     //------------------------------------------------------------------------------

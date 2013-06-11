@@ -74,9 +74,6 @@ private:
     // processing units
     TEncGOP*                m_pcGOPEncoder;                     ///< GOP encoder
 
-    UInt64                  m_uiPicTotalBits;                   ///< total bits for the picture
-    UInt64                  m_uiPicDist;                        ///< total distortion for the picture
-    Double                  m_dPicRdCost;                       ///< picture-level RD cost
     UInt                    m_uiSliceIdx;
     std::vector<TEncSbac*>  CTXMem;
 
@@ -99,9 +96,6 @@ public:
 
     // misc. functions
     Void    setSearchRange(TComSlice* pcSlice);                                         ///< set ME range adaptively
-    UInt64  getTotalBits()  { return m_uiPicTotalBits; }
-
-//     TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                      ///< CU encoder
 
     Void    xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice);
     UInt    getSliceIdx()         { return m_uiSliceIdx; }

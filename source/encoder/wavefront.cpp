@@ -237,10 +237,10 @@ void EncodeFrame::ProcessRow(int irow)
         TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && irow > 0) ? &m_rows[irow - 1].m_cBufferSbacCoder : NULL;
         codeRow.processCU(pcCU, m_pcSlice, pcBufSBac, m_enableWpp && uiCol == 1);
 
-        // FIXME: If needed, these counters may be added atomically to slice or this (needed for rate control?)
-        //m_uiPicTotalBits += pcCU->getTotalBits();
-        //m_dPicRdCost     += pcCU->getTotalCost();
-        //m_uiPicDist      += pcCU->getTotalDistortion();
+        // TODO: Keep atomic running totals for rate control?
+        // pcCU->getTotalBits();
+        // pcCU->getTotalCost();
+        // pcCU->getTotalDistortion();
 
         // Completed CU processing
         curRow.m_curCol++;
