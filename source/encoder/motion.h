@@ -57,7 +57,7 @@ protected:
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
 
-    int blockOffset;
+    intptr_t blockOffset;
     int partEnum;
     int searchMethod;
     int subsample;
