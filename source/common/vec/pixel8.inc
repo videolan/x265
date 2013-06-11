@@ -153,8 +153,8 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 #if defined(_MSC_VER)
 #undef ALWAYSINLINE
 #define ALWAYSINLINE  __forceinline
-#endif
 #pragma warning(disable: 4100) // unused formal parameters
+#endif
 
 template< int size >
 ALWAYSINLINE void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)

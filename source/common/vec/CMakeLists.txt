@@ -40,9 +40,9 @@ if(GCC)
         ipfilter-sse2.cpp ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
         dct-sse2.cpp dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp
         intra-sse2.cpp intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp
-        PROPERTIES COMPILE_FLAGS -msse4)
+        PROPERTIES COMPILE_FLAGS "-msse4 -Wno-unused-parameter")
     set_source_files_properties(avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp
-        PROPERTIES COMPILE_FLAGS -mavx)
+        PROPERTIES COMPILE_FLAGS "-mavx -Wno-unused-parameter")
 endif(GCC)
 
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
