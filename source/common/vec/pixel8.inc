@@ -93,29 +93,28 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 {
     Vec4i sum(0);
     Vec8us sad;
-    int main_iters = (ly >> 3) << 3;
+    int main_iters = (ly >> 4) << 4;
     int row;
 
-    if (ly < 8)
+    if (ly < 16)
     {
         sad = 0;
         unrollFunc_8<ly>(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad);
         return horizontal_add(sum);
     }
-    for (row = 0; row < main_iters; row += 8)
+    for (row = 0; row < main_iters; row += 16)
+    {
+        sad = 0;
+        unrollFunc_8<16>(piOrg, strideOrg, piCur, strideCur, &sad);
+        sum += extend_low(sad);
+        piOrg += strideOrg * 16;
+        piCur += strideCur * 16;
+    }
+    if (ly & 8)
     {
         sad = 0;
         unrollFunc_8<8>(piOrg, strideOrg, piCur, strideCur, &sad);
-        sum += extend_low(sad);
-        piOrg += strideOrg * 8;
-        piCur += strideCur * 8;
-    }
-
-    if (ly & 4)
-    {
-        sad = 0;
-        unrollFunc_8<4>(piOrg, strideOrg, piCur, strideCur, &sad);
         sum += extend_low(sad);
     }
     return horizontal_add(sum);
