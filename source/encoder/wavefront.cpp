@@ -137,16 +137,13 @@ void CTURow::destroy()
 
 EncodeFrame::EncodeFrame(ThreadPool* pool)
     : QueueFrame(pool)
-    , m_pcSbacCoder(NULL)
-    , m_pcBinCABAC(NULL)
-    , m_pcSlice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
 
 void EncodeFrame::destroy()
 {
-    JobProvider::Flush();
+    JobProvider::Flush();  // ensure no worker threads are using this frame
 
     if (m_rows)
     {
@@ -157,14 +154,33 @@ void EncodeFrame::destroy()
 
         delete[] m_rows;
     }
+
+    m_cSliceEncoder.destroy();
+    if (m_pcCfg->getUseSAO())
+    {
+        m_cEncSAO.destroy();
+        m_cEncSAO.destroyEncBuffer();
+    }
+    m_cLoopFilter.destroy();
 }
 
-void EncodeFrame::create(TEncTop *top)
+void EncodeFrame::init(TEncTop *top)
 {
+    m_pcCfg = top;
     m_nrows = top->getNumSubstreams();
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
-    m_pcSbacCoder = top->getSbacCoder();
-    m_pcBinCABAC = top->getBinCABAC();
+
+    m_cSliceEncoder.init(top);
+    m_cSliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, (UChar) g_uiMaxCUDepth);
+    if (top->getUseSAO())
+    {
+        m_cEncSAO.setSaoLcuBoundary(top->getSaoLcuBoundary());
+        m_cEncSAO.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
+        m_cEncSAO.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
+        m_cEncSAO.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
+        m_cEncSAO.createEncBuffer();
+    }
+    m_cLoopFilter.create(g_uiMaxCUDepth);
 
     m_rows = new CTURow[m_nrows];
     for (int i = 0; i < m_nrows; ++i)
@@ -179,19 +195,19 @@ void EncodeFrame::create(TEncTop *top)
     }
 }
 
-void EncodeFrame::Encode(TComPic *pic, TComSlice* pcSlice)
+void EncodeFrame::Encode(TComPic *pic, TComSlice *pcSlice)
 {
     m_pic = pic;
     m_pcSlice = pcSlice;
 
     // reset entropy coders
-    m_pcSbacCoder->init(m_pcBinCABAC);
+    m_cSbacCoder.init(&m_cBinCoderCABAC);
     for (int i = 0; i < this->m_nrows; i++)
     {
         m_rows[i].init();
-        m_rows[i].m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, pcSlice);
+        m_rows[i].m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
         m_rows[i].m_cEntropyCoder.resetEntropy();
-        m_rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(m_pcSbacCoder);
+        m_rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(&m_cSbacCoder);
     }
 
     QueueFrame::Enqueue();
@@ -220,7 +236,7 @@ void EncodeFrame::ProcessRow(int irow)
         TComDataCU* pcCU = m_pic->getCU(uiCUAddr);
         pcCU->initCU(m_pic, uiCUAddr);
 
-        codeRow.m_cEntropyCoder.setEntropyCoder(m_pcSbacCoder, m_pcSlice);
+        codeRow.m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.resetEntropy();
 
         TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && irow > 0) ? &m_rows[irow - 1].m_cBufferSbacCoder : NULL;

@@ -91,7 +91,6 @@ Void TEncTop::create()
 
     // create processing unit classes
     m_cGOPEncoder.create();
-    m_cSliceEncoder.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
     if (m_bUseSAO)
     {
         m_cEncSAO.setSaoLcuBoundary(getSaoLcuBoundary());
@@ -100,7 +99,8 @@ Void TEncTop::create()
         m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
         m_cEncSAO.createEncBuffer();
     }
-    m_cLoopFilter.create(g_uiMaxCUDepth);
+
+    m_cFrameEncoders = new x265::EncodeFrame(m_threadPool);
 
     if (m_RCEnableRateControl)
     {
@@ -113,13 +113,11 @@ Void TEncTop::destroy()
 {
     // destroy processing unit classes
     m_cGOPEncoder.destroy();
-    m_cSliceEncoder.destroy();
     if (m_cSPS.getUseSAO())
     {
         m_cEncSAO.destroy();
         m_cEncSAO.destroyEncBuffer();
     }
-    m_cLoopFilter.destroy();
     m_cRateCtrl.destroy();
 
     if (m_cFrameEncoders)
@@ -153,9 +151,7 @@ Void TEncTop::init()
     // initialize processing unit classes
     m_iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cGOPEncoder.init(this);
-    m_cSliceEncoder.init(this);
-    m_cFrameEncoders = new x265::EncodeFrame(m_threadPool);
-    m_cFrameEncoders->create(this);
+    m_cFrameEncoders->init(this);
 
     m_iMaxRefPicNum = 0;
 }

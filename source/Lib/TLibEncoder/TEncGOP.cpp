@@ -141,18 +141,16 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
 {
     m_pcEncTop             = pcTEncTop;
     m_pcCfg                = pcTEncTop;
-    m_pcSliceEncoder       = pcTEncTop->getSliceEncoder();
     m_pcListPic            = pcTEncTop->getListPic();
-
-    m_pcCavlcCoder         = pcTEncTop->getCavlcCoder();
-    m_pcSbacCoder          = pcTEncTop->getSbacCoder();
-    m_pcBinCABAC           = pcTEncTop->getBinCABAC();
-    m_pcLoopFilter         = pcTEncTop->getLoopFilter();
-    m_pcBitCounter         = pcTEncTop->getBitCounter();
-
-    //--Adaptive Loop filter
-    m_pcSAO                = pcTEncTop->getSAO();
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
+
+    m_pcSliceEncoder       = NULL;
+    m_pcCavlcCoder         = NULL;
+    m_pcSbacCoder          = NULL;
+    m_pcBinCABAC           = NULL;
+    m_pcLoopFilter         = NULL;
+    m_pcBitCounter         = NULL;
+    m_pcSAO                = NULL;
     m_lastBPSEI            = 0;
     m_totalCoded           = 0;
 }
@@ -228,7 +226,15 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     UInt                  uiOneBitstreamPerSliceLength = 0;
     TComOutputBitstream* pcSubstreamsOut = NULL;
     x265::EncodeFrame* frame = m_pcEncTop->getFrameEncoder(0);
-    m_pcEntropyCoder = frame->getEntropyEncoder(0);
+
+    m_pcEntropyCoder       = frame->getEntropyEncoder(0);
+    m_pcSliceEncoder       = frame->getSliceEncoder();
+    m_pcCavlcCoder         = frame->getCavlcCoder();
+    m_pcSbacCoder          = frame->getSingletonSbac();
+    m_pcBinCABAC           = frame->getBinCABAC();
+    m_pcLoopFilter         = frame->getLoopFilter();
+    m_pcBitCounter         = frame->getBitCounter();
+    m_pcSAO                = frame->getSAO();
 
     xInitGOP(iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut);
 

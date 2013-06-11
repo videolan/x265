@@ -75,7 +75,6 @@ private:
     Int                     m_iNumPicRcvd;                ///< number of received pictures
     UInt                    m_uiNumAllPicCoded;           ///< number of coded pictures
     TComList<TComPic*>      m_cListPic;                   ///< dynamic list of pictures
-    x265::ThreadPool       *m_threadPool;
     Int                     m_iNumSubstreams;             ///< # of WPP capable coding rows.
 
     // quality control
@@ -86,31 +85,25 @@ private:
     TComSPS                 m_cSPS;                       ///< SPS
     TComPPS                 m_cPPS;                       ///< PPS
 
+    TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
+
+    /* TODO: We keep a TEncSampleAdaptiveOffset instance in TEncTop only so we can
+     * properly initialize new input pictures with SAO data buffers.  This should
+     * be cleaned */
+    TEncSampleAdaptiveOffset m_cEncSAO;
+
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
-
-    /*==== These structures need to be per-frame or per-GOP ==== */
-    TEncSlice               m_cSliceEncoder;
-    x265::EncodeFrame      *m_cFrameEncoders; // TODO: TEncSlice should be member of EncodeFrame
-
-    TEncCavlc               m_cCavlcCoder;                ///< CAVLC encoder
-    TEncSbac                m_cSbacCoder;                 ///< SBAC encoder
-    TEncBinCABAC            m_cBinCoderCABAC;             ///< bin coder CABAC
-    TComLoopFilter          m_cLoopFilter;                ///< deblocking filter class
-    TEncSampleAdaptiveOffset m_cEncSAO;                   ///< sample adaptive offset class
-
-    // RD cost computation
-    TComBitCounter          m_cBitCounter;                ///< bit counter for RD optimization
-    TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
-    /*==== end per-frame or per-GOP ==== */
+    x265::EncodeFrame      *m_cFrameEncoders;
+    x265::ThreadPool       *m_threadPool;
 
 protected:
 
     Void  xGetNewPicBuffer(TComPic*& rpcPic);             ///< get picture buffer which will be processed
+    Void  deletePicBuffer();
     Void  xInitSPS();                                     ///< initialize SPS from encoder options
     Void  xInitPPS();                                     ///< initialize PPS from encoder options
     Void  xInitRPS();                                     ///< initialize RPS from encoder options
-    Void  deletePicBuffer();
 
 public:
 
@@ -143,18 +136,11 @@ public:
 
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
 
+    TEncGOP*                getGOPEncoder()         { return &m_cGOPEncoder; }
 
-    TEncGOP*                getGOPEncoder() { return &m_cGOPEncoder; }
-    TEncSlice*              getSliceEncoder() { return &m_cSliceEncoder; }
     x265::EncodeFrame*      getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
-    TComLoopFilter*         getLoopFilter() { return &m_cLoopFilter; }
-    TEncSampleAdaptiveOffset* getSAO() { return &m_cEncSAO; }
-    TEncCavlc*              getCavlcCoder() { return &m_cCavlcCoder; }
-    TEncSbac*               getSbacCoder() { return &m_cSbacCoder; }
-    TEncBinCABAC*           getBinCABAC() { return &m_cBinCoderCABAC; }
-    TComBitCounter*         getBitCounter() { return &m_cBitCounter; }
-    TEncRateCtrl*           getRateCtrl() { return &m_cRateCtrl; }
 
+    TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function

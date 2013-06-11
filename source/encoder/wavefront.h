@@ -80,7 +80,7 @@ public:
 
     virtual ~EncodeFrame() {}
 
-    void create(TEncTop *top);
+    void init(TEncTop *top);
 
     void destroy();
 
@@ -158,7 +158,16 @@ public:
 
     TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cCuEncoder; }
 
-    TEncSbac*    getSingletonSbac()            { return m_pcSbacCoder; }
+    TComSlice*   getSlice()                    { return m_pcSlice; }
+
+    /* Frame singletons, last the life of the encoder */
+    TEncSbac*               getSingletonSbac() { return &m_cSbacCoder; }
+    TComLoopFilter*         getLoopFilter()    { return &m_cLoopFilter; }
+    TEncSampleAdaptiveOffset* getSAO()         { return &m_cEncSAO; }
+    TEncCavlc*              getCavlcCoder()    { return &m_cCavlcCoder; }
+    TEncBinCABAC*           getBinCABAC()      { return &m_cBinCoderCABAC; }
+    TComBitCounter*         getBitCounter()    { return &m_cBitCounter; }
+    TEncSlice*              getSliceEncoder()  { return &m_cSliceEncoder; }
 
     void resetEntropy(TComSlice *pcSlice)
     {
@@ -172,24 +181,27 @@ public:
     void resetEncoder()
     {
         // Initialize global singletons (these should eventually be per-slice)
-        m_pcSbacCoder->init((TEncBinIf*)m_pcBinCABAC);
+        m_cSbacCoder.init((TEncBinIf*)&m_cBinCoderCABAC);
     }
 
 protected:
 
-    // Pointers to global singletons in TEncTop. Prevents frame parallelism
-    TEncSbac*     m_pcSbacCoder;
-    TEncBinCABAC* m_pcBinCABAC;
+    TEncSbac                 m_cSbacCoder;
+    TEncBinCABAC             m_cBinCoderCABAC;
+    TEncCavlc                m_cCavlcCoder;
+    TComLoopFilter           m_cLoopFilter;
+    TEncSampleAdaptiveOffset m_cEncSAO;
+    TComBitCounter           m_cBitCounter;
+    TEncSlice                m_cSliceEncoder;
+    TEncCfg*                 m_pcCfg;
 
-    // pointers to current data being encoded
-    TComSlice*    m_pcSlice;
-    TComPic*      m_pic;
+    TComSlice*               m_pcSlice;
+    TComPic*                 m_pic;
 
-    int           m_nrows;
-    bool          m_enableWpp;
-
-    CTURow*       m_rows;
-    Event         m_completionEvent;
+    int                      m_nrows;
+    bool                     m_enableWpp;
+    CTURow*                  m_rows;
+    Event                    m_completionEvent;
 };
 }
 

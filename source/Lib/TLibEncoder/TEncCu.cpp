@@ -362,8 +362,7 @@ Void TEncCu::init(TEncTop* pcEncTop)
     m_pcEntropyCoder     = NULL;
     m_pppcRDSbacCoder    = NULL;
     m_pcRDGoOnSbacCoder  = NULL;
-
-    m_pcBitCounter       = pcEncTop->getBitCounter();
+    m_pcBitCounter       = NULL;
     m_pcRateCtrl         = pcEncTop->getRateCtrl();
 }
 
