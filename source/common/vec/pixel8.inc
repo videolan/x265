@@ -150,8 +150,11 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
     return horizontal_add(sum);
 }
 
-
-#pragma warning(disable: 4100)
+#if defined(_MSC_VER)
+#undef ALWAYSINLINE
+#define ALWAYSINLINE  __forceinline
+#endif
+#pragma warning(disable: 4100) // unused formal parameters
 
 template< int size >
 ALWAYSINLINE void unrollFunc_16(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur, Vec8us *sad)
