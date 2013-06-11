@@ -490,51 +490,50 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
     }
 }
 
-void CDECL getResidualIntra(pixel *piOrg, pixel *piPred, short *piResi, int height, int width, int stride)
+void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int height, int width, int stride)
+{
+    pixel* pOrg   = piOrg;
+    pixel* pPred  = piPred;
+    short* pResi  = piResi;
+
+    for (int uiY = 0; uiY < height; uiY++)
     {
-        // get residual
-        pixel*  pOrg    = piOrg;
-        pixel*  pPred   = piPred;
-        short* pResi  = piResi;
-        //TODO : performance primitive?
-        for (int uiY = 0; uiY < height; uiY++)
+        for (int uiX = 0; uiX < width; uiX++)
         {
-            for (int uiX = 0; uiX < width; uiX++)
-            {
-                pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
-            }
-
-            pOrg  += stride;
-            pResi += stride;
-            pPred += stride;
+            pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
         }
+
+        pOrg  += stride;
+        pResi += stride;
+        pPred += stride;
     }
+}
 
 
-void CDECL calcRecons(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth)
+void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth)
+{
+    pixel* pPred      = piPred;
+    short* pResi      = piResi;
+    pixel* pReco      = piReco;
+    short* pRecQt     = piRecQt;
+    pixel* pRecIPred  = piRecIPred;
+
+    for (int uiY = 0; uiY < uiHeight; uiY++)
     {
-        pixel*   pPred      = piPred;
-        short* pResi      = piResi;
-        pixel*   pReco      = piReco;
-        short* pRecQt     = piRecQt;
-        pixel*   pRecIPred  = piRecIPred;
-        //TODO : performance primitive?
-        for (int uiY = 0; uiY < uiHeight; uiY++)
+        for (int uiX = 0; uiX < uiWidth; uiX++)
         {
-            for (int uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pReco[uiX] = (pixel) ClipY(static_cast<short>(pPred[uiX]) + pResi[uiX]);
-                pRecQt[uiX] = (short)pReco[uiX];
-                pRecIPred[uiX] = pReco[uiX];
-            }
-
-            pPred     += uiStride;
-            pResi     += uiStride;
-            pReco     += uiStride;
-            pRecQt    += uiRecQtStride;
-            pRecIPred += uiRecIPredStride;
+            pReco[uiX] = (pixel) ClipY(static_cast<short>(pPred[uiX]) + pResi[uiX]);
+            pRecQt[uiX] = (short)pReco[uiX];
+            pRecIPred[uiX] = pReco[uiX];
         }
+
+        pPred     += uiStride;
+        pResi     += uiStride;
+        pReco     += uiStride;
+        pRecQt    += uiRecQtStride;
+        pRecIPred += uiRecIPredStride;
     }
+}
 
 }  // end anonymous namespace
 
@@ -862,7 +861,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d_32x32 = pixel_sa8d_32x32;
     p.sa8d_64x64 = pixel_sa8d_64x64;
 
-    p.getResidue = getResidualIntra;
+    p.getResidue = getResidual;
     p.calcRecons = calcRecons;
 }
 }

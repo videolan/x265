@@ -1716,54 +1716,53 @@ void CDECL sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     res[3] = horizontal_add(sum4);
 }
 
-void CDECL getResidualIntra(pixel *piOrg, pixel *piPred, short *piResi, int height, int width, int stride)
+void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int height, int width, int stride)
 {
-        // get residual
-        pixel*  pOrg    = piOrg;
-        pixel*  pPred   = piPred;
-        short* pResi  = piResi;
-        
-        Vec8s v_pOrg, v_pPred, v_pResilo, v_pResihi;
-        Vec16uc v_temp1, v_temp2;
-        if(width == 4)
-        {
+    pixel*  pOrg    = piOrg;
+    pixel*  pPred   = piPred;
+    short* pResi  = piResi;
+
+    Vec8s v_pOrg, v_pPred, v_pResilo, v_pResihi;
+    Vec16uc v_temp1, v_temp2;
+    if(width == 4)
+    {
         for (int uiY = 0; uiY < height; uiY++)
         {
-                v_temp1 = load_partial(const_int(4), pOrg);
-                
-                v_pOrg = extend_low(v_temp1);
-                v_temp2 = load_partial(const_int(4), pPred);
-                v_pPred = extend_low(v_temp2);
+            v_temp1 = load_partial(const_int(4), pOrg);
 
-                v_pResilo = v_pOrg - v_pPred;
-                store_partial(const_int(8), pResi, v_pResilo);
+            v_pOrg = extend_low(v_temp1);
+            v_temp2 = load_partial(const_int(4), pPred);
+            v_pPred = extend_low(v_temp2);
+
+            v_pResilo = v_pOrg - v_pPred;
+            store_partial(const_int(8), pResi, v_pResilo);
 
             pOrg  += stride;
             pResi += stride;
             pPred += stride;
         }
-        }
-        else if(width == 8)
+    }
+    else if(width == 8)
+    {
+        for (int uiY = 0; uiY < height; uiY++)
         {
-            for (int uiY = 0; uiY < height; uiY++)
-            {
-                //pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
-                v_temp1.load(pOrg);
-                v_pOrg = extend_low(v_temp1);
-                v_temp2.load(pPred);
-                v_pPred = extend_low(v_temp2);
+            //pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
+            v_temp1.load(pOrg);
+            v_pOrg = extend_low(v_temp1);
+            v_temp2.load(pPred);
+            v_pPred = extend_low(v_temp2);
 
-                v_pResilo = v_pOrg - v_pPred;
-                v_pResilo.store(pResi);
+            v_pResilo = v_pOrg - v_pPred;
+            v_pResilo.store(pResi);
 
-                pOrg  += stride;
-                pResi += stride;
-                pPred += stride;
-            }
-            
+            pOrg  += stride;
+            pResi += stride;
+            pPred += stride;
         }
-        else 
-        {
+
+    }
+    else 
+    {
         for (int uiY = 0; uiY < height; uiY++)
         {
             for (int uiX = 0; uiX < width; uiX+=16)
@@ -1787,114 +1786,108 @@ void CDECL getResidualIntra(pixel *piOrg, pixel *piPred, short *piResi, int heig
             pResi += stride;
             pPred += stride;
         }
-        }
-
+    }
 }
 
+void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth)
+{
+    pixel* pPred      = piPred;
+    short* pResi      = piResi;
+    pixel* pReco      = piReco;
+    short* pRecQt     = piRecQt;
+    pixel* pRecIPred  = piRecIPred;
 
-void CDECL calcRecons(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth)
+    if (uiWidth == 4)
     {
-        pixel*   pPred      = piPred;
-        short* pResi      = piResi;
-        pixel*   pReco      = piReco;
-        short* pRecQt     = piRecQt;
-        pixel*   pRecIPred  = piRecIPred;
-        //TODO : performance primitive?
-
-        if(uiWidth == 4)
+        for (int uiY = 0; uiY < uiHeight; uiY++)
         {
-            for (int uiY = 0; uiY < uiHeight; uiY++)
-            {
-                    Vec8s vresi, vpred, vres, vsum;
-                    Vec16uc tmp;
+            Vec8s vresi, vpred, vres, vsum;
+            Vec16uc tmp;
 
-                    tmp = load_partial(const_int(4), pPred );
-                    vpred = extend_low(tmp);
-                
-                    vresi = load_partial(const_int(8), pResi);
-                    vsum = vpred + vresi;
-                
-                    vsum = min(255, max(vsum, 0));
+            tmp = load_partial(const_int(4), pPred );
+            vpred = extend_low(tmp);
 
-                    store_partial(const_int(8), pRecQt, vsum);
+            vresi = load_partial(const_int(8), pResi);
+            vsum = vpred + vresi;
 
-                    tmp = compress(vsum, vsum);
+            vsum = min(255, max(vsum, 0));
 
-                    store_partial(const_int(4), pReco, tmp);
-                    store_partial(const_int(4), pRecIPred, tmp);
+            store_partial(const_int(8), pRecQt, vsum);
 
-                pPred     += uiStride;
-                pResi     += uiStride;
-                pReco     += uiStride;
-                pRecQt    += uiRecQtStride;
-                pRecIPred += uiRecIPredStride;
-            }
+            tmp = compress(vsum, vsum);
 
-        }
-        else if(uiWidth == 8)
-        {
-            for (int uiY = 0; uiY < uiHeight; uiY++)
-            {
-                    Vec8s vresi, vpred, vres, vsum;
-                    Vec16uc tmp;
+            store_partial(const_int(4), pReco, tmp);
+            store_partial(const_int(4), pRecIPred, tmp);
 
-                    tmp.load(pPred);
-                    vpred = extend_low(tmp);
-                
-                    vresi.load(pResi);
-                    vsum = vpred + vresi;
-                
-                    vsum = min(255, max(vsum, 0));
-
-                    vsum.store(pRecQt);
-
-                    tmp = compress(vsum, vsum);
-
-                    store_partial(const_int(8), pReco, tmp);
-                    store_partial(const_int(8), pRecIPred, tmp);
-
-                pPred     += uiStride;
-                pResi     += uiStride;
-                pReco     += uiStride;
-                pRecQt    += uiRecQtStride;
-                pRecIPred += uiRecIPredStride;
-            }
-
-        }
-        else
-        {
-            for (int uiY = 0; uiY < uiHeight; uiY++)
-            {
-                for (int uiX = 0; uiX < uiWidth; uiX+=16)
-                {
-                    Vec8s vresi, vpred, vres, vsum1, vsum2;
-                    Vec16uc tmp;
-
-                    tmp.load(pPred + uiX);
-
-                    vpred = extend_low(tmp);
-                    vresi.load(pResi+uiX);
-                    vsum1 = vpred + vresi;
-                    vsum1 = min(255, max(vsum1, 0));
-                    vsum1.store(pRecQt + uiX);
-
-                    vpred = extend_high(tmp);
-                    vresi.load(pResi+uiX + 8);
-                    vsum2 = vpred + vresi;
-                    vsum2 = min(255, max(vsum2, 0));
-                    vsum2.store(pRecQt + uiX + 8);
-
-                    tmp = compress(vsum1, vsum2);
-                    tmp.store(pReco + uiX);
-                    tmp.store(pRecIPred + uiX);
-                }
-
-                pPred     += uiStride;
-                pResi     += uiStride;
-                pReco     += uiStride;
-                pRecQt    += uiRecQtStride;
-                pRecIPred += uiRecIPredStride;
-            }
+            pPred     += uiStride;
+            pResi     += uiStride;
+            pReco     += uiStride;
+            pRecQt    += uiRecQtStride;
+            pRecIPred += uiRecIPredStride;
         }
     }
+    else if (uiWidth == 8)
+    {
+        for (int uiY = 0; uiY < uiHeight; uiY++)
+        {
+            Vec8s vresi, vpred, vres, vsum;
+            Vec16uc tmp;
 
+            tmp.load(pPred);
+            vpred = extend_low(tmp);
+
+            vresi.load(pResi);
+            vsum = vpred + vresi;
+
+            vsum = min(255, max(vsum, 0));
+
+            vsum.store(pRecQt);
+
+            tmp = compress(vsum, vsum);
+
+            store_partial(const_int(8), pReco, tmp);
+            store_partial(const_int(8), pRecIPred, tmp);
+
+            pPred     += uiStride;
+            pResi     += uiStride;
+            pReco     += uiStride;
+            pRecQt    += uiRecQtStride;
+            pRecIPred += uiRecIPredStride;
+        }
+    }
+    else
+    {
+        for (int uiY = 0; uiY < uiHeight; uiY++)
+        {
+            for (int uiX = 0; uiX < uiWidth; uiX += 16)
+            {
+                Vec8s vresi, vpred, vres, vsum1, vsum2;
+                Vec16uc tmp;
+
+                tmp.load(pPred + uiX);
+
+                vpred = extend_low(tmp);
+                vresi.load(pResi+uiX);
+                vsum1 = vpred + vresi;
+                vsum1 = min(255, max(vsum1, 0));
+                vsum1.store(pRecQt + uiX);
+
+                vpred = extend_high(tmp);
+                vresi.load(pResi+uiX + 8);
+                vsum2 = vpred + vresi;
+                vsum2 = min(255, max(vsum2, 0));
+                vsum2.store(pRecQt + uiX + 8);
+
+                tmp = compress(vsum1, vsum2);
+                tmp.store(pReco + uiX);
+                tmp.store(pRecIPred + uiX);
+            }
+
+            pPred     += uiStride;
+            pResi     += uiStride;
+            pReco     += uiStride;
+            pRecQt    += uiRecQtStride;
+            pRecIPred += uiRecIPredStride;
+        }
+    }
+}
