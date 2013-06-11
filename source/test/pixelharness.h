@@ -44,6 +44,9 @@ protected:
     bool check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt);
     bool check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt);
     bool check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s_c opt);
+    bool check_getResidue(x265::getResidue_t ref, x265::getResidue_t opt);
+    bool check_calcRecons(x265::calcRecons_t ref, x265::calcRecons_t opt);
+
 
 public:
 

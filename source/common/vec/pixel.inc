@@ -231,5 +231,10 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
+
+#if !HIGH_BIT_DEPTH
+    p.getResidue = getResidualIntra;
+    p.calcRecons = calcRecons;
+#endif 
 }
 }

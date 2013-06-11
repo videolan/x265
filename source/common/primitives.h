@@ -201,6 +201,9 @@ typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, int, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
+typedef void (CDECL * getResidue_t)(pixel *piOrig, pixel *piPred, short *piRes, int height, int width, int stride);
+typedef void (CDECL * calcRecons_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth);
+
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -240,6 +243,8 @@ struct EncoderPrimitives
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_t cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
+    getResidue_t getResidue;
+    calcRecons_t calcRecons;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
