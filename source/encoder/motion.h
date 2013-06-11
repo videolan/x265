@@ -74,7 +74,6 @@ public:
     {
         // fenc must be 16 byte aligned
         fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
-        fencSad = fenc;
     }
 
     ~MotionEstimate() {}
@@ -109,20 +108,6 @@ protected:
     static const int COST_MAX = 1 << 28;
 
     inline void StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
-
-    /* Helper functions for motionEstimate.  fref is coincident block in reference frame */
-    inline int fpelSad(pixel *fref, const MV& fmv)
-    {
-#if SUBSAMPLE_SAD
-        return sad(fencSad, FENC_STRIDE,
-                   fref + fmv.y * ref->m_lumaStride  + fmv.x,
-                   sadStride) << subsample;
-#else
-        return sad(fenc, FENC_STRIDE,
-                   fref + fmv.y * ref->m_lumaStride + fmv.x,
-                   ref->m_lumaStride);
-#endif
-    }
 
     inline int qpelSad(const MV& qmv)
     {

@@ -140,11 +140,14 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     return sum;
 }
 
+#if SUBSAMPLE_SAD
+
 #define COST_MV_PT_DIST(mx, my, point, dist) \
     do \
     { \
         MV tmv(mx, my); \
-        int cost = fpelSad(fref, tmv) + mvcost(tmv << 2); \
+        int cost = sad(fencSad, FENC_STRIDE, fref + mx + my * stride, sadStride) << subsample; \
+        cost += mvcost(tmv << 2); \
         if (cost < bcost) { \
             bcost = cost; \
             bmv = tmv; \
@@ -156,12 +159,10 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
 #define COST_MV(mx, my) \
     do \
     { \
-        MV _tmv(mx, my); \
-        int cost = fpelSad(fref, _tmv) + mvcost(_tmv << 2); \
-        COPY2_IF_LT(bcost, cost, bmv, _tmv); \
+        int cost = sad(fencSad, FENC_STRIDE, fref + mx + my * stride, sadStride) << subsample; \
+        cost += mvcost(MV(mx, my) << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
     } while (0)
-
-#if SUBSAMPLE_SAD
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
@@ -228,6 +229,28 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     }
 
 #else // if SUBSAMPLE_SAD
+
+#define COST_MV_PT_DIST(mx, my, point, dist) \
+    do \
+    { \
+        MV tmv(mx, my); \
+        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        cost += mvcost(tmv << 2); \
+        if (cost < bcost) { \
+            bcost = cost; \
+            bmv = tmv; \
+            bPointNr = point; \
+            bDistance = dist; \
+        } \
+    } while (0)
+
+#define COST_MV(mx, my) \
+    do \
+    { \
+        int cost = sad(fenc, FENC_STRIDE, fref + mx + my * stride, stride); \
+        cost += mvcost(MV(mx, my) << 2); \
+        COPY2_IF_LT(bcost, cost, bmv, MV(mx, my)); \
+    } while (0)
 
 #define COST_MV_X3_DIR(m0x, m0y, m1x, m1y, m2x, m2y, costs) \
     { \
@@ -359,7 +382,15 @@ int MotionEstimate::motionEstimate(const MV &qmvp,
 
     /* re-measure full pel rounded MVP with SAD as search start point */
     MV bmv = pmv.roundToFPel();
-    int bcost = pmv.isSubpel() ? fpelSad(fref, bmv) + mvcost(bmv << 2) : bprecost;
+    int bcost = bprecost;
+    if (pmv.isSubpel())
+    {
+#if SUBSAMPLE_SAD
+        bcost = (sad(fencSad, FENC_STRIDE, fref + bmv.x + bmv.y * stride, sadStride) << subsample) + mvcost(bmv << 2);
+#else
+        bcost = sad(fenc, FENC_STRIDE, fref + bmv.x + bmv.y * stride, stride) + mvcost(bmv << 2);
+#endif
+    }
 
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
