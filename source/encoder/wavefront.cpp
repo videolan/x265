@@ -220,12 +220,11 @@ void EncodeFrame::ProcessRow(int irow)
     PPAScopeEvent(Thread_ProcessRow);
 
     // Called by worker threads
-    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
-    const uint32_t lineStartCUAddr = irow * numCols;
-
     CTURow& curRow  = m_rows[irow];
     CTURow& codeRow = m_rows[m_enableWpp ? irow : 0];
 
+    const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
+    const uint32_t lineStartCUAddr = irow * numCols;
     for (UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
     {
         const uint32_t uiCUAddr = lineStartCUAddr + uiCol;
