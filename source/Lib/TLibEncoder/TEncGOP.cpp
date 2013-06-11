@@ -1141,9 +1141,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                 if (!bNALUAlignedWrittenToList)
                 {
-                    {
-                        nalu.m_Bitstream.writeAlignZero();
-                    }
+                    nalu.m_Bitstream.writeAlignZero();
                     accessUnit.push_back(new NALUnitEBSP(nalu));
                     uiOneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits() + 24; // length of bitstream after byte-alignment + 3 byte startcode 0x000001
                 }
