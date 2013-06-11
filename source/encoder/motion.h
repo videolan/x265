@@ -108,16 +108,6 @@ protected:
     static const int COST_MAX = 1 << 28;
 
     inline void StarPatternSearch(MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv);
-
-    inline int qpelSatd(const MV& qmv)
-    {
-        MV fmv = qmv >> 2;
-        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
-
-        return satd(fenc, FENC_STRIDE,
-                    qfref + fmv.y * ref->m_lumaStride + fmv.x,
-                    ref->m_lumaStride);
-    }
 };
 }
 

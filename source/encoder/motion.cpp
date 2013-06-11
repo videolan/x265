@@ -901,8 +901,10 @@ me_hex2:
     bcost = COST_MAX;
     for (int i = 0; i < 9; i++)
     {
-        MV mv = bmv + square1[i] * 2;
-        int cost = qpelSatd(mv) + mvcost(mv);
+        MV qmv = bmv + square1[i] * 2;
+        MV fmv = qmv >> 2;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
@@ -912,8 +914,10 @@ me_hex2:
     bdir = 0;
     for (int i = 1; i < 9; i++)
     {
-        MV mv = bmv + square1[i];
-        int cost = qpelSatd(mv) + mvcost(mv);
+        MV qmv = bmv + square1[i];
+        MV fmv = qmv >> 2;
+        pixel *qfref = ref->m_lumaPlane[qmv.x & 3][qmv.y & 3] + blockOffset;
+        int cost = satd(fenc, FENC_STRIDE, qfref + fmv.y * stride + fmv.x, stride) + mvcost(qmv);
         COPY2_IF_LT(bcost, cost, bdir, i);
     }
 
