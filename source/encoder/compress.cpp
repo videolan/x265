@@ -113,11 +113,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
         xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
         //m_InterCU_2Nx2N[uiDepth]->copyCU(rpcTempCU);
         rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
-        
-        // SKIP
-        xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
-        rpcTempCU->initEstData(uiDepth, iQP);
-                
+
         bTrySplitDQP = bTrySplit;
 
         if (uiDepth <= m_addSADDepth)
@@ -164,25 +160,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
                     }
                 }
             }      
-
-            // do normal intra modes
-            // speedup for inter frames
-            if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
-                rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
-                rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0) // avoid very complex intra if it is unlikely
-            {
-                xCheckRDCostIntrainInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-                rpcTempCU->initEstData(uiDepth, iQP);
-
-                if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
-                {
-                    if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
-                    {
-                        xCheckRDCostIntrainInter(rpcBestCU, rpcTempCU, SIZE_NxN);
-                        rpcTempCU->initEstData(uiDepth, iQP);
-                    }
-                }
-            }            
         }
 
         m_pcEntropyCoder->resetBits();
