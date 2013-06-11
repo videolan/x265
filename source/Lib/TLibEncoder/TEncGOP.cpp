@@ -1696,77 +1696,91 @@ static const Char* nalUnitTypeToString(NalUnitType type)
     default:                              return "UNK";
     }
 }
-
 #endif // if VERBOSE_RATE
+
+UInt64 computePSNR(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
+{
+    UInt64 uiSSD = 0;
+
+    if ((iWidth | iHeight) & 3)
+    {
+        /* Slow Path */
+        for (Int y = 0; y < iHeight; y++)
+        {
+            for (Int x = 0; x < iWidth; x++)
+            {
+                Int iDiff = (Int)(pOrg[x] - pRec[x]);
+                uiSSD += iDiff * iDiff;
+            }
+
+            pOrg += iStride;
+            pRec += iStride;
+        }
+        return uiSSD;
+    }
+    Int y = 0;
+    /* Consume Y in chunks of 64 */
+    for (; y + 64 <= iHeight ; y += 64)
+    {
+        Int x = 0;
+        for (; x + 64 <= iWidth ; x += 64)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 16 <= iWidth ; x += 16)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 4 <= iWidth ; x += 4)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64](pOrg + x, iStride, pRec + x, iStride);
+        pOrg += iStride * 64;
+        pRec += iStride * 64;
+    }
+    /* Consume Y in chunks of 16 */
+    for (;y + 16 <= iHeight ; y += 16)
+    {
+        Int x = 0;
+        for (; x + 64 <= iWidth ; x += 64)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 16 <= iWidth ; x += 16)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 4 <= iWidth ; x += 4)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16](pOrg + x, iStride, pRec + x, iStride);
+        pOrg += iStride * 16;
+        pRec += iStride * 16;
+    }
+    /* Consume Y in chunks of 4 */
+    for (;y + 4 <= iHeight ; y += 4)
+    {
+        Int x = 0;
+        for (; x + 64 <= iWidth ; x += 64)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 16 <= iWidth ; x += 16)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4](pOrg + x, iStride, pRec + x, iStride);
+        for (; x + 4 <= iWidth ; x += 4)
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4](pOrg + x, iStride, pRec + x, iStride);
+        pOrg += iStride * 4;
+        pRec += iStride * 4;
+    }
+    return uiSSD;
+}
 
 Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit& accessUnit)
 {
-    Int     x, y;
-    UInt64 uiSSDY  = 0;
-    UInt64 uiSSDU  = 0;
-    UInt64 uiSSDV  = 0;
-
     Double  dYPSNR  = 0.0;
     Double  dUPSNR  = 0.0;
     Double  dVPSNR  = 0.0;
 
     //===== calculate PSNR =====
-    Pel*  pOrg    = pcPic->getPicYuvOrg()->getLumaAddr();
-    Pel*  pRec    = pcPicD->getLumaAddr();
-    Int   iStride = pcPicD->getStride();
-
-    Int   iWidth;
-    Int   iHeight;
-
-    iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
-    iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
-
+    Int iStride = pcPicD->getStride();
+    Int iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
+    Int iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
     Int iSize = iWidth * iHeight;
-    // TODO: Add SSD intrinsic
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            Int iDiff = (Int)(pOrg[x] - pRec[x]);
-            uiSSDY   += iDiff * iDiff;
-        }
 
-        pOrg += iStride;
-        pRec += iStride;
-    }
+    UInt64 uiSSDY = computePSNR(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, iWidth, iHeight);
 
     iHeight >>= 1;
     iWidth  >>= 1;
     iStride >>= 1;
-    pOrg  = pcPic->getPicYuvOrg()->getCbAddr();
-    pRec  = pcPicD->getCbAddr();
 
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            Int iDiff = (Int)(pOrg[x] - pRec[x]);
-            uiSSDU   += iDiff * iDiff;
-        }
-
-        pOrg += iStride;
-        pRec += iStride;
-    }
-
-    pOrg  = pcPic->getPicYuvOrg()->getCrAddr();
-    pRec  = pcPicD->getCrAddr();
-
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            Int iDiff = (Int)(pOrg[x] - pRec[x]);
-            uiSSDV   += iDiff * iDiff;
-        }
-
-        pOrg += iStride;
-        pRec += iStride;
-    }
+    UInt64 uiSSDU = computePSNR(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDV = computePSNR(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
 
     Int maxvalY = 255 << (g_bitDepthY - 8);
     Int maxvalC = 255 << (g_bitDepthC - 8);
@@ -1816,7 +1830,9 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
         return;
 
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
-    if (!pcSlice->isReferenced()) c += 32;
+    
+    if (!pcSlice->isReferenced())
+        c += 32;  // lower case if unreferenced
 
     printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            pcSlice->getPOC(),
