@@ -122,8 +122,6 @@ TEncGOP::~TEncGOP()
  */
 Void  TEncGOP::create()
 {
-    m_bLongtermTestPictureHasBeenCoded = 0;
-    m_bLongtermTestPictureHasBeenCoded2 = 0;
 }
 
 Void  TEncGOP::destroy()

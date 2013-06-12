@@ -73,8 +73,6 @@ class TEncGOP
 private:
 
     //  Data
-    Bool                    m_bLongtermTestPictureHasBeenCoded;
-    Bool                    m_bLongtermTestPictureHasBeenCoded2;
     UInt                    m_numLongTermRefPicSPS;
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
