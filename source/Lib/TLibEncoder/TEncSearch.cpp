@@ -3346,13 +3346,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         
     }
 
-#if CU_STAT_LOGFILE
-    if (mergeFlag == 0)
-    {
-        fprintf(fp1, "\n Width : %dx%d , partition Size : %d , SATD Cost : %.2f ", pcCU->getWidth(0), pcCU->getWidth(0), (int)pcCU->getPartitionSize(0), meCost);
-    }
-    meCost = 0;
-#endif
     setWpScalingDistParam(pcCU, -1, REF_PIC_LIST_X);
 }
 
@@ -4039,13 +4032,6 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         pcCU->getTotalBits()       = uiBits;
         pcCU->getTotalDistortion() = uiDistortion;
-#if CU_STAT_LOGFILE
-        if (mergeFlag == 0)
-        {
-            int rdoCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
-            fprintf(fp1, ",RDO Cost : %.2f ", rdoCost);
-        }
-#endif
         pcCU->getTotalCost()       = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
 
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
@@ -4167,14 +4153,6 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     pcCU->getTotalBits()       = uiBitsBest;
     pcCU->getTotalDistortion() = uiDistortionBest;
     pcCU->getTotalCost()       = dCostBest;
-#endif
-#if CU_STAT_LOGFILE
-    if (mergeFlag == 0)
-    {
-        fprintf(fp1, ",RDO Cost : %.2f ", dCostBest);
-        pcCU->getTotalDistortion() = uiDistortionBest;
-        pcCU->getTotalCost()       = dCostBest;
-    }
 #endif
 
     if (pcCU->isSkipped(0))
@@ -5143,6 +5121,50 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
         ruiBits += m_pcEntropyCoder->getNumberOfWrittenBits();
     }
 }
+
+/**** Function to estimate the header bits ************/
+UInt  TEncSearch::estimateHeaderBits(TComDataCU* pcCU, UInt uiAbsPartIdx)
+{
+    UInt bits = 0;
+
+    m_pcEntropyCoder->resetBits();
+
+    UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]];
+    UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> pcCU->getDepth(0))  - 1;
+    UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
+    UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >>  pcCU->getDepth(0)) - 1;
+
+    TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
+    if ((uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+    {
+        m_pcEntropyCoder->encodeSplitFlag(pcCU, uiAbsPartIdx,  pcCU->getDepth(0));
+    }
+
+    if (pcCU->getMergeFlag(0) && pcCU->getPartitionSize(0) == SIZE_2Nx2N && !pcCU->getQtRootCbf(0))
+    {
+        m_pcEntropyCoder->encodeMergeFlag(pcCU, 0);
+        m_pcEntropyCoder->encodeMergeIndex(pcCU, 0, true);
+    }
+
+    if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    {
+        m_pcEntropyCoder->encodeCUTransquantBypassFlag(pcCU, 0, true);
+    }
+
+    if (!pcCU->getSlice()->isIntra())
+    {
+        m_pcEntropyCoder->encodeSkipFlag(pcCU, 0, true);
+    }
+       
+    m_pcEntropyCoder->encodePredMode(pcCU, 0, true);
+        
+    m_pcEntropyCoder->encodePartSize(pcCU, 0, pcCU->getDepth(0), true);
+    bits += m_pcEntropyCoder->getNumberOfWrittenBits();
+
+    return bits;
+
+}
+
 
 /**
  * \brief Generate half-sample interpolated block
