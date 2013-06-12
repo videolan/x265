@@ -260,6 +260,60 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x2
     return true;
 }
 
+bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::filterVmulti_t opt)
+{
+    short rand_height = 32; //(short)rand() % 100;                 // Randomly generated Height
+    short rand_width = 32; //(short)rand() % 100;                  // Randomly generated Width
+    short rand_srcStride, rand_dstStride;
+
+    pixel dstAvec[100*100];
+    pixel dstEvec[100*100];
+    pixel dstIvec[100*100];
+    pixel dstPvec[100*100];
+
+    pixel dstAref[100*100];
+    pixel dstEref[100*100];
+    pixel dstIref[100*100];
+    pixel dstPref[100*100];
+
+
+    for (int i = 0; i <= 100; i++)
+    {        
+
+        rand_srcStride = 64; //rand_width + rand() % 100;              // Randomly generated srcStride
+        rand_dstStride = 64; //rand_width + rand() % 100;              // Randomly generated dstStride
+        memset(dstAref, 0, 10000*sizeof(pixel));
+        memset(dstEref, 0, 10000*sizeof(pixel));
+        memset(dstIref, 0, 10000*sizeof(pixel));
+        memset(dstPref, 0, 10000*sizeof(pixel));
+        memset(dstAvec, 0, 10000*sizeof(pixel));
+        memset(dstEvec, 0, 10000*sizeof(pixel));
+        memset(dstIvec, 0, 10000*sizeof(pixel));
+        memset(dstPvec, 0, 10000*sizeof(pixel));
+        opt(8, short_buff+ 3*64 ,
+            rand_srcStride,
+            dstAvec, dstEvec,dstIvec, dstPvec,
+            rand_dstStride,
+            rand_width,
+            rand_height);
+        ref(8, short_buff + 3*64,
+            rand_srcStride,
+            dstAref, dstEref,dstIref, dstPref,
+            rand_dstStride,
+            rand_width,
+            rand_height);
+
+        if (memcmp(dstAvec,dstAref, 100*100 * sizeof(pixel)) || memcmp(dstEvec,dstEref, 100*100 * sizeof(pixel)) 
+            || memcmp(dstIvec,dstIref, 100*100 * sizeof(pixel)) || memcmp(dstPvec,dstPref, 100*100 * sizeof(pixel)))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -316,6 +370,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    if (opt.filterVmulti)
+    {
+        if (!check_filterVMultiplane(ref.filterVmulti, opt.filterVmulti))
+        {
+            printf("\nFilter-multiplane failed\n");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -369,5 +431,12 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         printf("filterConvertShorttoPel\t");
         REPORT_SPEEDUP(opt.ipfilterConvert_s_p, ref.ipfilterConvert_s_p,
                        8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
+    }
+
+    if (opt.filterVmulti)
+    {
+        printf("Filter-multiplane\t");
+        REPORT_SPEEDUP(opt.filterVmulti, ref.filterVmulti,
+                       8, short_buff, srcStride, IPF_vec_output_p, IPF_C_output_p, IPF_vec_output_p, IPF_C_output_p, dstStride, width, height);
     }
 }

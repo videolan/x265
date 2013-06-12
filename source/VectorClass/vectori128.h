@@ -4520,6 +4520,21 @@ static ALWAYSINLINE Vec8s compress (Vec4i const & low, Vec4i const & high) {
 #endif
 }
 
+static ALWAYSINLINE Vec8s compress_unsafe (Vec4i const & low, Vec4i const & high) {
+#if INSTRSET >= 5   // SSE4.1 supported
+    return  _mm_packus_epi32(low,high);                  // unsigned pack
+#else
+    __m128i low1  = _mm_shufflelo_epi16(low,0xD8);         // low words in place
+    __m128i high1 = _mm_shufflelo_epi16(high,0xD8);        // low words in place
+    __m128i low2  = _mm_shufflehi_epi16(low1,0xD8);        // low words in place
+    __m128i high2 = _mm_shufflehi_epi16(high1,0xD8);       // low words in place
+    __m128i low3  = _mm_shuffle_epi32(low2,0xD8);          // low dwords of low  to pos. 0 and 32
+    __m128i high3 = _mm_shuffle_epi32(high2,0xD8);         // low dwords of high to pos. 0 and 32
+    return  _mm_unpacklo_epi64(low3,high3);                // interleave
+#endif
+
+}
+
 // Function compress : packs two vectors of 32-bit integers into one vector of 16-bit integers
 // Signed with saturation
 static ALWAYSINLINE Vec8s compress_saturated (Vec4i const & low, Vec4i const & high) {
