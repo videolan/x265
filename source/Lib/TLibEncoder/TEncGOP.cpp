@@ -1696,7 +1696,7 @@ static const Char* nalUnitTypeToString(NalUnitType type)
 }
 #endif // if VERBOSE_RATE
 
-UInt64 computePSNR(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
+static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
 {
     UInt64 uiSSD = 0;
 
@@ -1761,32 +1761,28 @@ UInt64 computePSNR(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
 
 Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit& accessUnit)
 {
-    Double  dYPSNR  = 0.0;
-    Double  dUPSNR  = 0.0;
-    Double  dVPSNR  = 0.0;
-
     //===== calculate PSNR =====
     Int iStride = pcPicD->getStride();
     Int iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
     Int iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
     Int iSize = iWidth * iHeight;
 
-    UInt64 uiSSDY = computePSNR(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDY = computeSSD(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, iWidth, iHeight);
 
     iHeight >>= 1;
     iWidth  >>= 1;
     iStride >>= 1;
 
-    UInt64 uiSSDU = computePSNR(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
-    UInt64 uiSSDV = computePSNR(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
 
     Int maxvalY = 255 << (g_bitDepthY - 8);
     Int maxvalC = 255 << (g_bitDepthC - 8);
     Double fRefValueY = (Double)maxvalY * maxvalY * iSize;
     Double fRefValueC = (Double)maxvalC * maxvalC * iSize / 4.0;
-    dYPSNR            = (uiSSDY ? 10.0 * log10(fRefValueY / (Double)uiSSDY) : 99.99);
-    dUPSNR            = (uiSSDU ? 10.0 * log10(fRefValueC / (Double)uiSSDU) : 99.99);
-    dVPSNR            = (uiSSDV ? 10.0 * log10(fRefValueC / (Double)uiSSDV) : 99.99);
+    Double dYPSNR = (uiSSDY ? 10.0 * log10(fRefValueY / (Double)uiSSDY) : 99.99);
+    Double dUPSNR = (uiSSDU ? 10.0 * log10(fRefValueC / (Double)uiSSDU) : 99.99);
+    Double dVPSNR = (uiSSDV ? 10.0 * log10(fRefValueC / (Double)uiSSDV) : 99.99);
 
     /* calculate the size of the access unit, excluding:
      *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
