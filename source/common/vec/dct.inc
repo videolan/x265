@@ -2993,24 +2993,6 @@ void xDCT4(short *pSrc, short *pDst, intptr_t)
     _mm_storeu_si128((__m128i*)&pDst[2 * 4], T21);
 }
 
-#if INSTRSET < 5
-void xIDCT4(short *pSrc, short *pDst, intptr_t stride)
-{
-    const int shift_1st = 7;
-    const int shift_2nd = 12;
-    ALIGN_VAR_32(Short, tmp[4 * 4]);
-    ALIGN_VAR_32(Short, tmp2[4 * 4]);
-
-    partialButterflyInverse4(pSrc, tmp, shift_1st, 4);
-    partialButterflyInverse4(tmp, tmp2, shift_2nd, 4);
-    for(int i=0; i<4; i++)
-    {
-        memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
-    }
-}
-#endif // INSTRSET < 5
-
-#if INSTRSET >= 5
 ALIGN_VAR_32(static const short, tab_idct_4x4[4][8] )=
 {
     { 64,  64, 64,  64, 64,  64, 64,  64 },
@@ -3042,9 +3024,6 @@ void xIDCT4(short *pSrc, short *pDst, intptr_t stride)
     m128Tmp1 = _mm_add_epi32( E2, O2 );
     m128Tmp1 = _mm_srai_epi32( m128Tmp1, 7  );       // Sum = Sum >> iShiftNum
     m128iA = _mm_packs_epi32( m128iA, m128Tmp1);
-
-
-
 
     m128iD = _mm_sub_epi32( E2, O2 );
     m128iD = _mm_srai_epi32( m128iD, 7  );         // Sum = Sum >> iShiftNum
@@ -3100,7 +3079,6 @@ void xIDCT4(short *pSrc, short *pDst, intptr_t stride)
     _mm_storel_epi64( (__m128i*)&pDst[2 * stride], m128iD );
     _mm_storeh_pi   ( (__m64*  )&pDst[3 * stride], _mm_castsi128_ps(m128iD));
 }
-#endif // INSTRSET >= 5
 
 #if INSTRSET < 5
 void xDCT8(short *pSrc, short *pDst, intptr_t)
