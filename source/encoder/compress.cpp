@@ -59,18 +59,10 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool 
     }
     
     /* This needs to be replaced by a combination of: bit estimate for headers/partition info and MV bits from motion estimation */
-    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
-    
-    rpcTempCU->getTotalDistortion()= primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-    
-    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-    
     xCheckDQP(rpcTempCU);    
 }
 
-
-Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
+Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex)
 {
     m_abortFlag = false;
     TComPic* pcPic = rpcBestCU->getPic();
@@ -103,16 +95,21 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
+  
+    rpcTempCU->initEstData(uiDepth, iQP); 
+
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
         bTrySplit    = true;
+        
+        if(uiDepth==0)
+            rpcTempCU->initCU(pcCU->getPic(), pcCU->getAddr());
+        else
+            rpcTempCU->initSubCU(pcCU, PartitionIndex, uiDepth, iQP); 
 
-        rpcTempCU->initEstData(uiDepth, iQP);
-                
         xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
-        //m_InterCU_2Nx2N[uiDepth]->copyCU(rpcTempCU);
-        rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
+        rpcTempCU->initEstData(uiDepth, iQP); 
 
         bTrySplitDQP = bTrySplit;
 
@@ -198,11 +195,11 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UI
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                 if (rpcBestCU->isIntra(0))
                 {
-                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth);
+                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
                 }
                 else
                 {
-                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, uhNextDepth);
+                    xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
                 }
                 {
                     rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
