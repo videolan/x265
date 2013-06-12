@@ -31,7 +31,7 @@
 
 using namespace x265;
 
-Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG)
+Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG)
 {
     UChar uhDepth = rpcTempCU->getDepth(0);
 
@@ -59,7 +59,10 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool 
     }
     
     /* This needs to be replaced by a combination of: bit estimate for headers/partition info and MV bits from motion estimation */
-    xCheckDQP(rpcTempCU);    
+    TComYuv* pcYuv;
+    pcYuv = m_ppcPredYuvTemp[uhDepth];
+    m_ppcPredYuvTemp[uhDepth] = m_ppcPredYuvMode[Index][uhDepth];
+    m_ppcPredYuvMode[Index][uhDepth] = pcYuv;
 }
 
 Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex)
