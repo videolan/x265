@@ -227,12 +227,12 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
     // Initialize Scalable Nesting SEI with single layer values
     SEIScalableNesting scalableNestingSEI;
-    scalableNestingSEI.m_bitStreamSubsetFlag           = 1;    // If the nested SEI messages are picture buffering SEI messages, picture timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
+    scalableNestingSEI.m_bitStreamSubsetFlag           = 1;     // If the nested SEI messages are picture buffering SEI messages, picture timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
     scalableNestingSEI.m_nestingOpFlag                 = 0;
-    scalableNestingSEI.m_nestingNumOpsMinus1           = 0;    //nesting_num_ops_minus1
+    scalableNestingSEI.m_nestingNumOpsMinus1           = 0;     // nesting_num_ops_minus1
     scalableNestingSEI.m_allLayersFlag                 = 0;
-    scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1; //nesting_no_op_max_temporal_id_plus1
-    scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; //nesting_num_layers_minus1
+    scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1; // nesting_no_op_max_temporal_id_plus1
+    scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; // nesting_num_layers_minus1
     scalableNestingSEI.m_nestingLayerId[0]             = 0;
     scalableNestingSEI.m_callerOwnsSEIs                = true;
 
