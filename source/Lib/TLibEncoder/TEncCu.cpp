@@ -77,6 +77,12 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcResiYuvBest = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvBest = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcPredYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
+
+    m_ppcPredYuvMode[0] = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcPredYuvMode[1] = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcPredYuvMode[2] = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcPredYuvMode[3] = new TComYuv*[m_uhTotalDepth - 1];
+
     m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
 
@@ -118,6 +124,19 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
         m_ppcPredYuvTemp[i] = new TComYuv;
         m_ppcPredYuvTemp[i]->create(uiWidth, uiHeight);
+
+        m_ppcPredYuvMode[0][i] = new TComYuv;
+        m_ppcPredYuvMode[0][i]->create(uiWidth, uiHeight);
+
+        m_ppcPredYuvMode[1][i] = new TComYuv;
+        m_ppcPredYuvMode[1][i]->create(uiWidth, uiHeight);
+
+        m_ppcPredYuvMode[2][i] = new TComYuv;
+        m_ppcPredYuvMode[2][i]->create(uiWidth, uiHeight);
+
+        m_ppcPredYuvMode[3][i] = new TComYuv;
+        m_ppcPredYuvMode[3][i]->create(uiWidth, uiHeight);
+
         m_ppcResiYuvTemp[i] = new TShortYUV;
         m_ppcResiYuvTemp[i]->create(uiWidth, uiHeight);
         m_ppcRecoYuvTemp[i] = new TComYuv;
@@ -216,6 +235,32 @@ Void TEncCu::destroy()
             m_ppcPredYuvTemp[i]->destroy();
             delete m_ppcPredYuvTemp[i];
             m_ppcPredYuvTemp[i] = NULL;
+        }
+
+        if (m_ppcPredYuvMode[0][i])
+        {
+            m_ppcPredYuvMode[0][i]->destroy();
+            delete m_ppcPredYuvMode[0][i];
+            m_ppcPredYuvMode[0][i] = NULL;
+        }
+
+        if (m_ppcPredYuvMode[1][i])
+        {
+            m_ppcPredYuvMode[1][i]->destroy();
+            delete m_ppcPredYuvMode[1][i];
+            m_ppcPredYuvMode[1][i] = NULL;
+        }
+        if (m_ppcPredYuvMode[2][i])
+        {
+            m_ppcPredYuvMode[2][i]->destroy();
+            delete m_ppcPredYuvMode[2][i];
+            m_ppcPredYuvMode[2][i] = NULL;
+        }
+        if (m_ppcPredYuvMode[3][i])
+        {
+            m_ppcPredYuvMode[3][i]->destroy();
+            delete m_ppcPredYuvMode[3][i];
+            m_ppcPredYuvMode[3][i] = NULL;
         }
         if (m_ppcResiYuvTemp[i])
         {
@@ -334,6 +379,27 @@ Void TEncCu::destroy()
         delete [] m_ppcPredYuvTemp;
         m_ppcPredYuvTemp = NULL;
     }
+    if (m_ppcPredYuvMode[0])
+    {
+        delete [] m_ppcPredYuvMode[0];
+        m_ppcPredYuvMode[0] = NULL;
+    }
+    if (m_ppcPredYuvMode[1])
+    {
+        delete [] m_ppcPredYuvMode[1];
+        m_ppcPredYuvMode[1] = NULL;
+    }
+    if (m_ppcPredYuvMode[2])
+    {
+        delete [] m_ppcPredYuvMode[2];
+        m_ppcPredYuvMode[2] = NULL;
+    }
+    if (m_ppcPredYuvMode[3])
+    {
+        delete [] m_ppcPredYuvMode[3];
+        m_ppcPredYuvMode[3] = NULL;
+    }
+
     if (m_ppcResiYuvTemp)
     {
         delete [] m_ppcResiYuvTemp;

@@ -80,6 +80,7 @@ private:
     TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
+    TComYuv**               m_ppcPredYuvMode[4]; //To store pred structures for inter, intra, rect and merge
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_RecoYuvNxN[4];
