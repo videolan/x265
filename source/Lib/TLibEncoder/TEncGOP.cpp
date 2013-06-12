@@ -1628,7 +1628,7 @@ UInt64 TEncGOP::xFindDistortionFrame(TComPicYuv* pcPic0, TComPicYuv* pcPic1)
     uiShift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthC - 8);
     iHeight >>= 1;
     iWidth  >>= 1;
-    iStride >>= 1;
+    iStride = pcPic1->getCStride();
 
     pSrc0  = pcPic0->getCbAddr();
     pSrc1  = pcPic1->getCbAddr();
