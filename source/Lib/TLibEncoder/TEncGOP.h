@@ -143,8 +143,6 @@ protected:
 
     Void  xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
 
-    UInt64 xFindDistortionFrame(TComPicYuv* pcPic0, TComPicYuv* pcPic1);
-
     Double xCalculateRVM();
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
