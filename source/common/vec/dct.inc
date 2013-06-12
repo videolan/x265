@@ -6,6 +6,7 @@
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2915,86 +2916,82 @@ void xIDST4(short *pSrc, short *pDst, intptr_t stride)
 }
 #endif // INSTRSET >= 5
 
-#if INSTRSET < 5
-void xDCT4(short *pSrc, short *pDst, intptr_t)
+ALIGN_VAR_32(static const short, tab_dct_4x4[][8]) =
 {
-    const int shift_1st = 1;
-
-    partialButterfly4(pSrc, pDst, shift_1st, 4);
-}
-#endif // INSTRSET < 5
-
-
-#if INSTRSET >= 5
+    { 64, 64, 64, 64, 64, 64, 64, 64},
+    { 83, 36, 83, 36, 83, 36, 83, 36},
+    { 64,-64, 64,-64, 64,-64, 64,-64},
+    { 36,-83, 36,-83, 36,-83, 36,-83},
+};
 void xDCT4(short *pSrc, short *pDst, intptr_t)
 {
     // Const
     __m128i c_1         = _mm_set1_epi32(1);
     __m128i c_128       = _mm_set1_epi32(128);
-    __m128i c16_64_64   = _mm_set1_epi32(0x00400040);
-    __m128i c16_n64_64  = _mm_set1_epi32(0xFFC00040);
-    __m128i c16_36_83   = _mm_set1_epi32(0x00240053);
-    __m128i c16_n83_36  = _mm_set1_epi32(0xFFAD0024);
-    __m128i c32_36_83   = _mm_set_epi32( 36, 83, 36, 83);
-    __m128i c32_n64_64  = _mm_set_epi32(-64, 64,-64, 64);
-    __m128i c32_n83_36  = _mm_set_epi32(-83, 36,-83, 36);
 
-    __m128i T20  = _mm_loadu_si128((__m128i *)&pSrc[0 * 4]); // [13 12 11 10 03 02 01 00]
-    __m128i T22  = _mm_loadu_si128((__m128i *)&pSrc[2 * 4]); // [33 32 31 30 23 22 21 20]
+    __m128i T20, T21;
+    __m128i T30, T31, T32, T33;
+    __m128i T40, T41, T50, T51, T60, T61, T62, T63, T70, T71, T72, T73;
+    __m128i T50_, T51_;
+
+    T20  = _mm_loadu_si128((__m128i *)&pSrc[0 * 4]); // [13 12 11 10 03 02 01 00]
+    T21  = _mm_loadu_si128((__m128i *)&pSrc[2 * 4]); // [33 32 31 30 23 22 21 20]
 
     // DCT1
-    __m128i T30  = _mm_shuffle_epi32(T20, 0xD8);
-    __m128i T31  = _mm_shuffle_epi32(T22, 0xD8);
-    __m128i T32  = _mm_shufflehi_epi16(T30, 0xB1);
-    __m128i T33  = _mm_shufflehi_epi16(T31, 0xB1);
+    T30  = _mm_shuffle_epi32(T20, 0xD8);        // [13 12 03 02 11 10 01 00]
+    T31  = _mm_shuffle_epi32(T21, 0xD8);        // [33 32 23 22 31 30 21 20]
+    T32  = _mm_shufflehi_epi16(T30, 0xB1);      // [12 13 02 03 11 10 01 00]
+    T33  = _mm_shufflehi_epi16(T31, 0xB1);      // [32 33 22 23 31 30 21 20]
 
-    __m128i T40  = _mm_unpacklo_epi64(T32, T33);
-    __m128i T41  = _mm_unpackhi_epi64(T32, T33);
-    __m128i T50  = _mm_add_epi16(T40, T41);             // [1+2 0+3]
-    __m128i T51  = _mm_sub_epi16(T40, T41);             // [1-2 0-3]
-    __m128i T60  = _mm_madd_epi16(c16_64_64,  T50);     // [ 64*s12 + 64*s03] = [03 02 01 00]
-    __m128i T61  = _mm_madd_epi16(c16_36_83,  T51);     // [ 36*d12 + 83*d03] = [13 12 11 10]
-    __m128i T62  = _mm_madd_epi16(c16_n64_64, T50);     // [-64*s12 + 64*s03] = [23 22 21 20]
-    __m128i T63  = _mm_madd_epi16(c16_n83_36, T51);     // [-83*d12 + 36*d03] = [33 32 31 30]
-    __m128i T70  = _mm_srai_epi32(_mm_add_epi32(c_1, T60), 1);  // [03 02 01 00]
-    __m128i T71  = _mm_srai_epi32(_mm_add_epi32(c_1, T61), 1);  // [13 12 11 10]
-    __m128i T72  = _mm_srai_epi32(_mm_add_epi32(c_1, T62), 1);  // [23 22 21 20]
-    __m128i T73  = _mm_srai_epi32(_mm_add_epi32(c_1, T63), 1);  // [33 32 31 30]
+    T40  = _mm_unpacklo_epi64(T32, T33);        // [31 30 21 20 11 10 01 00]
+    T41  = _mm_unpackhi_epi64(T32, T33);        // [32 33 22 23 12 13 02 03]
+    T50  = _mm_add_epi16(T40, T41);             // [1+2 0+3]
+    T51  = _mm_sub_epi16(T40, T41);             // [1-2 0-3]
+    T60  = _mm_madd_epi16(T50, _mm_load_si128((__m128i*)tab_dct_4x4[0])); // [ 64*s12 + 64*s03] = [03 02 01 00]
+    T61  = _mm_madd_epi16(T51, _mm_load_si128((__m128i*)tab_dct_4x4[1])); // [ 36*d12 + 83*d03] = [13 12 11 10]
+    T62  = _mm_madd_epi16(T50, _mm_load_si128((__m128i*)tab_dct_4x4[2])); // [-64*s12 + 64*s03] = [23 22 21 20]
+    T63  = _mm_madd_epi16(T51, _mm_load_si128((__m128i*)tab_dct_4x4[3])); // [-83*d12 + 36*d03] = [33 32 31 30]
+    T70  = _mm_srai_epi32(_mm_add_epi32(T60, c_1), 1);  // [30 20 10 00]
+    T71  = _mm_srai_epi32(_mm_add_epi32(T61, c_1), 1);  // [31 21 11 01]
+    T72  = _mm_srai_epi32(_mm_add_epi32(T62, c_1), 1);  // [32 22 12 02]
+    T73  = _mm_srai_epi32(_mm_add_epi32(T63, c_1), 1);  // [33 23 13 03]
 
-    // DCT2
-    __m128i T80  = _mm_unpacklo_epi64(T70, T71);
-    __m128i T81_ = _mm_unpackhi_epi64(T70, T71);
-    __m128i T81  = _mm_shuffle_epi32(T81_, 0xB1);
-    __m128i T82  = _mm_unpacklo_epi64(T72, T73);
-    __m128i T83_ = _mm_unpackhi_epi64(T72, T73);
-    __m128i T83  = _mm_shuffle_epi32(T83_, 0xB1);
-    __m128i T90A = _mm_add_epi32(T80, T81);
-    __m128i T90B = _mm_add_epi32(T82, T83);
-    __m128i T91A = _mm_sub_epi32(T80, T81);
-    __m128i T91B = _mm_sub_epi32(T82, T83);
-    __m128i TA0A = _mm_slli_epi32(T90A, 6);
-    __m128i TA0B = _mm_slli_epi32(T90B, 6);
-    __m128i TA1A = _mm_mullo_epi32(c32_36_83,  T91A);
-    __m128i TA1B = _mm_mullo_epi32(c32_36_83,  T91B);
-    __m128i TA2A = _mm_mullo_epi32(c32_n64_64, T90A);
-    __m128i TA2B = _mm_mullo_epi32(c32_n64_64, T90B);
-    __m128i TA3A = _mm_mullo_epi32(c32_n83_36, T91A);
-    __m128i TA3B = _mm_mullo_epi32(c32_n83_36, T91B);
-    __m128i TB0  = _mm_hadd_epi32(TA0A, TA0B);
-    __m128i TB1  = _mm_hadd_epi32(TA1A, TA1B);
-    __m128i TB2  = _mm_hadd_epi32(TA2A, TA2B);
-    __m128i TB3  = _mm_hadd_epi32(TA3A, TA3B);
-    __m128i TC0  = _mm_srai_epi32(_mm_add_epi32(TB0, c_128), 8);
-    __m128i TC1  = _mm_srai_epi32(_mm_add_epi32(TB1, c_128), 8);
-    __m128i TC2  = _mm_srai_epi32(_mm_add_epi32(TB2, c_128), 8);
-    __m128i TC3  = _mm_srai_epi32(_mm_add_epi32(TB3, c_128), 8);
-    __m128i TD0  = _mm_packs_epi32(TC0, TC1);       // [13 12 11 10 03 02 01 00]
-    __m128i TD1  = _mm_packs_epi32(TC2, TC3);       // [33 32 31 30 23 22 21 20]
+    // Transpose
+    T20  = _mm_packs_epi32(T70, T71);       // [13 12 11 10 03 02 01 00]
+    T21  = _mm_packs_epi32(T72, T73);       // [33 32 31 30 23 22 21 20]
 
-    _mm_storeu_si128((__m128i*)&pDst[0 * 4], TD0);
-    _mm_storeu_si128((__m128i*)&pDst[2 * 4], TD1);
+    T30  = _mm_shuffle_epi32(T20, 0xD8);        // [13 12 03 02 11 10 01 00]
+    T31  = _mm_shuffle_epi32(T21, 0xD8);        // [33 32 23 22 31 30 21 20]
+    T32  = _mm_shufflehi_epi16(T30, 0xB1);      // [12 13 02 03 11 10 01 00]
+    T33  = _mm_shufflehi_epi16(T31, 0xB1);      // [32 33 22 23 31 30 21 20]
+
+    T40  = _mm_unpacklo_epi64(T32, T33);        // [31 30 21 20 11 10 01 00]
+    T41  = _mm_unpackhi_epi64(T32, T33);        // [32 33 22 23 12 13 02 03]
+
+    T50_ = _mm_madd_epi16(T40, _mm_load_si128((__m128i*)tab_dct_4x4[0]));
+    T51_ = _mm_madd_epi16(T41, _mm_load_si128((__m128i*)tab_dct_4x4[0]));
+    T60  = _mm_add_epi32(T50_, T51_);
+    T50_ = _mm_madd_epi16(T40, _mm_load_si128((__m128i*)tab_dct_4x4[1]));
+    T51_ = _mm_madd_epi16(T41, _mm_load_si128((__m128i*)tab_dct_4x4[1]));
+    T61  = _mm_sub_epi32(T50_, T51_);
+    T50_ = _mm_madd_epi16(T40, _mm_load_si128((__m128i*)tab_dct_4x4[2]));
+    T51_ = _mm_madd_epi16(T41, _mm_load_si128((__m128i*)tab_dct_4x4[2]));
+    T62  = _mm_add_epi32(T50_, T51_);
+    T50_ = _mm_madd_epi16(T40, _mm_load_si128((__m128i*)tab_dct_4x4[3]));
+    T51_ = _mm_madd_epi16(T41, _mm_load_si128((__m128i*)tab_dct_4x4[3]));
+    T63  = _mm_sub_epi32(T50_, T51_);
+    
+    T70  = _mm_srai_epi32(_mm_add_epi32(T60, c_128), 8);  // [30 20 10 00]
+    T71  = _mm_srai_epi32(_mm_add_epi32(T61, c_128), 8);  // [31 21 11 01]
+    T72  = _mm_srai_epi32(_mm_add_epi32(T62, c_128), 8);  // [32 22 12 02]
+    T73  = _mm_srai_epi32(_mm_add_epi32(T63, c_128), 8);  // [33 23 13 03]
+
+    T20  = _mm_packs_epi32(T70, T71);       // [13 12 11 10 03 02 01 00]
+    T21  = _mm_packs_epi32(T72, T73);       // [33 32 31 30 23 22 21 20]
+
+    _mm_storeu_si128((__m128i*)&pDst[0 * 4], T20);
+    _mm_storeu_si128((__m128i*)&pDst[2 * 4], T21);
 }
-#endif // INSTRSET >= 5
 
 #if INSTRSET < 5
 void xIDCT4(short *pSrc, short *pDst, intptr_t stride)
