@@ -208,6 +208,7 @@ typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, 
 typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
+typedef void (CDECL * cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
@@ -252,6 +253,7 @@ struct EncoderPrimitives
     dct_t dct[NUM_DCTS];
     cvt16to32_t cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
+    cvt16to16_shl_t cvt16to16_shl;
     cvt32to16_t cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
     calcresidual_t calcresidual[NUM_BLOCKS];
