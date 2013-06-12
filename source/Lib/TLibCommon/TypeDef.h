@@ -111,8 +111,6 @@
 #define NUM_CHROMA_MODE                           5 // total number of chroma modes
 #define DM_CHROMA_IDX                            36 // chroma mode index for derived from luma intra mode
 
-#define RDO_WITHOUT_DQP_BITS                      0 ///< Disable counting dQP bits in RDO-based mode decision
-
 #define FULL_NBIT 0 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
 #if FULL_NBIT || !HIGH_BIT_DEPTH
 # define DISTORTION_PRECISION_ADJUSTMENT(x) 0
