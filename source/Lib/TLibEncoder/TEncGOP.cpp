@@ -1696,6 +1696,11 @@ static const Char* nalUnitTypeToString(NalUnitType type)
 }
 #endif // if VERBOSE_RATE
 
+// TODO:
+//   1 - as a performance optimization, if we're not reporting PSNR we do not have to measure PSNR
+//       (we do not yet have a switch to disable PSNR reporting)
+//   2 - it would be better to accumulate SSD of each CTU at the end of processCTU() while it is cache-hot
+//       in fact, we almost certainly are already measuring the CTU distortion and not accumulating it
 static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
 {
     UInt64 uiSSD = 0;
