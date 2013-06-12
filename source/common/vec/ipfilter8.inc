@@ -210,6 +210,117 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
     }
 }
 
+/*
+    Please refer Fig 7 in HEVC Overview document to familiarize with variables' naming convention
+    Input: Subpel from the Horizontal filter - 'src'
+    Output: All planes in the corresponding column - 'dst<A|E|I|P>'
+*/
+
+#define PROCESSROW { \
+        /*  write a3 to subpel */  \
+        val = (a3 + IF_INTERNAL_OFFS + 32) >> 6; \
+        val = max(val, 0); \
+        val = min(val, 255); \
+        tmp = compress_unsafe(val, 0); \
+        compress_unsafe(tmp, 0).store_partial(4, dstA + row * dstStride + col); \
+        /*  load a7 */ \
+        tmp.load(src + col + (row + 7) * cstride); \
+        a7 = extend_low(tmp); \
+        /*  calculation
+
+            The coefficients for different planes are :
+            e:    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+            i:    { -1, 4, -11, 40, 40, -11, 4, -1 },
+            p:    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+            Thus the expressions are:
+            sume = 4*a1 -a0 - 10*a2 + 58*a3 + 17*a4 -  5*a5 +   a6     ;
+            sumi = 4*a1 -a0 - 11*a2 + 40*a3 + 40*a4 - 11*a5 + 4*a6  -a7;
+            sump =   a1      - 5*a2 + 17*a3 + 58*a4 - 10*a5 + 4*a6  -a7;
+            */\
+        exp1 = (a1 << 2) - a0 - 10 * a2; \
+        exp2 = 40 * a3; \
+        exp3 = 17 * a3; \
+        exp4 = 17 * a4; \
+        exp5 = 40 * a4; \
+        exp6 = (a6 << 2) - a7 - 10 * a5; \
+            \
+        sume = exp1 + exp2 + exp3 + a3 + exp4 - 5 * a5 +   a6; \
+        sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
+        sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
+            \
+/* store results */ \
+        sumi = (sumi + offset) >> 12; \
+        tmp  = compress_unsafe(sumi, 0); \
+        tmp  = max(tmp, 0); \
+        tmp  = min(tmp, 255); \
+        store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0)); \
+            \
+        sume = (sume + offset) >> 12; \
+        tmp  = compress_unsafe(sume, 0); \
+        tmp  = max(tmp, 0); \
+        tmp  = min(tmp, 255); \
+        store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0)); \
+            \
+        sump = (sump + offset) >> 12; \
+        tmp  = compress_unsafe(sump, 0); \
+        tmp  = max(tmp, 0); \
+        tmp  = min(tmp, 255); \
+        store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0)); \
+            \
+/* move rows up the queue */ \
+        a0 = a1; \
+        a1 = a2; \
+        a2 = a3; \
+        a3 = a4; \
+        a4 = a5; \
+        a5 = a6; \
+        a6 = a7; \
+}
+
+void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+{
+    int row, col;
+    int cstride =  srcStride;
+
+    src -= (8 / 2 - 1) * cstride;
+    int offset;
+    int headRoom = IF_INTERNAL_PREC - 8;
+    int shift = IF_FILTER_PREC;
+    shift += headRoom;
+    offset = 1 << (shift - 1);
+    offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
+
+    Vec4i a0, a1, a2, a3, a4, a5, a6, a7, sum;
+    Vec8s tmp;
+    Vec4i val, sume, sumi, sump;
+    Vec4i exp1, exp2, exp3, exp4, exp5, exp6;
+
+    for (col = 0; col < block_width - 3; col += 4)
+    {
+        tmp.load(src + col);
+        a0 = extend_low(tmp);
+        tmp.load(src + col + cstride);
+        a1 = extend_low(tmp);
+        tmp.load(src + col + 2 * cstride);
+        a2 = extend_low(tmp);
+        tmp.load(src + col + 3 * cstride);
+        a3 = extend_low(tmp);
+        tmp.load(src + col + 4 * cstride);
+        a4 = extend_low(tmp);
+        tmp.load(src + col + 5 * cstride);
+        a5 = extend_low(tmp);
+        tmp.load(src + col + 6 * cstride);
+        a6 = extend_low(tmp);
+
+        for (row = 0; row < block_height; row++)
+        {
+            PROCESSROW
+                row++;
+            PROCESSROW
+        }
+    }
+}
+
 template<int N>
 void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
