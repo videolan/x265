@@ -81,7 +81,6 @@ private:
     Int                     m_iLastIDR;
     Int                     m_iGopSize;
     Int                     m_iNumPicCoded;
-    Bool                    m_bFirst;
 
     //  Access channel
     TEncTop*                m_pcEncTop;

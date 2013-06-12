@@ -99,7 +99,6 @@ TEncGOP::TEncGOP()
     m_iLastIDR            = 0;
     m_iGopSize            = 0;
     m_iNumPicCoded        = 0; //Niko
-    m_bFirst              = true;
     m_bSeqFirst           = true;
 
     m_pcCfg               = NULL;
@@ -1493,7 +1492,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
 
         pcPic->setReconMark(true);
-        m_bFirst = false;
         m_iNumPicCoded++;
         m_totalCoded++;
 
