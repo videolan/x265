@@ -1776,7 +1776,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     iHeight >>= 1;
     iWidth  >>= 1;
-    iStride >>= 1;
+    iStride = pcPicD->getCStride();
 
     UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
     UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
