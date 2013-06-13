@@ -209,6 +209,8 @@ public:
     Void xEncPCM(TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Short* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
     Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv);
 
+      UInt estimateHeaderBits(TComDataCU* pcCU, UInt uiAbsPartIdx);
+
 protected:
 
     // -------------------------------------------------------------------------------------------------------------------

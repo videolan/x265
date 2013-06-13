@@ -69,7 +69,8 @@ class TEncCu
 private:
 
     TComDataCU**            m_InterCU_2Nx2N;
-    TComDataCU**            m_InterCU_Rect;
+    TComDataCU**            m_InterCU_2NxN;
+    TComDataCU**            m_InterCU_Nx2N;
     TComDataCU**            m_IntrainInterCU;
     TComDataCU**            m_MergeCU;
     TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
@@ -80,6 +81,7 @@ private:
     TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
+    TComYuv**               m_ppcPredYuvMode[5]; //To store pred structures for inter, intra, rect(2) and merge
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_RecoYuvNxN[4];
@@ -139,7 +141,7 @@ protected:
     Void  finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
     Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, UInt uiPartUnitIdx, PartSize eParentPartSize = SIZE_NONE);
     Void  xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt uiDepth, PartSize eParentPartSize = SIZE_NONE);
-    Void  xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
+    Void  xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex);
     Void  xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx,           UInt uiDepth);
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
@@ -148,7 +150,7 @@ protected:
 
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
-    Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
+    Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize);
     Void  xCheckDQP(TComDataCU* pcCU);
