@@ -75,14 +75,7 @@ inline const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-using namespace std;
-//! \ingroup TLibEncoder
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / initialization / destroy
-// ====================================================================================================================
-Int getLSB(Int poc, Int maxLSB)
+static inline Int getLSB(Int poc, Int maxLSB)
 {
     if (poc >= 0)
     {
@@ -94,6 +87,14 @@ Int getLSB(Int poc, Int maxLSB)
     }
 }
 
+using namespace std;
+
+//! \ingroup TLibEncoder
+//! \{
+
+// ====================================================================================================================
+// Constructor / destructor / initialization / destroy
+// ====================================================================================================================
 TEncGOP::TEncGOP()
 {
     m_iLastIDR            = 0;
@@ -1909,7 +1910,7 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice, TComList<TComPic*
     {
         longtermPicsPoc[ctr] = rps->getPOC(i);                              // LTRP POC
         longtermPicsLSB[ctr] = getLSB(longtermPicsPoc[ctr], maxPicOrderCntLSB); // LTRP POC LSB
-        indices[ctr]      = i;
+        indices[ctr] = i;
         longtermPicsMSB[ctr] = longtermPicsPoc[ctr] - longtermPicsLSB[ctr];
     }
 
