@@ -328,18 +328,20 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         if (!pcPic || pcPic->getPOC() != pocCurr)
         {
-            printf("Encode frame POC not found in input list!\n");
+            printf("error: Encode frame POC not found in input list!\n");
+            assert(0);
             return;
         }
 
         //  Slice data initialization
         pcPic->clearSliceBuffer();
-        pcSliceEncoder->setSliceIdx(0);
         pcPic->setCurrSliceIdx(0);
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
+        pcSliceEncoder->setSliceIdx(0);
 
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
+
         //set default slice level flag to the same as SPS level flag
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
         pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
