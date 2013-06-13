@@ -66,11 +66,7 @@ protected:
 
 public:
 
-    MotionEstimate() : searchMethod(3), subsample(0)
-    {
-        // fenc must be 16 byte aligned
-        fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
-    }
+    MotionEstimate();
 
     ~MotionEstimate() {}
 

@@ -54,11 +54,19 @@ static void init_scales(void)
     }
 }
 
-void MotionEstimate::setSourcePU(int offset, int width, int height)
+MotionEstimate::MotionEstimate()
+    : searchMethod(3)
+    , subsample(0)
 {
     if (size_scale[0] == 0)
         init_scales();
 
+    // fenc must be 16 byte aligned
+    fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
+}
+
+void MotionEstimate::setSourcePU(int offset, int width, int height)
+{
     blockOffset = offset;
 
     /* copy PU block into cache */
