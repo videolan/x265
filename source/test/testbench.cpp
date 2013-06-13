@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
-    for (int i = 2; i <= cpuid; i++)
+    for (int i = 6; i <= cpuid; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;

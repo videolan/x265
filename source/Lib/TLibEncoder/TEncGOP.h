@@ -73,15 +73,12 @@ class TEncGOP
 private:
 
     //  Data
-    Bool                    m_bLongtermTestPictureHasBeenCoded;
-    Bool                    m_bLongtermTestPictureHasBeenCoded2;
     UInt                    m_numLongTermRefPicSPS;
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
     Int                     m_iLastIDR;
     Int                     m_iGopSize;
     Int                     m_iNumPicCoded;
-    Bool                    m_bFirst;
 
     //  Access channel
     TEncTop*                m_pcEncTop;
@@ -138,12 +135,7 @@ protected:
 
 protected:
 
-    Void  xInitGOP(Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut);
-    Void  xGetBuffer(TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr);
-
     Void  xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
-
-    UInt64 xFindDistortionFrame(TComPicYuv* pcPic0, TComPicYuv* pcPic1);
 
     Double xCalculateRVM();
 

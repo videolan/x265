@@ -99,7 +99,6 @@ TEncGOP::TEncGOP()
     m_iLastIDR            = 0;
     m_iGopSize            = 0;
     m_iNumPicCoded        = 0; //Niko
-    m_bFirst              = true;
     m_bSeqFirst           = true;
 
     m_pcCfg               = NULL;
@@ -123,8 +122,6 @@ TEncGOP::~TEncGOP()
  */
 Void  TEncGOP::create()
 {
-    m_bLongtermTestPictureHasBeenCoded = 0;
-    m_bLongtermTestPictureHasBeenCoded2 = 0;
 }
 
 Void  TEncGOP::destroy()
@@ -198,29 +195,28 @@ Void TEncGOP::xCreateLeadingSEIMessages(TEncEntropy *pcEntropyCoder, AccessUnit 
 // ====================================================================================================================
 Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsInGOP)
 {
-    TComPic*        pcPic;
-    TComPicYuv*     pcPicYuvRecOut;
-    TComSlice*      pcSlice;
-    TComOutputBitstream  *pcBitstreamRedirect;
-
     PPAScopeEvent(TEncGOP_compressGOP);
 
-    pcBitstreamRedirect = new TComOutputBitstream;
     AccessUnit::iterator  itLocationToPushSliceHeaderNALU; // used to store location where NALU containing slice header is to be inserted
+    Int                   picSptDpbOutputDuDelay = 0;
+    UInt*                 accumBitsDU = NULL;
+    UInt*                 accumNalsDU = NULL;
     UInt                  uiOneBitstreamPerSliceLength = 0;
-    TComOutputBitstream* pcSubstreamsOut = NULL;
-    x265::EncodeFrame* frame = m_pcEncTop->getFrameEncoder(0);
+    TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
+    TComOutputBitstream*  pcSubstreamsOut = NULL;
+    x265::EncodeFrame*    pcEncodeFrame  = m_pcEncTop->getFrameEncoder(0);
+    TEncEntropy*          pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
+    TEncSlice*            pcSliceEncoder = pcEncodeFrame->getSliceEncoder();
+    TEncCavlc*            pcCavlcCoder   = pcEncodeFrame->getCavlcCoder();
+    TEncSbac*             pcSbacCoder    = pcEncodeFrame->getSingletonSbac();
+    TEncBinCABAC*         pcBinCABAC     = pcEncodeFrame->getBinCABAC();
+    TComLoopFilter*       pcLoopFilter   = pcEncodeFrame->getLoopFilter();
+    TComBitCounter*       pcBitCounter   = pcEncodeFrame->getBitCounter();
+    TEncSampleAdaptiveOffset* pcSAO      = pcEncodeFrame->getSAO();
 
-    TEncEntropy*    pcEntropyCoder = frame->getEntropyEncoder(0);
-    TEncSlice*      pcSliceEncoder = frame->getSliceEncoder();
-    TEncCavlc*      pcCavlcCoder   = frame->getCavlcCoder();
-    TEncSbac*       pcSbacCoder    = frame->getSingletonSbac();
-    TEncBinCABAC*   pcBinCABAC     = frame->getBinCABAC();
-    TComLoopFilter* pcLoopFilter   = frame->getLoopFilter();
-    TComBitCounter* pcBitCounter   = frame->getBitCounter();
-    TEncSampleAdaptiveOffset* pcSAO = frame->getSAO();
-
-    xInitGOP(iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut);
+    // Exception for the first frame
+    m_iGopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
+    assert(iNumPicRcvd > 0 && m_iGopSize > 0);
 
     m_iNumPicCoded = 0;
     SEIPictureTiming pictureTimingSEI;
@@ -228,18 +224,15 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
     // Initialize Scalable Nesting SEI with single layer values
     SEIScalableNesting scalableNestingSEI;
-    scalableNestingSEI.m_bitStreamSubsetFlag           = 1;    // If the nested SEI messages are picture buffereing SEI mesages, picure timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
+    scalableNestingSEI.m_bitStreamSubsetFlag           = 1;     // If the nested SEI messages are picture buffering SEI messages, picture timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
     scalableNestingSEI.m_nestingOpFlag                 = 0;
-    scalableNestingSEI.m_nestingNumOpsMinus1           = 0;    //nesting_num_ops_minus1
+    scalableNestingSEI.m_nestingNumOpsMinus1           = 0;     // nesting_num_ops_minus1
     scalableNestingSEI.m_allLayersFlag                 = 0;
-    scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1; //nesting_no_op_max_temporal_id_plus1
-    scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; //nesting_num_layers_minus1
+    scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1; // nesting_no_op_max_temporal_id_plus1
+    scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; // nesting_num_layers_minus1
     scalableNestingSEI.m_nestingLayerId[0]             = 0;
     scalableNestingSEI.m_callerOwnsSEIs                = true;
 
-    Int picSptDpbOutputDuDelay = 0;
-    UInt *accumBitsDU = NULL;
-    UInt *accumNalsDU = NULL;
     SEIDecodingUnitInfo decodingUnitInfoSEI;
     for (Int iGOPid = 0; iGOPid < m_iGopSize; iGOPid++)
     {
@@ -310,24 +303,52 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         // start a new access unit: create an entry in the list of output access units
         accessUnitsInGOP.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsInGOP.back();
-        xGetBuffer(rcListPic, rcListPicYuvRecOut, iNumPicRcvd, iTimeOffset, pcPic, pcPicYuvRecOut, pocCurr);
+
+        TComPic*              pcPic = NULL;
+        TComPicYuv*           pcPicYuvRecOut;
+        TComSlice*            pcSlice;
+        {
+            // Pick reconstruction picture in output time order
+            TComList<TComPicYuv*>::iterator iterPicYuvRec = rcListPicYuvRecOut.end();
+            for (Int i = 0; i < iNumPicRcvd - iTimeOffset + 1; i++)
+                iterPicYuvRec--;
+            pcPicYuvRecOut = *(iterPicYuvRec);
+
+            // Locate input picture with the correct POC (makes no assumption on
+            // input picture ordering)
+            TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+            while (iterPic != rcListPic.end())
+            {
+                pcPic = *(iterPic++);
+                if (pcPic->getPOC() == pocCurr)
+                {
+                    break;
+                }
+            }
+        }
+        if (!pcPic || pcPic->getPOC() != pocCurr)
+        {
+            printf("error: Encode frame POC not found in input list!\n");
+            assert(0);
+            return;
+        }
 
         //  Slice data initialization
         pcPic->clearSliceBuffer();
-        assert(pcPic->getNumAllocatedSlice() == 1);
-        pcSliceEncoder->setSliceIdx(0);
         pcPic->setCurrSliceIdx(0);
+        pcSliceEncoder->setSliceIdx(0);
 
-        pcSliceEncoder->initEncSlice(pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
+
         //set default slice level flag to the same as SPS level flag
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
         pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
-            frame->setFlatScalingList();
-            frame->setUseScalingList(false);
+            pcEncodeFrame->setFlatScalingList();
+            pcEncodeFrame->setUseScalingList(false);
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
         }
@@ -336,8 +357,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->setDefaultScalingList();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            frame->setScalingList(pcSlice->getScalingList());
-            frame->setUseScalingList(true);
+            pcEncodeFrame->setScalingList(pcSlice->getScalingList());
+            pcEncodeFrame->setUseScalingList(true);
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
         {
@@ -348,8 +369,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->getScalingList()->checkDcOfMatrix();
             m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
             m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-            frame->setScalingList(pcSlice->getScalingList());
-            frame->setUseScalingList(true);
+            pcEncodeFrame->setScalingList(pcSlice->getScalingList());
+            pcEncodeFrame->setUseScalingList(true);
         }
         else
         {
@@ -612,7 +633,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             sliceQP = Clip3(-pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, sliceQP);
             m_pcRateCtrl->getRCPic()->setPicEstQP(sliceQP);
 
-            pcSliceEncoder->resetQP(pcPic, sliceQP, lambda);
+            pcSliceEncoder->resetQP(pcPic, pcEncodeFrame, sliceQP, lambda);
         }
 
         UInt uiNumSlices = 1;
@@ -1044,7 +1065,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
                     pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
                     pcEntropyCoder->resetEntropy();
-                    frame->resetEntropy(pcSlice);
+                    pcEncodeFrame->resetEntropy(pcSlice);
                 }
 
                 if (pcSlice->isNextSlice())
@@ -1052,9 +1073,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     // set entropy coder for writing
                     pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
                     {
-                        frame->resetEntropy(pcSlice);
-                        frame->getSbacCoder(0)->load(pcSbacCoder);
-                        pcEntropyCoder->setEntropyCoder(frame->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
+                        pcEncodeFrame->resetEntropy(pcSlice);
+                        pcEncodeFrame->getSbacCoder(0)->load(pcSbacCoder);
+                        pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
                     }
                     pcEntropyCoder->resetEntropy();
                     // File writing
@@ -1071,7 +1092,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 }
                 pcSlice->setFinalized(true);
 
-                pcSbacCoder->load(frame->getSbacCoder(0));
+                pcSbacCoder->load(pcEncodeFrame->getSbacCoder(0));
 
                 pcSlice->setTileOffstForMultES(uiOneBitstreamPerSliceLength);
                 pcSlice->setTileLocationCount(0);
@@ -1088,7 +1109,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     {
                         // Flush all substreams -- this includes empty ones.
                         // Terminating bit and flush.
-                        pcEntropyCoder->setEntropyCoder(frame->getSbacCoder(ui), pcSlice);
+                        pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(ui), pcSlice);
                         pcEntropyCoder->setBitstream(&pcSubstreamsOut[ui]);
                         pcEntropyCoder->encodeTerminatingBit(1);
                         pcEntropyCoder->encodeSliceFinish();
@@ -1180,7 +1201,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     pcEntropyCoder->setBitstream(pcBitCounter);
 
                     // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                    pcSAO->startSaoEnc(pcPic, pcEntropyCoder, frame->getRDSbacCoders(0), frame->getRDGoOnSbacCoder(0));
+                    pcSAO->startSaoEnc(pcPic, pcEntropyCoder, pcEncodeFrame->getRDSbacCoders(0), pcEncodeFrame->getRDGoOnSbacCoder(0));
 
                     SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
@@ -1493,7 +1514,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
 
         pcPic->setReconMark(true);
-        m_bFirst = false;
         m_iNumPicCoded++;
         m_totalCoded++;
 
@@ -1549,119 +1569,6 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
-
-Void TEncGOP::xInitGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut)
-{
-    assert(iNumPicRcvd > 0);
-    //  Exception for the first frame
-    if (iPOCLast == 0)
-    {
-        m_iGopSize    = 1;
-    }
-    else
-        m_iGopSize    = m_pcCfg->getGOPSize();
-
-    assert(m_iGopSize > 0);
-}
-
-Void TEncGOP::xGetBuffer(TComList<TComPic*>&    rcListPic,
-                         TComList<TComPicYuv*>& rcListPicYuvRecOut,
-                         Int                    iNumPicRcvd,
-                         Int                    iTimeOffset,
-                         TComPic*&              rpcPic,
-                         TComPicYuv*&           rpcPicYuvRecOut,
-                         Int                    pocCurr)
-{
-    Int i;
-
-    //  Rec. output
-    TComList<TComPicYuv*>::iterator     iterPicYuvRec = rcListPicYuvRecOut.end();
-    for (i = 0; i < iNumPicRcvd - iTimeOffset + 1; i++)
-    {
-        iterPicYuvRec--;
-    }
-
-    rpcPicYuvRecOut = *(iterPicYuvRec);
-
-    //  Current pic.
-    TComList<TComPic*>::iterator iterPic = rcListPic.begin();
-    while (iterPic != rcListPic.end())
-    {
-        rpcPic = *(iterPic);
-        rpcPic->setCurrSliceIdx(0);
-        if (rpcPic->getPOC() == pocCurr)
-        {
-            break;
-        }
-        iterPic++;
-    }
-
-    assert(rpcPic->getPOC() == pocCurr);
-}
-
-UInt64 TEncGOP::xFindDistortionFrame(TComPicYuv* pcPic0, TComPicYuv* pcPic1)
-{
-    Int     x, y;
-    Pel*  pSrc0   = pcPic0->getLumaAddr();
-    Pel*  pSrc1   = pcPic1->getLumaAddr();
-    UInt  uiShift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthY - 8);
-    Int   iTemp;
-
-    Int   iStride = pcPic0->getStride();
-    Int   iWidth  = pcPic0->getWidth();
-    Int   iHeight = pcPic0->getHeight();
-
-    UInt64  uiTotalDiff = 0;
-
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            iTemp = pSrc0[x] - pSrc1[x];
-            uiTotalDiff += (iTemp * iTemp) >> uiShift;
-        }
-
-        pSrc0 += iStride;
-        pSrc1 += iStride;
-    }
-
-    uiShift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthC - 8);
-    iHeight >>= 1;
-    iWidth  >>= 1;
-    iStride >>= 1;
-
-    pSrc0  = pcPic0->getCbAddr();
-    pSrc1  = pcPic1->getCbAddr();
-
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            iTemp = pSrc0[x] - pSrc1[x];
-            uiTotalDiff += (iTemp * iTemp) >> uiShift;
-        }
-
-        pSrc0 += iStride;
-        pSrc1 += iStride;
-    }
-
-    pSrc0  = pcPic0->getCrAddr();
-    pSrc1  = pcPic1->getCrAddr();
-
-    for (y = 0; y < iHeight; y++)
-    {
-        for (x = 0; x < iWidth; x++)
-        {
-            iTemp = pSrc0[x] - pSrc1[x];
-            uiTotalDiff += (iTemp * iTemp) >> uiShift;
-        }
-
-        pSrc0 += iStride;
-        pSrc1 += iStride;
-    }
-
-    return uiTotalDiff;
-}
 
 #if VERBOSE_RATE
 static const Char* nalUnitTypeToString(NalUnitType type)
@@ -1776,7 +1683,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     iHeight >>= 1;
     iWidth  >>= 1;
-    iStride >>= 1;
+    iStride = pcPicD->getCStride();
 
     UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
     UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
