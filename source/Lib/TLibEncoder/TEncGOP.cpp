@@ -202,9 +202,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     UInt*                 accumBitsDU = NULL;
     UInt*                 accumNalsDU = NULL;
     UInt                  uiOneBitstreamPerSliceLength = 0;
-    TComPic*              pcPic;
-    TComPicYuv*           pcPicYuvRecOut;
-    TComSlice*            pcSlice;
     TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  pcSubstreamsOut = NULL;
     x265::EncodeFrame*    pcEncodeFrame  = m_pcEncTop->getFrameEncoder(0);
@@ -306,9 +303,37 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         // start a new access unit: create an entry in the list of output access units
         accessUnitsInGOP.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsInGOP.back();
-        xGetBuffer(rcListPic, rcListPicYuvRecOut, iNumPicRcvd, iTimeOffset, pcPic, pcPicYuvRecOut, pocCurr);
+
+        TComPic*              pcPic = NULL;
+        TComPicYuv*           pcPicYuvRecOut;
+        TComSlice*            pcSlice;
+        {
+            // Pick reconstruction picture in output time order
+            TComList<TComPicYuv*>::iterator iterPicYuvRec = rcListPicYuvRecOut.end();
+            for (Int i = 0; i < iNumPicRcvd - iTimeOffset + 1; i++)
+                iterPicYuvRec--;
+            pcPicYuvRecOut = *(iterPicYuvRec);
+
+            // Locate input picture with the correct POC (makes no assumption on
+            // input picture ordering)
+            TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+            while (iterPic != rcListPic.end())
+            {
+                pcPic = *(iterPic++);
+                if (pcPic->getPOC() == pocCurr)
+                {
+                    break;
+                }
+            }
+        }
+        if (!pcPic || pcPic->getPOC() != pocCurr)
+        {
+            printf("Encode frame POC not found in input list!\n");
+            return;
+        }
 
         //  Slice data initialization
+        pcPic->setCurrSliceIdx(0);
         pcPic->clearSliceBuffer();
         assert(pcPic->getNumAllocatedSlice() == 1);
         pcSliceEncoder->setSliceIdx(0);
@@ -1544,41 +1569,6 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
-
-Void TEncGOP::xGetBuffer(TComList<TComPic*>&    rcListPic,
-                         TComList<TComPicYuv*>& rcListPicYuvRecOut,
-                         Int                    iNumPicRcvd,
-                         Int                    iTimeOffset,
-                         TComPic*&              rpcPic,
-                         TComPicYuv*&           rpcPicYuvRecOut,
-                         Int                    pocCurr)
-{
-    Int i;
-
-    //  Rec. output
-    TComList<TComPicYuv*>::iterator     iterPicYuvRec = rcListPicYuvRecOut.end();
-    for (i = 0; i < iNumPicRcvd - iTimeOffset + 1; i++)
-    {
-        iterPicYuvRec--;
-    }
-
-    rpcPicYuvRecOut = *(iterPicYuvRec);
-
-    //  Current pic.
-    TComList<TComPic*>::iterator iterPic = rcListPic.begin();
-    while (iterPic != rcListPic.end())
-    {
-        rpcPic = *(iterPic);
-        rpcPic->setCurrSliceIdx(0);
-        if (rpcPic->getPOC() == pocCurr)
-        {
-            break;
-        }
-        iterPic++;
-    }
-
-    assert(rpcPic->getPOC() == pocCurr);
-}
 
 #if VERBOSE_RATE
 static const Char* nalUnitTypeToString(NalUnitType type)
