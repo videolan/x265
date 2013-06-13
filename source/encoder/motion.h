@@ -52,7 +52,7 @@ protected:
     intptr_t fencLumaStride;
 
     pixelcmp sad;
-    pixelcmp bufsad;
+    pixelcmp fullsad;
     pixelcmp satd;
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
@@ -85,7 +85,7 @@ public:
 
     void setSourcePU(int offset, int pwidth, int pheight);
 
-    int bufSAD(pixel *fref, intptr_t stride)  { return bufsad(fenc, FENC_STRIDE, fref, stride); }
+    int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
 
     int motionEstimate(MotionReference *ref,
                        const MV &mvmin,

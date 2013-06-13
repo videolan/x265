@@ -84,7 +84,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         subsample = 1;
 
         partEnum = PartitionFromSizes(width, height);
-        bufsad = primitives.sad[partEnum];
+        fullsad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
 
         /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
@@ -95,7 +95,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
 #endif // if SUBSAMPLE_SAD
     {
         partEnum = PartitionFromSizes(width, height);
-        bufsad = sad = primitives.sad[partEnum];
+        fullsad = sad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
         sad_x3 = primitives.sad_x3[partEnum];
         sad_x4 = primitives.sad_x4[partEnum];
