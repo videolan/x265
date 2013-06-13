@@ -76,11 +76,11 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     UInt uiTPelY   = rpcBestCU->getCUPelY();
     UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
 
-    Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
+    Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcBestCU->getQP(0);
 
     // If slice start or slice end is within this cu...
-    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
-    Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
+    TComSlice * pcSlice = rpcBestCU->getPic()->getSlice(rpcBestCU->getPic()->getCurrSliceIdx());
+    Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcBestCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcBestCU->getSCUAddr() + rpcBestCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
     TComDataCU* BestCUTemp = rpcBestCU;
