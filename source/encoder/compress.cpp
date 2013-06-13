@@ -243,12 +243,12 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
         xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
         // with sub partitioned prediction.
-        BestCUTemp = rpcBestCU;
+        BestCUTemp = rpcBestCU;    
     }
 
     BestCUTemp->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(BestCUTemp->getPic(), BestCUTemp->getAddr(), BestCUTemp->getZorderIdxInCU(), uiDepth, uiDepth, BestCUTemp, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-
+    
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
@@ -256,9 +256,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
     // Assert if Best prediction mode is NONE
     // Selected mode's RD-cost must be not MAX_DOUBLE.
-    assert(rpcBestCU->getPartitionSize(0) != SIZE_NONE);
-    assert(rpcBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);    
+    assert(BestCUTemp->getPartitionSize(0) != SIZE_NONE);
+    assert(BestCUTemp->getPredictionMode(0) != MODE_NONE);
+    assert(BestCUTemp->getTotalCost() != MAX_DOUBLE);    
 }
 
 #if _MSC_VER
