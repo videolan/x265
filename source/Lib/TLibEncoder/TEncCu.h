@@ -69,7 +69,8 @@ class TEncCu
 private:
 
     TComDataCU**            m_InterCU_2Nx2N;
-    TComDataCU**            m_InterCU_Rect;
+    TComDataCU**            m_InterCU_2NxN;
+    TComDataCU**            m_InterCU_Nx2N;
     TComDataCU**            m_IntrainInterCU;
     TComDataCU**            m_MergeCU;
     TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
@@ -80,7 +81,7 @@ private:
     TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
-    TComYuv**               m_ppcPredYuvMode[4]; //To store pred structures for inter, intra, rect and merge
+    TComYuv**               m_ppcPredYuvMode[5]; //To store pred structures for inter, intra, rect(2) and merge
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_RecoYuvNxN[4];
