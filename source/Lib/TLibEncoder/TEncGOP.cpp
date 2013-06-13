@@ -333,7 +333,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
 
         //  Slice data initialization
-        pcPic->setCurrSliceIdx(0);
         pcPic->clearSliceBuffer();
         assert(pcPic->getNumAllocatedSlice() == 1);
         pcSliceEncoder->setSliceIdx(0);
