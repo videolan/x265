@@ -87,8 +87,8 @@ public:
     Void    init(TEncTop* pcEncTop);
 
     /// preparation of slice encoding (reference marking, QP and lambda)
-    Void    initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                         Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS);
+    TComSlice *initEncSlice(TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS);
+
     Void    resetQP(TComPic* pic, Int sliceQP, Double lambda);
     // compress and encode slice
     Void    compressSlice(TComPic* rpcPic);                                            ///< analysis stage of slice

@@ -334,11 +334,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         //  Slice data initialization
         pcPic->clearSliceBuffer();
-        assert(pcPic->getNumAllocatedSlice() == 1);
         pcSliceEncoder->setSliceIdx(0);
         pcPic->setCurrSliceIdx(0);
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
 
-        pcSliceEncoder->initEncSlice(pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
         //set default slice level flag to the same as SPS level flag
