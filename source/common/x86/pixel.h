@@ -189,6 +189,27 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx       ( pixel *pix1, intptr_t stride1, p
 uint64_t x265_pixel_sa8d_satd_16x16_xop       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
 uint64_t x265_pixel_sa8d_satd_16x16_avx2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
 
+#define DECL_SSD(width,suffix)\
+    int x265_pixel_ssd_##width##x64_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x48_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x32_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x24_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x16_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x12_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x8_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+    int x265_pixel_ssd_##width##x4_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
+
+DECL_SSD(8,sse2)
+DECL_SSD(16,sse2)
+DECL_SSD(32,sse2)
+
+DECL_SSD(8,ssse3)
+DECL_SSD(16,ssse3)
+DECL_SSD(32,ssse3)
+
+DECL_SSD(8,avx)
+DECL_SSD(16,avx)
+DECL_SSD(32,avx)
 
 #define DECL_ADS( size, suffix ) \
 int x265_pixel_ads##size##_##suffix( int enc_dc[size], uint16_t *sums, int delta,\
