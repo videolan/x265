@@ -141,21 +141,21 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
         m_ppcPredYuvBest[uiDepth] = YuvTemp;
 
-        if(m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+        if(m_InterCU_Nx2N[uiDepth]->getTotalCost() < BestCUTemp->getTotalCost())
         {
             BestCUTemp = m_InterCU_Nx2N[uiDepth];
             YuvTemp = m_ppcPredYuvMode[1][uiDepth];
             m_ppcPredYuvMode[1][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
-        if(m_InterCU_2NxN[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+        if(m_InterCU_2NxN[uiDepth]->getTotalCost() < BestCUTemp->getTotalCost())
         {
             BestCUTemp = m_InterCU_2NxN[uiDepth];
             YuvTemp = m_ppcPredYuvMode[2][uiDepth];
             m_ppcPredYuvMode[2][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
-        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        m_pcPredSearch->encodeResAndCalcRdInterCU(BestCUTemp, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
     }
     else if (!(bSliceEnd && bInsidePicture))
     {
@@ -247,7 +247,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     }
 
     BestCUTemp->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
-    xCopyYuv2Pic(BestCUTemp->getPic(), BestCUTemp->getAddr(), BestCUTemp->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
+    xCopyYuv2Pic(BestCUTemp->getPic(), BestCUTemp->getAddr(), BestCUTemp->getZorderIdxInCU(), uiDepth, uiDepth, BestCUTemp, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
 
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
