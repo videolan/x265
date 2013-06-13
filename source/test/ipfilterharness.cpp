@@ -262,8 +262,8 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x2
 
 bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::filterVmulti_t opt)
 {
-    short rand_height = 32; //(short)rand() % 100;                 // Randomly generated Height
-    short rand_width = 32; //(short)rand() % 100;                  // Randomly generated Width
+    short rand_height = 32;                 // Can be randomly generated Height
+    short rand_width = 32;                  // Can be randomly generated Width
     short rand_srcStride, rand_dstStride;
 
     pixel dstAvec[100*100];
@@ -280,8 +280,8 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
     for (int i = 0; i <= 100; i++)
     {        
 
-        rand_srcStride = 64; //rand_width + rand() % 100;              // Randomly generated srcStride
-        rand_dstStride = 64; //rand_width + rand() % 100;              // Randomly generated dstStride
+        rand_srcStride = 64;               // Can be randomly generated 
+        rand_dstStride = 64;               
         memset(dstAref, 0, 10000*sizeof(pixel));
         memset(dstEref, 0, 10000*sizeof(pixel));
         memset(dstIref, 0, 10000*sizeof(pixel));

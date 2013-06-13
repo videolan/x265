@@ -216,7 +216,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
     Output: All planes in the corresponding column - 'dst<A|E|I|P>'
 */
 
-#define PROCESSROW { \
+#define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
         /*  write a3 to subpel */  \
         val = (a3 + IF_INTERNAL_OFFS + 32) >> 6; \
         val = max(val, 0); \
@@ -250,31 +250,23 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             \
 /* store results */ \
         sumi = (sumi + offset) >> 12; \
-        tmp  = compress_unsafe(sumi, 0); \
+        tmp  = compress_saturated(sumi, 0); \
         tmp  = max(tmp, 0); \
         tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sume = (sume + offset) >> 12; \
-        tmp  = compress_unsafe(sume, 0); \
+        tmp  = compress_saturated(sume, 0); \
         tmp  = max(tmp, 0); \
         tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sump = (sump + offset) >> 12; \
-        tmp  = compress_unsafe(sump, 0); \
+        tmp  = compress_saturated(sump, 0); \
         tmp  = max(tmp, 0); \
         tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
-/* move rows up the queue */ \
-        a0 = a1; \
-        a1 = a2; \
-        a2 = a3; \
-        a3 = a4; \
-        a4 = a5; \
-        a5 = a6; \
-        a6 = a7; \
 }
 
 void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
@@ -295,7 +287,7 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
     Vec4i val, sume, sumi, sump;
     Vec4i exp1, exp2, exp3, exp4, exp5, exp6;
 
-    for (col = 0; col < block_width - 3; col += 4)
+    for (col = 0; col < block_width; col += 4)         // Considering block width is always a multiple of 4
     {
         tmp.load(src + col);
         a0 = extend_low(tmp);
@@ -314,9 +306,18 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
 
         for (row = 0; row < block_height; row++)
         {
-            PROCESSROW
-                row++;
-            PROCESSROW
+            PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) row++;
+            PROCESSROW(a1, a2, a3, a4, a5, a6, a7, a0) 
+
+            Vec8s a8;
+            a8=a0;
+            a0=a2;
+            a1=a3;
+            a2=a4;
+            a3=a5;
+            a4=a6;
+            a5=a7;
+            a6=a8;
         }
     }
 }
