@@ -473,6 +473,17 @@ ALIGN 16
 %endif
 %endmacro
 
+%macro DECL_SSD 1
+SSD %1, 64
+SSD %1, 48
+SSD %1, 32
+SSD %1, 24
+SSD %1, 16
+SSD %1, 12
+SSD %1, 8
+SSD %1, 4
+%endmacro
+
 INIT_MMX mmx
 SSD 16, 16
 SSD 16,  8
@@ -505,11 +516,9 @@ SSD 16,  8
 SSD  8, 16
 SSD  8,  4
 INIT_XMM avx
-SSD 16, 16
-SSD  8,  8
-SSD 16,  8
-SSD  8, 16
-SSD  8,  4
+DECL_SSD 32
+DECL_SSD 16
+DECL_SSD 8
 INIT_MMX ssse3
 SSD  4,  4
 SSD  4,  8
