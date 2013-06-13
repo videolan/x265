@@ -122,21 +122,24 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
     }
 }
 
-void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
+void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
 {
-    int i;
+    int i, j;
 
-    for (i = 0; i < num; i += 8)
+    for (i=0; i <size; i++)
     {
-        Vec8s im16;
-        Vec4i im32;
+        for (j=0; j<size; j+=4)
+        {
+            __m128i im16;
+            __m128i im32;
 
-        im16 = load_partial(const_int(8), psOrg);
-        im32 = extend_low(im16) << shift;
-        im32.store(piDst);
+            im16 = _mm_loadl_epi64((__m128i*)&psOrg[i*iStride+j]);
+            im32 = _mm_srai_epi32(_mm_unpacklo_epi16(im16, im16), 16);
+            im32 = _mm_slli_epi32(im32, shift);
+            _mm_storeu_si128((__m128i*)piDst, im32);
 
-        psOrg += 4;
-        piDst += 4;
+            piDst += 4;
+        }
     }
 }
 

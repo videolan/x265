@@ -466,11 +466,14 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
     }
 }
 
-void CDECL convert16to32_shl(int *piDst, short *psOrg, int shift, int num)
+void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
 {
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < size; i++)
     {
-        piDst[i] = ((int)psOrg[i]) << shift;
+        for (int j = 0; j < size; j++)
+        {
+            piDst[i*size+j] = ((int)psOrg[i*iStride+j]) << shift;
+        }
     }
 }
 
