@@ -3665,7 +3665,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         return;
     }
 
-    m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
 
     // Configure the MV bit cost calculator  (TODO: m_bc will go away)

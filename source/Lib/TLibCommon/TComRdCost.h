@@ -176,7 +176,6 @@ private:
 
 public:
 
-    TComMv                  m_mvPredictor;
     Int                     m_iCostScale;
 
     TComRdCost();
@@ -202,8 +201,6 @@ public:
     Double  getLambda()                        { return m_dLambda; }
 
     // for motion cost
-    Void    setPredictor(TComMv& rcMv)         { m_mvPredictor = rcMv; }
-
     Void    setCostScale(Int iCostScale)       { m_iCostScale = iCostScale; }
 
     UInt    getCost(UInt b)                    { return (UInt)((m_uiLambdaMotionSAD * b + 32768) >> 16); }
