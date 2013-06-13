@@ -1170,7 +1170,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                                      UInt&       ruiDistY,
                                      UInt&       ruiDistC,
                                      Bool        bCheckFirst,
-                                     Double&     dRDCost)
+                                     UInt64&     dRDCost)
 {
     UInt    uiFullDepth   = pcCU->getDepth(0) +  uiTrDepth;
     UInt    uiLog2TrSize  = g_aucConvertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
@@ -1198,7 +1198,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
         bCheckSplit = false;
     }
 
-    Double  dSingleCost   = MAX_DOUBLE;
+    UInt64  dSingleCost   = MAXUINT64;
     UInt    uiSingleDistY = 0;
     UInt    uiSingleDistC = 0;
     UInt    uiSingleCbfY  = 0;
@@ -1229,7 +1229,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
             UInt   singleCbfYTmp      = 0;
             UInt   singleCbfUTmp      = 0;
             UInt   singleCbfVTmp      = 0;
-            Double singleCostTmp      = 0;
+            UInt64 singleCostTmp      = 0;
             Int    default0Save1Load2 = 0;
             Int    firstCheckId       = 0;
 
@@ -1269,12 +1269,12 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
                 if (modeId == 1 && singleCbfYTmp == 0)
                 {
                     //In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
-                    singleCostTmp = MAX_DOUBLE;
+                    singleCostTmp = MAXUINT64;
                 }
                 else
                 {
                     UInt uiSingleBits = xGetIntraBitsQT(pcCU, uiTrDepth, uiAbsPartIdx, true, !bLumaOnly, false);
-                    singleCostTmp     = CALCRDCOST(uiSingleBits, singleDistYTmp + singleDistCTmp, m_pcRdCost->m_dLambda);
+                    singleCostTmp = m_pcRdCost->calcRdCost(singleDistYTmp + singleDistCTmp, uiSingleBits);
                 }
 
                 if (singleCostTmp < dSingleCost)
@@ -1367,7 +1367,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
             {
                 uiSingleBits = uiSingleBits * 4;
             }
-            dSingleCost = CALCRDCOST(uiSingleBits, uiSingleDistY + uiSingleDistC, m_pcRdCost->m_dLambda);
+            dSingleCost = m_pcRdCost->calcRdCost(uiSingleDistY + uiSingleDistC, uiSingleBits);
         }
     }
 
@@ -1385,7 +1385,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
         }
 
         //----- code splitted block -----
-        Double  dSplitCost      = 0.0;
+        UInt64  dSplitCost      = 0.0;
         UInt    uiSplitDistY    = 0;
         UInt    uiSplitDistC    = 0;
         UInt    uiQPartsDiv     = pcCU->getPic()->getNumPartInCU() >> ((uiFullDepth + 1) << 1);
@@ -1425,7 +1425,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* pcCU,
 
         //----- determine rate and r-d cost -----
         UInt uiSplitBits = xGetIntraBitsQT(pcCU, uiTrDepth, uiAbsPartIdx, true, !bLumaOnly, false);
-        dSplitCost       = CALCRDCOST(uiSplitBits, uiSplitDistY + uiSplitDistC, m_pcRdCost->m_dLambda);
+        dSplitCost       = m_pcRdCost->calcRdCost(uiSplitDistY + uiSplitDistC, uiSplitBits);
 
         //===== compare and set best =====
         if (dSplitCost < dSingleCost)
@@ -1954,12 +1954,12 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* pcCU,
 
             for (Int chromaId = 0; chromaId < 2; chromaId++)
             {
-                Double  dSingleCost    = MAX_DOUBLE;
+                UInt64  dSingleCost    = MAXUINT64;
                 Int     bestModeId     = 0;
                 UInt    singleDistC    = 0;
                 UInt    singleCbfC     = 0;
                 UInt    singleDistCTmp = 0;
-                Double  singleCostTmp  = 0;
+                UInt64  singleCostTmp  = 0;
                 UInt    singleCbfCTmp  = 0;
 
                 Int     default0Save1Load2 = 0;
@@ -1983,12 +1983,12 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* pcCU,
                     if (chromaModeId == 1 && singleCbfCTmp == 0)
                     {
                         //In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
-                        singleCostTmp = MAX_DOUBLE;
+                        singleCostTmp = MAXUINT64;
                     }
                     else
                     {
                         UInt bitsTmp = xGetIntraBitsQTChroma(pcCU, uiTrDepth, uiAbsPartIdx, chromaId + 2, false);
-                        singleCostTmp  = CALCRDCOST(bitsTmp, singleDistCTmp, m_pcRdCost->m_dLambda);
+                        singleCostTmp = m_pcRdCost->calcRdCost(singleDistCTmp, bitsTmp);
                     }
 
                     if (singleCostTmp < dSingleCost)
@@ -2204,7 +2204,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     UInt    uiOverallDistY = 0;
     UInt    uiOverallDistC = 0;
     UInt    CandNum;
-    Double  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
+    UInt64  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
     x265::pixelcmp sa8d;
 
@@ -2270,7 +2270,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
             for (Int i = 0; i < numModesForFullRD; i++)
             {
-                CandCostList[i] = MAX_DOUBLE;
+                CandCostList[i] = MAXUINT64;
             }
 
             CandNum = 0;
@@ -2286,7 +2286,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 x265_emms();
 
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
-                Double cost      = (Double)uiSad + (Double)iModeBits * m_pcRdCost->getSqrtLambda();
+                UInt64 sqrtLambda = m_pcRdCost->getSqrtLambda()*256;
+                UInt64 cost      = uiSad + ((iModeBits * sqrtLambda +128 )>>8);
 
                 CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
             }
@@ -2327,7 +2328,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         UInt    uiBestPUMode  = 0;
         UInt    uiBestPUDistY = 0;
         UInt    uiBestPUDistC = 0;
-        Double  dBestPUCost   = MAX_DOUBLE;
+        UInt64  dBestPUCost   = MAXUINT64;
         for (UInt uiMode = 0; uiMode < numModesForFullRD; uiMode++)
         {
             // set luma prediction mode
@@ -2341,7 +2342,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             // determine residual for partition
             UInt   uiPUDistY = 0;
             UInt   uiPUDistC = 0;
-            Double dPUCost   = 0.0;
+            UInt64 dPUCost   = 0.0;
             xRecurIntraCodingQT(pcCU, uiInitTrDepth, uiPartOffset, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, true, dPUCost);
 
             // check r-d cost
@@ -2376,7 +2377,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             // determine residual for partition
             UInt   uiPUDistY = 0;
             UInt   uiPUDistC = 0;
-            Double dPUCost   = 0.0;
+            UInt64 dPUCost   = 0;
             xRecurIntraCodingQT(pcCU, uiInitTrDepth, uiPartOffset, bLumaOnly, pcOrgYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, false, dPUCost);
 
             // check r-d cost
@@ -2516,7 +2517,7 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* pcCU,
     UInt    uiDepth     = pcCU->getDepth(0);
     UInt    uiBestMode  = 0;
     UInt    uiBestDist  = 0;
-    Double  dBestCost   = MAX_DOUBLE;
+    UInt64  dBestCost   = MAXUINT64;
 
     //----- init mode list -----
     UInt  uiMinMode = 0;
@@ -2541,7 +2542,7 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* pcCU,
         }
 
         UInt    uiBits = xGetIntraBitsQT(pcCU,   0, 0, false, true, false);
-        Double  dCost  = CALCRDCOST(uiBits, uiDist, m_pcRdCost->m_dLambda);
+        UInt64  dCost  = m_pcRdCost->calcRdCost(uiDist, uiBits);
 
         //----- compare -----
         if (dCost < dBestCost)
@@ -2725,7 +2726,7 @@ Void TEncSearch::IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPr
     xEncIntraHeader(pcCU, uiDepth, uiAbsPartIdx, true, false);
     uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
 
-    dCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
+    dCost = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
 
     m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
 
@@ -3278,7 +3279,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
             UInt uiMEInterDir = 0;
             TComMvField cMEMvField[2];
 
-            m_pcRdCost->getMotionCost(1, 0);
             // calculate ME cost
             UInt uiMEError = MAX_UINT;
             UInt uiMECost = MAX_UINT;
@@ -3510,7 +3510,6 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, TComMv 
 
     if (pcAMVPInfo->iN < 2) return;
 
-    m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setCostScale(0);
 
     Int iBestMVPIdx = riMVPIdx;
@@ -3582,8 +3581,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
     // calc distortion
     uiCost = m_me.bufSAD((pixel*)pcTemplateCand->getLumaAddr(uiPartAddr), pcTemplateCand->getStride());
     x265_emms();
-    uiCost =  (UInt)((Double)floor((Double)uiCost + (Double)((Int)(m_auiMVPIdxCost[iMVPIdx][iMVPNum] * (Double)m_pcRdCost->m_uiLambdaMotionSAD + .5) >> 16)));
-    return uiCost;
+    return m_pcRdCost->calcRdSADCost(uiCost, m_auiMVPIdxCost[iMVPIdx][iMVPNum]);
 }
 
 DECLARE_CYCLE_COUNTER(ME);
@@ -3658,12 +3656,15 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
         /* Get total cost of PU, but only include MV bit cost once */
         ruiBits += m_me.bitcost(rcMv);
-        ruiCost = (UInt)(floor(fWeight * ((Double)satdCost - m_me.mvcost(rcMv))) + (Double)m_pcRdCost->getCost(ruiBits));
+        if (bBi)
+            ruiCost = (UInt)(floor(fWeight * ((Double)satdCost - m_me.mvcost(rcMv))) + (Double)m_pcRdCost->getCost(ruiBits));
+        else
+            ruiCost = (satdCost - m_me.mvcost(rcMv)) + m_pcRdCost->getCost(ruiBits);
+
         CYCLE_COUNTER_STOP(ME);
         return;
     }
 
-    m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setPredictor(*pcMvPred);
     m_pcRdCost->setCostScale(2);
 
@@ -3684,7 +3685,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         xPatternSearchFast(pcCU, pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost);
     }
 
-    m_pcRdCost->getMotionCost(1, 0);
     m_pcRdCost->setCostScale(1);
 
     xPatternSearchFracDIF(pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi, refPic, uiPartAddr);
@@ -3697,7 +3697,11 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     UInt uiMvBits = m_bc.mvcost(x265::MV(rcMv.getHor(), rcMv.getVer()));
 
     ruiBits      += uiMvBits;
-    ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
+    if (bBi)
+        ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
+    else
+        ruiCost       = (ruiCost - m_pcRdCost->getCost(uiMvBits)) + m_pcRdCost->getCost(ruiBits);
+
     CYCLE_COUNTER_STOP(ME);
 }
 
@@ -4032,7 +4036,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         pcCU->getTotalBits()       = uiBits;
         pcCU->getTotalDistortion() = uiDistortion;
-        pcCU->getTotalCost()       = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
+        pcCU->getTotalCost()       = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
 
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
 
@@ -4044,7 +4048,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
     //  Residual coding.
     Int     qp, qpBest = 0;
-    Double  dCost, dCostBest = MAX_DOUBLE;
+    UInt64  dCost, dCostBest = MAXUINT64;
 
     UInt uiTrLevel = 0;
     if ((pcCU->getWidth(0) > pcCU->getSlice()->getSPS()->getMaxTrSize()))
@@ -4082,7 +4086,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     zeroResiBits = 1; //rqt_root_cbf of fixed length, 1
 #endif
 
-    Double dZeroCost = CALCRDCOST(zeroResiBits, uiZeroDistortion, m_pcRdCost->m_dLambda);
+    UInt64 dZeroCost = m_pcRdCost->calcRdCost(uiZeroDistortion, zeroResiBits);
     if (pcCU->isLosslessCoded(0))
     {
         dZeroCost = dCost + 1;
@@ -4116,7 +4120,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
         xAddSymbolBitsInter(pcCU, 0, 0, uiBits, pDummy, NULL, pDummy);
     }
 
-    Double dExactCost = CALCRDCOST(uiBits, uiDistortion, m_pcRdCost->m_dLambda);
+    UInt64 dExactCost = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
     dCost = dExactCost;
 
     if (dCost < dCostBest)
@@ -4137,7 +4141,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
     }
 
-    assert(dCostBest != MAX_DOUBLE);
+    assert(dCostBest != MAXUINT64);
 
     rpcYuvRec->addClip(pcYuvPred, rpcYuvResiBest, 0, uiWidth);
 
@@ -4146,9 +4150,8 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     uiDistortionBest += m_pcRdCost->m_cbDistortionWeight * primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCbAddr(),   pcYuvOrg->getCStride(), rpcYuvRec->getCbAddr(),   rpcYuvRec->getCStride());
     uiDistortionBest += m_pcRdCost->m_crDistortionWeight * primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCrAddr(),   pcYuvOrg->getCStride(), rpcYuvRec->getCrAddr(),   rpcYuvRec->getCStride());
 
-    dCostBest = CALCRDCOST(uiBitsBest, uiDistortionBest, m_pcRdCost->m_dLambda);
+    dCostBest = m_pcRdCost->calcRdCost(uiDistortionBest, uiBitsBest);
 
-    
 #if !FAST_MODE_DECISION
     pcCU->getTotalBits()       = uiBitsBest;
     pcCU->getTotalDistortion() = uiDistortionBest;
@@ -4173,7 +4176,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                                      UInt        absTUPartIdx,
                                      TShortYUV*  pcResi,
                                      const UInt  uiDepth,
-                                     Double &    rdCost,
+                                     UInt64 &    rdCost,
                                      UInt &      ruiBits,
                                      UInt &      ruiDist,
                                      UInt *      puiZeroDist)
@@ -4207,7 +4210,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
     const UInt uiSetCbf = 1 << uiTrMode;
     // code full block
-    Double dSingleCost = MAX_DOUBLE;
+    UInt64 dSingleCost = MAXUINT64;
     UInt uiSingleBits = 0;
     UInt uiSingleDist = 0;
     UInt uiAbsSumY = 0, uiAbsSumU = 0, uiAbsSumV = 0;
@@ -4232,9 +4235,9 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         trWidth  = trHeight  = 1 << uiLog2TrSize;
         trWidthC = trHeightC = 1 << uiLog2TrSizeC;
         pcCU->setTrIdxSubParts(uiDepth - pcCU->getDepth(0), uiAbsPartIdx, uiDepth);
-        Double minCostY = MAX_DOUBLE;
-        Double minCostU = MAX_DOUBLE;
-        Double minCostV = MAX_DOUBLE;
+        UInt64 minCostY = MAXUINT64;
+        UInt64 minCostU = MAXUINT64;
+        UInt64 minCostV = MAXUINT64;
         Bool checkTransformSkipY  = pcCU->getSlice()->getPPS()->getUseTransformSkip() && trWidth == 4 && trHeight == 4;
         Bool checkTransformSkipUV = pcCU->getSlice()->getPPS()->getUseTransformSkip() && trWidthC == 4 && trHeightC == 4;
 
@@ -4342,11 +4345,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             }
             else
             {
-                const Double singleCostY = CALCRDCOST(uiSingleBitsY, uiNonzeroDistY, m_pcRdCost->m_dLambda);
+                const UInt64 singleCostY = m_pcRdCost->calcRdCost(uiNonzeroDistY, uiSingleBitsY);
                 m_pcEntropyCoder->resetBits();
                 m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_LUMA,     uiTrMode);
-                const UInt uiNullBitsY   = m_pcEntropyCoder->getNumberOfWrittenBits();
-                const Double nullCostY   = CALCRDCOST(uiNullBitsY, uiDistY, m_pcRdCost->m_dLambda);
+                const UInt uiNullBitsY = m_pcEntropyCoder->getNumberOfWrittenBits();
+                const UInt64 nullCostY = m_pcRdCost->calcRdCost(uiDistY, uiNullBitsY);
                 if (nullCostY < singleCostY)
                 {
                     uiAbsSumY = 0;
@@ -4371,7 +4374,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             m_pcEntropyCoder->resetBits();
             m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_LUMA, uiTrMode);
             const UInt uiNullBitsY = m_pcEntropyCoder->getNumberOfWrittenBits();
-            minCostY = CALCRDCOST(uiNullBitsY, uiDistY, m_pcRdCost->m_dLambda);
+            minCostY = m_pcRdCost->calcRdCost(uiDistY, uiNullBitsY);
         }
 
         if (!uiAbsSumY)
@@ -4416,11 +4419,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 }
                 else
                 {
-                    const Double dSingleCostU = CALCRDCOST(uiSingleBitsU, uiNonzeroDistU, m_pcRdCost->m_dLambda);
+                    const UInt64 dSingleCostU = m_pcRdCost->calcRdCost(uiNonzeroDistU, uiSingleBitsU);
                     m_pcEntropyCoder->resetBits();
                     m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_CHROMA_U,     uiTrMode);
-                    const UInt uiNullBitsU    = m_pcEntropyCoder->getNumberOfWrittenBits();
-                    const Double dNullCostU   = CALCRDCOST(uiNullBitsU, uiDistU, m_pcRdCost->m_dLambda);
+                    const UInt uiNullBitsU = m_pcEntropyCoder->getNumberOfWrittenBits();
+                    const UInt64 dNullCostU = m_pcRdCost->calcRdCost(uiDistU, uiNullBitsU);
                     if (dNullCostU < dSingleCostU)
                     {
                         uiAbsSumU = 0;
@@ -4445,7 +4448,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 m_pcEntropyCoder->resetBits();
                 m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_CHROMA_U, uiTrModeC);
                 const UInt uiNullBitsU = m_pcEntropyCoder->getNumberOfWrittenBits();
-                minCostU = CALCRDCOST(uiNullBitsU, uiDistU, m_pcRdCost->m_dLambda);
+                minCostU = m_pcRdCost->calcRdCost(uiDistU, uiNullBitsU);
             }
             if (!uiAbsSumU)
             {
@@ -4482,11 +4485,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 }
                 else
                 {
-                    const Double dSingleCostV = CALCRDCOST(uiSingleBitsV, uiNonzeroDistV, m_pcRdCost->m_dLambda);
+                    const UInt64 dSingleCostV = m_pcRdCost->calcRdCost(uiNonzeroDistV, uiSingleBitsV);
                     m_pcEntropyCoder->resetBits();
                     m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_CHROMA_V,     uiTrMode);
-                    const UInt uiNullBitsV    = m_pcEntropyCoder->getNumberOfWrittenBits();
-                    const Double dNullCostV   = CALCRDCOST(uiNullBitsV, uiDistV, m_pcRdCost->m_dLambda);
+                    const UInt uiNullBitsV = m_pcEntropyCoder->getNumberOfWrittenBits();
+                    const UInt64 dNullCostV = m_pcRdCost->calcRdCost(uiDistV, uiNullBitsV);
                     if (dNullCostV < dSingleCostV)
                     {
                         uiAbsSumV = 0;
@@ -4511,7 +4514,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 m_pcEntropyCoder->resetBits();
                 m_pcEntropyCoder->encodeQtCbfZero(pcCU, TEXT_CHROMA_V, uiTrModeC);
                 const UInt uiNullBitsV = m_pcEntropyCoder->getNumberOfWrittenBits();
-                minCostV = CALCRDCOST(uiNullBitsV, uiDistV, m_pcRdCost->m_dLambda);
+                minCostV = m_pcRdCost->calcRdCost(uiDistV, uiNullBitsV);
             }
             if (!uiAbsSumV)
             {
@@ -4534,7 +4537,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         if (checkTransformSkipY)
         {
             UInt uiNonzeroDistY = 0, uiAbsSumTransformSkipY;
-            Double dSingleCostY = MAX_DOUBLE;
+            UInt64 dSingleCostY = MAXUINT64;
 
             Short *pcResiCurrY = m_pcQTTempTComYuv[uiQTTempAccessLayer].getLumaAddr(absTUPartIdx);
             UInt resiYStride = m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride();
@@ -4584,7 +4587,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 uiNonzeroDistY = primitives.sse_ss[Part](pcResi->getLumaAddr(absTUPartIdx), pcResi->getStride(),
                                                          m_pcQTTempTComYuv[uiQTTempAccessLayer].getLumaAddr(absTUPartIdx), m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride());
 
-                dSingleCostY = CALCRDCOST(uiTsSingleBitsY, uiNonzeroDistY, m_pcRdCost->m_dLambda);
+                dSingleCostY = m_pcRdCost->calcRdCost(uiNonzeroDistY, uiTsSingleBitsY);
             }
 
             if (!uiAbsSumTransformSkipY || minCostY < dSingleCostY)
@@ -4610,8 +4613,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         if (bCodeChroma && checkTransformSkipUV)
         {
             UInt uiNonzeroDistU = 0, uiNonzeroDistV = 0, uiAbsSumTransformSkipU, uiAbsSumTransformSkipV;
-            Double dSingleCostU = MAX_DOUBLE;
-            Double dSingleCostV = MAX_DOUBLE;
+            UInt64 dSingleCostU = MAXUINT64;
+            UInt64 dSingleCostV = MAXUINT64;
 
             Short *pcResiCurrU = m_pcQTTempTComYuv[uiQTTempAccessLayer].getCbAddr(absTUPartIdxC);
             Short *pcResiCurrV = m_pcQTTempTComYuv[uiQTTempAccessLayer].getCrAddr(absTUPartIdxC);
@@ -4677,7 +4680,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
                 uiNonzeroDistU = m_pcRdCost->m_cbDistortionWeight * primitives.sse_ss[PartC](pcResi->getCbAddr(absTUPartIdxC), pcResi->getCStride(),
                                                                                              m_pcQTTempTComYuv[uiQTTempAccessLayer].getCbAddr(absTUPartIdxC), m_pcQTTempTComYuv[uiQTTempAccessLayer].getCStride());
-                dSingleCostU = CALCRDCOST(uiSingleBitsU, uiNonzeroDistU, m_pcRdCost->m_dLambda);
+                dSingleCostU = m_pcRdCost->calcRdCost(uiNonzeroDistU, uiSingleBitsU);
             }
 
             if (!uiAbsSumTransformSkipU || minCostU < dSingleCostU)
@@ -4714,7 +4717,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
                 uiNonzeroDistV = m_pcRdCost->m_crDistortionWeight * primitives.sse_ss[PartC](pcResi->getCrAddr(absTUPartIdxC), pcResi->getCStride(),
                                                                                              m_pcQTTempTComYuv[uiQTTempAccessLayer].getCrAddr(absTUPartIdxC), m_pcQTTempTComYuv[uiQTTempAccessLayer].getCStride());
-                dSingleCostV = CALCRDCOST(uiSingleBitsV, uiNonzeroDistV, m_pcRdCost->m_dLambda);
+                dSingleCostV = m_pcRdCost->calcRdCost(uiNonzeroDistV, uiSingleBitsV);
             }
 
             if (!uiAbsSumTransformSkipV || minCostV < dSingleCostV)
@@ -4771,7 +4774,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         uiSingleBits = m_pcEntropyCoder->getNumberOfWrittenBits();
 
         uiSingleDist = uiDistY + uiDistU + uiDistV;
-        dSingleCost = CALCRDCOST(uiSingleBits, uiSingleDist, m_pcRdCost->m_dLambda);
+        dSingleCost = m_pcRdCost->calcRdCost(uiSingleDist, uiSingleBits);
     }
 
     // code sub-blocks
@@ -4784,7 +4787,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         }
         UInt uiSubdivDist = 0;
         UInt uiSubdivBits = 0;
-        Double dSubdivCost = 0.0;
+        UInt64 dSubdivCost = 0.0;
 
         const UInt uiQPartNumSubdiv = pcCU->getPic()->getNumPartInCU() >> ((uiDepth + 1) << 1);
         for (UInt ui = 0; ui < 4; ++ui)
@@ -4821,7 +4824,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         }
 
         uiSubdivBits = m_pcEntropyCoder->getNumberOfWrittenBits();
-        dSubdivCost  = CALCRDCOST(uiSubdivBits, uiSubdivDist, m_pcRdCost->m_dLambda);
+        dSubdivCost  = m_pcRdCost->calcRdCost(uiSubdivDist, uiSubdivBits);
 
         if (uiYCbf || uiUCbf || uiVCbf || !bCheckFull)
         {
@@ -5046,7 +5049,7 @@ UInt TEncSearch::xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt u
     return m_pcEntropyCoder->getNumberOfWrittenBits();
 }
 
-UInt TEncSearch::xUpdateCandList(UInt uiMode, Double uiCost, UInt uiFastCandNum, UInt * CandModeList, Double * CandCostList)
+UInt TEncSearch::xUpdateCandList(UInt uiMode, UInt64 uiCost, UInt uiFastCandNum, UInt * CandModeList, UInt64 * CandCostList)
 {
     UInt i;
     UInt shift = 0;

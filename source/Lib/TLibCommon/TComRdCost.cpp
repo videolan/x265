@@ -55,8 +55,8 @@ Void TComRdCost::setLambda(Double dLambda)
 {
     m_dLambda           = dLambda;
     m_sqrtLambda        = sqrt(m_dLambda);
-    m_uiLambdaMotionSAD = (UInt)floor(65536.0 * m_sqrtLambda);
-    m_uiLambdaMotionSSE = (UInt)floor(65536.0 * m_dLambda);
+    m_uiLambdaMotionSAD = (UInt64)floor(65536.0 * m_sqrtLambda);
+    m_uiLambdaMotionSSE = (UInt64)floor(65536.0 * m_dLambda);
 }
 
 // Initalize Function Pointer by [eDFunc]
@@ -104,7 +104,6 @@ Void TComRdCost::init()
     m_afpDistortFunc[27] = TComRdCost::xGetHADs;
     m_afpDistortFunc[28] = TComRdCost::xGetHADs;
 
-    m_uiCost                  = 0;
     m_iCostScale              = 0;
 }
 

@@ -330,7 +330,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
     m_uiCUPelX           = (iCUAddr % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth;
     m_uiCUPelY           = (iCUAddr / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight;
     m_uiAbsIdxInLCU      = 0;
-    m_dTotalCost         = MAX_DOUBLE;
+    m_dTotalCost         = MAXUINT64;
     m_uiTotalDistortion  = 0;
     m_uiTotalBits        = 0;
     m_uiTotalBins        = 0;
@@ -492,7 +492,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
 */
 Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 {
-    m_dTotalCost         = MAX_DOUBLE;
+    m_dTotalCost         = MAXUINT64;
     m_uiTotalDistortion  = 0;
     m_uiTotalBits        = 0;
     m_uiTotalBins        = 0;
@@ -565,7 +565,7 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
     m_uiCUPelX           = pcCU->getCUPelX() + (g_uiMaxCUWidth >> uiDepth) * (uiPartUnitIdx &  1);
     m_uiCUPelY           = pcCU->getCUPelY() + (g_uiMaxCUHeight >> uiDepth) * (uiPartUnitIdx >> 1);
 
-    m_dTotalCost         = MAX_DOUBLE;
+    m_dTotalCost         = MAXUINT64;
     m_uiTotalDistortion  = 0;
     m_uiTotalBits        = 0;
     m_uiTotalBins        = 0;

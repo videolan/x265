@@ -187,7 +187,7 @@ private:
     // -------------------------------------------------------------------------------------------------------------------
 
     Bool          m_bDecSubCu;        ///< indicates decoder-mode
-    Double        m_dTotalCost;       ///< sum of partition RD costs
+    UInt64        m_dTotalCost;       ///< sum of partition RD costs
     UInt          m_uiTotalDistortion; ///< sum of partition distortion
     UInt          m_uiTotalBits;      ///< sum of partition bits
     UInt          m_uiTotalBins;     ///< sum of partition bins
@@ -568,7 +568,7 @@ public:
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    Double&       getTotalCost()                  { return m_dTotalCost; }
+    UInt64&       getTotalCost()                  { return m_dTotalCost; }
 
     UInt&         getTotalDistortion()            { return m_uiTotalDistortion; }
 

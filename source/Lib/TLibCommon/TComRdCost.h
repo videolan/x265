@@ -155,34 +155,33 @@ public:
     Short* ptr2;
 };
 
-#define CALCRDCOST(uiBits, uiDistortion, m_dLambda) \
-    (Double)floor((Double)uiDistortion + (Double)((uiBits * m_dLambda + .5))) \
-
 /// RD cost computation class
-class TComRdCost
-    : public TComRdCostWeightPrediction
+class TComRdCost : public TComRdCostWeightPrediction
 {
 private:
 
-    // for distortion
     FpDistFunc              m_afpDistortFunc[64]; // [eDFunc]
 
+    Double                  m_dLambda;
+
     Double                  m_sqrtLambda;
-    UInt                    m_uiLambdaMotionSSE;
+
     Double                  m_dFrameLambda;
+
+    UInt64                  m_uiLambdaMotionSSE;
+
+    UInt64                  m_uiLambdaMotionSAD;
 
 public:
 
     TComMv                  m_mvPredictor;
-    UInt                    m_uiCost;
     Int                     m_iCostScale;
-    Double                  m_dLambda;
-    UInt                    m_uiLambdaMotionSAD;
 
     Double                  m_cbDistortionWeight;
     Double                  m_crDistortionWeight;
 
     TComRdCost();
+
     virtual ~TComRdCost();
 
     Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = cbDistortionWeight; }
@@ -191,20 +190,22 @@ public:
 
     Void    setLambda(Double dLambda);
 
-    Void    setFrameLambda(Double dLambda) { m_dFrameLambda = dLambda; }
+    inline UInt64  calcRdCost(UInt64 distortion, UInt64 bits) { return distortion + ((bits * m_uiLambdaMotionSSE) >> 16); }
 
-    Double  getSqrtLambda()   { return m_sqrtLambda; }
+    inline UInt64  calcRdSADCost(UInt64 sadCost, UInt64 bits) { return sadCost + ((bits * m_uiLambdaMotionSAD) >> 16); }
 
-    Double  getLambda() { return m_dLambda; }
+    Void    setFrameLambda(Double dLambda)     { m_dFrameLambda = dLambda; }
+
+    Double  getSqrtLambda()                    { return m_sqrtLambda; }
+
+    Double  getLambda()                        { return m_dLambda; }
 
     // for motion cost
-    Void    getMotionCost(Bool bSad, Int iAdd) { m_uiCost = (bSad ? m_uiLambdaMotionSAD + iAdd : m_uiLambdaMotionSSE + iAdd); }
-
     Void    setPredictor(TComMv& rcMv)         { m_mvPredictor = rcMv; }
 
     Void    setCostScale(Int iCostScale)       { m_iCostScale = iCostScale; }
 
-    UInt    getCost(UInt b)                    { return (m_uiCost * b) >> 16; }
+    UInt    getCost(UInt b)                    { return (UInt)((m_uiLambdaMotionSAD * b) >> 16); }
 
     // Distortion Functions
     Void    init();
