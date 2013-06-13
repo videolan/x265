@@ -68,7 +68,7 @@ class TEncSearch : public TComPrediction
 private:
 
     x265::MotionEstimate m_me;
-    x265::BitCost        m_bc;
+    x265::BitCost        m_bc; // TODO: m_bc will go away with HM ME
 
     TCoeff**        m_ppcQTTempCoeffY;
     TCoeff**        m_ppcQTTempCoeffCb;

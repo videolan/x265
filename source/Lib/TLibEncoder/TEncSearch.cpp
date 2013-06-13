@@ -3648,7 +3648,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
                                            cMvSrchRngLT,
                                            cMvSrchRngRB,
-                                           *pcMvPred,
+                                           cMvPred,
                                            3,
                                            m_acMvPredictors,
                                            iSrchRng,
@@ -3656,18 +3656,14 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
         /* Get total cost of PU, but only include MV bit cost once */
         ruiBits += m_me.bitcost(rcMv);
-        if (bBi)
-            ruiCost = (UInt)(floor(fWeight * ((Double)satdCost - m_me.mvcost(rcMv))) + (Double)m_pcRdCost->getCost(ruiBits));
-        else
-            ruiCost = (satdCost - m_me.mvcost(rcMv)) + m_pcRdCost->getCost(ruiBits);
-
+        ruiCost = (satdCost - m_me.mvcost(rcMv)) + m_pcRdCost->getCost(ruiBits);
         CYCLE_COUNTER_STOP(ME);
         return;
     }
 
     m_pcRdCost->setCostScale(2);
 
-    // Configure the MV bit cost calculator  (TODO: m_bc will go away)
+    // Configure the MV bit cost calculator
     m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
     m_bc.setMVP(*pcMvPred);
 
@@ -3691,15 +3687,15 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     m_pcRdCost->setCostScale(0);
     rcMv <<= 2;
     rcMv += (cMvHalf <<= 1);
-    rcMv +=  cMvQter;
+    rcMv += cMvQter;
 
     UInt uiMvBits = m_bc.mvcost(x265::MV(rcMv.getHor(), rcMv.getVer()));
 
-    ruiBits      += uiMvBits;
+    ruiBits += uiMvBits;
     if (bBi)
-        ruiCost       = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
+        ruiCost = (UInt)(floor(fWeight * ((Double)ruiCost - (Double)m_pcRdCost->getCost(uiMvBits))) + (Double)m_pcRdCost->getCost(ruiBits));
     else
-        ruiCost       = (ruiCost - m_pcRdCost->getCost(uiMvBits)) + m_pcRdCost->getCost(ruiBits);
+        ruiCost = (ruiCost - m_pcRdCost->getCost(uiMvBits)) + m_pcRdCost->getCost(ruiBits);
 
     CYCLE_COUNTER_STOP(ME);
 }
