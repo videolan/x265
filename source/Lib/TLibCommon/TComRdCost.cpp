@@ -59,6 +59,16 @@ Void TComRdCost::setLambda(Double dLambda)
     m_uiLambdaMotionSSE = (UInt64)floor(65536.0 * m_dLambda);
 }
 
+Void TComRdCost::setCbDistortionWeight(Double cbDistortionWeight)
+{
+    m_cbDistortionWeight = (UInt)floor(256.0 * cbDistortionWeight);
+}
+
+Void TComRdCost::setCrDistortionWeight(Double crDistortionWeight)
+{
+    m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight);
+}
+
 // Initalize Function Pointer by [eDFunc]
 Void TComRdCost::init()
 {

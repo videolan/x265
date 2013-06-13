@@ -182,28 +182,28 @@ public:
 
     virtual ~TComRdCost();
 
-    Void    setLambda(Double dLambda);
+    Void setLambda(Double dLambda);
 
-    Void    setCbDistortionWeight(Double cbDistortionWeight) { m_cbDistortionWeight = (UInt)floor(256.0 * cbDistortionWeight); }
+    Void setCbDistortionWeight(Double cbDistortionWeight);
 
-    Void    setCrDistortionWeight(Double crDistortionWeight) { m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight); }
+    Void setCrDistortionWeight(Double crDistortionWeight);
+
+    Double  getSqrtLambda()                               { return m_sqrtLambda; }
+
+    Double  getLambda()                                   { return m_dLambda; }
 
     inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_uiLambdaMotionSSE + 32768) >> 16); }
 
     inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
 
-    inline UInt    scaleChromaDistCb(UInt dist) { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
+    inline UInt    scaleChromaDistCb(UInt dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
-    inline UInt    scaleChromaDistCr(UInt dist) { return ((dist * m_crDistortionWeight) + 128) >> 8; }
-
-    Double  getSqrtLambda()                    { return m_sqrtLambda; }
-
-    Double  getLambda()                        { return m_dLambda; }
+    inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
     // for motion cost
-    Void    setCostScale(Int iCostScale)       { m_iCostScale = iCostScale; }
+    Void    setCostScale(Int iCostScale)                  { m_iCostScale = iCostScale; }
 
-    UInt    getCost(UInt b)                    { return (UInt)((m_uiLambdaMotionSAD * b + 32768) >> 16); }
+    UInt    getCost(UInt b)                               { return (UInt)((m_uiLambdaMotionSAD * b + 32768) >> 16); }
 
     // Distortion Functions
     Void    init();
