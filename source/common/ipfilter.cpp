@@ -25,6 +25,7 @@
 #include "primitives.h"
 #include <cstring>
 #include <assert.h>
+#include "TLibCommon/TComPrediction.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -305,7 +306,17 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
         dst += dstStride;
     }
 }
+
+void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+{
+    filterConvertShortToPel(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
 }
+
+}
+
 #if _MSC_VER
 #pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(default: 4100)
@@ -327,5 +338,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
     p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+
+    p.filterVmulti = filterVertical_short_pel_multiplane;
 }
 }
