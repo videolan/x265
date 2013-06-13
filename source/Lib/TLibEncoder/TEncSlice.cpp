@@ -130,13 +130,12 @@ Void TEncSlice::init(TEncTop* pcEncTop)
  \param pcPic         picture class
  \param pocLast       POC of last picture
  \param pocCurr       current POC
- \param iNumPicRcvd   number of received pictures
  \param iTimeOffset   POC offset for hierarchical structure
  \param iDepth        temporal layer depth
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
-TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
+TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
 {
     Double dQP;
     Double dLambda;
