@@ -26,6 +26,7 @@
 extern "C" {
 #include "pixel.h"
 void x265_intel_cpu_indicator_init( void ) {}
+
 }
 
 bool hasXOP(void);
@@ -258,11 +259,26 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid == 7)
     {
-        INIT5_NAME( sse_pp, ssd, _avx );
+        
         p.sa8d_8x8 = x265_pixel_sa8d_8x8_avx;
         p.sa8d_16x16 = x265_pixel_sa8d_16x16_avx;
         p.sa8d_32x32 = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
         p.sa8d_64x64 = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
+
+#define ASSGN_SSE(type,width,suffix) \
+    p.sse_##type[PARTITION_##width##x64] = (pixelcmp) x265_pixel_ssd_##width##x64_##suffix; \
+    p.sse_##type[PARTITION_##width##x48] = (pixelcmp) x265_pixel_ssd_##width##x48_##suffix; \
+    p.sse_##type[PARTITION_##width##x32] = (pixelcmp) x265_pixel_ssd_##width##x32_##suffix; \
+    p.sse_##type[PARTITION_##width##x24] = (pixelcmp) x265_pixel_ssd_##width##x24_##suffix; \
+    p.sse_##type[PARTITION_##width##x16] = (pixelcmp) x265_pixel_ssd_##width##x16_##suffix; \
+    p.sse_##type[PARTITION_##width##x12] = (pixelcmp) x265_pixel_ssd_##width##x12_##suffix; \
+    p.sse_##type[PARTITION_##width##x8] = (pixelcmp) x265_pixel_ssd_##width##x8_##suffix; \
+    p.sse_##type[PARTITION_##width##x4] = (pixelcmp) x265_pixel_ssd_##width##x4_##suffix; \
+
+        ASSGN_SSE(pp,32,avx)        
+        ASSGN_SSE(pp,16,avx)
+        ASSGN_SSE(pp,8,avx)
+
         p.satd[PARTITION_4x16] = x265_pixel_satd_4x16_avx;
         p.satd[PARTITION_4x32] = cmp<4, 32, 4, 16, x265_pixel_satd_4x16_avx>;
         p.satd[PARTITION_4x48] = cmp<4, 48, 4, 16, x265_pixel_satd_4x16_avx>;
