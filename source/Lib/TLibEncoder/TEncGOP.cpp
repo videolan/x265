@@ -217,7 +217,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     TComBitCounter*       pcBitCounter   = pcEncodeFrame->getBitCounter();
     TEncSampleAdaptiveOffset* pcSAO      = pcEncodeFrame->getSAO();
 
-    xInitGOP(iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut);
+    // Exception for the first frame
+    m_iGopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
+    assert(iNumPicRcvd > 0 && m_iGopSize > 0);
 
     m_iNumPicCoded = 0;
     SEIPictureTiming pictureTimingSEI;
@@ -1542,20 +1544,6 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
-
-Void TEncGOP::xInitGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut)
-{
-    assert(iNumPicRcvd > 0);
-    //  Exception for the first pcEncodeFrame
-    if (iPOCLast == 0)
-    {
-        m_iGopSize    = 1;
-    }
-    else
-        m_iGopSize    = m_pcCfg->getGOPSize();
-
-    assert(m_iGopSize > 0);
-}
 
 Void TEncGOP::xGetBuffer(TComList<TComPic*>&    rcListPic,
                          TComList<TComPicYuv*>& rcListPicYuvRecOut,
