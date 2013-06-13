@@ -76,6 +76,16 @@ namespace x265 {
 #define INIT7( name, cpu ) INIT7_NAME( name, name, cpu )
 #define INIT8( name, cpu ) INIT8_NAME( name, name, cpu )
 
+#define ASSGN_SSE(type,width,suffix) \
+    p.sse_##type[PARTITION_##width##x64] = (pixelcmp) x265_pixel_ssd_##width##x64_##suffix; \
+    p.sse_##type[PARTITION_##width##x48] = (pixelcmp) x265_pixel_ssd_##width##x48_##suffix; \
+    p.sse_##type[PARTITION_##width##x32] = (pixelcmp) x265_pixel_ssd_##width##x32_##suffix; \
+    p.sse_##type[PARTITION_##width##x24] = (pixelcmp) x265_pixel_ssd_##width##x24_##suffix; \
+    p.sse_##type[PARTITION_##width##x16] = (pixelcmp) x265_pixel_ssd_##width##x16_##suffix; \
+    p.sse_##type[PARTITION_##width##x12] = (pixelcmp) x265_pixel_ssd_##width##x12_##suffix; \
+    p.sse_##type[PARTITION_##width##x8] = (pixelcmp) x265_pixel_ssd_##width##x8_##suffix; \
+    p.sse_##type[PARTITION_##width##x4] = (pixelcmp) x265_pixel_ssd_##width##x4_##suffix; \
+
 #if _MSC_VER
 #pragma warning(disable: 4100) // unused param, temporary issue until alignment problems are resolved
 #endif
@@ -241,6 +251,38 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sad_x4[PARTITION_8x4] = x265_pixel_sad_x4_8x4_ssse3;
         p.sad_x4[PARTITION_8x8] = x265_pixel_sad_x4_8x8_ssse3;
         p.sad_x4[PARTITION_8x16] = x265_pixel_sad_x4_8x16_ssse3;
+
+        ASSGN_SSE(pp,8,ssse3)
+        ASSGN_SSE(pp,16,ssse3)
+        ASSGN_SSE(pp,32,ssse3)
+
+        p.sse_pp[PARTITION_24x4] = cmp<24, 4, 8, 4, x265_pixel_ssd_8x4_ssse3>;
+        p.sse_pp[PARTITION_24x8] = cmp<24, 8, 8, 8, x265_pixel_ssd_8x8_ssse3>;
+        p.sse_pp[PARTITION_24x12] = cmp<24, 12, 8, 12, x265_pixel_ssd_8x12_ssse3>;
+        p.sse_pp[PARTITION_24x16] = cmp<24, 16, 8, 16, x265_pixel_ssd_8x16_ssse3>;
+        p.sse_pp[PARTITION_24x24] = cmp<24, 24, 8, 24, x265_pixel_ssd_8x24_ssse3>;
+        p.sse_pp[PARTITION_24x32] = cmp<24, 32, 8, 32, x265_pixel_ssd_8x32_ssse3>;
+        p.sse_pp[PARTITION_24x48] = cmp<24, 48, 8, 48, x265_pixel_ssd_8x48_ssse3>;
+        p.sse_pp[PARTITION_24x64] = cmp<24, 64, 8, 64, x265_pixel_ssd_8x64_ssse3>;
+
+        p.sse_pp[PARTITION_48x4] = cmp<48, 4, 16, 4, x265_pixel_ssd_16x4_ssse3>;
+        p.sse_pp[PARTITION_48x8] = cmp<48, 8, 16, 8, x265_pixel_ssd_16x8_ssse3>;
+        p.sse_pp[PARTITION_48x12] = cmp<48, 12, 16, 12, x265_pixel_ssd_16x12_ssse3>;
+        p.sse_pp[PARTITION_48x16] = cmp<48, 16, 16, 16, x265_pixel_ssd_16x16_ssse3>;
+        p.sse_pp[PARTITION_48x24] = cmp<48, 24, 16, 24, x265_pixel_ssd_16x24_ssse3>;
+        p.sse_pp[PARTITION_48x32] = cmp<48, 32, 16, 32, x265_pixel_ssd_16x32_ssse3>;
+        p.sse_pp[PARTITION_48x48] = cmp<48, 48, 16, 48, x265_pixel_ssd_16x48_ssse3>;
+        p.sse_pp[PARTITION_48x64] = cmp<48, 64, 16, 64, x265_pixel_ssd_16x64_ssse3>;
+
+        p.sse_pp[PARTITION_64x4] = cmp<64, 4, 32, 4, x265_pixel_ssd_32x4_ssse3>;
+        p.sse_pp[PARTITION_64x8] = cmp<64, 8, 32, 8, x265_pixel_ssd_32x8_ssse3>;
+        p.sse_pp[PARTITION_64x12] = cmp<64, 12, 32, 12, x265_pixel_ssd_32x12_ssse3>;
+        p.sse_pp[PARTITION_64x16] = cmp<64, 16, 32, 16, x265_pixel_ssd_32x16_ssse3>;
+        p.sse_pp[PARTITION_64x24] = cmp<64, 24, 32, 24, x265_pixel_ssd_32x24_ssse3>;
+        p.sse_pp[PARTITION_64x32] = cmp<64, 32, 32, 32, x265_pixel_ssd_32x32_ssse3>;
+        p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_ssse3>;
+        p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_ssse3>;
+
     }
     if (cpuid >= 4)
     {
@@ -264,16 +306,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sa8d_16x16 = x265_pixel_sa8d_16x16_avx;
         p.sa8d_32x32 = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
         p.sa8d_64x64 = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
-
-#define ASSGN_SSE(type,width,suffix) \
-    p.sse_##type[PARTITION_##width##x64] = (pixelcmp) x265_pixel_ssd_##width##x64_##suffix; \
-    p.sse_##type[PARTITION_##width##x48] = (pixelcmp) x265_pixel_ssd_##width##x48_##suffix; \
-    p.sse_##type[PARTITION_##width##x32] = (pixelcmp) x265_pixel_ssd_##width##x32_##suffix; \
-    p.sse_##type[PARTITION_##width##x24] = (pixelcmp) x265_pixel_ssd_##width##x24_##suffix; \
-    p.sse_##type[PARTITION_##width##x16] = (pixelcmp) x265_pixel_ssd_##width##x16_##suffix; \
-    p.sse_##type[PARTITION_##width##x12] = (pixelcmp) x265_pixel_ssd_##width##x12_##suffix; \
-    p.sse_##type[PARTITION_##width##x8] = (pixelcmp) x265_pixel_ssd_##width##x8_##suffix; \
-    p.sse_##type[PARTITION_##width##x4] = (pixelcmp) x265_pixel_ssd_##width##x4_##suffix; \
 
         ASSGN_SSE(pp,8,avx)
         ASSGN_SSE(pp,16,avx)

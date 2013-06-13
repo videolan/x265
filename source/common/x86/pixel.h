@@ -199,9 +199,13 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx2      ( pixel *pix1, intptr_t stride1, p
     int x265_pixel_ssd_##width##x8_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
     int x265_pixel_ssd_##width##x4_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
 
-DECL_SSD(32,avx)
-DECL_SSD(16,avx)
+DECL_SSD(8,ssse3)
+DECL_SSD(16,ssse3)
+DECL_SSD(32,ssse3)
+
 DECL_SSD(8,avx)
+DECL_SSD(16,avx)
+DECL_SSD(32,avx)
 
 #define DECL_ADS( size, suffix ) \
 int x265_pixel_ads##size##_##suffix( int enc_dc[size], uint16_t *sums, int delta,\
