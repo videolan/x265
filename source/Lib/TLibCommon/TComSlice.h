@@ -489,7 +489,7 @@ private:
 
     UInt        m_numReorderPics[MAX_TLAYER];
     UInt        m_uiMaxDecPicBuffering[MAX_TLAYER];
-    UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];
+    UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
 
     UInt        m_numHrdParameters;
     UInt        m_maxNuhReservedZeroLayerId;
@@ -882,7 +882,7 @@ private:
     Bool        m_scalingListPresentFlag;
     TComScalingList*     m_scalingList; //!< ScalingList class pointer
     UInt        m_uiMaxDecPicBuffering[MAX_TLAYER];
-    UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];
+    UInt        m_uiMaxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
 
     Bool        m_useDF;
     Bool        m_useStrongIntraSmoothing;

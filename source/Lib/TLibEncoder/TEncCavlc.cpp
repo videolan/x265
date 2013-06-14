@@ -407,7 +407,7 @@ Void TEncCavlc::codeSPS(TComSPS* pcSPS)
     {
         WRITE_UVLC(pcSPS->getMaxDecPicBuffering(i) - 1,       "sps_max_dec_pic_buffering_minus1[i]");
         WRITE_UVLC(pcSPS->getNumReorderPics(i),               "sps_num_reorder_pics[i]");
-        WRITE_UVLC(pcSPS->getMaxLatencyIncrease(i),           "sps_max_latency_increase[i]");
+        WRITE_UVLC(pcSPS->getMaxLatencyIncrease(i),           "sps_max_latency_increase_plus1[i]");
         if (!subLayerOrderingInfoPresentFlag)
         {
             break;
@@ -498,7 +498,7 @@ Void TEncCavlc::codeVPS(TComVPS* pcVPS)
     {
         WRITE_UVLC(pcVPS->getMaxDecPicBuffering(i) - 1,       "vps_max_dec_pic_buffering_minus1[i]");
         WRITE_UVLC(pcVPS->getNumReorderPics(i),               "vps_num_reorder_pics[i]");
-        WRITE_UVLC(pcVPS->getMaxLatencyIncrease(i),           "vps_max_latency_increase[i]");
+        WRITE_UVLC(pcVPS->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]");
         if (!subLayerOrderingInfoPresentFlag)
         {
             break;
