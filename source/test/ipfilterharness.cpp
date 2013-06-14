@@ -50,7 +50,7 @@ IPFilterHarness::IPFilterHarness()
 {
     ipf_t_size = 200 * 200;
     pixel_buff = (pixel*)malloc(ipf_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
-    short_buff = (short*)malloc(ipf_t_size * sizeof(short));
+    short_buff = (short*)TestHarness::alignedMalloc(sizeof(short), ipf_t_size, 32);
     IPF_vec_output_s = (short*)malloc(ipf_t_size * sizeof(short)); // Output Buffer1
     IPF_C_output_s = (short*)malloc(ipf_t_size * sizeof(short));   // Output Buffer2
     IPF_vec_output_p = (pixel*)malloc(ipf_t_size * sizeof(pixel)); // Output Buffer1
@@ -77,7 +77,7 @@ IPFilterHarness::~IPFilterHarness()
     free(IPF_C_output_s);
     free(IPF_vec_output_p);
     free(IPF_C_output_p);
-    free(short_buff);
+    TestHarness::alignedFree(short_buff);
     free(pixel_buff);
 }
 
