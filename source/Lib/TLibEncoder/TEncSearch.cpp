@@ -959,7 +959,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     //===== get residual signal =====
 
-    primitives.calcresidual[uiWidth/8]((pixel*)piOrg, (pixel*)piPred, piResi, uiStride);
+    primitives.calcresidual[g_aucConvertToBit[uiWidth]]((pixel*)piOrg, (pixel*)piPred, piResi, uiStride);
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
@@ -999,7 +999,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     //===== reconstruction =====  
 
-    primitives.calcrecon[uiWidth/8]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
+    primitives.calcrecon[g_aucConvertToBit[uiWidth]]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
 
     //===== update distortion =====
     int Part = PartitionFromSizes(uiWidth, uiHeight);
@@ -1092,7 +1092,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
     }
     //===== get residual signal =====    
 
-    primitives.calcresidual[uiWidth/8]((pixel*)piOrg,(pixel*)piPred,piResi, uiStride);
+    primitives.calcresidual[g_aucConvertToBit[uiWidth]]((pixel*)piOrg,(pixel*)piPred,piResi, uiStride);
 
     //===== transform and quantization =====
     {
@@ -1141,7 +1141,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
 
     //===== reconstruction =====
     
-    primitives.calcrecon[uiWidth/8]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
+    primitives.calcrecon[g_aucConvertToBit[uiWidth]]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
 
     //===== update distortion =====
     int Part = x265::PartitionFromSizes(uiWidth, uiHeight);

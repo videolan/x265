@@ -99,8 +99,8 @@ enum SquareBlocks   // Routines can be indexed using (Blocksize/8) gives (0,1,2,
     BLOCK_4x4,
     BLOCK_8x8,
     BLOCK_16x16,
-    BLOCK_32x32=4,
-    BLOCK_64x64=8,
+    BLOCK_32x32,
+    BLOCK_64x64,
     NUM_BLOCKS
 };
 
