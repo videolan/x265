@@ -266,29 +266,29 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
     short rand_width = 32;                  // Can be randomly generated Width
     short rand_srcStride, rand_dstStride;
 
-    pixel dstAvec[100*100];
-    pixel dstEvec[100*100];
-    pixel dstIvec[100*100];
-    pixel dstPvec[100*100];
+    pixel dstAvec[100 * 100];
+    pixel dstEvec[100 * 100];
+    pixel dstIvec[100 * 100];
+    pixel dstPvec[100 * 100];
 
-    pixel dstAref[100*100];
-    pixel dstEref[100*100];
-    pixel dstIref[100*100];
-    pixel dstPref[100*100];
+    pixel dstAref[100 * 100];
+    pixel dstEref[100 * 100];
+    pixel dstIref[100 * 100];
+    pixel dstPref[100 * 100];
 
     for (int i = 0; i <= 100; i++)
-    {        
-        rand_srcStride = 64;               // Can be randomly generated 
-        rand_dstStride = 64;               
-        memset(dstAref, 0, 10000*sizeof(pixel));
-        memset(dstEref, 0, 10000*sizeof(pixel));
-        memset(dstIref, 0, 10000*sizeof(pixel));
-        memset(dstPref, 0, 10000*sizeof(pixel));
-        memset(dstAvec, 0, 10000*sizeof(pixel));
-        memset(dstEvec, 0, 10000*sizeof(pixel));
-        memset(dstIvec, 0, 10000*sizeof(pixel));
-        memset(dstPvec, 0, 10000*sizeof(pixel));
-        opt(8, short_buff + 8*rand_srcStride,
+    {
+        rand_srcStride = 64;               // Can be randomly generated
+        rand_dstStride = 64;
+        memset(dstAref, 0, 10000 * sizeof(pixel));
+        memset(dstEref, 0, 10000 * sizeof(pixel));
+        memset(dstIref, 0, 10000 * sizeof(pixel));
+        memset(dstPref, 0, 10000 * sizeof(pixel));
+        memset(dstAvec, 0, 10000 * sizeof(pixel));
+        memset(dstEvec, 0, 10000 * sizeof(pixel));
+        memset(dstIvec, 0, 10000 * sizeof(pixel));
+        memset(dstPvec, 0, 10000 * sizeof(pixel));
+        opt(8, short_buff + 8 * rand_srcStride,
             rand_srcStride,
             dstAvec, dstEvec, dstIvec, dstPvec,
             rand_dstStride,
@@ -301,8 +301,8 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
             rand_width,
             rand_height);
 
-        if (memcmp(dstAvec,dstAref, 100*100 * sizeof(pixel)) || memcmp(dstEvec,dstEref, 100*100 * sizeof(pixel)) 
-            || memcmp(dstIvec,dstIref, 100*100 * sizeof(pixel)) || memcmp(dstPvec,dstPref, 100*100 * sizeof(pixel)))
+        if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(pixel)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(pixel))
+            || memcmp(dstIvec, dstIref, 100 * 100 * sizeof(pixel)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(pixel)))
         {
             return false;
         }
@@ -311,6 +311,56 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
     return true;
 }
 
+bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::filterHmulti_t opt)
+{
+    short rand_height = 32;                 // Can be randomly generated Height
+    short rand_width = 32;                  // Can be randomly generated Width
+    short rand_srcStride, rand_dstStride;
+
+    short dstAvec[100 * 100];
+    short dstEvec[100 * 100];
+    short dstIvec[100 * 100];
+    short dstPvec[100 * 100];
+
+    short dstAref[100 * 100];
+    short dstEref[100 * 100];
+    short dstIref[100 * 100];
+    short dstPref[100 * 100];
+
+    for (int i = 0; i <= 100; i++)
+    {
+        rand_srcStride = 64;               // Can be randomly generated
+        rand_dstStride = 64;
+        memset(dstAref, 0, 10000 * sizeof(short));
+        memset(dstEref, 0, 10000 * sizeof(short));
+        memset(dstIref, 0, 10000 * sizeof(short));
+        memset(dstPref, 0, 10000 * sizeof(short));
+        memset(dstAvec, 0, 10000 * sizeof(short));
+        memset(dstEvec, 0, 10000 * sizeof(short));
+        memset(dstIvec, 0, 10000 * sizeof(short));
+        memset(dstPvec, 0, 10000 * sizeof(short));
+        opt(8, pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            dstAvec, dstEvec, dstIvec, dstPvec,
+            rand_dstStride,
+            rand_width,
+            rand_height);
+        ref(8, pixel_buff + 3 * rand_srcStride,
+            rand_srcStride,
+            dstAref, dstEref, dstIref, dstPref,
+            rand_dstStride,
+            rand_width,
+            rand_height);
+
+        if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short))
+            || memcmp(dstIvec, dstIref, 100 * 100 * sizeof(short)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(short)))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
@@ -367,15 +417,25 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
             return false;
         }
     }
-
+    
     if (opt.filterVmulti)
     {
         if (!check_filterVMultiplane(ref.filterVmulti, opt.filterVmulti))
         {
-            printf("\nFilter-multiplane failed\n");
+            printf("\nFilter-V-multiplane failed\n");
             return false;
         }
     }
+
+    if (opt.filterHmulti)
+    {
+        if (!check_filterHMultiplane(ref.filterHmulti, opt.filterHmulti))
+        {
+            printf("\nFilter-H-multiplane failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -433,8 +493,15 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.filterVmulti)
     {
-        printf("Filter-multiplane\t");
+        printf("Filter-V-multiplane\t");
         REPORT_SPEEDUP(opt.filterVmulti, ref.filterVmulti,
                        8, short_buff + 8 * srcStride, srcStride, IPF_vec_output_p, IPF_C_output_p, IPF_vec_output_p, IPF_C_output_p, dstStride, width, height);
+    }
+
+    if (opt.filterVmulti)
+    {
+        printf("Filter-H-multiplane\t");
+        REPORT_SPEEDUP(opt.filterHmulti, ref.filterHmulti,
+                       8, pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, width, height);
     }
 }
