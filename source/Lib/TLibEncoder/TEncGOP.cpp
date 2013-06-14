@@ -99,7 +99,6 @@ TEncGOP::TEncGOP()
 {
     m_iLastIDR            = 0;
     m_iGopSize            = 0;
-    m_iNumPicCoded        = 0; //Niko
     m_bSeqFirst           = true;
 
     m_pcCfg               = NULL;
@@ -219,7 +218,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     m_iGopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
     assert(iNumPicRcvd > 0 && m_iGopSize > 0);
 
-    m_iNumPicCoded = 0;
+    Int iNumPicCoded = 0;
     SEIPictureTiming pictureTimingSEI;
     Bool writeSOP = m_pcCfg->getSOPDescriptionSEIEnabled();
 
@@ -1515,7 +1514,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
 
         pcPic->setReconMark(true);
-        m_iNumPicCoded++;
+        iNumPicCoded++;
         m_totalCoded++;
 
         if (m_pcCfg->getLogLevel() >= X265_LOG_DEBUG)
@@ -1532,7 +1531,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     if (accumBitsDU != NULL) delete accumBitsDU;
     if (accumNalsDU != NULL) delete accumNalsDU;
 
-    assert(m_iNumPicCoded == iNumPicRcvd);
+    assert(iNumPicCoded == iNumPicRcvd);
 }
 
 Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
