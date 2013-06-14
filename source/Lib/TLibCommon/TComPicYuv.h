@@ -165,7 +165,7 @@ public:
     Pel*  getCrAddr(Int iCuAddr, Int uiAbsZorderIdx) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
     /* Access functions for m_filteredBlock */
-    Pel* getLumaFilterBlock(int ver, int hor) { return m_refList->m_lumaPlane[hor][ver]; }
+    Pel* getLumaFilterBlock(int ver, int hor) { return (Pel *) m_refList->m_lumaPlane[hor][ver]; }
 
     Pel* getLumaFilterBlock(int ver, int hor, Int iCuAddr, Int uiAbsZorderIdx) { return m_refList->m_lumaPlane[hor][ver] + m_cuOffsetY[iCuAddr] + m_buOffsetY[g_auiZscanToRaster[uiAbsZorderIdx]]; }
 
