@@ -93,7 +93,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
     Bool bInsidePicture = (uiRPelX < rpcTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
     TComDataCU* BestCUTemp = rpcBestCU;
-    TComYuv* YuvTemp;
+    TComYuv* YuvTemp = NULL;
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
@@ -245,8 +245,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
         if(rpcTempCU->getTotalCost() < BestCUTemp->getTotalCost())
         {
             BestCUTemp = rpcTempCU;
-            for(int i= 0; i < 4; i++)
-                xCopyYuv2Best(pcSubBestPartCU->getTotalNumPart()*i, uiDepth+1);
+            
+            YuvTemp = m_ppcRecoYuvTemp[uiDepth];
+            m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
+            m_ppcRecoYuvBest[uiDepth] = YuvTemp;
         }                
     }
 
