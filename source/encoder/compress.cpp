@@ -54,10 +54,11 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt 
 Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex)
 {
     m_abortFlag = false;
-    
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : pcCU->getQP(0);
-    
+        
+    /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
     TComDataCU* rpcTempCU = m_ppcTempCU[uiDepth];
+    /*The best CU initialised to Temp data struct, but will later point to the best CU*/
     rpcBestCU = rpcTempCU;
     
     if(uiDepth==0)
@@ -92,13 +93,14 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
-    TComDataCU* BestCUTemp = rpcBestCU;
+    
     TComYuv* YuvTemp = NULL;
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
         bTrySplit    = true;
-        
+    
+        /*Initialise all Mode-CUs based on parentCU*/
         if(uiDepth==0)
         {
             m_InterCU_2Nx2N[uiDepth]->initCU(pcCU->getPic(), pcCU->getAddr());
@@ -116,6 +118,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             m_MergeCU[uiDepth]->initSubCU(pcCU, PartitionIndex, uiDepth, iQP); 
         }
 
+        /*Compute 2Nx2N mode costs*/
         xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
         
         bTrySplitDQP = bTrySplit;
@@ -128,6 +131,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
 
         if (!earlyDetectionSkipMode)
         {
+            /*Compute Rect costs*/
             if (m_pcEncCfg->getUseRectInter())
             {
                 xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);                                
@@ -135,28 +139,33 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             }      
         }
 
+        /* Disable recursive analysis for whole CUs temporarily
+        Recursive analysis is allowed only for boundary/inslice CUs for now*/
         bSubBranch = false;
                 
-        BestCUTemp = m_InterCU_2Nx2N[uiDepth];
+        /* Choose the mode with the least cost*/
+        rpcBestCU = m_InterCU_2Nx2N[uiDepth];
         YuvTemp = m_ppcPredYuvMode[0][uiDepth];
         m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
         m_ppcPredYuvBest[uiDepth] = YuvTemp;
 
-        if(m_InterCU_Nx2N[uiDepth]->getTotalCost() < BestCUTemp->getTotalCost())
+        if(m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
         {
-            BestCUTemp = m_InterCU_Nx2N[uiDepth];
+            rpcBestCU = m_InterCU_Nx2N[uiDepth];
             YuvTemp = m_ppcPredYuvMode[1][uiDepth];
             m_ppcPredYuvMode[1][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
-        if(m_InterCU_2NxN[uiDepth]->getTotalCost() < BestCUTemp->getTotalCost())
+        if(m_InterCU_2NxN[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
         {
-            BestCUTemp = m_InterCU_2NxN[uiDepth];
+            rpcBestCU = m_InterCU_2NxN[uiDepth];
             YuvTemp = m_ppcPredYuvMode[2][uiDepth];
             m_ppcPredYuvMode[2][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
-        m_pcPredSearch->encodeResAndCalcRdInterCU(BestCUTemp, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        
+        /* Perform encode residual for the best mode chosen only*/
+        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
     }
     else if (!(bSliceEnd && bInsidePicture))
     {
@@ -169,11 +178,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
         UChar       uhNextDepth         = uiDepth + 1;        
+        /*Best CU initialised to NULL; */
         TComDataCU* pcSubBestPartCU     = NULL;
+        /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
         TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
-        UInt uiPartUnitIdx = 0;
+       
         rpcTempCU->getTotalCost() = 0;
-        for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
+        for (UInt uiPartUnitIdx = 0; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
             pcSubBestPartCU = NULL;
             pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
@@ -181,15 +192,15 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             Bool bInSlice = pcSubTempPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (pcSubTempPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubTempPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
-                // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
-                
                 xCompressInterCU(pcSubBestPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
-                
+        
+                /*rpcTempCU is the parent CU for next depth. Copy SubBestCu */
                 rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);                
             }
             else if (bInSlice)
             {
+                /*No recursion, simply copy data and move on*/
                 pcSubTempPartCU->copyToPic(uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubTempPartCU, uiPartUnitIdx, uhNextDepth);
             }
@@ -221,9 +232,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             }
         }
 
-        if(rpcTempCU->getTotalCost() < BestCUTemp->getTotalCost())
+        if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
         {
-            BestCUTemp = rpcTempCU;
+            rpcBestCU = rpcTempCU;
             
             YuvTemp = m_ppcRecoYuvTemp[uiDepth];
             m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
@@ -231,10 +242,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
         }                
     }
 
-    BestCUTemp->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
-    xCopyYuv2Pic(BestCUTemp->getPic(), BestCUTemp->getAddr(), BestCUTemp->getZorderIdxInCU(), uiDepth, uiDepth, BestCUTemp, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    rpcBestCU = BestCUTemp;
-
+    rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
+    xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
+    
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
@@ -242,9 +252,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
 
     // Assert if Best prediction mode is NONE
     // Selected mode's RD-cost must be not MAX_DOUBLE.
-    assert(BestCUTemp->getPartitionSize(0) != SIZE_NONE);
-    assert(BestCUTemp->getPredictionMode(0) != MODE_NONE);
-    assert(BestCUTemp->getTotalCost() != MAX_DOUBLE);    
+    assert(rpcBestCU->getPartitionSize(0) != SIZE_NONE);
+    assert(rpcBestCU->getPredictionMode(0) != MODE_NONE);
+    assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);    
 }
 
 #if _MSC_VER

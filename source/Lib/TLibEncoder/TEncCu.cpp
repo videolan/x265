@@ -505,6 +505,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     {
 #if FAST_MODE_DECISION
         TComDataCU* rpcBestCU = NULL;
+        /* At the start of analysis, the best CU is a null pointer
+        On return, it points to the CU encode with best chosen mode*/
         xCompressInterCU(rpcBestCU, pcCu, 0, 0);
 #else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
