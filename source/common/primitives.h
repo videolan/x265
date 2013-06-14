@@ -94,6 +94,16 @@ enum Partitions
     NUM_PARTITIONS
 };
 
+enum SquareBlocks   // Routines can be indexed using (Blocksize/8) gives (0,1,2,4,8)
+{
+    BLOCK_4x4,
+    BLOCK_8x8,
+    BLOCK_16x16,
+    BLOCK_32x32=4,
+    BLOCK_64x64=8,
+    NUM_BLOCKS
+};
+
 enum FilterConf
 {
     //Naming convention used is - FILTER_isVertical_N_isFirst_isLast
@@ -201,8 +211,8 @@ typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, 
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
-typedef void (CDECL * getResidue_t)(pixel *piOrig, pixel *piPred, short *piRes, int height, int width, int stride);
-typedef void (CDECL * calcRecons_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth);
+typedef void (CDECL * getResidue_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
+typedef void (CDECL * calcRecons_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
 typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height);
 
@@ -244,8 +254,8 @@ struct EncoderPrimitives
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_t cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
-    getResidue_t getResidue;
-    calcRecons_t calcRecons;
+    getResidue_t getResidue[NUM_BLOCKS];
+    calcRecons_t calcRecons[NUM_BLOCKS];
     filterVmulti_t filterVmulti;
     filterHmulti_t filterHmulti;
 };
