@@ -103,6 +103,7 @@ TEncGOP::TEncGOP()
 
     m_pcCfg               = NULL;
     m_pcListPic           = NULL;
+    m_cFrameEncoders      = NULL;
 
     m_bRefreshPending   = 0;
     m_pocCRA            = 0;
@@ -125,7 +126,13 @@ Void  TEncGOP::create()
 }
 
 Void  TEncGOP::destroy()
-{}
+{
+    if (m_cFrameEncoders)
+    {
+        m_cFrameEncoders->destroy();
+        delete m_cFrameEncoders;
+    }
+}
 
 Void TEncGOP::init(TEncTop* pcTEncTop)
 {
@@ -135,6 +142,8 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
     m_lastBPSEI            = 0;
     m_totalCoded           = 0;
+    m_cFrameEncoders = new x265::EncodeFrame(pcTEncTop->getThreadPool());
+    m_cFrameEncoders->init(pcTEncTop);
 }
 
 SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
@@ -204,7 +213,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     UInt                  uiOneBitstreamPerSliceLength = 0;
     TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  pcSubstreamsOut = NULL;
-    x265::EncodeFrame*    pcEncodeFrame  = m_pcEncTop->getFrameEncoder(0);
+    x265::EncodeFrame*    pcEncodeFrame  = getFrameEncoder(0);
     TEncEntropy*          pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
     TEncSlice*            pcSliceEncoder = pcEncodeFrame->getSliceEncoder();
     TEncCavlc*            pcCavlcCoder   = pcEncodeFrame->getCavlcCoder();
@@ -549,7 +558,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         //  Slice compression
         if (m_pcCfg->getUseASR())
         {
-            pcSliceEncoder->setSearchRange(pcSlice);
+            pcSliceEncoder->setSearchRange(pcSlice, pcEncodeFrame);
         }
 
         Bool bGPBcheck = false;
@@ -683,7 +692,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSlice->setNextSlice(false);
             assert(pcPic->getNumAllocatedSlice() == startCUAddrSliceIdx);
 
-            pcSliceEncoder->compressSlice(pcPic);  // The bulk of the real work
+            pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
 
             Bool bNoBinBitConstraintViolated = (!pcSlice->isNextSlice());
 
@@ -1096,7 +1105,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                 pcSlice->setTileOffstForMultES(uiOneBitstreamPerSliceLength);
                 pcSlice->setTileLocationCount(0);
-                pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut);
+                pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut, pcEncodeFrame);
 
                 {
                     // Construct the final bitstream by flushing and concatenating substreams.

@@ -56,7 +56,6 @@
 #include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
 #include "threadpool.h"
-#include "wavefront.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -94,7 +93,6 @@ private:
 
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
-    x265::EncodeFrame      *m_cFrameEncoders;
     x265::ThreadPool       *m_threadPool;
 
 protected:
@@ -137,8 +135,6 @@ public:
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
 
     TEncGOP*                getGOPEncoder()         { return &m_cGOPEncoder; }
-
-    x265::EncodeFrame*      getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
 
     TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
 

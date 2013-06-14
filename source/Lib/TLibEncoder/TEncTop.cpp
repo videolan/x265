@@ -39,9 +39,7 @@
 #include "TEncTop.h"
 #include "TEncPic.h"
 #include "TLibCommon/ContextModel.h"
-
 #include "primitives.h"
-#include "threadpool.h"
 
 #include <limits.h>
 
@@ -58,15 +56,13 @@ TEncTop::TEncTop()
     m_framesToBeEncoded = INT_MAX;
     m_iNumPicRcvd       =  0;
     m_uiNumAllPicCoded  =  0;
+    m_iMaxRefPicNum     = 0;
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
     g_nSymbolCounter = 0;
 #endif
-
-    m_iMaxRefPicNum  = 0;
-    m_cFrameEncoders = 0;
 
     ContextModel::buildNextStateTable();
 }
@@ -100,8 +96,6 @@ Void TEncTop::create()
         m_cEncSAO.createEncBuffer();
     }
 
-    m_cFrameEncoders = new x265::EncodeFrame(m_threadPool);
-
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
@@ -120,12 +114,7 @@ Void TEncTop::destroy()
     }
     m_cRateCtrl.destroy();
 
-    if (m_cFrameEncoders)
-    {
-        m_cFrameEncoders->destroy();
-        delete m_cFrameEncoders;
-    }
-    
+   
     deletePicBuffer();
 
     // destroy ROM
@@ -151,7 +140,6 @@ Void TEncTop::init()
     // initialize processing unit classes
     m_iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cGOPEncoder.init(this);
-    m_cFrameEncoders->init(this);
 
     m_iMaxRefPicNum = 0;
 }
