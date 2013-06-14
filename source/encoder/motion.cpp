@@ -1061,7 +1061,7 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref,
             return;
     }
 
-    for (int16_t dist = 16; dist <= merange; dist <<= 1)
+    for (int16_t dist = 16; dist <= (int16_t)merange; dist <<= 1)
     {
         const int16_t iTop    = omv.y - dist;
         const int16_t iBottom = omv.y + dist;

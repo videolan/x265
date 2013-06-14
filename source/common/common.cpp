@@ -173,6 +173,8 @@ int x265_check_params(x265_param_t *param)
             "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG)");
     CONFIRM(param->iSearchRange < 0,
             "Search Range must be more than 0");
+    CONFIRM(param->iSearchRange >= 32768,
+        "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
     CONFIRM(param->iMaxCuDQPDepth > param->uiMaxCUDepth - 1,
