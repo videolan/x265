@@ -588,12 +588,12 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         pcPic->getSlice(pcSlice->getSliceIdx())->setMvdL1ZeroFlag(pcSlice->getMvdL1ZeroFlag());
 
-        Int sliceQP              = pcSlice->getSliceQp();
         Double lambda            = 0.0;
         Int actualHeadBits       = 0;
         Int actualTotalBits      = 0;
         Int estimatedBits        = 0;
         Int tmpBitsBeforeWriting = 0;
+
         if (m_pcCfg->getUseRateCtrl())
         {
             Int frameLevel = m_pcRateCtrl->getRCSeq()->getGOPID2Level(iGOPid);
@@ -604,9 +604,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             m_pcRateCtrl->initRCPic(frameLevel);
             estimatedBits = m_pcRateCtrl->getRCPic()->getTargetBits();
 
+            Int sliceQP = m_pcCfg->getInitialQP();
             if ((pcSlice->getPOC() == 0 && m_pcCfg->getInitialQP() > 0) || (frameLevel == 0 && m_pcCfg->getForceIntraQP())) // QP is specified
             {
-                sliceQP              = m_pcCfg->getInitialQP();
                 Int    NumberBFrames = (m_pcCfg->getGOPSize() - 1);
                 Double dLambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
                 Double dQPFactor     = 0.57 * dLambda_scale;
