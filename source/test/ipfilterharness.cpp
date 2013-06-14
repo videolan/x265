@@ -276,10 +276,8 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
     pixel dstIref[100*100];
     pixel dstPref[100*100];
 
-
     for (int i = 0; i <= 100; i++)
     {        
-
         rand_srcStride = 64;               // Can be randomly generated 
         rand_dstStride = 64;               
         memset(dstAref, 0, 10000*sizeof(pixel));
@@ -290,15 +288,15 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
         memset(dstEvec, 0, 10000*sizeof(pixel));
         memset(dstIvec, 0, 10000*sizeof(pixel));
         memset(dstPvec, 0, 10000*sizeof(pixel));
-        opt(8, short_buff+ 3*64 ,
+        opt(8, short_buff + 8*rand_srcStride,
             rand_srcStride,
-            dstAvec, dstEvec,dstIvec, dstPvec,
+            dstAvec, dstEvec, dstIvec, dstPvec,
             rand_dstStride,
             rand_width,
             rand_height);
-        ref(8, short_buff + 3*64,
+        ref(8, short_buff + 8*rand_srcStride,
             rand_srcStride,
-            dstAref, dstEref,dstIref, dstPref,
+            dstAref, dstEref, dstIref, dstPref,
             rand_dstStride,
             rand_width,
             rand_height);
@@ -437,6 +435,6 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         printf("Filter-multiplane\t");
         REPORT_SPEEDUP(opt.filterVmulti, ref.filterVmulti,
-                       8, short_buff, srcStride, IPF_vec_output_p, IPF_C_output_p, IPF_vec_output_p, IPF_C_output_p, dstStride, width, height);
+                       8, short_buff + 8 * srcStride, srcStride, IPF_vec_output_p, IPF_C_output_p, IPF_vec_output_p, IPF_C_output_p, dstStride, width, height);
     }
 }
