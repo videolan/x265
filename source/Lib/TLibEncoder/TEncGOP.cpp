@@ -1643,11 +1643,11 @@ static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHei
     {
         Int x = 0;
         for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         pOrg += iStride * 64;
         pRec += iStride * 64;
     }
@@ -1656,11 +1656,11 @@ static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHei
     {
         Int x = 0;
         for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         pOrg += iStride * 16;
         pRec += iStride * 16;
     }
@@ -1669,11 +1669,11 @@ static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHei
     {
         Int x = 0;
         for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4](pOrg + x, iStride, pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
         pOrg += iStride * 4;
         pRec += iStride * 4;
     }
