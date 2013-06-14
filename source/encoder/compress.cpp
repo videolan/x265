@@ -54,10 +54,10 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt 
 Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex)
 {
     m_abortFlag = false;
-    TComPic* pcPic = rpcBestCU->getPic();
+    TComPic* pcPic = rpcTempCU->getPic();
 
     // get Original YUV data from picture
-    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -71,19 +71,19 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     Bool bTrySplitDQP  = true;
 
     Bool bBoundary = false;
-    UInt uiLPelX   = rpcBestCU->getCUPelX();
-    UInt uiRPelX   = uiLPelX + rpcBestCU->getWidth(0)  - 1;
-    UInt uiTPelY   = rpcBestCU->getCUPelY();
-    UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
+    UInt uiLPelX   = rpcTempCU->getCUPelX();
+    UInt uiRPelX   = uiLPelX + rpcTempCU->getWidth(0)  - 1;
+    UInt uiTPelY   = rpcTempCU->getCUPelY();
+    UInt uiBPelY   = uiTPelY + rpcTempCU->getHeight(0) - 1;
 
-    Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcBestCU->getQP(0);
+    Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
-    TComSlice * pcSlice = rpcBestCU->getPic()->getSlice(rpcBestCU->getPic()->getCurrSliceIdx());
-    Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcBestCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcBestCU->getSCUAddr() + rpcBestCU->getTotalNumPart());
-    Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
+    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
+    Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
+    Bool bInsidePicture = (uiRPelX < rpcTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
-    TComDataCU* BestCUTemp = rpcBestCU;
+    TComDataCU* BestCUTemp = NULL;
     TComYuv* YuvTemp;
     if (!bSliceEnd && bInsidePicture)
     {
@@ -126,16 +126,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }      
         }
 
-        // Early CU determination
-        if (rpcBestCU->isSkipped(0))
-        {
-            bSubBranch = false;
-        }
-        else
-        {
-            bSubBranch = false;
-        }
-        
+        bSubBranch = false;
+                
         BestCUTemp = m_InterCU_2Nx2N[uiDepth];
         YuvTemp = m_ppcPredYuvMode[0][uiDepth];
         m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
@@ -169,17 +161,17 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
         UChar       uhNextDepth         = uiDepth + 1;
-        TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
+        TComDataCU* pcSubBestPartCU     = NULL;
         TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
         UInt uiPartUnitIdx = 0;
         rpcTempCU->getTotalCost() = 0;
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
+            pcSubBestPartCU = NULL;
             pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
-            Bool bInSlice = pcSubBestPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
-            if (bInSlice && (pcSubBestPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubBestPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+            Bool bInSlice = pcSubTempPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
+            if (bInSlice && (pcSubTempPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (pcSubTempPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
@@ -191,6 +183,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
                 }
 
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
+                
                 xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
                 
                 rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
@@ -198,8 +191,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
             else if (bInSlice)
             {
-                pcSubBestPartCU->copyToPic(uhNextDepth);
-                rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth);
+                pcSubTempPartCU->copyToPic(uhNextDepth);
+                rpcTempCU->copyPartFrom(pcSubTempPartCU, uiPartUnitIdx, uhNextDepth);
             }
         }
 
@@ -241,14 +234,15 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-        xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);                                 // RD compare current larger prediction
-        // with sub partitioned prediction.
-        BestCUTemp = rpcBestCU;    
+        
+        BestCUTemp = rpcTempCU;    
+        
     }
 
     BestCUTemp->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
     xCopyYuv2Pic(BestCUTemp->getPic(), BestCUTemp->getAddr(), BestCUTemp->getZorderIdxInCU(), uiDepth, uiDepth, BestCUTemp, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
-    
+    rpcBestCU = BestCUTemp;
+
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
