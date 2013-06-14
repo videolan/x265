@@ -611,6 +611,172 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
     }
 }
 
+void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height)
+{
+    int row, col;
+
+    src -= (8 / 2 - 1);
+    int offset;
+    int headRoom = IF_INTERNAL_PREC - 8;
+    int shift = IF_FILTER_PREC;
+    shift -= headRoom;
+    offset = -IF_INTERNAL_OFFS << shift;
+
+    Vec8s vec_sum_low, vec_sum_high;
+    Vec16uc vec_src0;
+    Vec8s vec_offset(offset);
+    Vec8s sumaL, sumaH, sumbL, sumbH, sumcL, sumcH, tmp, exp1;
+
+    // Load Ai, ai += Ai*coefi
+
+    for (row = 0; row < block_height; row++)
+    {
+        col = 0;
+
+        for (; col + 16 <= (block_width); col += 16)               // Iterations multiple of 8
+        {
+            vec_src0.load(src + col);
+            sumbL = -(extend_low(vec_src0));
+            sumbH = -(extend_high(vec_src0));
+
+            // a = b+=4*a1,  c+=1*a1
+            vec_src0.load(src + col + 1);                       // Load the 8 elements
+            sumcL = extend_low(vec_src0);
+            sumbL += (sumcL << 2);
+            sumaL = sumbL;
+            sumcH = extend_high(vec_src0);
+            sumbH += (sumcH << 2);
+            sumaH = sumbH;
+
+            // a +=-10*a2    b+=-11*a2      c+=-5*a2
+            vec_src0.load(src + col + 2);
+            tmp = extend_low(vec_src0);
+            sumbL -= tmp;
+            tmp *= (-5);
+            sumcL += tmp;
+            tmp <<= 1;
+            sumaL += tmp;
+            sumbL += tmp;
+            tmp = extend_high(vec_src0);
+            sumbH -= tmp;
+            tmp *= (-5);
+            sumcH += tmp;
+            tmp <<= 1;
+            sumaH += tmp;
+            sumbH += tmp;
+
+            // a +=58*a3    b+=40*a3      c+=17*a3
+            vec_src0.load(src + col + 3);
+            tmp = extend_low(vec_src0);
+            ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + col);    // storing A as short into intermediate buffer
+            exp1 = (tmp << 4) + tmp;
+            sumcL += exp1;
+            sumaL += tmp;
+            tmp *= 40;
+            sumbL += tmp;
+            sumaL += (tmp + exp1);
+            tmp = extend_high(vec_src0);
+            ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + col + 8);    // storing A as short into intermediate buffer
+            exp1 = (tmp << 4) + tmp;
+            sumcH += exp1;
+            sumaH += tmp;
+            tmp *= 40;
+            sumbH += tmp;
+            sumaH += (tmp + exp1);
+
+            // a +=17*a4    b+=40*a4      c+=58*a4
+            vec_src0.load(src + col + 4);
+            tmp = extend_low(vec_src0);
+            exp1 = (tmp << 4) + tmp;
+            sumaL += exp1;
+            sumcL += tmp;
+            tmp *= 40;
+            sumbL += tmp;
+            sumcL += (tmp + exp1);
+            tmp = extend_high(vec_src0);
+            exp1 = (tmp << 4) + tmp;
+            sumaH += exp1;
+            sumcH += tmp;
+            tmp *= 40;
+            sumbH += tmp;
+            sumcH += (tmp + exp1);
+
+            // a +=-5*a5    b+=-11*a5      c+=-10*a5
+            vec_src0.load(src + col + 5);
+            tmp = extend_low(vec_src0);
+            sumbL -= tmp;
+            tmp *= (-5);
+            sumaL += tmp;
+            tmp <<= 1;
+            sumcL += tmp;
+            sumbL += tmp;
+            tmp = extend_high(vec_src0);
+            sumbH -= tmp;
+            tmp *= (-5);
+            sumaH += tmp;
+            tmp <<= 1;
+            sumcH += tmp;
+            sumbH += tmp;
+
+            // a +=1*a6    b+=4*a6      c+=4*a6
+            vec_src0.load(src + col + 6);
+            tmp = extend_low(vec_src0);
+            sumaL += tmp;
+            tmp <<= 2;
+            sumbL += tmp;
+            sumcL += tmp;
+            tmp = extend_high(vec_src0);
+            sumaH += tmp;
+            tmp <<= 2;
+            sumbH += tmp;
+            sumcH += tmp;
+
+            // a +=0*a7    b+=-1*a7      c+=-1*a7
+            vec_src0.load(src + col + 7);
+            tmp = extend_low(vec_src0);
+            sumbL -= tmp;
+            sumcL -= tmp;
+            sumaL = (sumaL + vec_offset);               // Add offset to sum_low
+            sumbL = (sumbL + vec_offset);
+            sumcL = (sumcL + vec_offset);
+            tmp = extend_high(vec_src0);
+            sumbH -= tmp;
+            sumcH -= tmp;
+            sumaH = (sumaH + vec_offset);
+            sumbH = (sumbH + vec_offset);
+            sumcH = (sumcH + vec_offset);
+
+            sumaL.store(dstA + col);                             // Store vector
+            sumbL.store(dstB + col);
+            sumcL.store(dstC + col);
+            sumaH.store(dstA + col + 8);                             // Store vector
+            sumbH.store(dstB + col + 8);
+            sumcH.store(dstC + col + 8);
+        }
+
+        for (; col < block_width; col++)                           // Remaining iterations
+        {
+            vec_src0.load(src + col);
+            tmp = extend_low(vec_src0);                        // Assuming that there is no overflow (Everywhere in this function!)
+            int isuma = horizontal_add(tmp * Vec8s(-1, 4, -10, 58, 17,  -5, 1,  0));
+            int isumb = horizontal_add(tmp * Vec8s(-1, 4, -11, 40, 40, -11, 4, -1));
+            int isumc = horizontal_add(tmp * Vec8s(0, 1,  -5, 17, 58, -10, 4, -1));
+            short vala = (short)(isuma + offset) >> shift;
+            short valb = (short)(isumb + offset) >> shift;
+            short valc = (short)(isumc + offset) >> shift;
+            dstA[col] = vala;
+            dstB[col] = valb;
+            dstC[col] = valc;
+        }
+
+        src += srcStride;
+        dstF += dstStride;
+        dstA += dstStride;
+        dstB += dstStride;
+        dstC += dstStride;
+    }
+}
+
 template<int N>
 void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {

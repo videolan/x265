@@ -204,7 +204,7 @@ typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
 typedef void (CDECL * getResidue_t)(pixel *piOrig, pixel *piPred, short *piRes, int height, int width, int stride);
 typedef void (CDECL * calcRecons_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
-
+typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -247,6 +247,7 @@ struct EncoderPrimitives
     getResidue_t getResidue;
     calcRecons_t calcRecons;
     filterVmulti_t filterVmulti;
+    filterHmulti_t filterHmulti;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
