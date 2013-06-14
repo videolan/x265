@@ -107,8 +107,8 @@ protected:
                                   int &bcost,
                                   int &bPointNr,
                                   int &bDistance,
-                                  int16_t dist,
-                                  const MV& omv);
+                                  int earlyExitIters,
+                                  int merange);
 };
 }
 

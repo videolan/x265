@@ -747,21 +747,9 @@ me_hex2:
     {
         int bPointNr = 0;
         int bDistance = 0;
-        int rounds = 0;
 
-        const int earlyStopRounds = 3;
-        for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
-        {
-            int saved = bcost;
-            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
-
-            // Break if we go earlyStopRounds without an improved prediction
-            if (bcost < saved)
-                rounds = 0;
-            else if (++rounds >= earlyStopRounds)
-                break;
-        }
-
+        const int EarlyExitIters = 3;
+        StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, EarlyExitIters, merange);
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points.  If no new point is found, stop
@@ -792,52 +780,52 @@ me_hex2:
                 break;
         }
 
-        const int rasterDistance = 5;
-        if (bDistance > rasterDistance)
+        const int RasterDistance = 5;
+        if (bDistance > RasterDistance)
         {
             // raster search refinement if original search distance was too big
             MV tmv;
-            for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += rasterDistance)
+            for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y += RasterDistance)
             {
-                for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += rasterDistance)
+                for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x += RasterDistance)
                 {
-                    if (tmv.x + (rasterDistance * 3) <= mvmax.x)
+                    if (tmv.x + (RasterDistance * 3) <= mvmax.x)
                     {
                         pixel *pix_base = fref + tmv.y * stride + tmv.x;
 #if SUBSAMPLE_SAD
                         sad_x4(fencSad,
                                pix_base,
-                               pix_base + rasterDistance,
-                               pix_base + rasterDistance * 2,
-                               pix_base + rasterDistance * 3,
+                               pix_base + RasterDistance,
+                               pix_base + RasterDistance * 2,
+                               pix_base + RasterDistance * 3,
                                sadStride, costs);
                         costs[0] = (costs[0] << subsample) + mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[1] = (costs[1] << subsample) + mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[1], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[2] = (costs[2] << subsample) + mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[2], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[3] = (costs[3] << subsample) + mvcost(tmv << 3);
                         COPY2_IF_LT(bcost, costs[3], bmv, tmv);
 #else // if SUBSAMPLE_SAD
                         sad_x4(fenc,
                                pix_base,
-                               pix_base + rasterDistance,
-                               pix_base + rasterDistance * 2,
-                               pix_base + rasterDistance * 3,
+                               pix_base + RasterDistance,
+                               pix_base + RasterDistance * 2,
+                               pix_base + RasterDistance * 3,
                                stride, costs);
                         costs[0] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[0], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[1] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[1], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[2] += mvcost(tmv << 2);
                         COPY2_IF_LT(bcost, costs[2], bmv, tmv);
-                        tmv.x += rasterDistance;
+                        tmv.x += RasterDistance;
                         costs[3] += mvcost(tmv << 3);
                         COPY2_IF_LT(bcost, costs[3], bmv, tmv);
 #endif // if SUBSAMPLE_SAD
@@ -851,35 +839,32 @@ me_hex2:
         while (bDistance > 0)
         {
             // center a new search around current best
-            omv = bmv;
             bDistance = 0;
             bPointNr = 0;
-            for (int16_t dist = 1; dist <= (int16_t)merange; dist *= 2)
-            {
-                StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, dist, omv);
-            }
+            const int MaxIters = 32;
+            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, MaxIters, merange);
 
             if (bDistance == 1)
             {
-                if (bPointNr)
+                if (!bPointNr)
+                    break;
+
+                /* For a given direction 1 to 8, check nearest 2 outer X pixels
+                        X   X
+                    X 1 2 3 X
+                        4 * 5
+                    X 6 7 8 X
+                        X   X
+                */
+                const MV mv1 = bmv + offsets[(bPointNr - 1) * 2];
+                const MV mv2 = bmv + offsets[(bPointNr - 1) * 2 + 1];
+                if (mv1.checkRange(mvmin, mvmax))
                 {
-                    /* For a given direction 1 to 8, check nearest 2 outer X pixels
-                         X   X
-                       X 1 2 3 X
-                         4 * 5
-                       X 6 7 8 X
-                         X   X
-                    */
-                    const MV mv1 = bmv + offsets[(bPointNr - 1) * 2];
-                    const MV mv2 = bmv + offsets[(bPointNr - 1) * 2 + 1];
-                    if (mv1.checkRange(mvmin, mvmax))
-                    {
-                        COST_MV(mv1.x, mv1.y);
-                    }
-                    if (mv2.checkRange(mvmin, mvmax))
-                    {
-                        COST_MV(mv2.x, mv2.y);
-                    }
+                    COST_MV(mv1.x, mv1.y);
+                }
+                if (mv2.checkRange(mvmin, mvmax))
+                {
+                    COST_MV(mv2.x, mv2.y);
                 }
                 break;
             }
@@ -929,7 +914,15 @@ me_hex2:
     return bcost;
 }
 
-void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, const MV &mvmax, MV &bmv, int &bcost, int &bPointNr, int &bDistance, int16_t dist, const MV& omv)
+void MotionEstimate::StarPatternSearch(MotionReference *ref,
+                                       const MV &mvmin,
+                                       const MV &mvmax,
+                                       MV &bmv,
+                                       int &bcost,
+                                       int &bPointNr,
+                                       int &bDistance,
+                                       int earlyExitIters,
+                                       int merange)
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;
@@ -938,8 +931,13 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
     size_t sadStride = ref->m_lumaStride << subsample;
 #endif
 
-    if (dist == 1)
+    MV omv = bmv;
+    int saved = bcost;
+    int rounds = 0;
+
     {
+        int16_t dist = 1;
+
         /* bPointNr
               2
             4 * 5
@@ -976,8 +974,13 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
                 COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
             }
         }
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
     }
-    else if (dist <= 8)
+
+    for (int16_t dist = 2; dist <= 8; dist <<= 1)
     {
         /* bPointNr
               2
@@ -996,6 +999,7 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
         const int16_t iBottom_2 = omv.y + (dist >> 1);
         const int16_t iLeft_2   = omv.x - (dist >> 1);
         const int16_t iRight_2  = omv.x + (dist >> 1);
+        saved = bcost;
 
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
@@ -1050,14 +1054,21 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
                 COST_MV_PT_DIST(omv.x, iBottom, 7, dist);
             }
         } // check border for each mv
+
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
     }
-    else
+
+    for (int16_t dist = 16; dist <= merange; dist <<= 1)
     {
         const int16_t iTop    = omv.y - dist;
         const int16_t iBottom = omv.y + dist;
         const int16_t iLeft   = omv.x - dist;
         const int16_t iRight  = omv.x + dist;
 
+        saved = bcost;
         if (iTop >= mvmin.y && iLeft >= mvmin.x &&
             iRight <= mvmax.x && iBottom <= mvmax.y) // check border
         {
@@ -1140,5 +1151,10 @@ void MotionEstimate::StarPatternSearch(MotionReference *ref, const MV &mvmin, co
                 } // check bottom
             } // for ...
         } // check border for each mv
+
+        if (bcost < saved)
+            rounds = 0;
+        else if (++rounds >= earlyExitIters)
+            return;
     } // dist > 8
 }
