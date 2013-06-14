@@ -204,17 +204,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             }
         }
 
-        if (!bBoundary)
-        {
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, uiDepth, true);
-
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-        }
-        else
-            rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(), m_pcRdCost->m_dLambda);
-
         if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             Bool hasResidual = false;
@@ -241,7 +230,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& pcCU, UInt ui
             }
         }
 
-        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
         if(rpcTempCU->getTotalCost() < BestCUTemp->getTotalCost())
         {
             BestCUTemp = rpcTempCU;
