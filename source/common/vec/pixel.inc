@@ -236,16 +236,16 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.cvt32to16_shr = convert32to16_shr;
 
 #if !HIGH_BIT_DEPTH
-    p.getResidue[BLOCK_4x4] = getResidual4;
-    p.getResidue[BLOCK_8x8] = getResidual8;
-    p.getResidue[BLOCK_16x16] = getResidual<16>;
-    p.getResidue[BLOCK_32x32] = getResidual<32>;
-    p.getResidue[BLOCK_64x64] = getResidual<64>;
-    p.calcRecons[BLOCK_4x4] = calcRecons4;
-    p.calcRecons[BLOCK_8x8] = calcRecons8;
-    p.calcRecons[BLOCK_16x16] = calcRecons<16>;
-    p.calcRecons[BLOCK_32x32] = calcRecons<32>;
-    p.calcRecons[BLOCK_64x64] = calcRecons<64>;
+    p.calcresidual[BLOCK_4x4] = getResidual4;
+    p.calcresidual[BLOCK_8x8] = getResidual8;
+    p.calcresidual[BLOCK_16x16] = getResidual<16>;
+    p.calcresidual[BLOCK_32x32] = getResidual<32>;
+    p.calcresidual[BLOCK_64x64] = getResidual<64>;
+    p.calcrecon[BLOCK_4x4] = calcRecons4;
+    p.calcrecon[BLOCK_8x8] = calcRecons8;
+    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
+    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
+    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
 #endif 
 }
 }
