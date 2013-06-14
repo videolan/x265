@@ -505,7 +505,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     {
 #if FAST_MODE_DECISION
         TComDataCU* rpcBestCU = NULL;
-        xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
+        xCompressInterCU(rpcBestCU, pcCu, 0, 0);
 #else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
 #endif
@@ -2233,6 +2233,13 @@ Void TEncCu::xCopyYuv2Tmp(UInt uiPartUnitIdx, UInt uiNextDepth)
     UInt uiCurrDepth = uiNextDepth - 1;
 
     m_ppcRecoYuvBest[uiNextDepth]->copyToPartYuv(m_ppcRecoYuvTemp[uiCurrDepth], uiPartUnitIdx);
+}
+
+Void TEncCu::xCopyYuv2Best(UInt uiPartUnitIdx, UInt uiNextDepth)
+{
+    UInt uiCurrDepth = uiNextDepth - 1;
+
+    m_ppcRecoYuvTemp[uiNextDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiCurrDepth], uiPartUnitIdx);
 }
 
 /** Function for filling the PCM buffer of a CU using its original sample array
