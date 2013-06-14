@@ -414,9 +414,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
         pcSlice->getRPS()->setNumberOfLongtermPictures(0);
 
-        if (pcSlice->checkThatAllRefPicsAreAvailable(rcListPic, pcSlice->getRPS(), false) != 0)
+        if ((pcSlice->checkThatAllRefPicsAreAvailable(rcListPic, pcSlice->getRPS(), false) != 0) || (pcSlice->isIRAP()))
         {
-            pcSlice->createExplicitReferencePictureSetFromReference(rcListPic, pcSlice->getRPS());
+            pcSlice->createExplicitReferencePictureSetFromReference(rcListPic, pcSlice->getRPS(), pcSlice->isIRAP());
         }
         pcSlice->applyReferencePictureSet(rcListPic, pcSlice->getRPS());
 

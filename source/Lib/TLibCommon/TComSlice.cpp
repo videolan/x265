@@ -1003,7 +1003,7 @@ Int TComSlice::checkThatAllRefPicsAreAvailable(TComList<TComPic*>& rcListPic, TC
 
 /** Function for constructing an explicit Reference Picture Set out of the available pictures in a referenced Reference Picture Set
 */
-Void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet)
+Void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP)
 {
     TComPic* rpcPic;
     Int i, j;
@@ -1028,7 +1028,7 @@ Void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*
                 // This picture exists as a reference picture
                 // and should be added to the explicit Reference Picture Set
                 pcRPS->setDeltaPOC(k, pReferencePictureSet->getDeltaPOC(i));
-                pcRPS->setUsed(k, pReferencePictureSet->getUsed(i));
+                pcRPS->setUsed(k, pReferencePictureSet->getUsed(i) && (!isRAP));
                 if (pcRPS->getDeltaPOC(k) < 0)
                 {
                     nrOfNegativePictures++;
