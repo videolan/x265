@@ -1627,7 +1627,7 @@ public:
     Bool isTemporalLayerSwitchingPoint(TComList<TComPic*>& rcListPic);
     Bool isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*>& rcListPic);
     Int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
-    Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet);
+    Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
 
     Void setMaxNumMergeCand(UInt val)          { m_maxNumMergeCand = val; }
 

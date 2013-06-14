@@ -1819,7 +1819,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
     rpcTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
 
     Int mergeCandBuffer[MRG_MAX_NUM_CANDS];
-    for (UInt ui = 0; ui < rpcTempCU->getSlice()->getMaxNumMergeCand(); ++ui)
+    for (UInt ui = 0; ui < numValidMergeCand; ++ui)
     {
         mergeCandBuffer[ui] = 0;
     }
