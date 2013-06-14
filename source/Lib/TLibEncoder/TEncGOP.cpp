@@ -767,7 +767,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 // CHECK_ME: maybe HM's bug
                 UInt maxCU = 1500 >> (pcSlice->getSPS()->getMaxCUDepth() << 1);
                 UInt numDU = 0;
-                if (pcPic->getNumCUsInFrame() % maxCU != 0)
+                if (pcPic->getNumCUsInFrame() % maxCU != 0 || numDU == 0)
                 {
                     numDU++;
                 }
