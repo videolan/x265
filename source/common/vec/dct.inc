@@ -3290,6 +3290,7 @@ void xDCT8(int16_t *pSrc, int16_t *pDst, intptr_t nStride)
     MAKE_ODD(12, 3);
     MAKE_ODD(13, 5);
     MAKE_ODD(14, 7);
+#undef MAKE_ODD
 }
 #endif // INSTRSET >= 4
 
