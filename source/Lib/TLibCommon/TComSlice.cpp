@@ -379,7 +379,7 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
             return;
         }
 
-        assert(numPocTotalCurr != 0);
+        assert(numPocTotalCurr >= 0);
 
         m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
         m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
@@ -400,6 +400,7 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
     {
         rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
     }
+    assert(cIdx == numPocTotalCurr);
 
     if (m_eSliceType == B_SLICE)
     {
@@ -418,29 +419,32 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
         {
             rpsCurrList1[cIdx] = RefPicSetLtCurr[i];
         }
+        assert(cIdx == numPocTotalCurr);
     }
 
     ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
 
-    for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[0] - 1); rIdx++)
+    for (Int rIdx = 0; rIdx < m_aiNumRefIdx[0]; rIdx ++)
     {
-        m_apcRefPicList[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? rpsCurrList0[m_RefPicListModification.getRefPicSetIdxL0(rIdx)] : rpsCurrList0[rIdx % numPocTotalCurr];
-        m_bIsUsedAsLongTerm[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? (m_RefPicListModification.getRefPicSetIdxL0(rIdx) >= (NumPocStCurr0 + NumPocStCurr1))
-            : ((rIdx % numPocTotalCurr) >= (NumPocStCurr0 + NumPocStCurr1));
+        cIdx = m_RefPicListModification.getRefPicListModificationFlagL0() ? m_RefPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
+        assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+        m_apcRefPicList[0][rIdx] = rpsCurrList0[ cIdx ];
+        m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
     }
 
-    if (m_eSliceType == P_SLICE)
+    if (m_eSliceType != B_SLICE)
     {
         m_aiNumRefIdx[1] = 0;
         ::memset(m_apcRefPicList[1], 0, sizeof(m_apcRefPicList[1]));
     }
     else
     {
-        for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[1] - 1); rIdx++)
+        for (Int rIdx = 0; rIdx < m_aiNumRefIdx[1]; rIdx ++)
         {
-            m_apcRefPicList[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ? rpsCurrList1[m_RefPicListModification.getRefPicSetIdxL1(rIdx)] : rpsCurrList1[rIdx % numPocTotalCurr];
-            m_bIsUsedAsLongTerm[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ?
-                (m_RefPicListModification.getRefPicSetIdxL1(rIdx) >= (NumPocStCurr0 + NumPocStCurr1)) : ((rIdx % numPocTotalCurr) >= (NumPocStCurr0 + NumPocStCurr1));
+            cIdx = m_RefPicListModification.getRefPicListModificationFlagL1() ? m_RefPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
+            assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+            m_apcRefPicList[1][rIdx] = rpsCurrList1[ cIdx ];
+            m_bIsUsedAsLongTerm[1][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
         }
     }
 }
