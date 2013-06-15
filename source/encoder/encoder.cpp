@@ -40,9 +40,87 @@ using namespace x265;
 #pragma warning(disable: 4800) // 'int' : forcing value to bool 'true' or 'false' (performance warning)
 #endif
 
+void Encoder::determineLevelAndProfile(x265_param_t *param)
+{
+    // this is all based on the table at on Wikipedia at
+    // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
+
+    uint32_t lumaSamples = param->iSourceWidth * param->iSourceHeight;
+    uint32_t samplesPerSec = lumaSamples * param->iFrameRate;
+    uint32_t bitrate = 1000; // in kbps TODO: ABR
+
+    m_level = Level::NONE; const char *level = "none";
+    if (lumaSamples >= 36864 || samplesPerSec >= 552960)      { m_level = Level::LEVEL1;  level = "1";   }
+    if (lumaSamples >= 122880 || samplesPerSec >= 3686400)    { m_level = Level::LEVEL2;  level = "2";   }
+    if (lumaSamples >= 245760 || samplesPerSec >= 7372800)    { m_level = Level::LEVEL2_1;level = "2.1"; }
+    if (lumaSamples >= 552960 || samplesPerSec >= 16588800)   { m_level = Level::LEVEL3;  level = "3";   }
+    if (lumaSamples >= 983040 || samplesPerSec >= 33177600)   { m_level = Level::LEVEL3_1;level = "3.1"; }
+    if (lumaSamples >= 2228224 || samplesPerSec >= 66846720)
+    {
+        m_level = Level::LEVEL4; level = "4";
+        if (samplesPerSec >= 133693440 || bitrate > 30000)    { m_level = Level::LEVEL4_1; level = "4.1"; }
+    }
+    if (lumaSamples >= 8912896 || samplesPerSec >= 267386880 || bitrate > 50000)
+    {
+        m_level = Level::LEVEL5; level = "5";
+        if (samplesPerSec >= 534773760 || bitrate > 100000)   { m_level = Level::LEVEL5_1; level = "5.1"; }
+        if (samplesPerSec >= 1069547520 || bitrate > 160000)  { m_level = Level::LEVEL5_2; level = "5.2"; }
+    }
+    if (lumaSamples >= 35651584 || samplesPerSec >= 1069547520 || bitrate > 240000)
+    {
+        m_level = Level::LEVEL6; level = "6";
+        if (samplesPerSec >= 2139095040 || bitrate > 240000)  { m_level = Level::LEVEL6_1; level = "6.1"; }
+        if (samplesPerSec >= 4278190080 || bitrate > 480000)  { m_level = Level::LEVEL6_2; level = "6.2"; }
+    }
+
+    m_levelTier = Level::MAIN;
+    switch (m_level)
+    {
+    case Level::LEVEL4:
+        if (bitrate > 12000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL4_1:
+        if (bitrate > 20000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5:
+        if (bitrate > 25000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5_1:
+        if (bitrate > 40000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5_2:
+        if (bitrate > 60000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6:
+        if (bitrate > 60000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6_1:
+        if (bitrate > 120000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6_2:
+        if (bitrate > 240000) m_levelTier = Level::HIGH;
+        break;
+    }
+    if (samplesPerSec > 4278190080 || lumaSamples > 35651584 || bitrate > 800000)
+        x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
+
+    if (param->internalBitDepth == 10)
+        m_profile = Profile::MAIN10;
+    else if (param->iIntraPeriod == 1)
+        m_profile = Profile::MAINSTILLPICTURE;
+    else
+        m_profile = Profile::MAIN;
+
+    static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
+    static const char *tiers[]    = { "Main", "High" };
+    x265_log(param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
+}
+
 void Encoder::configure(x265_param_t *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+
+    determineLevelAndProfile(param);
 
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
 
