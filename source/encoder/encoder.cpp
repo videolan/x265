@@ -47,32 +47,74 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
 
     uint32_t lumaSamples = param->iSourceWidth * param->iSourceHeight;
     uint32_t samplesPerSec = lumaSamples * param->iFrameRate;
-    uint32_t bitrate = 1000; // in kbps TODO: ABR
+    uint32_t bitrate = 100; // in kbps TODO: ABR
 
-    m_level = Level::NONE; const char *level = "none";
-    if (lumaSamples >= 36864 || samplesPerSec >= 552960)      { m_level = Level::LEVEL1;  level = "1";   }
-    if (lumaSamples >= 122880 || samplesPerSec >= 3686400)    { m_level = Level::LEVEL2;  level = "2";   }
-    if (lumaSamples >= 245760 || samplesPerSec >= 7372800)    { m_level = Level::LEVEL2_1;level = "2.1"; }
-    if (lumaSamples >= 552960 || samplesPerSec >= 16588800)   { m_level = Level::LEVEL3;  level = "3";   }
-    if (lumaSamples >= 983040 || samplesPerSec >= 33177600)   { m_level = Level::LEVEL3_1;level = "3.1"; }
-    if (lumaSamples >= 2228224 || samplesPerSec >= 66846720)
+    m_level = Level::LEVEL1;
+    const char *level = "1";
+    if (samplesPerSec > 552960 || lumaSamples > 36864 || bitrate > 128)
     {
-        m_level = Level::LEVEL4; level = "4";
-        if (samplesPerSec >= 133693440 || bitrate > 30000)    { m_level = Level::LEVEL4_1; level = "4.1"; }
+        m_level = Level::LEVEL2;
+        level = "2";
     }
-    if (lumaSamples >= 8912896 || samplesPerSec >= 267386880 || bitrate > 50000)
+    if (samplesPerSec > 3686400 || lumaSamples > 122880 || bitrate > 1500)
     {
-        m_level = Level::LEVEL5; level = "5";
-        if (samplesPerSec >= 534773760 || bitrate > 100000)   { m_level = Level::LEVEL5_1; level = "5.1"; }
-        if (samplesPerSec >= 1069547520 || bitrate > 160000)  { m_level = Level::LEVEL5_2; level = "5.2"; }
+        m_level = Level::LEVEL2_1;
+        level = "2.1";
     }
-    if (lumaSamples >= 35651584 || samplesPerSec >= 1069547520 || bitrate > 240000)
+    if (samplesPerSec > 7372800 || lumaSamples > 245760 || bitrate > 3000)
     {
-        m_level = Level::LEVEL6; level = "6";
-        if (samplesPerSec >= 2139095040 || bitrate > 240000)  { m_level = Level::LEVEL6_1; level = "6.1"; }
-        if (samplesPerSec >= 4278190080 || bitrate > 480000)  { m_level = Level::LEVEL6_2; level = "6.2"; }
+        m_level = Level::LEVEL3;
+        level = "3";
     }
+    if (samplesPerSec > 16588800 || lumaSamples > 552960 || bitrate > 6000)
+    {
+        m_level = Level::LEVEL3_1;
+        level = "3.1";
+    }
+    if (samplesPerSec > 33177600 || lumaSamples > 983040 || bitrate > 10000)
+    { 
+        m_level = Level::LEVEL4;
+        level = "4";
+    }
+    if (samplesPerSec > 66846720 || bitrate > 30000)
+    {
+        m_level = Level::LEVEL4_1;
+        level = "4.1";
+    }
+    if (samplesPerSec > 133693440 || lumaSamples > 2228224 || bitrate > 50000)
+    {
+        m_level = Level::LEVEL5;
+        level = "5";
+    }
+    if (samplesPerSec > 267386880 || bitrate > 100000)
+    {
+        m_level = Level::LEVEL5_1;
+        level = "5.1";
+    }
+    if (samplesPerSec > 534773760 || bitrate > 160000)
+    {
+        m_level = Level::LEVEL5_2;
+        level = "5.2";
+    }
+    if (samplesPerSec > 1069547520 || lumaSamples > 8912896 || bitrate > 240000)
+    {
+        m_level = Level::LEVEL6;
+        level = "6";
+    }
+    if (samplesPerSec > 1069547520 || bitrate > 240000)
+    {
+        m_level = Level::LEVEL6_1;
+        level = "6.1";
+    }
+    if (samplesPerSec > 2139095040 || bitrate > 480000)
+    {
+        m_level = Level::LEVEL6_2;
+        level = "6.2";
+    }
+    if (samplesPerSec > 4278190080 || lumaSamples > 35651584 || bitrate > 800000)
+        x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
 
+    /* Within a given level, we might be at a high tier, depending on bitrate */
     m_levelTier = Level::MAIN;
     switch (m_level)
     {
@@ -101,8 +143,6 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
         if (bitrate > 240000) m_levelTier = Level::HIGH;
         break;
     }
-    if (samplesPerSec > 4278190080 || lumaSamples > 35651584 || bitrate > 800000)
-        x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
 
     if (param->internalBitDepth == 10)
         m_profile = Profile::MAIN10;
