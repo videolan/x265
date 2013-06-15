@@ -134,8 +134,6 @@ public:
 
     Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
 
-    TEncGOP*                getGOPEncoder()         { return &m_cGOPEncoder; }
-
     TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
 
     // -------------------------------------------------------------------------------------------------------------------

@@ -118,7 +118,6 @@ Void TEncSlice::init(TEncTop* pcEncTop)
 {
     m_pcCfg             = pcEncTop;
     m_pcListPic         = pcEncTop->getListPic();
-    m_pcGOPEncoder      = pcEncTop->getGOPEncoder();
 }
 
 /**
@@ -135,7 +134,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
-TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
+TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Bool bForceISlice, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
 {
     Double dQP;
     Double dLambda;
@@ -182,7 +181,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
     SliceType eSliceType;
 
     eSliceType = B_SLICE;
-    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : eSliceType;
 
     pcSlice->setSliceType(eSliceType);
 
@@ -293,7 +292,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
-    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : eSliceType;
 
     pcSlice->setSliceType(eSliceType);
 #endif
