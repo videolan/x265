@@ -99,7 +99,6 @@ TEncGOP::TEncGOP()
 {
     m_iLastIDR            = 0;
     m_iGopSize            = 0;
-    m_bSeqFirst           = true;
     m_totalCoded          = 0;
     m_bRefreshPending     = 0;
     m_pocCRA              = 0;
@@ -739,7 +738,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
 
         /* write various header sets. */
-        if (m_bSeqFirst)
+        if (iPOCLast == 0)
         {
             OutputNALUnit nalu(NAL_UNIT_VPS);
             pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
@@ -750,14 +749,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
             nalu = NALUnit(NAL_UNIT_SPS);
             pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-            if (m_bSeqFirst)
+            pcSlice->getSPS()->setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
+            for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
             {
-                pcSlice->getSPS()->setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
-                for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
-                {
-                    pcSlice->getSPS()->setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
-                    pcSlice->getSPS()->setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
-                }
+                pcSlice->getSPS()->setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
+                pcSlice->getSPS()->setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
             }
             if (m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled())
             {
@@ -788,8 +784,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 
             xCreateLeadingSEIMessages(pcEntropyCoder, accessUnit, pcSlice->getSPS());
-
-            m_bSeqFirst = false;
         }
 
         if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP

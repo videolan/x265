@@ -89,9 +89,6 @@ private:
 
     SEIWriter               m_seiWriter;
 
-    // indicate sequence first
-    Bool                    m_bSeqFirst;
-
     // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
