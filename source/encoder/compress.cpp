@@ -218,17 +218,22 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
-        if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
+        if(rpcBestCU)
         {
-            TComDataCU* temp = rpcBestCU;
-            rpcBestCU = rpcTempCU;
-            rpcTempCU = temp;
+            if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
+            {
+                TComDataCU* temp = rpcBestCU;
+                rpcBestCU = rpcTempCU;
+                rpcTempCU = temp;
             
-            YuvTemp = m_ppcRecoYuvTemp[uiDepth];
-            m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
-            m_ppcRecoYuvBest[uiDepth] = YuvTemp;
-            m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]->store(m_pppcRDSbacCoder[uiDepth][CI_NEXT_BEST]);
-        }        
+                YuvTemp = m_ppcRecoYuvTemp[uiDepth];
+                m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
+                m_ppcRecoYuvBest[uiDepth] = YuvTemp;
+            }
+        }else
+        {
+            rpcBestCU = rpcTempCU;
+        }
     }
 
     rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
