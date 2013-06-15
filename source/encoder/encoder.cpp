@@ -40,9 +40,127 @@ using namespace x265;
 #pragma warning(disable: 4800) // 'int' : forcing value to bool 'true' or 'false' (performance warning)
 #endif
 
+void Encoder::determineLevelAndProfile(x265_param_t *param)
+{
+    // this is all based on the table at on Wikipedia at
+    // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
+
+    uint32_t lumaSamples = param->iSourceWidth * param->iSourceHeight;
+    uint32_t samplesPerSec = lumaSamples * param->iFrameRate;
+    uint32_t bitrate = 100; // in kbps TODO: ABR
+
+    m_level = Level::LEVEL1;
+    const char *level = "1";
+    if (samplesPerSec > 552960 || lumaSamples > 36864 || bitrate > 128)
+    {
+        m_level = Level::LEVEL2;
+        level = "2";
+    }
+    if (samplesPerSec > 3686400 || lumaSamples > 122880 || bitrate > 1500)
+    {
+        m_level = Level::LEVEL2_1;
+        level = "2.1";
+    }
+    if (samplesPerSec > 7372800 || lumaSamples > 245760 || bitrate > 3000)
+    {
+        m_level = Level::LEVEL3;
+        level = "3";
+    }
+    if (samplesPerSec > 16588800 || lumaSamples > 552960 || bitrate > 6000)
+    {
+        m_level = Level::LEVEL3_1;
+        level = "3.1";
+    }
+    if (samplesPerSec > 33177600 || lumaSamples > 983040 || bitrate > 10000)
+    { 
+        m_level = Level::LEVEL4;
+        level = "4";
+    }
+    if (samplesPerSec > 66846720 || bitrate > 30000)
+    {
+        m_level = Level::LEVEL4_1;
+        level = "4.1";
+    }
+    if (samplesPerSec > 133693440 || lumaSamples > 2228224 || bitrate > 50000)
+    {
+        m_level = Level::LEVEL5;
+        level = "5";
+    }
+    if (samplesPerSec > 267386880 || bitrate > 100000)
+    {
+        m_level = Level::LEVEL5_1;
+        level = "5.1";
+    }
+    if (samplesPerSec > 534773760 || bitrate > 160000)
+    {
+        m_level = Level::LEVEL5_2;
+        level = "5.2";
+    }
+    if (samplesPerSec > 1069547520 || lumaSamples > 8912896 || bitrate > 240000)
+    {
+        m_level = Level::LEVEL6;
+        level = "6";
+    }
+    if (samplesPerSec > 1069547520 || bitrate > 240000)
+    {
+        m_level = Level::LEVEL6_1;
+        level = "6.1";
+    }
+    if (samplesPerSec > 2139095040 || bitrate > 480000)
+    {
+        m_level = Level::LEVEL6_2;
+        level = "6.2";
+    }
+    if (samplesPerSec > 4278190080 || lumaSamples > 35651584 || bitrate > 800000)
+        x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
+
+    /* Within a given level, we might be at a high tier, depending on bitrate */
+    m_levelTier = Level::MAIN;
+    switch (m_level)
+    {
+    case Level::LEVEL4:
+        if (bitrate > 12000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL4_1:
+        if (bitrate > 20000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5:
+        if (bitrate > 25000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5_1:
+        if (bitrate > 40000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL5_2:
+        if (bitrate > 60000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6:
+        if (bitrate > 60000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6_1:
+        if (bitrate > 120000) m_levelTier = Level::HIGH;
+        break;
+    case Level::LEVEL6_2:
+        if (bitrate > 240000) m_levelTier = Level::HIGH;
+        break;
+    }
+
+    if (param->internalBitDepth == 10)
+        m_profile = Profile::MAIN10;
+    else if (param->iIntraPeriod == 1)
+        m_profile = Profile::MAINSTILLPICTURE;
+    else
+        m_profile = Profile::MAIN;
+
+    static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
+    static const char *tiers[]    = { "Main", "High" };
+    x265_log(param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
+}
+
 void Encoder::configure(x265_param_t *param)
 {
     x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+
+    determineLevelAndProfile(param);
 
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
 

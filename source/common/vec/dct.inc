@@ -3290,6 +3290,488 @@ void xDCT8(int16_t *pSrc, int16_t *pDst, intptr_t nStride)
     MAKE_ODD(12, 3);
     MAKE_ODD(13, 5);
     MAKE_ODD(14, 7);
+#undef MAKE_ODD
+}
+#endif // INSTRSET >= 4
+
+#if INSTRSET < 4
+void xDCT16(short *pSrc, short *pDst, intptr_t)
+{
+    const int shift_1st = 3;
+    const int shift_2nd = 10;
+    ALIGN_VAR_32(Short, tmp[16 * 16]);
+
+    partialButterfly16(pSrc, tmp, shift_1st, 16);
+    partialButterfly16(tmp, pDst, shift_2nd, 16);
+}
+#endif // INSTRSET < 4
+
+#if INSTRSET >= 4
+ALIGN_VAR_32(static const short, tab_dct_16x16_0[][8])=
+{
+    { 0x0F0E, 0x0D0C, 0x0B0A, 0x0908, 0x0706, 0x0504, 0x0302, 0x0100},  // 0
+    { 0x0100, 0x0F0E, 0x0706, 0x0908, 0x0302, 0x0D0C, 0x0504, 0x0B0A},  // 1
+    { 0x0100, 0x0706, 0x0302, 0x0504, 0x0F0E, 0x0908, 0x0D0C, 0x0B0A},  // 2
+    { 0x0F0E, 0x0908, 0x0D0C, 0x0B0A, 0x0100, 0x0706, 0x0302, 0x0504},  // 3
+};
+
+ALIGN_VAR_32(static const short, tab_dct_16x16_1[][8])=
+{
+    // share with 8x8
+    { 64, 64, 64, 64, 64, 64, 64, 64},  //  0
+    { 64,-64, 64,-64, 64,-64, 64,-64},  //  1
+    { 83, 36, 83, 36, 83, 36, 83, 36},  //  2
+    { 36,-83, 36,-83, 36,-83, 36,-83},  //  3
+    { 89, 18, 75, 50, 89, 18, 75, 50},  //  4
+    { 75,-50,-18,-89, 75,-50,-18,-89},  //  5
+    { 50, 75,-89, 18, 50, 75,-89, 18},  //  6
+    { 18,-89,-50, 75, 18,-89,-50, 75},  //  7
+
+    { 90, 87, 80, 70, 57, 43, 25,  9},  //  8
+    { 87, 57,  9,-43,-80,-90,-70,-25},  //  9
+    { 80,  9,-70,-87,-25, 57, 90, 43},  // 10
+    { 70,-43,-87,  9, 90, 25,-80,-57},  // 11
+    { 57,-80,-25, 90,- 9,-87, 43, 70},  // 12
+    { 43,-90, 57, 25,-87, 70,  9,-80},  // 13
+    { 25,-70, 90,-80, 43,  9,-57, 87},  // 14
+    {  9,-25, 43,-57, 70,-80, 87,-90},  // 15
+    { 83, 83,-83,-83, 36, 36,-36,-36},  // 16
+    { 36, 36,-36,-36,-83,-83, 83, 83},  // 17
+    { 89, 89, 18, 18, 75, 75, 50, 50},  // 18
+    { 75, 75,-50,-50,-18,-18,-89,-89},  // 19
+    { 50, 50, 75, 75,-89,-89, 18, 18},  // 20
+    { 18, 18,-89,-89,-50,-50, 75, 75},  // 21
+
+#define MAKE_COEF(a0, a1, a2, a3, a4, a5, a6, a7) \
+    { (a0), -(a0), (a3), -(a3), (a1), -(a1), (a2), -(a2)}, \
+    { (a7), -(a7), (a4), -(a4), (a6), -(a6), (a5), -(a5)},
+
+    MAKE_COEF(90, 87, 80, 70, 57, 43, 25,  9)
+    MAKE_COEF(87, 57,  9,-43,-80,-90,-70,-25)
+    MAKE_COEF(80,  9,-70,-87,-25, 57, 90, 43)
+    MAKE_COEF(70,-43,-87,  9, 90, 25,-80,-57)
+    MAKE_COEF(57,-80,-25, 90, -9,-87, 43, 70)
+    MAKE_COEF(43,-90, 57, 25,-87, 70,  9,-80)
+    MAKE_COEF(25,-70, 90,-80, 43,  9,-57, 87)
+    MAKE_COEF( 9,-25, 43,-57, 70,-80, 87,-90)
+#undef MAKE_COEF
+};
+
+void xDCT16(short *pSrc, short *pDst, intptr_t nStride)
+{
+    // Const
+    __m128i c_4     = _mm_set1_epi32(4);
+    __m128i c_512   = _mm_set1_epi32(512);
+
+    int i;
+
+    ALIGN_VAR_32(short, tmp[16*16]);
+
+    __m128i T00A, T01A, T02A, T03A, T04A, T05A, T06A, T07A;
+    __m128i T00B, T01B, T02B, T03B, T04B, T05B, T06B, T07B;
+    __m128i T10, T11, T12, T13, T14, T15, T16, T17;
+    __m128i T20, T21, T22, T23, T24, T25, T26, T27;
+    __m128i T30, T31, T32, T33, T34, T35, T36, T37;
+    __m128i T40, T41, T42, T43, T44, T45, T46, T47;
+    __m128i T50, T51, T52, T53;
+    __m128i T60, T61, T62, T63, T64, T65, T66, T67;
+    __m128i T70;
+
+    // DCT1
+    for( i=0; i<16; i+=8 )
+    {
+        T00A = _mm_load_si128((__m128i*)&pSrc[(i+0)*16+0]);    // [07 06 05 04 03 02 01 00]
+        T00B = _mm_load_si128((__m128i*)&pSrc[(i+0)*16+8]);    // [0F 0E 0D 0C 0B 0A 09 08]
+        T01A = _mm_load_si128((__m128i*)&pSrc[(i+1)*16+0]);    // [17 16 15 14 13 12 11 10]
+        T01B = _mm_load_si128((__m128i*)&pSrc[(i+1)*16+8]);    // [1F 1E 1D 1C 1B 1A 19 18]
+        T02A = _mm_load_si128((__m128i*)&pSrc[(i+2)*16+0]);    // [27 26 25 24 23 22 21 20]
+        T02B = _mm_load_si128((__m128i*)&pSrc[(i+2)*16+8]);    // [2F 2E 2D 2C 2B 2A 29 28]
+        T03A = _mm_load_si128((__m128i*)&pSrc[(i+3)*16+0]);    // [37 36 35 34 33 32 31 30]
+        T03B = _mm_load_si128((__m128i*)&pSrc[(i+3)*16+8]);    // [3F 3E 3D 3C 3B 3A 39 38]
+        T04A = _mm_load_si128((__m128i*)&pSrc[(i+4)*16+0]);    // [47 46 45 44 43 42 41 40]
+        T04B = _mm_load_si128((__m128i*)&pSrc[(i+4)*16+8]);    // [4F 4E 4D 4C 4B 4A 49 48]
+        T05A = _mm_load_si128((__m128i*)&pSrc[(i+5)*16+0]);    // [57 56 55 54 53 52 51 50]
+        T05B = _mm_load_si128((__m128i*)&pSrc[(i+5)*16+8]);    // [5F 5E 5D 5C 5B 5A 59 58]
+        T06A = _mm_load_si128((__m128i*)&pSrc[(i+6)*16+0]);    // [67 66 65 64 63 62 61 60]
+        T06B = _mm_load_si128((__m128i*)&pSrc[(i+6)*16+8]);    // [6F 6E 6D 6C 6B 6A 69 68]
+        T07A = _mm_load_si128((__m128i*)&pSrc[(i+7)*16+0]);    // [77 76 75 74 73 72 71 70]
+        T07B = _mm_load_si128((__m128i*)&pSrc[(i+7)*16+8]);    // [7F 7E 7D 7C 7B 7A 79 78]
+
+        T00B = _mm_shuffle_epi8(T00B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T01B = _mm_shuffle_epi8(T01B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T02B = _mm_shuffle_epi8(T02B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T03B = _mm_shuffle_epi8(T03B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T04B = _mm_shuffle_epi8(T04B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T05B = _mm_shuffle_epi8(T05B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T06B = _mm_shuffle_epi8(T06B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+        T07B = _mm_shuffle_epi8(T07B, _mm_load_si128((__m128i*)tab_dct_16x16_0[0]));
+
+        T10  = _mm_add_epi16(T00A, T00B);
+        T11  = _mm_add_epi16(T01A, T01B);
+        T12  = _mm_add_epi16(T02A, T02B);
+        T13  = _mm_add_epi16(T03A, T03B);
+        T14  = _mm_add_epi16(T04A, T04B);
+        T15  = _mm_add_epi16(T05A, T05B);
+        T16  = _mm_add_epi16(T06A, T06B);
+        T17  = _mm_add_epi16(T07A, T07B);
+
+        T20  = _mm_sub_epi16(T00A, T00B);
+        T21  = _mm_sub_epi16(T01A, T01B);
+        T22  = _mm_sub_epi16(T02A, T02B);
+        T23  = _mm_sub_epi16(T03A, T03B);
+        T24  = _mm_sub_epi16(T04A, T04B);
+        T25  = _mm_sub_epi16(T05A, T05B);
+        T26  = _mm_sub_epi16(T06A, T06B);
+        T27  = _mm_sub_epi16(T07A, T07B);
+
+        T30  = _mm_shuffle_epi8(T10, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T31  = _mm_shuffle_epi8(T11, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T32  = _mm_shuffle_epi8(T12, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T33  = _mm_shuffle_epi8(T13, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T34  = _mm_shuffle_epi8(T14, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T35  = _mm_shuffle_epi8(T15, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T36  = _mm_shuffle_epi8(T16, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+        T37  = _mm_shuffle_epi8(T17, _mm_load_si128((__m128i*)tab_dct_16x16_0[1]));
+
+        T40  = _mm_hadd_epi16(T30, T31);
+        T41  = _mm_hadd_epi16(T32, T33);
+        T42  = _mm_hadd_epi16(T34, T35);
+        T43  = _mm_hadd_epi16(T36, T37);
+        T44  = _mm_hsub_epi16(T30, T31);
+        T45  = _mm_hsub_epi16(T32, T33);
+        T46  = _mm_hsub_epi16(T34, T35);
+        T47  = _mm_hsub_epi16(T36, T37);
+
+        T50  = _mm_hadd_epi16(T40, T41);
+        T51  = _mm_hadd_epi16(T42, T43);
+        T52  = _mm_hsub_epi16(T40, T41);
+        T53  = _mm_hsub_epi16(T42, T43);
+
+        T60  = _mm_madd_epi16(T50, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 0]));
+        T61  = _mm_madd_epi16(T51, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 0]));
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[ 0*16+i], T70);
+
+        T60  = _mm_madd_epi16(T50, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 1]));
+        T61  = _mm_madd_epi16(T51, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 1]));
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[ 8*16+i], T70);
+
+        T60  = _mm_madd_epi16(T52, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 2]));
+        T61  = _mm_madd_epi16(T53, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 2]));
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[ 4*16+i], T70);
+
+        T60  = _mm_madd_epi16(T52, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 3]));
+        T61  = _mm_madd_epi16(T53, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 3]));
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[12*16+i], T70);
+
+        T60  = _mm_madd_epi16(T44, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 4]));
+        T61  = _mm_madd_epi16(T45, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 4]));
+        T62  = _mm_madd_epi16(T46, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 4]));
+        T63  = _mm_madd_epi16(T47, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 4]));
+        T60  = _mm_hadd_epi32(T60, T61);
+        T61  = _mm_hadd_epi32(T62, T63);
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[ 2*16+i], T70);
+
+        T60  = _mm_madd_epi16(T44, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 5]));
+        T61  = _mm_madd_epi16(T45, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 5]));
+        T62  = _mm_madd_epi16(T46, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 5]));
+        T63  = _mm_madd_epi16(T47, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 5]));
+        T60  = _mm_hadd_epi32(T60, T61);
+        T61  = _mm_hadd_epi32(T62, T63);
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[ 6*16+i], T70);
+
+        T60  = _mm_madd_epi16(T44, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 6]));
+        T61  = _mm_madd_epi16(T45, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 6]));
+        T62  = _mm_madd_epi16(T46, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 6]));
+        T63  = _mm_madd_epi16(T47, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 6]));
+        T60  = _mm_hadd_epi32(T60, T61);
+        T61  = _mm_hadd_epi32(T62, T63);
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[10*16+i], T70);
+
+        T60  = _mm_madd_epi16(T44, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 7]));
+        T61  = _mm_madd_epi16(T45, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 7]));
+        T62  = _mm_madd_epi16(T46, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 7]));
+        T63  = _mm_madd_epi16(T47, _mm_load_si128((__m128i*)tab_dct_16x16_1[ 7]));
+        T60  = _mm_hadd_epi32(T60, T61);
+        T61  = _mm_hadd_epi32(T62, T63);
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3);
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3);
+        T70  = _mm_packs_epi32(T60, T61);
+        _mm_store_si128((__m128i*)&tmp[14*16+i], T70);
+
+#define MAKE_ODD(tab, dst) \
+        T60  = _mm_madd_epi16(T20, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T61  = _mm_madd_epi16(T21, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T62  = _mm_madd_epi16(T22, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T63  = _mm_madd_epi16(T23, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T64  = _mm_madd_epi16(T24, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T65  = _mm_madd_epi16(T25, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T66  = _mm_madd_epi16(T26, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T67  = _mm_madd_epi16(T27, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)])); \
+        T60  = _mm_hadd_epi32(T60, T61); \
+        T61  = _mm_hadd_epi32(T62, T63); \
+        T62  = _mm_hadd_epi32(T64, T65); \
+        T63  = _mm_hadd_epi32(T66, T67); \
+        T60  = _mm_hadd_epi32(T60, T61); \
+        T61  = _mm_hadd_epi32(T62, T63); \
+        T60  = _mm_srai_epi32(_mm_add_epi32(T60, c_4), 3); \
+        T61  = _mm_srai_epi32(_mm_add_epi32(T61, c_4), 3); \
+        T70  = _mm_packs_epi32(T60, T61); \
+        _mm_store_si128((__m128i*)&tmp[(dst)*16+i], T70);
+
+        MAKE_ODD( 8, 1);
+        MAKE_ODD( 9, 3);
+        MAKE_ODD(10, 5);
+        MAKE_ODD(11, 7);
+        MAKE_ODD(12, 9);
+        MAKE_ODD(13,11);
+        MAKE_ODD(14,13);
+        MAKE_ODD(15,15);
+#undef MAKE_ODD
+    }
+
+    // DCT2
+    for( i=0; i<16; i+=4 )
+    {
+        T00A = _mm_load_si128((__m128i*)&tmp[(i+0)*16+0]);    // [07 06 05 04 03 02 01 00]
+        T00B = _mm_load_si128((__m128i*)&tmp[(i+0)*16+8]);    // [0F 0E 0D 0C 0B 0A 09 08]
+        T01A = _mm_load_si128((__m128i*)&tmp[(i+1)*16+0]);    // [17 16 15 14 13 12 11 10]
+        T01B = _mm_load_si128((__m128i*)&tmp[(i+1)*16+8]);    // [1F 1E 1D 1C 1B 1A 19 18]
+        T02A = _mm_load_si128((__m128i*)&tmp[(i+2)*16+0]);    // [27 26 25 24 23 22 21 20]
+        T02B = _mm_load_si128((__m128i*)&tmp[(i+2)*16+8]);    // [2F 2E 2D 2C 2B 2A 29 28]
+        T03A = _mm_load_si128((__m128i*)&tmp[(i+3)*16+0]);    // [37 36 35 34 33 32 31 30]
+        T03B = _mm_load_si128((__m128i*)&tmp[(i+3)*16+8]);    // [3F 3E 3D 3C 3B 3A 39 38]
+
+        T00A = _mm_shuffle_epi8(T00A, _mm_load_si128((__m128i*)tab_dct_16x16_0[2]));
+        T00B = _mm_shuffle_epi8(T00B, _mm_load_si128((__m128i*)tab_dct_16x16_0[3]));
+        T01A = _mm_shuffle_epi8(T01A, _mm_load_si128((__m128i*)tab_dct_16x16_0[2]));
+        T01B = _mm_shuffle_epi8(T01B, _mm_load_si128((__m128i*)tab_dct_16x16_0[3]));
+        T02A = _mm_shuffle_epi8(T02A, _mm_load_si128((__m128i*)tab_dct_16x16_0[2]));
+        T02B = _mm_shuffle_epi8(T02B, _mm_load_si128((__m128i*)tab_dct_16x16_0[3]));
+        T03A = _mm_shuffle_epi8(T03A, _mm_load_si128((__m128i*)tab_dct_16x16_0[2]));
+        T03B = _mm_shuffle_epi8(T03B, _mm_load_si128((__m128i*)tab_dct_16x16_0[3]));
+
+        T10  = _mm_unpacklo_epi16(T00A, T00B);
+        T11  = _mm_unpackhi_epi16(T00A, T00B);
+        T12  = _mm_unpacklo_epi16(T01A, T01B);
+        T13  = _mm_unpackhi_epi16(T01A, T01B);
+        T14  = _mm_unpacklo_epi16(T02A, T02B);
+        T15  = _mm_unpackhi_epi16(T02A, T02B);
+        T16  = _mm_unpacklo_epi16(T03A, T03B);
+        T17  = _mm_unpackhi_epi16(T03A, T03B);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[0]));
+
+        T30  = _mm_add_epi32(T20, T21);
+        T31  = _mm_add_epi32(T22, T23);
+        T32  = _mm_add_epi32(T24, T25);
+        T33  = _mm_add_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T41  = _mm_hsub_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T41  = _mm_srai_epi32(_mm_add_epi32(T41, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        T61  = _mm_packs_epi32(T41, T41);
+        _mm_storel_epi64((__m128i*)&pDst[ 0*nStride+i], T60);
+        _mm_storel_epi64((__m128i*)&pDst[ 8*nStride+i], T61);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[16]));
+
+        T30  = _mm_add_epi32(T20, T21);
+        T31  = _mm_add_epi32(T22, T23);
+        T32  = _mm_add_epi32(T24, T25);
+        T33  = _mm_add_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[ 4*nStride+i], T60);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[17]));
+
+        T30  = _mm_add_epi32(T20, T21);
+        T31  = _mm_add_epi32(T22, T23);
+        T32  = _mm_add_epi32(T24, T25);
+        T33  = _mm_add_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[12*nStride+i], T60);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[18]));
+
+        T30  = _mm_sub_epi32(T20, T21);
+        T31  = _mm_sub_epi32(T22, T23);
+        T32  = _mm_sub_epi32(T24, T25);
+        T33  = _mm_sub_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[ 2*nStride+i], T60);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[19]));
+
+        T30  = _mm_sub_epi32(T20, T21); 
+        T31  = _mm_sub_epi32(T22, T23);
+        T32  = _mm_sub_epi32(T24, T25);
+        T33  = _mm_sub_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[ 6*nStride+i], T60);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[20]));
+
+        T30  = _mm_sub_epi32(T20, T21); 
+        T31  = _mm_sub_epi32(T22, T23);
+        T32  = _mm_sub_epi32(T24, T25);
+        T33  = _mm_sub_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[10*nStride+i], T60);
+
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[21]));
+
+        T30  = _mm_sub_epi32(T20, T21); 
+        T31  = _mm_sub_epi32(T22, T23);
+        T32  = _mm_sub_epi32(T24, T25);
+        T33  = _mm_sub_epi32(T26, T27);
+
+        T30  = _mm_hadd_epi32(T30, T31);
+        T31  = _mm_hadd_epi32(T32, T33);
+
+        T40  = _mm_hadd_epi32(T30, T31);
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10);
+        T60  = _mm_packs_epi32(T40, T40);
+        _mm_storel_epi64((__m128i*)&pDst[14*nStride+i], T60);
+
+
+#define MAKE_ODD(tab, dst) \
+        T20  = _mm_madd_epi16(T10, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)  ])); /* [*O2_0 *O1_0 *O3_0 *O0_0] */ \
+        T21  = _mm_madd_epi16(T11, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)+1])); /* [*O5_0 *O6_0 *O4_0 *O7_0] */ \
+        T22  = _mm_madd_epi16(T12, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)  ])); \
+        T23  = _mm_madd_epi16(T13, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)+1])); \
+        T24  = _mm_madd_epi16(T14, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)  ])); \
+        T25  = _mm_madd_epi16(T15, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)+1])); \
+        T26  = _mm_madd_epi16(T16, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)  ])); \
+        T27  = _mm_madd_epi16(T17, _mm_load_si128((__m128i*)tab_dct_16x16_1[(tab)+1])); \
+        \
+        T30  = _mm_add_epi32(T20, T21); \
+        T31  = _mm_add_epi32(T22, T23); \
+        T32  = _mm_add_epi32(T24, T25); \
+        T33  = _mm_add_epi32(T26, T27); \
+        \
+        T30  = _mm_hadd_epi32(T30, T31); \
+        T31  = _mm_hadd_epi32(T32, T33); \
+        \
+        T40  = _mm_hadd_epi32(T30, T31); \
+        T40  = _mm_srai_epi32(_mm_add_epi32(T40, c_512), 10); \
+        T60  = _mm_packs_epi32(T40, T40); \
+        _mm_storel_epi64((__m128i*)&pDst[(dst)*nStride+i], T60);
+
+        MAKE_ODD(22,  1);
+        MAKE_ODD(24,  3);
+        MAKE_ODD(26,  5);
+        MAKE_ODD(28,  7);
+        MAKE_ODD(30,  9);
+        MAKE_ODD(32, 11);
+        MAKE_ODD(34, 13);
+        MAKE_ODD(36, 15);
+#undef MAKE_ODD
+    }
 }
 #endif // INSTRSET >= 4
 
@@ -5625,6 +6107,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.deQuant = xDeQuant;
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
+    p.dct[DCT_16x16] = xDCT16;
     p.dct[IDST_4x4] = xIDST4;
     p.dct[IDCT_4x4] = xIDCT4;
     p.dct[IDCT_8x8] = xIDCT8;

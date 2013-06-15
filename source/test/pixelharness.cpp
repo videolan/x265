@@ -268,33 +268,30 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p
     return true;
 }
 
-bool PixelHarness::check_getResidue(x265::getResidue_t ref, x265::getResidue_t opt)
-{     
+bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt)
+{
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
-    ALIGN_VAR_16(short, opt_dest[64 * 64]); 
-    memset(ref_dest,0,64*64*sizeof(short));
-    memset(opt_dest,0,64*64*sizeof(short));
+    ALIGN_VAR_16(short, opt_dest[64 * 64]);
+    memset(ref_dest, 0, 64 * 64 * sizeof(short));
+    memset(opt_dest, 0, 64 * 64 * sizeof(short));
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
-        int height = 4<<(i%4); // rand()%64 + 1;
-        int width = 4<<(i%4); //rand()%64 + 1;
         int stride = 64;
-        opt(pbuf1 + j, pbuf2+ j, opt_dest, height,width, stride);
-        ref(pbuf1 + j, pbuf2+ j, ref_dest, height,width, stride);
+        opt(pbuf1 + j, pbuf2 + j, opt_dest, stride);
+        ref(pbuf1 + j, pbuf2 + j, ref_dest, stride);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
         j += 100;
-        
     }
 
     return true;
 }
 
-bool PixelHarness::check_calcRecons(x265::calcRecons_t ref, x265::calcRecons_t opt)
-{     
+bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
+{
     ALIGN_VAR_16(short, ref_recq[64 * 64]);
     ALIGN_VAR_16(short, opt_recq[64 * 64]);
 
@@ -304,32 +301,28 @@ bool PixelHarness::check_calcRecons(x265::calcRecons_t ref, x265::calcRecons_t o
     ALIGN_VAR_16(pixel, ref_pred[64 * 64]);
     ALIGN_VAR_16(pixel, opt_pred[64 * 64]);
 
-    memset(ref_recq,0,64*64*sizeof(short));
-    memset(opt_recq,0,64*64*sizeof(short));
-    memset(ref_reco,0,64*64*sizeof(pixel));
-    memset(opt_reco,0,64*64*sizeof(pixel));
-    memset(ref_pred,0,64*64*sizeof(pixel));
-    memset(opt_pred,0,64*64*sizeof(pixel));
+    memset(ref_recq, 0, 64 * 64 * sizeof(short));
+    memset(opt_recq, 0, 64 * 64 * sizeof(short));
+    memset(ref_reco, 0, 64 * 64 * sizeof(pixel));
+    memset(opt_reco, 0, 64 * 64 * sizeof(pixel));
+    memset(ref_pred, 0, 64 * 64 * sizeof(pixel));
+    memset(opt_pred, 0, 64 * 64 * sizeof(pixel));
 
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
-        int height = 4<<(i%4); // rand()%64 + 1;
-        int width = 4<<(i%4); //rand()%64 + 1;
         int stride = 64;
-        opt(pbuf1 + j, sbuf1+ j, opt_reco, opt_recq, opt_pred, stride, stride, stride, height, width );
-        ref(pbuf1 + j, sbuf1+ j, ref_reco, ref_recq, ref_pred, stride, stride, stride, height, width );
+        opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
+        ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
 
         if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)) || memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)) || memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += 100;
-        
     }
 
     return true;
 }
-
 
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
@@ -471,23 +464,30 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.getResidue)
+    for (int i = 0; i <= 8; (i ? i <<= 1 : i++))
     {
-        if (!check_getResidue(ref.getResidue, opt.getResidue))
+        if (opt.calcresidual[i])
         {
-            printf("getResidue failed!\n");
-            return false;
+            if (!check_calresidual(ref.calcresidual[i], opt.calcresidual[i]))
+            {
+                printf("getResidue width:%d failed!\n", i ? i * 8 : 4);
+                return false;
+            }
         }
     }
 
-    if (opt.calcRecons)
+    for (int i = 0; i <= 8; (i ? i <<= 1 : i++))
     {
-        if (!check_calcRecons(ref.calcRecons, opt.calcRecons))
+        if (opt.calcrecon[i])
         {
-            printf("calcRecon failed!\n");
-            return false;
+            if (!check_calcrecon(ref.calcrecon[i], opt.calcrecon[i]))
+            {
+                printf("calcRecon width:%d failed!\n", i ? i * 8 : 4);
+                return false;
+            }
         }
     }
+
     return true;
 }
 
@@ -589,21 +589,21 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.cpyblock_s_c, ref.cpyblock_s_c, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
     }
 
-    if (opt.getResidue)
+    for (int i = 0; i <= 8; i ? i <<= 1 : i++)
     {
-        for(int i =4; i<=32; i<<=1)
+        if (opt.calcresidual[i])
         {
-            printf("getResidue%dx%d", i,i);
-            REPORT_SPEEDUP(opt.getResidue, ref.getResidue, pbuf1 , pbuf2, sbuf1, i, i, 64);
+            printf("getResidue%dx%d", (i ? i * 8 : 4), (i ? i * 8 : 4));
+            REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
         }
     }
 
-    if (opt.calcRecons)
+    for (int i = 0; i <= 8; i ? i <<= 1 : i++)
     {
-        for(int i =4; i<=32; i<<=1)
+        if (opt.calcrecon[i])
         {
-            printf("calcRecons%dx%d", i,i);
-            REPORT_SPEEDUP(opt.calcRecons, ref.calcRecons, pbuf1 , sbuf1, pbuf2, sbuf1, pbuf1, 64,64,64, i, i);
+            printf("calcRecons%dx%d", (i ? i * 8 : 4), (i ? i * 8 : 4));
+            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
         }
     }
 }

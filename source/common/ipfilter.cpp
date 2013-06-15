@@ -315,6 +315,14 @@ void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int src
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
 }
 
+void CDECL filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height)
+{
+    filterConvertPelToShort(bitDepth, src, srcStride, dstF, dstStride, block_width, block_height);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstB, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstC, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+}
+
 }
 
 #if _MSC_VER
@@ -340,5 +348,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
 
     p.filterVmulti = filterVertical_short_pel_multiplane;
+    p.filterHmulti = filterHorizontalMultiplane;
 }
 }

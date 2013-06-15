@@ -50,7 +50,7 @@ const DctConf_t DctConf_infos[] =
    { "Dst4x4\t",    4},
    { "Dct4x4\t",    4},
    { "Dct8x8\t",    8},
-   { "Dct16x16\t", 16},
+   { "Dct16x16",   16},
    { "Dct32x32\t", 32},
    {"IDst4x4\t",    4},
    {"IDct4x4\t",    4},

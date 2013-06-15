@@ -493,15 +493,16 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
     }
 }
 
-void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int height, int width, int stride)
+template <int blockSize>
+void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int stride)
 {
     pixel* pOrg   = piOrg;
     pixel* pPred  = piPred;
     short* pResi  = piResi;
 
-    for (int uiY = 0; uiY < height; uiY++)
+    for (int uiY = 0; uiY < blockSize; uiY++)
     {
-        for (int uiX = 0; uiX < width; uiX++)
+        for (int uiX = 0; uiX < blockSize; uiX++)
         {
             pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
         }
@@ -512,8 +513,8 @@ void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int height, i
     }
 }
 
-
-void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride, int uiHeight, int uiWidth)
+template <int blockSize>
+void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride)
 {
     pixel* pPred      = piPred;
     short* pResi      = piResi;
@@ -521,9 +522,9 @@ void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQ
     short* pRecQt     = piRecQt;
     pixel* pRecIPred  = piRecIPred;
 
-    for (int uiY = 0; uiY < uiHeight; uiY++)
+    for (int uiY = 0; uiY < blockSize; uiY++)
     {
-        for (int uiX = 0; uiX < uiWidth; uiX++)
+        for (int uiX = 0; uiX < blockSize; uiX++)
         {
             pReco[uiX] = (pixel) ClipY(static_cast<short>(pPred[uiX]) + pResi[uiX]);
             pRecQt[uiX] = (short)pReco[uiX];
@@ -864,7 +865,15 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d_32x32 = pixel_sa8d_32x32;
     p.sa8d_64x64 = pixel_sa8d_64x64;
 
-    p.getResidue = getResidual;
-    p.calcRecons = calcRecons;
+    p.calcresidual[BLOCK_4x4] = getResidual<4>;
+    p.calcresidual[BLOCK_8x8] = getResidual<8>;
+    p.calcresidual[BLOCK_16x16] = getResidual<16>;
+    p.calcresidual[BLOCK_32x32] = getResidual<32>;
+    p.calcresidual[BLOCK_64x64] = getResidual<64>;
+    p.calcrecon[BLOCK_4x4] = calcRecons<4>;
+    p.calcrecon[BLOCK_8x8] = calcRecons<8>;
+    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
+    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
+    p.calcrecon[BLOCK_64x64] = calcRecons<64>;
 }
 }

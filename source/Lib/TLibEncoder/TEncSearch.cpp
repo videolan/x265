@@ -949,17 +949,17 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
         // save prediction
         if (default0Save1Load2 == 1)
         {
-            primitives.cpyblock(uiWidth, uiHeight, m_pSharedPredTransformSkip[0], uiWidth, piPred, uiStride);
+            primitives.cpyblock((int)uiWidth, uiHeight, (pixel *)m_pSharedPredTransformSkip[0], uiWidth, (pixel *)piPred, uiStride);
         }
     }
     else
     {
-        primitives.cpyblock(uiWidth, uiHeight, piPred, uiStride, m_pSharedPredTransformSkip[0], uiWidth);
+        primitives.cpyblock((int)uiWidth, uiHeight, (pixel *)piPred, uiStride, (pixel *)m_pSharedPredTransformSkip[0], uiWidth);
     }
 
     //===== get residual signal =====
 
-    primitives.getResidue((pixel*)piOrg,(pixel*)piPred,piResi, uiHeight, uiWidth, uiStride);
+    primitives.calcresidual[(Int)g_aucConvertToBit[uiWidth]]((pixel*)piOrg, (pixel*)piPred, piResi, uiStride);
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
@@ -999,11 +999,11 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     //===== reconstruction =====  
 
-    primitives.calcRecons((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride, uiHeight, uiWidth);
+    primitives.calcrecon[(Int)g_aucConvertToBit[uiWidth]]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
 
     //===== update distortion =====
     int Part = PartitionFromSizes(uiWidth, uiHeight);
-    ruiDist += primitives.sse_pp[Part](piOrg, uiStride, piReco, uiStride);
+    ruiDist += primitives.sse_pp[Part]((pixel*)piOrg, (intptr_t)uiStride, (pixel*)piReco, uiStride);
 }
 
 Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
@@ -1079,7 +1079,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
             Pel*  pPred   = piPred;
             Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];            
             
-            primitives.cpyblock(uiWidth,uiHeight,pPredBuf,uiWidth, pPred, uiStride);
+            primitives.cpyblock((int)uiWidth,uiHeight,(pixel *)pPredBuf,uiWidth, (pixel *)pPred, uiStride);
         }
     }
     else
@@ -1088,11 +1088,11 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         Pel*  pPred   = piPred;
         Pel*  pPredBuf = m_pSharedPredTransformSkip[1 + uiChromaId];
         
-        primitives.cpyblock(uiWidth,uiHeight,pPred,uiStride,pPredBuf,uiWidth);
+        primitives.cpyblock((int)uiWidth,uiHeight,(pixel *)pPred,uiStride,(pixel *)pPredBuf,uiWidth);
     }
     //===== get residual signal =====    
 
-    primitives.getResidue((pixel*)piOrg,(pixel*)piPred,piResi, uiHeight, uiWidth, uiStride);
+    primitives.calcresidual[(Int)g_aucConvertToBit[uiWidth]]((pixel*)piOrg,(pixel*)piPred,piResi, uiStride);
 
     //===== transform and quantization =====
     {
@@ -1141,11 +1141,11 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
 
     //===== reconstruction =====
     
-    primitives.calcRecons((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride, uiHeight, uiWidth);
+    primitives.calcrecon[(Int)g_aucConvertToBit[uiWidth]]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
 
     //===== update distortion =====
     int Part = x265::PartitionFromSizes(uiWidth, uiHeight);
-    UInt Cost = primitives.sse_pp[Part](piOrg, uiStride, piReco, uiStride);
+    UInt Cost = primitives.sse_pp[Part]((pixel*)piOrg, (intptr_t)uiStride, (pixel*)piReco, uiStride);
     if (eText == TEXT_CHROMA_U)
     {
         ruiDist += m_pcRdCost->scaleChromaDistCb(Cost);
@@ -4005,9 +4005,9 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         pcYuvPred->copyToPartYuv(rpcYuvRec, 0);
 
-        uiDistortion = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)](pcYuvOrg->getLumaAddr(), pcYuvOrg->getStride(), rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
-        uiDistortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCbAddr(), pcYuvOrg->getCStride(), rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
-        uiDistortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCrAddr(), pcYuvOrg->getCStride(), rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
+        uiDistortion = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)]((pixel *)pcYuvOrg->getLumaAddr(), (intptr_t)pcYuvOrg->getStride(), (pixel *)rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
+        uiDistortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCbAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
+        uiDistortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCrAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
 
 #if !FAST_MODE_DECISION
         m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
@@ -4141,9 +4141,9 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     rpcYuvRec->addClip(pcYuvPred, rpcYuvResiBest, 0, uiWidth);
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    uiDistortionBest = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)](pcYuvOrg->getLumaAddr(), pcYuvOrg->getStride(), rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
-    uiDistortionBest += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCbAddr(), pcYuvOrg->getCStride(), rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
-    uiDistortionBest += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)](pcYuvOrg->getCrAddr(), pcYuvOrg->getCStride(), rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
+    uiDistortionBest = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)]((pixel *)pcYuvOrg->getLumaAddr(), (intptr_t)pcYuvOrg->getStride(), (pixel *)rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
+    uiDistortionBest += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCbAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
+    uiDistortionBest += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCrAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
     dCostBest = m_pcRdCost->calcRdCost(uiDistortionBest, uiBitsBest);
 
 #if !FAST_MODE_DECISION
@@ -4315,7 +4315,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         ::memset(m_pTempPel, 0, sizeof(Pel) * uiNumSamplesLuma); // not necessary needed for inside of recursion (only at the beginning)
 
         int Part = PartitionFromSizes(trWidth, trHeight);
-        UInt uiDistY = primitives.sse_sp[Part](pcResi->getLumaAddr(absTUPartIdx), pcResi->getStride(), m_pTempPel, trWidth);
+        UInt uiDistY = primitives.sse_sp[Part](pcResi->getLumaAddr(absTUPartIdx), (intptr_t)pcResi->getStride(), (pixel *)m_pTempPel, trWidth);
 
         if (puiZeroDist)
         {
@@ -4388,7 +4388,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         int PartC = x265::PartitionFromSizes(trWidthC, trHeightC);
         if (bCodeChroma)
         {
-            uiDistU = m_pcRdCost->scaleChromaDistCb(primitives.sse_sp[PartC](pcResi->getCbAddr(absTUPartIdxC), pcResi->getCStride(), m_pTempPel, trWidthC));
+            uiDistU = m_pcRdCost->scaleChromaDistCb(primitives.sse_sp[PartC](pcResi->getCbAddr(absTUPartIdxC), (intptr_t)pcResi->getCStride(), (pixel *)m_pTempPel, trWidthC));
 
             if (puiZeroDist)
             {
@@ -4455,7 +4455,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
                 }
             }
 
-            uiDistV = m_pcRdCost->scaleChromaDistCr(primitives.sse_sp[PartC](pcResi->getCrAddr(absTUPartIdxC), pcResi->getCStride(), m_pTempPel, trWidthC));
+            uiDistV = m_pcRdCost->scaleChromaDistCr(primitives.sse_sp[PartC](pcResi->getCrAddr(absTUPartIdxC), (intptr_t)pcResi->getCStride(), (pixel *)m_pTempPel, trWidthC));
             if (puiZeroDist)
             {
                 *puiZeroDist += uiDistV;
