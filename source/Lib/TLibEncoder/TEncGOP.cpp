@@ -219,6 +219,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     TComBitCounter*       pcBitCounter   = pcEncodeFrame->getBitCounter();
     TEncSampleAdaptiveOffset* pcSAO      = pcEncodeFrame->getSAO();
 
+    if (m_pcCfg->getUseRateCtrl())
+    {
+        m_pcRateCtrl->initRCGOP(iNumPicRcvd);
+    }
+
     // Exception for the first frame
     m_iGopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
     assert(iNumPicRcvd > 0 && m_iGopSize > 0);
@@ -1512,7 +1517,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         xResetNonNestedSEIPresentFlags();
         xResetNestedSEIPresentFlags();
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
-
         pcPic->setReconMark(true);
         iNumPicCoded++;
         m_totalCoded++;
@@ -1530,6 +1534,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
     if (accumBitsDU != NULL) delete accumBitsDU;
     if (accumNalsDU != NULL) delete accumNalsDU;
+
+    if (m_pcCfg->getUseRateCtrl())
+    {
+        m_pcRateCtrl->destroyRCGOP();
+    }
 
     assert(iNumPicCoded == iNumPicRcvd);
 }

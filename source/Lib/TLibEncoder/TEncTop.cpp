@@ -202,21 +202,10 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>
         m_framesToBeEncoded = m_iNumPicRcvd + m_uiNumAllPicCoded;
     }
 
-    if (m_RCEnableRateControl)
-    {
-        m_cRateCtrl.initRCGOP(m_iNumPicRcvd);
-    }
-
     // compress GOP
     m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, accessUnitsOut);
 
-    if (m_RCEnableRateControl)
-    {
-        m_cRateCtrl.destroyRCGOP();
-    }
-
     m_uiNumAllPicCoded += m_iNumPicRcvd;
-
     Int iNumEncoded = m_iNumPicRcvd;
     m_iNumPicRcvd = 0;
     return iNumEncoded;
