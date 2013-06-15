@@ -100,23 +100,24 @@ TEncGOP::TEncGOP()
     m_iLastIDR            = 0;
     m_iGopSize            = 0;
     m_bSeqFirst           = true;
-
+    m_totalCoded          = 0;
+    m_bRefreshPending     = 0;
+    m_pocCRA              = 0;
+    m_numLongTermRefPicSPS = 0;
+    m_cpbRemovalDelay     = 0;
+    m_lastBPSEI           = 0;
     m_pcCfg               = NULL;
     m_cFrameEncoders      = NULL;
 
-    m_bRefreshPending   = 0;
-    m_pocCRA            = 0;
-    m_numLongTermRefPicSPS = 0;
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
     ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
-    m_cpbRemovalDelay   = 0;
-    m_lastBPSEI         = 0;
     xResetNonNestedSEIPresentFlags();
     xResetNestedSEIPresentFlags();
 }
 
 TEncGOP::~TEncGOP()
-{}
+{
+}
 
 /** Create list to contain pointers to LCU start addresses of slice.
  */
@@ -138,8 +139,6 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_pcEncTop             = pcTEncTop;
     m_pcCfg                = pcTEncTop;
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
-    m_lastBPSEI            = 0;
-    m_totalCoded           = 0;
     m_cFrameEncoders = new x265::EncodeFrame(pcTEncTop->getThreadPool());
     m_cFrameEncoders->init(pcTEncTop);
 }
@@ -345,7 +344,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcPic->setCurrSliceIdx(0);
         pcSliceEncoder->setSliceIdx(0);
 
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, m_iGopSize == 0, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, m_iGopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
 
