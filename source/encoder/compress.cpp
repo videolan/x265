@@ -132,6 +132,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         /* Disable recursive analysis for whole CUs temporarily*/
         bSubBranch = false;
                 
+        /*Choose best mode; initialise rpcBestCU to 2Nx2N*/
         rpcBestCU = m_InterCU_2Nx2N[uiDepth];
         
         YuvTemp = m_ppcPredYuvMode[0][uiDepth];
@@ -185,6 +186,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             {
                 xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
         
+                /*Adding costs from best SUbCUs*/
                 rpcTempCU->getTotalCost() += pcSubBestPartCU->getTotalCost();
                 rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);                
@@ -222,6 +224,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
+        /*If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
+        Copy Recon data from Temp structure to Best structure*/
         if(rpcBestCU)
         {
             if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
@@ -241,16 +245,18 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
     }
 
-    rpcBestCU->copyToPic(uiDepth);                                                   // Copy Best data to Picture for next partition prediction.
-    xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   // Copy Yuv data to picture Yuv
+    /* Copy Best data to Picture for next partition prediction.*/
+    rpcBestCU->copyToPic(uiDepth);                                                   
+    /* Copy Yuv data to picture Yuv*/
+    xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);   
     
     if (bBoundary || (bSliceEnd && bInsidePicture))
     {
         return;
     }
 
-    // Assert if Best prediction mode is NONE
-    // Selected mode's RD-cost must be not MAX_DOUBLE.
+    /* Assert if Best prediction mode is NONE
+     Selected mode's RD-cost must be not MAX_DOUBLE.*/
     assert(rpcBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(rpcBestCU->getPredictionMode(0) != MODE_NONE);
     assert(rpcBestCU->getTotalCost() != MAX_DOUBLE);    
