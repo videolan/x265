@@ -84,7 +84,6 @@ private:
     //  Access channel
     TEncTop*                m_pcEncTop;
     TEncCfg*                m_pcCfg;
-    TComList<TComPic*>*     m_pcListPic;
     TEncRateCtrl*           m_pcRateCtrl;
 
     SEIWriter               m_seiWriter;

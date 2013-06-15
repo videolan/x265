@@ -102,7 +102,6 @@ TEncGOP::TEncGOP()
     m_bSeqFirst           = true;
 
     m_pcCfg               = NULL;
-    m_pcListPic           = NULL;
     m_cFrameEncoders      = NULL;
 
     m_bRefreshPending   = 0;
@@ -138,7 +137,6 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
 {
     m_pcEncTop             = pcTEncTop;
     m_pcCfg                = pcTEncTop;
-    m_pcListPic            = pcTEncTop->getListPic();
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
     m_lastBPSEI            = 0;
     m_totalCoded           = 0;
