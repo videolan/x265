@@ -54,10 +54,10 @@ Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt 
 Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& pcCU, UInt uiDepth, UInt PartitionIndex)
 {
     m_abortFlag = false;
-    TComPic* pcPic = rpcBestCU->getPic();
+    TComPic* pcPic = rpcTempCU->getPic();
     
     // get Original YUV data from picture
-    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    m_ppcOrigYuv[uiDepth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -71,17 +71,17 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     Bool bTrySplitDQP  = true;
 
     Bool bBoundary = false;
-    UInt uiLPelX   = rpcBestCU->getCUPelX();
-    UInt uiRPelX   = uiLPelX + rpcBestCU->getWidth(0)  - 1;
-    UInt uiTPelY   = rpcBestCU->getCUPelY();
-    UInt uiBPelY   = uiTPelY + rpcBestCU->getHeight(0) - 1;
+    UInt uiLPelX   = rpcTempCU->getCUPelX();
+    UInt uiRPelX   = uiLPelX + rpcTempCU->getWidth(0)  - 1;
+    UInt uiTPelY   = rpcTempCU->getCUPelY();
+    UInt uiBPelY   = uiTPelY + rpcTempCU->getHeight(0) - 1;
 
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(rpcTempCU->getPic()->getCurrSliceIdx());
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
-    Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
+    Bool bInsidePicture = (uiRPelX < rpcTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
     TComYuv* YuvTemp;
     if (!bSliceEnd && bInsidePicture)
@@ -126,11 +126,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         // Early CU determination
-        if (rpcBestCU->isSkipped(0))
-        {
-            bSubBranch = false;
-        }
-        else
         {
             bSubBranch = false;
         }
