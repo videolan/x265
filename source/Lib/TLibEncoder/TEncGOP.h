@@ -124,8 +124,6 @@ public:
 
     Int   getGOPSize()          { return m_iGopSize;  }
 
-    TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
-
     Void  printOutSummary(UInt uiNumAllPicCoded);
 
     NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
