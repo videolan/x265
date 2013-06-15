@@ -182,7 +182,7 @@ Void TEncCu::destroy()
 
     for (i = 0; i < m_uhTotalDepth - 1; i++)
     {
-        /*if (m_InterCU_2Nx2N[i])
+        if (m_InterCU_2Nx2N[i])
         {
             m_InterCU_2Nx2N[i]->destroy();
             delete m_InterCU_2Nx2N[i];
@@ -224,7 +224,7 @@ Void TEncCu::destroy()
             m_ppcTempCU[i]->destroy();
             delete m_ppcTempCU[i];
             m_ppcTempCU[i] = NULL;
-        }*/
+        }
         if (m_ppcPredYuvBest[i])
         {
             m_ppcPredYuvBest[i]->destroy();
@@ -502,12 +502,14 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else    
+    {
 #if FAST_MODE_DECISION
-        xCompressInterCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
+        TComDataCU* rpcBestCU = NULL;
+        xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
 #else
         xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
 #endif
-    
+    }
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
         if (pcCu->getSlice()->getSliceType() != I_SLICE) //IIII

@@ -166,13 +166,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
         UChar       uhNextDepth         = uiDepth + 1;
-        TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
+        TComDataCU* pcSubBestPartCU     = NULL;//m_ppcBestCU[uhNextDepth];
         TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
         UInt uiPartUnitIdx = 0;
         rpcTempCU->getTotalCost() = 0;
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
+            //pcSubBestPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
 
             Bool bInSlice = pcSubTempPartCU->getSCUAddr() < pcSlice->getSliceCurEndCUAddr();
@@ -222,10 +222,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         {
             if(rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
             {
-                TComDataCU* temp = rpcBestCU;
                 rpcBestCU = rpcTempCU;
-                rpcTempCU = temp;
-            
+                            
                 YuvTemp = m_ppcRecoYuvTemp[uiDepth];
                 m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
                 m_ppcRecoYuvBest[uiDepth] = YuvTemp;
@@ -233,6 +231,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }else
         {
             rpcBestCU = rpcTempCU;
+            YuvTemp = m_ppcRecoYuvTemp[uiDepth];
+            m_ppcRecoYuvTemp[uiDepth] = m_ppcRecoYuvBest[uiDepth];
+            m_ppcRecoYuvBest[uiDepth] = YuvTemp;
         }
     }
 
