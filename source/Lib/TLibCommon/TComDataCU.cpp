@@ -863,8 +863,9 @@ Void TComDataCU::copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefP
 Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth)
 {
     assert(uiPartUnitIdx < 4);
-
+#if !FAST_MODE_DECISION
     m_dTotalCost         += pcCU->getTotalCost();
+#endif
     m_uiTotalDistortion  += pcCU->getTotalDistortion();
     m_uiTotalBits        += pcCU->getTotalBits();
 
