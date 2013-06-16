@@ -623,37 +623,11 @@ void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
 */
 void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, UInt uiMode)
 {
-    Int shift_1st = g_aucConvertToBit[iWidth]  + 1 + bitDepth - 8; // log2(iWidth) - 1 + g_bitDepth - 8
-    Int shift_2nd = g_aucConvertToBit[iHeight]  + 8;                 // log2(iHeight) + 6
-
     // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
     assert(bitDepth == 8);
 
-    if (iWidth == 4 && iHeight == 4)
-    {
-        if (uiMode != REG_DCT)
-        {
-            //fastForwardDst(block, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
-            //fastForwardDst(tmp, coeff, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
-            x265::primitives.dct[x265::DST_4x4](block, coeff, iWidth);
-        }
-        else
-        {
-            x265::primitives.dct[x265::DCT_4x4](block, coeff, iWidth);
-        }
-    }
-    else if (iWidth == 8 && iHeight == 8)
-    {
-        x265::primitives.dct[x265::DCT_8x8](block, coeff, iWidth);
-    }
-    else if (iWidth == 16 && iHeight == 16)
-    {
-        x265::primitives.dct[x265::DCT_16x16](block, coeff, iWidth);
-    }
-    else if (iWidth == 32 && iHeight == 32)
-    {
-        x265::primitives.dct[x265::DCT_32x32](block, coeff, iWidth);
-    }
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](block, coeff, iWidth);
 }
 
 // To minimize the distortion only. No rate is considered.
