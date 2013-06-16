@@ -1168,9 +1168,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     pcSAO->endSaoEnc();
                     pcSAO->PCMLFDisableProcess(pcPic);
                 }
-#if SAO_RDO
-                pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
-#endif
                 processingState = ENCODE_SLICE;
 
                 for (Int s = 0; s < uiNumSlices; s++)
