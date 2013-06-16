@@ -142,6 +142,8 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
     case Level::LEVEL6_2:
         if (bitrate > 240000) m_levelTier = Level::HIGH;
         break;
+    default:
+        break;
     }
 
     if (param->internalBitDepth == 10)
