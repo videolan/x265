@@ -1085,9 +1085,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             // Construct the final bitstream by flushing and concatenating substreams.
             // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
             UInt* puiSubstreamSizes = pcSlice->getSubstreamSizes();
-            UInt uiTotalCodedSize = 0; // for padding calcs.
-            UInt uiNumSubstreamsPerTile = iNumSubstreams;
-
             for (UInt ui = 0; ui < iNumSubstreams; ui++)
             {
                 // Flush all substreams -- this includes empty ones.
@@ -1098,14 +1095,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 pcEntropyCoder->encodeSliceFinish();
 
                 pcSubstreamsOut[ui].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
-                // Byte alignment is necessary between tiles when tiles are independent.
-                uiTotalCodedSize += pcSubstreamsOut[ui].getNumberOfWrittenBits();
 
-                Bool bNextSubstreamInNewTile = ((ui + 1) < iNumSubstreams) && ((ui + 1) % uiNumSubstreamsPerTile == 0);
-                if (bNextSubstreamInNewTile)
-                {
-                    pcSlice->setTileLocation(ui / uiNumSubstreamsPerTile, pcSlice->getTileOffstForMultES() + (uiTotalCodedSize >> 3));
-                }
+                // Byte alignment is necessary between tiles when tiles are independent.
                 if (ui + 1 < iNumSubstreams)
                 {
                     puiSubstreamSizes[ui] = pcSubstreamsOut[ui].getNumberOfWrittenBits() + (pcSubstreamsOut[ui].countStartCodeEmulations() << 3);
