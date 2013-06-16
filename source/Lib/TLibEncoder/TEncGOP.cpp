@@ -679,32 +679,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         // Allocate some coders, now we know how many tiles there are.
         pcSubstreamsOut = new TComOutputBitstream[iNumSubstreams];
 
-        UInt startCUAddrSliceIdx = 0; // used to index "m_uiStoredStartCUAddrForEncodingSlice" containing locations of slice boundaries
-        UInt startCUAddrSlice    = 0; // used to keep track of current slice's starting CU addr.
         m_storedStartCUAddrForEncodingSlice.clear();
-
-        UInt nextCUAddr = 0;
-        m_storedStartCUAddrForEncodingSlice.push_back(nextCUAddr);
-        startCUAddrSliceIdx++;
-
-        // CHECK_ME: we are only once because there have only one slice
-        //while (nextCUAddr < uiRealEndAddress) // determine slice boundaries
-        {
-            pcSlice->setNextSlice(false);
-            assert(pcPic->getNumAllocatedSlice() == startCUAddrSliceIdx);
-
-            pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
-
-            Bool bNoBinBitConstraintViolated = (!pcSlice->isNextSlice());
-
-            startCUAddrSlice = pcSlice->getSliceCurEndCUAddr();
-            assert(startCUAddrSlice >= uiRealEndAddress);
-
-            nextCUAddr = startCUAddrSlice;
-        }
-
+        m_storedStartCUAddrForEncodingSlice.push_back(0);
+        pcSlice->setNextSlice(false);
+        pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
         m_storedStartCUAddrForEncodingSlice.push_back(pcSlice->getSliceCurEndCUAddr());
-        startCUAddrSliceIdx++;
 
         pcSlice = pcPic->getSlice(0);
 
@@ -842,22 +821,22 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                 if (pictureTimingSEI.m_numNalusInDuMinus1 == NULL)
                 {
-                    pictureTimingSEI.m_numNalusInDuMinus1       = new UInt[numDU];
+                    pictureTimingSEI.m_numNalusInDuMinus1 = new UInt[numDU];
                 }
-                if (pictureTimingSEI.m_duCpbRemovalDelayMinus1  == NULL)
+                if (pictureTimingSEI.m_duCpbRemovalDelayMinus1 == NULL)
                 {
                     pictureTimingSEI.m_duCpbRemovalDelayMinus1  = new UInt[numDU];
                 }
                 if (accumBitsDU == NULL)
                 {
-                    accumBitsDU                                  = new UInt[numDU];
+                    accumBitsDU = new UInt[numDU];
                 }
                 if (accumNalsDU == NULL)
                 {
-                    accumNalsDU                                  = new UInt[numDU];
+                    accumNalsDU = new UInt[numDU];
                 }
             }
-            pictureTimingSEI.m_auCpbRemovalDelay = std::max<Int>(1, m_totalCoded - m_lastBPSEI); // Syntax element signalled as minus, hence the .
+            pictureTimingSEI.m_auCpbRemovalDelay = std::max<Int>(1, m_totalCoded - m_lastBPSEI); // Syntax element signaled as minus, hence the .
             pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(0) + pcSlice->getPOC() - m_totalCoded;
             Int factor = pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2;
             pictureTimingSEI.m_picDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
@@ -894,7 +873,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             sei_buffering_period.m_initialAltCpbRemovalDelay[0][1]  = uiInitialCpbRemovalDelay;
             sei_buffering_period.m_initialAltCpbRemovalDelayOffset[0][1]  = uiInitialCpbRemovalDelay;
 
-            sei_buffering_period.m_rapCpbParamsPresentFlag              = 0;
+            sei_buffering_period.m_rapCpbParamsPresentFlag = 0;
             //for the concatenation, it can be set to one during splicing.
             sei_buffering_period.m_concatenationFlag = 0;
             //since the temporal layer HRD is not ready, we assumed it is fixed
@@ -973,17 +952,13 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             accessUnit.push_back(new NALUnitEBSP(nalu));
         }
 
-        /* use the main bitstream buffer for storing the marshalled picture */
+        /* use the main bitstream buffer for storing the marshaled picture */
         pcEntropyCoder->setBitstream(NULL);
 
-        startCUAddrSliceIdx = 0;
-        startCUAddrSlice    = 0;
-
-        nextCUAddr                 = 0;
-        pcSlice = pcPic->getSlice(startCUAddrSliceIdx);
-
+        pcSlice = pcPic->getSlice(0);
         Int processingState = (pcSlice->getSPS()->getUseSAO()) ? (EXECUTE_INLOOPFILTER) : (ENCODE_SLICE);
         Bool skippedSlice = false;
+        UInt nextCUAddr = 0;
         while (nextCUAddr < uiRealEndAddress) // Iterate over all slices
         {
             switch (processingState)
@@ -991,22 +966,12 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             case ENCODE_SLICE:
             {
                 pcSlice->setNextSlice(false);
-                {
-                    pcSlice = pcPic->getSlice(startCUAddrSliceIdx);
-                    if (startCUAddrSliceIdx > 0 && pcSlice->getSliceType() != I_SLICE)
-                    {
-                        pcSlice->checkColRefIdx(startCUAddrSliceIdx, pcPic);
-                    }
-                    pcPic->setCurrSliceIdx(startCUAddrSliceIdx);
-                    pcSliceEncoder->setSliceIdx(startCUAddrSliceIdx);
-                    assert(startCUAddrSliceIdx == pcSlice->getSliceIdx());
-                    // Reconstruction slice
-                    pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx + 1]);
-
-                    pcSlice->setNextSlice(true);
-
-                    startCUAddrSliceIdx++;
-                }
+                pcSlice = pcPic->getSlice(0);
+                pcPic->setCurrSliceIdx(0);
+                pcSliceEncoder->setSliceIdx(0);
+                // Reconstruction slice
+                pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[1]);
+                pcSlice->setNextSlice(true);
 
                 pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
                 pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
@@ -1153,12 +1118,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     }
                 }
 
-                UInt boundingAddrSlice;
-                boundingAddrSlice        = m_storedStartCUAddrForEncodingSlice[startCUAddrSliceIdx];
-                nextCUAddr               = boundingAddrSlice;
+                nextCUAddr = m_storedStartCUAddrForEncodingSlice[1];
                 // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
                 // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
-                Bool bNALUAlignedWrittenToList    = false; // used to ensure current NALU is not written more than once to the NALU list.
+                Bool bNALUAlignedWrittenToList = false; // used to ensure current NALU is not written more than once to the NALU list.
                 xAttachSliceDataToNalUnit(pcEntropyCoder, nalu, pcBitstreamRedirect);
                 accessUnit.push_back(new NALUnitEBSP(nalu));
                 actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
