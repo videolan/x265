@@ -45,13 +45,6 @@ namespace {
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
-#if defined(_MSC_VER) && _MSC_VER == 1500 && X86_64
-#define VC9_X64 1
-#if INSTRSET > 4
-#pragma message ("VC9 x64 detected, avoiding SSE4 butterfly intrinsics")
-#endif
-#endif
-
 void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
