@@ -42,6 +42,7 @@
 #include "primitives.h"
 
 #include <limits.h>
+#include <math.h> // sqrt
 
 //! \ingroup TLibEncoder
 //! \{
