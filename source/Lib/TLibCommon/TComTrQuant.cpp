@@ -1082,19 +1082,13 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, block[32 * 32]);
     ALIGN_VAR_32(Short, coeff[32 * 32]);
-    Int j;
-    for (j = 0; j < iHeight; j++)
-    {
-        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short));
-    }
 
     // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
     assert(bitDepth == 8);
 
     const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](block, coeff, iWidth);
+    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](piBlkResi, coeff, uiStride);
 
     assert(iWidth == iHeight);
     assert(((iWidth * iHeight) % 8) == 0);
