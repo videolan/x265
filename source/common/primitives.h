@@ -129,20 +129,7 @@ enum FilterConf
     NUM_FILTER
 };
 
-enum Butterflies
-{
-    BUTTERFLY_4,
-    BUTTERFLY_INVERSE_4,
-    BUTTERFLY_8,
-    BUTTERFLY_INVERSE_8,
-    BUTTERFLY_16,
-    BUTTERFLY_INVERSE_16,
-    BUTTERFLY_32,
-    BUTTERFLY_INVERSE_32,
-    NUM_BUTTERFLIES
-};
-
-// NOTE: All of DCT functions don't support Dest Stride
+// NOTE: Not all DCT functions support Dest Stride
 enum Dcts
 {
     DST_4x4,
@@ -190,9 +177,7 @@ typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref
 typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
-typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
 typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
 typedef void (CDECL * IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
@@ -235,8 +220,6 @@ struct EncoderPrimitives
     pixelcmp sa8d_32x32;
     pixelcmp sa8d_64x64;
     IPFilter filter[NUM_FILTER];
-    mbdst inversedst;
-    butterfly partial_butterfly[NUM_BUTTERFLIES];
     IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
     IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];
     IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];

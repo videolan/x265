@@ -623,16 +623,7 @@ namespace x265 {
 
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
-    p.inversedst = inversedst;
-
-    p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
-    p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
-    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
-    p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
-    p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
-    p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
-    p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
-    p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+    p.deQuant = xDeQuant;
     p.dct[DST_4x4] = xDST4_C;
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
@@ -643,7 +634,5 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dct[IDCT_8x8] = xIDCT8_C;
     p.dct[IDCT_16x16] = xIDCT16_C;
     p.dct[IDCT_32x32] = xIDCT32_C;
-
-    p.deQuant = xDeQuant;
 }
 }
