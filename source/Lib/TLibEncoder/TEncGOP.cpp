@@ -1451,38 +1451,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     assert(iNumPicCoded == iNumPicRcvd);
 }
 
-Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded)
-{
-    if (m_pcCfg->getLogLevel() < X265_LOG_INFO)
-        return;
-
-    assert(uiNumAllPicCoded == m_gcAnalyzeAll.getNumPic());
-
-    //--CFG_KDY
-    m_gcAnalyzeAll.setFrmRate(m_pcCfg->getFrameRate());
-    m_gcAnalyzeI.setFrmRate(m_pcCfg->getFrameRate());
-    m_gcAnalyzeP.setFrmRate(m_pcCfg->getFrameRate());
-    m_gcAnalyzeB.setFrmRate(m_pcCfg->getFrameRate());
-
-    m_gcAnalyzeI.printOut('i');
-    m_gcAnalyzeP.printOut('p');
-    m_gcAnalyzeB.printOut('b');
-    m_gcAnalyzeAll.printOut('a');
-
-#if _SUMMARY_OUT_
-    m_gcAnalyzeAll.printSummaryOut();
-#endif
-#if _SUMMARY_PIC_
-    m_gcAnalyzeI.printSummary('I');
-    m_gcAnalyzeP.printSummary('P');
-    m_gcAnalyzeB.printSummary('B');
-#endif
-
-    Double rvm = xCalculateRVM();
-    if (rvm != 0.0)
-        fprintf(stderr, "\nRVM: %.3lf\n", rvm);
-}
-
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
@@ -1629,24 +1597,26 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
             numRBSPBytes += numRBSPBytes_nal;
         }
     }
-
     UInt uibits = numRBSPBytes * 8;
-    m_vRVM_RP.push_back(uibits);
+
+    /* Acquire encoder global lock to accumulate statistics and print debug info to console */
+    x265::ScopedLock(m_pcEncTop->m_statLock);
+    m_pcEncTop->m_vRVM_RP.push_back(uibits);
 
     //===== add PSNR =====
-    m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
+    m_pcEncTop->m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     TComSlice*  pcSlice = pcPic->getSlice(0);
     if (pcSlice->isIntra())
     {
-        m_gcAnalyzeI.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
+        m_pcEncTop->m_gcAnalyzeI.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
     if (pcSlice->isInterP())
     {
-        m_gcAnalyzeP.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
+        m_pcEncTop->m_gcAnalyzeP.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
     if (pcSlice->isInterB())
     {
-        m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
+        m_pcEncTop->m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
 
     if (m_pcCfg->getLogLevel() < X265_LOG_DEBUG)
@@ -1724,55 +1694,6 @@ NalUnitType TEncGOP::getNalUnitType(Int pocCurr, Int lastIDR)
         }
     }
     return NAL_UNIT_CODED_SLICE_TRAIL_R;
-}
-
-Double TEncGOP::xCalculateRVM()
-{
-    Double dRVM = 0;
-
-    if (m_pcCfg->getGOPSize() == 1 && m_pcCfg->getIntraPeriod() != 1 && m_pcCfg->getFramesToBeEncoded() > RVM_VCEGAM10_M * 2)
-    {
-        // calculate RVM only for lowdelay configurations
-        std::vector<Double> vRL, vB;
-        size_t N = m_vRVM_RP.size();
-        vRL.resize(N);
-        vB.resize(N);
-
-        Int i;
-        Double dRavg = 0, dBavg = 0;
-        vB[RVM_VCEGAM10_M] = 0;
-        for (i = RVM_VCEGAM10_M + 1; i < N - RVM_VCEGAM10_M + 1; i++)
-        {
-            vRL[i] = 0;
-            for (Int j = i - RVM_VCEGAM10_M; j <= i + RVM_VCEGAM10_M - 1; j++)
-            {
-                vRL[i] += m_vRVM_RP[j];
-            }
-
-            vRL[i] /= (2 * RVM_VCEGAM10_M);
-            vB[i] = vB[i - 1] + m_vRVM_RP[i] - vRL[i];
-            dRavg += m_vRVM_RP[i];
-            dBavg += vB[i];
-        }
-
-        dRavg /= (N - 2 * RVM_VCEGAM10_M);
-        dBavg /= (N - 2 * RVM_VCEGAM10_M);
-
-        Double dSigamB = 0;
-        for (i = RVM_VCEGAM10_M + 1; i < N - RVM_VCEGAM10_M + 1; i++)
-        {
-            Double tmp = vB[i] - dBavg;
-            dSigamB += tmp * tmp;
-        }
-
-        dSigamB = sqrt(dSigamB / (N - 2 * RVM_VCEGAM10_M));
-
-        Double f = sqrt(12.0 * (RVM_VCEGAM10_M - 1) / (RVM_VCEGAM10_M + 1));
-
-        dRVM = dSigamB / dRavg * f;
-    }
-
-    return dRVM;
 }
 
 /** Attaches the input bitstream to the stream in the output NAL unit

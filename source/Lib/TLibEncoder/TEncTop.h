@@ -55,6 +55,8 @@
 #include "TEncSampleAdaptiveOffset.h"
 #include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
+#include "TEncAnalyze.h"
+#include "threading.h"
 #include "threadpool.h"
 
 //! \ingroup TLibEncoder
@@ -102,6 +104,7 @@ protected:
     Void  xInitSPS();                                     ///< initialize SPS from encoder options
     Void  xInitPPS();                                     ///< initialize PPS from encoder options
     Void  xInitRPS();                                     ///< initialize RPS from encoder options
+    Double xCalculateRVM();
 
 public:
 
@@ -136,6 +139,14 @@ public:
 
     TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
 
+    /* Collect statistics globally */
+    x265::Lock  m_statLock;
+    TEncAnalyze m_gcAnalyzeAll;
+    TEncAnalyze m_gcAnalyzeI;
+    TEncAnalyze m_gcAnalyzeP;
+    TEncAnalyze m_gcAnalyzeB;
+    std::vector<Int> m_vRVM_RP;
+
     // -------------------------------------------------------------------------------------------------------------------
     // encoder function
     // -------------------------------------------------------------------------------------------------------------------
@@ -143,7 +154,7 @@ public:
     /// encode several number of pictures until end-of-sequence
     int encode(Bool bEos, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut);
 
-    void printSummary() { m_cGOPEncoder.printOutSummary(m_uiNumAllPicCoded); }
+    void printSummary();
 };
 
 //! \}

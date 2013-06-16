@@ -94,7 +94,6 @@ private:
     Int                     m_pocCRA;
     std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
 
-    std::vector<Int>        m_vRVM_RP;
     UInt                    m_lastBPSEI;
     UInt                    m_totalCoded;
     UInt                    m_cpbRemovalDelay;
