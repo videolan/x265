@@ -1109,16 +1109,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcEntropyCoder->encodeTilesWPPEntryPoint(pcSlice);
 
             // Substreams...
-            TComOutputBitstream *pcOut = pcBitstreamRedirect;
-            Int nss = iNumSubstreams;
-            if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+            Int nss = pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag() ? pcSlice->getNumEntryPointOffsets() + 1 : iNumSubstreams;
+            for (Int i = 0; i < nss; i++)
             {
-                // 1st line present for WPP.
-                nss  = pcSlice->getNumEntryPointOffsets() + 1;
-            }
-            for (UInt ui = 0; ui < nss; ui++)
-            {
-                pcOut->addSubstream(&pcSubstreamsOut[ui]);
+                pcBitstreamRedirect->addSubstream(&pcSubstreamsOut[i]);
             }
         }
 
