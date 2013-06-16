@@ -481,6 +481,16 @@ void CDECL xDCT16_C(short *pSrc, short *pDst, intptr_t)
     partialButterfly16(tmp, pDst, shift_2nd, 16);
 }
 
+void CDECL xDCT32_C(short *pSrc, short *pDst, intptr_t)
+{
+    const int shift_1st = 4;
+    const int shift_2nd = 11;
+    ALIGN_VAR_32(Short, tmp[32 * 32]);
+
+    partialButterfly32(pSrc, tmp, shift_1st, 32);
+    partialButterfly32(tmp, pDst, shift_2nd, 32);
+}
+
 void CDECL xIDCT8_C(short *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
@@ -607,6 +617,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
     p.dct[DCT_16x16] = xDCT16_C;
+    p.dct[DCT_32x32] = xDCT32_C;
     p.dct[IDST_4x4] = xIDST4_C;
     p.dct[IDCT_4x4] = xIDCT4_C;
     p.dct[IDCT_8x8] = xIDCT8_C;
