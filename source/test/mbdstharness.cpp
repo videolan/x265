@@ -29,18 +29,6 @@
 
 using namespace x265;
 
-const char *ButterflyConf_names[] =
-{
-    "4\t",
-    "Inverse4",
-    "8\t",
-    "Inverse8",
-    "16\t",
-    "Inverse16",
-    "32\t",
-    "Inverse32"
-};
-
 struct DctConf_t {
     const char *name;
     int width;
