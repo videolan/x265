@@ -956,237 +956,209 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcEntropyCoder->setBitstream(NULL);
 
         pcSlice = pcPic->getSlice(0);
-        Int processingState = (pcSlice->getSPS()->getUseSAO()) ? (EXECUTE_INLOOPFILTER) : (ENCODE_SLICE);
-        Bool skippedSlice = false;
-        UInt nextCUAddr = 0;
-        while (nextCUAddr < uiRealEndAddress) // Iterate over all slices
+        if (pcSlice->getSPS()->getUseSAO())
         {
-            switch (processingState)
+            // set entropy coder for RD
+            pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
+            if (pcSlice->getSPS()->getUseSAO())
             {
-            case ENCODE_SLICE:
-            {
-                pcSlice->setNextSlice(false);
-                pcSlice = pcPic->getSlice(0);
-                pcPic->setCurrSliceIdx(0);
-                pcSliceEncoder->setSliceIdx(0);
-                // Reconstruction slice
-                pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[1]);
-                pcSlice->setNextSlice(true);
-
-                pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
-                pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
-                pcSliceEncoder->xDetermineStartAndBoundingCUAddr(pcPic, true);
-
-                uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
-                uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
-                uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-                uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
-                uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
-                uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
-                while (uiPosX >= uiWidth || uiPosY >= uiHeight)
-                {
-                    uiInternalAddress--;
-                    uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-                    uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
-                }
-
-                uiInternalAddress++;
-                if (uiInternalAddress == pcPic->getNumPartInCU())
-                {
-                    uiInternalAddress = 0;
-                    uiExternalAddress = (uiExternalAddress + 1);
-                }
-                UInt endAddress = (uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
-                if (skippedSlice)
-                {
-                    pcSlice->setNextSlice(true);
-                }
-                skippedSlice = false;
-                pcSlice->allocSubstreamSizes(iNumSubstreams);
-                for (UInt ui = 0; ui < iNumSubstreams; ui++)
-                {
-                    pcSubstreamsOut[ui].clear();
-                }
-
-                pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
                 pcEntropyCoder->resetEntropy();
-                /* start slice NALunit */
-                OutputNALUnit nalu(pcSlice->getNalUnitType(), pcSlice->getTLayer());
-                Bool sliceSegment = (!pcSlice->isNextSlice());
-                if (!sliceSegment)
-                {
-                    uiOneBitstreamPerSliceLength = 0; // start of a new slice
-                }
-                pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-                tmpBitsBeforeWriting = pcEntropyCoder->getNumberOfWrittenBits();
-                pcEntropyCoder->encodeSliceHeader(pcSlice);
-                actualHeadBits += (pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting);
+                pcEntropyCoder->setBitstream(pcBitCounter);
 
-                // is it needed?
-                {
-                    if (!sliceSegment)
-                    {
-                        pcBitstreamRedirect->writeAlignOne();
-                    }
-                    else
-                    {
-                        // We've not completed our slice header info yet, do the alignment later.
-                    }
-                    pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
-                    pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
-                    pcEntropyCoder->resetEntropy();
-                    pcEncodeFrame->resetEntropy(pcSlice);
-                }
+                // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
+                pcSAO->startSaoEnc(pcPic, pcEntropyCoder, pcEncodeFrame->getRDSbacCoders(0), pcEncodeFrame->getRDGoOnSbacCoder(0));
 
-                if (pcSlice->isNextSlice())
-                {
-                    // set entropy coder for writing
-                    pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
-                    {
-                        pcEncodeFrame->resetEntropy(pcSlice);
-                        pcEncodeFrame->getSbacCoder(0)->load(pcSbacCoder);
-                        pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
-                    }
-                    pcEntropyCoder->resetEntropy();
-                    // File writing
-                    if (!sliceSegment)
-                    {
-                        pcEntropyCoder->setBitstream(pcBitstreamRedirect);
-                    }
-                    else
-                    {
-                        pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-                    }
-                    // for now, override the TILES_DECODER setting in order to write substreams.
-                    pcEntropyCoder->setBitstream(&pcSubstreamsOut[0]);
-                }
-                pcSlice->setFinalized(true);
+                SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
-                pcSbacCoder->load(pcEncodeFrame->getSbacCoder(0));
-
-                pcSlice->setTileOffstForMultES(uiOneBitstreamPerSliceLength);
-                pcSlice->setTileLocationCount(0);
-                pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut, pcEncodeFrame);
-
-                {
-                    // Construct the final bitstream by flushing and concatenating substreams.
-                    // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
-                    UInt* puiSubstreamSizes = pcSlice->getSubstreamSizes();
-                    UInt uiTotalCodedSize = 0; // for padding calcs.
-                    UInt uiNumSubstreamsPerTile = iNumSubstreams;
-
-                    for (UInt ui = 0; ui < iNumSubstreams; ui++)
-                    {
-                        // Flush all substreams -- this includes empty ones.
-                        // Terminating bit and flush.
-                        pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(ui), pcSlice);
-                        pcEntropyCoder->setBitstream(&pcSubstreamsOut[ui]);
-                        pcEntropyCoder->encodeTerminatingBit(1);
-                        pcEntropyCoder->encodeSliceFinish();
-
-                        pcSubstreamsOut[ui].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
-                        // Byte alignment is necessary between tiles when tiles are independent.
-                        uiTotalCodedSize += pcSubstreamsOut[ui].getNumberOfWrittenBits();
-
-                        Bool bNextSubstreamInNewTile = ((ui + 1) < iNumSubstreams) && ((ui + 1) % uiNumSubstreamsPerTile == 0);
-                        if (bNextSubstreamInNewTile)
-                        {
-                            pcSlice->setTileLocation(ui / uiNumSubstreamsPerTile, pcSlice->getTileOffstForMultES() + (uiTotalCodedSize >> 3));
-                        }
-                        if (ui + 1 < iNumSubstreams)
-                        {
-                            puiSubstreamSizes[ui] = pcSubstreamsOut[ui].getNumberOfWrittenBits() + (pcSubstreamsOut[ui].countStartCodeEmulations() << 3);
-                        }
-                    }
-
-                    // Complete the slice header info.
-                    pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
-                    pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-                    pcEntropyCoder->encodeTilesWPPEntryPoint(pcSlice);
-
-                    // Substreams...
-                    TComOutputBitstream *pcOut = pcBitstreamRedirect;
-                    Int nss = iNumSubstreams;
-                    if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
-                    {
-                        // 1st line present for WPP.
-                        nss  = pcSlice->getNumEntryPointOffsets() + 1;
-                    }
-                    for (UInt ui = 0; ui < nss; ui++)
-                    {
-                        pcOut->addSubstream(&pcSubstreamsOut[ui]);
-                    }
-                }
-
-                nextCUAddr = m_storedStartCUAddrForEncodingSlice[1];
-                // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
-                // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
-                xAttachSliceDataToNalUnit(pcEntropyCoder, nalu, pcBitstreamRedirect);
-                accessUnit.push_back(new NALUnitEBSP(nalu));
-                actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-                uiOneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
-
-                if ((m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled()) &&
-                    (pcSlice->getSPS()->getVuiParametersPresentFlag()) &&
-                    ((pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-                     || (pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())) &&
-                    (pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag()))
-                {
-                    UInt numNalus = 0;
-                    UInt numRBSPBytes = 0;
-                    for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
-                    {
-                        UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
-                        if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-                        {
-                            numRBSPBytes += numRBSPBytes_nal;
-                            numNalus++;
-                        }
-                    }
-
-                    accumBitsDU[pcSlice->getSliceIdx()] = (numRBSPBytes << 3);
-                    accumNalsDU[pcSlice->getSliceIdx()] = numNalus; // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
-                }
-                processingState = ENCODE_SLICE;
+                pcSAO->SAOProcess(&cSaoParam, pcPic->getSlice(0)->getLambdaLuma(), pcPic->getSlice(0)->getLambdaChroma(), pcPic->getSlice(0)->getDepth());
+                pcSAO->endSaoEnc();
+                pcSAO->PCMLFDisableProcess(pcPic);
             }
-            break;
-            case EXECUTE_INLOOPFILTER:
+
+            for (Int s = 0; s < uiNumSlices; s++)
             {
-                // set entropy coder for RD
-                pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
                 if (pcSlice->getSPS()->getUseSAO())
                 {
-                    pcEntropyCoder->resetEntropy();
-                    pcEntropyCoder->setBitstream(pcBitCounter);
-
-                    // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                    pcSAO->startSaoEnc(pcPic, pcEntropyCoder, pcEncodeFrame->getRDSbacCoders(0), pcEncodeFrame->getRDGoOnSbacCoder(0));
-
-                    SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
-
-                    pcSAO->SAOProcess(&cSaoParam, pcPic->getSlice(0)->getLambdaLuma(), pcPic->getSlice(0)->getLambdaChroma(), pcPic->getSlice(0)->getDepth());
-                    pcSAO->endSaoEnc();
-                    pcSAO->PCMLFDisableProcess(pcPic);
-                }
-                processingState = ENCODE_SLICE;
-
-                for (Int s = 0; s < uiNumSlices; s++)
-                {
-                    if (pcSlice->getSPS()->getUseSAO())
-                    {
-                        pcPic->getSlice(s)->setSaoEnabledFlag((pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0] == 1) ? true : false);
-                    }
+                    pcPic->getSlice(s)->setSaoEnabledFlag((pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0] == 1) ? true : false);
                 }
             }
-            break;
-            default:
+        }
+
+        pcSlice->setNextSlice(false);
+        pcSlice = pcPic->getSlice(0);
+        pcPic->setCurrSliceIdx(0);
+        pcSliceEncoder->setSliceIdx(0);
+
+        // Reconstruction slice
+        pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[1]);
+        pcSlice->setNextSlice(true);
+
+        pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
+        pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
+        pcSliceEncoder->xDetermineStartAndBoundingCUAddr(pcPic, true);
+
+        uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
+        uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
+        uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+        uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+        uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
+        uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+        while (uiPosX >= uiWidth || uiPosY >= uiHeight)
+        {
+            uiInternalAddress--;
+            uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
+            uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+        }
+
+        uiInternalAddress++;
+        if (uiInternalAddress == pcPic->getNumPartInCU())
+        {
+            uiInternalAddress = 0;
+            uiExternalAddress = (uiExternalAddress + 1);
+        }
+        UInt endAddress = (uiExternalAddress * pcPic->getNumPartInCU() + uiInternalAddress);
+        pcSlice->allocSubstreamSizes(iNumSubstreams);
+        for (UInt ui = 0; ui < iNumSubstreams; ui++)
+        {
+            pcSubstreamsOut[ui].clear();
+        }
+
+        pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
+        pcEntropyCoder->resetEntropy();
+        /* start slice NALunit */
+        OutputNALUnit nalu(pcSlice->getNalUnitType(), pcSlice->getTLayer());
+        Bool sliceSegment = (!pcSlice->isNextSlice());
+        if (!sliceSegment)
+        {
+            uiOneBitstreamPerSliceLength = 0; // start of a new slice
+        }
+        pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+        tmpBitsBeforeWriting = pcEntropyCoder->getNumberOfWrittenBits();
+        pcEntropyCoder->encodeSliceHeader(pcSlice);
+        actualHeadBits += (pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting);
+
+        // is it needed?
+        if (!sliceSegment)
+        {
+            pcBitstreamRedirect->writeAlignOne();
+        }
+        else
+        {
+            // We've not completed our slice header info yet, do the alignment later.
+        }
+        pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
+        pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
+        pcEntropyCoder->resetEntropy();
+        pcEncodeFrame->resetEntropy(pcSlice);
+
+        if (pcSlice->isNextSlice())
+        {
+            // set entropy coder for writing
+            pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
             {
-                printf("Not a supported encoding state\n");
-                assert(0);
-                exit(-1);
+                pcEncodeFrame->resetEntropy(pcSlice);
+                pcEncodeFrame->getSbacCoder(0)->load(pcSbacCoder);
+                pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
             }
+            pcEntropyCoder->resetEntropy();
+            // File writing
+            if (!sliceSegment)
+            {
+                pcEntropyCoder->setBitstream(pcBitstreamRedirect);
             }
-        } // end iteration over slices
+            else
+            {
+                pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+            }
+            // for now, override the TILES_DECODER setting in order to write substreams.
+            pcEntropyCoder->setBitstream(&pcSubstreamsOut[0]);
+        }
+        pcSlice->setFinalized(true);
+
+        pcSbacCoder->load(pcEncodeFrame->getSbacCoder(0));
+
+        pcSlice->setTileOffstForMultES(uiOneBitstreamPerSliceLength);
+        pcSlice->setTileLocationCount(0);
+        pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut, pcEncodeFrame);
+
+        {
+            // Construct the final bitstream by flushing and concatenating substreams.
+            // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
+            UInt* puiSubstreamSizes = pcSlice->getSubstreamSizes();
+            UInt uiTotalCodedSize = 0; // for padding calcs.
+            UInt uiNumSubstreamsPerTile = iNumSubstreams;
+
+            for (UInt ui = 0; ui < iNumSubstreams; ui++)
+            {
+                // Flush all substreams -- this includes empty ones.
+                // Terminating bit and flush.
+                pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(ui), pcSlice);
+                pcEntropyCoder->setBitstream(&pcSubstreamsOut[ui]);
+                pcEntropyCoder->encodeTerminatingBit(1);
+                pcEntropyCoder->encodeSliceFinish();
+
+                pcSubstreamsOut[ui].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
+                // Byte alignment is necessary between tiles when tiles are independent.
+                uiTotalCodedSize += pcSubstreamsOut[ui].getNumberOfWrittenBits();
+
+                Bool bNextSubstreamInNewTile = ((ui + 1) < iNumSubstreams) && ((ui + 1) % uiNumSubstreamsPerTile == 0);
+                if (bNextSubstreamInNewTile)
+                {
+                    pcSlice->setTileLocation(ui / uiNumSubstreamsPerTile, pcSlice->getTileOffstForMultES() + (uiTotalCodedSize >> 3));
+                }
+                if (ui + 1 < iNumSubstreams)
+                {
+                    puiSubstreamSizes[ui] = pcSubstreamsOut[ui].getNumberOfWrittenBits() + (pcSubstreamsOut[ui].countStartCodeEmulations() << 3);
+                }
+            }
+
+            // Complete the slice header info.
+            pcEntropyCoder->setEntropyCoder(pcCavlcCoder, pcSlice);
+            pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+            pcEntropyCoder->encodeTilesWPPEntryPoint(pcSlice);
+
+            // Substreams...
+            TComOutputBitstream *pcOut = pcBitstreamRedirect;
+            Int nss = iNumSubstreams;
+            if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+            {
+                // 1st line present for WPP.
+                nss  = pcSlice->getNumEntryPointOffsets() + 1;
+            }
+            for (UInt ui = 0; ui < nss; ui++)
+            {
+                pcOut->addSubstream(&pcSubstreamsOut[ui]);
+            }
+        }
+
+        // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
+        // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
+        xAttachSliceDataToNalUnit(pcEntropyCoder, nalu, pcBitstreamRedirect);
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+        actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
+        uiOneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
+
+        if ((m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled()) &&
+            (pcSlice->getSPS()->getVuiParametersPresentFlag()) &&
+            ((pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
+                || (pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())) &&
+            (pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag()))
+        {
+            UInt numNalus = 0;
+            UInt numRBSPBytes = 0;
+            for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
+            {
+                UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
+                if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
+                {
+                    numRBSPBytes += numRBSPBytes_nal;
+                    numNalus++;
+                }
+            }
+
+            accumBitsDU[pcSlice->getSliceIdx()] = (numRBSPBytes << 3);
+            accumNalsDU[pcSlice->getSliceIdx()] = numNalus; // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
+        }
 
         if (pcSlice->getSPS()->getUseSAO())
         {
