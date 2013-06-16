@@ -615,21 +615,6 @@ void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-/** MxN forward transform (2D)
-*  \param block input data (residual)
-*  \param coeff output data (transform coefficients)
-*  \param iWidth input data (width of transform)
-*  \param iHeight input data (height of transform)
-*/
-void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, UInt uiMode)
-{
-    // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
-    assert(bitDepth == 8);
-
-    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](block, coeff, iWidth);
-}
-
 // To minimize the distortion only. No rate is considered.
 Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
@@ -1105,7 +1090,11 @@ Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride,
         memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short));
     }
 
-    xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
+    // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
+    assert(bitDepth == 8);
+
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](block, coeff, iWidth);
 
     assert(iWidth == iHeight);
     assert(((iWidth * iHeight) % 8) == 0);
