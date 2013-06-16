@@ -679,12 +679,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         // Allocate some coders, now we know how many tiles there are.
         pcSubstreamsOut = new TComOutputBitstream[iNumSubstreams];
 
-        m_storedStartCUAddrForEncodingSlice.clear();
-        m_storedStartCUAddrForEncodingSlice.push_back(0);
         pcSlice->setNextSlice(false);
         pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
-        m_storedStartCUAddrForEncodingSlice.push_back(pcSlice->getSliceCurEndCUAddr());
-
         pcSlice = pcPic->getSlice(0);
 
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
@@ -706,8 +702,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSlice = pcPic->getSlice(0);
         if (pcSlice->getSPS()->getUseSAO())
         {
-            m_storedStartCUAddrForEncodingSlice.resize(uiNumSlices + 1);
-            pcPic->createNonDBFilterInfo(m_storedStartCUAddrForEncodingSlice, 0, bLFCrossTileBoundary);
+            pcPic->createNonDBFilterInfo(pcSlice->getSliceCurEndCUAddr(), 0, bLFCrossTileBoundary);
         }
 
         pcSlice = pcPic->getSlice(0);
@@ -990,9 +985,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSliceEncoder->setSliceIdx(0);
 
         // Reconstruction slice
-        pcSlice->setSliceCurEndCUAddr(m_storedStartCUAddrForEncodingSlice[1]);
         pcSlice->setNextSlice(true);
-
         pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
         pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
         pcSliceEncoder->xDetermineStartAndBoundingCUAddr(pcPic, true);

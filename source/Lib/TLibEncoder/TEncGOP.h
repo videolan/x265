@@ -92,7 +92,6 @@ private:
     // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
-    std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
 
     UInt                    m_lastBPSEI;
     UInt                    m_totalCoded;
