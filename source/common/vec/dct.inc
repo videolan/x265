@@ -36,6 +36,8 @@
 #include <smmintrin.h>
 #include <algorithm>
 
+extern void fastForwardDst(Short *block, Short *coeff, Int shift);
+
 namespace {
 
 /* Used for filter */
@@ -2915,6 +2917,90 @@ void xIDST4(short *pSrc, short *pDst, intptr_t stride)
     _mm_storeh_pi   ( (__m64*  )&pDst[3 * stride], _mm_castsi128_ps(m128iBD));
 }
 #endif // INSTRSET >= 5
+
+ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
+{
+    {29, 55, 74, 84, 29, 55, 74, 84},
+    {74, 74,  0,-74, 74, 74, 0 ,-74},
+    {84,-29,-74, 55, 84,-29,-74, 55},
+    {55,-84, 74,-29, 55,-84, 74,-29},
+};
+
+#if INSTRSET < 4
+void xDST4(short *pSrc, short *pDst, intptr_t nStride)
+{
+    const int shift_1st = 1;
+    const int shift_2nd = 8;
+    ALIGN_VAR_32(Short, tmp [4 * 4]);
+    ALIGN_VAR_32(Short, tmp1[4 * 4]);
+
+    fastForwardDst(pSrc, tmp, shift_1st);
+    fastForwardDst(tmp, tmp1, shift_2nd);
+
+    for(int i=0; i<4; i++)
+    {
+        memcpy(&pDst[i*nStride], &tmp1[i*4], 4*sizeof(short));
+    }
+}
+#endif // INSTRSET < 4
+
+#if INSTRSET >= 4
+void xDST4(short *pSrc, short *pDst, intptr_t nStride)
+{
+    // Const
+    __m128i c_1     = _mm_set1_epi32(1);
+    __m128i c_128   = _mm_set1_epi32(128);
+
+    // Load
+    __m128i T30  = _mm_load_si128((__m128i*)(pSrc    ));
+    __m128i T31  = _mm_load_si128((__m128i*)(pSrc + 8));
+
+    // DST1
+    __m128i T40a = _mm_madd_epi16(T30, _mm_load_si128((__m128i*)tab_dst_4[0]));
+    __m128i T40b = _mm_madd_epi16(T31, _mm_load_si128((__m128i*)tab_dst_4[0]));
+    __m128i T41a = _mm_madd_epi16(T30, _mm_load_si128((__m128i*)tab_dst_4[1]));
+    __m128i T41b = _mm_madd_epi16(T31, _mm_load_si128((__m128i*)tab_dst_4[1]));
+    __m128i T42a = _mm_madd_epi16(T30, _mm_load_si128((__m128i*)tab_dst_4[2]));
+    __m128i T42b = _mm_madd_epi16(T31, _mm_load_si128((__m128i*)tab_dst_4[2]));
+    __m128i T43a = _mm_madd_epi16(T30, _mm_load_si128((__m128i*)tab_dst_4[3]));
+    __m128i T43b = _mm_madd_epi16(T31, _mm_load_si128((__m128i*)tab_dst_4[3]));
+    __m128i T50  = _mm_hadd_epi32(T40a, T40b);
+    __m128i T51  = _mm_hadd_epi32(T41a, T41b);
+    __m128i T52  = _mm_hadd_epi32(T42a, T42b);
+    __m128i T53  = _mm_hadd_epi32(T43a, T43b);
+    __m128i T60  = _mm_srai_epi32(_mm_add_epi32(T50, c_1), 1);  // [03 02 01 00]
+    __m128i T61  = _mm_srai_epi32(_mm_add_epi32(T51, c_1), 1);  // [13 12 11 10]
+    __m128i T62  = _mm_srai_epi32(_mm_add_epi32(T52, c_1), 1);  // [23 22 21 20]
+    __m128i T63  = _mm_srai_epi32(_mm_add_epi32(T53, c_1), 1);  // [33 32 31 30]
+    __m128i T70  = _mm_packs_epi32(T60, T61);
+    __m128i T71  = _mm_packs_epi32(T62, T63);
+
+    // DCT2
+    T30 = _mm_madd_epi16(T70, _mm_load_si128((__m128i*)tab_dst_4[0]));
+    T31 = _mm_madd_epi16(T71, _mm_load_si128((__m128i*)tab_dst_4[0]));
+    T30 = _mm_hadd_epi32(T30, T31);
+    T30 = _mm_srai_epi32(_mm_add_epi32(T30, c_128), 8);  // [03 02 01 00]
+    _mm_storel_epi64((__m128i*)&pDst[0*nStride], _mm_packs_epi32(T30, T30));
+
+    T30 = _mm_madd_epi16(T70, _mm_load_si128((__m128i*)tab_dst_4[1]));
+    T31 = _mm_madd_epi16(T71, _mm_load_si128((__m128i*)tab_dst_4[1]));
+    T30 = _mm_hadd_epi32(T30, T31);
+    T30 = _mm_srai_epi32(_mm_add_epi32(T30, c_128), 8);  // [03 02 01 00]
+    _mm_storel_epi64((__m128i*)&pDst[1*nStride], _mm_packs_epi32(T30, T30));
+
+    T30 = _mm_madd_epi16(T70, _mm_load_si128((__m128i*)tab_dst_4[2]));
+    T31 = _mm_madd_epi16(T71, _mm_load_si128((__m128i*)tab_dst_4[2]));
+    T30 = _mm_hadd_epi32(T30, T31);
+    T30 = _mm_srai_epi32(_mm_add_epi32(T30, c_128), 8);  // [03 02 01 00]
+    _mm_storel_epi64((__m128i*)&pDst[2*nStride], _mm_packs_epi32(T30, T30));
+
+    T30 = _mm_madd_epi16(T70, _mm_load_si128((__m128i*)tab_dst_4[3]));
+    T31 = _mm_madd_epi16(T71, _mm_load_si128((__m128i*)tab_dst_4[3]));
+    T30 = _mm_hadd_epi32(T30, T31);
+    T30 = _mm_srai_epi32(_mm_add_epi32(T30, c_128), 8);  // [03 02 01 00]
+    _mm_storel_epi64((__m128i*)&pDst[3*nStride], _mm_packs_epi32(T30, T30));
+}
+#endif // INSTRSET >=4
 
 ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
 {
@@ -6763,6 +6849,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
 
     p.deQuant = xDeQuant;
+    p.dct[DST_4x4] = xDST4;
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
     p.dct[DCT_16x16] = xDCT16;

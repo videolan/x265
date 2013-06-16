@@ -629,14 +629,13 @@ void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, U
     // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
     assert(bitDepth == 8);
 
-    ALIGN_VAR_32(Short, tmp[64 * 64]);
-
     if (iWidth == 4 && iHeight == 4)
     {
         if (uiMode != REG_DCT)
         {
-            fastForwardDst(block, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
-            fastForwardDst(tmp, coeff, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+            //fastForwardDst(block, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
+            //fastForwardDst(tmp, coeff, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+            x265::primitives.dct[x265::DST_4x4](block, coeff, iWidth);
         }
         else
         {

@@ -5,6 +5,7 @@
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +39,8 @@
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #endif
+
+extern void fastForwardDst(Short *block, Short *coeff, Int shift);
 
 namespace {
 // anonymous file-static namespace
@@ -436,6 +439,22 @@ void CDECL xIDST4_C(short *pSrc, short *pDst, intptr_t stride)
     }
 }
 
+void CDECL xDST4_C(short *pSrc, short *pDst, intptr_t nStride)
+{
+    const int shift_1st = 1;
+    const int shift_2nd = 8;
+    ALIGN_VAR_32(Short, tmp [4 * 4]);
+    ALIGN_VAR_32(Short, tmp1[4 * 4]);
+
+    fastForwardDst(pSrc, tmp, shift_1st);
+    fastForwardDst(tmp, tmp1, shift_2nd);
+
+    for(int i=0; i<4; i++)
+    {
+        memcpy(&pDst[i*nStride], &tmp1[i*4], 4*sizeof(short));
+    }
+}
+
 void CDECL xDCT4_C(short *pSrc, short *pDst, intptr_t)
 {
     const int shift_1st = 1;
@@ -614,6 +633,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
     p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
     p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+    p.dct[DST_4x4] = xDST4_C;
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
     p.dct[DCT_16x16] = xDCT16_C;
