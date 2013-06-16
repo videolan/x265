@@ -49,18 +49,17 @@ const DctConf_t DctConf_infos[] =
 
 MBDstHarness::MBDstHarness()
 {
-    mb_t_size = 6400;
+    mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
+    mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
 
-    mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
-    mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
-    mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
-    mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
-    mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), 0x1e00, 32);
+    mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
+    mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
+    mbuf4 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
 
-    mintbuf1 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
-    mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
-    mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
-    mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), 0x1e00, 32);
+    mintbuf1 = (int*)TestHarness::alignedMalloc(sizeof(int), mb_t_size, 32);
+    mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), mb_t_size, 32);
+    mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
 
     if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct)
     {
@@ -74,24 +73,26 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
-    for (int i = 0; i < 0x1e00; i++)
+    for (int i = 0; i < mb_t_size; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
     }
 
-    for (int i = 0; i < 64 * 100; i++)
+    for (int i = 0; i < mb_t_size; i++)
     {
         mintbuf1[i] = rand() & PIXEL_MAX;
         mintbuf2[i] = rand() & PIXEL_MAX;
     }
 
-    memset(mbuf2, 0, mb_t_size);
-    memset(mbuf3, 0, mb_t_size);
-    memset(mbuf4, 0, mb_t_size);
+#if _DEBUG
+    memset(mbuf2, 0, mem_cmp_size);
+    memset(mbuf3, 0, mem_cmp_size);
+    memset(mbuf4, 0, mem_cmp_size);
 
-    memset(mintbuf3, 0, mb_t_size);
-    memset(mintbuf4, 0, mb_t_size);
+    memset(mintbuf3, 0, mem_cmp_size);
+    memset(mintbuf4, 0, mem_cmp_size);
+#endif
 }
 
 MBDstHarness::~MBDstHarness()
@@ -111,7 +112,7 @@ MBDstHarness::~MBDstHarness()
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 {
     int j = 0;
-    int mem_cmp_size = 2 * width * width; // -> sizeof(short)*number of elements*number of lines
+    int cmp_size = sizeof(short) * width * width;
 
     for (int i = 0; i <= 100; i++)
     {
@@ -129,7 +130,7 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
             opt(mbufdct + j, mbuf3, width);
         }
 
-        if (memcmp(mbuf2, mbuf3, mem_cmp_size))
+        if (memcmp(mbuf2, mbuf3, cmp_size))
         {
 #if _DEBUG
             // redo for debug
@@ -140,8 +141,10 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
         }
 
         j += 16;
+#if _DEBUG
         memset(mbuf2, 0xCD, mem_cmp_size);
         memset(mbuf3, 0xCD, mem_cmp_size);
+#endif
     }
 
     return true;
@@ -150,7 +153,6 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
 bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
 {
     int j = 0;
-    int mem_cmp_size = 1024; // 32*32
 
     for (int i = 0; i <= 5; i++)
     {
@@ -177,8 +179,10 @@ bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
             return false;
 
         j += 16;
+#if _DEBUG
         memset(mintbuf3, 0, mem_cmp_size);
         memset(mintbuf4, 0, mem_cmp_size);
+#endif
     }
 
     return true;
@@ -214,8 +218,6 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 {
     for (int value = 0; value < NUM_DCTS; value++)
     {
-        memset(mbuf2, 0, mb_t_size); // Initialize output buffer to zero
-        memset(mbuf3, 0, mb_t_size); // Initialize output buffer to zero
         if (opt.dct[value])
         {
             printf("%s\t\t", DctConf_infos[value].name);

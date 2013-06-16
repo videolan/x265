@@ -33,7 +33,8 @@ protected:
 
     short *mbuf1, *mbuf2, *mbuf3, *mbuf4, *mbufdct;
     int *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4;
-    int mb_t_size;
+    static const int mb_t_size = 6400;
+    static const int mem_cmp_size = 32 * 32;
 
     bool check_xdequant_primitive(x265::quant ref, x265::quant opt);
     bool check_dct_primitive(x265::dct_t ref, x265::dct_t opt, int width);
