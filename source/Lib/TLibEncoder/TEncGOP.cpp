@@ -1440,8 +1440,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
     delete pcBitstreamRedirect;
 
-    if (accumBitsDU != NULL) delete accumBitsDU;
-    if (accumNalsDU != NULL) delete accumNalsDU;
+    if (accumBitsDU != NULL) delete [] accumBitsDU;
+    if (accumNalsDU != NULL) delete [] accumNalsDU;
 
     if (m_pcCfg->getUseRateCtrl())
     {
