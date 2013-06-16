@@ -1121,19 +1121,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 nextCUAddr = m_storedStartCUAddrForEncodingSlice[1];
                 // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
                 // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
-                Bool bNALUAlignedWrittenToList = false; // used to ensure current NALU is not written more than once to the NALU list.
                 xAttachSliceDataToNalUnit(pcEntropyCoder, nalu, pcBitstreamRedirect);
                 accessUnit.push_back(new NALUnitEBSP(nalu));
                 actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-                bNALUAlignedWrittenToList = true;
                 uiOneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
-
-                if (!bNALUAlignedWrittenToList)
-                {
-                    nalu.m_Bitstream.writeAlignZero();
-                    accessUnit.push_back(new NALUnitEBSP(nalu));
-                    uiOneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits() + 24; // length of bitstream after byte-alignment + 3 byte startcode 0x000001
-                }
 
                 if ((m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled()) &&
                     (pcSlice->getSPS()->getVuiParametersPresentFlag()) &&
