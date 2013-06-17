@@ -178,7 +178,7 @@ public:
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
-    Void          createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
+    Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
 
