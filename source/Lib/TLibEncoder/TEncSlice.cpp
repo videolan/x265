@@ -358,10 +358,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
     }
     pcSlice->setTLayer(pcPic->getTLayer());
 
-    assert(m_apcPicYuvPred);
-    assert(m_apcPicYuvResi);
-
-    pcPic->setPicYuvPred(m_apcPicYuvPred);
     pcSlice->setMaxNumMergeCand(m_pcCfg->getMaxNumMergeCand());
     xStoreWPparam(pPPS->getUseWP(), pPPS->getWPBiPred());
     return pcSlice;
