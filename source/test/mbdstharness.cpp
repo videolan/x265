@@ -151,19 +151,8 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 
     for (int i = 0; i <= 100; i++)
     {
-        if (width >= 16)
-        {
-            // IDCT16x16 and IDCT32x32 may broken input buffer, so copy one
-            ALIGN_VAR_32(short, tmp[32*32]);
-            memcpy(tmp, mbufdct + j, sizeof(short)* 32 *32);
-            ref(mbufdct + j, mbuf2, width);
-            opt(tmp, mbuf3, width);
-        }
-        else
-        {
-            ref(mbufdct + j, mbuf2, width);
-            opt(mbufdct + j, mbuf3, width);
-        }
+        ref(mbufdct + j, mbuf2, width);
+        opt(mbufdct + j, mbuf3, width);
 
         if (memcmp(mbuf2, mbuf3, cmp_size))
         {
