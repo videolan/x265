@@ -65,7 +65,6 @@ private:
     TComPicYuv*           m_apcPicYuv[2];         //  Texture,  0:org / 1:rec
 
     TComPicYuv*           m_pcPicYuvPred;         //  Prediction
-    TComPicYuv*           m_pcPicYuvResi;         //  Residual
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
     Int*                  m_pSliceSUMap;
     Bool*                 m_pbValidSlice;
@@ -123,11 +122,7 @@ public:
 
     TComPicYuv*   getPicYuvPred()       { return m_pcPicYuvPred; }
 
-    TComPicYuv*   getPicYuvResi()       { return m_pcPicYuvResi; }
-
     Void          setPicYuvPred(TComPicYuv* pcPicYuv)       { m_pcPicYuvPred = pcPicYuv; }
-
-    Void          setPicYuvResi(TComPicYuv* pcPicYuv)       { m_pcPicYuvResi = pcPicYuv; }
 
     UInt          getNumCUsInFrame()      { return m_apcPicSym->getNumberOfCUsInFrame(); }
 
