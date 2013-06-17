@@ -60,7 +60,6 @@ private:
     UInt                  m_uiTLayer;             //  Temporal layer
     Bool                  m_bUsedByCurr;          //  Used by current picture
     Bool                  m_bIsLongTerm;          //  IS long term picture
-    Bool                  m_bIsUsedAsLongTerm;    //  long term picture is used as reference before
     TComPicSym*           m_apcPicSym;            //  Symbol
 
     TComPicYuv*           m_apcPicYuv[2];         //  Texture,  0:org / 1:rec

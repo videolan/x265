@@ -60,7 +60,6 @@ TComPicSym::TComPicSym()
     , m_apcTComSlice(NULL)
     , m_uiNumAllocatedSlice(0)
     , m_apcTComDataCU(NULL)
-    , m_iTileBoundaryIndependenceIdr(0)
 {}
 
 Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth)

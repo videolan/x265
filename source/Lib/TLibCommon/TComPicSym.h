@@ -74,8 +74,6 @@ private:
     UInt          m_uiNumAllocatedSlice;
     TComDataCU**  m_apcTComDataCU;      ///< array of CU data
 
-    Int           m_iTileBoundaryIndependenceIdr;
-
     SAOParam *m_saoParam;
 
 public:
