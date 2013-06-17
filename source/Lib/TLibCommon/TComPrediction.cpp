@@ -370,19 +370,17 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
     }
     else
     {
-         //Create the prediction
-        int k;
+        // Create the prediction
         Pel refAbv[3 * MAX_CU_SIZE];
         Pel refLft[3 * MAX_CU_SIZE];
-        int limit = ( uiDirMode <=25 && uiDirMode >=11 )? (iWidth + 1) : (2*iWidth+1);
+        int limit = (uiDirMode <= 25 && uiDirMode >= 11) ? (iWidth + 1) : (2*iWidth+1);
         memcpy(refAbv + iWidth - 1, ptrSrc, (limit) * sizeof(Pel));
-        for (k = 0; k < limit; k++)
+        for (int k = 0; k < limit; k++)
         {
-               refLft[k + iWidth - 1] = ptrSrc[k * sw];
+            refLft[k + iWidth - 1] = ptrSrc[k * sw];
         }
 
         primitives.getIPredAng(g_bitDepthC, (pixel*)pDst, uiStride, iWidth, uiDirMode, false, (pixel*)refLft + iWidth -1, (pixel*)refAbv + iWidth -1);
-  
     }
 }
 
@@ -588,21 +586,21 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 {
     assert(bi == false);
 
-    Int     refStride  = refPic->getCStride();
-    Int     dstStride  = dstPic->getCStride();
+    Int refStride = refPic->getCStride();
+    Int dstStride = dstPic->getCStride();
 
-    Int     refOffset  = (mv->getHor() >> 3) + (mv->getVer() >> 3) * refStride;
+    Int refOffset = (mv->getHor() >> 3) + (mv->getVer() >> 3) * refStride;
 
-    Pel*    refCb     =  refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Pel*    refCr     =  refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Pel* refCb = refPic->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Pel* refCr = refPic->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Pel* dstCb =  dstPic->getCbAddr(partAddr);
-    Pel* dstCr =  dstPic->getCrAddr(partAddr);
+    Pel* dstCb = dstPic->getCbAddr(partAddr);
+    Pel* dstCr = dstPic->getCrAddr(partAddr);
 
-    Int     xFrac  = mv->getHor() & 0x7;
-    Int     yFrac  = mv->getVer() & 0x7;
-    UInt    cxWidth  = width  >> 1;
-    UInt    cxHeight = height >> 1;
+    Int xFrac = mv->getHor() & 0x7;
+    Int yFrac = mv->getVer() & 0x7;
+    UInt cxWidth = width >> 1;
+    UInt cxHeight = height >> 1;
 
     Int filterSize = NTAPS_CHROMA;
 
