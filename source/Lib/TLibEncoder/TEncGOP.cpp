@@ -1418,7 +1418,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         xResetNonNestedSEIPresentFlags();
         xResetNestedSEIPresentFlags();
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
-        pcPic->setReconMark(true);
         iNumPicCoded++;
         m_totalCoded++;
 

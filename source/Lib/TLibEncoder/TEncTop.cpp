@@ -329,8 +329,6 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
         }
         m_cListPic.pushBack(rpcPic);
     }
-    rpcPic->setReconMark(false);
-
     m_iPOCLast++;
 
     rpcPic->getSlice(0)->setPOC(m_iPOCLast);
