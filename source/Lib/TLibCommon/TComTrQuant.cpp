@@ -1088,16 +1088,12 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, coeff[32 * 32]);
-
-    x265::primitives.cvt32to16(plCoef, coeff, iWidth * iHeight);
-
     // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
     assert( bitDepth == 8 );
 
     //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
     const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, pResidual, uiStride);
+    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](plCoef, pResidual, uiStride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping

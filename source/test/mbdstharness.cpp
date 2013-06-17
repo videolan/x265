@@ -56,6 +56,7 @@ MBDstHarness::MBDstHarness()
 {
     mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
     mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
+    mbufidct= (int  *)TestHarness::alignedMalloc(sizeof(int),   mb_t_size, 32);
 
     mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
     mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
@@ -78,10 +79,12 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
+    const int idct_max = (1 << (BIT_DEPTH+4)) - 1;
     for (int i = 0; i < mb_t_size; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
+        mbufidct[i]= (rand() & idct_max);
     }
 
     for (int i = 0; i < mb_t_size; i++)
@@ -94,6 +97,7 @@ MBDstHarness::MBDstHarness()
     memset(mbuf2, 0, mem_cmp_size);
     memset(mbuf3, 0, mem_cmp_size);
     memset(mbuf4, 0, mem_cmp_size);
+    memset(mbufidct, 0, mb_t_size):
 
     memset(mintbuf3, 0, mem_cmp_size);
     memset(mintbuf4, 0, mem_cmp_size);
@@ -107,6 +111,7 @@ MBDstHarness::~MBDstHarness()
     TestHarness::alignedFree(mbuf3);
     TestHarness::alignedFree(mbuf4);
     TestHarness::alignedFree(mbufdct);
+    TestHarness::alignedFree(mbufidct);
 
     TestHarness::alignedFree(mintbuf1);
     TestHarness::alignedFree(mintbuf2);
@@ -151,8 +156,8 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 
     for (int i = 0; i <= 100; i++)
     {
-        ref(mbufdct + j, mbuf2, width);
-        opt(mbufdct + j, mbuf3, width);
+        ref(mbufidct + j, mbuf2, width);
+        opt(mbufidct + j, mbuf3, width);
 
         if (memcmp(mbuf2, mbuf3, cmp_size))
         {
@@ -266,7 +271,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.idct[value])
         {
             printf("%s\t\t", IDctConf_infos[value].name);
-            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbuf1, mbuf2, IDctConf_infos[value].width);
+            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mbuf2, IDctConf_infos[value].width);
         }
     }
 

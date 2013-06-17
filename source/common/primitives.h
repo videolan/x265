@@ -202,7 +202,7 @@ typedef void (CDECL * cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, int
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, int *pDst, intptr_t stride);
-typedef void (CDECL * idct_t)(short *pSrc, short *pDst, intptr_t stride);
+typedef void (CDECL * idct_t)(int *pSrc, short *pDst, intptr_t stride);
 typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
 typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);

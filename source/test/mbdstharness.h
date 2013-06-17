@@ -33,6 +33,7 @@ class MBDstHarness : public TestHarness
 protected:
 
     short *mbuf1, *mbuf2, *mbuf3, *mbuf4, *mbufdct;
+    int *mbufidct;
     int *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4;
     static const int mb_t_size = 6400;
     static const int mem_cmp_size = 32 * 32;
