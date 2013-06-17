@@ -55,8 +55,6 @@ using namespace x265;
 
 TEncSlice::TEncSlice()
 {
-    m_apcPicYuvPred = NULL;
-    m_apcPicYuvResi = NULL;
 }
 
 TEncSlice::~TEncSlice()
@@ -80,38 +78,10 @@ Void TEncSlice::initCtxMem(UInt i)
 
 Void TEncSlice::create(Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth)
 {
-    // create prediction picture
-    if (m_apcPicYuvPred == NULL)
-    {
-        m_apcPicYuvPred  = new TComPicYuv;
-        m_apcPicYuvPred->create(iWidth, iHeight, iMaxCUWidth, iMaxCUHeight, uhTotalDepth);
-    }
-
-    // create residual picture
-    if (m_apcPicYuvResi == NULL)
-    {
-        m_apcPicYuvResi  = new TComPicYuv;
-        m_apcPicYuvResi->create(iWidth, iHeight, iMaxCUWidth, iMaxCUHeight, uhTotalDepth);
-    }
 }
 
 Void TEncSlice::destroy()
 {
-    // destroy prediction picture
-    if (m_apcPicYuvPred)
-    {
-        m_apcPicYuvPred->destroy();
-        delete m_apcPicYuvPred;
-        m_apcPicYuvPred  = NULL;
-    }
-
-    // destroy residual picture
-    if (m_apcPicYuvResi)
-    {
-        m_apcPicYuvResi->destroy();
-        delete m_apcPicYuvResi;
-        m_apcPicYuvResi  = NULL;
-    }
 }
 
 Void TEncSlice::init(TEncTop* pcEncTop)

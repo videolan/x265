@@ -67,11 +67,6 @@ private:
 
     // encoder configuration
     TEncCfg*                m_pcCfg;                            ///< encoder configuration class
-
-    // pictures
-    TComPicYuv*             m_apcPicYuvPred;                    ///< prediction picture buffer
-    TComPicYuv*             m_apcPicYuvResi;                    ///< residual picture buffer
-
     UInt                    m_uiSliceIdx;
     std::vector<TEncSbac*>  CTXMem;
 
