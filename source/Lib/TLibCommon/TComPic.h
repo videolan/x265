@@ -84,17 +84,17 @@ public:
 
     virtual Void  destroy();
 
-    UInt          getTLayer()                { return m_uiTLayer; }
+    UInt          getTLayer()               { return m_uiTLayer; }
 
-    Void          setTLayer(UInt uiTLayer) { m_uiTLayer = uiTLayer; }
+    Void          setTLayer(UInt uiTLayer)  { m_uiTLayer = uiTLayer; }
 
-    Bool          getUsedByCurr()             { return m_bUsedByCurr; }
+    Bool          getUsedByCurr()           { return m_bUsedByCurr; }
 
     Void          setUsedByCurr(Bool bUsed) { m_bUsedByCurr = bUsed; }
 
-    Bool          getIsLongTerm()             { return m_bIsLongTerm; }
+    Bool          getIsLongTerm()           { return m_bIsLongTerm; }
 
-    Void          setIsLongTerm(Bool lt) { m_bIsLongTerm = lt; }
+    Void          setIsLongTerm(Bool lt)    { m_bIsLongTerm = lt; }
 
     Void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
 
