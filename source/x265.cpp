@@ -233,26 +233,26 @@ struct CLIOptions
     {
 #define XSTR(x) STR(x)
 #define STR(x) #x
-        printf("x265: HEVC encoder version %s\n", XSTR(X265_VERSION));
-        printf("x265: build info ");
-        printf(NVM_ONOS);
-        printf(NVM_COMPILEDBY);
-        printf(NVM_BITS);
+        fprintf(stderr, "x265 [info]: HEVC encoder version %s\n", XSTR(X265_VERSION));
+        fprintf(stderr, "x265 [info]: build info ");
+        fprintf(stderr, NVM_ONOS);
+        fprintf(stderr, NVM_COMPILEDBY);
+        fprintf(stderr, NVM_BITS);
 #if HIGH_BIT_DEPTH
-        printf("16bpp");
+        fprintf(stderr, "16bpp");
 #else
-        printf("8bpp");
+        fprintf(stderr, "8bpp");
 #endif
-        printf("\n");
+        fprintf(stderr, "\n");
         x265_setup_primitives(param, 0);
     }
 
     void do_help(x265_param_t *param)
     {
         print_version(param);
-        printf("Syntax: x265 [options] infile [-o] outfile\n");
+        printf("\nSyntax: x265 [options] infile [-o] outfile\n");
         printf("    infile can be YUV or Y4M\n");
-        printf("    outfile is raw HEVC stream only\n");
+        printf("    outfile is raw HEVC bitstream\n");
         printf("Options:\n");
 
 #define HELP(message) printf("\n%s\n", message);
