@@ -60,8 +60,7 @@ namespace x265 { class EncodeFrame; }
 // ====================================================================================================================
 
 /// slice encoder class
-class TEncSlice
-    : public WeightPredAnalysis
+class TEncSlice : public WeightPredAnalysis
 {
 private:
 

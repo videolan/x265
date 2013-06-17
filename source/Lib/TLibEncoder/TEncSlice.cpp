@@ -86,7 +86,7 @@ Void TEncSlice::destroy()
 
 Void TEncSlice::init(TEncTop* pcEncTop)
 {
-    m_pcCfg             = pcEncTop;
+    m_pcCfg = pcEncTop;
 }
 
 /**
