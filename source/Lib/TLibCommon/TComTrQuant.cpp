@@ -1020,7 +1020,11 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
     }
     else
     {
-        xIT(bitDepth, uiMode, m_plTempCoeff, rpcResidual, uiStride, uiWidth, uiHeight);
+        // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
+        assert( bitDepth == 8 );
+
+        const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
+        x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((uiWidth==4) && (uiMode != REG_DCT))](m_plTempCoeff, rpcResidual, uiStride);
     }
 }
 
