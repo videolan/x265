@@ -81,7 +81,7 @@ private:
 
     std::vector<std::vector<TComDataCU*> > m_vSliceCUDataLink;
 
-    SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
+    SEIMessages           m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 
 public:
 

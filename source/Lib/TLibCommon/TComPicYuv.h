@@ -96,7 +96,7 @@ private:
 
 protected:
 
-    Void  xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int iHeight, Int iMarginX, Int iMarginY);
+    Void xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int iHeight, Int iMarginX, Int iMarginY);
     Void generateLumaHQpel();
 
 public:
