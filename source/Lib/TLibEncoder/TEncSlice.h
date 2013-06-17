@@ -86,7 +86,7 @@ public:
     // compress and encode slice
     Void    compressSlice(TComPic* pcPic, x265::EncodeFrame* pcEncodeFrame);        ///< analysis stage of slice
 
-    Void    encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams, x265::EncodeFrame* pcEncodeFrame);
+    Void    encodeSlice(TComPic* rpcPic, TComOutputBitstream* pcSubstreams, x265::EncodeFrame* pcEncodeFrame);
 
     // misc. functions
     Void    setSearchRange(TComSlice* pcSlice, x265::EncodeFrame *pcEncodeframe);    ///< set ME range adaptively

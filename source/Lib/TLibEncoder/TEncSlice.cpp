@@ -499,13 +499,13 @@ Void TEncSlice::compressSlice(TComPic* pcPic, EncodeFrame* pcEncodeFrame)
  \param  rpcPic        picture class
  \retval rpcBitstream  bitstream class
  */
-Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams, EncodeFrame* pcEncodeFrame)
+Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, EncodeFrame* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_encodeSlice);
     UInt       uiCUAddr;
     UInt       uiStartCUAddr;
     UInt       uiBoundingCUAddr;
-    TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
 
     // choose entropy coder
     TEncEntropy *pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
@@ -525,14 +525,14 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams,
 #endif
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tPOC: ");
-    DTRACE_CABAC_V(rpcPic->getPOC());
+    DTRACE_CABAC_V(pcPic->getPOC());
     DTRACE_CABAC_T("\n");
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
     const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
-    const UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
+    const UInt uiHeightInLCUs = pcPic->getPicSym()->getFrameHeightInCU();
     const Int  iNumSubstreams = (bWaveFrontsynchro ? uiHeightInLCUs : 1);
     UInt uiBitsOriginallyInSubstreams = 0;
 
@@ -542,14 +542,14 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams,
         uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
+    UInt uiWidthInLCUs  = pcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    uiCUAddr = (uiStartCUAddr / rpcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
+    uiCUAddr = (uiStartCUAddr / pcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
     UInt uiEncCUOrder;
-    for (uiEncCUOrder = uiStartCUAddr / rpcPic->getNumPartInCU();
-         uiEncCUOrder < (uiBoundingCUAddr + rpcPic->getNumPartInCU() - 1) / rpcPic->getNumPartInCU();
+    for (uiEncCUOrder = uiStartCUAddr / pcPic->getNumPartInCU();
+         uiEncCUOrder < (uiBoundingCUAddr + pcPic->getNumPartInCU() - 1) / pcPic->getNumPartInCU();
          uiCUAddr = (++uiEncCUOrder))
     {
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
@@ -563,15 +563,15 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams,
         if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
-            TComDataCU *pcCUUp = rpcPic->getCU(uiCUAddr)->getCUAbove();
-            UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
+            TComDataCU *pcCUUp = pcPic->getCU(uiCUAddr)->getCUAbove();
+            UInt uiWidthInCU = pcPic->getFrameWidthInCU();
             UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
             TComDataCU *pcCUTR = NULL;
 
             // CHECK_ME: here can br optimize a little, do it later
             if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
             {
-                pcCUTR = rpcPic->getCU(uiCUAddr - uiWidthInCU + 1);
+                pcCUTR = pcPic->getCU(uiCUAddr - uiWidthInCU + 1);
             }
             if (true /*bEnforceSliceRestriction*/ && ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL)))
             {
@@ -585,7 +585,7 @@ Void TEncSlice::encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams,
         }
         pcSbacCoder->load(pcEncodeFrame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
 
-        TComDataCU* pcCU = rpcPic->getCU(uiCUAddr);
+        TComDataCU* pcCU = pcPic->getCU(uiCUAddr);
         if (pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
