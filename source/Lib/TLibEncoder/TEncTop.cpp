@@ -55,17 +55,16 @@ TEncTop::TEncTop()
 {
     m_iPOCLast          = -1;
     m_framesToBeEncoded = INT_MAX;
-    m_iNumPicRcvd       =  0;
-    m_uiNumAllPicCoded  =  0;
+    m_iNumPicRcvd       = 0;
+    m_uiNumAllPicCoded  = 0;
     m_iMaxRefPicNum     = 0;
+    ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
     g_hTrace = fopen("TraceEnc.txt", "wb");
     g_bJustDoIt = g_bEncDecTraceDisable;
     g_nSymbolCounter = 0;
 #endif
-
-    ContextModel::buildNextStateTable();
 }
 
 TEncTop::~TEncTop()
@@ -141,8 +140,6 @@ Void TEncTop::init()
     // initialize processing unit classes
     m_iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cGOPEncoder.init(this);
-
-    m_iMaxRefPicNum = 0;
 
     m_gcAnalyzeAll.setFrmRate(getFrameRate());
     m_gcAnalyzeI.setFrmRate(getFrameRate());
