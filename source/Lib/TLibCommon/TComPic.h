@@ -60,6 +60,7 @@ private:
     UInt                  m_uiTLayer;             //  Temporal layer
     Bool                  m_bUsedByCurr;          //  Used by current picture
     Bool                  m_bIsLongTerm;          //  IS long term picture
+    Bool                  m_bCheckLTMSB;
     TComPicSym*           m_apcPicSym;            //  Symbol
 
     TComPicYuv*           m_apcPicYuv[2];         //  Texture,  0:org / 1:rec
@@ -68,10 +69,6 @@ private:
     Int*                  m_pSliceSUMap;
 
     Int                   m_sliceGranularityForNDBFilter;
-    Bool                  m_bIndependentSliceBoundaryForNDBFilter;
-    Bool                  m_bIndependentTileBoundaryForNDBFilter;
-    TComPicYuv*           m_pNDBFilterYuvTmp;  //!< temporary picture buffer when non-cross slice/tile boundary in-loop filtering is enabled
-    Bool                  m_bCheckLTMSB;
 
     Int                   m_numReorderPics[MAX_TLAYER];
     Window                m_conformanceWindow;
@@ -165,12 +162,6 @@ public:
     Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
-
-    Bool          getIndependentSliceBoundaryForNDBFilter()             { return m_bIndependentSliceBoundaryForNDBFilter; }
-
-    Bool          getIndependentTileBoundaryForNDBFilter()             { return m_bIndependentTileBoundaryForNDBFilter; }
-
-    TComPicYuv*   getYuvPicBufferForIndependentBoundaryProcessing()             { return m_pNDBFilterYuvTmp; }
 
     std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter(Int sliceID) { return m_vSliceCUDataLink[sliceID]; }
 

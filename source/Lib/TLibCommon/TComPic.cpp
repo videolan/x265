@@ -49,14 +49,11 @@ TComPic::TComPic()
     : m_uiTLayer(0)
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
+    , m_bCheckLTMSB(false)
     , m_apcPicSym(NULL)
     , m_uiCurrSliceIdx(0)
     , m_pSliceSUMap(NULL)
     , m_sliceGranularityForNDBFilter(0)
-    , m_bIndependentSliceBoundaryForNDBFilter(false)
-    , m_bIndependentTileBoundaryForNDBFilter(false)
-    , m_pNDBFilterYuvTmp(NULL)
-    , m_bCheckLTMSB(false)
 {
     m_apcPicYuv[0]      = NULL;
     m_apcPicYuv[1]      = NULL;
@@ -67,7 +64,6 @@ TComPic::~TComPic()
 
 Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                      Int *numReorderPics, Bool bIsVirtual)
-
 {
     m_apcPicSym     = new TComPicSym;
     m_apcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
@@ -152,9 +148,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt maxNumSUInLCUHeight = getNumPartInHeight();
 
-    m_bIndependentSliceBoundaryForNDBFilter = false;
     m_sliceGranularityForNDBFilter = sliceGranularityDepth;
-    m_bIndependentTileBoundaryForNDBFilter  = (false);
 
     m_pSliceSUMap = new Int[maxNumSUInLCU * numLCUInPic];
     for (UInt i = 0; i < (maxNumSUInLCU * numLCUInPic); i++)
@@ -252,15 +246,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
             continue;
         }
 
-        pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight
-                                                    , false, false, false, false
-                                                    , m_bIndependentTileBoundaryForNDBFilter);
-    }
-
-    if (m_bIndependentSliceBoundaryForNDBFilter || m_bIndependentTileBoundaryForNDBFilter)
-    {
-        m_pNDBFilterYuvTmp = new TComPicYuv();
-        m_pNDBFilterYuvTmp->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+        pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight, false, false, false, false, false);
     }
 }
 
@@ -361,13 +347,6 @@ Void TComPic::destroyNonDBFilterInfo()
     {
         TComDataCU* pcCU = getCU(CUAddr);
         pcCU->getNDBFilterBlocks()->clear();
-    }
-
-    if (m_bIndependentSliceBoundaryForNDBFilter || m_bIndependentTileBoundaryForNDBFilter)
-    {
-        m_pNDBFilterYuvTmp->destroy();
-        delete m_pNDBFilterYuvTmp;
-        m_pNDBFilterYuvTmp = NULL;
     }
 }
 
