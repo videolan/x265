@@ -220,10 +220,8 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
         /*  write a3 to subpel */  \
         val = (a3 + IF_INTERNAL_OFFS + 32) >> 6; \
         val = max(val, 0); \
-        val = min(val, 255); \
-        tmp = compress_unsafe(val, 0); \
+        tmp = compress_saturated(val, 0); \
         compress_unsafe(tmp, 0).store_partial(4, dstA + row * dstStride + col); \
-        /*  load a7 */ \
         tmp.load(src + col + (row + 7) * cstride); \
         a7 = extend_low(tmp); \
         /*  calculation
@@ -250,21 +248,18 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             \
 /* store results */ \
         sumi = (sumi + offset) >> 12; \
+        sumi  = max(sumi, 0);\
         tmp  = compress_saturated(sumi, 0); \
-        tmp  = max(tmp, 0); \
-        tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sume = (sume + offset) >> 12; \
+        sume  = max(sume, 0);\
         tmp  = compress_saturated(sume, 0); \
-        tmp  = max(tmp, 0); \
-        tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sump = (sump + offset) >> 12; \
+        sump  = max(sump, 0);\
         tmp  = compress_saturated(sump, 0); \
-        tmp  = max(tmp, 0); \
-        tmp  = min(tmp, 255); \
         store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
 }
