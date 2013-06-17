@@ -55,24 +55,25 @@ TComPic::TComPic()
     , m_pSliceSUMap(NULL)
     , m_sliceGranularityForNDBFilter(0)
 {
-    m_apcPicYuv[0]      = NULL;
-    m_apcPicYuv[1]      = NULL;
+    m_apcPicYuv[0] = NULL;
+    m_apcPicYuv[1] = NULL;
 }
 
 TComPic::~TComPic()
-{}
+{
+}
 
 Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                      Int *numReorderPics, Bool bIsVirtual)
 {
-    m_apcPicSym     = new TComPicSym;
+    m_apcPicSym = new TComPicSym;
     m_apcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     if (!bIsVirtual)
     {
-        m_apcPicYuv[0]  = new TComPicYuv;
+        m_apcPicYuv[0] = new TComPicYuv;
         m_apcPicYuv[0]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     }
-    m_apcPicYuv[1]  = new TComPicYuv;
+    m_apcPicYuv[1] = new TComPicYuv;
     m_apcPicYuv[1]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
     // there are no SEI messages associated with this picture initially
@@ -105,14 +106,14 @@ Void TComPic::destroy()
     {
         m_apcPicYuv[0]->destroy();
         delete m_apcPicYuv[0];
-        m_apcPicYuv[0]  = NULL;
+        m_apcPicYuv[0] = NULL;
     }
 
     if (m_apcPicYuv[1])
     {
         m_apcPicYuv[1]->destroy();
         delete m_apcPicYuv[1];
-        m_apcPicYuv[1]  = NULL;
+        m_apcPicYuv[1] = NULL;
     }
 
     deleteSEIs(m_SEIs);

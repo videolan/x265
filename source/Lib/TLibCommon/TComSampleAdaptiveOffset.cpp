@@ -539,7 +539,8 @@ Void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pcPic)
 }
 
 Void TComSampleAdaptiveOffset::destroyPicSaoInfo()
-{}
+{
+}
 
 /** sample adaptive offset process for one LCU
  * \param   iAddr, iSaoType, iYCbCr
