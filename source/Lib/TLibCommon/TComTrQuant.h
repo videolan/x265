@@ -224,9 +224,6 @@ protected:
 
 private:
 
-    // forward Transform
-    Void xT(Int bitDepth, UInt uiMode, Short* pResidual, UInt uiStride, Int* plCoeff, Int iWidth, Int iHeight);
-
     // skipping Transform
     Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height);
 

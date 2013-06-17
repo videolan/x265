@@ -972,7 +972,13 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
     }
     else
     {
-        xT(bitDepth, uiMode, pcResidual, uiStride, m_plTempCoeff, uiWidth, uiHeight);
+        // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
+        assert(bitDepth == 8);
+
+        const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
+        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((uiWidth==4) && (uiMode != REG_DCT))](pcResidual, m_plTempCoeff, uiStride);
+
+        assert(uiWidth == uiHeight);
     }
     xQuant(pcCU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, uiWidth, uiHeight, uiAbsSum, eTType, uiAbsPartIdx);
 }
@@ -1072,25 +1078,6 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
 // ------------------------------------------------------------------------------------------------
 // Logical transform
 // ------------------------------------------------------------------------------------------------
-
-/** Wrapper function between HM interface and core NxN forward transform (2D)
- *  \param piBlkResi input data (residual)
- *  \param psCoeff output data (transform coefficients)
- *  \param uiStride stride of input residual data
- *  \param iSize transform size (iSize x iSize)
- *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
- */
-Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
-{
-    // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
-    assert(bitDepth == 8);
-
-    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](piBlkResi, psCoeff, uiStride);
-
-    assert(iWidth == iHeight);
-    assert(((iWidth * iHeight) % 8) == 0);
-}
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
  *  \param plCoef input data (transform coefficients)
