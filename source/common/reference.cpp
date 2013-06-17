@@ -55,7 +55,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     m_filterHeight = height + s_tmpMarginY * 2;
     m_next = NULL;
 
-    m_lumaPlane[0][0] = pic->m_apiPicBufY + m_startPad;
+    m_lumaPlane[0][0] = (pixel *)pic->m_apiPicBufY + m_startPad;
 
     /* Create buffers for Hpel/Qpel Planes */
     size_t padwidth = width + pic->m_iLumaMarginX * 2;
@@ -66,7 +66,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
         {
             if (i == 0 && j == 0)
                 continue;
-            m_lumaPlane[i][j] = (Pel*)xMalloc(pixel,  padwidth * padheight) + m_startPad;
+            m_lumaPlane[i][j] = (pixel *)xMalloc(pixel,  padwidth * padheight) + m_startPad;
         }
     }
 }
@@ -177,7 +177,7 @@ void MotionReference::generateReferencePlane(int idx)
     int y = idx >> 2;
     short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
     Short *intPtr = filteredBlockTmp  + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
-    Pel *dstPtr = m_lumaPlane[x][y]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
+    Pel *dstPtr = (Pel *)m_lumaPlane[x][y]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[y]);
     m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
 }

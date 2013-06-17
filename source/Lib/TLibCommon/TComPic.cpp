@@ -146,7 +146,7 @@ Void TComPic::compressMotion()
  * \param numTiles number of tiles in picture
  * \param bNDBFilterCrossTileBoundary cross-tile-boundary in-loop filtering; true for "cross".
  */
-Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary)
+Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt numLCUInPic   = getNumCUsInFrame();
@@ -156,7 +156,6 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
     Int  numLCUsInPicHeight = getFrameHeightInCU();
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt maxNumSUInLCUHeight = getNumPartInHeight();
-    Int  numSlices = (Int)sliceStartAddress.size() - 1;
 
     m_bIndependentSliceBoundaryForNDBFilter = false;
     m_sliceGranularityForNDBFilter = sliceGranularityDepth;
@@ -181,19 +180,18 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
     }
 
     m_vSliceCUDataLink.clear();
-
-    m_vSliceCUDataLink.resize(numSlices);
+    m_vSliceCUDataLink.resize(1);
 
     UInt startAddr, endAddr, firstCUInStartLCU, startLCU, endLCU, lastCUInEndLCU, uiAddr;
     UInt LPelX, TPelY, LCUX, LCUY;
     UInt currSU;
     UInt startSU, endSU;
 
-    for (Int s = 0; s < numSlices; s++)
+    for (Int s = 0; s < 1; s++)
     {
         //1st step: decide the real start address
-        startAddr = sliceStartAddress[s];
-        endAddr   = sliceStartAddress[s + 1] - 1;
+        startAddr = 0;
+        endAddr   = lastSliceCUAddr-1;
 
         startLCU            = startAddr / maxNumSUInLCU;
         firstCUInStartLCU   = startAddr % maxNumSUInLCU;
@@ -271,7 +269,7 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
     }
 
     //step 3: border availability
-    for (Int s = 0; s < numSlices; s++)
+    for (Int s = 0; s < 1; s++)
     {
         if (!m_pbValidSlice[s])
         {

@@ -615,50 +615,6 @@ void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-/** MxN forward transform (2D)
-*  \param block input data (residual)
-*  \param coeff output data (transform coefficients)
-*  \param iWidth input data (width of transform)
-*  \param iHeight input data (height of transform)
-*/
-void xTrMxN(Int bitDepth, Short *block, Short *coeff, Int iWidth, Int iHeight, UInt uiMode)
-{
-    Int shift_1st = g_aucConvertToBit[iWidth]  + 1 + bitDepth - 8; // log2(iWidth) - 1 + g_bitDepth - 8
-    Int shift_2nd = g_aucConvertToBit[iHeight]  + 8;                 // log2(iHeight) + 6
-
-    // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
-    assert(bitDepth == 8);
-
-    ALIGN_VAR_32(Short, tmp[64 * 64]);
-
-    if (iWidth == 4 && iHeight == 4)
-    {
-        if (uiMode != REG_DCT)
-        {
-            fastForwardDst(block, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
-            fastForwardDst(tmp, coeff, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
-        }
-        else
-        {
-            x265::primitives.dct[x265::DCT_4x4](block, coeff, iWidth);
-        }
-    }
-    else if (iWidth == 8 && iHeight == 8)
-    {
-        x265::primitives.dct[x265::DCT_8x8](block, coeff, iWidth);
-    }
-    else if (iWidth == 16 && iHeight == 16)
-    {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](block, tmp, shift_1st, 16);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_16](tmp, coeff, shift_2nd, 16);
-    }
-    else if (iWidth == 32 && iHeight == 32)
-    {
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](block, tmp, shift_1st, 32);
-        x265::primitives.partial_butterfly[x265::BUTTERFLY_32](tmp, coeff, shift_2nd, 32);
-    }
-}
-
 // To minimize the distortion only. No rate is considered.
 Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
@@ -1126,15 +1082,13 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, block[32 * 32]);
     ALIGN_VAR_32(Short, coeff[32 * 32]);
-    Int j;
-    for (j = 0; j < iHeight; j++)
-    {
-        memcpy(&block[j * iWidth], &piBlkResi[j * uiStride], iWidth * sizeof(Short));
-    }
 
-    xTrMxN(bitDepth, block, coeff, iWidth, iHeight, uiMode);
+    // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
+    assert(bitDepth == 8);
+
+    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
+    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](piBlkResi, coeff, uiStride);
 
     assert(iWidth == iHeight);
     assert(((iWidth * iHeight) % 8) == 0);

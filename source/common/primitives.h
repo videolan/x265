@@ -99,8 +99,8 @@ enum SquareBlocks   // Routines can be indexed using (Blocksize/8) gives (0,1,2,
     BLOCK_4x4,
     BLOCK_8x8,
     BLOCK_16x16,
-    BLOCK_32x32=4,
-    BLOCK_64x64=8,
+    BLOCK_32x32,
+    BLOCK_64x64,
     NUM_BLOCKS
 };
 
@@ -129,20 +129,7 @@ enum FilterConf
     NUM_FILTER
 };
 
-enum Butterflies
-{
-    BUTTERFLY_4,
-    BUTTERFLY_INVERSE_4,
-    BUTTERFLY_8,
-    BUTTERFLY_INVERSE_8,
-    BUTTERFLY_16,
-    BUTTERFLY_INVERSE_16,
-    BUTTERFLY_32,
-    BUTTERFLY_INVERSE_32,
-    NUM_BUTTERFLIES
-};
-
-// NOTE: All of DCT functions don't support Dest Stride
+// NOTE: Not all DCT functions support Dest Stride
 enum Dcts
 {
     DST_4x4,
@@ -190,9 +177,7 @@ typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref
 typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
-typedef void (CDECL * mbdst)(short *block, short *coeff, int shift);
 typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (CDECL * butterfly)(short *src, short *dst, int shift, int line);
 typedef void (CDECL * IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (CDECL * IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
@@ -208,11 +193,12 @@ typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, 
 typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
+typedef void (CDECL * cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
-typedef void (CDECL * getResidue_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
-typedef void (CDECL * calcRecons_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
+typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
+typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
 typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height);
 
@@ -234,8 +220,6 @@ struct EncoderPrimitives
     pixelcmp sa8d_32x32;
     pixelcmp sa8d_64x64;
     IPFilter filter[NUM_FILTER];
-    mbdst inversedst;
-    butterfly partial_butterfly[NUM_BUTTERFLIES];
     IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
     IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];
     IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];
@@ -252,10 +236,11 @@ struct EncoderPrimitives
     dct_t dct[NUM_DCTS];
     cvt16to32_t cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
+    cvt16to16_shl_t cvt16to16_shl;
     cvt32to16_t cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
-    getResidue_t getResidue[NUM_BLOCKS];
-    calcRecons_t calcRecons[NUM_BLOCKS];
+    calcresidual_t calcresidual[NUM_BLOCKS];
+    calcrecon_t calcrecon[NUM_BLOCKS];
     filterVmulti_t filterVmulti;
     filterHmulti_t filterHmulti;
 };

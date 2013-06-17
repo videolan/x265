@@ -32,7 +32,6 @@ using namespace x265;
 
 IntraPredHarness::IntraPredHarness()
 {
-    ip_t_size = 4 * 65 * 65 * 100;
     pixel_buff = (pixel*)malloc(ip_t_size * sizeof(pixel));     // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
 
     if (!pixel_buff)
@@ -46,8 +45,8 @@ IntraPredHarness::IntraPredHarness()
         pixel_buff[i] = rand() % PIXEL_MAX;
     }
 
-    pixel_out_C   = (pixel*)malloc(ip_t_size * sizeof(pixel));
-    pixel_out_Vec = (pixel*)malloc(ip_t_size * sizeof(pixel));
+    pixel_out_C   = (pixel*)malloc(out_size * sizeof(pixel));
+    pixel_out_Vec = (pixel*)malloc(out_size * sizeof(pixel));
 
     if (!pixel_out_C || !pixel_out_Vec)
     {
@@ -80,8 +79,10 @@ bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::
         if (!blkLeftAvailable)
             blkAboveAvailable = 1;
 
-        memset(pixel_out_Vec, 0xCD, ip_t_size);      // Initialize output buffer to zero
-        memset(pixel_out_C, 0xCD, ip_t_size);        // Initialize output buffer to zero
+#if _DEBUG
+        memset(pixel_out_Vec, 0xCD, out_size);
+        memset(pixel_out_C, 0xCD, out_size);
+#endif
 
         opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
         ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
@@ -106,9 +107,10 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
     {
         for (int i = 0; i <= 100; i++)
         {
-            memset(pixel_out_Vec, 0xCD, ip_t_size);  // Initialize output buffer to zero
-            memset(pixel_out_C, 0xCD, ip_t_size);    // Initialize output buffer to zero
-
+#if _DEBUG
+            memset(pixel_out_Vec, 0xCD, out_size);
+            memset(pixel_out_C, 0xCD, out_size);
+#endif
             ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width, 0);
             opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0);
 
@@ -143,8 +145,10 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
             {
                 pmode = p;
 
-                memset(pixel_out_Vec, 0xCD, ip_t_size);      // Initialize output buffer to zero
-                memset(pixel_out_C, 0xCD, ip_t_size);        // Initialize output buffer to zero
+#if _DEBUG
+                memset(pixel_out_Vec, 0xCD, out_size);
+                memset(pixel_out_C, 0xCD, out_size);
+#endif
                 pixel * refAbove = pixel_buff + j;
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];

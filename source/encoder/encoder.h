@@ -42,6 +42,7 @@ protected:
     Level::Name   m_level;
 
     bool InitializeGOP(x265_param_t *param);
+    void determineLevelAndProfile(x265_param_t *param);
 
 public:
 

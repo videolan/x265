@@ -84,20 +84,15 @@ private:
     //  Access channel
     TEncTop*                m_pcEncTop;
     TEncCfg*                m_pcCfg;
-    TComList<TComPic*>*     m_pcListPic;
     TEncRateCtrl*           m_pcRateCtrl;
+    x265::EncodeFrame*      m_cFrameEncoders;
 
     SEIWriter               m_seiWriter;
-
-    // indicate sequence first
-    Bool                    m_bSeqFirst;
 
     // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
-    std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
 
-    std::vector<Int> m_vRVM_RP;
     UInt                    m_lastBPSEI;
     UInt                    m_totalCoded;
     UInt                    m_cpbRemovalDelay;
@@ -108,46 +103,37 @@ private:
     Bool                    m_pictureTimingSEIPresentInAU;
     Bool                    m_nestedBufferingPeriodSEIPresentInAU;
     Bool                    m_nestedPictureTimingSEIPresentInAU;
-    x265::EncodeFrame      *m_cFrameEncoders;
 
 public:
 
     TEncGOP();
+
     virtual ~TEncGOP();
 
     Void  create();
     Void  destroy();
-
     Void  init(TEncTop* pcTEncTop);
+
     Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP);
-    Void  xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
-
-    Int   getGOPSize()          { return m_iGopSize;  }
-
-    TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
 
     Void  printOutSummary(UInt uiNumAllPicCoded);
 
-    NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
-    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
-
 protected:
 
-    TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
+    NalUnitType        getNalUnitType(Int pocCurr, Int lastIdr);
+    x265::EncodeFrame* getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
 
-protected:
-
-    x265::EncodeFrame*      getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
-
-    Void  xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
-
+    Void   xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
     Double xCalculateRVM();
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
+    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
+
+    Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
     Void xCreateLeadingSEIMessages(TEncEntropy *pcEntropyCoder, AccessUnit &accessUnit, TComSPS *sps);
-    Int xGetFirstSeiLocation(AccessUnit &accessUnit);
+    Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
     Void xResetNonNestedSEIPresentFlags()
     {
         m_activeParameterSetSEIPresentInAU = false;

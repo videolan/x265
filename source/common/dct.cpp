@@ -5,6 +5,7 @@
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +39,8 @@
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #endif
+
+extern void fastForwardDst(Short *block, Short *coeff, Int shift);
 
 namespace {
 // anonymous file-static namespace
@@ -436,6 +439,22 @@ void CDECL xIDST4_C(short *pSrc, short *pDst, intptr_t stride)
     }
 }
 
+void CDECL xDST4_C(short *pSrc, short *pDst, intptr_t nStride)
+{
+    const int shift_1st = 1;
+    const int shift_2nd = 8;
+    ALIGN_VAR_32(Short, tmp [4 * 4]);
+    ALIGN_VAR_32(Short, tmp1[4 * 4]);
+
+    fastForwardDst(pSrc, tmp, shift_1st);
+    fastForwardDst(tmp, tmp1, shift_2nd);
+
+    for(int i=0; i<4; i++)
+    {
+        memcpy(&pDst[i*nStride], &tmp1[i*4], 4*sizeof(short));
+    }
+}
+
 void CDECL xDCT4_C(short *pSrc, short *pDst, intptr_t)
 {
     const int shift_1st = 1;
@@ -469,6 +488,26 @@ void CDECL xDCT8_C(short *pSrc, short *pDst, intptr_t)
 
     partialButterfly8(pSrc, tmp, shift_1st, 8);
     partialButterfly8(tmp, pDst, shift_2nd, 8);
+}
+
+void CDECL xDCT16_C(short *pSrc, short *pDst, intptr_t)
+{
+    const int shift_1st = 3;
+    const int shift_2nd = 10;
+    ALIGN_VAR_32(Short, tmp[16 * 16]);
+
+    partialButterfly16(pSrc, tmp, shift_1st, 16);
+    partialButterfly16(tmp, pDst, shift_2nd, 16);
+}
+
+void CDECL xDCT32_C(short *pSrc, short *pDst, intptr_t)
+{
+    const int shift_1st = 4;
+    const int shift_2nd = 11;
+    ALIGN_VAR_32(Short, tmp[32 * 32]);
+
+    partialButterfly32(pSrc, tmp, shift_1st, 32);
+    partialButterfly32(tmp, pDst, shift_2nd, 32);
 }
 
 void CDECL xIDCT8_C(short *pSrc, short *pDst, intptr_t stride)
@@ -584,24 +623,16 @@ namespace x265 {
 
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
-    p.inversedst = inversedst;
-
-    p.partial_butterfly[BUTTERFLY_16] = partialButterfly16;
-    p.partial_butterfly[BUTTERFLY_32] = partialButterfly32;
-    p.partial_butterfly[BUTTERFLY_8] = partialButterfly8;
-    p.partial_butterfly[BUTTERFLY_INVERSE_4] = partialButterflyInverse4;
-    p.partial_butterfly[BUTTERFLY_INVERSE_8] = partialButterflyInverse8;
-    p.partial_butterfly[BUTTERFLY_INVERSE_16] = partialButterflyInverse16;
-    p.partial_butterfly[BUTTERFLY_INVERSE_32] = partialButterflyInverse32;
-    p.partial_butterfly[BUTTERFLY_4] = partialButterfly4;
+    p.deQuant = xDeQuant;
+    p.dct[DST_4x4] = xDST4_C;
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
+    p.dct[DCT_16x16] = xDCT16_C;
+    p.dct[DCT_32x32] = xDCT32_C;
     p.dct[IDST_4x4] = xIDST4_C;
     p.dct[IDCT_4x4] = xIDCT4_C;
     p.dct[IDCT_8x8] = xIDCT8_C;
     p.dct[IDCT_16x16] = xIDCT16_C;
     p.dct[IDCT_32x32] = xIDCT32_C;
-
-    p.deQuant = xDeQuant;
 }
 }

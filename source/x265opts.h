@@ -16,7 +16,7 @@ OPT("input-depth",     inputBitDepth,             required_argument,   0, "Bit-d
 OPT("width",           param->iSourceWidth,       required_argument,   0, "Source picture width, auto-detect if Y4M")
 OPT("height",          param->iSourceHeight,      required_argument,   0, "Source picture height, auto-detect if Y4M")
 OPT("rate",            param->iFrameRate,         required_argument,   0, "Frame rate, auto-detect if Y4M")
-OPT("frame-skip",      this->frameSkip,           required_argument,   0, "Number of frames to skip at start of input YUV")
+OPT("frame-skip",      this->frameSkip,           required_argument,   0, "Number of frames to skip at start of input file")
 OPT("frames",          this->framesToBeEncoded,   required_argument, 'f', "Number of frames to be encoded (default=all)")
 
 HELP("Reconstructed video options (debugging):")
