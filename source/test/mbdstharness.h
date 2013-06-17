@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +39,7 @@ protected:
 
     bool check_xdequant_primitive(x265::quant ref, x265::quant opt);
     bool check_dct_primitive(x265::dct_t ref, x265::dct_t opt, int width);
+    bool check_idct_primitive(x265::idct_t ref, x265::idct_t opt, int width);
 
 public:
 

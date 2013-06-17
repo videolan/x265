@@ -137,12 +137,17 @@ enum Dcts
     DCT_8x8,
     DCT_16x16,
     DCT_32x32,
+    NUM_DCTS
+};
+
+enum IDcts
+{
     IDST_4x4,
     IDCT_4x4,
     IDCT_8x8,
     IDCT_16x16,
     IDCT_32x32,
-    NUM_DCTS
+    NUM_IDCTS
 };
 
 enum IPFilterConf_P_P
@@ -196,7 +201,8 @@ typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, 
 typedef void (CDECL * cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
 typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
 typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
-typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
+typedef void (CDECL * dct_t)(short *pSrc, int *pDst, intptr_t stride);
+typedef void (CDECL * idct_t)(short *pSrc, short *pDst, intptr_t stride);
 typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
 typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
@@ -234,6 +240,7 @@ struct EncoderPrimitives
     getIPredAng_p getIPredAng;
     quant deQuant;
     dct_t dct[NUM_DCTS];
+    idct_t idct[NUM_IDCTS];
     cvt16to32_t cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to16_shl_t cvt16to16_shl;

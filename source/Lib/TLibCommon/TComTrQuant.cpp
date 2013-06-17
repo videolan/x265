@@ -84,7 +84,7 @@ TComTrQuant::TComTrQuant()
 
     // allocate temporary buffers
     // OPT_ME: I may reduce this to short and output matched, bug I am not sure it is right.
-    m_plTempCoeff  = new Int[MAX_CU_SIZE * MAX_CU_SIZE];
+    m_plTempCoeff  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
 
     // allocate bit estimation class  (for RDOQ)
     m_pcEstBitsSbac = new estBitsSbacStruct;
@@ -96,7 +96,7 @@ TComTrQuant::~TComTrQuant()
     // delete temporary buffers
     if (m_plTempCoeff)
     {
-        delete [] m_plTempCoeff;
+        xFree(m_plTempCoeff);
         m_plTempCoeff = NULL;
     }
 
@@ -1082,17 +1082,14 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
  */
 Void TComTrQuant::xT(Int bitDepth, UInt uiMode, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int iWidth, Int iHeight)
 {
-    ALIGN_VAR_32(Short, coeff[32 * 32]);
-
     // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
     assert(bitDepth == 8);
 
     const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](piBlkResi, coeff, uiStride);
+    x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](piBlkResi, psCoeff, uiStride);
 
     assert(iWidth == iHeight);
     assert(((iWidth * iHeight) % 8) == 0);
-    x265::primitives.cvt16to32(coeff, psCoeff, iWidth * iHeight);
 }
 
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
@@ -1113,7 +1110,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, 
 
     //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
     const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.dct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, pResidual, uiStride);
+    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](coeff, pResidual, uiStride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping

@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +40,11 @@ const DctConf_t DctConf_infos[] =
    { "Dct4x4\t",    4},
    { "Dct8x8\t",    8},
    { "Dct16x16",   16},
-   { "Dct32x32", 32},
+   { "Dct32x32",   32},
+};
+
+const DctConf_t IDctConf_infos[] =
+{
    {"IDst4x4\t",    4},
    {"IDct4x4\t",    4},
    {"IDct8x8\t",    8},
@@ -110,6 +115,36 @@ MBDstHarness::~MBDstHarness()
 }
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
+{
+    int j = 0;
+    int cmp_size = sizeof(int) * width * width;
+
+    for (int i = 0; i <= 100; i++)
+    {
+        ref(mbufdct + j, mintbuf1, width);
+        opt(mbufdct + j, mintbuf2, width);
+
+        if (memcmp(mintbuf1, mintbuf2, cmp_size))
+        {
+#if _DEBUG
+            // redo for debug
+            ref(mbufdct + j, mintbuf1, width);
+            opt(mbufdct + j, mintbuf2, width);
+#endif
+            return false;
+        }
+
+        j += 16;
+#if _DEBUG
+        memset(mbuf2, 0xCD, mem_cmp_size);
+        memset(mbuf3, 0xCD, mem_cmp_size);
+#endif
+    }
+
+    return true;
+}
+
+bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
 {
     int j = 0;
     int cmp_size = sizeof(short) * width * width;
@@ -202,6 +237,18 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    for( int i=0; i<NUM_IDCTS; i++ )
+    {
+        if (opt.idct[i])
+        {
+            if (!check_idct_primitive(ref.idct[i], opt.idct[i], IDctConf_infos[i].width))
+            {
+                printf("\n%s failed\n", IDctConf_infos[i].name);
+                return false;
+            }
+        }
+    }
+
     if (opt.deQuant)
     {
         if (!check_xdequant_primitive(ref.deQuant, opt.deQuant))
@@ -221,7 +268,16 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.dct[value])
         {
             printf("%s\t\t", DctConf_infos[value].name);
-            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mbuf2, DctConf_infos[value].width);
+            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mintbuf1, DctConf_infos[value].width);
+        }
+    }
+
+    for (int value = 0; value < NUM_IDCTS; value++)
+    {
+        if (opt.idct[value])
+        {
+            printf("%s\t\t", IDctConf_infos[value].name);
+            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbuf1, mbuf2, IDctConf_infos[value].width);
         }
     }
 
