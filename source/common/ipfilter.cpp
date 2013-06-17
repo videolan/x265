@@ -303,22 +303,23 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
     }
 }
 
-void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
 {
-    filterConvertShortToPel(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height);
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
 }
 
-void CDECL filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height)
+void CDECL filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
 {
-    filterConvertPelToShort(bitDepth, src, srcStride, dstF, dstStride, block_width, block_height);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstB, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstC, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
+    filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
+    filterConvertShortToPel(bitDepth, midA, midStride, pDstA, pDstStride, block_width, block_height);
+    filterConvertShortToPel(bitDepth, midB, midStride, pDstB, pDstStride, block_width, block_height);
+    filterConvertShortToPel(bitDepth, midC, midStride, pDstC, pDstStride, block_width, block_height);
 }
-
 }
 
 #if _MSC_VER
