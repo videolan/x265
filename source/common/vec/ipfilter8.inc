@@ -217,11 +217,6 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
 */
 
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-        /*  write a3 to subpel */  \
-        val = (a3 + IF_INTERNAL_OFFS + 32) >> 6; \
-        val = max(val, 0); \
-        tmp = compress_saturated(val, 0); \
-        compress_unsafe(tmp, 0).store_partial(4, dstA + row * dstStride + col); \
         tmp.load(src + col + (row + 7) * cstride); \
         a7 = extend_low(tmp); \
         /*  calculation
@@ -248,23 +243,23 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             \
 /* store results */ \
         sumi = (sumi + offset) >> 12; \
-        sumi  = max(sumi, 0);\
+        sumi  = max(sumi, 0); \
         tmp  = compress_saturated(sumi, 0); \
         store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sume = (sume + offset) >> 12; \
-        sume  = max(sume, 0);\
+        sume  = max(sume, 0); \
         tmp  = compress_saturated(sume, 0); \
         store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
         sump = (sump + offset) >> 12; \
-        sump  = max(sump, 0);\
+        sump  = max(sump, 0); \
         tmp  = compress_saturated(sump, 0); \
         store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0)); \
             \
 }
 
-void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
 {
     int row, col;
     int cstride =  srcStride;
@@ -302,17 +297,17 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
         for (row = 0; row < block_height; row++)
         {
             PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) row++;
-            PROCESSROW(a1, a2, a3, a4, a5, a6, a7, a0) 
+            PROCESSROW(a1, a2, a3, a4, a5, a6, a7, a0)
 
             Vec8s a8;
-            a8=a0;
-            a0=a2;
-            a1=a3;
-            a2=a4;
-            a3=a5;
-            a4=a6;
-            a5=a7;
-            a6=a8;
+            a8 = a0;
+            a0 = a2;
+            a1 = a3;
+            a2 = a4;
+            a3 = a5;
+            a4 = a6;
+            a5 = a7;
+            a6 = a8;
         }
     }
 }
@@ -606,7 +601,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
     }
 }
 
-void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height)
+void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
 {
     int row, col;
 
@@ -621,7 +616,7 @@ void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStrid
     Vec16uc vec_src0;
     Vec8s vec_offset(offset);
     Vec8s sumaL, sumaH, sumbL, sumbH, sumcL, sumcH, tmp, exp1;
-
+    Vec8s valL, valH;
     // Load Ai, ai += Ai*coefi
 
     for (row = 0; row < block_height; row++)
@@ -742,28 +737,71 @@ void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStrid
             sumcH = (sumcH + vec_offset);
 
             sumaL.store(dstA + col);                             // Store vector
-            sumbL.store(dstB + col);
-            sumcL.store(dstC + col);
             sumaH.store(dstA + col + 8);                             // Store vector
+            valL = (sumaL + IF_INTERNAL_OFFS + 32) >> 6;
+            valH = (sumaH + IF_INTERNAL_OFFS + 32) >> 6;
+            valL = min(max(valL, 0), 255);
+            valH = min(max(valH, 0), 255);
+            compress_unsafe(valL, valH).store(pDstA + row * pDstStride + col);
+
+            sumbL.store(dstB + col);
             sumbH.store(dstB + col + 8);
+            valL = (sumbL + IF_INTERNAL_OFFS + 32) >> 6;
+            valH = (sumbH + IF_INTERNAL_OFFS + 32) >> 6;
+            valL = min(max(valL, 0), 255);
+            valH = min(max(valH, 0), 255);
+            compress_unsafe(valL, valH).store(pDstB + row * pDstStride + col);
+
+            sumcL.store(dstC + col);
             sumcH.store(dstC + col + 8);
+            valL = (sumcL + IF_INTERNAL_OFFS + 32) >> 6;
+            valH = (sumcH + IF_INTERNAL_OFFS + 32) >> 6;
+            valL = min(max(valL, 0), 255);
+            valH = min(max(valH, 0), 255);
+            compress_unsafe(valL, valH).store(pDstC + row * pDstStride + col);
         }
 
-        for (; col < block_width; col++)                           // Remaining iterations
+        if (block_width - col > 0)
         {
-            vec_src0.load(src + col);
-            tmp = extend_low(vec_src0);                        // Assuming that there is no overflow (Everywhere in this function!)
-            int isuma = horizontal_add(tmp * Vec8s(-1, 4, -10, 58, 17,  -5, 1,  0));
-            int isumb = horizontal_add(tmp * Vec8s(-1, 4, -11, 40, 40, -11, 4, -1));
-            int isumc = horizontal_add(tmp * Vec8s(0, 1,  -5, 17, 58, -10, 4, -1));
-            short vala = (short)(isuma + offset) >> shift;
-            short valb = (short)(isumb + offset) >> shift;
-            short valc = (short)(isumc + offset) >> shift;
-            dstA[col] = vala;
-            dstB[col] = valb;
-            dstC[col] = valc;
-        }
+            vec_src0.load(src + block_width - 13);
+            if (block_width - col > 8)
+            {
+                tmp = extend_low(vec_src0);
+                ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + block_width - 16);
+            }
+            tmp = extend_high(vec_src0);
+            ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + block_width - 8);
 
+            for (; col < block_width; col++)                           // Remaining iterations
+            {
+                vec_src0.load(src + col);
+                tmp = extend_low(vec_src0);                        // Assuming that there is no overflow (Everywhere in this function!)
+                int isuma = horizontal_add(tmp * Vec8s(-1, 4, -10, 58, 17,  -5, 1,  0));
+                int isumb = horizontal_add(tmp * Vec8s(-1, 4, -11, 40, 40, -11, 4, -1));
+                int isumc = horizontal_add(tmp * Vec8s(0, 1,  -5, 17, 58, -10, 4, -1));
+                short vala = (short)(isuma + offset) >> shift;
+                short valb = (short)(isumb + offset) >> shift;
+                short valc = (short)(isumc + offset) >> shift;
+                dstA[col] = vala;
+                vala = (vala + IF_INTERNAL_OFFS + 32) >> 6;
+                if (vala < 0) vala = 0;
+                else if (vala > 255)
+                    vala = 255;
+                pDstA[row * pDstStride + col] = (pixel)vala;
+                dstB[col] = valb;
+                valb = (valb + IF_INTERNAL_OFFS + 32) >> 6;
+                if (valb < 0) valb = 0;
+                else if (valb > 255)
+                    valb = 255;
+                pDstB[row * pDstStride + col] = (pixel)valb;
+                dstC[col] = valc;
+                valc = (valc + IF_INTERNAL_OFFS + 32) >> 6;
+                if (valc < 0) valc = 0;
+                else if (valc > 255)
+                    valc = 255;
+                pDstC[row * pDstStride + col] = (pixel)valc;
+            }
+        }
         src += srcStride;
         dstF += dstStride;
         dstA += dstStride;

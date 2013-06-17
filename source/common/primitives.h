@@ -199,8 +199,8 @@ typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (CDECL * dct_t)(short *pSrc, short *pDst, intptr_t stride);
 typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
 typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
-typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
-typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height);
+typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height);
+typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
