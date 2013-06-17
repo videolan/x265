@@ -1754,7 +1754,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
                 v_side = v_side >> 1;
                 row0 += v_side;
                 row0 = min(max(0, row0), 255);
-                Vec16uc v_res(compress(row0, 0));
+                Vec16uc v_res(compress_unsafe(row0, 0));
                 store_partial(const_int(4), pDst, v_res);
             }
             else
@@ -2179,14 +2179,14 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
             tmp3 = blend8s<0, 8, 1, 9, 2, 10, 3, 11>(tmp1, tmp2);
             tmp4 = blend8s<4, 12, 5, 13, 6, 14, 7, 15>(tmp1, tmp2);
 
-            tmp16_1 = compress(tmp3, tmp3);
+            tmp16_1 = compress_unsafe(tmp3, tmp3);
             store_partial(const_int(4), pDst, tmp16_1);
 
             tmp2uq = reinterpret_i(tmp16_1);
             tmp2uq >>= 32;
             store_partial(const_int(4), pDst + dstStride, tmp2uq);
 
-            tmp16_1 = compress(tmp4, tmp4);
+            tmp16_1 = compress_unsafe(tmp4, tmp4);
             store_partial(const_int(4), pDst + (2 * dstStride), tmp16_1);
 
             tmp2uq = reinterpret_i(tmp16_1);
@@ -2195,10 +2195,10 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
         }
         else
         {
-            store_partial(const_int(4), pDst, compress(row11, row11));
-            store_partial(const_int(4), pDst + (dstStride), compress(row21, row21));
-            store_partial(const_int(4), pDst + (2 * dstStride), compress(row31, row31));
-            store_partial(const_int(4), pDst + (3 * dstStride), compress(row41, row41));
+            store_partial(const_int(4), pDst, compress_unsafe(row11, row11));
+            store_partial(const_int(4), pDst + (dstStride), compress_unsafe(row21, row21));
+            store_partial(const_int(4), pDst + (2 * dstStride), compress_unsafe(row31, row31));
+            store_partial(const_int(4), pDst + (3 * dstStride), compress_unsafe(row41, row41));
         }
     }
 }
@@ -2883,7 +2883,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* pDst, int dstStride, int width, int
                 row02 = ref + v_side;
                 row02 = min(max(0, row02), (1 << bitDepth) - 1);
 
-                tmp1 = compress(row01, row02);
+                tmp1 = compress_unsafe(row01, row02);
                 tmp1.store(pDst);            //row0
             }
             else
