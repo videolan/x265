@@ -37,7 +37,8 @@ protected:
 
     pixel *IP_vec_output_p, *IP_C_output_p;
 
-    int ip_t_size;
+    static const int ip_t_size = 4 * 65 * 65 * 100;
+    static const int out_size = 64 * FENC_STRIDE;
 
     bool check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt);
     bool check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref, x265::getIPredPlanar_p opt);
