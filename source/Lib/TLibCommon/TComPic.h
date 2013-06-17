@@ -68,8 +68,6 @@ private:
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
     Int*                  m_pSliceSUMap;
 
-    Int                   m_sliceGranularityForNDBFilter;
-
     Int                   m_numReorderPics[MAX_TLAYER];
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;

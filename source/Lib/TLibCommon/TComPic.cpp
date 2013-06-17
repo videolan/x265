@@ -53,7 +53,6 @@ TComPic::TComPic()
     , m_apcPicSym(NULL)
     , m_uiCurrSliceIdx(0)
     , m_pSliceSUMap(NULL)
-    , m_sliceGranularityForNDBFilter(0)
 {
     m_apcPicYuv[0] = NULL;
     m_apcPicYuv[1] = NULL;
@@ -149,8 +148,6 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt maxNumSUInLCUHeight = getNumPartInHeight();
 
-    m_sliceGranularityForNDBFilter = sliceGranularityDepth;
-
     m_pSliceSUMap = new Int[maxNumSUInLCU * numLCUInPic];
     for (UInt i = 0; i < (maxNumSUInLCU * numLCUInPic); i++)
     {
@@ -233,7 +230,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
         TComDataCU* pcCU = getCU(uiAddr);
         m_vSliceCUDataLink[0].push_back(pcCU);
 
-        createNonDBFilterInfoLCU(0, pcCU, startSU, endSU, m_sliceGranularityForNDBFilter, picWidth, picHeight);
+        createNonDBFilterInfoLCU(0, pcCU, startSU, endSU, sliceGranularityDepth, picWidth, picHeight);
     }
 
     //step 3: border availability
