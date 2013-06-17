@@ -72,8 +72,6 @@ private:
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    std::vector<std::vector<TComDataCU*> > m_vSliceCUDataLink;
-
     SEIMessages           m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 
 public:
@@ -160,8 +158,6 @@ public:
     Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
-
-    std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter(Int sliceID) { return m_vSliceCUDataLink[sliceID]; }
 
     /** transfer ownership of seis to this picture */
     void setSEIs(SEIMessages& seis) { m_SEIs = seis; }
