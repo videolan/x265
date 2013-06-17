@@ -97,7 +97,7 @@ MBDstHarness::MBDstHarness()
     memset(mbuf2, 0, mem_cmp_size);
     memset(mbuf3, 0, mem_cmp_size);
     memset(mbuf4, 0, mem_cmp_size);
-    memset(mbufidct, 0, mb_t_size):
+    memset(mbufidct, 0, mb_t_size);
 
     memset(mintbuf3, 0, mem_cmp_size);
     memset(mintbuf4, 0, mem_cmp_size);
@@ -163,8 +163,8 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
         {
 #if _DEBUG
             // redo for debug
-            ref(mbufdct + j, mbuf2, width);
-            opt(mbufdct + j, mbuf3, width);
+            ref(mbufidct + j, mbuf2, width);
+            opt(mbufidct + j, mbuf3, width);
 #endif
             return false;
         }
