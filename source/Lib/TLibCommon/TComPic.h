@@ -66,7 +66,7 @@ private:
 
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
     Int*                  m_pSliceSUMap;
-    Bool*                 m_pbValidSlice;
+
     Int                   m_sliceGranularityForNDBFilter;
     Bool                  m_bIndependentSliceBoundaryForNDBFilter;
     Bool                  m_bIndependentTileBoundaryForNDBFilter;
@@ -165,8 +165,6 @@ public:
     Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
-
-    Bool          getValidSlice(Int sliceID)  { return m_pbValidSlice[sliceID]; }
 
     Bool          getIndependentSliceBoundaryForNDBFilter()             { return m_bIndependentSliceBoundaryForNDBFilter; }
 

@@ -52,7 +52,6 @@ TComPic::TComPic()
     , m_apcPicSym(NULL)
     , m_uiCurrSliceIdx(0)
     , m_pSliceSUMap(NULL)
-    , m_pbValidSlice(NULL)
     , m_sliceGranularityForNDBFilter(0)
     , m_bIndependentSliceBoundaryForNDBFilter(false)
     , m_bIndependentTileBoundaryForNDBFilter(false)
@@ -157,12 +156,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     m_sliceGranularityForNDBFilter = sliceGranularityDepth;
     m_bIndependentTileBoundaryForNDBFilter  = (false);
 
-    m_pbValidSlice = new Bool[1];
-    m_pbValidSlice[0] = true;
-
     m_pSliceSUMap = new Int[maxNumSUInLCU * numLCUInPic];
-
-    //initialization
     for (UInt i = 0; i < (maxNumSUInLCU * numLCUInPic); i++)
     {
         m_pSliceSUMap[i] = -1;
@@ -183,109 +177,84 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     UInt currSU;
     UInt startSU, endSU;
 
-    for (Int s = 0; s < 1; s++)
+    //1st step: decide the real start address
+    startAddr = 0;
+    endAddr   = lastSliceCUAddr-1;
+
+    startLCU            = startAddr / maxNumSUInLCU;
+    firstCUInStartLCU   = startAddr % maxNumSUInLCU;
+
+    endLCU              = endAddr   / maxNumSUInLCU;
+    lastCUInEndLCU      = endAddr   % maxNumSUInLCU;
+
+    uiAddr = (startLCU);
+
+    LCUX      = getCU(uiAddr)->getCUPelX();
+    LCUY      = getCU(uiAddr)->getCUPelY();
+    LPelX     = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[firstCUInStartLCU]];
+    TPelY     = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[firstCUInStartLCU]];
+    currSU    = firstCUInStartLCU;
+
+    Bool bMoveToNextLCU = false;
+    Bool bSliceInOneLCU = (startLCU == endLCU);
+
+    while (!(LPelX < picWidth) || !(TPelY < picHeight))
     {
-        //1st step: decide the real start address
-        startAddr = 0;
-        endAddr   = lastSliceCUAddr-1;
+        currSU++;
 
-        startLCU            = startAddr / maxNumSUInLCU;
-        firstCUInStartLCU   = startAddr % maxNumSUInLCU;
-
-        endLCU              = endAddr   / maxNumSUInLCU;
-        lastCUInEndLCU      = endAddr   % maxNumSUInLCU;
-
-        uiAddr = (startLCU);
-
-        LCUX      = getCU(uiAddr)->getCUPelX();
-        LCUY      = getCU(uiAddr)->getCUPelY();
-        LPelX     = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[firstCUInStartLCU]];
-        TPelY     = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[firstCUInStartLCU]];
-        currSU    = firstCUInStartLCU;
-
-        Bool bMoveToNextLCU = false;
-        Bool bSliceInOneLCU = (startLCU == endLCU);
-
-        while (!(LPelX < picWidth) || !(TPelY < picHeight))
+        if (currSU >= maxNumSUInLCU)
         {
-            currSU++;
-
-            if (bSliceInOneLCU)
-            {
-                if (currSU > lastCUInEndLCU)
-                {
-                    m_pbValidSlice[s] = false;
-                    break;
-                }
-            }
-
-            if (currSU >= maxNumSUInLCU)
-            {
-                bMoveToNextLCU = true;
-                break;
-            }
-
-            LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
-            TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
+            bMoveToNextLCU = true;
+            break;
         }
 
-        if (!m_pbValidSlice[s])
+        LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
+        TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
+    }
+
+    if (currSU != firstCUInStartLCU)
+    {
+        if (!bMoveToNextLCU)
         {
-            continue;
+            firstCUInStartLCU = currSU;
         }
-
-        if (currSU != firstCUInStartLCU)
+        else
         {
-            if (!bMoveToNextLCU)
-            {
-                firstCUInStartLCU = currSU;
-            }
-            else
-            {
-                startLCU++;
-                firstCUInStartLCU = 0;
-                assert(startLCU < getNumCUsInFrame());
-            }
-            assert(startLCU * maxNumSUInLCU + firstCUInStartLCU < endAddr);
+            startLCU++;
+            firstCUInStartLCU = 0;
+            assert(startLCU < getNumCUsInFrame());
         }
+        assert(startLCU * maxNumSUInLCU + firstCUInStartLCU < endAddr);
+    }
 
-        //2nd step: assign NonDBFilterInfo to each processing block
-        for (UInt i = startLCU; i <= endLCU; i++)
-        {
-            startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
-            endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
+    //2nd step: assign NonDBFilterInfo to each processing block
+    for (UInt i = startLCU; i <= endLCU; i++)
+    {
+        startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
+        endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
 
-            uiAddr = (i);
+        uiAddr = (i);
 
-            TComDataCU* pcCU = getCU(uiAddr);
-            m_vSliceCUDataLink[s].push_back(pcCU);
+        TComDataCU* pcCU = getCU(uiAddr);
+        m_vSliceCUDataLink[0].push_back(pcCU);
 
-            createNonDBFilterInfoLCU(s, pcCU, startSU, endSU, m_sliceGranularityForNDBFilter, picWidth, picHeight);
-        }
+        createNonDBFilterInfoLCU(0, pcCU, startSU, endSU, m_sliceGranularityForNDBFilter, picWidth, picHeight);
     }
 
     //step 3: border availability
-    for (Int s = 0; s < 1; s++)
+    for (Int i = 0; i < m_vSliceCUDataLink[0].size(); i++)
     {
-        if (!m_pbValidSlice[s])
+        TComDataCU* pcCU = m_vSliceCUDataLink[0][i];
+        uiAddr = pcCU->getAddr();
+
+        if (pcCU->getPic() == 0)
         {
             continue;
         }
 
-        for (Int i = 0; i < m_vSliceCUDataLink[s].size(); i++)
-        {
-            TComDataCU* pcCU = m_vSliceCUDataLink[s][i];
-            uiAddr = pcCU->getAddr();
-
-            if (pcCU->getPic() == 0)
-            {
-                continue;
-            }
-
-            pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight
-                                                      , false, false, false, false
-                                                      , m_bIndependentTileBoundaryForNDBFilter);
-        }
+        pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight
+                                                    , false, false, false, false
+                                                    , m_bIndependentTileBoundaryForNDBFilter);
     }
 
     if (m_bIndependentSliceBoundaryForNDBFilter || m_bIndependentTileBoundaryForNDBFilter)
@@ -383,12 +352,6 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
  */
 Void TComPic::destroyNonDBFilterInfo()
 {
-    if (m_pbValidSlice != NULL)
-    {
-        delete[] m_pbValidSlice;
-        m_pbValidSlice = NULL;
-    }
-
     if (m_pSliceSUMap != NULL)
     {
         delete[] m_pSliceSUMap;
