@@ -218,6 +218,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 
     //2nd step: assign NonDBFilterInfo to each processing block
     std::vector<TComDataCU*> vSliceCUDataLink;
+    vSliceCUDataLink.reserve(endLCU-startLCU+1);
     for (UInt i = startLCU; i <= endLCU; i++)
     {
         startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
