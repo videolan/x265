@@ -53,15 +53,12 @@ public:
 protected:
 
     bool FindJob();
-    void generateIntermediates(int x);
     void generateReferencePlane(int idx);
 
     intptr_t     m_startPad;
     TComPicYuv  *m_reconPic;
     volatile int m_workerCount;
     volatile int m_finishedPlanes;
-    volatile int m_vplanesFinished[4];
-    volatile int m_interReady[4];
     Event        m_completionEvent;
 
     // Generate subpels for entire frame with a margin of tmpMargin
