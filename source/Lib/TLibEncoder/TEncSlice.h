@@ -84,7 +84,7 @@ public:
     Void    resetQP(TComPic* pic, x265::EncodeFrame *pcEncodeFrame, Int sliceQP, Double lambda);
 
     // compress and encode slice
-    Void    compressSlice(TComPic* rpcPic, x265::EncodeFrame* pcEncodeFrame);        ///< analysis stage of slice
+    Void    compressSlice(TComPic* pcPic, x265::EncodeFrame* pcEncodeFrame);        ///< analysis stage of slice
 
     Void    encodeSlice(TComPic*& rpcPic, TComOutputBitstream* pcSubstreams, x265::EncodeFrame* pcEncodeFrame);
 

@@ -397,7 +397,7 @@ int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
 int cntSkipCu[4], cntTotalCu[4];
 extern FILE * fp, * fp1;
 #endif
-Void TEncSlice::compressSlice(TComPic* rpcPic, EncodeFrame* pcEncodeFrame)
+Void TEncSlice::compressSlice(TComPic* pcPic, EncodeFrame* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_compressSlice);
 
@@ -424,9 +424,9 @@ Void TEncSlice::compressSlice(TComPic* rpcPic, EncodeFrame* pcEncodeFrame)
     cntIntraNxN = 0;
 #endif // if LOGGING
 
-    rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-    TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
-    xDetermineStartAndBoundingCUAddr(rpcPic, false);
+    pcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
+    TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
+    xDetermineStartAndBoundingCUAddr(pcPic, false);
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -465,7 +465,7 @@ Void TEncSlice::compressSlice(TComPic* rpcPic, EncodeFrame* pcEncodeFrame)
 #endif
     }
 
-    pcEncodeFrame->Encode(rpcPic, pcSlice);
+    pcEncodeFrame->Encode(pcPic, pcSlice);
 
     if (m_pcCfg->getWaveFrontsynchro())
     {
