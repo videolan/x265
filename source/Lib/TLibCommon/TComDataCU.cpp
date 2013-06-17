@@ -746,8 +746,6 @@ Void TComDataCU::copyCU(TComDataCU* pcCU)
     m_uiNumPartition     = pcCU->getTotalNumPart();
     m_unitSize           = pcCU->getUnitSize();
 
-    m_piSliceSUMap       = pcCU->getSliceSUMap();
-
     Int numElements = m_uiNumPartition;
     for (Int ui = 0; ui < numElements; ui++)
     {
@@ -3422,7 +3420,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
                                                      , Bool bIndependentTileBoundaryEnabled)
 {
     UInt numSUInLCU = numSUInLCUWidth * numSUInLCUHeight;
-    Int* pSliceIDMapLCU = m_piSliceSUMap;
     UInt uiLPelX, uiTPelY;
     UInt width, height;
     Bool bPicRBoundary, bPicBBoundary, bPicTBoundary, bPicLBoundary;

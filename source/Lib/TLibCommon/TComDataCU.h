@@ -151,7 +151,6 @@ private:
     Pel*          m_pcIPCMSampleCb;   ///< PCM sample buffer (Cb)
     Pel*          m_pcIPCMSampleCr;   ///< PCM sample buffer (Cr)
 
-    Int*          m_piSliceSUMap;     ///< pointer of slice ID map
     std::vector<NDBFBlockInfo> m_vNDFBlock;
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -433,15 +432,6 @@ public:
     Void          setIPCMFlag(UInt uiIdx, Bool b)     { m_pbIPCMFlag[uiIdx] = b; }
 
     Void          setIPCMFlagSubParts(Bool bIpcmFlag, UInt uiAbsPartIdx, UInt uiDepth);
-
-    /// get slice ID for SU
-    Int           getSUSliceID(UInt uiIdx)              { return m_piSliceSUMap[uiIdx]; }
-
-    /// get the pointer of slice ID map
-    Int*          getSliceSUMap()                        { return m_piSliceSUMap; }
-
-    /// set the pointer of slice ID map
-    Void          setSliceSUMap(Int *pi)                 { m_piSliceSUMap = pi; }
 
     std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      { return &m_vNDFBlock; }
 

@@ -66,7 +66,6 @@ private:
     TComPicYuv*           m_apcPicYuv[2];         //  Texture,  0:org / 1:rec
 
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
-    Int*                  m_pSliceSUMap;
 
     Int                   m_numReorderPics[MAX_TLAYER];
     Window                m_conformanceWindow;
