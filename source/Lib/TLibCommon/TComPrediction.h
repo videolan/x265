@@ -111,9 +111,6 @@ public:
     Int  getPredicBufWidth()        { return m_iPredBufStride; }
 
     Int  getPredicBufHeight()       { return m_iPredBufHeight; }
-
-    static const short m_lumaFilter[4][8];
-    static const short m_chromaFilter[8][4];
 };
 
 //! \}

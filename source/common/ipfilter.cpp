@@ -25,16 +25,12 @@
 #include "primitives.h"
 #include <cstring>
 #include <assert.h>
-#include "TLibCommon/TComPrediction.h"
+#include "TLibCommon/TComInterpolationFilter.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #pragma warning(disable: 4100) // unreferenced formal parameter
 #endif
-
-#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
-#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
-#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 namespace {
 template<int N>
@@ -310,17 +306,17 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstA, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
 {
     filterConvertShortToPel(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
 }
 
 void CDECL filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, int block_width, int block_height)
 {
     filterConvertPelToShort(bitDepth, src, srcStride, dstF, dstStride, block_width, block_height);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstB, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstC, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstB, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstA, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
+    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, dstC, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
 }
 
 }

@@ -53,26 +53,6 @@ const UChar m_aucIntraFilter[5] =
     10, //64x64
 };
 
-const short TComPrediction::m_lumaFilter[4][8] =
-{
-    {  0, 0,   0, 64,  0,   0, 0,  0 },
-    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-    { -1, 4, -11, 40, 40, -11, 4, -1 },
-    {  0, 1,  -5, 17, 58, -10, 4, -1 }
-};
-
-const short TComPrediction::m_chromaFilter[8][4] =
-{
-    {  0, 64,  0,  0 },
-    { -2, 58, 10, -2 },
-    { -4, 54, 16, -2 },
-    { -6, 46, 28, -4 },
-    { -4, 36, 36, -4 },
-    { -4, 28, 46, -6 },
-    { -2, 16, 54, -4 },
-    { -2, 10, 58, -2 }
-};
-
 // ====================================================================================================================
 // Constructor / destructor / initialize
 // ====================================================================================================================
@@ -637,25 +617,25 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
         }
         else
         {
-            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
-            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_chromaFilter[xFrac]);
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
-        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
     }
     else
     {
         Int     extStride = cxWidth;
         Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
 
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_chromaFilter[xFrac]);
-        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_if.m_chromaFilter[xFrac]);
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
 
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_chromaFilter[xFrac]);
-        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_if.m_chromaFilter[xFrac]);
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_if.m_chromaFilter[yFrac]);
 
         xFree(extY);
     }

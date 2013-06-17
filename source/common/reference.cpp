@@ -24,7 +24,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "TLibCommon/TComPrediction.h"
+#include "TLibCommon/TComInterpolationFilter.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
 #include "reference.h"
@@ -165,7 +165,7 @@ void MotionReference::generateIntermediates(int x)
     else
     {
         // Horizontal filter into intermediate buffer
-        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8, TComPrediction::m_lumaFilter[x]);
+        primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, m_lumaStride, intPtr, m_intStride, m_filterWidth + 8, m_filterHeight + 8, TComInterpolationFilter::m_lumaFilter[x]);
     }
 }
 
@@ -178,6 +178,6 @@ void MotionReference::generateReferencePlane(int idx)
     short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
     Short *intPtr = filteredBlockTmp  + m_offsetToLuma - s_tmpMarginY * m_intStride - s_tmpMarginX;
     Pel *dstPtr = (Pel *)m_lumaPlane[x][y]  - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
-    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComPrediction::m_lumaFilter[y]);
+    primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, m_intStride, (pixel*)dstPtr, m_lumaStride,  m_filterWidth, m_filterHeight, TComInterpolationFilter::m_lumaFilter[y]);
     m_reconPic->xExtendPicCompBorder(dstPtr, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
 }

@@ -55,9 +55,6 @@
  */
 class TComInterpolationFilter
 {
-    static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
-    static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
-
     static Void filterCopy(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast);
 
     template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
@@ -67,6 +64,11 @@ class TComInterpolationFilter
     static Void filterHor(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height,               Bool isLast, Short const *coeff);
     template<Int N>
     static Void filterVer(Int bitDepth, Short *src, Int srcStride, Short *dst, Int dstStride, Int width, Int height, Bool isFirst, Bool isLast, Short const *coeff);
+
+public:
+
+    static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
+    static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
 public:
 
