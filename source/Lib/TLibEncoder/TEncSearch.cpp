@@ -4009,7 +4009,6 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
         uiDistortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCbAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
         uiDistortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCrAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
 
-#if !FAST_MODE_DECISION
         m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST]);
         m_pcEntropyCoder->resetBits();
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
@@ -4021,13 +4020,6 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
 
         uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_TEMP_BEST]);
-#else // if !FAST_MODE_DECISION
-        uiBits = 0;
-        if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-            uiBits++; //TransquantBypassFlag, FL = 1
-        uiBits++; //Skip Flag, fixed length = 1
-        uiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index
-#endif // if !FAST_MODE_DECISION
 
         pcCU->getTotalBits()       = uiBits;
         pcCU->getTotalDistortion() = uiDistortion;
@@ -4073,13 +4065,10 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     xEstimateResidualQT(pcCU, 0, 0, 0, rpcYuvResi,  pcCU->getDepth(0), dCost, uiBits, uiDistortion, &uiZeroDistortion);
 
     UInt zeroResiBits;
-#if !FAST_MODE_DECISION
+
     m_pcEntropyCoder->resetBits();
     m_pcEntropyCoder->encodeQtRootCbfZero(pcCU);
     zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
-#else
-    zeroResiBits = 1; //rqt_root_cbf of fixed length, 1
-#endif
 
     UInt64 dZeroCost = m_pcRdCost->calcRdCost(uiZeroDistortion, zeroResiBits);
     if (pcCU->isLosslessCoded(0))
@@ -5085,7 +5074,6 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
     {
         pcCU->setSkipFlagSubParts(true, 0, pcCU->getDepth(0));
 
-#if !FAST_MODE_DECISION
         m_pcEntropyCoder->resetBits();
         if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
         {
@@ -5094,12 +5082,6 @@ Void  TEncSearch::xAddSymbolBitsInter(TComDataCU* pcCU, UInt uiQp, UInt uiTrMode
         m_pcEntropyCoder->encodeSkipFlag(pcCU, 0, true);
         m_pcEntropyCoder->encodeMergeIndex(pcCU, 0, true);
         ruiBits += m_pcEntropyCoder->getNumberOfWrittenBits();
-#else
-        if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-            ruiBits++; //TransquantBypassFlag, FL = 1
-        ruiBits++; //Skip Flag, fixed length = 1
-        ruiBits += pcCU->getSlice()->getMaxNumMergeCand() - 1; //TR coding, maximum mrg_index
-#endif // if !FAST_MODE_DECISION
     }
     else
     {

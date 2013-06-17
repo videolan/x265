@@ -1869,16 +1869,6 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                                                               m_ppcRecoYuvTemp[uhDepth],
                                                               (uiNoResidual ? true : false));
           /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
-#if 0//FAST_MODE_DECISION
-                    
-                    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-                    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
-                    x265_emms();
-                    rpcTempCU->getTotalDistortion() = SATD;
-                    rpcTempCU->getTotalCost()  = CALCRDCOST(rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion(),m_pcRdCost->getUiLambda());
-#endif
-
                     if (uiNoResidual == 0)
                     {
                         if (rpcTempCU->getQtRootCbf(0) == 0)
