@@ -66,9 +66,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     // variable for Early CU determination
     Bool    bSubBranch = true;
 
-    // variable for Cbf fast mode PU decision
-    Bool earlyDetectionSkipMode = false;
-
     Bool bTrySplitDQP  = true;
 
     Bool bBoundary = false;
@@ -119,15 +116,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_addSADDepth = uiDepth;
         }
 
-        if (!earlyDetectionSkipMode)
+        /*Compute Rect costs*/
+        if (m_pcEncCfg->getUseRectInter())
         {
-            /*Compute Rect costs*/
-            if (m_pcEncCfg->getUseRectInter())
-            {
-                xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);                                
-                xComputeCostInter(m_InterCU_2NxN[uiDepth], SIZE_2NxN, 2);
-            }      
-        }
+            xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);                                
+            xComputeCostInter(m_InterCU_2NxN[uiDepth], SIZE_2NxN, 2);
+        }      
+        
 
         /* Disable recursive analysis for whole CUs temporarily*/
         bSubBranch = false;
