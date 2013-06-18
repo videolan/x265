@@ -62,7 +62,7 @@ public:
 
     Void   setActivity(Double d) { m_dActivity = d; }
 
-    Double getActivity()           { return m_dActivity; }
+    Double getActivity()         { return m_dActivity; }
 };
 
 /// Local image characteristics for CUs on a specific depth
@@ -99,7 +99,7 @@ public:
 
     Double                 getAvgActivity()        { return m_dAvgActivity;        }
 
-    Void                   setAvgActivity(Double d)  { m_dAvgActivity = d; }
+    Void                   setAvgActivity(Double d) { m_dAvgActivity = d; }
 };
 
 /// Picture class including local image characteristics information for QP adaptation
