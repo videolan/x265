@@ -344,9 +344,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
 
         //  Slice data initialization
-        pcPic->clearSliceBuffer();
         pcSliceEncoder->setSliceIdx(0);
-
         pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, m_iGopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
@@ -586,7 +584,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         {
             pcSlice->setMvdL1ZeroFlag(false);
         }
-        pcPic->getSlice(pcSlice->getSliceIdx())->setMvdL1ZeroFlag(pcSlice->getMvdL1ZeroFlag());
+        pcPic->getSlice()->setMvdL1ZeroFlag(pcSlice->getMvdL1ZeroFlag());
 
         Double lambda            = 0.0;
         Int actualHeadBits       = 0;
@@ -597,7 +595,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         if (m_pcCfg->getUseRateCtrl())
         {
             Int frameLevel = m_pcRateCtrl->getRCSeq()->getGOPID2Level(iGOPid);
-            if (pcPic->getSlice(0)->getSliceType() == I_SLICE)
+            if (pcPic->getSlice()->getSliceType() == I_SLICE)
             {
                 frameLevel = 0;
             }
@@ -680,7 +678,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         pcSlice->setNextSlice(false);
         pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
-        pcSlice = pcPic->getSlice(0);
+        pcSlice = pcPic->getSlice();
 
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
         if (m_pcCfg->getSaoLcuBasedOptimization() && m_pcCfg->getSaoLcuBoundary())
@@ -698,16 +696,10 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         }
         pcLoopFilter->loopFilterPic(pcPic);
 
-        pcSlice = pcPic->getSlice(0);
+        pcSlice = pcPic->getSlice();
         if (pcSlice->getSPS()->getUseSAO())
         {
             pcPic->createNonDBFilterInfo(pcSlice->getSliceCurEndCUAddr(), 0, bLFCrossTileBoundary);
-        }
-
-        pcSlice = pcPic->getSlice(0);
-
-        if (pcSlice->getSPS()->getUseSAO())
-        {
             pcSAO->createPicSaoInfo(pcPic);
         }
 
@@ -949,7 +941,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         /* use the main bitstream buffer for storing the marshaled picture */
         pcEntropyCoder->setBitstream(NULL);
 
-        pcSlice = pcPic->getSlice(0);
+        pcSlice = pcPic->getSlice();
         if (pcSlice->getSPS()->getUseSAO())
         {
             // set entropy coder for RD
@@ -964,28 +956,25 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
                 SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
-                pcSAO->SAOProcess(&cSaoParam, pcPic->getSlice(0)->getLambdaLuma(), pcPic->getSlice(0)->getLambdaChroma(), pcPic->getSlice(0)->getDepth());
+                pcSAO->SAOProcess(&cSaoParam, pcPic->getSlice()->getLambdaLuma(), pcPic->getSlice()->getLambdaChroma(), pcPic->getSlice()->getDepth());
                 pcSAO->endSaoEnc();
                 pcSAO->PCMLFDisableProcess(pcPic);
             }
 
-            for (Int s = 0; s < uiNumSlices; s++)
+            if (pcSlice->getSPS()->getUseSAO())
             {
-                if (pcSlice->getSPS()->getUseSAO())
-                {
-                    pcPic->getSlice(s)->setSaoEnabledFlag((pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0] == 1) ? true : false);
-                }
+                pcPic->getSlice()->setSaoEnabledFlag((pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0] == 1) ? true : false);
             }
         }
 
         pcSlice->setNextSlice(false);
-        pcSlice = pcPic->getSlice(0);
+        pcSlice = pcPic->getSlice();
         pcSliceEncoder->setSliceIdx(0);
 
         // Reconstruction slice
         pcSlice->setNextSlice(true);
-        pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
-        pcSlice->setRPSidx(pcPic->getSlice(0)->getRPSidx());
+        pcSlice->setRPS(pcPic->getSlice()->getRPS());
+        pcSlice->setRPSidx(pcPic->getSlice()->getRPSidx());
         pcSliceEncoder->xDetermineStartAndBoundingCUAddr(pcPic, true);
 
         uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
@@ -1595,7 +1584,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     //===== add PSNR =====
     m_pcEncTop->m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
-    TComSlice*  pcSlice = pcPic->getSlice(0);
+    TComSlice*  pcSlice = pcPic->getSlice();
     if (pcSlice->isIntra())
     {
         m_pcEncTop->m_gcAnalyzeI.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
@@ -1769,8 +1758,8 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice, TComList<TComPic*
         {
             pcPic = *iterPic;
             if ((getLSB(pcPic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
-                (pcPic->getSlice(0)->isReferenced())     &&                          // Reference picture
-                (pcPic->getPOC() != longtermPicsPoc[i]))                              // Not the LTRP itself
+                (pcPic->getSlice()->isReferenced()) &&                                  // Reference picture
+                (pcPic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
             {
                 mSBPresentFlag[i] = true;
                 break;
@@ -1845,7 +1834,7 @@ Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
     Pel* Rec    = pcPicYuvRec->getLumaAddr(0);
     Pel* tempRec = Rec;
     Int  stride = pcPicYuvRec->getStride();
-    UInt log2maxTB = pcPic->getSlice(0)->getSPS()->getQuadtreeTULog2MaxSize();
+    UInt log2maxTB = pcPic->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     UInt maxTBsize = (1 << log2maxTB);
     const UInt minBlockArtSize = 8;
     const UInt picWidth = pcPicYuvRec->getWidth();
@@ -1858,7 +1847,7 @@ Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
     UInt rowIdx = 0;
     Pel p0, p1, p2, q0, q1, q2;
 
-    Int qp = pcPic->getSlice(0)->getSliceQp();
+    Int qp = pcPic->getSlice()->getSliceQp();
     Int bitdepthScale = 1 << (g_bitDepthY - 8);
     Int beta = TComLoopFilter::getBeta(qp) * bitdepthScale;
     const Int thr2 = (beta >> 2);
@@ -1941,23 +1930,17 @@ Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
     {
         avgSAD >>= 9;
         Int offset = Clip3(2, 6, (Int)avgSAD);
-        for (Int i = 0; i < uiNumSlices; i++)
-        {
-            pcPic->getSlice(i)->setDeblockingFilterOverrideFlag(true);
-            pcPic->getSlice(i)->setDeblockingFilterDisable(false);
-            pcPic->getSlice(i)->setDeblockingFilterBetaOffsetDiv2(offset);
-            pcPic->getSlice(i)->setDeblockingFilterTcOffsetDiv2(offset);
-        }
+        pcPic->getSlice()->setDeblockingFilterOverrideFlag(true);
+        pcPic->getSlice()->setDeblockingFilterDisable(false);
+        pcPic->getSlice()->setDeblockingFilterBetaOffsetDiv2(offset);
+        pcPic->getSlice()->setDeblockingFilterTcOffsetDiv2(offset);
     }
     else
     {
-        for (Int i = 0; i < uiNumSlices; i++)
-        {
-            pcPic->getSlice(i)->setDeblockingFilterOverrideFlag(false);
-            pcPic->getSlice(i)->setDeblockingFilterDisable(pcPic->getSlice(i)->getPPS()->getPicDisableDeblockingFilterFlag());
-            pcPic->getSlice(i)->setDeblockingFilterBetaOffsetDiv2(pcPic->getSlice(i)->getPPS()->getDeblockingFilterBetaOffsetDiv2());
-            pcPic->getSlice(i)->setDeblockingFilterTcOffsetDiv2(pcPic->getSlice(i)->getPPS()->getDeblockingFilterTcOffsetDiv2());
-        }
+        pcPic->getSlice()->setDeblockingFilterOverrideFlag(false);
+        pcPic->getSlice()->setDeblockingFilterDisable(pcPic->getSlice()->getPPS()->getPicDisableDeblockingFilterFlag());
+        pcPic->getSlice()->setDeblockingFilterBetaOffsetDiv2(pcPic->getSlice()->getPPS()->getDeblockingFilterBetaOffsetDiv2());
+        pcPic->getSlice()->setDeblockingFilterTcOffsetDiv2(pcPic->getSlice()->getPPS()->getDeblockingFilterTcOffsetDiv2());
     }
 
     free(colSAD);

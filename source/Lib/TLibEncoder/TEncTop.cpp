@@ -301,7 +301,7 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
         for (Int i = 0; i < iSize; i++)
         {
             rpcPic = *(iterPic++);
-            if (rpcPic->getSlice(0)->isReferenced() == false)
+            if (rpcPic->getSlice()->isReferenced() == false)
             {
                 break;
             }
@@ -329,10 +329,7 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
         }
         m_cListPic.pushBack(rpcPic);
     }
-    m_iPOCLast++;
-
-    rpcPic->getSlice(0)->setPOC(m_iPOCLast);
-    // mark it should be extended
+    rpcPic->getSlice()->setPOC(++m_iPOCLast);
     rpcPic->getPicYuvRec()->setBorderExtension(false);
 }
 

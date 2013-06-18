@@ -108,7 +108,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
     Double dQP;
     Double dLambda;
 
-    TComSlice* pcSlice = pcPic->getSlice(0);
+    TComSlice* pcSlice = pcPic->getSlice();
     pcSlice->setSPS(pSPS);
     pcSlice->setPPS(pPPS);
     pcSlice->setSliceBits(0);
@@ -335,7 +335,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
 
 Void TEncSlice::resetQP(TComPic* pic, EncodeFrame *pcEncodeFrame, Int sliceQP, Double lambda)
 {
-    TComSlice* slice = pic->getSlice(0);
+    TComSlice* slice = pic->getSlice();
 
     // store lambda
     slice->setSliceQp(sliceQP);
@@ -424,8 +424,8 @@ Void TEncSlice::compressSlice(TComPic* pcPic, EncodeFrame* pcEncodeFrame)
     cntIntraNxN = 0;
 #endif // if LOGGING
 
-    pcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-    TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = pcPic->getSlice();
+    pcSlice->setSliceSegmentBits(0);
     xDetermineStartAndBoundingCUAddr(pcPic, false);
 
     //------------------------------------------------------------------------------
@@ -505,7 +505,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, E
     UInt       uiCUAddr;
     UInt       uiStartCUAddr;
     UInt       uiBoundingCUAddr;
-    TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = pcPic->getSlice();
 
     // choose entropy coder
     TEncEntropy *pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
@@ -691,7 +691,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, E
  */
 Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice)
 {
-    TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
+    TComSlice* pcSlice = rpcPic->getSlice();
     UInt uiBoundingCUAddrSlice;
 
     UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();

@@ -646,7 +646,7 @@ Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntrop
     m_pcEntropyCoder = pcEntropyCoder;
 
     m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder;
-    m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcPic->getSlice(0));
+    m_pcEntropyCoder->setEntropyCoder(m_pcRDGoOnSbacCoder, pcPic->getSlice());
     m_pcEntropyCoder->resetEntropy();
     m_pcEntropyCoder->resetBits();
 
@@ -973,7 +973,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
 {
     Int x, y;
     TComDataCU *pTmpCu = m_pcPic->getCU(iAddr);
-    TComSPS *pTmpSPS =  m_pcPic->getSlice(0)->getSPS();
+    TComSPS *pTmpSPS =  m_pcPic->getSlice()->getSPS();
 
     Pel* pOrg;
     Pel* pRec;
@@ -1244,7 +1244,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
 {
     Int addr, yCbCr;
     Int x, y;
-    TComSPS *pTmpSPS =  pcPic->getSlice(0)->getSPS();
+    TComSPS *pTmpSPS =  pcPic->getSlice()->getSPS();
 
     Pel* pOrg;
     Pel* pRec;

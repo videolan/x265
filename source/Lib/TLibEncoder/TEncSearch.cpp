@@ -5113,7 +5113,7 @@ UInt  TEncSearch::estimateHeaderBits(TComDataCU* pcCU, UInt uiAbsPartIdx)
     UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >>  pcCU->getDepth(0)) - 1;
 
-    TComSlice * pcSlice = pcCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = pcCU->getPic()->getSlice();
     if ((uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
         m_pcEntropyCoder->encodeSplitFlag(pcCU, uiAbsPartIdx,  pcCU->getDepth(0));

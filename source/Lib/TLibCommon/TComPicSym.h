@@ -70,11 +70,10 @@ private:
     UInt          m_uiNumPartInHeight;
     UInt          m_uiNumCUsInFrame;
 
-    TComSlice**   m_apcTComSlice;
-    UInt          m_uiNumAllocatedSlice;
+    TComSlice*    m_pcTComSlice;
     TComDataCU**  m_apcTComDataCU;      ///< array of CU data
 
-    SAOParam *m_saoParam;
+    SAOParam*     m_saoParam;
 
 public:
 
@@ -82,7 +81,8 @@ public:
     Void        destroy();
 
     TComPicSym();
-    TComSlice*  getSlice(UInt i)          { return m_apcTComSlice[i]; }
+
+    TComSlice*  getSlice()                { return m_pcTComSlice; }
 
     UInt        getFrameWidthInCU()       { return m_uiWidthInCU; }
 
@@ -94,14 +94,8 @@ public:
 
     UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame; }
 
-    TComDataCU*&  getCU(UInt uiCUAddr)  { return m_apcTComDataCU[uiCUAddr]; }
+    TComDataCU*&  getCU(UInt uiCUAddr)    { return m_apcTComDataCU[uiCUAddr]; }
 
-    Void        setSlice(TComSlice* p, UInt i) { m_apcTComSlice[i] = p; }
-
-    UInt        getNumAllocatedSlice()    { return m_uiNumAllocatedSlice; }
-
-    Void        allocateNewSlice();
-    Void        clearSliceBuffer();
     UInt        getNumPartition()         { return m_uiNumPartitions; }
 
     UInt        getNumPartInWidth()       { return m_uiNumPartInWidth; }

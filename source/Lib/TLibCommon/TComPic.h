@@ -99,9 +99,9 @@ public:
 
     TComPicSym*   getPicSym()             { return m_pcPicSym; }
 
-    TComSlice*    getSlice(Int i)         { return m_pcPicSym->getSlice(i); }
+    TComSlice*    getSlice()              { return m_pcPicSym->getSlice(); }
 
-    Int           getPOC()                { return m_pcPicSym->getSlice(0)->getPOC(); }
+    Int           getPOC()                { return m_pcPicSym->getSlice()->getPOC(); }
 
     TComDataCU*   getCU(UInt uiCUAddr)    { return m_pcPicSym->getCU(uiCUAddr); }
 
@@ -138,12 +138,6 @@ public:
     Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer]; }
 
     Void          compressMotion();
-
-    UInt          getNumAllocatedSlice()  { return m_pcPicSym->getNumAllocatedSlice(); }
-
-    Void          allocateNewSlice()      { m_pcPicSym->allocateNewSlice(); }
-
-    Void          clearSliceBuffer()      { m_pcPicSym->clearSliceBuffer(); }
 
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 

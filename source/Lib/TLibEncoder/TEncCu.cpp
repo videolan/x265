@@ -643,7 +643,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
-    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice();
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
@@ -1172,7 +1172,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     Int iQP = m_pcEncCfg->getUseRateCtrl() ? m_pcRateCtrl->getRCQP() : rpcTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
-    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = rpcTempCU->getPic()->getSlice();
     Bool bSliceEnd = (pcSlice->getSliceCurEndCUAddr() > rpcTempCU->getSCUAddr() && pcSlice->getSliceCurEndCUAddr() < rpcTempCU->getSCUAddr() + rpcTempCU->getTotalNumPart());
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
     // We need to split, so don't try these modes.
@@ -1263,7 +1263,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
 
                 //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-                if (pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth))
+                if (pcPic->getSlice()->getSPS()->getAMPAcc(uiDepth))
                 {
                     Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
                     Bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
@@ -1372,9 +1372,9 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 }
             }
             // test PCM
-            if (pcPic->getSlice(0)->getSPS()->getUsePCM()
-                && rpcTempCU->getWidth(0) <= (1 << pcPic->getSlice(0)->getSPS()->getPCMLog2MaxSize())
-                && rpcTempCU->getWidth(0) >= (1 << pcPic->getSlice(0)->getSPS()->getPCMLog2MinSize()))
+            if (pcPic->getSlice()->getSPS()->getUsePCM()
+                && rpcTempCU->getWidth(0) <= (1 << pcPic->getSlice()->getSPS()->getPCMLog2MaxSize())
+                && rpcTempCU->getWidth(0) >= (1 << pcPic->getSlice()->getSPS()->getPCMLog2MinSize()))
             {
                 UInt uiRawBits = (2 * g_bitDepthY + g_bitDepthC) * rpcBestCU->getWidth(0) * rpcBestCU->getHeight(0) / 2;
                 UInt uiBestBits = rpcBestCU->getTotalBits();
@@ -1602,7 +1602,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 {
     TComPic* pcPic = pcCU->getPic();
-    TComSlice * pcSlice = pcCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = pcCU->getPic()->getSlice();
 
     //Calculate end address
     UInt uiCUAddr = pcCU->getSCUAddr() + uiAbsPartIdx;
@@ -1718,7 +1718,7 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
 
-    TComSlice * pcSlice = pcCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = pcCU->getPic()->getSlice();
 
     // If slice start is within this cu...
 
@@ -2187,7 +2187,7 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
 {
     UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
     UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
-    TComSlice * pcSlice = pcCU->getPic()->getSlice(0);
+    TComSlice * pcSlice = pcCU->getPic()->getSlice();
     Bool bSliceEnd   = pcSlice->getSliceCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
         pcSlice->getSliceCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
 

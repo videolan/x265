@@ -219,7 +219,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         {
             wpACDCParam *currWeightACDCParam, *refWeightACDCParam;
             slice->getWpAcDcParam(currWeightACDCParam);
-            slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
+            slice->getRefPic(eRefPicList, refIdxTemp)->getSlice()->getWpAcDcParam(refWeightACDCParam);
 
             for (Int comp = 0; comp < 3; comp++)
             {

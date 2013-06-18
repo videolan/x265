@@ -57,8 +57,7 @@ TComPicSym::TComPicSym()
     , m_uiNumPartInWidth(0)
     , m_uiNumPartInHeight(0)
     , m_uiNumCUsInFrame(0)
-    , m_apcTComSlice(NULL)
-    , m_uiNumAllocatedSlice(0)
+    , m_pcTComSlice(NULL)
     , m_apcTComDataCU(NULL)
 {}
 
@@ -84,18 +83,7 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
     m_uiNumCUsInFrame   = m_uiWidthInCU * m_uiHeightInCU;
     m_apcTComDataCU     = new TComDataCU*[m_uiNumCUsInFrame];
 
-    if (m_uiNumAllocatedSlice > 0)
-    {
-        for (i = 0; i < m_uiNumAllocatedSlice; i++)
-        {
-            delete m_apcTComSlice[i];
-        }
-
-        delete [] m_apcTComSlice;
-    }
-    m_apcTComSlice      = new TComSlice*[m_uiNumCUsInFrame * m_uiNumPartitions];
-    m_apcTComSlice[0]   = new TComSlice;
-    m_uiNumAllocatedSlice = 1;
+    m_pcTComSlice      = new TComSlice;
     for (i = 0; i < m_uiNumCUsInFrame; i++)
     {
         m_apcTComDataCU[i] = new TComDataCU;
@@ -107,16 +95,11 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
 
 Void TComPicSym::destroy()
 {
-    if (m_uiNumAllocatedSlice > 0)
+    if (m_pcTComSlice)
     {
-        for (Int i = 0; i < m_uiNumAllocatedSlice; i++)
-        {
-            delete m_apcTComSlice[i];
-        }
-
-        delete [] m_apcTComSlice;
+        delete m_pcTComSlice;
     }
-    m_apcTComSlice = NULL;
+    m_pcTComSlice = NULL;
 
     for (Int i = 0; i < m_uiNumCUsInFrame; i++)
     {
@@ -134,28 +117,6 @@ Void TComPicSym::destroy()
         delete m_saoParam;
         m_saoParam = NULL;
     }
-}
-
-Void TComPicSym::allocateNewSlice()
-{
-    m_apcTComSlice[m_uiNumAllocatedSlice++] = new TComSlice;
-    if (m_uiNumAllocatedSlice >= 2)
-    {
-        m_apcTComSlice[m_uiNumAllocatedSlice - 1]->copySliceInfo(m_apcTComSlice[m_uiNumAllocatedSlice - 2]);
-        m_apcTComSlice[m_uiNumAllocatedSlice - 1]->initSlice();
-    }
-}
-
-Void TComPicSym::clearSliceBuffer()
-{
-    UInt i;
-
-    for (i = 1; i < m_uiNumAllocatedSlice; i++)
-    {
-        delete m_apcTComSlice[i];
-    }
-
-    m_uiNumAllocatedSlice = 1;
 }
 
 Void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
