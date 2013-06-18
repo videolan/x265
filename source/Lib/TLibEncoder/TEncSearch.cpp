@@ -2852,30 +2852,28 @@ Void TEncSearch::xMergeEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUId
     ruiCost = MAX_UINT;
     for (UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
     {
+        UInt uiCostCand = MAX_UINT;
+        UInt uiBitsCand = 0;
+
+        PartSize ePartSize = pcCU->getPartitionSize(0);
+
+        pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(cMvFieldNeighbours[0 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
+        pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
+
+        xGetInterPredictionError(pcCU, pcYuvOrg, iPUIdx, uiCostCand, m_pcEncCfg->getUseHADME());
+        uiBitsCand = uiMergeCand + 1;
+        if (uiMergeCand == m_pcEncCfg->getMaxNumMergeCand() - 1)
         {
-            UInt uiCostCand = MAX_UINT;
-            UInt uiBitsCand = 0;
-
-            PartSize ePartSize = pcCU->getPartitionSize(0);
-
-            pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(cMvFieldNeighbours[0 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
-            pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
-
-            xGetInterPredictionError(pcCU, pcYuvOrg, iPUIdx, uiCostCand, m_pcEncCfg->getUseHADME());
-            uiBitsCand = uiMergeCand + 1;
-            if (uiMergeCand == m_pcEncCfg->getMaxNumMergeCand() - 1)
-            {
-                uiBitsCand--;
-            }
-            uiCostCand = uiCostCand + m_pcRdCost->getCost(uiBitsCand);
-            if (uiCostCand < ruiCost)
-            {
-                ruiCost = uiCostCand;
-                pacMvField[0] = cMvFieldNeighbours[0 + 2 * uiMergeCand];
-                pacMvField[1] = cMvFieldNeighbours[1 + 2 * uiMergeCand];
-                uiInterDir = uhInterDirNeighbours[uiMergeCand];
-                uiMergeIndex = uiMergeCand;
-            }
+            uiBitsCand--;
+        }
+        uiCostCand = uiCostCand + m_pcRdCost->getCost(uiBitsCand);
+        if (uiCostCand < ruiCost)
+        {
+            ruiCost = uiCostCand;
+            pacMvField[0] = cMvFieldNeighbours[0 + 2 * uiMergeCand];
+            pacMvField[1] = cMvFieldNeighbours[1 + 2 * uiMergeCand];
+            uiInterDir = uhInterDirNeighbours[uiMergeCand];
+            uiMergeIndex = uiMergeCand;
         }
     }
 }
