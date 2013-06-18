@@ -132,8 +132,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 }
 
 #if !defined(ENABLE_ASM_PRIMITIVES)
-extern "C"
-void x265_cpu_emms(void)
-{}
-
+// the intrinsic primitives will not use MMX instructions, so if assembly
+// is disabled there should be no reason to use EMMS.
+extern "C" void x265_cpu_emms(void) {}
 #endif
