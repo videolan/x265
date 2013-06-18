@@ -209,31 +209,18 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     }
 
     //2nd step: assign NonDBFilterInfo to each processing block
-    std::vector<TComDataCU*> vSliceCUDataLink;
-    vSliceCUDataLink.reserve(endLCU-startLCU+1);
     for (UInt i = startLCU; i <= endLCU; i++)
     {
         startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
         endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
-
         TComDataCU* pcCU = getCU(i);
-        vSliceCUDataLink.push_back(pcCU);
-
         createNonDBFilterInfoLCU(0, pcCU, startSU, endSU, sliceGranularityDepth, picWidth, picHeight);
     }
 
     //step 3: border availability
-    for (Int i = 0; i < vSliceCUDataLink.size(); i++)
+    for (UInt i = startLCU; i <= endLCU; i++)
     {
-        TComDataCU* pcCU = vSliceCUDataLink[i];
-        uiAddr = pcCU->getAddr();
-
-        if (pcCU->getPic() == 0)
-        {
-            continue;
-        }
-
-        pcCU->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight, false, false, false, false, false);
+        getCU(i)->setNDBFilterBlockBorderAvailability(numLCUsInPicWidth, numLCUsInPicHeight, maxNumSUInLCUWidth, maxNumSUInLCUHeight, picWidth, picHeight, false, false, false, false, false);
     }
 }
 
