@@ -487,9 +487,10 @@ void CDECL convert32to16(int *psOrg, short *piDst, int num)
 
 void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 {
+    int round = 1 << (shift-1);
     for (int i = 0; i < num; i++)
     {
-        piDst[i] = (short)(psOrg[i] >> shift);
+        piDst[i] = (short)((psOrg[i] + round) >> shift);
     }
 }
 
