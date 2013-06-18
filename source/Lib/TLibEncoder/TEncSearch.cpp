@@ -2748,21 +2748,12 @@ Void TEncSearch::IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPr
 
 Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, UInt& ruiErr, Bool bHadamard)
 {
+    UInt uiAbsPartIdx;
+    Int iWidth, iHeight;
     motionCompensation(pcCU, &m_tmpYuvPred, REF_PIC_LIST_X, iPartIdx);
-    UInt uiAbsPartIdx = 0;
-    Int iWidth = 0;
-    Int iHeight = 0;
     pcCU->getPartIndexAndSize(iPartIdx, uiAbsPartIdx, iWidth, iHeight);
-
-    DistParam cDistParam;
-
-    cDistParam.bApplyWeight = false;
-
-    m_pcRdCost->setDistParam(cDistParam, g_bitDepthY,
-                             pcYuvOrg->getLumaAddr(uiAbsPartIdx), pcYuvOrg->getStride(),
-                             m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride(),
-                             iWidth, iHeight, m_pcEncCfg->getUseHADME());
-    ruiErr = cDistParam.DistFunc(&cDistParam);
+    ruiErr = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride());
+    x265_emms();
 }
 
 /** estimation of best merge coding
