@@ -54,18 +54,18 @@
 class TComPic
 {
 private:
+    TComPicSym*           m_pcPicSym;             // Symbols
+    TComPicYuv*           m_pcPicYuvOrg;
+    TComPicYuv*           m_pcPicYuvRec;
+
+    Window                m_conformanceWindow;
+    Window                m_defaultDisplayWindow;
 
     UInt                  m_uiTLayer;             // Temporal layer
     Bool                  m_bUsedByCurr;          // Used by current picture
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
-    TComPicSym*           m_pcPicSym;             // Symbols
-    TComPicYuv*           m_pcPicYuvOrg;
-    TComPicYuv*           m_pcPicYuvRec;
-
     Int                   m_numReorderPics[MAX_TLAYER];
-    Window                m_conformanceWindow;
-    Window                m_defaultDisplayWindow;
 
 public:
 
