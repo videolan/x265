@@ -38,10 +38,6 @@
 #ifndef __TENCGOP__
 #define __TENCGOP__
 
-#include <list>
-
-#include <stdlib.h>
-
 #include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComBitCounter.h"
