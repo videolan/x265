@@ -62,8 +62,8 @@ private:
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
     TComPicSym*           m_pcPicSym;             // Symbols
-
-    TComPicYuv*           m_apcPicYuv[2];         // Texture,  0:org / 1:rec
+    TComPicYuv*           m_pcPicYuvOrg;
+    TComPicYuv*           m_pcPicYuvRec;
 
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
 
@@ -97,19 +97,19 @@ public:
 
     Void          setCheckLTMSBPresent(Bool b) { m_bCheckLTMSB = b; }
 
-    Bool          getCheckLTMSBPresent() { return m_bCheckLTMSB; }
+    Bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
 
-    TComPicSym*   getPicSym()           { return m_pcPicSym; }
+    TComPicSym*   getPicSym()             { return m_pcPicSym; }
 
-    TComSlice*    getSlice(Int i)       { return m_pcPicSym->getSlice(i); }
+    TComSlice*    getSlice(Int i)         { return m_pcPicSym->getSlice(i); }
 
-    Int           getPOC()              { return m_pcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
+    Int           getPOC()                { return m_pcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
 
-    TComDataCU*   getCU(UInt uiCUAddr)  { return m_pcPicSym->getCU(uiCUAddr); }
+    TComDataCU*   getCU(UInt uiCUAddr)    { return m_pcPicSym->getCU(uiCUAddr); }
 
-    TComPicYuv*   getPicYuvOrg()        { return m_apcPicYuv[0]; }
+    TComPicYuv*   getPicYuvOrg()          { return m_pcPicYuvOrg; }
 
-    TComPicYuv*   getPicYuvRec()        { return m_apcPicYuv[1]; }
+    TComPicYuv*   getPicYuvRec()          { return m_pcPicYuvRec; }
 
     UInt          getNumCUsInFrame()      { return m_pcPicSym->getNumberOfCUsInFrame(); }
 
@@ -131,24 +131,25 @@ public:
 
     UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
 
-    Int           getStride()           { return m_apcPicYuv[1]->getStride(); }
+    Int           getStride()             { return m_pcPicYuvRec->getStride(); }
 
-    Int           getCStride()          { return m_apcPicYuv[1]->getCStride(); }
+    Int           getCStride()            { return m_pcPicYuvRec->getCStride(); }
 
     Void          setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
 
     Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer]; }
 
     Void          compressMotion();
-    UInt          getCurrSliceIdx()            { return m_uiCurrSliceIdx; }
 
-    Void          setCurrSliceIdx(UInt i)      { m_uiCurrSliceIdx = i; }
+    UInt          getCurrSliceIdx()       { return m_uiCurrSliceIdx; }
 
-    UInt          getNumAllocatedSlice()       { return m_pcPicSym->getNumAllocatedSlice(); }
+    Void          setCurrSliceIdx(UInt i) { m_uiCurrSliceIdx = i; }
 
-    Void          allocateNewSlice()           { m_pcPicSym->allocateNewSlice(); }
+    UInt          getNumAllocatedSlice()  { return m_pcPicSym->getNumAllocatedSlice(); }
 
-    Void          clearSliceBuffer()           { m_pcPicSym->clearSliceBuffer(); }
+    Void          allocateNewSlice()      { m_pcPicSym->allocateNewSlice(); }
+
+    Void          clearSliceBuffer()      { m_pcPicSym->clearSliceBuffer(); }
 
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 

@@ -51,10 +51,10 @@ TComPic::TComPic()
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
     , m_pcPicSym(NULL)
+    , m_pcPicYuvOrg(NULL)
+    , m_pcPicYuvRec(NULL)
     , m_uiCurrSliceIdx(0)
 {
-    m_apcPicYuv[0] = NULL;
-    m_apcPicYuv[1] = NULL;
 }
 
 TComPic::~TComPic()
@@ -68,11 +68,11 @@ Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight,
     m_pcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     if (!bIsVirtual)
     {
-        m_apcPicYuv[0] = new TComPicYuv;
-        m_apcPicYuv[0]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+        m_pcPicYuvOrg = new TComPicYuv;
+        m_pcPicYuvOrg->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     }
-    m_apcPicYuv[1] = new TComPicYuv;
-    m_apcPicYuv[1]->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_pcPicYuvRec = new TComPicYuv;
+    m_pcPicYuvRec->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
     // there are no SEI messages associated with this picture initially
     if (m_SEIs.size() > 0)
@@ -100,18 +100,18 @@ Void TComPic::destroy()
         m_pcPicSym = NULL;
     }
 
-    if (m_apcPicYuv[0])
+    if (m_pcPicYuvOrg)
     {
-        m_apcPicYuv[0]->destroy();
-        delete m_apcPicYuv[0];
-        m_apcPicYuv[0] = NULL;
+        m_pcPicYuvOrg->destroy();
+        delete m_pcPicYuvOrg;
+        m_pcPicYuvOrg = NULL;
     }
 
-    if (m_apcPicYuv[1])
+    if (m_pcPicYuvRec)
     {
-        m_apcPicYuv[1]->destroy();
-        delete m_apcPicYuv[1];
-        m_apcPicYuv[1] = NULL;
+        m_pcPicYuvRec->destroy();
+        delete m_pcPicYuvRec;
+        m_pcPicYuvRec = NULL;
     }
 
     deleteSEIs(m_SEIs);
