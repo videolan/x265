@@ -65,6 +65,9 @@ protected:
     static const int s_tmpMarginX = 4;
     static const int s_tmpMarginY = 4;
 
+    static const int s_intMarginX = 0;    // Extra margin for horizontal filter
+    static const int s_intMarginY = 4;
+
     int         m_intStride;
     intptr_t    m_extendOffset;
     intptr_t    m_offsetToLuma;
@@ -74,7 +77,6 @@ protected:
 
     MotionReference& operator =(const MotionReference&);
 };
-
 }
 
 #endif // ifndef __REFERENCE__
