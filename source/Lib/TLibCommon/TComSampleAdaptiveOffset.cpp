@@ -547,37 +547,7 @@ Void TComSampleAdaptiveOffset::destroyPicSaoInfo()
  */
 Void TComSampleAdaptiveOffset::processSaoCu(Int iAddr, Int iSaoType, Int iYCbCr)
 {
-    if (!m_bUseNIF)
-    {
-        processSaoCuOrg(iAddr, iSaoType, iYCbCr);
-    }
-    else
-    {
-        Int  isChroma = (iYCbCr != 0) ? 1 : 0;
-        Int  stride   = (iYCbCr != 0) ? (m_pcPic->getCStride()) : (m_pcPic->getStride());
-        Pel* pPicRest = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr);
-        Pel* pPicDec  = getPicYuvAddr(m_pcYuvTmp, iYCbCr);
-
-        std::vector<NDBFBlockInfo>& vFilterBlocks = *(m_pcPic->getCU(iAddr)->getNDBFilterBlocks());
-
-        //variables
-        UInt  xPos, yPos, width, height;
-        Bool* pbBorderAvail;
-        UInt  posOffset;
-
-        for (Int i = 0; i < vFilterBlocks.size(); i++)
-        {
-            xPos        = vFilterBlocks[i].posX   >> isChroma;
-            yPos        = vFilterBlocks[i].posY   >> isChroma;
-            width       = vFilterBlocks[i].width  >> isChroma;
-            height      = vFilterBlocks[i].height >> isChroma;
-            pbBorderAvail = vFilterBlocks[i].isBorderAvailable;
-
-            posOffset = (yPos * stride) + xPos;
-
-            processSaoBlock(pPicDec + posOffset, pPicRest + posOffset, stride, iSaoType, width, height, pbBorderAvail, iYCbCr);
-        }
-    }
+    processSaoCuOrg(iAddr, iSaoType, iYCbCr);
 }
 
 /** Perform SAO for non-cross-slice or non-cross-tile process
@@ -1067,10 +1037,6 @@ Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* pcSaoParam)
         m_uiSaoBitIncreaseY = max(g_bitDepthY - 10, 0);
         m_uiSaoBitIncreaseC = max(g_bitDepthC - 10, 0);
 
-        if (m_bUseNIF)
-        {
-            m_pcPic->getPicYuvRec()->copyToPic(m_pcYuvTmp);
-        }
         if (m_saoLcuBasedOptimization)
         {
             pcSaoParam->oneUnitFlag[0] = 0;

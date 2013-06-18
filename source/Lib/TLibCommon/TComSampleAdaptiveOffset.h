@@ -95,7 +95,6 @@ protected:
     Int   *m_iUpBuff2;
     Int   *m_iUpBufft;
     Int   *ipSwap;
-    Bool  m_bUseNIF;     //!< true for performing non-cross slice boundary ALF
     TComPicYuv* m_pcYuvTmp;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
     Pel* m_pTmpU1;

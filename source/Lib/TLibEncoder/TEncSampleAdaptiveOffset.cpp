@@ -894,41 +894,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* pRecStart, Pel* pOrgStart,
  */
 Void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int iAddr, Int iPartIdx, Int iYCbCr)
 {
-    if (!m_bUseNIF)
-    {
-        calcSaoStatsCuOrg(iAddr, iPartIdx, iYCbCr);
-    }
-    else
-    {
-        Int64** ppStats = m_iOffsetOrg[iPartIdx];
-        Int64** ppCount = m_iCount[iPartIdx];
-
-        //parameters
-        Int  isChroma = (iYCbCr != 0) ? 1 : 0;
-        Int  stride   = (iYCbCr != 0) ? (m_pcPic->getCStride()) : (m_pcPic->getStride());
-        Pel* pPicOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr);
-        Pel* pPicRec  = getPicYuvAddr(m_pcYuvTmp, iYCbCr);
-
-        std::vector<NDBFBlockInfo>& vFilterBlocks = *(m_pcPic->getCU(iAddr)->getNDBFilterBlocks());
-
-        //variables
-        UInt  xPos, yPos, width, height;
-        Bool* pbBorderAvail;
-        UInt  posOffset;
-
-        for (Int i = 0; i < vFilterBlocks.size(); i++)
-        {
-            xPos        = vFilterBlocks[i].posX   >> isChroma;
-            yPos        = vFilterBlocks[i].posY   >> isChroma;
-            width       = vFilterBlocks[i].width  >> isChroma;
-            height      = vFilterBlocks[i].height >> isChroma;
-            pbBorderAvail = vFilterBlocks[i].isBorderAvailable;
-
-            posOffset = (yPos * stride) + xPos;
-
-            calcSaoStatsBlock(pPicRec + posOffset, pPicOrg + posOffset, stride, ppStats, ppCount, width, height, pbBorderAvail, iYCbCr);
-        }
-    }
+    calcSaoStatsCuOrg(iAddr, iPartIdx, iYCbCr);
 }
 
 /** Calculate SAO statistics for current LCU without non-crossing slice
@@ -1619,11 +1585,6 @@ Void TEncSampleAdaptiveOffset::resetStats()
  */
 Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *pcSaoParam, Double dLambdaLuma, Double dLambdaChroma, Int depth)
 {
-    if (m_bUseNIF)
-    {
-        m_pcPic->getPicYuvRec()->copyToPic(m_pcYuvTmp);
-    }
-
     m_uiSaoBitIncreaseY = max(g_bitDepthY - 10, 0);
     m_uiSaoBitIncreaseC = max(g_bitDepthC - 10, 0);
     m_iOffsetThY = 1 << min(g_bitDepthY - 5, 5);
