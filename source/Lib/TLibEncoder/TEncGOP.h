@@ -126,18 +126,6 @@ protected:
 
     Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
-    Void xResetNonNestedSEIPresentFlags()
-    {
-        m_activeParameterSetSEIPresentInAU = false;
-        m_bufferingPeriodSEIPresentInAU    = false;
-        m_pictureTimingSEIPresentInAU      = false;
-    }
-
-    Void xResetNestedSEIPresentFlags()
-    {
-        m_nestedBufferingPeriodSEIPresentInAU    = false;
-        m_nestedPictureTimingSEIPresentInAU      = false;
-    }
 
     Void dblMetric(TComPic* pcPic, UInt uiNumSlices);
 }; // END CLASS DEFINITION TEncGOP

@@ -109,8 +109,12 @@ TEncGOP::TEncGOP()
 
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
     ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
-    xResetNonNestedSEIPresentFlags();
-    xResetNestedSEIPresentFlags();
+
+    m_activeParameterSetSEIPresentInAU = false;
+    m_bufferingPeriodSEIPresentInAU    = false;
+    m_pictureTimingSEIPresentInAU      = false;
+    m_nestedBufferingPeriodSEIPresentInAU    = false;
+    m_nestedPictureTimingSEIPresentInAU      = false;
 }
 
 TEncGOP::~TEncGOP()
@@ -1392,8 +1396,13 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 }
             }
         }
-        xResetNonNestedSEIPresentFlags();
-        xResetNestedSEIPresentFlags();
+
+        m_activeParameterSetSEIPresentInAU = false;
+        m_bufferingPeriodSEIPresentInAU    = false;
+        m_pictureTimingSEIPresentInAU      = false;
+        m_nestedBufferingPeriodSEIPresentInAU    = false;
+        m_nestedPictureTimingSEIPresentInAU      = false;
+
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
         iNumPicCoded++;
         m_totalCoded++;
