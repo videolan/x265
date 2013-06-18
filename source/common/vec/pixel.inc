@@ -224,52 +224,28 @@ namespace x265 {
 
 void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 {
-    // sad
     SET_FUNC_PRIMITIVE_TABLE(sad, sad_, pixelcmp)
-
-    //sad_x3
     SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3)
-
-    // sad_x4
     SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4)
 
-#if HIGH_BIT_DEPTH
-    // sse_pp
-    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_ss, pixelcmp)
-
-    //sse_sp
-    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_ss, pixelcmp_sp)
-
-    //sse_ss
-    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
-
-#else
-
-    //sse_pp
-    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp)
-
-    //sse_sp
-    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp)
-
-    //sse_ss
-    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
-
-#endif /* if HIGH_BIT_DEPTH */
-
-#if HIGH_BIT_DEPTH
-    // satd
-    p.satd[PARTITION_4x4] = satd_4x4;
-    p.satd[PARTITION_4x8] = satd<4, 8>;
-    p.satd[PARTITION_16x4] = satd<16, 4>;
-    //p.sa8d_8x8 = sa8d_8x8;
-#endif
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt16to16_shl = convert16to16_shl;
     p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
 
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_ss, pixelcmp)
+    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_ss, pixelcmp_sp)
+    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
+    p.satd[PARTITION_4x4] = satd_4x4;
+    p.satd[PARTITION_4x8] = satd<4, 8>;
+    p.satd[PARTITION_16x4] = satd<16, 4>;
+#else
+    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp)
+    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp)
+    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
+
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;
     p.calcresidual[BLOCK_16x16] = getResidual<16>;
@@ -280,6 +256,6 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.calcrecon[BLOCK_16x16] = calcRecons<16>;
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
     p.calcrecon[BLOCK_64x64] = calcRecons<64>;
-#endif 
+#endif /* if HIGH_BIT_DEPTH */
 }
 }
