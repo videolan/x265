@@ -58,8 +58,6 @@
 #include "TEncRateCtrl.h"
 #include "wavefront.h"
 
-#include <vector>
-
 //! \ingroup TLibEncoder
 //! \{
 
