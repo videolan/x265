@@ -62,7 +62,7 @@ TComSlice::TComSlice()
     , m_iSliceQpDeltaCb(0)
     , m_iSliceQpDeltaCr(0)
     , m_iDepth(0)
-    , m_bRefenced(false)
+    , m_bReferenced(false)
     , m_pcSPS(NULL)
     , m_pcPPS(NULL)
     , m_pcPic(NULL)
@@ -643,7 +643,7 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_iDepth               = pSrc->m_iDepth;
 
     // referenced slice
-    m_bRefenced            = pSrc->m_bRefenced;
+    m_bReferenced          = pSrc->m_bReferenced;
 
     // access channel
     m_pcSPS                = pSrc->m_pcSPS;

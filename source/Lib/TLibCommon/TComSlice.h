@@ -1387,7 +1387,7 @@ private:
     Int         m_iDepth;
 
     // referenced slice?
-    Bool        m_bRefenced;
+    Bool        m_bReferenced;
 
     // access channel
     TComVPS*    m_pcVPS;
@@ -1530,9 +1530,9 @@ public:
     Int       getNumRpsCurrTempList();
     Int       getList1IdxToList0Idx(Int list1Idx) { return m_list1IdxToList0Idx[list1Idx]; }
 
-    Void      setReferenced(Bool b)            { m_bRefenced = b; }
+    Void      setReferenced(Bool b)            { m_bReferenced = b; }
 
-    Bool      isReferenced()                   { return m_bRefenced; }
+    Bool      isReferenced()                   { return m_bReferenced; }
 
     Void      setPOC(Int i)                    { m_iPOC = i; if (getTLayer() == 0) m_prevPOC = i; }
 
