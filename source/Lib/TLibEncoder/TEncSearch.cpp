@@ -2344,10 +2344,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
             {
                 UInt uiSad = uiSads[uiMode];
-                UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
-                UInt64 sqrtLambda = m_pcRdCost->getSqrtLambda()*256;
-                UInt64 cost      = uiSad + ((iModeBits * sqrtLambda +128 )>>8);
-
+                UInt iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
+                UInt64 cost = m_pcRdCost->calcRdSADCost(uiSad, iModeBits);
                 CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
             }
 
