@@ -1521,8 +1521,6 @@ public:
 
     UInt      getColRefIdx()                      { return m_colRefIdx;                  }
 
-    Void      checkColRefIdx(UInt curSliceIdx, TComPic* pic);
-
     Bool      getIsUsedAsLongTerm(Int i, Int j)   { return m_bIsUsedAsLongTerm[i][j]; }
 
     Bool      getCheckLDC()                       { return m_bCheckLDC; }
