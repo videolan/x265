@@ -61,6 +61,7 @@ protected:
     int partEnum;
     int searchMethod;
     int subsample;
+    int bwidth, bheight;
 
     MotionEstimate& operator =(const MotionEstimate&);
 
@@ -87,7 +88,7 @@ public:
 
     int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
 
-    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    int bufSATD(pixel *fref, intptr_t stride);
 
     int motionEstimate(MotionReference *ref,
                        const MV &mvmin,
