@@ -87,6 +87,8 @@ public:
 
     int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
 
+    int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+
     int motionEstimate(MotionReference *ref,
                        const MV &mvmin,
                        const MV &mvmax,
