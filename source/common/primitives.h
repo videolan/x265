@@ -35,8 +35,8 @@
 // from cpu-a.asm, if ASM primitives are compiled.  Else primitives.cpp
 extern "C" void x265_cpu_emms(void);
 
-#if X86_64
-#define x265_emms()
+#if _MSC_VER && _WIN64
+#define x265_emms() x265_cpu_emms()
 #elif _MSC_VER
 #include <mmintrin.h>
 #define x265_emms() _mm_empty()
