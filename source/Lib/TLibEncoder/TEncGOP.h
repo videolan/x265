@@ -118,7 +118,7 @@ protected:
     Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
 
-    Void dblMetric(TComPic* pcPic, UInt uiNumSlices);
+    Void dblMetric(TComPic* pcPic);
 }; // END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================

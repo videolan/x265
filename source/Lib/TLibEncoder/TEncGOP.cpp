@@ -613,8 +613,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             pcSliceEncoder->resetQP(pcPic, pcEncodeFrame, sliceQP, lambda);
         }
 
-        UInt uiNumSlices = 1;
-
         UInt uiInternalAddress = pcPic->getNumPartInCU() - 4;
         UInt uiExternalAddress = pcPic->getPicSym()->getNumberOfCUsInFrame() - 1;
         UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
@@ -662,7 +660,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcLoopFilter->setCfg(bLFCrossTileBoundary);
         if (m_pcCfg->getDeblockingFilterMetric())
         {
-            dblMetric(pcPic, uiNumSlices);
+            dblMetric(pcPic);
         }
         pcLoopFilter->loopFilterPic(pcPic);
 
@@ -1824,10 +1822,10 @@ Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
     return seiStartPos;
 }
 
-Void TEncGOP::dblMetric(TComPic* pcPic, UInt uiNumSlices)
+Void TEncGOP::dblMetric(TComPic* pcPic)
 {
     TComPicYuv* pcPicYuvRec = pcPic->getPicYuvRec();
-    Pel* Rec    = pcPicYuvRec->getLumaAddr(0);
+    Pel* Rec = pcPicYuvRec->getLumaAddr(0);
     Pel* tempRec = Rec;
     Int  stride = pcPicYuvRec->getStride();
     UInt log2maxTB = pcPic->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
