@@ -46,13 +46,13 @@
 // ====================================================================================================================
 
 TComPic::TComPic()
-    : m_uiTLayer(0)
+    : m_pcPicSym(NULL)
+    , m_pcPicYuvOrg(NULL)
+    , m_pcPicYuvRec(NULL)
+    , m_uiTLayer(0)
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-    , m_pcPicSym(NULL)
-    , m_pcPicYuvOrg(NULL)
-    , m_pcPicYuvRec(NULL)
 {
 }
 
@@ -60,29 +60,22 @@ TComPic::~TComPic()
 {
 }
 
-Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
-                     Int *numReorderPics, Bool bIsVirtual)
+Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
 {
     m_pcPicSym = new TComPicSym;
     m_pcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
-    if (!bIsVirtual)
-    {
-        m_pcPicYuvOrg = new TComPicYuv;
-        m_pcPicYuvOrg->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
-    }
+
+    m_pcPicYuvOrg = new TComPicYuv;
+    m_pcPicYuvOrg->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+
     m_pcPicYuvRec = new TComPicYuv;
     m_pcPicYuvRec->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
-
-    m_bUsedByCurr = false;
 
     /* store conformance window parameters with picture */
     m_conformanceWindow = conformanceWindow;
 
     /* store display window parameters with picture */
     m_defaultDisplayWindow = defaultDisplayWindow;
-
-    /* store number of reorder pics with picture */
-    memcpy(m_numReorderPics, numReorderPics, MAX_TLAYER * sizeof(Int));
 }
 
 Void TComPic::destroy()

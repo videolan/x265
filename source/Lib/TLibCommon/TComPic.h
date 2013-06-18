@@ -65,15 +65,13 @@ private:
     Bool                  m_bUsedByCurr;          // Used by current picture
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
-    Int                   m_numReorderPics[MAX_TLAYER];
 
 public:
 
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
-                         Int *numReorderPics, Bool bIsVirtual = false);
+    Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
 
     virtual Void  destroy();
 
@@ -128,10 +126,6 @@ public:
     Int           getStride()             { return m_pcPicYuvRec->getStride(); }
 
     Int           getCStride()            { return m_pcPicYuvRec->getCStride(); }
-
-    Void          setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i; }
-
-    Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer]; }
 
     Void          compressMotion();
 
