@@ -192,8 +192,8 @@ typedef void (CDECL * blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride
 typedef void (CDECL * blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
 typedef void (CDECL * blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
-typedef void (CDECL * getIPredDC_p)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
-typedef void (CDECL * getIPredPlanar_p)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
+typedef void (CDECL * getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
+typedef void (CDECL * getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
 typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
@@ -235,8 +235,8 @@ struct EncoderPrimitives
     blockcpy_p_s cpyblock_p_s; // pixel from short
     blockcpy_s_p cpyblock_s_p; // short from pixel
     blockcpy_s_c cpyblock_s_c; // short from unsigned char
-    getIPredDC_p getIPredDC;
-    getIPredPlanar_p getIPredPlanar;
+    getIPredDC_t getIPredDC;
+    getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
     quant deQuant;
     dct_t dct[NUM_DCTS];

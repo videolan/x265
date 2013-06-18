@@ -40,8 +40,8 @@ protected:
     static const int ip_t_size = 4 * 65 * 65 * 100;
     static const int out_size = 64 * FENC_STRIDE;
 
-    bool check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt);
-    bool check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref, x265::getIPredPlanar_p opt);
+    bool check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt);
+    bool check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt);
     bool check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt);
 
 public:

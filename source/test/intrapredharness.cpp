@@ -64,28 +64,22 @@ IntraPredHarness::~IntraPredHarness()
     free(pixel_out_Vec);
 }
 
-bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::getIPredDC_p opt)
+bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
     for (int i = 0; i <= 100; i++)
     {
-        int blkAboveAvailable = rand() & 1;
-        int blkLeftAvailable = rand() & 1;
         int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
         int rand_filter = rand() & 1;
-
-        // The Left and Above can't both be false
-        if (!blkLeftAvailable)
-            blkAboveAvailable = 1;
 
 #if _DEBUG
         memset(pixel_out_Vec, 0xCD, out_size);
         memset(pixel_out_C, 0xCD, out_size);
 #endif
 
-        opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
-        ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, rand_width, blkAboveAvailable, blkLeftAvailable, rand_filter);
+        opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, rand_width, rand_filter);
+        ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, rand_width, rand_filter);
 
         for (int k = 0; k < rand_width; k++)
         {
@@ -99,7 +93,7 @@ bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_p ref, x265::
     return true;
 }
 
-bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref, x265::getIPredPlanar_p opt)
+bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -111,8 +105,8 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_p ref
             memset(pixel_out_Vec, 0xCD, out_size);
             memset(pixel_out_C, 0xCD, out_size);
 #endif
-            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width, 0);
-            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width, 0);
+            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_C,   FENC_STRIDE, width);
+            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_Vec, FENC_STRIDE, width);
 
             for (int k = 0; k < width; k++)
             {
@@ -207,17 +201,15 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
 {
     int width = 64;
     short srcStride = 96;
-    int blkAboveAvailable = 1;
-    int blkLeftAvailable = 1;
 
     if (opt.getIPredDC)
     {
         printf("IPred_getIPredDC_pel[filter=0]");
         REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
-                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 0);
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 0);
         printf("IPred_getIPredDC_pel[filter=1]");
         REPORT_SPEEDUP(opt.getIPredDC, ref.getIPredDC,
-                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, width, blkAboveAvailable, blkLeftAvailable, 1);
+                       pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
     }
     if (opt.getIPredPlanar)
     {
@@ -226,7 +218,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             width = ii;
             printf("IPred_getIPredPlanar[width=%d]", ii);
             REPORT_SPEEDUP(opt.getIPredPlanar, ref.getIPredPlanar,
-                           pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width, 1);
+                           pixel_buff + srcStride, srcStride, pixel_out_Vec, FENC_STRIDE, width);
         }
     }
     if (opt.getIPredAng)
