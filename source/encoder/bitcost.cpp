@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "primitives.h"
 #include "bitcost.h"
 #include <stdint.h>
 #include <algorithm>
@@ -38,6 +39,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
         // this row while we were blocked
         if (!s_costs[qp])
         {
+            x265_emms(); // just to be safe
+
             CalculateLogs();
             s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
             uint16_t *c = s_costs[qp];
