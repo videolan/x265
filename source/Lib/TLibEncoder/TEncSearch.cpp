@@ -2326,7 +2326,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                     UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)&tmp[(uiMode - 2) * (uiWidth * uiWidth)], uiWidth);
                     uiSads[uiMode] = uiSad;
                 }
-                x265_emms();
             }
             else
             {
@@ -2338,7 +2337,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                     UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
                     uiSads[uiMode] = uiSad;
                 }
-                x265_emms();
             }
 
             for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
@@ -2380,6 +2378,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 uiRdModeList[i] = i;
             }
         }
+        x265_emms();
 
         //===== check modes (using r-d costs) =====
         UInt    uiBestPUMode  = 0;
@@ -2413,7 +2412,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 xSetIntraResultQT(pcCU, uiInitTrDepth, uiPartOffset, bLumaOnly, pcRecoYuv);
 
                 UInt uiQPartNum = pcCU->getPic()->getNumPartInCU() >> ((pcCU->getDepth(0) + uiInitTrDepth) << 1);
-                ::memcpy(m_puhQTTempTrIdx,  pcCU->getTransformIdx()       + uiPartOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTrIdx,  pcCU->getTransformIdx() + uiPartOffset, uiQPartNum * sizeof(UChar));
                 ::memcpy(m_puhQTTempCbf[0], pcCU->getCbf(TEXT_LUMA) + uiPartOffset, uiQPartNum * sizeof(UChar));
                 ::memcpy(m_puhQTTempCbf[1], pcCU->getCbf(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
                 ::memcpy(m_puhQTTempCbf[2], pcCU->getCbf(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
