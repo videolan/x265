@@ -345,7 +345,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         //  Slice data initialization
         pcPic->clearSliceBuffer();
-        pcPic->setCurrSliceIdx(0);
         pcSliceEncoder->setSliceIdx(0);
 
         pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, m_iGopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
@@ -981,7 +980,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         pcSlice->setNextSlice(false);
         pcSlice = pcPic->getSlice(0);
-        pcPic->setCurrSliceIdx(0);
         pcSliceEncoder->setSliceIdx(0);
 
         // Reconstruction slice

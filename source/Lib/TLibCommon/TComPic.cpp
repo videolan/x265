@@ -53,7 +53,6 @@ TComPic::TComPic()
     , m_pcPicSym(NULL)
     , m_pcPicYuvOrg(NULL)
     , m_pcPicYuvRec(NULL)
-    , m_uiCurrSliceIdx(0)
 {
 }
 

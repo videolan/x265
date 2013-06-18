@@ -65,8 +65,6 @@ private:
     TComPicYuv*           m_pcPicYuvOrg;
     TComPicYuv*           m_pcPicYuvRec;
 
-    UInt                  m_uiCurrSliceIdx;       // Index of current slice
-
     Int                   m_numReorderPics[MAX_TLAYER];
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
@@ -103,7 +101,7 @@ public:
 
     TComSlice*    getSlice(Int i)         { return m_pcPicSym->getSlice(i); }
 
-    Int           getPOC()                { return m_pcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
+    Int           getPOC()                { return m_pcPicSym->getSlice(0)->getPOC(); }
 
     TComDataCU*   getCU(UInt uiCUAddr)    { return m_pcPicSym->getCU(uiCUAddr); }
 
@@ -140,10 +138,6 @@ public:
     Int           getNumReorderPics(UInt tlayer)        { return m_numReorderPics[tlayer]; }
 
     Void          compressMotion();
-
-    UInt          getCurrSliceIdx()       { return m_uiCurrSliceIdx; }
-
-    Void          setCurrSliceIdx(UInt i) { m_uiCurrSliceIdx = i; }
 
     UInt          getNumAllocatedSlice()  { return m_pcPicSym->getNumAllocatedSlice(); }
 
