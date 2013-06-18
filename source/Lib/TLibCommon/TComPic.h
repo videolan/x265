@@ -42,7 +42,6 @@
 #include "CommonDef.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
-#include "TComBitStream.h"
 #include "SEI.h"
 
 //! \ingroup TLibCommon
