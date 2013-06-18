@@ -42,7 +42,6 @@
 #include "CommonDef.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
-#include "SEI.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -67,8 +66,6 @@ private:
     Int                   m_numReorderPics[MAX_TLAYER];
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
-
-    SEIMessages           m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 
 public:
 
@@ -145,19 +142,6 @@ public:
     Void          createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary = true);
     Void          createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
     Void          destroyNonDBFilterInfo();
-
-    /** transfer ownership of seis to this picture */
-    void setSEIs(SEIMessages& seis) { m_SEIs = seis; }
-
-    /**
-     * return the current list of SEI messages associated with this picture.
-     * Pointer is valid until this->destroy() is called */
-    SEIMessages& getSEIs() { return m_SEIs; }
-
-    /**
-     * return the current list of SEI messages associated with this picture.
-     * Pointer is valid until this->destroy() is called */
-    const SEIMessages& getSEIs() const { return m_SEIs; }
 }; // END CLASS DEFINITION TComPic
 
 //! \}
