@@ -111,7 +111,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
         m_level = Level::LEVEL6_2;
         level = "6.2";
     }
-    if (samplesPerSec > 4278190080 || lumaSamples > 35651584 || bitrate > 800000)
+    if (samplesPerSec > 4278190080U || lumaSamples > 35651584 || bitrate > 800000)
         x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
 
     /* Within a given level, we might be at a high tier, depending on bitrate */
