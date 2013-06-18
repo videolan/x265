@@ -392,39 +392,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.sa8d_8x8)
+    for (uint16_t curblock = 0; curblock < NUM_BLOCKS; curblock++)
     {
-        if (!check_pixel_primitive(ref.sa8d_8x8, opt.sa8d_8x8))
+        if (opt.sa8d[curblock])
         {
-            printf("sa8d_8x8: failed!\n");
-            return false;
-        }
-    }
-
-    if (opt.sa8d_16x16)
-    {
-        if (!check_pixel_primitive(ref.sa8d_16x16, opt.sa8d_16x16))
-        {
-            printf("sa8d_16x16: failed!\n");
-            return false;
-        }
-    }
-
-    if (opt.sa8d_32x32)
-    {
-        if (!check_pixel_primitive(ref.sa8d_32x32, opt.sa8d_32x32))
-        {
-            printf("sa8d_32x32: failed!\n");
-            return false;
-        }
-    }
-
-    if (opt.sa8d_64x64)
-    {
-        if (!check_pixel_primitive(ref.sa8d_64x64, opt.sa8d_64x64))
-        {
-            printf("sa8d_64x64: failed!\n");
-            return false;
+            if (!check_pixel_primitive(ref.sa8d[curblock], opt.sa8d[curblock]))
+            {
+                printf("sa8d[%dx%d]: failed!\n", 4 << curblock, 4 << curblock);
+                return false;
+            }
         }
     }
 
@@ -541,28 +517,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    if (opt.sa8d_8x8)
+    for (uint16_t curblock = 0; curblock < NUM_BLOCKS; curblock++)
     {
-        printf("sa8d_8x8");
-        REPORT_SPEEDUP(opt.sa8d_8x8, ref.sa8d_8x8, pbuf1, STRIDE, pbuf2, STRIDE);
-    }
-
-    if (opt.sa8d_16x16)
-    {
-        printf("sa8d_16x16");
-        REPORT_SPEEDUP(opt.sa8d_16x16, ref.sa8d_16x16, pbuf1, STRIDE, pbuf2, STRIDE);
-    }
-
-    if (opt.sa8d_32x32)
-    {
-        printf("sa8d_32x32");
-        REPORT_SPEEDUP(opt.sa8d_32x32, ref.sa8d_32x32, pbuf1, STRIDE, pbuf2, STRIDE);
-    }
-
-    if (opt.sa8d_64x64)
-    {
-        printf("sa8d_64x64");
-        REPORT_SPEEDUP(opt.sa8d_64x64, ref.sa8d_64x64, pbuf1, STRIDE, pbuf2, STRIDE);
+        if (opt.sa8d[curblock])
+        {
+            printf("sa8d[%dx%d]", 4 << curblock, 4 << curblock);
+            REPORT_SPEEDUP(opt.sa8d[curblock], ref.sa8d[curblock], pbuf1, STRIDE, pbuf2, STRIDE);
+        }
     }
 
     if (opt.cpyblock)

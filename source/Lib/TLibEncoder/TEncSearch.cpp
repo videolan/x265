@@ -2120,30 +2120,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Pel*  piPredV     = pcPredYuv->getCrAddr(0);
 
     //===== init pattern =====
-    x265::pixelcmp sa8d;
-
-    switch (uiWidth)
-    {
-    case 32:
-        sa8d = x265::primitives.sa8d_32x32;
-        break;
-    case 16:
-        sa8d = x265::primitives.sa8d_16x16;
-        break;
-    case 8:
-        sa8d = x265::primitives.sa8d_8x8;
-        break;
-    case 4:
-        sa8d = x265::primitives.satd[PARTITION_4x4];
-        break;
-    default:
-        assert(!"invalid intra block width");
-        sa8d = x265::primitives.sad[0];
-        break;
-    }
-
     assert(uiWidth == uiHeight);
-
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
     pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
     Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf);
@@ -2154,6 +2131,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     UInt  uiMaxMode   = 4;
     UInt  uiBestMode  = MAX_UINT;
     UInt  uiMinSAD    = MAX_UINT;
+    x265::pixelcmp sa8d = x265::primitives.sa8d[g_aucConvertToBit[uiWidth]];
     for (UInt uiMode  = uiMinMode; uiMode < uiMaxMode; uiMode++)
     {
         //--- get prediction ---
@@ -2197,32 +2175,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     UInt    CandNum;
     UInt64  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
-    x265::pixelcmp sa8d;
-
-    // TODO: Use a table lookup here
-    switch (uiWidth)
-    {
-    case 64:
-        sa8d = x265::primitives.sa8d_64x64;
-        break;
-    case 32:
-        sa8d = x265::primitives.sa8d_32x32;
-        break;
-    case 16:
-        sa8d = x265::primitives.sa8d_16x16;
-        break;
-    case 8:
-        sa8d = x265::primitives.sa8d_8x8;
-        break;
-    case 4:
-        sa8d = x265::primitives.satd[PARTITION_4x4];
-        break;
-    default:
-        assert(!"invalid intra block width");
-        sa8d = x265::primitives.sad[0];
-        break;
-    }
-
     assert(uiWidth == uiHeight);
 
     //===== set QP and clear Cbf =====
@@ -2245,12 +2197,13 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
-        Int numModesAvailable     = 35; //total number of Intra modes
+        Int numModesAvailable = 35; //total number of Intra modes
         Pel* piOrg         = pcOrgYuv->getLumaAddr(uiPU, uiWidth);
         Pel* piPred        = pcPredYuv->getLumaAddr(uiPU, uiWidth);
         UInt uiStride      = pcPredYuv->getStride();
         UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
         Int numModesForFullRD = g_aucIntraModeNumFast[uiWidthBit];
+        x265::pixelcmp sa8d = x265::primitives.sa8d[g_aucConvertToBit[uiWidth]];
 
         Bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)

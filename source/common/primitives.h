@@ -221,10 +221,7 @@ struct EncoderPrimitives
     pixelcmp_ss sse_ss[NUM_PARTITIONS]; // SSE (short, short) fenc alignment not assumed
     pixelcmp_sp sse_sp[NUM_PARTITIONS]; // SSE (short, pixel) fenc alignment not assumed
     pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
-    pixelcmp sa8d_8x8;
-    pixelcmp sa8d_16x16;
-    pixelcmp sa8d_32x32;
-    pixelcmp sa8d_64x64;
+    pixelcmp sa8d[NUM_BLOCKS];      // sa8d primitives for square blocks
     IPFilter filter[NUM_FILTER];
     IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
     IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];

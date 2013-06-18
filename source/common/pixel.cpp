@@ -860,11 +860,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cvt32to16     = convert32to16;
     p.cvt32to16_shr = convert32to16_shr;
 
-    // sa8d
-    p.sa8d_8x8   = pixel_sa8d_8x8;
-    p.sa8d_16x16 = pixel_sa8d_16x16;
-    p.sa8d_32x32 = pixel_sa8d_32x32;
-    p.sa8d_64x64 = pixel_sa8d_64x64;
+    p.sa8d[BLOCK_4x4]   = satd_4x4;
+    p.sa8d[BLOCK_8x8]   = pixel_sa8d_8x8;
+    p.sa8d[BLOCK_16x16] = pixel_sa8d_16x16;
+    p.sa8d[BLOCK_32x32] = pixel_sa8d_32x32;
+    p.sa8d[BLOCK_64x64] = pixel_sa8d_64x64;
 
     p.calcresidual[BLOCK_4x4] = getResidual<4>;
     p.calcresidual[BLOCK_8x8] = getResidual<8>;
