@@ -91,11 +91,6 @@ private:
     UInt                    m_cpbRemovalDelay;
     UInt                    m_tl0Idx;
     UInt                    m_rapIdx;
-    Bool                    m_activeParameterSetSEIPresentInAU;
-    Bool                    m_bufferingPeriodSEIPresentInAU;
-    Bool                    m_pictureTimingSEIPresentInAU;
-    Bool                    m_nestedBufferingPeriodSEIPresentInAU;
-    Bool                    m_nestedPictureTimingSEIPresentInAU;
 
 public:
 

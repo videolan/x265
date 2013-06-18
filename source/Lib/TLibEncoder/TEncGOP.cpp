@@ -109,12 +109,6 @@ TEncGOP::TEncGOP()
 
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
     ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
-
-    m_activeParameterSetSEIPresentInAU = false;
-    m_bufferingPeriodSEIPresentInAU    = false;
-    m_pictureTimingSEIPresentInAU      = false;
-    m_nestedBufferingPeriodSEIPresentInAU    = false;
-    m_nestedPictureTimingSEIPresentInAU      = false;
 }
 
 TEncGOP::~TEncGOP()
@@ -192,6 +186,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     TComLoopFilter*       pcLoopFilter   = pcEncodeFrame->getLoopFilter();
     TComBitCounter*       pcBitCounter   = pcEncodeFrame->getBitCounter();
     TEncSampleAdaptiveOffset* pcSAO      = pcEncodeFrame->getSAO();
+    Bool bActiveParameterSetSEIPresentInAU = false;
+    Bool bBufferingPeriodSEIPresentInAU = false;
+    Bool bPictureTimingSEIPresentInAU = false;
+    Bool bNestedBufferingPeriodSEIPresentInAU = false;
+    Bool bNestedPictureTimingSEIPresentInAU = false;
 
     if (m_pcCfg->getUseRateCtrl())
     {
@@ -734,7 +733,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 writeRBSPTrailingBits(nalu.m_Bitstream);
                 accessUnit.push_back(new NALUnitEBSP(nalu));
                 delete sei;
-                m_activeParameterSetSEIPresentInAU = true;
+                bActiveParameterSetSEIPresentInAU = true;
             }
 
             if (m_pcCfg->getDisplayOrientationSEIAngle())
@@ -865,7 +864,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             writeRBSPTrailingBits(nalu.m_Bitstream);
             {
                 UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                UInt offsetPosition = m_activeParameterSetSEIPresentInAU; // Insert BP SEI after APS SEI
+                UInt offsetPosition = bActiveParameterSetSEIPresentInAU; // Insert BP SEI after APS SEI
                 AccessUnit::iterator it;
                 for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
                 {
@@ -873,7 +872,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 }
 
                 accessUnit.insert(it, new NALUnitEBSP(nalu));
-                m_bufferingPeriodSEIPresentInAU = true;
+                bBufferingPeriodSEIPresentInAU = true;
             }
 
             if (m_pcCfg->getScalableNestingSEIEnabled())
@@ -886,7 +885,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 m_seiWriter.writeSEImessage(naluTmp.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
                 writeRBSPTrailingBits(naluTmp.m_Bitstream);
                 UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                UInt offsetPosition = m_activeParameterSetSEIPresentInAU + m_bufferingPeriodSEIPresentInAU + m_pictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
+                UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
                 AccessUnit::iterator it;
                 for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
                 {
@@ -894,7 +893,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 }
 
                 accessUnit.insert(it, new NALUnitEBSP(naluTmp));
-                m_nestedBufferingPeriodSEIPresentInAU = true;
+                bNestedBufferingPeriodSEIPresentInAU = true;
             }
 
             m_lastBPSEI = m_totalCoded;
@@ -1308,8 +1307,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, pcSlice->getSPS());
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-                        + m_bufferingPeriodSEIPresentInAU;                  // Insert PT SEI after APS and BP SEI
+                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU
+                        + bBufferingPeriodSEIPresentInAU;                  // Insert PT SEI after APS and BP SEI
                     AccessUnit::iterator it;
                     for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
                     {
@@ -1317,7 +1316,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     }
 
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
-                    m_pictureTimingSEIPresentInAU = true;
+                    bPictureTimingSEIPresentInAU = true;
                 }
                 if (m_pcCfg->getScalableNestingSEIEnabled()) // put picture timing SEI into scalable nesting SEI
                 {
@@ -1328,8 +1327,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     m_seiWriter.writeSEImessage(onalu.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-                        + m_bufferingPeriodSEIPresentInAU + m_pictureTimingSEIPresentInAU + m_nestedBufferingPeriodSEIPresentInAU; // Insert PT SEI after APS and BP SEI
+                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU
+                        + bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU + bNestedBufferingPeriodSEIPresentInAU; // Insert PT SEI after APS and BP SEI
                     AccessUnit::iterator it;
                     for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
                     {
@@ -1337,7 +1336,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     }
 
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
-                    m_nestedPictureTimingSEIPresentInAU = true;
+                    bNestedPictureTimingSEIPresentInAU = true;
                 }
             }
             if (m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
@@ -1362,9 +1361,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                         writeRBSPTrailingBits(onalu.m_Bitstream);
 
                         UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                        UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-                            + m_bufferingPeriodSEIPresentInAU
-                            + m_pictureTimingSEIPresentInAU;          // Insert DU info SEI after APS, BP and PT SEI
+                        UInt offsetPosition = bActiveParameterSetSEIPresentInAU
+                            + bBufferingPeriodSEIPresentInAU
+                            + bPictureTimingSEIPresentInAU;          // Insert DU info SEI after APS, BP and PT SEI
                         for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
                         {
                             it++;
@@ -1397,11 +1396,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             }
         }
 
-        m_activeParameterSetSEIPresentInAU = false;
-        m_bufferingPeriodSEIPresentInAU    = false;
-        m_pictureTimingSEIPresentInAU      = false;
-        m_nestedBufferingPeriodSEIPresentInAU    = false;
-        m_nestedPictureTimingSEIPresentInAU      = false;
+        bActiveParameterSetSEIPresentInAU = false;
+        bBufferingPeriodSEIPresentInAU    = false;
+        bPictureTimingSEIPresentInAU      = false;
+        bNestedBufferingPeriodSEIPresentInAU    = false;
+        bNestedPictureTimingSEIPresentInAU      = false;
 
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
         iNumPicCoded++;
