@@ -1407,7 +1407,6 @@ private:
     Bool        m_bTLayerSwitchingFlag;
 
     UInt        m_sliceCurEndCUAddr;
-    UInt        m_sliceIdx;
     Bool        m_nextSlice;
     UInt        m_sliceBits;
     UInt        m_sliceSegmentBits;
@@ -1634,10 +1633,6 @@ public:
     Void setSliceCurEndCUAddr(UInt uiAddr)     { m_sliceCurEndCUAddr = uiAddr; }
 
     UInt getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
-
-    Void setSliceIdx(UInt i)                   { m_sliceIdx = i; }
-
-    UInt getSliceIdx()                         { return m_sliceIdx; }
 
     Void copySliceInfo(TComSlice *pcSliceSrc);
 

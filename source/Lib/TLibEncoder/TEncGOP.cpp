@@ -318,7 +318,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         pcSliceEncoder->setSliceIdx(0);
         pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
-        pcSlice->setSliceIdx(0);
 
         //set default slice level flag to the same as SPS level flag
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
@@ -1114,8 +1113,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 }
             }
 
-            accumBitsDU[pcSlice->getSliceIdx()] = (numRBSPBytes << 3);
-            accumNalsDU[pcSlice->getSliceIdx()] = numNalus; // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
+            accumBitsDU[0] = (numRBSPBytes << 3);
+            accumNalsDU[0] = numNalus; // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
         }
 
         if (pcSlice->getSPS()->getUseSAO())
@@ -1400,6 +1399,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         bPictureTimingSEIPresentInAU      = false;
         bNestedBufferingPeriodSEIPresentInAU = false;
 
+        // TODO: we don't want to copy the recon picture here
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
         iNumPicCoded++;
         m_totalCoded++;
