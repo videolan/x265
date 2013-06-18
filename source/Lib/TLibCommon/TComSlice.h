@@ -341,101 +341,101 @@ public:
 
     virtual ~TComHRD() {}
 
-    Void setNalHrdParametersPresentFlag(Bool flag)  { m_nalHrdParametersPresentFlag = flag; }
+    Void setNalHrdParametersPresentFlag(Bool flag) { m_nalHrdParametersPresentFlag = flag; }
 
-    Bool getNalHrdParametersPresentFlag()            { return m_nalHrdParametersPresentFlag; }
+    Bool getNalHrdParametersPresentFlag() { return m_nalHrdParametersPresentFlag; }
 
-    Void setVclHrdParametersPresentFlag(Bool flag)  { m_vclHrdParametersPresentFlag = flag; }
+    Void setVclHrdParametersPresentFlag(Bool flag) { m_vclHrdParametersPresentFlag = flag; }
 
-    Bool getVclHrdParametersPresentFlag()            { return m_vclHrdParametersPresentFlag; }
+    Bool getVclHrdParametersPresentFlag() { return m_vclHrdParametersPresentFlag; }
 
-    Void setSubPicCpbParamsPresentFlag(Bool flag)  { m_subPicCpbParamsPresentFlag = flag; }
+    Void setSubPicCpbParamsPresentFlag(Bool flag) { m_subPicCpbParamsPresentFlag = flag; }
 
-    Bool getSubPicCpbParamsPresentFlag()            { return m_subPicCpbParamsPresentFlag; }
+    Bool getSubPicCpbParamsPresentFlag() { return m_subPicCpbParamsPresentFlag; }
 
     Void setTickDivisorMinus2(UInt value) { m_tickDivisorMinus2 = value; }
 
-    UInt getTickDivisorMinus2()            { return m_tickDivisorMinus2; }
+    UInt getTickDivisorMinus2() { return m_tickDivisorMinus2; }
 
     Void setDuCpbRemovalDelayLengthMinus1(UInt value) { m_duCpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getDuCpbRemovalDelayLengthMinus1()            { return m_duCpbRemovalDelayLengthMinus1; }
+    UInt getDuCpbRemovalDelayLengthMinus1() { return m_duCpbRemovalDelayLengthMinus1; }
 
-    Void setSubPicCpbParamsInPicTimingSEIFlag(Bool flag)   { m_subPicCpbParamsInPicTimingSEIFlag = flag; }
+    Void setSubPicCpbParamsInPicTimingSEIFlag(Bool flag) { m_subPicCpbParamsInPicTimingSEIFlag = flag; }
 
-    Bool getSubPicCpbParamsInPicTimingSEIFlag()             { return m_subPicCpbParamsInPicTimingSEIFlag; }
+    Bool getSubPicCpbParamsInPicTimingSEIFlag() { return m_subPicCpbParamsInPicTimingSEIFlag; }
 
-    Void setDpbOutputDelayDuLengthMinus1(UInt value)  { m_dpbOutputDelayDuLengthMinus1 = value; }
+    Void setDpbOutputDelayDuLengthMinus1(UInt value) { m_dpbOutputDelayDuLengthMinus1 = value; }
 
-    UInt getDpbOutputDelayDuLengthMinus1()             { return m_dpbOutputDelayDuLengthMinus1; }
+    UInt getDpbOutputDelayDuLengthMinus1() { return m_dpbOutputDelayDuLengthMinus1; }
 
-    Void setBitRateScale(UInt value) { m_bitRateScale = value;                       }
+    Void setBitRateScale(UInt value) { m_bitRateScale = value; }
 
-    UInt getBitRateScale()            { return m_bitRateScale;                        }
+    UInt getBitRateScale() { return m_bitRateScale; }
 
-    Void setCpbSizeScale(UInt value) { m_cpbSizeScale = value;                       }
+    Void setCpbSizeScale(UInt value) { m_cpbSizeScale = value; }
 
-    UInt getCpbSizeScale()            { return m_cpbSizeScale;                        }
+    UInt getCpbSizeScale() { return m_cpbSizeScale; }
 
-    Void setDuCpbSizeScale(UInt value) { m_ducpbSizeScale = value;                     }
+    Void setDuCpbSizeScale(UInt value) { m_ducpbSizeScale = value; }
 
-    UInt getDuCpbSizeScale()            { return m_ducpbSizeScale;                      }
+    UInt getDuCpbSizeScale() { return m_ducpbSizeScale; }
 
     Void setInitialCpbRemovalDelayLengthMinus1(UInt value) { m_initialCpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getInitialCpbRemovalDelayLengthMinus1()            { return m_initialCpbRemovalDelayLengthMinus1;  }
+    UInt getInitialCpbRemovalDelayLengthMinus1() { return m_initialCpbRemovalDelayLengthMinus1; }
 
-    Void setCpbRemovalDelayLengthMinus1(UInt value) { m_cpbRemovalDelayLengthMinus1 = value;        }
+    Void setCpbRemovalDelayLengthMinus1(UInt value) { m_cpbRemovalDelayLengthMinus1 = value; }
 
-    UInt getCpbRemovalDelayLengthMinus1()            { return m_cpbRemovalDelayLengthMinus1;         }
+    UInt getCpbRemovalDelayLengthMinus1() { return m_cpbRemovalDelayLengthMinus1; }
 
-    Void setDpbOutputDelayLengthMinus1(UInt value) { m_dpbOutputDelayLengthMinus1 = value;         }
+    Void setDpbOutputDelayLengthMinus1(UInt value) { m_dpbOutputDelayLengthMinus1 = value; }
 
-    UInt getDpbOutputDelayLengthMinus1()            { return m_dpbOutputDelayLengthMinus1;          }
+    UInt getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
 
-    Void setFixedPicRateFlag(Int layer, Bool flag)  { m_HRD[layer].fixedPicRateFlag = flag;         }
+    Void setFixedPicRateFlag(Int layer, Bool flag) { m_HRD[layer].fixedPicRateFlag = flag; }
 
-    Bool getFixedPicRateFlag(Int layer)  { return m_HRD[layer].fixedPicRateFlag;         }
+    Bool getFixedPicRateFlag(Int layer) { return m_HRD[layer].fixedPicRateFlag; }
 
-    Void setFixedPicRateWithinCvsFlag(Int layer, Bool flag)  { m_HRD[layer].fixedPicRateWithinCvsFlag = flag;         }
+    Void setFixedPicRateWithinCvsFlag(Int layer, Bool flag) { m_HRD[layer].fixedPicRateWithinCvsFlag = flag; }
 
-    Bool getFixedPicRateWithinCvsFlag(Int layer)  { return m_HRD[layer].fixedPicRateWithinCvsFlag;         }
+    Bool getFixedPicRateWithinCvsFlag(Int layer) { return m_HRD[layer].fixedPicRateWithinCvsFlag; }
 
-    Void setPicDurationInTcMinus1(Int layer, UInt value) { m_HRD[layer].picDurationInTcMinus1 = value;   }
+    Void setPicDurationInTcMinus1(Int layer, UInt value) { m_HRD[layer].picDurationInTcMinus1 = value; }
 
-    UInt getPicDurationInTcMinus1(Int layer) { return m_HRD[layer].picDurationInTcMinus1;    }
+    UInt getPicDurationInTcMinus1(Int layer) { return m_HRD[layer].picDurationInTcMinus1; }
 
-    Void setLowDelayHrdFlag(Int layer, Bool flag)  { m_HRD[layer].lowDelayHrdFlag = flag;          }
+    Void setLowDelayHrdFlag(Int layer, Bool flag) { m_HRD[layer].lowDelayHrdFlag = flag; }
 
-    Bool getLowDelayHrdFlag(Int layer)  { return m_HRD[layer].lowDelayHrdFlag;          }
+    Bool getLowDelayHrdFlag(Int layer) { return m_HRD[layer].lowDelayHrdFlag; }
 
     Void setCpbCntMinus1(Int layer, UInt value) { m_HRD[layer].cpbCntMinus1 = value; }
 
-    UInt getCpbCntMinus1(Int layer)  { return m_HRD[layer].cpbCntMinus1; }
+    UInt getCpbCntMinus1(Int layer) { return m_HRD[layer].cpbCntMinus1; }
 
     Void setBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
 
-    UInt getBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl];  }
+    UInt getBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl]; }
 
-    Void setCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value;       }
+    Void setCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl];        }
+    UInt getCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    Void setDuCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value;       }
+    Void setDuCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getDuCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl];        }
+    UInt getDuCpbSizeValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    Void setDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value;       }
+    Void setDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl, UInt value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value; }
 
-    UInt getDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl)              { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl];        }
+    UInt getDuBitRateValueMinus1(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl]; }
 
-    Void setCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl, Bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
+    Void setCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl, Bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value; }
 
-    Bool getCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl];             }
+    Bool getCbrFlag(Int layer, Int cpbcnt, Int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl]; }
 
-    Void setNumDU(UInt value) { m_numDU = value;                            }
+    Void setNumDU(UInt value) { m_numDU = value; }
 
-    UInt getNumDU()            { return m_numDU;          }
+    UInt getNumDU()           { return m_numDU; }
 
     Bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 };
