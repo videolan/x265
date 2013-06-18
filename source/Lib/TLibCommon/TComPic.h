@@ -57,13 +57,13 @@ class TComPic
 {
 private:
 
-    UInt                  m_uiTLayer;             //  Temporal layer
-    Bool                  m_bUsedByCurr;          //  Used by current picture
-    Bool                  m_bIsLongTerm;          //  IS long term picture
+    UInt                  m_uiTLayer;             // Temporal layer
+    Bool                  m_bUsedByCurr;          // Used by current picture
+    Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
-    TComPicSym*           m_apcPicSym;            //  Symbol
+    TComPicSym*           m_pcPicSym;             // Symbols
 
-    TComPicYuv*           m_apcPicYuv[2];         //  Texture,  0:org / 1:rec
+    TComPicYuv*           m_apcPicYuv[2];         // Texture,  0:org / 1:rec
 
     UInt                  m_uiCurrSliceIdx;       // Index of current slice
 
@@ -99,33 +99,33 @@ public:
 
     Bool          getCheckLTMSBPresent() { return m_bCheckLTMSB; }
 
-    TComPicSym*   getPicSym()           { return m_apcPicSym; }
+    TComPicSym*   getPicSym()           { return m_pcPicSym; }
 
-    TComSlice*    getSlice(Int i)       { return m_apcPicSym->getSlice(i); }
+    TComSlice*    getSlice(Int i)       { return m_pcPicSym->getSlice(i); }
 
-    Int           getPOC()              { return m_apcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
+    Int           getPOC()              { return m_pcPicSym->getSlice(m_uiCurrSliceIdx)->getPOC(); }
 
-    TComDataCU*   getCU(UInt uiCUAddr)  { return m_apcPicSym->getCU(uiCUAddr); }
+    TComDataCU*   getCU(UInt uiCUAddr)  { return m_pcPicSym->getCU(uiCUAddr); }
 
     TComPicYuv*   getPicYuvOrg()        { return m_apcPicYuv[0]; }
 
     TComPicYuv*   getPicYuvRec()        { return m_apcPicYuv[1]; }
 
-    UInt          getNumCUsInFrame()      { return m_apcPicSym->getNumberOfCUsInFrame(); }
+    UInt          getNumCUsInFrame()      { return m_pcPicSym->getNumberOfCUsInFrame(); }
 
-    UInt          getNumPartInWidth()     { return m_apcPicSym->getNumPartInWidth(); }
+    UInt          getNumPartInWidth()     { return m_pcPicSym->getNumPartInWidth(); }
 
-    UInt          getNumPartInHeight()    { return m_apcPicSym->getNumPartInHeight(); }
+    UInt          getNumPartInHeight()    { return m_pcPicSym->getNumPartInHeight(); }
 
-    UInt          getNumPartInCU()        { return m_apcPicSym->getNumPartition(); }
+    UInt          getNumPartInCU()        { return m_pcPicSym->getNumPartition(); }
 
-    UInt          getFrameWidthInCU()     { return m_apcPicSym->getFrameWidthInCU(); }
+    UInt          getFrameWidthInCU()     { return m_pcPicSym->getFrameWidthInCU(); }
 
-    UInt          getFrameHeightInCU()    { return m_apcPicSym->getFrameHeightInCU(); }
+    UInt          getFrameHeightInCU()    { return m_pcPicSym->getFrameHeightInCU(); }
 
-    UInt          getMinCUWidth()         { return m_apcPicSym->getMinCUWidth(); }
+    UInt          getMinCUWidth()         { return m_pcPicSym->getMinCUWidth(); }
 
-    UInt          getMinCUHeight()        { return m_apcPicSym->getMinCUHeight(); }
+    UInt          getMinCUHeight()        { return m_pcPicSym->getMinCUHeight(); }
 
     UInt          getParPelX(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
 
@@ -144,11 +144,11 @@ public:
 
     Void          setCurrSliceIdx(UInt i)      { m_uiCurrSliceIdx = i; }
 
-    UInt          getNumAllocatedSlice()       { return m_apcPicSym->getNumAllocatedSlice(); }
+    UInt          getNumAllocatedSlice()       { return m_pcPicSym->getNumAllocatedSlice(); }
 
-    Void          allocateNewSlice()           { m_apcPicSym->allocateNewSlice(); }
+    Void          allocateNewSlice()           { m_pcPicSym->allocateNewSlice(); }
 
-    Void          clearSliceBuffer()           { m_apcPicSym->clearSliceBuffer(); }
+    Void          clearSliceBuffer()           { m_pcPicSym->clearSliceBuffer(); }
 
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 

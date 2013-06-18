@@ -50,7 +50,7 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-    , m_apcPicSym(NULL)
+    , m_pcPicSym(NULL)
     , m_uiCurrSliceIdx(0)
 {
     m_apcPicYuv[0] = NULL;
@@ -64,8 +64,8 @@ TComPic::~TComPic()
 Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                      Int *numReorderPics, Bool bIsVirtual)
 {
-    m_apcPicSym = new TComPicSym;
-    m_apcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_pcPicSym = new TComPicSym;
+    m_pcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
     if (!bIsVirtual)
     {
         m_apcPicYuv[0] = new TComPicYuv;
@@ -93,11 +93,11 @@ Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight,
 
 Void TComPic::destroy()
 {
-    if (m_apcPicSym)
+    if (m_pcPicSym)
     {
-        m_apcPicSym->destroy();
-        delete m_apcPicSym;
-        m_apcPicSym = NULL;
+        m_pcPicSym->destroy();
+        delete m_pcPicSym;
+        m_pcPicSym = NULL;
     }
 
     if (m_apcPicYuv[0])
