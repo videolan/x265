@@ -2264,8 +2264,23 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
             CandNum = 0;
             UInt uiSads[35];
+            Bool bFilter = (uiWidth <= 16);
+            Pel *ptrSrc = m_piPredBuf;
 
-            for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
+            // 1
+            primitives.getIPredDC((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, uiWidth, bFilter);
+            uiSads[DC_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+
+            // 0
+            if (uiWidth >=8 && uiWidth <=32)
+            {
+                ptrSrc += ADI_BUF_STRIDE * (2 * uiWidth + 1);
+            }
+            primitives.getIPredPlanar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, uiWidth);
+            uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+
+            // 33 Angle modes
+            for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
             {
                 predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
 
