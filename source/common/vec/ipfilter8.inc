@@ -216,9 +216,23 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
     Output: All planes in the corresponding column - 'dst<A|E|I|P>'
 */
 
+#if INSTRSET >= 5   /* SSE4.1 supported*/ 
+#define CLIP0(S) {\
+    S = _mm_max_epi32(S,_mm_setzero_si128()); \
+}
+#else 
+#define CLIP0(S) { \
+        greater = _mm_cmpgt_epi32(S,_mm_setzero_si128());\
+        S = _mm_and_si128(greater,S);\
+}
+#endif 
+
+
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-        tmp.load(src + col + (row + 7) * cstride); \
-        a7 = extend_low(tmp); \
+        /*tmp.load(src + col + (row + 7) * cstride);*/ \
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * cstride)); \
+        /*a7 = extend_low(tmp); */\
+        a7 = _mm_unpacklo_epi16(tmp,_mm_srai_epi16(tmp,15)); \
         /*  calculation
 
             The coefficients for different planes are :
@@ -243,19 +257,27 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
             \
 /* store results */ \
         sumi = (sumi + offset) >> 12; \
-        sumi  = max(sumi, 0); \
-        tmp  = compress_saturated(sumi, 0); \
-        store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0)); \
+        CLIP0(sumi)\
+/*tmp  = compress_saturated(sumi, 0); */\
+        tmp  =  _mm_packs_epi32(sumi,_mm_setzero_si128()); \
+        /*store_partial(const_int(4), dstI + row * dstStride + col, compress_unsafe(tmp, 0));*/ \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32( _mm_packus_epi16(tmp,_mm_setzero_si128())); \
             \
         sume = (sume + offset) >> 12; \
-        sume  = max(sume, 0); \
-        tmp  = compress_saturated(sume, 0); \
-        store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0)); \
+        /*sume  = max(sume, 0); */\
+        CLIP0(sume)\
+        /*tmp  = compress_saturated(sume, 0); */\
+        tmp  =  _mm_packs_epi32(sume,_mm_setzero_si128()); \
+        /*store_partial(const_int(4), dstE + row * dstStride + col, compress_unsafe(tmp, 0));*/ \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32( _mm_packus_epi16(tmp,_mm_setzero_si128())); \
             \
         sump = (sump + offset) >> 12; \
-        sump  = max(sump, 0); \
-        tmp  = compress_saturated(sump, 0); \
-        store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0)); \
+        /*sump  = max(sump, 0); */\
+        CLIP0(sump)\
+        /*tmp  = compress_saturated(sump, 0); */\
+        tmp  =  _mm_packs_epi32(sump,_mm_setzero_si128()); \
+        /*store_partial(const_int(4), dstP + row * dstStride + col, compress_unsafe(tmp, 0));*/ \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32( _mm_packus_epi16(tmp,_mm_setzero_si128())); \
             \
 }
 
@@ -276,7 +298,9 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
     Vec8s tmp;
     Vec4i val, sume, sumi, sump;
     Vec4i exp1, exp2, exp3, exp4, exp5, exp6;
-
+#if INSTRSET < 5
+    __m128i greater;
+#endif
     for (col = 0; col < block_width; col += 4)         // Considering block width is always a multiple of 4
     {
         tmp.load(src + col);
