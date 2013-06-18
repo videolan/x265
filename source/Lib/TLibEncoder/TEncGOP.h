@@ -73,7 +73,6 @@ private:
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
     Int                     m_iLastIDR;
-    Int                     m_iGopSize;
 
     //  Access channel
     TEncTop*                m_pcEncTop;

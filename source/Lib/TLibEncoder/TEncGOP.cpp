@@ -98,7 +98,6 @@ using namespace std;
 TEncGOP::TEncGOP()
 {
     m_iLastIDR            = 0;
-    m_iGopSize            = 0;
     m_totalCoded          = 0;
     m_bRefreshPending     = 0;
     m_pocCRA              = 0;
@@ -224,13 +223,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         m_pcRateCtrl->initRCGOP(iNumPicRcvd);
     }
 
-    // Exception for the first frame
-    m_iGopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
-    assert(iNumPicRcvd > 0 && m_iGopSize > 0);
-
+    Int gopSize = (iPOCLast == 0) ? 1 : m_pcCfg->getGOPSize();
     Int iNumPicCoded = 0;
-    SEIPictureTiming pictureTimingSEI;
     Bool writeSOP = m_pcCfg->getSOPDescriptionSEIEnabled();
+
+    SEIPictureTiming pictureTimingSEI;
 
     // Initialize Scalable Nesting SEI with single layer values
     SEIScalableNesting scalableNestingSEI;
@@ -244,7 +241,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     scalableNestingSEI.m_callerOwnsSEIs                = true;
 
     SEIDecodingUnitInfo decodingUnitInfoSEI;
-    for (Int iGOPid = 0; iGOPid < m_iGopSize; iGOPid++)
+    for (Int iGOPid = 0; iGOPid < gopSize; iGOPid++)
     {
         UInt uiColDir = 1;
 
@@ -272,17 +269,17 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             iCloseLeft = iCloseLeft + m_pcCfg->getGOPEntry(iGOPid).m_POC - 1;
             while (iCloseLeft < 0)
             {
-                iCloseLeft += m_iGopSize;
+                iCloseLeft += gopSize;
             }
         }
         Int iLeftQP = 0, iRightQP = 0;
-        for (Int i = 0; i < m_iGopSize; i++)
+        for (Int i = 0; i < gopSize; i++)
         {
-            if (m_pcCfg->getGOPEntry(i).m_POC == (iCloseLeft % m_iGopSize) + 1)
+            if (m_pcCfg->getGOPEntry(i).m_POC == (iCloseLeft % gopSize) + 1)
             {
                 iLeftQP = m_pcCfg->getGOPEntry(i).m_QPOffset;
             }
-            if (m_pcCfg->getGOPEntry(i).m_POC == (iCloseRight % m_iGopSize) + 1)
+            if (m_pcCfg->getGOPEntry(i).m_POC == (iCloseRight % gopSize) + 1)
             {
                 iRightQP = m_pcCfg->getGOPEntry(i).m_QPOffset;
             }
@@ -345,7 +342,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         //  Slice data initialization
         pcSliceEncoder->setSliceIdx(0);
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, m_iGopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
         pcSlice->setSliceIdx(0);
 
@@ -769,7 +766,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
             UInt i = 0;
             UInt prevEntryId = iGOPid;
-            for (j = iGOPid; j < m_iGopSize; j++)
+            for (j = iGOPid; j < gopSize; j++)
             {
                 Int deltaPOC = m_pcCfg->getGOPEntry(j).m_POC - m_pcCfg->getGOPEntry(prevEntryId).m_POC;
                 if ((SOPcurrPOC + deltaPOC) < m_pcCfg->getFramesToBeEncoded())
