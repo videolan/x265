@@ -97,6 +97,10 @@ using namespace std;
 // ====================================================================================================================
 TEncGOP::TEncGOP()
 {
+    m_pcCfg               = NULL;
+    m_cFrameEncoders      = NULL;
+    m_pcEncTop            = NULL;
+    m_pcRateCtrl          = NULL;
     m_iLastIDR            = 0;
     m_totalCoded          = 0;
     m_bRefreshPending     = 0;
@@ -104,9 +108,6 @@ TEncGOP::TEncGOP()
     m_numLongTermRefPicSPS = 0;
     m_cpbRemovalDelay     = 0;
     m_lastBPSEI           = 0;
-    m_pcCfg               = NULL;
-    m_cFrameEncoders      = NULL;
-
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
     ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
 }
@@ -177,7 +178,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     UInt                  uiOneBitstreamPerSliceLength = 0;
     TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  pcSubstreamsOut = NULL;
-    x265::EncodeFrame*    pcEncodeFrame  = getFrameEncoder(0);
+    x265::EncodeFrame*    pcEncodeFrame  = &m_cFrameEncoders[0];
     TEncEntropy*          pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
     TEncSlice*            pcSliceEncoder = pcEncodeFrame->getSliceEncoder();
     TEncCavlc*            pcCavlcCoder   = pcEncodeFrame->getCavlcCoder();
@@ -190,7 +191,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     Bool bBufferingPeriodSEIPresentInAU = false;
     Bool bPictureTimingSEIPresentInAU = false;
     Bool bNestedBufferingPeriodSEIPresentInAU = false;
-    Bool bNestedPictureTimingSEIPresentInAU = false;
 
     if (m_pcCfg->getUseRateCtrl())
     {
@@ -1336,7 +1336,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     }
 
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
-                    bNestedPictureTimingSEIPresentInAU = true;
                 }
             }
             if (m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
@@ -1399,8 +1398,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         bActiveParameterSetSEIPresentInAU = false;
         bBufferingPeriodSEIPresentInAU    = false;
         bPictureTimingSEIPresentInAU      = false;
-        bNestedBufferingPeriodSEIPresentInAU    = false;
-        bNestedPictureTimingSEIPresentInAU      = false;
+        bNestedBufferingPeriodSEIPresentInAU = false;
 
         pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
         iNumPicCoded++;

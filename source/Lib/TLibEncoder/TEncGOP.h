@@ -68,24 +68,22 @@ class TEncGOP
 {
 private:
 
+    TEncTop*                m_pcEncTop;
+    TEncCfg*                m_pcCfg;
+    TEncRateCtrl*           m_pcRateCtrl;
+    x265::EncodeFrame*      m_cFrameEncoders;
+
     //  Data
     UInt                    m_numLongTermRefPicSPS;
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
     Int                     m_iLastIDR;
 
-    //  Access channel
-    TEncTop*                m_pcEncTop;
-    TEncCfg*                m_pcCfg;
-    TEncRateCtrl*           m_pcRateCtrl;
-    x265::EncodeFrame*      m_cFrameEncoders;
-
     SEIWriter               m_seiWriter;
 
     // clean decoding refresh
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
-
     UInt                    m_lastBPSEI;
     UInt                    m_totalCoded;
     UInt                    m_cpbRemovalDelay;
@@ -108,11 +106,9 @@ public:
 
 protected:
 
-    NalUnitType        getNalUnitType(Int pocCurr, Int lastIdr);
-    x265::EncodeFrame* getFrameEncoder(UInt i) { return &m_cFrameEncoders[i]; }
+    NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
 
     Void   xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
-    Double xCalculateRVM();
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
