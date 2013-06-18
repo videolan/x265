@@ -34,15 +34,19 @@ protected:
     pixel *pixel_buff;
     pixel *pixel_out_C;
     pixel *pixel_out_Vec;
+    pixel *pixel_out_33_C;
+    pixel *pixel_out_33_Vec;
 
     pixel *IP_vec_output_p, *IP_C_output_p;
 
     static const int ip_t_size = 4 * 65 * 65 * 100;
     static const int out_size = 64 * FENC_STRIDE;
+    static const int out_size_33 = 33 * 64 * FENC_STRIDE;
 
     bool check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt);
     bool check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt);
     bool check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt);
+    bool check_getIPredAngs4_primitive(x265::getIPredAngs_t ref, x265::getIPredAngs_t opt);
 
 public:
 

@@ -30,6 +30,7 @@
 #include <smmintrin.h>
 
 extern char g_aucConvertToBit[];
+extern unsigned char g_aucIntraFilterType[][35];
 
 using namespace x265;
 
@@ -4663,6 +4664,56 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
         }
     }
 }
+
+#if HIGH_BIT_DEPTH
+#else // HIGH_BIT_DEPTH
+
+#if INSTRSET < 40
+void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+{
+    int iMode;
+
+    // avoid warning
+    (pLeft1);
+    (pAbove1);
+
+    for( iMode = 2; iMode <= 34; iMode++ )
+    {
+        pixel *pLeft = pLeft0;
+        pixel *pAbove = pAbove0;
+        pixel *pDst = pDst0 + (iMode-2) * (4 * 4);
+        xPredIntraAngBufRef(8, pDst, 4, 4, iMode, bLuma, pLeft, pAbove);
+
+        // Optimize code don't flip buffer
+        bool modeHor = (iMode < 18);
+        // Flip the block if this is the horizontal mode
+        if (modeHor)
+        {
+            pixel  tmp;
+            const int width = 4;
+            for (int k = 0; k < width - 1; k++)
+            {
+                for (int l = k + 1; l < width; l++)
+                {
+                    tmp                 = pDst[k * width + l];
+                    pDst[k * width + l] = pDst[l * width + k];
+                    pDst[l * width + k] = tmp;
+                }
+            }
+        }
+    }
+}
+
+#else // INSTRSET >= 4
+
+void xPredIntraAngs4(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+{
+    
+}
+#endif // INSTRSET < 4
+
+#endif // HIGH_BIT_DEPTH
+
 }
 
 #include "utils.h"
@@ -4674,5 +4725,7 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
+    p.getIPredAngs4 = xPredIntraAngs4;
 }
+
 }

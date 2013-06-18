@@ -2279,16 +2279,67 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             primitives.getIPredPlanar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, uiWidth);
             uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 
-            // 33 Angle modes
-            for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
+            // 33 Angle modes once
+            if (uiWidth <= 4)
             {
-                predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
+                ALIGN_VAR_32(Pel, buf1[MAX_CU_SIZE * MAX_CU_SIZE]);
+                ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
 
-                // use hadamard transform here
-                UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
-                uiSads[uiMode] = uiSad;
+                // Transpose NxN
+                // TODO: Optimize by SSE2
+                for (int k = 0; k < uiWidth; k++)
+                {
+                    for (int l = 0; l < uiWidth; l++)
+                    {
+                        buf1[k * uiWidth + l] = piOrg[l * uiStride + k];
+                    }
+                }
+
+                Pel *pAbove0 = refAbove    + uiWidth - 1;
+                Pel *pAbove1 = refAboveFlt + uiWidth - 1;
+                Pel *pLeft0  = refLeft     + uiWidth - 1;
+                Pel *pLeft1  = refLeftFlt  + uiWidth - 1;
+
+                x265::primitives.getIPredAngs4(tmp, pAbove0, pLeft0, pAbove1, pLeft1, (uiWidth<16));
+
+                // TODO: We need SATD_x4 here
+                for (UInt uiMode = 2; uiMode < 18; uiMode++)
+                {
+                    //predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
+                    //for (int k = 0; k < uiWidth; k++)
+                    //{
+                    //    for (int l = 0; l < uiWidth; l++)
+                    //    {
+                    //        if (tmp[(uiMode - 2) * (uiWidth * uiWidth) + k * uiWidth + l] != piPred[l * uiStride + k])
+                    //            printf("X");
+                    //    }
+                    //}
+                    //UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+
+                    // use hadamard transform here
+                    UInt uiSad = sa8d((pixel*)buf1, uiWidth, (pixel*)&tmp[(uiMode - 2) * (uiWidth * uiWidth)], uiWidth);
+                    uiSads[uiMode] = uiSad;
+                }
+                for (UInt uiMode = 18; uiMode < numModesAvailable; uiMode++)
+                {
+                    // use hadamard transform here
+                    UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)&tmp[(uiMode - 2) * (uiWidth * uiWidth)], uiWidth);
+                    uiSads[uiMode] = uiSad;
+                }
+                x265_emms();
             }
-            x265_emms();
+            else
+            {
+                for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
+                {
+                    predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
+
+                    // use hadamard transform here
+                    UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+                    uiSads[uiMode] = uiSad;
+                }
+                x265_emms();
+            }
 
             for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
             {

@@ -195,6 +195,7 @@ typedef void (CDECL * blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride
 typedef void (CDECL * getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
 typedef void (CDECL * getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
 typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
+typedef void (CDECL * getIPredAngs_t)(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma);
 typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
@@ -238,6 +239,7 @@ struct EncoderPrimitives
     getIPredDC_t getIPredDC;
     getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
+    getIPredAngs_t getIPredAngs4;
     quant deQuant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];

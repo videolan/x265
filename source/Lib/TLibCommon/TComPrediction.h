@@ -60,6 +60,7 @@ class TComPrediction : public TComWeightPrediction
 protected:
 
     Pel*      m_piPredBuf;
+    Pel*      m_piPredAngBufs;
     Int       m_iPredBufStride;
     Int       m_iPredBufHeight;
 

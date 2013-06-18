@@ -60,13 +60,15 @@ const UChar m_aucIntraFilter[5] =
 TComPrediction::TComPrediction()
     : m_pLumaRecBuffer(0)
     , m_iLumaRecStride(0)
+    , m_piPredBuf(NULL)
+    , m_piPredAngBufs(NULL)
 {
-    m_piPredBuf = NULL;
 }
 
 TComPrediction::~TComPrediction()
 {
     delete[] m_piPredBuf;
+    xFree(m_piPredAngBufs);
 
     xFree(refAbove);
     xFree(refAboveFlt);
@@ -114,6 +116,7 @@ Void TComPrediction::initTempBuff()
         m_iPredBufHeight  = ((MAX_CU_SIZE + 2) << 4);
         m_iPredBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_piPredBuf = new Pel[m_iPredBufStride * m_iPredBufHeight];
+        m_piPredAngBufs = (Pel*)xMalloc(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
         refAbove = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
         refAboveFlt = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);

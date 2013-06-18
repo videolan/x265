@@ -47,6 +47,8 @@ IntraPredHarness::IntraPredHarness()
 
     pixel_out_C   = (pixel*)malloc(out_size * sizeof(pixel));
     pixel_out_Vec = (pixel*)malloc(out_size * sizeof(pixel));
+    pixel_out_33_C   = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), out_size_33, 32);
+    pixel_out_33_Vec = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), out_size_33, 32);
 
     if (!pixel_out_C || !pixel_out_Vec)
     {
@@ -62,6 +64,8 @@ IntraPredHarness::~IntraPredHarness()
     free(pixel_buff);
     free(pixel_out_C);
     free(pixel_out_Vec);
+    TestHarness::alignedFree(pixel_out_33_C);
+    TestHarness::alignedFree(pixel_out_33_Vec);
 }
 
 bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt)
@@ -167,6 +171,52 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     return true;
 }
 
+bool IntraPredHarness::check_getIPredAngs4_primitive(x265::getIPredAngs_t ref, x265::getIPredAngs_t opt)
+{
+    int j = ADI_BUF_STRIDE;
+
+    Bool isLuma;
+
+    for (int width = 4; width <= 4; width <<= 1)
+    {
+        for (int i = 0; i <= 100; i++)
+        {
+            isLuma = (width <= 16) && (rand()%2);
+
+            pixel * refAbove0 = pixel_buff + j;
+            pixel * refLeft0 = refAbove0 + 3 * width;
+            refLeft0[0] = refAbove0[0];
+
+            pixel * refAbove1 = pixel_buff + j + FENC_STRIDE;
+            pixel * refLeft1 = refAbove1 + 3 * width + FENC_STRIDE;
+            refLeft1[0] = refAbove1[0];
+
+#if _DEBUG
+            memset(pixel_out_33_Vec, 0xCD, out_size);
+            memset(pixel_out_33_C, 0xCD, out_size);
+#endif
+
+            ref(pixel_out_33_C,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            opt(pixel_out_33_Vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            for (int p = 2-2; p <= 34-2; p++)
+            {
+                for (int k = 0; k < width; k++)
+                {
+                    if (memcmp(pixel_out_33_C + p * (width *width) + k * width, pixel_out_33_Vec + p * (width *width) + k * width, width))
+                    {
+                        printf("\nFailed: [%2d]: width=%d, mode=%d, bfilter=%d\n", k, width, p+2, isLuma);
+                        return false;
+                    }
+                }
+            }
+
+            j += FENC_STRIDE;
+        }
+    }
+
+    return true;
+}
+
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.getIPredDC)
@@ -190,6 +240,14 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
         if (!check_getIPredAng_primitive(ref.getIPredAng, opt.getIPredAng))
         {
             printf("intrapred_angular_pel failed\n");
+            return false;
+        }
+    }
+    if (opt.getIPredAngs4)
+    {
+        if (!check_getIPredAngs4_primitive(ref.getIPredAngs4, opt.getIPredAngs4))
+        {
+            printf("intrapred_angular_4x4_33_modes failed\n");
             return false;
         }
     }
@@ -237,6 +295,20 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 REPORT_SPEEDUP(opt.getIPredAng, ref.getIPredAng,
                                BIT_DEPTH, pixel_out_Vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
             }
+        }
+    }
+    if (opt.getIPredAngs4)
+    {
+        for (int ii = 4; ii <= 4; ii <<= 1)
+        {
+            width = ii;
+            bool bFilter  = (width <= 16);
+            pixel * refAbove = pixel_buff + srcStride;
+            pixel * refLeft = refAbove + 3 * width;
+            refLeft[0] = refAbove[0];
+            printf("IPred_getIPredAngs4\t\t");
+            REPORT_SPEEDUP(opt.getIPredAngs4, ref.getIPredAngs4,
+                           pixel_out_33_Vec, refAbove, refLeft, refAbove, refLeft, bFilter);
         }
     }
 }
