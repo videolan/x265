@@ -2274,17 +2274,21 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             }
 
             CandNum = 0;
+            UInt uiSads[35];
 
-            for (Int modeIdx = 0; modeIdx < numModesAvailable; modeIdx++)
+            for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
             {
-                UInt uiMode = modeIdx;
-
                 predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
 
                 // use hadamard transform here
                 UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
-                x265_emms();
+                uiSads[uiMode] = uiSad;
+            }
+            x265_emms();
 
+            for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
+            {
+                UInt uiSad = uiSads[uiMode];
                 UInt   iModeBits = xModeBitsIntra(pcCU, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
                 UInt64 sqrtLambda = m_pcRdCost->getSqrtLambda()*256;
                 UInt64 cost      = uiSad + ((iModeBits * sqrtLambda +128 )>>8);
