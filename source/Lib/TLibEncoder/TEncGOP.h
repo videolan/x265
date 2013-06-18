@@ -125,7 +125,6 @@ protected:
     Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
 
     Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
-    Void xCreateLeadingSEIMessages(TEncEntropy *pcEntropyCoder, AccessUnit &accessUnit, TComSPS *sps);
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
     Void xResetNonNestedSEIPresentFlags()
     {

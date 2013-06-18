@@ -165,35 +165,6 @@ SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
     return seiDisplayOrientation;
 }
 
-Void TEncGOP::xCreateLeadingSEIMessages(TEncEntropy *pcEntropyCoder, AccessUnit &accessUnit, TComSPS *sps)
-{
-    OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-
-    if (m_pcCfg->getActiveParameterSetsSEIEnabled())
-    {
-        SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets(sps);
-
-        pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
-        m_activeParameterSetSEIPresentInAU = true;
-    }
-
-    if (m_pcCfg->getDisplayOrientationSEIAngle())
-    {
-        SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
-
-        nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-        pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-        delete sei;
-    }
-}
-
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -750,7 +721,29 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
             accessUnit.push_back(new NALUnitEBSP(nalu));
             actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 
-            xCreateLeadingSEIMessages(pcEntropyCoder, accessUnit, pcSlice->getSPS());
+            if (m_pcCfg->getActiveParameterSetsSEIEnabled())
+            {
+                SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets(pcSlice->getSPS());
+
+                pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+                m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, pcSlice->getSPS());
+                writeRBSPTrailingBits(nalu.m_Bitstream);
+                accessUnit.push_back(new NALUnitEBSP(nalu));
+                delete sei;
+                m_activeParameterSetSEIPresentInAU = true;
+            }
+
+            if (m_pcCfg->getDisplayOrientationSEIAngle())
+            {
+                SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
+
+                nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
+                pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+                m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, pcSlice->getSPS());
+                writeRBSPTrailingBits(nalu.m_Bitstream);
+                accessUnit.push_back(new NALUnitEBSP(nalu));
+                delete sei;
+            }
         }
 
         if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP
