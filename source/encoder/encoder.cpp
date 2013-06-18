@@ -334,7 +334,6 @@ void Encoder::configure(x265_param_t *param)
     setLoopFilterBetaOffset(0);
     setLoopFilterTcOffset(0);
     setDeblockingFilterControlPresent(0);
-    setDeblockingFilterMetric(0);
 
     setTransquantBypassEnableFlag(0);
     setCUTransquantBypassFlagValue(0);

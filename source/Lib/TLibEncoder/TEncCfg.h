@@ -146,7 +146,6 @@ protected:
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
     Bool      m_DeblockingFilterControlPresent;
-    Bool      m_DeblockingFilterMetric;
     Bool      m_bUseSAO;
     Int       m_maxNumOffsetsPerPic;
     Bool      m_saoLcuBoundary;
@@ -335,8 +334,6 @@ public:
 
     Void      setDeblockingFilterControlPresent(Bool b) { m_DeblockingFilterControlPresent = b; }
 
-    Void      setDeblockingFilterMetric(Bool b)      { m_DeblockingFilterMetric = b; }
-
     //====== Motion search ========
     Void      setSearchMethod(Int i)     { m_iSearchMethod = i; }
 
@@ -415,8 +412,6 @@ public:
     Int       getLoopFilterTcOffset()      { return m_loopFilterTcOffsetDiv2; }
 
     Bool      getDeblockingFilterControlPresent()  { return m_DeblockingFilterControlPresent; }
-
-    Bool      getDeblockingFilterMetric()      { return m_DeblockingFilterMetric; }
 
     //==== Motion search ========
     Int       getSearchMethod()      { return m_iSearchMethod; }

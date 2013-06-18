@@ -519,18 +519,7 @@ Void TEncTop::xInitPPS()
     m_cPPS.setWPBiPred(m_useWeightedBiPred);
     m_cPPS.setOutputFlagPresentFlag(false);
     m_cPPS.setSignHideFlag(getSignHideFlag());
-    if (getDeblockingFilterMetric())
-    {
-        m_cPPS.setDeblockingFilterControlPresentFlag(true);
-        m_cPPS.setDeblockingFilterOverrideEnabledFlag(true);
-        m_cPPS.setPicDisableDeblockingFilterFlag(false);
-        m_cPPS.setDeblockingFilterBetaOffsetDiv2(0);
-        m_cPPS.setDeblockingFilterTcOffsetDiv2(0);
-    }
-    else
-    {
-        m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
-    }
+    m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
     m_cPPS.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     m_cPPS.setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
     Int histogram[MAX_NUM_REF + 1];

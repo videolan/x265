@@ -280,14 +280,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
     pcSlice->setNumRefIdx(REF_PIC_LIST_0, m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
     pcSlice->setNumRefIdx(REF_PIC_LIST_1, m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
 
-    if (m_pcCfg->getDeblockingFilterMetric())
-    {
-        pcSlice->setDeblockingFilterOverrideFlag(true);
-        pcSlice->setDeblockingFilterDisable(false);
-        pcSlice->setDeblockingFilterBetaOffsetDiv2(0);
-        pcSlice->setDeblockingFilterTcOffsetDiv2(0);
-    }
-    else if (pcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
+    if (pcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         pcSlice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_pcCfg->getLoopFilterOffsetInPPS());
         pcSlice->setDeblockingFilterOverrideFlag(!m_pcCfg->getLoopFilterOffsetInPPS());
