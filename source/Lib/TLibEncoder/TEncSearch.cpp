@@ -937,15 +937,13 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     UInt    uiRecIPredStride  = pcCU->getPic()->getPicYuvRec()->getStride();
     Bool    useTransformSkip  = pcCU->getTransformSkip(uiAbsPartIdx, TEXT_LUMA);
     //===== init availability pattern =====
-    Bool  bAboveAvail = false;
-    Bool  bLeftAvail  = false;
 
     if (default0Save1Load2 != 2)
     {
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
-        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        pcCU->getPattern()->initAdiPattern(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
-        predIntraLumaAng(pcCU->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
+        predIntraLumaAng(pcCU->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth);
         // save prediction
         if (default0Save1Load2 == 1)
         {
@@ -1060,19 +1058,15 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
     }
 
     //===== init availability pattern =====
-    Bool  bAboveAvail = false;
-    Bool  bLeftAvail  = false;
     if (default0Save1Load2 != 2)
     {
         pcCU->getPattern()->initPattern(pcCU, uiTrDepth, uiAbsPartIdx);
 
-        pcCU->getPattern()->initAdiPatternChroma(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+        pcCU->getPattern()->initAdiPatternChroma(pcCU, uiAbsPartIdx, uiTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
         Pel*  pPatChroma  = (uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piPredBuf) : pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf));
 
         //===== get prediction signal =====
-        {
-            predIntraChromaAng(pPatChroma, uiChromaPredMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
-        }
+        predIntraChromaAng(pPatChroma, uiChromaPredMode, piPred, uiStride, uiWidth);
         // save prediction
         if (default0Save1Load2 == 1)
         {
@@ -2126,9 +2120,6 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     Pel*  piPredV     = pcPredYuv->getCrAddr(0);
 
     //===== init pattern =====
-    Bool  bAboveAvail = false;
-    Bool  bLeftAvail  = false;
-
     x265::pixelcmp sa8d;
 
     switch (uiWidth)
@@ -2154,7 +2145,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     assert(uiWidth == uiHeight);
 
     pcCU->getPattern()->initPattern(pcCU, 0, 0);
-    pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail);
+    pcCU->getPattern()->initAdiPatternChroma(pcCU, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
     Pel*  pPatChromaU = pcCU->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf);
     Pel*  pPatChromaV = pcCU->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piPredBuf);
 
@@ -2166,8 +2157,8 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     for (UInt uiMode  = uiMinMode; uiMode < uiMaxMode; uiMode++)
     {
         //--- get prediction ---
-        predIntraChromaAng(pPatChromaU, uiMode, piPredU, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
-        predIntraChromaAng(pPatChromaV, uiMode, piPredV, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
+        predIntraChromaAng(pPatChromaU, uiMode, piPredU, uiStride, uiWidth);
+        predIntraChromaAng(pPatChromaV, uiMode, piPredV, uiStride, uiWidth);
 
         //--- get SAD ---
         UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
@@ -2249,11 +2240,9 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
     for (UInt uiPU = 0; uiPU < uiNumPU; uiPU++, uiPartOffset += uiQNumParts)
     {
         //===== init pattern for luma prediction =====
-        Bool bAboveAvail = false;
-        Bool bLeftAvail  = false;
         pcCU->getPattern()->initPattern(pcCU, uiInitTrDepth, uiPartOffset);
         // Reference sample smoothing
-        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, bAboveAvail, bLeftAvail, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        pcCU->getPattern()->initAdiPattern(pcCU, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         Int numModesAvailable     = 35; //total number of Intra modes
@@ -2278,7 +2267,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
 
             for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
             {
-                predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail);
+                predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
 
                 // use hadamard transform here
                 UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);

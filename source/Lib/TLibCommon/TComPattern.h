@@ -135,7 +135,7 @@ public:
                      Int  iOffsetLeft,
                      Int  iOffsetAbove);
 
-    Void initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
+    Void initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
 
     /// set parameters from CU data for accessing neighbouring pixels
     Void  initPattern(TComDataCU* pcCU,
@@ -148,9 +148,7 @@ public:
                          UInt        uiPartDepth,
                          Pel*        piAdiBuf,
                          Int         iOrgBufStride,
-                         Int         iOrgBufHeight,
-                         Bool&       bAbove,
-                         Bool&       bLeft);
+                         Int         iOrgBufHeight);
 
     /// set chroma parameters from CU data for accessing ADI data
     Void  initAdiPatternChroma(TComDataCU* pcCU,
@@ -158,9 +156,7 @@ public:
                                UInt        uiPartDepth,
                                Pel*        piAdiBuf,
                                Int         iOrgBufStride,
-                               Int         iOrgBufHeight,
-                               Bool&       bAbove,
-                               Bool&       bLeft);
+                               Int         iOrgBufHeight);
 
 private:
 

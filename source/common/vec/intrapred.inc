@@ -296,7 +296,7 @@ void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* rpDst, intptr_t i
     }
 }
 
-void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/, int blkAboveAvailable, int blkLeftAvailable, int bFilter)
+void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter)
 {
     //assert(iWidth == iHeight); // all of Intra is NxN
     //assert(blkAboveAvailable || blkLeftAvailable); // I think left and above always true since HEVC have a pixel fill process
@@ -305,72 +305,66 @@ void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStrid
     pixel *pSrcAbove = &pSrc[-srcStride];
     pixel *pSrcLeft = &pSrc[-1];
 
-    if (blkLeftAvailable)
+    for (int iInd = 0; iInd < width; iInd++)
     {
-        for (int iInd = 0; iInd < width; iInd++)
-        {
-            iSum += *pSrcLeft;
-            pSrcLeft += srcStride;
-        }
+        iSum += *pSrcLeft;
+        pSrcLeft += srcStride;
     }
 
 #if HIGH_BIT_DEPTH
     Vec8s sumAbove(0);
     Vec8s m0;
 
-    if (blkAboveAvailable)
+    switch (width)
     {
-        switch (width)
-        {
-        case 4:
-            sumAbove = load_partial(const_int(8), pSrcAbove);
-            break;
-        case 8:
-            m0.load(pSrcAbove);
-            sumAbove = m0;
-            break;
-        case 16:
-            m0.load(pSrcAbove);
-            sumAbove  = m0;
-            m0.load(pSrcAbove + 8);
-            sumAbove += m0;
-            break;
-        case 32:
-            m0.load(pSrcAbove);
-            sumAbove  = m0;
-            m0.load(pSrcAbove + 8);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 16);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 24);
-            sumAbove += m0;
-            break;
+    case 4:
+        sumAbove = load_partial(const_int(8), pSrcAbove);
+        break;
+    case 8:
+        m0.load(pSrcAbove);
+        sumAbove = m0;
+        break;
+    case 16:
+        m0.load(pSrcAbove);
+        sumAbove  = m0;
+        m0.load(pSrcAbove + 8);
+        sumAbove += m0;
+        break;
+    case 32:
+        m0.load(pSrcAbove);
+        sumAbove  = m0;
+        m0.load(pSrcAbove + 8);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 16);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 24);
+        sumAbove += m0;
+        break;
         //case 64:
-        default:
-            // CHECK_ME: the max support bit_depth is 13-bits
-            m0.load(pSrcAbove);
-            sumAbove  = m0;
-            m0.load(pSrcAbove + 8);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 16);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 24);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 32);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 40);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 48);
-            sumAbove += m0;
-            m0.load(pSrcAbove + 56);
-            sumAbove += m0;
-            break;
-        }
-
-        iSum += horizontal_add_x(sumAbove);
+    default:
+        // CHECK_ME: the max support bit_depth is 13-bits
+        m0.load(pSrcAbove);
+        sumAbove  = m0;
+        m0.load(pSrcAbove + 8);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 16);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 24);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 32);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 40);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 48);
+        sumAbove += m0;
+        m0.load(pSrcAbove + 56);
+        sumAbove += m0;
+        break;
     }
 
-    logSize += (blkAboveAvailable + blkLeftAvailable - 1);
+    iSum += horizontal_add_x(sumAbove);
+
+    logSize += 1;
     pixel dcVal = (iSum + (1 << (logSize - 1))) >> logSize;
     Vec8us dcValN(dcVal);
     int k;
@@ -451,13 +445,12 @@ void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStrid
         break;
     }
 
-    if (bFilter && blkAboveAvailable && blkLeftAvailable)
+    if (bFilter)
     {
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, width);
     }
 #else // if !HIGH_BIT_DEPTH
 
-    if (blkAboveAvailable)
     {
         Vec16uc pix;
         Vec8us  im;
@@ -506,7 +499,7 @@ void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStrid
         }
     }
 
-    logSize += (blkAboveAvailable + blkLeftAvailable - 1);
+    logSize += 1;
     pixel dcVal = (iSum + (1 << (logSize - 1))) >> logSize;
     Vec16uc dcValN(dcVal);
     int k;
@@ -583,7 +576,7 @@ void predIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStrid
         break;
     }
 
-    if (bFilter && blkAboveAvailable && blkLeftAvailable)
+    if (bFilter)
     {
         xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, width);
     }
@@ -1423,7 +1416,7 @@ predIntraPlanar_t *intraPlanarN[] =
 #endif
 };
 
-void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width, int /*height*/)
+void predIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width)
 {
     //assert(width == height);
 

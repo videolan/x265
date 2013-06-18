@@ -299,17 +299,16 @@ Void xPredIntraAng(Int bitDepth, Pel* pSrc, Int srcStride, Pel*& rpDst, Int dstS
     }
 }
 
-Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
+Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iSize)
 {
     Pel *pDst = piPred;
     Pel *ptrSrc;
     Pel *refLft, *refAbv;
 
-    assert(g_aucConvertToBit[iWidth] >= 0);   //   4x  4
-    assert(g_aucConvertToBit[iWidth] <= 5);   // 128x128
-    assert(iWidth == iHeight);
+    assert(g_aucConvertToBit[iSize] >= 0);   //   4x  4
+    assert(g_aucConvertToBit[iSize] <= 5);   // 128x128
 
-    char log2BlkSize = g_aucConvertToBit[iWidth] + 2;
+    char log2BlkSize = g_aucConvertToBit[iSize] + 2;
 
     ptrSrc = m_piPredBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
@@ -322,37 +321,37 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
 
     assert(ucFiltIdx <= 1);
 
-    refLft = refLeft + iWidth - 1;
-    refAbv = refAbove + iWidth - 1;
+    refLft = refLeft + iSize - 1;
+    refAbv = refAbove + iSize - 1;
 
     if (ucFiltIdx)
     {
-        ptrSrc += ADI_BUF_STRIDE * (2 * iHeight + 1);
-        refLft = refLeftFlt + iWidth - 1;
-        refAbv = refAboveFlt + iWidth - 1;
+        ptrSrc += ADI_BUF_STRIDE * (2 * iSize + 1);
+        refLft = refLeftFlt + iSize - 1;
+        refAbv = refAboveFlt + iSize - 1;
     }
 
     // get starting pixel in block
     Int sw = ADI_BUF_STRIDE;
-    Bool bFilter = ((iWidth <= 16) && (iHeight <= 16));
+    Bool bFilter = (iSize <= 16);
 
     // Create the prediction
     if (uiDirMode == PLANAR_IDX)
     {
-        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight);
+        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize);
     }
     else if (uiDirMode == DC_IDX)
     {
-        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight, bAbove, bLeft, bFilter);
+        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize, bFilter);
     }
     else
     {
-        primitives.getIPredAng(g_bitDepthY, (pixel*)pDst, uiStride, iWidth, uiDirMode, bFilter, (pixel*)refLft, (pixel*)refAbv);
+        primitives.getIPredAng(g_bitDepthY, (pixel*)pDst, uiStride, iSize, uiDirMode, bFilter, (pixel*)refLft, (pixel*)refAbv);
     }
 }
 
 // Angular chroma
-Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth, Int iHeight, Bool bAbove, Bool bLeft)
+Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int iWidth)
 {
     Pel *pDst = piPred;
     Pel *ptrSrc = piSrc;
@@ -362,11 +361,11 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
 
     if (uiDirMode == PLANAR_IDX)
     {
-        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight);
+        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth);
     }
     else if (uiDirMode == DC_IDX)
     {
-        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, iHeight, bAbove, bLeft, false);
+        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, false);
     }
     else
     {

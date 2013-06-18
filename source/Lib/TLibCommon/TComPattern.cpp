@@ -170,7 +170,7 @@ Void TComPattern::initPattern(TComDataCU* pcCU, UInt uiPartDepth, UInt uiAbsPart
     m_cPatternCr.setPatternParamCU(pcCU, 2, uiWidth >> 1, uiHeight >> 1, uiOffsetLeft, uiOffsetAbove, uiAbsPartIdx);
 }
 
-Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
+Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight)
 {
     Pel*  piRoiOrigin;
     Pel*  piAdiTemp;
@@ -202,9 +202,6 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     iNumIntraNeighbor  += isAboveRightAvailable(pcCU, uiPartIdxLT, uiPartIdxRT, bNeighborFlags + (iNumUnitsInCu * 3) + 1);
     iNumIntraNeighbor  += isLeftAvailable(pcCU, uiPartIdxLT, uiPartIdxLB, bNeighborFlags + (iNumUnitsInCu * 2) - 1);
     iNumIntraNeighbor  += isBelowLeftAvailable(pcCU, uiPartIdxLT, uiPartIdxLB, bNeighborFlags + iNumUnitsInCu   - 1);
-
-    bAbove = true;
-    bLeft  = true;
 
     uiWidth = uiCuWidth2 + 1;
     uiHeight = uiCuHeight2 + 1;
@@ -304,9 +301,9 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
 }
 
 //Overloaded initialiation of ADI buffers to support buffered references for xpredIntraAngBufRef
-Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
+Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
 {
-    initAdiPattern(pcCU, uiZorderIdxInPart, uiPartDepth, piAdiBuf, iOrgBufStride, iOrgBufHeight, bAbove, bLeft);
+    initAdiPattern(pcCU, uiZorderIdxInPart, uiPartDepth, piAdiBuf, iOrgBufStride, iOrgBufHeight);
     UInt  uiCuWidth   = pcCU->getWidth(0) >> uiPartDepth;
     UInt  uiCuHeight  = pcCU->getHeight(0) >> uiPartDepth;
     UInt  uiCuWidth2  = uiCuWidth << 1;
@@ -328,7 +325,7 @@ Void TComPattern::initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt 
     }
 }
 
-Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Bool& bAbove, Bool& bLeft)
+Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight)
 {
     Pel*  piRoiOrigin;
     Pel*  piAdiTemp;
@@ -359,9 +356,6 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* pcCU, UInt uiZorderIdxInPart,
     iNumIntraNeighbor  += isAboveRightAvailable(pcCU, uiPartIdxLT, uiPartIdxRT, bNeighborFlags + (iNumUnitsInCu * 3) + 1);
     iNumIntraNeighbor  += isLeftAvailable(pcCU, uiPartIdxLT, uiPartIdxLB, bNeighborFlags + (iNumUnitsInCu * 2) - 1);
     iNumIntraNeighbor  += isBelowLeftAvailable(pcCU, uiPartIdxLT, uiPartIdxLB, bNeighborFlags + iNumUnitsInCu   - 1);
-
-    bAbove = true;
-    bLeft  = true;
 
     uiCuWidth = uiCuWidth >> 1; // for chroma
     uiCuHeight = uiCuHeight >> 1; // for chroma

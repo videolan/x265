@@ -30,42 +30,21 @@
 extern char g_aucConvertToBit[];
 
 namespace {
-pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth, intptr_t iHeight, int bAbove, int bLeft)
+pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth)
 {
     int iInd, iSum = 0;
     pixel pDcVal;
 
-    if (bAbove)
+    for (iInd = 0; iInd < iWidth; iInd++)
     {
-        for (iInd = 0; iInd < iWidth; iInd++)
-        {
-            iSum += pSrc[iInd - iSrcStride];
-        }
+        iSum += pSrc[iInd - iSrcStride];
     }
-    if (bLeft)
+    for (iInd = 0; iInd < iWidth; iInd++)
     {
-        for (iInd = 0; iInd < iHeight; iInd++)
-        {
-            iSum += pSrc[iInd * iSrcStride - 1];
-        }
+        iSum += pSrc[iInd * iSrcStride - 1];
     }
 
-    if (bAbove && bLeft)
-    {
-        pDcVal = (pixel)((iSum + iWidth) / (iWidth + iHeight));
-    }
-    else if (bAbove)
-    {
-        pDcVal = (pixel)((iSum + iWidth / 2) / iWidth);
-    }
-    else if (bLeft)
-    {
-        pDcVal = (pixel)((iSum + iHeight / 2) / iHeight);
-    }
-    else
-    {
-        pDcVal = pSrc[-1]; // Default DC value already calculated and placed in the prediction array if no neighbors are available
-    }
+    pDcVal = (pixel)((iSum + iWidth) / (iWidth + iWidth));
 
     return pDcVal;
 }
@@ -88,13 +67,13 @@ void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* pDst, intptr_t iD
     }
 }
 
-void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int height, int blkAboveAvailable, int blkLeftAvailable, int bFilter)
+void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter)
 {
     int k, l;
     int blkSize = width;
 
     // Do the DC prediction
-    pixel dcval = (pixel)predIntraGetPredValDC(pSrc, srcStride, width, height, blkAboveAvailable, blkLeftAvailable);
+    pixel dcval = (pixel)predIntraGetPredValDC(pSrc, srcStride, width);
 
     for (k = 0; k < blkSize; k++)
     {
@@ -104,13 +83,13 @@ void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStri
         }
     }
 
-    if (bFilter && blkAboveAvailable && blkLeftAvailable)
+    if (bFilter)
     {
-        xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, height);
+        xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, width);
     }
 }
 
-void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int /*height*/)
+void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width)
 {
     //assert(width == height);
 
