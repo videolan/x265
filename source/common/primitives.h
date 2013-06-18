@@ -94,7 +94,7 @@ enum Partitions
     NUM_PARTITIONS
 };
 
-enum SquareBlocks   // Routines can be indexed using (Blocksize/8) gives (0,1,2,4,8)
+enum SquareBlocks   // Routines can be indexed using log2n(width)
 {
     BLOCK_4x4,
     BLOCK_8x8,
@@ -106,7 +106,6 @@ enum SquareBlocks   // Routines can be indexed using (Blocksize/8) gives (0,1,2,
 
 enum FilterConf
 {
-    //Naming convention used is - FILTER_isVertical_N_isFirst_isLast
     FILTER_H_4_0_0,
     FILTER_H_4_0_1,
     FILTER_H_4_1_0,
