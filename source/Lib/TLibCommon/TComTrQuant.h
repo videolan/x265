@@ -142,47 +142,40 @@ public:
                       UInt         uiAbsPartIdx,
                       Bool         useTransformSkip = false);
 
-    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip = false);
-    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr,   UInt uiStride, UInt uiWidth, UInt uiHeight,
+    Void invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff* pcCoeff, UInt uiWidth, UInt uiHeight, Int scalingListType, Bool useTransformSkip = false);
+    Void invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr, UInt uiStride, UInt uiWidth, UInt uiHeight,
                               UInt uiMaxTrMode,  UInt uiTrMode, TCoeff* rpcCoeff);
 
     // Misc functions
     Void setQPforQuant(Int qpy, TextType eTxtType, Int qpBdOffset, Int chromaQPOffset);
 
-    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_dLambdaLuma = dLambdaLuma; m_dLambdaChroma = dLambdaChroma; }
+    Void setLambda(Double dLambdaLuma, Double dLambdaChroma);
 
-    Void selectLambda(TextType eTType) { m_dLambda = (eTType == TEXT_LUMA) ? m_dLambdaLuma : m_dLambdaChroma; }
+    Void selectLambda(TextType eTType);
 
     Void setRDOQOffset(UInt uiRDOQOffset) { m_uiRDOQOffset = uiRDOQOffset; }
 
     estBitsSbacStruct* m_pcEstBitsSbac;
 
-    static Int      calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, Int width, Int height);
+    static Int calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, Int width, Int height);
 
-    static Int      getSigCtxInc(Int      patternSigCtx,
-                                 UInt     scanIdx,
-                                 Int      posX,
-                                 Int      posY,
-                                 Int      log2BlkSize,
-                                 TextType textureType);
+    static Int getSigCtxInc(Int      patternSigCtx,
+                            UInt     scanIdx,
+                            Int      posX,
+                            Int      posY,
+                            Int      log2BlkSize,
+                            TextType textureType);
 
     static UInt getSigCoeffGroupCtxInc(const UInt* uiSigCoeffGroupFlag,
                                        const UInt uiCGPosX,
                                        const UInt uiCGPosY,
                                        Int width, Int height);
+
     Void initScalingList();
     Void destroyScalingList();
     Void setErrScaleCoeff(UInt list, UInt size, UInt qp);
-    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
-
-    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
-
-    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
-
     Void setUseScalingList(Bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
-
     Bool getUseScalingList() { return m_scalingListEnabledFlag; }
-
     Void setFlatScalingList();
     Void xsetFlatScalingList(UInt list, UInt size, UInt qp);
     Void xSetScalingListEnc(TComScalingList *scalingList, UInt list, UInt size, UInt qp);
@@ -191,14 +184,12 @@ public:
     Void setScalingListDec(TComScalingList *scalingList);
     Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
-    Void    initSliceQpDelta();
-    Void    storeSliceQpNext(TComSlice* pcSlice);
-    Void    clearSliceARLCnt();
-    Int     getQpDelta(Int qp) { return m_qpDelta[qp]; }
-
-    Int*    getSliceNSamples() { return m_sliceNsamples; }
-
-    Double* getSliceSumC()    { return m_sliceSumC; }
+    Void initSliceQpDelta();
+    Void storeSliceQpNext(TComSlice* pcSlice);
+    Void clearSliceARLCnt();
+    Int  getQpDelta(Int qp) { return m_qpDelta[qp]; }
+    Int* getSliceNSamples() { return m_sliceNsamples; }
+    Double* getSliceSumC()  { return m_sliceSumC; }
 
 protected:
 
@@ -209,9 +200,9 @@ protected:
 
     QpParam  m_cQP;
 
-    Double   m_dLambda;
-    Double   m_dLambdaLuma;
-    Double   m_dLambdaChroma;
+    UInt64   m_uiLambda;
+    UInt64   m_uiLambdaLuma;
+    UInt64   m_uiLambdaChroma;
 
     UInt     m_uiRDOQOffset;
     UInt     m_uiMaxTrSize;
@@ -221,12 +212,18 @@ protected:
     Bool     m_bUseAdaptQpSelect;
     Bool     m_useTransformSkipFast;
     Bool     m_scalingListEnabledFlag;
-    Int      *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
-    Int      *m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
+    Int     *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
+    Int     *m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
 
     Double   *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
 
 private:
+
+    Double* getErrScaleCoeff(UInt list, UInt size, UInt qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
+
+    Int* getQuantCoeff(UInt list, UInt qp, UInt size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
+
+    Int* getDequantCoeff(UInt list, UInt qp, UInt size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
     // skipping Transform
     Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height);
@@ -246,19 +243,19 @@ private:
 
     // RDOQ functions
 
-    Void           xRateDistOptQuant(TComDataCU * pcCU,
-                                     Int *        plSrcCoeff,
-                                     TCoeff *     piDstCoeff,
-                                     Int * &      piArlDstCoeff,
-                                     UInt         uiWidth,
-                                     UInt         uiHeight,
-                                     UInt &       uiAbsSum,
-                                     TextType     eTType,
-                                     UInt         uiAbsPartIdx);
+    Void xRateDistOptQuant(TComDataCU * pcCU,
+                           Int *        plSrcCoeff,
+                           TCoeff *     piDstCoeff,
+                           Int * &      piArlDstCoeff,
+                           UInt         uiWidth,
+                           UInt         uiHeight,
+                           UInt &       uiAbsSum,
+                           TextType     eTType,
+                           UInt         uiAbsPartIdx);
 
-    __inline UInt xGetCodedLevel(Double& rd64CodedCost,
-                                 Double& rd64CodedCost0,
-                                 Double& rd64CodedCostSig,
+    __inline UInt xGetCodedLevel(UInt64& rui64CodedCost,
+                                 UInt64& rui64CodedCost0,
+                                 UInt64& rui64CodedCostSig,
                                  Int     lLevelDouble,
                                  UInt    uiMaxAbsLevel,
                                  UShort  ui16CtxNumSig,
@@ -268,10 +265,10 @@ private:
                                  UInt    c1Idx,
                                  UInt    c2Idx,
                                  Int     iQBits,
-                                 Double  dTemp,
+                                 Double  dErrScale,
                                  Bool    bLast) const;
 
-    __inline Double xGetICRateCost(UInt uiAbsLevel,
+    __inline UInt64 xGetICRateCost(UInt uiAbsLevel,
                                    UShort ui16CtxNumOne,
                                    UShort ui16CtxNumAbs,
                                    UShort ui16AbsGoRice,
@@ -285,12 +282,12 @@ private:
                             UInt   c1Idx,
                             UInt   c2Idx) const;
 
-    __inline Double xGetRateLast(UInt uiPosX, UInt uiPosY) const;
-
-    __inline Double xGetRateSigCoeffGroup(UShort uiSignificanceCoeffGroup, UShort ui16CtxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantCoeffGroupBits[ui16CtxNumSig][uiSignificanceCoeffGroup]; }
-    __inline Double xGetRateSigCoef(UShort uiSignificance, UShort ui16CtxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantBits[ui16CtxNumSig][uiSignificance]; }
-    __inline Double xGetICost(Double dRate) const { return m_dLambda * dRate; } ///< Get the cost for a specific rate
-    __inline Double xGetIEPRate() const           { return 32768; }             ///< Get the cost of an equal probable bit
+    __inline UInt64 xGetRateLast(UInt uiPosX, UInt uiPosY) const;
+    __inline UInt64 xGetRateSigCoeffGroup(UShort uiSignificanceCoeffGroup, UShort ui16CtxNumSig) const { return xGetICost(m_pcEstBitsSbac->significantCoeffGroupBits[ui16CtxNumSig][uiSignificanceCoeffGroup]); }
+    __inline UInt64 xGetRateSigCoef(UShort uiSignificance, UShort ui16CtxNumSig) const { return xGetICost(m_pcEstBitsSbac->significantBits[ui16CtxNumSig][uiSignificance]); }
+    __inline UInt64 xGetICost(UInt64 bits) const                    { return (m_uiLambda * bits + 32768) >> 16; }       ///< Get the cost for a specific rate
+    __inline UInt   xGetIEPRate() const                             { return 32768; }                                   ///< Get the cost of an equal probable bit
+    __inline UInt64 xApplyScale(Double cost, Double errScale) const { return (UInt64) (errScale * cost * cost + 0.5); }
 
     // dequantization
     Void xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType);
