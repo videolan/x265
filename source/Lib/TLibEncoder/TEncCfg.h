@@ -132,8 +132,7 @@ protected:
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
-    Bool      m_useRectInter;
-
+    Bool      m_useRectInter;    
     //======= Transform =============
     UInt      m_uiQuadtreeTULog2MaxSize;
     UInt      m_uiQuadtreeTULog2MinSize;
@@ -160,6 +159,8 @@ protected:
     Int       m_bipredSearchRange;
 
     //====== Quality control ========
+    Bool      m_useRDO;
+
     Int       m_iMaxCuDQPDepth;                 //  Max. depth for a minimum CuDQP (0:default)
 
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
@@ -348,6 +349,10 @@ public:
     Void      setUseAMP(Bool b)          { m_useAMP = b; }
 
     //====== Quality control ========
+    Void      setUseRDO(Bool b)         { m_useRDO = b;}
+
+    Bool      getUseRDO() const         { return m_useRDO; }
+
     Void      setMaxCuDQPDepth(Int i)      { m_iMaxCuDQPDepth = i; }
 
     Void      setChromaCbQpOffset(Int i)      { m_chromaCbQpOffset = i; }
