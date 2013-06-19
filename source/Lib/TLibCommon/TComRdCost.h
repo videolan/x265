@@ -196,14 +196,14 @@ public:
 
     inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
 
+    inline UInt    getCost(UInt bits)                     { return (UInt)((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
+
     inline UInt    scaleChromaDistCb(UInt dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
     inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
     // for motion cost
     Void    setCostScale(Int iCostScale)                  { m_iCostScale = iCostScale; }
-
-    UInt    getCost(UInt b)                               { return (UInt)((m_uiLambdaMotionSAD * b + 32768) >> 16); }
 
     // Distortion Functions
     Void    init();
