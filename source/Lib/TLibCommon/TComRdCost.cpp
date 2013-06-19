@@ -69,7 +69,7 @@ Void TComRdCost::setCrDistortionWeight(Double crDistortionWeight)
     m_crDistortionWeight = (UInt)floor(256.0 * crDistortionWeight);
 }
 
-// Initalize Function Pointer by [eDFunc]
+// Initialize Function Pointer by [eDFunc]
 Void TComRdCost::init()
 {
     m_afpDistortFunc[0]  = NULL;                // for DF_DEFAULT
