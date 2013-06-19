@@ -117,17 +117,6 @@ Void TComRdCost::init()
     m_iCostScale              = 0;
 }
 
-Void TComRdCost::setDistParam(UInt uiBlkWidth, UInt uiBlkHeight, DFunc eDFunc, DistParam& rcDistParam)
-{
-    // set Block Width / Height
-    rcDistParam.iCols    = uiBlkWidth;
-    rcDistParam.iRows    = uiBlkHeight;
-    rcDistParam.DistFunc = m_afpDistortFunc[eDFunc + g_aucConvertToBit[rcDistParam.iCols] + 1];
-
-    // initialize
-    rcDistParam.iSubShift  = 0;
-}
-
 // Setting the Distortion Parameter for Inter (ME)
 Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, DistParam& rcDistParam)
 {
