@@ -104,16 +104,6 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     }
 }
 
-int MotionEstimate::bufSATD(pixel *fref, intptr_t stride)
-{
-#if 0
-    return satd(fenc, FENC_STRIDE, fref, stride);
-#else
-    return sa8d(fenc, FENC_STRIDE, fref, stride);
-#endif
-}
-
-
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
 static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */

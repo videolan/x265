@@ -81,14 +81,14 @@ public:
         fencLumaStride = luma;
     }
 
-    /* Methods called at CU setup.  bufSAD() and motionEstimate() both require
-     * setSourcePU() to be called before they may be called. */
+    /* Methods called at CU setup.  bufSAD(), bufSATD, and motionEstimate() all
+     * require setSourcePU() to be called before they may be called. */
 
     void setSourcePU(int offset, int pwidth, int pheight);
 
-    int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
+    inline int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
 
-    int bufSATD(pixel *fref, intptr_t stride);
+    inline int bufSATD(pixel *fref, intptr_t stride) { return sa8d(fenc, FENC_STRIDE, fref, stride); }
 
     int motionEstimate(MotionReference *ref,
                        const MV &mvmin,
