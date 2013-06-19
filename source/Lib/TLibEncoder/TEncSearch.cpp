@@ -2749,7 +2749,7 @@ Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, I
     Int iWidth, iHeight;
     motionCompensation(pcCU, &m_tmpYuvPred, REF_PIC_LIST_X, iPartIdx);
     pcCU->getPartIndexAndSize(iPartIdx, uiAbsPartIdx, iWidth, iHeight);
-    ruiErr = m_me.bufSATD((pixel*)m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride());
+    ruiErr = m_me.bufSA8D((pixel*)m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride());
     x265_emms();
 }
 
