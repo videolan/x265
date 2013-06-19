@@ -337,7 +337,7 @@ int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
         sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
     }
 
-    return (sum + 2) >> 2;
+    return (int)((sum + 2) >> 2);
 }
 
 int CDECL sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)

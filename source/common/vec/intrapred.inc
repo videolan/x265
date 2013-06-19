@@ -4725,7 +4725,9 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
+#if !HIGH_BIT_DEPTH
     p.getIPredAngs4 = xPredIntraAngs4;
+#endif
 }
 
 }

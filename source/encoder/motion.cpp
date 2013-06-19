@@ -62,7 +62,7 @@ MotionEstimate::MotionEstimate()
         init_scales();
 
     // fenc must be 16 byte aligned
-    fenc = fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15);
+    fenc = (pixel *)((char*)fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15));
 }
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)

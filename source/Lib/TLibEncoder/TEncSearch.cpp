@@ -2253,7 +2253,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 Pel *pLeft0  = refLeft     + uiWidth - 1;
                 Pel *pLeft1  = refLeftFlt  + uiWidth - 1;
 
-                x265::primitives.getIPredAngs4(tmp, pAbove0, pLeft0, pAbove1, pLeft1, (uiWidth<16));
+                x265::primitives.getIPredAngs4((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth<16));
 
                 // TODO: We need SATD_x4 here
                 for (UInt uiMode = 2; uiMode < 18; uiMode++)
@@ -2752,7 +2752,7 @@ Void TEncSearch::xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, I
     Int iWidth, iHeight;
     motionCompensation(pcCU, &m_tmpYuvPred, REF_PIC_LIST_X, iPartIdx);
     pcCU->getPartIndexAndSize(iPartIdx, uiAbsPartIdx, iWidth, iHeight);
-    ruiErr = m_me.bufSATD(m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride());
+    ruiErr = m_me.bufSATD((pixel*)m_tmpYuvPred.getLumaAddr(uiAbsPartIdx), m_tmpYuvPred.getStride());
     x265_emms();
 }
 
