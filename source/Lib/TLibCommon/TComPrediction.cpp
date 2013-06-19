@@ -58,10 +58,10 @@ const UChar m_aucIntraFilter[5] =
 // ====================================================================================================================
 
 TComPrediction::TComPrediction()
-    : m_pLumaRecBuffer(0)
-    , m_iLumaRecStride(0)
-    , m_piPredBuf(NULL)
+    : m_piPredBuf(NULL)
     , m_piPredAngBufs(NULL)
+    , m_pLumaRecBuffer(0)
+    , m_iLumaRecStride(0)
 {
 }
 
