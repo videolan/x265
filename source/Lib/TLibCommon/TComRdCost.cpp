@@ -193,45 +193,6 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     rcDistParam.iSubShift  = 0;
 }
 
-UInt TComRdCost::calcHAD(Int bitDepth, Pel* pi0, Int iStride0, Pel* pi1, Int iStride1, Int iWidth, Int iHeight)
-{
-    UInt uiSum = 0;
-    Int x, y;
-
-    if (((iWidth % 8) == 0) && ((iHeight % 8) == 0))
-    {
-        for (y = 0; y < iHeight; y += 8)
-        {
-            for (x = 0; x < iWidth; x += 8)
-            {
-                uiSum += xCalcHADs8x8(&pi0[x], &pi1[x], iStride0, iStride1, 1);
-            }
-
-            pi0 += iStride0 * 8;
-            pi1 += iStride1 * 8;
-        }
-    }
-    else if (((iWidth % 4) == 0) && ((iHeight % 4) == 0))
-    {
-        for (y = 0; y < iHeight; y += 4)
-        {
-            for (x = 0; x < iWidth; x += 4)
-            {
-                uiSum += xCalcHADs4x4(&pi0[x], &pi1[x], iStride0, iStride1, 1);
-            }
-
-            pi0 += iStride0 * 4;
-            pi1 += iStride1 * 4;
-        }
-    }
-    else
-    {
-        assert(!"Unexpected PU size, multiple of 2");
-    }
-
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(bitDepth - 8);
-}
-
 // ====================================================================================================================
 // Distortion functions
 // ====================================================================================================================
