@@ -1825,7 +1825,7 @@ __inline UInt TComTrQuant::xGetCodedLevel(UInt64& rui64CodedCost,
     UInt uiMinAbsLevel = (uiMaxAbsLevel > 1 ? uiMaxAbsLevel - 1 : 1);
     for (Int uiAbsLevel = uiMaxAbsLevel; uiAbsLevel >= uiMinAbsLevel; uiAbsLevel--)
     {
-        Double uiErr      = Double(lLevelDouble) - (uiAbsLevel << iQBits);
+        Double uiErr      = Double(lLevelDouble - (uiAbsLevel << iQBits));
         UInt64 uiCurrCost = xApplyScale(uiErr, dErrorScale) + xGetICRateCost(uiAbsLevel, ui16CtxNumOne, ui16CtxNumAbs, ui16AbsGoRice, c1Idx, c2Idx);
         uiCurrCost       += uiCurrCostSig;
 
