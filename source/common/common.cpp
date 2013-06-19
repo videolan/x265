@@ -326,10 +326,10 @@ void x265_print_params(x265_param_t *param)
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->enableRectInter, "rect");
     TOOLOPT(param->enableAMP, "amp");
-    TOOLOPT(param->enableRDO, "rdo");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
+    TOOLOPT(param->enableRDO, "rdo");
     TOOLOPT(param->useRDOQ, "rdoq");
     if (param->useTransformSkip)
     {
