@@ -4763,8 +4763,8 @@ ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
 void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
     // avoid warning
-    (pLeft1);
-    (pAbove1);
+    (void)pLeft1;
+    (void)pAbove1;
 
     pixel (*pDstN)[4*4] = (pixel(*)[4*4])pDst0;
 
