@@ -73,6 +73,7 @@ private:
     TComDataCU**            m_InterCU_Nx2N;
     TComDataCU**            m_IntrainInterCU;
     TComDataCU**            m_MergeCU;
+    TComDataCU**            m_MergeBestCU; 
     TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
     TComDataCU**            m_ppcTempCU;    ///< Temporary CUs in each depth
     UChar                   m_uhTotalDepth;
@@ -81,7 +82,7 @@ private:
     TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
-    TComYuv**               m_ppcPredYuvMode[5]; //To store pred structures for inter, intra, rect(2) and merge
+    TComYuv**               m_ppcPredYuvMode[6]; //To store pred structures for inter, intra, rect(2) and merge
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_RecoYuvNxN[4];
@@ -148,6 +149,8 @@ protected:
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
     
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
+    Void  xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU,  Bool *earlyDetectionSkipMode);
+    Void  xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize,UInt index);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
     Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);

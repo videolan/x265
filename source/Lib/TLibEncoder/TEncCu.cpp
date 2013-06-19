@@ -71,6 +71,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_InterCU_Nx2N          = new TComDataCU*[m_uhTotalDepth - 1];
     m_IntrainInterCU        = new TComDataCU*[m_uhTotalDepth - 1];
     m_MergeCU               = new TComDataCU*[m_uhTotalDepth - 1];
+    m_MergeBestCU           = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcBestCU      = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
 
@@ -84,6 +85,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcPredYuvMode[2] = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcPredYuvMode[3] = new TComYuv*[m_uhTotalDepth - 1];
     m_ppcPredYuvMode[4] = new TComYuv*[m_uhTotalDepth - 1];
+    m_ppcPredYuvMode[5] = new TComYuv*[m_uhTotalDepth - 1];
 
     m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
@@ -118,7 +120,8 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
         m_IntrainInterCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
         m_MergeCU[i] = new TComDataCU;
         m_MergeCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-
+        m_MergeBestCU[i] = new TComDataCU;
+        m_MergeBestCU[i]->create(uiNumPartitions, uiWidth, uiHeight, false, uiMaxWidth >> (m_uhTotalDepth - 1));
         m_ppcPredYuvBest[i] = new TComYuv;
         m_ppcPredYuvBest[i]->create(uiWidth, uiHeight);
         m_ppcResiYuvBest[i] = new TShortYUV;
@@ -143,6 +146,9 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
         m_ppcPredYuvMode[4][i] = new TComYuv;
         m_ppcPredYuvMode[4][i]->create(uiWidth, uiHeight);
+
+        m_ppcPredYuvMode[5][i] = new TComYuv;
+        m_ppcPredYuvMode[5][i]->create(uiWidth, uiHeight);
 
         m_ppcResiYuvTemp[i] = new TShortYUV;
         m_ppcResiYuvTemp[i]->create(uiWidth, uiHeight);
@@ -213,6 +219,13 @@ Void TEncCu::destroy()
             m_MergeCU[i] = NULL;
         }
 
+        if (m_MergeBestCU[i])
+        {
+            m_MergeBestCU[i]->destroy();
+            delete m_MergeBestCU[i];
+            m_MergeBestCU[i] = NULL;
+        }
+
         if (m_ppcBestCU[i])
         {
             m_ppcBestCU[i]->destroy();
@@ -280,6 +293,13 @@ Void TEncCu::destroy()
             m_ppcPredYuvMode[4][i]->destroy();
             delete m_ppcPredYuvMode[4][i];
             m_ppcPredYuvMode[4][i] = NULL;
+        }
+
+        if (m_ppcPredYuvMode[5][i])
+        {
+            m_ppcPredYuvMode[5][i]->destroy();
+            delete m_ppcPredYuvMode[5][i];
+            m_ppcPredYuvMode[5][i] = NULL;
         }
         if (m_ppcResiYuvTemp[i])
         {
@@ -351,6 +371,11 @@ Void TEncCu::destroy()
     {
         delete [] m_MergeCU;
         m_MergeCU = NULL;
+    }
+    if (m_MergeBestCU)
+    {
+        delete [] m_MergeBestCU;
+        m_MergeBestCU = NULL;
     }
     if (m_ppcBestCU)
     {
@@ -473,7 +498,7 @@ extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
 extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
 extern  int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
-bool mergeFlag=0;
+bool mergeFlag = 0;
 #endif
 
 Void TEncCu::compressCU(TComDataCU* pcCu)
@@ -483,8 +508,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
 #if CU_STAT_LOGFILE
     totalCU++;
-    if(pcCu->getSlice()->getSliceType() != I_SLICE)
-    fprintf(fp1,"CU number : %d \n", totalCU);
+    if (pcCu->getSlice()->getSliceType() != I_SLICE)
+        fprintf(fp1, "CU number : %d \n", totalCU);
 #endif
     //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
 
@@ -501,11 +526,12 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
 
     if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
-    else    
+    else
     {
         if(!m_pcEncCfg->getUseRDO())
         {
             TComDataCU* rpcBestCU = NULL;
+
             /* At the start of analysis, the best CU is a null pointer
             On return, it points to the CU encode with best chosen mode*/
             xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
@@ -783,7 +809,6 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             uiTargetPartIdx = 0;
             if (hasResidual)
             {
-
                 Bool foundNonZeroCbf = false;
                 rpcTempCU->setQPSubCUs(rpcTempCU->getRefQP(uiTargetPartIdx), rpcTempCU, 0, uiDepth, foundNonZeroCbf);
                 assert(foundNonZeroCbf);
@@ -1194,12 +1219,12 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 rpcTempCU->initEstData(uiDepth, iQP);                              //by Competition for inter_2Nx2N
             }
 #if CU_STAT_LOGFILE
-                    mergeFlag = 1;
+            mergeFlag = 1;
 #endif
             // SKIP
             xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
 #if CU_STAT_LOGFILE
-                    mergeFlag = 0;
+            mergeFlag = 0;
 #endif
             rpcTempCU->initEstData(uiDepth, iQP);
 
@@ -1869,7 +1894,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                                                               m_ppcResiYuvBest[uhDepth],
                                                               m_ppcRecoYuvTemp[uhDepth],
                                                               (uiNoResidual ? true : false));
-          /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
+                    /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
                     if (uiNoResidual == 0)
                     {
                         if (rpcTempCU->getQtRootCbf(0) == 0)
@@ -1940,7 +1965,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     m_ppcRecoYuvTemp[uhDepth]->clear();
     m_ppcResiYuvTemp[uhDepth]->clear();
     m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], bUseMRG);
-        
+
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
         /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
@@ -1952,7 +1977,7 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     }
 
     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
-    
+
     xCheckDQP(rpcTempCU);
 
     xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
@@ -2055,7 +2080,7 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
     if(!m_pcEncCfg->getUseRDO())
     {
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
+        UInt SATD = primitives.satd[partEnum]((pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
                                             (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
         x265_emms();
         rpcTempCU->getTotalDistortion() = SATD;
@@ -2150,7 +2175,7 @@ Void TEncCu::xCheckDQP(TComDataCU* pcCU)
 
     if (pcCU->getSlice()->getPPS()->getUseDQP() && (g_uiMaxCUWidth >> uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize())
     {
-        pcCU->setQPSubParts(pcCU->getRefQP(0), 0, uiDepth); // set QP to default QP        
+        pcCU->setQPSubParts(pcCU->getRefQP(0), 0, uiDepth); // set QP to default QP
     }
 }
 
