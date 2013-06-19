@@ -185,7 +185,7 @@ typedef struct x265_param_t
     int       useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
     int       enableAMP;                        ///< flag for enabling asymmetrical motion predictions
     int       enableRectInter;                  ///< flag for enabling rectangular modes 2NxN, Nx2N
-
+    int       enableRDO;                        ///< flag for enabling RDO 
     // coding quality
     int       iQP;                              ///< QP value of key-picture (integer)
     int       cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)

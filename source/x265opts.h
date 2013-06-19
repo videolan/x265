@@ -41,6 +41,8 @@ OPT("rect",            param->enableRectInter,                 no_argument, 0, "
 OPT("no-rect",         param->enableRectInter,                 no_argument, 0, "Disable rectangular motion partitions Nx2N and 2NxN")
 OPT("amp",             param->enableAMP,                       no_argument, 0, "Enable asymmetric motion partitions, requires --rect")
 OPT("no-amp",          param->enableAMP,                       no_argument, 0, "Disable asymmetric motion partitions")
+OPT("rdo",             param->enableRDO,                       no_argument, 0, "Enable rate distortion-based mode decision")
+OPT("no-rdo",          param->enableRDO,                       no_argument, 0, "Enable mode decision without rate distortion optimization")
 OPT("max-merge",       param->maxNumMergeCand,           required_argument, 0, "Maximum number of merge candidates (default: 5)")
 OPT("fdm",             param->useFastDecisionForMerge,         no_argument, 0, "Enable fast decision for Merge RD Cost")
 OPT("no-fdm",          param->useFastDecisionForMerge,         no_argument, 0, "Disable fast decision for Merge RD Cost")

@@ -95,6 +95,7 @@ void x265_param_default(x265_param_t *param)
     param->uiQuadtreeTUMaxDepthIntra = 3;
     param->enableAMP = 0;
     param->enableRectInter = 0;
+    param->enableRDO = 1;
     param->iQP = 32;
     param->iQPAdaptationRange = 6;
     param->bUseSAO = 0;
@@ -324,12 +325,13 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
     x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
-#if FAST_MODE_DECISION
-    printf("fmd ");
-#endif
 #define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
     TOOLOPT(param->enableRectInter, "rect");
     TOOLOPT(param->enableAMP, "amp");
+    if(param->enableRDO)
+        printf("rdo ");
+    else
+        printf("no-rdo ");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
