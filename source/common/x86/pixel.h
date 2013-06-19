@@ -92,6 +92,10 @@ DECL_X4( sad, cache64_mmx2 );
 DECL_X4( sad, cache64_sse2 );
 DECL_X4( sad, cache64_ssse3 );
 
+#if !HIGH_BIT_DEPTH
+int x265_pixel_satd_16x12_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
+#endif
+
 DECL_PIXELS( uint64_t, var, mmx2, ( pixel *pix, intptr_t i_stride ))
 DECL_PIXELS( uint64_t, var, sse2, ( pixel *pix, intptr_t i_stride ))
 DECL_PIXELS( uint64_t, var, avx,  ( pixel *pix, intptr_t i_stride ))
