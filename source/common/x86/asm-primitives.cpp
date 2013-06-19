@@ -28,7 +28,7 @@ extern "C" {
 void x265_intel_cpu_indicator_init( void ) {}
 }
 
-bool hasXOP(void);
+bool hasXOP(void); // instr_detect.cpp
 
 namespace {
 
@@ -334,6 +334,48 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
         p.sa8d[BLOCK_64x64] = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
 
+        p.sa8d_inter[PARTITION_8x8]   = x265_pixel_sa8d_8x8_avx;
+        p.sa8d_inter[PARTITION_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_8x24]  = cmp<8, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_8x48]  = cmp<8, 48, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_8x64]  = cmp<8, 64, 8, 8, x265_pixel_sa8d_8x8_avx>;
+
+        p.sa8d_inter[PARTITION_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_16x16] = x265_pixel_sa8d_16x16_avx;
+        p.sa8d_inter[PARTITION_16x24] = cmp<16, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_16x32] = cmp<16, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_16x48] = cmp<16, 48, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_16x64] = cmp<16, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
+
+        p.sa8d_inter[PARTITION_24x8]  = cmp<24, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_24x16] = cmp<24, 16, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_24x24] = cmp<24, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_24x32] = cmp<24, 32, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_24x48] = cmp<24, 48, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_24x64] = cmp<24, 64, 8, 8, x265_pixel_sa8d_8x8_avx>;
+
+        p.sa8d_inter[PARTITION_32x8]  = cmp<32, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_32x16] = cmp<32, 16, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_32x24] = cmp<32, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_32x48] = cmp<32, 48, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_32x64] = cmp<32, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
+
+        p.sa8d_inter[PARTITION_48x8]  = cmp<48, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_48x16] = cmp<48, 16, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_48x24] = cmp<48, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_48x32] = cmp<48, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_48x48] = cmp<48, 48, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_48x64] = cmp<48, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
+
+        p.sa8d_inter[PARTITION_64x8]  = cmp<64, 8, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_64x16] = cmp<64, 16, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_64x24] = cmp<64, 24, 8, 8, x265_pixel_sa8d_8x8_avx>;
+        p.sa8d_inter[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_sa8d_16x16_avx>;
+        p.sa8d_inter[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_avx>;
+
         ASSGN_SSE(pp,8,avx)
         ASSGN_SSE(pp,16,avx)
         ASSGN_SSE(pp,32,avx)        
@@ -381,6 +423,48 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_xop;
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
         p.sa8d[BLOCK_64x64] = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
+
+        p.sa8d_inter[PARTITION_8x8]   = x265_pixel_sa8d_8x8_xop;
+        p.sa8d_inter[PARTITION_8x16]  = cmp<8, 16, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_8x24]  = cmp<8, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_8x32]  = cmp<8, 32, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_8x48]  = cmp<8, 48, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_8x64]  = cmp<8, 64, 8, 8, x265_pixel_sa8d_8x8_xop>;
+
+        p.sa8d_inter[PARTITION_16x8]  = cmp<16, 8, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_16x16] = x265_pixel_sa8d_16x16_xop;
+        p.sa8d_inter[PARTITION_16x24] = cmp<16, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_16x32] = cmp<16, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_16x48] = cmp<16, 48, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_16x64] = cmp<16, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
+
+        p.sa8d_inter[PARTITION_24x8]  = cmp<24, 8, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_24x16] = cmp<24, 16, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_24x24] = cmp<24, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_24x32] = cmp<24, 32, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_24x48] = cmp<24, 48, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_24x64] = cmp<24, 64, 8, 8, x265_pixel_sa8d_8x8_xop>;
+
+        p.sa8d_inter[PARTITION_32x8]  = cmp<32, 8, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_32x16] = cmp<32, 16, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_32x24] = cmp<32, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_32x48] = cmp<32, 48, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_32x64] = cmp<32, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
+
+        p.sa8d_inter[PARTITION_48x8]  = cmp<48, 8, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_48x16] = cmp<48, 16, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_48x24] = cmp<48, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_48x32] = cmp<48, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_48x48] = cmp<48, 48, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_48x64] = cmp<48, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
+
+        p.sa8d_inter[PARTITION_64x8]  = cmp<64, 8, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_64x16] = cmp<64, 16, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_64x24] = cmp<64, 24, 8, 8, x265_pixel_sa8d_8x8_xop>;
+        p.sa8d_inter[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_sa8d_16x16_xop>;
+        p.sa8d_inter[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_sa8d_16x16_xop>;
 
         INIT7( satd, _xop );
         INIT5_NAME( sse_pp, ssd, _xop );
@@ -449,6 +533,35 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         INIT2_NAME( sse_pp, ssd, _avx2 );
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_avx2;
     }
+    // SA8D devolves to SATD for blocks not even multiples of 8x8
+    p.sa8d_inter[PARTITION_4x4]   = p.satd[PARTITION_4x4];
+    p.sa8d_inter[PARTITION_4x8]   = p.satd[PARTITION_4x8];
+    p.sa8d_inter[PARTITION_4x12]  = p.satd[PARTITION_4x12];
+    p.sa8d_inter[PARTITION_4x16]  = p.satd[PARTITION_4x16];
+    p.sa8d_inter[PARTITION_4x24]  = p.satd[PARTITION_4x24];
+    p.sa8d_inter[PARTITION_4x32]  = p.satd[PARTITION_4x32];
+    p.sa8d_inter[PARTITION_4x48]  = p.satd[PARTITION_4x48];
+    p.sa8d_inter[PARTITION_4x64]  = p.satd[PARTITION_4x64];
+    p.sa8d_inter[PARTITION_8x4]   = p.satd[PARTITION_8x4];
+    p.sa8d_inter[PARTITION_8x12]  = p.satd[PARTITION_8x12];
+    p.sa8d_inter[PARTITION_12x4]  = p.satd[PARTITION_12x4];
+    p.sa8d_inter[PARTITION_12x8]  = p.satd[PARTITION_12x8];
+    p.sa8d_inter[PARTITION_12x12] = p.satd[PARTITION_12x12];
+    p.sa8d_inter[PARTITION_12x16] = p.satd[PARTITION_12x16];
+    p.sa8d_inter[PARTITION_12x24] = p.satd[PARTITION_12x24];
+    p.sa8d_inter[PARTITION_12x32] = p.satd[PARTITION_12x32];
+    p.sa8d_inter[PARTITION_12x48] = p.satd[PARTITION_12x48];
+    p.sa8d_inter[PARTITION_12x64] = p.satd[PARTITION_12x64];
+    p.sa8d_inter[PARTITION_16x4]  = p.satd[PARTITION_16x4];
+    p.sa8d_inter[PARTITION_16x12] = p.satd[PARTITION_16x12];
+    p.sa8d_inter[PARTITION_24x4]  = p.satd[PARTITION_24x4];
+    p.sa8d_inter[PARTITION_24x12] = p.satd[PARTITION_24x12];
+    p.sa8d_inter[PARTITION_32x4]  = p.satd[PARTITION_32x4];
+    p.sa8d_inter[PARTITION_32x12] = p.satd[PARTITION_32x12];
+    p.sa8d_inter[PARTITION_48x4]  = p.satd[PARTITION_48x4];
+    p.sa8d_inter[PARTITION_48x12] = p.satd[PARTITION_48x12];
+    p.sa8d_inter[PARTITION_64x4]  = p.satd[PARTITION_64x4];
+    p.sa8d_inter[PARTITION_64x12] = p.satd[PARTITION_64x12];
 #endif
 }
 

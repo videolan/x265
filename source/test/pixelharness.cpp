@@ -337,6 +337,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
+        if (opt.sa8d_inter[curpar])
+        {
+            if (!check_pixel_primitive(ref.sa8d_inter[curpar], opt.sa8d_inter[curpar]))
+            {
+                printf("sa8d_inter[%s]: failed!\n", FuncNames[curpar]);
+                return false;
+            }
+        }
+
         if (opt.sad[curpar])
         {
             if (!check_pixel_primitive(ref.sad[curpar], opt.sad[curpar]))
@@ -392,13 +401,29 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (uint16_t curblock = 0; curblock < NUM_BLOCKS; curblock++)
+    for (int i = 0; i < NUM_BLOCKS; i++)
     {
-        if (opt.sa8d[curblock])
+        if (opt.calcresidual[i])
         {
-            if (!check_pixel_primitive(ref.sa8d[curblock], opt.sa8d[curblock]))
+            if (!check_calresidual(ref.calcresidual[i], opt.calcresidual[i]))
             {
-                printf("sa8d[%dx%d]: failed!\n", 4 << curblock, 4 << curblock);
+                printf("getResidue width:%d failed!\n", 4 << i);
+                return false;
+            }
+        }
+        if (opt.calcrecon[i])
+        {
+            if (!check_calcrecon(ref.calcrecon[i], opt.calcrecon[i]))
+            {
+                printf("calcRecon width:%d failed!\n", 4 << i);
+                return false;
+            }
+        }
+        if (opt.sa8d[i])
+        {
+            if (!check_pixel_primitive(ref.sa8d[i], opt.sa8d[i]))
+            {
+                printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -440,30 +465,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_BLOCKS; i++)
-    {
-        if (opt.calcresidual[i])
-        {
-            if (!check_calresidual(ref.calcresidual[i], opt.calcresidual[i]))
-            {
-                printf("getResidue width:%d failed!\n", 4 << i);
-                return false;
-            }
-        }
-    }
-
-    for (int i = 0; i < NUM_BLOCKS; i++)
-    {
-        if (opt.calcrecon[i])
-        {
-            if (!check_calcrecon(ref.calcrecon[i], opt.calcrecon[i]))
-            {
-                printf("calcRecon width:%d failed!\n", 4 << i);
-                return false;
-            }
-        }
-    }
-
     return true;
 }
 
@@ -478,6 +479,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             printf("  satd[%s]", FuncNames[curpar]);
             REPORT_SPEEDUP(opt.satd[curpar], ref.satd[curpar], pbuf1, STRIDE, fref, STRIDE);
+        }
+
+        if (opt.sa8d_inter[curpar])
+        {
+            printf("  sa8d[%s]", FuncNames[curpar]);
+            REPORT_SPEEDUP(opt.sa8d_inter[curpar], ref.sa8d_inter[curpar], pbuf1, STRIDE, fref, STRIDE);
         }
 
         if (opt.sad[curpar])
@@ -517,12 +524,23 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    for (uint16_t curblock = 0; curblock < NUM_BLOCKS; curblock++)
+    for (int i = 0; i < NUM_BLOCKS; i++)
     {
-        if (opt.sa8d[curblock])
+        if (opt.sa8d[i])
         {
-            printf("sa8d[%dx%d]", 4 << curblock, 4 << curblock);
-            REPORT_SPEEDUP(opt.sa8d[curblock], ref.sa8d[curblock], pbuf1, STRIDE, pbuf2, STRIDE);
+            printf("sa8d[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.sa8d[i], ref.sa8d[i], pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+        if (opt.calcresidual[i])
+        {
+            printf("residual[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
+        }
+
+        if (opt.calcrecon[i])
+        {
+            printf("recon[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
         }
     }
 
@@ -548,23 +566,5 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("s_c   cpy");
         REPORT_SPEEDUP(opt.cpyblock_s_c, ref.cpyblock_s_c, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
-    }
-
-    for (int i = 0; i < NUM_BLOCKS; i++)
-    {
-        if (opt.calcresidual[i])
-        {
-            printf("residual[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
-        }
-    }
-
-    for (int i = 0; i < NUM_BLOCKS; i++)
-    {
-        if (opt.calcrecon[i])
-        {
-            printf("recon[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, pbuf2, sbuf1, pbuf1, 64, 64, 64);
-        }
     }
 }

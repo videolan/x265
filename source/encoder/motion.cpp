@@ -86,6 +86,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         partEnum = PartitionFromSizes(width, height);
         fullsad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
+        sa8d = primitives.sa8d_inter[partEnum];
 
         /* Make sub-sampled copy of fenc block at `fencSad' for SAD calculations */
         fencSad = fenc + height * FENC_STRIDE;
@@ -97,10 +98,10 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
         partEnum = PartitionFromSizes(width, height);
         fullsad = sad = primitives.sad[partEnum];
         satd = primitives.satd[partEnum];
+        sa8d = primitives.sa8d_inter[partEnum];
         sad_x3 = primitives.sad_x3[partEnum];
         sad_x4 = primitives.sad_x4[partEnum];
     }
-    bwidth = width; bheight = height;
 }
 
 int MotionEstimate::bufSATD(pixel *fref, intptr_t stride)
@@ -108,33 +109,7 @@ int MotionEstimate::bufSATD(pixel *fref, intptr_t stride)
 #if 0
     return satd(fenc, FENC_STRIDE, fref, stride);
 #else
-    if (partEnum == PARTITION_64x64)
-        return x265::primitives.sa8d[BLOCK_64x64](fenc, FENC_STRIDE, fref, stride);
-    if ((bwidth & 31) == 0 && (bheight & 31) == 0)
-    {
-        int cost = 0;
-        for (int y = 0; y < bheight ; y += 32)
-            for (int x = 0; x < bwidth ; x += 32)
-                cost += x265::primitives.sa8d[BLOCK_32x32](fenc + y * FENC_STRIDE + x, FENC_STRIDE, fref + y * stride + x, stride);
-        return cost;
-    }
-    if ((bwidth & 15) == 0 && (bheight & 15) == 0)
-    {
-        int cost = 0;
-        for (int y = 0; y < bheight ; y += 16)
-            for (int x = 0; x < bwidth ; x += 16)
-                cost += x265::primitives.sa8d[BLOCK_16x16](fenc + y * FENC_STRIDE + x, FENC_STRIDE, fref + y * stride + x, stride);
-        return cost;
-    }
-    if ((bwidth & 7) == 0 && (bheight & 7) == 0)
-    {
-        int cost = 0;
-        for (int y = 0; y < bheight ; y += 8)
-            for (int x = 0; x < bwidth ; x += 8)
-                cost += x265::primitives.sa8d[BLOCK_8x8](fenc + y * FENC_STRIDE + x, FENC_STRIDE, fref + y * stride + x, stride);
-        return cost;
-    }
-    return satd(fenc, FENC_STRIDE, fref, stride);
+    return sa8d(fenc, FENC_STRIDE, fref, stride);
 #endif
 }
 

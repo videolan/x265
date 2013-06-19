@@ -54,6 +54,7 @@ protected:
     pixelcmp sad;
     pixelcmp fullsad;
     pixelcmp satd;
+    pixelcmp sa8d;
     pixelcmp_x3 sad_x3;
     pixelcmp_x4 sad_x4;
 
@@ -61,7 +62,6 @@ protected:
     int partEnum;
     int searchMethod;
     int subsample;
-    int bwidth, bheight;
 
     MotionEstimate& operator =(const MotionEstimate&);
 

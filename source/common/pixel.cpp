@@ -244,6 +244,7 @@ int CDECL satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stri
     return (int)(sum >> 1);
 }
 
+// x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
 int CDECL satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][4];
@@ -268,7 +269,7 @@ int CDECL satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stri
     return (((sum_t)sum) + (sum >> BITS_PER_SUM)) >> 1;
 }
 
-template<int w, int h>
+template<int w, int h> // calculate satd in blocks of 4x4
 int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
@@ -285,7 +286,7 @@ int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_
     return satd;
 }
 
-template<int w, int h>
+template<int w, int h> // calculate satd in blocks of 8x4
 int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
@@ -297,22 +298,6 @@ int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_
             satd += satd_8x4(pix1 + row * stride_pix1 + col, stride_pix1,
                              pix2 + row * stride_pix2 + col, stride_pix2);
         }
-    }
-
-    return satd;
-}
-
-template<int h>
-int CDECL satd12(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
-{
-    int satd = 0;
-
-    for (int row = 0; row < h; row += 4)
-    {
-        satd += satd_8x4(pix1 + row * stride_pix1, stride_pix1,
-                         pix2 + row * stride_pix2, stride_pix2);
-        satd += satd_4x4(pix1 + row * stride_pix1 + 8, stride_pix1,
-                         pix2 + row * stride_pix2 + 8, stride_pix2);
     }
 
     return satd;
@@ -352,54 +337,39 @@ int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
         sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
     }
 
-    return (int)sum;
-}
-
-int CDECL pixel_sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
-{
-    int sum = sa8d_8x8(pix1, i_pix1, pix2, i_pix2);
-
     return (sum + 2) >> 2;
 }
 
-int CDECL pixel_sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int CDECL sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
         + sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
         + sa8d_8x8(pix1 + 8 * i_pix1, i_pix1, pix2 + 8 * i_pix2, i_pix2)
         + sa8d_8x8(pix1 + 8 + 8 * i_pix1, i_pix1, pix2 + 8 + 8 * i_pix2, i_pix2);
 
+    // This matches x264 sa8d_16x16, but is slightly different from HM's behavior because
+    // it only rounds once at the end
     return (sum + 2) >> 2;
 }
 
-int CDECL pixel_sa8d_32x32(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+template<int w, int h> // Calculate sa8d in blocks of 8x8
+int CDECL sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
-    int sum = 0;
-
-    for (int y = 0; y < 32; y += 8)
-    {
-        for (int x = 0; x < 32; x += 8)
-        {
-            sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
-        }
-    }
-
-    return (sum + 2) >> 2;
+    int cost = 0;
+    for (int y = 0; y < h; y += 8)
+        for (int x = 0; x < w; x += 8)
+            cost += sa8d_8x8(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
+    return cost;
 }
 
-int CDECL pixel_sa8d_64x64(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+template<int w, int h> // Calculate sa8d in blocks of 16x16
+int CDECL sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
-    int sum = 0;
-
-    for (int y = 0; y < 64; y += 8)
-    {
-        for (int x = 0; x < 64; x += 8)
-        {
-            sum += sa8d_8x8(pix1 + y * i_pix1 + x, i_pix1, pix2 + y * i_pix2 + x, i_pix2);
-        }
-    }
-
-    return (sum + 2) >> 2;
+    int cost = 0;
+    for (int y = 0; y < h; y += 16)
+        for (int x = 0; x < w; x += 16)
+            cost += sa8d_16x16(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
+    return cost;
 }
 
 void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
@@ -640,14 +610,14 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_8x48]  = satd8<8, 48>;
     p.satd[PARTITION_8x64]  = satd8<8, 64>;
 
-    p.satd[PARTITION_12x4]  = satd12<4>;
-    p.satd[PARTITION_12x8]  = satd12<8>;
-    p.satd[PARTITION_12x12] = satd12<12>;
-    p.satd[PARTITION_12x16] = satd12<16>;
-    p.satd[PARTITION_12x24] = satd12<24>;
-    p.satd[PARTITION_12x32] = satd12<32>;
-    p.satd[PARTITION_12x48] = satd12<48>;
-    p.satd[PARTITION_12x64] = satd12<64>;
+    p.satd[PARTITION_12x4]  = satd4<12, 4>;
+    p.satd[PARTITION_12x8]  = satd4<12, 8>;
+    p.satd[PARTITION_12x12] = satd4<12, 12>;
+    p.satd[PARTITION_12x16] = satd4<12, 16>;
+    p.satd[PARTITION_12x24] = satd4<12, 24>;
+    p.satd[PARTITION_12x32] = satd4<12, 32>;
+    p.satd[PARTITION_12x48] = satd4<12, 48>;
+    p.satd[PARTITION_12x64] = satd4<12, 64>;
 
     p.satd[PARTITION_16x4]  = satd8<16, 4>;
     p.satd[PARTITION_16x8]  = satd8<16, 8>;
@@ -861,10 +831,82 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cvt32to16_shr = convert32to16_shr;
 
     p.sa8d[BLOCK_4x4]   = satd_4x4;
-    p.sa8d[BLOCK_8x8]   = pixel_sa8d_8x8;
-    p.sa8d[BLOCK_16x16] = pixel_sa8d_16x16;
-    p.sa8d[BLOCK_32x32] = pixel_sa8d_32x32;
-    p.sa8d[BLOCK_64x64] = pixel_sa8d_64x64;
+    p.sa8d[BLOCK_8x8]   = sa8d_8x8;
+    p.sa8d[BLOCK_16x16] = sa8d_16x16;
+    p.sa8d[BLOCK_32x32] = sa8d16<32, 32>;
+    p.sa8d[BLOCK_64x64] = sa8d16<64, 64>;
+
+    p.sa8d_inter[PARTITION_4x4]   = satd_4x4;
+    p.sa8d_inter[PARTITION_4x8]   = satd4<4, 8>;
+    p.sa8d_inter[PARTITION_4x12]  = satd4<4, 12>;
+    p.sa8d_inter[PARTITION_4x16]  = satd4<4, 16>;
+    p.sa8d_inter[PARTITION_4x24]  = satd4<4, 24>;
+    p.sa8d_inter[PARTITION_4x32]  = satd4<4, 32>;
+    p.sa8d_inter[PARTITION_4x48]  = satd4<4, 48>;
+    p.sa8d_inter[PARTITION_4x64]  = satd4<4, 64>;
+
+    p.sa8d_inter[PARTITION_8x4]   = satd_8x4;
+    p.sa8d_inter[PARTITION_8x8]   = sa8d_8x8;
+    p.sa8d_inter[PARTITION_8x12]  = satd8<8, 12>;
+    p.sa8d_inter[PARTITION_8x16]  = sa8d8<8, 16>;
+    p.sa8d_inter[PARTITION_8x24]  = sa8d8<8, 24>;
+    p.sa8d_inter[PARTITION_8x32]  = sa8d8<8, 32>;
+    p.sa8d_inter[PARTITION_8x48]  = sa8d8<8, 48>;
+    p.sa8d_inter[PARTITION_8x64]  = sa8d8<8, 64>;
+
+    p.sa8d_inter[PARTITION_12x4]  = satd4<12, 4>;
+    p.sa8d_inter[PARTITION_12x8]  = satd4<12, 8>;
+    p.sa8d_inter[PARTITION_12x12] = satd4<12, 12>;
+    p.sa8d_inter[PARTITION_12x16] = satd4<12, 16>;
+    p.sa8d_inter[PARTITION_12x24] = satd4<12, 24>;
+    p.sa8d_inter[PARTITION_12x32] = satd4<12, 32>;
+    p.sa8d_inter[PARTITION_12x48] = satd4<12, 48>;
+    p.sa8d_inter[PARTITION_12x64] = satd4<12, 64>;
+
+    p.sa8d_inter[PARTITION_16x4]  = satd8<16, 4>;
+    p.sa8d_inter[PARTITION_16x8]  = sa8d8<16, 8>;
+    p.sa8d_inter[PARTITION_16x12] = satd8<16, 12>;
+    p.sa8d_inter[PARTITION_16x16] = sa8d_16x16;
+    p.sa8d_inter[PARTITION_16x24] = sa8d8<16, 24>;
+    p.sa8d_inter[PARTITION_16x32] = sa8d16<16, 32>;
+    p.sa8d_inter[PARTITION_16x48] = sa8d16<16, 48>;
+    p.sa8d_inter[PARTITION_16x64] = sa8d16<16, 64>;
+
+    p.sa8d_inter[PARTITION_24x4]  = satd8<24, 4>;
+    p.sa8d_inter[PARTITION_24x8]  = sa8d8<24, 8>;
+    p.sa8d_inter[PARTITION_24x12] = satd8<24, 12>;
+    p.sa8d_inter[PARTITION_24x16] = sa8d8<24, 16>;
+    p.sa8d_inter[PARTITION_24x24] = sa8d8<24, 24>;
+    p.sa8d_inter[PARTITION_24x32] = sa8d8<24, 32>;
+    p.sa8d_inter[PARTITION_24x48] = sa8d8<24, 48>;
+    p.sa8d_inter[PARTITION_24x64] = sa8d8<24, 64>;
+
+    p.sa8d_inter[PARTITION_32x4]  = satd8<32, 4>;
+    p.sa8d_inter[PARTITION_32x8]  = sa8d8<32, 8>;
+    p.sa8d_inter[PARTITION_32x12] = satd8<32, 12>;
+    p.sa8d_inter[PARTITION_32x16] = sa8d16<32, 16>;
+    p.sa8d_inter[PARTITION_32x24] = sa8d8<32, 24>;
+    p.sa8d_inter[PARTITION_32x32] = sa8d16<32, 32>;
+    p.sa8d_inter[PARTITION_32x48] = sa8d16<32, 48>;
+    p.sa8d_inter[PARTITION_32x64] = sa8d16<32, 64>;
+
+    p.sa8d_inter[PARTITION_48x4]  = satd8<48, 4>;
+    p.sa8d_inter[PARTITION_48x8]  = sa8d8<48, 8>;
+    p.sa8d_inter[PARTITION_48x12] = satd8<48, 12>;
+    p.sa8d_inter[PARTITION_48x16] = sa8d16<48, 16>;
+    p.sa8d_inter[PARTITION_48x24] = sa8d8<48, 24>;
+    p.sa8d_inter[PARTITION_48x32] = sa8d16<48, 32>;
+    p.sa8d_inter[PARTITION_48x48] = sa8d16<48, 48>;
+    p.sa8d_inter[PARTITION_48x64] = sa8d16<48, 64>;
+
+    p.sa8d_inter[PARTITION_64x4]  = satd8<64, 4>;
+    p.sa8d_inter[PARTITION_64x8]  = sa8d8<64, 8>;
+    p.sa8d_inter[PARTITION_64x12] = satd8<64, 12>;
+    p.sa8d_inter[PARTITION_64x16] = sa8d16<64, 16>;
+    p.sa8d_inter[PARTITION_64x24] = sa8d8<64, 24>;
+    p.sa8d_inter[PARTITION_64x32] = sa8d16<64, 32>;
+    p.sa8d_inter[PARTITION_64x48] = sa8d16<64, 48>;
+    p.sa8d_inter[PARTITION_64x64] = sa8d16<64, 64>;
 
     p.calcresidual[BLOCK_4x4] = getResidual<4>;
     p.calcresidual[BLOCK_8x8] = getResidual<8>;
