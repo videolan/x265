@@ -2144,28 +2144,6 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
     }
 }
 
-void TEncCu::swapCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth)
-{
-    TComYuv* pcYuv;
-    // Change Information data
-    TComDataCU* pcCU = rpcBestCU;
-
-    rpcBestCU = rpcTempCU;
-    rpcTempCU = pcCU;
-
-    // Change Prediction data
-    pcYuv = m_ppcPredYuvBest[uiDepth];
-    m_ppcPredYuvBest[uiDepth] = m_ppcPredYuvTemp[uiDepth];
-    m_ppcPredYuvTemp[uiDepth] = pcYuv;
-
-    // Change Reconstruction data
-    pcYuv = m_ppcRecoYuvBest[uiDepth];
-    m_ppcRecoYuvBest[uiDepth] = m_ppcRecoYuvTemp[uiDepth];
-    m_ppcRecoYuvTemp[uiDepth] = pcYuv;
-
-    pcYuv = NULL;
-}
-
 Void TEncCu::xCheckDQP(TComDataCU* pcCU)
 {
     UInt uiDepth = pcCU->getDepth(0);
