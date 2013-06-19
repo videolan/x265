@@ -190,6 +190,7 @@ void Encoder::configure(x265_param_t *param)
     setUseRectInter(param->enableRectInter);
 
     //====== Quality control ========
+    setUseRDO(param->enableRDO);
     setMaxCuDQPDepth(param->iMaxCuDQPDepth);
     setChromaCbQpOffset(param->cbQpOffset);
     setChromaCrQpOffset(param->crQpOffset);
