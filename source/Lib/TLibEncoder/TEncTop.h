@@ -99,7 +99,7 @@ private:
 
 protected:
 
-    Void  xGetNewPicBuffer(TComPic*& rpcPic);             ///< get picture buffer which will be processed
+    TComPic* xGetNewPicBuffer();                          ///< get picture buffer which will be processed
     Void  deletePicBuffer();
     Void  xInitSPS();                                     ///< initialize SPS from encoder options
     Void  xInitPPS();                                     ///< initialize PPS from encoder options

@@ -36,9 +36,9 @@
 */
 
 #include "TLibCommon/CommonDef.h"
+#include "TLibCommon/ContextModel.h"
 #include "TEncTop.h"
 #include "TEncPic.h"
-#include "TLibCommon/ContextModel.h"
 #include "primitives.h"
 
 #include <limits.h>
@@ -185,8 +185,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>
         m_iNumPicRcvd++;
         
         // get original YUV
-        TComPic* pcPicCurr = NULL;
-        xGetNewPicBuffer(pcPicCurr);
+        TComPic* pcPicCurr = xGetNewPicBuffer();
         pcPicCurr->getPicYuvOrg()->copyFromPicture(*pic);
 
         // compute image characteristics
@@ -290,9 +289,10 @@ Double TEncTop::xCalculateRVM()
  .
  \retval rpcPic obtained picture buffer
  */
-Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
+TComPic* TEncTop::xGetNewPicBuffer()
 {
     TComSlice::sortPicList(m_cListPic);
+    TComPic *pcPic = NULL;
 
     if (m_cListPic.size() >= (UInt)(m_iGOPSize + getMaxDecPicBuffering(MAX_TLAYER - 1) + 2))
     {
@@ -300,37 +300,38 @@ Void TEncTop::xGetNewPicBuffer(TComPic*& rpcPic)
         Int iSize = Int(m_cListPic.size());
         for (Int i = 0; i < iSize; i++)
         {
-            rpcPic = *(iterPic++);
-            if (rpcPic->getSlice()->isReferenced() == false)
+            pcPic = *(iterPic++);
+            if (pcPic->getSlice()->isReferenced() == false)
             {
                 break;
             }
         }
     }
-    else
+    if (pcPic == NULL)
     {
         if (getUseAdaptiveQP())
         {
             TEncPic* pcEPic = new TEncPic;
             pcEPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth() + 1,
                            m_conformanceWindow, m_defaultDisplayWindow);
-            rpcPic = pcEPic;
+            pcPic = pcEPic;
         }
         else
         {
-            rpcPic = new TComPic;
+            pcPic = new TComPic;
 
-            rpcPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
-                           m_conformanceWindow, m_defaultDisplayWindow);
+            pcPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                          m_conformanceWindow, m_defaultDisplayWindow);
         }
         if (getUseSAO())
         {
-            rpcPic->getPicSym()->allocSaoParam(&m_cEncSAO);
+            pcPic->getPicSym()->allocSaoParam(&m_cEncSAO);
         }
-        m_cListPic.pushBack(rpcPic);
+        m_cListPic.pushBack(pcPic);
     }
-    rpcPic->getSlice()->setPOC(++m_iPOCLast);
-    rpcPic->getPicYuvRec()->setBorderExtension(false);
+    pcPic->getSlice()->setPOC(++m_iPOCLast);
+    pcPic->getPicYuvRec()->setBorderExtension(false);
+    return pcPic;
 }
 
 Void TEncTop::xInitSPS()
