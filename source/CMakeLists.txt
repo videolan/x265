@@ -40,13 +40,6 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
-option(FAST_MODE_DECISION "Disable RDO in CU analysis" OFF)
-if(FAST_MODE_DECISION)
-    add_definitions(-DFAST_MODE_DECISION=1)
-else(FAST_MODE_DECISION)
-    add_definitions(-DFAST_MODE_DECISION=0)
-endif(FAST_MODE_DECISION)
-
 option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
 find_package(Yasm)
 if(YASM_FOUND)
