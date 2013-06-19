@@ -1321,7 +1321,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
                                                           c1Idx, c2Idx, iQBits, dTemp, 0);
                     sigRateDelta[uiBlkPos] = m_pcEstBitsSbac->significantBits[uiCtxSig][1] - m_pcEstBitsSbac->significantBits[uiCtxSig][0];
                 }
-                deltaU[uiBlkPos]        = (lLevelDouble - ((Int)uiLevel << iQBits)) >> (iQBits - 8);
+                deltaU[uiBlkPos] = (lLevelDouble - ((Int)uiLevel << iQBits)) >> (iQBits - 8);
                 if (uiLevel > 0)
                 {
                     Int rateNow = xGetICRate(uiLevel, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx);
@@ -1368,7 +1368,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
 
                     c1Idx   = 0;
                     c2Idx   = 0;
-                    uiCtxSet          = (iScanPos == SCAN_SET_SIZE || eTType != TEXT_LUMA) ? 0 : 2;
+                    uiCtxSet = (iScanPos == SCAN_SET_SIZE || eTType != TEXT_LUMA) ? 0 : 2;
                     if (c1 == 0)
                     {
                         uiCtxSet++;
@@ -1379,7 +1379,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* pcCU,
             else
             {
                 pdCostCoeff[iScanPos] = 0;
-                d64BaseCost    += pdCostCoeff0[iScanPos];
+                d64BaseCost += pdCostCoeff0[iScanPos];
             }
             rdStats.d64SigCost += pdCostSig[iScanPos];
             if (iScanPosinCG == 0)
@@ -1728,8 +1728,7 @@ Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
                               Int      posX,
                               Int      posY,
                               Int      log2BlockSize,
-                              TextType textureType
-                              )
+                              TextType textureType)
 {
     const Int ctxIndMap[16] =
     {
@@ -1855,10 +1854,9 @@ __inline UInt TComTrQuant::xGetCodedLevel(Double& rd64CodedCost,
 __inline Double TComTrQuant::xGetICRateCost(UInt uiAbsLevel,
                                             UShort ui16CtxNumOne,
                                             UShort ui16CtxNumAbs,
-                                            UShort ui16AbsGoRice
-                                            ,  UInt                            c1Idx,
-                                            UInt                            c2Idx
-                                            ) const
+                                            UShort ui16AbsGoRice,
+                                            UInt c1Idx,
+                                            UInt c2Idx) const
 {
     Double iRate = xGetIEPRate();
     UInt baseLevel  =  (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
@@ -1971,23 +1969,12 @@ __inline Int TComTrQuant::xGetICRate(UInt   uiAbsLevel,
     return iRate;
 }
 
-__inline Double TComTrQuant::xGetRateSigCoeffGroup(UShort uiSignificanceCoeffGroup,
-                                                   UShort ui16CtxNumSig) const
-{
-    return xGetICost(m_pcEstBitsSbac->significantCoeffGroupBits[ui16CtxNumSig][uiSignificanceCoeffGroup]);
-}
-
 /** Calculates the cost of signaling the last significant coefficient in the block
  * \param uiPosX X coordinate of the last significant coefficient
  * \param uiPosY Y coordinate of the last significant coefficient
  * \returns cost of last significant coefficient
  */
-
-/*
- * \param uiWidth width of the transform unit (TU)
-*/
-__inline Double TComTrQuant::xGetRateLast(const UInt uiPosX,
-                                          const UInt uiPosY) const
+__inline Double TComTrQuant::xGetRateLast(UInt uiPosX, UInt uiPosY) const
 {
     UInt uiCtxX   = g_uiGroupIdx[uiPosX];
     UInt uiCtxY   = g_uiGroupIdx[uiPosY];
@@ -2002,36 +1989,6 @@ __inline Double TComTrQuant::xGetRateLast(const UInt uiPosX,
         uiCost += xGetIEPRate() * ((uiCtxY - 2) >> 1);
     }
     return xGetICost(uiCost);
-}
-
-/** Calculates the cost for specific absolute transform level
-* \param uiAbsLevel scaled quantized level
-* \param ui16CtxNumOne current ctxInc for coeff_abs_level_greater1 (1st bin of coeff_abs_level_minus1 in AVC)
-* \param ui16CtxNumAbs current ctxInc for coeff_abs_level_greater2 (remaining bins of coeff_abs_level_minus1 in AVC)
-* \param ui16CtxBase current global offset for coeff_abs_level_greater1 and coeff_abs_level_greater2
-* \returns cost of given absolute transform level
-*/
-__inline Double TComTrQuant::xGetRateSigCoef(UShort uiSignificance,
-                                             UShort ui16CtxNumSig) const
-{
-    return xGetICost(m_pcEstBitsSbac->significantBits[ui16CtxNumSig][uiSignificance]);
-}
-
-/** Get the cost for a specific rate
- * \param dRate rate of a bit
- * \returns cost at the specific rate
- */
-__inline Double TComTrQuant::xGetICost(Double dRate) const
-{
-    return m_dLambda * dRate;
-}
-
-/** Get the cost of an equal probable bit
- * \returns cost of equal probable bit
- */
-__inline Double TComTrQuant::xGetIEPRate() const
-{
-    return 32768;
 }
 
 /** Context derivation process of coeff_abs_significant_flag

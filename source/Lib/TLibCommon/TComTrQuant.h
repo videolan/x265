@@ -165,6 +165,7 @@ public:
                                  Int      posY,
                                  Int      log2BlkSize,
                                  TextType textureType);
+
     static UInt getSigCoeffGroupCtxInc(const UInt* uiSigCoeffGroupFlag,
                                        const UInt uiCGPosX,
                                        const UInt uiCGPosY,
@@ -204,12 +205,14 @@ protected:
     Int     m_qpDelta[MAX_QP + 1];
     Int     m_sliceNsamples[LEVEL_RANGE + 1];
     Double  m_sliceSumC[LEVEL_RANGE + 1];
-    Int *    m_plTempCoeff;
+    Int*    m_plTempCoeff;
 
     QpParam  m_cQP;
+
     Double   m_dLambda;
     Double   m_dLambdaLuma;
     Double   m_dLambdaChroma;
+
     UInt     m_uiRDOQOffset;
     UInt     m_uiMaxTrSize;
     Bool     m_bEnc;
@@ -220,7 +223,8 @@ protected:
     Bool     m_scalingListEnabledFlag;
     Int      *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
     Int      *m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
-    Double   *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];      ///< array of quantization matrix coefficient 4x4
+
+    Double   *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
 
 private:
 
@@ -252,40 +256,41 @@ private:
                                      TextType     eTType,
                                      UInt         uiAbsPartIdx);
 
-    __inline UInt              xGetCodedLevel(Double& rd64CodedCost,
-                                              Double& rd64CodedCost0,
-                                              Double& rd64CodedCostSig,
-                                              Int     lLevelDouble,
-                                              UInt    uiMaxAbsLevel,
-                                              UShort  ui16CtxNumSig,
-                                              UShort  ui16CtxNumOne,
-                                              UShort  ui16CtxNumAbs,
-                                              UShort  ui16AbsGoRice,
-                                              UInt    c1Idx,
-                                              UInt    c2Idx,
-                                              Int     iQBits,
-                                              Double  dTemp,
-                                              Bool    bLast) const;
+    __inline UInt xGetCodedLevel(Double& rd64CodedCost,
+                                 Double& rd64CodedCost0,
+                                 Double& rd64CodedCostSig,
+                                 Int     lLevelDouble,
+                                 UInt    uiMaxAbsLevel,
+                                 UShort  ui16CtxNumSig,
+                                 UShort  ui16CtxNumOne,
+                                 UShort  ui16CtxNumAbs,
+                                 UShort  ui16AbsGoRice,
+                                 UInt    c1Idx,
+                                 UInt    c2Idx,
+                                 Int     iQBits,
+                                 Double  dTemp,
+                                 Bool    bLast) const;
+
     __inline Double xGetICRateCost(UInt uiAbsLevel,
                                    UShort ui16CtxNumOne,
                                    UShort ui16CtxNumAbs,
-                                   UShort ui16AbsGoRice
-                                   , UInt                            c1Idx,
-                                   UInt                            c2Idx) const;
+                                   UShort ui16AbsGoRice,
+                                   UInt   c1Idx,
+                                   UInt   c2Idx) const;
+
     __inline Int xGetICRate(UInt uiAbsLevel,
                             UShort ui16CtxNumOne,
                             UShort ui16CtxNumAbs,
-                            UShort ui16AbsGoRice
-                            , UInt                            c1Idx,
-                            UInt                            c2Idx) const;
-    __inline Double xGetRateLast(const UInt uiPosX,
-                                 const UInt uiPosY) const;
-    __inline Double xGetRateSigCoeffGroup(UShort uiSignificanceCoeffGroup,
-                                          UShort ui16CtxNumSig) const;
-    __inline Double xGetRateSigCoef(UShort uiSignificance,
-                                    UShort ui16CtxNumSig) const;
-    __inline Double xGetICost(Double dRate) const;
-    __inline Double xGetIEPRate() const;
+                            UShort ui16AbsGoRice,
+                            UInt   c1Idx,
+                            UInt   c2Idx) const;
+
+    __inline Double xGetRateLast(UInt uiPosX, UInt uiPosY) const;
+
+    __inline Double xGetRateSigCoeffGroup(UShort uiSignificanceCoeffGroup, UShort ui16CtxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantCoeffGroupBits[ui16CtxNumSig][uiSignificanceCoeffGroup]; }
+    __inline Double xGetRateSigCoef(UShort uiSignificance, UShort ui16CtxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantBits[ui16CtxNumSig][uiSignificance]; }
+    __inline Double xGetICost(Double dRate) const { return m_dLambda * dRate; } ///< Get the cost for a specific rate
+    __inline Double xGetIEPRate() const           { return 32768; }             ///< Get the cost of an equal probable bit
 
     // dequantization
     Void xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType);
