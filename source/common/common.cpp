@@ -299,9 +299,7 @@ void x265_print_params(x265_param_t *param)
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
 
     x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange);
-    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d ", param->maxNumMergeCand);
-    printf("PME:%d ", param->log2ParallelMergeLevel);
-    printf("TMVPMode:%d\n", param->TMVPModeId);
+    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d PME:%d TMVPMode:%d\n", param->maxNumMergeCand, param->log2ParallelMergeLevel, param->TMVPModeId);
     x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->iIntraPeriod);
     if (param->iWaveFrontSynchro)
     {
@@ -325,13 +323,10 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
     }
     x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
-#define TOOLOPT(FLAG, STR) if (FLAG) printf("%s ", STR)
+#define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->enableRectInter, "rect");
     TOOLOPT(param->enableAMP, "amp");
-    if(param->enableRDO)
-        printf("rdo ");
-    else
-        printf("no-rdo ");
+    TOOLOPT(param->enableRDO, "rdo");
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
@@ -352,7 +347,7 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bUseAdaptQpSelect, "aq");
     TOOLOPT(param->signHideFlag, "sign-hide");
     TOOLOPT(param->bUseConstrainedIntraPred, "cip");
-    printf("\n");
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
 
