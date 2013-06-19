@@ -229,8 +229,7 @@ public:
 
     Void          copyToPic(UChar uiDepth);
     Void          copyToPic(UChar uiDepth, UInt uiPartIdx, UInt uiPartDepth);
-    Void          copyCU(TComDataCU* pcCU);
-
+    
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
