@@ -261,8 +261,8 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     int iMode;
 
     // avoid warning
-    (pLeft1);
-    (pAbove1);
+    (void)pLeft1;
+    (void)pAbove1;
 
     for( iMode = 2; iMode <= 34; iMode++ )
     {
