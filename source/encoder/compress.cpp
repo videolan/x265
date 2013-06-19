@@ -183,13 +183,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         
                 /*Adding costs from best SUbCUs*/
                 rpcTempCU->getTotalCost() += pcSubBestPartCU->getTotalCost();
-                rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth); // Keep best part data to current temporary data.
+                rpcTempCU->copyPartFrom(pcSubBestPartCU, uiPartUnitIdx, uhNextDepth, false); // Keep best part data to current temporary data.
                 xCopyYuv2Tmp(pcSubBestPartCU->getTotalNumPart() * uiPartUnitIdx, uhNextDepth);                
             }
             else if (bInSlice)
             {
                 pcSubTempPartCU->copyToPic(uhNextDepth);
-                rpcTempCU->copyPartFrom(pcSubTempPartCU, uiPartUnitIdx, uhNextDepth);        
+                rpcTempCU->copyPartFrom(pcSubTempPartCU, uiPartUnitIdx, uhNextDepth, false);        
             }
         }
 

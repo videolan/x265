@@ -225,7 +225,7 @@ public:
 
     Void          copySubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth);
     Void          copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList);
-    Void          copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth);
+    Void          copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis = true);
 
     Void          copyToPic(UChar uiDepth);
     Void          copyToPic(UChar uiDepth, UInt uiPartIdx, UInt uiPartDepth);

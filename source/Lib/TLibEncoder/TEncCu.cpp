@@ -503,14 +503,15 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else    
     {
-#if FAST_MODE_DECISION
-        TComDataCU* rpcBestCU = NULL;
-        /* At the start of analysis, the best CU is a null pointer
-        On return, it points to the CU encode with best chosen mode*/
-        xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
-#else
-        xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
-#endif
+        if(!m_pcEncCfg->getUseRDO())
+        {
+            TComDataCU* rpcBestCU = NULL;
+            /* At the start of analysis, the best CU is a null pointer
+            On return, it points to the CU encode with best chosen mode*/
+            xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
+        }
+        else
+            xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
     }
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -2051,13 +2052,14 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
 
     rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
     rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-#if FAST_MODE_DECISION
-    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-    UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
-                                        (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
-    x265_emms();
-    rpcTempCU->getTotalDistortion() = SATD;
-#endif
+    if(!m_pcEncCfg->getUseRDO())
+    {
+        UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+        UInt SATD = primitives.satd[partEnum]( (pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
+                                            (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
+        x265_emms();
+        rpcTempCU->getTotalDistortion() = SATD;
+    }
     rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
     xCheckDQP(rpcTempCU);

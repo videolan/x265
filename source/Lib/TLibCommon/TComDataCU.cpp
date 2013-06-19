@@ -858,12 +858,12 @@ Void TComDataCU::copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefP
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth)
+Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis)
 {
     assert(uiPartUnitIdx < 4);
-#if !FAST_MODE_DECISION
-    m_dTotalCost         += pcCU->getTotalCost();
-#endif
+    if(isRDObasedAnalysis)
+        m_dTotalCost         += pcCU->getTotalCost();
+
     m_uiTotalDistortion  += pcCU->getTotalDistortion();
     m_uiTotalBits        += pcCU->getTotalBits();
 

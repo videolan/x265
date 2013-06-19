@@ -2908,9 +2908,9 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
-#if FAST_MODE_DECISION
-    pcCU->getTotalCost() = 0;
-#endif
+    if(!m_pcEncCfg->getUseRDO())
+        pcCU->getTotalCost() = 0;
+
     for (Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++)
     {
         UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
@@ -3315,9 +3315,8 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if CU_STAT_LOGFILE
                 meCost += uiMRGCost;
 #endif
-#if FAST_MODE_DECISION
-                pcCU->getTotalCost() += uiMRGCost;
-#endif
+                if(!m_pcEncCfg->getUseRDO())
+                    pcCU->getTotalCost() += uiMRGCost;
             }
             else
             {
@@ -3331,15 +3330,15 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 #if CU_STAT_LOGFILE
                 meCost += uiMECost;
 #endif
-#if FAST_MODE_DECISION
-                pcCU->getTotalCost() += uiMECost;
-#endif
+                if(!m_pcEncCfg->getUseRDO())
+                    pcCU->getTotalCost() += uiMECost;
             }
         }
-#if FAST_MODE_DECISION
         else
-            pcCU->getTotalCost() += uiCostTemp;
-#endif
+        {
+            if(!m_pcEncCfg->getUseRDO())
+                pcCU->getTotalCost() += uiCostTemp;
+        }
         motionCompensation(pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx);
         
     }
@@ -4133,11 +4132,12 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     uiDistortionBest += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCrAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
     dCostBest = m_pcRdCost->calcRdCost(uiDistortionBest, uiBitsBest);
 
-#if !FAST_MODE_DECISION
-    pcCU->getTotalBits()       = uiBitsBest;
-    pcCU->getTotalDistortion() = uiDistortionBest;
-    pcCU->getTotalCost()       = dCostBest;
-#endif
+    if(m_pcEncCfg->getUseRDO())
+    {
+        pcCU->getTotalBits()       = uiBitsBest;
+        pcCU->getTotalDistortion() = uiDistortionBest;
+        pcCU->getTotalCost()       = dCostBest;
+    }
 
     if (pcCU->isSkipped(0))
     {
