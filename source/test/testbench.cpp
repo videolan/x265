@@ -84,12 +84,13 @@ int main(int argc, char *argv[])
 {
     int cpuid = instrset_detect(); // Detect supported instruction set
     const char *testname = 0;
+    int cpuid_user = -1;
 
     for (int i = 1; i < argc - 1; i += 2)
     {
         if (!strcmp(argv[i], "--cpuid"))
         {
-            cpuid = atoi(argv[i + 1]);
+            cpuid_user = atoi(argv[i + 1]);
         }
         if (!strcmp(argv[i], "--test"))
         {
@@ -121,7 +122,14 @@ int main(int argc, char *argv[])
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
 
-    for (int i = 2; i <= cpuid; i++)
+    int cpuid_low = 2;
+    int cpuid_high = cpuid;
+
+    if (cpuid_user >= 0)
+    {
+        cpuid_low = cpuid_high = cpuid_user;
+    }
+    for (int i = cpuid_low; i <= cpuid_high; i++)
     {
 #if ENABLE_VECTOR_PRIMITIVES
         EncoderPrimitives vecprim;
