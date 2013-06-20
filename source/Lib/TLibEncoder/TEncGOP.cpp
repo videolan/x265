@@ -167,7 +167,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     int maxGOP = m_pcCfg->getIntraPeriod() > 2 ? m_pcCfg->getIntraPeriod() : 2;
     m_recon = new x265_picture_t[maxGOP];
 
-    // make references to the last N TComPic's recon frames
+    // pre-allocate a full keyframe interval of TComPic
     for (int i = 0; i < maxGOP; i++)
     {
         TComPic *pcPic;
