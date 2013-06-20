@@ -250,20 +250,20 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_24x48] = cmp<24, 48, 8, 16, x265_pixel_satd_8x16_sse2>;
         p.satd[PARTITION_24x64] = cmp<24, 64, 8, 16, x265_pixel_satd_8x16_sse2>;
 
-        p.satd[PARTITION_32x8] = cmp<32, 8, 16, 8, x265_pixel_satd_16x8_sse2>;        
-        p.satd[PARTITION_32x16] = cmp<32, 16, 16, 16, x265_pixel_satd_16x16_sse2>;        
+        p.satd[PARTITION_32x8] = cmp<32, 8, 16, 8, x265_pixel_satd_16x8_sse2>;
+        p.satd[PARTITION_32x16] = cmp<32, 16, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_32x32] = cmp<32, 32, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_32x48] = cmp<32, 48, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_32x64] = cmp<32, 64, 16, 16, x265_pixel_satd_16x16_sse2>;
-        
-        p.satd[PARTITION_48x8] = cmp<48, 8, 16, 8, x265_pixel_satd_16x8_sse2>;        
-        p.satd[PARTITION_48x16] = cmp<48, 16, 16, 16, x265_pixel_satd_16x16_sse2>;        
+
+        p.satd[PARTITION_48x8] = cmp<48, 8, 16, 8, x265_pixel_satd_16x8_sse2>;
+        p.satd[PARTITION_48x16] = cmp<48, 16, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_48x32] = cmp<48, 32, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_48x48] = cmp<48, 48, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_48x64] = cmp<48, 64, 16, 16, x265_pixel_satd_16x16_sse2>;
-        
-        p.satd[PARTITION_64x8] = cmp<64, 8, 16, 8, x265_pixel_satd_16x8_sse2>;        
-        p.satd[PARTITION_64x16] = cmp<64, 16, 16, 16, x265_pixel_satd_16x16_sse2>;        
+
+        p.satd[PARTITION_64x8] = cmp<64, 8, 16, 8, x265_pixel_satd_16x8_sse2>;
+        p.satd[PARTITION_64x16] = cmp<64, 16, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_sse2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_sse2>;
@@ -409,7 +409,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 
         ASSGN_SSE(pp,8,avx)
         ASSGN_SSE(pp,16,avx)
-        ASSGN_SSE(pp,32,avx)        
+        ASSGN_SSE(pp,32,avx)
 
         p.sse_pp[PARTITION_24x4] = cmp<24, 4, 8, 4, x265_pixel_ssd_8x4_avx>;
         p.sse_pp[PARTITION_24x8] = cmp<24, 8, 8, 8, x265_pixel_ssd_8x8_avx>;
@@ -437,7 +437,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sse_pp[PARTITION_64x32] = cmp<64, 32, 32, 32, x265_pixel_ssd_32x32_avx>;
         p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_avx>;
         p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_avx>;
-                
+
 
         p.satd[PARTITION_4x16] = x265_pixel_satd_4x16_avx;
         p.satd[PARTITION_4x32] = cmp<4, 32, 4, 16, x265_pixel_satd_4x16_avx>;
