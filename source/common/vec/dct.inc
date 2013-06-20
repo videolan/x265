@@ -3948,11 +3948,16 @@ namespace x265 {
 void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 {
     p.deQuant = xDeQuant;
+
+    // TODO: in 16bpp mode, the intermediate must be 32-bits
+#if !HIGH_BIT_DEPTH && INSTRSET > 4
     p.dct[DST_4x4] = xDST4;
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
     p.dct[DCT_16x16] = xDCT16;
     p.dct[DCT_32x32] = xDCT32;
+#endif
+    // TODO: I am not sure the IDCT works on 16bpp mode
     p.idct[IDST_4x4] = xIDST4;
     p.idct[IDCT_4x4] = xIDCT4;
     p.idct[IDCT_8x8] = xIDCT8;
