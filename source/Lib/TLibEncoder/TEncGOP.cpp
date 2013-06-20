@@ -136,8 +136,19 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_pcEncTop             = pcTEncTop;
     m_pcCfg                = pcTEncTop;
     m_pcRateCtrl           = pcTEncTop->getRateCtrl();
+
+    // initialize SPS
+    pcTEncTop->xInitSPS(&m_cSPS);
+
+    // initialize PPS
+    m_cPPS.setSPS(&m_cSPS);
+
+    pcTEncTop->xInitPPS(&m_cPPS);
+    pcTEncTop->xInitRPS(&m_cSPS);
+
+    int numRows = (m_pcCfg->getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cFrameEncoders = new x265::EncodeFrame(pcTEncTop->getThreadPool());
-    m_cFrameEncoders->init(pcTEncTop);
+    m_cFrameEncoders->init(pcTEncTop, numRows);
 }
 
 SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
@@ -309,24 +320,24 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         //  Slice data initialization
         pcSliceEncoder->setSliceIdx(0);
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, m_pcEncTop->getSPS(), m_pcEncTop->getPPS());
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, getSPS(), getPPS());
         pcSlice->setLastIDR(m_iLastIDR);
 
         //set default slice level flag to the same as SPS level flag
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
-        pcSlice->getScalingList()->setUseTransformSkip(m_pcEncTop->getPPS()->getUseTransformSkip());
+        pcSlice->getScalingList()->setUseTransformSkip(getPPS()->getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
             pcEncodeFrame->setFlatScalingList();
             pcEncodeFrame->setUseScalingList(false);
-            m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
+            getSPS()->setScalingListPresentFlag(false);
+            getPPS()->setScalingListPresentFlag(false);
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_DEFAULT)
         {
             pcSlice->setDefaultScalingList();
-            m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
-            m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
+            getSPS()->setScalingListPresentFlag(false);
+            getPPS()->setScalingListPresentFlag(false);
             pcEncodeFrame->setScalingList(pcSlice->getScalingList());
             pcEncodeFrame->setUseScalingList(true);
         }
@@ -337,8 +348,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                 pcSlice->setDefaultScalingList();
             }
             pcSlice->getScalingList()->checkDcOfMatrix();
-            m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
-            m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
+            getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
+            getPPS()->setScalingListPresentFlag(false);
             pcEncodeFrame->setScalingList(pcSlice->getScalingList());
             pcEncodeFrame->setUseScalingList(true);
         }
@@ -1442,7 +1453,7 @@ Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
         }
     }
 
-    slice->setRPS(m_pcEncTop->getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->setRPS(getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
     slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
 }
 

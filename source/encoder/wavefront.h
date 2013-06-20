@@ -80,7 +80,7 @@ public:
 
     virtual ~EncodeFrame() {}
 
-    void init(TEncTop *top);
+    void init(TEncTop *top, int numRows);
 
     void destroy();
 

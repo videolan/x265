@@ -109,7 +109,7 @@ Void TEncTop::destroy()
 {
     // destroy processing unit classes
     m_cGOPEncoder.destroy();
-    if (m_cSPS.getUseSAO())
+    if (getUseSAO())
     {
         m_cEncSAO.destroy();
         m_cEncSAO.destroyEncBuffer();
@@ -129,19 +129,7 @@ Void TEncTop::destroy()
 
 Void TEncTop::init()
 {
-    // initialize SPS
-    xInitSPS();
-
-    /* set the VPS profile information */
-    *m_cVPS.getPTL() = *m_cSPS.getPTL();
-    m_cVPS.getTimingInfo()->setTimingInfoPresentFlag(false);
-    // initialize PPS
-    m_cPPS.setSPS(&m_cSPS);
-    xInitPPS();
-    xInitRPS();
-
     // initialize processing unit classes
-    m_iNumSubstreams = (getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
     m_cGOPEncoder.init(this);
 
     m_gcAnalyzeAll.setFrmRate(getFrameRate());
@@ -335,7 +323,7 @@ TComPic* TEncTop::xGetNewPicBuffer()
         if (getUseAdaptiveQP())
         {
             TEncPic* pcEPic = new TEncPic;
-            pcEPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth() + 1,
+            pcEPic->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, /* m_cPPS. */ getMaxCuDQPDepth() + 1,
                            m_conformanceWindow, m_defaultDisplayWindow);
             pcPic = pcEPic;
         }
@@ -357,9 +345,9 @@ TComPic* TEncTop::xGetNewPicBuffer()
     return pcPic;
 }
 
-Void TEncTop::xInitSPS()
+Void TEncTop::xInitSPS(TComSPS *pcSPS)
 {
-    ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
+    ProfileTierLevel& profileTierLevel = *pcSPS->getPTL()->getGeneralPTL();
 
     profileTierLevel.setLevelIdc(m_level);
     profileTierLevel.setTierFlag(m_levelTier);
@@ -385,14 +373,14 @@ Void TEncTop::xInitSPS()
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
 
-    m_cSPS.setPicWidthInLumaSamples(m_iSourceWidth);
-    m_cSPS.setPicHeightInLumaSamples(m_iSourceHeight);
-    m_cSPS.setConformanceWindow(m_conformanceWindow);
-    m_cSPS.setMaxCUWidth(g_uiMaxCUWidth);
-    m_cSPS.setMaxCUHeight(g_uiMaxCUHeight);
-    m_cSPS.setMaxCUDepth(g_uiMaxCUDepth);
+    pcSPS->setPicWidthInLumaSamples(m_iSourceWidth);
+    pcSPS->setPicHeightInLumaSamples(m_iSourceHeight);
+    pcSPS->setConformanceWindow(m_conformanceWindow);
+    pcSPS->setMaxCUWidth(g_uiMaxCUWidth);
+    pcSPS->setMaxCUHeight(g_uiMaxCUHeight);
+    pcSPS->setMaxCUDepth(g_uiMaxCUDepth);
 
-    Int minCUSize = m_cSPS.getMaxCUWidth() >> (m_cSPS.getMaxCUDepth() - g_uiAddCUDepth);
+    Int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_uiAddCUDepth);
     Int log2MinCUSize = 0;
     while (minCUSize > 1)
     {
@@ -400,65 +388,65 @@ Void TEncTop::xInitSPS()
         log2MinCUSize++;
     }
 
-    m_cSPS.setLog2MinCodingBlockSize(log2MinCUSize);
-    m_cSPS.setLog2DiffMaxMinCodingBlockSize(m_cSPS.getMaxCUDepth() - g_uiAddCUDepth);
+    pcSPS->setLog2MinCodingBlockSize(log2MinCUSize);
+    pcSPS->setLog2DiffMaxMinCodingBlockSize(pcSPS->getMaxCUDepth() - g_uiAddCUDepth);
 
-    m_cSPS.setPCMLog2MinSize(m_uiPCMLog2MinSize);
-    m_cSPS.setUsePCM(m_usePCM);
-    m_cSPS.setPCMLog2MaxSize(m_pcmLog2MaxSize);
+    pcSPS->setPCMLog2MinSize(m_uiPCMLog2MinSize);
+    pcSPS->setUsePCM(m_usePCM);
+    pcSPS->setPCMLog2MaxSize(m_pcmLog2MaxSize);
 
-    m_cSPS.setQuadtreeTULog2MaxSize(m_uiQuadtreeTULog2MaxSize);
-    m_cSPS.setQuadtreeTULog2MinSize(m_uiQuadtreeTULog2MinSize);
-    m_cSPS.setQuadtreeTUMaxDepthInter(m_uiQuadtreeTUMaxDepthInter);
-    m_cSPS.setQuadtreeTUMaxDepthIntra(m_uiQuadtreeTUMaxDepthIntra);
+    pcSPS->setQuadtreeTULog2MaxSize(m_uiQuadtreeTULog2MaxSize);
+    pcSPS->setQuadtreeTULog2MinSize(m_uiQuadtreeTULog2MinSize);
+    pcSPS->setQuadtreeTUMaxDepthInter(m_uiQuadtreeTUMaxDepthInter);
+    pcSPS->setQuadtreeTUMaxDepthIntra(m_uiQuadtreeTUMaxDepthIntra);
 
-    m_cSPS.setTMVPFlagsPresent(false);
-    m_cSPS.setUseLossless(m_useLossless);
+    pcSPS->setTMVPFlagsPresent(false);
+    pcSPS->setUseLossless(m_useLossless);
 
-    m_cSPS.setMaxTrSize(1 << m_uiQuadtreeTULog2MaxSize);
+    pcSPS->setMaxTrSize(1 << m_uiQuadtreeTULog2MaxSize);
 
     Int i;
 
     for (i = 0; i < g_uiMaxCUDepth - g_uiAddCUDepth; i++)
     {
-        m_cSPS.setAMPAcc(i, m_useAMP);
+        pcSPS->setAMPAcc(i, m_useAMP);
     }
 
-    m_cSPS.setUseAMP(m_useAMP);
+    pcSPS->setUseAMP(m_useAMP);
 
     for (i = g_uiMaxCUDepth - g_uiAddCUDepth; i < g_uiMaxCUDepth; i++)
     {
-        m_cSPS.setAMPAcc(i, 0);
+        pcSPS->setAMPAcc(i, 0);
     }
 
-    m_cSPS.setBitDepthY(g_bitDepthY);
-    m_cSPS.setBitDepthC(g_bitDepthC);
+    pcSPS->setBitDepthY(g_bitDepthY);
+    pcSPS->setBitDepthC(g_bitDepthC);
 
-    m_cSPS.setQpBDOffsetY(6 * (g_bitDepthY - 8));
-    m_cSPS.setQpBDOffsetC(6 * (g_bitDepthC - 8));
+    pcSPS->setQpBDOffsetY(6 * (g_bitDepthY - 8));
+    pcSPS->setQpBDOffsetC(6 * (g_bitDepthC - 8));
 
-    m_cSPS.setUseSAO(m_bUseSAO);
+    pcSPS->setUseSAO(m_bUseSAO);
 
-    m_cSPS.setMaxTLayers(m_maxTempLayer);
-    m_cSPS.setTemporalIdNestingFlag((m_maxTempLayer == 1) ? true : false);
-    for (i = 0; i < m_cSPS.getMaxTLayers(); i++)
+    pcSPS->setMaxTLayers(m_maxTempLayer);
+    pcSPS->setTemporalIdNestingFlag((m_maxTempLayer == 1) ? true : false);
+    for (i = 0; i < pcSPS->getMaxTLayers(); i++)
     {
-        m_cSPS.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        m_cSPS.setNumReorderPics(m_numReorderPics[i], i);
+        pcSPS->setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+        pcSPS->setNumReorderPics(m_numReorderPics[i], i);
     }
 
-    m_cSPS.setPCMBitDepthLuma(g_uiPCMBitDepthLuma);
-    m_cSPS.setPCMBitDepthChroma(g_uiPCMBitDepthChroma);
-    m_cSPS.setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
+    pcSPS->setPCMBitDepthLuma(g_uiPCMBitDepthLuma);
+    pcSPS->setPCMBitDepthChroma(g_uiPCMBitDepthChroma);
+    pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 
-    m_cSPS.setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
+    pcSPS->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
 
-    m_cSPS.setUseStrongIntraSmoothing(m_useStrongIntraSmoothing);
+    pcSPS->setUseStrongIntraSmoothing(m_useStrongIntraSmoothing);
 
-    m_cSPS.setVuiParametersPresentFlag(getVuiParametersPresentFlag());
-    if (m_cSPS.getVuiParametersPresentFlag())
+    pcSPS->setVuiParametersPresentFlag(getVuiParametersPresentFlag());
+    if (pcSPS->getVuiParametersPresentFlag())
     {
-        TComVUI* pcVUI = m_cSPS.getVuiParameters();
+        TComVUI* pcVUI = pcSPS->getVuiParameters();
         pcVUI->setAspectRatioInfoPresentFlag(getAspectRatioIdc() != -1);
         pcVUI->setAspectRatioIdc(getAspectRatioIdc());
         pcVUI->setSarWidth(getSarWidth());
@@ -490,14 +478,18 @@ Void TEncTop::xInitSPS()
         pcVUI->setLog2MaxMvLengthHorizontal(getLog2MaxMvLengthHorizontal());
         pcVUI->setLog2MaxMvLengthVertical(getLog2MaxMvLengthVertical());
     }
+
+    /* set the VPS profile information */
+    *getVPS()->getPTL() = *pcSPS->getPTL();
+    getVPS()->getTimingInfo()->setTimingInfoPresentFlag(false);
 }
 
-Void TEncTop::xInitPPS()
+Void TEncTop::xInitPPS(TComPPS *pcPPS)
 {
-    m_cPPS.setConstrainedIntraPred(m_bUseConstrainedIntraPred);
+    pcPPS->setConstrainedIntraPred(m_bUseConstrainedIntraPred);
     Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
-    Int lowestQP = -m_cSPS.getQpBDOffsetY();
+    Int lowestQP = -(6 * (g_bitDepthY - 8)); //m_cSPS.getQpBDOffsetY();
 
     if (getUseLossless())
     {
@@ -517,35 +509,35 @@ Void TEncTop::xInitPPS()
 
     if (bUseDQP)
     {
-        m_cPPS.setUseDQP(true);
-        m_cPPS.setMaxCuDQPDepth(m_iMaxCuDQPDepth);
-        m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
+        pcPPS->setUseDQP(true);
+        pcPPS->setMaxCuDQPDepth(m_iMaxCuDQPDepth);
+        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }
     else
     {
-        m_cPPS.setUseDQP(false);
-        m_cPPS.setMaxCuDQPDepth(0);
-        m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
+        pcPPS->setUseDQP(false);
+        pcPPS->setMaxCuDQPDepth(0);
+        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }
 
     if (m_RCEnableRateControl)
     {
-        m_cPPS.setUseDQP(true);
-        m_cPPS.setMaxCuDQPDepth(0);
-        m_cPPS.setMinCuDQPSize(m_cPPS.getSPS()->getMaxCUWidth() >> (m_cPPS.getMaxCuDQPDepth()));
+        pcPPS->setUseDQP(true);
+        pcPPS->setMaxCuDQPDepth(0);
+        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }
 
-    m_cPPS.setChromaCbQpOffset(m_chromaCbQpOffset);
-    m_cPPS.setChromaCrQpOffset(m_chromaCrQpOffset);
+    pcPPS->setChromaCbQpOffset(m_chromaCbQpOffset);
+    pcPPS->setChromaCrQpOffset(m_chromaCrQpOffset);
 
-    m_cPPS.setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
-    m_cPPS.setUseWP(m_useWeightedPred);
-    m_cPPS.setWPBiPred(m_useWeightedBiPred);
-    m_cPPS.setOutputFlagPresentFlag(false);
-    m_cPPS.setSignHideFlag(getSignHideFlag());
-    m_cPPS.setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
-    m_cPPS.setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
-    m_cPPS.setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
+    pcPPS->setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
+    pcPPS->setUseWP(m_useWeightedPred);
+    pcPPS->setWPBiPred(m_useWeightedBiPred);
+    pcPPS->setOutputFlagPresentFlag(false);
+    pcPPS->setSignHideFlag(getSignHideFlag());
+    pcPPS->setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
+    pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
+    pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
     Int histogram[MAX_NUM_REF + 1];
     for (Int i = 0; i <= MAX_NUM_REF; i++)
     {
@@ -570,20 +562,20 @@ Void TEncTop::xInitPPS()
     }
 
     assert(bestPos <= 15);
-    m_cPPS.setNumRefIdxL0DefaultActive(bestPos);
-    m_cPPS.setNumRefIdxL1DefaultActive(bestPos);
-    m_cPPS.setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
-    m_cPPS.setUseTransformSkip(m_useTransformSkip);
-    m_cPPS.setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
+    pcPPS->setNumRefIdxL0DefaultActive(bestPos);
+    pcPPS->setNumRefIdxL1DefaultActive(bestPos);
+    pcPPS->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
+    pcPPS->setUseTransformSkip(m_useTransformSkip);
+    pcPPS->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
-Void TEncTop::xInitRPS()
+Void TEncTop::xInitRPS(TComSPS *pcSPS)
 {
     TComReferencePictureSet*      rps;
 
-    m_cSPS.createRPSList(getGOPSize() + m_extraRPSs);
-    TComRPSList* rpsList = m_cSPS.getRPSList();
+    pcSPS->createRPSList(getGOPSize() + m_extraRPSs);
+    TComRPSList* rpsList = pcSPS->getRPSList();
 
     for (Int i = 0; i < getGOPSize() + m_extraRPSs; i++)
     {
@@ -612,8 +604,8 @@ Void TEncTop::xInitRPS()
 
         // handle inter RPS initialization from the config file.
         rps->setInterRPSPrediction(ge.m_interRPSPrediction > 0); // not very clean, converting anything > 0 to true.
-        rps->setDeltaRIdxMinus1(0);                           // index to the Reference RPS is always the previous one.
-        TComReferencePictureSet*     RPSRef = rpsList->getReferencePictureSet(i - 1); // get the reference RPS
+        rps->setDeltaRIdxMinus1(0);                              // index to the Reference RPS is always the previous one.
+        TComReferencePictureSet* RPSRef = rpsList->getReferencePictureSet(i - 1); // get the reference RPS
 
         if (ge.m_interRPSPrediction == 2) // Automatic generation of the inter RPS idc based on the RIdx provided.
         {

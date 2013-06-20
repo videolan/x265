@@ -82,10 +82,6 @@ private:
     TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
     TComScalingList         m_scalingList;                ///< quantization matrix information
 
-    // SPS
-    TComSPS                 m_cSPS;                       ///< SPS
-    TComPPS                 m_cPPS;                       ///< PPS
-
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
 
     /* TODO: We keep a TEncSampleAdaptiveOffset instance in TEncTop only so we can
@@ -100,16 +96,12 @@ private:
 
 protected:
 
-    TComPic* xGetNewPicBuffer();                          ///< get picture buffer which will be processed
-    Void  deletePicBuffer();
-    Void  xInitSPS();                                     ///< initialize SPS from encoder options
-    Void  xInitPPS();                                     ///< initialize PPS from encoder options
-    Void  xInitRPS();                                     ///< initialize RPS from encoder options
     Double xCalculateRVM();
 
 public:
 
     TEncTop();
+
     virtual ~TEncTop();
 
     Void      create();
@@ -120,12 +112,6 @@ public:
     // member access functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    Int                     getNumSubstreams() { return m_iNumSubstreams; }
-
-    TComSPS*                getSPS()           { return &m_cSPS; }
-
-    TComPPS*                getPPS()           { return &m_cPPS; }
-
     TComScalingList*        getScalingList()   { return &m_scalingList; }
 
     x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
@@ -133,6 +119,13 @@ public:
     void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
+
+    Void xInitSPS(TComSPS *pcSPS);
+    Void xInitPPS(TComPPS *pcPPS);
+    Void xInitRPS(TComSPS *pcSPS);
+
+    Void deletePicBuffer();
+    TComPic* xGetNewPicBuffer();
 
     /* Collect statistics globally */
     x265::Lock  m_statLock;
@@ -146,7 +139,6 @@ public:
     // encoder function
     // -------------------------------------------------------------------------------------------------------------------
 
-    /// encode several number of pictures until end-of-sequence
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
     void printSummary();

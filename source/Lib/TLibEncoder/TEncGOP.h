@@ -72,6 +72,7 @@ private:
     TEncCfg*                m_pcCfg;
     TEncRateCtrl*           m_pcRateCtrl;
     x265::EncodeFrame*      m_cFrameEncoders;
+    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -90,6 +91,9 @@ private:
     UInt                    m_tl0Idx;
     UInt                    m_rapIdx;
 
+    TComSPS                 m_cSPS;
+    TComPPS                 m_cPPS;
+
 public:
 
     TEncGOP();
@@ -105,6 +109,10 @@ public:
     Void  printOutSummary(UInt uiNumAllPicCoded);
 
 protected:
+
+    TComSPS* getSPS() { return &m_cSPS; }
+
+    TComPPS* getPPS() { return &m_cPPS; }
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 

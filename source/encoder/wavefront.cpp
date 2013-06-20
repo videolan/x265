@@ -160,10 +160,10 @@ void EncodeFrame::destroy()
     m_cLoopFilter.destroy();
 }
 
-void EncodeFrame::init(TEncTop *top)
+void EncodeFrame::init(TEncTop *top, int numRows)
 {
     m_pcCfg = top;
-    m_nrows = top->getNumSubstreams();
+    m_nrows = numRows;
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
 
     m_cSliceEncoder.init(top);
