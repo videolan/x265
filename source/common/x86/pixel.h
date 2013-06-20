@@ -92,7 +92,6 @@ DECL_X4( sad, cache64_mmx2 );
 DECL_X4( sad, cache64_sse2 );
 DECL_X4( sad, cache64_ssse3 );
 
-#if _WIN64
 int x265_pixel_satd_8x12_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
 int x265_pixel_satd_8x24_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
 int x265_pixel_satd_8x32_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
@@ -105,7 +104,6 @@ int x265_pixel_satd_16x24_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
 int x265_pixel_satd_16x32_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
 int x265_pixel_satd_16x48_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
 int x265_pixel_satd_16x64_sse2 ( pixel *, intptr_t, pixel *, intptr_t );
-#endif
 
 DECL_PIXELS( uint64_t, var, mmx2, ( pixel *pix, intptr_t i_stride ))
 DECL_PIXELS( uint64_t, var, sse2, ( pixel *pix, intptr_t i_stride ))
