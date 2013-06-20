@@ -255,8 +255,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
                                                          ) \
                                            ) \
                              ); \
-            \
-/* store results */ \
+        /* store results */ \
         sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sumi) \
         tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
@@ -297,7 +296,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
         sume = exp1 + exp2 + exp3 + a3 + exp4 - 5 * a5 +   a6; \
         sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
         sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
-/* store results */ \
+        /* store results */ \
         sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sumi) \
         tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
