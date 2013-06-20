@@ -358,11 +358,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
 
         /////////////////////////////////////////////////////////////////////////////////////////////////// Initial to start encoding
         Int pocCurr = iPOCLast - iNumPicRcvd + m_pcCfg->getGOPEntry(iGOPid).m_POC;
-        Int iTimeOffset = m_pcCfg->getGOPEntry(iGOPid).m_POC;
         if (iPOCLast == 0)
         {
             pocCurr = 0;
-            iTimeOffset = 1;
         }
         if (pocCurr >= m_pcCfg->getFramesToBeEncoded())
         {
