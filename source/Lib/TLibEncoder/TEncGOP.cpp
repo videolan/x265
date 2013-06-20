@@ -197,7 +197,7 @@ x265_picture_t *TEncGOP::getReconPictures(UInt POC, UInt count)
     for (UInt i = 0; i < count; i++)
     {
         TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
-        while (iterPic != m_cListPic.end() && (*iterPic)->getSlice()->getPOC() != POC)
+        while (iterPic != m_cListPic.end() && (*iterPic)->getPOC() != POC)
             iterPic++;
         POC++;
         TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
