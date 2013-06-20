@@ -1649,7 +1649,7 @@ cglobal pixel_satd_8x8_internal
 
 ; 16x8 regresses on phenom win64, 16x16 is almost the same (too many spilled registers)
 ; These aren't any faster on AVX systems with fast movddup (Bulldozer, Sandy Bridge)
-%if HIGH_BIT_DEPTH == 0 && notcpuflag(avx)
+%if HIGH_BIT_DEPTH == 0 && (WIN64 || UNIX64) && notcpuflag(avx)
 
 cglobal pixel_satd_8x12, 4,6,8
     SATD_START_SSE2 m6, m7
