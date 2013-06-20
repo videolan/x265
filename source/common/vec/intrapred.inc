@@ -4665,7 +4665,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     }
 }
 
-#if 0//HIGH_BIT_DEPTH || (INSTRSET < 4)
+#if HIGH_BIT_DEPTH || (INSTRSET < 4)
 
 // TODO: reference code, please optimize it
 void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
