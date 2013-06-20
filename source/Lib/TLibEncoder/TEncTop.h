@@ -75,8 +75,6 @@ private:
     Int                     m_iPOCLast;                   ///< time index (POC)
     Int                     m_iNumPicRcvd;                ///< number of received pictures
     UInt                    m_uiNumAllPicCoded;           ///< number of coded pictures
-    TComList<TComPic*>      m_cListPic;                   ///< dynamic list of pictures
-    Int                     m_iNumSubstreams;             ///< # of WPP capable coding rows.
 
     // quality control
     TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
@@ -123,9 +121,6 @@ public:
     Void xInitSPS(TComSPS *pcSPS);
     Void xInitPPS(TComPPS *pcPPS);
     Void xInitRPS(TComSPS *pcSPS);
-
-    Void deletePicBuffer();
-    TComPic* xGetNewPicBuffer();
 
     /* Collect statistics globally */
     x265::Lock  m_statLock;

@@ -72,7 +72,6 @@ private:
     TEncCfg*                m_pcCfg;
     TEncRateCtrl*           m_pcRateCtrl;
     x265::EncodeFrame*      m_cFrameEncoders;
-    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -96,6 +95,8 @@ private:
 
 public:
 
+    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
+
     TEncGOP();
 
     virtual ~TEncGOP();
@@ -104,9 +105,9 @@ public:
     Void  destroy();
     Void  init(TEncTop* pcTEncTop);
 
-    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, std::list<AccessUnit>& accessUnitsInGOP);
+    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& accessUnitsInGOP);
 
-    Void  printOutSummary(UInt uiNumAllPicCoded);
+    TComPic* xGetNewPicBuffer();
 
 protected:
 
@@ -125,7 +126,7 @@ protected:
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>&);
+    Void arrangeLongtermPicturesInRPS(TComSlice *);
 
     Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
