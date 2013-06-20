@@ -269,7 +269,7 @@ int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_
     return satd;
 }
 
-int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+inline int _sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     sum2_t tmp[8][4];
     sum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
@@ -303,18 +303,23 @@ int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
         sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
     }
 
-    return (int)((sum + 2) >> 2);
+    return sum;
+}
+
+int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+{
+    return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
 int CDECL sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
-    int sum = sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
-        + sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
-        + sa8d_8x8(pix1 + 8 * i_pix1, i_pix1, pix2 + 8 * i_pix2, i_pix2)
-        + sa8d_8x8(pix1 + 8 + 8 * i_pix1, i_pix1, pix2 + 8 + 8 * i_pix2, i_pix2);
+    int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
+        + _sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
+        + _sa8d_8x8(pix1 + 8 * i_pix1, i_pix1, pix2 + 8 * i_pix2, i_pix2)
+        + _sa8d_8x8(pix1 + 8 + 8 * i_pix1, i_pix1, pix2 + 8 + 8 * i_pix2, i_pix2);
 
     // This matches x264 sa8d_16x16, but is slightly different from HM's behavior because
-    // it only rounds once at the end
+    // this version only rounds once at the end
     return (sum + 2) >> 2;
 }
 
