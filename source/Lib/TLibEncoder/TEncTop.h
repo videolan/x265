@@ -122,19 +122,17 @@ public:
 
     Int                     getNumSubstreams() { return m_iNumSubstreams; }
 
-    TComList<TComPic*>*     getListPic() { return &m_cListPic; }
+    TComSPS*                getSPS()           { return &m_cSPS; }
 
-    TComSPS*                getSPS() { return &m_cSPS; }
+    TComPPS*                getPPS()           { return &m_cPPS; }
 
-    TComPPS*                getPPS() { return &m_cPPS; }
+    TComScalingList*        getScalingList()   { return &m_scalingList; }
 
-    TComScalingList*        getScalingList() { return &m_scalingList; }
-
-    x265::ThreadPool*       getThreadPool() { return m_threadPool; }
+    x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
 
     void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
-    TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
+    TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
 
     /* Collect statistics globally */
     x265::Lock  m_statLock;

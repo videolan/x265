@@ -450,7 +450,7 @@ Void TEncCavlc::codeSPS(TComSPS* pcSPS)
     assert(pcSPS->getMaxTLayers() > 0);
 
     TComRPSList* rpsList = pcSPS->getRPSList();
-    TComReferencePictureSet*      rps;
+    TComReferencePictureSet* rps;
 
     WRITE_UVLC(rpsList->getNumberOfReferencePictureSets(), "num_short_term_ref_pic_sets");
     for (Int i = 0; i < rpsList->getNumberOfReferencePictureSets(); i++)

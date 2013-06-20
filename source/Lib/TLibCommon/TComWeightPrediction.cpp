@@ -294,12 +294,12 @@ Void TComWeightPrediction::addWeightUni(TComYuv* pcYuvSrc0, UInt iPartUnitIdx, U
  */
 Void TComWeightPrediction::getWpScaling(TComDataCU* pcCU, Int iRefIdx0, Int iRefIdx1, wpScalingParam *&wp0, wpScalingParam *&wp1)
 {
-    TComSlice*      pcSlice       = pcCU->getSlice();
-    TComPPS*        pps           = pcCU->getSlice()->getPPS();
+    TComSlice*      pcSlice = pcCU->getSlice();
+    const TComPPS*  pps     = pcCU->getSlice()->getPPS();
     Bool            wpBiPred = pps->getWPBiPred();
     wpScalingParam* pwp;
-    Bool            bBiDir        = (iRefIdx0 >= 0 && iRefIdx1 >= 0);
-    Bool            bUniDir       = !bBiDir;
+    Bool            bBiDir   = (iRefIdx0 >= 0 && iRefIdx1 >= 0);
+    Bool            bUniDir  = !bBiDir;
 
     if (bUniDir || wpBiPred)
     { // explicit --------------------
@@ -372,7 +372,7 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* pcCU, Int iRefIdx0, Int iRef
 Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
 {
     wpScalingParam  *pwp0, *pwp1;
-    TComPPS         *pps = pcCU->getSlice()->getPPS();
+    const TComPPS   *pps = pcCU->getSlice()->getPPS();
 
     assert(pps->getWPBiPred());
 
