@@ -164,7 +164,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_cFrameEncoders = new x265::EncodeFrame(pcTEncTop->getThreadPool());
     m_cFrameEncoders->init(pcTEncTop, numRows);
 
-    int maxGOP = m_pcCfg->getIntraPeriod() > 1 ? m_pcCfg->getIntraPeriod() : 1;
+    int maxGOP = m_pcCfg->getIntraPeriod() > 2 ? m_pcCfg->getIntraPeriod() : 2;
     m_recon = new x265_picture_t[maxGOP];
 
     // make references to the last N TComPic's recon frames
