@@ -25,6 +25,7 @@
 
 #include "primitives.h"
 #include <assert.h>
+#include <string.h>
 
 #define INSTRSET 2
 #include "vectorclass.h"

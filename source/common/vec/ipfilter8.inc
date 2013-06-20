@@ -460,62 +460,28 @@ void CDECL filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcS
         PROCESSROW(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL((block_width + marginX), 3) row++;
         PROCESSROW(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL((block_width + marginX), 3)
     }
-
     // Extending bottom rows
     pixel *pe, *pi, *pp;
     pe = dstE + (block_height - 1) * dstStride - marginX;
     pi = dstI + (block_height - 1) * dstStride - marginX;
     pp = dstP + (block_height - 1) * dstStride - marginX;
-    int x, y;
-    for (x = 0; x < block_width + (marginX << 1) - 16; x += 16)
-    {
-        tmp16e = _mm_loadu_si128((__m128i const*)(pe + x));
-        tmp16i = _mm_loadu_si128((__m128i const*)(pi + x));
-        tmp16p = _mm_loadu_si128((__m128i const*)(pp + x));
-        for (y = 0; y < marginY; y++)
-        {
-            _mm_storeu_si128((__m128i*)(pe + (y + 1) * dstStride + x), tmp16e);
-            _mm_storeu_si128((__m128i*)(pi + (y + 1) * dstStride + x), tmp16i);
-            _mm_storeu_si128((__m128i*)(pp + (y + 1) * dstStride + x), tmp16p);
-        }
-    }
-
-    tmp16e = _mm_loadu_si128((__m128i const*)(pe + block_width + (marginX << 1) - 16));
-    tmp16i = _mm_loadu_si128((__m128i const*)(pi + block_width + (marginX << 1) - 16));
-    tmp16p = _mm_loadu_si128((__m128i const*)(pp + block_width + (marginX << 1) - 16));
-    for (y = 0; y < marginY; y++)
-    {
-        _mm_storeu_si128((__m128i*)(pe + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16e);
-        _mm_storeu_si128((__m128i*)(pi + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16i);
-        _mm_storeu_si128((__m128i*)(pp + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16p);
-    }
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pe + y * dstStride, pe, block_width + marginX * 2);
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pi + y * dstStride, pi, block_width + marginX * 2);
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pp + y * dstStride, pp, block_width + marginX * 2);
 
     // Extending top rows
     pe -= ((block_height - 1) * dstStride);
     pi -= ((block_height - 1) * dstStride);
     pp -= ((block_height - 1) * dstStride);
-    for (x = 0; x < block_width + (marginX << 1) - 16; x += 16)
-    {
-        tmp16e = _mm_loadu_si128((__m128i const*)(pe + x));
-        tmp16i = _mm_loadu_si128((__m128i const*)(pi + x));
-        tmp16p = _mm_loadu_si128((__m128i const*)(pp + x));
-        for (y = 0; y < marginY; y++)
-        {
-            _mm_storeu_si128((__m128i*)(pe - (y + 1) * dstStride + x), tmp16e);
-            _mm_storeu_si128((__m128i*)(pi - (y + 1) * dstStride + x), tmp16i);
-            _mm_storeu_si128((__m128i*)(pp - (y + 1) * dstStride + x), tmp16p);
-        }
-    }
-
-    tmp16e = _mm_loadu_si128((__m128i const*)(pe + block_width + (marginX << 1) - 16));
-    tmp16i = _mm_loadu_si128((__m128i const*)(pi + block_width + (marginX << 1) - 16));
-    tmp16p = _mm_loadu_si128((__m128i const*)(pp + block_width + (marginX << 1) - 16));
-    for (y = 0; y < marginY; y++)
-    {
-        _mm_storeu_si128((__m128i*)(pe - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16e);
-        _mm_storeu_si128((__m128i*)(pi - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16i);
-        _mm_storeu_si128((__m128i*)(pp - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16p);
-    }
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pe - y * dstStride, pe, block_width + marginX * 2);
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pi - y * dstStride, pi, block_width + marginX * 2);
+    for (int y = 1; y <= marginY; y++)
+        memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
 }
 
 template<int N>
