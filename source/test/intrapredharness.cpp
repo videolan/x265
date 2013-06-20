@@ -208,7 +208,7 @@ bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t r
                 {
                     if (memcmp(pixel_out_33_C + p * (width *width) + k * width, pixel_out_33_Vec + p * (width *width) + k * width, width))
                     {
-                        printf("\nFailed: [%2d]: width=%d, mode=%d, bfilter=%d\n", k, width, p+2, isLuma);
+                        printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p+2, k, isLuma);
                         return false;
                     }
                 }
