@@ -101,6 +101,8 @@ Void TEncTop::create()
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
+
+    m_recon = new x265_picture_t[m_iGOPSize];
 }
 
 Void TEncTop::destroy()
@@ -114,7 +116,8 @@ Void TEncTop::destroy()
     }
     m_cRateCtrl.destroy();
 
-   
+    if (m_recon)
+        delete [] m_recon;
     deletePicBuffer();
 
     // destroy ROM
@@ -172,13 +175,13 @@ Void TEncTop::deletePicBuffer()
  - Picture buffer list acts like as ring buffer
  - End of the list has the latest picture
  .
- \param   flush               cause encoder to encode a partial GOP
- \param   pcPicYuvOrg         original YUV picture
- \retval  rcListPicYuvRecOut  list of reconstruction YUV pictures
- \retval  rcListBitstreamOut  list of output bitstreams
- \retval                      number of encoded pictures
+ \param   flush               force encoder to encode a partial GOP
+ \param   pic                 input original YUV picture
+ \param   pic_out             pointer to list of reconstructed pictures
+ \param   accessUnitsOut      list of output bitstreams
+ \retval                      number of returned recon pictures
  */
-int TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut)
+int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut)
 {
     if (pic)
     {
@@ -206,8 +209,27 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, TComList<TComPicYuv*>
     }
 
     // compress GOP
-    m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, accessUnitsOut);
+    m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, m_cListPic, accessUnitsOut);
 
+    if (pic_out)
+    {
+        *pic_out = m_recon;
+        TComList<TComPic*>::iterator iterPic = m_cListPic.end();
+        for (int i = 0; i < m_iNumPicRcvd; i++)
+            iterPic--;
+        for (int i = 0; i < m_iNumPicRcvd; i++)
+        {
+            TComPicYuv *recpic = (*iterPic++)->getPicYuvRec();
+            x265_picture_t& recon = m_recon[i];
+            recon.planes[0] = recpic->getLumaAddr();
+            recon.stride[0] = recpic->getStride();
+            recon.planes[1] = recpic->getCbAddr();
+            recon.stride[1] = recpic->getCStride();
+            recon.planes[2] = recpic->getCrAddr();
+            recon.stride[2] = recpic->getCStride();
+            recon.bitDepth = sizeof(Pel) * 8;
+        }
+    }
     m_uiNumAllPicCoded += m_iNumPicRcvd;
     Int iNumEncoded = m_iNumPicRcvd;
     m_iNumPicRcvd = 0;

@@ -167,7 +167,7 @@ SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsInGOP)
+Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, std::list<AccessUnit>& accessUnitsInGOP)
 {
     PPAScopeEvent(TEncGOP_compressGOP);
 
@@ -286,15 +286,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         AccessUnit& accessUnit = accessUnitsInGOP.back();
 
         TComPic*              pcPic = NULL;
-        TComPicYuv*           pcPicYuvRecOut;
         TComSlice*            pcSlice;
         {
-            // Pick reconstruction picture in output time order
-            TComList<TComPicYuv*>::iterator iterPicYuvRec = rcListPicYuvRecOut.end();
-            for (Int i = 0; i < iNumPicRcvd - iTimeOffset + 1; i++)
-                iterPicYuvRec--;
-            pcPicYuvRecOut = *(iterPicYuvRec);
-
             // Locate input picture with the correct POC (makes no assumption on
             // input picture ordering)
             TComList<TComPic*>::iterator iterPic = rcListPic.begin();
@@ -1392,9 +1385,6 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
         bBufferingPeriodSEIPresentInAU    = false;
         bPictureTimingSEIPresentInAU      = false;
         bNestedBufferingPeriodSEIPresentInAU = false;
-
-        // TODO: we don't want to copy the recon picture here
-        pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
         iNumPicCoded++;
         m_totalCoded++;
 

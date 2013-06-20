@@ -763,13 +763,6 @@ x265_t *x265_encoder_open(x265_param_t *param)
         encoder->configure(param);
         encoder->create();
         encoder->init();
-
-        for (int i = 0; i < MAX_GOP; i++)
-        {
-            TComPicYuv *pcPicYuvRec = new TComPicYuv;
-            pcPicYuvRec->create(param->iSourceWidth, param->iSourceHeight, param->uiMaxCUSize, param->uiMaxCUSize, param->uiMaxCUDepth);
-            encoder->m_cListPicYuvRec.pushBack(pcPicYuvRec);
-        }
     }
 
     return encoder;
@@ -782,11 +775,7 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
     list<AccessUnit> outputAccessUnits;
     if (pi_nal) *pi_nal = 0;
 
-    /* TEncTop::encode uses this strange mechanism of pushing frames to the back of the list and then returning
-     * reconstructed images ordered from the middle to the end */
-    TComPicYuv *pcPicYuvRec = encoder->m_cListPicYuvRec.popFront();
-    encoder->m_cListPicYuvRec.pushBack(pcPicYuvRec);
-    int iNumEncoded = encoder->encode(!pic_in, pic_in, encoder->m_cListPicYuvRec, outputAccessUnits);
+    int iNumEncoded = encoder->encode(!pic_in, pic_in, pic_out, outputAccessUnits);
     if (iNumEncoded > 0)
     {
         if (pp_nal)
@@ -847,38 +836,8 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
             *pp_nal = &encoder->m_nals[0];
             if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
         }
-
-        /* push these recon output frame pointers onto m_cListRecQueue */
-        TComList<TComPicYuv *>::iterator iterPicYuvRec = encoder->m_cListPicYuvRec.end();
-        for (int i = 0; i < iNumEncoded; i++)
-        {
-            --iterPicYuvRec;
-        }
-
-        for (int i = 0; i < iNumEncoded; i++)
-        {
-            encoder->m_cListRecQueue.pushBack(*(iterPicYuvRec++));
-        }
     }
-
-    if (encoder->m_cListRecQueue.size())
-    {
-        TComPicYuv *recpic = encoder->m_cListRecQueue.popFront();
-        if (pic_out)
-        {
-            *pic_out = &encoder->m_reconpic;
-            encoder->m_reconpic.planes[0] = recpic->getLumaAddr();
-            encoder->m_reconpic.stride[0] = recpic->getStride();
-            encoder->m_reconpic.planes[1] = recpic->getCbAddr();
-            encoder->m_reconpic.stride[1] = recpic->getCStride();
-            encoder->m_reconpic.planes[2] = recpic->getCrAddr();
-            encoder->m_reconpic.stride[2] = recpic->getCStride();
-            encoder->m_reconpic.bitDepth = sizeof(Pel) * 8;
-        }
-        return 1;
-    }
-
-    return 0;
+    return iNumEncoded;
 }
 
 EXTERN_CYCLE_COUNTER(ME);
@@ -889,14 +848,6 @@ void x265_encoder_close(x265_t *encoder)
     encoder->printSummary();
 
     REPORT_CYCLE_COUNTER(ME);
-
-    // delete used buffers in encoder class
-    while (!encoder->m_cListPicYuvRec.empty())
-    {
-        TComPicYuv *yuv = encoder->m_cListPicYuvRec.popBack();
-        yuv->destroy();
-        delete yuv;
-    }
 
     encoder->destroy();
     delete encoder;

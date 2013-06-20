@@ -40,11 +40,8 @@ protected:
 
 public:
 
-    TComList<TComPicYuv *>  m_cListPicYuvRec;   ///< list of reconstructed YUV files
-    TComList<TComPicYuv *>  m_cListRecQueue;
     std::vector<x265_nal_t> m_nals;
     std::string             m_packetData;
-    x265_picture_t          m_reconpic;
 
     Encoder()
     {

@@ -96,6 +96,7 @@ private:
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
     x265::ThreadPool       *m_threadPool;
+    x265_picture_t         *m_recon;
 
 protected:
 
@@ -152,7 +153,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// encode several number of pictures until end-of-sequence
-    int encode(Bool bEos, const x265_picture_t* pic, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut);
+    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
     void printSummary();
 };
