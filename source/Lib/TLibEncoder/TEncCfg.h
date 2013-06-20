@@ -297,6 +297,8 @@ public:
 
     Void      setExtraRPSs(Int i)      { m_extraRPSs = i; }
 
+    Int       getExtraRPSs()          { return m_extraRPSs; }
+
     GOPEntry  getGOPEntry(Int i)      { return m_GOPList[i]; }
 
     Void      setMaxDecPicBuffering(UInt u, UInt tlayer) { m_maxDecPicBuffering[tlayer] = u;    }

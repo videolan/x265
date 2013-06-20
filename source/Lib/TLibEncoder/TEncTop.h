@@ -134,10 +134,6 @@ public:
 
     void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
-    Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
-
-    Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
-
     TEncRateCtrl*           getRateCtrl()           { return &m_cRateCtrl; }
 
     /* Collect statistics globally */

@@ -372,7 +372,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
 
         // Do decoding refresh marking if any
         pcSlice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, rcListPic);
-        m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
+        selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
         pcSlice->getRPS()->setNumberOfLongtermPictures(0);
 
         if ((pcSlice->checkThatAllRefPicsAreAvailable(rcListPic, pcSlice->getRPS(), false) != 0) || (pcSlice->isIRAP()))
@@ -756,7 +756,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
                     SOPcurrPOC += deltaPOC;
                     SOPDescriptionSEI.m_sopDescVclNaluType[i] = getNalUnitType(SOPcurrPOC, m_iLastIDR);
                     SOPDescriptionSEI.m_sopDescTemporalId[i] = m_pcCfg->getGOPEntry(j).m_temporalId;
-                    SOPDescriptionSEI.m_sopDescStRpsIdx[i] = m_pcEncTop->getReferencePictureSetIdxForSOP(pcSlice, SOPcurrPOC, j);
+                    SOPDescriptionSEI.m_sopDescStRpsIdx[i] = getReferencePictureSetIdxForSOP(pcSlice, SOPcurrPOC, j);
                     SOPDescriptionSEI.m_sopDescPocDelta[i] = deltaPOC;
 
                     prevEntryId = j;
@@ -1408,6 +1408,74 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcL
     }
 
     assert(iNumPicCoded == iNumPicRcvd);
+}
+
+// This is a function that
+// determines what Reference Picture Set to use
+// for a specific slice (with POC = POCCurr)
+Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid)
+{
+    slice->setRPSidx(GOPid);
+    UInt intraPeriod = m_pcCfg->getIntraPeriod();
+    Int gopSize = m_pcCfg->getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < m_pcCfg->getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && m_pcCfg->getDecodingRefreshType() > 0)
+        {
+            Int POCIndex = POCCurr % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == m_pcCfg->getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+        else
+        {
+            if (POCCurr == m_pcCfg->getGOPEntry(extraNum).m_POC)
+            {
+                slice->setRPSidx(extraNum);
+            }
+        }
+    }
+
+    slice->setRPS(m_pcEncTop->getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
+}
+
+Int TEncGOP::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid)
+{
+    int rpsIdx = GOPid;
+    UInt intraPeriod = m_pcCfg->getIntraPeriod();
+    Int gopSize = m_pcCfg->getGOPSize();
+
+    for (Int extraNum = gopSize; extraNum < m_pcCfg->getExtraRPSs() + gopSize; extraNum++)
+    {
+        if (intraPeriod > 0 && m_pcCfg->getDecodingRefreshType() > 0)
+        {
+            Int POCIndex = POCCurr % intraPeriod;
+            if (POCIndex == 0)
+            {
+                POCIndex = intraPeriod;
+            }
+            if (POCIndex == m_pcCfg->getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+        else
+        {
+            if (POCCurr == m_pcCfg->getGOPEntry(extraNum).m_POC)
+            {
+                rpsIdx = extraNum;
+            }
+        }
+    }
+
+    return rpsIdx;
 }
 
 // ====================================================================================================================

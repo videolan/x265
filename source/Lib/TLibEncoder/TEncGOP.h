@@ -106,6 +106,10 @@ public:
 
 protected:
 
+    Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
+
+    Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
+
     NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
 
     Void   xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);

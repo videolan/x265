@@ -214,6 +214,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (pic_out)
     {
         *pic_out = m_recon;
+        // make references to the last N TComPic's recon frames
         TComList<TComPic*>::iterator iterPic = m_cListPic.end();
         for (int i = 0; i < m_iNumPicRcvd; i++)
             iterPic--;
@@ -708,70 +709,6 @@ Void TEncTop::xInitRPS()
             }
         }
     }
-}
-
-// This is a function that
-// determines what Reference Picture Set to use
-// for a specific slice (with POC = POCCurr)
-Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid)
-{
-    slice->setRPSidx(GOPid);
-
-    for (Int extraNum = m_iGOPSize; extraNum < m_extraRPSs + m_iGOPSize; extraNum++)
-    {
-        if (m_uiIntraPeriod > 0 && getDecodingRefreshType() > 0)
-        {
-            Int POCIndex = POCCurr % m_uiIntraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = m_uiIntraPeriod;
-            }
-            if (POCIndex == m_GOPList[extraNum].m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-        else
-        {
-            if (POCCurr == m_GOPList[extraNum].m_POC)
-            {
-                slice->setRPSidx(extraNum);
-            }
-        }
-    }
-
-    slice->setRPS(getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
-    slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
-}
-
-Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid)
-{
-    int rpsIdx = GOPid;
-
-    for (Int extraNum = m_iGOPSize; extraNum < m_extraRPSs + m_iGOPSize; extraNum++)
-    {
-        if (m_uiIntraPeriod > 0 && getDecodingRefreshType() > 0)
-        {
-            Int POCIndex = POCCurr % m_uiIntraPeriod;
-            if (POCIndex == 0)
-            {
-                POCIndex = m_uiIntraPeriod;
-            }
-            if (POCIndex == m_GOPList[extraNum].m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-        else
-        {
-            if (POCCurr == m_GOPList[extraNum].m_POC)
-            {
-                rpsIdx = extraNum;
-            }
-        }
-    }
-
-    return rpsIdx;
 }
 
 //! \}
