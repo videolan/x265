@@ -23,6 +23,8 @@
 
 #include "primitives.h"
 #include "bitcost.h"
+#include "common.h"
+
 #include <stdint.h>
 #include <algorithm>
 #include <math.h>
@@ -58,8 +60,8 @@ void BitCost::setQP(unsigned int qp, double lambda)
             c[0] = (uint16_t)lambda;
             for (int i = 1; i < BC_MAX_MV; i++)
             {
-                c[i]  = std::min<uint16_t>(max16, (uint16_t)(s_bitsizes[i << 1] * lambda + 0.5));
-                c[-i] = std::min<uint16_t>(max16, (uint16_t)(s_bitsizes[(i << 1) + 1] * lambda + 0.5));
+                c[i]  = (uint16_t) X265_MIN(max16, s_bitsizes[i << 1] * lambda + 0.5);
+                c[-i] = (uint16_t) X265_MIN(max16, s_bitsizes[(i << 1) + 1] * lambda + 0.5);
             }
 
 #endif // if X264_APPROACH
