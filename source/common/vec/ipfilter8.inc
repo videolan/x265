@@ -260,15 +260,18 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
         sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sumi) \
         tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
+        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
         sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sume) \
         tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
+        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
         sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sump) \
         tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
+        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
 #else /* if INSTRSET >= 5 */
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
@@ -295,22 +298,57 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
         sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
         sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
 /* store results */ \
-        sumi = (sumi + offset) >> 12; \
+        sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sumi) \
         tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
-        sume = (sume + offset) >> 12; \
+        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
+        sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sume) \
         tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
-        sump = (sump + offset) >> 12; \
+        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
+        sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
         CLIP0(sump) \
         tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(_mm_packus_epi16(tmp, _mm_setzero_si128())); \
+        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
 #endif /* if INSTRSET >= 5 */
 
-void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
+#if INSTRSET >= 5
+#define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
+        tmp16e = _mm_shuffle_epi8(sume, _mm_set1_epi8(Y)); \
+        tmp16i = _mm_shuffle_epi8(sumi, _mm_set1_epi8(Y)); \
+        tmp16p = _mm_shuffle_epi8(sump, _mm_set1_epi8(Y)); \
+        for (int i = -marginX; i < -16; i += 16) \
+        { \
+            _mm_storeu_si128((__m128i*)(dstE + row * dstStride + X + i), tmp16e); \
+            _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X + i), tmp16i); \
+            _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X + i), tmp16p); \
+        } \
+        _mm_storeu_si128((__m128i*)(dstE + row * dstStride + X - 16), tmp16e); /*Assuming marginX > 16*/ \
+        _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X - 16), tmp16i); \
+        _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X - 16), tmp16p); \
+}
+#else /* if INSTRSET >= 5 */
+#define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
+        tmp16e = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sume); \
+        tmp16i = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sumi); \
+        tmp16p = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sump); \
+        for (int i = -marginX; i < -16; i += 16) \
+        { \
+            tmp16e.store(dstE + row * dstStride + X + i); \
+            tmp16i.store(dstI + row * dstStride + X + i); \
+            tmp16p.store(dstP + row * dstStride + X + i); \
+        } \
+        tmp16e.store(dstE + row * dstStride + X - 16);      /*Assuming marginX > 16*/ \
+        tmp16i.store(dstI + row * dstStride + X - 16);      \
+        tmp16p.store(dstP + row * dstStride + X - 16);      \
+}
+#endif /* if INSTRSET >= 5 */
+
+void CDECL filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
     int row, col;
     int cstride =  srcStride;
@@ -323,29 +361,68 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
 
+#if INSTRSET < 5
+    __m128i greater;
+    Vec16uc tmp16e, tmp16i, tmp16p;
     Vec4i a0, a1, a2, a3, a4, a5, a6, a7, sum;
     Vec8s tmp;
     Vec4i val, sume, sumi, sump;
     Vec4i exp1, exp2, exp3, exp4, exp5, exp6;
-#if INSTRSET < 5
-    __m128i greater;
-#endif
-    for (col = 0; col < block_width; col += 4)         // Considering block width is always a multiple of 4
+#else
+    __m128i tmp16e, tmp16i, tmp16p;
+    __m128i a0, a1, a2, a3, a4, a5, a6, a7;
+    __m128i tmp;
+    __m128i sume, sumi, sump;
+    __m128i exp1, exp2, exp3, exp4, exp5, exp6;
+#endif /* if INSTRSET < 5 */
+
+    col = 0;
+
+    tmp = _mm_loadu_si128((__m128i const*)(src + col));
+    a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+    a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+    a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+    a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+    a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+    a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+    a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+
+    for (row = 0; row < block_height; row++)
     {
-        tmp.load(src + col);
-        a0 = extend_low(tmp);
-        tmp.load(src + col + cstride);
-        a1 = extend_low(tmp);
-        tmp.load(src + col + 2 * cstride);
-        a2 = extend_low(tmp);
-        tmp.load(src + col + 3 * cstride);
-        a3 = extend_low(tmp);
-        tmp.load(src + col + 4 * cstride);
-        a4 = extend_low(tmp);
-        tmp.load(src + col + 5 * cstride);
-        a5 = extend_low(tmp);
-        tmp.load(src + col + 6 * cstride);
-        a6 = extend_low(tmp);
+        PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a1, a2, a3, a4, a5, a6, a7, a0) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a2, a3, a4, a5, a6, a7, a0, a1) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a3, a4, a5, a6, a7, a0, a1, a2) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a4, a5, a6, a7, a0, a1, a2, a3) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a5, a6, a7, a0, a1, a2, a3, a4) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL(0, 0) row++;
+        PROCESSROW(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL(0, 0)
+    }
+
+    col += 4;
+
+    for ( /*col = 0*/; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
+    {
+        tmp = _mm_loadu_si128((__m128i const*)(src + col));
+        a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+        a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+        a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+        a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+        a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+        a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+        a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
 
         for (row = 0; row < block_height; row++)
         {
@@ -358,6 +435,89 @@ void CDECL filterVertical_short_pel_multiplane(int /*bitDepth*/, short *src, int
             PROCESSROW(a6, a7, a0, a1, a2, a3, a4, a5) row++;
             PROCESSROW(a7, a0, a1, a2, a3, a4, a5, a6)
         }
+    }
+
+    tmp = _mm_loadu_si128((__m128i const*)(src + col));
+    a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+    a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+    a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+    a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+    a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+    a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+    a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+
+    for (row = 0; row < block_height; row++)
+    {
+        PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a1, a2, a3, a4, a5, a6, a7, a0) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a2, a3, a4, a5, a6, a7, a0, a1) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a3, a4, a5, a6, a7, a0, a1, a2) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a4, a5, a6, a7, a0, a1, a2, a3) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a5, a6, a7, a0, a1, a2, a3, a4) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROW(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL((block_width + marginX), 3)
+    }
+
+    // Extending bottom rows
+    pixel *pe, *pi, *pp;
+    pe = dstE + (block_height - 1) * dstStride - marginX;
+    pi = dstI + (block_height - 1) * dstStride - marginX;
+    pp = dstP + (block_height - 1) * dstStride - marginX;
+    int x, y;
+    for (x = 0; x < block_width + (marginX << 1) - 16; x += 16)
+    {
+        tmp16e = _mm_loadu_si128((__m128i const*)(pe + x));
+        tmp16i = _mm_loadu_si128((__m128i const*)(pi + x));
+        tmp16p = _mm_loadu_si128((__m128i const*)(pp + x));
+        for (y = 0; y < marginY; y++)
+        {
+            _mm_storeu_si128((__m128i*)(pe + (y + 1) * dstStride + x), tmp16e);
+            _mm_storeu_si128((__m128i*)(pi + (y + 1) * dstStride + x), tmp16i);
+            _mm_storeu_si128((__m128i*)(pp + (y + 1) * dstStride + x), tmp16p);
+        }
+    }
+
+    tmp16e = _mm_loadu_si128((__m128i const*)(pe + block_width + (marginX << 1) - 16));
+    tmp16i = _mm_loadu_si128((__m128i const*)(pi + block_width + (marginX << 1) - 16));
+    tmp16p = _mm_loadu_si128((__m128i const*)(pp + block_width + (marginX << 1) - 16));
+    for (y = 0; y < marginY; y++)
+    {
+        _mm_storeu_si128((__m128i*)(pe + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16e);
+        _mm_storeu_si128((__m128i*)(pi + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16i);
+        _mm_storeu_si128((__m128i*)(pp + (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16p);
+    }
+
+    // Extending top rows
+    pe -= ((block_height - 1) * dstStride);
+    pi -= ((block_height - 1) * dstStride);
+    pp -= ((block_height - 1) * dstStride);
+    for (x = 0; x < block_width + (marginX << 1) - 16; x += 16)
+    {
+        tmp16e = _mm_loadu_si128((__m128i const*)(pe + x));
+        tmp16i = _mm_loadu_si128((__m128i const*)(pi + x));
+        tmp16p = _mm_loadu_si128((__m128i const*)(pp + x));
+        for (y = 0; y < marginY; y++)
+        {
+            _mm_storeu_si128((__m128i*)(pe - (y + 1) * dstStride + x), tmp16e);
+            _mm_storeu_si128((__m128i*)(pi - (y + 1) * dstStride + x), tmp16i);
+            _mm_storeu_si128((__m128i*)(pp - (y + 1) * dstStride + x), tmp16p);
+        }
+    }
+
+    tmp16e = _mm_loadu_si128((__m128i const*)(pe + block_width + (marginX << 1) - 16));
+    tmp16i = _mm_loadu_si128((__m128i const*)(pi + block_width + (marginX << 1) - 16));
+    tmp16p = _mm_loadu_si128((__m128i const*)(pp + block_width + (marginX << 1) - 16));
+    for (y = 0; y < marginY; y++)
+    {
+        _mm_storeu_si128((__m128i*)(pe - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16e);
+        _mm_storeu_si128((__m128i*)(pi - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16i);
+        _mm_storeu_si128((__m128i*)(pp - (y + 1) * dstStride + block_width + (marginX << 1) - 16), tmp16p);
     }
 }
 

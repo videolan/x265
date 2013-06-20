@@ -310,6 +310,46 @@ void CDECL filterVertical_short_pel_multiplane(int bitDepth, short *src, int src
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
 }
 
+void xExtendPicCompBorder(pixel* piTxt, int iStride, int iWidth, int iHeight, int iMarginX, int iMarginY)
+{
+    int   x, y;
+    pixel*  pi;
+
+    pi = piTxt;
+    for (y = 0; y < iHeight; y++)
+    {
+        for (x = 0; x < iMarginX; x++)
+        {
+            pi[-iMarginX + x] = pi[0];
+            pi[iWidth + x] = pi[iWidth - 1];
+        }
+
+        pi += iStride;
+    }
+
+    pi -= (iStride + iMarginX);
+    for (y = 0; y < iMarginY; y++)
+    {
+        ::memcpy(pi + (y + 1) * iStride, pi, sizeof(pixel) * (iWidth + (iMarginX << 1)));
+    }
+
+    pi -= ((iHeight - 1) * iStride);
+    for (y = 0; y < iMarginY; y++)
+    {
+        ::memcpy(pi - (y + 1) * iStride, pi, sizeof(pixel) * (iWidth + (iMarginX << 1)));
+    }
+}
+
+void CDECL filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
+{
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
+    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
+    xExtendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
+    xExtendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
+    xExtendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
+}
+
 void CDECL filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
 {
     filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
@@ -344,7 +384,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
     p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
 
-    p.filterVmulti = filterVertical_short_pel_multiplane;
+    p.filterVmulti = filterVerticalMultiplaneExtend;
     p.filterHmulti = filterHorizontalMultiplane;
 }
 }

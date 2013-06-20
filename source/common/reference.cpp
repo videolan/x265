@@ -157,13 +157,13 @@ void MotionReference::generateReferencePlane(int x)
     pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
 
-    primitives.filterVmulti(g_bitDepthY, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight);
+    primitives.filterVmulti(g_bitDepthY, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
     if (x > 0)
     {
         int bufOffset = -(s_tmpMarginY + s_intMarginY) * m_lumaStride - (s_tmpMarginX + s_intMarginX);
         m_reconPic->xExtendPicCompBorder((Pel *)m_lumaPlane[x][0] + bufOffset, m_lumaStride, m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY), m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
     }
-    m_reconPic->xExtendPicCompBorder((Pel *)dstPtr1, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
+    /*m_reconPic->xExtendPicCompBorder((Pel *)dstPtr1, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
     m_reconPic->xExtendPicCompBorder((Pel *)dstPtr2, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
-    m_reconPic->xExtendPicCompBorder((Pel *)dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
+    m_reconPic->xExtendPicCompBorder((Pel *)dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);*/
 }
