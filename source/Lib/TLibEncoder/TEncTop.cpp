@@ -87,37 +87,19 @@ Void TEncTop::create()
 
     // create processing unit classes
     m_cGOPEncoder.create();
-    if (m_bUseSAO)
-    {
-        m_cEncSAO.setSaoLcuBoundary(getSaoLcuBoundary());
-        m_cEncSAO.setSaoLcuBasedOptimization(getSaoLcuBasedOptimization());
-        m_cEncSAO.setMaxNumOffsetsPerPic(getMaxNumOffsetsPerPic());
-        m_cEncSAO.create(getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
-        m_cEncSAO.createEncBuffer();
-    }
 
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
                          g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
-
-    m_recon = new x265_picture_t[m_iGOPSize];
 }
 
 Void TEncTop::destroy()
 {
     // destroy processing unit classes
     m_cGOPEncoder.destroy();
-    if (getUseSAO())
-    {
-        m_cEncSAO.destroy();
-        m_cEncSAO.destroyEncBuffer();
-    }
     m_cRateCtrl.destroy();
-
-    if (m_recon)
-        delete [] m_recon;
 
     // destroy ROM
     destroyROM();
@@ -172,37 +154,16 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
 
     // Wait until we have a full GOP of pictures
     if (!m_iNumPicRcvd || (!flush && m_iPOCLast != 0 && m_iNumPicRcvd != m_iGOPSize && m_iGOPSize))
-    {
         return 0;
-    }
     if (flush)
-    {
         m_framesToBeEncoded = m_iNumPicRcvd + m_uiNumAllPicCoded;
-    }
 
     // compress GOP
     m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, accessUnitsOut);
 
     if (pic_out)
-    {
-        *pic_out = m_recon;
-        // make references to the last N TComPic's recon frames
-        TComList<TComPic*>::iterator iterPic = m_cGOPEncoder.m_cListPic.end();
-        for (int i = 0; i < m_iNumPicRcvd; i++)
-            iterPic--;
-        for (int i = 0; i < m_iNumPicRcvd; i++)
-        {
-            TComPicYuv *recpic = (*iterPic++)->getPicYuvRec();
-            x265_picture_t& recon = m_recon[i];
-            recon.planes[0] = recpic->getLumaAddr();
-            recon.stride[0] = recpic->getStride();
-            recon.planes[1] = recpic->getCbAddr();
-            recon.stride[1] = recpic->getCStride();
-            recon.planes[2] = recpic->getCrAddr();
-            recon.stride[2] = recpic->getCStride();
-            recon.bitDepth = sizeof(Pel) * 8;
-        }
-    }
+        *pic_out = m_cGOPEncoder.getReconPictures(m_iPOCLast - m_iNumPicRcvd + 1, m_iNumPicRcvd);
+
     m_uiNumAllPicCoded += m_iNumPicRcvd;
     Int iNumEncoded = m_iNumPicRcvd;
     m_iNumPicRcvd = 0;

@@ -82,15 +82,9 @@ private:
 
     TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
 
-    /* TODO: We keep a TEncSampleAdaptiveOffset instance in TEncTop only so we can
-     * properly initialize new input pictures with SAO data buffers.  This should
-     * be cleaned */
-    TEncSampleAdaptiveOffset m_cEncSAO;
-
     // processing unit
     TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
     x265::ThreadPool       *m_threadPool;
-    x265_picture_t         *m_recon;
 
 protected:
 

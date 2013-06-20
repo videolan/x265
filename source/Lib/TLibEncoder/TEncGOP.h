@@ -72,6 +72,8 @@ private:
     TEncCfg*                m_pcCfg;
     TEncRateCtrl*           m_pcRateCtrl;
     x265::EncodeFrame*      m_cFrameEncoders;
+    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
+    x265_picture_t         *m_recon;
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -95,8 +97,6 @@ private:
 
 public:
 
-    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
-
     TEncGOP();
 
     virtual ~TEncGOP();
@@ -108,6 +108,8 @@ public:
     Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& accessUnitsInGOP);
 
     TComPic* xGetNewPicBuffer();
+
+    x265_picture_t *getReconPictures(UInt startPOC, UInt count);
 
 protected:
 
