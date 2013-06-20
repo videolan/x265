@@ -175,6 +175,7 @@ void Encoder::configure(x265_param_t *param)
     else
         x265_log(param, X265_LOG_INFO, "Wavefront Parallel Processing disabled, single thread mode\n");
 
+    m_iGOPSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->iFrameRate);
     setSourceWidth(param->iSourceWidth);
@@ -775,7 +776,7 @@ x265_t *x265_encoder_open(x265_param_t *param)
 }
 
 extern "C"
-int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t *pic_out)
+int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t **pic_out)
 {
     /* A boat-load of ugly hacks here until we have a proper lookahead */
     list<AccessUnit> outputAccessUnits;
@@ -865,13 +866,14 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         TComPicYuv *recpic = encoder->m_cListRecQueue.popFront();
         if (pic_out)
         {
-            pic_out->planes[0] = recpic->getLumaAddr();
-            pic_out->stride[0] = recpic->getStride();
-            pic_out->planes[1] = recpic->getCbAddr();
-            pic_out->stride[1] = recpic->getCStride();
-            pic_out->planes[2] = recpic->getCrAddr();
-            pic_out->stride[2] = recpic->getCStride();
-            pic_out->bitDepth = sizeof(Pel) * 8;
+            *pic_out = &encoder->m_reconpic;
+            encoder->m_reconpic.planes[0] = recpic->getLumaAddr();
+            encoder->m_reconpic.stride[0] = recpic->getStride();
+            encoder->m_reconpic.planes[1] = recpic->getCbAddr();
+            encoder->m_reconpic.stride[1] = recpic->getCStride();
+            encoder->m_reconpic.planes[2] = recpic->getCrAddr();
+            encoder->m_reconpic.stride[2] = recpic->getCStride();
+            encoder->m_reconpic.bitDepth = sizeof(Pel) * 8;
         }
         return 1;
     }
