@@ -552,7 +552,7 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
         || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
     {
         // mark all pictures as not used for reference
-        TComList<TComPic*>::iterator        iterPic       = rcListPic.begin();
+        TComList<TComPic*>::iterator iterPic = rcListPic.begin();
         while (iterPic != rcListPic.end())
         {
             rpcPic = *(iterPic);
