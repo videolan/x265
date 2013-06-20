@@ -46,7 +46,7 @@ protected:
     bool check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt);
     bool check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt);
     bool check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt);
-    bool check_getIPredAngs4_primitive(x265::getIPredAngs_t ref, x265::getIPredAngs_t opt);
+    bool check_getIPredAngs_primitive(const x265::getIPredAngs_t ref[], const x265::getIPredAngs_t opt[]);
 
 public:
 

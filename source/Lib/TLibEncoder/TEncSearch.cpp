@@ -2203,7 +2203,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         UInt uiStride      = pcPredYuv->getStride();
         UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
         Int numModesForFullRD = g_aucIntraModeNumFast[uiWidthBit];
-        x265::pixelcmp sa8d = x265::primitives.sa8d[(int)g_aucConvertToBit[uiWidth]];
+        Int nLog2SizeMinus2 = g_aucConvertToBit[uiWidth];
+        x265::pixelcmp sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
 
         Bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)
@@ -2253,7 +2254,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 Pel *pLeft0  = refLeft     + uiWidth - 1;
                 Pel *pLeft1  = refLeftFlt  + uiWidth - 1;
 
-                x265::primitives.getIPredAngs4((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth<16));
+                x265::primitives.getIPredAngs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth<16));
 
                 // TODO: We need SATD_x4 here
                 for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)

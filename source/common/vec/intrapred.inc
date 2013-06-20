@@ -4665,10 +4665,9 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     }
 }
 
-#if HIGH_BIT_DEPTH || (INSTRSET < 4)
-
 // TODO: reference code, please optimize it
-void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+template<int size>
+void xPredIntraAngs(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
     int iMode;
 
@@ -4680,8 +4679,8 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     {
         pixel *pLeft = pLeft0;
         pixel *pAbove = pAbove0;
-        pixel *pDst = pDst0 + (iMode-2) * (4 * 4);
-        xPredIntraAngBufRef(8, pDst, 4, 4, iMode, bLuma, pLeft, pAbove);
+        pixel *pDst = pDst0 + (iMode-2) * (size * size);
+        xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
 
         // Optimize code don't flip buffer
         bool modeHor = (iMode < 18);
@@ -4689,21 +4688,18 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
         if (modeHor)
         {
             pixel  tmp;
-            const int width = 4;
-            for (int k = 0; k < width - 1; k++)
+            for (int k = 0; k < size - 1; k++)
             {
-                for (int l = k + 1; l < width; l++)
+                for (int l = k + 1; l < size; l++)
                 {
-                    tmp                 = pDst[k * width + l];
-                    pDst[k * width + l] = pDst[l * width + k];
-                    pDst[l * width + k] = tmp;
+                    tmp                = pDst[k * size + l];
+                    pDst[k * size + l] = pDst[l * size + k];
+                    pDst[l * size + k] = tmp;
                 }
             }
         }
     }
 }
-
-#else // HIGH_BIT_DEPTH || (INSTRSET < 4)
 
 ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
 {
@@ -5111,8 +5107,6 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     _mm_store_si128((__m128i*)pDstN[16], T30);
 }
 
-#endif // HIGH_BIT_DEPTH || (INSTRSET < 4)
-
 }
 
 #include "utils.h"
@@ -5124,8 +5118,19 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.getIPredDC = predIntraDC;
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
-#if !HIGH_BIT_DEPTH
-    p.getIPredAngs4 = xPredIntraAngs4;
+
+#if HIGH_BIT_DEPTH || (INSTRSET < 4)
+    p.getIPredAngs[0] = xPredIntraAngs<4>;
+    p.getIPredAngs[1] = xPredIntraAngs<8>;
+    p.getIPredAngs[2] = xPredIntraAngs<16>;
+    p.getIPredAngs[3] = xPredIntraAngs<32>;
+    p.getIPredAngs[4] = xPredIntraAngs<64>;
+#else
+    p.getIPredAngs[0] = xPredIntraAngs4;
+    p.getIPredAngs[1] = xPredIntraAngs<8>;
+    p.getIPredAngs[2] = xPredIntraAngs<16>;
+    p.getIPredAngs[3] = xPredIntraAngs<32>;
+    p.getIPredAngs[4] = xPredIntraAngs<64>;
 #endif
 }
 

@@ -258,6 +258,7 @@ unsigned char g_aucIntraFilterType[][35] = {
 };
 #endif
 
+template<int size>
 void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
     int iMode;
@@ -270,9 +271,9 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     {
         pixel *pLeft = pLeft0;
         pixel *pAbove = pAbove0;
-        pixel *pDst = pDst0 + (iMode-2) * (4 * 4);
+        pixel *pDst = pDst0 + (iMode-2) * (size * size);
 
-        xPredIntraAngBufRef(8, pDst, 4, 4, iMode, bLuma, pLeft, pAbove);
+        xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
 
         // Optimize code don't flip buffer
         bool modeHor = (iMode < 18);
@@ -280,14 +281,13 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
         if (modeHor)
         {
             pixel  tmp;
-            const int width = 4;
-            for (int k = 0; k < width - 1; k++)
+            for (int k = 0; k < size - 1; k++)
             {
-                for (int l = k + 1; l < width; l++)
+                for (int l = k + 1; l < size; l++)
                 {
-                    tmp                 = pDst[k * width + l];
-                    pDst[k * width + l] = pDst[l * width + k];
-                    pDst[l * width + k] = tmp;
+                    tmp                = pDst[k * size + l];
+                    pDst[k * size + l] = pDst[l * size + k];
+                    pDst[l * size + k] = tmp;
                 }
             }
         }
@@ -304,6 +304,10 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.getIPredDC = xPredIntraDC;
     p.getIPredPlanar = xPredIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
-    p.getIPredAngs4 = xPredIntraAngs4;
+    p.getIPredAngs[0] = xPredIntraAngs4<4>;
+    p.getIPredAngs[1] = xPredIntraAngs4<8>;
+    p.getIPredAngs[2] = xPredIntraAngs4<16>;
+    p.getIPredAngs[3] = xPredIntraAngs4<32>;
+    p.getIPredAngs[4] = xPredIntraAngs4<64>;
 }
 }

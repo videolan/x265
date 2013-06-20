@@ -171,14 +171,18 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     return true;
 }
 
-bool IntraPredHarness::check_getIPredAngs4_primitive(x265::getIPredAngs_t ref, x265::getIPredAngs_t opt)
+bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t ref[], const x265::getIPredAngs_t opt[])
 {
     int j = ADI_BUF_STRIDE;
 
     Bool isLuma;
 
-    for (int width = 4; width <= 4; width <<= 1)
+    for (int size = 2; size <= 5; size++)
     {
+        if (opt[size-2] == NULL) continue;
+
+        const int width = (1<<size);
+
         for (int i = 0; i <= 100; i++)
         {
             isLuma = (width <= 16) && (rand()%2);
@@ -196,8 +200,8 @@ bool IntraPredHarness::check_getIPredAngs4_primitive(x265::getIPredAngs_t ref, x
             memset(pixel_out_33_C, 0xCD, out_size);
 #endif
 
-            ref(pixel_out_33_C,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-            opt(pixel_out_33_Vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            ref[size-2](pixel_out_33_C,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            opt[size-2](pixel_out_33_Vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
             for (int p = 2-2; p <= 34-2; p++)
             {
                 for (int k = 0; k < width; k++)
@@ -243,11 +247,11 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
             return false;
         }
     }
-    if (opt.getIPredAngs4)
+    if (opt.getIPredAngs[0])
     {
-        if (!check_getIPredAngs4_primitive(ref.getIPredAngs4, opt.getIPredAngs4))
+        if (!check_getIPredAngs_primitive(ref.getIPredAngs, opt.getIPredAngs))
         {
-            printf("intrapred_angular_4x4_33_modes failed\n");
+            printf("intrapred_angular_33_modes failed\n");
             return false;
         }
     }
@@ -297,18 +301,21 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             }
         }
     }
-    if (opt.getIPredAngs4)
+    for (int size = 2; size <= 6; size++)
     {
-        for (int ii = 4; ii <= 4; ii <<= 1)
+        if (opt.getIPredAngs[size-2])
         {
-            width = ii;
-            bool bFilter  = (width <= 16);
-            pixel * refAbove = pixel_buff + srcStride;
-            pixel * refLeft = refAbove + 3 * width;
-            refLeft[0] = refAbove[0];
-            printf("IPred_getIPredAngs4\t\t");
-            REPORT_SPEEDUP(opt.getIPredAngs4, ref.getIPredAngs4,
-                           pixel_out_33_Vec, refAbove, refLeft, refAbove, refLeft, bFilter);
+            for (int ii = 4; ii <= 4; ii <<= 1)
+            {
+                width = ii;
+                bool bFilter  = (width <= 16);
+                pixel * refAbove = pixel_buff + srcStride;
+                pixel * refLeft = refAbove + 3 * width;
+                refLeft[0] = refAbove[0];
+                printf("IPred_getIPredAngs%d\t\t", (1<<size));
+                REPORT_SPEEDUP(opt.getIPredAngs[size-2], ref.getIPredAngs[size-2],
+                               pixel_out_33_Vec, refAbove, refLeft, refAbove, refLeft, bFilter);
+            }
         }
     }
 }

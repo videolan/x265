@@ -236,7 +236,7 @@ struct EncoderPrimitives
     getIPredDC_t getIPredDC;
     getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
-    getIPredAngs_t getIPredAngs4;
+    getIPredAngs_t getIPredAngs[5];
     quant deQuant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
