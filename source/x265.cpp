@@ -473,7 +473,7 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, &pic_recon);
+        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, cliopt.recon ? &pic_recon : NULL);
         outFrameCount += iNumRecon;
         while (iNumRecon && cliopt.recon)
         {
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, NULL, &pic_recon);
+        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, NULL, cliopt.recon ? &pic_recon : NULL);
         int recon = iNumRecon;
         outFrameCount += iNumRecon;
         while (iNumRecon && cliopt.recon)
