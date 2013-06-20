@@ -329,7 +329,10 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->useFastDecisionForMerge, "fdm");
     TOOLOPT(param->bUseCbfFastMode, "cfm");
     TOOLOPT(param->useEarlySkipDetection, "esd");
-    TOOLOPT(param->enableRDO, "rdo");
+    if(param->enableRDO)
+        fprintf(stderr, "rdo ");
+    else
+        fprintf(stderr, "no-rdo ");
     TOOLOPT(param->useRDOQ, "rdoq");
     if (param->useTransformSkip)
     {
