@@ -48,8 +48,8 @@ public:
     // return bit cost of motion vector difference, without lambda
     inline uint16_t bitcost(const MV& mv) const
     {
-        return s_bitsizes[(abs(mv.x - m_mvp.x) << 1) + !!(mv.x < m_mvp.x)] +
-               s_bitsizes[(abs(mv.y - m_mvp.y) << 1) + !!(mv.y < m_mvp.y)];
+        return (uint16_t)(s_bitsizes[(abs(mv.x - m_mvp.x) << 1) + !!(mv.x < m_mvp.x)] +
+                          s_bitsizes[(abs(mv.y - m_mvp.y) << 1) + !!(mv.y < m_mvp.y)] + 0.5f);
     }
 
     static void destroy();
@@ -72,7 +72,7 @@ private:
 
     static const int BC_MAX_QP = 82;
 
-    static uint16_t *s_bitsizes;
+    static float *s_bitsizes;
 
     static uint16_t *s_costs[BC_MAX_QP];
 

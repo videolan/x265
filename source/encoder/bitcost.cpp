@@ -45,26 +45,13 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
             CalculateLogs();
             s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
-            uint16_t *c = s_costs[qp];
-            const uint16_t max16 = (1 << 16) - 1;
 
-#if X264_APPROACH
             // estimate same cost for negative and positive MVD
             for (int i = 0; i < BC_MAX_MV; i++)
             {
-                c[i] = c[-i] = std::min<uint16_t>(max16, (uint16_t)(logs[i] * lambda + 0.5));
+                s_costs[qp][i]  = 
+                s_costs[qp][-i] = (uint16_t)X265_MIN(s_bitsizes[i] * lambda + 0.5f, (1 << 16) - 1);
             }
-
-#else
-            // penalize negative MVD by one bit
-            c[0] = (uint16_t)lambda;
-            for (int i = 1; i < BC_MAX_MV; i++)
-            {
-                c[i]  = (uint16_t) X265_MIN(max16, s_bitsizes[i << 1] * lambda + 0.5);
-                c[-i] = (uint16_t) X265_MIN(max16, s_bitsizes[(i << 1) + 1] * lambda + 0.5);
-            }
-
-#endif // if X264_APPROACH
         }
     }
 
@@ -77,7 +64,7 @@ void BitCost::setQP(unsigned int qp, double lambda)
 
 uint16_t *BitCost::s_costs[BC_MAX_QP];
 
-uint16_t *BitCost::s_bitsizes;
+float *BitCost::s_bitsizes;
 
 Lock BitCost::s_costCalcLock;
 
@@ -85,33 +72,13 @@ void BitCost::CalculateLogs()
 {
     if (!s_bitsizes)
     {
-        s_bitsizes = new uint16_t[2 * BC_MAX_MV + 1];
-        s_bitsizes[0] = 1;
-#if X264_APPROACH
-        float log2_2 = (float)(2.0 / log(2.0));  // 2 x 1/log(2)
-        for (int i = 1; i <= 2 * BC_MAX_MV; i++)
+        s_bitsizes = new float[BC_MAX_MV + 1];
+        s_bitsizes[0] = 0.718f;
+        float log2_2 = 2.0f / log(2.0f);  // 2 x 1/log(2)
+        for (int i = 1; i <= BC_MAX_MV; i++)
         {
-            s_bitsizes[i] = (uint16_t)(log((float)(i + 1)) * log2_2 + 1.718f);
+            s_bitsizes[i] = log((float)(i + 1)) * log2_2 + 1.718f;
         }
-
-#else
-        s_bitsizes[1] = 1;
-        for (int i = 2; i <= 2 * BC_MAX_MV; i++)
-        {
-            // TODO: should be possible to replace this loop with a log() and
-            //       match the outputs.  Not a priority since this only runs once.
-            int temp = i;
-            uint16_t len = 1;
-            while (1 != temp)
-            {
-                temp >>= 1;
-                len += 2;
-            }
-
-            s_bitsizes[i] = len;
-        }
-
-#endif // if X264_APPROACH
     }
 }
 
