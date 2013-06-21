@@ -376,7 +376,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
            /* Disable recursive analysis for whole CUs temporarily*/
-        if (rpcBestCU != 0 && rpcBestCU->isSkipped(0))
+        if (rpcBestCU->isSkipped(0))
         {
 #if CU_STAT_LOGFILE
             cntSkipCu[uiDepth]++;
