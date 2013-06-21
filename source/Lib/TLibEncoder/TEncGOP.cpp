@@ -1277,6 +1277,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
                 m_pcRateCtrl->getRCGOP()->updateAfterPicture(estimatedBits);
             }
         }
+
         if ((m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled()) &&
             (pcSlice->getSPS()->getVuiParametersPresentFlag()) &&
             ((pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
@@ -1357,14 +1358,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
                     m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, pcSlice->getSPS());
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU
-                        + bBufferingPeriodSEIPresentInAU;                  // Insert PT SEI after APS and BP SEI
-                    AccessUnit::iterator it;
-                    for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
-                    {
+                    // Insert PT SEI after APS and BP SEI
+                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU;
+                    AccessUnit::iterator it = accessUnit.begin();
+                    for (j = 0; j < seiPositionInAu + offsetPosition; j++)
                         it++;
-                    }
-
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
                     bPictureTimingSEIPresentInAU = true;
                 }
@@ -1377,14 +1375,14 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
                     m_seiWriter.writeSEImessage(onalu.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU
-                        + bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU + bNestedBufferingPeriodSEIPresentInAU; // Insert PT SEI after APS and BP SEI
-                    AccessUnit::iterator it;
-                    for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
-                    {
+                    // Insert PT SEI after APS and BP SEI
+                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
+                                          bBufferingPeriodSEIPresentInAU +
+                                          bPictureTimingSEIPresentInAU +
+                                          bNestedBufferingPeriodSEIPresentInAU;
+                    AccessUnit::iterator it = accessUnit.begin();
+                    for (j = 0; j < seiPositionInAu + offsetPosition; j++)
                         it++;
-                    }
-
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
                 }
             }
@@ -1401,30 +1399,27 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
                     tempSEI.m_dpbOutputDuDelayPresentFlag = false;
                     tempSEI.m_picSptDpbOutputDuDelay = picSptDpbOutputDuDelay;
 
-                    AccessUnit::iterator it;
+                    AccessUnit::iterator it = accessUnit.begin();
                     // Insert the first one in the right location, before the first slice
                     if (i == 0)
                     {
                         // Insert before the first slice.
                         m_seiWriter.writeSEImessage(onalu.m_Bitstream, tempSEI, pcSlice->getSPS());
                         writeRBSPTrailingBits(onalu.m_Bitstream);
-
                         UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                        UInt offsetPosition = bActiveParameterSetSEIPresentInAU
-                            + bBufferingPeriodSEIPresentInAU
-                            + bPictureTimingSEIPresentInAU;          // Insert DU info SEI after APS, BP and PT SEI
-                        for (j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
-                        {
+                        // Insert DU info SEI after APS, BP and PT SEI
+                        UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
+                                              bBufferingPeriodSEIPresentInAU +
+                                              bPictureTimingSEIPresentInAU;
+                        for (j = 0; j < seiPositionInAu + offsetPosition; j++)
                             it++;
-                        }
-
                         accessUnit.insert(it, new NALUnitEBSP(onalu));
                     }
                     else
                     {
-                        Int ctr;
+                        it = accessUnit.begin();
                         // For the second decoding unit onwards we know how many NALUs are present
-                        for (ctr = 0, it = accessUnit.begin(); it != accessUnit.end(); it++)
+                        for (Int ctr = 0; it != accessUnit.end(); it++)
                         {
                             if (ctr == accumNalsDU[i - 1])
                             {
