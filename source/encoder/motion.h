@@ -29,8 +29,6 @@
 #include "mv.h"
 #include "bitcost.h"
 
-#define SUBSAMPLE_SAD 1  /* Skip Rows feature for SAD calculation */
-
 namespace x265 {
 // private x265 namespace
 
@@ -39,20 +37,13 @@ class MotionEstimate : public BitCost
 protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
-#if SUBSAMPLE_SAD
-    pixel  fenc_buf[(64 + 32) * FENC_STRIDE + 16];
-    pixel *fenc;
-    pixel *fencSad;
-#else
     pixel  fenc_buf[64 * FENC_STRIDE + 16];
     pixel *fenc;
-#endif
 
     pixel *fencplane;
     intptr_t fencLumaStride;
 
     pixelcmp sad;
-    pixelcmp fullsad;
     pixelcmp satd;
     pixelcmp sa8d;
     pixelcmp_x3 sad_x3;
@@ -81,12 +72,12 @@ public:
         fencLumaStride = luma;
     }
 
-    /* Methods called at CU setup.  bufSAD(), bufSATD, and motionEstimate() all
-     * require setSourcePU() to be called before they may be called. */
-
     void setSourcePU(int offset, int pwidth, int pheight);
 
-    inline int bufSAD(pixel *fref, intptr_t stride)  { return fullsad(fenc, FENC_STRIDE, fref, stride); }
+    /* buf*() and motionEstimate() methods all use cached fenc pixels and thus
+     * require setSourcePU() to be called prior. */
+
+    inline int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
 
     inline int bufSA8D(pixel *fref, intptr_t stride) { return sa8d(fenc, FENC_STRIDE, fref, stride); }
 
