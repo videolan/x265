@@ -4130,12 +4130,11 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* pcCU, TComYuv* pcYuvOrg, 
     uiDistortionBest += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel *)pcYuvOrg->getCrAddr(), (intptr_t)pcYuvOrg->getCStride(), (pixel *)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
     dCostBest = m_pcRdCost->calcRdCost(uiDistortionBest, uiBitsBest);
 
-    if(m_pcEncCfg->getUseRDO())
-    {
-        pcCU->getTotalBits()       = uiBitsBest;
-        pcCU->getTotalDistortion() = uiDistortionBest;
-        pcCU->getTotalCost()       = dCostBest;
-    }
+    
+    pcCU->getTotalBits()       = uiBitsBest;
+    pcCU->getTotalDistortion() = uiDistortionBest;
+    pcCU->getTotalCost()       = dCostBest;
+    
 
     if (pcCU->isSkipped(0))
     {
