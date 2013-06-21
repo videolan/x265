@@ -122,7 +122,7 @@ Void  TEncGOP::create()
 {
 }
 
-Void  TEncGOP::destroy()
+Void TEncGOP::destroy()
 {
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
     Int iSize = Int(m_cListPic.size());
@@ -216,13 +216,11 @@ x265_picture_t *TEncGOP::getReconPictures(UInt POC, UInt count)
 TComPic* TEncGOP::xGetNewPicBuffer()
 {
     TComSlice::sortPicList(m_cListPic);
-    TComPic *pcPic = NULL;
 
-    TComList<TComPic*>::iterator iterPic  = m_cListPic.begin();
-    Int iSize = Int(m_cListPic.size());
-    for (Int i = 0; i < iSize; i++)
+    TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
+    for (size_t i = 0; i < m_cListPic.size(); i++)
     {
-        pcPic = *(iterPic++);
+        TComPic *pcPic = *(iterPic++);
         if (pcPic->getSlice()->isReferenced() == false)
         {
             pcPic->getPicYuvRec()->setBorderExtension(false);
