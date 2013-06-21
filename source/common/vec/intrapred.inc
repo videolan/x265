@@ -4671,15 +4671,12 @@ void xPredIntraAngs(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1,
 {
     int iMode;
 
-    // avoid warning
-    (void)pLeft1;
-    (void)pAbove1;
-
     for( iMode = 2; iMode <= 34; iMode++ )
     {
-        pixel *pLeft = pLeft0;
-        pixel *pAbove = pAbove0;
+        pixel *pLeft = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
+        pixel *pAbove = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
         pixel *pDst = pDst0 + (iMode-2) * (size * size);
+
         xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
 
         // Optimize code don't flip buffer

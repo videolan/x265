@@ -29,6 +29,17 @@
 //#define MAX_CU_SIZE 64
 extern char g_aucConvertToBit[];
 
+unsigned char g_aucIntraFilterType[][35] =
+{
+    //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
+    /*  4x4  */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    /*  8x8  */ { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+    /* 16x16 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 },
+    /* 32x32 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1 },
+    /* 64x64 */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
+
 namespace {
 pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth)
 {
@@ -249,28 +260,15 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
     }
 }
 
-#if 0
-unsigned char g_aucIntraFilterType[][35] = {
-    //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
-    /*  8x8  */ { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-    /* 16x16 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 },
-    /* 32x32 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1 },
-};
-#endif
-
 template<int size>
-void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+void xPredIntraAngs_C(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
     int iMode;
 
-    // avoid warning
-    (void)pLeft1;
-    (void)pAbove1;
-
     for( iMode = 2; iMode <= 34; iMode++ )
     {
-        pixel *pLeft = pLeft0;
-        pixel *pAbove = pAbove0;
+        pixel *pLeft = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
+        pixel *pAbove = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
         pixel *pDst = pDst0 + (iMode-2) * (size * size);
 
         xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
@@ -304,10 +302,10 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.getIPredDC = xPredIntraDC;
     p.getIPredPlanar = xPredIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
-    p.getIPredAngs[0] = xPredIntraAngs4<4>;
-    p.getIPredAngs[1] = xPredIntraAngs4<8>;
-    p.getIPredAngs[2] = xPredIntraAngs4<16>;
-    p.getIPredAngs[3] = xPredIntraAngs4<32>;
-    p.getIPredAngs[4] = xPredIntraAngs4<64>;
+    p.getIPredAngs[0] = xPredIntraAngs_C<4>;
+    p.getIPredAngs[1] = xPredIntraAngs_C<8>;
+    p.getIPredAngs[2] = xPredIntraAngs_C<16>;
+    p.getIPredAngs[3] = xPredIntraAngs_C<32>;
+    p.getIPredAngs[4] = xPredIntraAngs_C<64>;
 }
 }

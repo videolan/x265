@@ -189,15 +189,14 @@ bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t r
 
             pixel * refAbove0 = pixel_buff + j;
             pixel * refLeft0 = refAbove0 + 3 * width;
-            refLeft0[0] = refAbove0[0];
 
-            pixel * refAbove1 = pixel_buff + j + FENC_STRIDE;
+            pixel * refAbove1 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0]
             pixel * refLeft1 = refAbove1 + 3 * width + FENC_STRIDE;
-            refLeft1[0] = refAbove1[0];
+            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];
 
 #if _DEBUG
-            memset(pixel_out_33_Vec, 0xCD, out_size);
-            memset(pixel_out_33_C, 0xCD, out_size);
+            memset(pixel_out_33_Vec, 0xCD, out_size_33);
+            memset(pixel_out_33_C, 0xCD, out_size_33);
 #endif
 
             ref[size-2](pixel_out_33_C,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
