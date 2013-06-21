@@ -349,11 +349,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
         accessUnitsInGOP.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsInGOP.back();
 
-        TComPic*              pcPic = NULL;
-        TComSlice*            pcSlice;
+        TComPic*   pcPic = NULL;
+        TComSlice* pcSlice;
         {
             // Locate input picture with the correct POC (makes no assumption on
-            // input picture ordering)
+            // input picture ordering because list is often re-ordered)
             TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
             while (iterPic != m_cListPic.end())
             {
