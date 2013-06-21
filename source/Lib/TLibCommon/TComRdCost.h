@@ -190,8 +190,6 @@ public:
 
     Double  getSqrtLambda()                               { return m_sqrtLambda; }
 
-    Double  getLambda()                                   { return m_dLambda; }
-
     inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_uiLambdaMotionSSE + 32768) >> 16); }
 
     inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
