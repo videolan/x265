@@ -348,10 +348,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);
             xComputeCostInter(m_InterCU_2NxN[uiDepth], SIZE_2NxN, 2);
         }
-
-        /* Disable recursive analysis for whole CUs temporarily*/
-        bSubBranch = false;
-
+            
         /*Choose best mode; initialise rpcBestCU to 2Nx2N*/
         if (m_InterCU_2Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
         {
@@ -378,6 +375,19 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
 
+           /* Disable recursive analysis for whole CUs temporarily*/
+        if (rpcBestCU != 0 && rpcBestCU->isSkipped(0))
+        {
+#if CU_STAT_LOGFILE
+            cntSkipCu[uiDepth]++;
+#endif
+            bSubBranch = false;
+        }
+        else
+        {
+            bSubBranch = true;
+        }
+
         /* Perform encode residual for the best mode chosen only*/
         m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
     }
@@ -385,19 +395,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     {
         bBoundary = true;
         m_addSADDepth++;
-    }
-
-    if (rpcBestCU != 0 && rpcBestCU->isSkipped(0))
-    {
-#if CU_STAT_LOGFILE
-        cntSkipCu[uiDepth]++;
-#endif
-        bSubBranch = false;
-    }
-    else
-    {
-        bSubBranch = true;
-    }
+    }    
 
 // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
