@@ -149,7 +149,8 @@ int main(int argc, char *argv[])
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
                 continue;
-            if (!harness[h]->testCorrectness(cprim, vecprim))
+            /* Here it should be asmprim and not vecprim. Right? */
+            if (!harness[h]->testCorrectness(cprim, asmprim))
             {
                 fprintf(stderr, "\nx265: ASM primitive has failed. Go and fix that Right Now!\n");
                 return -1;

@@ -30,79 +30,45 @@
 template<typename T>
 inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x)); }
 
+#define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x4] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 4, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 12, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 16, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 24, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 32, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 48, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 64, DATA_TYPE1, DATA_TYPE2 >;  \
 
 #define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    p. FUNC_PREFIX [PARTITION_4x4] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_4x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 4, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_8x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_8x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 8, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_12x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_12x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 12, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_16x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_16x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 16, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_24x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_24x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 24, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_32x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_32x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 32, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_48x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_48x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 48, 64, DATA_TYPE1, DATA_TYPE2 >;  \
-                                                                                                                   \
-    p. FUNC_PREFIX [PARTITION_64x4]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x8]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 8, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_64x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < 64, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(4, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(8, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(12, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(16, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(24, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(32, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(48, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(64, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+
+#define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, WIDTH) \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x4]   = FUNC_PREFIX<WIDTH, 4>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x8]   = FUNC_PREFIX<WIDTH, 8>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x12]   = FUNC_PREFIX<WIDTH, 12>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x16]   = FUNC_PREFIX<WIDTH, 16>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x24]   = FUNC_PREFIX<WIDTH, 24>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x32]   = FUNC_PREFIX<WIDTH, 32>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x48]   = FUNC_PREFIX<WIDTH, 48>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x64]   = FUNC_PREFIX<WIDTH, 64>;
+
+#define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX)\
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 4) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 8) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 12) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 16) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 24) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 32) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 48) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 64) \
 
 namespace {
 // place functions in anonymous namespace (file static)
@@ -518,79 +484,10 @@ namespace x265 {
 /* It should initialize entries for pixel functions defined in this file. */
 void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
-    // sad
-    p.sad[PARTITION_4x4]   = sad<4, 4>;
-    p.sad[PARTITION_4x8]   = sad<4, 8>;
-    p.sad[PARTITION_4x12]  = sad<4, 12>;
-    p.sad[PARTITION_4x16]  = sad<4, 16>;
-    p.sad[PARTITION_4x24]  = sad<4, 24>;
-    p.sad[PARTITION_4x32]  = sad<4, 32>;
-    p.sad[PARTITION_4x48]  = sad<4, 48>;
-    p.sad[PARTITION_4x64]  = sad<4, 64>;
-
-    p.sad[PARTITION_8x4]   = sad<8, 4>;
-    p.sad[PARTITION_8x8]   = sad<8, 8>;
-    p.sad[PARTITION_8x12]  = sad<8, 12>;
-    p.sad[PARTITION_8x16]  = sad<8, 16>;
-    p.sad[PARTITION_8x24]  = sad<8, 24>;
-    p.sad[PARTITION_8x32]  = sad<8, 32>;
-    p.sad[PARTITION_8x48]  = sad<8, 48>;
-    p.sad[PARTITION_8x64]  = sad<8, 64>;
-
-    p.sad[PARTITION_12x4]  = sad<12, 4>;
-    p.sad[PARTITION_12x8]  = sad<12, 8>;
-    p.sad[PARTITION_12x12] = sad<12, 12>;
-    p.sad[PARTITION_12x16] = sad<12, 16>;
-    p.sad[PARTITION_12x24] = sad<12, 24>;
-    p.sad[PARTITION_12x32] = sad<12, 32>;
-    p.sad[PARTITION_12x48] = sad<12, 48>;
-    p.sad[PARTITION_12x64] = sad<12, 64>;
-
-    p.sad[PARTITION_16x4]  = sad<16, 4>;
-    p.sad[PARTITION_16x8]  = sad<16, 8>;
-    p.sad[PARTITION_16x12] = sad<16, 12>;
-    p.sad[PARTITION_16x16] = sad<16, 16>;
-    p.sad[PARTITION_16x24] = sad<16, 24>;
-    p.sad[PARTITION_16x32] = sad<16, 32>;
-    p.sad[PARTITION_16x48] = sad<16, 48>;
-    p.sad[PARTITION_16x64] = sad<16, 64>;
-
-    p.sad[PARTITION_24x4]  = sad<24, 4>;
-    p.sad[PARTITION_24x8]  = sad<24, 8>;
-    p.sad[PARTITION_24x12] = sad<24, 12>;
-    p.sad[PARTITION_24x16] = sad<24, 16>;
-    p.sad[PARTITION_24x24] = sad<24, 24>;
-    p.sad[PARTITION_24x32] = sad<24, 32>;
-    p.sad[PARTITION_24x48] = sad<24, 48>;
-    p.sad[PARTITION_24x64] = sad<24, 64>;
-
-    p.sad[PARTITION_32x4]  = sad<32, 4>;
-    p.sad[PARTITION_32x8]  = sad<32, 8>;
-    p.sad[PARTITION_32x12] = sad<32, 12>;
-    p.sad[PARTITION_32x16] = sad<32, 16>;
-    p.sad[PARTITION_32x24] = sad<32, 24>;
-    p.sad[PARTITION_32x32] = sad<32, 32>;
-    p.sad[PARTITION_32x48] = sad<32, 48>;
-    p.sad[PARTITION_32x64] = sad<32, 64>;
-
-    p.sad[PARTITION_48x4]  = sad<48, 4>;
-    p.sad[PARTITION_48x8]  = sad<48, 8>;
-    p.sad[PARTITION_48x12] = sad<48, 12>;
-    p.sad[PARTITION_48x16] = sad<48, 16>;
-    p.sad[PARTITION_48x24] = sad<48, 24>;
-    p.sad[PARTITION_48x32] = sad<48, 32>;
-    p.sad[PARTITION_48x48] = sad<48, 48>;
-    p.sad[PARTITION_48x64] = sad<48, 64>;
-
-    p.sad[PARTITION_64x4]  = sad<64, 4>;
-    p.sad[PARTITION_64x8]  = sad<64, 8>;
-    p.sad[PARTITION_64x12] = sad<64, 12>;
-    p.sad[PARTITION_64x16] = sad<64, 16>;
-    p.sad[PARTITION_64x24] = sad<64, 24>;
-    p.sad[PARTITION_64x32] = sad<64, 32>;
-    p.sad[PARTITION_64x48] = sad<64, 48>;
-    p.sad[PARTITION_64x64] = sad<64, 64>;
-
+    SET_FUNC_PRIMITIVE_TABLE_C2(sad)
+    SET_FUNC_PRIMITIVE_TABLE_C2(sad_x3)
+    SET_FUNC_PRIMITIVE_TABLE_C2(sad_x4)
+    
     // satd
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_4x8]   = satd4<4, 8>;
@@ -662,153 +559,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_64x24] = satd8<64, 24>;
     p.satd[PARTITION_64x32] = satd8<64, 32>;
     p.satd[PARTITION_64x48] = satd8<64, 48>;
-    p.satd[PARTITION_64x64] = satd8<64, 64>;
-
-    // sad_x3
-    p.sad_x3[PARTITION_4x4]   = sad_x3<4, 4>;
-    p.sad_x3[PARTITION_4x8]   = sad_x3<4, 8>;
-    p.sad_x3[PARTITION_4x12]  = sad_x3<4, 12>;
-    p.sad_x3[PARTITION_4x16]  = sad_x3<4, 16>;
-    p.sad_x3[PARTITION_4x24]  = sad_x3<4, 24>;
-    p.sad_x3[PARTITION_4x32]  = sad_x3<4, 32>;
-    p.sad_x3[PARTITION_4x48]  = sad_x3<4, 48>;
-    p.sad_x3[PARTITION_4x64]  = sad_x3<4, 64>;
-
-    p.sad_x3[PARTITION_8x4]   = sad_x3<8, 4>;
-    p.sad_x3[PARTITION_8x8]   = sad_x3<8, 8>;
-    p.sad_x3[PARTITION_8x12]  = sad_x3<8, 12>;
-    p.sad_x3[PARTITION_8x16]  = sad_x3<8, 16>;
-    p.sad_x3[PARTITION_8x24]  = sad_x3<8, 24>;
-    p.sad_x3[PARTITION_8x32]  = sad_x3<8, 32>;
-    p.sad_x3[PARTITION_8x48]  = sad_x3<8, 48>;
-    p.sad_x3[PARTITION_8x64]  = sad_x3<8, 64>;
-
-    p.sad_x3[PARTITION_12x4]  = sad_x3<12, 4>;
-    p.sad_x3[PARTITION_12x8]  = sad_x3<12, 8>;
-    p.sad_x3[PARTITION_12x12] = sad_x3<12, 12>;
-    p.sad_x3[PARTITION_12x16] = sad_x3<12, 16>;
-    p.sad_x3[PARTITION_12x24] = sad_x3<12, 24>;
-    p.sad_x3[PARTITION_12x32] = sad_x3<12, 32>;
-    p.sad_x3[PARTITION_12x48] = sad_x3<12, 48>;
-    p.sad_x3[PARTITION_12x64] = sad_x3<12, 64>;
-
-    p.sad_x3[PARTITION_16x4]  = sad_x3<16, 4>;
-    p.sad_x3[PARTITION_16x8]  = sad_x3<16, 8>;
-    p.sad_x3[PARTITION_16x12] = sad_x3<16, 12>;
-    p.sad_x3[PARTITION_16x16] = sad_x3<16, 16>;
-    p.sad_x3[PARTITION_16x24] = sad_x3<16, 24>;
-    p.sad_x3[PARTITION_16x32] = sad_x3<16, 32>;
-    p.sad_x3[PARTITION_16x48] = sad_x3<16, 48>;
-    p.sad_x3[PARTITION_16x64] = sad_x3<16, 64>;
-
-    p.sad_x3[PARTITION_24x4]  = sad_x3<24, 4>;
-    p.sad_x3[PARTITION_24x8]  = sad_x3<24, 8>;
-    p.sad_x3[PARTITION_24x12] = sad_x3<24, 12>;
-    p.sad_x3[PARTITION_24x16] = sad_x3<24, 16>;
-    p.sad_x3[PARTITION_24x24] = sad_x3<24, 24>;
-    p.sad_x3[PARTITION_24x32] = sad_x3<24, 32>;
-    p.sad_x3[PARTITION_24x48] = sad_x3<24, 48>;
-    p.sad_x3[PARTITION_24x64] = sad_x3<24, 64>;
-
-    p.sad_x3[PARTITION_32x4]  = sad_x3<32, 4>;
-    p.sad_x3[PARTITION_32x8]  = sad_x3<32, 8>;
-    p.sad_x3[PARTITION_32x12] = sad_x3<32, 12>;
-    p.sad_x3[PARTITION_32x16] = sad_x3<32, 16>;
-    p.sad_x3[PARTITION_32x24] = sad_x3<32, 24>;
-    p.sad_x3[PARTITION_32x32] = sad_x3<32, 32>;
-    p.sad_x3[PARTITION_32x48] = sad_x3<32, 48>;
-    p.sad_x3[PARTITION_32x64] = sad_x3<32, 64>;
-
-    p.sad_x3[PARTITION_48x4]  = sad_x3<48, 4>;
-    p.sad_x3[PARTITION_48x8]  = sad_x3<48, 8>;
-    p.sad_x3[PARTITION_48x12] = sad_x3<48, 12>;
-    p.sad_x3[PARTITION_48x16] = sad_x3<48, 16>;
-    p.sad_x3[PARTITION_48x24] = sad_x3<48, 24>;
-    p.sad_x3[PARTITION_48x32] = sad_x3<48, 32>;
-    p.sad_x3[PARTITION_48x48] = sad_x3<48, 48>;
-    p.sad_x3[PARTITION_48x64] = sad_x3<48, 64>;
-
-    p.sad_x3[PARTITION_64x4]  = sad_x3<64, 4>;
-    p.sad_x3[PARTITION_64x8]  = sad_x3<64, 8>;
-    p.sad_x3[PARTITION_64x12] = sad_x3<64, 12>;
-    p.sad_x3[PARTITION_64x16] = sad_x3<64, 16>;
-    p.sad_x3[PARTITION_64x24] = sad_x3<64, 24>;
-    p.sad_x3[PARTITION_64x32] = sad_x3<64, 32>;
-    p.sad_x3[PARTITION_64x48] = sad_x3<64, 48>;
-    p.sad_x3[PARTITION_64x64] = sad_x3<64, 64>;
-
-    // sad_x4
-    p.sad_x4[PARTITION_4x4]   = sad_x4<4, 4>;
-    p.sad_x4[PARTITION_4x8]   = sad_x4<4, 8>;
-    p.sad_x4[PARTITION_4x12]  = sad_x4<4, 12>;
-    p.sad_x4[PARTITION_4x16]  = sad_x4<4, 16>;
-    p.sad_x4[PARTITION_4x24]  = sad_x4<4, 24>;
-    p.sad_x4[PARTITION_4x32]  = sad_x4<4, 32>;
-    p.sad_x4[PARTITION_4x48]  = sad_x4<4, 48>;
-    p.sad_x4[PARTITION_4x64]  = sad_x4<4, 64>;
-
-    p.sad_x4[PARTITION_8x4]   = sad_x4<8, 4>;
-    p.sad_x4[PARTITION_8x8]   = sad_x4<8, 8>;
-    p.sad_x4[PARTITION_8x12]  = sad_x4<8, 12>;
-    p.sad_x4[PARTITION_8x16]  = sad_x4<8, 16>;
-    p.sad_x4[PARTITION_8x24]  = sad_x4<8, 24>;
-    p.sad_x4[PARTITION_8x32]  = sad_x4<8, 32>;
-    p.sad_x4[PARTITION_8x48]  = sad_x4<8, 48>;
-    p.sad_x4[PARTITION_8x64]  = sad_x4<8, 64>;
-
-    p.sad_x4[PARTITION_12x4]  = sad_x4<12, 4>;
-    p.sad_x4[PARTITION_12x8]  = sad_x4<12, 8>;
-    p.sad_x4[PARTITION_12x12] = sad_x4<12, 12>;
-    p.sad_x4[PARTITION_12x16] = sad_x4<12, 16>;
-    p.sad_x4[PARTITION_12x24] = sad_x4<12, 24>;
-    p.sad_x4[PARTITION_12x32] = sad_x4<12, 32>;
-    p.sad_x4[PARTITION_12x48] = sad_x4<12, 48>;
-    p.sad_x4[PARTITION_12x64] = sad_x4<12, 64>;
-
-    p.sad_x4[PARTITION_16x4]  = sad_x4<16, 4>;
-    p.sad_x4[PARTITION_16x8]  = sad_x4<16, 8>;
-    p.sad_x4[PARTITION_16x12] = sad_x4<16, 12>;
-    p.sad_x4[PARTITION_16x16] = sad_x4<16, 16>;
-    p.sad_x4[PARTITION_16x24] = sad_x4<16, 24>;
-    p.sad_x4[PARTITION_16x32] = sad_x4<16, 32>;
-    p.sad_x4[PARTITION_16x48] = sad_x4<16, 48>;
-    p.sad_x4[PARTITION_16x64] = sad_x4<16, 64>;
-
-    p.sad_x4[PARTITION_24x4]  = sad_x4<24, 4>;
-    p.sad_x4[PARTITION_24x8]  = sad_x4<24, 8>;
-    p.sad_x4[PARTITION_24x12] = sad_x4<24, 12>;
-    p.sad_x4[PARTITION_24x16] = sad_x4<24, 16>;
-    p.sad_x4[PARTITION_24x24] = sad_x4<24, 24>;
-    p.sad_x4[PARTITION_24x32] = sad_x4<24, 32>;
-    p.sad_x4[PARTITION_24x48] = sad_x4<24, 48>;
-    p.sad_x4[PARTITION_24x64] = sad_x4<24, 64>;
-
-    p.sad_x4[PARTITION_32x4]  = sad_x4<32, 4>;
-    p.sad_x4[PARTITION_32x8]  = sad_x4<32, 8>;
-    p.sad_x4[PARTITION_32x12] = sad_x4<32, 12>;
-    p.sad_x4[PARTITION_32x16] = sad_x4<32, 16>;
-    p.sad_x4[PARTITION_32x24] = sad_x4<32, 24>;
-    p.sad_x4[PARTITION_32x32] = sad_x4<32, 32>;
-    p.sad_x4[PARTITION_32x48] = sad_x4<32, 48>;
-    p.sad_x4[PARTITION_32x64] = sad_x4<32, 64>;
-
-    p.sad_x4[PARTITION_48x4]  = sad_x4<48, 4>;
-    p.sad_x4[PARTITION_48x8]  = sad_x4<48, 8>;
-    p.sad_x4[PARTITION_48x12] = sad_x4<48, 12>;
-    p.sad_x4[PARTITION_48x16] = sad_x4<48, 16>;
-    p.sad_x4[PARTITION_48x24] = sad_x4<48, 24>;
-    p.sad_x4[PARTITION_48x32] = sad_x4<48, 32>;
-    p.sad_x4[PARTITION_48x48] = sad_x4<48, 48>;
-    p.sad_x4[PARTITION_48x64] = sad_x4<48, 64>;
-
-    p.sad_x4[PARTITION_64x4]  = sad_x4<64, 4>;
-    p.sad_x4[PARTITION_64x8]  = sad_x4<64, 8>;
-    p.sad_x4[PARTITION_64x12] = sad_x4<64, 12>;
-    p.sad_x4[PARTITION_64x16] = sad_x4<64, 16>;
-    p.sad_x4[PARTITION_64x24] = sad_x4<64, 24>;
-    p.sad_x4[PARTITION_64x32] = sad_x4<64, 32>;
-    p.sad_x4[PARTITION_64x48] = sad_x4<64, 48>;
-    p.sad_x4[PARTITION_64x64] = sad_x4<64, 64>;
+    p.satd[PARTITION_64x64] = satd8<64, 64>;   
 
     //sse
 #if HIGH_BIT_DEPTH
