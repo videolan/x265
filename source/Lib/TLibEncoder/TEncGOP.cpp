@@ -230,30 +230,6 @@ TComPic* TEncGOP::xGetNewPicBuffer()
     return NULL;
 }
 
-SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
-{
-    SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
-
-    seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId();
-    seiActiveParameterSets->m_fullRandomAccessFlag = false;
-    seiActiveParameterSets->m_noParamSetUpdateFlag = false;
-    seiActiveParameterSets->numSpsIdsMinus1 = 0;
-    seiActiveParameterSets->activeSeqParamSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-    seiActiveParameterSets->activeSeqParamSetId[0] = sps->getSPSId();
-    return seiActiveParameterSets;
-}
-
-SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
-{
-    SEIDisplayOrientation *seiDisplayOrientation = new SEIDisplayOrientation();
-
-    seiDisplayOrientation->cancelFlag = false;
-    seiDisplayOrientation->horFlip = false;
-    seiDisplayOrientation->verFlip = false;
-    seiDisplayOrientation->anticlockwiseRotation = m_pcCfg->getDisplayOrientationSEIAngle();
-    return seiDisplayOrientation;
-}
-
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -1496,6 +1472,30 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
     }
 
     assert(iNumPicCoded == iNumPicRcvd);
+}
+
+SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets(TComSPS *sps)
+{
+    SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
+
+    seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId();
+    seiActiveParameterSets->m_fullRandomAccessFlag = false;
+    seiActiveParameterSets->m_noParamSetUpdateFlag = false;
+    seiActiveParameterSets->numSpsIdsMinus1 = 0;
+    seiActiveParameterSets->activeSeqParamSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
+    seiActiveParameterSets->activeSeqParamSetId[0] = sps->getSPSId();
+    return seiActiveParameterSets;
+}
+
+SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
+{
+    SEIDisplayOrientation *seiDisplayOrientation = new SEIDisplayOrientation();
+
+    seiDisplayOrientation->cancelFlag = false;
+    seiDisplayOrientation->horFlip = false;
+    seiDisplayOrientation->verFlip = false;
+    seiDisplayOrientation->anticlockwiseRotation = m_pcCfg->getDisplayOrientationSEIAngle();
+    return seiDisplayOrientation;
 }
 
 // This is a function that
