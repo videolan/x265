@@ -180,9 +180,9 @@ struct CLIOptions
             return;
         int64_t i_elapsed = i_time - i_start;
         double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
-        double bitrate = (double)totalBytes * 8 / ((double)1000 * param->iFrameRate);
         if (framesToBeEncoded && i_frame)
         {
+            float bitrate = 0.008f * totalBytes / ((float)i_frame / param->iFrameRate);
             int eta = (int)(i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
             sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
                     100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
@@ -190,6 +190,7 @@ struct CLIOptions
         }
         else
         {
+            double bitrate = (double)totalBytes * 8 / ((double)1000 * param->iFrameRate);
             sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate);
         }
         fprintf(stderr, "%s  \r", buf + 5);

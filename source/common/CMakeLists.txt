@@ -16,7 +16,7 @@ include_directories(../VectorClass)
 
 file(GLOB LIBCOMMON_HDR ../Lib/TLibCommon/*.h)
 file(GLOB LIBCOMMON_SRC ../Lib/TLibCommon/*.cpp)
-source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
+source_group(TLibCommon FILES ${LIBCOMMON_SRC})
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare")
