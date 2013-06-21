@@ -83,17 +83,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize, UI
 
     rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
     rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-#if FAST_MODE_DECISION
-    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-    UInt SATD = primitives.satd[partEnum]((pixel*)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
-                                          (pixel*)m_ppcPredYuvMode[index][uiDepth]->getLumaAddr(),  m_ppcPredYuvMode[index][uiDepth]->getStride());
-    x265_emms();
-    rpcTempCU->getTotalDistortion() = SATD;
-#endif
     rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
-
-    //xCheckDQP(rpcTempCU);
-    //xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
 }
 
 /** check RD costs for a CU block encoded with merge
@@ -160,16 +150,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
 
                     // do MC
                     m_pcPredSearch->motionCompensation(rpcTempCU, m_ppcPredYuvMode[4][uhDepth]);
-                    // estimate residual and encode everything
-#if 0
-                    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU,
-                                                              m_ppcOrigYuv[uhDepth],
-                                                              m_ppcPredYuvTemp[uhDepth],
-                                                              m_ppcResiYuvTemp[uhDepth],
-                                                              m_ppcResiYuvBest[uhDepth],
-                                                              m_ppcRecoYuvTemp[uhDepth],
-                                                              (uiNoResidual ? true : false));
-#endif
+
                     /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
                     
                     me_merge.setSourcePU(0,rpcTempCU->getWidth(0),rpcTempCU->getHeight(0));
