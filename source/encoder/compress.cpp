@@ -118,6 +118,10 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth);
     rpcTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
 
+    x265::MotionEstimate me_merge;
+    me_merge.setSourcePlane((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(),  
+                                        m_ppcOrigYuv[uhDepth]->getStride());
+
     Int mergeCandBuffer[MRG_MAX_NUM_CANDS];
     for (UInt ui = 0; ui < numValidMergeCand; ++ui)
     {
@@ -167,13 +171,13 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                                                               (uiNoResidual ? true : false));
 #endif
                     /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
-
-                    UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-                    UInt SATD = primitives.satd[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                                          (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+                    
+                    me_merge.setSourcePU(0,rpcTempCU->getWidth(0),rpcTempCU->getHeight(0));
+                    rpcTempCU->getTotalDistortion() = me_merge.bufSATD((pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), 
+                                                m_ppcPredYuvTemp[uhDepth]->getStride());
+                    rpcTempCU->getTotalCost() = rpcTempCU->getTotalDistortion(); 
                     x265_emms();
-                    rpcTempCU->getTotalDistortion() = SATD;
-                    rpcTempCU->getTotalCost() = SATD;
+                             
 
                     if (uiNoResidual == 0)
                     {
