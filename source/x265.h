@@ -142,10 +142,11 @@ typedef enum
     X265_UMH_SEARCH,
     X265_STAR_SEARCH,
     X265_ORIG_SEARCH, // original HM functions (deprecated)
+    X265_FULL_SEARCH
 }
 X265_ME_METHODS;
 
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", "full", 0 };
 
 /* Log level */
 #define X265_LOG_NONE          (-1)

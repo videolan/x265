@@ -2975,7 +2975,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                         }
                         else
                         {
-                            if (m_iSearchMethod != X265_ORIG_SEARCH)
+                            if (m_iSearchMethod < X265_ORIG_SEARCH)
                             {
                                 CYCLE_COUNTER_START(ME);
                                 int merange = m_aaiAdaptSR[eRefPicList][iRefIdxTemp];
@@ -2998,7 +2998,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                     }
                     else
                     {
-                        if (m_iSearchMethod != X265_ORIG_SEARCH)
+                        if (m_iSearchMethod < X265_ORIG_SEARCH)
                         {
                             CYCLE_COUNTER_START(ME);
                             int merange = m_aaiAdaptSR[eRefPicList][iRefIdxTemp];
@@ -3660,7 +3660,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     // Do integer search
     m_pcRdCost->setCostScale(2);
-    if (bBi)
+    if (bBi || m_iSearchMethod == X265_FULL_SEARCH )
     {
         xPatternSearch(pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost);
     }

@@ -34,7 +34,7 @@ OPT("tu-intra-depth",  param->uiQuadtreeTUMaxDepthIntra, required_argument, 0, "
 OPT("tu-inter-depth",  param->uiQuadtreeTUMaxDepthInter, required_argument, 0, "Max TU recursive depth for inter CUs")
 
 HELP("Temporal / motion search options:")
-OPT("me",              param->searchMethod,              required_argument, 0, "Motion search method 0:dia 1:hex 2:umh 3:star(default) 4:hm-orig")
+OPT("me",              param->searchMethod,              required_argument, 0, "Motion search method 0:dia 1:hex 2:umh 3:star(default) 4:hm-orig 5:full")
 OPT("merange",         param->iSearchRange,              required_argument, 0, "Motion search range (default: 64)")
 OPT("bpredrange",      param->bipredSearchRange,         required_argument, 0, "Motion search range for bipred refinement (default:4)")
 OPT("rect",            param->enableRectInter,                 no_argument, 0, "Enable rectangular motion partitions Nx2N and 2NxN")
