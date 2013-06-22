@@ -2909,6 +2909,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         UInt          bitsValidList1 = MAX_UINT;
         UInt          costValidList1 = MAX_UINT;
 
+        //PPAScopeEvent(TEncSearch_xMotionEstimation + pcCU->getDepth(iPartIdx));
         xGetBlkBits(ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
 
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
@@ -3617,7 +3618,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     int cost_shift = 0;
 
     pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight);
-    //PPAScopeEvent(TEncSearch_xMotionEstimation + pcCU->getDepth(iPartIdx));
 
     if (bBi)
     {
@@ -3715,7 +3715,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     Int   iBestY = 0;
 
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
-
+    m_cDistParam.bitDepth = g_bitDepthY;
     piRefY += (iSrchRngVerTop * iRefStride);
     for (Int y = iSrchRngVerTop; y <= iSrchRngVerBottom; y++)
     {
