@@ -912,24 +912,18 @@ void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStrid
             sumaH.store(dstA + col + 8);                             // Store vector
             valL = (sumaL + IF_INTERNAL_OFFS + 32) >> 6;
             valH = (sumaH + IF_INTERNAL_OFFS + 32) >> 6;
-            valL = min(max(valL, 0), 255);
-            valH = min(max(valH, 0), 255);
             compress_unsafe(valL, valH).store(pDstA + row * pDstStride + col);
 
             sumbL.store(dstB + col);
             sumbH.store(dstB + col + 8);
             valL = (sumbL + IF_INTERNAL_OFFS + 32) >> 6;
             valH = (sumbH + IF_INTERNAL_OFFS + 32) >> 6;
-            valL = min(max(valL, 0), 255);
-            valH = min(max(valH, 0), 255);
             compress_unsafe(valL, valH).store(pDstB + row * pDstStride + col);
 
             sumcL.store(dstC + col);
             sumcH.store(dstC + col + 8);
             valL = (sumcL + IF_INTERNAL_OFFS + 32) >> 6;
             valH = (sumcH + IF_INTERNAL_OFFS + 32) >> 6;
-            valL = min(max(valL, 0), 255);
-            valH = min(max(valH, 0), 255);
             compress_unsafe(valL, valH).store(pDstC + row * pDstStride + col);
         }
 
