@@ -32,7 +32,7 @@
 
 #define FENC_STRIDE 64
 
-// from cpu-a.asm, if ASM primitives are compiled.  Else primitives.cpp
+// from cpu-a.asm, if ASM primitives are compiled, else primitives.cpp
 extern "C" void x265_cpu_emms(void);
 
 #if _MSC_VER && _WIN64
@@ -101,7 +101,7 @@ enum SquareBlocks   // Routines can be indexed using log2n(width)
     BLOCK_16x16,
     BLOCK_32x32,
     BLOCK_64x64,
-    NUM_BLOCKS
+    NUM_SQUARE_BLOCKS
 };
 
 enum FilterConf
@@ -128,7 +128,7 @@ enum FilterConf
     NUM_FILTER
 };
 
-// NOTE: Not all DCT functions support Dest Stride
+// NOTE: Not all DCT functions support dest stride
 enum Dcts
 {
     DST_4x4,
@@ -225,15 +225,15 @@ typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, s
 struct EncoderPrimitives
 {
     /* All pixel comparison functions take the same arguments */
-    pixelcmp sad[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp_x3 sad_x3[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp_x4 sad_x4[NUM_PARTITIONS];   // Sum of Differences for each size
-    pixelcmp sse_pp[NUM_PARTITIONS];   // SSE (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss sse_ss[NUM_PARTITIONS]; // SSE (short, short) fenc alignment not assumed
-    pixelcmp_sp sse_sp[NUM_PARTITIONS]; // SSE (short, pixel) fenc alignment not assumed
-    pixelcmp satd[NUM_PARTITIONS];  // Sum of Transformed differences (HADAMARD)
+    pixelcmp sad[NUM_PARTITIONS];        // Sum of Differences for each size
+    pixelcmp_x3 sad_x3[NUM_PARTITIONS];  // Sum of Differences 3x for each size
+    pixelcmp_x4 sad_x4[NUM_PARTITIONS];  // Sum of Differences 4x for each size
+    pixelcmp sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss sse_ss[NUM_PARTITIONS];  // Sum of Square Error (short, short) fenc alignment not assumed
+    pixelcmp_sp sse_sp[NUM_PARTITIONS];  // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixelcmp satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
-    pixelcmp sa8d[NUM_BLOCKS];           // sa8d primitives for square intra blocks
+    pixelcmp sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
     IPFilter filter[NUM_FILTER];
     IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
     IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];
@@ -248,7 +248,7 @@ struct EncoderPrimitives
     getIPredDC_t getIPredDC;
     getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
-    getIPredAngs_t getIPredAngs[5];
+    getIPredAngs_t getIPredAngs[NUM_SQUARE_BLOCKS];
     quant deQuant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
@@ -257,9 +257,9 @@ struct EncoderPrimitives
     cvt16to16_shl_t cvt16to16_shl;
     cvt32to16_t cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
-    calcresidual_t calcresidual[NUM_BLOCKS];
-    calcrecon_t calcrecon[NUM_BLOCKS];
-    transpose_t transpose[5];
+    calcresidual_t calcresidual[NUM_SQUARE_BLOCKS];
+    calcrecon_t calcrecon[NUM_SQUARE_BLOCKS];
+    transpose_t transpose[NUM_SQUARE_BLOCKS];
     filterVmulti_t filterVmulti;
     filterHmulti_t filterHmulti;
 };

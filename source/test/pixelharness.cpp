@@ -401,7 +401,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_BLOCKS; i++)
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
         if (opt.calcresidual[i])
         {
@@ -524,7 +524,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    for (int i = 0; i < NUM_BLOCKS; i++)
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
         if (opt.sa8d[i])
         {
