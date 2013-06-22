@@ -4163,12 +4163,12 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
     UInt SplitFlag = ((pcCU->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1) && pcCU->getPredictionMode(uiAbsPartIdx) == MODE_INTER && (pcCU->getPartitionSize(uiAbsPartIdx) != SIZE_2Nx2N));
     Bool bCheckFull;
-    if (SplitFlag && uiDepth == pcCU->getDepth(uiAbsPartIdx) && (uiLog2TrSize >  pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx)))
+    if (SplitFlag && uiDepth == pcCU->getDepth(uiAbsPartIdx) && (uiLog2TrSize > pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx)))
         bCheckFull = false;
     else
         bCheckFull =  (uiLog2TrSize <= pcCU->getSlice()->getSPS()->getQuadtreeTULog2MaxSize());
 
-    const Bool bCheckSplit  = (uiLog2TrSize >  pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
+    const Bool bCheckSplit  = (uiLog2TrSize > pcCU->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
 
     assert(bCheckFull || bCheckSplit);
 
