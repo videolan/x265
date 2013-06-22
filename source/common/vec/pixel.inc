@@ -286,6 +286,87 @@ void CDECL transpose8(pixel* pDst, pixel* pSrc, intptr_t nStride)
     _mm_store_si128((__m128i*)&pDst[6*8], T03);
 }
 
+ALWAYSINLINE void CDECL transpose16_dummy(pixel* pDst, intptr_t nStrideD, pixel* pSrc, intptr_t nStrideS)
+{
+    __m128i T00, T01, T02, T03, T04, T05, T06, T07;
+
+    T00 = _mm_loadl_epi64((__m128i*)&pSrc[ 0 * nStrideS]);
+    T01 = _mm_loadl_epi64((__m128i*)&pSrc[ 1 * nStrideS]);
+    T02 = _mm_loadl_epi64((__m128i*)&pSrc[ 2 * nStrideS]);
+    T03 = _mm_loadl_epi64((__m128i*)&pSrc[ 3 * nStrideS]);
+    T04 = _mm_loadl_epi64((__m128i*)&pSrc[ 4 * nStrideS]);
+    T05 = _mm_loadl_epi64((__m128i*)&pSrc[ 5 * nStrideS]);
+    T06 = _mm_loadl_epi64((__m128i*)&pSrc[ 6 * nStrideS]);
+    T07 = _mm_loadl_epi64((__m128i*)&pSrc[ 7 * nStrideS]);
+    TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
+    _mm_storel_epi64((__m128i*)&pDst[ 8 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 9 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[10 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[11 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[12 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[13 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[14 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[15 * nStrideD + 8], _mm_castsi128_ps(T00));
+
+    T00 = _mm_loadl_epi64((__m128i*)&pSrc[ 0 * nStrideS + 8]);
+    T01 = _mm_loadl_epi64((__m128i*)&pSrc[ 1 * nStrideS + 8]);
+    T02 = _mm_loadl_epi64((__m128i*)&pSrc[ 2 * nStrideS + 8]);
+    T03 = _mm_loadl_epi64((__m128i*)&pSrc[ 3 * nStrideS + 8]);
+    T04 = _mm_loadl_epi64((__m128i*)&pSrc[ 4 * nStrideS + 8]);
+    T05 = _mm_loadl_epi64((__m128i*)&pSrc[ 5 * nStrideS + 8]);
+    T06 = _mm_loadl_epi64((__m128i*)&pSrc[ 6 * nStrideS + 8]);
+    T07 = _mm_loadl_epi64((__m128i*)&pSrc[ 7 * nStrideS + 8]);
+    TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
+    _mm_storel_epi64((__m128i*)&pDst[ 8 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 9 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[10 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[11 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[12 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[13 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[14 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[15 * nStrideD], _mm_castsi128_ps(T00));
+
+    T00 = _mm_loadl_epi64((__m128i*)&pSrc[ 8 * nStrideS + 8]);
+    T01 = _mm_loadl_epi64((__m128i*)&pSrc[ 9 * nStrideS + 8]);
+    T02 = _mm_loadl_epi64((__m128i*)&pSrc[10 * nStrideS + 8]);
+    T03 = _mm_loadl_epi64((__m128i*)&pSrc[11 * nStrideS + 8]);
+    T04 = _mm_loadl_epi64((__m128i*)&pSrc[12 * nStrideS + 8]);
+    T05 = _mm_loadl_epi64((__m128i*)&pSrc[13 * nStrideS + 8]);
+    T06 = _mm_loadl_epi64((__m128i*)&pSrc[14 * nStrideS + 8]);
+    T07 = _mm_loadl_epi64((__m128i*)&pSrc[15 * nStrideS + 8]);
+    TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
+    _mm_storel_epi64((__m128i*)&pDst[ 0 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 1 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 2 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 3 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 4 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 5 * nStrideD], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 6 * nStrideD], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 7 * nStrideD], _mm_castsi128_ps(T00));
+
+    T00 = _mm_loadl_epi64((__m128i*)&pSrc[ 8 * nStrideS]);
+    T01 = _mm_loadl_epi64((__m128i*)&pSrc[ 9 * nStrideS]);
+    T02 = _mm_loadl_epi64((__m128i*)&pSrc[10 * nStrideS]);
+    T03 = _mm_loadl_epi64((__m128i*)&pSrc[11 * nStrideS]);
+    T04 = _mm_loadl_epi64((__m128i*)&pSrc[12 * nStrideS]);
+    T05 = _mm_loadl_epi64((__m128i*)&pSrc[13 * nStrideS]);
+    T06 = _mm_loadl_epi64((__m128i*)&pSrc[14 * nStrideS]);
+    T07 = _mm_loadl_epi64((__m128i*)&pSrc[15 * nStrideS]);
+    TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
+    _mm_storel_epi64((__m128i*)&pDst[ 0 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 1 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 2 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 3 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 4 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 5 * nStrideD + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDst[ 6 * nStrideD + 8], T00);
+    _mm_storeh_pi(     (__m64*)&pDst[ 7 * nStrideD + 8], _mm_castsi128_ps(T00));
+}
+
+void CDECL transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
+{
+    transpose16_dummy(pDst, 16, pSrc, nStrideS);
+}
 #endif !HIGH_BIT_DEPTH
 
 }  // end anonymous namespace
@@ -335,7 +416,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 #if !HIGh_BIT_DEPTH
     p.transpose[0] = transpose4;
     p.transpose[1] = transpose8;
-    p.transpose[2] = transpose<16>;
+    p.transpose[2] = transpose16;
     p.transpose[3] = transpose<32>;
     p.transpose[4] = transpose<64>;
 #endif
