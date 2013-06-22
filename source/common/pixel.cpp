@@ -4,6 +4,7 @@
  * Authors: Steve Borho <steve@borho.org>
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -481,6 +482,18 @@ void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQ
     }
 }
 
+template <int blockSize>
+void CDECL transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
+{
+    for (int k = 0; k < blockSize; k++)
+    {
+        for (int l = 0; l < blockSize; l++)
+        {
+            pDst[k * blockSize + l] = pSrc[l * nStride + k];
+        }
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -674,5 +687,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.calcrecon[BLOCK_16x16] = calcRecons<16>;
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
     p.calcrecon[BLOCK_64x64] = calcRecons<64>;
+
+    p.transpose[0] = transpose<4>;
+    p.transpose[1] = transpose<8>;
+    p.transpose[2] = transpose<16>;
+    p.transpose[3] = transpose<32>;
+    p.transpose[4] = transpose<64>;
 }
 }

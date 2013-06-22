@@ -4,6 +4,7 @@
  * Authors: Steve Borho <steve@borho.org>
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -214,7 +215,39 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
         piDst += 4;
     }
 }
+
+template <int blockSize>
+void CDECL transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
+{
+    for (int k = 0; k < blockSize; k++)
+    {
+        for (int l = 0; l < blockSize; l++)
+        {
+            pDst[k * blockSize + l] = pSrc[l * nStride + k];
+        }
+    }
 }
+
+#if !HIGH_BIT_DEPTH
+void CDECL transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
+{
+    __m128i T00, T01, T02, T03;
+
+    T00 = _mm_cvtsi32_si128(*(int*)&pSrc[0*nStride]);   // [03 02 01 00]
+    T01 = _mm_cvtsi32_si128(*(int*)&pSrc[1*nStride]);   // [13 12 11 10]
+    T02 = _mm_cvtsi32_si128(*(int*)&pSrc[2*nStride]);   // [23 22 21 20]
+    T03 = _mm_cvtsi32_si128(*(int*)&pSrc[3*nStride]);   // [33 32 31 30]
+
+    T00 = _mm_unpacklo_epi8(T00, T01);
+    T01 = _mm_unpacklo_epi8(T02, T03);
+
+    T00 = _mm_unpacklo_epi16(T00, T01);
+
+    _mm_store_si128((__m128i*)pDst, T00);
+}
+#endif
+
+}  // end anonymous namespace
 
 #include "utils.h"
 #include "sse.inc"
@@ -257,5 +290,13 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
     p.calcrecon[BLOCK_64x64] = calcRecons<64>;
 #endif /* if HIGH_BIT_DEPTH */
+
+#if !HIGh_BIT_DEPTH
+    p.transpose[0] = transpose4;
+    p.transpose[1] = transpose<8>;
+    p.transpose[2] = transpose<16>;
+    p.transpose[3] = transpose<32>;
+    p.transpose[4] = transpose<64>;
+#endif
 }
 }

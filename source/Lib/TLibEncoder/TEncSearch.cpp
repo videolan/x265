@@ -2217,14 +2217,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
 
                 // Transpose NxN
-                // TODO: Optimize by SSE2
-                for (int k = 0; k < uiWidth; k++)
-                {
-                    for (int l = 0; l < uiWidth; l++)
-                    {
-                        buf1[k * uiWidth + l] = piOrg[l * uiStride + k];
-                    }
-                }
+                x265::primitives.transpose[nLog2SizeMinus2](buf1, piOrg, uiStride);
 
                 Pel *pAbove0 = refAbove    + uiWidth - 1;
                 Pel *pAbove1 = refAboveFlt + uiWidth - 1;

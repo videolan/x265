@@ -215,6 +215,7 @@ typedef void (CDECL * dct_t)(short *pSrc, int *pDst, intptr_t stride);
 typedef void (CDECL * idct_t)(int *pSrc, short *pDst, intptr_t stride);
 typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
 typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
+typedef void (CDECL * transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
 typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height,int marginX, int marginY);
 typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
 
@@ -258,6 +259,7 @@ struct EncoderPrimitives
     cvt32to16_shr_t cvt32to16_shr;
     calcresidual_t calcresidual[NUM_BLOCKS];
     calcrecon_t calcrecon[NUM_BLOCKS];
+    transpose_t transpose[5];
     filterVmulti_t filterVmulti;
     filterHmulti_t filterHmulti;
 };
