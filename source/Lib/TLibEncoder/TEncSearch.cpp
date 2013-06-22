@@ -3679,7 +3679,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     rcMv += (cMvHalf <<= 1);
     rcMv += cMvQter;
 
-    UInt uiMvBits = m_bc.mvcost(rcMv);
+    UInt uiMvBits = m_bc.bitcost(rcMv);
 
     ruiBits += uiMvBits;
     ruiCost = ((ruiCost - m_pcRdCost->getCost(uiMvBits)) >> cost_shift) + m_pcRdCost->getCost(ruiBits);
