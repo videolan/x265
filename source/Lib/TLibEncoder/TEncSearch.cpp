@@ -301,7 +301,6 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
         // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
         m_cDistParam.iSubShift = 1;
     }
-    m_cDistParam.uiComp = 0;
 
     // distortion
     m_cDistParam.bitDepth = g_bitDepthY;
@@ -653,7 +652,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
         cMvTest = pcMvRefine[i];
         cMvTest += rcMvFrac;
 
-        m_cDistParam.uiComp = 0;
         m_cDistParam.pCur = piRefPos;
         m_cDistParam.bitDepth = g_bitDepthY;
         uiDist = m_cDistParam.DistFunc(&m_cDistParam);
@@ -3760,7 +3758,6 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
             piRefSrch = piRefY + x;
             m_cDistParam.pCur = piRefSrch;
 
-            m_cDistParam.uiComp = 0;
             m_cDistParam.bitDepth = g_bitDepthY;
             uiSad = m_cDistParam.DistFunc(&m_cDistParam);
             uiSad += m_bc.mvcost(MV(x, y) << 2);

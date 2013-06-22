@@ -75,10 +75,7 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
     Int  iStrideCur = pcDtParam->iStrideCur;
     Int  iStrideOrg = pcDtParam->iStrideOrg;
 
-    UInt            uiComp    = pcDtParam->uiComp;
-
-    assert(uiComp < 3);
-    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[uiComp]);
+    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
     Int   w0      = wpCur->w,
           offset  = wpCur->offset,
           shift   = wpCur->shift,
@@ -98,8 +95,6 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
-    pcDtParam->uiComp = 255; // reset for DEBUG (assert test)
 
     return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
 }
@@ -124,9 +119,7 @@ UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
 
     assert(pcDtParam->iSubShift == 0);
 
-    UInt            uiComp    = pcDtParam->uiComp;
-    assert(uiComp < 3);
-    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[uiComp]);
+    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
     Int   w0      = wpCur->w,
           offset  = wpCur->offset,
           shift   = wpCur->shift,
@@ -150,8 +143,6 @@ UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
         piOrg += iStrideOrg;
         piCur += iStrideCur;
     }
-
-    pcDtParam->uiComp = 255; // reset for DEBUG (assert test)
 
     return uiSum;
 }
@@ -507,10 +498,7 @@ UInt TComRdCostWeightPrediction::xGetHADsw(DistParam* pcDtParam)
 
     Int  x, y;
 
-    UInt            uiComp    = pcDtParam->uiComp;
-
-    assert(uiComp < 3);
-    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[uiComp]);
+    wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
 
     xSetWPscale(wpCur->w, 0, wpCur->shift, wpCur->offset, wpCur->round);
 
