@@ -390,7 +390,7 @@ protected:
                    UInt&        ruiSAD);
 
     Void xSetSearchRange(TComDataCU* pcCU,
-                         TComMv&     cMvPred,
+                         TComMv      cMvPred,
                          Int         iSrchRng,
                          TComMv&     rcMvSrchRngLT,
                          TComMv&     rcMvSrchRngRB);

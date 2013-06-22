@@ -3691,23 +3691,19 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     CYCLE_COUNTER_STOP(ME);
 }
 
-Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv& cMvPred, Int iSrchRng, TComMv& rcMvSrchRngLT, TComMv& rcMvSrchRngRB)
+Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv mvp, Int merange, TComMv& mvmin, TComMv& mvmax)
 {
-    Int  iMvShift = 2;
-    TComMv cTmpMvPred = cMvPred;
+    pcCU->clipMv(mvp);
 
-    pcCU->clipMv(cTmpMvPred);
+    MV dist(merange<<2, merange<<2);
+    mvmin = mvp - dist;
+    mvmax = mvp + dist;
 
-    rcMvSrchRngLT.setHor(cTmpMvPred.getHor() - (iSrchRng << iMvShift));
-    rcMvSrchRngLT.setVer(cTmpMvPred.getVer() - (iSrchRng << iMvShift));
+    pcCU->clipMv(mvmin);
+    pcCU->clipMv(mvmax);
 
-    rcMvSrchRngRB.setHor(cTmpMvPred.getHor() + (iSrchRng << iMvShift));
-    rcMvSrchRngRB.setVer(cTmpMvPred.getVer() + (iSrchRng << iMvShift));
-    pcCU->clipMv(rcMvSrchRngLT);
-    pcCU->clipMv(rcMvSrchRngRB);
-
-    rcMvSrchRngLT >>= iMvShift;
-    rcMvSrchRngRB >>= iMvShift;
+    mvmin >>= 2;
+    mvmax >>= 2;
 }
 
 Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
