@@ -440,7 +440,6 @@ protected:
                              TShortYUV*& rpcYuvResi);
 
     Void  setWpScalingDistParam(TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur);
-    inline  Void  setDistParamComp(UInt uiComp)  { m_cDistParam.uiComp = uiComp; }
 }; // END CLASS DEFINITION TEncSearch
 
 //! \}
