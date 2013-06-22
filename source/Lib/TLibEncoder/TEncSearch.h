@@ -380,15 +380,6 @@ protected:
                            UInt&       ruiCost,
                            Bool        bBi = false);
 
-    Void xTZSearch(TComDataCU*  pcCU,
-                   TComPattern* pcPatternKey,
-                   Pel*         piRefY,
-                   Int          iRefStride,
-                   TComMv*      pcMvSrchRngLT,
-                   TComMv*      pcMvSrchRngRB,
-                   TComMv&      rcMv,
-                   UInt&        ruiSAD);
-
     Void xSetSearchRange(TComDataCU* pcCU,
                          TComMv      cMvPred,
                          Int         iSrchRng,

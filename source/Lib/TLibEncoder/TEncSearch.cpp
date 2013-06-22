@@ -2942,6 +2942,10 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
         m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
+        pcCU->getMvPredLeft(m_acMvPredictors[0]);
+        pcCU->getMvPredAbove(m_acMvPredictors[1]);
+        pcCU->getMvPredAboveRight(m_acMvPredictors[2]);
+
         Bool bTestNormalMC = true;
 
         if (bUseMRG && pcCU->getWidth(0) > 8 && iNumPart == 2)
@@ -3781,14 +3785,6 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
 }
 
 Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
-{
-    pcCU->getMvPredLeft(m_acMvPredictors[0]);
-    pcCU->getMvPredAbove(m_acMvPredictors[1]);
-    pcCU->getMvPredAboveRight(m_acMvPredictors[2]);
-    xTZSearch(pcCU, pcPatternKey, piRefY, iRefStride, pcMvSrchRngLT, pcMvSrchRngRB, rcMv, ruiSAD);
-}
-
-Void TEncSearch::xTZSearch(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
 {
     Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
     Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
