@@ -192,7 +192,7 @@ bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t r
 
             pixel * refAbove1 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0]
             pixel * refLeft1 = refAbove1 + 3 * width + FENC_STRIDE;
-            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];
+            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];;
 
 #if _DEBUG
             memset(pixel_out_33_Vec, 0xCD, out_size_33);
@@ -208,6 +208,7 @@ bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t r
                     if (memcmp(pixel_out_33_C + p * (width *width) + k * width, pixel_out_33_Vec + p * (width *width) + k * width, width))
                     {
                         printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p+2, k, isLuma);
+                        opt[size-2](pixel_out_33_Vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
                         return false;
                     }
                 }

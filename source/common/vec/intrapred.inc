@@ -4709,6 +4709,41 @@ ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
     { 11, 10, 9, 0, 0, 1, 2, 3, 4, 2, 1, 0, 0, 9, 10, 11 },     //  6
     { 15, 12, 11, 10, 9, 0, 0, 1, 7, 4, 3, 2, 1, 0, 0, 9 },     //  7
     { 0, 10, 11, 13, 1, 0, 10, 11, 3, 2, 0, 10, 5, 4, 2, 0},    //  8
+
+    { 1, 2, 2, 3, 3, 4, 4,  5,  5,  6,  6,  7,  7,  8,  8,  9 },    //  9
+    { 2, 3, 3, 4, 4, 5, 5,  6,  6,  7,  7,  8,  8,  9,  9, 10 },    // 10
+    { 3, 4, 4, 5, 5, 6, 6,  7,  7,  8,  8,  9,  9, 10, 10, 11 },    // 11
+    { 4, 5, 5, 6, 6, 7, 7,  8,  8,  9,  9, 10, 10, 11, 11, 12 },    // 12
+    { 5, 6, 6, 7, 7, 8, 8,  9,  9, 10, 10, 11, 11, 12, 12, 13 },    // 13
+    { 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 14
+    { 9, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,  6,  7 },    // 15
+    { 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 16
+    { 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 17
+    { 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 18
+    { 14, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6},           // 19
+    { 7, 4, 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 20
+    { 13, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 21
+    { 6, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 22
+    { 12, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 23
+    { 5, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 24
+    { 14, 12, 12, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 25
+    { 7, 5, 5, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 26
+    { 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 27
+    { 4, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 28
+    { 13, 11, 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 29
+    { 6, 4, 4, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 30
+    { 15, 13, 13, 11, 11, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4 },        // 31
+    { 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },            // 32
+    { 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 33
+    { 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5 },          // 34
+    { 5, 3, 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12 },        // 35
+    { 13, 12, 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3, 3, 4 },        // 36
+    { 6, 5, 5, 3, 3, 2, 2, 0, 0, 8, 8, 9, 9, 10, 10, 11 },          // 37
+    { 15, 13, 13, 12, 12, 10, 10, 9, 9, 0, 0, 1, 1, 2, 2, 3 },      // 38
+    { 0, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },             // 39
+    { 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },       // 40
+
+    { 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 },       // 41
 };
 
 ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
@@ -5104,6 +5139,986 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     _mm_store_si128((__m128i*)pDstN[16], T30);
 }
 
+#pragma warning(disable:4189 4101)
+void xPredIntraAngs8(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+{
+    const int size = 8;
+    int iMode;
+
+#define N   (8)
+    pixel (*pDstN)[8*8] = (pixel(*)[8*8])pDst0;
+
+    __m128i T00, T01, T02, T03, T04, T05;
+    __m128i R00, R01;
+    __m128i R10, R11;
+    __m128i R20, R21/*, R22, R23, R24, R25, R26, R27*/;
+    __m128i R30, R31/*, R32, R33, R34, R35, R36, R37*/;
+
+    R00 = _mm_loadu_si128((__m128i*)(pLeft0+1));    // [-16 -15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01]
+    R10 = _mm_loadu_si128((__m128i*)(pAbove0+1));   // [ 16  15  14  13  12  11  10  09  08  07  06  05  04  03  02  01]
+
+    T00 = _mm_unpacklo_epi64(R00, R00);
+    _mm_store_si128((__m128i*)&pDstN[ 8][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[ 8][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[ 8][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[ 8][6*N], T00);
+
+    T00 = _mm_unpacklo_epi64(R10, R10);
+    _mm_store_si128((__m128i*)&pDstN[24][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[24][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[24][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[24][6*N], T00);
+
+    if (bLuma)
+    {
+        __m128i roundH, roundV;
+        __m128i pL = _mm_set1_epi16(pLeft0[1]);
+        __m128i pT = _mm_set1_epi16(pAbove0[1]);
+        roundH = _mm_set1_epi16(pAbove0[0]);
+        roundV = roundH;
+
+        roundH = _mm_srai_epi16(_mm_sub_epi16(_mm_unpacklo_epi8(R10, _mm_setzero_si128()), roundH), 1);
+        roundV = _mm_srai_epi16(_mm_sub_epi16(_mm_unpacklo_epi8(R00, _mm_setzero_si128()), roundV), 1);
+
+        T00 = _mm_add_epi16(roundH, pL);
+        T01 = _mm_add_epi16(roundV, pT);
+        T00 = _mm_packus_epi16(T00, T01);
+
+        ALIGN_VAR_32(pixel, tmp[2*N]);
+        _mm_store_si128((__m128i*)tmp, T00);
+        for(int i = 0; i < N; i++)
+        {
+            pDstN[ 8][i*N] = tmp[i  ];
+            pDstN[24][i*N] = tmp[i+N];
+        }
+    }
+
+    const __m128i c_16 = _mm_set1_epi16(16);
+
+    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 0])); // [-09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02 -02 -01]
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 9])); // [-10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02]
+
+    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 9]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 1][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[31][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[21]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[21]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 2][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[30][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[17]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[17]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 3][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[29][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 4][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[28][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 4][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[28][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 5][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[27][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 5][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[27][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 5][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[27][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 6][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[26][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[15]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[15]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 6][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[26][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[25]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[25]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 6][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[26][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 6][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[26][6*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 7][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[25][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 7][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[25][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 7][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[25][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 7][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[25][6*N], T01);
+
+    R20 = R21;                                                              // [-10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02]
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[10])); // [-11 -10 -10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03]
+    R30 = R31;
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[10]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 2][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[30][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 3][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[29][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 4][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[28][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 5][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[27][6*N], T01);
+
+
+    R20 = R21;
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[11]));
+    R30 = R31;
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[11]));
+
+    T00 = _mm_loadl_epi64((__m128i*)&pDstN[ 4][5*N]);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_load_si128((__m128i*)&pDstN[28][4*N]);
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T01 = _mm_packus_epi16(T01, T03);
+    _mm_storel_epi64((__m128i*)&pDstN[ 4][7*N], T01);
+    _mm_storeh_pi((__m64*)&pDstN[28][7*N], _mm_castsi128_ps(T01));
+    T00 = _mm_unpacklo_epi64(T00, T01);
+    T01 = _mm_unpackhi_epi64(T02, T01);
+    _mm_store_si128((__m128i*)&pDstN[ 1][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[31][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T01 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    _mm_storel_epi64((__m128i*)&pDstN[ 4][6*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[28][6*N], _mm_castsi128_ps(T00));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 2][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[30][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[21]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[21]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 3][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[29][4*N], T01);
+
+
+    R20 = R21;
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[12]));
+    R30 = R31;
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[12]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 3][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[29][6*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 1][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[31][4*N], T01);
+
+
+    R20 = R21;
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[13]));
+    R30 = R31;
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[13]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 2][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[30][6*N], T01);
+
+
+    R20 = R21;
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[14]));
+    R30 = R31;
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[14]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 1][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[31][6*N], T01);
+
+
+    // ***********************************************************************
+    R00 = _mm_loadu_si128((__m128i*)(pLeft0));      // [-15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01  00]
+    R01 = _mm_unpacklo_epi64(R00, R10);             // [ 08  07  06  05  04  03  02  01 -07 -06 -05 -04 -03 -02 -01  00]
+    R10 = _mm_loadu_si128((__m128i*)(pAbove0));     // [ 15  14  13  12  11  10  09  08  07  06  05  04  03  02  01  00]
+
+    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
+    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 9][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[23][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 9][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[23][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[20]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 9][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[23][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[ 9][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[23][6*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[27]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[10][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[22][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[17]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[17]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[10][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[22][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[10][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[22][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[14]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[11][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[21][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[12][0*N], T00);
+//     _mm_storeh_pi((__m64*)&pDstN[15][0*N], _mm_castsi128_ps(T00));
+    _mm_store_si128((__m128i*)&pDstN[20][0*N], T01);
+//     _mm_storeh_pi((__m64*)&pDstN[17][0*N], _mm_castsi128_ps(T01));
+
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[15]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[16]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[15]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[15]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[13][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[19][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[11]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[11]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[22]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[14][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[18][0*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[25]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[25]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[12][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[20][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_storel_epi64((__m128i*)&pDstN[13][2*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[14][2*N], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&pDstN[19][2*N], T01);
+    _mm_storeh_pi((__m64*)&pDstN[18][2*N], _mm_castsi128_ps(T01));
+
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[17]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[18]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[11][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[21][2*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[19]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[11][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[21][4*N], T01);
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    _mm_storel_epi64((__m128i*)&pDstN[11][6*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[21][6*N], _mm_castsi128_ps(T00));
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[19]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[20]));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    _mm_storel_epi64((__m128i*)&pDstN[11][7*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[21][7*N], _mm_castsi128_ps(T00));
+
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[21]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[22]));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[29]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[29]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[10][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[22][6*N], T01);
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[23]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[24]));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[31]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[12][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[20][4*N], T01);
+
+    R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[25]));
+    R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[26]));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[12][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[20][6*N], T01);
+
+    R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[27]));
+    R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[28]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[11]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[28]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[11]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_storeu_si128((__m128i*)&pDstN[13][3*N], T00);
+    _mm_storeu_si128((__m128i*)&pDstN[19][3*N], T01);
+
+    R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[29]));
+    R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[30]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[26]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_storeu_si128((__m128i*)&pDstN[13][5*N], T00);
+    _mm_storeu_si128((__m128i*)&pDstN[19][5*N], T01);
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[31]));
+    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128( (pLeft0[6] << 8) | pLeft0[8] ));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    _mm_storel_epi64((__m128i*)&pDstN[13][7*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[19][7*N], _mm_castsi128_ps(T00));
+
+    R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[32]));
+    R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[33]));
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[34]));
+    R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[35]));
+
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[23]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_storeu_si128((__m128i*)&pDstN[14][3*N], T00);
+    _mm_storeu_si128((__m128i*)&pDstN[18][3*N], T01);
+
+    R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[36]));
+    R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[37]));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[13]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_storeu_si128((__m128i*)&pDstN[14][5*N], T00);
+    _mm_storeu_si128((__m128i*)&pDstN[18][5*N], T01);
+
+    R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[38]));
+    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128( (pLeft0[6] << 8) | pLeft0[8] ));
+
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    _mm_storel_epi64((__m128i*)&pDstN[14][7*N], T00);
+    _mm_storeh_pi((__m64*)&pDstN[18][7*N], _mm_castsi128_ps(T00));
+
+
+    R00 = _mm_loadl_epi64((__m128i*)&pLeft0[1]);
+    R01 = _mm_loadl_epi64((__m128i*)pAbove0);
+    R01 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[39]));
+
+    R10 = _mm_loadl_epi64((__m128i*)&pAbove0[1]);
+    R11 = _mm_loadl_epi64((__m128i*)pLeft0);
+    R11 = _mm_shuffle_epi8(R11, _mm_load_si128((__m128i*)tab_angle_0[39]));
+
+    R00 = _mm_unpacklo_epi64(R00, R01);                                     // [00 01 02 04 05 06 07 00 -8 -7 -6 -5 -4 -3 -2 -1]
+    R10 = _mm_unpacklo_epi64(R10, R11);
+
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40])); // [01 02 04 05 06 07 00 -8 -7 -6 -5 -4 -3 -2 -1  0]
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+
+    R20 = _mm_unpacklo_epi8(R01, R00);
+    R30 = _mm_unpacklo_epi8(R11, R10);
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R21 = _mm_unpacklo_epi8(R01, R00);
+    R31 = _mm_unpacklo_epi8(R11, R10);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[12]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[15][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[17][0*N], T01);
+
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R20 = _mm_unpacklo_epi8(R01, R00);
+    R30 = _mm_unpacklo_epi8(R11, R10);
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[18]));
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R21 = _mm_unpacklo_epi8(R01, R00);
+    R31 = _mm_unpacklo_epi8(R11, R10);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[15][2*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[17][2*N], T01);
+
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R20 = _mm_unpacklo_epi8(R01, R00);
+    R30 = _mm_unpacklo_epi8(R11, R10);
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[30]));
+    R21 = _mm_unpacklo_epi8(R01, R00);
+    R31 = _mm_unpacklo_epi8(R11, R10);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[15][4*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[17][4*N], T01);
+
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R20 = _mm_unpacklo_epi8(R01, R00);
+    R30 = _mm_unpacklo_epi8(R11, R10);
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[10]));
+    R00 = R01;
+    R10 = R11;
+    R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R11 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[40]));
+    R21 = _mm_unpacklo_epi8(R01, R00);
+    R31 = _mm_unpacklo_epi8(R11, R10);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[16]));
+    T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
+    T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
+    T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
+    T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
+    T00 = _mm_packus_epi16(T00, T01);
+    T01 = _mm_packus_epi16(T02, T03);
+    _mm_store_si128((__m128i*)&pDstN[15][6*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[17][6*N], T01);
+
+
+    // 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -6, -7,
+    R00 = _mm_loadl_epi64((__m128i*)pLeft1);
+    R01 = _mm_loadl_epi64((__m128i*)&pAbove1[1]);
+
+    //R00 = _mm_setr_epi8(0, -1, -2, -3, -4, -5, -6, -7, 99, 99, 99, 99, 99, 99, 99, 99);
+    //R01 = _mm_setr_epi8(1, 2, 3, 4, 5, 6, 7, 8, 99, 99, 99, 99, 99, 99, 99, 99);
+    R00 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[41]));
+    R00 = _mm_unpacklo_epi64(R00, R01);
+
+    R01 = _mm_srli_si128(R00, 1);
+    T00 = _mm_unpacklo_epi64(R01, R00);
+    _mm_store_si128((__m128i*)&pDstN[16][6*N], T00);
+
+    R00 = _mm_srli_si128(R00, 2);
+    R01 = _mm_srli_si128(R01, 2);
+    T00 = _mm_unpacklo_epi64(R01, R00);
+    _mm_store_si128((__m128i*)&pDstN[16][4*N], T00);
+
+    R00 = _mm_srli_si128(R00, 2);
+    R01 = _mm_srli_si128(R01, 2);
+    T00 = _mm_unpacklo_epi64(R01, R00);
+    _mm_store_si128((__m128i*)&pDstN[16][2*N], T00);
+
+    R00 = _mm_srli_si128(R00, 2);
+    R01 = _mm_srli_si128(R01, 2);
+    T00 = _mm_unpacklo_epi64(R01, R00);
+    _mm_store_si128((__m128i*)&pDstN[16][0*N], T00);
+
+    T00 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pLeft1[2]), _mm_loadl_epi64((__m128i*)&pLeft1[3]));
+    T01 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pLeft1[4]), _mm_loadl_epi64((__m128i*)&pLeft1[5]));
+    T02 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pLeft1[6]), _mm_loadl_epi64((__m128i*)&pLeft1[7]));
+    T03 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pLeft1[8]), _mm_loadl_epi64((__m128i*)&pLeft1[9]));
+    _mm_store_si128((__m128i*)&pDstN[ 0][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[ 0][2*N], T01);
+    _mm_store_si128((__m128i*)&pDstN[ 0][4*N], T02);
+    _mm_store_si128((__m128i*)&pDstN[ 0][6*N], T03);
+
+    T00 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pAbove1[2]), _mm_loadl_epi64((__m128i*)&pAbove1[3]));
+    T01 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pAbove1[4]), _mm_loadl_epi64((__m128i*)&pAbove1[5]));
+    T02 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pAbove1[6]), _mm_loadl_epi64((__m128i*)&pAbove1[7]));
+    T03 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&pAbove1[8]), _mm_loadl_epi64((__m128i*)&pAbove1[9]));
+    _mm_store_si128((__m128i*)&pDstN[32][0*N], T00);
+    _mm_store_si128((__m128i*)&pDstN[32][2*N], T01);
+    _mm_store_si128((__m128i*)&pDstN[32][4*N], T02);
+    _mm_store_si128((__m128i*)&pDstN[32][6*N], T03);
+
+#undef N
+}
+
 }
 
 #include "utils.h"
@@ -5124,7 +6139,7 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.getIPredAngs[4] = xPredIntraAngs<64>;
 #else
     p.getIPredAngs[0] = xPredIntraAngs4;
-    p.getIPredAngs[1] = xPredIntraAngs<8>;
+    p.getIPredAngs[1] = xPredIntraAngs8;
     p.getIPredAngs[2] = xPredIntraAngs<16>;
     p.getIPredAngs[3] = xPredIntraAngs<32>;
     p.getIPredAngs[4] = xPredIntraAngs<64>;

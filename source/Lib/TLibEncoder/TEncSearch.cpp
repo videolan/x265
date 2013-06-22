@@ -2234,7 +2234,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 
             // 33 Angle modes once
-            if (uiWidth <= 4)
+            if (uiWidth <= 8)
             {
                 ALIGN_VAR_32(Pel, buf1[MAX_CU_SIZE * MAX_CU_SIZE]);
                 ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
