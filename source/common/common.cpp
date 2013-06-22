@@ -162,6 +162,12 @@ int x265_check_params(x265_param_t *param)
     if (param->iWaveFrontSynchro == 0)
         param->poolNumThreads = 1;
 
+    if (param->searchMethod != X265_ORIG_SEARCH && (param->useWeightedPred || param->useWeightedBiPred))
+    {
+        x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
+        param->searchMethod = X265_ORIG_SEARCH;
+    }
+
 #if !HIGH_BIT_DEPTH
     CONFIRM(param->internalBitDepth != 8,
             "InternalBitDepth must be 8");
