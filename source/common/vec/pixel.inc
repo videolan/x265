@@ -245,7 +245,48 @@ void CDECL transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
 
     _mm_store_si128((__m128i*)pDst, T00);
 }
-#endif
+
+#define TRANSPOSE_8X8(in0, in1, in2, in3, in4, in5, in6, in7, \
+                      out0, out1, out2, out3) \
+  {                                                     \
+    const __m128i tr0_0 = _mm_unpacklo_epi8(in0, in1); \
+    const __m128i tr0_1 = _mm_unpacklo_epi8(in2, in3); \
+    const __m128i tr0_2 = _mm_unpacklo_epi8(in4, in5); \
+    const __m128i tr0_3 = _mm_unpacklo_epi8(in6, in7); \
+                                                        \
+    const __m128i tr1_0 = _mm_unpacklo_epi16(tr0_0, tr0_1); \
+    const __m128i tr1_1 = _mm_unpackhi_epi16(tr0_0, tr0_1); \
+    const __m128i tr1_2 = _mm_unpacklo_epi16(tr0_2, tr0_3); \
+    const __m128i tr1_3 = _mm_unpackhi_epi16(tr0_2, tr0_3); \
+                                                            \
+    out0 = _mm_unpacklo_epi32(tr1_0, tr1_2); \
+    out1 = _mm_unpackhi_epi32(tr1_0, tr1_2); \
+    out2 = _mm_unpacklo_epi32(tr1_1, tr1_3); \
+    out3 = _mm_unpackhi_epi32(tr1_1, tr1_3); \
+}
+
+void CDECL transpose8(pixel* pDst, pixel* pSrc, intptr_t nStride)
+{
+    __m128i T00, T01, T02, T03, T04, T05, T06, T07;
+
+    T00 = _mm_loadl_epi64((__m128i*)&pSrc[0*nStride]);   // [07 06 05 04 03 02 01 00]
+    T01 = _mm_loadl_epi64((__m128i*)&pSrc[1*nStride]);   // [17 16 15 14 13 12 11 10]
+    T02 = _mm_loadl_epi64((__m128i*)&pSrc[2*nStride]);   // [27 26 25 24 23 22 21 20]
+    T03 = _mm_loadl_epi64((__m128i*)&pSrc[3*nStride]);   // [37 36 35 34 33 32 31 30]
+    T04 = _mm_loadl_epi64((__m128i*)&pSrc[4*nStride]);   // [47 46 45 44 43 42 41 40]
+    T05 = _mm_loadl_epi64((__m128i*)&pSrc[5*nStride]);   // [57 56 55 54 53 52 51 50]
+    T06 = _mm_loadl_epi64((__m128i*)&pSrc[6*nStride]);   // [67 66 65 64 63 62 61 60]
+    T07 = _mm_loadl_epi64((__m128i*)&pSrc[7*nStride]);   // [77 76 75 74 73 72 71 70]
+
+    TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
+
+    _mm_store_si128((__m128i*)&pDst[0*8], T00);
+    _mm_store_si128((__m128i*)&pDst[2*8], T01);
+    _mm_store_si128((__m128i*)&pDst[4*8], T02);
+    _mm_store_si128((__m128i*)&pDst[6*8], T03);
+}
+
+#endif !HIGH_BIT_DEPTH
 
 }  // end anonymous namespace
 
@@ -293,7 +334,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 
 #if !HIGh_BIT_DEPTH
     p.transpose[0] = transpose4;
-    p.transpose[1] = transpose<8>;
+    p.transpose[1] = transpose8;
     p.transpose[2] = transpose<16>;
     p.transpose[3] = transpose<32>;
     p.transpose[4] = transpose<64>;
