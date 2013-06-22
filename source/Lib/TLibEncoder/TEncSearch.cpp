@@ -51,6 +51,8 @@ extern FILE *fp1;
 extern bool mergeFlag;
 UInt64      meCost;
 #endif
+DECLARE_CYCLE_COUNTER(ME);
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -2994,12 +2996,48 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                         }
                         else
                         {
-                            xMotionEstimation(pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPred[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
+                            if (m_iSearchMethod != X265_ORIG_SEARCH)
+                            {
+                                CYCLE_COUNTER_START(ME);
+                                int merange = m_aaiAdaptSR[eRefPicList][iRefIdxTemp];
+                                MV& mvp = cMvPred[iRefList][iRefIdxTemp];
+                                MV& outmv = cMvTemp[iRefList][iRefIdxTemp];
+                                MV mvmin, mvmax;
+                                xSetSearchRange(pcCU, mvp, merange, mvmin, mvmax);
+                                TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxTemp)->getPicYuvRec();
+                                int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
+                                                                   mvmin, mvmax, mvp, 3, m_acMvPredictors, merange, outmv);
+
+                                /* Get total cost of partition, but only include MV bit cost once */
+                                uiBitsTemp += m_me.bitcost(outmv);
+                                uiCostTemp = (satdCost - m_me.mvcost(outmv)) + m_pcRdCost->getCost(uiBitsTemp);
+                                CYCLE_COUNTER_STOP(ME);
+                            }
+                            else
+                                xMotionEstimation(pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPred[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
                         }
                     }
                     else
                     {
-                        xMotionEstimation(pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPred[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
+                        if (m_iSearchMethod != X265_ORIG_SEARCH)
+                        {
+                            CYCLE_COUNTER_START(ME);
+                            int merange = m_aaiAdaptSR[eRefPicList][iRefIdxTemp];
+                            MV& mvp = cMvPred[iRefList][iRefIdxTemp];
+                            MV& outmv = cMvTemp[iRefList][iRefIdxTemp];
+                            MV mvmin, mvmax;
+                            xSetSearchRange(pcCU, mvp, merange, mvmin, mvmax);
+                            TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxTemp)->getPicYuvRec();
+                            int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
+                                                               mvmin, mvmax, mvp, 3, m_acMvPredictors, merange, outmv);
+
+                            /* Get total cost of partition, but only include MV bit cost once */
+                            uiBitsTemp += m_me.bitcost(outmv);
+                            uiCostTemp = (satdCost - m_me.mvcost(outmv)) + m_pcRdCost->getCost(uiBitsTemp);
+                            CYCLE_COUNTER_STOP(ME);
+                        }
+                        else
+                            xMotionEstimation(pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPred[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
                     }
                     xCopyAMVPInfo(pcCU->getCUMvField(eRefPicList)->getAMVPInfo(), &aacAMVPInfo[iRefList][iRefIdxTemp]); // must always be done ( also when AMVP_MODE = AM_NONE )
                     xCheckBestMVP(pcCU, eRefPicList, cMvTemp[iRefList][iRefIdxTemp], cMvPred[iRefList][iRefIdxTemp], aaiMvpIdx[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
@@ -3136,7 +3174,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
                             if (iRefIdxTemp == pcCU->getSlice()->getNumRefIdx(eRefPicList) - 1) uiBitsTemp--;
                         }
                         uiBitsTemp += m_auiMVPIdxCost[aaiMvpIdxBi[iRefList][iRefIdxTemp]][AMVP_MAX_NUM_CANDS];
-                        // call ME
+                        // call bidir ME
                         xMotionEstimation(pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPredBi[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp, true);
                         xCopyAMVPInfo(&aacAMVPInfo[iRefList][iRefIdxTemp], pcCU->getCUMvField(eRefPicList)->getAMVPInfo());
                         xCheckBestMVP(pcCU, eRefPicList, cMvTemp[iRefList][iRefIdxTemp], cMvPredBi[iRefList][iRefIdxTemp], aaiMvpIdxBi[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
@@ -3579,10 +3617,9 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
     return m_pcRdCost->calcRdSADCost(uiCost, m_auiMVPIdxCost[iMVPIdx][iMVPNum]);
 }
 
-DECLARE_CYCLE_COUNTER(ME);
-
 Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, TComMv* pcMvPred, Int iRefIdxPred, TComMv& rcMv, UInt& ruiBits, UInt& ruiCost, Bool bBi)
 {
+    CYCLE_COUNTER_START(ME);
     UInt          uiPartAddr;
     Int           iRoiWidth;
     Int           iRoiHeight;
@@ -3635,26 +3672,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         xSetSearchRange(pcCU, rcMv, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
     else
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
-
-    CYCLE_COUNTER_START(ME);
-    if (m_iSearchMethod != X265_ORIG_SEARCH && m_cDistParam.bApplyWeight == false && !bBi)
-    {
-        TComPicYuv *refRecon = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec();
-        int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
-                                           cMvSrchRngLT,
-                                           cMvSrchRngRB,
-                                           cMvPred,
-                                           3,
-                                           m_acMvPredictors,
-                                           iSrchRng,
-                                           rcMv);
-
-        /* Get total cost of PU, but only include MV bit cost once */
-        ruiBits += m_me.bitcost(rcMv);
-        ruiCost = (satdCost - m_me.mvcost(rcMv)) + m_pcRdCost->getCost(ruiBits);
-        CYCLE_COUNTER_STOP(ME);
-        return;
-    }
 
     // Configure the MV bit cost calculator
     m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
