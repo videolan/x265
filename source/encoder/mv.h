@@ -44,8 +44,6 @@ public:
 
     MV() : word(0)                             {}
 
-    MV(int32_t _w) : word(_w)                  {}
-
     MV(int16_t _x, int16_t _y) : x(_x), y(_y)  {}
 
     const MV& operator =(uint32_t w)           { word = w; return *this; }

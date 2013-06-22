@@ -285,7 +285,7 @@ int MotionEstimate::motionEstimate(MotionReference *ref,
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
-        int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(0);
+        int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(MV(0,0));
         if (cost < bcost)
         {
             bcost = cost;
