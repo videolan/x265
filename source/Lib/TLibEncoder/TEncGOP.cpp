@@ -46,6 +46,7 @@
 #include "TLibCommon/NAL.h"
 #include "PPA/ppa.h"
 #include "NALwrite.h"
+#include "common.h"
 #include <time.h>
 #include <math.h>
 
@@ -165,6 +166,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_cFrameEncoders->init(pcTEncTop, numRows);
 
     int maxGOP = m_pcCfg->getIntraPeriod() > 2 ? m_pcCfg->getIntraPeriod() : 2;
+    maxGOP = X265_MAX(maxGOP, m_pcCfg->getGOPSize());
     m_recon = new x265_picture_t[maxGOP];
 
     // pre-allocate a full keyframe interval of TComPic
