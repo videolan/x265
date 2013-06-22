@@ -3735,13 +3735,12 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
 
     UInt  uiSad;
-    UInt  uiSadBest         = MAX_UINT;
+    UInt  uiSadBest = MAX_UINT;
     Int   iBestX = 0;
     Int   iBestY = 0;
 
     Pel*  piRefSrch;
 
-    //-- jclee for using the SAD function pointer
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
 
     // fast encoder decision: use subsampled SAD for integer ME
@@ -3780,7 +3779,6 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     }
 
     rcMv.set(iBestX, iBestY);
-
     ruiSAD = uiSadBest - m_bc.mvcost(rcMv << 2);
 }
 
