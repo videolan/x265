@@ -3709,35 +3709,30 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
     Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
 
-    UInt  uiSad;
-    UInt  uiSadBest = MAX_UINT;
-    Int   iBestX = 0;
-    Int   iBestY = 0;
-
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
     m_cDistParam.bitDepth = g_bitDepthY;
     piRefY += (iSrchRngVerTop * iRefStride);
+
+    // find min. distortion position
+    UInt uiSadBest = MAX_UINT;
     for (Int y = iSrchRngVerTop; y <= iSrchRngVerBottom; y++)
     {
         for (Int x = iSrchRngHorLeft; x <= iSrchRngHorRight; x++)
         {
-            //  find min. distortion position
+            MV mv(x, y);
             m_cDistParam.pCur = piRefY + x;
-            m_cDistParam.bitDepth = g_bitDepthY;
-            uiSad = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(MV(x, y) << 2);
+            UInt uiSad = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(mv << 2);
 
             if (uiSad < uiSadBest)
             {
                 uiSadBest = uiSad;
-                iBestX    = x;
-                iBestY    = y;
+                rcMv = mv;
             }
         }
 
         piRefY += iRefStride;
     }
 
-    rcMv.set(iBestX, iBestY);
     ruiSAD = uiSadBest - m_bc.mvcost(rcMv << 2);
 }
 
