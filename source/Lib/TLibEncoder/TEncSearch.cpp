@@ -266,28 +266,6 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost)
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
 }
 
-#if FASTME_SMOOTHER_MV
-#define FIRSTSEARCHSTOP     1
-#else
-#define FIRSTSEARCHSTOP     0
-#endif
-
-#define TZ_SEARCH_CONFIGURATION                                                                                 \
-    const Int  iRaster                  = 5; /* TZ soll von aussen ?ergeben werden */                            \
-    const Bool bTestOtherPredictedMV    = 0;                                                                      \
-    const Bool bTestZeroVector          = 1;                                                                      \
-    const Bool bTestZeroVectorStart     = 0;                                                                      \
-    const Bool bTestZeroVectorStop      = 0;                                                                      \
-    const Bool bFirstSearchStop         = FIRSTSEARCHSTOP;                                                        \
-    const UInt uiFirstSearchRounds      = 3; /* first search stop X rounds after best match (must be >=1) */     \
-    const Bool bEnableRasterSearch      = 1;                                                                      \
-    const Bool bAlwaysRasterSearch      = 0; /* ===== 1: BETTER but factor 2 slower ===== */                     \
-    const Bool bRasterRefinementEnable  = 0; /* enable either raster refinement or star refinement */            \
-    const Bool bStarRefinementEnable    = 1; /* enable either star refinement or raster refinement */            \
-    const Bool bStarRefinementStop      = 0;                                                                      \
-    const UInt uiStarRefinementRounds   = 2; /* star refinement stop X rounds after best match (must be >=1) */  \
-
-
 __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance)
 {
     UInt  uiSad;
@@ -3736,18 +3714,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     Int   iBestX = 0;
     Int   iBestY = 0;
 
-    Pel*  piRefSrch;
-
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
-
-    // fast encoder decision: use subsampled SAD for integer ME
-    if (0)
-    {
-        if (m_cDistParam.iRows > 12)
-        {
-            m_cDistParam.iSubShift = 1;
-        }
-    }
 
     piRefY += (iSrchRngVerTop * iRefStride);
     for (Int y = iSrchRngVerTop; y <= iSrchRngVerBottom; y++)
@@ -3755,12 +3722,9 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
         for (Int x = iSrchRngHorLeft; x <= iSrchRngHorRight; x++)
         {
             //  find min. distortion position
-            piRefSrch = piRefY + x;
-            m_cDistParam.pCur = piRefSrch;
-
+            m_cDistParam.pCur = piRefY + x;
             m_cDistParam.bitDepth = g_bitDepthY;
-            uiSad = m_cDistParam.DistFunc(&m_cDistParam);
-            uiSad += m_bc.mvcost(MV(x, y) << 2);
+            uiSad = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(MV(x, y) << 2);
 
             if (uiSad < uiSadBest)
             {
@@ -3779,17 +3743,30 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
 
 Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
 {
+    const Int  iRaster                  = 5;
+    const Bool bTestOtherPredictedMV    = 0;
+    const Bool bTestZeroVector          = 1;
+    const Bool bTestZeroVectorStart     = 0;
+    const Bool bTestZeroVectorStop      = 0;
+    const Bool bFirstSearchStop         = 1;
+    const UInt uiFirstSearchRounds      = 3; /* first search stop X rounds after best match (must be >=1) */
+    const Bool bEnableRasterSearch      = 1;
+    const Bool bAlwaysRasterSearch      = 0; /* ===== 1: BETTER but factor 2 slower ===== */
+    const Bool bRasterRefinementEnable  = 0; /* enable either raster refinement or star refinement */
+    const Bool bStarRefinementEnable    = 1; /* enable either star refinement or raster refinement */
+    const Bool bStarRefinementStop      = 0;
+    const UInt uiStarRefinementRounds   = 2; /* star refinement stop X rounds after best match (must be >=1) */
+
     Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
     Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
     Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
     Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
 
-    TZ_SEARCH_CONFIGURATION
-
     UInt uiSearchRange = m_iSearchRange;
 
     pcCU->clipMv(rcMv);
     rcMv >>= 2;
+
     // init TZSearchStruct
     IntTZSearchStruct cStruct;
     cStruct.iYStride    = iRefStride;
