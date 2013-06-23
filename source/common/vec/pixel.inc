@@ -413,7 +413,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.calcrecon[BLOCK_64x64] = calcRecons<64>;
 #endif /* if HIGH_BIT_DEPTH */
 
-#if !HIGh_BIT_DEPTH
+#if !HIGH_BIT_DEPTH
     p.transpose[0] = transpose4;
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
