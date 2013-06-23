@@ -675,7 +675,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     Bool bInsidePicture = (uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     //Data for splitting
-    UChar       uhNextDepth         = uiDepth + 1;
+    UChar uhNextDepth = uiDepth + 1;
     UInt uiPartUnitIdx = 0;
     TComDataCU* pcSubBestPartCU[4], *pcSubTempPartCU[4];
 
@@ -683,7 +683,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     if (!bSliceEnd && bInsidePicture)
     {
         // variables for fast encoder decision
-        bTrySplit    = true;
+        bTrySplit = true;
 
         rpcTempCU->initEstData(uiDepth, iQP);
 
@@ -1985,17 +1985,13 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 
 Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize)
 {
-    UInt uiDepth = rpcTempCU->getDepth(0);
-
     //PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
-
+    UInt uiDepth = rpcTempCU->getDepth(0);
+    UInt uiPreCalcDistC = 0;
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
-
     rpcTempCU->setPartSizeSubParts(eSize, 0, uiDepth);
     rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
-
-    UInt uiPreCalcDistC = 0;
     
     m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, true);
 
