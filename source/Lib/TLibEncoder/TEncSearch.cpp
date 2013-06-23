@@ -2217,7 +2217,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
 
                 // Transpose NxN
-                x265::primitives.transpose[nLog2SizeMinus2](buf1, piOrg, uiStride);
+                x265::primitives.transpose[nLog2SizeMinus2]((pixel*)buf1, (pixel*)piOrg, uiStride);
 
                 Pel *pAbove0 = refAbove    + uiWidth - 1;
                 Pel *pAbove1 = refAboveFlt + uiWidth - 1;
