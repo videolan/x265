@@ -51,13 +51,9 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize, UI
     rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
 
-    Bool bSeparateLumaChroma = true; // choose estimation mode
-    UInt uiPreCalcDistC      = 0;
-    if (!bSeparateLumaChroma)
-    {
-        m_pcPredSearch->preestChromaPredMode(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvMode[index][uiDepth]);
-    }
-    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth],  m_ppcPredYuvMode[index][uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, bSeparateLumaChroma);
+    UInt uiPreCalcDistC = 0;
+
+    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth],  m_ppcPredYuvMode[index][uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, true);
 
     m_ppcRecoYuvTemp[uiDepth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
 
