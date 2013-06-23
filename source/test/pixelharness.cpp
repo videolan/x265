@@ -274,6 +274,7 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
     memset(ref_dest, 0, 64 * 64 * sizeof(short));
     memset(opt_dest, 0, 64 * 64 * sizeof(short));
+
     int j = 0;
     for (int i = 0; i <= 100; i++)
     {
@@ -284,7 +285,7 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
-        j += 100;
+        j += 16 * 5;
     }
 
     return true;
@@ -407,7 +408,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         {
             if (!check_calresidual(ref.calcresidual[i], opt.calcresidual[i]))
             {
-                printf("getResidue width:%d failed!\n", 4 << i);
+                printf("calcresifual width:%d failed!\n", 4 << i);
                 return false;
             }
         }

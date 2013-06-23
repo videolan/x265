@@ -403,9 +403,9 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;
-    p.calcresidual[BLOCK_16x16] = getResidual<16>;
-    p.calcresidual[BLOCK_32x32] = getResidual<32>;
-    p.calcresidual[BLOCK_64x64] = getResidual<64>;
+    p.calcresidual[BLOCK_16x16] = getResidual16;
+    p.calcresidual[BLOCK_32x32] = getResidual32;
+    p.calcresidual[BLOCK_64x64] = getResidual64;
     p.calcrecon[BLOCK_4x4] = calcRecons4;
     p.calcrecon[BLOCK_8x8] = calcRecons8;
     p.calcrecon[BLOCK_16x16] = calcRecons<16>;
