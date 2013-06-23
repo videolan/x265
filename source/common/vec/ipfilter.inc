@@ -25,6 +25,19 @@
  *****************************************************************************/
 
 #include "utils.h"
+#include "primitives.h"
+#include <assert.h>
+#include <string.h>
+
+namespace {
+// each of these headers implements a portion of the performance
+// primitives and declares a Setup_Vec_FOOPrimitves() method.
+#if HIGH_BIT_DEPTH
+#include "ipfilter16.inc"
+#else
+#include "ipfilter8.inc"
+#endif
+}
 
 namespace x265 {
 void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)

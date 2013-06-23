@@ -23,23 +23,9 @@
 
 /* this file instantiates SSE2 versions of the vectorized primitives */
 
-#include "primitives.h"
-#include <assert.h>
-#include <string.h>
-
 #define INSTRSET 2
 #include "vectorclass.h"
 
 #define ARCH sse2
-
-using namespace x265;
-
-namespace {
-#if HIGH_BIT_DEPTH
-#include "ipfilter16.inc"
-#else
-#include "ipfilter8.inc"
-#endif
-}
 
 #include "ipfilter.inc"

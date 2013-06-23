@@ -23,24 +23,9 @@
 
 /* this file instantiates AVX versions of the vectorized primitives */
 
-#include "primitives.h"
-#include <assert.h>
-#include <string.h>
-
 #define INSTRSET 7
 #include "vectorclass.h"
 
 #define ARCH avx
-using namespace x265;
-
-namespace {
-// each of these headers implements a portion of the performance
-// primitives and declares a Setup_Vec_FOOPrimitves() method.
-#if HIGH_BIT_DEPTH
-#include "ipfilter16.inc"
-#else
-#include "ipfilter8.inc"
-#endif
-}
 
 #include "ipfilter.inc"
