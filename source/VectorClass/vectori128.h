@@ -5507,7 +5507,7 @@ static ALWAYSINLINE void store_partial_by_i(void const * p, Vec128b const& a) {
     {
         case  4:  *(uint32_t*)p = _mm_cvtsi128_si32(a); break;
         case  8:  _mm_storel_epi64((__m128i*)p, a);     break;
-        default:  _mm_storeu_si128((__m128i*)p, a);      break;
+        default:  _mm_storeu_si128((__m128i*)p, a);     break;
     }
 }
 
