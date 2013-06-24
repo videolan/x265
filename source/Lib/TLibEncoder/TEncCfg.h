@@ -122,7 +122,7 @@ protected:
     Int       m_extraRPSs;
     Int       m_maxDecPicBuffering[MAX_TLAYER];
     Int       m_numReorderPics[MAX_TLAYER];
-
+    Int       m_gopThreads;                     // number of TEncGOP instances
     Int       m_iQP;                            //  if (AdaptiveQP == OFF)
 
     Int       m_aiPad[2];
@@ -275,6 +275,8 @@ public:
     Void      setLogLevel(Int l)       { m_logLevel = l; }
 
     Int       getLogLevel() const      { return m_logLevel; }
+
+    Void      setGopThreads(Int i)     { m_gopThreads = i; }
 
     Void      setFrameRate(Int i)      { m_iFrameRate = i; }
 

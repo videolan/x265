@@ -86,7 +86,10 @@ Void TEncTop::create()
     initROM();
 
     // create processing unit classes
-    m_cGOPEncoder.create();
+    m_GOPEncoders = new TEncGOP[m_gopThreads];
+    for (int i = 0; i < m_gopThreads; i++)
+        m_GOPEncoders[i].create();
+    m_curGOPEncoder = m_GOPEncoders;
 
     if (m_RCEnableRateControl)
     {
@@ -98,7 +101,12 @@ Void TEncTop::create()
 Void TEncTop::destroy()
 {
     // destroy processing unit classes
-    m_cGOPEncoder.destroy();
+    if (m_GOPEncoders)
+    {
+        for (int i = 0; i < m_gopThreads; i++)
+            m_GOPEncoders[i].destroy();
+        delete [] m_GOPEncoders;
+    }
     m_cRateCtrl.destroy();
 
     // destroy ROM
@@ -111,7 +119,8 @@ Void TEncTop::destroy()
 Void TEncTop::init()
 {
     // initialize processing unit classes
-    m_cGOPEncoder.init(this);
+    for (int i = 0; i < m_gopThreads; i++)
+        m_GOPEncoders[i].init(this);
 
     m_gcAnalyzeAll.setFrmRate(getFrameRate());
     m_gcAnalyzeI.setFrmRate(getFrameRate());
@@ -138,7 +147,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         m_picsQueued++;
 
         // get original YUV
-        TComPic* pcPicCurr = m_cGOPEncoder.xGetNewPicBuffer();
+        TComPic* pcPicCurr = m_curGOPEncoder->xGetNewPicBuffer();
         pcPicCurr->getSlice()->setPOC(++m_pocLast);
         pcPicCurr->getPicYuvOrg()->copyFromPicture(*pic);
         if (getUseAdaptiveQP())
@@ -165,9 +174,9 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     }
 
     // compress GOP
-    m_cGOPEncoder.processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
+    m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
 
-    if (pic_out) *pic_out = m_cGOPEncoder.getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
+    if (pic_out) *pic_out = m_curGOPEncoder->getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
 
     m_picsEncoded += m_picsQueued;
     Int ret = m_picsQueued;

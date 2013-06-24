@@ -83,6 +83,7 @@ void x265_param_default(x265_param_t *param)
     memset(param, 0, sizeof(x265_param_t));
     param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
+    param->gopNumThreads = 1;
     param->searchRange = 64;
     param->bipredSearchRange = 4;
     param->keyframeInterval = 16; // should probably default to 1 per second
@@ -157,7 +158,7 @@ int x265_check_params(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (param->bEnableWavefront == 0)
+    if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)
         param->poolNumThreads = 1;
 
     if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedPred || param->bEnableWeightedBiPred))
@@ -170,7 +171,9 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->internalBitDepth != 8,
             "InternalBitDepth must be 8");
 #endif
-    CONFIRM(param->qp <  -6 * (param->internalBitDepth - 8) || param->qp > 51,
+    CONFIRM(param->gopNumThreads < 1 || param->gopNumThreads > 32,
+            "Number of GOP threads must be between 1 and 32");
+    CONFIRM(param->qp < -6 * (param->internalBitDepth - 8) || param->qp > 51,
             "QP exceeds supported range (-QpBDOffsety to 51)");
     CONFIRM(param->frameRate <= 0,
             "Frame rate must be more than 1");
@@ -179,7 +182,7 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->searchRange < 0,
             "Search Range must be more than 0");
     CONFIRM(param->searchRange >= 32768,
-        "Search Range must be less than 32768");
+            "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
     CONFIRM(param->keyframeInterval < -1 || param->keyframeInterval == 0,

@@ -82,9 +82,9 @@ private:
 
     TEncRateCtrl            m_cRateCtrl;        ///< Rate control class
 
-    // processing unit
-    TEncGOP                 m_cGOPEncoder;      ///< GOP encoder
-    x265::ThreadPool       *m_threadPool;
+    TEncGOP*                m_GOPEncoders;
+    TEncGOP*                m_curGOPEncoder;
+    x265::ThreadPool*       m_threadPool;
 
 public:
 
