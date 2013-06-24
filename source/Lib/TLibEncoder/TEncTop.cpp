@@ -148,21 +148,28 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         }
     }
 
-    // Wait until we have a full mini-GOP of pictures
-    if (!m_picsQueued || (!flush && m_pocLast != 0 && m_picsQueued != m_iGOPSize && m_iGOPSize))
+    int batchSize = m_uiIntraPeriod;
+    if (m_uiIntraPeriod == (UInt) -1)
+        batchSize = getGOPSize();
+    if (m_pocLast == 0)
+        batchSize = 1;
+
+    // Wait until we have a full batch of pictures
+    if (m_picsQueued < batchSize && !flush)
         return 0;
-    m_picsEncoded += m_picsQueued;
+
     if (flush)
     {
-        // TEncGOP needs to know to ignore POC above this value
-        m_framesToBeEncoded = m_picsEncoded;
+        // TEncGOP needs to not try to reference frames above this POC value
+        m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
     }
 
     // compress GOP
-    m_cGOPEncoder.compressGOP(m_pocLast, m_picsQueued, accessUnitsOut);
+    m_cGOPEncoder.processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
 
     if (pic_out) *pic_out = m_cGOPEncoder.getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
 
+    m_picsEncoded += m_picsQueued;
     Int ret = m_picsQueued;
     m_picsQueued = 0;
     return ret;

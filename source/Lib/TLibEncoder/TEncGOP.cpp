@@ -234,12 +234,17 @@ TComPic* TEncGOP::xGetNewPicBuffer()
 
 void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP)
 {
-    assert(m_totalCoded == POCLast);
-    m_totalCoded = POCLast;
-    for (int poc = POCLast; poc < POCLast + numFrames; )
+    // TEncTOP has queued an entire keyframe interval of frames in our picture list
+    // Encode them in batches of m_pcCfg->getGOPSize()
+    m_totalCoded = POCLast - numFrames + 1;
+    int poc = m_totalCoded;
+    int numEncoded = 0;
+    while (numEncoded < numFrames)
     {
-        Int gopSize = (POCLast == 0) ? 1 : m_pcCfg->getGOPSize();
-        compressGOP(poc, gopSize, accessUnitsInGOP);
+        int gopSize = (poc == 0) ? 1 : m_pcCfg->getGOPSize();
+        gopSize = X265_MIN(gopSize, numFrames - numEncoded);
+        compressGOP(poc + gopSize - 1, gopSize, accessUnitsInGOP);
+        numEncoded += gopSize;
         poc += gopSize;
     }
 }
