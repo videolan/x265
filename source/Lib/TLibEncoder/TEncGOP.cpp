@@ -148,9 +148,9 @@ Void TEncGOP::destroy()
 
 Void TEncGOP::init(TEncTop* pcTEncTop)
 {
-    m_pcEncTop             = pcTEncTop;
-    m_pcCfg                = pcTEncTop;
-    m_pcRateCtrl           = pcTEncTop->getRateCtrl();
+    m_pcEncTop   = pcTEncTop;
+    m_pcCfg      = pcTEncTop;
+    m_pcRateCtrl = pcTEncTop->getRateCtrl();
 
     // initialize SPS
     pcTEncTop->xInitSPS(&m_cSPS);
