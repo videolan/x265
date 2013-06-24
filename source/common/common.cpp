@@ -85,7 +85,7 @@ void x265_param_default(x265_param_t *param)
     param->searchMethod = X265_STAR_SEARCH;
     param->iSearchRange = 64;
     param->bipredSearchRange = 4;
-    param->iIntraPeriod = 16;
+    param->iIntraPeriod = 16; // should probably default to 1 per second
     param->internalBitDepth = 8;
     param->uiMaxCUSize = 64;
     param->uiMaxCUDepth = 4;
@@ -120,11 +120,9 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
         return 0;
     if (!strcmp(profile, "main"))
     {
-        param->iIntraPeriod = 16;
     }
     else if (!strcmp(profile, "main10"))
     {
-        param->iIntraPeriod = 16;
 #if HIGH_BIT_DEPTH
         param->internalBitDepth = 10;
 #else
@@ -184,6 +182,8 @@ int x265_check_params(x265_param_t *param)
         "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
+    CONFIRM(param->iIntraPeriod < -1 || param->iIntraPeriod == 0,
+            "Keyframe interval must be -1 (open-GOP) 1 (intra-only) or greater than 1");
     CONFIRM(param->iMaxCuDQPDepth > param->uiMaxCUDepth - 1,
             "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
