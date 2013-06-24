@@ -77,6 +77,8 @@ TComPrediction::~TComPrediction()
 
     m_acYuvPred[0].destroy();
     m_acYuvPred[1].destroy();
+    m_acShortPred[0].destroy();
+    m_acShortPred[1].destroy();
 
     m_cYuvPredTemp.destroy();
 
@@ -126,6 +128,8 @@ Void TComPrediction::initTempBuff()
         // new structure
         m_acYuvPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
         m_acYuvPred[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
+        m_acShortPred[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
+        m_acShortPred[1].create(MAX_CU_SIZE, MAX_CU_SIZE);
 
         m_cYuvPredTemp.create(MAX_CU_SIZE, MAX_CU_SIZE);
     }
@@ -412,7 +416,7 @@ Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, Re
     Int         iWidth;
     Int         iHeight;
     UInt        uiPartAddr;
-
+    
     if (iPartIdx >= 0)
     {
         pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iWidth, iHeight);
@@ -420,15 +424,13 @@ Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, Re
         {
             if (pcCU->getSlice()->getPPS()->getUseWP())
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred, true);
+                TShortYUV* pcMbYuv = &m_acShortPred[0];
+                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
+                xWeightedPredictionUni(pcCU, pcMbYuv, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
             }
             else
             {
                 xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
-            }
-            if (pcCU->getSlice()->getPPS()->getUseWP())
-            {
-                xWeightedPredictionUni(pcCU, pcYuvPred, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
             }
         }
         else
@@ -453,15 +455,13 @@ Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, Re
         {
             if (pcCU->getSlice()->getPPS()->getUseWP())
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred, true);
+                TShortYUV* pcMbYuv = &m_acShortPred[0];
+                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
+                xWeightedPredictionUni(pcCU, pcMbYuv, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
             }
             else
             {
                 xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
-            }
-            if (pcCU->getSlice()->getPPS()->getUseWP())
-            {
-                xWeightedPredictionUni(pcCU, pcYuvPred, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
             }
         }
         else
@@ -477,6 +477,7 @@ Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, Re
         }
     }
 }
+
 
 Void TComPrediction::xPredInterUni(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Bool bi)
 {
@@ -507,11 +508,11 @@ Void TComPrediction::xPredInterUni(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth
 
 Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, TComYuv*& rpcYuvPred)
 {
-    TComYuv* pcMbYuv;
     Int      iRefIdx[2] = { -1, -1 };
 
     if (pcCU->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartAddr) >= 0 && pcCU->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartAddr) >= 0)
     {
+        TShortYUV* pcMbYuv;
         for (Int iRefList = 0; iRefList < 2; iRefList++)
         {
             RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -519,22 +520,21 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
 
             assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
 
-            pcMbYuv = &m_acYuvPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);   //pcMbYuv should be TShortYuv
+            pcMbYuv = &m_acShortPred[iRefList];
+            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);  
         }
         if (pcCU->getSlice()->getPPS()->getWPBiPred() && pcCU->getSlice()->getSliceType() == B_SLICE)
         {
-            //m_acYuvPred must be TShortYuv
-            xWeightedPredictionBi(pcCU, &m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+            xWeightedPredictionBi(pcCU, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
         }
         else
         {
-            //m_acYuvPred must be TShortYuv
-            xWeightedAverage(&m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+            rpcYuvPred->addAvg(&m_acShortPred[0], &m_acShortPred[1], uiPartAddr, iWidth, iHeight);
         }
     }
     else if (pcCU->getSlice()->getPPS()->getWPBiPred() && pcCU->getSlice()->getSliceType() == B_SLICE)
     {
+        TShortYUV* pcMbYuv;
         for (Int iRefList = 0; iRefList < 2; iRefList++)
         {
             RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -547,14 +547,14 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
 
             assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
 
-            pcMbYuv = &m_acYuvPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true); //pcMbYuv must be TShort
+            pcMbYuv = &m_acShortPred[iRefList];
+            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true); 
         }
-        //m_acYuvPred must be TShort
-        xWeightedPredictionBi(pcCU, &m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+        xWeightedPredictionBi(pcCU, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
     }
     else if (pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType() == P_SLICE)
     {
+        TShortYUV* pcMbYuv;
         for (Int iRefList = 0; iRefList < 2; iRefList++)
         {
             RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -567,14 +567,14 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
 
             assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
 
-            pcMbYuv = &m_acYuvPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true); //pcMbYuv must be TShortYuv
+            pcMbYuv = &m_acShortPred[iRefList];
+            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true); 
         }
-        //m_acYuvPred must be TShortYuv
-        xWeightedPredictionUni(pcCU, &m_acYuvPred[0], uiPartAddr, iWidth, iHeight, REF_PIC_LIST_0, rpcYuvPred);
+        xWeightedPredictionUni(pcCU, &m_acShortPred[0], uiPartAddr, iWidth, iHeight, REF_PIC_LIST_0, rpcYuvPred);
     }
     else
     {
+        TComYuv* pcMbYuv;
         for (Int iRefList = 0; iRefList < 2; iRefList++)
         {
             RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -588,9 +588,8 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
             assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
 
             pcMbYuv = &m_acYuvPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv); //pcMbYuv must be TComYuv
+            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv); 
         }
-        //m_acYuvPred must be TComYuv
         xWeightedAverage(&m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
     }
 }
@@ -609,77 +608,22 @@ Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth,
  */
 Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *&dstPic, Bool bi)
 { 
-#if HIGH_BIT_DEPTH
-    if (bi == false)
-#endif
-    {
-        assert(bi == false);
+    assert(bi == false);
 
-        Int refStride = refPic->getStride();
-        Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
-        Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Int refStride = refPic->getStride();
+    Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
+    Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-        Int dstStride = dstPic->getStride();
-        Pel *dst      = dstPic->getLumaAddr(partAddr);
+    Int dstStride = dstPic->getStride();
+    Pel *dst      = dstPic->getLumaAddr(partAddr);
 
-        Int xFrac = mv->getHor() & 0x3;
-        Int yFrac = mv->getVer() & 0x3;
+    Int xFrac = mv->getHor() & 0x3;
+    Int yFrac = mv->getVer() & 0x3;
 
-        Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-        Int srcStride = refPic->getStride();
+    Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
+    Int srcStride = refPic->getStride();
 
-        x265::primitives.cpyblock(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
-    }
-#if HIGH_BIT_DEPTH
-    else /* For biprediction. will work correctly only when HIGH_BIT_DEPTH enabled. Will be removed once bipred is fixed.  */
-    {
-        assert(bi == true);
-
-        Int refStride = refPic->getStride();
-        Int refOffset = (mv->getHor() >> 2) + (mv->getVer() >> 2) * refStride;
-        Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-
-        Int dstStride = dstPic->getStride();
-        Short *dst      = (Short*)dstPic->getLumaAddr(partAddr);
-
-        Int xFrac = mv->getHor() & 0x3;
-        Int yFrac = mv->getVer() & 0x3;
-
-        Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-        Int srcStride = refPic->getStride();
-
-        if (yFrac == 0)
-        {
-            if(xFrac==0)
-            {
-                //filterconvertpeltoshort
-                x265::primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height);
-            }
-            else
-            {
-                //filterhorizontalpelshort
-                x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[xFrac]);
-            }
-        }
-        else if (xFrac == 0)
-        {
-            //filterverticalpelshort
-            x265::primitives.ipFilter_p_s[FILTER_V_P_S_8](g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
-        }
-        else
-        {
-            Int tmpStride = width;
-            Int filterSize = NTAPS_LUMA;
-            Int halfFilterSize = (filterSize >> 1);
-            Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
-
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(ref - (halfFilterSize - 1) * refStride) , refStride, tmp, tmpStride, width, height + filterSize - 1, TComInterpolationFilter::m_lumaFilter[xFrac]);
-            x265::primitives.ipFilter_s_s[FILTER_V_S_S_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride ,tmpStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
-
-            free(tmp);
-        }
-    }
-#endif
+    x265::primitives.cpyblock(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
 }
 
 //Motion compensated block for biprediction
@@ -704,18 +648,15 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     {
         if(xFrac==0)
         {
-                //filterconvertpeltoshort
             x265::primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height);
         }
         else
         {
-            //filterhorizontalpelshort
             x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        //filterverticalpelshort
         x265::primitives.ipFilter_p_s[FILTER_V_P_S_8](g_bitDepthY, (pixel*)ref , refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
     }
     else
@@ -767,89 +708,38 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     Int filterSize = NTAPS_CHROMA;
 
     Int halfFilterSize = (filterSize >> 1);
-#if HIGH_BIT_DEPTH
-    if (bi == false)
-#endif
+
+    if (yFrac == 0)
     {
-        if (yFrac == 0)
+        if (xFrac == 0)
         {
-            if (xFrac == 0)
-            {
-                x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
-                x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
-            }
-            else
-            {
-                primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
-                primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
-            }
-        }
-        else if (xFrac == 0)
-        {
-            primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
-            primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
+            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
         }
         else
         {
-            Int     extStride = cxWidth;
-            Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
-
-            primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_if.m_chromaFilter[xFrac]);
-            primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
-
-            primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_if.m_chromaFilter[xFrac]);
-            primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_if.m_chromaFilter[yFrac]);
-
-            xFree(extY);
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
+            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
         }
     }
-#if HIGH_BIT_DEPTH
-    else  /* For biprediction. will work correctly only when HIGHBITDEPTH enabled. Will be removed once bipred is fixed.  */
-    {    
-        Short* dstCb = (Short*)dstPic->getCbAddr(partAddr);
-        Short* dstCr = (Short*)dstPic->getCrAddr(partAddr);
-        if (yFrac == 0)
-        {
-            //m_if.filterHorChroma(refCb, refStride, dstCb,  dstStride, cxWidth, cxHeight, xFrac, !bi);
-            //m_if.filterHorChroma(refCr, refStride, dstCr,  dstStride, cxWidth, cxHeight, xFrac, !bi);
-            if(xFrac==0)
-            {
-                    //filterconvertpeltoshort
-                x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCb , refStride, dstCb, dstStride, cxWidth, cxHeight);
-                x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCr , refStride, dstCr, dstStride, cxWidth, cxHeight);
-            }
-            else
-            {
-                //filterhorizontalpelshort
-                x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCb , refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
-                x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCr , refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
-            }
-        }
-        else if (xFrac == 0)
-        {
-            //m_if.filterVerChroma(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
-            //m_if.filterVerChroma(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
-            x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-            x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-        }
-        else
-        {
-            Int     extStride = cxWidth;
-            Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
-            //m_if.filterHorChroma(refCb - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, xFrac, false);
-            //m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
-            x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-
-            //m_if.filterHorChroma(refCr - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, xFrac, false);
-            //m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
-            x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-            free(extY);
-        }
-        
+    else if (xFrac == 0)
+    {
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
     }
-#endif
+    else
+    {
+        Int     extStride = cxWidth;
+        Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
+
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_if.m_chromaFilter[xFrac]);
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+
+        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_if.m_chromaFilter[xFrac]);
+        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_if.m_chromaFilter[yFrac]);
+
+        xFree(extY);
+    }
 }
 
 //Generate motion compensated block when biprediction
@@ -879,25 +769,19 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 
     if (yFrac == 0)
     {
-        //m_if.filterHorChroma(refCb, refStride, dstCb,  dstStride, cxWidth, cxHeight, xFrac, !bi);
-        //m_if.filterHorChroma(refCr, refStride, dstCr,  dstStride, cxWidth, cxHeight, xFrac, !bi);
         if(xFrac==0)
         {
-            //filterconvertpeltoshort
             x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCb , refStride, dstCb, dstStride, cxWidth, cxHeight);
             x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCr , refStride, dstCr, dstStride, cxWidth, cxHeight);
         }
         else
         {
-            //filterhorizontalpelshort
             x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCb , refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
             x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCr , refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        //m_if.filterVerChroma(refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
-        //m_if.filterVerChroma(refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, true, !bi);
         x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
         x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
     }
@@ -905,18 +789,12 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     {
         Int     extStride = cxWidth;
         Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
-        //m_if.filterHorChroma(refCb - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, xFrac, false);
-        //m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
-        x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
+        x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
         x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-
-        //m_if.filterHorChroma(refCr - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, xFrac, false);
-        //m_if.filterVerChroma(extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, yFrac, false, !bi);
-        x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
+        x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
         x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
         free(extY);
     }
-
 }
 
 Void TComPrediction::xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv*& rpcYuvDst)

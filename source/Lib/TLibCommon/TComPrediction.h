@@ -68,6 +68,7 @@ protected:
     Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
 
     TComYuv   m_acYuvPred[2];
+    TShortYUV   m_acShortPred[2];
     TComYuv   m_cYuvPredTemp;
     /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
     TComYuv m_filteredBlock[4][4];

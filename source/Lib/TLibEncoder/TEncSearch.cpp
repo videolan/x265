@@ -3572,16 +3572,13 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
     // prediction pattern
     if (pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType() == P_SLICE)
     {
-        xPredInterLumaBlk(pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, true);
+        TShortYUV *pcMbYuv = &m_acShortPred[0];
+        xPredInterLumaBlk(pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcMbYuv, true);
+        xWeightedPredictionUni(pcCU, pcMbYuv, uiPartAddr, iSizeX, iSizeY, eRefPicList, pcTemplateCand, iRefIdx);
     }
     else
     {
         xPredInterLumaBlk(pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, false);
-    }
-
-    if (pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType() == P_SLICE)
-    {
-        xWeightedPredictionUni(pcCU, pcTemplateCand, uiPartAddr, iSizeX, iSizeY, eRefPicList, pcTemplateCand, iRefIdx);
     }
 
     // calc distortion

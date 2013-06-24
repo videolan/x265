@@ -649,6 +649,75 @@ Void TComYuv::addAvg(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt iPartUnitIdx, 
     }
 }
 
+Void TComYuv::addAvg(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitIdx, UInt iWidth, UInt iHeight)
+{
+    Int x, y;
+
+    Short* pSrcY0  = pcYuvSrc0->getLumaAddr(iPartUnitIdx);
+    Short* pSrcU0  = pcYuvSrc0->getCbAddr(iPartUnitIdx);
+    Short* pSrcV0  = pcYuvSrc0->getCrAddr(iPartUnitIdx);
+
+    Short* pSrcY1  = pcYuvSrc1->getLumaAddr(iPartUnitIdx);
+    Short* pSrcU1  = pcYuvSrc1->getCbAddr(iPartUnitIdx);
+    Short* pSrcV1  = pcYuvSrc1->getCrAddr(iPartUnitIdx);
+
+    Pel* pDstY   = getLumaAddr(iPartUnitIdx);
+    Pel* pDstU   = getCbAddr(iPartUnitIdx);
+    Pel* pDstV   = getCrAddr(iPartUnitIdx);
+
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
+    UInt  iSrc1Stride = pcYuvSrc1->getStride();
+    UInt  iDstStride  = getStride();
+    Int shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
+    Int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
+
+    for (y = 0; y < iHeight; y++)
+    {
+        for (x = 0; x < iWidth; x += 4)
+        {
+            pDstY[x + 0] = ClipY((pSrcY0[x + 0] + pSrcY1[x + 0] + offset) >> shiftNum);
+            pDstY[x + 1] = ClipY((pSrcY0[x + 1] + pSrcY1[x + 1] + offset) >> shiftNum);
+            pDstY[x + 2] = ClipY((pSrcY0[x + 2] + pSrcY1[x + 2] + offset) >> shiftNum);
+            pDstY[x + 3] = ClipY((pSrcY0[x + 3] + pSrcY1[x + 3] + offset) >> shiftNum);
+        }
+
+        pSrcY0 += iSrc0Stride;
+        pSrcY1 += iSrc1Stride;
+        pDstY  += iDstStride;
+    }
+
+    shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthC;
+    offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
+
+    iSrc0Stride = pcYuvSrc0->getCStride();
+    iSrc1Stride = pcYuvSrc1->getCStride();
+    iDstStride  = getCStride();
+
+    iWidth  >>= 1;
+    iHeight >>= 1;
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: chroma min width is 2
+            pDstU[x] = ClipC((pSrcU0[x] + pSrcU1[x] + offset) >> shiftNum);
+            pDstV[x] = ClipC((pSrcV0[x] + pSrcV1[x] + offset) >> shiftNum);
+            x--;
+            pDstU[x] = ClipC((pSrcU0[x] + pSrcU1[x] + offset) >> shiftNum);
+            pDstV[x] = ClipC((pSrcV0[x] + pSrcV1[x] + offset) >> shiftNum);
+            x--;
+        }
+
+        pSrcU0 += iSrc0Stride;
+        pSrcU1 += iSrc1Stride;
+        pSrcV0 += iSrc0Stride;
+        pSrcV1 += iSrc1Stride;
+        pDstU  += iDstStride;
+        pDstV  += iDstStride;
+    }
+}
+
 Void TComYuv::removeHighFreq(TComYuv* pcYuvSrc, UInt uiPartIdx, UInt uiWidht, UInt uiHeight)
 {
     Int x, y;

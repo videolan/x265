@@ -40,25 +40,26 @@
 #include "TComWeightPrediction.h"
 #include "TComInterpolationFilter.h"
 
-static inline Pel weightBidirY(Int w0, Pel P0, Int w1, Pel P1, Int round, Int shift, Int offset)
+static inline Pel weightBidirY(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightBidirC(Int w0, Pel P0, Int w1, Pel P1, Int round, Int shift, Int offset)
+static inline Pel weightBidirC(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift));
 }
 
-static inline Pel weightUnidirY(Int w0, Pel P0, Int round, Int shift, Int offset)
+static inline Pel weightUnidirY(Int w0, Short P0, Int round, Int shift, Int offset)
 {
     return ClipY(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
-static inline Pel weightUnidirC(Int w0, Pel P0, Int round, Int shift, Int offset)
+static inline Pel weightUnidirC(Int w0, Short P0, Int round, Int shift, Int offset)
 {
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
+
 
 // ====================================================================================================================
 // Class definition
@@ -180,6 +181,121 @@ Void TComWeightPrediction::addWeightBi(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, U
     }
 }
 
+/** weighted averaging for bi-pred
+ * \param TShortYuv* pcYuvSrc0
+ * \param TShortYuv* pcYuvSrc1
+ * \param iPartUnitIdx
+ * \param iWidth
+ * \param iHeight
+ * \param wpScalingParam *wp0
+ * \param wpScalingParam *wp1
+ * \param TComYuv* rpcYuvDst
+ * \returns Void
+ */
+Void TComWeightPrediction::addWeightBi(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitIdx, UInt iWidth, UInt iHeight, wpScalingParam *wp0, wpScalingParam *wp1, TComYuv* rpcYuvDst, Bool bRound)
+{
+    Int x, y;
+
+    Short* pSrcY0  = pcYuvSrc0->getLumaAddr(iPartUnitIdx);
+    Short* pSrcU0  = pcYuvSrc0->getCbAddr(iPartUnitIdx);
+    Short* pSrcV0  = pcYuvSrc0->getCrAddr(iPartUnitIdx);
+
+    Short* pSrcY1  = pcYuvSrc1->getLumaAddr(iPartUnitIdx);
+    Short* pSrcU1  = pcYuvSrc1->getCbAddr(iPartUnitIdx);
+    Short* pSrcV1  = pcYuvSrc1->getCrAddr(iPartUnitIdx);
+
+    Pel* pDstY   = rpcYuvDst->getLumaAddr(iPartUnitIdx);
+    Pel* pDstU   = rpcYuvDst->getCbAddr(iPartUnitIdx);
+    Pel* pDstV   = rpcYuvDst->getCrAddr(iPartUnitIdx);
+
+    // Luma : --------------------------------------------
+    Int w0      = wp0[0].w;
+    Int offset  = wp0[0].offset;
+    Int shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
+    Int shift   = wp0[0].shift + shiftNum;
+    Int round   = shift ? (1 << (shift - 1)) * bRound : 0;
+    Int w1      = wp1[0].w;
+
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
+    UInt  iSrc1Stride = pcYuvSrc1->getStride();
+    UInt  iDstStride  = rpcYuvDst->getStride();
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: luma min width is 4
+            pDstY[x] = weightBidirY(w0, pSrcY0[x], w1, pSrcY1[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightBidirY(w0, pSrcY0[x], w1, pSrcY1[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightBidirY(w0, pSrcY0[x], w1, pSrcY1[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightBidirY(w0, pSrcY0[x], w1, pSrcY1[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcY0 += iSrc0Stride;
+        pSrcY1 += iSrc1Stride;
+        pDstY  += iDstStride;
+    }
+
+    // Chroma U : --------------------------------------------
+    w0      = wp0[1].w;
+    offset  = wp0[1].offset;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shift   = wp0[1].shift + shiftNum;
+    round   = shift ? (1 << (shift - 1)) : 0;
+    w1      = wp1[1].w;
+
+    iSrc0Stride = pcYuvSrc0->getCStride();
+    iSrc1Stride = pcYuvSrc1->getCStride();
+    iDstStride  = rpcYuvDst->getCStride();
+
+    iWidth  >>= 1;
+    iHeight >>= 1;
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: chroma min width is 2
+            pDstU[x] = weightBidirC(w0, pSrcU0[x], w1, pSrcU1[x], round, shift, offset);
+            x--;
+            pDstU[x] = weightBidirC(w0, pSrcU0[x], w1, pSrcU1[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcU0 += iSrc0Stride;
+        pSrcU1 += iSrc1Stride;
+        pDstU  += iDstStride;
+    }
+
+    // Chroma V : --------------------------------------------
+    w0      = wp0[2].w;
+    offset  = wp0[2].offset;
+    shift   = wp0[2].shift + shiftNum;
+    round   = shift ? (1 << (shift - 1)) : 0;
+    w1      = wp1[2].w;
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: chroma min width is 2
+            pDstV[x] = weightBidirC(w0, pSrcV0[x], w1, pSrcV1[x], round, shift, offset);
+            x--;
+            pDstV[x] = weightBidirC(w0, pSrcV0[x], w1, pSrcV1[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcV0 += iSrc0Stride;
+        pSrcV1 += iSrc1Stride;
+        pDstV  += iDstStride;
+    }
+}
+
+
 /** weighted averaging for uni-pred
  * \param TComYuv* pcYuvSrc0
  * \param iPartUnitIdx
@@ -196,6 +312,105 @@ Void TComWeightPrediction::addWeightUni(TComYuv* pcYuvSrc0, UInt iPartUnitIdx, U
     Pel* pSrcY0  = pcYuvSrc0->getLumaAddr(iPartUnitIdx);
     Pel* pSrcU0  = pcYuvSrc0->getCbAddr(iPartUnitIdx);
     Pel* pSrcV0  = pcYuvSrc0->getCrAddr(iPartUnitIdx);
+
+    Pel* pDstY   = rpcYuvDst->getLumaAddr(iPartUnitIdx);
+    Pel* pDstU   = rpcYuvDst->getCbAddr(iPartUnitIdx);
+    Pel* pDstV   = rpcYuvDst->getCrAddr(iPartUnitIdx);
+
+    // Luma : --------------------------------------------
+    Int w0      = wp0[0].w;
+    Int offset  = wp0[0].offset;
+    Int shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
+    Int shift   = wp0[0].shift + shiftNum;
+    Int round   = shift ? (1 << (shift - 1)) : 0;
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
+    UInt  iDstStride  = rpcYuvDst->getStride();
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: luma min width is 4
+            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
+            x--;
+            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcY0 += iSrc0Stride;
+        pDstY  += iDstStride;
+    }
+
+    // Chroma U : --------------------------------------------
+    w0      = wp0[1].w;
+    offset  = wp0[1].offset;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shift   = wp0[1].shift + shiftNum;
+    round   = shift ? (1 << (shift - 1)) : 0;
+
+    iSrc0Stride = pcYuvSrc0->getCStride();
+    iDstStride  = rpcYuvDst->getCStride();
+
+    iWidth  >>= 1;
+    iHeight >>= 1;
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: chroma min width is 2
+            pDstU[x] = weightUnidirC(w0, pSrcU0[x], round, shift, offset);
+            x--;
+            pDstU[x] = weightUnidirC(w0, pSrcU0[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcU0 += iSrc0Stride;
+        pDstU  += iDstStride;
+    }
+
+    // Chroma V : --------------------------------------------
+    w0      = wp0[2].w;
+    offset  = wp0[2].offset;
+    shift   = wp0[2].shift + shiftNum;
+    round   = shift ? (1 << (shift - 1)) : 0;
+
+    for (y = iHeight - 1; y >= 0; y--)
+    {
+        for (x = iWidth - 1; x >= 0; )
+        {
+            // note: chroma min width is 2
+            pDstV[x] = weightUnidirC(w0, pSrcV0[x], round, shift, offset);
+            x--;
+            pDstV[x] = weightUnidirC(w0, pSrcV0[x], round, shift, offset);
+            x--;
+        }
+
+        pSrcV0 += iSrc0Stride;
+        pDstV  += iDstStride;
+    }
+}
+
+/** weighted averaging for uni-pred
+ * \param TShortYUV* pcYuvSrc0
+ * \param iPartUnitIdx
+ * \param iWidth
+ * \param iHeight
+ * \param wpScalingParam *wp0
+ * \param TComYuv* rpcYuvDst
+ * \returns Void
+ */
+Void TComWeightPrediction::addWeightUni(TShortYUV* pcYuvSrc0, UInt iPartUnitIdx, UInt iWidth, UInt iHeight, wpScalingParam *wp0, TComYuv* rpcYuvDst)
+{
+    Int x, y;
+
+    Short* pSrcY0  = pcYuvSrc0->getLumaAddr(iPartUnitIdx);
+    Short* pSrcU0  = pcYuvSrc0->getCbAddr(iPartUnitIdx);
+    Short* pSrcV0  = pcYuvSrc0->getCrAddr(iPartUnitIdx);
 
     Pel* pDstY   = rpcYuvDst->getLumaAddr(iPartUnitIdx);
     Pel* pDstU   = rpcYuvDst->getCbAddr(iPartUnitIdx);
@@ -396,6 +611,45 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYu
     }
 }
 
+/** weighted prediction for bi-pred
+ * \param TComDataCU* pcCU
+ * \param TShortYuv* pcYuvSrc0
+ * \param TShortYuv* pcYuvSrc1
+ * \param iRefIdx0
+ * \param iRefIdx1
+ * \param uiPartIdx
+ * \param iWidth
+ * \param iHeight
+ * \param TComYuv* rpcYuvDst
+ * \returns Void
+ */
+Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
+{
+    wpScalingParam  *pwp0, *pwp1;
+    const TComPPS   *pps = pcCU->getSlice()->getPPS();
+
+    assert(pps->getWPBiPred());
+
+    getWpScaling(pcCU, iRefIdx0, iRefIdx1, pwp0, pwp1);
+
+    if (iRefIdx0 >= 0 && iRefIdx1 >= 0)
+    {
+        addWeightBi(pcYuvSrc0, pcYuvSrc1, uiPartIdx, iWidth, iHeight, pwp0, pwp1, rpcYuvDst);
+    }
+    else if (iRefIdx0 >= 0 && iRefIdx1 <  0)
+    {
+        addWeightUni(pcYuvSrc0, uiPartIdx, iWidth, iHeight, pwp0, rpcYuvDst);
+    }
+    else if (iRefIdx0 <  0 && iRefIdx1 >= 0)
+    {
+        addWeightUni(pcYuvSrc1, uiPartIdx, iWidth, iHeight, pwp1, rpcYuvDst);
+    }
+    else
+    {
+        assert(0);
+    }
+}
+
 /** weighted prediction for uni-pred
  * \param TComDataCU* pcCU
  * \param TComYuv* pcYuvSrc
@@ -409,6 +663,40 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYu
  * \returns Void
  */
 Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* pcCU, TComYuv* pcYuvSrc, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Int iRefIdx)
+{
+    wpScalingParam  *pwp, *pwpTmp;
+
+    if (iRefIdx < 0)
+    {
+        iRefIdx   = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+    }
+    assert(iRefIdx >= 0);
+
+    if (eRefPicList == REF_PIC_LIST_0)
+    {
+        getWpScaling(pcCU, iRefIdx, -1, pwp, pwpTmp);
+    }
+    else
+    {
+        getWpScaling(pcCU, -1, iRefIdx, pwpTmp, pwp);
+    }
+    addWeightUni(pcYuvSrc, uiPartAddr, iWidth, iHeight, pwp, rpcYuvPred);
+}
+
+
+/** weighted prediction for uni-pred
+ * \param TComDataCU* pcCU
+ * \param TShortYuv* pcYuvSrc
+ * \param uiPartAddr
+ * \param iWidth
+ * \param iHeight
+ * \param eRefPicList
+ * \param TComYuv*& rpcYuvPred
+ * \param iPartIdx
+ * \param iRefIdx
+ * \returns Void
+ */
+Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* pcCU, TShortYUV* pcYuvSrc, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Int iRefIdx)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
