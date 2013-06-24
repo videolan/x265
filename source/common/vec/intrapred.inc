@@ -6130,7 +6130,10 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.getIPredPlanar = predIntraPlanar;
     p.getIPredAng = xPredIntraAngBufRef;
 
-#if HIGH_BIT_DEPTH || (INSTRSET < 4)
+    /* VC10 and VC11 both generate bad Win32 code for these functions.
+     * They apparently can't deal with register allocation for intrinsic
+     * functions this large */
+#if HIGH_BIT_DEPTH || (INSTRSET < 4) || (defined(_MSC_VER) && !defined(_WIN64))
     p.getIPredAngs[0] = xPredIntraAngs<4>;
     p.getIPredAngs[1] = xPredIntraAngs<8>;
     p.getIPredAngs[2] = xPredIntraAngs<16>;
