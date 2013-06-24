@@ -367,7 +367,7 @@ void CDECL transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
 {
     transpose16_dummy(pDst, 16, pSrc, nStrideS);
 }
-#endif !HIGH_BIT_DEPTH
+#endif // !HIGH_BIT_DEPTH
 
 }  // end anonymous namespace
 

@@ -139,7 +139,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
 }
 
 template<int N>
-void filterVertical_short_short(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_short_short(int /* bitDepth */, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -224,13 +224,11 @@ void filterVertical_pel_short(int bitDepth, pixel *src, int srcStride, short *ds
     int cStride =  srcStride;
     src -= (N / 2 - 1) * cStride;
     Int offset;
-    Short maxVal;
     Int headRoom = IF_INTERNAL_PREC - bitDepth;
     Int shift = IF_FILTER_PREC;
 
     shift -=  headRoom;
     offset = -IF_INTERNAL_OFFS << shift;
-    maxVal = 0;
 
     int row, col;
     for (row = 0; row < height; row++)

@@ -5144,17 +5144,14 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
 #endif
 void xPredIntraAngs8(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
-    const int size = 8;
-    int iMode;
-
 #define N   (8)
     pixel (*pDstN)[8*8] = (pixel(*)[8*8])pDst0;
 
-    __m128i T00, T01, T02, T03, T04, T05;
+    __m128i T00, T01, T02, T03;
     __m128i R00, R01;
     __m128i R10, R11;
-    __m128i R20, R21/*, R22, R23, R24, R25, R26, R27*/;
-    __m128i R30, R31/*, R32, R33, R34, R35, R36, R37*/;
+    __m128i R20, R21;
+    __m128i R30, R31;
 
     R00 = _mm_loadu_si128((__m128i*)(pLeft0+1));    // [-16 -15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01]
     R10 = _mm_loadu_si128((__m128i*)(pAbove0+1));   // [ 16  15  14  13  12  11  10  09  08  07  06  05  04  03  02  01]
