@@ -111,6 +111,8 @@ public:
 
     x265_picture_t *getReconPictures(UInt startPOC, UInt count);
 
+    void processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP);
+
 protected:
 
     TComSPS* getSPS() { return &m_cSPS; }

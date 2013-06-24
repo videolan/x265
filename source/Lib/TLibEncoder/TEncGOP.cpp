@@ -232,6 +232,18 @@ TComPic* TEncGOP::xGetNewPicBuffer()
     return NULL;
 }
 
+void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP)
+{
+    assert(m_totalCoded == POCLast);
+    m_totalCoded = POCLast;
+    for (int poc = POCLast; poc < POCLast + numFrames; )
+    {
+        Int gopSize = (POCLast == 0) ? 1 : m_pcCfg->getGOPSize();
+        compressGOP(poc, gopSize, accessUnitsInGOP);
+        poc += gopSize;
+    }
+}
+
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
