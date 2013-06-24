@@ -157,78 +157,76 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 
 typedef struct x265_param_t
 {
-    int       internalBitDepth;                 ///< bit-depth codec operates at
-
     int       logLevel;
-    int       iWaveFrontSynchro;                ///< Enable Wavefront Parallel Processing
-    int       poolNumThreads;                   ///< if WPP enabled, number of threads in pool
+    int       bEnableWavefront;                ///< enable wavefront parallel processing
+    int       poolNumThreads;                  ///< number of threads to allocate for thread pool
+
+    int       internalBitDepth;                ///< bit-depth the codec operates at
 
     // source specification
-    int       iFrameRate;                       ///< source frame-rates (Hz)
-    int       iSourceWidth;                     ///< source width in pixel
-    int       iSourceHeight;                    ///< source height in pixel
+    int       frameRate;                       ///< source frame-rate in Hz
+    int       sourceWidth;                     ///< source width in pixels
+    int       sourceHeight;                    ///< source height in pixels
 
     // coding unit (CU) definition
-    uint32_t  uiMaxCUSize;                      ///< max. CU width and height in pixels
-    uint32_t  uiMaxCUDepth;                     ///< max. CU depth
+    uint32_t  maxCUSize;                       ///< max. CU width and height in pixels
+    uint32_t  maxCUDepth;                      ///< max. CU recursion/split depth
 
     // transform unit (TU) definition
-    uint32_t  uiQuadtreeTULog2MaxSize;
-    uint32_t  uiQuadtreeTULog2MinSize;
+    uint32_t  tuQTMaxLog2Size;
+    uint32_t  tuQTMinLog2Size;
 
-    uint32_t  uiQuadtreeTUMaxDepthInter;
-    uint32_t  uiQuadtreeTUMaxDepthIntra;
+    uint32_t  tuQTMaxInterDepth;               ///< amount the TU is allow to recurse beyond the inter PU depth
+    uint32_t  tuQTMaxIntraDepth;               ///< amount the TU is allow to recurse beyond the intra PU depth
 
     // coding structure
-    int       iIntraPeriod;                     ///< period of I-slice (random access period)
+    int       keyframeInterval;                ///< period of I-slice (random access period)
 
-    int       useTransformSkip;                 ///< flag for enabling intra transform skipping
-    int       useTransformSkipFast;             ///< flag for enabling fast intra transform skipping
-    int       enableAMP;                        ///< flag for enabling asymmetrical motion predictions
-    int       enableRectInter;                  ///< flag for enabling rectangular modes 2NxN, Nx2N
-    int       enableRDO;                        ///< flag for enabling RDO 
+    // Intra coding tools
+    int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)
+    int       bEnableStrongIntraSmoothing;     ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
+
+    // Inter coding tools
+    int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, HM, FULL)
+    int       searchRange;                     ///< ME search range
+    int       bipredSearchRange;               ///< ME search range for bipred refinement
+    uint32_t  log2ParallelMergeLevel;          ///< Parallel merge estimation region
+    uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
+    int       TMVPModeId;                      ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
+    int       bEnableWeightedPred;             ///< enable weighted prediction in P slices
+    int       bEnableWeightedBiPred;           ///< enable bi-directional weighted prediction in B slices
+
+    int       bEnableAMP;                      ///< enable asymmetrical motion predictions
+    int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
+    int       bEnableFastMergeDecision;        ///< enable fast merge decision from rd-cost
+    int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
+    int       bEnableEarlySkip;                ///< enable early skip (merge) detection
+    int       bEnableRDO;                      ///< enable full rate distortion optimization
+    int       bEnableRDOQ;                     ///< enable RD optimized quantization
+    int       bEnableSignHiding;               ///< enable hiding one sign bit per TU via implicit signaling
+    int       bEnableTransformSkip;            ///< enable intra transform skipping
+    int       bEnableTSkipFast;                ///< enable fast intra transform skipping
+    int       bEnableRDOQTS;                   ///< enable RD optimized quantization when transform skip is selected
+
+    // SAO loop filter
+    int       bEnableSAO;                      ///< Enable SAO filter
+    int       maxSAOOffsetsPerPic;             ///< SAO maximum number of offset per picture
+    int       saoLcuBoundary;                  ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+    int       saoLcuBasedOptimization;         ///< SAO LCU-based optimization
+
     // coding quality
-    int       iQP;                              ///< QP value of key-picture (integer)
-    int       cbQpOffset;                       ///< Chroma Cb QP Offset (0:default)
-    int       crQpOffset;                       ///< Chroma Cr QP Offset (0:default)
+    int       qp;                              ///< QP value of key-picture (integer)
+    int       cbQpOffset;                      ///< Chroma Cb QP Offset (0:default)
+    int       crQpOffset;                      ///< Chroma Cr QP Offset (0:default)
+    int       rdPenalty;                       ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
 
-    uint32_t  iMaxCuDQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
-    int       bUseAdaptQpSelect;                ///< TODO: What does this flag enable?
-    int       bUseAdaptiveQP;                   ///< Flag for enabling QP adaptation based on a psycho-visual model
-    int       iQPAdaptationRange;               ///< dQP range by QP adaptation
+    int       bEnableAdaptiveQP;               ///< Flag for enabling QP adaptation based on a psycho-visual model
+    int       bEnableAdaptQpSelect;            ///< TODO: What does this flag enable?
+    uint32_t  maxCUdQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
+    int       qpAdaptionRange;                 ///< dQP range by QP adaptation
 
-    // coding tool (lossless)
-    int       bUseSAO;                          ///< Enable SAO filter
-    int       maxNumOffsetsPerPic;              ///< SAO maximum number of offset per picture
-    int       saoLcuBoundary;                   ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    int       saoLcuBasedOptimization;          ///< SAO LCU-based optimization
-
-    // coding tools
-    int       useRDOQ;                          ///< flag for using RD optimized quantization
-    int       useRDOQTS;                        ///< flag for using RD optimized quantization for transform skip
-    int       rdPenalty;                        ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
-    int       signHideFlag;
-    int       useFastDecisionForMerge;          ///< flag for using Fast Decision Merge RD-Cost
-    int       bUseCbfFastMode;                  ///< flag for using Cbf Fast PU Mode Decision
-    int       useEarlySkipDetection;            ///< flag for using Early SKIP Detection
-
-    int       searchMethod;                     ///< ME search method (DIA, HEX, UMH, HM)
-    int       iSearchRange;                     ///< ME search range
-    int       bipredSearchRange;                ///< ME search range for bipred refinement
-    int       bUseConstrainedIntraPred;         ///< flag for using constrained intra prediction
-
-    // weighted prediction
-    int       useWeightedPred;                  ///< Use of weighted prediction in P slices
-    int       useWeightedBiPred;                ///< Use of bi-directional weighted prediction in B slices
-
-    uint32_t  log2ParallelMergeLevel;           ///< Parallel merge estimation region
-    uint32_t  maxNumMergeCand;                  ///< Max number of merge candidates
-
-    int       TMVPModeId;                       ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
-    int       useStrongIntraSmoothing;          ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
-
-    // DecodedPictureHashSEI
-    int       useDecodedPictureHashSEI;         ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+    // debugging
+    int       bEnableDecodedPictureHashSEI;    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }
 x265_param_t;
 

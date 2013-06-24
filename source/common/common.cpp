@@ -83,34 +83,34 @@ void x265_param_default(x265_param_t *param)
     memset(param, 0, sizeof(x265_param_t));
     param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
-    param->iSearchRange = 64;
+    param->searchRange = 64;
     param->bipredSearchRange = 4;
-    param->iIntraPeriod = 16; // should probably default to 1 per second
+    param->keyframeInterval = 16; // should probably default to 1 per second
     param->internalBitDepth = 8;
-    param->uiMaxCUSize = 64;
-    param->uiMaxCUDepth = 4;
-    param->uiQuadtreeTULog2MaxSize = 5;
-    param->uiQuadtreeTULog2MinSize = 2;
-    param->uiQuadtreeTUMaxDepthInter = 3;
-    param->uiQuadtreeTUMaxDepthIntra = 3;
-    param->enableAMP = 0;
-    param->enableRectInter = 0;
-    param->enableRDO = 1;
-    param->iQP = 32;
-    param->iQPAdaptationRange = 6;
-    param->bUseSAO = 0;
-    param->maxNumOffsetsPerPic = 2048;
+    param->maxCUSize = 64;
+    param->maxCUDepth = 4;
+    param->tuQTMaxLog2Size = 5;
+    param->tuQTMinLog2Size = 2;
+    param->tuQTMaxInterDepth = 3;
+    param->tuQTMaxIntraDepth = 3;
+    param->bEnableAMP = 0;
+    param->bEnableRectInter = 0;
+    param->bEnableRDO = 1;
+    param->qp = 32;
+    param->qpAdaptionRange = 6;
+    param->bEnableSAO = 0;
+    param->maxSAOOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
     param->log2ParallelMergeLevel = 2;
     param->maxNumMergeCand = 5u;
     param->TMVPModeId = 1;
-    param->signHideFlag = 1;
-    param->useFastDecisionForMerge = 1;
-    param->useStrongIntraSmoothing = 1;
-    param->useRDOQ = 1;
-    param->useRDOQTS = 1;
-    param->useTransformSkip = 1;
-    param->useTransformSkipFast = 1;
+    param->bEnableSignHiding = 1;
+    param->bEnableFastMergeDecision = 1;
+    param->bEnableStrongIntraSmoothing = 1;
+    param->bEnableRDOQ = 1;
+    param->bEnableRDOQTS = 1;
+    param->bEnableTransformSkip = 1;
+    param->bEnableTSkipFast = 1;
 }
 
 extern "C"
@@ -132,7 +132,7 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     }
     else if (!strcmp(profile, "mainstillpicture"))
     {
-        param->iIntraPeriod = 1;
+        param->keyframeInterval = 1;
     }
     else
     {
@@ -157,10 +157,10 @@ int x265_check_params(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (param->iWaveFrontSynchro == 0)
+    if (param->bEnableWavefront == 0)
         param->poolNumThreads = 1;
 
-    if (param->searchMethod != X265_ORIG_SEARCH && (param->useWeightedPred || param->useWeightedBiPred))
+    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedPred || param->bEnableWeightedBiPred))
     {
         x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
         param->searchMethod = X265_ORIG_SEARCH;
@@ -170,81 +170,81 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->internalBitDepth != 8,
             "InternalBitDepth must be 8");
 #endif
-    CONFIRM(param->iQP <  -6 * (param->internalBitDepth - 8) || param->iQP > 51,
+    CONFIRM(param->qp <  -6 * (param->internalBitDepth - 8) || param->qp > 51,
             "QP exceeds supported range (-QpBDOffsety to 51)");
-    CONFIRM(param->iFrameRate <= 0,
+    CONFIRM(param->frameRate <= 0,
             "Frame rate must be more than 1");
     CONFIRM(param->searchMethod<0 || param->searchMethod> X265_FULL_SEARCH,
             "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG 5:FULL)");
-    CONFIRM(param->iSearchRange < 0,
+    CONFIRM(param->searchRange < 0,
             "Search Range must be more than 0");
-    CONFIRM(param->iSearchRange >= 32768,
+    CONFIRM(param->searchRange >= 32768,
         "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
-    CONFIRM(param->iIntraPeriod < -1 || param->iIntraPeriod == 0,
+    CONFIRM(param->keyframeInterval < -1 || param->keyframeInterval == 0,
             "Keyframe interval must be -1 (open-GOP) 1 (intra-only) or greater than 1");
-    CONFIRM(param->iMaxCuDQPDepth > param->uiMaxCUDepth - 1,
+    CONFIRM(param->maxCUdQPDepth > param->maxCUDepth - 1,
             "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
-    CONFIRM(param->cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12");
-    CONFIRM(param->cbQpOffset >  12,   "Max. Chroma Cb QP Offset is  12");
-    CONFIRM(param->crQpOffset < -12,   "Min. Chroma Cr QP Offset is -12");
-    CONFIRM(param->crQpOffset >  12,   "Max. Chroma Cr QP Offset is  12");
+    CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
+    CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
+    CONFIRM(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
+    CONFIRM(param->crQpOffset >  12, "Max. Chroma Cr QP Offset is  12");
 
-    CONFIRM(param->iQPAdaptationRange <= 0,
+    CONFIRM(param->qpAdaptionRange <= 0,
             "QP Adaptation Range must be more than 0");
-    CONFIRM((param->uiMaxCUSize >> param->uiMaxCUDepth) < 4,
+    CONFIRM((param->maxCUSize >> param->maxCUDepth) < 4,
             "Minimum partition width size should be larger than or equal to 8");
-    CONFIRM(param->uiMaxCUSize < 16,
+    CONFIRM(param->maxCUSize < 16,
             "Maximum partition width size should be larger than or equal to 16");
-    CONFIRM((param->iSourceWidth  % (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1))) != 0,
+    CONFIRM((param->sourceWidth  % (param->maxCUSize >> (param->maxCUDepth - 1))) != 0,
             "Resulting coded frame width must be a multiple of the minimum CU size");
-    CONFIRM((param->iSourceHeight % (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1))) != 0,
+    CONFIRM((param->sourceHeight % (param->maxCUSize >> (param->maxCUDepth - 1))) != 0,
             "Resulting coded frame height must be a multiple of the minimum CU size");
 
-    CONFIRM(param->uiQuadtreeTULog2MinSize < 2,
+    CONFIRM(param->tuQTMinLog2Size < 2,
             "QuadtreeTULog2MinSize must be 2 or greater.");
-    CONFIRM(param->uiQuadtreeTULog2MaxSize > 5,
+    CONFIRM(param->tuQTMaxLog2Size > 5,
             "QuadtreeTULog2MaxSize must be 5 or smaller.");
-    CONFIRM((1u << param->uiQuadtreeTULog2MaxSize) > param->uiMaxCUSize,
+    CONFIRM((1u << param->tuQTMaxLog2Size) > param->maxCUSize,
             "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
 
-    CONFIRM(param->uiQuadtreeTULog2MaxSize < param->uiQuadtreeTULog2MinSize,
+    CONFIRM(param->tuQTMaxLog2Size < param->tuQTMinLog2Size,
             "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
-    CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1)),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (param->maxCUDepth - 1)),
             "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> (param->uiMaxCUDepth - 1)),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (param->maxCUDepth - 1)),
             "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> param->uiMaxCUDepth),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> param->maxCUDepth),
             "Minimum CU width must be greater than minimum transform size.");
-    CONFIRM((1u << param->uiQuadtreeTULog2MinSize) > (param->uiMaxCUSize >> param->uiMaxCUDepth),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> param->maxCUDepth),
             "Minimum CU height must be greater than minimum transform size.");
-    CONFIRM(param->uiQuadtreeTUMaxDepthInter < 1,
+    CONFIRM(param->tuQTMaxInterDepth < 1,
             "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
-    CONFIRM(param->uiMaxCUSize < (1u << (param->uiQuadtreeTULog2MinSize + param->uiQuadtreeTUMaxDepthInter - 1)),
+    CONFIRM(param->maxCUSize < (1u << (param->tuQTMinLog2Size + param->tuQTMaxInterDepth - 1)),
             "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-    CONFIRM(param->uiQuadtreeTUMaxDepthIntra < 1,
+    CONFIRM(param->tuQTMaxIntraDepth < 1,
             "QuadtreeTUMaxDepthIntra must be greater than or equal to 1");
-    CONFIRM(param->uiMaxCUSize < (1u << (param->uiQuadtreeTULog2MinSize + param->uiQuadtreeTUMaxDepthIntra - 1)),
+    CONFIRM(param->maxCUSize < (1u << (param->tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1)),
             "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
 
     CONFIRM(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CONFIRM(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
-    CONFIRM(param->bUseAdaptQpSelect && param->iQP < 0,
+    CONFIRM(param->bEnableAdaptQpSelect && param->qp < 0,
             "AdaptiveQpSelection must be disabled when QP < 0.");
-    CONFIRM(param->bUseAdaptQpSelect && (param->cbQpOffset != 0 || param->crQpOffset != 0),
+    CONFIRM(param->bEnableAdaptQpSelect && (param->cbQpOffset != 0 || param->crQpOffset != 0),
             "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
 
     //TODO:ChromaFmt assumes 4:2:0 below
-    CONFIRM(param->iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
+    CONFIRM(param->sourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
             "Picture width must be an integer multiple of the specified chroma subsampling");
-    CONFIRM(param->iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
+    CONFIRM(param->sourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0,
             "Picture height must be an integer multiple of the specified chroma subsampling");
 
     // max CU size should be power of 2
-    uint32_t ui = param->uiMaxCUSize;
+    uint32_t ui = param->maxCUSize;
     while (ui)
     {
         ui >>= 1;
@@ -252,12 +252,12 @@ int x265_check_params(x265_param_t *param)
             CONFIRM(ui != 1, "Width should be 2^n");
     }
 
-    CONFIRM(param->iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative");
+    CONFIRM(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
 
     CONFIRM(param->log2ParallelMergeLevel < 2,
             "Log2ParallelMergeLevel should be larger than or equal to 2");
 
-    CONFIRM(param->iWaveFrontSynchro && param->bUseAdaptQpSelect,
+    CONFIRM(param->bEnableWavefront && param->bEnableAdaptQpSelect,
             "Adaptive QP Select cannot be used together with WPP");
 
     return check_failed;
@@ -266,19 +266,19 @@ int x265_check_params(x265_param_t *param)
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 {
     // set max CU width & height
-    g_uiMaxCUWidth  = param->uiMaxCUSize;
-    g_uiMaxCUHeight = param->uiMaxCUSize;
+    g_uiMaxCUWidth  = param->maxCUSize;
+    g_uiMaxCUHeight = param->maxCUSize;
 
     // compute actual CU depth with respect to config depth and max transform size
     g_uiAddCUDepth  = 0;
-    while ((param->uiMaxCUSize >> param->uiMaxCUDepth) > (1u << (param->uiQuadtreeTULog2MinSize + g_uiAddCUDepth)))
+    while ((param->maxCUSize >> param->maxCUDepth) > (1u << (param->tuQTMinLog2Size + g_uiAddCUDepth)))
     {
         g_uiAddCUDepth++;
     }
 
-    param->uiMaxCUDepth += g_uiAddCUDepth;
+    param->maxCUDepth += g_uiAddCUDepth;
     g_uiAddCUDepth++;
-    g_uiMaxCUDepth = param->uiMaxCUDepth;
+    g_uiMaxCUDepth = param->maxCUDepth;
 
     // set internal bit-depth and constants
 #if HIGH_BIT_DEPTH
@@ -300,29 +300,29 @@ void x265_print_params(x265_param_t *param)
 #if HIGH_BIT_DEPTH
     x265_log(param, X265_LOG_INFO, "Internal bit depth           : %d\n", param->internalBitDepth);
 #endif
-    x265_log(param, X265_LOG_INFO, "CU size / depth              : %d / %d\n", param->uiMaxCUSize, param->uiMaxCUDepth);
-    x265_log(param, X265_LOG_INFO, "RQT trans. size (min / max)  : %d / %d\n", 1 << param->uiQuadtreeTULog2MinSize, 1 << param->uiQuadtreeTULog2MaxSize);
-    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->uiQuadtreeTUMaxDepthInter, param->uiQuadtreeTUMaxDepthIntra);
+    x265_log(param, X265_LOG_INFO, "CU size / depth              : %d / %d\n", param->maxCUSize, param->maxCUDepth);
+    x265_log(param, X265_LOG_INFO, "RQT trans. size (min / max)  : %d / %d\n", 1 << param->tuQTMinLog2Size, 1 << param->tuQTMaxLog2Size);
+    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
-    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->iSearchRange);
+    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->searchRange);
     x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d PME:%d TMVPMode:%d\n", param->maxNumMergeCand, param->log2ParallelMergeLevel, param->TMVPModeId);
-    x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->iIntraPeriod);
-    if (param->iWaveFrontSynchro)
+    x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->keyframeInterval);
+    if (param->bEnableWavefront)
     {
-        x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->iSourceHeight + param->uiMaxCUSize - 1) / param->uiMaxCUSize);
+        x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize);
     }
-    x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->iQP);
-    if (param->iMaxCuDQPDepth)
+    x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->qp);
+    if (param->maxCUdQPDepth)
     {
-        x265_log(param, X265_LOG_INFO, "Max dQP signaling depth      : %d\n", param->iMaxCuDQPDepth);
+        x265_log(param, X265_LOG_INFO, "Max dQP signaling depth      : %d\n", param->maxCUdQPDepth);
     }
     if (param->cbQpOffset || param->crQpOffset)
     {
         x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
     }
-    if (param->bUseAdaptiveQP)
+    if (param->bEnableAdaptiveQP)
     {
-        x265_log(param, X265_LOG_INFO, "QP adaptation                : %d (range=%d)\n", param->bUseAdaptiveQP, param->iQPAdaptationRange);
+        x265_log(param, X265_LOG_INFO, "QP adaptation                : %d (range=%d)\n", param->bEnableAdaptiveQP, param->qpAdaptionRange);
     }
     if (param->rdPenalty)
     {
@@ -330,32 +330,32 @@ void x265_print_params(x265_param_t *param)
     }
     x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
-    TOOLOPT(param->enableRectInter, "rect");
-    TOOLOPT(param->enableAMP, "amp");
-    TOOLOPT(param->useFastDecisionForMerge, "fdm");
-    TOOLOPT(param->bUseCbfFastMode, "cfm");
-    TOOLOPT(param->useEarlySkipDetection, "esd");
-    if(param->enableRDO)
+    TOOLOPT(param->bEnableRectInter, "rect");
+    TOOLOPT(param->bEnableAMP, "amp");
+    TOOLOPT(param->bEnableFastMergeDecision, "fdm");
+    TOOLOPT(param->bEnableCbfFastMode, "cfm");
+    TOOLOPT(param->bEnableEarlySkip, "esd");
+    if(param->bEnableRDO)
         fprintf(stderr, "rdo ");
     else
         fprintf(stderr, "no-rdo ");
-    TOOLOPT(param->useRDOQ, "rdoq");
-    if (param->useTransformSkip)
+    TOOLOPT(param->bEnableRDOQ, "rdoq");
+    if (param->bEnableTransformSkip)
     {
-        TOOLOPT(param->useTransformSkip, "tskip");
-        TOOLOPT(param->useTransformSkipFast, "tskip-fast");
-        TOOLOPT(param->useRDOQTS, "rdoqts");
+        TOOLOPT(param->bEnableTransformSkip, "tskip");
+        TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
+        TOOLOPT(param->bEnableRDOQTS, "rdoqts");
     }
-    if (param->bUseSAO)
+    if (param->bEnableSAO)
     {
-        TOOLOPT(param->bUseSAO, "sao");
+        TOOLOPT(param->bEnableSAO, "sao");
         TOOLOPT(param->saoLcuBasedOptimization, "sao-lcu");
     }
-    TOOLOPT(param->useWeightedPred, "weightp");
-    TOOLOPT(param->useWeightedBiPred, "weightbp");
-    TOOLOPT(param->bUseAdaptQpSelect, "aq");
-    TOOLOPT(param->signHideFlag, "sign-hide");
-    TOOLOPT(param->bUseConstrainedIntraPred, "cip");
+    TOOLOPT(param->bEnableWeightedPred, "weightp");
+    TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
+    TOOLOPT(param->bEnableAdaptQpSelect, "aq");
+    TOOLOPT(param->bEnableSignHiding, "sign-hide");
+    TOOLOPT(param->bEnableConstrainedIntra, "cip");
     fprintf(stderr, "\n");
     fflush(stderr);
 }

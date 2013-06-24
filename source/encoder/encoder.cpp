@@ -45,8 +45,8 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
     // this is all based on the table at on Wikipedia at
     // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
 
-    uint32_t lumaSamples = param->iSourceWidth * param->iSourceHeight;
-    uint32_t samplesPerSec = lumaSamples * param->iFrameRate;
+    uint32_t lumaSamples = param->sourceWidth * param->sourceHeight;
+    uint32_t samplesPerSec = lumaSamples * param->frameRate;
     uint32_t bitrate = 100; // in kbps TODO: ABR
 
     m_level = Level::LEVEL1;
@@ -148,7 +148,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
 
     if (param->internalBitDepth == 10)
         m_profile = Profile::MAIN10;
-    else if (param->iIntraPeriod == 1)
+    else if (param->keyframeInterval == 1)
         m_profile = Profile::MAINSTILLPICTURE;
     else
         m_profile = Profile::MAIN;
@@ -167,56 +167,56 @@ void Encoder::configure(x265_param_t *param)
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
 
     // Disable param->iWaveFrontSynchro if one thread was instantiated
-    if (getThreadPool()->GetThreadCount() == 1 && param->iWaveFrontSynchro)
-        param->iWaveFrontSynchro = 0;
-    setWaveFrontSynchro(param->iWaveFrontSynchro);
-    if (param->iWaveFrontSynchro)
+    if (getThreadPool()->GetThreadCount() == 1 && param->bEnableWavefront)
+        param->bEnableWavefront = 0;
+    setWaveFrontSynchro(param->bEnableWavefront);
+    if (param->bEnableWavefront)
         x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads\n", getThreadPool()->GetThreadCount());
     else
         x265_log(param, X265_LOG_INFO, "Wavefront Parallel Processing disabled, single thread mode\n");
 
     m_iGOPSize = 4;
     setLogLevel(param->logLevel);
-    setFrameRate(param->iFrameRate);
-    setSourceWidth(param->iSourceWidth);
-    setSourceHeight(param->iSourceHeight);
-    setIntraPeriod(param->iIntraPeriod);
-    setQP(param->iQP);
+    setFrameRate(param->frameRate);
+    setSourceWidth(param->sourceWidth);
+    setSourceHeight(param->sourceHeight);
+    setIntraPeriod(param->keyframeInterval);
+    setQP(param->qp);
 
     //====== Motion search ========
     setSearchMethod(param->searchMethod);
-    setSearchRange(param->iSearchRange);
+    setSearchRange(param->searchRange);
     setBipredSearchRange(param->bipredSearchRange);
-    setUseAMP(param->enableAMP);
-    setUseRectInter(param->enableRectInter);
+    setUseAMP(param->bEnableAMP);
+    setUseRectInter(param->bEnableRectInter);
 
     //====== Quality control ========
-    setUseRDO(param->enableRDO);
-    setMaxCuDQPDepth(param->iMaxCuDQPDepth);
+    setUseRDO(param->bEnableRDO);
+    setMaxCuDQPDepth(param->maxCUdQPDepth);
     setChromaCbQpOffset(param->cbQpOffset);
     setChromaCrQpOffset(param->crQpOffset);
-    setUseAdaptQpSelect(param->bUseAdaptQpSelect);
+    setUseAdaptQpSelect(param->bEnableAdaptQpSelect);
 
-    setUseAdaptiveQP(param->bUseAdaptiveQP);
-    setQPAdaptationRange(param->iQPAdaptationRange);
+    setUseAdaptiveQP(param->bEnableAdaptiveQP);
+    setQPAdaptationRange(param->qpAdaptionRange);
 
     //====== Coding Tools ========
-    setUseRDOQ(param->useRDOQ);
-    setUseRDOQTS(param->useRDOQTS);
+    setUseRDOQ(param->bEnableRDOQ);
+    setUseRDOQTS(param->bEnableRDOQTS);
     setRDpenalty(param->rdPenalty);
-    setQuadtreeTULog2MaxSize(param->uiQuadtreeTULog2MaxSize);
-    setQuadtreeTULog2MinSize(param->uiQuadtreeTULog2MinSize);
-    setQuadtreeTUMaxDepthInter(param->uiQuadtreeTUMaxDepthInter);
-    setQuadtreeTUMaxDepthIntra(param->uiQuadtreeTUMaxDepthIntra);
-    setUseFastDecisionForMerge(param->useFastDecisionForMerge);
-    setUseCbfFastMode(param->bUseCbfFastMode);
-    setUseEarlySkipDetection(param->useEarlySkipDetection);
-    setUseTransformSkip(param->useTransformSkip);
-    setUseTransformSkipFast(param->useTransformSkipFast);
-    setUseConstrainedIntraPred(param->bUseConstrainedIntraPred);
+    setQuadtreeTULog2MaxSize(param->tuQTMaxLog2Size);
+    setQuadtreeTULog2MinSize(param->tuQTMinLog2Size);
+    setQuadtreeTUMaxDepthInter(param->tuQTMaxInterDepth);
+    setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
+    setUseFastDecisionForMerge(param->bEnableFastMergeDecision);
+    setUseCbfFastMode(param->bEnableCbfFastMode);
+    setUseEarlySkipDetection(param->bEnableEarlySkip);
+    setUseTransformSkip(param->bEnableTransformSkip);
+    setUseTransformSkipFast(param->bEnableTSkipFast);
+    setUseConstrainedIntraPred(param->bEnableConstrainedIntra);
     setMaxNumMergeCand(param->maxNumMergeCand);
-    setUseSAO(param->bUseSAO);
-    setMaxNumOffsetsPerPic(param->maxNumOffsetsPerPic);
+    setUseSAO(param->bEnableSAO);
+    setMaxNumOffsetsPerPic(param->maxSAOOffsetsPerPic);
     setSaoLcuBoundary(param->saoLcuBoundary);
     setSaoLcuBasedOptimization(param->saoLcuBasedOptimization);
 
@@ -224,22 +224,22 @@ void Encoder::configure(x265_param_t *param)
     setLog2ParallelMergeLevelMinus2(param->log2ParallelMergeLevel - 2);
 
     //====== Weighted Prediction ========
-    setUseWP(param->useWeightedPred);
-    setWPBiPred(param->useWeightedBiPred);
+    setUseWP(param->bEnableWeightedPred);
+    setWPBiPred(param->bEnableWeightedBiPred);
 
     setTMVPModeId(param->TMVPModeId);
-    setSignHideFlag(param->signHideFlag);
+    setSignHideFlag(param->bEnableSignHiding);
 
-    setUseStrongIntraSmoothing(param->useStrongIntraSmoothing);
+    setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
     //====== Settings derived from user configuration ======
     setProfile(m_profile);
     setLevel(m_levelTier, m_level);
 
     //====== HM Settings not exposed for configuration ======
-    if (param->iIntraPeriod > 0)
+    if (param->keyframeInterval > 0)
     {
-        m_iGOPSize = X265_MIN(param->iIntraPeriod, m_iGOPSize);
+        m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
         m_iGOPSize = X265_MAX(1, m_iGOPSize);
     }
     InitializeGOP(param);
@@ -275,7 +275,7 @@ void Encoder::configure(x265_param_t *param)
     setUseASR(0);
     setUseHADME(1);
     setdQPs(NULL);
-    setDecodedPictureHashSEIEnabled(param->useDecodedPictureHashSEI);
+    setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);
     setRecoveryPointSEIEnabled(0);
     setBufferingPeriodSEIEnabled(0);
     setPictureTimingSEIEnabled(0);
@@ -359,7 +359,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (param->iIntraPeriod == 1)
+    if (param->keyframeInterval == 1)
     {
         /* encoder_all_I */
         m_GOPList[0] = GOPEntry();
@@ -369,7 +369,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[0].m_POC = 1;
         m_GOPList[0].m_numRefPicsActive = 4;
     }
-    else if (param->iIntraPeriod == 32) // hacky temporary way to select random access
+    else if (param->keyframeInterval == 32) // hacky temporary way to select random access
     {
         /* encoder_randomaccess_main */
         setDecodingRefreshType(1);
@@ -453,7 +453,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
     }
 
     int numOK = 0;
-    CONFIRM(param->iIntraPeriod >= 0 && (param->iIntraPeriod % m_iGOPSize != 0), "Intra period must be a multiple of GOPSize, or -1");
+    CONFIRM(param->keyframeInterval >= 0 && (param->keyframeInterval % m_iGOPSize != 0), "Intra period must be a multiple of GOPSize, or -1");
 
     for (int i = 0; i < m_iGOPSize; i++)
     {
@@ -463,7 +463,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         }
     }
 
-    if ((param->iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable))
+    if ((param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable))
     {
         for (Int i = 0; i < m_iGOPSize; i++)
         {

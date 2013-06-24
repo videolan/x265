@@ -182,7 +182,7 @@ struct CLIOptions
         double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
         if (framesToBeEncoded && i_frame)
         {
-            float bitrate = 0.008f * totalBytes / ((float)i_frame / param->iFrameRate);
+            float bitrate = 0.008f * totalBytes / ((float)i_frame / param->frameRate);
             int eta = (int)(i_elapsed * (framesToBeEncoded - i_frame) / ((int64_t)i_frame * 1000000));
             sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
                     100. * i_frame / framesToBeEncoded, i_frame, framesToBeEncoded, fps, bitrate,
@@ -190,7 +190,7 @@ struct CLIOptions
         }
         else
         {
-            double bitrate = (double)totalBytes * 8 / ((double)1000 * param->iFrameRate);
+            double bitrate = (double)totalBytes * 8 / ((double)1000 * param->frameRate);
             sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", i_frame, fps, bitrate);
         }
         fprintf(stderr, "%s  \r", buf + 5);
@@ -359,17 +359,17 @@ struct CLIOptions
         if (this->input->getWidth())
         {
             /* parse the width, height, frame rate from the y4m file */
-            param->iSourceWidth = this->input->getWidth();
-            param->iSourceHeight = this->input->getHeight();
-            param->iFrameRate = (int)this->input->getRate();
+            param->sourceWidth = this->input->getWidth();
+            param->sourceHeight = this->input->getHeight();
+            param->frameRate = (int)this->input->getRate();
             inputBitDepth = 8;
         }
         else
         {
-            this->input->setDimensions(param->iSourceWidth, param->iSourceHeight);
+            this->input->setDimensions(param->sourceWidth, param->sourceHeight);
             this->input->setBitDepth(inputBitDepth);
         }
-        assert(param->iSourceHeight && param->iSourceWidth);
+        assert(param->sourceHeight && param->sourceWidth);
 
         /* rules for input, output and internal bitdepths as per help text */
         if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
@@ -387,13 +387,13 @@ struct CLIOptions
         if (this->cli_log_level >= X265_LOG_INFO)
         {
             fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
-                param->iSourceWidth, param->iSourceHeight, param->iFrameRate,
+                param->sourceWidth, param->sourceHeight, param->frameRate,
                 this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
         }
 
         if (reconfn)
         {
-            this->recon = x265::Output::Open(reconfn, param->iSourceWidth, param->iSourceHeight, outputBitDepth, param->iFrameRate);
+            this->recon = x265::Output::Open(reconfn, param->sourceWidth, param->sourceHeight, outputBitDepth, param->frameRate);
             if (this->recon->isFail())
             {
                 log(X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -516,7 +516,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "aborted at input frame %d, output frame %d\n", cliopt.frameSkip + inFrameCount, outFrameCount);
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
-    double vidtime = (double)inFrameCount / param.iFrameRate;
+    double vidtime = (double)inFrameCount / param.frameRate;
     printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s\n", 
         outFrameCount, elapsed, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
 
