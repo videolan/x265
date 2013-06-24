@@ -72,49 +72,21 @@ class TEncTop : public TEncCfg
 private:
 
     // picture
-    Int                     m_iPOCLast;                   ///< time index (POC)
-    Int                     m_iNumPicRcvd;                ///< number of received pictures
-    UInt                    m_uiNumAllPicCoded;           ///< number of coded pictures
+    Int                     m_pocLast;          ///< time index (POC)
+    Int                     m_picsQueued;       ///< number of received pictures
+    Int                     m_picsEncoded;      ///< number of coded pictures
 
     // quality control
-    TEncPreanalyzer         m_cPreanalyzer;               ///< image characteristics analyzer for TM5-step3-like adaptive QP
-    TComScalingList         m_scalingList;                ///< quantization matrix information
+    TEncPreanalyzer         m_cPreanalyzer;     ///< image characteristics analyzer for TM5-step3-like adaptive QP
+    TComScalingList         m_scalingList;      ///< quantization matrix information
 
-    TEncRateCtrl            m_cRateCtrl;                  ///< Rate control class
+    TEncRateCtrl            m_cRateCtrl;        ///< Rate control class
 
     // processing unit
-    TEncGOP                 m_cGOPEncoder;                ///< GOP encoder
+    TEncGOP                 m_cGOPEncoder;      ///< GOP encoder
     x265::ThreadPool       *m_threadPool;
 
-protected:
-
-    Double xCalculateRVM();
-
 public:
-
-    TEncTop();
-
-    virtual ~TEncTop();
-
-    Void      create();
-    Void      destroy();
-    Void      init();
-
-    // -------------------------------------------------------------------------------------------------------------------
-    // member access functions
-    // -------------------------------------------------------------------------------------------------------------------
-
-    TComScalingList*        getScalingList()   { return &m_scalingList; }
-
-    x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
-
-    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
-
-    TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
-
-    Void xInitSPS(TComSPS *pcSPS);
-    Void xInitPPS(TComPPS *pcPPS);
-    Void xInitRPS(TComSPS *pcSPS);
 
     /* Collect statistics globally */
     x265::Lock  m_statLock;
@@ -124,13 +96,33 @@ public:
     TEncAnalyze m_gcAnalyzeB;
     std::vector<Int> m_vRVM_RP;
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // encoder function
-    // -------------------------------------------------------------------------------------------------------------------
+public:
+
+    TEncTop();
+
+    virtual ~TEncTop();
+
+    Void create();
+    Void destroy();
+    Void init();
+
+    TComScalingList*        getScalingList()   { return &m_scalingList; }
+    TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
+    x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
+    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
+
+    Void xInitSPS(TComSPS *pcSPS);
+    Void xInitPPS(TComPPS *pcPPS);
+    Void xInitRPS(TComSPS *pcSPS);
 
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
     void printSummary();
+
+protected:
+
+    Double xCalculateRVM();
+
 };
 
 //! \}

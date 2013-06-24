@@ -53,11 +53,11 @@
 
 TEncTop::TEncTop()
 {
-    m_iPOCLast          = -1;
+    m_pocLast = -1;
     m_framesToBeEncoded = INT_MAX;
-    m_iNumPicRcvd       = 0;
-    m_uiNumAllPicCoded  = 0;
-    m_iMaxRefPicNum     = 0;
+    m_picsQueued = 0;
+    m_picsEncoded = 0;
+    m_iMaxRefPicNum = 0;
     ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
@@ -125,12 +125,8 @@ Void TEncTop::init()
 // ====================================================================================================================
 
 /**
- - Application has picture buffer list with size of GOP + 1
- - Picture buffer list acts like as ring buffer
- - End of the list has the latest picture
- .
  \param   flush               force encoder to encode a partial GOP
- \param   pic                 input original YUV picture
+ \param   pic                 input original YUV picture or NULL
  \param   pic_out             pointer to list of reconstructed pictures
  \param   accessUnitsOut      list of output bitstreams
  \retval                      number of returned recon pictures
@@ -139,35 +135,37 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
 {
     if (pic)
     {
+        m_picsQueued++;
+
         // get original YUV
         TComPic* pcPicCurr = m_cGOPEncoder.xGetNewPicBuffer();
-        pcPicCurr->getSlice()->setPOC(++m_iPOCLast);
+        pcPicCurr->getSlice()->setPOC(++m_pocLast);
         pcPicCurr->getPicYuvOrg()->copyFromPicture(*pic);
-
-        // compute image characteristics
         if (getUseAdaptiveQP())
         {
+            // compute image characteristics
             m_cPreanalyzer.xPreanalyze(dynamic_cast<TEncPic*>(pcPicCurr));
         }
-        m_iNumPicRcvd++;
     }
 
-    // Wait until we have a full GOP of pictures
-    if (!m_iNumPicRcvd || (!flush && m_iPOCLast != 0 && m_iNumPicRcvd != m_iGOPSize && m_iGOPSize))
+    // Wait until we have a full mini-GOP of pictures
+    if (!m_picsQueued || (!flush && m_pocLast != 0 && m_picsQueued != m_iGOPSize && m_iGOPSize))
         return 0;
+    m_picsEncoded += m_picsQueued;
     if (flush)
-        m_framesToBeEncoded = m_iNumPicRcvd + m_uiNumAllPicCoded;
+    {
+        // TEncGOP needs to know to ignore POC above this value
+        m_framesToBeEncoded = m_picsEncoded;
+    }
 
     // compress GOP
-    m_cGOPEncoder.compressGOP(m_iPOCLast, m_iNumPicRcvd, accessUnitsOut);
+    m_cGOPEncoder.compressGOP(m_pocLast, m_picsQueued, accessUnitsOut);
 
-    if (pic_out)
-        *pic_out = m_cGOPEncoder.getReconPictures(m_iPOCLast - m_iNumPicRcvd + 1, m_iNumPicRcvd);
+    if (pic_out) *pic_out = m_cGOPEncoder.getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
 
-    m_uiNumAllPicCoded += m_iNumPicRcvd;
-    Int iNumEncoded = m_iNumPicRcvd;
-    m_iNumPicRcvd = 0;
-    return iNumEncoded;
+    Int ret = m_picsQueued;
+    m_picsQueued = 0;
+    return ret;
 }
 
 Void TEncTop::printSummary()
