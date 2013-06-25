@@ -203,10 +203,12 @@ bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
 
         unsigned int uiLog2TrSize = (rand() % 4) + 2;
 
+        int cmp_size = sizeof(int) * iWidth * iWidth;
+
         opt(8, mintbuf1 + j, mintbuf3, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);  // g_bitDepthY  = 8, g_bitDepthC = 8
         ref(8, mintbuf1 + j, mintbuf4, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);
 
-        if (memcmp(mintbuf3, mintbuf4, mem_cmp_size))
+        if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
 
         j += 16;
