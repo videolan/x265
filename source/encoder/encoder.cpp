@@ -270,7 +270,7 @@ void Encoder::configure(x265_param_t *param)
         if (remain)
             param->keyframeInterval += m_iGOPSize - remain;
     }
-    else
+    else if (param->keyframeInterval > 0)
     {
         int remain = param->keyframeInterval % m_iGOPSize;
         if (remain)
