@@ -159,15 +159,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         }
     }
 
-    int batchSize = m_uiIntraPeriod;
-    if (m_pocLast == 0)
-        // Exception for very first frame
-        batchSize = 1;
-    else if (m_openGOP)
-        batchSize = getGOPSize();
-    else if (m_pocLast == m_uiIntraPeriod - 1)
-        // Exception for very first GOP
-        batchSize = m_uiIntraPeriod - 1;
+    int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;
 
     // Wait until we have a full batch of pictures
     if (m_picsQueued < batchSize && !flush)
@@ -185,7 +177,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     m_picsEncoded += m_picsQueued;
 
     // cycle to the next GOP encoder
-    if (!m_openGOP && (m_picsEncoded % m_uiIntraPeriod == 0))
+    if (!m_openGOP)
     {
         intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
         cur = (cur == m_gopThreads - 1) ? 0 : cur + 1;
