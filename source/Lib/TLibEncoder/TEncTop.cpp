@@ -159,6 +159,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     }
 
     int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;
+    // ugly hack for our B-frame random access mode, the next I frame is
+    // the 25th encoded frame because of re-ordering
     if (m_uiIntraPeriod == 32 && m_picsEncoded == 0)
         batchSize = 25;
 
@@ -168,6 +170,17 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
 
     if (flush)
     {
+        if (m_picsQueued < batchSize && m_uiIntraPeriod == 32 && m_gopThreads > 1)
+        {
+            // We cannot encode a partial GOP because the first frame in the series
+            // will not be an I frame, and the references are all in the previous
+            // GOP coder.  We _could_ work around this by copying references to the
+            // last GOP coder, or copying these last frames to the previous GOP coder
+            // but both of those would unnecessarily complicate this code for what is
+            // a temporary problem.
+            fprintf(stderr, "x265 [info]: unable to flush incomplete GOP in this configuration, stream is truncated\n");
+            return 0;
+        }
         // TEncGOP needs to not try to reference frames above this POC value
         m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
     }
