@@ -75,6 +75,7 @@ private:
     Int                     m_pocLast;          ///< time index (POC)
     Int                     m_picsQueued;       ///< number of received pictures
     Int                     m_picsEncoded;      ///< number of coded pictures
+    Bool                    m_openGOP;
 
     // quality control
     TEncPreanalyzer         m_cPreanalyzer;     ///< image characteristics analyzer for TM5-step3-like adaptive QP
