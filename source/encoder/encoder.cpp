@@ -294,7 +294,7 @@ void Encoder::configure(x265_param_t *param)
     setInterlacedSourceFlag(0);
     setNonPackedConstraintFlag(0);
     setFrameOnlyConstraintFlag(0);
-    setDecodingRefreshType(0);
+    setDecodingRefreshType(1);
     setUseASR(0);
     setUseHADME(1);
     setdQPs(NULL);
