@@ -149,7 +149,7 @@ protected:
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
     
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
-    Void  xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU,  Bool *earlyDetectionSkipMode);
+    Void  xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
     Void  xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize,UInt index);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
     Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
