@@ -205,8 +205,6 @@ Void TEncTop::printSummary()
         m_gcAnalyzeP.printOut('p');
         m_gcAnalyzeB.printOut('b');
         m_gcAnalyzeAll.printOut('a');
-        if (getGOPSize() == 1 && getIntraPeriod() != 1 && getFramesToBeEncoded() > RVM_VCEGAM10_M * 2)
-            fprintf(stderr, "\nRVM: %.3lf\n", xCalculateRVM());
     }
 
 #if _SUMMARY_OUT_
@@ -218,52 +216,6 @@ Void TEncTop::printSummary()
     m_gcAnalyzeB.printSummary('B');
 #endif
 }
-
-Double TEncTop::xCalculateRVM()
-{
-    // calculate RVM only for lowdelay configurations
-    std::vector<Double> vRL, vB;
-    size_t N = m_vRVM_RP.size();
-    vRL.resize(N);
-    vB.resize(N);
-
-    Int i;
-    Double dRavg = 0, dBavg = 0;
-    vB[RVM_VCEGAM10_M] = 0;
-    for (i = RVM_VCEGAM10_M + 1; i < N - RVM_VCEGAM10_M + 1; i++)
-    {
-        vRL[i] = 0;
-        for (Int j = i - RVM_VCEGAM10_M; j <= i + RVM_VCEGAM10_M - 1; j++)
-        {
-            vRL[i] += m_vRVM_RP[j];
-        }
-
-        vRL[i] /= (2 * RVM_VCEGAM10_M);
-        vB[i] = vB[i - 1] + m_vRVM_RP[i] - vRL[i];
-        dRavg += m_vRVM_RP[i];
-        dBavg += vB[i];
-    }
-
-    dRavg /= (N - 2 * RVM_VCEGAM10_M);
-    dBavg /= (N - 2 * RVM_VCEGAM10_M);
-
-    Double dSigamB = 0;
-    for (i = RVM_VCEGAM10_M + 1; i < N - RVM_VCEGAM10_M + 1; i++)
-    {
-        Double tmp = vB[i] - dBavg;
-        dSigamB += tmp * tmp;
-    }
-
-    dSigamB = sqrt(dSigamB / (N - 2 * RVM_VCEGAM10_M));
-
-    Double f = sqrt(12.0 * (RVM_VCEGAM10_M - 1) / (RVM_VCEGAM10_M + 1));
-
-    return dSigamB / dRavg * f;
-}
-
-// ====================================================================================================================
-// Protected member functions
-// ====================================================================================================================
 
 Void TEncTop::xInitSPS(TComSPS *pcSPS)
 {

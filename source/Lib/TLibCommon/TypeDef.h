@@ -102,8 +102,6 @@
                                                     // this should be done with encoder only decision
                                                     // but because of the absence of reference frame management, the related code was hard coded currently
 
-#define RVM_VCEGAM10_M                            4
-
 #define PLANAR_IDX                                0
 #define VER_IDX                                  26 // index for intra VERTICAL   mode
 #define HOR_IDX                                  10 // index for intra HORIZONTAL mode
