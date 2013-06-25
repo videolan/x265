@@ -169,6 +169,11 @@ void Encoder::configure(x265_param_t *param)
         x265_log(param, X265_LOG_WARNING, "GOP parallelism not compatible with open-GOP, using --gops 1\n");
         param->gopNumThreads = 1;
     }
+    if (param->keyframeInterval == 32 && param->gopNumThreads > 1)
+    {
+        x265_log(param, X265_LOG_WARNING, "GOP parallelism not yet compatible with random access, using --gops 1\n");
+        param->gopNumThreads = 1;
+    }
 
     // Trim the thread pool if no parallelism features enabled
     if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)

@@ -282,7 +282,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
         m_pcRateCtrl->initRCGOP(iNumPicRcvd);
     }
 
-    Int gopSize = X265_MIN(iNumPicRcvd, m_pcCfg->getGOPSize());
+    Int gopSize = iPOCLast == 0 ? 1 : m_pcCfg->getGOPSize();
     Int iNumPicCoded = 0;
     Bool writeSOP = m_pcCfg->getSOPDescriptionSEIEnabled();
 
@@ -1465,6 +1465,9 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
             fflush(stderr);
         }
         delete[] pcSubstreamsOut;
+
+        if (iNumPicCoded == iNumPicRcvd)
+            break;
     }
 
     delete pcBitstreamRedirect;

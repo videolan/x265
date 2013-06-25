@@ -160,7 +160,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     }
 
     int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;
-    if (m_uiIntraPeriod == 32 && m_picsEncoded == 0 && m_gopThreads > 1)
+    if (m_uiIntraPeriod == 32 && m_picsEncoded == 0)
         batchSize = 25;
 
     // Wait until we have a full batch of pictures
