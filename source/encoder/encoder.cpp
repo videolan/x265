@@ -164,21 +164,25 @@ void Encoder::configure(x265_param_t *param)
 
     determineLevelAndProfile(param);
 
+    // Trim the thread pool if no parallelism features enabled
+    if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)
+        param->poolNumThreads = 1;
+
     setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
 
-    // Disable param->iWaveFrontSynchro if one thread was instantiated
-    if (getThreadPool()->GetThreadCount() == 1 && (param->bEnableWavefront || param->gopNumThreads > 1))
+    // Disable parallelism features if one thread was instantiated
+    if (getThreadPool()->GetThreadCount() <= 1 && (param->bEnableWavefront || param->gopNumThreads > 1))
     {
         param->bEnableWavefront = 0;
         param->gopNumThreads = 1;
     }
-    setWaveFrontSynchro(param->bEnableWavefront);
-    setGopThreads(param->gopNumThreads);
     if (getThreadPool()->GetThreadCount() > 1)
         x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads, GOPs:%d WPP:%d\n",
                  getThreadPool()->GetThreadCount(), param->gopNumThreads, param->bEnableWavefront);
     else
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
+    setWaveFrontSynchro(param->bEnableWavefront);
+    setGopThreads(param->gopNumThreads);
 
     m_iGOPSize = 4;
     setLogLevel(param->logLevel);
@@ -189,6 +193,11 @@ void Encoder::configure(x265_param_t *param)
     setQP(param->qp);
 
     //====== Motion search ========
+    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedPred || param->bEnableWeightedBiPred))
+    {
+        x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
+        param->searchMethod = X265_ORIG_SEARCH;
+    }
     setSearchMethod(param->searchMethod);
     setSearchRange(param->searchRange);
     setBipredSearchRange(param->bipredSearchRange);

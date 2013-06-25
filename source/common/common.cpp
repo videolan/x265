@@ -158,15 +158,6 @@ int x265_check_params(x265_param_t *param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)
-        param->poolNumThreads = 1;
-
-    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedPred || param->bEnableWeightedBiPred))
-    {
-        x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
-        param->searchMethod = X265_ORIG_SEARCH;
-    }
-
 #if !HIGH_BIT_DEPTH
     CONFIRM(param->internalBitDepth != 8,
             "InternalBitDepth must be 8");
