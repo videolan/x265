@@ -183,7 +183,8 @@ void Encoder::configure(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
     setWaveFrontSynchro(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
-    
+  
+    // default keyframe interval of 1 second
     if (param->keyframeInterval == 0)
         param->keyframeInterval = param->frameRate;
     m_iGOPSize = 4;
