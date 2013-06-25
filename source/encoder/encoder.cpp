@@ -195,15 +195,11 @@ void Encoder::configure(x265_param_t *param)
     setWaveFrontSynchro(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
   
-    // default keyframe interval of 1 second
-    if (param->keyframeInterval == 0)
-        param->keyframeInterval = param->frameRate;
     m_iGOPSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);
     setSourceWidth(param->sourceWidth);
     setSourceHeight(param->sourceHeight);
-    setIntraPeriod(param->keyframeInterval);
     setQP(param->qp);
 
     //====== Motion search ========
@@ -278,6 +274,24 @@ void Encoder::configure(x265_param_t *param)
         setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
         setLambdaModifier(i, 1.0);
     }
+    // default keyframe interval of 1 second
+    if (param->keyframeInterval == 0)
+    {
+        param->keyframeInterval = param->frameRate;
+        int remain = param->keyframeInterval % m_iGOPSize;
+        if (remain)
+            param->keyframeInterval += m_iGOPSize - remain;
+    }
+    else
+    {
+        int remain = param->keyframeInterval % m_iGOPSize;
+        if (remain)
+        {
+            param->keyframeInterval += m_iGOPSize - remain;
+            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of 4, forcing --keyint %d\n", param->keyframeInterval);
+        }
+    }
+    setIntraPeriod(param->keyframeInterval);
 
     TComVPS vps;
     vps.setMaxTLayers(m_maxTempLayer);
