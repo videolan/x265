@@ -34,7 +34,7 @@ namespace {
 
 /* template for building arbitrary partition sizes from full optimized primitives */
 template<int lx, int ly, int dx, int dy, x265::pixelcmp compare>
-int CDECL cmp(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int cmp(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int sum = 0;
     for (int row = 0; row < ly; row += dy)

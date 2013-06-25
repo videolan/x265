@@ -75,7 +75,7 @@ namespace {
 // place functions in anonymous namespace (file static)
 
 template<int lx, int ly>
-int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int sum = 0;
 
@@ -94,7 +94,7 @@ int CDECL sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pi
 }
 
 template<int lx, int ly>
-void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t strideCur, int *res)
+void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t strideCur, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -116,7 +116,7 @@ void CDECL sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t s
 }
 
 template<int lx, int ly>
-void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t strideCur, int *res)
+void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t strideCur, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -141,7 +141,7 @@ void CDECL sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix
 }
 
 template<int lx, int ly, class T1, class T2>
-int CDECL sse(T1 *pix1, intptr_t stride_pix1, T2 *pix2, intptr_t stride_pix2)
+int sse(T1 *pix1, intptr_t stride_pix1, T2 *pix2, intptr_t stride_pix2)
 {
     int sum = 0;
     int iTemp;
@@ -183,7 +183,7 @@ inline sum2_t abs2(sum2_t a)
     return (a + s) ^ s;
 }
 
-int CDECL satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][2];
     sum2_t a0, a1, a2, a3, b0, b1;
@@ -212,7 +212,7 @@ int CDECL satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stri
 }
 
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
-int CDECL satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][4];
     sum2_t a0, a1, a2, a3;
@@ -237,7 +237,7 @@ int CDECL satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stri
 }
 
 template<int w, int h> // calculate satd in blocks of 4x4
-int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
 
@@ -254,7 +254,7 @@ int CDECL satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_
 }
 
 template<int w, int h> // calculate satd in blocks of 8x4
-int CDECL satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
 
@@ -307,12 +307,12 @@ inline int _sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return (int)sum;
 }
 
-int CDECL sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-int CDECL sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
         + _sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
@@ -325,7 +325,7 @@ int CDECL sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 }
 
 template<int w, int h> // Calculate sa8d in blocks of 8x8
-int CDECL sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int cost = 0;
     for (int y = 0; y < h; y += 8)
@@ -335,7 +335,7 @@ int CDECL sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 }
 
 template<int w, int h> // Calculate sa8d in blocks of 16x16
-int CDECL sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int cost = 0;
     for (int y = 0; y < h; y += 16)
@@ -344,7 +344,7 @@ int CDECL sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return cost;
 }
 
-void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
+void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -358,7 +358,7 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, i
     }
 }
 
-void CDECL blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_t strideb)
+void blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -372,7 +372,7 @@ void CDECL blockcopy_s_p(int bx, int by, short *a, intptr_t stridea, pixel *b, i
     }
 }
 
-void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, intptr_t strideb)
+void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -386,7 +386,7 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, short *b, i
     }
 }
 
-void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intptr_t strideb)
+void blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -400,7 +400,7 @@ void CDECL blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b,
     }
 }
 
-void CDECL convert16to32(short *psOrg, int *piDst, int num)
+void convert16to32(short *psOrg, int *piDst, int num)
 {
     for (int i = 0; i < num; i++)
     {
@@ -408,7 +408,7 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
     }
 }
 
-void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
+void convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -419,7 +419,7 @@ void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shi
     }
 }
 
-void CDECL convert32to16(int *psOrg, short *piDst, int num)
+void convert32to16(int *psOrg, short *piDst, int num)
 {
     for (int i = 0; i < num; i++)
     {
@@ -427,7 +427,7 @@ void CDECL convert32to16(int *psOrg, short *piDst, int num)
     }
 }
 
-void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
+void convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 {
     int round = 1 << (shift-1);
     for (int i = 0; i < num; i++)
@@ -437,7 +437,7 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 }
 
 template <int blockSize>
-void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int stride)
+void getResidual(pixel *piOrg, pixel *piPred, short *piResi, int stride)
 {
     pixel* pOrg   = piOrg;
     pixel* pPred  = piPred;
@@ -457,7 +457,7 @@ void CDECL getResidual(pixel *piOrg, pixel *piPred, short *piResi, int stride)
 }
 
 template <int blockSize>
-void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride)
+void calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride)
 {
     pixel* pPred      = piPred;
     short* pResi      = piResi;
@@ -483,7 +483,7 @@ void CDECL calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQ
 }
 
 template <int blockSize>
-void CDECL transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
+void transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
 {
     for (int k = 0; k < blockSize; k++)
     {

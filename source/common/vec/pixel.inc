@@ -103,7 +103,7 @@
 namespace {
 /* File for pixels type-neutral code */
 
-void CDECL convert16to32(short *psOrg, int *piDst, int num)
+void convert16to32(short *psOrg, int *piDst, int num)
 {
     int i;
 
@@ -123,7 +123,7 @@ void CDECL convert16to32(short *psOrg, int *piDst, int num)
     }
 }
 
-void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
+void convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
 {
     int i, j;
 
@@ -144,7 +144,7 @@ void CDECL convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shi
     }
 }
 
-void CDECL convert16to16_shl(short *psDst, short *psOrg, int width, int height, intptr_t stride, int shift)
+void convert16to16_shl(short *psDst, short *psOrg, int width, int height, intptr_t stride, int shift)
 {
     int i, j;
 
@@ -177,7 +177,7 @@ void CDECL convert16to16_shl(short *psDst, short *psOrg, int width, int height, 
     }
 }
 
-void CDECL convert32to16(int *psOrg, short *piDst, int num)
+void convert32to16(int *psOrg, short *piDst, int num)
 {
     int i;
 
@@ -196,7 +196,7 @@ void CDECL convert32to16(int *psOrg, short *piDst, int num)
     }
 }
 
-void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
+void convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 {
     int i;
     Vec4i round = _mm_set1_epi32(1 << (shift - 1));
@@ -217,7 +217,7 @@ void CDECL convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
 }
 
 template <int blockSize>
-void CDECL transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
+void transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
 {
     for (int k = 0; k < blockSize; k++)
     {
@@ -229,7 +229,7 @@ void CDECL transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
 }
 
 #if !HIGH_BIT_DEPTH
-void CDECL transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
+void transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
 {
     __m128i T00, T01, T02, T03;
 
@@ -265,7 +265,7 @@ void CDECL transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
     out3 = _mm_unpackhi_epi32(tr1_1, tr1_3); \
 }
 
-void CDECL transpose8(pixel* pDst, pixel* pSrc, intptr_t nStride)
+void transpose8(pixel* pDst, pixel* pSrc, intptr_t nStride)
 {
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
@@ -286,7 +286,7 @@ void CDECL transpose8(pixel* pDst, pixel* pSrc, intptr_t nStride)
     _mm_store_si128((__m128i*)&pDst[6*8], T03);
 }
 
-ALWAYSINLINE void CDECL transpose16_dummy(pixel* pDst, intptr_t nStrideD, pixel* pSrc, intptr_t nStrideS)
+ALWAYSINLINE void transpose16_dummy(pixel* pDst, intptr_t nStrideD, pixel* pSrc, intptr_t nStrideS)
 {
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
@@ -363,7 +363,7 @@ ALWAYSINLINE void CDECL transpose16_dummy(pixel* pDst, intptr_t nStrideD, pixel*
     _mm_storeh_pi(     (__m64*)&pDst[ 7 * nStrideD + 8], _mm_castsi128_ps(T00));
 }
 
-void CDECL transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
+void transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
 {
     transpose16_dummy(pDst, 16, pSrc, nStrideS);
 }

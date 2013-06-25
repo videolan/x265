@@ -45,7 +45,7 @@ namespace {
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
-void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+void xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
     int* piCoef = pDes;
@@ -1266,7 +1266,7 @@ void xDCT16(short *pSrc, int *pDst, intptr_t nStride)
 #endif // INSTRSET >= 4
 
 #if INSTRSET < 4
-void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
+void partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j;
     int add = 1 << (shift - 1);

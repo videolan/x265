@@ -52,16 +52,10 @@ extern "C" void x265_cpu_emms(void);
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
 #define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
-#ifndef CDECL
-#define CDECL
-#endif
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
-#ifndef CDECL
-#define CDECL                _cdecl
-#endif
 #endif // if defined(__GNUC__)
 
 #if HIGH_BIT_DEPTH
@@ -185,39 +179,39 @@ enum IPFilterConf_S_S
 // else returns -1 (in which case you should use the slow path)
 int PartitionFromSizes(int Width, int Height);
 
-typedef int  (CDECL * pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
-typedef int  (CDECL * pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
-typedef int  (CDECL * pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
-typedef void (CDECL * pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
-typedef void (CDECL * pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
-typedef void (CDECL * IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (CDECL * IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (CDECL * IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (CDECL * IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (CDECL * IPFilter_s_s)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (CDECL * IPFilterConvert_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
-typedef void (CDECL * IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
-typedef void (CDECL * blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (CDECL * blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (CDECL * blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
-typedef void (CDECL * blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
-typedef void (CDECL * getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
-typedef void (CDECL * getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
-typedef void (CDECL * getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
-typedef void (CDECL * getIPredAngs_t)(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma);
-typedef void (CDECL * quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
-typedef void (CDECL * cvt16to32_t)(short *psOrg, int *piDst, int);
-typedef void (CDECL * cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
-typedef void (CDECL * cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
-typedef void (CDECL * cvt32to16_t)(int *psOrg, short *piDst, int);
-typedef void (CDECL * cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
-typedef void (CDECL * dct_t)(short *pSrc, int *pDst, intptr_t stride);
-typedef void (CDECL * idct_t)(int *pSrc, short *pDst, intptr_t stride);
-typedef void (CDECL * calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
-typedef void (CDECL * calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
-typedef void (CDECL * transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
-typedef void (CDECL * filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height,int marginX, int marginY);
-typedef void (CDECL * filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
+typedef int  (*pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
+typedef int  (*pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
+typedef int  (*pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef void (*pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
+typedef void (*pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
+typedef void (*IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
+typedef void (*IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_s_s)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilterConvert_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
+typedef void (*IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (*blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
+typedef void (*getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
+typedef void (*getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
+typedef void (*getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
+typedef void (*getIPredAngs_t)(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma);
+typedef void (*quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
+typedef void (*cvt16to32_t)(short *psOrg, int *piDst, int);
+typedef void (*cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
+typedef void (*cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
+typedef void (*cvt32to16_t)(int *psOrg, short *piDst, int);
+typedef void (*cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
+typedef void (*dct_t)(short *pSrc, int *pDst, intptr_t stride);
+typedef void (*idct_t)(int *pSrc, short *pDst, intptr_t stride);
+typedef void (*calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
+typedef void (*calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
+typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
+typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height,int marginX, int marginY);
+typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,

@@ -33,7 +33,7 @@
 #endif
 
 template<int ly>
-int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec16uc m1, n1;
 
@@ -90,7 +90,7 @@ ALWAYSINLINE void unrollFunc_8<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCur
 }
 
 template<int ly>
-int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec4i sum(0);
     Vec8us sad;
@@ -123,7 +123,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 }
 
 template<int ly>
-int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec16uc m1, n1;
 
@@ -184,7 +184,7 @@ ALWAYSINLINE void unrollFunc_16<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCu
 }
 
 template<int ly>
-int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec4i sum(0);
     Vec8us sad(0);
@@ -216,7 +216,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+int sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
     Vec16uc m1, n1;
 
@@ -289,7 +289,7 @@ ALWAYSINLINE void unrollFunc_32<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCu
 }
 
 template<int ly>
-int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec4i sum(0);
     Vec8us sad;
@@ -340,7 +340,7 @@ ALWAYSINLINE void unrollFunc_48<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCu
 }
 
 template<int ly>
-int CDECL sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec4i sum(0);
     Vec8us sad(0);
@@ -399,7 +399,7 @@ ALWAYSINLINE void unrollFunc_64<1>(pixel *piOrg, intptr_t strideOrg, pixel *piCu
 }
 
 template<int ly>
-int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec4i sum(0);
     Vec8us sad;
@@ -418,7 +418,7 @@ int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-void CDECL sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -482,7 +482,7 @@ void CDECL sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void CDECL sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -546,7 +546,7 @@ void CDECL sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void CDECL sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -617,7 +617,7 @@ void CDECL sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -680,7 +680,7 @@ void CDECL sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -769,7 +769,7 @@ void CDECL sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -850,7 +850,7 @@ void CDECL sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -949,7 +949,7 @@ void CDECL sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -1017,7 +1017,7 @@ void CDECL sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1090,7 +1090,7 @@ void CDECL sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 }
 
 template<int ly>
-void CDECL sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1164,7 +1164,7 @@ void CDECL sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void CDECL sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1247,7 +1247,7 @@ void CDECL sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1320,7 +1320,7 @@ void CDECL sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1425,7 +1425,7 @@ void CDECL sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1520,7 +1520,7 @@ void CDECL sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1637,7 +1637,7 @@ void CDECL sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1716,7 +1716,7 @@ void CDECL sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     res[3] = horizontal_add(sum4);
 }
 
-void CDECL getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     for (int y = 0; y < 4; y++)
     {
@@ -1731,7 +1731,7 @@ void CDECL getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void CDECL getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     for (int y = 0; y < 8; y++)
     {
@@ -1746,7 +1746,7 @@ void CDECL getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void CDECL getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
@@ -1765,7 +1765,7 @@ void CDECL getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void CDECL getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
@@ -1791,7 +1791,7 @@ void CDECL getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void CDECL getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
+void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
@@ -1831,7 +1831,7 @@ void CDECL getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
     }
 }
 
-void CDECL calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+void calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
 {
     for (int y = 0; y < 4; y++)
     {
@@ -1861,7 +1861,7 @@ void CDECL calcRecons4(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, 
     }
 }
 
-void CDECL calcRecons8(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+void calcRecons8(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
 {
     for (int y = 0; y < 8; y++)
     {
@@ -1892,7 +1892,7 @@ void CDECL calcRecons8(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, 
 }
 
 template<int blockSize>
-void CDECL calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
+void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* pRecIPred, int stride, int recstride, int ipredstride)
 {
     for (int y = 0; y < blockSize; y++)
     {

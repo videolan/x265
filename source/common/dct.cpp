@@ -45,7 +45,7 @@ extern void fastForwardDst(Short *block, Short *coeff, Int shift);
 namespace {
 // anonymous file-static namespace
 
-void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output block
+void inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int i, c[4];
     int rnd_factor = 1 << (shift - 1);
@@ -65,7 +65,7 @@ void CDECL inversedst(short *tmp, short *block, int shift)  // input tmp, output
     }
 }
 
-void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
+void partialButterfly16(short *src, short *dst, int shift, int line)
 {
     int j, k;
     int E[8], O[8];
@@ -118,7 +118,7 @@ void CDECL partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
+void partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j, k;
     int E[16], O[16];
@@ -187,7 +187,7 @@ void CDECL partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
-void CDECL partialButterfly8(Short *src, Short *dst, Int shift, Int line)
+void partialButterfly8(Short *src, Short *dst, Int shift, Int line)
 {
     Int j, k;
     Int E[4], O[4];
@@ -224,7 +224,7 @@ void CDECL partialButterfly8(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
 {
     Int j;
     Int E[2], O[2];
@@ -249,7 +249,7 @@ void CDECL partialButterflyInverse4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
 {
     Int j, k;
     Int E[4], O[4];
@@ -285,7 +285,7 @@ void CDECL partialButterflyInverse8(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line)
+void partialButterflyInverse16(short *src, short *dst, int shift, int line)
 {
     Int j, k;
     Int E[8], O[8];
@@ -336,7 +336,7 @@ void CDECL partialButterflyInverse16(short *src, short *dst, int shift, int line
     }
 }
 
-void CDECL partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
+void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
 {
     int j, k;
     int E[16], O[16];
@@ -400,7 +400,7 @@ void CDECL partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line
     }
 }
 
-void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
+void partialButterfly4(Short *src, Short *dst, Int shift, Int line)
 {
     Int j;
     Int E[2], O[2];
@@ -424,7 +424,7 @@ void CDECL partialButterfly4(Short *src, Short *dst, Int shift, Int line)
     }
 }
 
-void CDECL xDST4_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDST4_C(short *pSrc, int *pDst, intptr_t nStride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -450,7 +450,7 @@ void CDECL xDST4_C(short *pSrc, int *pDst, intptr_t nStride)
 #undef N
 }
 
-void CDECL xDCT4_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT4_C(short *pSrc, int *pDst, intptr_t nStride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -475,7 +475,7 @@ void CDECL xDCT4_C(short *pSrc, int *pDst, intptr_t nStride)
 #undef N
 }
 
-void CDECL xDCT8_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT8_C(short *pSrc, int *pDst, intptr_t nStride)
 {
     const int shift_1st = 2;
     const int shift_2nd = 9;
@@ -501,7 +501,7 @@ void CDECL xDCT8_C(short *pSrc, int *pDst, intptr_t nStride)
 #undef N
 }
 
-void CDECL xDCT16_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT16_C(short *pSrc, int *pDst, intptr_t nStride)
 {
     const int shift_1st = 3;
     const int shift_2nd = 10;
@@ -527,7 +527,7 @@ void CDECL xDCT16_C(short *pSrc, int *pDst, intptr_t nStride)
 #undef N
 }
 
-void CDECL xDCT32_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT32_C(short *pSrc, int *pDst, intptr_t nStride)
 {
     const int shift_1st = 4;
     const int shift_2nd = 11;
@@ -553,7 +553,7 @@ void CDECL xDCT32_C(short *pSrc, int *pDst, intptr_t nStride)
 #undef N
 }
 
-void CDECL xIDST4_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDST4_C(int *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -579,7 +579,7 @@ void CDECL xIDST4_C(int *pSrc, short *pDst, intptr_t stride)
     }
 }
 
-void CDECL xIDCT4_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT4_C(int *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -605,7 +605,7 @@ void CDECL xIDCT4_C(int *pSrc, short *pDst, intptr_t stride)
     }
 }
 
-void CDECL xIDCT8_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT8_C(int *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -630,7 +630,7 @@ void CDECL xIDCT8_C(int *pSrc, short *pDst, intptr_t stride)
     }
 }
 
-void CDECL xIDCT16_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT16_C(int *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -655,7 +655,7 @@ void CDECL xIDCT16_C(int *pSrc, short *pDst, intptr_t stride)
     }
 }
 
-void CDECL xIDCT32_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT32_C(int *pSrc, short *pDst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -682,7 +682,7 @@ void CDECL xIDCT32_C(int *pSrc, short *pDst, intptr_t stride)
 }
 
 
-void CDECL xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+void xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
 {
     const int* piQCoef = pSrc;
     int* piCoef = pDes;

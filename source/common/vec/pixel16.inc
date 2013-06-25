@@ -28,7 +28,7 @@
 /* intrinsics for when pixel type is short */
 
 template<int ly>
-int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -69,7 +69,7 @@ int CDECL sad_4(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 }
 
 template<int ly>
-int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -110,7 +110,7 @@ int CDECL sad_8(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strid
 }
 
 template<int ly>
-int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -163,7 +163,7 @@ int CDECL sad_12(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -212,7 +212,7 @@ int CDECL sad_16(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
+int sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -269,7 +269,7 @@ int CDECL sad_24(pixel *piOrg, intptr_t strideOrg, pixel *piCur, intptr_t stride
 }
 
 template<int ly>
-int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -334,7 +334,7 @@ int CDECL sad_32(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-int CDECL sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -415,7 +415,7 @@ int CDECL sad_48(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     Vec8s m1, n1;
 
@@ -471,7 +471,7 @@ int CDECL sad_64(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t stri
 }
 
 template<int ly>
-void CDECL sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -534,7 +534,7 @@ void CDECL sad_x3_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 }
 
 template<int ly>
-void CDECL sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -597,7 +597,7 @@ void CDECL sad_x3_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, i
 }
 
 template<int ly>
-void CDECL sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -686,7 +686,7 @@ void CDECL sad_x3_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -767,7 +767,7 @@ void CDECL sad_x3_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -826,7 +826,7 @@ void CDECL sad_x3_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -894,7 +894,7 @@ void CDECL sad_x3_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -980,7 +980,7 @@ void CDECL sad_x3_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
+void sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -1084,7 +1084,7 @@ void CDECL sad_x3_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1157,7 +1157,7 @@ void CDECL sad_x4_4(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 }
 
 template<int ly>
-void CDECL sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1230,7 +1230,7 @@ void CDECL sad_x4_8(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, p
 }
 
 template<int ly>
-void CDECL sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1335,7 +1335,7 @@ void CDECL sad_x4_12(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1430,7 +1430,7 @@ void CDECL sad_x4_16(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1499,7 +1499,7 @@ void CDECL sad_x4_24(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1579,7 +1579,7 @@ void CDECL sad_x4_32(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1681,7 +1681,7 @@ void CDECL sad_x4_48(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
 }
 
 template<int ly>
-void CDECL sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
+void sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, pixel *piCur4, intptr_t strideCur, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1804,7 +1804,7 @@ void CDECL sad_x4_64(pixel *piOrg, pixel *piCur1, pixel *piCur2, pixel *piCur3, 
     res[3] = horizontal_add(sum4);
 }
 
-int CDECL satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
+int satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {
     int satd = 0;
 
@@ -1872,7 +1872,7 @@ int CDECL satd_4x4(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t i
     return satd;
 }
 
-int CDECL sa8d_8x8(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
+int sa8d_8x8(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t iStrideCur)
 {
     ALIGN_VAR_16(short, m2[8][8]);
 
@@ -2039,7 +2039,7 @@ int CDECL sa8d_8x8(pixel * piOrg, intptr_t iStrideOrg, pixel * piCur, intptr_t i
 }
 
 template<int lx, int ly>
-int CDECL satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
+int satd(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int uiSum = 0;
 

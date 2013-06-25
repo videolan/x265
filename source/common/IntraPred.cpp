@@ -41,7 +41,7 @@ unsigned char g_aucIntraFilterType[][35] =
 
 
 namespace {
-pixel CDECL predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth)
+pixel predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth)
 {
     int iInd, iSum = 0;
     pixel pDcVal;

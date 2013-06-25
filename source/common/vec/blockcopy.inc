@@ -25,7 +25,7 @@
 
 #if HIGH_BIT_DEPTH
 
-void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     if ((bx & 7) || (((size_t)dst | (size_t)src) & 15))
     {
@@ -57,7 +57,7 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *sr
 
 #else /* if HIGH_BIT_DEPTH */
 
-void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
+void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
     if (((size_t)dst | (size_t)src | bx) & 15)
     {
@@ -87,7 +87,7 @@ void CDECL blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *sr
     }
 }
 
-void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
+void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
     if (((size_t)dst | (size_t)src | bx) & 15)
     {
@@ -124,7 +124,7 @@ void CDECL blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *sr
 
 #endif /* if HIGH_BIT_DEPTH */
 
-void CDECL blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
+void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
     if (((size_t)dst | (size_t)src | bx) & 15)
     {

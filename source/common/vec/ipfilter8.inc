@@ -29,7 +29,7 @@
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 template<int N>
-void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
     int cstride =  srcStride;
@@ -345,7 +345,7 @@ void CDECL filterVertical_short_pel(int bitDepth, short *src, int srcStride, pix
 }
 #endif /* if INSTRSET >= 5 */
 
-void CDECL filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
+void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
     int row, col;
     int cstride =  srcStride;
@@ -485,7 +485,7 @@ void CDECL filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcS
 }
 
 template<int N>
-void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
@@ -691,7 +691,7 @@ void CDECL filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel
 }
 
 template<int N>
-void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 
 {
     int row, col;
@@ -773,7 +773,7 @@ void CDECL filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pix
     }
 }
 
-void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
+void filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
 {
     int row, col;
 
@@ -977,7 +977,7 @@ void CDECL filterHorizontalMultiplane(int /*bitDepth*/, pixel *src, int srcStrid
 }
 
 template<int N>
-void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
@@ -1053,7 +1053,7 @@ void CDECL filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, s
     }
 }
 
-void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
     pixel* srcOrg = src;
     short* dstOrg = dst;
@@ -1093,7 +1093,7 @@ void CDECL filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, shor
     }
 }
 
-void CDECL filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
     short* srcOrg = src;
     pixel* dstOrg = dst;
