@@ -262,14 +262,6 @@ void Encoder::configure(x265_param_t *param)
         m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
         m_iGOPSize = X265_MAX(1, m_iGOPSize);
     }
-    InitializeGOP(param);
-    setGOPSize(m_iGOPSize);
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        setNumReorderPics(m_numReorderPics[i], i);
-        setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        setLambdaModifier(i, 1.0);
-    }
     // default keyframe interval of 1 second
     if (param->keyframeInterval == 0)
     {
@@ -284,10 +276,19 @@ void Encoder::configure(x265_param_t *param)
         if (remain)
         {
             param->keyframeInterval += m_iGOPSize - remain;
-            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of 4, forcing --keyint %d\n", param->keyframeInterval);
+            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
+                     m_iGOPSize, param->keyframeInterval);
         }
     }
     setIntraPeriod(param->keyframeInterval);
+    InitializeGOP(param);
+    setGOPSize(m_iGOPSize);
+    for (int i = 0; i < MAX_TLAYER; i++)
+    {
+        setNumReorderPics(m_numReorderPics[i], i);
+        setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
+        setLambdaModifier(i, 1.0);
+    }
 
     TComVPS vps;
     vps.setMaxTLayers(m_maxTempLayer);
