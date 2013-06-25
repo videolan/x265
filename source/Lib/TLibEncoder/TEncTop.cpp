@@ -128,7 +128,6 @@ Void TEncTop::init()
     m_gcAnalyzeI.setFrmRate(getFrameRate());
     m_gcAnalyzeP.setFrmRate(getFrameRate());
     m_gcAnalyzeB.setFrmRate(getFrameRate());
-    m_vRVM_RP.reserve(512);
 }
 
 // ====================================================================================================================

@@ -1725,7 +1725,6 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     /* Acquire encoder global lock to accumulate statistics and print debug info to console */
     x265::ScopedLock(m_pcEncTop->m_statLock);
-    m_pcEncTop->m_vRVM_RP.push_back(uibits);
 
     //===== add PSNR =====
     m_pcEncTop->m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);

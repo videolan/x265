@@ -95,7 +95,6 @@ public:
     TEncAnalyze m_gcAnalyzeI;
     TEncAnalyze m_gcAnalyzeP;
     TEncAnalyze m_gcAnalyzeB;
-    std::vector<Int> m_vRVM_RP;
 
 public:
 
