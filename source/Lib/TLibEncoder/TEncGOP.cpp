@@ -190,6 +190,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
         {
             pcPic->getPicSym()->allocSaoParam(m_cFrameEncoders->getSAO());
         }
+        pcPic->getSlice()->setPOC(MAX_INT);
         m_cListPic.pushBack(pcPic);
     }
 }
@@ -226,6 +227,7 @@ TComPic* TEncGOP::xGetNewPicBuffer()
         if (pcPic->getSlice()->isReferenced() == false)
         {
             pcPic->getPicYuvRec()->setBorderExtension(false);
+            pcPic->getSlice()->setReferenced(true);
             return pcPic;
         }
     }
