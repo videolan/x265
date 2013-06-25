@@ -30,33 +30,35 @@
 
 using namespace x265;
 
-struct DctConf_t {
+struct DctConf_t
+{
     const char *name;
     int width;
 };
+
 const DctConf_t DctConf_infos[] =
 {
-   { "Dst4x4\t",    4},
-   { "Dct4x4\t",    4},
-   { "Dct8x8\t",    8},
-   { "Dct16x16",   16},
-   { "Dct32x32",   32},
+    { "Dst4x4\t",    4 },
+    { "Dct4x4\t",    4 },
+    { "Dct8x8\t",    8 },
+    { "Dct16x16",   16 },
+    { "Dct32x32",   32 },
 };
 
 const DctConf_t IDctConf_infos[] =
 {
-   {"IDst4x4\t",    4},
-   {"IDct4x4\t",    4},
-   {"IDct8x8\t",    8},
-   {"IDct16x16",   16},
-   {"IDct32x32",   32},
+    { "IDst4x4\t",    4 },
+    { "IDct4x4\t",    4 },
+    { "IDct8x8\t",    8 },
+    { "IDct16x16",   16 },
+    { "IDct32x32",   32 },
 };
 
 MBDstHarness::MBDstHarness()
 {
     mbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
     mbufdct = (short*)TestHarness::alignedMalloc(sizeof(short), mb_t_size, 32);
-    mbufidct= (int  *)TestHarness::alignedMalloc(sizeof(int),   mb_t_size, 32);
+    mbufidct = (int*)TestHarness::alignedMalloc(sizeof(int),   mb_t_size, 32);
 
     mbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
     mbuf3 = (short*)TestHarness::alignedMalloc(sizeof(short), mem_cmp_size, 32);
@@ -79,12 +81,12 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
-    const int idct_max = (1 << (BIT_DEPTH+4)) - 1;
+    const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
     for (int i = 0; i < mb_t_size; i++)
     {
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
-        mbufidct[i]= (rand() & idct_max);
+        mbufidct[i] = (rand() & idct_max);
     }
 
     for (int i = 0; i < mb_t_size; i++)
@@ -219,7 +221,7 @@ bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
 
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for( int i=0; i<NUM_DCTS; i++ )
+    for (int i = 0; i < NUM_DCTS; i++)
     {
         if (opt.dct[i])
         {
@@ -231,7 +233,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for( int i=0; i<NUM_IDCTS; i++ )
+    for (int i = 0; i < NUM_IDCTS; i++)
     {
         if (opt.idct[i])
         {
