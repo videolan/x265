@@ -442,11 +442,6 @@ int main(int argc, char **argv)
     if (cliopt.parse(argc, argv, &param))
         exit(1);
 
-    if (x265_check_params(&param))
-        exit(1);
-
-    x265_print_params(&param);
-
     x265_t *encoder = x265_encoder_open(&param);
     if (!encoder)
     {

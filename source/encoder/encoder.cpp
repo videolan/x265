@@ -183,7 +183,9 @@ void Encoder::configure(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
     setWaveFrontSynchro(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
-
+    
+    if (param->keyframeInterval == 0)
+        param->keyframeInterval = param->frameRate;
     m_iGOPSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);
@@ -778,6 +780,7 @@ x265_t *x265_encoder_open(x265_param_t *param)
     if (encoder)
     {
         encoder->configure(param);
+        x265_print_params(param);
         encoder->create();
         encoder->init();
     }

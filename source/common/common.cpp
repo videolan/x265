@@ -86,7 +86,6 @@ void x265_param_default(x265_param_t *param)
     param->gopNumThreads = 1;
     param->searchRange = 64;
     param->bipredSearchRange = 4;
-    param->keyframeInterval = 16; // should probably default to 1 per second
     param->internalBitDepth = 8;
     param->maxCUSize = 64;
     param->maxCUDepth = 4;
@@ -176,8 +175,8 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
-    CONFIRM(param->keyframeInterval < -1 || param->keyframeInterval == 0,
-            "Keyframe interval must be -1 (open-GOP) 1 (intra-only) or greater than 1");
+    CONFIRM(param->keyframeInterval < -1,
+            "Keyframe interval must be -1 (open-GOP) 0 (auto) 1 (intra-only) or greater than 1");
     CONFIRM(param->maxCUdQPDepth > param->maxCUDepth - 1,
             "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
