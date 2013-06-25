@@ -256,10 +256,6 @@ void Encoder::configure(x265_param_t *param)
 
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
-    //====== Settings derived from user configuration ======
-    setProfile(m_profile);
-    setLevel(m_levelTier, m_level);
-
     //====== HM Settings not exposed for configuration ======
     if (param->keyframeInterval > 0)
     {
