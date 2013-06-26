@@ -176,7 +176,6 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
     }
 
-    // compress GOP
     m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
     if (pic_out) *pic_out = m_curGOPEncoder->getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
     m_picsEncoded += m_picsQueued;
