@@ -41,18 +41,9 @@
 #include "x265.h"
 
 // Include files
-#include "TLibCommon/TComList.h"
-#include "TLibCommon/TComPrediction.h"
-#include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/AccessUnit.h"
 #include "TEncCfg.h"
 #include "TEncGOP.h"
-#include "TEncSlice.h"
-#include "TEncEntropy.h"
-#include "TEncCavlc.h"
-#include "TEncSbac.h"
-#include "TEncSearch.h"
-#include "TEncSampleAdaptiveOffset.h"
 #include "TEncRateCtrl.h"
 #include "TEncAnalyze.h"
 #include "threading.h"
