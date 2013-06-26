@@ -175,9 +175,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         // Wait until we have a full batch of pictures
         return 0;
 
-    m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
-    if (pic_out) *pic_out = m_curGOPEncoder->getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
+    m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued);
+    Int ret = m_curGOPEncoder->getOutputs(pic_out, accessUnitsOut);
+    assert(ret == m_picsQueued);
     m_picsEncoded += m_picsQueued;
+    m_picsQueued = 0;
 
     // cycle to the next GOP encoder
     if (!m_openGOP)
@@ -187,8 +189,6 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         m_curGOPEncoder = &m_GOPEncoders[cur];
     }
 
-    Int ret = m_picsQueued;
-    m_picsQueued = 0;
     return ret;
 }
 

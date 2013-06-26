@@ -74,6 +74,9 @@ private:
     x265::EncodeFrame*      m_cFrameEncoders;
     TComList<TComPic*>      m_cListPic;         ///< dynamic list of input pictures
     x265_picture_t         *m_recon;
+    std::list<AccessUnit>   m_accessUnits;
+    Int                     m_startPOC;
+    Int                     m_batchSize;
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -106,13 +109,14 @@ public:
 
     void addPicture(Int poc, const x265_picture_t *pic);
 
-    void processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP);
+    void processKeyframeInterval(Int POCLast, Int numFrames);
 
-    x265_picture_t *getReconPictures(UInt startPOC, UInt count);
+    // returns count of returned pictures
+    int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
 
 protected:
 
-    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& accessUnitsInGOP);
+    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd);
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
