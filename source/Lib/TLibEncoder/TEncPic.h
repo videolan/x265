@@ -118,6 +118,8 @@ public:
     Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
                          Window &conformanceWindow, Window &defaultDisplayWindow);
 
+    Void          preanalyze();
+
     virtual Void  destroy();
 
     TEncPicQPAdaptationLayer* getAQLayer(UInt uiDepth)  { return &m_acAQLayer[uiDepth]; }

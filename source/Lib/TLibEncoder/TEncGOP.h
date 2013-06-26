@@ -48,7 +48,6 @@
 #include "TEncEntropy.h"
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
-#include "TEncPreanalyzer.h"
 #include "SEIwrite.h"
 
 #include "TEncAnalyze.h"
@@ -75,7 +74,6 @@ private:
     x265::EncodeFrame*      m_cFrameEncoders;
     TComList<TComPic*>      m_cListPic;         ///< dynamic list of input pictures
     x265_picture_t         *m_recon;
-    TEncPreanalyzer         m_cPreanalyzer;     ///< image characteristics analyzer for TM5-step3-like adaptive QP
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;

@@ -41,6 +41,7 @@
 
 #include "TEncTop.h"
 #include "TEncGOP.h"
+#include "TEncPic.h"
 #include "TEncAnalyze.h"
 #include "TLibCommon/SEI.h"
 #include "TLibCommon/NAL.h"
@@ -232,7 +233,7 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
             if (m_pcCfg->getUseAdaptiveQP())
             {
                 // compute image characteristics
-                m_cPreanalyzer.xPreanalyze(dynamic_cast<TEncPic*>(pcPic));
+                dynamic_cast<TEncPic*>(pcPic)->preanalyze();
             }
             return;
         }
