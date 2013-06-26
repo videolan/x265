@@ -155,7 +155,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (m_uiIntraPeriod == 32 && m_picsEncoded == 0)
         batchSize = 25;
 
-    if (flush)
+    if (flush && m_picsQueued)
     {
         if (m_picsQueued < batchSize && m_uiIntraPeriod == 32 && m_gopThreads > 1)
         {
