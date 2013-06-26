@@ -30,5 +30,5 @@ add_library(encoder ../../COPYING ../x265.h
     bitcost.cpp bitcost.h
     motion.cpp motion.h
     wavefront.cpp wavefront.h
-    compress.cpp compress.h)
+    compress.cpp)
 target_link_libraries(encoder common)
