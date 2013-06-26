@@ -212,6 +212,8 @@ typedef void (*calcrecon_t)(pixel* piPred, short* piResi, pixel*  piReco, short*
 typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
 typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
+typedef uint32_t (*quantaq_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int *arlCCoef, int qBitsC, int qBits, int add, int numCoeff);
+typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -256,6 +258,8 @@ struct EncoderPrimitives
     transpose_t transpose[NUM_SQUARE_BLOCKS];
     filterVmulti_t filterVmulti;
     filterHmulti_t filterHmulti;
+    quantaq_t quantaq;
+    quant_t quant;
 };
 
 /* This copy of the table is what gets used by all by the encoder.
