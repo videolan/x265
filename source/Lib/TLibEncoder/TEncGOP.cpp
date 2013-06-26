@@ -202,7 +202,7 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
 
     if (pic_out)
     {
-        for (UInt i = 0; i < m_batchSize; i++)
+        for (Int i = 0; i < m_batchSize; i++)
         {
             TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
             while (iterPic != m_cListPic.end() && (*iterPic)->getPOC() != m_startPOC)
