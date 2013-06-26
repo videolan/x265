@@ -43,7 +43,7 @@ add_library(common
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     md5.cpp md5.h
-    TShortYUV.cpp TShortYUV.h
+    TShortYUV.cpp TShortYUV.h mv.h
     reference.cpp reference.h
     common.cpp common.h)
     

@@ -27,7 +27,7 @@ endif(MSVC)
 add_library(encoder ../../COPYING ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
     encoder.cpp encoder.h
-    bitcost.cpp bitcost.h mv.h
+    bitcost.cpp bitcost.h
     motion.cpp motion.h
     wavefront.cpp wavefront.h
     compress.cpp compress.h)
