@@ -2826,7 +2826,7 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
     }
     while (pInfo->iN < AMVP_MAX_NUM_CANDS)
     {
-        pInfo->m_acMvCand[pInfo->iN].set(0, 0);
+        pInfo->m_acMvCand[pInfo->iN] = 0;
         pInfo->iN++;
     }
 }

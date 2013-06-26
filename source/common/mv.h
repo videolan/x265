@@ -100,8 +100,6 @@ public:
     }
 
     /* For compatibility with TComMV */
-    void  set(int16_t _x, int16_t _y) { x = _x; y = _y; }
-
     short getHor() const          { return x; }
 
     short getVer() const          { return y; }
