@@ -24,29 +24,23 @@
 #include "TLibEncoder/TEncCu.h"
 #include <math.h>
 #include <common.h>
-#if _MSC_VER
-#pragma warning (disable: 4244)
-#pragma warning (disable: 4018)
-#endif
 
 using namespace x265;
+
 #if CU_STAT_LOGFILE
 extern int totalCU;
 extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
 extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
 extern  int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
-
 #endif
 
 Void TEncCu::xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize, UInt index)
 {
-    UInt uiDepth = rpcTempCU->getDepth(0);
-
     //PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
 
+    UChar uiDepth = rpcTempCU->getDepth(0);
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
-
     rpcTempCU->setPartSizeSubParts(eSize, 0, uiDepth);
     rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
@@ -104,11 +98,11 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth);
     rpcTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
 
-    x265::MotionEstimate me_merge;
+    x265::MotionEstimate me_merge; // TODO: use m_pcPredSearch->m_me here
     me_merge.setSourcePlane((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(),
                             m_ppcOrigYuv[uhDepth]->getStride());
 
-    for (UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
+    for (Int uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
     {
         // set MC parameters
         rpcTempCU->setPredModeSubParts(MODE_INTER, 0, uhDepth);             // interprets depth relative to LCU level
@@ -249,7 +243,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
         bTrySplitDQP = bTrySplit;
 
-        if (uiDepth <= m_addSADDepth)
+        if ((Int)uiDepth <= m_addSADDepth)
         {
             m_LCUPredictionSAD += m_temporalSAD;
             m_addSADDepth = uiDepth;
@@ -327,7 +321,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
         rpcTempCU->initEstData(uiDepth, iQP);
-        UChar       uhNextDepth         = uiDepth + 1;
+        UChar       uhNextDepth         = (UChar)(uiDepth + 1);
         /*Best CU initialised to NULL; */
         TComDataCU* pcSubBestPartCU     = NULL;
         /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
@@ -357,7 +351,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
             else if (bInSlice)
             {
-                pcSubTempPartCU->copyToPic(uhNextDepth);
+                pcSubTempPartCU->copyToPic((UChar)uhNextDepth);
                 rpcTempCU->copyPartFrom(pcSubTempPartCU, uiPartUnitIdx, uhNextDepth, false);
             }
         }
@@ -495,7 +489,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     }
 #endif // if LOGGING
        /* Copy Best data to Picture for next partition prediction.*/
-    rpcBestCU->copyToPic(uiDepth);
+    rpcBestCU->copyToPic((UChar)uiDepth);
     /* Copy Yuv data to picture Yuv*/
     xCopyYuv2Pic(rpcBestCU->getPic(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU(), uiDepth, uiDepth, rpcBestCU, uiLPelX, uiTPelY);
 
