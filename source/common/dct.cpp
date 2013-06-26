@@ -761,6 +761,68 @@ void xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight,
         }
     }
 }
+
+uint32_t quantaq_C(int* coef,
+                   int* quantCoeff,
+                   int* deltaU,
+                   int* qCoef,
+                   int* arlCCoef,
+                   int  qBitsC,
+                   int  qBits,
+                   int  add,
+                   int  numCoeff)
+{
+    int addc   = 1 << (qBitsC - 1);
+    int qBits8 = qBits - 8;
+    uint32_t acSum = 0;
+
+    for (int blockpos = 0; blockpos < numCoeff; blockpos++)
+    {
+        int level;
+        int  sign;
+        level = coef[blockpos];
+        sign  = (level < 0 ? -1 : 1);
+
+        uint64_t tmplevel = (uint64_t)abs(level) * quantCoeff[blockpos];
+        arlCCoef[blockpos] = (int)((tmplevel + addc) >> qBitsC);
+        level = (int)((tmplevel + add) >> qBits);
+        deltaU[blockpos] = (int)((tmplevel - (level << qBits)) >> qBits8);
+        acSum += level;
+        level *= sign;
+        qCoef[blockpos] = Clip3(-32768, 32767, level);
+    }
+
+    return acSum;
+}
+
+uint32_t quant_C(int* coef,
+                 int* quantCoeff,
+                 int* deltaU,
+                 int* qCoef,
+                 int  qBits,
+                 int  add,
+                 int  numCoeff)
+{
+    int qBits8 = qBits - 8;
+    uint32_t acSum = 0;
+
+    for (int blockpos = 0; blockpos < numCoeff; blockpos++)
+    {
+        int level;
+        int sign;
+        level = coef[blockpos];
+        sign  = (level < 0 ? -1 : 1);
+
+        uint64_t tmplevel = (uint64_t)abs(level) * quantCoeff[blockpos];
+        level = (int)((tmplevel + add) >> qBits);
+        deltaU[blockpos] = (int)((tmplevel - (level << qBits)) >> qBits8);
+        acSum += level;
+        level *= sign;
+        qCoef[blockpos] = Clip3(-32768, 32767, level);
+    }
+
+    return acSum;
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -769,6 +831,8 @@ namespace x265 {
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
     p.deQuant = xDeQuant;
+    p.quantaq = quantaq_C;
+    p.quant = quant_C;
     p.dct[DST_4x4] = xDST4_C;
     p.dct[DCT_4x4] = xDCT4_C;
     p.dct[DCT_8x8] = xDCT8_C;
