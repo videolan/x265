@@ -38,7 +38,7 @@ protected:
     static const int mb_t_size = 6400;
     static const int mem_cmp_size = 32 * 32;
 
-    bool check_xdequant_primitive(x265::quant ref, x265::quant opt);
+    bool check_xdequant_primitive(x265::dequant_t ref, x265::dequant_t opt);
     bool check_dct_primitive(x265::dct_t ref, x265::dct_t opt, int width);
     bool check_idct_primitive(x265::idct_t ref, x265::idct_t opt, int width);
 

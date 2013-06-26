@@ -199,7 +199,6 @@ typedef void (*getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intpt
 typedef void (*getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
 typedef void (*getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (*getIPredAngs_t)(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma);
-typedef void (*quant)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef void (*cvt16to32_t)(short *psOrg, int *piDst, int);
 typedef void (*cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
 typedef void (*cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
@@ -212,6 +211,7 @@ typedef void (*calcrecon_t)(pixel* piPred, short* piResi, pixel*  piReco, short*
 typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
 typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
+typedef void (*dequant_t)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef uint32_t (*quantaq_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int *arlCCoef, int qBitsC, int qBits, int add, int numCoeff);
 typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
 
@@ -245,7 +245,7 @@ struct EncoderPrimitives
     getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
     getIPredAngs_t getIPredAngs[NUM_SQUARE_BLOCKS];
-    quant deQuant;
+    dequant_t deQuant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
     cvt16to32_t cvt16to32;

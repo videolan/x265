@@ -181,7 +181,7 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
     return true;
 }
 
-bool MBDstHarness::check_xdequant_primitive(quant ref, quant opt)
+bool MBDstHarness::check_xdequant_primitive(dequant_t ref, dequant_t opt)
 {
     int j = 0;
 
