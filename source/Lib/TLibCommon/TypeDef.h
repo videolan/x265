@@ -95,11 +95,6 @@
 #define LM_CHROMA_IDX  35
 #endif
 
-#define PRINT_RPS_INFO                            0 ///< Enable/disable the printing of bits used to send the RPS.
-                                                    // using one nearest frame as reference frame, and the other frames are high quality (POC%4==0) frames (1+X)
-                                                    // this should be done with encoder only decision
-                                                    // but because of the absence of reference frame management, the related code was hard coded currently
-
 #define PLANAR_IDX                                0
 #define VER_IDX                                  26 // index for intra VERTICAL   mode
 #define HOR_IDX                                  10 // index for intra HORIZONTAL mode
