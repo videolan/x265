@@ -215,22 +215,29 @@ x265_picture_t *TEncGOP::getReconPictures(UInt POC, UInt count)
     return m_recon;
 }
 
-TComPic* TEncGOP::xGetNewPicBuffer()
+void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
 {
     TComSlice::sortPicList(m_cListPic);
 
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
-    for (size_t i = 0; i < m_cListPic.size(); i++)
+    while (iterPic != m_cListPic.end())
     {
         TComPic *pcPic = *(iterPic++);
         if (pcPic->getSlice()->isReferenced() == false)
         {
+            pcPic->getSlice()->setPOC(poc);
+            pcPic->getPicYuvOrg()->copyFromPicture(*pic);
             pcPic->getPicYuvRec()->setBorderExtension(false);
             pcPic->getSlice()->setReferenced(true);
-            return pcPic;
+            if (m_pcCfg->getUseAdaptiveQP())
+            {
+                // compute image characteristics
+                m_cPreanalyzer.xPreanalyze(dynamic_cast<TEncPic*>(pcPic));
+            }
+            return;
         }
     }
-    return NULL;
+    assert(!"No room for added picture");
 }
 
 void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP)

@@ -146,16 +146,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (pic)
     {
         m_picsQueued++;
-
-        // get original YUV
-        TComPic* pcPicCurr = m_curGOPEncoder->xGetNewPicBuffer();
-        pcPicCurr->getSlice()->setPOC(++m_pocLast);
-        pcPicCurr->getPicYuvOrg()->copyFromPicture(*pic);
-        if (getUseAdaptiveQP())
-        {
-            // compute image characteristics
-            m_cPreanalyzer.xPreanalyze(dynamic_cast<TEncPic*>(pcPicCurr));
-        }
+        m_curGOPEncoder->addPicture(++m_pocLast, pic);
     }
 
     int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;

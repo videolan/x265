@@ -48,6 +48,7 @@
 #include "TEncEntropy.h"
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
+#include "TEncPreanalyzer.h"
 #include "SEIwrite.h"
 
 #include "TEncAnalyze.h"
@@ -72,8 +73,9 @@ private:
     TEncCfg*                m_pcCfg;
     TEncRateCtrl*           m_pcRateCtrl;
     x265::EncodeFrame*      m_cFrameEncoders;
-    TComList<TComPic*>      m_cListPic;       ///< dynamic list of input pictures
+    TComList<TComPic*>      m_cListPic;         ///< dynamic list of input pictures
     x265_picture_t         *m_recon;
+    TEncPreanalyzer         m_cPreanalyzer;     ///< image characteristics analyzer for TM5-step3-like adaptive QP
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -104,11 +106,11 @@ public:
     Void  destroy();
     Void  init(TEncTop* pcTEncTop);
 
-    TComPic* xGetNewPicBuffer();
-
-    x265_picture_t *getReconPictures(UInt startPOC, UInt count);
+    void addPicture(Int poc, const x265_picture_t *pic);
 
     void processKeyframeInterval(Int POCLast, Int numFrames, std::list<AccessUnit>& accessUnitsInGOP);
+
+    x265_picture_t *getReconPictures(UInt startPOC, UInt count);
 
 protected:
 

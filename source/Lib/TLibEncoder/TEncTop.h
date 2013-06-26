@@ -53,7 +53,6 @@
 #include "TEncSbac.h"
 #include "TEncSearch.h"
 #include "TEncSampleAdaptiveOffset.h"
-#include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
 #include "TEncAnalyze.h"
 #include "threading.h"
@@ -78,7 +77,6 @@ private:
     Bool                    m_openGOP;
 
     // quality control
-    TEncPreanalyzer         m_cPreanalyzer;     ///< image characteristics analyzer for TM5-step3-like adaptive QP
     TComScalingList         m_scalingList;      ///< quantization matrix information
 
     TEncRateCtrl            m_cRateCtrl;        ///< Rate control class
