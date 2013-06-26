@@ -6,6 +6,7 @@ endif(GCC)
 file(GLOB LIBENCODER_HDR  ../Lib/TLibEncoder/*.h)
 file(GLOB LIBENCODER_SRC  ../Lib/TLibEncoder/*.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_SRC})
+source_group(TLibEncoderH FILES ${LIBENCODER_HDR})
 if(GCC)
     set_source_files_properties(compress.cpp ${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare")
