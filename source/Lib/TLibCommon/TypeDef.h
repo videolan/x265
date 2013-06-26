@@ -112,10 +112,8 @@
 
 #define REG_DCT                               65535
 
-#define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices
-
 #define CABAC_INIT_PRESENT_FLAG                   1
-#define  LAMBDA_PARTITION_SELECT                  0.6
+#define LAMBDA_PARTITION_SELECT                   0.6
 
 // ====================================================================================================================
 // Basic type redefinition

@@ -91,6 +91,8 @@ Void TEncCavlc::codeDFSvlc(Int iCode, const Char *pSymbolName)
     WRITE_SVLC(iCode, pSymbolName);
 }
 
+#define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices
+
 #define PRINT_RPS_INFO                            0 ///< Enable/disable the printing of bits used to send the RPS.
                                                     // using one nearest frame as reference frame, and the other frames are high quality (POC%4==0) frames (1+X)
                                                     // this should be done with encoder only decision
