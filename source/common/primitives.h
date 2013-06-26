@@ -208,9 +208,9 @@ typedef void (*cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
 typedef void (*dct_t)(short *pSrc, int *pDst, intptr_t stride);
 typedef void (*idct_t)(int *pSrc, short *pDst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
-typedef void (*calcrecon_t)(pixel* piPred, short* piResi,pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
+typedef void (*calcrecon_t)(pixel* piPred, short* piResi, pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
-typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height,int marginX, int marginY);
+typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
 
 /* Define a structure containing function pointers to optimized encoder
