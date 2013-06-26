@@ -718,6 +718,9 @@ Void TComYuv::addAvg(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitI
     }
 }
 
+#define DISABLING_CLIP_FOR_BIPREDME 0  // x265 disables this flag so 8bpp and 16bpp outputs match
+                                       // the intent is for all HM bipred to be replaced with x264 logic
+
 Void TComYuv::removeHighFreq(TComYuv* pcYuvSrc, UInt uiPartIdx, UInt uiWidht, UInt uiHeight)
 {
     Int x, y;
