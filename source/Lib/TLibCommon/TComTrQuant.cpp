@@ -976,7 +976,7 @@ Void TComTrQuant::transformNxN(TComDataCU* pcCU,
         assert(bitDepth == 8);
 
         const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
-        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((uiWidth==4) && (uiMode != REG_DCT))](pcResidual, m_plTempCoeff, uiStride);
+        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((uiWidth == 4) && (uiMode != REG_DCT))](pcResidual, m_plTempCoeff, uiStride);
 
         assert(uiWidth == uiHeight);
     }
@@ -1021,10 +1021,10 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
     else
     {
         // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
-        assert( bitDepth == 8 );
+        assert(bitDepth == 8);
 
         const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
-        x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((uiWidth==4) && (uiMode != REG_DCT))](m_plTempCoeff, rpcResidual, uiStride);
+        x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((uiWidth == 4) && (uiMode != REG_DCT))](m_plTempCoeff, rpcResidual, uiStride);
     }
 }
 
@@ -1093,11 +1093,11 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, Text
 Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
 {
     // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
-    assert( bitDepth == 8 );
+    assert(bitDepth == 8);
 
     //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
     const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth==4) && (uiMode != REG_DCT))](plCoef, pResidual, uiStride);
+    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth == 4) && (uiMode != REG_DCT))](plCoef, pResidual, uiStride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping
@@ -1850,12 +1850,12 @@ __inline UInt TComTrQuant::xGetCodedLevel(Double& rd64CodedCost,
  * \param ui16AbsGoRice Rice parameter for coeff_abs_level_minus3
  * \returns cost of given absolute transform level
  */
-__inline Double TComTrQuant::xGetICRateCost(UInt uiAbsLevel,
+__inline Double TComTrQuant::xGetICRateCost(UInt   uiAbsLevel,
                                             UShort ui16CtxNumOne,
                                             UShort ui16CtxNumAbs,
                                             UShort ui16AbsGoRice,
-                                            UInt c1Idx,
-                                            UInt c2Idx) const
+                                            UInt   c1Idx,
+                                            UInt   c2Idx) const
 {
     Double iRate = xGetIEPRate();
     UInt baseLevel  =  (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
