@@ -818,29 +818,16 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
         Int iQBits = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift;
         iAdd = (pcCU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (iQBits - 9);
         Int iQBitsC = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift - ARL_C_PRECISION;
-        Int iAddC   = 1 << (iQBitsC - 1);
 
-        Int qBits8 = iQBits - 8;
-        for (Int n = 0; n < iWidth * iHeight; n++)
+        Int numCoeff = iWidth * iHeight;
+        if (m_bUseAdaptQpSelect)
         {
-            Int iLevel;
-            Int  iSign;
-            UInt uiBlockPos = n;
-            iLevel  = piCoef[uiBlockPos];
-            iSign   = (iLevel < 0 ? -1 : 1);
-
-            Int64 tmpLevel = (Int64)abs(iLevel) * piQuantCoeff[uiBlockPos];
-            if (m_bUseAdaptQpSelect)
-            {
-                piArlCCoef[uiBlockPos] = (Int)((tmpLevel + iAddC) >> iQBitsC);
-            }
-            iLevel = (Int)((tmpLevel + iAdd) >> iQBits);
-            deltaU[uiBlockPos] = (Int)((tmpLevel - (iLevel << iQBits)) >> qBits8);
-            uiAcSum += iLevel;
-            iLevel *= iSign;
-            piQCoef[uiBlockPos] = Clip3(-32768, 32767, iLevel);
-        } // for n
-
+            uiAcSum += x265::primitives.quantaq(piCoef, piQuantCoeff, deltaU, piQCoef, piArlCCoef, iQBitsC, iQBits, iAdd, numCoeff);
+        }
+        else
+        {
+            uiAcSum += x265::primitives.quant(piCoef, piQuantCoeff, deltaU, piQCoef, iQBits, iAdd, numCoeff);
+        }
         if (pcCU->getSlice()->getPPS()->getSignHideFlag())
         {
             if (uiAcSum >= 2)
@@ -848,7 +835,7 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
                 signBitHidingHDQ(piQCoef, piCoef, scan, deltaU, iWidth, iHeight);
             }
         }
-    } //if RDOQ
+    }
 }
 
 Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType)
