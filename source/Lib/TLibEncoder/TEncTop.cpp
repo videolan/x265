@@ -155,10 +155,6 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (m_uiIntraPeriod == 32 && m_picsEncoded == 0)
         batchSize = 25;
 
-    // Wait until we have a full batch of pictures
-    if (m_picsQueued < batchSize && !flush)
-        return 0;
-
     if (flush)
     {
         if (m_picsQueued < batchSize && m_uiIntraPeriod == 32 && m_gopThreads > 1)
@@ -175,6 +171,9 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         // TEncGOP needs to not try to reference frames above this POC value
         m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
     }
+    else if (m_picsQueued < batchSize)
+        // Wait until we have a full batch of pictures
+        return 0;
 
     m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued, accessUnitsOut);
     if (pic_out) *pic_out = m_curGOPEncoder->getReconPictures(m_pocLast - m_picsQueued + 1, m_picsQueued);
