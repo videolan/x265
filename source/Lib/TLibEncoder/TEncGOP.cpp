@@ -393,24 +393,24 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
 
         //  Slice data initialization
         pcSliceEncoder->setSliceIdx(0);
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, getSPS(), getPPS());
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, &m_cSPS, &m_cPPS);
         pcSlice->setLastIDR(m_iLastIDR);
 
         //set default slice level flag to the same as SPS level flag
         pcSlice->setScalingList(m_pcEncTop->getScalingList());
-        pcSlice->getScalingList()->setUseTransformSkip(getPPS()->getUseTransformSkip());
+        pcSlice->getScalingList()->setUseTransformSkip(m_cPPS.getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
             pcEncodeFrame->setFlatScalingList();
             pcEncodeFrame->setUseScalingList(false);
-            getSPS()->setScalingListPresentFlag(false);
-            getPPS()->setScalingListPresentFlag(false);
+            m_cSPS.setScalingListPresentFlag(false);
+            m_cPPS.setScalingListPresentFlag(false);
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_DEFAULT)
         {
             pcSlice->setDefaultScalingList();
-            getSPS()->setScalingListPresentFlag(false);
-            getPPS()->setScalingListPresentFlag(false);
+            m_cSPS.setScalingListPresentFlag(false);
+            m_cPPS.setScalingListPresentFlag(false);
             pcEncodeFrame->setScalingList(pcSlice->getScalingList());
             pcEncodeFrame->setUseScalingList(true);
         }
@@ -421,8 +421,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
                 pcSlice->setDefaultScalingList();
             }
             pcSlice->getScalingList()->checkDcOfMatrix();
-            getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
-            getPPS()->setScalingListPresentFlag(false);
+            m_cSPS.setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
+            m_cPPS.setScalingListPresentFlag(false);
             pcEncodeFrame->setScalingList(pcSlice->getScalingList());
             pcEncodeFrame->setUseScalingList(true);
         }
@@ -1538,7 +1538,7 @@ Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
         }
     }
 
-    slice->setRPS(getSPS()->getRPSList()->getReferencePictureSet(slice->getRPSidx()));
+    slice->setRPS(m_cSPS.getRPSList()->getReferencePictureSet(slice->getRPSidx()));
     slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures() + slice->getRPS()->getNumberOfPositivePictures());
 }
 

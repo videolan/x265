@@ -104,8 +104,6 @@ public:
     Void  destroy();
     Void  init(TEncTop* pcTEncTop);
 
-    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& accessUnitsInGOP);
-
     TComPic* xGetNewPicBuffer();
 
     x265_picture_t *getReconPictures(UInt startPOC, UInt count);
@@ -114,9 +112,7 @@ public:
 
 protected:
 
-    TComSPS* getSPS() { return &m_cSPS; }
-
-    TComPPS* getPPS() { return &m_cPPS; }
+    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& accessUnitsInGOP);
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
