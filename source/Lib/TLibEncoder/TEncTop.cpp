@@ -177,6 +177,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
             // but both of those would unnecessarily complicate this code for what is
             // a temporary problem.
             fprintf(stderr, "x265 [info]: unable to flush incomplete GOP in this configuration, stream is truncated\n");
+            if (ret)
+                return ret;
             return flushGopCoders(pic_out, accessUnitsOut);
         }
 
@@ -185,6 +187,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
             // TEncGOP needs to not try to reference frames above this POC value
             m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
         }
+        else if (ret)
+            return ret;
         else
             return flushGopCoders(pic_out, accessUnitsOut);
     }
