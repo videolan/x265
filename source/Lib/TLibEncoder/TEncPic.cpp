@@ -204,7 +204,7 @@ Void TEncPic::preanalyze()
                     pBlkY += iStride;
                 }
 
-                Double dMinVar = DBL_MAX;
+                Double dMinVar = MAX_DOUBLE;
                 for (Int i = 0; i < 4; i++)
                 {
                     const Double dAverage = Double(uiSum[i]) / uiNumPixInAQPart;
