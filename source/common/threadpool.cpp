@@ -314,6 +314,7 @@ void ThreadPoolImpl::Stop()
         do
         {
             PokeIdleThreads();
+            GIVE_UP_TIME();
             exited_count = 0;
             for (int i = 0; i < m_numThreads; i++)
                 exited_count += m_threads[i].isExited() ? 1 : 0;
