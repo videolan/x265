@@ -5306,9 +5306,6 @@ void xPredIntraAngs4(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1
     _mm_store_si128((__m128i*)pDstN[16], T30);
 }
 
-#if _MSC_VER
-#pragma warning(disable:4189 4101)
-#endif
 void xPredIntraAngs8(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
 #define N   (8)
