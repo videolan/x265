@@ -80,6 +80,7 @@ private:
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
     Int                     m_iLastIDR;
+    UInt                    m_totalCoded;
 
     SEIWriter               m_seiWriter;
 
@@ -87,8 +88,6 @@ private:
     Bool                    m_bRefreshPending;
     Int                     m_pocCRA;
     UInt                    m_lastBPSEI;
-    UInt                    m_totalCoded;
-    UInt                    m_cpbRemovalDelay;
     UInt                    m_tl0Idx;
     UInt                    m_rapIdx;
 

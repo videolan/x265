@@ -107,7 +107,6 @@ TEncGOP::TEncGOP()
     m_bRefreshPending     = 0;
     m_pocCRA              = 0;
     m_numLongTermRefPicSPS = 0;
-    m_cpbRemovalDelay     = 0;
     m_lastBPSEI           = 0;
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
     ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
@@ -962,9 +961,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd, std::list<AccessUnit>& 
             }
 
             m_lastBPSEI = m_totalCoded;
-            m_cpbRemovalDelay = 0;
         }
-        m_cpbRemovalDelay++;
         if ((m_pcEncTop->getRecoveryPointSEIEnabled()) && (pcSlice->getSliceType() == I_SLICE))
         {
             if (m_pcEncTop->getGradualDecodingRefreshInfoEnabled() && !pcSlice->getRapPicFlag())
