@@ -66,6 +66,7 @@ private:
     Int                     m_picsQueued;       ///< number of received pictures
     Int                     m_picsEncoded;      ///< number of coded pictures
     Bool                    m_openGOP;
+    uint32_t                m_busyGOPs;
 
     // quality control
     TComScalingList         m_scalingList;      ///< quantization matrix information
@@ -107,6 +108,11 @@ public:
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
     void printSummary();
+
+protected:
+
+    int flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
+
 };
 
 //! \}

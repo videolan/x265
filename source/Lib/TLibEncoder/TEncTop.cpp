@@ -58,6 +58,7 @@ TEncTop::TEncTop()
     m_picsQueued = 0;
     m_picsEncoded = 0;
     m_iMaxRefPicNum = 0;
+    m_busyGOPs = 0;
     ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
@@ -143,6 +144,16 @@ Void TEncTop::init()
  */
 int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut)
 {
+    Int ret = 0;
+
+    intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
+    if (m_busyGOPs & (1 << cur))
+    {
+        /* block for this GOP coder to complete before giving it new pictures */
+        m_busyGOPs ^= (1 << cur);
+        ret = m_curGOPEncoder->getOutputs(pic_out, accessUnitsOut);
+    }
+
     if (pic)
     {
         m_picsQueued++;
@@ -155,7 +166,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (m_uiIntraPeriod == 32 && m_picsEncoded == 0)
         batchSize = 25;
 
-    if (flush && m_picsQueued)
+    if (flush)
     {
         if (m_picsQueued < batchSize && m_uiIntraPeriod == 32 && m_gopThreads > 1)
         {
@@ -166,30 +177,58 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
             // but both of those would unnecessarily complicate this code for what is
             // a temporary problem.
             fprintf(stderr, "x265 [info]: unable to flush incomplete GOP in this configuration, stream is truncated\n");
-            return 0;
+            return flushGopCoders(pic_out, accessUnitsOut);
         }
-        // TEncGOP needs to not try to reference frames above this POC value
-        m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
+
+        if (m_picsQueued)
+        {
+            // TEncGOP needs to not try to reference frames above this POC value
+            m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
+        }
+        else
+            return flushGopCoders(pic_out, accessUnitsOut);
     }
     else if (m_picsQueued < batchSize)
         // Wait until we have a full batch of pictures
-        return 0;
+        return ret;
 
     m_curGOPEncoder->processKeyframeInterval(m_pocLast, m_picsQueued);
-    Int ret = m_curGOPEncoder->getOutputs(pic_out, accessUnitsOut);
-    assert(ret == m_picsQueued);
     m_picsEncoded += m_picsQueued;
     m_picsQueued = 0;
+    m_busyGOPs |= (1 << cur);
 
     // cycle to the next GOP encoder
     if (!m_openGOP && m_gopThreads > 1)
     {
-        intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
         cur = (cur == m_gopThreads - 1) ? 0 : cur + 1;
         m_curGOPEncoder = &m_GOPEncoders[cur];
     }
 
     return ret;
+}
+
+int TEncTop::flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut)
+{
+    /* The encoder is being flushed. iterate through GOP coders, starting at the current encoder,
+     * and return their outputs */
+
+    intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
+    while (m_busyGOPs)
+    {
+        if (m_busyGOPs & (1 << cur))
+        {
+            m_busyGOPs ^= (1 << cur);
+            int ret = m_curGOPEncoder->getOutputs(pic_out, accessUnitsOut);
+            cur = (cur == m_gopThreads - 1) ? 0 : cur + 1;
+            m_curGOPEncoder = &m_GOPEncoders[cur];
+            return ret;
+        }
+
+        cur = (cur == m_gopThreads - 1) ? 0 : cur + 1;
+        m_curGOPEncoder = &m_GOPEncoders[cur];
+    }
+
+    return 0;
 }
 
 Void TEncTop::printSummary()
