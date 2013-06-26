@@ -40,7 +40,6 @@
 
 #include "CommonDef.h"
 #include "TComPattern.h"
-#include "TComMv.h"
 #include "TComRdCost.h"
 #include "TComSlice.h"
 

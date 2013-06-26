@@ -40,6 +40,8 @@
 #include "assert.h"
 #include <stdlib.h>
 
+using namespace x265;
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -57,8 +59,8 @@ Void TComCUMvField::create(UInt uiNumPartition)
     assert(m_pcMvd    == NULL);
     assert(m_piRefIdx == NULL);
 
-    m_pcMv     = new TComMv[uiNumPartition];
-    m_pcMvd    = new TComMv[uiNumPartition];
+    m_pcMv     = new MV[uiNumPartition];
+    m_pcMvd    = new MV[uiNumPartition];
     m_piRefIdx = new Char[uiNumPartition];
 
     m_uiNumPartition = uiNumPartition;
@@ -99,7 +101,7 @@ Void TComCUMvField::clearMvField()
 
 Void TComCUMvField::copyFrom(TComCUMvField const * pcCUMvFieldSrc, Int iNumPartSrc, Int iPartAddrDst)
 {
-    Int iSizeInTComMv = sizeof(TComMv) * iNumPartSrc;
+    Int iSizeInTComMv = sizeof(MV) * iNumPartSrc;
 
     memcpy(m_pcMv     + iPartAddrDst, pcCUMvFieldSrc->m_pcMv,     iSizeInTComMv);
     memcpy(m_pcMvd    + iPartAddrDst, pcCUMvFieldSrc->m_pcMvd,    iSizeInTComMv);
@@ -113,7 +115,7 @@ Void TComCUMvField::copyTo(TComCUMvField* pcCUMvFieldDst, Int iPartAddrDst) cons
 
 Void TComCUMvField::copyTo(TComCUMvField* pcCUMvFieldDst, Int iPartAddrDst, UInt uiOffset, UInt uiNumPart) const
 {
-    Int iSizeInTComMv = sizeof(TComMv) * uiNumPart;
+    Int iSizeInTComMv = sizeof(MV) * uiNumPart;
     Int iOffset = uiOffset + iPartAddrDst;
 
     memcpy(pcCUMvFieldDst->m_pcMv     + iOffset, m_pcMv     + uiOffset, iSizeInTComMv);
@@ -309,12 +311,12 @@ Void TComCUMvField::setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr,
     }
 }
 
-Void TComCUMvField::setAllMv(TComMv const & mv, PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx)
+Void TComCUMvField::setAllMv(MV const & mv, PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx)
 {
     setAll(m_pcMv, mv, eCUMode, iPartAddr, uiDepth, iPartIdx);
 }
 
-Void TComCUMvField::setAllMvd(TComMv const & mvd, PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx)
+Void TComCUMvField::setAllMvd(MV const & mvd, PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx)
 {
     setAll(m_pcMvd, mvd, eCUMode, iPartAddr, uiDepth, iPartIdx);
 }
@@ -342,7 +344,7 @@ Void TComCUMvField::compress(Char* pePredMode, Int scale)
 
     for (Int uiPartIdx = 0; uiPartIdx < m_uiNumPartition; uiPartIdx += N)
     {
-        TComMv cMv(0, 0);
+        MV cMv(0, 0);
         PredMode predMode = MODE_INTRA;
         Int iRefIdx = 0;
 

@@ -165,7 +165,7 @@ private:
     TComMvField   m_cMvFieldA;        ///< motion vector of position A
     TComMvField   m_cMvFieldB;        ///< motion vector of position B
     TComMvField   m_cMvFieldC;        ///< motion vector of position C
-    TComMv        m_cMvPred;          ///< motion vector predictor
+    x265::MV      m_cMvPred;          ///< motion vector predictor
 
     // -------------------------------------------------------------------------------------------------------------------
     // coding tool information
@@ -199,7 +199,7 @@ protected:
     Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
 
     Void          deriveRightBottomIdx(UInt uiPartIdx, UInt& ruiPartIdxRB);
-    Bool          xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, TComMv& rcMv, Int& riRefIdx);
+    Bool          xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, x265::MV& rcMv, Int& riRefIdx);
 
     /// compute scaling factor from POC difference
     Int           xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, Int iColRefPOC);
@@ -469,12 +469,12 @@ public:
     Void          setMVPIdxSubParts(Int iMVPIdx, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
     Void          setMVPNumSubParts(Int iMVPNum, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
 
-    Void          clipMv(TComMv& rcMv);
-    Void          getMvPredLeft(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldA.getMv(); }
+    Void          clipMv(x265::MV& rcMv);
+    Void          getMvPredLeft(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldA.getMv(); }
 
-    Void          getMvPredAbove(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldB.getMv(); }
+    Void          getMvPredAbove(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldB.getMv(); }
 
-    Void          getMvPredAboveRight(TComMv& rcMvPred)   { rcMvPred = m_cMvFieldC.getMv(); }
+    Void          getMvPredAboveRight(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldC.getMv(); }
 
     Void          compressMV();
 

@@ -33,7 +33,7 @@
 
 /** \file     TComMotionInfo.h
     \brief    motion information handling classes (header)
-    \todo     TComMvField seems to be better to be inherited from TComMv
+    \todo     TComMvField seems to be better to be inherited from x265::MV
 */
 
 #ifndef __TCOMMOTIONINFO__
@@ -41,7 +41,7 @@
 
 #include <memory.h>
 #include "CommonDef.h"
-#include "TComMv.h"
+#include "mv.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -53,7 +53,7 @@
 /// parameters for AMVP
 typedef struct _AMVPInfo
 {
-    TComMv m_acMvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
+    x265::MV m_acMvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
     Int    iN;                              ///< number of motion vector predictor candidates
 } AMVPInfo;
 
@@ -66,14 +66,14 @@ class TComMvField
 {
 private:
 
-    TComMv    m_acMv;
+    x265::MV  m_acMv;
     Int       m_iRefIdx;
 
 public:
 
     TComMvField() : m_iRefIdx(NOT_VALID) {}
 
-    Void setMvField(TComMv const & cMv, Int iRefIdx)
+    Void setMvField(x265::MV const & cMv, Int iRefIdx)
     {
         m_acMv    = cMv;
         m_iRefIdx = iRefIdx;
@@ -81,9 +81,9 @@ public:
 
     Void setRefIdx(Int refIdx) { m_iRefIdx = refIdx; }
 
-    TComMv const & getMv() const { return m_acMv; }
+    x265::MV const & getMv() const { return m_acMv; }
 
-    TComMv       & getMv()       { return m_acMv; }
+    x265::MV       & getMv()       { return m_acMv; }
 
     Int getRefIdx() const { return m_iRefIdx;       }
 
@@ -97,8 +97,8 @@ class TComCUMvField
 {
 private:
 
-    TComMv*   m_pcMv;
-    TComMv*   m_pcMvd;
+    x265::MV* m_pcMv;
+    x265::MV* m_pcMvd;
     Char*     m_piRefIdx;
     UInt      m_uiNumPartition;
     AMVPInfo  m_cAMVPInfo;
@@ -133,9 +133,9 @@ public:
     // get
     // ------------------------------------------------------------------------------------------------------------------
 
-    TComMv const & getMv(Int iIdx) const { return m_pcMv[iIdx]; }
+    x265::MV const & getMv(Int iIdx) const { return m_pcMv[iIdx]; }
 
-    TComMv const & getMvd(Int iIdx) const { return m_pcMvd[iIdx]; }
+    x265::MV const & getMvd(Int iIdx) const { return m_pcMvd[iIdx]; }
 
     Int            getRefIdx(Int iIdx) const { return m_piRefIdx[iIdx]; }
 
@@ -145,9 +145,9 @@ public:
     // set
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    setAllMv(TComMv const & rcMv,         PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
-    Void    setAllMvd(TComMv const & rcMvd,        PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
-    Void    setAllRefIdx(Int iRefIdx,                 PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
+    Void    setAllMv(x265::MV const & rcMv,            PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
+    Void    setAllMvd(x265::MV const & rcMvd,          PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
+    Void    setAllRefIdx(Int iRefIdx,                  PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
     Void    setAllMvField(TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx = 0);
 
     Void setNumPartition(Int iNumPart)

@@ -38,13 +38,16 @@
 
 #include "TComDataCU.h"
 #include "TComPic.h"
+#include "mv.h"
 
-static x265::MV scaleMv(x265::MV mv, int scale)
+using namespace x265;
+
+static MV scaleMv(MV mv, int scale)
 {
     int mvx = Clip3(-32768, 32767, (scale * mv.x + 127 + (scale * mv.x < 0)) >> 8);
     int mvy = Clip3(-32768, 32767, (scale * mv.y + 127 + (scale * mv.y < 0)) >> 8);
 
-    return x265::MV((int16_t)mvx, (int16_t)mvy);
+    return MV((int16_t)mvx, (int16_t)mvy);
 }
 
 //! \ingroup TLibCommon
@@ -1948,7 +1951,7 @@ Void TComDataCU::getMvField(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRef
 {
     if (pcCU == NULL)  // OUT OF BOUNDARY
     {
-        TComMv  cZeroMv;
+        MV cZeroMv(0, 0);
         rcMvField.setMvField(cZeroMv, NOT_VALID);
         return;
     }
@@ -2424,10 +2427,10 @@ Void TComDataCU::getInterMergeCandidates(UInt uiAbsPartIdx, UInt uiPUIdx, TComMv
         UInt uiAbsPartIdxTmp = g_auiZscanToRaster[uiPartIdxRB];
         UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
 
-        TComMv cColMv;
+        MV cColMv;
         Int iRefIdx;
 
-        if      ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxTmp] + m_pcPic->getMinCUWidth()) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
+        if ((m_pcPic->getCU(m_uiCUAddr)->getCUPelX() + g_auiRasterToPelX[uiAbsPartIdxTmp] + m_pcPic->getMinCUWidth()) >= m_pcSlice->getSPS()->getPicWidthInLumaSamples())  // image boundary check
         {
             uiLCUIdx = -1;
         }
@@ -2555,12 +2558,12 @@ Void TComDataCU::getInterMergeCandidates(UInt uiAbsPartIdx, UInt uiPUIdx, TComMv
     {
         abCandIsInter[uiArrayAddr] = true;
         puhInterDirNeighbours[uiArrayAddr] = 1;
-        pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(TComMv(0, 0), r);
+        pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(MV(0, 0), r);
 
         if (getSlice()->isInterB())
         {
             puhInterDirNeighbours[uiArrayAddr] = 3;
-            pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(TComMv(0, 0), r);
+            pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(MV(0, 0), r);
         }
         uiArrayAddr++;
         if (refcnt == iNumRefIdx - 1)
@@ -2673,7 +2676,7 @@ Void TComDataCU::getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int&
  */
 Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, Int iRefIdx, AMVPInfo* pInfo)
 {
-    TComMv cMvPred;
+    MV cMvPred;
     Bool bAddedSmvp = false;
 
     pInfo->iN = 0;
@@ -2757,7 +2760,7 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
     {
         // Get Temporal Motion Predictor
         Int iRefIdx_Col = iRefIdx;
-        TComMv cColMv;
+        MV   cColMv;
         UInt uiPartIdxRB;
         UInt uiAbsPartIdx;
         UInt uiAbsPartAddr;
@@ -2842,7 +2845,7 @@ Bool TComDataCU::isBipredRestriction(UInt puIdx)
     return false;
 }
 
-Void TComDataCU::clipMv(TComMv& rcMv)
+Void TComDataCU::clipMv(MV& rcMv)
 {
     Int iMvShift = 2;
     Int iOffset = 8;
@@ -2954,7 +2957,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
 
     if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0 && m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC() == pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx)))
     {
-        TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
+        MV cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
 
         pInfo->m_acMvCand[pInfo->iN++] = cMvPred;
         return true;
@@ -2978,7 +2981,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
         iNeibRefPOC = pcTmpCU->getSlice()->getRefPOC(eRefPicList2nd, pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx));
         if (iNeibRefPOC == iCurrRefPOC) // Same Reference Frame But Diff List//
         {
-            TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
+            MV cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
             pInfo->m_acMvCand[pInfo->iN++] = cMvPred;
             return true;
         }
@@ -3058,8 +3061,8 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
     if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0)
     {
         iNeibRefPOC = pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx));
-        TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
-        TComMv rcMv;
+        MV cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
+        MV rcMv;
 
         bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
@@ -3088,8 +3091,8 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
     if (pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx) >= 0)
     {
         iNeibRefPOC = pcTmpCU->getSlice()->getRefPOC(eRefPicList2nd, pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx));
-        TComMv cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
-        TComMv rcMv;
+        MV cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
+        MV rcMv;
 
         bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(eRefPicList2nd, pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
@@ -3125,13 +3128,13 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
  * \param riRefIdx
  * \returns Bool
  */
-Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, TComMv& rcMv, Int& riRefIdx)
+Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, MV& rcMv, Int& riRefIdx)
 {
     UInt uiAbsPartAddr = uiPartUnitIdx;
 
     RefPicList  eColRefPicList;
     Int iColPOC, iColRefPOC, iCurrPOC, iCurrRefPOC, iScale;
-    TComMv cColMv;
+    MV cColMv;
 
     // use coldir.
     TComPic *pColPic = getSlice()->getRefPic(RefPicList(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0), getSlice()->getColRefIdx());

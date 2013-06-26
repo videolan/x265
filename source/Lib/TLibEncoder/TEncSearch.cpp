@@ -56,30 +56,30 @@ DECLARE_CYCLE_COUNTER(ME);
 //! \ingroup TLibEncoder
 //! \{
 
-static const TComMv s_acMvRefineH[9] =
+static const MV s_acMvRefineH[9] =
 {
-    TComMv(0,  0),  // 0
-    TComMv(0, -1),  // 1
-    TComMv(0,  1),  // 2
-    TComMv(-1,  0), // 3
-    TComMv(1,  0),  // 4
-    TComMv(-1, -1), // 5
-    TComMv(1, -1),  // 6
-    TComMv(-1,  1), // 7
-    TComMv(1,  1)   // 8
+    MV(0,  0),  // 0
+    MV(0, -1),  // 1
+    MV(0,  1),  // 2
+    MV(-1,  0), // 3
+    MV(1,  0),  // 4
+    MV(-1, -1), // 5
+    MV(1, -1),  // 6
+    MV(-1,  1), // 7
+    MV(1,  1)   // 8
 };
 
-static const TComMv s_acMvRefineQ[9] =
+static const MV s_acMvRefineQ[9] =
 {
-    TComMv(0,  0),  // 0
-    TComMv(0, -1),  // 1
-    TComMv(0,  1),  // 2
-    TComMv(-1, -1), // 5
-    TComMv(1, -1),  // 6
-    TComMv(-1,  0), // 3
-    TComMv(1,  0),  // 4
-    TComMv(-1,  1), // 7
-    TComMv(1,  1)   // 8
+    MV(0,  0),  // 0
+    MV(0, -1),  // 1
+    MV(0,  1),  // 2
+    MV(-1, -1), // 5
+    MV(1, -1),  // 6
+    MV(-1,  0), // 3
+    MV(1,  0),  // 4
+    MV(-1,  1), // 7
+    MV(1,  1)   // 8
 };
 
 static const UInt s_auiDFilter[9] =
@@ -285,7 +285,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     uiSad = m_cDistParam.DistFunc(&m_cDistParam);
     
     // motion cost
-    uiSad += m_bc.mvcost(x265::MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
+    uiSad += m_bc.mvcost(MV(iSearchX, iSearchY) << m_pcRdCost->m_iCostScale);
 
     if (uiSad < rcStruct.uiBestSad)
     {
@@ -298,7 +298,7 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
     }
 }
 
-__inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB)
+__inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB)
 {
     Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
     Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
@@ -429,7 +429,7 @@ __inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearch
     } // switch( rcStruct.ucPointNr )
 }
 
-__inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist)
+__inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist)
 {
     Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
     Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
@@ -598,9 +598,7 @@ __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntT
 
 //<--
 
-UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
-                                    TComMv baseRefMv,
-                                    Int iFrac, TComMv& rcMvFrac, TComPicYuv* refPic, Int offset, TComDataCU* pcCU, UInt uiPartAddr)
+UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey, MV baseRefMv, Int iFrac, MV& rcMvFrac, TComPicYuv* refPic, Int offset, TComDataCU* pcCU, UInt uiPartAddr)
 {
     UInt  uiDist;
     UInt  uiDistBest  = MAX_UINT;
@@ -610,11 +608,11 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey,
 
     m_pcRdCost->setDistParam(pcPatternKey, refPic->getLumaFilterBlock(0, 0, pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr) + offset, iRefStride, 1, m_cDistParam, m_pcEncCfg->getUseHADME());
 
-    const TComMv* pcMvRefine = (iFrac == 2 ? s_acMvRefineH : s_acMvRefineQ);
+    const MV* pcMvRefine = (iFrac == 2 ? s_acMvRefineH : s_acMvRefineQ);
 
     for (UInt i = 0; i < 9; i++)
     {
-        TComMv cMvTest = pcMvRefine[i];
+        MV cMvTest = pcMvRefine[i];
         cMvTest += baseRefMv;
 
         Int horVal = cMvTest.getHor() * iFrac;
@@ -2807,7 +2805,7 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* pcCU, UInt puIdx, TComMvFi
             if (interDirNeighbours[mergeCand] == 3)
             {
                 interDirNeighbours[mergeCand] = 1;
-                mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(TComMv(0, 0), -1);
+                mvFieldNeighbours[(mergeCand << 1) + 1].setMvField(MV(0, 0), -1);
             }
         }
     }
@@ -2829,45 +2827,45 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
     m_cYuvPredTemp.clear();
     rpcPredYuv->clear();
 
-    TComMv        cMvSrchRngLT;
-    TComMv        cMvSrchRngRB;
+    MV        cMvSrchRngLT;
+    MV        cMvSrchRngRB;
 
-    TComMv        cMvZero;
-    TComMv        TempMv; //kolya
+    MV        cMvZero;
+    MV        TempMv; //kolya
 
-    TComMv        cMv[2];
-    TComMv        cMvBi[2];
-    TComMv        cMvTemp[2][33];
+    MV        cMv[2];
+    MV        cMvBi[2];
+    MV        cMvTemp[2][33];
 
-    Int           iNumPart    = pcCU->getNumPartInter();
-    Int           iNumPredDir = pcCU->getSlice()->isInterP() ? 1 : 2;
+    Int       iNumPart    = pcCU->getNumPartInter();
+    Int       iNumPredDir = pcCU->getSlice()->isInterP() ? 1 : 2;
 
-    TComMv        cMvPred[2][33];
+    MV        cMvPred[2][33];
 
-    TComMv        cMvPredBi[2][33];
-    Int           aaiMvpIdxBi[2][33];
+    MV        cMvPredBi[2][33];
+    Int       aaiMvpIdxBi[2][33];
 
-    Int           aaiMvpIdx[2][33];
-    Int           aaiMvpNum[2][33];
+    Int       aaiMvpIdx[2][33];
+    Int       aaiMvpNum[2][33];
 
-    AMVPInfo aacAMVPInfo[2][33];
+    AMVPInfo  aacAMVPInfo[2][33];
 
-    Int           iRefIdx[2] = { 0, 0 }; //If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
-    Int           iRefIdxBi[2];
+    Int       iRefIdx[2] = { 0, 0 }; //If un-initialized, may cause SEGV in bi-directional prediction iterative stage.
+    Int       iRefIdxBi[2];
 
-    UInt          uiPartAddr;
-    Int           iRoiWidth, iRoiHeight;
+    UInt      uiPartAddr;
+    Int       iRoiWidth, iRoiHeight;
 
-    UInt          uiMbBits[3] = { 1, 1, 0 };
+    UInt      uiMbBits[3] = { 1, 1, 0 };
 
-    UInt          uiLastMode = 0;
-    Int           iRefStart, iRefEnd;
+    UInt      uiLastMode = 0;
+    Int       iRefStart, iRefEnd;
 
-    PartSize      ePartSize = pcCU->getPartitionSize(0);
+    PartSize  ePartSize = pcCU->getPartitionSize(0);
 
-    Int           bestBiPRefIdxL1 = 0;
-    Int           bestBiPMvpL1 = 0;
-    UInt          biPDistTemp = MAX_INT;
+    Int       bestBiPRefIdxL1 = 0;
+    Int       bestBiPMvpL1 = 0;
+    UInt      biPDistTemp = MAX_INT;
 
     /* TODO: this could be as high as TEncSlice::compressSlice() */
     TComPicYuv *fenc = pcCU->getSlice()->getPic()->getPicYuvOrg();
@@ -2897,7 +2895,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         UInt          uiBitsTempL0[MAX_NUM_REF];
 
-        TComMv        mvValidList1;
+        MV            mvValidList1;
         Int           refIdxValidList1 = 0;
         UInt          bitsValidList1 = MAX_UINT;
         UInt          costValidList1 = MAX_UINT;
@@ -2962,7 +2960,7 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
                             /* correct the bit-rate part of the current ref */
                             m_me.setMVP(cMvPred[iRefList][iRefIdxTemp]);
-                            uiBitsTemp += m_me.bitcost(x265::MV(cMvTemp[1][iRefIdxTemp].getHor(), cMvTemp[1][iRefIdxTemp].getVer()));
+                            uiBitsTemp += m_me.bitcost(cMvTemp[1][iRefIdxTemp]);
 
                             /* calculate the correct cost */
                             uiCostTemp += m_pcRdCost->getCost(uiBitsTemp);
@@ -3356,14 +3354,14 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 }
 
 // AMVP
-Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU, TComYuv* pcOrgYuv, UInt uiPartIdx, RefPicList eRefPicList, Int iRefIdx, TComMv& rcMvPred, Bool bFilled, UInt* puiDistBiP)
+Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* pcCU, TComYuv* pcOrgYuv, UInt uiPartIdx, RefPicList eRefPicList, Int iRefIdx, MV& rcMvPred, Bool bFilled, UInt* puiDistBiP)
 {
     AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
 
-    TComMv  cBestMv;
+    MV      cBestMv;
     Int     iBestIdx = 0;
-    TComMv  cZeroMv;
-    TComMv  cMvPred;
+    MV      cZeroMv;
+    MV      cMvPred;
     UInt    uiBestCost = MAX_INT;
     UInt    uiPartAddr = 0;
     Int     iRoiWidth, iRoiHeight;
@@ -3508,7 +3506,7 @@ Void TEncSearch::xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst)
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, TComMv cMv, TComMv& rcMvPred, Int& riMVPIdx, UInt& ruiBits, UInt& ruiCost)
+Void TEncSearch::xCheckBestMVP(TComDataCU* pcCU, RefPicList eRefPicList, MV cMv, MV& rcMvPred, Int& riMVPIdx, UInt& ruiBits, UInt& ruiCost)
 {
     AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
 
@@ -3555,7 +3553,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
                                   UInt        uiPartAddr,
                                   TComYuv*    pcOrgYuv,
                                   TComYuv*    pcTemplateCand,
-                                  TComMv      cMvCand,
+                                  MV          cMvCand,
                                   Int         iMVPIdx,
                                   Int         iMVPNum,
                                   RefPicList  eRefPicList,
@@ -3587,16 +3585,16 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* pcCU,
     return m_pcRdCost->calcRdSADCost(uiCost, m_auiMVPIdxCost[iMVPIdx][iMVPNum]);
 }
 
-Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, TComMv* pcMvPred, Int iRefIdxPred, TComMv& rcMv, UInt& ruiBits, UInt& ruiCost, Bool bBi)
+Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, MV* pcMvPred, Int iRefIdxPred, MV& rcMv, UInt& ruiBits, UInt& ruiCost, Bool bBi)
 {
     CYCLE_COUNTER_START(ME);
     UInt          uiPartAddr;
     Int           iRoiWidth;
     Int           iRoiHeight;
 
-    TComMv        cMvHalf, cMvQter;
-    TComMv        cMvSrchRngLT;
-    TComMv        cMvSrchRngRB;
+    MV            cMvHalf, cMvQter;
+    MV            cMvSrchRngLT;
+    MV            cMvSrchRngRB;
 
     TComYuv*      pcYuv = pcYuvOrg;
 
@@ -3635,7 +3633,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
 
     TComPicYuv* refPic = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
 
-    TComMv      cMvPred = *pcMvPred;
+    MV          cMvPred = *pcMvPred;
 
     if (bBi)
         xSetSearchRange(pcCU, rcMv, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
@@ -3677,7 +3675,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
     CYCLE_COUNTER_STOP(ME);
 }
 
-Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv mvp, Int merange, TComMv& mvmin, TComMv& mvmax)
+Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, MV mvp, Int merange, MV& mvmin, MV& mvmax)
 {
     pcCU->clipMv(mvp);
 
@@ -3692,7 +3690,7 @@ Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, TComMv mvp, Int merange, TCom
     mvmax >>= 2;
 }
 
-Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
+Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
 {
     Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
     Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
@@ -3726,7 +3724,7 @@ Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRef
     ruiSAD = uiSadBest - m_bc.mvcost(rcMv << 2);
 }
 
-Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, TComMv& rcMv, UInt& ruiSAD)
+Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
 {
     const Int  iRaster                  = 5;
     const Bool bTestOtherPredictedMV    = 0;
@@ -3766,7 +3764,7 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
     {
         for (UInt index = 0; index < 3; index++)
         {
-            TComMv cMv = m_acMvPredictors[index];
+            MV cMv = m_acMvPredictors[index];
             pcCU->clipMv(cMv);
             cMv >>= 2;
             xTZSearchHelp(pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0);
@@ -3897,18 +3895,17 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  pcCU,
                                        TComPattern* pcPatternKey,
                                        Pel*         piRefY,
                                        Int          iRefStride,
-                                       TComMv*      pcMvInt,
-                                       TComMv&      rcMvHalf,
-                                       TComMv&      rcMvQter,
+                                       MV*          pcMvInt,
+                                       MV&          rcMvHalf,
+                                       MV&          rcMvQter,
                                        UInt&        ruiCost,
                                        Bool         biPred,
                                        TComPicYuv * refPic,
-                                       UInt         uiPartAddr
-                                       )
+                                       UInt         uiPartAddr)
 {
     Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
 
-    TComMv baseRefMv(0, 0);
+    MV baseRefMv(0, 0);
 
     rcMvHalf = *pcMvInt;
     rcMvHalf <<= 1;
@@ -5158,7 +5155,7 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
  * \param halfPelRef Half-pel mv
  * \param biPred     Flag indicating whether block is for biprediction
  */
-Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, TComMv halfPelRef, Bool biPred)
+Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool biPred)
 {
     assert(g_bitDepthY == 8);
 

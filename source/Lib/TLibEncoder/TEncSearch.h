@@ -112,9 +112,9 @@ protected:
     Int             m_bipredSearchRange; // Search range for bi-prediction
     Int             m_iSearchMethod;
     Int             m_aaiAdaptSR[2][33];
-    TComMv          m_cSrchRngLT;
-    TComMv          m_cSrchRngRB;
-    TComMv          m_acMvPredictors[3];
+    x265::MV        m_cSrchRngLT;
+    x265::MV        m_cSrchRngRB;
+    x265::MV        m_acMvPredictors[3];
 
     // RD computation
     TEncSbac***     m_pppcRDSbacCoder;
@@ -147,8 +147,13 @@ protected:
 
     /// sub-function for motion vector refinement used in fractional-pel accuracy
     UInt  xPatternRefinement(TComPattern * pcPatternKey,
-                             TComMv baseRefMv,
-                             Int iFrac, TComMv & rcMvFrac, TComPicYuv * refPic, Int offset, TComDataCU * pcCU, UInt);
+                             x265::MV baseRefMv,
+                             Int iFrac,
+                             x265::MV & rcMvFrac,
+                             TComPicYuv * refPic,
+                             Int offset,
+                             TComDataCU * pcCU,
+                             UInt);
 
     typedef struct
     {
@@ -164,8 +169,8 @@ protected:
 
     // sub-functions for ME
     __inline Void xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance);
-    __inline Void xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB);
-    __inline Void xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, TComMv* pcMvSrchRngLT, TComMv* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist);
+    __inline Void xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, x265::MV* pcMvSrchRngLT, x265::MV* pcMvSrchRngRB);
+    __inline Void xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, x265::MV* pcMvSrchRngLT, x265::MV* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist);
 
     Void xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, UInt& ruiSAD, Bool Hadamard);
 
@@ -319,14 +324,14 @@ protected:
                              UInt        uiPartIdx,
                              RefPicList  eRefPicList,
                              Int         iRefIdx,
-                             TComMv&     rcMvPred,
+                             x265::MV&   rcMvPred,
                              Bool        bFilled = false,
                              UInt*       puiDistBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* pcCU,
                        RefPicList  eRefPicList,
-                       TComMv      cMv,
-                       TComMv&     rcMvPred,
+                       x265::MV    cMv,
+                       x265::MV&   rcMvPred,
                        Int&        riMVPIdx,
                        UInt&       ruiBits,
                        UInt&       ruiCost);
@@ -336,7 +341,7 @@ protected:
                           UInt        uiPartAddr,
                           TComYuv*    pcOrgYuv,
                           TComYuv*    pcTemplateCand,
-                          TComMv      cMvCand,
+                          x265::MV    cMvCand,
                           Int         iMVPIdx,
                           Int         iMVPNum,
                           RefPicList  eRefPicList,
@@ -373,48 +378,50 @@ protected:
                            TComYuv*    pcYuvOrg,
                            Int         iPartIdx,
                            RefPicList  eRefPicList,
-                           TComMv*     pcMvPred,
+                           x265::MV*   pcMvPred,
                            Int         iRefIdxPred,
-                           TComMv&     rcMv,
+                           x265::MV&   rcMv,
                            UInt&       ruiBits,
                            UInt&       ruiCost,
                            Bool        bBi = false);
 
     Void xSetSearchRange(TComDataCU* pcCU,
-                         TComMv      cMvPred,
+                         x265::MV    cMvPred,
                          Int         iSrchRng,
-                         TComMv&     rcMvSrchRngLT,
-                         TComMv&     rcMvSrchRngRB);
+                         x265::MV&   rcMvSrchRngLT,
+                         x265::MV&   rcMvSrchRngRB);
 
     Void xPatternSearchFast(TComDataCU*  pcCU,
                             TComPattern* pcPatternKey,
                             Pel*         piRefY,
                             Int          iRefStride,
-                            TComMv*      pcMvSrchRngLT,
-                            TComMv*      pcMvSrchRngRB,
-                            TComMv&      rcMv,
+                            x265::MV*    pcMvSrchRngLT,
+                            x265::MV*    pcMvSrchRngRB,
+                            x265::MV&    rcMv,
                             UInt&        ruiSAD);
 
     Void xPatternSearch(TComPattern* pcPatternKey,
                         Pel*         piRefY,
                         Int          iRefStride,
-                        TComMv*      pcMvSrchRngLT,
-                        TComMv*      pcMvSrchRngRB,
-                        TComMv&      rcMv,
+                        x265::MV*    pcMvSrchRngLT,
+                        x265::MV*    pcMvSrchRngRB,
+                        x265::MV&    rcMv,
                         UInt&        ruiSAD);
 
     Void xPatternSearchFracDIF(TComDataCU* pcCU,
                                TComPattern* pcPatternKey,
                                Pel* piRefY,
                                Int iRefStride,
-                               TComMv* pcMvInt,
-                               TComMv& rcMvHalf,
-                               TComMv& rcMvQter,
-                               UInt& ruiCost
-                               , Bool biPred, TComPicYuv* refPic, UInt uiPartAddr);
+                               x265::MV* pcMvInt,
+                               x265::MV& rcMvHalf,
+                               x265::MV& rcMvQter,
+                               UInt& ruiCost,
+                               Bool biPred,
+                               TComPicYuv* refPic,
+                               UInt uiPartAddr);
 
     Void xExtDIFUpSamplingH(TComPattern* pcPattern, Bool biPred);
-    Void xExtDIFUpSamplingQ(TComPattern* pcPatternKey, TComMv halfPelRef, Bool biPred);
+    Void xExtDIFUpSamplingQ(TComPattern* pcPatternKey, x265::MV halfPelRef, Bool biPred);
 
     // -------------------------------------------------------------------------------------------------------------------
     // T & Q & Q-1 & T-1
