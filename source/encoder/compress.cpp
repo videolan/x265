@@ -108,23 +108,6 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
     me_merge.setSourcePlane((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(),  
                                         m_ppcOrigYuv[uhDepth]->getStride());
 
-    Int mergeCandBuffer[MRG_MAX_NUM_CANDS];
-    for (UInt ui = 0; ui < numValidMergeCand; ++ui)
-    {
-        mergeCandBuffer[ui] = 0;
-    }
-
-
-    UInt iteration;
-    if (rpcTempCU->isLosslessCoded(0))
-    {
-        iteration = 1;
-    }
-    else
-    {
-        iteration = 2;
-    }
-
         for (UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
         {
                     // set MC parameters
