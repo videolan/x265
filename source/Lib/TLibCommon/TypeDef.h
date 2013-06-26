@@ -83,8 +83,6 @@
 #define ARL_C_PRECISION                           7 ///< G382: 7-bit arithmetic precision
 #define LEVEL_RANGE                              30 ///< G382: max coefficient level in statistics collection
 
-#define VERBOSE_RATE                              0 ///< Print additional rate information in encoder
-
 #define AMVP_DECIMATION_FACTOR                    4
 
 #define SCAN_SET_SIZE                            16

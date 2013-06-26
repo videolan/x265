@@ -1641,6 +1641,7 @@ Int TEncGOP::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int 
 // Protected member functions
 // ====================================================================================================================
 
+#define VERBOSE_RATE 0
 #if VERBOSE_RATE
 static const Char* nalUnitTypeToString(NalUnitType type)
 {
