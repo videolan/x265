@@ -1,5 +1,5 @@
 /*****************************************************************************
- * x265: TshortYUV classes for short based YUV-style frames
+ * x265: TShortYUV classes for short sized YUV-style frames
  *****************************************************************************
  * Copyright (C) 2013 x265 project
  *
@@ -76,7 +76,7 @@ public:
     short*    getCrAddr()    { return CrBuf; }
 
     //  Access starting position of YUV partition unit buffer
-    short* getLumaAddr(unsigned int iPartUnitIdx) { return YBuf +   getAddrOffset(iPartUnitIdx, width); }
+    short* getLumaAddr(unsigned int iPartUnitIdx) { return YBuf + getAddrOffset(iPartUnitIdx, width); }
 
     short* getCbAddr(unsigned int iPartUnitIdx) { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
 
