@@ -30,7 +30,7 @@ namespace x265 {
 // private x265 namespace
 
 #if _MSC_VER
-#pragma warning(disable: 4201)
+#pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
 #endif
 class MV
 {
@@ -101,10 +101,6 @@ public:
 
     /* For compatibility with TComMV */
     void  set(int16_t _x, int16_t _y) { x = _x; y = _y; }
-
-    void  setHor(short i)         { x = i; }
-
-    void  setVer(short i)         { y = i; }
 
     short getHor() const          { return x; }
 

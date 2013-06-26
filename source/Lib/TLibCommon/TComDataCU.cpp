@@ -2855,8 +2855,8 @@ Void TComDataCU::clipMv(MV& rcMv)
     Int iVerMax = (m_pcSlice->getSPS()->getPicHeightInLumaSamples() + iOffset - m_uiCUPelY - 1) << iMvShift;
     Int iVerMin = (-(Int)g_uiMaxCUHeight - iOffset - (Int)m_uiCUPelY + 1) << iMvShift;
 
-    rcMv.setHor(min(iHorMax, max(iHorMin, (Int)rcMv.getHor())));
-    rcMv.setVer(min(iVerMax, max(iVerMin, (Int)rcMv.getVer())));
+    rcMv.x = min(iHorMax, max(iHorMin, (Int)rcMv.x));
+    rcMv.y = min(iVerMax, max(iVerMin, (Int)rcMv.y));
 }
 
 UInt TComDataCU::getIntraSizeIdx(UInt uiAbsPartIdx)
