@@ -51,6 +51,9 @@
 #include <time.h>
 #include <math.h>
 
+using namespace std;
+using namespace x265;
+
 /**
  * Produce an ascii(hex) representation of picture digest.
  *
@@ -89,8 +92,6 @@ static inline Int getLSB(Int poc, Int maxLSB)
     }
 }
 
-using namespace std;
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -125,6 +126,13 @@ Void  TEncGOP::create()
 
 Void TEncGOP::destroy()
 {
+    // release and join the worker thread
+    m_threadActive = false;
+    m_batchSize = 0;
+    m_startPOC = 0;
+    m_inputLock.Release();
+    Thread::Stop();
+
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
     Int iSize = Int(m_cListPic.size());
     for (Int i = 0; i < iSize; i++)
@@ -151,6 +159,12 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_pcEncTop   = pcTEncTop;
     m_pcCfg      = pcTEncTop;
     m_pcRateCtrl = pcTEncTop->getRateCtrl();
+
+    m_threadActive = true;
+    m_inputLock.Acquire();
+    m_batchSize = 0;
+    m_startPOC = 0;
+    Thread::Start();
 
     // initialize SPS
     pcTEncTop->xInitSPS(&m_cSPS);
@@ -197,6 +211,15 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
 
 int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessUnitsOut)
 {
+    while (1)
+    {
+        m_outputLock.Acquire();
+        if (!m_accessUnits.empty())
+            break;
+        m_outputLock.Release();
+    }
+    m_inputLock.Acquire();
+
     // move access units from member variable list to end of user's container
     accessUnitsOut.splice(accessUnitsOut.end(), m_accessUnits);
 
@@ -205,9 +228,8 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
         for (Int i = 0; i < m_batchSize; i++)
         {
             TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
-            while (iterPic != m_cListPic.end() && (*iterPic)->getPOC() != m_startPOC)
+            while (iterPic != m_cListPic.end() && (*iterPic)->getPOC() != (m_startPOC + i))
                 iterPic++;
-            m_startPOC++;
             TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
             x265_picture_t& recon = m_recon[i];
             recon.planes[0] = recpic->getLumaAddr();
@@ -220,6 +242,7 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
         }
         *pic_out = m_recon;
     }
+    m_outputLock.Release();
     return m_batchSize;
 }
 
@@ -248,6 +271,38 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
     assert(!"No room for added picture");
 }
 
+void TEncGOP::ThreadMain()
+{
+    int lastPOC = -1;
+
+    while (m_threadActive)
+    {
+        m_inputLock.Acquire();
+
+        if (m_batchSize > 0 && m_startPOC != lastPOC)
+        {
+            m_outputLock.Acquire();
+
+            lastPOC = m_startPOC;
+            int poc = m_totalCoded;
+            int numEncoded = 0;
+            while (numEncoded < m_batchSize)
+            {
+                int gopSize = (poc == 0) ? 1 : m_pcCfg->getGOPSize();
+                gopSize = X265_MIN(gopSize, m_batchSize - numEncoded);
+                compressGOP(poc + gopSize - 1, gopSize);
+                numEncoded += gopSize;
+                poc += gopSize;
+            }
+
+            m_inputLock.Release();
+            m_outputLock.Release();
+        }
+        else
+            m_inputLock.Release();
+    }
+}
+
 void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames)
 {
     // TEncTOP has queued an entire keyframe interval of frames in our picture list
@@ -255,17 +310,7 @@ void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames)
     m_totalCoded = POCLast - numFrames + 1;
     m_startPOC = m_totalCoded;
     m_batchSize = numFrames;
-
-    int poc = m_totalCoded;
-    int numEncoded = 0;
-    while (numEncoded < numFrames)
-    {
-        int gopSize = (poc == 0) ? 1 : m_pcCfg->getGOPSize();
-        gopSize = X265_MIN(gopSize, numFrames - numEncoded);
-        compressGOP(poc + gopSize - 1, gopSize);
-        numEncoded += gopSize;
-        poc += gopSize;
-    }
+    m_inputLock.Release();
 }
 
 // ====================================================================================================================

@@ -52,6 +52,7 @@
 
 #include "TEncAnalyze.h"
 #include "TEncRateCtrl.h"
+#include "threading.h"
 #include "wavefront.h"
 
 //! \ingroup TLibEncoder
@@ -64,7 +65,7 @@ class TEncTop;
 // ====================================================================================================================
 
 /// GOP encoder class
-class TEncGOP
+class TEncGOP : public x265::Thread
 {
 private:
 
@@ -77,6 +78,9 @@ private:
     std::list<AccessUnit>   m_accessUnits;
     Int                     m_startPOC;
     Int                     m_batchSize;
+    Bool                    m_threadActive;
+    x265::Lock              m_inputLock;
+    x265::Lock              m_outputLock;
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -116,7 +120,9 @@ public:
 
 protected:
 
-    Void  compressGOP(Int iPOCLast, Int iNumPicRcvd);
+    void ThreadMain();
+
+    Void compressGOP(Int iPOCLast, Int iNumPicRcvd);
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
