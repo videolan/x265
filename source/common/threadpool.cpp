@@ -120,16 +120,20 @@ private:
     bool           m_dirty;
 
     bool           m_idle;
+    
+    bool           m_exited;
 
 public:
 
-    PoolThread(ThreadPoolImpl& pool) : m_pool(pool), m_dirty(false), m_idle(false) {}
+    PoolThread(ThreadPoolImpl& pool) : m_pool(pool), m_dirty(false), m_idle(false), m_exited(false) {}
 
     //< query if thread is still potentially walking provider list
-    bool isDirty() const { return !m_idle && m_dirty; }
+    bool isDirty() const  { return !m_idle && m_dirty; }
 
     //< set m_dirty if the thread might be walking provider list
-    void markDirty()     { m_dirty = !m_idle; }
+    void markDirty()      { m_dirty = !m_idle; }
+
+    bool isExited() const { return m_exited; }
 
     virtual ~PoolThread() {}
 
@@ -224,6 +228,8 @@ void PoolThread::ThreadMain()
             m_idle = false;
         }
     }
+
+    m_exited = true;
 }
 
 void ThreadPoolImpl::PokeIdleThreads()
@@ -304,12 +310,17 @@ void ThreadPoolImpl::Stop()
 
         // set invalid flag, then wake them up so they exit their main func
         m_ok = false;
-        for (int i = 0; i < m_numThreads; i++)
+        int exited_count;
+        do
         {
             PokeIdleThreads();
+            exited_count = 0;
+            for (int i = 0; i < m_numThreads; i++)
+                exited_count += m_threads[i].isExited() ? 1 : 0;
         }
+        while (exited_count < m_numThreads);
 
-        // wait for each thread to exit
+        // join each thread to cleanup resources
         for (int i = 0; i < m_numThreads; i++)
         {
             m_threads[i].Stop();
