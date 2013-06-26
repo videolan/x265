@@ -64,15 +64,13 @@ using namespace x265;
  */
 Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 {
-    Int i;
-
-    m_uhTotalDepth          = uhTotalDepth + 1;
-    m_InterCU_2Nx2N         = new TComDataCU*[m_uhTotalDepth - 1];
-    m_InterCU_2NxN          = new TComDataCU*[m_uhTotalDepth - 1];
-    m_InterCU_Nx2N          = new TComDataCU*[m_uhTotalDepth - 1];
-    m_IntrainInterCU        = new TComDataCU*[m_uhTotalDepth - 1];
-    m_MergeCU               = new TComDataCU*[m_uhTotalDepth - 1];
-    m_MergeBestCU           = new TComDataCU*[m_uhTotalDepth - 1];
+    m_uhTotalDepth   = uhTotalDepth + 1;
+    m_InterCU_2Nx2N  = new TComDataCU*[m_uhTotalDepth - 1];
+    m_InterCU_2NxN   = new TComDataCU*[m_uhTotalDepth - 1];
+    m_InterCU_Nx2N   = new TComDataCU*[m_uhTotalDepth - 1];
+    m_IntrainInterCU = new TComDataCU*[m_uhTotalDepth - 1];
+    m_MergeCU        = new TComDataCU*[m_uhTotalDepth - 1];
+    m_MergeBestCU    = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcBestCU      = new TComDataCU*[m_uhTotalDepth - 1];
     m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
 
@@ -98,11 +96,9 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
-    UInt uiNumPartitions;
-
-    for (i = 0; i < m_uhTotalDepth - 1; i++)
+    for (Int i = 0; i < m_uhTotalDepth - 1; i++)
     {
-        uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
+        UInt uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
         UInt uiWidth  = uiMaxWidth  >> i;
         UInt uiHeight = uiMaxHeight >> i;
 
@@ -185,9 +181,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
 Void TEncCu::destroy()
 {
-    Int i;
-
-    for (i = 0; i < m_uhTotalDepth - 1; i++)
+    for (Int i = 0; i < m_uhTotalDepth - 1; i++)
     {
         if (m_InterCU_2Nx2N[i])
         {
@@ -219,14 +213,12 @@ Void TEncCu::destroy()
             delete m_MergeCU[i];
             m_MergeCU[i] = NULL;
         }
-
         if (m_MergeBestCU[i])
         {
             m_MergeBestCU[i]->destroy();
             delete m_MergeBestCU[i];
             m_MergeBestCU[i] = NULL;
         }
-
         if (m_ppcBestCU[i])
         {
             m_ppcBestCU[i]->destroy();
@@ -263,7 +255,6 @@ Void TEncCu::destroy()
             delete m_ppcPredYuvTemp[i];
             m_ppcPredYuvTemp[i] = NULL;
         }
-
         if (m_ppcPredYuvMode[0][i])
         {
             m_ppcPredYuvMode[0][i]->destroy();
@@ -295,7 +286,6 @@ Void TEncCu::destroy()
             delete m_ppcPredYuvMode[4][i];
             m_ppcPredYuvMode[4][i] = NULL;
         }
-
         if (m_ppcPredYuvMode[5][i])
         {
             m_ppcPredYuvMode[5][i]->destroy();
@@ -338,7 +328,6 @@ Void TEncCu::destroy()
             delete m_RecoYuvNxN[3][i];
             m_RecoYuvNxN[3][i] = NULL;
         }
-
         if (m_ppcOrigYuv[i])
         {
             m_ppcOrigYuv[i]->destroy();
