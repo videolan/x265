@@ -300,10 +300,10 @@ __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchSt
 
 __inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB)
 {
-    Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
-    Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
-    Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
-    Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
+    Int   iSrchRngHorLeft   = pcMvSrchRngLT->x;
+    Int   iSrchRngHorRight  = pcMvSrchRngRB->x;
+    Int   iSrchRngVerTop    = pcMvSrchRngLT->y;
+    Int   iSrchRngVerBottom = pcMvSrchRngRB->y;
 
     // 2 point search,                   //   1 2 3
     // check only the 2 untested points  //   4 0 5
@@ -431,10 +431,10 @@ __inline Void TEncSearch::xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearch
 
 __inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist)
 {
-    Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
-    Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
-    Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
-    Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
+    Int   iSrchRngHorLeft   = pcMvSrchRngLT->x;
+    Int   iSrchRngHorRight  = pcMvSrchRngRB->x;
+    Int   iSrchRngVerTop    = pcMvSrchRngLT->y;
+    Int   iSrchRngVerBottom = pcMvSrchRngRB->y;
 
     assert(iDist != 0);
     const Int iTop        = iStartY - iDist;
@@ -615,8 +615,8 @@ UInt TEncSearch::xPatternRefinement(TComPattern* pcPatternKey, MV baseRefMv, Int
         MV cMvTest = pcMvRefine[i];
         cMvTest += baseRefMv;
 
-        Int horVal = cMvTest.getHor() * iFrac;
-        Int verVal = cMvTest.getVer() * iFrac;
+        Int horVal = cMvTest.x * iFrac;
+        Int verVal = cMvTest.y * iFrac;
         piRefPos =  refPic->getLumaFilterBlock(verVal & 3, horVal & 3, pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr) + offset;
         if (horVal < 0)
             piRefPos -= 1;
@@ -3692,10 +3692,10 @@ Void TEncSearch::xSetSearchRange(TComDataCU* pcCU, MV mvp, Int merange, MV& mvmi
 
 Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
 {
-    Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
-    Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
-    Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
-    Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
+    Int   iSrchRngHorLeft   = pcMvSrchRngLT->x;
+    Int   iSrchRngHorRight  = pcMvSrchRngRB->x;
+    Int   iSrchRngVerTop    = pcMvSrchRngLT->y;
+    Int   iSrchRngVerBottom = pcMvSrchRngRB->y;
 
     m_pcRdCost->setDistParam(pcPatternKey, piRefY, iRefStride,  m_cDistParam);
     m_cDistParam.bitDepth = g_bitDepthY;
@@ -3740,10 +3740,10 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
     const Bool bStarRefinementStop      = 0;
     const UInt uiStarRefinementRounds   = 2; /* star refinement stop X rounds after best match (must be >=1) */
 
-    Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
-    Int   iSrchRngHorRight  = pcMvSrchRngRB->getHor();
-    Int   iSrchRngVerTop    = pcMvSrchRngLT->getVer();
-    Int   iSrchRngVerBottom = pcMvSrchRngRB->getVer();
+    Int   iSrchRngHorLeft   = pcMvSrchRngLT->x;
+    Int   iSrchRngHorRight  = pcMvSrchRngRB->x;
+    Int   iSrchRngVerTop    = pcMvSrchRngLT->y;
+    Int   iSrchRngVerBottom = pcMvSrchRngRB->y;
 
     UInt uiSearchRange = m_iSearchRange;
 
@@ -3757,7 +3757,7 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
     cStruct.uiBestSad   = MAX_UINT;
 
     // set rcMv (Median predictor) as start point and as best point
-    xTZSearchHelp(pcPatternKey, cStruct, rcMv.getHor(), rcMv.getVer(), 0, 0);
+    xTZSearchHelp(pcPatternKey, cStruct, rcMv.x, rcMv.y, 0, 0);
 
     // test whether one of PRED_A, PRED_B, PRED_C MV is better start point than Median predictor
     if (bTestOtherPredictedMV)
@@ -3767,7 +3767,7 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
             MV cMv = m_acMvPredictors[index];
             pcCU->clipMv(cMv);
             cMv >>= 2;
-            xTZSearchHelp(pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0);
+            xTZSearchHelp(pcPatternKey, cStruct, cMv.x, cMv.y, 0, 0);
         }
     }
 
@@ -3887,7 +3887,7 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* pcCU, TComPattern* pcPatternKey,
     }
 
     // write out best match
-    rcMv.set(cStruct.iBestX, cStruct.iBestY);
+    rcMv = MV(cStruct.iBestX, cStruct.iBestY);
     ruiSAD = cStruct.uiBestSad - m_bc.mvcost(rcMv << 2);
 }
 
@@ -3903,7 +3903,7 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  pcCU,
                                        TComPicYuv * refPic,
                                        UInt         uiPartAddr)
 {
-    Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
+    Int         iOffset    = pcMvInt->x + pcMvInt->y * iRefStride;
 
     MV baseRefMv(0, 0);
 
@@ -5174,16 +5174,16 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
 
     Int halfFilterSize = (filterSize >> 1);
 
-    Int extHeight = (halfPelRef.getVer() == 0) ? height + filterSize : height + filterSize - 1;
+    Int extHeight = (halfPelRef.y == 0) ? height + filterSize : height + filterSize - 1;
 
     // Horizontal filter 1/4
     srcPtr = pattern->getROIY() - halfFilterSize * srcStride - 1;
     intPtr = filteredBlockTmp[1].getLumaAddr();
-    if (halfPelRef.getVer() > 0)
+    if (halfPelRef.y > 0)
     {
         srcPtr += srcStride;
     }
-    if (halfPelRef.getHor() >= 0)
+    if (halfPelRef.x >= 0)
     {
         srcPtr += 1;
     }
@@ -5192,11 +5192,11 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
     // Horizontal filter 3/4
     srcPtr = pattern->getROIY() - halfFilterSize * srcStride - 1;
     intPtr = filteredBlockTmp[3].getLumaAddr();
-    if (halfPelRef.getVer() > 0)
+    if (halfPelRef.y > 0)
     {
         srcPtr += srcStride;
     }
-    if (halfPelRef.getHor() > 0)
+    if (halfPelRef.x > 0)
     {
         srcPtr += 1;
     }
@@ -5205,7 +5205,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
     // Generate @ 1,1
     intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[1][1].getLumaAddr();
-    if (halfPelRef.getVer() == 0)
+    if (halfPelRef.y == 0)
     {
         intPtr += intStride;
     }
@@ -5216,12 +5216,12 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
     dstPtr = m_filteredBlock[3][1].getLumaAddr();
     primitives.ipFilter_s_p[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height, m_if.m_lumaFilter[3]);
 
-    if (halfPelRef.getVer() != 0)
+    if (halfPelRef.y != 0)
     {
         // Generate @ 2,1
         intPtr = filteredBlockTmp[1].getLumaAddr() + (halfFilterSize - 1) * intStride;
         dstPtr = m_filteredBlock[2][1].getLumaAddr();
-        if (halfPelRef.getVer() == 0)
+        if (halfPelRef.y == 0)
         {
             intPtr += intStride;
         }
@@ -5230,7 +5230,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
         // Generate @ 2,3
         intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
         dstPtr = m_filteredBlock[2][3].getLumaAddr();
-        if (halfPelRef.getVer() == 0)
+        if (halfPelRef.y == 0)
         {
             intPtr += intStride;
         }
@@ -5249,16 +5249,16 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
         primitives.ipfilterConvert_s_p(g_bitDepthY, intPtr, intStride, (pixel*)dstPtr, dstStride, width, height);
     }
 
-    if (halfPelRef.getHor() != 0)
+    if (halfPelRef.x != 0)
     {
         // Generate @ 1,2
         intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
         dstPtr = m_filteredBlock[1][2].getLumaAddr();
-        if (halfPelRef.getHor() > 0)
+        if (halfPelRef.x > 0)
         {
             intPtr += 1;
         }
-        if (halfPelRef.getVer() >= 0)
+        if (halfPelRef.y >= 0)
         {
             intPtr += intStride;
         }
@@ -5268,11 +5268,11 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
         // Generate @ 3,2
         intPtr = filteredBlockTmp[2].getLumaAddr() + (halfFilterSize - 1) * intStride;
         dstPtr = m_filteredBlock[3][2].getLumaAddr();
-        if (halfPelRef.getHor() > 0)
+        if (halfPelRef.x > 0)
         {
             intPtr += 1;
         }
-        if (halfPelRef.getVer() > 0)
+        if (halfPelRef.y > 0)
         {
             intPtr += intStride;
         }
@@ -5283,7 +5283,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
         // Generate @ 1,0
         intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
         dstPtr = m_filteredBlock[1][0].getLumaAddr();
-        if (halfPelRef.getVer() >= 0)
+        if (halfPelRef.y >= 0)
         {
             intPtr += intStride;
         }
@@ -5292,7 +5292,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
         // Generate @ 3,0
         intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
         dstPtr = (Pel*)m_filteredBlock[3][0].getLumaAddr();
-        if (halfPelRef.getVer() > 0)
+        if (halfPelRef.y > 0)
         {
             intPtr += intStride;
         }
@@ -5302,7 +5302,7 @@ Void TEncSearch::xExtDIFUpSamplingQ(TComPattern* pattern, MV halfPelRef, Bool bi
     // Generate @ 1,3
     intPtr = filteredBlockTmp[3].getLumaAddr() + (halfFilterSize - 1) * intStride;
     dstPtr = m_filteredBlock[1][3].getLumaAddr();
-    if (halfPelRef.getVer() == 0)
+    if (halfPelRef.y == 0)
     {
         intPtr += intStride;
     }

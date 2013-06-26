@@ -87,9 +87,9 @@ public:
 
     Int getRefIdx() const { return m_iRefIdx;       }
 
-    Int getHor() const { return m_acMv.getHor(); }
+    Int getHor() const { return m_acMv.x; }
 
-    Int getVer() const { return m_acMv.getVer(); }
+    Int getVer() const { return m_acMv.y; }
 };
 
 /// class for motion information in one CU

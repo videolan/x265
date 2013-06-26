@@ -98,11 +98,6 @@ public:
     {
         return x >= _min.x && x <= _max.x && y >= _min.y && y <= _max.y;
     }
-
-    /* For compatibility with TComMV */
-    short getHor() const          { return x; }
-
-    short getVer() const          { return y; }
 };
 }
 

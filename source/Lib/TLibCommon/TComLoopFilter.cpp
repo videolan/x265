@@ -466,29 +466,29 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* pcCU, Int iDir, UInt
                     {
                         if (piRefP0 == piRefQ0)
                         {
-                            uiBs  = ((abs(pcMvQ0.getHor() - pcMvP0.getHor()) >= 4) ||
-                                     (abs(pcMvQ0.getVer() - pcMvP0.getVer()) >= 4) ||
-                                     (abs(pcMvQ1.getHor() - pcMvP1.getHor()) >= 4) ||
-                                     (abs(pcMvQ1.getVer() - pcMvP1.getVer()) >= 4)) ? 1 : 0;
+                            uiBs  = ((abs(pcMvQ0.x - pcMvP0.x) >= 4) ||
+                                     (abs(pcMvQ0.y - pcMvP0.y) >= 4) ||
+                                     (abs(pcMvQ1.x - pcMvP1.x) >= 4) ||
+                                     (abs(pcMvQ1.y - pcMvP1.y) >= 4)) ? 1 : 0;
                         }
                         else
                         {
-                            uiBs  = ((abs(pcMvQ1.getHor() - pcMvP0.getHor()) >= 4) ||
-                                     (abs(pcMvQ1.getVer() - pcMvP0.getVer()) >= 4) ||
-                                     (abs(pcMvQ0.getHor() - pcMvP1.getHor()) >= 4) ||
-                                     (abs(pcMvQ0.getVer() - pcMvP1.getVer()) >= 4)) ? 1 : 0;
+                            uiBs  = ((abs(pcMvQ1.x - pcMvP0.x) >= 4) ||
+                                     (abs(pcMvQ1.y - pcMvP0.y) >= 4) ||
+                                     (abs(pcMvQ0.x - pcMvP1.x) >= 4) ||
+                                     (abs(pcMvQ0.y - pcMvP1.y) >= 4)) ? 1 : 0;
                         }
                     }
                     else // Same L0 & L1
                     {
-                        uiBs  = ((abs(pcMvQ0.getHor() - pcMvP0.getHor()) >= 4) ||
-                                 (abs(pcMvQ0.getVer() - pcMvP0.getVer()) >= 4) ||
-                                 (abs(pcMvQ1.getHor() - pcMvP1.getHor()) >= 4) ||
-                                 (abs(pcMvQ1.getVer() - pcMvP1.getVer()) >= 4)) &&
-                            ((abs(pcMvQ1.getHor() - pcMvP0.getHor()) >= 4) ||
-                             (abs(pcMvQ1.getVer() - pcMvP0.getVer()) >= 4) ||
-                             (abs(pcMvQ0.getHor() - pcMvP1.getHor()) >= 4) ||
-                             (abs(pcMvQ0.getVer() - pcMvP1.getVer()) >= 4)) ? 1 : 0;
+                        uiBs  = ((abs(pcMvQ0.x - pcMvP0.x) >= 4) ||
+                                 (abs(pcMvQ0.y - pcMvP0.y) >= 4) ||
+                                 (abs(pcMvQ1.x - pcMvP1.x) >= 4) ||
+                                 (abs(pcMvQ1.y - pcMvP1.y) >= 4)) &&
+                            ((abs(pcMvQ1.x - pcMvP0.x) >= 4) ||
+                             (abs(pcMvQ1.y - pcMvP0.y) >= 4) ||
+                             (abs(pcMvQ0.x - pcMvP1.x) >= 4) ||
+                             (abs(pcMvQ0.y - pcMvP1.y) >= 4)) ? 1 : 0;
                     }
                 }
                 else // for all different Ref_Idx
@@ -510,9 +510,9 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* pcCU, Int iDir, UInt
                 if (piRefP0 == NULL) pcMvP0 = 0;
                 if (piRefQ0 == NULL) pcMvQ0 = 0;
 
-                uiBs  = ((piRefP0 != piRefQ0) ||
-                         (abs(pcMvQ0.getHor() - pcMvP0.getHor()) >= 4) ||
-                         (abs(pcMvQ0.getVer() - pcMvP0.getVer()) >= 4)) ? 1 : 0;
+                uiBs = ((piRefP0 != piRefQ0) ||
+                        (abs(pcMvQ0.x - pcMvP0.x) >= 4) ||
+                        (abs(pcMvQ0.y - pcMvP0.y) >= 4)) ? 1 : 0;
             }
         } // enf of "if( one of BCBP == 0 )"
     } // enf of "if( not Intra )"

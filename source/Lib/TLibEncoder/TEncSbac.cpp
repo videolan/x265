@@ -750,8 +750,8 @@ Void TEncSbac::codeMvd(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)
     }
 
     const TComCUMvField* pcCUMvField = pcCU->getCUMvField(eRefList);
-    const Int iHor = pcCUMvField->getMvd(uiAbsPartIdx).getHor();
-    const Int iVer = pcCUMvField->getMvd(uiAbsPartIdx).getVer();
+    const Int iHor = pcCUMvField->getMvd(uiAbsPartIdx).x;
+    const Int iVer = pcCUMvField->getMvd(uiAbsPartIdx).y;
     ContextModel* pCtx = m_cCUMvdSCModel.get(0);
 
     m_pcBinIf->encodeBin(iHor != 0 ? 1 : 0, *pCtx);
