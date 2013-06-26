@@ -443,6 +443,11 @@ Void TEncCu::destroy()
         delete [] m_ppcPredYuvMode[4];
         m_ppcPredYuvMode[4] = NULL;
     }
+    if (m_ppcPredYuvMode[5])
+    {
+        delete [] m_ppcPredYuvMode[5];
+        m_ppcPredYuvMode[5] = NULL;
+    }
 
     if (m_ppcResiYuvTemp)
     {
