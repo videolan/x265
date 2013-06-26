@@ -339,8 +339,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     {
         bBoundary = true;
         m_addSADDepth++;
-    }    
-
+    }  
+#if CU_STAT_LOGFILE
+    if(rpcBestCU)
+        {
+            fprintf(fp1,"\n Width : %d ,Inter 2Nx2N_Merge : %d , 2Nx2N : %d , 2NxN : %d, Nx2N : %d ", rpcBestCU->getWidth(0), m_MergeBestCU[uiDepth]->getTotalCost(), m_InterCU_2Nx2N[uiDepth]->getTotalCost(),m_InterCU_2NxN[uiDepth]->getTotalCost(),m_InterCU_Nx2N[uiDepth]->getTotalCost());
+        }
+#endif
 // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
