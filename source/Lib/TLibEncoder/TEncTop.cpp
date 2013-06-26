@@ -182,7 +182,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     m_picsQueued = 0;
 
     // cycle to the next GOP encoder
-    if (!m_openGOP)
+    if (!m_openGOP && m_gopThreads > 1)
     {
         intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
         cur = (cur == m_gopThreads - 1) ? 0 : cur + 1;
