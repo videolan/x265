@@ -84,6 +84,76 @@ using namespace x265;
         store_partial(const_int(4), pDst + (3 * dstStride), compress_unsafe(row41, row41)); \
     }
 
+#define PRED_INTRA_ANG8_START   \
+    /* Map the mode index to main prediction direction and angle*/    \
+    bool modeHor       = (dirMode < 18);    \
+    bool modeVer       = !modeHor;  \
+    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;    \
+    int absAng         = abs(intraPredAngle);   \
+    int signAng        = intraPredAngle < 0 ? -1 : 1;   \
+    /* Set bitshifts and scale the angle parameter to block size*/  \
+    int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };   \
+    absAng             = angTable[absAng];  \
+    intraPredAngle     = signAng * absAng;  \
+    if (modeHor)         /* Near horizontal modes*/   \
+    {\
+        Vec16uc tmp;    \
+        Vec8s row11, row12; \
+        Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2;   \
+        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;    \
+        Vec8s tmp1, tmp2;   \
+        v_deltaPos = 0; \
+        v_ipAngle = intraPredAngle; \
+
+#define PRED_INTRA_ANG8_MIDDLE   \
+        /* Flip the block */    \
+        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
+        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
+        row1 = tmp16_1; \
+        row2 = tmp16_2; \
+        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
+        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
+        row3 = tmp16_1; \
+        row4 = tmp16_2; \
+        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
+        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
+        row1 = tmp16_1; \
+        row2 = tmp16_2; \
+        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
+        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
+        row3 = tmp16_1; \
+        row4 = tmp16_2; \
+        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3);    \
+        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3);    \
+        row1 = tmp16_1; \
+        row3 = tmp16_2; \
+        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4);    \
+        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4);    \
+        row2 = tmp16_1; \
+        row4 = tmp16_2; \
+        store_partial(const_int(8), pDst, row1);   /*row1*/   \
+        store_partial(const_int(8), pDst + (2 * dstStride), row3);   /*row3*/   \
+        store_partial(const_int(8), pDst + (4 * dstStride), row2);   /*row5*/   \
+        store_partial(const_int(8), pDst + (6 * dstStride), row4);   /*row7*/   \
+        row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1); \
+        store_partial(const_int(8), pDst + (1 * dstStride), row1);   /*row2*/   \
+        row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3); \
+        store_partial(const_int(8), pDst + (3 * dstStride), row1);   /*row4*/   \
+        row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2);    \
+        store_partial(const_int(8), pDst + (5 * dstStride), row1);   /*row6*/   \
+        row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4); \
+        store_partial(const_int(8), pDst + (7 * dstStride), row1);   /*row8*/   \
+    }   \
+    else                         /* Vertical modes*/    \
+    {\
+        Vec8s row11, row12; \
+        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;    \
+        Vec16uc tmp;    \
+        Vec8s tmp1, tmp2;   \
+        v_deltaPos = 0; \
+        v_ipAngle = intraPredAngle; \
+
+
 namespace {
 const int angAP[17][64] =
 {
@@ -2146,7 +2216,7 @@ void PredIntraAng4_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMod
 }
 
 typedef void (*PredIntraAng4x4_table)(pixel* pDst, int dstStride, pixel *refMain, int dirMode);
-PredIntraAng4x4_table PredIntraAng[] = {
+PredIntraAng4x4_table PredIntraAng4[] = {
     /* PredIntraAng4_0 is replaced with PredIntraAng4_2. For PredIntraAng4_0 we are going through default path in the xPredIntraAng4x4 because we cannot afford to pass large number arguments for this function. */
     PredIntraAng4_32,
     PredIntraAng4_26,
@@ -2287,7 +2357,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
     }
     else
     {
-        PredIntraAng[dirMode-2](pDst, dstStride, refMain, dirMode);
+        PredIntraAng4[dirMode-2](pDst, dstStride, refMain, dirMode);
     }
 }
 
@@ -2320,13 +2390,30 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
         RES = ((thirty2 - v_deltaFract) * ROW1 + (v_deltaFract * ROW2) + 16) >> 5; \
 }
 
-void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void PredIntraAng8_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/) 
 {
-    int k;
-    int blkSize        = width;
+    Vec8s tmp;
+    tmp = load_partial(const_int(8), refMain + 2);        //-1,0,1,2
+    store_partial(const_int(8), pDst, tmp);
+    tmp = load_partial(const_int(8), refMain + 3);     //-2,-1,0,1
+    store_partial(const_int(8), pDst + dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 4);
+    store_partial(const_int(8), pDst + 2 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 5);
+    store_partial(const_int(8), pDst + 3 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 6);
+    store_partial(const_int(8), pDst + 4 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 7);
+    store_partial(const_int(8), pDst + 5 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 8);
+    store_partial(const_int(8), pDst + 6 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain + 9);
+    store_partial(const_int(8), pDst + 7 * dstStride, tmp);
+}
 
+void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+{
     // Map the mode index to main prediction direction and angle
-    assert(dirMode > 1); //no planar and dc
     bool modeHor       = (dirMode < 18);
     bool modeVer       = !modeHor;
     int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
@@ -2336,13 +2423,296 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
 
     // Set bitshifts and scale the angle parameter to block size
     int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    int invAngle       = invAngTable[absAng];
     absAng             = angTable[absAng];
     intraPredAngle     = signAng * absAng;
 
-    // Do angular predictions
+    if (modeHor)         // Near horizontal modes
+    {
+        Vec16uc tmp;
+        Vec8s row11, row12;
+        Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2;
+        Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
+        Vec8s tmp1, tmp2;
+        v_deltaPos = 0;
+        v_ipAngle = intraPredAngle;
 
+        PREDANG_CALCROW_HOR(0, tmp1);
+        PREDANG_CALCROW_HOR(1, tmp2);
+        row1 = compress(tmp1, tmp2);
+        PREDANG_CALCROW_HOR(2, tmp1);
+        PREDANG_CALCROW_HOR(3, tmp2);
+        row2 = compress(tmp1, tmp2);
+        PREDANG_CALCROW_HOR(4, tmp1);
+        PREDANG_CALCROW_HOR(5, tmp2);
+        row3 = compress(tmp1, tmp2);
+        PREDANG_CALCROW_HOR(6, tmp1);
+        PREDANG_CALCROW_HOR(7, tmp2);
+        row4 = compress(tmp1, tmp2);
+
+        PRED_INTRA_ANG8_MIDDLE
+
+        PREDANG_CALCROW_VER(0);
+        PREDANG_CALCROW_VER(1);
+        PREDANG_CALCROW_VER(2);
+        PREDANG_CALCROW_VER(3);
+        PREDANG_CALCROW_VER(4);
+        PREDANG_CALCROW_VER(5);
+        PREDANG_CALCROW_VER(6);
+        PREDANG_CALCROW_VER(7);
+    }
+}
+
+void PredIntraAng8_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+{
+        PRED_INTRA_ANG8_START
+
+        LOADROW(row11, 0);
+        LOADROW(row12, 1);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row1 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row2 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row3 = compress(tmp1, tmp2);
+        row11 = row12;
+        LOADROW(row12, 2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row4 = compress(tmp1, tmp2);
+
+        PRED_INTRA_ANG8_MIDDLE
+
+        LOADROW(row11, 0);
+        LOADROW(row12, 1);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+        row11 = row12;
+        LOADROW(row12, 2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+    }
+}
+
+void PredIntraAng8_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+{
+        PRED_INTRA_ANG8_START
+
+        LOADROW(row11, 0);
+        LOADROW(row12, 1);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row1 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row2 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row3 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row4 = compress(tmp1, tmp2);
+
+        PRED_INTRA_ANG8_MIDDLE
+
+        LOADROW(row11, 0);
+        LOADROW(row12, 1);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+    }
+}
+
+void PredIntraAng8_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+{
+        PRED_INTRA_ANG8_START
+
+        LOADROW(row11, -1);
+        LOADROW(row12, 0);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row1 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row2 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row3 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row4 = compress(tmp1, tmp2);
+
+        PRED_INTRA_ANG8_MIDDLE
+
+        LOADROW(row11, -1);
+        LOADROW(row12, 0);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+    }
+}
+
+void PredIntraAng8_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+{
+        PRED_INTRA_ANG8_START
+
+        LOADROW(row11, -1);
+        LOADROW(row12, 0);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row1 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row2 = compress(tmp1, tmp2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row3 = compress(tmp1, tmp2);
+        row12 = row11;
+        LOADROW(row11, -2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        row4 = compress(tmp1, tmp2);
+
+        PRED_INTRA_ANG8_MIDDLE
+
+        LOADROW(row11, -1);
+        LOADROW(row12, 0);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+        row12 = row11;
+        LOADROW(row11, -2);
+        CALCROW(tmp1, row11, row12);
+        CALCROW(tmp2, row11, row12);
+        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+    }
+}     
+
+void PredIntraAng8_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/) 
+{
+    Vec16uc tmp;
+    tmp = load_partial(const_int(8), refMain);        //-1,0,1,2
+    store_partial(const_int(8), pDst, tmp);
+    tmp = load_partial(const_int(8), refMain - 1);     //-2,-1,0,1
+    store_partial(const_int(8), pDst + dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 2);
+    store_partial(const_int(8), pDst + 2 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 3);
+    store_partial(const_int(8), pDst + 3 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 4);
+    store_partial(const_int(8), pDst + 4 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 5);
+    store_partial(const_int(8), pDst + 5 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 6);
+    store_partial(const_int(8), pDst + 6 * dstStride, tmp);
+    tmp = load_partial(const_int(8), refMain - 7);
+    store_partial(const_int(8), pDst + 7 * dstStride, tmp);
+}
+
+typedef void (*PredIntraAng8x8_table)(pixel* pDst, int dstStride, pixel *refMain, int dirMode);
+PredIntraAng8x8_table PredIntraAng8[] = {
+    /* 
+    PredIntraAng8_0 is replaced with PredIntraAng8_2. For PredIntraAng8_0 we are going through default path in the xPredIntraAng8x8 because we cannot afford to pass large number arguments for this function. 
+    Path for PredIntraAng8_21, PredIntraAng8_m_21, PredIntraAng8_17, PredIntraAng8_m_17, PredIntraAng8_13, PredIntraAng8_m_13, PredIntraAng8_9, PredIntraAng8_m_9 is same as PredIntraAng8_26.
+    */
+    PredIntraAng8_32,
+    PredIntraAng8_26,
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.      
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
+    PredIntraAng8_5,    
+    PredIntraAng8_2,
+    PredIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
+    PredIntraAng8_m_2,
+    PredIntraAng8_m_5,
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_32" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_26" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_21" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_17" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_13" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_m_9" here.
+    PredIntraAng8_m_5,
+    PredIntraAng8_m_2,
+    PredIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
+    PredIntraAng8_2,
+    PredIntraAng8_5,
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
+    PredIntraAng8_26,
+    PredIntraAng8_32
+};
+
+
+void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+{
+    int k;
+    int blkSize        = width;
+
+    assert(dirMode > 1); //no planar and dc
+    static const int mode_to_angle_table[] = {32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32};
+    static const int mode_to_invAng_table[] = {256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256};
+    int intraPredAngle = mode_to_angle_table[dirMode-2];
+    int invAngle       = mode_to_invAng_table[dirMode-2];
+    bool modeHor       = (dirMode < 18);
+    bool modeVer       = !modeHor;
     pixel* refMain;
     pixel* refSide;
 
@@ -2463,307 +2833,10 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
             }
         }
     }
-    else if (intraPredAngle == -32)
-    {
-        Vec16uc tmp;
-        tmp = load_partial(const_int(8), refMain);        //-1,0,1,2
-        store_partial(const_int(8), pDst, tmp);
-        tmp = load_partial(const_int(8), refMain - 1);     //-2,-1,0,1
-        store_partial(const_int(8), pDst + dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 2);
-        store_partial(const_int(8), pDst + 2 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 3);
-        store_partial(const_int(8), pDst + 3 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 4);
-        store_partial(const_int(8), pDst + 4 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 5);
-        store_partial(const_int(8), pDst + 5 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 6);
-        store_partial(const_int(8), pDst + 6 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain - 7);
-        store_partial(const_int(8), pDst + 7 * dstStride, tmp);
-        return;
-    }
-    else if (intraPredAngle == 32)
-    {
-        Vec8s tmp;
-        tmp = load_partial(const_int(8), refMain + 2);        //-1,0,1,2
-        store_partial(const_int(8), pDst, tmp);
-        tmp = load_partial(const_int(8), refMain + 3);     //-2,-1,0,1
-        store_partial(const_int(8), pDst + dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 4);
-        store_partial(const_int(8), pDst + 2 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 5);
-        store_partial(const_int(8), pDst + 3 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 6);
-        store_partial(const_int(8), pDst + 4 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 7);
-        store_partial(const_int(8), pDst + 5 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 8);
-        store_partial(const_int(8), pDst + 6 * dstStride, tmp);
-        tmp = load_partial(const_int(8), refMain + 9);
-        store_partial(const_int(8), pDst + 7 * dstStride, tmp);
-        return;
-    }
     else
     {
-        if (modeHor)         // Near horizontal modes
-        {
-            Vec16uc tmp;
-            Vec8s row11, row12;
-            Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec8s tmp1, tmp2;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
-            switch (intraPredAngle)
-            {
-            case -5:
-                LOADROW(row11, -1);
-                LOADROW(row12, 0);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row1 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row2 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row3 = compress(tmp1, tmp2);
-                row12 = row11;
-                LOADROW(row11, -2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row4 = compress(tmp1, tmp2);
-                break;
-
-            case -2:
-                LOADROW(row11, -1);
-                LOADROW(row12, 0);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row1 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row2 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row3 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row4 = compress(tmp1, tmp2);
-                break;
-
-            case 2:
-                LOADROW(row11, 0);
-                LOADROW(row12, 1);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row1 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row2 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row3 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row4 = compress(tmp1, tmp2);
-                break;
-
-            case 5:
-                LOADROW(row11, 0);
-                LOADROW(row12, 1);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row1 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row2 = compress(tmp1, tmp2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row3 = compress(tmp1, tmp2);
-                row11 = row12;
-                LOADROW(row12, 2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                row4 = compress(tmp1, tmp2);
-                break;
-
-            default:               // these cases uses the lookup table to identify access patterns
-
-                PREDANG_CALCROW_HOR(0, tmp1);
-                PREDANG_CALCROW_HOR(1, tmp2);
-                row1 = compress(tmp1, tmp2);
-                PREDANG_CALCROW_HOR(2, tmp1);
-                PREDANG_CALCROW_HOR(3, tmp2);
-                row2 = compress(tmp1, tmp2);
-                PREDANG_CALCROW_HOR(4, tmp1);
-                PREDANG_CALCROW_HOR(5, tmp2);
-                row3 = compress(tmp1, tmp2);
-                PREDANG_CALCROW_HOR(6, tmp1);
-                PREDANG_CALCROW_HOR(7, tmp2);
-                row4 = compress(tmp1, tmp2);
-            }
-
-            // Flip the block
-            tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);
-            tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);
-            row1 = tmp16_1;
-            row2 = tmp16_2;
-
-            tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);
-            tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);
-            row3 = tmp16_1;
-            row4 = tmp16_2;
-
-            tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);
-            tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);
-            row1 = tmp16_1;
-            row2 = tmp16_2;
-
-            tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);
-            tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);
-            row3 = tmp16_1;
-            row4 = tmp16_2;
-
-            tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3);
-            tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3);
-            row1 = tmp16_1;
-            row3 = tmp16_2;
-
-            tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4);
-            tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4);
-            row2 = tmp16_1;
-            row4 = tmp16_2;
-
-            store_partial(const_int(8), pDst, row1);   //row1
-            store_partial(const_int(8), pDst + (2 * dstStride), row3);   //row3
-            store_partial(const_int(8), pDst + (4 * dstStride), row2);   //row5
-            store_partial(const_int(8), pDst + (6 * dstStride), row4);   //row7
-
-            row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1);
-            store_partial(const_int(8), pDst + (1 * dstStride), row1);   //row2
-
-            row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3);
-            store_partial(const_int(8), pDst + (3 * dstStride), row1);   //row4
-
-            row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2);
-            store_partial(const_int(8), pDst + (5 * dstStride), row1);   //row6
-
-            row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4);
-            store_partial(const_int(8), pDst + (7 * dstStride), row1);   //row8
-        }
-        else                         // Vertical modes
-        {
-            Vec8s row11, row12;
-            Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;
-            Vec16uc tmp;
-            Vec8s tmp1, tmp2;
-            v_deltaPos = 0;
-            v_ipAngle = intraPredAngle;
-            switch (intraPredAngle)
-            {
-            case -5:
-                LOADROW(row11, -1);
-                LOADROW(row12, 0);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-                row12 = row11;
-                LOADROW(row11, -2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-                break;
-
-            case -2:
-                LOADROW(row11, -1);
-                LOADROW(row12, 0);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-                break;
-
-            case 2:
-                LOADROW(row11, 0);
-                LOADROW(row12, 1);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-                break;
-
-            case 5:
-                LOADROW(row11, 0);
-                LOADROW(row12, 1);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-                row11 = row12;
-                LOADROW(row12, 2);
-                CALCROW(tmp1, row11, row12);
-                CALCROW(tmp2, row11, row12);
-                store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-                store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-                break;
-
-            default:                   // these cases uses the lookup table to identify access patterns
-                PREDANG_CALCROW_VER(0);
-                PREDANG_CALCROW_VER(1);
-                PREDANG_CALCROW_VER(2);
-                PREDANG_CALCROW_VER(3);
-                PREDANG_CALCROW_VER(4);
-                PREDANG_CALCROW_VER(5);
-                PREDANG_CALCROW_VER(6);
-                PREDANG_CALCROW_VER(7);
-            }
-        }
-    }
+        PredIntraAng8[dirMode-2](pDst, dstStride, refMain, dirMode);
+    }    
 }
 
 #undef PREDANG_CALCROW_VER
