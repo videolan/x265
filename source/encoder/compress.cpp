@@ -139,15 +139,18 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
             pcYuv =  m_ppcPredYuvMode[3][uhDepth];
             m_ppcPredYuvMode[3][uhDepth]  = m_ppcPredYuvMode[4][uhDepth];
             m_ppcPredYuvMode[4][uhDepth] = pcYuv;
+            pcYuv = m_ppcRecoYuvBest[uhDepth];
+            m_ppcRecoYuvBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
+            m_ppcRecoYuvTemp[uhDepth] = pcYuv;         
         }
 
         rpcTempCU->initEstData(uhDepth, orgQP);
     }
 
     me_merge.setSourcePU(0, rpcBestCU->getWidth(0), rpcBestCU->getHeight(0));
-    rpcBestCU->getTotalDistortion() = me_merge.bufSATD((pixel*)m_ppcPredYuvMode[3][uhDepth]->getLumaAddr(),
+   
+    rpcBestCU->getTotalCost() = me_merge.bufSATD((pixel*)m_ppcPredYuvMode[3][uhDepth]->getLumaAddr(),
                                                        m_ppcPredYuvMode[3][uhDepth]->getStride());
-    rpcBestCU->getTotalCost() = rpcBestCU->getTotalDistortion();
     x265_emms();
 }
 
@@ -284,8 +287,12 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         /* Perform encode residual for the best mode chosen only*/
-
+        if(m_MergeBestCU[uiDepth] != rpcBestCU){
         m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        }
+        else{
+            rpcBestCU->getTotalCost() =  m_pcRdCost->calcRdCost(rpcBestCU->getTotalDistortion(), rpcBestCU->getTotalBits());
+        }
 
         /* Disable recursive analysis for whole CUs temporarily*/
         if (rpcBestCU->isSkipped(0))
@@ -317,6 +324,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         fprintf(fp1, "\n Width : %d ,Inter 2Nx2N_Merge : %d , 2Nx2N : %d , 2NxN : %d, Nx2N : %d ", rpcBestCU->getWidth(0), m_MergeBestCU[uiDepth]->getTotalCost(), m_InterCU_2Nx2N[uiDepth]->getTotalCost(), m_InterCU_2NxN[uiDepth]->getTotalCost(), m_InterCU_Nx2N[uiDepth]->getTotalCost());
     }
 #endif
+
 // further split
     if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
     {
