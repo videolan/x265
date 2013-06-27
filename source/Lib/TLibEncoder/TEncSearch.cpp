@@ -2209,7 +2209,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
             uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 
             // 33 Angle modes once
-            if (uiWidth <= 8)
+            if (uiWidth <= 16)
             {
                 ALIGN_VAR_32(Pel, buf1[MAX_CU_SIZE * MAX_CU_SIZE]);
                 ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
@@ -2222,21 +2222,11 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
                 Pel *pLeft0  = refLeft     + uiWidth - 1;
                 Pel *pLeft1  = refLeftFlt  + uiWidth - 1;
 
-                x265::primitives.getIPredAngs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth<16));
+                x265::primitives.getIPredAngs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth <= 16));
 
                 // TODO: We need SATD_x4 here
                 for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
                 {
-                    //predIntraLumaAng(pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth);
-                    //for (int k = 0; k < uiWidth; k++)
-                    //{
-                    //    for (int l = 0; l < uiWidth; l++)
-                    //    {
-                    //        if (tmp[(uiMode - 2) * (uiWidth * uiWidth) + k * uiWidth + l] != piPred[l * uiStride + k])
-                    //            printf("X");
-                    //    }
-                    //}
-                    //UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
                     bool modeHor = (uiMode < 18);
                     Pel *pSrc = (modeHor ? buf1 : piOrg);
                     intptr_t srcStride = (modeHor ? uiWidth : uiStride);
