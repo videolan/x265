@@ -28,8 +28,6 @@ HELP("Quad-Tree analysis:")
 OPT("wpp",             param->bEnableWavefront,         no_argument, 0, "Enable Wavefront Parallel Processing")
 OPT("no-wpp",          param->bEnableWavefront,         no_argument, 0, "Disable Wavefront Parallel Processing")
 OPT("ctu",             param->maxCUSize,          required_argument, 's', "Maximum CU size (default: 64x64)")
-OPT("tu-maxlog2",      param->tuQTMaxLog2Size,    required_argument, 0, "Maximum TU size in logarithm base 2")
-OPT("tu-minlog2",      param->tuQTMinLog2Size,    required_argument, 0, "Minimum TU size in logarithm base 2")
 OPT("tu-intra-depth",  param->tuQTMaxIntraDepth,  required_argument, 0, "Max TU recursive depth for intra CUs")
 OPT("tu-inter-depth",  param->tuQTMaxInterDepth,  required_argument, 0, "Max TU recursive depth for inter CUs")
 

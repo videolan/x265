@@ -172,10 +172,6 @@ typedef struct x265_param_t
     // coding unit (CU) definition
     uint32_t  maxCUSize;                       ///< max. CU width and height in pixels
 
-    // transform unit (TU) definition
-    uint32_t  tuQTMaxLog2Size;
-    uint32_t  tuQTMinLog2Size;
-
     uint32_t  tuQTMaxInterDepth;               ///< amount the TU is allow to recurse beyond the inter PU depth
     uint32_t  tuQTMaxIntraDepth;               ///< amount the TU is allow to recurse beyond the intra PU depth
 

@@ -223,8 +223,10 @@ void Encoder::configure(x265_param_t *param)
     setUseRDOQ(param->bEnableRDOQ);
     setUseRDOQTS(param->bEnableRDOQTS);
     setRDpenalty(param->rdPenalty);
-    setQuadtreeTULog2MaxSize(param->tuQTMaxLog2Size);
-    setQuadtreeTULog2MinSize(param->tuQTMinLog2Size);
+    uint32_t tuQTMaxLog2Size = getMaxCuDepth(param->maxCUSize) + 2 - 1;
+    setQuadtreeTULog2MaxSize(tuQTMaxLog2Size);
+    uint32_t tuQTMinLog2Size = 2; //log2(4)
+    setQuadtreeTULog2MinSize(tuQTMinLog2Size);
     setQuadtreeTUMaxDepthInter(param->tuQTMaxInterDepth);
     setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
     setUseFastDecisionForMerge(param->bEnableFastMergeDecision);
