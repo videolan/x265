@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "instrset.h"
 #include "common.h"
@@ -89,6 +90,9 @@ static const char *CpuType[] =
 extern "C"
 void x265_setup_primitives(x265_param_t *param, int cpuid)
 {
+    // initialize global variables
+    initROM();
+
     if (cpuid < 0)
     {
         if (x265::primitives.sad[0])

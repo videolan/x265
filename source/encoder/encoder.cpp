@@ -895,5 +895,6 @@ void x265_encoder_close(x265_t *encoder)
 extern "C"
 void x265_cleanup(void)
 {
+    destroyROM();
     x265::BitCost::destroy();
 }

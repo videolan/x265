@@ -83,9 +83,6 @@ Void TEncTop::create()
         exit(1);
     }
 
-    // initialize global variables
-    initROM();
-
     // create processing unit classes
     m_GOPEncoders = new TEncGOP[m_gopThreads];
     for (int i = 0; i < m_gopThreads; i++)
@@ -109,9 +106,6 @@ Void TEncTop::destroy()
         delete [] m_GOPEncoders;
     }
     m_cRateCtrl.destroy();
-
-    // destroy ROM
-    destroyROM();
 
     if (m_threadPool)
         m_threadPool->Release();
