@@ -252,18 +252,6 @@ void Encoder::configure(x265_param_t *param)
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
     //====== HM Settings not exposed for configuration ======
-    if (param->keyframeInterval > 0)
-    {
-        m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
-        m_iGOPSize = X265_MAX(1, m_iGOPSize);
-        int remain = param->keyframeInterval % m_iGOPSize;
-        if (remain)
-        {
-            param->keyframeInterval += m_iGOPSize - remain;
-            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                     m_iGOPSize, param->keyframeInterval);
-        }
-    }
     InitializeGOP(param);
     setGOPSize(m_iGOPSize);
     for (int i = 0; i < MAX_TLAYER; i++)
@@ -391,10 +379,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[0].m_POC = 1;
         m_GOPList[0].m_numRefPicsActive = 4;
     }
-    else if (param->keyframeInterval == 32) // hacky temporary way to select random access
+    else if (param->bframes > 0) // hacky temporary way to select random access
     {
         /* encoder_randomaccess_main */
-        setDecodingRefreshType(1);
         int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
         double factors[] = { 0, 0.442, 0.3536, 0.3536, 0.68 };
         int pocs[] = { 8, 4, 2, 1, 3, 6, 5, 7 };
@@ -461,9 +448,26 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_GOPList[3].m_QPFactor = 0.578;
     }
 
-    // default keyframe interval of 1 second
-    if (param->keyframeInterval == 0)
+    if (param->keyframeInterval > 0)
     {
+        m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
+        m_iGOPSize = X265_MAX(1, m_iGOPSize);
+        int remain = param->keyframeInterval % m_iGOPSize;
+        if (remain)
+        {
+            param->keyframeInterval += m_iGOPSize - remain;
+            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
+                m_iGOPSize, param->keyframeInterval);
+        }
+        if (param->bframes && param->keyframeInterval < 16)
+        {
+            param->keyframeInterval = 16;
+            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be at least 16 for B GOP structure\n");
+        }
+    }
+    else if (param->keyframeInterval == 0)
+    {
+        // default keyframe interval of 1 second
         param->keyframeInterval = param->frameRate;
         int remain = param->keyframeInterval % m_iGOPSize;
         if (remain)

@@ -182,6 +182,7 @@ typedef struct x265_param_t
 
     // coding structure
     int       keyframeInterval;                ///< period of I-slice (random access period)
+    int       bframes;                         ///< Max number of consecutive B-frames (for now it only enables B-frame fixed GOP profile)
 
     // Intra coding tools
     int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)

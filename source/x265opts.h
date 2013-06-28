@@ -67,6 +67,7 @@ OPT("no-constrained-intra", param->bEnableConstrainedIntra, no_argument, 0, "Dis
 
 HELP("Slice decision options:")
 OPT("keyint",          param->keyframeInterval,       required_argument, 'i', "Intra period in frames, (-1: only first frame)")
+OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
 OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
 OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
 OPT("weightbp",        param->bEnableWeightedBiPred,        no_argument, 0, "Enable weighted (bidirectional) prediction in B slices")
