@@ -161,8 +161,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     }
 
     int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;
-    // ugly hack for our B-frame random access mode, the next I frame is
-    // the one mini-gop before the full keyframe interval because of re-ordering
+    // ugly hack for our B-frame random access mode, the second I frame will be
+    // one mini-gop before the full keyframe interval because of re-ordering
     if (getGOPSize() == 8 && m_picsEncoded == 0)
         batchSize = m_uiIntraPeriod - 8 + 1;
 
