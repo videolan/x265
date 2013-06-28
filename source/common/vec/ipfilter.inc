@@ -55,7 +55,8 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 
 #if !HIGH_BIT_DEPTH
     p.filterVmulti = filterVerticalMultiplaneExtend;
-#if INSTRSET > 4 // SJB - the SSE2 / non-intrinsic function is buggy
+#if INSTRSET > 4 && (!defined(_MSC_VER) || _MSC_VER > 1500)
+    // SJB - the SSE2 / non-intrinsic function is buggy
     p.filterHmulti = filterHorizontalMultiplaneExtend;
 #endif
 #endif
