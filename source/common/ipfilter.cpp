@@ -476,7 +476,7 @@ void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pix
     xExtendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
 }
 
-void filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height)
+void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
 {
     filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
     filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
@@ -485,6 +485,10 @@ void filterHorizontalMultiplane(int bitDepth, pixel *src, int srcStride, short *
     filterConvertShortToPel(bitDepth, midA, midStride, pDstA, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midB, midStride, pDstB, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midC, midStride, pDstC, pDstStride, block_width, block_height);
+
+    xExtendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
+    xExtendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
+    xExtendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY); 
 }
 }
 
@@ -516,6 +520,6 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     p.ipFilter_s_s[FILTER_V_S_S_4] = filterVertical_short_short<4>;
 
     p.filterVmulti = filterVerticalMultiplaneExtend;
-    p.filterHmulti = filterHorizontalMultiplane;
+    p.filterHmulti = filterHorizontalMultiplaneExtend;
 }
 }

@@ -107,7 +107,7 @@ void MotionReference::generateReferencePlanes()
         primitives.filterHmulti(g_bitDepthY, srcPtr, m_lumaStride,                                     // source buffer
                                 intPtrF, intPtrA, intPtrB, intPtrC, m_intStride,                       // 4 intermediate HPEL buffers
                                 m_lumaPlane[1][0] + bufOffset, m_lumaPlane[2][0] + bufOffset, m_lumaPlane[3][0] + bufOffset, m_lumaStride, // 3 (x=n, y=0) output buffers (no V interp)
-                                m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY));
+                                m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY),  m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
     }
 
     if (!m_pool)
@@ -164,10 +164,10 @@ void MotionReference::generateReferencePlane(int x)
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
 
     primitives.filterVmulti(g_bitDepthY, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
-    if (x > 0)
-    {
-        /* the Y=0 planes were not extended by the horizontal filter */
-        int bufOffset = -(s_tmpMarginY + s_intMarginY) * m_lumaStride - (s_tmpMarginX + s_intMarginX);
-        m_reconPic->xExtendPicCompBorder((Pel *)m_lumaPlane[x][0] + bufOffset, m_lumaStride, m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY), m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
-    }
+    //if (x > 0)
+    //{
+    //    /* the Y=0 planes were not extended by the horizontal filter */
+    //    int bufOffset = -(s_tmpMarginY + s_intMarginY) * m_lumaStride - (s_tmpMarginX + s_intMarginX);
+    //    m_reconPic->xExtendPicCompBorder((Pel *)m_lumaPlane[x][0] + bufOffset, m_lumaStride, m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY), m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
+    //}
 }

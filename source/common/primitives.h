@@ -210,7 +210,7 @@ typedef void (*calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int s
 typedef void (*calcrecon_t)(pixel* piPred, short* piResi, pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
 typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
 typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
-typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height);
+typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*dequant_t)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
 typedef uint32_t (*quantaq_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int *arlCCoef, int qBitsC, int qBits, int add, int numCoeff);
 typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);

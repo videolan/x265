@@ -55,7 +55,7 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 
 #if !HIGH_BIT_DEPTH
     p.filterVmulti = filterVerticalMultiplaneExtend;
-    p.filterHmulti = filterHorizontalMultiplane;
+    p.filterHmulti = filterHorizontalMultiplaneExtend;
 #endif
 }
 }
