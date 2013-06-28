@@ -774,7 +774,8 @@ void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *ds
 }
 
 #if INSTRSET < 5
-void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY){
+void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
+{
     int row, col;
 
     src -= (8 / 2 - 1);
@@ -790,95 +791,95 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
     Vec8s sumaL, sumaH, sumbL, sumbH, sumcL, sumcH, tmp, exp1;
     Vec8s valL, valH;
     Vec16uc tmp16a, tmp16b, tmp16c;
-    // Load Ai, ai += Ai*coefi      
+    // Load Ai, ai += Ai*coefi
 
     for (row = 0; row < block_height; row++)
     {
         col = 0;
 
-            vec_src0.load(src + col);
-            sumbL = -(extend_low(vec_src0));
+        vec_src0.load(src + col);
+        sumbL = -(extend_low(vec_src0));
 
-            // a = b+=4*a1,  c+=1*a1
-            vec_src0.load(src + col + 1);                       // Load the 8 elements
-            sumcL = extend_low(vec_src0);
-            sumbL += (sumcL << 2);
-            sumaL = sumbL;
+        // a = b+=4*a1,  c+=1*a1
+        vec_src0.load(src + col + 1);                       // Load the 8 elements
+        sumcL = extend_low(vec_src0);
+        sumbL += (sumcL << 2);
+        sumaL = sumbL;
  
-            // a +=-10*a2    b+=-11*a2      c+=-5*a2
-            vec_src0.load(src + col + 2);
-            tmp = extend_low(vec_src0);
-            sumbL -= tmp;
-            tmp *= (-5);
-            sumcL += tmp;
-            tmp <<= 1;
-            sumaL += tmp;
-            sumbL += tmp;
+        // a +=-10*a2    b+=-11*a2      c+=-5*a2
+        vec_src0.load(src + col + 2);
+        tmp = extend_low(vec_src0);
+        sumbL -= tmp;
+        tmp *= (-5);
+        sumcL += tmp;
+        tmp <<= 1;
+        sumaL += tmp;
+        sumbL += tmp;
 
-            // a +=58*a3    b+=40*a3      c+=17*a3
-            vec_src0.load(src + col + 3);
-            tmp = extend_low(vec_src0);
-            ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + col);    // storing A as short into intermediate buffer
-            exp1 = (tmp << 4) + tmp;
-            sumcL += exp1;
-            sumaL += tmp;
-            tmp *= 40;
-            sumbL += tmp;
-            sumaL += (tmp + exp1);
+        // a +=58*a3    b+=40*a3      c+=17*a3
+        vec_src0.load(src + col + 3);
+        tmp = extend_low(vec_src0);
+        ((tmp << 6) - IF_INTERNAL_OFFS).store(dstF + col);    // storing A as short into intermediate buffer
+        exp1 = (tmp << 4) + tmp;
+        sumcL += exp1;
+        sumaL += tmp;
+        tmp *= 40;
+        sumbL += tmp;
+        sumaL += (tmp + exp1);
  
-            // a +=17*a4    b+=40*a4      c+=58*a4
-            vec_src0.load(src + col + 4);
-            tmp = extend_low(vec_src0);
-            exp1 = (tmp << 4) + tmp;
-            sumaL += exp1;
-            sumcL += tmp;
-            tmp *= 40;
-            sumbL += tmp;
-            sumcL += (tmp + exp1);
+        // a +=17*a4    b+=40*a4      c+=58*a4
+        vec_src0.load(src + col + 4);
+        tmp = extend_low(vec_src0);
+        exp1 = (tmp << 4) + tmp;
+        sumaL += exp1;
+        sumcL += tmp;
+        tmp *= 40;
+        sumbL += tmp;
+        sumcL += (tmp + exp1);
  
-            // a +=-5*a5    b+=-11*a5      c+=-10*a5
-            vec_src0.load(src + col + 5);
-            tmp = extend_low(vec_src0);
-            sumbL -= tmp;
-            tmp *= (-5);
-            sumaL += tmp;
-            tmp <<= 1;
-            sumcL += tmp;
-            sumbL += tmp;
+        // a +=-5*a5    b+=-11*a5      c+=-10*a5
+        vec_src0.load(src + col + 5);
+        tmp = extend_low(vec_src0);
+        sumbL -= tmp;
+        tmp *= (-5);
+        sumaL += tmp;
+        tmp <<= 1;
+        sumcL += tmp;
+        sumbL += tmp;
 
-            // a +=1*a6    b+=4*a6      c+=4*a6
-            vec_src0.load(src + col + 6);
-            tmp = extend_low(vec_src0);
-            sumaL += tmp;
-            tmp <<= 2;
-            sumbL += tmp;
-            sumcL += tmp;
+        // a +=1*a6    b+=4*a6      c+=4*a6
+        vec_src0.load(src + col + 6);
+        tmp = extend_low(vec_src0);
+        sumaL += tmp;
+        tmp <<= 2;
+        sumbL += tmp;
+        sumcL += tmp;
 
-            // a +=0*a7    b+=-1*a7      c+=-1*a7
-            vec_src0.load(src + col + 7);
-            tmp = extend_low(vec_src0);
-            sumbL -= tmp;
-            sumcL -= tmp;
-            sumaL = (sumaL + vec_offset);               // Add offset to sum_low
-            sumbL = (sumbL + vec_offset);
-            sumcL = (sumcL + vec_offset);
+        // a +=0*a7    b+=-1*a7      c+=-1*a7
+        vec_src0.load(src + col + 7);
+        tmp = extend_low(vec_src0);
+        sumbL -= tmp;
+        sumcL -= tmp;
+        sumaL = (sumaL + vec_offset);               // Add offset to sum_low
+        sumbL = (sumbL + vec_offset);
+        sumcL = (sumcL + vec_offset);
 
-            sumaL.store(dstA + col);                             // Store vector
-            sumaL = (sumaL + IF_INTERNAL_OFFS + 32) >> 6;
-            tmp16a = compress_unsafe(sumaL, sumaL);                            // Its certainly safe, just a misnomer
-            tmp16a.store_partial(8,pDstA + row * pDstStride + col);
+        sumaL.store(dstA + col);                             // Store vector
+        sumaL = (sumaL + IF_INTERNAL_OFFS + 32) >> 6;
+        tmp16a = compress_unsafe(sumaL, sumaL);                            // Its certainly safe, just a misnomer
+        tmp16a.store_partial(8,pDstA + row * pDstStride + col);
 
-            sumbL.store(dstB + col);
-            sumbL = (sumbL + IF_INTERNAL_OFFS + 32) >> 6;
-            tmp16b = compress_unsafe(sumbL, sumbL);
-            tmp16b.store_partial(8,pDstB + row * pDstStride + col);
+        sumbL.store(dstB + col);
+        sumbL = (sumbL + IF_INTERNAL_OFFS + 32) >> 6;
+        tmp16b = compress_unsafe(sumbL, sumbL);
+        tmp16b.store_partial(8,pDstB + row * pDstStride + col);
 
-            sumcL.store(dstC + col);
-            sumcL = (sumcL + IF_INTERNAL_OFFS + 32) >> 6;
-            tmp16c = compress_unsafe(sumcL, sumcL);
-            tmp16c.store_partial(8,pDstC + row * pDstStride + col);
-        
-            //Extend First column
+        sumcL.store(dstC + col);
+        sumcL = (sumcL + IF_INTERNAL_OFFS + 32) >> 6;
+        tmp16c = compress_unsafe(sumcL, sumcL);
+        tmp16c.store_partial(8,pDstC + row * pDstStride + col);
+
+        //Extend First column
         __m128i ma, mb, mc;
         ma = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>((Vec16uc)tmp16a); 
         mb = permute16uc<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>((Vec16uc)tmp16b); 
@@ -979,7 +980,6 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
             sumcL = (sumcL + IF_INTERNAL_OFFS + 32) >> 6;
             tmp16c = compress_unsafe(sumcL, sumcL);
             tmp16c.store_partial(8,pDstC + row * pDstStride + col);
-
         }
 
         if (block_width - col > 0)

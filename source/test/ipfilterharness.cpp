@@ -288,18 +288,16 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
         rand_srcStride = 200;               // Can be randomly generated
         rand_dstStride = 200;
 
-        opt(8, short_buff + 8 * rand_srcStride,
-            rand_srcStride,
-            dstEvec + marginY * rand_dstStride + marginX, dstIvec + marginY * rand_dstStride + marginX, dstPvec + marginY * rand_dstStride + marginX,
-            rand_dstStride,
-            rand_width,
-            rand_height, marginX, marginY);
-        ref(8, short_buff + 8 * rand_srcStride,
-            rand_srcStride,
-            dstEref + marginY * rand_dstStride + marginX, dstIref + marginY * rand_dstStride + marginX, dstPref + marginY * rand_dstStride + marginX,
-            rand_dstStride,
-            rand_width,
-            rand_height, marginX, marginY);
+        opt(8, short_buff + 8 * rand_srcStride, rand_srcStride,
+            dstEvec + marginY * rand_dstStride + marginX,
+            dstIvec + marginY * rand_dstStride + marginX,
+            dstPvec + marginY * rand_dstStride + marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY);
+        ref(8, short_buff + 8 * rand_srcStride, rand_srcStride,
+            dstEref + marginY * rand_dstStride + marginX,
+            dstIref + marginY * rand_dstStride + marginX,
+            dstPref + marginY * rand_dstStride + marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY);
 
         if (memcmp(dstEvec, dstEref, 200 * 200 * sizeof(pixel))
             || memcmp(dstIvec, dstIref, 200 * 200 * sizeof(pixel)) || memcmp(dstPvec, dstPref, 200 * 200 * sizeof(pixel)))
@@ -356,17 +354,18 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
         marginY = (rand()%16)+16;
         rand_srcStride = rand_width;               // Can be randomly generated
         rand_dstStride = rand_width+2*marginX;
-        opt(8, pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            dstAvec, dstEvec, dstIvec, dstPvec,
-            rand_dstStride, pDstAvec+marginY*rand_dstStride+marginX, pDstBvec+marginY*rand_dstStride+marginX, pDstCvec+marginY*rand_dstStride+marginX, 
-            rand_dstStride, rand_width, rand_height, marginX,marginY);
-        ref(8, pixel_buff + 3 * rand_srcStride,
-            rand_srcStride,
-            dstAref, dstEref, dstIref, dstPref,
-            rand_dstStride, pDstAref+marginY*rand_dstStride+marginX, pDstBref+marginY*rand_dstStride+marginX, pDstCref+marginY*rand_dstStride+marginX, rand_dstStride,
-            rand_width,
-            rand_height,  marginX,marginY);
+        opt(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
+            dstAvec, dstEvec, dstIvec, dstPvec, rand_dstStride,
+            pDstAvec+marginY*rand_dstStride+marginX,
+            pDstBvec+marginY*rand_dstStride+marginX,
+            pDstCvec+marginY*rand_dstStride+marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY);
+        ref(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
+            dstAref, dstEref, dstIref, dstPref, rand_dstStride,
+            pDstAref+marginY*rand_dstStride+marginX,
+            pDstBref+marginY*rand_dstStride+marginX,
+            pDstCref+marginY*rand_dstStride+marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY);
 
         if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short))
             || memcmp(dstIvec, dstIref, 100 * 100 * sizeof(short)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(short))
