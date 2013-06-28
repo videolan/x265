@@ -39,7 +39,6 @@
 extern void fastForwardDst(Short *block, Short *coeff, Int shift);
 
 namespace {
-
 /* Used for filter */
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
@@ -3938,6 +3937,144 @@ void xIDCT32(int *pSrc, short *pDst, intptr_t stride)
 #undef STROE_LINE
     }
 }
+
+uint32_t quantaq(int* coef,
+                 int* quantCoeff,
+                 int* deltaU,
+                 int* qCoef,
+                 int* arlCCoef,
+                 int  qBitsC,
+                 int  qBits,
+                 int  add,
+                 int  numCoeff)
+{
+    int addc   = 1 << (qBitsC - 1);
+    int qBits8 = qBits - 8;
+    uint32_t acSum = 0;
+    int dstOffset = 0;
+
+    for (int blockpos = 0; blockpos < numCoeff; blockpos = blockpos + 4)
+    {
+        Vec4i addC(addc);
+        Vec4i addVec(add);
+
+        Vec4i zero(0);
+        Vec4i one(1);
+
+        Vec4i level1;
+        level1.load(coef + blockpos);
+
+        Vec4i sign1;
+        sign1 = level1 < zero;
+        sign1 = sign1 | one;
+
+        Vec4i qCoeff1;
+        qCoeff1.load(quantCoeff + blockpos);
+        Vec4i tmplevel1 = abs(level1) * qCoeff1;
+        Vec4i arlCCoef1 = (tmplevel1 + addC) >> qBitsC;
+        arlCCoef1.store(arlCCoef + blockpos);
+        level1 = (tmplevel1 + addVec) >> qBits;
+        Vec4i deltaU1 = ((tmplevel1 - (level1 << qBits)) >> qBits8);
+        deltaU1.store(deltaU + blockpos);
+        acSum = acSum + horizontal_add(level1);
+        level1 = level1 * sign1;
+
+        blockpos += 4;
+
+        Vec4i level2;
+        level2.load(coef + blockpos);
+
+        Vec4i sign2;
+        sign2 = level2 < zero;
+        sign2 = sign2 | one;
+
+        Vec4i qCoeff2;
+        qCoeff2.load(quantCoeff + blockpos);
+        Vec4i tmplevel2 = abs(level2) * qCoeff2;
+        Vec4i arlCCoef2 = (tmplevel2 + addC) >> qBitsC;
+        arlCCoef2.store(arlCCoef + blockpos);
+        level2 = (tmplevel2 + addVec) >> qBits;
+        Vec4i deltaU2 = ((tmplevel2 - (level2 << qBits)) >> qBits8);
+        deltaU2.store(deltaU + blockpos);
+        acSum = acSum + horizontal_add(level2);
+        level2 = level2 * sign2;
+
+        Vec8s level = compress_saturated(level1, level2);
+        Vec4i qCoef_n0_n3 = extend_low(level);
+        Vec4i qCoef_n4_n7 = extend_high(level);
+        qCoef_n0_n3.store(qCoef + dstOffset);
+        dstOffset += 4;
+        qCoef_n4_n7.store(qCoef + dstOffset);
+        dstOffset += 4;
+    }
+
+    return acSum;
+}
+
+uint32_t quant(int* coef,
+               int* quantCoeff,
+               int* deltaU,
+               int* qCoef,
+               int  qBits,
+               int  add,
+               int  numCoeff)
+{
+    int qBits8 = qBits - 8;
+    uint32_t acSum = 0;
+    int dstOffset = 0;
+
+    for (int blockpos = 0; blockpos < numCoeff; blockpos = blockpos + 4)
+    {
+        Vec4i addVec(add);
+
+        Vec4i zero(0);
+        Vec4i one(1);
+
+        Vec4i level1;
+        level1.load(coef + blockpos);
+
+        Vec4i sign1;
+        sign1 = level1 < zero;
+        sign1 = sign1 | one;
+
+        Vec4i qCoeff1;
+        qCoeff1.load(quantCoeff + blockpos);
+        Vec4i tmplevel1 = abs(level1) * qCoeff1;
+        level1 = (tmplevel1 + addVec) >> qBits;
+        Vec4i deltaU1 = ((tmplevel1 - (level1 << qBits)) >> qBits8);
+        deltaU1.store(deltaU + blockpos);
+        acSum = acSum + horizontal_add(level1);
+        level1 = level1 * sign1;
+
+        blockpos += 4;
+
+        Vec4i level2;
+        level2.load(coef + blockpos);
+
+        Vec4i sign2;
+        sign2 = level2 < zero;
+        sign2 = sign2 | one;
+
+        Vec4i qCoeff2;
+        qCoeff2.load(quantCoeff + blockpos);
+        Vec4i tmplevel2 = abs(level2) * qCoeff2;
+        level2 = (tmplevel2 + addVec) >> qBits;
+        Vec4i deltaU2 = ((tmplevel2 - (level2 << qBits)) >> qBits8);
+        deltaU2.store(deltaU + blockpos);
+        acSum = acSum + horizontal_add(level2);
+        level2 = level2 * sign2;
+
+        Vec8s level = compress_saturated(level1, level2);
+        Vec4i qCoef_n0_n3 = extend_low(level);
+        Vec4i qCoef_n4_n7 = extend_high(level);
+        qCoef_n0_n3.store(qCoef + dstOffset);
+        dstOffset += 4;
+        qCoef_n4_n7.store(qCoef + dstOffset);
+        dstOffset += 4;
+    }
+
+    return acSum;
+}
 }
 
 #include "utils.h"
@@ -3948,6 +4085,8 @@ namespace x265 {
 void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 {
     p.deQuant = xDeQuant;
+    p.quantaq = quantaq;
+    p.quant = quant;
 
     // TODO: in 16bpp mode, the intermediate must be 32-bits
 #if !HIGH_BIT_DEPTH && INSTRSET > 4
