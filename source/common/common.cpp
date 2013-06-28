@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <math.h>
 
 #if _WIN32
 #include <sys/types.h>
@@ -148,18 +147,13 @@ static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
     return 1;
 }
 
-uint32_t getMaxCuDepth(uint32_t maxCuSize)
-{   
-    return (uint32_t)(log((float)(maxCuSize))/log(2.0f)) - 2;
-}
-
 int x265_check_params(x265_param_t *param)
 {
-    uint32_t maxCUDepth = getMaxCuDepth(param->maxCUSize);
-    uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
-    uint32_t tuQTMinLog2Size = 2; //log2(4)
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
+    uint32_t maxCUDepth = (uint32_t) g_aucConvertToBit[param->maxCUSize];
+    uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
+    uint32_t tuQTMinLog2Size = 2; //log2(4)
 
 #if !HIGH_BIT_DEPTH
     CONFIRM(param->internalBitDepth != 8,
@@ -250,8 +244,9 @@ int x265_check_params(x265_param_t *param)
 
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 {
-    uint32_t maxCUDepth = getMaxCuDepth(param->maxCUSize);
+    uint32_t maxCUDepth = (uint32_t) g_aucConvertToBit[param->maxCUSize];
     uint32_t tuQTMinLog2Size = 2; //log2(4)
+
     // set max CU width & height
     g_uiMaxCUWidth  = param->maxCUSize;
     g_uiMaxCUHeight = param->maxCUSize;
