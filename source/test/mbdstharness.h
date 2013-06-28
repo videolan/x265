@@ -34,11 +34,13 @@ protected:
 
     short *mbuf1, *mbuf2, *mbuf3, *mbuf4, *mbufdct;
     int *mbufidct;
-    int *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4;
+    int *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4, *mintbuf5, *mintbuf6, *mintbuf7, *mintbuf8;
     static const int mb_t_size = 6400;
     static const int mem_cmp_size = 32 * 32;
 
     bool check_xdequant_primitive(x265::dequant_t ref, x265::dequant_t opt);
+    bool check_quantaq_primitive(x265::quantaq_t ref, x265::quantaq_t opt);
+    bool check_quant_primitive(x265::quant_t ref, x265::quant_t opt);
     bool check_dct_primitive(x265::dct_t ref, x265::dct_t opt, int width);
     bool check_idct_primitive(x265::idct_t ref, x265::idct_t opt, int width);
 

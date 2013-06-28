@@ -68,6 +68,10 @@ MBDstHarness::MBDstHarness()
     mintbuf2 = (int*)TestHarness::alignedMalloc(sizeof(int), mb_t_size, 32);
     mintbuf3 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
     mintbuf4 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf5 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf6 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf7 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
+    mintbuf8 = (int*)TestHarness::alignedMalloc(sizeof(int), mem_cmp_size, 32);
 
     if (!mbuf1 || !mbuf2 || !mbuf3 || !mbuf4 || !mbufdct)
     {
@@ -75,7 +79,7 @@ MBDstHarness::MBDstHarness()
         exit(1);
     }
 
-    if (!mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4)
+    if (!mintbuf1 || !mintbuf2 || !mintbuf3 || !mintbuf4 || !mintbuf5 || !mintbuf6 || !mintbuf7 || !mintbuf8)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -103,7 +107,11 @@ MBDstHarness::MBDstHarness()
 
     memset(mintbuf3, 0, mem_cmp_size);
     memset(mintbuf4, 0, mem_cmp_size);
-#endif
+    memset(mintbuf5, 0, mem_cmp_size);
+    memset(mintbuf6, 0, mem_cmp_size);
+    memset(mintbuf7, 0, mem_cmp_size);
+    memset(mintbuf8, 0, mem_cmp_size);
+#endif // if _DEBUG
 }
 
 MBDstHarness::~MBDstHarness()
@@ -119,6 +127,10 @@ MBDstHarness::~MBDstHarness()
     TestHarness::alignedFree(mintbuf2);
     TestHarness::alignedFree(mintbuf3);
     TestHarness::alignedFree(mintbuf4);
+    TestHarness::alignedFree(mintbuf5);
+    TestHarness::alignedFree(mintbuf6);
+    TestHarness::alignedFree(mintbuf7);
+    TestHarness::alignedFree(mintbuf8);
 }
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, int width)
@@ -221,6 +233,106 @@ bool MBDstHarness::check_xdequant_primitive(dequant_t ref, dequant_t opt)
     return true;
 }
 
+bool MBDstHarness::check_quantaq_primitive(quantaq_t ref, quantaq_t opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 5; i++)
+    {
+        int iWidth = (rand() % 4 + 1) * 4;
+
+        if (iWidth == 12)
+        {
+            iWidth = 32;
+        }
+        int iHeight = iWidth;
+
+        uint32_t tmp1 = 0;
+        uint32_t tmp2 = 0;
+
+        int iQBitsC = rand() % 32;
+        int iQBits = rand() % 32;
+        int iAdd = rand() % 2147483647;
+        int cmp_size = sizeof(int) * iHeight * iWidth;
+        int numCoeff = iHeight * iWidth;
+
+        tmp1 = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, mintbuf5, iQBitsC, iQBits, iAdd, numCoeff);
+        tmp2 = ref(mintbuf1 + j, mintbuf2 + j, mintbuf6, mintbuf7, mintbuf8, iQBitsC, iQBits, iAdd, numCoeff);
+
+        if (memcmp(mintbuf3, mintbuf6, cmp_size))
+            return false;
+
+        if (memcmp(mintbuf4, mintbuf7, cmp_size))
+            return false;
+
+        if (memcmp(mintbuf5, mintbuf8, cmp_size))
+            return false;
+
+        if (tmp1 != tmp2)
+            return false;
+
+        j += 16;
+
+#if _DEBUG
+        memset(mintbuf3, 0, mem_cmp_size);
+        memset(mintbuf4, 0, mem_cmp_size);
+        memset(mintbuf5, 0, mem_cmp_size);
+        memset(mintbuf6, 0, mem_cmp_size);
+        memset(mintbuf7, 0, mem_cmp_size);
+        memset(mintbuf8, 0, mem_cmp_size);
+#endif
+    }
+
+    return true;
+}
+
+bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= 5; i++)
+    {
+        int iWidth = (rand() % 4 + 1) * 4;
+
+        if (iWidth == 12)
+        {
+            iWidth = 32;
+        }
+        int iHeight = iWidth;
+
+        uint32_t tmp1 = 0;
+        uint32_t tmp2 = 0;
+
+        int iQBits = rand() % 32;
+        int iAdd = rand() % 2147483647;
+        int cmp_size = sizeof(int) * iHeight * iWidth;
+        int numCoeff = iHeight * iWidth;
+
+        tmp1 = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, iQBits, iAdd, numCoeff);
+        tmp2 = ref(mintbuf1 + j, mintbuf2 + j, mintbuf5, mintbuf6, iQBits, iAdd, numCoeff);
+
+        if (memcmp(mintbuf3, mintbuf5, cmp_size))
+            return false;
+
+        if (memcmp(mintbuf4, mintbuf6, cmp_size))
+            return false;
+
+        if (tmp1 != tmp2)
+            return false;
+
+        j += 16;
+
+#if _DEBUG
+        memset(mintbuf3, 0, mem_cmp_size);
+        memset(mintbuf4, 0, mem_cmp_size);
+        memset(mintbuf5, 0, mem_cmp_size);
+        memset(mintbuf6, 0, mem_cmp_size);
+#endif
+    }
+
+    return true;
+}
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int i = 0; i < NUM_DCTS; i++)
@@ -256,6 +368,24 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.quantaq)
+    {
+        if (!check_quantaq_primitive(ref.quantaq, opt.quantaq))
+        {
+            printf("quantaq: Failed!\n");
+            return false;
+        }
+    }
+
+    if (opt.quant)
+    {
+        if (!check_quant_primitive(ref.quant, opt.quant))
+        {
+            printf("quant: Failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -283,5 +413,17 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("xDeQuant\t\t");
         REPORT_SPEEDUP(opt.deQuant, ref.deQuant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
+    }
+
+    if (opt.quantaq)
+    {
+        printf("quantaq\t\t\t");
+        REPORT_SPEEDUP(opt.quantaq, ref.quantaq, mintbuf1, mintbuf2, mintbuf3, mintbuf4, mintbuf5, 15, 23, 23785, 32 * 32);
+    }
+
+    if (opt.quant)
+    {
+        printf("quant\t\t\t");
+        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
     }
 }
