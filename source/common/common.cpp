@@ -88,7 +88,6 @@ void x265_param_default(x265_param_t *param)
     param->bipredSearchRange = 4;
     param->internalBitDepth = 8;
     param->maxCUSize = 64;
-    param->maxCUDepth = 4;
     param->tuQTMaxLog2Size = 5;
     param->tuQTMinLog2Size = 2;
     param->tuQTMaxInterDepth = 3;
@@ -152,8 +151,13 @@ static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
     return 1;
 }
 
+static inline uint32_t getMaxCuDepth(uint32_t maxCuSize)
+{   
+    return (uint32_t)(log(maxCuSize)/log(2)) - 2;
+}
 int x265_check_params(x265_param_t *param)
 {
+    uint32_t maxCUDepth = getMaxCuDepth(param->maxCUSize);
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
@@ -177,8 +181,8 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be more than 0");
     CONFIRM(param->keyframeInterval < -1,
             "Keyframe interval must be -1 (open-GOP) 0 (auto) 1 (intra-only) or greater than 1");
-    CONFIRM(param->maxCUdQPDepth > param->maxCUDepth - 1,
-            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
+    CONFIRM(param->maxCUdQPDepth > maxCUDepth - 1,
+	            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
@@ -187,13 +191,13 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->qpAdaptionRange <= 0,
             "QP Adaptation Range must be more than 0");
-    CONFIRM((param->maxCUSize >> param->maxCUDepth) < 4,
+    CONFIRM((param->maxCUSize >> maxCUDepth) < 4,
             "Minimum partition width size should be larger than or equal to 8");
     CONFIRM(param->maxCUSize < 16,
             "Maximum partition width size should be larger than or equal to 16");
-    CONFIRM((param->sourceWidth  % (param->maxCUSize >> (param->maxCUDepth - 1))) != 0,
+    CONFIRM((param->sourceWidth  % (param->maxCUSize >> (maxCUDepth - 1))) != 0,
             "Resulting coded frame width must be a multiple of the minimum CU size");
-    CONFIRM((param->sourceHeight % (param->maxCUSize >> (param->maxCUDepth - 1))) != 0,
+    CONFIRM((param->sourceHeight % (param->maxCUSize >> (maxCUDepth - 1))) != 0,
             "Resulting coded frame height must be a multiple of the minimum CU size");
 
     CONFIRM(param->tuQTMinLog2Size < 2,
@@ -205,13 +209,13 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->tuQTMaxLog2Size < param->tuQTMinLog2Size,
             "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
-    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (param->maxCUDepth - 1)),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (maxCUDepth - 1)),
             "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (param->maxCUDepth - 1)),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> (maxCUDepth - 1)),
             "QuadtreeTULog2MinSize must not be greater than minimum CU size"); // HS
-    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> param->maxCUDepth),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> maxCUDepth),
             "Minimum CU width must be greater than minimum transform size.");
-    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> param->maxCUDepth),
+    CONFIRM((1u << param->tuQTMinLog2Size) > (param->maxCUSize >> maxCUDepth),
             "Minimum CU height must be greater than minimum transform size.");
     CONFIRM(param->tuQTMaxInterDepth < 1,
             "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
@@ -258,20 +262,21 @@ int x265_check_params(x265_param_t *param)
 
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 {
+    uint32_t maxCUDepth = getMaxCuDepth(param->maxCUSize);
     // set max CU width & height
     g_uiMaxCUWidth  = param->maxCUSize;
     g_uiMaxCUHeight = param->maxCUSize;
 
     // compute actual CU depth with respect to config depth and max transform size
     g_uiAddCUDepth  = 0;
-    while ((param->maxCUSize >> param->maxCUDepth) > (1u << (param->tuQTMinLog2Size + g_uiAddCUDepth)))
+    while ((param->maxCUSize >> maxCUDepth) > (1u << (param->tuQTMinLog2Size + g_uiAddCUDepth)))
     {
         g_uiAddCUDepth++;
     }
 
-    param->maxCUDepth += g_uiAddCUDepth;
+    maxCUDepth += g_uiAddCUDepth;
     g_uiAddCUDepth++;
-    g_uiMaxCUDepth = param->maxCUDepth;
+    g_uiMaxCUDepth = maxCUDepth;
 
     // set internal bit-depth and constants
 #if HIGH_BIT_DEPTH
@@ -293,7 +298,7 @@ void x265_print_params(x265_param_t *param)
 #if HIGH_BIT_DEPTH
     x265_log(param, X265_LOG_INFO, "Internal bit depth           : %d\n", param->internalBitDepth);
 #endif
-    x265_log(param, X265_LOG_INFO, "CU size / depth              : %d / %d\n", param->maxCUSize, param->maxCUDepth);
+    x265_log(param, X265_LOG_INFO, "CU size                      : %d\n", param->maxCUSize);
     x265_log(param, X265_LOG_INFO, "RQT trans. size (min / max)  : %d / %d\n", 1 << param->tuQTMinLog2Size, 1 << param->tuQTMaxLog2Size);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
