@@ -283,7 +283,7 @@ void Encoder::configure(x265_param_t *param)
     setInterlacedSourceFlag(0);
     setNonPackedConstraintFlag(0);
     setFrameOnlyConstraintFlag(0);
-    setDecodingRefreshType(param->gopNumThreads > 1 ? 1 : 0); // if GOP threads enabled, force IDR mode, else CRA
+    setDecodingRefreshType(2); // 1 == CRA, 2 == IDR
     setUseASR(0);   // adapt search range based on temporal distances
     setUseHADME(1); // For HM/Full search mode subpel refine
     setdQPs(NULL);
