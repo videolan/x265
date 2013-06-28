@@ -24,7 +24,6 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "TLibCommon/TComInterpolationFilter.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
 #include "reference.h"
@@ -111,18 +110,25 @@ void MotionReference::generateReferencePlanes()
                                 m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY));
     }
 
-    m_workerCount = 0;
-    m_finishedPlanes = 0;
-
-    JobProvider::Enqueue();
-    for (int i = 0; i < 4; i++)
+    if (!m_pool)
     {
-        m_pool->PokeIdleThreads();
+        for (int i = 0; i < 4; i++)
+            generateReferencePlane(i);
     }
+    else
+    {
+        m_workerCount = 0;
+        m_finishedPlanes = 0;
 
-    m_completionEvent.Wait();
-    JobProvider::Dequeue();
+        JobProvider::Enqueue();
+        for (int i = 0; i < 4; i++)
+        {
+            m_pool->PokeIdleThreads();
+        }
 
+        m_completionEvent.Wait();
+        JobProvider::Dequeue();
+    }
     xFree(m_intermediateValues);
 }
 

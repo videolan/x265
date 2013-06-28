@@ -206,13 +206,21 @@ void EncodeFrame::Encode(TComPic *pic, TComSlice *pcSlice)
         m_rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(&m_cSbacCoder);
     }
 
-    QueueFrame::Enqueue();
+    if (!m_pool || !m_enableWpp)
+    {
+        for (int i = 0; i < this->m_nrows; i++)
+            ProcessRow(i);
+    }
+    else
+    {
+        QueueFrame::Enqueue();
 
-    // Enqueue first row, then block until worker threads complete the frame
-    QueueFrame::EnqueueRow(0);
-    m_completionEvent.Wait();
+        // Enqueue first row, then block until worker threads complete the frame
+        QueueFrame::EnqueueRow(0);
+        m_completionEvent.Wait();
 
-    QueueFrame::Dequeue();
+        QueueFrame::Dequeue();
+    }
 }
 
 void EncodeFrame::ProcessRow(int irow)
