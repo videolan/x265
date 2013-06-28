@@ -664,12 +664,12 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
         Int tmpStride = width;
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
-        Short *tmp    = (Short*)malloc(width * (height + filterSize - 1) * sizeof(Short));
+        Short *tmp = (Short*)xMalloc(Short, width * (height + filterSize - 1));
 
         x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(ref - (halfFilterSize - 1) * refStride) , refStride, tmp, tmpStride, width, height + filterSize - 1, TComInterpolationFilter::m_lumaFilter[xFrac]);
         x265::primitives.ipFilter_s_s[FILTER_V_S_S_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride ,tmpStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
 
-        free(tmp);
+        xFree(tmp);
     }
 }
 
@@ -788,12 +788,12 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else
     {
         Int     extStride = cxWidth;
-        Short*  extY      = (Short*)malloc(cxWidth * (cxHeight + filterSize - 1) * sizeof(Short));
+        Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
         x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
         x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
         x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
         x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-        free(extY);
+        xFree(extY);
     }
 }
 
