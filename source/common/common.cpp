@@ -29,8 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-
-#include <string>
+#include <math.h>
 
 #if _WIN32
 #include <sys/types.h>
