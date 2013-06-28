@@ -783,10 +783,10 @@ uint32_t quantaq_C(int* coef,
         level = coef[blockpos];
         sign  = (level < 0 ? -1 : 1);
 
-        uint64_t tmplevel = (uint64_t)abs(level) * quantCoeff[blockpos];
-        arlCCoef[blockpos] = (int)((tmplevel + addc) >> qBitsC);
-        level = (int)((tmplevel + add) >> qBits);
-        deltaU[blockpos] = (int)((tmplevel - (level << qBits)) >> qBits8);
+        int tmplevel = abs(level) * quantCoeff[blockpos];
+        arlCCoef[blockpos] = ((tmplevel + addc) >> qBitsC);
+        level = ((tmplevel + add) >> qBits);
+        deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
         acSum += level;
         level *= sign;
         qCoef[blockpos] = Clip3(-32768, 32767, level);
@@ -813,9 +813,9 @@ uint32_t quant_C(int* coef,
         level = coef[blockpos];
         sign  = (level < 0 ? -1 : 1);
 
-        uint64_t tmplevel = (uint64_t)abs(level) * quantCoeff[blockpos];
-        level = (int)((tmplevel + add) >> qBits);
-        deltaU[blockpos] = (int)((tmplevel - (level << qBits)) >> qBits8);
+        int tmplevel = abs(level) * quantCoeff[blockpos];
+        level = ((tmplevel + add) >> qBits);
+        deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
         acSum += level;
         level *= sign;
         qCoef[blockpos] = Clip3(-32768, 32767, level);
