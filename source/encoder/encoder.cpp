@@ -256,17 +256,6 @@ void Encoder::configure(x265_param_t *param)
     {
         m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
         m_iGOPSize = X265_MAX(1, m_iGOPSize);
-    }
-    // default keyframe interval of 1 second
-    if (param->keyframeInterval == 0)
-    {
-        param->keyframeInterval = param->frameRate;
-        int remain = param->keyframeInterval % m_iGOPSize;
-        if (remain)
-            param->keyframeInterval += m_iGOPSize - remain;
-    }
-    else if (param->keyframeInterval > 0)
-    {
         int remain = param->keyframeInterval % m_iGOPSize;
         if (remain)
         {
@@ -275,7 +264,6 @@ void Encoder::configure(x265_param_t *param)
                      m_iGOPSize, param->keyframeInterval);
         }
     }
-    setIntraPeriod(param->keyframeInterval);
     InitializeGOP(param);
     setGOPSize(m_iGOPSize);
     for (int i = 0; i < MAX_TLAYER; i++)
@@ -472,6 +460,16 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 
         m_GOPList[3].m_QPFactor = 0.578;
     }
+
+    // default keyframe interval of 1 second
+    if (param->keyframeInterval == 0)
+    {
+        param->keyframeInterval = param->frameRate;
+        int remain = param->keyframeInterval % m_iGOPSize;
+        if (remain)
+            param->keyframeInterval += m_iGOPSize - remain;
+    }
+    setIntraPeriod(param->keyframeInterval);
 
     bool verifiedGOP = false;
     bool errorGOP = false;
