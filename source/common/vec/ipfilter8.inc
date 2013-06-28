@@ -1059,9 +1059,9 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
         memcpy(pp + y * pDstStride, pp, block_width + marginX * 2);
 
     // Extending top rows
-    pe -= ((block_height - 1) * dstStride);
-    pi -= ((block_height - 1) * dstStride);
-    pp -= ((block_height - 1) * dstStride);
+    pe  = pDstA - marginX;
+    pi  = pDstB - marginX;
+    pp  = pDstC - marginX;
     for (int y = 1; y <= marginY; y++)
         memcpy(pe - y * pDstStride, pe, block_width + marginX * 2);
     for (int y = 1; y <= marginY; y++)
@@ -1360,9 +1360,9 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
         memcpy(pp + y * pDstStride, pp, block_width + marginX * 2);
 
     // Extending top rows
-    pe -= ((block_height - 1) * dstStride);
-    pi -= ((block_height - 1) * dstStride);
-    pp -= ((block_height - 1) * dstStride);
+    pe  = pDstA - marginX;
+    pi  = pDstB - marginX;
+    pp  = pDstC - marginX;
     for (int y = 1; y <= marginY; y++)
         memcpy(pe - y * pDstStride, pe, block_width + marginX * 2);
     for (int y = 1; y <= marginY; y++)
