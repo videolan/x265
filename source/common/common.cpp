@@ -150,8 +150,9 @@ static inline int _confirm(x265_param_t *param, bool bflag, const char* message)
 
 uint32_t getMaxCuDepth(uint32_t maxCuSize)
 {   
-    return (uint32_t)(log(maxCuSize)/log(2)) - 2;
+    return (uint32_t)(log((float)(maxCuSize))/log(2.0f)) - 2;
 }
+
 int x265_check_params(x265_param_t *param)
 {
     uint32_t maxCUDepth = getMaxCuDepth(param->maxCUSize);
