@@ -53,7 +53,7 @@
 class TEncTop;
 class TEncGOP;
 
-namespace x265 { class EncodeFrame; }
+namespace x265 { class FrameEncoder; }
 
 // ====================================================================================================================
 // Class definition
@@ -79,17 +79,17 @@ public:
     Void    init(TEncTop* pcEncTop);
 
     /// preparation of slice encoding (reference marking, QP and lambda)
-    TComSlice *initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Bool bForceISlice, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS);
+    TComSlice *initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeFrame, Bool bForceISlice, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS);
 
-    Void    resetQP(TComPic* pic, x265::EncodeFrame *pcEncodeFrame, Int sliceQP, Double lambda);
+    Void    resetQP(TComPic* pic, x265::FrameEncoder *pcEncodeFrame, Int sliceQP, Double lambda);
 
     // compress and encode slice
-    Void    compressSlice(TComPic* pcPic, x265::EncodeFrame* pcEncodeFrame);        ///< analysis stage of slice
+    Void    compressSlice(TComPic* pcPic, x265::FrameEncoder* pcEncodeFrame);        ///< analysis stage of slice
 
-    Void    encodeSlice(TComPic* rpcPic, TComOutputBitstream* pcSubstreams, x265::EncodeFrame* pcEncodeFrame);
+    Void    encodeSlice(TComPic* rpcPic, TComOutputBitstream* pcSubstreams, x265::FrameEncoder* pcEncodeFrame);
 
     // misc. functions
-    Void    setSearchRange(TComSlice* pcSlice, x265::EncodeFrame *pcEncodeframe);    ///< set ME range adaptively
+    Void    setSearchRange(TComSlice* pcSlice, x265::FrameEncoder *pcEncodeframe);    ///< set ME range adaptively
 
     Void    xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice);
 

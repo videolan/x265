@@ -72,13 +72,13 @@ public:
     volatile uint32_t   m_curCol;
 };
 
-class EncodeFrame : public QueueFrame
+class FrameEncoder : public QueueFrame
 {
 public:
 
-    EncodeFrame(ThreadPool *);
+    FrameEncoder(ThreadPool *);
 
-    virtual ~EncodeFrame() {}
+    virtual ~FrameEncoder() {}
 
     void init(TEncTop *top, int numRows);
 

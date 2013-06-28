@@ -176,7 +176,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     pcTEncTop->xInitRPS(&m_cSPS);
 
     int numRows = (m_pcCfg->getSourceHeight() + m_cSPS.getMaxCUHeight() - 1) / m_cSPS.getMaxCUHeight();
-    m_cFrameEncoders = new x265::EncodeFrame(pcTEncTop->getThreadPool());
+    m_cFrameEncoders = new x265::FrameEncoder(pcTEncTop->getThreadPool());
     m_cFrameEncoders->init(pcTEncTop, numRows);
 
     int maxGOP = m_pcCfg->getIntraPeriod() > 1 ? m_pcCfg->getIntraPeriod() : 1;
@@ -327,15 +327,15 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
     UInt                  uiOneBitstreamPerSliceLength = 0;
     TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  pcSubstreamsOut = NULL;
-    x265::EncodeFrame*    pcEncodeFrame  = &m_cFrameEncoders[0];
-    TEncEntropy*          pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
-    TEncSlice*            pcSliceEncoder = pcEncodeFrame->getSliceEncoder();
-    TEncCavlc*            pcCavlcCoder   = pcEncodeFrame->getCavlcCoder();
-    TEncSbac*             pcSbacCoder    = pcEncodeFrame->getSingletonSbac();
-    TEncBinCABAC*         pcBinCABAC     = pcEncodeFrame->getBinCABAC();
-    TComLoopFilter*       pcLoopFilter   = pcEncodeFrame->getLoopFilter();
-    TComBitCounter*       pcBitCounter   = pcEncodeFrame->getBitCounter();
-    TEncSampleAdaptiveOffset* pcSAO      = pcEncodeFrame->getSAO();
+    x265::FrameEncoder*   frameEncoder   = &m_cFrameEncoders[0];
+    TEncEntropy*          pcEntropyCoder = frameEncoder->getEntropyEncoder(0);
+    TEncSlice*            pcSliceEncoder = frameEncoder->getSliceEncoder();
+    TEncCavlc*            pcCavlcCoder   = frameEncoder->getCavlcCoder();
+    TEncSbac*             pcSbacCoder    = frameEncoder->getSingletonSbac();
+    TEncBinCABAC*         pcBinCABAC     = frameEncoder->getBinCABAC();
+    TComLoopFilter*       pcLoopFilter   = frameEncoder->getLoopFilter();
+    TComBitCounter*       pcBitCounter   = frameEncoder->getBitCounter();
+    TEncSampleAdaptiveOffset* pcSAO      = frameEncoder->getSAO();
     Bool bActiveParameterSetSEIPresentInAU = false;
     Bool bBufferingPeriodSEIPresentInAU = false;
     Bool bPictureTimingSEIPresentInAU = false;
@@ -456,7 +456,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
 
         //  Slice data initialization
         pcSliceEncoder->setSliceIdx(0);
-        pcSlice = pcSliceEncoder->initEncSlice(pcPic, pcEncodeFrame, gopSize <= 1, iPOCLast, pocCurr, iGOPid, &m_cSPS, &m_cPPS);
+        pcSlice = pcSliceEncoder->initEncSlice(pcPic, frameEncoder, gopSize <= 1, iPOCLast, pocCurr, iGOPid, &m_cSPS, &m_cPPS);
         pcSlice->setLastIDR(m_iLastIDR);
 
         //set default slice level flag to the same as SPS level flag
@@ -464,8 +464,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
         pcSlice->getScalingList()->setUseTransformSkip(m_cPPS.getUseTransformSkip());
         if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
         {
-            pcEncodeFrame->setFlatScalingList();
-            pcEncodeFrame->setUseScalingList(false);
+            frameEncoder->setFlatScalingList();
+            frameEncoder->setUseScalingList(false);
             m_cSPS.setScalingListPresentFlag(false);
             m_cPPS.setScalingListPresentFlag(false);
         }
@@ -474,8 +474,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
             pcSlice->setDefaultScalingList();
             m_cSPS.setScalingListPresentFlag(false);
             m_cPPS.setScalingListPresentFlag(false);
-            pcEncodeFrame->setScalingList(pcSlice->getScalingList());
-            pcEncodeFrame->setUseScalingList(true);
+            frameEncoder->setScalingList(pcSlice->getScalingList());
+            frameEncoder->setUseScalingList(true);
         }
         else if (m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
         {
@@ -486,8 +486,8 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
             pcSlice->getScalingList()->checkDcOfMatrix();
             m_cSPS.setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
             m_cPPS.setScalingListPresentFlag(false);
-            pcEncodeFrame->setScalingList(pcSlice->getScalingList());
-            pcEncodeFrame->setUseScalingList(true);
+            frameEncoder->setScalingList(pcSlice->getScalingList());
+            frameEncoder->setUseScalingList(true);
         }
         else
         {
@@ -666,7 +666,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
         //  Slice compression
         if (m_pcCfg->getUseASR())
         {
-            pcSliceEncoder->setSearchRange(pcSlice, pcEncodeFrame);
+            pcSliceEncoder->setSearchRange(pcSlice, frameEncoder);
         }
 
         Bool bGPBcheck = false;
@@ -750,7 +750,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
             sliceQP = Clip3(-m_cSPS.getQpBDOffsetY(), MAX_QP, sliceQP);
             m_pcRateCtrl->getRCPic()->setPicEstQP(sliceQP);
 
-            pcSliceEncoder->resetQP(pcPic, pcEncodeFrame, sliceQP, lambda);
+            pcSliceEncoder->resetQP(pcPic, frameEncoder, sliceQP, lambda);
         }
 
         UInt uiInternalAddress = pcPic->getNumPartInCU() - 4;
@@ -785,7 +785,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
         pcSubstreamsOut = new TComOutputBitstream[iNumSubstreams];
 
         pcSlice->setNextSlice(false);
-        pcSliceEncoder->compressSlice(pcPic, pcEncodeFrame);  // The bulk of the real work
+        pcSliceEncoder->compressSlice(pcPic, frameEncoder);  // The bulk of the real work
 
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
         if (m_pcCfg->getSaoLcuBasedOptimization() && m_pcCfg->getSaoLcuBoundary())
@@ -1069,7 +1069,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
                 pcEntropyCoder->setBitstream(pcBitCounter);
 
                 // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                pcSAO->startSaoEnc(pcPic, pcEntropyCoder, pcEncodeFrame->getRDSbacCoders(0), pcEncodeFrame->getRDGoOnSbacCoder(0));
+                pcSAO->startSaoEnc(pcPic, pcEntropyCoder, frameEncoder->getRDSbacCoders(0), frameEncoder->getRDGoOnSbacCoder(0));
 
                 SAOParam& cSaoParam = *pcSlice->getPic()->getPicSym()->getSaoParam();
 
@@ -1145,16 +1145,16 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
         pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
         pcEntropyCoder->setEntropyCoder(pcSbacCoder, pcSlice);
         pcEntropyCoder->resetEntropy();
-        pcEncodeFrame->resetEntropy(pcSlice);
+        frameEncoder->resetEntropy(pcSlice);
 
         if (pcSlice->isNextSlice())
         {
             // set entropy coder for writing
             pcSbacCoder->init((TEncBinIf*)pcBinCABAC);
             {
-                pcEncodeFrame->resetEntropy(pcSlice);
-                pcEncodeFrame->getSbacCoder(0)->load(pcSbacCoder);
-                pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
+                frameEncoder->resetEntropy(pcSlice);
+                frameEncoder->getSbacCoder(0)->load(pcSbacCoder);
+                pcEntropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(0), pcSlice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
             }
             pcEntropyCoder->resetEntropy();
             // File writing
@@ -1171,11 +1171,11 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
         }
         pcSlice->setFinalized(true);
 
-        pcSbacCoder->load(pcEncodeFrame->getSbacCoder(0));
+        pcSbacCoder->load(frameEncoder->getSbacCoder(0));
 
         pcSlice->setTileOffstForMultES(uiOneBitstreamPerSliceLength);
         pcSlice->setTileLocationCount(0);
-        pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut, pcEncodeFrame);
+        pcSliceEncoder->encodeSlice(pcPic, pcSubstreamsOut, frameEncoder);
 
         {
             // Construct the final bitstream by flushing and concatenating substreams.
@@ -1185,7 +1185,7 @@ Void TEncGOP::compressGOP(Int iPOCLast, Int iNumPicRcvd)
             {
                 // Flush all substreams -- this includes empty ones.
                 // Terminating bit and flush.
-                pcEntropyCoder->setEntropyCoder(pcEncodeFrame->getSbacCoder(ui), pcSlice);
+                pcEntropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(ui), pcSlice);
                 pcEntropyCoder->setBitstream(&pcSubstreamsOut[ui]);
                 pcEntropyCoder->encodeTerminatingBit(1);
                 pcEntropyCoder->encodeSliceFinish();

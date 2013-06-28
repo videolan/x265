@@ -129,7 +129,7 @@ void CTURow::destroy()
     m_cCuEncoder.destroy();
 }
 
-EncodeFrame::EncodeFrame(ThreadPool* pool)
+FrameEncoder::FrameEncoder(ThreadPool* pool)
     : QueueFrame(pool)
     , m_pcCfg(NULL)
     , m_pcSlice(NULL)
@@ -137,7 +137,7 @@ EncodeFrame::EncodeFrame(ThreadPool* pool)
     , m_rows(NULL)
 {}
 
-void EncodeFrame::destroy()
+void FrameEncoder::destroy()
 {
     JobProvider::Flush();  // ensure no worker threads are using this frame
 
@@ -160,7 +160,7 @@ void EncodeFrame::destroy()
     m_cLoopFilter.destroy();
 }
 
-void EncodeFrame::init(TEncTop *top, int numRows)
+void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_pcCfg = top;
     m_nrows = numRows;
@@ -191,7 +191,7 @@ void EncodeFrame::init(TEncTop *top, int numRows)
     }
 }
 
-void EncodeFrame::Encode(TComPic *pic, TComSlice *pcSlice)
+void FrameEncoder::Encode(TComPic *pic, TComSlice *pcSlice)
 {
     m_pic = pic;
     m_pcSlice = pcSlice;
@@ -223,7 +223,7 @@ void EncodeFrame::Encode(TComPic *pic, TComSlice *pcSlice)
     }
 }
 
-void EncodeFrame::ProcessRow(int irow)
+void FrameEncoder::ProcessRow(int irow)
 {
     PPAScopeEvent(Thread_ProcessRow);
 

@@ -72,7 +72,7 @@ private:
     TEncTop*                m_pcEncTop;
     TEncCfg*                m_pcCfg;
     TEncRateCtrl*           m_pcRateCtrl;
-    x265::EncodeFrame*      m_cFrameEncoders;
+    x265::FrameEncoder*     m_cFrameEncoders;
     TComList<TComPic*>      m_cListPic;         ///< dynamic list of input pictures
     x265_picture_t         *m_recon;
     std::list<AccessUnit>   m_accessUnits;

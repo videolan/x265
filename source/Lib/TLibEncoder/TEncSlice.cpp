@@ -103,7 +103,7 @@ Void TEncSlice::init(TEncTop* pcEncTop)
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
-TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFrame, Bool bForceISlice, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
+TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeFrame, Bool bForceISlice, Int pocLast, Int pocCurr, Int iGOPid, TComSPS* pSPS, TComPPS *pPPS)
 {
     Double dQP;
     Double dLambda;
@@ -326,7 +326,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::EncodeFrame *pcEncodeFr
     return pcSlice;
 }
 
-Void TEncSlice::resetQP(TComPic* pic, EncodeFrame *pcEncodeFrame, Int sliceQP, Double lambda)
+Void TEncSlice::resetQP(TComPic* pic, FrameEncoder *pcEncodeFrame, Int sliceQP, Double lambda)
 {
     TComSlice* slice = pic->getSlice();
 
@@ -361,7 +361,7 @@ Void TEncSlice::resetQP(TComPic* pic, EncodeFrame *pcEncodeFrame, Int sliceQP, D
 // Public member functions
 // ====================================================================================================================
 
-Void TEncSlice::setSearchRange(TComSlice* pcSlice, EncodeFrame *pcEncodeframe)
+Void TEncSlice::setSearchRange(TComSlice* pcSlice, FrameEncoder *pcEncodeframe)
 {
     Int iCurrPOC = pcSlice->getPOC();
     Int iGOPSize = m_pcCfg->getGOPSize();
@@ -390,7 +390,7 @@ int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
 int cntSkipCu[4], cntTotalCu[4];
 extern FILE * fp, * fp1;
 #endif
-Void TEncSlice::compressSlice(TComPic* pcPic, EncodeFrame* pcEncodeFrame)
+Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_compressSlice);
 
@@ -492,7 +492,7 @@ Void TEncSlice::compressSlice(TComPic* pcPic, EncodeFrame* pcEncodeFrame)
  \param  rpcPic        picture class
  \retval rpcBitstream  bitstream class
  */
-Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, EncodeFrame* pcEncodeFrame)
+Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, FrameEncoder* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_encodeSlice);
     UInt       uiCUAddr;
