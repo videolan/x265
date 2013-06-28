@@ -1531,7 +1531,7 @@ public:
     Int       getNumRpsCurrTempList();
     Int       getList1IdxToList0Idx(Int list1Idx) { return m_list1IdxToList0Idx[list1Idx]; }
 
-    Void      setReferenced(Bool b)            { m_bReferenced = b; }
+    Void      setReferenced(Bool b);
 
     Bool      isReferenced()                   { return m_bReferenced; }
 

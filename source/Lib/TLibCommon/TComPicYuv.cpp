@@ -141,6 +141,14 @@ Void TComPicYuv::destroy()
         delete m_refList;
 }
 
+Void  TComPicYuv::clearReferences()
+{
+    // TODO: reclaim these into a GOP encoder pool
+    if (m_refList)
+        delete m_refList;
+    m_refList = NULL;
+}
+
 Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth)
 {
     m_iPicWidth       = iPicWidth;

@@ -113,6 +113,8 @@ public:
     Void  createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uhMaxCUDepth);
     Void  destroyLuma();
 
+    Void  clearReferences();
+
     // ------------------------------------------------------------------------------------------------
     //  Get information of picture
     // ------------------------------------------------------------------------------------------------
