@@ -160,8 +160,6 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
 
 void Encoder::configure(x265_param_t *param)
 {
-    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
-
     determineLevelAndProfile(param);
 
     if (param->keyframeInterval == -1 && param->gopNumThreads > 1)
@@ -795,6 +793,8 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 extern "C"
 x265_t *x265_encoder_open(x265_param_t *param)
 {
+    x265_setup_primitives(param, -1);  // -1 means auto-detect if uninitialized
+
     if (x265_check_params(param))
         return NULL;
 
