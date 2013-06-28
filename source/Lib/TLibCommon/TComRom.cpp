@@ -49,38 +49,44 @@
 // initialize ROM variables
 Void initROM()
 {
-    Int i, c;
-
-    // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
-    ::memset(g_aucConvertToBit,   -1, sizeof(g_aucConvertToBit));
-    c = 0;
-    for (i = 4; i < MAX_CU_SIZE; i *= 2)
+    if (g_auiSigLastScan[0][0] == 0)
     {
+        Int i, c;
+
+        // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
+        ::memset(g_aucConvertToBit, -1, sizeof(g_aucConvertToBit));
+        c = 0;
+        for (i = 4; i < MAX_CU_SIZE; i *= 2)
+        {
+            g_aucConvertToBit[i] = c;
+            c++;
+        }
         g_aucConvertToBit[i] = c;
-        c++;
-    }
 
-    g_aucConvertToBit[i] = c;
+        c = 2;
+        for (i = 0; i < MAX_CU_DEPTH; i++)
+        {
+            g_auiSigLastScan[0][i] = new UInt[c * c];
+            g_auiSigLastScan[1][i] = new UInt[c * c];
+            g_auiSigLastScan[2][i] = new UInt[c * c];
+            initSigLastScan(g_auiSigLastScan[0][i], g_auiSigLastScan[1][i], g_auiSigLastScan[2][i], c, c);
 
-    c = 2;
-    for (i = 0; i < MAX_CU_DEPTH; i++)
-    {
-        g_auiSigLastScan[0][i] = new UInt[c * c];
-        g_auiSigLastScan[1][i] = new UInt[c * c];
-        g_auiSigLastScan[2][i] = new UInt[c * c];
-        initSigLastScan(g_auiSigLastScan[0][i], g_auiSigLastScan[1][i], g_auiSigLastScan[2][i], c, c);
-
-        c <<= 1;
+            c <<= 1;
+        }
     }
 }
 
 Void destroyROM()
 {
-    for (Int i = 0; i < MAX_CU_DEPTH; i++)
+    if (g_auiSigLastScan[0][0])
     {
-        delete[] g_auiSigLastScan[0][i];
-        delete[] g_auiSigLastScan[1][i];
-        delete[] g_auiSigLastScan[2][i];
+        for (Int i = 0; i < MAX_CU_DEPTH; i++)
+        {
+            delete[] g_auiSigLastScan[0][i];
+            delete[] g_auiSigLastScan[1][i];
+            delete[] g_auiSigLastScan[2][i];
+        }
+        g_auiSigLastScan[0][0] = NULL;
     }
 }
 
