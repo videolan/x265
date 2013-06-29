@@ -10442,7 +10442,7 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     /* VC10 and VC11 both generate bad Win32 code for these functions.
      * They apparently can't deal with register allocation for intrinsic
      * functions this large */
-#if HIGH_BIT_DEPTH || (INSTRSET < 5) || (defined(_MSC_VER) && (_MSC_VER > 1500) && !defined(_WIN64))
+#if HIGH_BIT_DEPTH || (INSTRSET < 5) || (defined(_MSC_VER) && (_MSC_VER > 1500) && !defined(_WIN64) && !defined(__INTEL_COMPILER))
     p.getIPredAngs[0] = xPredIntraAngs<4>;
     p.getIPredAngs[1] = xPredIntraAngs<8>;
     p.getIPredAngs[2] = xPredIntraAngs<16>;
