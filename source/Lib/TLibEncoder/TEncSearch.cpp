@@ -177,15 +177,15 @@ TEncSearch::~TEncSearch()
     m_tmpYuvPred.destroy();
 }
 
-Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost)
+Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTrQuant)
 {
     m_pcEncCfg             = pcEncCfg;
-    m_pcTrQuant            = NULL;
+    m_pcTrQuant            = pcTrQuant;
+    m_pcRdCost             = pcRdCost;
     m_iSearchRange         = pcEncCfg->getSearchRange();
     m_bipredSearchRange    = pcEncCfg->getBipredSearchRange();
     m_iSearchMethod        = pcEncCfg->getSearchMethod();
     m_pcEntropyCoder       = NULL;
-    m_pcRdCost             = pcRdCost;
 
     m_me.setSearchMethod(m_iSearchMethod);
 
@@ -264,6 +264,14 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost)
     m_puhQTTempTransformSkipFlag[1] = new UChar[uiNumPartitions];
     m_puhQTTempTransformSkipFlag[2] = new UChar[uiNumPartitions];
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
+}
+
+Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
+{
+    m_me.setQP(QP, lambdaLuma);
+    m_bc.setQP(QP, lambdaLuma);
+    m_pcRdCost->setLambda(lambdaLuma);
+    m_pcTrQuant->setLambda(lambdaLuma, lambdaChroma);
 }
 
 __inline Void TEncSearch::xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance)
@@ -2897,7 +2905,6 @@ Void TEncSearch::predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& 
 
         Pel* PU = fenc->getLumaAddr(pcCU->getAddr(), pcCU->getZorderIdxInCU() + uiPartAddr);
         m_me.setSourcePU(PU - fenc->getLumaAddr(), iRoiWidth, iRoiHeight);
-        m_me.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
 
         pcCU->getMvPredLeft(m_acMvPredictors[0]);
         pcCU->getMvPredAbove(m_acMvPredictors[1]);
@@ -3631,7 +3638,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPar
         xSetSearchRange(pcCU, cMvPred, iSrchRng, cMvSrchRngLT, cMvSrchRngRB);
 
     // Configure the MV bit cost calculator
-    m_bc.setQP(pcCU->getQP(0), m_pcRdCost->getSqrtLambda());
     m_bc.setMVP(*pcMvPred);
 
     setWpScalingDistParam(pcCU, iRefIdxPred, eRefPicList);

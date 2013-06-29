@@ -97,12 +97,11 @@ public:
         }
     }
 
-    void setLambda(double dLambdaLuma, double dLambdaChroma)
+    void setQPLambda(Int QP, double dLambdaLuma, double dLambdaChroma)
     {
         for (int i = 0; i < m_nrows; i++)
         {
-            m_rows[i].m_cRdCost.setLambda(dLambdaLuma);
-            m_rows[i].m_cTrQuant.setLambda(dLambdaLuma, dLambdaChroma);
+            m_rows[i].m_cSearch.setQPLambda(QP, dLambdaLuma, dLambdaChroma);
         }
     }
 

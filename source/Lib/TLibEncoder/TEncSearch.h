@@ -136,12 +136,12 @@ public:
 
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
 
-    Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
+    Void setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma);
 
     TEncSearch();
     virtual ~TEncSearch();
 
-    Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost);
+    Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant *pcTrQuant);
 
 protected:
 

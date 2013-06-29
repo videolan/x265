@@ -254,7 +254,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     pcEncodeFrame->setCrDistortionWeight(weight);
 
     // for RDOQ
-    pcEncodeFrame->setLambda(dLambda, dLambda / weight);
+    pcEncodeFrame->setQPLambda(iQP, dLambda, dLambda / weight);
 
     // For SAO
     pcSlice->setLambda(dLambda, dLambda / weight);
@@ -351,7 +351,7 @@ Void TEncSlice::resetQP(TComPic* pic, FrameEncoder *pcEncodeFrame, Int sliceQP, 
     pcEncodeFrame->setCrDistortionWeight(weight);
 
     // for RDOQ
-    pcEncodeFrame->setLambda(lambda, lambda / weight);
+    pcEncodeFrame->setQPLambda(sliceQP, lambda, lambda / weight);
 
     // For SAO
     slice->setLambda(lambda, lambda / weight);

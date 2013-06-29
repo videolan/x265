@@ -33,7 +33,7 @@ void CTURow::create(TEncTop* top)
 {
     m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCodersCABAC);
     m_cSbacCoder.init(&m_cBinCoderCABAC);
-    m_cSearch.init(top, &m_cRdCost);
+    m_cSearch.init(top, &m_cRdCost, &m_cTrQuant);
 
     m_cCuEncoder.create((UChar)g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
     m_cCuEncoder.init(top);

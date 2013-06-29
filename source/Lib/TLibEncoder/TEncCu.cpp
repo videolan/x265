@@ -515,7 +515,6 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_pcPredSearch->set_pppcRDSbacCoder(m_pppcRDSbacCoder);
     m_pcPredSearch->set_pcEntropyCoder(m_pcEntropyCoder);
     m_pcPredSearch->set_pcRDGoOnSbacCoder(m_pcRDGoOnSbacCoder);
-    m_pcPredSearch->set_pcTrQuant(m_pcTrQuant);
 
     // analysis of CU
 
