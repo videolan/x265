@@ -63,9 +63,9 @@ elseif(HG_EXECUTABLE)
         endif()
     endif()
 
-    set(X265_VERSION ${HG_REVISION} CACHE STRING "x265 version string.")
+    set(X265_VERSION ${HG_REVISION})
 else()
-    set(X265_VERSION "unknown" CACHE STRING "x265 version string.")
+    set(X265_VERSION "unknown")
 endif()
 
 message(STATUS "xhevc version ${X265_VERSION}")
