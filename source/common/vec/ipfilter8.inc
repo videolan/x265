@@ -216,17 +216,6 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
     Output: All planes in the corresponding column - 'dst<A|E|I|P>'
 */
 
-#if INSTRSET >= 5   /* SSE4.1 supported*/
-#define CLIP0(S) { \
-        S = _mm_max_epi32(S, _mm_setzero_si128()); \
-}
-#else
-#define CLIP0(S) { \
-        greater = _mm_cmpgt_epi32(S, _mm_setzero_si128()); \
-        S = _mm_and_si128(greater, S); \
-}
-#endif
-
 #if INSTRSET >= 5
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
     tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * cstride)); \
@@ -255,17 +244,14 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
                             ); \
     /* store results */ \
     sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sumi) \
     tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
     sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
     sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sume) \
     tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
     sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
     sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sump) \
     tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
     sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
@@ -296,17 +282,14 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
     sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
     /* store results */ \
     sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sumi) \
     tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
     sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
     sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sume) \
     tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
     sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
     sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    CLIP0(sump) \
     tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
     sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
     *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
@@ -359,7 +342,6 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride,
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
 
 #if INSTRSET < 5
-    __m128i greater;
     Vec16uc tmp16e, tmp16i, tmp16p;
     Vec4i a0, a1, a2, a3, a4, a5, a6, a7, sum;
     Vec8s tmp;
