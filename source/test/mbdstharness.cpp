@@ -239,25 +239,25 @@ bool MBDstHarness::check_quantaq_primitive(quantaq_t ref, quantaq_t opt)
 
     for (int i = 0; i <= 5; i++)
     {
-        int iWidth = (rand() % 4 + 1) * 4;
+        int width = (rand() % 4 + 1) * 4;
 
-        if (iWidth == 12)
+        if (width == 12)
         {
-            iWidth = 32;
+            width = 32;
         }
-        int iHeight = iWidth;
+        int height = width;
 
-        uint32_t tmp1 = 0;
-        uint32_t tmp2 = 0;
+        uint32_t optReturnValue = 0;
+        uint32_t refReturnValue = 0;
 
-        int iQBitsC = rand() % 32;
-        int iQBits = rand() % 32;
-        int iAdd = rand() % 2147483647;
-        int cmp_size = sizeof(int) * iHeight * iWidth;
-        int numCoeff = iHeight * iWidth;
+        int qbitsc = rand() % 32;
+        int qbits = rand() % 32;
+        int valueToAdd = rand() % 2147483647;
+        int cmp_size = sizeof(int) * height * width;
+        int numCoeff = height * width;
 
-        tmp1 = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, mintbuf5, iQBitsC, iQBits, iAdd, numCoeff);
-        tmp2 = ref(mintbuf1 + j, mintbuf2 + j, mintbuf6, mintbuf7, mintbuf8, iQBitsC, iQBits, iAdd, numCoeff);
+        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, mintbuf5, qbitsc, qbits, valueToAdd, numCoeff);
+        refReturnValue = ref(mintbuf1 + j, mintbuf2 + j, mintbuf6, mintbuf7, mintbuf8, qbitsc, qbits, valueToAdd, numCoeff);
 
         if (memcmp(mintbuf3, mintbuf6, cmp_size))
             return false;
@@ -268,7 +268,7 @@ bool MBDstHarness::check_quantaq_primitive(quantaq_t ref, quantaq_t opt)
         if (memcmp(mintbuf5, mintbuf8, cmp_size))
             return false;
 
-        if (tmp1 != tmp2)
+        if (optReturnValue != refReturnValue)
             return false;
 
         j += 16;
