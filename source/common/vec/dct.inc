@@ -44,72 +44,72 @@ namespace {
 #define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
-void xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int iPer, int iRem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoefOrig)
+void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoefOrig)
 {
-    const int* piQCoef = pSrc;
-    int* piCoef = pDes;
+    const int* qCoef = src;
+    int* coef = dst;
 
     int g_invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
-    if (iWidth > 32)
+    if (width > 32)
     {
-        iWidth  = 32;
-        iHeight = 32;
+        width  = 32;
+        height = 32;
     }
 
-    int iShift, iAdd;
+    int shift, valueToAdd;
 
-    int iTransformShift = 15 - bitDepth - uiLog2TrSize;
+    int transformShift = 15 - bitDepth - log2TrSize;
 
-    iShift = 6 - iTransformShift;
+    shift = 6 - transformShift;
 
     if (useScalingList)
     {
-        iShift += 4;
-        int *piDequantCoef = piDequantCoefOrig;
+        shift += 4;
+        int *deQuantCoef = deQuantCoefOrig;
 
-        if (iShift > iPer)
+        if (shift > per)
         {
-            iAdd = 1 << (iShift - iPer - 1);
-            Vec4i IAdd(iAdd);
+            valueToAdd = 1 << (shift - per - 1);
+            Vec4i IAdd(valueToAdd);
 
-            for (int n = 0; n < iWidth * iHeight; n = n + 8)
+            for (int n = 0; n < width * height; n = n + 8)
             {
                 Vec4i qCoef1, qCoef2, deQuantCoef1, deQuantCoef2;
 
-                qCoef1.load(piQCoef + n);
-                qCoef2.load(piQCoef + n + 4);
+                qCoef1.load(qCoef + n);
+                qCoef2.load(qCoef + n + 4);
 
-                deQuantCoef1.load(piDequantCoef + n);
-                deQuantCoef2.load(piDequantCoef + n + 4);
+                deQuantCoef1.load(deQuantCoef + n);
+                deQuantCoef2.load(deQuantCoef + n + 4);
 
                 Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
 
                 qCoef1 = extend_low(qCoef12);
                 qCoef2 = extend_high(qCoef12);
 
-                qCoef1 =  (qCoef1 *  deQuantCoef1 + IAdd) >> (iShift - iPer);
-                qCoef2 =  (qCoef2 *  deQuantCoef2 + IAdd) >> (iShift - iPer);
+                qCoef1 =  (qCoef1 *  deQuantCoef1 + IAdd) >> (shift - per);
+                qCoef2 =  (qCoef2 *  deQuantCoef2 + IAdd) >> (shift - per);
 
                 qCoef12 = compress_saturated(qCoef1, qCoef2);
 
                 qCoef1 = extend_low(qCoef12);
-                qCoef1.store(piCoef + n);
+                qCoef1.store(coef + n);
                 qCoef2 = extend_high(qCoef12);
-                qCoef2.store(piCoef + n + 4);
+                qCoef2.store(coef + n + 4);
             }
         }
         else
         {
-            for (int n = 0; n < iWidth * iHeight; n = n + 8)
+            for (int n = 0; n < width * height; n = n + 8)
             {
                 Vec4i qCoef1, qCoef2, deQuantCoef1, deQuantCoef2;
 
-                qCoef1.load(piQCoef + n);
-                qCoef2.load(piQCoef + n + 4);
+                qCoef1.load(qCoef + n);
+                qCoef2.load(qCoef + n + 4);
 
-                deQuantCoef1.load(piDequantCoef + n);
-                deQuantCoef2.load(piDequantCoef + n + 4);
+                deQuantCoef1.load(deQuantCoef + n);
+                deQuantCoef2.load(deQuantCoef + n + 4);
 
                 Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
 
@@ -124,46 +124,46 @@ void xDeQuant(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight,
                 qCoef1 = extend_low(qCoef12);
                 qCoef2 = extend_high(qCoef12);
 
-                qCoef1 = qCoef1 << (iPer - iShift);
-                qCoef2 = qCoef2 << (iPer - iShift);
+                qCoef1 = qCoef1 << (per - shift);
+                qCoef2 = qCoef2 << (per - shift);
 
                 qCoef12 = compress_saturated(qCoef1, qCoef2);
 
                 qCoef1 = extend_low(qCoef12);
-                qCoef1.store(piCoef + n);
+                qCoef1.store(coef + n);
                 qCoef2 = extend_high(qCoef12);
-                qCoef2.store(piCoef + n + 4);
+                qCoef2.store(coef + n + 4);
             }
         }
     }
     else
     {
-        iAdd = 1 << (iShift - 1);
-        int scale = g_invQuantScales[iRem] << iPer;
+        valueToAdd = 1 << (shift - 1);
+        int scale = g_invQuantScales[rem] << per;
 
         Vec4i Scale(scale);
-        Vec4i IAdd(iAdd);
+        Vec4i IAdd(valueToAdd);
 
-        for (int n = 0; n < iWidth * iHeight; n = n + 8)
+        for (int n = 0; n < width * height; n = n + 8)
         {
             Vec4i qCoef1, qCoef2;
-            qCoef1.load(piQCoef + n);
-            qCoef2.load(piQCoef + n + 4);
+            qCoef1.load(qCoef + n);
+            qCoef2.load(qCoef + n + 4);
 
             Vec8s qCoef12 = compress_saturated(qCoef1, qCoef2);
 
             qCoef1 = extend_low(qCoef12);
             qCoef2 = extend_high(qCoef12);
 
-            qCoef1 = (qCoef1 * Scale + IAdd) >> iShift;
-            qCoef2 = (qCoef2 * Scale + IAdd) >> iShift;
+            qCoef1 = (qCoef1 * Scale + IAdd) >> shift;
+            qCoef2 = (qCoef2 * Scale + IAdd) >> shift;
 
             qCoef12 = compress_saturated(qCoef1, qCoef2);
 
             qCoef1 = extend_low(qCoef12);
-            qCoef1.store(piCoef + n);
+            qCoef1.store(coef + n);
             qCoef2 = extend_high(qCoef12);
-            qCoef2.store(piCoef + n + 4);
+            qCoef2.store(coef + n + 4);
         }
     }
 }
