@@ -436,33 +436,33 @@ void filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
 }
 
-void xExtendPicCompBorder(pixel* piTxt, int iStride, int iWidth, int iHeight, int iMarginX, int iMarginY)
+void extendPicCompBorder(pixel* piTxt, int stride, int width, int height, int marginX, int marginY)
 {
     int   x, y;
     pixel*  pi;
 
     pi = piTxt;
-    for (y = 0; y < iHeight; y++)
+    for (y = 0; y < height; y++)
     {
-        for (x = 0; x < iMarginX; x++)
+        for (x = 0; x < marginX; x++)
         {
-            pi[-iMarginX + x] = pi[0];
-            pi[iWidth + x] = pi[iWidth - 1];
+            pi[-marginX + x] = pi[0];
+            pi[width + x] = pi[width - 1];
         }
 
-        pi += iStride;
+        pi += stride;
     }
 
-    pi -= (iStride + iMarginX);
-    for (y = 0; y < iMarginY; y++)
+    pi -= (stride + marginX);
+    for (y = 0; y < marginY; y++)
     {
-        ::memcpy(pi + (y + 1) * iStride, pi, sizeof(pixel) * (iWidth + (iMarginX << 1)));
+        ::memcpy(pi + (y + 1) * stride, pi, sizeof(pixel) * (width + (marginX << 1)));
     }
 
-    pi -= ((iHeight - 1) * iStride);
-    for (y = 0; y < iMarginY; y++)
+    pi -= ((height - 1) * stride);
+    for (y = 0; y < marginY; y++)
     {
-        ::memcpy(pi - (y + 1) * iStride, pi, sizeof(pixel) * (iWidth + (iMarginX << 1)));
+        ::memcpy(pi - (y + 1) * stride, pi, sizeof(pixel) * (width + (marginX << 1)));
     }
 }
 
@@ -471,9 +471,9 @@ void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pix
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[2]);
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[1]);
     filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComInterpolationFilter::m_lumaFilter[3]);
-    xExtendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
-    xExtendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
-    xExtendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
 }
 
 void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
@@ -486,9 +486,9 @@ void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, s
     filterConvertShortToPel(bitDepth, midB, midStride, pDstB, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midC, midStride, pDstC, pDstStride, block_width, block_height);
 
-    xExtendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
-    xExtendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
-    xExtendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY); 
+    extendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY); 
 }
 }
 
