@@ -199,26 +199,26 @@ bool MBDstHarness::check_xdequant_primitive(dequant_t ref, dequant_t opt)
 
     for (int i = 0; i <= 5; i++)
     {
-        int iWidth = (rand() % 4 + 1) * 4;
+        int width = (rand() % 4 + 1) * 4;
 
-        if (iWidth == 12)
+        if (width == 12)
         {
-            iWidth = 32;
+            width = 32;
         }
-        int iHeight = iWidth;
+        int height = width;
 
-        int tmp = rand() % 58;
-        int iPer = tmp / 6;
-        int iRem = tmp % 6;
+        int scale = rand() % 58;
+        int per = scale / 6;
+        int rem = scale % 6;
 
-        bool useScalingList = (tmp % 2 == 0) ? false : true;
+        bool useScalingList = (scale % 2 == 0) ? false : true;
 
-        unsigned int uiLog2TrSize = (rand() % 4) + 2;
+        uint32_t log2TrSize = (rand() % 4) + 2;
 
-        int cmp_size = sizeof(int) * iWidth * iWidth;
+        int cmp_size = sizeof(int) * height * width;
 
-        opt(8, mintbuf1 + j, mintbuf3, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);  // g_bitDepthY  = 8, g_bitDepthC = 8
-        ref(8, mintbuf1 + j, mintbuf4, iWidth, iHeight, iPer, iRem, useScalingList, uiLog2TrSize, mintbuf2 + j);
+        opt(8, mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);  // g_bitDepthY  = 8, g_bitDepthC = 8
+        ref(8, mintbuf1 + j, mintbuf4, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
