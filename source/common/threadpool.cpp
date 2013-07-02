@@ -90,7 +90,9 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
 }
 
 #define ATOMIC_OR(ptr, mask)            _InterlockedOr64((volatile LONG64*)ptr, mask)
+#if defined(__MSC_VER) && !defined(__INTEL_COMPILER)
 #pragma intrinsic(_InterlockedCompareExchange64)
+#endif
 #else // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
 #define ATOMIC_OR(ptr, mask)            InterlockedOr64((volatile LONG64*)ptr, mask)
 #endif // if _WIN32_WINNT <= _WIN32_WINNT_WINXP
