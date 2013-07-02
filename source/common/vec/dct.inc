@@ -206,17 +206,17 @@ ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
     { 55, -84, 74, -29, 55, -84, 74, -29 },
 };
 
-void xDST4(short *pSrc, int *pDst, intptr_t nStride)
+void xDST4(short *src, int *dst, intptr_t nStride)
 {
     // Const
     __m128i c_1     = _mm_set1_epi32(1);
     __m128i c_128   = _mm_set1_epi32(128);
 
     // Load
-    __m128i T20  = _mm_loadl_epi64((__m128i*)&pSrc[0 * nStride]);
-    __m128i T21  = _mm_loadl_epi64((__m128i*)&pSrc[1 * nStride]);
-    __m128i T22  = _mm_loadl_epi64((__m128i*)&pSrc[2 * nStride]);
-    __m128i T23  = _mm_loadl_epi64((__m128i*)&pSrc[3 * nStride]);
+    __m128i T20  = _mm_loadl_epi64((__m128i*)&src[0 * nStride]);
+    __m128i T21  = _mm_loadl_epi64((__m128i*)&src[1 * nStride]);
+    __m128i T22  = _mm_loadl_epi64((__m128i*)&src[2 * nStride]);
+    __m128i T23  = _mm_loadl_epi64((__m128i*)&src[3 * nStride]);
 
     __m128i T30  = _mm_unpacklo_epi64(T20, T21);
     __m128i T31  = _mm_unpacklo_epi64(T22, T23);
@@ -250,8 +250,8 @@ void xDST4(short *pSrc, int *pDst, intptr_t nStride)
     T61 = _mm_hadd_epi32(T62, T63);
     T60 = _mm_srai_epi32(_mm_add_epi32(T60, c_128), 8);
     T61 = _mm_srai_epi32(_mm_add_epi32(T61, c_128), 8);
-    _mm_store_si128((__m128i*)&pDst[0 * 4], T60);
-    _mm_store_si128((__m128i*)&pDst[1 * 4], T61);
+    _mm_store_si128((__m128i*)&dst[0 * 4], T60);
+    _mm_store_si128((__m128i*)&dst[1 * 4], T61);
 
     T60 = _mm_madd_epi16(T70, _mm_load_si128((__m128i*)tab_dst_4[2]));
     T61 = _mm_madd_epi16(T71, _mm_load_si128((__m128i*)tab_dst_4[2]));
@@ -261,8 +261,8 @@ void xDST4(short *pSrc, int *pDst, intptr_t nStride)
     T61 = _mm_hadd_epi32(T62, T63);
     T60 = _mm_srai_epi32(_mm_add_epi32(T60, c_128), 8);
     T61 = _mm_srai_epi32(_mm_add_epi32(T61, c_128), 8);
-    _mm_store_si128((__m128i*)&pDst[2 * 4], T60);
-    _mm_store_si128((__m128i*)&pDst[3 * 4], T61);
+    _mm_store_si128((__m128i*)&dst[2 * 4], T60);
+    _mm_store_si128((__m128i*)&dst[3 * 4], T61);
 }
 
 #endif // INSTRSET >=4
