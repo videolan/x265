@@ -367,6 +367,16 @@ void transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
 {
     transpose16_dummy(pDst, 16, pSrc, nStrideS);
 }
+
+void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
+{
+    assert( dst != src );
+
+    transpose16_dummy(dst,                32, src,                      strideSrc);
+    transpose16_dummy(dst + 16 * 32,      32, src + 16,                 strideSrc);
+    transpose16_dummy(dst + 16 * 32 + 16, 32, src + 16 * strideSrc + 16, strideSrc);
+    transpose16_dummy(dst + 16,           32, src + 16 * strideSrc,      strideSrc);
+}
 #endif // !HIGH_BIT_DEPTH
 
 }  // end anonymous namespace
@@ -417,7 +427,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.transpose[0] = transpose4;
     p.transpose[1] = transpose8;
     p.transpose[2] = transpose16;
-    p.transpose[3] = transpose<32>;
+    p.transpose[3] = transpose32;
     p.transpose[4] = transpose<64>;
 #endif
 }
