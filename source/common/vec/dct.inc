@@ -169,27 +169,27 @@ void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int
 }
 
 #if INSTRSET < 4
-void xDST4(short *pSrc, int *pDst, intptr_t nStride)
+void xDST4(short *src, int *dst, intptr_t nStride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
 
-    ALIGN_VAR_32(Short, tmp[4 * 4]);
-    ALIGN_VAR_32(Short, tmp1[4 * 4]);
+    ALIGN_VAR_32(Short, coef[4 * 4]);
+    ALIGN_VAR_32(Short, block[4 * 4]);
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&tmp1[i * 4], &pSrc[i * nStride], 4 * sizeof(short));
+        memcpy(&block[i * 4], &src[i * nStride], 4 * sizeof(short));
     }
 
-    fastForwardDst(tmp1, tmp, shift_1st);
-    fastForwardDst(tmp, tmp1, shift_2nd);
+    fastForwardDst(block, coef, shift_1st);
+    fastForwardDst(coef, block, shift_2nd);
 #define N (4)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            pDst[i * N + j] = tmp1[i * N + j];
+            dst[i * N + j] = block[i * N + j];
         }
     }
 
