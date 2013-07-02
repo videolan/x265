@@ -785,27 +785,27 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-void xDCT16(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT16(short *src, int *dst, intptr_t nStride)
 {
     const int shift_1st = 3;
     const int shift_2nd = 10;
 
-    ALIGN_VAR_32(Short, tmp[16 * 16]);
-    ALIGN_VAR_32(Short, tmp1[16 * 16]);
+    ALIGN_VAR_32(Short, coef[16 * 16]);
+    ALIGN_VAR_32(Short, block[16 * 16]);
 
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&tmp1[i * 16], &pSrc[i * nStride], 16 * sizeof(short));
+        memcpy(&block[i * 16], &src[i * nStride], 16 * sizeof(short));
     }
 
-    partialButterfly16(tmp1, tmp, shift_1st, 16);
-    partialButterfly16(tmp, tmp1, shift_2nd, 16);
+    partialButterfly16(block, coef, shift_1st, 16);
+    partialButterfly16(coef, block, shift_2nd, 16);
 #define N (16)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            pDst[i * N + j] = tmp1[i * N + j];
+            dst[i * N + j] = block[i * N + j];
         }
     }
 
