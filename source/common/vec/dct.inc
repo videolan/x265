@@ -2337,16 +2337,16 @@ ALIGN_VAR_32(static const short, tab_idct_4x4[4][8]) =
     { 83,  36, 83,  36, 83,  36, 83,  36 },
     { 36, -83, 36, -83, 36, -83, 36, -83 },
 };
-void xIDCT4(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT4(int *src, short *dst, intptr_t stride)
 {
     __m128i S0, S8, m128iAdd, m128Tmp1, m128Tmp2, E1, E2, O1, O2, m128iA, m128iD;
 
-    m128Tmp1 = _mm_load_si128((__m128i*)&pSrc[0]);
-    m128Tmp2 = _mm_load_si128((__m128i*)&pSrc[4]);
+    m128Tmp1 = _mm_load_si128((__m128i*)&src[0]);
+    m128Tmp2 = _mm_load_si128((__m128i*)&src[4]);
     S0 = _mm_packs_epi32(m128Tmp1, m128Tmp2);
 
-    m128Tmp1 = _mm_load_si128((__m128i*)&pSrc[8]);
-    m128Tmp2 = _mm_load_si128((__m128i*)&pSrc[12]);
+    m128Tmp1 = _mm_load_si128((__m128i*)&src[8]);
+    m128Tmp2 = _mm_load_si128((__m128i*)&src[12]);
     S8 = _mm_packs_epi32(m128Tmp1, m128Tmp2);
 
     m128iAdd  = _mm_set1_epi32(64);
@@ -2415,10 +2415,10 @@ void xIDCT4(int *pSrc, short *pDst, intptr_t stride)
     m128iA   = _mm_unpacklo_epi16(m128Tmp1, m128Tmp2);
     m128iD   = _mm_unpackhi_epi16(m128Tmp1, m128Tmp2);
 
-    _mm_storel_epi64((__m128i*)&pDst[0 * stride], m128iA);
-    _mm_storeh_pi((__m64*)&pDst[1 * stride], _mm_castsi128_ps(m128iA));
-    _mm_storel_epi64((__m128i*)&pDst[2 * stride], m128iD);
-    _mm_storeh_pi((__m64*)&pDst[3 * stride], _mm_castsi128_ps(m128iD));
+    _mm_storel_epi64((__m128i*)&dst[0 * stride], m128iA);
+    _mm_storeh_pi((__m64*)&dst[1 * stride], _mm_castsi128_ps(m128iA));
+    _mm_storel_epi64((__m128i*)&dst[2 * stride], m128iD);
+    _mm_storeh_pi((__m64*)&dst[3 * stride], _mm_castsi128_ps(m128iD));
 }
 
 ALIGN_VAR_32(static const short, tab_idct_8x8[12][8]) =
