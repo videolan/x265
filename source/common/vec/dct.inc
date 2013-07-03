@@ -2192,29 +2192,29 @@ inline void inversedst(short *tmp, short *block, int shift)  // input tmp, outpu
     blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block + 8);
 }
 
-void xIDST4(int *pSrc, short *pDst, intptr_t stride)
+void xIDST4(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, tmp[4 * 4]);
-    ALIGN_VAR_32(Short, tmp1[4 * 4]);
+    ALIGN_VAR_32(Short, coef[4 * 4]);
+    ALIGN_VAR_32(Short, block[4 * 4]);
 #define N (4)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            tmp1[i * N + j] = (short)pSrc[i * N + j];
+            block[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    inversedst(tmp1, tmp, shift_1st);
-    inversedst(tmp, tmp1, shift_2nd);
+    inversedst(block, coef, shift_1st);
+    inversedst(coef, block, shift_2nd);
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&pDst[i * stride], &tmp1[i * 4], 4 * sizeof(short));
+        memcpy(&dst[i * stride], &block[i * 4], 4 * sizeof(short));
     }
 }
 
