@@ -368,6 +368,8 @@ void transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
     transpose16_dummy(pDst, 16, pSrc, nStrideS);
 }
 
+#include "utils.h"
+
 void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
 {
     assert( dst != src );
@@ -381,7 +383,6 @@ void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
 
 }  // end anonymous namespace
 
-#include "utils.h"
 #include "sse.inc"
 
 namespace x265 {
