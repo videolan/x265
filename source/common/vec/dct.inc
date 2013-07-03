@@ -2232,18 +2232,18 @@ ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
     {  -74, -29, -74, -29, -74, -29, -74, -29 }
 };
 
-void xIDST4(int *pSrc, short *pDst, intptr_t stride)
+void xIDST4(int *src, short *dst, intptr_t stride)
 {
     __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD, m128iA, m128iD;
 
     m128iAdd  = _mm_set1_epi32(64);
 
-    m128iTmp1 = _mm_load_si128((__m128i*)&pSrc[0]);
-    m128iTmp2 = _mm_load_si128((__m128i*)&pSrc[4]);
+    m128iTmp1 = _mm_load_si128((__m128i*)&src[0]);
+    m128iTmp2 = _mm_load_si128((__m128i*)&src[4]);
     S0 = _mm_packs_epi32(m128iTmp1, m128iTmp2);
 
-    m128iTmp1 = _mm_load_si128((__m128i*)&pSrc[8]);
-    m128iTmp2 = _mm_load_si128((__m128i*)&pSrc[12]);
+    m128iTmp1 = _mm_load_si128((__m128i*)&src[8]);
+    m128iTmp2 = _mm_load_si128((__m128i*)&src[12]);
     S8 = _mm_packs_epi32(m128iTmp1, m128iTmp2);
 
     m128iAC  = _mm_unpacklo_epi16(S0, S8);
@@ -2322,10 +2322,10 @@ void xIDST4(int *pSrc, short *pDst, intptr_t stride)
     m128iAC   = _mm_unpacklo_epi16(m128iTmp1, m128iTmp2);
     m128iBD   = _mm_unpackhi_epi16(m128iTmp1, m128iTmp2);
 
-    _mm_storel_epi64((__m128i*)&pDst[0 * stride], m128iAC);
-    _mm_storeh_pi((__m64*)&pDst[1 * stride], _mm_castsi128_ps(m128iAC));
-    _mm_storel_epi64((__m128i*)&pDst[2 * stride], m128iBD);
-    _mm_storeh_pi((__m64*)&pDst[3 * stride], _mm_castsi128_ps(m128iBD));
+    _mm_storel_epi64((__m128i*)&dst[0 * stride], m128iAC);
+    _mm_storeh_pi((__m64*)&dst[1 * stride], _mm_castsi128_ps(m128iAC));
+    _mm_storel_epi64((__m128i*)&dst[2 * stride], m128iBD);
+    _mm_storeh_pi((__m64*)&dst[3 * stride], _mm_castsi128_ps(m128iBD));
 }
 
 #endif // INSTRSET >= 5
