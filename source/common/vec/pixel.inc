@@ -228,6 +228,8 @@ void transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
     }
 }
 
+#include "utils.h"
+
 #if !HIGH_BIT_DEPTH
 void transpose4(pixel* pDst, pixel* pSrc, intptr_t nStride)
 {
@@ -367,8 +369,6 @@ void transpose16(pixel* pDst, pixel* pSrc, intptr_t nStrideS)
 {
     transpose16_dummy(pDst, 16, pSrc, nStrideS);
 }
-
-#include "utils.h"
 
 void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
 {
