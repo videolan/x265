@@ -1542,28 +1542,28 @@ void partialButterfly32(short *src, short *dst, int shift, int line)
     }
 }
 
-void xDCT32(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT32(short *src, int *dst, intptr_t nStride)
 {
     const int shift_1st = 4;
     const int shift_2nd = 11;
 
-    ALIGN_VAR_32(Short, tmp[32 * 32]);
-    ALIGN_VAR_32(Short, tmp1[32 * 32]);
+    ALIGN_VAR_32(Short, coef[32 * 32]);
+    ALIGN_VAR_32(Short, block[32 * 32]);
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&tmp1[i * 32], &pSrc[i * nStride], 32 * sizeof(short));
+        memcpy(&block[i * 32], &src[i * nStride], 32 * sizeof(short));
     }
 
-    partialButterfly32(tmp1, tmp, shift_1st, 32);
-    partialButterfly32(tmp, tmp1, shift_2nd, 32);
+    partialButterfly32(block, coef, shift_1st, 32);
+    partialButterfly32(coef, block, shift_2nd, 32);
 
 #define N (32)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            pDst[i * N + j] = tmp1[i * N + j];
+            dst[i * N + j] = block[i * N + j];
         }
     }
 
