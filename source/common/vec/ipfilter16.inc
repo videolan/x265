@@ -511,7 +511,7 @@ void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *ds
             }
             else
             {
-                vec_src0.load_partial(4, src + col);
+                vec_src0 = load_partial(const_int(8), (src+col));
             }
 
             vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
@@ -614,7 +614,7 @@ void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *
             }
             else
             {
-                vec_src0.load_partial(4, src + col);
+                vec_src0 = load_partial(const_int(8), (src+col));
             }
 
             vec_src0 = vec_src0 * vec_c;                        // Assuming that there is no overflow (Everywhere in this function!)
