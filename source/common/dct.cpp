@@ -703,8 +703,8 @@ void xIDCT32_C(int *src, short *dst, intptr_t stride)
 
 void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoefOrig)
 {
-    const int* piQCoef = src;
-    int* piCoef = dst;
+    const int* qCoef = src;
+    int* coef = dst;
 
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -725,7 +725,7 @@ void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int
     if (useScalingList)
     {
         shift += 4;
-        int *piDequantCoef = dequantCoefOrig;
+        int *dequantCoef = dequantCoefOrig;
 
         if (shift > per)
         {
@@ -733,18 +733,18 @@ void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int
 
             for (int n = 0; n < width * height; n++)
             {
-                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-                coeffQ = ((clipQCoef * piDequantCoef[n]) + add) >> (shift - per);
-                piCoef[n] = Clip3(-32768, 32767, coeffQ);
+                clipQCoef = Clip3(-32768, 32767, qCoef[n]);
+                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift - per);
+                coef[n] = Clip3(-32768, 32767, coeffQ);
             }
         }
         else
         {
             for (int n = 0; n < width * height; n++)
             {
-                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-                coeffQ   = Clip3(-32768, 32767, clipQCoef * piDequantCoef[n]);
-                piCoef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
+                clipQCoef = Clip3(-32768, 32767, qCoef[n]);
+                coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]);
+                coef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
             }
         }
     }
@@ -755,9 +755,9 @@ void xDeQuant(int bitDepth, const int* src, int* dst, int width, int height, int
 
         for (int n = 0; n < width * height; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
+            clipQCoef = Clip3(-32768, 32767, qCoef[n]);
             coeffQ = (clipQCoef * scale + add) >> shift;
-            piCoef[n] = Clip3(-32768, 32767, coeffQ);
+            coef[n] = Clip3(-32768, 32767, coeffQ);
         }
     }
 }
