@@ -563,31 +563,31 @@ void xDCT32_C(short *src, int *dst, intptr_t nStride)
 #undef N
 }
 
-void xIDST4_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDST4_C(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, tmp[4 * 4]);
-    ALIGN_VAR_32(Short, tmp2[4 * 4]);
+    ALIGN_VAR_32(Short, coef[4 * 4]);
+    ALIGN_VAR_32(Short, coef2[4 * 4]);
 
 #define N (4)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            tmp2[i * N + j] = (short)pSrc[i * N + j];
+            coef2[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    inversedst(tmp2, tmp, shift_1st); // Forward DST BY FAST ALGORITHM, block input, tmp output
-    inversedst(tmp, tmp2, shift_2nd); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+    inversedst(coef2, coef, shift_1st); // Forward DST BY FAST ALGORITHM, block input, coef output
+    inversedst(coef, coef2, shift_2nd); // Forward DST BY FAST ALGORITHM, coef input, coeff output
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
+        memcpy(&dst[i * stride], &coef2[i * 4], 4 * sizeof(short));
     }
 }
 
