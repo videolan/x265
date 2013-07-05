@@ -60,6 +60,7 @@ static inline Pel weightUnidirC(Int w0, Short P0, Int round, Int shift, Int offs
     return ClipC(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -215,8 +216,8 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc
     Int round   = shift ? (1 << (shift - 1)) * bRound : 0;
     Int w1      = wp1[0].w;
 
-    UInt  iSrc0Stride = pcYuvSrc0->m_width;
-    UInt  iSrc1Stride = pcYuvSrc1->m_width;
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
+    UInt  iSrc1Stride = pcYuvSrc1->getStride();
     UInt  iDstStride  = rpcYuvDst->getStride();
 
     for (y = iHeight - 1; y >= 0; y--)
@@ -247,8 +248,8 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc
     round   = shift ? (1 << (shift - 1)) : 0;
     w1      = wp1[1].w;
 
-    iSrc0Stride = pcYuvSrc0->m_Cwidth;
-    iSrc1Stride = pcYuvSrc1->m_Cwidth;
+    iSrc0Stride = pcYuvSrc0->getCStride();
+    iSrc1Stride = pcYuvSrc1->getCStride();
     iDstStride  = rpcYuvDst->getCStride();
 
     iWidth  >>= 1;
@@ -293,6 +294,7 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc
         pDstV  += iDstStride;
     }
 }
+
 
 /** weighted averaging for uni-pred
  * \param TComYuv* pcYuvSrc0
@@ -420,7 +422,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* pcYuvSrc0, UInt iPartUnitIdx,
     Int shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     Int shift   = wp0[0].shift + shiftNum;
     Int round   = shift ? (1 << (shift - 1)) : 0;
-    UInt  iSrc0Stride = pcYuvSrc0->m_width;
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
     UInt  iDstStride  = rpcYuvDst->getStride();
 
     for (y = iHeight - 1; y >= 0; y--)
@@ -449,7 +451,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* pcYuvSrc0, UInt iPartUnitIdx,
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    iSrc0Stride = pcYuvSrc0->m_Cwidth;
+    iSrc0Stride = pcYuvSrc0->getCStride();
     iDstStride  = rpcYuvDst->getCStride();
 
     iWidth  >>= 1;
@@ -680,6 +682,7 @@ Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* pcCU, TComYuv* pcY
     }
     addWeightUni(pcYuvSrc, uiPartAddr, iWidth, iHeight, pwp, rpcYuvPred);
 }
+
 
 /** weighted prediction for uni-pred
  * \param TComDataCU* pcCU

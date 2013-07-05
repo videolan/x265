@@ -268,7 +268,7 @@ Void TComYuv::copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidt
     Short* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
 
     UInt  iSrcStride = getStride();
-    UInt  iDstStride = pcYuvDst->m_width;
+    UInt  iDstStride = pcYuvDst->getStride();
 
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDst, iDstStride, (pixel*)pSrc, iSrcStride);
 }
@@ -302,7 +302,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
     Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
     UInt   iSrcStride = getCStride();
-    UInt   iDstStride = pcYuvDst->m_Cwidth;
+    UInt   iDstStride = pcYuvDst->getCStride();
 
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstU, iDstStride, (pixel*)pSrcU, iSrcStride);
     x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
@@ -362,7 +362,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
         Short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
 
         UInt   iSrcStride = getCStride();
-        UInt   iDstStride = pcYuvDst->m_Cwidth;
+        UInt   iDstStride = pcYuvDst->getCStride();
 
         x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstU, iDstStride, (pixel*)pSrcU, iSrcStride);
     }
@@ -372,7 +372,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
         Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
         UInt   iSrcStride = getCStride();
-        UInt   iDstStride = pcYuvDst->m_Cwidth;
+        UInt   iDstStride = pcYuvDst->getCStride();
 
         x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
     }
@@ -384,7 +384,7 @@ Void TComYuv::copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWi
         Short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
         UInt   iSrcStride = getCStride();
-        UInt   iDstStride = pcYuvDst->m_Cwidth;
+        UInt   iDstStride = pcYuvDst->getCStride();
 
         x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstU, iDstStride, (pixel*)pSrcU, iSrcStride);
         x265::primitives.cpyblock_s_p(iWidth, iHeight, pDstV, iDstStride, (pixel*)pSrcV, iSrcStride);
@@ -437,7 +437,7 @@ Void TComYuv::addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUni
     Pel* pDst  = getLumaAddr(uiTrUnitIdx, uiPartSize);
 
     UInt iSrc0Stride = pcYuvSrc0->getStride();
-    UInt iSrc1Stride = pcYuvSrc1->m_width;
+    UInt iSrc1Stride = pcYuvSrc1->getStride();
     UInt iDstStride  = getStride();
 
     for (y = uiPartSize - 1; y >= 0; y--)
@@ -497,7 +497,7 @@ Void TComYuv::addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrU
     Pel* pDstV = getCrAddr(uiTrUnitIdx, uiPartSize);
 
     UInt  iSrc0Stride = pcYuvSrc0->getCStride();
-    UInt  iSrc1Stride = pcYuvSrc1->m_Cwidth;
+    UInt  iSrc1Stride = pcYuvSrc1->getCStride();
     UInt  iDstStride  = getCStride();
 
     for (y = uiPartSize - 1; y >= 0; y--)
@@ -665,8 +665,8 @@ Void TComYuv::addAvg(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitI
     Pel* pDstU   = getCbAddr(iPartUnitIdx);
     Pel* pDstV   = getCrAddr(iPartUnitIdx);
 
-    UInt  iSrc0Stride = pcYuvSrc0->m_width;
-    UInt  iSrc1Stride = pcYuvSrc1->m_width;
+    UInt  iSrc0Stride = pcYuvSrc0->getStride();
+    UInt  iSrc1Stride = pcYuvSrc1->getStride();
     UInt  iDstStride  = getStride();
     Int shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
     Int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
@@ -689,8 +689,8 @@ Void TComYuv::addAvg(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitI
     shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthC;
     offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
-    iSrc0Stride = pcYuvSrc0->m_Cwidth;
-    iSrc1Stride = pcYuvSrc1->m_Cwidth;
+    iSrc0Stride = pcYuvSrc0->getCStride();
+    iSrc1Stride = pcYuvSrc1->getCStride();
     iDstStride  = getCStride();
 
     iWidth  >>= 1;
