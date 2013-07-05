@@ -86,7 +86,7 @@ void TShortYUV::subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned in
 
     int  iSrc0Stride = pcYuvSrc0->getStride();
     int  iSrc1Stride = pcYuvSrc1->getStride();
-    int  iDstStride  = getStride();
+    int  iDstStride  = width;
 
     for (y = uiPartSize - 1; y >= 0; y--)
     {
@@ -114,7 +114,7 @@ void TShortYUV::subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned 
 
     int  iSrc0Stride = pcYuvSrc0->getCStride();
     int  iSrc1Stride = pcYuvSrc1->getCStride();
-    int  iDstStride  = getCStride();
+    int  iDstStride  = Cwidth;
 
     for (y = uiPartSize - 1; y >= 0; y--)
     {
@@ -151,9 +151,9 @@ void TShortYUV::addClipLuma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned
     short* pSrc1 = pcYuvSrc1->getLumaAddr(uiTrUnitIdx, uiPartSize);
     short* pDst  = getLumaAddr(uiTrUnitIdx, uiPartSize);
 
-    unsigned int iSrc0Stride = pcYuvSrc0->getStride();
-    unsigned int iSrc1Stride = pcYuvSrc1->getStride();
-    unsigned int iDstStride  = getStride();
+    unsigned int iSrc0Stride = pcYuvSrc0->width;
+    unsigned int iSrc1Stride = pcYuvSrc1->width;
+    unsigned int iDstStride  = width;
 
     for (y = uiPartSize - 1; y >= 0; y--)
     {
@@ -179,9 +179,9 @@ void TShortYUV::addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsign
     short* pDstU = getCbAddr(uiTrUnitIdx, uiPartSize);
     short* pDstV = getCrAddr(uiTrUnitIdx, uiPartSize);
 
-    unsigned int  iSrc0Stride = pcYuvSrc0->getCStride();
-    unsigned int  iSrc1Stride = pcYuvSrc1->getCStride();
-    unsigned int  iDstStride  = getCStride();
+    unsigned int  iSrc0Stride = pcYuvSrc0->Cwidth;
+    unsigned int  iSrc1Stride = pcYuvSrc1->Cwidth;
+    unsigned int  iDstStride  = Cwidth;
 
     for (y = uiPartSize - 1; y >= 0; y--)
     {
@@ -228,8 +228,8 @@ Void TShortYUV::copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, 
         return;
     }
 
-    unsigned int  iSrcStride = getStride();
-    unsigned int  iDstStride = pcYuvDst->getStride();
+    unsigned int  iSrcStride = width;
+    unsigned int  iDstStride = pcYuvDst->width;
     for (unsigned int y = iHeight; y != 0; y--)
     {
         ::memcpy(pDst, pSrc, iWidth * sizeof(short));
@@ -243,7 +243,7 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, un
     short* pSrc =           getLumaAddr(uiPartIdx);
     Pel* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
 
-    unsigned int  iSrcStride = getStride();
+    unsigned int  iSrcStride = width;
     unsigned int  iDstStride = pcYuvDst->getStride();
 
     for (unsigned int y = iHeight; y != 0; y--)
@@ -272,8 +272,8 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
         return;
     }
 
-    unsigned int   iSrcStride = getCStride();
-    unsigned int   iDstStride = pcYuvDst->getCStride();
+    unsigned int   iSrcStride = Cwidth;
+    unsigned int   iDstStride = pcYuvDst->Cwidth;
     for (unsigned int y = iHeight; y != 0; y--)
     {
         ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -292,7 +292,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
     Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
-    unsigned int   iSrcStride = getCStride();
+    unsigned int   iSrcStride = Cwidth;
     unsigned int   iDstStride = pcYuvDst->getCStride();
 
     for (unsigned int y = iHeight; y != 0; y--)
@@ -320,8 +320,8 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
         {
             return;
         }
-        unsigned int   iSrcStride = getCStride();
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iSrcStride = Cwidth;
+        unsigned int   iDstStride = pcYuvDst->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -337,8 +337,8 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
         {
             return;
         }
-        unsigned int   iSrcStride = getCStride();
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iSrcStride = Cwidth;
+        unsigned int   iDstStride = pcYuvDst->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstV, pSrcV, iWidth * sizeof(short));
@@ -359,8 +359,8 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
             //th best would be to fix the caller
             return;
         }
-        unsigned int   iSrcStride = getCStride();
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iSrcStride = Cwidth;
+        unsigned int   iDstStride = pcYuvDst->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -379,7 +379,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     {
         short*  pSrcU =           getCbAddr(uiPartIdx);
         Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-        unsigned int   iSrcStride = getCStride();
+        unsigned int   iSrcStride = Cwidth;
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
@@ -396,7 +396,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     {
         short*  pSrcV =           getCrAddr(uiPartIdx);
         Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
-        unsigned int   iSrcStride = getCStride();
+        unsigned int   iSrcStride = Cwidth;
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
@@ -416,7 +416,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
         Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
         Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
 
-        unsigned int   iSrcStride = getCStride();
+        unsigned int   iSrcStride = Cwidth;
         unsigned int   iDstStride = pcYuvDst->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {

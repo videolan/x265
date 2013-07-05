@@ -35,15 +35,6 @@ class TShortYUV
 {
 private:
 
-    short* YBuf;
-    short* CbBuf;
-    short* CrBuf;
-
-    unsigned int width;
-    unsigned int height;
-    unsigned int Cwidth;
-    unsigned int Cheight;
-
     static int getAddrOffset(unsigned int uiPartUnitIdx, unsigned int width)
     {
         int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
@@ -61,6 +52,15 @@ private:
     }
 
 public:
+
+    short* YBuf;
+    short* CbBuf;
+    short* CrBuf;
+
+    unsigned int width;
+    unsigned int height;
+    unsigned int Cwidth;
+    unsigned int Cheight;
 
     TShortYUV();
     virtual ~TShortYUV();
@@ -106,18 +106,6 @@ public:
     void    copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
     void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
     void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
-
-    unsigned int    getHeight()   { return height; }
-
-    unsigned int    getWidth()    { return width; }
-
-    unsigned int    getCHeight()  { return Cheight; }
-
-    unsigned int    getCWidth()   { return Cwidth; }
-
-    unsigned int    getStride()    { return width; }
-
-    unsigned int    getCStride()    { return Cwidth; }
 };
 
 #endif //end __TSHORTYUV__
