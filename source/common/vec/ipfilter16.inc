@@ -47,7 +47,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << bitDepth) - 1;
 
-    __declspec(align(16)) int cm[8][4];
+    ALIGN_VAR_16(int, cm[8][4]);
     for (int i = 0; i < N; i++)
     {
         cm[i][0] = coeff[i];
@@ -243,7 +243,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
     offset = 1 << (shift - 1);
     maxVal = (1 << bitDepth) - 1;
 
-    __declspec(align(16)) int cm[8][4];
+    ALIGN_VAR_16(int, cm[8][4]);
     for (int i = 0; i < N; i++)
     {
         cm[i][0] = coeff[i];
