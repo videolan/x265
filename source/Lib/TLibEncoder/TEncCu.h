@@ -73,7 +73,7 @@ private:
     TComDataCU**            m_InterCU_Nx2N;
     TComDataCU**            m_IntrainInterCU;
     TComDataCU**            m_MergeCU;
-    TComDataCU**            m_MergeBestCU; 
+    TComDataCU**            m_MergeBestCU;
     TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
     TComDataCU**            m_ppcTempCU;    ///< Temporary CUs in each depth
     UChar                   m_uhTotalDepth;
@@ -111,11 +111,17 @@ private:
     Bool                    m_abortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
 
 public:
+
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+
     Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
+
     Void set_pcPredSearch(TEncSearch* pcPredSearch) { m_pcPredSearch = pcPredSearch; }
+
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
+
     Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
+
     Void set_pcRdCost(TComRdCost* pcRdCost) { m_pcRdCost = pcRdCost; }
 
     /// copy parameters from encoder class
@@ -147,12 +153,13 @@ protected:
 
     Int   xComputeQP(TComDataCU* pcCU, UInt uiDepth);
     Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt uiDepth);
-    
+
     Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode);
-    Void  xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
-    Void  xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize,UInt index);
+    Void xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
+    Void  xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize);
     Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
     Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
+    Void  xEncodeIntrainInter(TComDataCU*& pcCU, TComYuv* pcYuvOrg, TComYuv* pcYuvPred, TShortYUV*& rpcYuvResi, TComYuv*& rpcYuvRec);
     Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
     Void  xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize);
     Void  xCheckDQP(TComDataCU* pcCU);

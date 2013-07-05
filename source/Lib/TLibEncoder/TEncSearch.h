@@ -65,7 +65,7 @@ class TEncCu;
 /// encoder search class
 class TEncSearch : public TComPrediction
 {
-private:
+public:
 
     x265::MotionEstimate m_me;
     x265::BitCost        m_bc; // TODO: m_bc will go away with HM ME
@@ -117,8 +117,7 @@ protected:
     x265::MV        m_acMvPredictors[3];
 
     // RD computation
-    TEncSbac***     m_pppcRDSbacCoder;
-    TEncSbac*       m_pcRDGoOnSbacCoder;
+
     DistParam       m_cDistParam;
 
     // Misc.
@@ -129,6 +128,9 @@ protected:
     UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1]; //th array bounds
 
 public:
+
+    TEncSbac***     m_pppcRDSbacCoder;
+    TEncSbac*       m_pcRDGoOnSbacCoder;
 
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
 
@@ -142,6 +144,8 @@ public:
     virtual ~TEncSearch();
 
     Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant *pcTrQuant);
+    UInt  xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
+    UInt  xUpdateCandList(UInt uiMode, UInt64 uiCost, UInt uiFastCandNum, UInt * CandModeList, UInt64 * CandCostList);
 
 protected:
 
@@ -215,6 +219,23 @@ public:
     Void IPCMSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv);
 
     UInt estimateHeaderBits(TComDataCU* pcCU, UInt uiAbsPartIdx);
+    Void  xRecurIntraCodingQT(TComDataCU * pcCU,
+                              UInt         uiTrDepth,
+                              UInt         uiAbsPartIdx,
+                              Bool         bLumaOnly,
+                              TComYuv *    pcOrgYuv,
+                              TComYuv *    pcPredYuv,
+                              TShortYUV *  pcResiYuv,
+                              UInt &       ruiDistY,
+                              UInt &       ruiDistC,
+                              Bool         bCheckFirst,
+                              UInt64 &     dRDCost);
+
+    Void  xSetIntraResultQT(TComDataCU* pcCU,
+                            UInt        uiTrDepth,
+                            UInt        uiAbsPartIdx,
+                            Bool        bLumaOnly,
+                            TComYuv*    pcRecoYuv);
 
 protected:
 
@@ -267,24 +288,6 @@ protected:
                                 UInt&       ruiDist,
                                 UInt        uiChromaId,
                                 Int         default0Save1Load2 = 0);
-
-    Void  xRecurIntraCodingQT(TComDataCU * pcCU,
-                              UInt         uiTrDepth,
-                              UInt         uiAbsPartIdx,
-                              Bool         bLumaOnly,
-                              TComYuv *    pcOrgYuv,
-                              TComYuv *    pcPredYuv,
-                              TShortYUV *  pcResiYuv,
-                              UInt &       ruiDistY,
-                              UInt &       ruiDistC,
-                              Bool         bCheckFirst,
-                              UInt64 &     dRDCost);
-
-    Void  xSetIntraResultQT(TComDataCU* pcCU,
-                            UInt        uiTrDepth,
-                            UInt        uiAbsPartIdx,
-                            Bool        bLumaOnly,
-                            TComYuv*    pcRecoYuv);
 
     Void  xRecurIntraChromaCodingQT(TComDataCU* pcCU,
                                     UInt        uiTrDepth,
@@ -408,17 +411,17 @@ protected:
                         x265::MV&    rcMv,
                         UInt&        ruiSAD);
 
-    Void xPatternSearchFracDIF(TComDataCU* pcCU,
+    Void xPatternSearchFracDIF(TComDataCU*  pcCU,
                                TComPattern* pcPatternKey,
-                               Pel* piRefY,
-                               Int iRefStride,
-                               x265::MV* pcMvInt,
-                               x265::MV& rcMvHalf,
-                               x265::MV& rcMvQter,
-                               UInt& ruiCost,
-                               Bool biPred,
-                               TComPicYuv* refPic,
-                               UInt uiPartAddr);
+                               Pel*         piRefY,
+                               Int          iRefStride,
+                               x265::MV*    pcMvInt,
+                               x265::MV&    rcMvHalf,
+                               x265::MV&    rcMvQter,
+                               UInt&        ruiCost,
+                               Bool         biPred,
+                               TComPicYuv*  refPic,
+                               UInt         uiPartAddr);
 
     Void xExtDIFUpSamplingH(TComPattern* pcPattern, Bool biPred);
     Void xExtDIFUpSamplingQ(TComPattern* pcPatternKey, x265::MV halfPelRef, Bool biPred);
@@ -430,9 +433,6 @@ protected:
     Void xEncodeResidualQT(TComDataCU* pcCU, UInt uiAbsPartIdx, const UInt uiDepth, Bool bSubdivAndCbf, TextType eType);
     Void xEstimateResidualQT(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TShortYUV* pcResi, const UInt uiDepth, UInt64 &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist);
     Void xSetResidualQTData(TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx, TShortYUV* pcResi, UInt uiDepth, Bool bSpatial);
-
-    UInt  xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
-    UInt  xUpdateCandList(UInt uiMode, UInt64 uiCost, UInt uiFastCandNum, UInt * CandModeList, UInt64 * CandCostList);
 
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits

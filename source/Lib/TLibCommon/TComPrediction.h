@@ -65,7 +65,7 @@ protected:
     Int       m_iPredBufHeight;
 
     //reference sample for IntraPrediction
-    Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
+   
 
     TComYuv   m_acYuvPred[2];
     TShortYUV   m_acShortPred[2];
@@ -95,6 +95,7 @@ protected:
     Bool xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr);
 
 public:
+     Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
 
     TComPrediction();
     virtual ~TComPrediction();
