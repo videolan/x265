@@ -591,31 +591,31 @@ void xIDST4_C(int *src, short *dst, intptr_t stride)
     }
 }
 
-void xIDCT4_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT4_C(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, tmp[4 * 4]);
-    ALIGN_VAR_32(Short, tmp2[4 * 4]);
+    ALIGN_VAR_32(Short, coef[4 * 4]);
+    ALIGN_VAR_32(Short, coef2[4 * 4]);
 
 #define N (4)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            tmp2[i * N + j] = (short)pSrc[i * N + j];
+            coef2[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    partialButterflyInverse4(tmp2, tmp, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, tmp output
-    partialButterflyInverse4(tmp, tmp2, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, tmp input, coeff output
+    partialButterflyInverse4(coef2, coef, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, coef output
+    partialButterflyInverse4(coef, coef2, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, coef input, coeff output
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&pDst[i * stride], &tmp2[i * 4], 4 * sizeof(short));
+        memcpy(&dst[i * stride], &coef2[i * 4], 4 * sizeof(short));
     }
 }
 
