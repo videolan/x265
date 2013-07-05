@@ -354,23 +354,23 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i g_aiT8_zero_row(64, 64, 0, 0);
-    Vec4i g_aiT8_four_row(64, -64, 0, 0);
-    Vec4i g_aiT8_two_row(83, 36, 0, 0);
-    Vec4i g_aiT8_six_row(36, -83, 0, 0);
+    Vec4i gaiTRow0(64, 64, 0, 0);
+    Vec4i gaiTRow4(64, -64, 0, 0);
+    Vec4i gaiTRow2(83, 36, 0, 0);
+    Vec4i gaiTRow6(36, -83, 0, 0);
 
-    Vec4i g_aiT8_one_row(89, 75, 50, 18);
-    Vec4i g_aiT8_three_row(75, -18, -89, -50);
-    Vec4i g_aiT8_five_row(50, -89, 18, 75);
-    Vec4i g_aiT8_seven_row(18, -50, 75, -89);
+    Vec4i gaiTRow1(89, 75, 50, 18);
+    Vec4i gaiTRow3(75, -18, -89, -50);
+    Vec4i gaiTRow5(50, -89, 18, 75);
+    Vec4i gaiTRow7(18, -50, 75, -89);
 
     for (j = 0; j < line; j++)
     {
-        Vec8s tmp;
-        tmp.load(src);
+        Vec8s srcTmp;
+        srcTmp.load(src);
 
-        Vec4i E_first_half = extend_low(tmp);
-        Vec4i E_second_half = extend_high(tmp);
+        Vec4i E_first_half = extend_low(srcTmp);
+        Vec4i E_second_half = extend_high(srcTmp);
         E_second_half = permute4i<3, 2, 1, 0>(E_second_half);
 
         Vec4i E = E_first_half + E_second_half;
@@ -381,20 +381,20 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
         Vec4i EE = EE_first_half + EE_second_half;
         Vec4i EO = EE_first_half - EE_second_half;
 
-        int dst0 = ((horizontal_add(g_aiT8_zero_row * EE)) + add) >> shift;
-        int dst4 = ((horizontal_add(g_aiT8_four_row * EE)) + add) >> shift;
-        int dst2 = ((horizontal_add(g_aiT8_two_row * EO)) + add) >> shift;
-        int dst6 = ((horizontal_add(g_aiT8_six_row * EO)) + add) >> shift;
+        int dst0 = ((horizontal_add(gaiTRow0 * EE)) + add) >> shift;
+        int dst4 = ((horizontal_add(gaiTRow4 * EE)) + add) >> shift;
+        int dst2 = ((horizontal_add(gaiTRow2 * EO)) + add) >> shift;
+        int dst6 = ((horizontal_add(gaiTRow6 * EO)) + add) >> shift;
 
         dst[0] = dst0;
         dst[4 * line] = dst4;
         dst[2 * line] = dst2;
         dst[6 * line] = dst6;
 
-        int dst1 = ((horizontal_add(g_aiT8_one_row * O)) + add) >> shift;
-        int dst3 = ((horizontal_add(g_aiT8_three_row * O)) + add) >> shift;
-        int dst5 = ((horizontal_add(g_aiT8_five_row * O)) + add) >> shift;
-        int dst7 = ((horizontal_add(g_aiT8_seven_row * O)) + add) >> shift;
+        int dst1 = ((horizontal_add(gaiTRow1 * O)) + add) >> shift;
+        int dst3 = ((horizontal_add(gaiTRow3 * O)) + add) >> shift;
+        int dst5 = ((horizontal_add(gaiTRow5 * O)) + add) >> shift;
+        int dst7 = ((horizontal_add(gaiTRow7 * O)) + add) >> shift;
 
         dst[line] = dst1;
         dst[3 * line] = dst3;
