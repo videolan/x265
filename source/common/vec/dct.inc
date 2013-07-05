@@ -2689,7 +2689,7 @@ void xIDCT8(int *src, short *dst, intptr_t stride)
     _mm_storeh_pi((__m64*)&dst[7 * stride +  4], _mm_castsi128_ps(T11));
 }
 
-void xIDCT16(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT16(int *src, short *dst, intptr_t stride)
 {
     const __m128i c16_p87_p90   = _mm_set1_epi32(0x0057005A); //row0 87high - 90low address
     const __m128i c16_p70_p80   = _mm_set1_epi32(0x00460050);
@@ -2753,72 +2753,72 @@ void xIDCT16(int *pSrc, short *pDst, intptr_t stride)
         const int offset = (i << 3);
         __m128i T00, T01;
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[0 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[0 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset + 4]);
         in00[i]  = _mm_packs_epi32(T00, T01);                       // [07 06 05 04 03 02 01 00]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[1 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[1 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset + 4]);
         in01[i]  = _mm_packs_epi32(T00, T01);                           // [17 16 15 14 13 12 11 10]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[2 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[2 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset + 4]);
         in02[i]  = _mm_packs_epi32(T00, T01);                       // [27 26 25 24 23 22 21 20]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[3 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[3 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset + 4]);
         in03[i]  = _mm_packs_epi32(T00, T01);                       // [37 36 35 34 33 32 31 30]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[4 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[4 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset + 4]);
         in04[i]  = _mm_packs_epi32(T00, T01);                       // [47 46 45 44 43 42 41 40]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[5 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[5 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset + 4]);
         in05[i]  = _mm_packs_epi32(T00, T01);                       // [57 56 55 54 53 52 51 50]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[6 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[6 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset + 4]);
         in06[i]  = _mm_packs_epi32(T00, T01);                       // [67 66 65 64 63 62 61 60]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[7 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[7 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset + 4]);
         in07[i]  = _mm_packs_epi32(T00, T01);                       // [77 76 75 74 73 72 71 70]
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[8 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[8 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset + 4]);
         in08[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[9 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[9 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset + 4]);
         in09[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[10 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[10 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset + 4]);
         in10[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[11 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[11 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset + 4]);
         in11[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[12 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[12 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset + 4]);
         in12[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[13 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[13 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset + 4]);
         in13[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[14 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[14 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset + 4]);
         in14[i]  = _mm_packs_epi32(T00, T01);
 
-        T00 = _mm_loadu_si128((const __m128i*)&pSrc[15 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&pSrc[15 * 16 + offset + 4]);
+        T00 = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset]);
+        T01 = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset + 4]);
         in15[i]  = _mm_packs_epi32(T00, T01);
     }
 
-    for (Int pass = 0; pass < 2; pass++)
+    for (int pass = 0; pass < 2; pass++)
     {
         if (pass == 1)
         {
@@ -2826,7 +2826,7 @@ void xIDCT16(int *pSrc, short *pDst, intptr_t stride)
             nShift  = 12;
         }
 
-        for (Int part = 0; part < 2; part++)
+        for (int part = 0; part < 2; part++)
         {
             const __m128i T_00_00A = _mm_unpacklo_epi16(in01[part], in03[part]);       // [33 13 32 12 31 11 30 10]
             const __m128i T_00_00B = _mm_unpackhi_epi16(in01[part], in03[part]);       // [37 17 36 16 35 15 34 14]
@@ -3066,38 +3066,38 @@ void xIDCT16(int *pSrc, short *pDst, intptr_t stride)
         }
     }
 
-    _mm_store_si128((__m128i*)&pDst[0 * stride + 0], in00[0]);
-    _mm_store_si128((__m128i*)&pDst[0 * stride + 8], in00[1]);
-    _mm_store_si128((__m128i*)&pDst[1 * stride + 0], in01[0]);
-    _mm_store_si128((__m128i*)&pDst[1 * stride + 8], in01[1]);
-    _mm_store_si128((__m128i*)&pDst[2 * stride + 0], in02[0]);
-    _mm_store_si128((__m128i*)&pDst[2 * stride + 8], in02[1]);
-    _mm_store_si128((__m128i*)&pDst[3 * stride + 0], in03[0]);
-    _mm_store_si128((__m128i*)&pDst[3 * stride + 8], in03[1]);
-    _mm_store_si128((__m128i*)&pDst[4 * stride + 0], in04[0]);
-    _mm_store_si128((__m128i*)&pDst[4 * stride + 8], in04[1]);
-    _mm_store_si128((__m128i*)&pDst[5 * stride + 0], in05[0]);
-    _mm_store_si128((__m128i*)&pDst[5 * stride + 8], in05[1]);
-    _mm_store_si128((__m128i*)&pDst[6 * stride + 0], in06[0]);
-    _mm_store_si128((__m128i*)&pDst[6 * stride + 8], in06[1]);
-    _mm_store_si128((__m128i*)&pDst[7 * stride + 0], in07[0]);
-    _mm_store_si128((__m128i*)&pDst[7 * stride + 8], in07[1]);
-    _mm_store_si128((__m128i*)&pDst[8 * stride + 0], in08[0]);
-    _mm_store_si128((__m128i*)&pDst[8 * stride + 8], in08[1]);
-    _mm_store_si128((__m128i*)&pDst[9 * stride + 0], in09[0]);
-    _mm_store_si128((__m128i*)&pDst[9 * stride + 8], in09[1]);
-    _mm_store_si128((__m128i*)&pDst[10 * stride + 0], in10[0]);
-    _mm_store_si128((__m128i*)&pDst[10 * stride + 8], in10[1]);
-    _mm_store_si128((__m128i*)&pDst[11 * stride + 0], in11[0]);
-    _mm_store_si128((__m128i*)&pDst[11 * stride + 8], in11[1]);
-    _mm_store_si128((__m128i*)&pDst[12 * stride + 0], in12[0]);
-    _mm_store_si128((__m128i*)&pDst[12 * stride + 8], in12[1]);
-    _mm_store_si128((__m128i*)&pDst[13 * stride + 0], in13[0]);
-    _mm_store_si128((__m128i*)&pDst[13 * stride + 8], in13[1]);
-    _mm_store_si128((__m128i*)&pDst[14 * stride + 0], in14[0]);
-    _mm_store_si128((__m128i*)&pDst[14 * stride + 8], in14[1]);
-    _mm_store_si128((__m128i*)&pDst[15 * stride + 0], in15[0]);
-    _mm_store_si128((__m128i*)&pDst[15 * stride + 8], in15[1]);
+    _mm_store_si128((__m128i*)&dst[0 * stride + 0], in00[0]);
+    _mm_store_si128((__m128i*)&dst[0 * stride + 8], in00[1]);
+    _mm_store_si128((__m128i*)&dst[1 * stride + 0], in01[0]);
+    _mm_store_si128((__m128i*)&dst[1 * stride + 8], in01[1]);
+    _mm_store_si128((__m128i*)&dst[2 * stride + 0], in02[0]);
+    _mm_store_si128((__m128i*)&dst[2 * stride + 8], in02[1]);
+    _mm_store_si128((__m128i*)&dst[3 * stride + 0], in03[0]);
+    _mm_store_si128((__m128i*)&dst[3 * stride + 8], in03[1]);
+    _mm_store_si128((__m128i*)&dst[4 * stride + 0], in04[0]);
+    _mm_store_si128((__m128i*)&dst[4 * stride + 8], in04[1]);
+    _mm_store_si128((__m128i*)&dst[5 * stride + 0], in05[0]);
+    _mm_store_si128((__m128i*)&dst[5 * stride + 8], in05[1]);
+    _mm_store_si128((__m128i*)&dst[6 * stride + 0], in06[0]);
+    _mm_store_si128((__m128i*)&dst[6 * stride + 8], in06[1]);
+    _mm_store_si128((__m128i*)&dst[7 * stride + 0], in07[0]);
+    _mm_store_si128((__m128i*)&dst[7 * stride + 8], in07[1]);
+    _mm_store_si128((__m128i*)&dst[8 * stride + 0], in08[0]);
+    _mm_store_si128((__m128i*)&dst[8 * stride + 8], in08[1]);
+    _mm_store_si128((__m128i*)&dst[9 * stride + 0], in09[0]);
+    _mm_store_si128((__m128i*)&dst[9 * stride + 8], in09[1]);
+    _mm_store_si128((__m128i*)&dst[10 * stride + 0], in10[0]);
+    _mm_store_si128((__m128i*)&dst[10 * stride + 8], in10[1]);
+    _mm_store_si128((__m128i*)&dst[11 * stride + 0], in11[0]);
+    _mm_store_si128((__m128i*)&dst[11 * stride + 8], in11[1]);
+    _mm_store_si128((__m128i*)&dst[12 * stride + 0], in12[0]);
+    _mm_store_si128((__m128i*)&dst[12 * stride + 8], in12[1]);
+    _mm_store_si128((__m128i*)&dst[13 * stride + 0], in13[0]);
+    _mm_store_si128((__m128i*)&dst[13 * stride + 8], in13[1]);
+    _mm_store_si128((__m128i*)&dst[14 * stride + 0], in14[0]);
+    _mm_store_si128((__m128i*)&dst[14 * stride + 8], in14[1]);
+    _mm_store_si128((__m128i*)&dst[15 * stride + 0], in15[0]);
+    _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
 }
 
 void xIDCT32(int *pSrc, short *pDst, intptr_t stride)
