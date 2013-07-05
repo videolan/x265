@@ -646,30 +646,30 @@ void xIDCT8_C(int *src, short *dst, intptr_t stride)
     }
 }
 
-void xIDCT16_C(int *pSrc, short *pDst, intptr_t stride)
+void xIDCT16_C(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
-    ALIGN_VAR_32(Short, tmp[16 * 16]);
-    ALIGN_VAR_32(Short, tmp2[16 * 16]);
+    ALIGN_VAR_32(Short, coef[16 * 16]);
+    ALIGN_VAR_32(Short, coef2[16 * 16]);
 
 #define N (16)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            tmp2[i * N + j] = (short)pSrc[i * N + j];
+            coef2[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    partialButterflyInverse16(tmp2, tmp, shift_1st, 16);
-    partialButterflyInverse16(tmp, tmp2, shift_2nd, 16);
+    partialButterflyInverse16(coef2, coef, shift_1st, 16);
+    partialButterflyInverse16(coef, coef2, shift_2nd, 16);
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&pDst[i * stride], &tmp2[i * 16], 16 * sizeof(short));
+        memcpy(&dst[i * stride], &coef2[i * 16], 16 * sizeof(short));
     }
 }
 
