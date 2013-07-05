@@ -479,28 +479,28 @@ void xDCT4_C(short *src, int *dst, intptr_t nStride)
 #undef N
 }
 
-void xDCT8_C(short *pSrc, int *pDst, intptr_t nStride)
+void xDCT8_C(short *src, int *dst, intptr_t nStride)
 {
     const int shift_1st = 2;
     const int shift_2nd = 9;
 
-    ALIGN_VAR_32(Short, tmp[8 * 8]);
-    ALIGN_VAR_32(Short, tmp1[8 * 8]);
+    ALIGN_VAR_32(Short, coef[8 * 8]);
+    ALIGN_VAR_32(Short, block[8 * 8]);
 
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&tmp1[i * 8], &pSrc[i * nStride], 8 * sizeof(short));
+        memcpy(&block[i * 8], &src[i * nStride], 8 * sizeof(short));
     }
 
-    partialButterfly8(tmp1, tmp, shift_1st, 8);
-    partialButterfly8(tmp, tmp1, shift_2nd, 8);
+    partialButterfly8(block, coef, shift_1st, 8);
+    partialButterfly8(coef, block, shift_2nd, 8);
 
 #define N (8)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            pDst[i * N + j] = tmp1[i * N + j];
+            dst[i * N + j] = block[i * N + j];
         }
     }
 
