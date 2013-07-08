@@ -103,15 +103,21 @@ void MotionReference::generateReferencePlanes()
 
         /* This one function call generates the four intermediate (short) planes for each
          * QPEL offset in the horizontal direction.  At the same time it outputs the three
-         * Y=0 output (pixel) planes since they require no vertical interpolation */
-        primitives.filterHmulti(g_bitDepthY, srcPtr, m_lumaStride,                                     // source buffer
-                                intPtrF, intPtrA, intPtrB, intPtrC, m_intStride,                       // 4 intermediate HPEL buffers
-                                m_lumaPlane[1][0] + bufOffset, m_lumaPlane[2][0] + bufOffset, m_lumaPlane[3][0] + bufOffset, m_lumaStride, // 3 (x=n, y=0) output buffers (no V interp)
-                                m_filterWidth + (2 * s_intMarginX), m_filterHeight + (2 * s_intMarginY),  m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
+         * Y=0 output (padded pixel) planes since they require no vertical interpolation */
+        primitives.filterHmulti(g_bitDepthY, srcPtr, m_lumaStride,               // source buffer
+                                intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
+                                m_lumaPlane[1][0] + bufOffset,
+                                m_lumaPlane[2][0] + bufOffset,
+                                m_lumaPlane[3][0] + bufOffset, m_lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
+                                m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
+                                m_filterHeight + (2 * s_intMarginY),
+                                m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
+                                m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
     }
 
     if (!m_pool)
     {
+        /* serial path for when no thread pool is present */
         for (int i = 0; i < 4; i++)
             generateReferencePlane(i);
     }
@@ -134,11 +140,11 @@ void MotionReference::generateReferencePlanes()
 
 bool MotionReference::FindJob()
 {
-    // Called by thread pool worker threads
+    /* Called by thread pool worker threads */
 
     if (m_workerCount < 4)
     {
-        /* First four threads calculate 4 intermediate buffers */
+        /* First four threads perform multi-vertical interpolations of intermediate buffers */
         int idx = ATOMIC_INC(&m_workerCount) - 1;
         if (idx < 4)
         {
@@ -159,6 +165,7 @@ void MotionReference::generateReferencePlane(int x)
     short* filteredBlockTmp = m_intermediateValues + x * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
     short* intPtr = filteredBlockTmp + s_intMarginY * m_intStride + s_intMarginX;
 
+    /* the Y=0 plane was generated during horizontal interpolation */
     pixel *dstPtr1 = m_lumaPlane[x][1] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
