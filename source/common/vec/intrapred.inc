@@ -490,7 +490,7 @@ void predIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride,
     Vec8us dcValN(dcVal);
     int k;
 
-    pixel *pDst1 = dst;
+    pixel *dst1 = dst;
     switch (width)
     {
     case 4:
