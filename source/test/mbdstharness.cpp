@@ -361,7 +361,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.dequant)
     {
-        if (!check_xdequant_primitive(ref.deQuant, opt.dequant))
+        if (!check_xdequant_primitive(ref.dequant, opt.dequant))
         {
             printf("XDeQuant: Failed!\n");
             return false;
