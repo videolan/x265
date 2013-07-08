@@ -89,7 +89,7 @@ public:
 
     void encode(TComPic *pic, TComSlice* pcSlice);
 
-    void processRow(int irow);
+    void processRow(int row);
 
     /* Config broadcast methods */
     void setAdaptiveSearchRange(int iDir, int iRefIdx, int iNewSR)

@@ -198,7 +198,7 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
 
     // reset entropy coders
     m_cSbacCoder.init(&m_cBinCoderCABAC);
-    for (int i = 0; i < this->m_nrows; i++)
+    for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init();
         m_rows[i].m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
@@ -208,7 +208,7 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
 
     if (!m_pool || !m_enableWpp)
     {
-        for (int i = 0; i < this->m_nrows; i++)
+        for (int i = 0; i < this->m_numRows; i++)
             processRow(i);
     }
     else
@@ -223,16 +223,16 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
     }
 }
 
-void FrameEncoder::processRow(int irow)
+void FrameEncoder::processRow(int row)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
     // Called by worker threads
-    CTURow& curRow  = m_rows[irow];
-    CTURow& codeRow = m_rows[m_enableWpp ? irow : 0];
+    CTURow& curRow  = m_rows[row];
+    CTURow& codeRow = m_rows[m_enableWpp ? row : 0];
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
-    const uint32_t lineStartCUAddr = irow * numCols;
+    const uint32_t lineStartCUAddr = row * numCols;
     for (UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
     {
         const uint32_t uiCUAddr = lineStartCUAddr + uiCol;
@@ -242,7 +242,7 @@ void FrameEncoder::processRow(int irow)
         codeRow.m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
         codeRow.m_cEntropyCoder.resetEntropy();
 
-        TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && irow > 0) ? &m_rows[irow - 1].m_cBufferSbacCoder : NULL;
+        TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && row > 0) ? &m_rows[row - 1].m_cBufferSbacCoder : NULL;
         codeRow.processCU(pcCU, m_pcSlice, pcBufSBac, m_enableWpp && uiCol == 1);
 
         // TODO: Keep atomic running totals for rate control?
@@ -253,19 +253,19 @@ void FrameEncoder::processRow(int irow)
         // Completed CU processing
         curRow.m_curCol++;
 
-        if (curRow.m_curCol >= 2 && irow < m_numRows - 1)
+        if (curRow.m_curCol >= 2 && row < m_numRows - 1)
         {
-            ScopedLock below(m_rows[irow + 1].m_lock);
-            if (m_rows[irow + 1].m_active == false &&
-                m_rows[irow + 1].m_curCol + 2 <= curRow.m_curCol)
+            ScopedLock below(m_rows[row + 1].m_lock);
+            if (m_rows[row + 1].m_active == false &&
+                m_rows[row + 1].m_curCol + 2 <= curRow.m_curCol)
             {
-                m_rows[irow + 1].m_active = true;
-                WaveFront::enqueueRow(irow + 1);
+                m_rows[row + 1].m_active = true;
+                WaveFront::enqueueRow(row + 1);
             }
         }
 
         ScopedLock self(curRow.m_lock);
-        if (irow > 0 && curRow.m_curCol < numCols - 1 && m_rows[irow - 1].m_curCol < curRow.m_curCol + 2)
+        if (row > 0 && curRow.m_curCol < numCols - 1 && m_rows[row - 1].m_curCol < curRow.m_curCol + 2)
         {
             curRow.m_active = false;
             return;
@@ -273,7 +273,7 @@ void FrameEncoder::processRow(int irow)
     }
 
     // this row of CTUs has been encoded
-    if (irow == m_numRows - 1)
+    if (row == m_numRows - 1)
     {
         m_completionEvent.Trigger();
     }
