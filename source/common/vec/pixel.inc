@@ -31,9 +31,9 @@
 #include "utils.h"
 
 namespace {
-/* File for pixels type-neutral code */
+/* File for pixels type-explicit functions */
 
-void convert16to32(short *Org, int *Dst, int num)
+void convert16to32(short *org, int *dst, int num)
 {
     int i;
 
@@ -42,18 +42,18 @@ void convert16to32(short *Org, int *Dst, int num)
         Vec8s im16;
         Vec4i im32L, im32H;
 
-        im16.load(Org);
+        im16.load(org);
         im32L = extend_low(im16);
         im32H = extend_high(im16);
-        im32L.store(Dst);
-        im32H.store(Dst + 4);
+        im32L.store(dst);
+        im32H.store(dst + 4);
 
-        Org += 8;
-        Dst += 8;
+        org += 8;
+        dst += 8;
     }
 }
 
-void convert16to32_shl(int *Dst, short *Org, intptr_t Stride, int shift, int size)
+void convert16to32_shl(int *dst, short *org, intptr_t stride, int shift, int size)
 {
     int i, j;
 
@@ -64,17 +64,17 @@ void convert16to32_shl(int *Dst, short *Org, intptr_t Stride, int shift, int siz
             __m128i im16;
             __m128i im32;
 
-            im16 = _mm_loadl_epi64((__m128i*)&Org[i*Stride+j]);
+            im16 = _mm_loadl_epi64((__m128i*)&org[i*stride+j]);
             im32 = _mm_srai_epi32(_mm_unpacklo_epi16(im16, im16), 16);
             im32 = _mm_slli_epi32(im32, shift);
-            _mm_storeu_si128((__m128i*)Dst, im32);
+            _mm_storeu_si128((__m128i*)dst, im32);
 
-            Dst += 4;
+            dst += 4;
         }
     }
 }
 
-void convert16to16_shl(short *Dst, short *Org, int width, int height, intptr_t stride, int shift)
+void convert16to16_shl(short *dst, short *org, int width, int height, intptr_t stride, int shift)
 {
     int i, j;
 
@@ -84,11 +84,11 @@ void convert16to16_shl(short *Dst, short *Org, int width, int height, intptr_t s
         {
             __m128i T00, T01;
 
-            T00 = _mm_loadl_epi64((__m128i*)&Org[(i  )*stride]);
-            T01 = _mm_loadl_epi64((__m128i*)&Org[(i+1)*stride]);
+            T00 = _mm_loadl_epi64((__m128i*)&org[(i  )*stride]);
+            T01 = _mm_loadl_epi64((__m128i*)&org[(i+1)*stride]);
             T00 = _mm_unpacklo_epi64(T00, T01);
             T00 = _mm_slli_epi16(T00, shift);
-            _mm_storeu_si128((__m128i*)&Dst[i*4], T00);
+            _mm_storeu_si128((__m128i*)&dst[i*4], T00);
         }
     }
     else
@@ -99,15 +99,15 @@ void convert16to16_shl(short *Dst, short *Org, int width, int height, intptr_t s
             {
                 __m128i T00;
 
-                T00 = _mm_loadu_si128((__m128i*)&Org[i*stride+j]);
+                T00 = _mm_loadu_si128((__m128i*)&org[i*stride+j]);
                 T00 = _mm_slli_epi16(T00, shift);
-                _mm_storeu_si128((__m128i*)&Dst[i*width+j], T00);
+                _mm_storeu_si128((__m128i*)&dst[i*width+j], T00);
             }
         }
     }
 }
 
-void convert32to16(int *Org, short *Dst, int num)
+void convert32to16(int *org, short *dst, int num)
 {
     int i;
 
@@ -116,17 +116,17 @@ void convert32to16(int *Org, short *Dst, int num)
         Vec4i im32L, im32H;
         Vec8s im16;
 
-        im32L.load(Org);
-        im32H.load(Org + 4);
+        im32L.load(org);
+        im32H.load(org + 4);
         im16 = compress_saturated(im32L, im32H);
-        im16.store(Dst);
+        im16.store(dst);
 
-        Org += 8;
-        Dst += 8;
+        org += 8;
+        dst += 8;
     }
 }
 
-void convert32to16_shr(short *Dst, int *Org, int shift, int num)
+void convert32to16_shr(short *dst, int *org, int shift, int num)
 {
     int i;
     Vec4i round = _mm_set1_epi32(1 << (shift - 1));
@@ -136,176 +136,173 @@ void convert32to16_shr(short *Dst, int *Org, int shift, int num)
         Vec4i im32;
         Vec8s im16;
 
-        im32.load(Org);
+        im32.load(org);
         im32 = (im32 + round) >> shift;
         im16 = compress_saturated(im32, im32);
-        store_partial(const_int(8), Dst, im16);
+        store_partial(const_int(8), dst, im16);
 
-        Org += 4;
-        Dst += 4;
+        org += 4;
+        dst += 4;
     }
 }
 
 template <int blockSize>
-void transpose(pixel* Dst, pixel* Src, intptr_t Stride)
+void transpose(pixel* dst, pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
     {
         for (int l = 0; l < blockSize; l++)
         {
-            Dst[k * blockSize + l] = Src[l * Stride + k];
+            dst[k * blockSize + l] = src[l * stride + k];
         }
     }
 }
 
 #if !HIGH_BIT_DEPTH
-void transpose4(pixel* Dst, pixel* Src, intptr_t Stride)
+void transpose4(pixel* dst, pixel* src, intptr_t stride)
 {
     __m128i T00, T01, T02, T03;
 
-    T00 = _mm_cvtsi32_si128(*(int*)&Src[0*Stride]);   // [03 02 01 00]
-    T01 = _mm_cvtsi32_si128(*(int*)&Src[1*Stride]);   // [13 12 11 10]
-    T02 = _mm_cvtsi32_si128(*(int*)&Src[2*Stride]);   // [23 22 21 20]
-    T03 = _mm_cvtsi32_si128(*(int*)&Src[3*Stride]);   // [33 32 31 30]
+    T00 = _mm_cvtsi32_si128(*(int*)&src[0*stride]);   // [03 02 01 00]
+    T01 = _mm_cvtsi32_si128(*(int*)&src[1*stride]);   // [13 12 11 10]
+    T02 = _mm_cvtsi32_si128(*(int*)&src[2*stride]);   // [23 22 21 20]
+    T03 = _mm_cvtsi32_si128(*(int*)&src[3*stride]);   // [33 32 31 30]
 
     T00 = _mm_unpacklo_epi8(T00, T01);
     T01 = _mm_unpacklo_epi8(T02, T03);
 
     T00 = _mm_unpacklo_epi16(T00, T01);
 
-    _mm_store_si128((__m128i*)Dst, T00);
+    _mm_store_si128((__m128i*)dst, T00);
 }
 
-#define TRANSPOSE_8X8(in0, in1, in2, in3, in4, in5, in6, in7, \
-                      out0, out1, out2, out3) \
-  {                                                     \
+#define TRANSPOSE_8X8(in0, in1, in2, in3, in4, in5, in6, in7, out0, out1, out2, out3) \
+{                                                      \
     const __m128i tr0_0 = _mm_unpacklo_epi8(in0, in1); \
     const __m128i tr0_1 = _mm_unpacklo_epi8(in2, in3); \
     const __m128i tr0_2 = _mm_unpacklo_epi8(in4, in5); \
     const __m128i tr0_3 = _mm_unpacklo_epi8(in6, in7); \
-                                                        \
     const __m128i tr1_0 = _mm_unpacklo_epi16(tr0_0, tr0_1); \
     const __m128i tr1_1 = _mm_unpackhi_epi16(tr0_0, tr0_1); \
     const __m128i tr1_2 = _mm_unpacklo_epi16(tr0_2, tr0_3); \
     const __m128i tr1_3 = _mm_unpackhi_epi16(tr0_2, tr0_3); \
-                                                            \
     out0 = _mm_unpacklo_epi32(tr1_0, tr1_2); \
     out1 = _mm_unpackhi_epi32(tr1_0, tr1_2); \
     out2 = _mm_unpacklo_epi32(tr1_1, tr1_3); \
     out3 = _mm_unpackhi_epi32(tr1_1, tr1_3); \
 }
 
-void transpose8(pixel* Dst, pixel* Src, intptr_t Stride)
+void transpose8(pixel* dst, pixel* src, intptr_t stride)
 {
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
-    T00 = _mm_loadl_epi64((__m128i*)&Src[0*Stride]);   // [07 06 05 04 03 02 01 00]
-    T01 = _mm_loadl_epi64((__m128i*)&Src[1*Stride]);   // [17 16 15 14 13 12 11 10]
-    T02 = _mm_loadl_epi64((__m128i*)&Src[2*Stride]);   // [27 26 25 24 23 22 21 20]
-    T03 = _mm_loadl_epi64((__m128i*)&Src[3*Stride]);   // [37 36 35 34 33 32 31 30]
-    T04 = _mm_loadl_epi64((__m128i*)&Src[4*Stride]);   // [47 46 45 44 43 42 41 40]
-    T05 = _mm_loadl_epi64((__m128i*)&Src[5*Stride]);   // [57 56 55 54 53 52 51 50]
-    T06 = _mm_loadl_epi64((__m128i*)&Src[6*Stride]);   // [67 66 65 64 63 62 61 60]
-    T07 = _mm_loadl_epi64((__m128i*)&Src[7*Stride]);   // [77 76 75 74 73 72 71 70]
+    T00 = _mm_loadl_epi64((__m128i*)&src[0*stride]);   // [07 06 05 04 03 02 01 00]
+    T01 = _mm_loadl_epi64((__m128i*)&src[1*stride]);   // [17 16 15 14 13 12 11 10]
+    T02 = _mm_loadl_epi64((__m128i*)&src[2*stride]);   // [27 26 25 24 23 22 21 20]
+    T03 = _mm_loadl_epi64((__m128i*)&src[3*stride]);   // [37 36 35 34 33 32 31 30]
+    T04 = _mm_loadl_epi64((__m128i*)&src[4*stride]);   // [47 46 45 44 43 42 41 40]
+    T05 = _mm_loadl_epi64((__m128i*)&src[5*stride]);   // [57 56 55 54 53 52 51 50]
+    T06 = _mm_loadl_epi64((__m128i*)&src[6*stride]);   // [67 66 65 64 63 62 61 60]
+    T07 = _mm_loadl_epi64((__m128i*)&src[7*stride]);   // [77 76 75 74 73 72 71 70]
 
     TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
 
-    _mm_store_si128((__m128i*)&Dst[0*8], T00);
-    _mm_store_si128((__m128i*)&Dst[2*8], T01);
-    _mm_store_si128((__m128i*)&Dst[4*8], T02);
-    _mm_store_si128((__m128i*)&Dst[6*8], T03);
+    _mm_store_si128((__m128i*)&dst[0*8], T00);
+    _mm_store_si128((__m128i*)&dst[2*8], T01);
+    _mm_store_si128((__m128i*)&dst[4*8], T02);
+    _mm_store_si128((__m128i*)&dst[6*8], T03);
 }
 
-ALWAYSINLINE void transpose16_dummy(pixel* Dst, intptr_t StrideD, pixel* Src, intptr_t StrideS)
+ALWAYSINLINE void transpose16_dummy(pixel* dst, intptr_t dststride, pixel* src, intptr_t srcstride)
 {
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
-    T00 = _mm_loadl_epi64((__m128i*)&Src[ 0 * StrideS]);
-    T01 = _mm_loadl_epi64((__m128i*)&Src[ 1 * StrideS]);
-    T02 = _mm_loadl_epi64((__m128i*)&Src[ 2 * StrideS]);
-    T03 = _mm_loadl_epi64((__m128i*)&Src[ 3 * StrideS]);
-    T04 = _mm_loadl_epi64((__m128i*)&Src[ 4 * StrideS]);
-    T05 = _mm_loadl_epi64((__m128i*)&Src[ 5 * StrideS]);
-    T06 = _mm_loadl_epi64((__m128i*)&Src[ 6 * StrideS]);
-    T07 = _mm_loadl_epi64((__m128i*)&Src[ 7 * StrideS]);
+    T00 = _mm_loadl_epi64((__m128i*)&src[ 0 * srcstride]);
+    T01 = _mm_loadl_epi64((__m128i*)&src[ 1 * srcstride]);
+    T02 = _mm_loadl_epi64((__m128i*)&src[ 2 * srcstride]);
+    T03 = _mm_loadl_epi64((__m128i*)&src[ 3 * srcstride]);
+    T04 = _mm_loadl_epi64((__m128i*)&src[ 4 * srcstride]);
+    T05 = _mm_loadl_epi64((__m128i*)&src[ 5 * srcstride]);
+    T06 = _mm_loadl_epi64((__m128i*)&src[ 6 * srcstride]);
+    T07 = _mm_loadl_epi64((__m128i*)&src[ 7 * srcstride]);
     TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
-    _mm_storel_epi64((__m128i*)&Dst[ 0 * StrideD], T00);
-    _mm_storeh_pi(     (__m64*)&Dst[ 1 * StrideD], _mm_castsi128_ps(T00));
-    _mm_storel_epi64((__m128i*)&Dst[ 2 * StrideD], T01);
-    _mm_storeh_pi(     (__m64*)&Dst[ 3 * StrideD], _mm_castsi128_ps(T01));
-    _mm_storel_epi64((__m128i*)&Dst[ 4 * StrideD], T02);
-    _mm_storeh_pi(     (__m64*)&Dst[ 5 * StrideD], _mm_castsi128_ps(T02));
-    _mm_storel_epi64((__m128i*)&Dst[ 6 * StrideD], T03);
-    _mm_storeh_pi(     (__m64*)&Dst[ 7 * StrideD], _mm_castsi128_ps(T03));
+    _mm_storel_epi64((__m128i*)&dst[ 0 * dststride], T00);
+    _mm_storeh_pi(     (__m64*)&dst[ 1 * dststride], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dst[ 2 * dststride], T01);
+    _mm_storeh_pi(     (__m64*)&dst[ 3 * dststride], _mm_castsi128_ps(T01));
+    _mm_storel_epi64((__m128i*)&dst[ 4 * dststride], T02);
+    _mm_storeh_pi(     (__m64*)&dst[ 5 * dststride], _mm_castsi128_ps(T02));
+    _mm_storel_epi64((__m128i*)&dst[ 6 * dststride], T03);
+    _mm_storeh_pi(     (__m64*)&dst[ 7 * dststride], _mm_castsi128_ps(T03));
 
-    T00 = _mm_loadl_epi64((__m128i*)&Src[ 0 * StrideS + 8]);
-    T01 = _mm_loadl_epi64((__m128i*)&Src[ 1 * StrideS + 8]);
-    T02 = _mm_loadl_epi64((__m128i*)&Src[ 2 * StrideS + 8]);
-    T03 = _mm_loadl_epi64((__m128i*)&Src[ 3 * StrideS + 8]);
-    T04 = _mm_loadl_epi64((__m128i*)&Src[ 4 * StrideS + 8]);
-    T05 = _mm_loadl_epi64((__m128i*)&Src[ 5 * StrideS + 8]);
-    T06 = _mm_loadl_epi64((__m128i*)&Src[ 6 * StrideS + 8]);
-    T07 = _mm_loadl_epi64((__m128i*)&Src[ 7 * StrideS + 8]);
+    T00 = _mm_loadl_epi64((__m128i*)&src[ 0 * srcstride + 8]);
+    T01 = _mm_loadl_epi64((__m128i*)&src[ 1 * srcstride + 8]);
+    T02 = _mm_loadl_epi64((__m128i*)&src[ 2 * srcstride + 8]);
+    T03 = _mm_loadl_epi64((__m128i*)&src[ 3 * srcstride + 8]);
+    T04 = _mm_loadl_epi64((__m128i*)&src[ 4 * srcstride + 8]);
+    T05 = _mm_loadl_epi64((__m128i*)&src[ 5 * srcstride + 8]);
+    T06 = _mm_loadl_epi64((__m128i*)&src[ 6 * srcstride + 8]);
+    T07 = _mm_loadl_epi64((__m128i*)&src[ 7 * srcstride + 8]);
     TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
-    _mm_storel_epi64((__m128i*)&Dst[ 8 * StrideD], T00);
-    _mm_storeh_pi(     (__m64*)&Dst[ 9 * StrideD], _mm_castsi128_ps(T00));
-    _mm_storel_epi64((__m128i*)&Dst[10 * StrideD], T01);
-    _mm_storeh_pi(     (__m64*)&Dst[11 * StrideD], _mm_castsi128_ps(T01));
-    _mm_storel_epi64((__m128i*)&Dst[12 * StrideD], T02);
-    _mm_storeh_pi(     (__m64*)&Dst[13 * StrideD], _mm_castsi128_ps(T02));
-    _mm_storel_epi64((__m128i*)&Dst[14 * StrideD], T03);
-    _mm_storeh_pi(     (__m64*)&Dst[15 * StrideD], _mm_castsi128_ps(T03));
+    _mm_storel_epi64((__m128i*)&dst[ 8 * dststride], T00);
+    _mm_storeh_pi(     (__m64*)&dst[ 9 * dststride], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dst[10 * dststride], T01);
+    _mm_storeh_pi(     (__m64*)&dst[11 * dststride], _mm_castsi128_ps(T01));
+    _mm_storel_epi64((__m128i*)&dst[12 * dststride], T02);
+    _mm_storeh_pi(     (__m64*)&dst[13 * dststride], _mm_castsi128_ps(T02));
+    _mm_storel_epi64((__m128i*)&dst[14 * dststride], T03);
+    _mm_storeh_pi(     (__m64*)&dst[15 * dststride], _mm_castsi128_ps(T03));
 
-    T00 = _mm_loadl_epi64((__m128i*)&Src[ 8 * StrideS]);
-    T01 = _mm_loadl_epi64((__m128i*)&Src[ 9 * StrideS]);
-    T02 = _mm_loadl_epi64((__m128i*)&Src[10 * StrideS]);
-    T03 = _mm_loadl_epi64((__m128i*)&Src[11 * StrideS]);
-    T04 = _mm_loadl_epi64((__m128i*)&Src[12 * StrideS]);
-    T05 = _mm_loadl_epi64((__m128i*)&Src[13 * StrideS]);
-    T06 = _mm_loadl_epi64((__m128i*)&Src[14 * StrideS]);
-    T07 = _mm_loadl_epi64((__m128i*)&Src[15 * StrideS]);
+    T00 = _mm_loadl_epi64((__m128i*)&src[ 8 * srcstride]);
+    T01 = _mm_loadl_epi64((__m128i*)&src[ 9 * srcstride]);
+    T02 = _mm_loadl_epi64((__m128i*)&src[10 * srcstride]);
+    T03 = _mm_loadl_epi64((__m128i*)&src[11 * srcstride]);
+    T04 = _mm_loadl_epi64((__m128i*)&src[12 * srcstride]);
+    T05 = _mm_loadl_epi64((__m128i*)&src[13 * srcstride]);
+    T06 = _mm_loadl_epi64((__m128i*)&src[14 * srcstride]);
+    T07 = _mm_loadl_epi64((__m128i*)&src[15 * srcstride]);
     TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
-    _mm_storel_epi64((__m128i*)&Dst[ 0 * StrideD + 8], T00);
-    _mm_storeh_pi(     (__m64*)&Dst[ 1 * StrideD + 8], _mm_castsi128_ps(T00));
-    _mm_storel_epi64((__m128i*)&Dst[ 2 * StrideD + 8], T01);
-    _mm_storeh_pi(     (__m64*)&Dst[ 3 * StrideD + 8], _mm_castsi128_ps(T01));
-    _mm_storel_epi64((__m128i*)&Dst[ 4 * StrideD + 8], T02);
-    _mm_storeh_pi(     (__m64*)&Dst[ 5 * StrideD + 8], _mm_castsi128_ps(T02));
-    _mm_storel_epi64((__m128i*)&Dst[ 6 * StrideD + 8], T03);
-    _mm_storeh_pi(     (__m64*)&Dst[ 7 * StrideD + 8], _mm_castsi128_ps(T03));
+    _mm_storel_epi64((__m128i*)&dst[ 0 * dststride + 8], T00);
+    _mm_storeh_pi(     (__m64*)&dst[ 1 * dststride + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dst[ 2 * dststride + 8], T01);
+    _mm_storeh_pi(     (__m64*)&dst[ 3 * dststride + 8], _mm_castsi128_ps(T01));
+    _mm_storel_epi64((__m128i*)&dst[ 4 * dststride + 8], T02);
+    _mm_storeh_pi(     (__m64*)&dst[ 5 * dststride + 8], _mm_castsi128_ps(T02));
+    _mm_storel_epi64((__m128i*)&dst[ 6 * dststride + 8], T03);
+    _mm_storeh_pi(     (__m64*)&dst[ 7 * dststride + 8], _mm_castsi128_ps(T03));
 
-    T00 = _mm_loadl_epi64((__m128i*)&Src[ 8 * StrideS + 8]);
-    T01 = _mm_loadl_epi64((__m128i*)&Src[ 9 * StrideS + 8]);
-    T02 = _mm_loadl_epi64((__m128i*)&Src[10 * StrideS + 8]);
-    T03 = _mm_loadl_epi64((__m128i*)&Src[11 * StrideS + 8]);
-    T04 = _mm_loadl_epi64((__m128i*)&Src[12 * StrideS + 8]);
-    T05 = _mm_loadl_epi64((__m128i*)&Src[13 * StrideS + 8]);
-    T06 = _mm_loadl_epi64((__m128i*)&Src[14 * StrideS + 8]);
-    T07 = _mm_loadl_epi64((__m128i*)&Src[15 * StrideS + 8]);
+    T00 = _mm_loadl_epi64((__m128i*)&src[ 8 * srcstride + 8]);
+    T01 = _mm_loadl_epi64((__m128i*)&src[ 9 * srcstride + 8]);
+    T02 = _mm_loadl_epi64((__m128i*)&src[10 * srcstride + 8]);
+    T03 = _mm_loadl_epi64((__m128i*)&src[11 * srcstride + 8]);
+    T04 = _mm_loadl_epi64((__m128i*)&src[12 * srcstride + 8]);
+    T05 = _mm_loadl_epi64((__m128i*)&src[13 * srcstride + 8]);
+    T06 = _mm_loadl_epi64((__m128i*)&src[14 * srcstride + 8]);
+    T07 = _mm_loadl_epi64((__m128i*)&src[15 * srcstride + 8]);
     TRANSPOSE_8X8(T00, T01, T02, T03, T04, T05, T06, T07, T00, T01, T02, T03);
-    _mm_storel_epi64((__m128i*)&Dst[ 8 * StrideD + 8], T00);
-    _mm_storeh_pi(     (__m64*)&Dst[ 9 * StrideD + 8], _mm_castsi128_ps(T00));
-    _mm_storel_epi64((__m128i*)&Dst[10 * StrideD + 8], T01);
-    _mm_storeh_pi(     (__m64*)&Dst[11 * StrideD + 8], _mm_castsi128_ps(T01));
-    _mm_storel_epi64((__m128i*)&Dst[12 * StrideD + 8], T02);
-    _mm_storeh_pi(     (__m64*)&Dst[13 * StrideD + 8], _mm_castsi128_ps(T02));
-    _mm_storel_epi64((__m128i*)&Dst[14 * StrideD + 8], T03);
-    _mm_storeh_pi(     (__m64*)&Dst[15 * StrideD + 8], _mm_castsi128_ps(T03));
+    _mm_storel_epi64((__m128i*)&dst[ 8 * dststride + 8], T00);
+    _mm_storeh_pi(     (__m64*)&dst[ 9 * dststride + 8], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dst[10 * dststride + 8], T01);
+    _mm_storeh_pi(     (__m64*)&dst[11 * dststride + 8], _mm_castsi128_ps(T01));
+    _mm_storel_epi64((__m128i*)&dst[12 * dststride + 8], T02);
+    _mm_storeh_pi(     (__m64*)&dst[13 * dststride + 8], _mm_castsi128_ps(T02));
+    _mm_storel_epi64((__m128i*)&dst[14 * dststride + 8], T03);
+    _mm_storeh_pi(     (__m64*)&dst[15 * dststride + 8], _mm_castsi128_ps(T03));
 }
 
-void transpose16(pixel* Dst, pixel* Src, intptr_t StrideS)
+void transpose16(pixel* dst, pixel* src, intptr_t srcstride)
 {
-    transpose16_dummy(Dst, 16, Src, StrideS);
+    transpose16_dummy(dst, 16, src, srcstride);
 }
 
-void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
+void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
 {
     assert( dst != src );
 
-    transpose16_dummy(dst,                32, src,                      strideSrc);
-    transpose16_dummy(dst + 16 * 32,      32, src + 16,                 strideSrc);
-    transpose16_dummy(dst + 16 * 32 + 16, 32, src + 16 * strideSrc + 16, strideSrc);
-    transpose16_dummy(dst + 16,           32, src + 16 * strideSrc,      strideSrc);
+    transpose16_dummy(dst,                32, src,                      srcstride);
+    transpose16_dummy(dst + 16 * 32,      32, src + 16,                 srcstride);
+    transpose16_dummy(dst + 16 * 32 + 16, 32, src + 16 * srcstride + 16, srcstride);
+    transpose16_dummy(dst + 16,           32, src + 16 * srcstride,      srcstride);
 }
 #endif // !HIGH_BIT_DEPTH
 
@@ -315,18 +312,18 @@ namespace x265 {
 // private x265 namespace
 
 #define SET_FUNC_PRIMITIVE_TABLE_WIDTH(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x4 ] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 4 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x8 ] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 8 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 12 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 16 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 24 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 32 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 48 >;   \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 64 >;   \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x4 ] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 4 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x8 ] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 8 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x12] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 12 >; \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x16] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 16 >; \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x24] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 24 >; \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x32] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 32 >; \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x48] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 48 >; \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x64] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF ## WIDTH < 64 >;
 
 #define SET_FUNC_PRIMITIVE_TABLE(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(4, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
-    SET_FUNC_PRIMITIVE_TABLE_WIDTH(8, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
+    SET_FUNC_PRIMITIVE_TABLE_WIDTH(4,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
+    SET_FUNC_PRIMITIVE_TABLE_WIDTH(8,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(12, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(16, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(24, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST) \
