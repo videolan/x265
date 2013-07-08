@@ -43,6 +43,7 @@ add_library(common
     ../VectorClass/instrset_detect.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
+    wavefront.h wavefront.cpp
     md5.cpp md5.h
     TShortYUV.cpp TShortYUV.h mv.h
     reference.cpp reference.h

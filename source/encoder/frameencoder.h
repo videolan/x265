@@ -21,20 +21,22 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#ifndef __WAVEFRONT__
-#define __WAVEFRONT__
+#ifndef __FRAMEENCODER__
+#define __FRAMEENCODER__
 
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 
-#include "threadpool.h"
+#include "wavefront.h"
 
 class TEncTop;
 
 namespace x265 {
 // private x265 namespace
+
+class ThreadPool;
 
 class CTURow
 {
@@ -72,7 +74,7 @@ public:
     volatile uint32_t   m_curCol;
 };
 
-class FrameEncoder : public QueueFrame
+class FrameEncoder : public WaveFront
 {
 public:
 
@@ -204,4 +206,4 @@ protected:
 };
 }
 
-#endif // ifndef __WAVEFRONT__
+#endif // ifndef __FRAMEENCODER__

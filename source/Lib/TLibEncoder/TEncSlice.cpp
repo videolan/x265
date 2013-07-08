@@ -40,7 +40,7 @@
 #include "PPA/ppa.h"
 #include "common.h"
 #include "threading.h"
-#include "wavefront.h"
+#include "frameencoder.h"
 
 #include <math.h>
 

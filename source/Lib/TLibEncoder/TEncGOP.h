@@ -53,7 +53,7 @@
 #include "TEncAnalyze.h"
 #include "TEncRateCtrl.h"
 #include "threading.h"
-#include "wavefront.h"
+#include "frameencoder.h"
 
 //! \ingroup TLibEncoder
 //! \{
