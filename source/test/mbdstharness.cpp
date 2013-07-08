@@ -38,20 +38,20 @@ struct DctConf_t
 
 const DctConf_t DctConf_infos[] =
 {
-    { "Dst4x4\t",    4 },
-    { "Dct4x4\t",    4 },
-    { "Dct8x8\t",    8 },
-    { "Dct16x16",   16 },
-    { "Dct32x32",   32 },
+    { "dst4x4\t",    4 },
+    { "dct4x4\t",    4 },
+    { "dct8x8\t",    8 },
+    { "dct16x16",   16 },
+    { "dct32x32",   32 },
 };
 
 const DctConf_t IDctConf_infos[] =
 {
-    { "IDst4x4\t",    4 },
-    { "IDct4x4\t",    4 },
-    { "IDct8x8\t",    8 },
-    { "IDct16x16",   16 },
-    { "IDct32x32",   32 },
+    { "idst4x4\t",    4 },
+    { "idct4x4\t",    4 },
+    { "idct8x8\t",    8 },
+    { "idct16x16",   16 },
+    { "idct32x32",   32 },
 };
 
 MBDstHarness::MBDstHarness()
@@ -193,7 +193,7 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, int width)
     return true;
 }
 
-bool MBDstHarness::check_xdequant_primitive(dequant_t ref, dequant_t opt)
+bool MBDstHarness::check_dequant_primitive(dequant_t ref, dequant_t opt)
 {
     int j = 0;
 
@@ -353,7 +353,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         {
             if (!check_idct_primitive(ref.idct[i], opt.idct[i], IDctConf_infos[i].width))
             {
-                printf("\n%s failed\n", IDctConf_infos[i].name);
+                printf("%s failed\n", IDctConf_infos[i].name);
                 return false;
             }
         }
@@ -361,9 +361,9 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.dequant)
     {
-        if (!check_xdequant_primitive(ref.dequant, opt.dequant))
+        if (!check_dequant_primitive(ref.dequant, opt.dequant))
         {
-            printf("XDeQuant: Failed!\n");
+            printf("dequant: Failed!\n");
             return false;
         }
     }
@@ -411,7 +411,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.dequant)
     {
-        printf("xDeQuant\t\t");
+        printf("dequant\t\t\t");
         REPORT_SPEEDUP(opt.dequant, ref.dequant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 
