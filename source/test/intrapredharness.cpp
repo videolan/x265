@@ -68,7 +68,7 @@ IntraPredHarness::~IntraPredHarness()
     TestHarness::alignedFree(pixel_out_33_Vec);
 }
 
-bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt)
+bool IntraPredHarness::check_getIPredDC_primitive(x265::intra_dc_t ref, x265::intra_dc_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -97,7 +97,7 @@ bool IntraPredHarness::check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::
     return true;
 }
 
-bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt)
+bool IntraPredHarness::check_getIPredPlanar_primitive(x265::intra_planar_t ref, x265::intra_planar_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -127,7 +127,7 @@ bool IntraPredHarness::check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref
     return true;
 }
 
-bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt)
+bool IntraPredHarness::check_getIPredAng_primitive(x265::intra_ang_t ref, x265::intra_ang_t opt)
 {
     int j = ADI_BUF_STRIDE;
 
@@ -171,7 +171,7 @@ bool IntraPredHarness::check_getIPredAng_primitive(x265::getIPredAng_p ref, x265
     return true;
 }
 
-bool IntraPredHarness::check_getIPredAngs_primitive(const x265::getIPredAngs_t ref[], const x265::getIPredAngs_t opt[])
+bool IntraPredHarness::check_getIPredAngs_primitive(const x265::intra_allangs_t ref[], const x265::intra_allangs_t opt[])
 {
     int j = ADI_BUF_STRIDE;
 

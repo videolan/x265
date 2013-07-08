@@ -43,10 +43,10 @@ protected:
     static const int out_size = 64 * FENC_STRIDE;
     static const int out_size_33 = 33 * 64 * FENC_STRIDE;
 
-    bool check_getIPredDC_primitive(x265::getIPredDC_t ref, x265::getIPredDC_t opt);
-    bool check_getIPredPlanar_primitive(x265::getIPredPlanar_t ref, x265::getIPredPlanar_t opt);
-    bool check_getIPredAng_primitive(x265::getIPredAng_p ref, x265::getIPredAng_p opt);
-    bool check_getIPredAngs_primitive(const x265::getIPredAngs_t ref[], const x265::getIPredAngs_t opt[]);
+    bool check_getIPredDC_primitive(x265::intra_dc_t ref, x265::intra_dc_t opt);
+    bool check_getIPredPlanar_primitive(x265::intra_planar_t ref, x265::intra_planar_t opt);
+    bool check_getIPredAng_primitive(x265::intra_ang_t ref, x265::intra_ang_t opt);
+    bool check_getIPredAngs_primitive(const x265::intra_allangs_t ref[], const x265::intra_allangs_t opt[]);
 
 public:
 

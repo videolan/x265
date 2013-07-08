@@ -194,20 +194,20 @@ typedef void (*blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel
 typedef void (*blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
-typedef void (*getIPredDC_t)(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter);
-typedef void (*getIPredPlanar_t)(pixel* pSrc, intptr_t srcStride, pixel* rpDst, intptr_t dstStride, int width);
-typedef void (*getIPredAng_p)(int bitDepth, pixel* rpDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
-typedef void (*getIPredAngs_t)(pixel *pDst, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma);
-typedef void (*cvt16to32_t)(short *psOrg, int *piDst, int);
-typedef void (*cvt16to32_shl_t)(int *piDst, short *psOrg, intptr_t, int, int);
-typedef void (*cvt16to16_shl_t)(short *psDst, short *psOrg, int, int, intptr_t, int);
-typedef void (*cvt32to16_t)(int *psOrg, short *piDst, int);
-typedef void (*cvt32to16_shr_t)(short *piDst, int *psOrg, int, int);
-typedef void (*dct_t)(short *pSrc, int *pDst, intptr_t stride);
-typedef void (*idct_t)(int *pSrc, short *pDst, intptr_t stride);
-typedef void (*calcresidual_t)(pixel *piOrig, pixel *piPred, short *piRes, int stride);
-typedef void (*calcrecon_t)(pixel* piPred, short* piResi, pixel*  piReco, short* piRecQt, pixel *piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride);
-typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t nStride);
+typedef void (*intra_dc_t)(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int bFilter);
+typedef void (*intra_planar_t)(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width);
+typedef void (*intra_ang_t)(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
+typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+typedef void (*cvt16to32_t)(short *src, int *dst, int);
+typedef void (*cvt16to32_shl_t)(int *dst, short *src, intptr_t, int, int);
+typedef void (*cvt16to16_shl_t)(short *dst, short *src, int, int, intptr_t, int);
+typedef void (*cvt32to16_t)(int *src, short *dst, int);
+typedef void (*cvt32to16_shr_t)(short *dst, int *src, int, int);
+typedef void (*dct_t)(short *src, int *dst, intptr_t stride);
+typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
+typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, short *residual, int stride);
+typedef void (*calcrecon_t)(pixel* pred, short* residual, pixel* recon, short* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
+typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t stride);
 typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*dequant_t)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
@@ -240,10 +240,10 @@ struct EncoderPrimitives
     blockcpy_p_s cpyblock_p_s; // pixel from short
     blockcpy_s_p cpyblock_s_p; // short from pixel
     blockcpy_s_c cpyblock_s_c; // short from unsigned char
-    getIPredDC_t getIPredDC;
-    getIPredPlanar_t getIPredPlanar;
-    getIPredAng_p getIPredAng;
-    getIPredAngs_t getIPredAngs[NUM_SQUARE_BLOCKS];
+    intra_dc_t getIPredDC;
+    intra_planar_t getIPredPlanar;
+    intra_ang_t getIPredAng;
+    intra_allangs_t getIPredAngs[NUM_SQUARE_BLOCKS];
     dequant_t dequant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
