@@ -3096,7 +3096,7 @@ void idct16(int *src, short *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
 }
 
-void xIDCT32(int *src, short *dst, intptr_t stride)
+void idct32(int *src, short *dst, intptr_t stride)
 {
     //Odd
     const __m128i c16_p90_p90   = _mm_set1_epi32(0x005A005A); //column 0
@@ -4097,6 +4097,6 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.idct[IDCT_4x4] = idct4;
     p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = idct16;
-    p.idct[IDCT_32x32] = xIDCT32;
+    p.idct[IDCT_32x32] = idct32;
 }
 }
