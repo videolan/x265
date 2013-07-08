@@ -26,6 +26,10 @@
 
 // Vector class versions of pixel comparison performance primitives
 
+#include <assert.h>
+#include "sse.inc"
+#include "utils.h"
+
 namespace {
 /* File for pixels type-neutral code */
 
@@ -153,8 +157,6 @@ void transpose(pixel* Dst, pixel* Src, intptr_t Stride)
         }
     }
 }
-
-#include "utils.h"
 
 #if !HIGH_BIT_DEPTH
 void transpose4(pixel* Dst, pixel* Src, intptr_t Stride)
@@ -308,8 +310,6 @@ void transpose32(pixel* dst, pixel* src, intptr_t strideSrc)
 #endif // !HIGH_BIT_DEPTH
 
 }  // end anonymous namespace
-
-#include "sse.inc"
 
 namespace x265 {
 // private x265 namespace
