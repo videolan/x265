@@ -646,30 +646,30 @@ void idct8_c(int *src, short *dst, intptr_t stride)
     }
 }
 
-void xIDCT16_C(int *src, short *dst, intptr_t stride)
+void idct16_c(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
     ALIGN_VAR_32(Short, coef[16 * 16]);
-    ALIGN_VAR_32(Short, coef2[16 * 16]);
+    ALIGN_VAR_32(Short, block[16 * 16]);
 
 #define N (16)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            coef2[i * N + j] = (short)src[i * N + j];
+            block[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    partialButterflyInverse16(coef2, coef, shift_1st, 16);
-    partialButterflyInverse16(coef, coef2, shift_2nd, 16);
+    partialButterflyInverse16(block, coef, shift_1st, 16);
+    partialButterflyInverse16(coef, block, shift_2nd, 16);
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&dst[i * stride], &coef2[i * 16], 16 * sizeof(short));
+        memcpy(&dst[i * stride], &block[i * 16], 16 * sizeof(short));
     }
 }
 
@@ -841,7 +841,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.idct[IDST_4x4] = idst4_c;
     p.idct[IDCT_4x4] = idct4_c;
     p.idct[IDCT_8x8] = idct8_c;
-    p.idct[IDCT_16x16] = xIDCT16_C;
+    p.idct[IDCT_16x16] = idct16_c;
     p.idct[IDCT_32x32] = xIDCT32_C;
 }
 }
