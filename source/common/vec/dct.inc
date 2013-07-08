@@ -2432,7 +2432,7 @@ ALIGN_VAR_32(static const short, tab_idct_8x8[12][8]) =
     {  83,  36,  83,  36, 83,  36, 83,  36 },
     {  36, -83,  36, -83, 36, -83, 36, -83 }
 };
-void xIDCT8(int *src, short *dst, intptr_t stride)
+void idct8(int *src, short *dst, intptr_t stride)
 {
     __m128i m128iS0, m128iS1, m128iS2, m128iS3, m128iS4, m128iS5, m128iS6, m128iS7, m128iAdd, m128Tmp0, m128Tmp1, m128Tmp2, m128Tmp3, E0h, E1h, E2h, E3h, E0l, E1l, E2l, E3l, O0h, O1h, O2h, O3h, O0l, O1l, O2l, O3l, EE0l, EE1l, E00l, E01l, EE0h, EE1h, E00h, E01h;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
@@ -4095,7 +4095,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     // TODO: I am not sure the IDCT works on 16bpp mode
     p.idct[IDST_4x4] = idst4;
     p.idct[IDCT_4x4] = idct4;
-    p.idct[IDCT_8x8] = xIDCT8;
+    p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = xIDCT16;
     p.idct[IDCT_32x32] = xIDCT32;
 }
