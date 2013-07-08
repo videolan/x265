@@ -419,8 +419,6 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
 
 void predIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int filter)
 {
-    //assert(iWidth == iHeight); // all of Intra is NxN
-    //assert(blkAboveAvailable || blkLeftAvailable); // I think left and above always true since HEVC have a pixel fill process
     int sum = 0;
     int logSize = g_aucConvertToBit[width] + 2;
     pixel *srcAbove = &src[-srcStride];
@@ -614,7 +612,6 @@ void predIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride,
             pix.load(srcAbove + 48);
             im1 += (Vec4ui)(pix.sad(_mm_setzero_si128()));
             im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
-            //im1 += extract_hi64(im1);
             sum += toInt32(im1);
             break;
         }

@@ -39,68 +39,68 @@ unsigned char g_aucIntraFilterType[][35] =
     /* 64x64 */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-
 namespace {
-pixel predIntraGetPredValDC(pixel* pSrc, intptr_t iSrcStride, intptr_t iWidth)
+pixel predIntraGetPredValDC(pixel* Src, intptr_t SrcStride, intptr_t Width)
 {
     int iInd, iSum = 0;
     pixel pDcVal;
 
-    for (iInd = 0; iInd < iWidth; iInd++)
+    for (iInd = 0; iInd < Width; iInd++)
     {
-        iSum += pSrc[iInd - iSrcStride];
-    }
-    for (iInd = 0; iInd < iWidth; iInd++)
-    {
-        iSum += pSrc[iInd * iSrcStride - 1];
+        iSum += Src[iInd - SrcStride];
     }
 
-    pDcVal = (pixel)((iSum + iWidth) / (iWidth + iWidth));
+    for (iInd = 0; iInd < Width; iInd++)
+    {
+        iSum += Src[iInd * SrcStride - 1];
+    }
+
+    pDcVal = (pixel)((iSum + Width) / (Width + Width));
 
     return pDcVal;
 }
 
-void xDCPredFiltering(pixel* pSrc, intptr_t iSrcStride, pixel* pDst, intptr_t iDstStride, int iWidth, int iHeight)
+void DCPredFiltering(pixel* Src, intptr_t SrcStride, pixel* Dst, intptr_t DstStride, int Width, int Height)
 {
-    intptr_t x, y, iDstStride2, iSrcStride2;
+    intptr_t x, y, DstStride2, SrcStride2;
 
     // boundary pixels processing
-    pDst[0] = (pixel)((pSrc[-iSrcStride] + pSrc[-1] + 2 * pDst[0] + 2) >> 2);
+    Dst[0] = (pixel)((Src[-SrcStride] + Src[-1] + 2 * Dst[0] + 2) >> 2);
 
-    for (x = 1; x < iWidth; x++)
+    for (x = 1; x < Width; x++)
     {
-        pDst[x] = (pixel)((pSrc[x - iSrcStride] +  3 * pDst[x] + 2) >> 2);
+        Dst[x] = (pixel)((Src[x - SrcStride] +  3 * Dst[x] + 2) >> 2);
     }
 
-    for (y = 1, iDstStride2 = iDstStride, iSrcStride2 = iSrcStride - 1; y < iHeight; y++, iDstStride2 += iDstStride, iSrcStride2 += iSrcStride)
+    for (y = 1, DstStride2 = DstStride, SrcStride2 = SrcStride - 1; y < Height; y++, DstStride2 += DstStride, SrcStride2 += SrcStride)
     {
-        pDst[iDstStride2] = (pixel)((pSrc[iSrcStride2] + 3 * pDst[iDstStride2] + 2) >> 2);
+        Dst[DstStride2] = (pixel)((Src[SrcStride2] + 3 * Dst[DstStride2] + 2) >> 2);
     }
 }
 
-void xPredIntraDC(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width, int bFilter)
+void PredIntraDC(pixel* Src, intptr_t srcStride, pixel* Dst, intptr_t dstStride, int width, int bFilter)
 {
     int k, l;
     int blkSize = width;
 
     // Do the DC prediction
-    pixel dcval = (pixel)predIntraGetPredValDC(pSrc, srcStride, width);
+    pixel dcval = (pixel)predIntraGetPredValDC(Src, srcStride, width);
 
     for (k = 0; k < blkSize; k++)
     {
         for (l = 0; l < blkSize; l++)
         {
-            pDst[k * dstStride + l] = dcval;
+            Dst[k * dstStride + l] = dcval;
         }
     }
 
     if (bFilter)
     {
-        xDCPredFiltering(pSrc, srcStride, pDst, dstStride, width, width);
+        DCPredFiltering(Src, srcStride, Dst, dstStride, width, width);
     }
 }
 
-void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dstStride, int width)
+void PredIntraPlanar(pixel* Src, intptr_t srcStride, pixel* Dst, intptr_t dstStride, int width)
 {
     //assert(width == height);
 
@@ -119,8 +119,8 @@ void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dst
     // Get left and above reference column and row
     for (k = 0; k < blkSize + 1; k++)
     {
-        topRow[k] = pSrc[k - srcStride];
-        leftColumn[k] = pSrc[k * srcStride - 1];
+        topRow[k] = Src[k - srcStride];
+        leftColumn[k] = Src[k * srcStride - 1];
     }
 
     // Prepare intermediate variables used in interpolation
@@ -142,12 +142,12 @@ void xPredIntraPlanar(pixel* pSrc, intptr_t srcStride, pixel* pDst, intptr_t dst
         {
             horPred += rightColumn[k];
             topRow[l] += bottomRow[l];
-            pDst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
+            Dst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
         }
     }
 }
 
-void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void PredIntraAngBufRef(int bitDepth, pixel* Dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
     int k, l;
     int blkSize  = width;
@@ -198,7 +198,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
             {
                 for (l = 0; l < blkSize; l++)
                 {
-                    pDst[k * dstStride + l] = refMain[l + 1];
+                    Dst[k * dstStride + l] = refMain[l + 1];
                 }
             }
 
@@ -206,7 +206,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    pDst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((pDst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                    Dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((Dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
                 }
             }
         }
@@ -229,7 +229,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
                     for (l = 0; l < blkSize; l++)
                     {
                         refMainIndex        = l + deltaInt + 1;
-                        pDst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
+                        Dst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
                     }
                 }
                 else
@@ -237,7 +237,7 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
                     // Just copy the integer samples
                     for (l = 0; l < blkSize; l++)
                     {
-                        pDst[k * dstStride + l] = refMain[l + deltaInt + 1];
+                        Dst[k * dstStride + l] = refMain[l + deltaInt + 1];
                     }
                 }
             }
@@ -251,9 +251,9 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
             {
                 for (l = k + 1; l < blkSize; l++)
                 {
-                    tmp                 = pDst[k * dstStride + l];
-                    pDst[k * dstStride + l] = pDst[l * dstStride + k];
-                    pDst[l * dstStride + k] = tmp;
+                    tmp                 = Dst[k * dstStride + l];
+                    Dst[k * dstStride + l] = Dst[l * dstStride + k];
+                    Dst[l * dstStride + k] = tmp;
                 }
             }
         }
@@ -261,17 +261,17 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
 }
 
 template<int size>
-void xPredIntraAngs_C(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
+void PredIntraAngs_C(pixel *Dst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
 {
     int iMode;
 
-    for( iMode = 2; iMode <= 34; iMode++ )
+    for (iMode = 2; iMode <= 34; iMode++)
     {
         pixel *pLeft = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
         pixel *pAbove = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
-        pixel *pDst = pDst0 + (iMode-2) * (size * size);
+        pixel *Dst = Dst0 + (iMode - 2) * (size * size);
 
-        xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
+        PredIntraAngBufRef(8, Dst, size, size, iMode, bLuma, pLeft, pAbove);
 
         // Optimize code don't flip buffer
         bool modeHor = (iMode < 18);
@@ -283,15 +283,14 @@ void xPredIntraAngs_C(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove
             {
                 for (int l = k + 1; l < size; l++)
                 {
-                    tmp                = pDst[k * size + l];
-                    pDst[k * size + l] = pDst[l * size + k];
-                    pDst[l * size + k] = tmp;
+                    tmp                = Dst[k * size + l];
+                    Dst[k * size + l] = Dst[l * size + k];
+                    Dst[l * size + k] = tmp;
                 }
             }
         }
     }
 }
-
 }
 
 namespace x265 {
@@ -299,13 +298,13 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.getIPredDC = xPredIntraDC;
-    p.getIPredPlanar = xPredIntraPlanar;
-    p.getIPredAng = xPredIntraAngBufRef;
-    p.getIPredAngs[0] = xPredIntraAngs_C<4>;
-    p.getIPredAngs[1] = xPredIntraAngs_C<8>;
-    p.getIPredAngs[2] = xPredIntraAngs_C<16>;
-    p.getIPredAngs[3] = xPredIntraAngs_C<32>;
-    p.getIPredAngs[4] = xPredIntraAngs_C<64>;
+    p.getIPredDC = PredIntraDC;
+    p.getIPredPlanar = PredIntraPlanar;
+    p.getIPredAng = PredIntraAngBufRef;
+    p.getIPredAngs[0] = PredIntraAngs_C<4>;
+    p.getIPredAngs[1] = PredIntraAngs_C<8>;
+    p.getIPredAngs[2] = PredIntraAngs_C<16>;
+    p.getIPredAngs[3] = PredIntraAngs_C<32>;
+    p.getIPredAngs[4] = PredIntraAngs_C<64>;
 }
 }
