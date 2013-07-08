@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "threadpool.h"
+#include "wavefront.h"
 #include "threading.h"
 #include "md5.h"
 #include "PPA/ppa.h"
@@ -60,7 +61,7 @@ struct RowData
 // then generate the same hash using the thread pool and wave-front parallelism
 // to verify the thread-pool behavior and the wave-front schedule data
 // structures.
-class MD5Frame : public QueueFrame
+class MD5Frame : public WaveFront
 {
 private:
 
@@ -72,7 +73,7 @@ private:
 
 public:
 
-    MD5Frame(ThreadPool *pool) : QueueFrame(pool), cu(0), row(0) {}
+    MD5Frame(ThreadPool *pool) : WaveFront(pool), cu(0), row(0) {}
 
     virtual ~MD5Frame()
     {
@@ -101,7 +102,7 @@ void MD5Frame::Initialize(int cols, int rows)
     this->numrows = rows;
     this->numcols = cols;
 
-    if (!this->QueueFrame::InitJobQueue(rows))
+    if (!this->WaveFront::initJobQueue(rows))
     {
         assert(!"Unable to initialize job queue");
     }
@@ -111,7 +112,7 @@ void MD5Frame::Encode()
 {
     this->JobProvider::Enqueue();
 
-    this->QueueFrame::EnqueueRow(0);
+    this->WaveFront::enqueueRow(0);
 
     this->complete.Wait();
 
@@ -176,7 +177,7 @@ void MD5Frame::ProcessRow(int rownum)
                 // set active indicator so row is only enqueued once
                 // row stays marked active until blocked or done
                 this->row[rownum + 1].active = true;
-                this->QueueFrame::EnqueueRow(rownum + 1);
+                this->WaveFront::enqueueRow(rownum + 1);
             }
         }
 
