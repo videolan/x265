@@ -39,14 +39,13 @@ namespace x265 {
 static int8_t psize[16] = {  0,  1,  2,  3, -1,  4, -1, 5,
                             -1, -1, -1,  6, -1, -1, -1, 7 };
 
-// Returns a Partitions enum if the size matches a supported performance primitive,
-// else returns -1 (in which case you should use the slow path)
-int PartitionFromSizes(int Width, int Height)
+// Returns a Partitions enum if the size matches a supported performance primitive
+int PartitionFromSizes(int width, int height)
 {
-    int8_t w = psize[(Width >> 2) - 1];
-    int8_t h = psize[(Height >> 2) - 1];
+    int8_t w = psize[(width >> 2) - 1];
+    int8_t h = psize[(height >> 2) - 1];
 
-    assert(((Width | Height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
+    assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
     assert((w | h) >= 0);
 
     // there are currently eight height partitions per width
@@ -65,8 +64,8 @@ void Setup_C_Primitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_DCTPrimitives(p);        // dct.cpp
-    Setup_C_IPFilterPrimitives(p);   // InterpolationFilter.cpp
-    Setup_C_IPredPrimitives(p);      // IntraPred.cpp
+    Setup_C_IPFilterPrimitives(p);   // ipfilter.cpp
+    Setup_C_IPredPrimitives(p);      // intrapred.cpp
 }
 }
 
@@ -105,7 +104,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
         cpuid = instrset_detect(); // Detect supported instruction set
         if (param->logLevel >= X265_LOG_INFO)
         {
-            x265_log(param, X265_LOG_INFO, "detected SIMD architectures ");
+            x265_log(param, X265_LOG_INFO, "detected SIMD architectures");
             for (int i = 1; i <= cpuid; i++)
             {
                 fprintf(stderr, "%s ", CpuType[i]);
@@ -124,7 +123,7 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
 
 #if ENABLE_VECTOR_PRIMITIVES
     x265::Setup_Vector_Primitives(x265::primitives, cpuid);
-    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " vector");
+    if (param->logLevel >= X265_LOG_INFO) fprintf(stderr, " intrinsic");
 #endif
 
 #if ENABLE_ASM_PRIMITIVES
