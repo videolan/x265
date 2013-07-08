@@ -826,7 +826,7 @@ namespace x265 {
 
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
-    p.deQuant = dequant_c;
+    p.dequant = dequant_c;
     p.quantaq = quantaq_c;
     p.quant = quant_c;
     p.dct[DST_4x4] = dst4_c;

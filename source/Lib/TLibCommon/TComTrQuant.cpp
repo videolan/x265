@@ -998,7 +998,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
     UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
     Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
 
-    x265::primitives.deQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
+    x265::primitives.dequant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
 #endif
 
     if (useTransformSkip == true)

@@ -359,9 +359,9 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.deQuant)
+    if (opt.dequant)
     {
-        if (!check_xdequant_primitive(ref.deQuant, opt.deQuant))
+        if (!check_xdequant_primitive(ref.deQuant, opt.dequant))
         {
             printf("XDeQuant: Failed!\n");
             return false;
@@ -409,10 +409,10 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    if (opt.deQuant)
+    if (opt.dequant)
     {
         printf("xDeQuant\t\t");
-        REPORT_SPEEDUP(opt.deQuant, ref.deQuant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
+        REPORT_SPEEDUP(opt.dequant, ref.deQuant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 
     if (opt.quantaq)

@@ -245,7 +245,7 @@ struct EncoderPrimitives
     getIPredPlanar_t getIPredPlanar;
     getIPredAng_p getIPredAng;
     getIPredAngs_t getIPredAngs[NUM_SQUARE_BLOCKS];
-    dequant_t deQuant;
+    dequant_t dequant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
     cvt16to32_t cvt16to32;

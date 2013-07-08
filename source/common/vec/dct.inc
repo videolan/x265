@@ -4080,7 +4080,7 @@ namespace x265 {
 
 void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 {
-    p.deQuant = dequant;
+    p.dequant = dequant;
     p.quantaq = quantaq;
     p.quant = quant;
 
