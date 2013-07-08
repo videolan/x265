@@ -139,7 +139,7 @@ FrameEncoder::FrameEncoder(ThreadPool* pool)
 
 void FrameEncoder::destroy()
 {
-    JobProvider::Flush();  // ensure no worker threads are using this frame
+    JobProvider::flush();  // ensure no worker threads are using this frame
 
     if (m_rows)
     {
@@ -213,13 +213,13 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
     }
     else
     {
-        WaveFront::Enqueue();
+        WaveFront::enqueue();
 
         // Enqueue first row, then block until worker threads complete the frame
         WaveFront::enqueueRow(0);
         m_completionEvent.Wait();
 
-        WaveFront::Dequeue();
+        WaveFront::dequeue();
     }
 }
 

@@ -132,7 +132,7 @@ void WaveFront::enqueueRow(int row)
 
     assert(row < m_numRows);
     ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
-    m_pool->PokeIdleThread();
+    m_pool->pokeIdleThread();
 }
 
 bool WaveFront::findJob()

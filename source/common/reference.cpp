@@ -71,7 +71,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
 
 MotionReference::~MotionReference()
 {
-    JobProvider::Flush();
+    JobProvider::flush();
 
     for (int i = 0; i < 4; i++)
     {
@@ -126,14 +126,14 @@ void MotionReference::generateReferencePlanes()
         m_workerCount = 0;
         m_finishedPlanes = 0;
 
-        JobProvider::Enqueue();
+        JobProvider::enqueue();
         for (int i = 0; i < 4; i++)
         {
-            m_pool->PokeIdleThread();
+            m_pool->pokeIdleThread();
         }
 
         m_completionEvent.Wait();
-        JobProvider::Dequeue();
+        JobProvider::dequeue();
     }
     xFree(m_intermediateValues);
 }

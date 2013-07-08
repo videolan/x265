@@ -51,10 +51,10 @@ public:
     virtual ~JobProvider() {}
 
     // Register this job provider with the thread pool, jobs are available
-    void Enqueue();
+    void enqueue();
 
     // Remove this job provider from the thread pool, all jobs complete
-    void Dequeue();
+    void dequeue();
 
     // Worker threads will call this method to find a job.  Must return true if
     // work was completed.  False if no work was available.
@@ -63,7 +63,7 @@ public:
     // All derived objects that call Enqueue *MUST* call flush before allowing
     // their object to be destroyed, otherwise you will see random crashes involving
     // partially freed vtables and you will be unhappy
-    void Flush();
+    void flush();
 
     friend class ThreadPoolImpl;
     friend class PoolThread;
@@ -80,25 +80,25 @@ protected:
     // Destructor is inaccessable, force the use of reference counted Release()
     ~ThreadPool() {}
 
-    virtual void EnqueueJobProvider(JobProvider &) = 0;
+    virtual void enqueueJobProvider(JobProvider &) = 0;
 
-    virtual void DequeueJobProvider(JobProvider &) = 0;
+    virtual void dequeueJobProvider(JobProvider &) = 0;
 
 public:
 
     // When numthreads == 0, a default thread count is used. A request may grow
     // an existing pool but it will never shrink.
-    static ThreadPool *AllocThreadPool(int numthreads = 0);
+    static ThreadPool *allocThreadPool(int numthreads = 0);
 
-    static ThreadPool *GetThreadPool();
+    static ThreadPool *getThreadPool();
 
-    virtual void PokeIdleThread() = 0;
+    virtual void pokeIdleThread() = 0;
 
     // The pool is reference counted so all calls to AllocThreadPool() should be
     // followed by a call to Release()
-    virtual void Release() = 0;
+    virtual void release() = 0;
 
-    virtual int  GetThreadCount() const = 0;
+    virtual int  getThreadCount() const = 0;
 
     friend class JobProvider;
 };

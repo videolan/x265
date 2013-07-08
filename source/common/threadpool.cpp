@@ -130,9 +130,9 @@ public:
         return this;
     }
 
-    int GetThreadCount() const { return m_numThreads; }
+    int getThreadCount() const { return m_numThreads; }
 
-    void Release();
+    void release();
 
     void Stop();
 
@@ -141,13 +141,13 @@ public:
         return m_ok;
     }
 
-    void EnqueueJobProvider(JobProvider &);
+    void enqueueJobProvider(JobProvider &);
 
-    void DequeueJobProvider(JobProvider &);
+    void dequeueJobProvider(JobProvider &);
 
     void FlushProviderList();
 
-    void PokeIdleThread();
+    void pokeIdleThread();
 };
 
 void PoolThread::ThreadMain()
@@ -180,7 +180,7 @@ void PoolThread::ThreadMain()
     m_exited = true;
 }
 
-void ThreadPoolImpl::PokeIdleThread()
+void ThreadPoolImpl::pokeIdleThread()
 {
     PoolThread::s_wakeEvent.Trigger();
 }
@@ -188,7 +188,7 @@ void ThreadPoolImpl::PokeIdleThread()
 ThreadPoolImpl *ThreadPoolImpl::instance;
 
 /* static */
-ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
+ThreadPool *ThreadPool::allocThreadPool(int numthreads)
 {
     if (ThreadPoolImpl::instance)
         return ThreadPoolImpl::instance->AddReference();
@@ -197,13 +197,13 @@ ThreadPool *ThreadPool::AllocThreadPool(int numthreads)
     return ThreadPoolImpl::instance;
 }
 
-ThreadPool *ThreadPool::GetThreadPool()
+ThreadPool *ThreadPool::getThreadPool()
 {
     assert(ThreadPoolImpl::instance);
     return ThreadPoolImpl::instance;
 }
 
-void ThreadPoolImpl::Release()
+void ThreadPoolImpl::release()
 {
     if (--m_referenceCount == 0)
     {
@@ -260,7 +260,7 @@ void ThreadPoolImpl::Stop()
         int exited_count;
         do
         {
-            PokeIdleThread();
+            pokeIdleThread();
             GIVE_UP_TIME();
             exited_count = 0;
             for (int i = 0; i < m_numThreads; i++)
@@ -290,7 +290,7 @@ ThreadPoolImpl::~ThreadPoolImpl()
     }
 }
 
-void ThreadPoolImpl::EnqueueJobProvider(JobProvider &p)
+void ThreadPoolImpl::enqueueJobProvider(JobProvider &p)
 {
     // only one list writer at a time
     ScopedLock l(m_writeLock);
@@ -305,7 +305,7 @@ void ThreadPoolImpl::EnqueueJobProvider(JobProvider &p)
         m_firstProvider = &p;
 }
 
-void ThreadPoolImpl::DequeueJobProvider(JobProvider &p)
+void ThreadPoolImpl::dequeueJobProvider(JobProvider &p)
 {
     // only one list writer at a time
     ScopedLock l(m_writeLock);
@@ -353,27 +353,27 @@ void ThreadPoolImpl::FlushProviderList()
     while (i < m_numThreads);
 }
 
-void JobProvider::Flush()
+void JobProvider::flush()
 {
     if (m_nextProvider || m_prevProvider)
-        Dequeue();
+        dequeue();
     dynamic_cast<ThreadPoolImpl*>(m_pool)->FlushProviderList();
 }
 
-void JobProvider::Enqueue()
+void JobProvider::enqueue()
 {
     // Add this provider to the end of the thread pool's job provider list
     assert(!m_nextProvider && !m_prevProvider && m_pool);
-    m_pool->EnqueueJobProvider(*this);
-    m_pool->PokeIdleThread();
+    m_pool->enqueueJobProvider(*this);
+    m_pool->pokeIdleThread();
 }
 
-void JobProvider::Dequeue()
+void JobProvider::dequeue()
 {
     // Remove this provider from the thread pool's job provider list
-    m_pool->DequeueJobProvider(*this);
+    m_pool->dequeueJobProvider(*this);
     // Ensure no jobs were missed while the provider was being removed
-    m_pool->PokeIdleThread();
+    m_pool->pokeIdleThread();
 }
 
 static int get_cpu_count()

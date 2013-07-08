@@ -79,7 +79,7 @@ public:
     {
         // ensure no threads are lingering on FindJob() before allowing
         // this object's vtable to be destroyed
-        JobProvider::Flush();
+        JobProvider::flush();
 
         if (this->cu)
             delete[] this->cu;
@@ -88,14 +88,14 @@ public:
             delete[] this->row;
     }
 
-    void Initialize(int cols, int rows);
+    void initialize(int cols, int rows);
 
-    void Encode();
+    void encode();
 
-    void ProcessRow(int row);
+    void processRow(int row);
 };
 
-void MD5Frame::Initialize(int cols, int rows)
+void MD5Frame::initialize(int cols, int rows)
 {
     this->cu = new CUData[rows * cols];
     this->row = new RowData[rows];
@@ -108,15 +108,15 @@ void MD5Frame::Initialize(int cols, int rows)
     }
 }
 
-void MD5Frame::Encode()
+void MD5Frame::encode()
 {
-    this->JobProvider::Enqueue();
+    this->JobProvider::enqueue();
 
     this->WaveFront::enqueueRow(0);
 
     this->complete.Wait();
 
-    this->JobProvider::Dequeue();
+    this->JobProvider::dequeue();
 
     unsigned int *outdigest = (unsigned int*)this->cu[this->numrows * this->numcols - 1].digest;
 
@@ -131,7 +131,7 @@ void MD5Frame::Encode()
         std::cout << "Bad hash: " << ss.str() << std::endl;
 }
 
-void MD5Frame::ProcessRow(int rownum)
+void MD5Frame::processRow(int rownum)
 {
     // Called by worker thread
     RowData &curRow = this->row[rownum];
@@ -205,32 +205,32 @@ int main(int, char **)
 
     PPA_INIT();
 
-    pool = ThreadPool::AllocThreadPool(1);
+    pool = ThreadPool::allocThreadPool(1);
     {
         MD5Frame frame(pool);
-        frame.Initialize(60, 40);
-        frame.Encode();
+        frame.initialize(60, 40);
+        frame.encode();
     }
-    pool->Release();
-    pool = ThreadPool::AllocThreadPool(2);
+    pool->release();
+    pool = ThreadPool::allocThreadPool(2);
     {
         MD5Frame frame(pool);
-        frame.Initialize(60, 40);
-        frame.Encode();
+        frame.initialize(60, 40);
+        frame.encode();
     }
-    pool->Release();
-    pool = ThreadPool::AllocThreadPool(4);
+    pool->release();
+    pool = ThreadPool::allocThreadPool(4);
     {
         MD5Frame frame(pool);
-        frame.Initialize(60, 40);
-        frame.Encode();
+        frame.initialize(60, 40);
+        frame.encode();
     }
-    pool->Release();
-    pool = ThreadPool::AllocThreadPool(8);
+    pool->release();
+    pool = ThreadPool::allocThreadPool(8);
     {
         MD5Frame frame(pool);
-        frame.Initialize(60, 40);
-        frame.Encode();
+        frame.initialize(60, 40);
+        frame.encode();
     }
-    pool->Release();
+    pool->release();
 }

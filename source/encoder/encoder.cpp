@@ -172,17 +172,17 @@ void Encoder::configure(x265_param_t *param)
     if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)
         param->poolNumThreads = 1;
 
-    setThreadPool(ThreadPool::AllocThreadPool(param->poolNumThreads));
+    setThreadPool(ThreadPool::allocThreadPool(param->poolNumThreads));
 
     // Disable parallelism features if one thread was instantiated
-    if (getThreadPool()->GetThreadCount() <= 1 && (param->bEnableWavefront || param->gopNumThreads > 1))
+    if (getThreadPool()->getThreadCount() <= 1 && (param->bEnableWavefront || param->gopNumThreads > 1))
     {
         param->bEnableWavefront = 0;
         param->gopNumThreads = 1;
     }
-    if (getThreadPool()->GetThreadCount() > 1)
+    if (getThreadPool()->getThreadCount() > 1)
         x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads, GOPs:%d WPP:%d\n",
-                 getThreadPool()->GetThreadCount(), param->gopNumThreads, param->bEnableWavefront);
+                 getThreadPool()->getThreadCount(), param->gopNumThreads, param->bEnableWavefront);
     else
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
     setWaveFrontSynchro(param->bEnableWavefront);

@@ -108,7 +108,7 @@ Void TEncTop::destroy()
     m_cRateCtrl.destroy();
 
     if (m_threadPool)
-        m_threadPool->Release();
+        m_threadPool->release();
 }
 
 Void TEncTop::init()
