@@ -165,7 +165,7 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
 }
 
 #if INSTRSET < 4
-void xDST4(short *src, int *dst, intptr_t nStride)
+void dst4(short *src, int *dst, intptr_t stride)
 {
     const int shift_1st = 1;
     const int shift_2nd = 8;
@@ -175,7 +175,7 @@ void xDST4(short *src, int *dst, intptr_t nStride)
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&block[i * 4], &src[i * nStride], 4 * sizeof(short));
+        memcpy(&block[i * 4], &src[i * stride], 4 * sizeof(short));
     }
 
     fastForwardDst(block, coef, shift_1st);
@@ -202,17 +202,17 @@ ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
     { 55, -84, 74, -29, 55, -84, 74, -29 },
 };
 
-void xDST4(short *src, int *dst, intptr_t nStride)
+void dst4(short *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_1     = _mm_set1_epi32(1);
     __m128i c_128   = _mm_set1_epi32(128);
 
     // Load
-    __m128i T20  = _mm_loadl_epi64((__m128i*)&src[0 * nStride]);
-    __m128i T21  = _mm_loadl_epi64((__m128i*)&src[1 * nStride]);
-    __m128i T22  = _mm_loadl_epi64((__m128i*)&src[2 * nStride]);
-    __m128i T23  = _mm_loadl_epi64((__m128i*)&src[3 * nStride]);
+    __m128i T20  = _mm_loadl_epi64((__m128i*)&src[0 * stride]);
+    __m128i T21  = _mm_loadl_epi64((__m128i*)&src[1 * stride]);
+    __m128i T22  = _mm_loadl_epi64((__m128i*)&src[2 * stride]);
+    __m128i T23  = _mm_loadl_epi64((__m128i*)&src[3 * stride]);
 
     __m128i T30  = _mm_unpacklo_epi64(T20, T21);
     __m128i T31  = _mm_unpacklo_epi64(T22, T23);
@@ -4086,7 +4086,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 
     // TODO: in 16bpp mode, the intermediate must be 32-bits
 #if !HIGH_BIT_DEPTH && INSTRSET > 4
-    p.dct[DST_4x4] = xDST4;
+    p.dct[DST_4x4] = dst4;
     p.dct[DCT_4x4] = xDCT4;
     p.dct[DCT_8x8] = xDCT8;
     p.dct[DCT_16x16] = xDCT16;
