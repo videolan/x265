@@ -270,7 +270,7 @@ ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
     { 64, -64, 64, -64, 64, -64, 64, -64 },
     { 36, -83, 36, -83, 36, -83, 36, -83 },
 };
-void xDCT4(short *src, int *dst, intptr_t nStride)
+void dct4(short *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_1         = _mm_set1_epi32(1);
@@ -281,10 +281,10 @@ void xDCT4(short *src, int *dst, intptr_t nStride)
     __m128i T40, T41, T50, T51, T60, T61, T62, T63, T70, T71, T72, T73;
     __m128i T50_, T51_;
 
-    __m128i T10  = _mm_loadl_epi64((__m128i*)&src[0 * nStride]);
-    __m128i T11  = _mm_loadl_epi64((__m128i*)&src[1 * nStride]);
-    __m128i T12  = _mm_loadl_epi64((__m128i*)&src[2 * nStride]);
-    __m128i T13  = _mm_loadl_epi64((__m128i*)&src[3 * nStride]);
+    __m128i T10  = _mm_loadl_epi64((__m128i*)&src[0 * stride]);
+    __m128i T11  = _mm_loadl_epi64((__m128i*)&src[1 * stride]);
+    __m128i T12  = _mm_loadl_epi64((__m128i*)&src[2 * stride]);
+    __m128i T13  = _mm_loadl_epi64((__m128i*)&src[3 * stride]);
 
     T20  = _mm_unpacklo_epi64(T10, T11);
     T21  = _mm_unpacklo_epi64(T12, T13);
@@ -4087,7 +4087,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     // TODO: in 16bpp mode, the intermediate must be 32-bits
 #if !HIGH_BIT_DEPTH && INSTRSET > 4
     p.dct[DST_4x4] = dst4;
-    p.dct[DCT_4x4] = xDCT4;
+    p.dct[DCT_4x4] = dct4;
     p.dct[DCT_8x8] = xDCT8;
     p.dct[DCT_16x16] = xDCT16;
     p.dct[DCT_32x32] = xDCT32;
