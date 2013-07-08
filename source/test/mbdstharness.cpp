@@ -412,7 +412,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.dequant)
     {
         printf("xDeQuant\t\t");
-        REPORT_SPEEDUP(opt.dequant, ref.deQuant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
+        REPORT_SPEEDUP(opt.dequant, ref.dequant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 
     if (opt.quantaq)
