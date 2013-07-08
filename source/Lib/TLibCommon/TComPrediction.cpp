@@ -344,15 +344,15 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     // Create the prediction
     if (uiDirMode == PLANAR_IDX)
     {
-        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize);
+        primitives.intra_pred_planar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize);
     }
     else if (uiDirMode == DC_IDX)
     {
-        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize, bFilter);
+        primitives.intra_pred_dc((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iSize, bFilter);
     }
     else
     {
-        primitives.getIPredAng(g_bitDepthY, (pixel*)pDst, uiStride, iSize, uiDirMode, bFilter, (pixel*)refLft, (pixel*)refAbv);
+        primitives.intra_pred_ang(g_bitDepthY, (pixel*)pDst, uiStride, iSize, uiDirMode, bFilter, (pixel*)refLft, (pixel*)refAbv);
     }
 }
 
@@ -367,11 +367,11 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
 
     if (uiDirMode == PLANAR_IDX)
     {
-        primitives.getIPredPlanar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth);
+        primitives.intra_pred_planar((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth);
     }
     else if (uiDirMode == DC_IDX)
     {
-        primitives.getIPredDC((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, false);
+        primitives.intra_pred_dc((pixel*)ptrSrc + sw + 1, sw, (pixel*)pDst, uiStride, iWidth, false);
     }
     else
     {
@@ -385,7 +385,7 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
             refLft[k + iWidth - 1] = ptrSrc[k * sw];
         }
 
-        primitives.getIPredAng(g_bitDepthC, (pixel*)pDst, uiStride, iWidth, uiDirMode, false, (pixel*)refLft + iWidth - 1, (pixel*)refAbv + iWidth - 1);
+        primitives.intra_pred_ang(g_bitDepthC, (pixel*)pDst, uiStride, iWidth, uiDirMode, false, (pixel*)refLft + iWidth - 1, (pixel*)refAbv + iWidth - 1);
     }
 }
 

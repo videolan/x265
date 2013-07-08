@@ -298,13 +298,13 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.getIPredDC = PredIntraDC;
-    p.getIPredPlanar = PredIntraPlanar;
-    p.getIPredAng = PredIntraAngBufRef;
-    p.getIPredAngs[0] = PredIntraAngs_C<4>;
-    p.getIPredAngs[1] = PredIntraAngs_C<8>;
-    p.getIPredAngs[2] = PredIntraAngs_C<16>;
-    p.getIPredAngs[3] = PredIntraAngs_C<32>;
-    p.getIPredAngs[4] = PredIntraAngs_C<64>;
+    p.intra_pred_dc = PredIntraDC;
+    p.intra_pred_planar = PredIntraPlanar;
+    p.intra_pred_ang = PredIntraAngBufRef;
+    p.intra_pred_allangs[0] = PredIntraAngs_C<4>;
+    p.intra_pred_allangs[1] = PredIntraAngs_C<8>;
+    p.intra_pred_allangs[2] = PredIntraAngs_C<16>;
+    p.intra_pred_allangs[3] = PredIntraAngs_C<32>;
+    p.intra_pred_allangs[4] = PredIntraAngs_C<64>;
 }
 }

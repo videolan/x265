@@ -13057,30 +13057,30 @@ namespace x265 {
 void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
 {
     initFileStaticVars();
-    p.getIPredDC = predIntraDC;
-    p.getIPredPlanar = predIntraPlanar;
-    p.getIPredAng = xPredIntraAngBufRef;
+    p.intra_pred_dc = predIntraDC;
+    p.intra_pred_planar = predIntraPlanar;
+    p.intra_pred_ang = xPredIntraAngBufRef;
 
     /* VC10 and VC11 both generate bad Win32 code for these functions.
      * They apparently can't deal with register allocation for intrinsic
      * functions this large */
 #if HIGH_BIT_DEPTH || (INSTRSET < 5) || (defined(_MSC_VER) && (_MSC_VER > 1500) && !defined(_WIN64) && !defined(__INTEL_COMPILER))
-    p.getIPredAngs[0] = xPredIntraAngs<4>;
-    p.getIPredAngs[1] = xPredIntraAngs<8>;
-    p.getIPredAngs[2] = xPredIntraAngs<16>;
-    p.getIPredAngs[3] = xPredIntraAngs<32>;
-    p.getIPredAngs[4] = xPredIntraAngs<64>;
+    p.intra_pred_allangs[0] = xPredIntraAngs<4>;
+    p.intra_pred_allangs[1] = xPredIntraAngs<8>;
+    p.intra_pred_allangs[2] = xPredIntraAngs<16>;
+    p.intra_pred_allangs[3] = xPredIntraAngs<32>;
+    p.intra_pred_allangs[4] = xPredIntraAngs<64>;
 #else
-    p.getIPredAngs[0] = predIntraAngs4;
-    p.getIPredAngs[1] = predIntraAngs8;
-#if X86_64
-    p.getIPredAngs[2] = xPredIntraAngs<16>;
-    p.getIPredAngs[3] = xPredIntraAngs<32>;
+    p.intra_pred_allangs[0] = predIntraAngs4;
+    p.intra_pred_allangs[1] = predIntraAngs8;
+#if defined(_MSC_VER) && defined(X86_64) && !defined(__INTEL_COMPILER)
+    p.intra_pred_allangs[2] = xPredIntraAngs<16>;
+    p.intra_pred_allangs[3] = xPredIntraAngs<32>;
 #else
-    p.getIPredAngs[2] = predIntraAngs16; // uses PINSERB
-    p.getIPredAngs[3] = predIntraAngs32;
+    p.intra_pred_allangs[2] = predIntraAngs16; // uses PINSERB
+    p.intra_pred_allangs[3] = predIntraAngs32;
 #endif
-    p.getIPredAngs[4] = xPredIntraAngs<64>;
+    p.intra_pred_allangs[4] = xPredIntraAngs<64>;
 #endif
 }
 

@@ -32,10 +32,10 @@ class IntraPredHarness : public TestHarness
 protected:
 
     pixel *pixel_buff;
-    pixel *pixel_out_C;
-    pixel *pixel_out_Vec;
-    pixel *pixel_out_33_C;
-    pixel *pixel_out_33_Vec;
+    pixel *pixel_out_c;
+    pixel *pixel_out_vec;
+    pixel *pixel_out_33_c;
+    pixel *pixel_out_33_vec;
 
     pixel *IP_vec_output_p, *IP_C_output_p;
 
@@ -43,10 +43,10 @@ protected:
     static const int out_size = 64 * FENC_STRIDE;
     static const int out_size_33 = 33 * 64 * FENC_STRIDE;
 
-    bool check_getIPredDC_primitive(x265::intra_dc_t ref, x265::intra_dc_t opt);
-    bool check_getIPredPlanar_primitive(x265::intra_planar_t ref, x265::intra_planar_t opt);
-    bool check_getIPredAng_primitive(x265::intra_ang_t ref, x265::intra_ang_t opt);
-    bool check_getIPredAngs_primitive(const x265::intra_allangs_t ref[], const x265::intra_allangs_t opt[]);
+    bool check_dc_primitive(x265::intra_dc_t ref, x265::intra_dc_t opt);
+    bool check_planar_primitive(x265::intra_planar_t ref, x265::intra_planar_t opt);
+    bool check_angular_primitive(x265::intra_ang_t ref, x265::intra_ang_t opt);
+    bool check_allangs_primitive(const x265::intra_allangs_t ref[], const x265::intra_allangs_t opt[]);
 
 public:
 

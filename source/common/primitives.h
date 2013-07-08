@@ -240,10 +240,10 @@ struct EncoderPrimitives
     blockcpy_p_s cpyblock_p_s; // pixel from short
     blockcpy_s_p cpyblock_s_p; // short from pixel
     blockcpy_s_c cpyblock_s_c; // short from unsigned char
-    intra_dc_t getIPredDC;
-    intra_planar_t getIPredPlanar;
-    intra_ang_t getIPredAng;
-    intra_allangs_t getIPredAngs[NUM_SQUARE_BLOCKS];
+    intra_dc_t intra_pred_dc;
+    intra_planar_t intra_pred_planar;
+    intra_ang_t intra_pred_ang;
+    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
     dequant_t dequant;
     dct_t dct[NUM_DCTS];
     idct_t idct[NUM_IDCTS];
