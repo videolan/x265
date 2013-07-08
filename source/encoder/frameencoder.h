@@ -94,7 +94,7 @@ public:
     /* Config broadcast methods */
     void setAdaptiveSearchRange(int iDir, int iRefIdx, int iNewSR)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cSearch.setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
         }
@@ -102,7 +102,7 @@ public:
 
     void setQPLambda(Int QP, double dLambdaLuma, double dLambdaChroma)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cSearch.setQPLambda(QP, dLambdaLuma, dLambdaChroma);
         }
@@ -110,7 +110,7 @@ public:
 
     void setCbDistortionWeight(double weight)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cRdCost.setCbDistortionWeight(weight);
         }
@@ -118,7 +118,7 @@ public:
 
     void setCrDistortionWeight(double weight)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cRdCost.setCrDistortionWeight(weight);
         }
@@ -126,7 +126,7 @@ public:
 
     void setFlatScalingList()
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cTrQuant.setFlatScalingList();
         }
@@ -134,7 +134,7 @@ public:
 
     void setUseScalingList(bool flag)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             m_rows[i].m_cTrQuant.setUseScalingList(flag);
         }
@@ -142,7 +142,7 @@ public:
 
     void setScalingList(TComScalingList *list)
     {
-        for (int i = 0; i < m_nrows; i++)
+        for (int i = 0; i < m_numRows; i++)
         {
             this->m_rows[i].m_cTrQuant.setScalingList(list);
         }
@@ -173,7 +173,7 @@ public:
 
     void resetEntropy(TComSlice *pcSlice)
     {
-        for (int i = 0; i < this->m_nrows; i++)
+        for (int i = 0; i < this->m_numRows; i++)
         {
             this->m_rows[i].m_cEntropyCoder.setEntropyCoder(&this->m_rows[i].m_cSbacCoder, pcSlice);
             this->m_rows[i].m_cEntropyCoder.resetEntropy();
@@ -200,7 +200,7 @@ protected:
     TComSlice*               m_pcSlice;
     TComPic*                 m_pic;
 
-    int                      m_nrows;
+    int                      m_numRows;
     bool                     m_enableWpp;
     CTURow*                  m_rows;
     Event                    m_completionEvent;

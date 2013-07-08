@@ -143,7 +143,7 @@ void FrameEncoder::destroy()
 
     if (m_rows)
     {
-        for (int i = 0; i < m_nrows; ++i)
+        for (int i = 0; i < m_numRows; ++i)
         {
             m_rows[i].destroy();
         }
@@ -163,7 +163,7 @@ void FrameEncoder::destroy()
 void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_pcCfg = top;
-    m_nrows = numRows;
+    m_numRows = numRows;
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
 
     m_cSliceEncoder.init(top);
@@ -178,13 +178,13 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     }
     m_cLoopFilter.create(g_uiMaxCUDepth);
 
-    m_rows = new CTURow[m_nrows];
-    for (int i = 0; i < m_nrows; ++i)
+    m_rows = new CTURow[m_numRows];
+    for (int i = 0; i < m_numRows; ++i)
     {
         m_rows[i].create(top);
     }
 
-    if (!WaveFront::initJobQueue(m_nrows))
+    if (!WaveFront::initJobQueue(m_numRows))
     {
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
@@ -253,7 +253,7 @@ void FrameEncoder::processRow(int irow)
         // Completed CU processing
         curRow.m_curCol++;
 
-        if (curRow.m_curCol >= 2 && irow < m_nrows - 1)
+        if (curRow.m_curCol >= 2 && irow < m_numRows - 1)
         {
             ScopedLock below(m_rows[irow + 1].m_lock);
             if (m_rows[irow + 1].m_active == false &&
@@ -273,7 +273,7 @@ void FrameEncoder::processRow(int irow)
     }
 
     // this row of CTUs has been encoded
-    if (irow == m_nrows - 1)
+    if (irow == m_numRows - 1)
     {
         m_completionEvent.Trigger();
     }
