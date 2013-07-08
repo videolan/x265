@@ -29,7 +29,7 @@
 //#define MAX_CU_SIZE 64
 extern char g_aucConvertToBit[];
 
-unsigned char g_aucIntraFilterType[][35] =
+unsigned char IntraFilterType[][35] =
 {
     //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
     /*  4x4  */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -267,8 +267,8 @@ void PredIntraAngs_C(pixel *Dst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1,
 
     for (iMode = 2; iMode <= 34; iMode++)
     {
-        pixel *pLeft = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
-        pixel *pAbove = (g_aucIntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
+        pixel *pLeft = (IntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
+        pixel *pAbove = (IntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
         pixel *dst = Dst0 + (iMode - 2) * (size * size);
 
         PredIntraAngBufRef(8, dst, size, size, iMode, bLuma, pLeft, pAbove);
