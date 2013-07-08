@@ -638,32 +638,32 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i gaiTRow0(64, 64, 0, 0);
-    Vec4i gaiTRow4(83, 36, 0, 0);
-    Vec4i gaiTRow8(64, -64, 0, 0);
-    Vec4i gaiTRow12(36, -83, 0, 0);
+    Vec4i zero_row(64, 64, 0, 0);
+    Vec4i four_row(83, 36, 0, 0);
+    Vec4i eight_row(64, -64, 0, 0);
+    Vec4i twelve_row(36, -83, 0, 0);
 
-    Vec4i gaiTRow2(89, 75, 50, 18);
-    Vec4i gaiTRow6(75, -18, -89, -50);
-    Vec4i gaiTRow10(50, -89, 18, 75);
-    Vec4i gaiTRow14(18, -50, 75, -89);
+    Vec4i two_row(89, 75, 50, 18);
+    Vec4i six_row(75, -18, -89, -50);
+    Vec4i ten_row(50, -89, 18, 75);
+    Vec4i fourteen_row(18, -50, 75, -89);
 
-    Vec4i gaiTRow1_n0_n3(90, 87, 80, 70);
-    Vec4i gaiTRow1_n4_n7(57, 43, 25,  9);
-    Vec4i gaiTRow3_n0_n3(87, 57,  9, -43);
-    Vec4i gaiTRow3_n4_n7(-80, -90, -70, -25);
-    Vec4i gaiTRow5_n0_n3(80,  9, -70, -87);
-    Vec4i gaiTRow5_n4_n7(-25, 57, 90, 43);
-    Vec4i gaiTRow7_n0_n3(70, -43, -87,  9);
-    Vec4i gaiTRow7_n4_n7(90, 25, -80, -57);
-    Vec4i gaiTRow9_n0_n3(57, -80, -25, 90);
-    Vec4i gaiTRow9_n4_n7(-9, -87, 43, 70);
-    Vec4i gaiTRow11_n0_n3(43, -90, 57, 25);
-    Vec4i gaiTRow11_n4_n7(-87, 70,  9, -80);
-    Vec4i gaiTRow13_n0_n3(25, -70, 90, -80);
-    Vec4i gaiTRow13_n4_n7(43,  9, -57, 87);
-    Vec4i gaiTRow15_n0_n3(9, -25, 43, -57);
-    Vec4i gaiTRow15_n4_n7(70, -80, 87, -90);
+    Vec4i one_row_first_half(90, 87, 80, 70);
+    Vec4i one_row_second_half(57, 43, 25,  9);
+    Vec4i three_row_first_half(87, 57,  9, -43);
+    Vec4i three_row_second_half(-80, -90, -70, -25);
+    Vec4i five_row_first_half(80,  9, -70, -87);
+    Vec4i five_row_second_half(-25, 57, 90, 43);
+    Vec4i seven_row_first_half(70, -43, -87,  9);
+    Vec4i seven_row_second_half(90, 25, -80, -57);
+    Vec4i nine_row_first_half(57, -80, -25, 90);
+    Vec4i nine_row_second_half(-9, -87, 43, 70);
+    Vec4i eleven_row_first_half(43, -90, 57, 25);
+    Vec4i eleven_row_second_half(-87, 70,  9, -80);
+    Vec4i thirteen_row_first_half(25, -70, 90, -80);
+    Vec4i thirteen_row_second_half(43,  9, -57, 87);
+    Vec4i fifteen_row_first_half(9, -25, 43, -57);
+    Vec4i fifteen_row_second_half(70, -80, 87, -90);
 
     for (j = 0; j < line; j++)
     {
@@ -694,10 +694,10 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
         Vec4i EEE = EE_first_half + EE_second_half;
         Vec4i EEO = EE_first_half - EE_second_half;
 
-        Vec4i dst_tmp0 = gaiTRow0 * EEE;
-        Vec4i dst_tmp4 = gaiTRow4 * EEO;
-        Vec4i dst_tmp8 = gaiTRow8 * EEE;
-        Vec4i dst_tmp12 = gaiTRow12 * EEO;
+        Vec4i dst_tmp0 = zero_row * EEE;
+        Vec4i dst_tmp4 = four_row * EEO;
+        Vec4i dst_tmp8 = eight_row * EEE;
+        Vec4i dst_tmp12 = twelve_row * EEO;
 
         int dst_zero = horizontal_add(dst_tmp0);
         int dst_four = horizontal_add(dst_tmp4);
@@ -714,10 +714,10 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
         dst[4 * line] = dst_shift_result[2];
         dst[12 * line] = dst_shift_result[3];
 
-        Vec4i dst_tmp2 = gaiTRow2 * EO;
-        Vec4i dst_tmp6 = gaiTRow6 * EO;
-        Vec4i dst_tmp10 = gaiTRow10 * EO;
-        Vec4i dst_tmp14 = gaiTRow14 * EO;
+        Vec4i dst_tmp2 = two_row * EO;
+        Vec4i dst_tmp6 = six_row * EO;
+        Vec4i dst_tmp10 = ten_row * EO;
+        Vec4i dst_tmp14 = fourteen_row * EO;
 
         int dst_two = horizontal_add(dst_tmp2);
         int dst_six = horizontal_add(dst_tmp6);
@@ -733,22 +733,22 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
         dst[10 * line] = dst_2_6_10_14[2];
         dst[14 * line] = dst_2_6_10_14[3];
 
-        Vec4i dst_tmp1_first_half = gaiTRow1_n0_n3 * O_first_half;
-        Vec4i dst_tmp1_second_half = gaiTRow1_n4_n7 * O_second_half;
-        Vec4i dst_tmp3_first_half = gaiTRow3_n0_n3 * O_first_half;
-        Vec4i dst_tmp3_second_half = gaiTRow3_n4_n7 * O_second_half;
-        Vec4i dst_tmp5_first_half = gaiTRow5_n0_n3 * O_first_half;
-        Vec4i dst_tmp5_second_half = gaiTRow5_n4_n7 * O_second_half;
-        Vec4i dst_tmp7_first_half = gaiTRow7_n0_n3 * O_first_half;
-        Vec4i dst_tmp7_second_half = gaiTRow7_n4_n7 * O_second_half;
-        Vec4i dst_tmp9_first_half = gaiTRow9_n0_n3 * O_first_half;
-        Vec4i dst_tmp9_second_half = gaiTRow9_n4_n7 * O_second_half;
-        Vec4i dst_tmp11_first_half = gaiTRow11_n0_n3 * O_first_half;
-        Vec4i dst_tmp11_second_half = gaiTRow11_n4_n7 * O_second_half;
-        Vec4i dst_tmp13_first_half = gaiTRow13_n0_n3 * O_first_half;
-        Vec4i dst_tmp13_second_half = gaiTRow13_n4_n7 * O_second_half;
-        Vec4i dst_tmp15_first_half = gaiTRow15_n0_n3 * O_first_half;
-        Vec4i dst_tmp15_second_half = gaiTRow15_n4_n7 * O_second_half;
+        Vec4i dst_tmp1_first_half = one_row_first_half * O_first_half;
+        Vec4i dst_tmp1_second_half = one_row_second_half * O_second_half;
+        Vec4i dst_tmp3_first_half = three_row_first_half * O_first_half;
+        Vec4i dst_tmp3_second_half = three_row_second_half * O_second_half;
+        Vec4i dst_tmp5_first_half = five_row_first_half * O_first_half;
+        Vec4i dst_tmp5_second_half = five_row_second_half * O_second_half;
+        Vec4i dst_tmp7_first_half = seven_row_first_half * O_first_half;
+        Vec4i dst_tmp7_second_half = seven_row_second_half * O_second_half;
+        Vec4i dst_tmp9_first_half = nine_row_first_half * O_first_half;
+        Vec4i dst_tmp9_second_half = nine_row_second_half * O_second_half;
+        Vec4i dst_tmp11_first_half = eleven_row_first_half * O_first_half;
+        Vec4i dst_tmp11_second_half = eleven_row_second_half * O_second_half;
+        Vec4i dst_tmp13_first_half = thirteen_row_first_half * O_first_half;
+        Vec4i dst_tmp13_second_half = thirteen_row_second_half * O_second_half;
+        Vec4i dst_tmp15_first_half = fifteen_row_first_half * O_first_half;
+        Vec4i dst_tmp15_second_half = fifteen_row_second_half * O_second_half;
 
         int dst_one = horizontal_add(dst_tmp1_first_half) + horizontal_add(dst_tmp1_second_half);
         int dst_three = horizontal_add(dst_tmp3_first_half) + horizontal_add(dst_tmp3_second_half);
@@ -781,7 +781,7 @@ inline void partialButterfly16(short *src, short *dst, int shift, int line)
     }
 }
 
-void xDCT16(short *src, int *dst, intptr_t nStride)
+void dct16(short *src, int *dst, intptr_t stride)
 {
     const int shift_1st = 3;
     const int shift_2nd = 10;
@@ -791,7 +791,7 @@ void xDCT16(short *src, int *dst, intptr_t nStride)
 
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&block[i * 16], &src[i * nStride], 16 * sizeof(short));
+        memcpy(&block[i * 16], &src[i * stride], 16 * sizeof(short));
     }
 
     partialButterfly16(block, coef, shift_1st, 16);
@@ -851,7 +851,7 @@ ALIGN_VAR_32(static const short, tab_dct_16_1[][8]) =
 #undef MAKE_COEF
 };
 
-void xDCT16(short *src, int *dst, intptr_t nStride)
+void dct16(short *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_4     = _mm_set1_epi32(4);
@@ -874,22 +874,22 @@ void xDCT16(short *src, int *dst, intptr_t nStride)
     // DCT1
     for (i = 0; i < 16; i += 8)
     {
-        T00A = _mm_load_si128((__m128i*)&src[(i + 0) * nStride + 0]);    // [07 06 05 04 03 02 01 00]
-        T00B = _mm_load_si128((__m128i*)&src[(i + 0) * nStride + 8]);    // [0F 0E 0D 0C 0B 0A 09 08]
-        T01A = _mm_load_si128((__m128i*)&src[(i + 1) * nStride + 0]);    // [17 16 15 14 13 12 11 10]
-        T01B = _mm_load_si128((__m128i*)&src[(i + 1) * nStride + 8]);    // [1F 1E 1D 1C 1B 1A 19 18]
-        T02A = _mm_load_si128((__m128i*)&src[(i + 2) * nStride + 0]);    // [27 26 25 24 23 22 21 20]
-        T02B = _mm_load_si128((__m128i*)&src[(i + 2) * nStride + 8]);    // [2F 2E 2D 2C 2B 2A 29 28]
-        T03A = _mm_load_si128((__m128i*)&src[(i + 3) * nStride + 0]);    // [37 36 35 34 33 32 31 30]
-        T03B = _mm_load_si128((__m128i*)&src[(i + 3) * nStride + 8]);    // [3F 3E 3D 3C 3B 3A 39 38]
-        T04A = _mm_load_si128((__m128i*)&src[(i + 4) * nStride + 0]);    // [47 46 45 44 43 42 41 40]
-        T04B = _mm_load_si128((__m128i*)&src[(i + 4) * nStride + 8]);    // [4F 4E 4D 4C 4B 4A 49 48]
-        T05A = _mm_load_si128((__m128i*)&src[(i + 5) * nStride + 0]);    // [57 56 55 54 53 52 51 50]
-        T05B = _mm_load_si128((__m128i*)&src[(i + 5) * nStride + 8]);    // [5F 5E 5D 5C 5B 5A 59 58]
-        T06A = _mm_load_si128((__m128i*)&src[(i + 6) * nStride + 0]);    // [67 66 65 64 63 62 61 60]
-        T06B = _mm_load_si128((__m128i*)&src[(i + 6) * nStride + 8]);    // [6F 6E 6D 6C 6B 6A 69 68]
-        T07A = _mm_load_si128((__m128i*)&src[(i + 7) * nStride + 0]);    // [77 76 75 74 73 72 71 70]
-        T07B = _mm_load_si128((__m128i*)&src[(i + 7) * nStride + 8]);    // [7F 7E 7D 7C 7B 7A 79 78]
+        T00A = _mm_load_si128((__m128i*)&src[(i + 0) * stride + 0]);    // [07 06 05 04 03 02 01 00]
+        T00B = _mm_load_si128((__m128i*)&src[(i + 0) * stride + 8]);    // [0F 0E 0D 0C 0B 0A 09 08]
+        T01A = _mm_load_si128((__m128i*)&src[(i + 1) * stride + 0]);    // [17 16 15 14 13 12 11 10]
+        T01B = _mm_load_si128((__m128i*)&src[(i + 1) * stride + 8]);    // [1F 1E 1D 1C 1B 1A 19 18]
+        T02A = _mm_load_si128((__m128i*)&src[(i + 2) * stride + 0]);    // [27 26 25 24 23 22 21 20]
+        T02B = _mm_load_si128((__m128i*)&src[(i + 2) * stride + 8]);    // [2F 2E 2D 2C 2B 2A 29 28]
+        T03A = _mm_load_si128((__m128i*)&src[(i + 3) * stride + 0]);    // [37 36 35 34 33 32 31 30]
+        T03B = _mm_load_si128((__m128i*)&src[(i + 3) * stride + 8]);    // [3F 3E 3D 3C 3B 3A 39 38]
+        T04A = _mm_load_si128((__m128i*)&src[(i + 4) * stride + 0]);    // [47 46 45 44 43 42 41 40]
+        T04B = _mm_load_si128((__m128i*)&src[(i + 4) * stride + 8]);    // [4F 4E 4D 4C 4B 4A 49 48]
+        T05A = _mm_load_si128((__m128i*)&src[(i + 5) * stride + 0]);    // [57 56 55 54 53 52 51 50]
+        T05B = _mm_load_si128((__m128i*)&src[(i + 5) * stride + 8]);    // [5F 5E 5D 5C 5B 5A 59 58]
+        T06A = _mm_load_si128((__m128i*)&src[(i + 6) * stride + 0]);    // [67 66 65 64 63 62 61 60]
+        T06B = _mm_load_si128((__m128i*)&src[(i + 6) * stride + 8]);    // [6F 6E 6D 6C 6B 6A 69 68]
+        T07A = _mm_load_si128((__m128i*)&src[(i + 7) * stride + 0]);    // [77 76 75 74 73 72 71 70]
+        T07B = _mm_load_si128((__m128i*)&src[(i + 7) * stride + 8]);    // [7F 7E 7D 7C 7B 7A 79 78]
 
         T00B = _mm_shuffle_epi8(T00B, _mm_load_si128((__m128i*)tab_dct_16_0[0]));
         T01B = _mm_shuffle_epi8(T01B, _mm_load_si128((__m128i*)tab_dct_16_0[0]));
@@ -4089,7 +4089,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.dct[DST_4x4] = dst4;
     p.dct[DCT_4x4] = dct4;
     p.dct[DCT_8x8] = xDCT8;
-    p.dct[DCT_16x16] = xDCT16;
+    p.dct[DCT_16x16] = dct16;
     p.dct[DCT_32x32] = xDCT32;
 #endif
     // TODO: I am not sure the IDCT works on 16bpp mode
