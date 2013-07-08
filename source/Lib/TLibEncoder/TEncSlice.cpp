@@ -465,7 +465,7 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
 #endif
     }
 
-    pcEncodeFrame->Encode(pcPic, pcSlice);
+    pcEncodeFrame->encode(pcPic, pcSlice);
 
     if (m_pcCfg->getWaveFrontsynchro())
     {

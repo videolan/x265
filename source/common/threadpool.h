@@ -58,7 +58,7 @@ public:
 
     // Worker threads will call this method to find a job.  Must return true if
     // work was completed.  False if no work was available.
-    virtual bool FindJob() = 0;
+    virtual bool findJob() = 0;
 
     // All derived objects that call Enqueue *MUST* call flush before allowing
     // their object to be destroyed, otherwise you will see random crashes involving

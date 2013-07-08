@@ -74,6 +74,7 @@ public:
     volatile uint32_t   m_curCol;
 };
 
+// Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront
 {
 public:
@@ -86,9 +87,9 @@ public:
 
     void destroy();
 
-    void Encode(TComPic *pic, TComSlice* pcSlice);
+    void encode(TComPic *pic, TComSlice* pcSlice);
 
-    void ProcessRow(int irow);
+    void processRow(int irow);
 
     /* Config broadcast methods */
     void setAdaptiveSearchRange(int iDir, int iRefIdx, int iNewSR)

@@ -49,7 +49,7 @@ private:
 
     //< WaveFront's internal implementation. Consults queuedBitmap and calls
     //< ProcessRow(row) for lowest numbered queued row or returns false
-    bool FindJob();
+    bool findJob();
 
 public:
 
@@ -59,15 +59,15 @@ public:
 
     //< Must be called just once after the frame is allocated.  Returns true on
     //< success.  It it returns false, the frame must encode in series.
-    bool InitJobQueue(int numRows);
+    bool initJobQueue(int numRows);
 
     //< Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
     //< ThreadPoolEnqueue() must be called before EnqueueRow()
-    void EnqueueRow(int row);
+    void enqueueRow(int row);
 
     //< Start or resume encode processing of this row.  When the bottom row is
     //< finished, ThreadPoolDequeue() must be called.
-    virtual void ProcessRow(int row) = 0;
+    virtual void processRow(int row) = 0;
 };
 
 } // end namespace x265

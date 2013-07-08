@@ -52,7 +52,7 @@ public:
 
 protected:
 
-    bool FindJob();
+    bool findJob();
     void generateReferencePlane(int idx);
 
     intptr_t     m_startPad;

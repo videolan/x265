@@ -184,14 +184,14 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_rows[i].create(top);
     }
 
-    if (!WaveFront::InitJobQueue(m_nrows))
+    if (!WaveFront::initJobQueue(m_nrows))
     {
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;
     }
 }
 
-void FrameEncoder::Encode(TComPic *pic, TComSlice *pcSlice)
+void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
 {
     m_pic = pic;
     m_pcSlice = pcSlice;
@@ -209,21 +209,21 @@ void FrameEncoder::Encode(TComPic *pic, TComSlice *pcSlice)
     if (!m_pool || !m_enableWpp)
     {
         for (int i = 0; i < this->m_nrows; i++)
-            ProcessRow(i);
+            processRow(i);
     }
     else
     {
         WaveFront::Enqueue();
 
         // Enqueue first row, then block until worker threads complete the frame
-        WaveFront::EnqueueRow(0);
+        WaveFront::enqueueRow(0);
         m_completionEvent.Wait();
 
         WaveFront::Dequeue();
     }
 }
 
-void FrameEncoder::ProcessRow(int irow)
+void FrameEncoder::processRow(int irow)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
@@ -260,7 +260,7 @@ void FrameEncoder::ProcessRow(int irow)
                 m_rows[irow + 1].m_curCol + 2 <= curRow.m_curCol)
             {
                 m_rows[irow + 1].m_active = true;
-                WaveFront::EnqueueRow(irow + 1);
+                WaveFront::enqueueRow(irow + 1);
             }
         }
 

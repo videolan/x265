@@ -101,7 +101,7 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
 namespace x265 {
 // x265 private namespace
 
-bool WaveFront::InitJobQueue(int numRows)
+bool WaveFront::initJobQueue(int numRows)
 {
     m_numRows = numRows;
 
@@ -125,7 +125,7 @@ WaveFront::~WaveFront()
     }
 }
 
-void WaveFront::EnqueueRow(int row)
+void WaveFront::enqueueRow(int row)
 {
     // thread safe
     uint64_t bit = 1LL << (row & 63);
@@ -135,7 +135,7 @@ void WaveFront::EnqueueRow(int row)
     m_pool->PokeIdleThread();
 }
 
-bool WaveFront::FindJob()
+bool WaveFront::findJob()
 {
     unsigned long id;
 
@@ -154,7 +154,7 @@ bool WaveFront::FindJob()
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
             {
                 // if the bit was actually flipped, process row, else try again
-                ProcessRow(w * 64 + id);
+                processRow(w * 64 + id);
                 return true;
             }
         }

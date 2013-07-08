@@ -138,7 +138,7 @@ void MotionReference::generateReferencePlanes()
     xFree(m_intermediateValues);
 }
 
-bool MotionReference::FindJob()
+bool MotionReference::findJob()
 {
     /* Called by thread pool worker threads */
 
