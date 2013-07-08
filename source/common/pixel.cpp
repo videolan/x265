@@ -32,8 +32,8 @@ template<typename T>
 inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x)); }
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x4] = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 4, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 8, DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 4,  DATA_TYPE1, DATA_TYPE2 >;  \
+    p. FUNC_PREFIX [PARTITION_##WIDTH##x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 8,  DATA_TYPE1, DATA_TYPE2 >;  \
     p. FUNC_PREFIX [PARTITION_##WIDTH##x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 12, DATA_TYPE1, DATA_TYPE2 >;  \
     p. FUNC_PREFIX [PARTITION_##WIDTH##x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 16, DATA_TYPE1, DATA_TYPE2 >;  \
     p. FUNC_PREFIX [PARTITION_##WIDTH##x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 24, DATA_TYPE1, DATA_TYPE2 >;  \
@@ -42,8 +42,8 @@ inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x));
     p. FUNC_PREFIX [PARTITION_##WIDTH##x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 64, DATA_TYPE1, DATA_TYPE2 >;  \
 
 #define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(4, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(8, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(4,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(8,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(12, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(16, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(24, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
@@ -52,18 +52,18 @@ inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x));
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(64, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, WIDTH) \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x4]   = FUNC_PREFIX<WIDTH, 4>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x8]   = FUNC_PREFIX<WIDTH, 8>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x12]   = FUNC_PREFIX<WIDTH, 12>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x16]   = FUNC_PREFIX<WIDTH, 16>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x24]   = FUNC_PREFIX<WIDTH, 24>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x32]   = FUNC_PREFIX<WIDTH, 32>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x48]   = FUNC_PREFIX<WIDTH, 48>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x64]   = FUNC_PREFIX<WIDTH, 64>;
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x4]  = FUNC_PREFIX<WIDTH,  4>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x8]  = FUNC_PREFIX<WIDTH,  8>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x12] = FUNC_PREFIX<WIDTH, 12>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x16] = FUNC_PREFIX<WIDTH, 16>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x24] = FUNC_PREFIX<WIDTH, 24>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x32] = FUNC_PREFIX<WIDTH, 32>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x48] = FUNC_PREFIX<WIDTH, 48>; \
+    p.FUNC_PREFIX[PARTITION_##WIDTH##x64] = FUNC_PREFIX<WIDTH, 64>;
 
 #define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX)\
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 4) \
-    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 8) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  4) \
+    SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  8) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 12) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 16) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 24) \
@@ -94,7 +94,7 @@ int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 }
 
 template<int lx, int ly>
-void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t strideCur, int *res)
+void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -109,14 +109,14 @@ void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t strideC
         }
 
         pix1 += FENC_STRIDE;
-        pix2 += strideCur;
-        pix3 += strideCur;
-        pix4 += strideCur;
+        pix2 += frefstride;
+        pix3 += frefstride;
+        pix4 += frefstride;
     }
 }
 
 template<int lx, int ly>
-void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t strideCur, int *res)
+void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t frefstride, int *res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -133,10 +133,10 @@ void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, int
         }
 
         pix1 += FENC_STRIDE;
-        pix2 += strideCur;
-        pix3 += strideCur;
-        pix4 += strideCur;
-        pix5 += strideCur;
+        pix2 += frefstride;
+        pix3 += frefstride;
+        pix4 += frefstride;
+        pix5 += frefstride;
     }
 }
 
@@ -400,96 +400,86 @@ void blockcopy_s_c(int bx, int by, short *a, intptr_t stridea, uint8_t *b, intpt
     }
 }
 
-void convert16to32(short *psOrg, int *piDst, int num)
+void convert16to32(short *src, int *dst, int num)
 {
     for (int i = 0; i < num; i++)
     {
-        piDst[i] = (int)psOrg[i];
+        dst[i] = (int)src[i];
     }
 }
 
-void convert16to32_shl(int *piDst, short *psOrg, intptr_t iStride, int shift, int size)
+void convert16to32_shl(int *dst, short *src, intptr_t iStride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
-            piDst[i*size+j] = ((int)psOrg[i*iStride+j]) << shift;
+            dst[i*size+j] = ((int)src[i*iStride+j]) << shift;
         }
     }
 }
 
-void convert32to16(int *psOrg, short *piDst, int num)
+void convert32to16(int *src, short *dst, int num)
 {
     for (int i = 0; i < num; i++)
     {
-        piDst[i] = (short)psOrg[i];
+        dst[i] = (short)src[i];
     }
 }
 
-void convert32to16_shr(short *piDst, int *psOrg, int shift, int num)
+void convert32to16_shr(short *dst, int *src, int shift, int num)
 {
     int round = 1 << (shift-1);
     for (int i = 0; i < num; i++)
     {
-        piDst[i] = (short)((psOrg[i] + round) >> shift);
+        dst[i] = (short)((src[i] + round) >> shift);
     }
 }
 
 template <int blockSize>
-void getResidual(pixel *piOrg, pixel *piPred, short *piResi, int stride)
+void getResidual(pixel *fenc, pixel *pred, short *residual, int stride)
 {
-    pixel* pOrg   = piOrg;
-    pixel* pPred  = piPred;
-    short* pResi  = piResi;
-
     for (int uiY = 0; uiY < blockSize; uiY++)
     {
         for (int uiX = 0; uiX < blockSize; uiX++)
         {
-            pResi[uiX] = static_cast<short>(pOrg[uiX]) - static_cast<short>(pPred[uiX]);
+            residual[uiX] = static_cast<short>(fenc[uiX]) - static_cast<short>(pred[uiX]);
         }
 
-        pOrg  += stride;
-        pResi += stride;
-        pPred += stride;
+        fenc += stride;
+        residual += stride;
+        pred += stride;
     }
 }
 
 template <int blockSize>
-void calcRecons(pixel* piPred, short* piResi, pixel* piReco, short* piRecQt, pixel* piRecIPred, int uiStride, int uiRecQtStride, int uiRecIPredStride)
+void calcRecons(pixel* pred, short* residual, pixel* recon, short* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
-    pixel* pPred      = piPred;
-    short* pResi      = piResi;
-    pixel* pReco      = piReco;
-    short* pRecQt     = piRecQt;
-    pixel* pRecIPred  = piRecIPred;
-
     for (int uiY = 0; uiY < blockSize; uiY++)
     {
         for (int uiX = 0; uiX < blockSize; uiX++)
         {
-            pReco[uiX] = (pixel) ClipY(static_cast<short>(pPred[uiX]) + pResi[uiX]);
-            pRecQt[uiX] = (short)pReco[uiX];
-            pRecIPred[uiX] = pReco[uiX];
+            recon[uiX] = (pixel) ClipY(static_cast<short>(pred[uiX]) + residual[uiX]);
+            recqt[uiX] = (short)recon[uiX];
+            recipred[uiX] = recon[uiX];
         }
 
-        pPred     += uiStride;
-        pResi     += uiStride;
-        pReco     += uiStride;
-        pRecQt    += uiRecQtStride;
-        pRecIPred += uiRecIPredStride;
+        pred += stride;
+        residual += stride;
+        recon += stride;
+        recqt += qtstride;
+        recipred += ipredstride;
     }
 }
 
 template <int blockSize>
-void transpose(pixel* pDst, pixel* pSrc, intptr_t nStride)
+void transpose(pixel* dst, pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
     {
         for (int l = 0; l < blockSize; l++)
         {
-            pDst[k * blockSize + l] = pSrc[l * nStride + k];
+            dst[k * blockSize + l] = src[l * stride + k];
         }
     }
 }
