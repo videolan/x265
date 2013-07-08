@@ -201,7 +201,7 @@ public:
 
     void FlushProviderList();
 
-    void PokeIdleThreads();
+    void PokeIdleThread();
 };
 
 void PoolThread::ThreadMain()
@@ -234,7 +234,7 @@ void PoolThread::ThreadMain()
     m_exited = true;
 }
 
-void ThreadPoolImpl::PokeIdleThreads()
+void ThreadPoolImpl::PokeIdleThread()
 {
     PoolThread::s_wakeEvent.Trigger();
 }
@@ -256,7 +256,6 @@ ThreadPool *ThreadPool::GetThreadPool()
     assert(ThreadPoolImpl::instance);
     return ThreadPoolImpl::instance;
 }
-
 
 void ThreadPoolImpl::Release()
 {
@@ -315,7 +314,7 @@ void ThreadPoolImpl::Stop()
         int exited_count;
         do
         {
-            PokeIdleThreads();
+            PokeIdleThread();
             GIVE_UP_TIME();
             exited_count = 0;
             for (int i = 0; i < m_numThreads; i++)
@@ -420,13 +419,15 @@ void JobProvider::Enqueue()
     // Add this provider to the end of the thread pool's job provider list
     assert(!m_nextProvider && !m_prevProvider && m_pool);
     m_pool->EnqueueJobProvider(*this);
-    m_pool->PokeIdleThreads();
+    m_pool->PokeIdleThread();
 }
 
 void JobProvider::Dequeue()
 {
     // Remove this provider from the thread pool's job provider list
     m_pool->DequeueJobProvider(*this);
+    // Ensure no jobs were missed while the provider was being removed
+    m_pool->PokeIdleThread();
 }
 
 bool QueueFrame::InitJobQueue(int numRows)
@@ -460,7 +461,7 @@ void QueueFrame::EnqueueRow(int row)
 
     assert(row < m_numRows);
     ATOMIC_OR(&m_queuedBitmap[row >> 6], bit);
-    m_pool->PokeIdleThreads();
+    m_pool->PokeIdleThread();
 }
 
 bool QueueFrame::FindJob()

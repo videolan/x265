@@ -50,7 +50,7 @@ public:
 
     virtual ~JobProvider() {}
 
-    //< Register this job provider with the thread pool, jpbs are available
+    //< Register this job provider with the thread pool, jobs are available
     void Enqueue();
 
     //< Remove this job provider from the thread pool, all jobs complete
@@ -132,7 +132,7 @@ public:
 
     virtual void DequeueJobProvider(JobProvider &) = 0;
 
-    virtual void PokeIdleThreads() = 0;
+    virtual void PokeIdleThread() = 0;
 
     virtual int  GetThreadCount() const = 0;
 };

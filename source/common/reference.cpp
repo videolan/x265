@@ -129,7 +129,7 @@ void MotionReference::generateReferencePlanes()
         JobProvider::Enqueue();
         for (int i = 0; i < 4; i++)
         {
-            m_pool->PokeIdleThreads();
+            m_pool->PokeIdleThread();
         }
 
         m_completionEvent.Wait();
