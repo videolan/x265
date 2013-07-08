@@ -701,7 +701,7 @@ void idct32_c(int *src, short *dst, intptr_t stride)
     }
 }
 
-void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoef)
+void dequant_c(int bitDepth, const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -758,7 +758,7 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
     }
 }
 
-uint32_t quantaq_C(int* coef,
+uint32_t quantaq_c(int* coef,
                    int* quantCoeff,
                    int* deltaU,
                    int* qCoef,
@@ -791,7 +791,7 @@ uint32_t quantaq_C(int* coef,
     return acSum;
 }
 
-uint32_t quant_C(int* coef,
+uint32_t quant_c(int* coef,
                  int* quantCoeff,
                  int* deltaU,
                  int* qCoef,
@@ -826,9 +826,9 @@ namespace x265 {
 
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
-    p.deQuant = dequant;
-    p.quantaq = quantaq_C;
-    p.quant = quant_C;
+    p.deQuant = dequant_c;
+    p.quantaq = quantaq_c;
+    p.quant = quant_c;
     p.dct[DST_4x4] = dst4_c;
     p.dct[DCT_4x4] = dct4_c;
     p.dct[DCT_8x8] = dct8_c;
