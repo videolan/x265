@@ -176,7 +176,7 @@ enum IPFilterConf_S_S
 };
 
 // Returns a Partitions enum for the given size, always expected to return a valid enum
-int PartitionFromSizes(int Width, int Height);
+int PartitionFromSizes(int width, int height);
 
 typedef int  (*pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
@@ -184,12 +184,12 @@ typedef int  (*pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intpt
 typedef void (*pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (*pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (*IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (*IPFilter_p_p)(int bit_Depth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilter_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilter_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_p_p)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_p_s)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*IPFilter_s_p)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
 typedef void (*IPFilter_s_s)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilterConvert_p_s)(int bit_Depth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
-typedef void (*IPFilterConvert_s_p)(int bit_Depth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (*IPFilterConvert_p_s)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
+typedef void (*IPFilterConvert_s_p)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
 typedef void (*blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
@@ -207,7 +207,7 @@ typedef void (*dct_t)(short *src, int *dst, intptr_t stride);
 typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, short *residual, int stride);
 typedef void (*calcrecon_t)(pixel* pred, short* residual, pixel* recon, short* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-typedef void (*transpose_t)(pixel* pDst, pixel* pSrc, intptr_t stride);
+typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*dequant_t)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
