@@ -591,31 +591,31 @@ void idst4_c(int *src, short *dst, intptr_t stride)
     }
 }
 
-void xIDCT4_C(int *src, short *dst, intptr_t stride)
+void idct4_c(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
 
     ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, coef2[4 * 4]);
+    ALIGN_VAR_32(Short, block[4 * 4]);
 
 #define N (4)
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            coef2[i * N + j] = (short)src[i * N + j];
+            block[i * N + j] = (short)src[i * N + j];
         }
     }
 
 #undef N
 
-    partialButterflyInverse4(coef2, coef, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, coef output
-    partialButterflyInverse4(coef, coef2, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, coef input, coeff output
+    partialButterflyInverse4(block, coef, shift_1st, 4); // Forward DST BY FAST ALGORITHM, block input, coef output
+    partialButterflyInverse4(coef, block, shift_2nd, 4); // Forward DST BY FAST ALGORITHM, coef input, coeff output
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&dst[i * stride], &coef2[i * 4], 4 * sizeof(short));
+        memcpy(&dst[i * stride], &block[i * 4], 4 * sizeof(short));
     }
 }
 
@@ -839,7 +839,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dct[DCT_16x16] = dct16_c;
     p.dct[DCT_32x32] = dct32_c;
     p.idct[IDST_4x4] = idst4_c;
-    p.idct[IDCT_4x4] = xIDCT4_C;
+    p.idct[IDCT_4x4] = idct4_c;
     p.idct[IDCT_8x8] = xIDCT8_C;
     p.idct[IDCT_16x16] = xIDCT16_C;
     p.idct[IDCT_32x32] = xIDCT32_C;
