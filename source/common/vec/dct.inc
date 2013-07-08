@@ -350,15 +350,15 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
     int j;
     int add = 1 << (shift - 1);
 
-    Vec4i gaiTRow0(64, 64, 0, 0);
-    Vec4i gaiTRow4(64, -64, 0, 0);
-    Vec4i gaiTRow2(83, 36, 0, 0);
-    Vec4i gaiTRow6(36, -83, 0, 0);
+    Vec4i zero_row(64, 64, 0, 0);
+    Vec4i four_row(64, -64, 0, 0);
+    Vec4i two_row(83, 36, 0, 0);
+    Vec4i six_row(36, -83, 0, 0);
 
-    Vec4i gaiTRow1(89, 75, 50, 18);
-    Vec4i gaiTRow3(75, -18, -89, -50);
-    Vec4i gaiTRow5(50, -89, 18, 75);
-    Vec4i gaiTRow7(18, -50, 75, -89);
+    Vec4i one_row(89, 75, 50, 18);
+    Vec4i three_row(75, -18, -89, -50);
+    Vec4i five_row(50, -89, 18, 75);
+    Vec4i seven_row(18, -50, 75, -89);
 
     for (j = 0; j < line; j++)
     {
@@ -377,20 +377,20 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
         Vec4i EE = EE_first_half + EE_second_half;
         Vec4i EO = EE_first_half - EE_second_half;
 
-        int dst0 = ((horizontal_add(gaiTRow0 * EE)) + add) >> shift;
-        int dst4 = ((horizontal_add(gaiTRow4 * EE)) + add) >> shift;
-        int dst2 = ((horizontal_add(gaiTRow2 * EO)) + add) >> shift;
-        int dst6 = ((horizontal_add(gaiTRow6 * EO)) + add) >> shift;
+        int dst0 = ((horizontal_add(zero_row * EE)) + add) >> shift;
+        int dst4 = ((horizontal_add(four_row * EE)) + add) >> shift;
+        int dst2 = ((horizontal_add(two_row * EO)) + add) >> shift;
+        int dst6 = ((horizontal_add(six_row * EO)) + add) >> shift;
 
         dst[0] = dst0;
         dst[4 * line] = dst4;
         dst[2 * line] = dst2;
         dst[6 * line] = dst6;
 
-        int dst1 = ((horizontal_add(gaiTRow1 * O)) + add) >> shift;
-        int dst3 = ((horizontal_add(gaiTRow3 * O)) + add) >> shift;
-        int dst5 = ((horizontal_add(gaiTRow5 * O)) + add) >> shift;
-        int dst7 = ((horizontal_add(gaiTRow7 * O)) + add) >> shift;
+        int dst1 = ((horizontal_add(one_row * O)) + add) >> shift;
+        int dst3 = ((horizontal_add(three_row * O)) + add) >> shift;
+        int dst5 = ((horizontal_add(five_row * O)) + add) >> shift;
+        int dst7 = ((horizontal_add(seven_row * O)) + add) >> shift;
 
         dst[line] = dst1;
         dst[3 * line] = dst3;
@@ -402,7 +402,7 @@ inline void partialButterfly8(short *src, short *dst, int shift, int line)
     }
 }
 
-void xDCT8(short *src, int *dst, intptr_t nStride)
+void dct8(short *src, int *dst, intptr_t stride)
 {
     const int shift_1st = 2;
     const int shift_2nd = 9;
@@ -412,7 +412,7 @@ void xDCT8(short *src, int *dst, intptr_t nStride)
 
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&block[i * 8], &src[i * nStride], 8 * sizeof(short));
+        memcpy(&block[i * 8], &src[i * stride], 8 * sizeof(short));
     }
 
     partialButterfly8(block, coef, shift_1st, 8);
@@ -451,7 +451,7 @@ ALIGN_VAR_32(static const short, tab_dct_8[][8]) =
     { 50, -50, 75, -75, -89, 89, 18, -18 },
     { 18, -18, -89, 89, -50, 50, 75, -75 },
 };
-void xDCT8(short *src, int *dst, intptr_t nStride)
+void dct8(short *src, int *dst, intptr_t stride)
 {
     // Const
     __m128i c_2     = _mm_set1_epi32(2);
@@ -465,14 +465,14 @@ void xDCT8(short *src, int *dst, intptr_t nStride)
     __m128i T40, T41, T42, T43, T44, T45, T46, T47;
     __m128i T50, T51, T52, T53, T54, T55, T56, T57;
 
-    T00 = _mm_load_si128((__m128i*)&src[0 * nStride]);   // [07 06 05 04 03 02 01 00]
-    T01 = _mm_load_si128((__m128i*)&src[1 * nStride]);   // [17 16 15 14 13 12 11 10]
-    T02 = _mm_load_si128((__m128i*)&src[2 * nStride]);   // [27 26 25 24 23 22 21 20]
-    T03 = _mm_load_si128((__m128i*)&src[3 * nStride]);   // [37 36 35 34 33 32 31 30]
-    T04 = _mm_load_si128((__m128i*)&src[4 * nStride]);   // [47 46 45 44 43 42 41 40]
-    T05 = _mm_load_si128((__m128i*)&src[5 * nStride]);   // [57 56 55 54 53 52 51 50]
-    T06 = _mm_load_si128((__m128i*)&src[6 * nStride]);   // [67 66 65 64 63 62 61 60]
-    T07 = _mm_load_si128((__m128i*)&src[7 * nStride]);   // [77 76 75 74 73 72 71 70]
+    T00 = _mm_load_si128((__m128i*)&src[0 * stride]);   // [07 06 05 04 03 02 01 00]
+    T01 = _mm_load_si128((__m128i*)&src[1 * stride]);   // [17 16 15 14 13 12 11 10]
+    T02 = _mm_load_si128((__m128i*)&src[2 * stride]);   // [27 26 25 24 23 22 21 20]
+    T03 = _mm_load_si128((__m128i*)&src[3 * stride]);   // [37 36 35 34 33 32 31 30]
+    T04 = _mm_load_si128((__m128i*)&src[4 * stride]);   // [47 46 45 44 43 42 41 40]
+    T05 = _mm_load_si128((__m128i*)&src[5 * stride]);   // [57 56 55 54 53 52 51 50]
+    T06 = _mm_load_si128((__m128i*)&src[6 * stride]);   // [67 66 65 64 63 62 61 60]
+    T07 = _mm_load_si128((__m128i*)&src[7 * stride]);   // [77 76 75 74 73 72 71 70]
 
     T10 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_dct_8[0]));  // [05 02 06 01 04 03 07 00]
     T11 = _mm_shuffle_epi8(T01, _mm_load_si128((__m128i*)tab_dct_8[0]));
@@ -4088,7 +4088,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
 #if !HIGH_BIT_DEPTH && INSTRSET > 4
     p.dct[DST_4x4] = dst4;
     p.dct[DCT_4x4] = dct4;
-    p.dct[DCT_8x8] = xDCT8;
+    p.dct[DCT_8x8] = dct8;
     p.dct[DCT_16x16] = dct16;
     p.dct[DCT_32x32] = xDCT32;
 #endif
