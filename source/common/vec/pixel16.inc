@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Steve Borho <steve@borho.Org>
+ * Authors: Steve Borho <steve@borho.org>
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *
@@ -28,7 +28,7 @@
 /* intrinsics for when pixel type is short */
 
 template<int ly>
-int sad_4(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_4(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -41,12 +41,12 @@ int sad_4(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 16; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad);
@@ -55,12 +55,12 @@ int sad_4(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad);
@@ -69,7 +69,7 @@ int sad_4(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_8(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_8(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -82,12 +82,12 @@ int sad_8(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 16; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -96,12 +96,12 @@ int sad_8(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -110,7 +110,7 @@ int sad_8(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_12(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_12(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -123,18 +123,18 @@ int sad_12(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 16; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             m1.cutoff(4);
-            n1.load(Cur + 8);
+            n1.load(fref + 8);
             n1.cutoff(4);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -143,18 +143,18 @@ int sad_12(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 8);
+        m1.load_a(fenc + 8);
         m1.cutoff(4);
-        n1.load(Cur + 8);
+        n1.load(fref + 8);
         n1.cutoff(4);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -163,7 +163,7 @@ int sad_12(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_16(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_16(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -176,16 +176,16 @@ int sad_16(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
-            n1.load(Cur + 8);
+            m1.load_a(fenc + 8);
+            n1.load(fref + 8);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -194,16 +194,16 @@ int sad_16(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 8);
-        n1.load(Cur + 8);
+        m1.load_a(fenc + 8);
+        n1.load(fref + 8);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -212,7 +212,7 @@ int sad_16(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_24(pixel *Org, intptr_t strideOrg, pixel *Cur, intptr_t strideCur)
+int sad_24(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -225,20 +225,20 @@ int sad_24(pixel *Org, intptr_t strideOrg, pixel *Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
-            n1.load(Cur + 8);
+            m1.load_a(fenc + 8);
+            n1.load(fref + 8);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 16);
-            n1.load(Cur + 16);
+            m1.load_a(fenc + 16);
+            n1.load(fref + 16);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -247,20 +247,20 @@ int sad_24(pixel *Org, intptr_t strideOrg, pixel *Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 8);
-        n1.load(Cur + 8);
+        m1.load_a(fenc + 8);
+        n1.load(fref + 8);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 16);
-        n1.load(Cur + 16);
+        m1.load_a(fenc + 16);
+        n1.load(fref + 16);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -269,7 +269,7 @@ int sad_24(pixel *Org, intptr_t strideOrg, pixel *Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_32(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_32(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -282,24 +282,24 @@ int sad_32(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
-            n1.load(Cur + 8);
+            m1.load_a(fenc + 8);
+            n1.load(fref + 8);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 16);
-            n1.load(Cur + 16);
+            m1.load_a(fenc + 16);
+            n1.load(fref + 16);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 24);
-            n1.load(Cur + 24);
+            m1.load_a(fenc + 24);
+            n1.load(fref + 24);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -308,24 +308,24 @@ int sad_32(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 8);
-        n1.load(Cur + 8);
+        m1.load_a(fenc + 8);
+        n1.load(fref + 8);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 16);
-        n1.load(Cur + 16);
+        m1.load_a(fenc + 16);
+        n1.load(fref + 16);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 24);
-        n1.load(Cur + 24);
+        m1.load_a(fenc + 24);
+        n1.load(fref + 24);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -334,7 +334,7 @@ int sad_32(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_48(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_48(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -347,32 +347,32 @@ int sad_48(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
-            n1.load(Cur + 8);
+            m1.load_a(fenc + 8);
+            n1.load(fref + 8);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 16);
-            n1.load(Cur + 16);
+            m1.load_a(fenc + 16);
+            n1.load(fref + 16);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 24);
-            n1.load(Cur + 24);
+            m1.load_a(fenc + 24);
+            n1.load(fref + 24);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 32);
-            n1.load(Cur + 32);
+            m1.load_a(fenc + 32);
+            n1.load(fref + 32);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 40);
-            n1.load(Cur + 40);
+            m1.load_a(fenc + 40);
+            n1.load(fref + 40);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -381,32 +381,32 @@ int sad_48(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
-        n1.load(Cur);
+        m1.load_a(fenc);
+        n1.load(fref);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 8);
-        n1.load(Cur + 8);
+        m1.load_a(fenc + 8);
+        n1.load(fref + 8);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 16);
-        n1.load(Cur + 16);
+        m1.load_a(fenc + 16);
+        n1.load(fref + 16);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 24);
-        n1.load(Cur + 24);
+        m1.load_a(fenc + 24);
+        n1.load(fref + 24);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 32);
-        n1.load(Cur + 32);
+        m1.load_a(fenc + 32);
+        n1.load(fref + 32);
         sad += abs(m1 - n1);
 
-        m1.load_a(Org + 40);
-        n1.load(Cur + 40);
+        m1.load_a(fenc + 40);
+        n1.load(fref + 40);
         sad += abs(m1 - n1);
 
-        Org += strideOrg;
-        Cur += strideCur;
+        fenc += fencstride;
+        fref += frefstride;
     }
 
     sum += extend_low(sad) + extend_high(sad);
@@ -415,7 +415,7 @@ int sad_48(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-int sad_64(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int sad_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     Vec8s m1, n1;
 
@@ -427,40 +427,40 @@ int sad_64(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int i = 0; i < 4; i++)
         {
-            m1.load_a(Org);
-            n1.load(Cur);
+            m1.load_a(fenc);
+            n1.load(fref);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 8);
-            n1.load(Cur + 8);
+            m1.load_a(fenc + 8);
+            n1.load(fref + 8);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 16);
-            n1.load(Cur + 16);
+            m1.load_a(fenc + 16);
+            n1.load(fref + 16);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 24);
-            n1.load(Cur + 24);
+            m1.load_a(fenc + 24);
+            n1.load(fref + 24);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 32);
-            n1.load(Cur + 32);
+            m1.load_a(fenc + 32);
+            n1.load(fref + 32);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 40);
-            n1.load(Cur + 40);
+            m1.load_a(fenc + 40);
+            n1.load(fref + 40);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 48);
-            n1.load(Cur + 48);
+            m1.load_a(fenc + 48);
+            n1.load(fref + 48);
             sad += abs(m1 - n1);
 
-            m1.load_a(Org + 56);
-            n1.load(Cur + 56);
+            m1.load_a(fenc + 56);
+            n1.load(fref + 56);
             sad += abs(m1 - n1);
 
-            Org += strideOrg;
-            Cur += strideCur;
+            fenc += fencstride;
+            fref += frefstride;
         }
 
         sum += extend_low(sad) + extend_high(sad);
@@ -471,7 +471,7 @@ int sad_64(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
 }
 
 template<int ly>
-void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -484,7 +484,7 @@ void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -493,10 +493,10 @@ void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -509,7 +509,7 @@ void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -518,10 +518,10 @@ void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -534,7 +534,7 @@ void sad_x3_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
 }
 
 template<int ly>
-void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -547,7 +547,7 @@ void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -556,10 +556,10 @@ void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -572,7 +572,7 @@ void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -581,10 +581,10 @@ void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -597,7 +597,7 @@ void sad_x3_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t stride
 }
 
 template<int ly>
-void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -610,7 +610,7 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -619,7 +619,7 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             m1.cutoff(4);
             n1.load(Cur1 + 8);
             n1.cutoff(4);
@@ -632,10 +632,10 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -648,7 +648,7 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -657,7 +657,7 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        m1.load_a(Org + 8);
+        m1.load_a(fenc + 8);
         m1.cutoff(4);
         n1.load(Cur1 + 8);
         n1.cutoff(4);
@@ -670,10 +670,10 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -686,7 +686,7 @@ void sad_x3_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -699,7 +699,7 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -708,7 +708,7 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -717,10 +717,10 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -733,7 +733,7 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -742,7 +742,7 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        m1.load_a(Org + 8);
+        m1.load_a(fenc + 8);
         n1.load(Cur1 + 8);
         n2.load(Cur2 + 8);
         n3.load(Cur3 + 8);
@@ -751,10 +751,10 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
         sad2 += abs(m1 - n2);
         sad3 += abs(m1 - n3);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -767,7 +767,7 @@ void sad_x3_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -779,7 +779,7 @@ void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 4; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -788,7 +788,7 @@ void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -797,7 +797,7 @@ void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -806,10 +806,10 @@ void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -826,7 +826,7 @@ void sad_x3_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -838,7 +838,7 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 4; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -847,7 +847,7 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -856,7 +856,7 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -865,7 +865,7 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -874,10 +874,10 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -894,7 +894,7 @@ void sad_x3_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -906,7 +906,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 2; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -915,7 +915,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -924,7 +924,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -933,7 +933,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -942,7 +942,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 32);
+            m1.load_a(fenc + 32);
             n1.load(Cur1 + 32);
             n2.load(Cur2 + 32);
             n3.load(Cur3 + 32);
@@ -951,7 +951,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 40);
+            m1.load_a(fenc + 40);
             n1.load(Cur1 + 40);
             n2.load(Cur2 + 40);
             n3.load(Cur3 + 40);
@@ -960,10 +960,10 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -980,7 +980,7 @@ void sad_x3_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strideCur, int *res)
+void sad_x3_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3;
 
@@ -992,7 +992,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
     {
         for (int i = 0; i < 2; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1001,7 +1001,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1010,7 +1010,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -1019,7 +1019,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -1028,7 +1028,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 32);
+            m1.load_a(fenc + 32);
             n1.load(Cur1 + 32);
             n2.load(Cur2 + 32);
             n3.load(Cur3 + 32);
@@ -1037,7 +1037,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 40);
+            m1.load_a(fenc + 40);
             n1.load(Cur1 + 40);
             n2.load(Cur2 + 40);
             n3.load(Cur3 + 40);
@@ -1046,7 +1046,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 48);
+            m1.load_a(fenc + 48);
             n1.load(Cur1 + 48);
             n2.load(Cur2 + 48);
             n3.load(Cur3 + 48);
@@ -1055,7 +1055,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            m1.load_a(Org + 56);
+            m1.load_a(fenc + 56);
             n1.load(Cur1 + 56);
             n2.load(Cur2 + 56);
             n3.load(Cur3 + 56);
@@ -1064,10 +1064,10 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
             sad2 += abs(m1 - n2);
             sad3 += abs(m1 - n3);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1084,7 +1084,7 @@ void sad_x3_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t strid
 }
 
 template<int ly>
-void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1097,7 +1097,7 @@ void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1108,11 +1108,11 @@ void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -1127,7 +1127,7 @@ void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -1138,11 +1138,11 @@ void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
-        Cur4 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
+        Cur4 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -1157,7 +1157,7 @@ void sad_x4_4(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
 }
 
 template<int ly>
-void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1170,7 +1170,7 @@ void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1181,11 +1181,11 @@ void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1200,7 +1200,7 @@ void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -1211,11 +1211,11 @@ void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
-        Cur4 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
+        Cur4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1230,7 +1230,7 @@ void sad_x4_8(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, in
 }
 
 template<int ly>
-void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1243,7 +1243,7 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1254,7 +1254,7 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             m1.cutoff(4);
             n1.load(Cur1 + 8);
             n1.cutoff(4);
@@ -1270,11 +1270,11 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1289,7 +1289,7 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -1300,7 +1300,7 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        m1.load_a(Org + 8);
+        m1.load_a(fenc + 8);
         m1.cutoff(4);
         n1.load(Cur1 + 8);
         n1.cutoff(4);
@@ -1316,11 +1316,11 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
-        Cur4 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
+        Cur4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1335,7 +1335,7 @@ void sad_x4_12(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1348,7 +1348,7 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 8; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1359,7 +1359,7 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1370,11 +1370,11 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1389,7 +1389,7 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 
     while (row++ < ly)
     {
-        m1.load_a(Org);
+        m1.load_a(fenc);
         n1.load(Cur1);
         n2.load(Cur2);
         n3.load(Cur3);
@@ -1400,7 +1400,7 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        m1.load_a(Org + 8);
+        m1.load_a(fenc + 8);
         n1.load(Cur1 + 8);
         n2.load(Cur2 + 8);
         n3.load(Cur3 + 8);
@@ -1411,11 +1411,11 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad3 += abs(m1 - n3);
         sad4 += abs(m1 - n4);
 
-        Org += FENC_STRIDE;
-        Cur1 += strideCur;
-        Cur2 += strideCur;
-        Cur3 += strideCur;
-        Cur4 += strideCur;
+        fenc += FENC_STRIDE;
+        Cur1 += frefstride;
+        Cur2 += frefstride;
+        Cur3 += frefstride;
+        Cur4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1430,7 +1430,7 @@ void sad_x4_16(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1442,7 +1442,7 @@ void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 4; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1453,7 +1453,7 @@ void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1464,7 +1464,7 @@ void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -1475,11 +1475,11 @@ void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1499,7 +1499,7 @@ void sad_x4_24(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1511,7 +1511,7 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 4; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1522,7 +1522,7 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1533,7 +1533,7 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -1544,7 +1544,7 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -1555,11 +1555,11 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1579,7 +1579,7 @@ void sad_x4_32(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1591,7 +1591,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 2; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1602,7 +1602,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1613,7 +1613,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -1624,7 +1624,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -1635,7 +1635,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 32);
+            m1.load_a(fenc + 32);
             n1.load(Cur1 + 32);
             n2.load(Cur2 + 32);
             n3.load(Cur3 + 32);
@@ -1646,7 +1646,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 40);
+            m1.load_a(fenc + 40);
             n1.load(Cur1 + 40);
             n2.load(Cur2 + 40);
             n3.load(Cur3 + 40);
@@ -1657,11 +1657,11 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1681,7 +1681,7 @@ void sad_x4_48(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t strideCur, int *res)
+void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
 {
     Vec8s m1, n1, n2, n3, n4;
 
@@ -1693,7 +1693,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     {
         for (int i = 0; i < 2; i++)
         {
-            m1.load_a(Org);
+            m1.load_a(fenc);
             n1.load(Cur1);
             n2.load(Cur2);
             n3.load(Cur3);
@@ -1704,7 +1704,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 8);
+            m1.load_a(fenc + 8);
             n1.load(Cur1 + 8);
             n2.load(Cur2 + 8);
             n3.load(Cur3 + 8);
@@ -1715,7 +1715,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 16);
+            m1.load_a(fenc + 16);
             n1.load(Cur1 + 16);
             n2.load(Cur2 + 16);
             n3.load(Cur3 + 16);
@@ -1726,7 +1726,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 24);
+            m1.load_a(fenc + 24);
             n1.load(Cur1 + 24);
             n2.load(Cur2 + 24);
             n3.load(Cur3 + 24);
@@ -1737,7 +1737,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 32);
+            m1.load_a(fenc + 32);
             n1.load(Cur1 + 32);
             n2.load(Cur2 + 32);
             n3.load(Cur3 + 32);
@@ -1748,7 +1748,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 40);
+            m1.load_a(fenc + 40);
             n1.load(Cur1 + 40);
             n2.load(Cur2 + 40);
             n3.load(Cur3 + 40);
@@ -1759,7 +1759,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 48);
+            m1.load_a(fenc + 48);
             n1.load(Cur1 + 48);
             n2.load(Cur2 + 48);
             n3.load(Cur3 + 48);
@@ -1770,7 +1770,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            m1.load_a(Org + 56);
+            m1.load_a(fenc + 56);
             n1.load(Cur1 + 56);
             n2.load(Cur2 + 56);
             n3.load(Cur3 + 56);
@@ -1781,11 +1781,11 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad3 += abs(m1 - n3);
             sad4 += abs(m1 - n4);
 
-            Org += FENC_STRIDE;
-            Cur1 += strideCur;
-            Cur2 += strideCur;
-            Cur3 += strideCur;
-            Cur4 += strideCur;
+            fenc += FENC_STRIDE;
+            Cur1 += frefstride;
+            Cur2 += frefstride;
+            Cur3 += frefstride;
+            Cur4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1804,7 +1804,7 @@ void sad_x4_64(pixel *Org, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     res[3] = horizontal_add(sum4);
 }
 
-int satd_4x4(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
+int satd_4x4(pixel * fenc, intptr_t istrideOrg, pixel * fref, intptr_t istrideCur)
 {
     int satd = 0;
 
@@ -1812,28 +1812,28 @@ int satd_4x4(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
 
     {
         Vec8s temp1, temp2, temp3, temp4, Org_v, Cur_v;
-        temp1.load(Org);
-        temp2.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        temp1.load(fenc);
+        temp2.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
-        temp3.load(Org);
-        temp4.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        temp3.load(fenc);
+        temp4.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
         Org_v = blend2q<0, 2>((Vec2q)temp1, (Vec2q)temp3);
         Cur_v = blend2q<0, 2>((Vec2q)temp2, (Vec2q)temp4);
 
-        temp1.load(Org);
-        temp2.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        temp1.load(fenc);
+        temp2.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
-        temp3.load(Org);
-        temp4.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        temp3.load(fenc);
+        temp4.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
         v1 = Org_v - Cur_v; //diff
 
@@ -1872,7 +1872,7 @@ int satd_4x4(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
     return satd;
 }
 
-int sa8d_8x8(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
+int sa8d_8x8(pixel * fenc, intptr_t istrideOrg, pixel * fref, intptr_t istrideCur)
 {
     ALIGN_VAR_16(short, m2[8][8]);
 
@@ -1883,15 +1883,15 @@ int sa8d_8x8(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
 
     for (j = 0; j < 8; j += 2)
     {
-        Org_v1.load_a(Org);
-        Cur_v1.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        Org_v1.load_a(fenc);
+        Cur_v1.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
-        Org_v2.load_a(Org);
-        Cur_v2.load(Cur);
-        Cur += istrideCur;
-        Org += istrideOrg;
+        Org_v2.load_a(fenc);
+        Cur_v2.load(fref);
+        fref += istrideCur;
+        fenc += istrideOrg;
 
         diff_v1 = Org_v1 - Cur_v1;
         diff_v2 = Org_v2 - Cur_v2;
@@ -2039,7 +2039,7 @@ int sa8d_8x8(pixel * Org, intptr_t istrideOrg, pixel * Cur, intptr_t istrideCur)
 }
 
 template<int lx, int ly>
-int satd(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
+int satd(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 {
     int uiSum = 0;
 
@@ -2047,8 +2047,8 @@ int satd(pixel * Org, intptr_t strideOrg, pixel * Cur, intptr_t strideCur)
     {
         for (int col = 0; col < lx; col += 4)
         {
-            uiSum += satd_4x4(Org + strideOrg * row + col, strideOrg,
-                              Cur + strideCur * row + col, strideCur);
+            uiSum += satd_4x4(fenc + fencstride * row + col, fencstride,
+                              fref + frefstride * row + col, frefstride);
         }
     }
 
