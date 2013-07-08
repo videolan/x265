@@ -175,8 +175,7 @@ enum IPFilterConf_S_S
     NUM_IPFILTER_S_S
 };
 
-// Returns a Partitions enum if the size matches a supported performance primitive,
-// else returns -1 (in which case you should use the slow path)
+// Returns a Partitions enum for the given size, always expected to return a valid enum
 int PartitionFromSizes(int Width, int Height);
 
 typedef int  (*pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
