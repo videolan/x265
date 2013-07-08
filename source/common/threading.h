@@ -55,12 +55,12 @@ public:
         DeleteCriticalSection(&this->handle);
     }
 
-    void Acquire()
+    void acquire()
     {
         EnterCriticalSection(&this->handle);
     }
 
-    void Release()
+    void release()
     {
         LeaveCriticalSection(&this->handle);
     }
@@ -84,12 +84,12 @@ public:
         CloseHandle(this->handle);
     }
 
-    void Wait()
+    void wait()
     {
         WaitForSingleObject(this->handle, INFINITE);
     }
 
-    void Trigger()
+    void trigger()
     {
         SetEvent(this->handle);
     }
@@ -117,12 +117,12 @@ public:
         pthread_mutex_destroy(&this->handle);
     }
 
-    void Acquire()
+    void acquire()
     {
         pthread_mutex_lock(&this->handle);
     }
 
-    void Release()
+    void release()
     {
         pthread_mutex_unlock(&this->handle);
     }
@@ -146,12 +146,12 @@ public:
         sem_destroy(&this->semaphore);
     }
 
-    void Wait()
+    void wait()
     {
         sem_wait(&this->semaphore);
     }
 
-    void Trigger()
+    void trigger()
     {
         sem_post(&this->semaphore);
     }
@@ -170,12 +170,12 @@ public:
 
     ScopedLock(Lock &instance) : inst(instance)
     {
-        this->inst.Acquire();
+        this->inst.acquire();
     }
 
     ~ScopedLock()
     {
-        this->inst.Release();
+        this->inst.release();
     }
 
 protected:
@@ -200,12 +200,12 @@ public:
     virtual ~Thread();
 
     //< Derived class must implement ThreadMain.
-    virtual void ThreadMain() = 0;
+    virtual void threadMain() = 0;
 
     //< Returns true if thread was successfully created
-    bool Start();
+    bool start();
 
-    void Stop();
+    void stop();
 };
 } // end namespace x265
 

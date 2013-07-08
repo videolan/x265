@@ -33,12 +33,12 @@ namespace x265 {
 static DWORD WINAPI ThreadShim(Thread *instance)
 {
     // defer processing to the virtual function implemented in the derived class
-    instance->ThreadMain();
+    instance->threadMain();
 
     return 0;
 }
 
-bool Thread::Start()
+bool Thread::start()
 {
     DWORD threadId;
 
@@ -47,7 +47,7 @@ bool Thread::Start()
     return threadId > 0;
 }
 
-void Thread::Stop()
+void Thread::stop()
 {
     if (this->thread)
     {
@@ -70,12 +70,12 @@ static void *ThreadShim(void *opaque)
     // defer processing to the virtual function implemented in the derived class
     Thread *instance = reinterpret_cast<Thread *>(opaque);
 
-    instance->ThreadMain();
+    instance->threadMain();
 
     return NULL;
 }
 
-bool Thread::Start()
+bool Thread::start()
 {
     if (pthread_create(&this->thread, NULL, ThreadShim, this))
     {
@@ -87,7 +87,7 @@ bool Thread::Start()
     return true;
 }
 
-void Thread::Stop()
+void Thread::stop()
 {
     if (this->thread)
     {

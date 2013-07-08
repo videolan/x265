@@ -130,8 +130,8 @@ Void TEncGOP::destroy()
     m_threadActive = false;
     m_batchSize = 0;
     m_startPOC = 0;
-    m_inputLock.Release();
-    Thread::Stop();
+    m_inputLock.release();
+    Thread::stop();
 
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
     Int iSize = Int(m_cListPic.size());
@@ -161,10 +161,10 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_pcRateCtrl = pcTEncTop->getRateCtrl();
 
     m_threadActive = true;
-    m_inputLock.Acquire();
+    m_inputLock.acquire();
     m_batchSize = 0;
     m_startPOC = 0;
-    Thread::Start();
+    Thread::start();
 
     // initialize SPS
     pcTEncTop->xInitSPS(&m_cSPS);
@@ -213,12 +213,12 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
 {
     while (1)
     {
-        m_outputLock.Acquire();
+        m_outputLock.acquire();
         if (!m_accessUnits.empty())
             break;
-        m_outputLock.Release();
+        m_outputLock.release();
     }
-    m_inputLock.Acquire();
+    m_inputLock.acquire();
 
     // move access units from member variable list to end of user's container
     accessUnitsOut.splice(accessUnitsOut.end(), m_accessUnits);
@@ -242,7 +242,7 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
         }
         *pic_out = m_recon;
     }
-    m_outputLock.Release();
+    m_outputLock.release();
     return m_batchSize;
 }
 
@@ -271,17 +271,17 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
     assert(!"No room for added picture");
 }
 
-void TEncGOP::ThreadMain()
+void TEncGOP::threadMain()
 {
     int lastPOC = -1;
 
     while (m_threadActive)
     {
-        m_inputLock.Acquire();
+        m_inputLock.acquire();
 
         if (m_batchSize > 0 && m_startPOC != lastPOC)
         {
-            m_outputLock.Acquire();
+            m_outputLock.acquire();
 
             lastPOC = m_startPOC;
             int poc = m_totalCoded;
@@ -295,11 +295,11 @@ void TEncGOP::ThreadMain()
                 poc += gopSize;
             }
 
-            m_inputLock.Release();
-            m_outputLock.Release();
+            m_inputLock.release();
+            m_outputLock.release();
         }
         else
-            m_inputLock.Release();
+            m_inputLock.release();
     }
 }
 
@@ -310,7 +310,7 @@ void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames)
     m_totalCoded = POCLast - numFrames + 1;
     m_startPOC = m_totalCoded;
     m_batchSize = numFrames;
-    m_inputLock.Release();
+    m_inputLock.release();
 }
 
 // ====================================================================================================================

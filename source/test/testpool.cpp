@@ -114,7 +114,7 @@ void MD5Frame::encode()
 
     this->WaveFront::enqueueRow(0);
 
-    this->complete.Wait();
+    this->complete.wait();
 
     this->JobProvider::dequeue();
 
@@ -196,7 +196,7 @@ void MD5Frame::processRow(int rownum)
     // * Row completed *
 
     if (rownum == this->numrows - 1)
-        this->complete.Trigger();
+        this->complete.trigger();
 }
 
 int main(int, char **)

@@ -132,7 +132,7 @@ void MotionReference::generateReferencePlanes()
             m_pool->pokeIdleThread();
         }
 
-        m_completionEvent.Wait();
+        m_completionEvent.wait();
         JobProvider::dequeue();
     }
     xFree(m_intermediateValues);
@@ -150,7 +150,7 @@ bool MotionReference::findJob()
         {
             generateReferencePlane(idx);
             if (ATOMIC_INC(&m_finishedPlanes) == 4)
-                m_completionEvent.Trigger();
+                m_completionEvent.trigger();
             return true;
         }
     }

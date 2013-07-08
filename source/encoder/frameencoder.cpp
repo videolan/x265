@@ -217,7 +217,7 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
 
         // Enqueue first row, then block until worker threads complete the frame
         WaveFront::enqueueRow(0);
-        m_completionEvent.Wait();
+        m_completionEvent.wait();
 
         WaveFront::dequeue();
     }
@@ -275,6 +275,6 @@ void FrameEncoder::processRow(int row)
     // this row of CTUs has been encoded
     if (row == m_numRows - 1)
     {
-        m_completionEvent.Trigger();
+        m_completionEvent.trigger();
     }
 }

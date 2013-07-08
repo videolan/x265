@@ -85,7 +85,7 @@ public:
 
     virtual ~PoolThread() {}
 
-    void ThreadMain();
+    void threadMain();
 
     volatile static int   s_sleepCount;
     static Event s_wakeEvent;
@@ -150,7 +150,7 @@ public:
     void pokeIdleThread();
 };
 
-void PoolThread::ThreadMain()
+void PoolThread::threadMain()
 {
     while (m_pool.IsValid())
     {
@@ -171,7 +171,7 @@ void PoolThread::ThreadMain()
         {
             m_idle = true;
             ATOMIC_INC(&s_sleepCount);
-            s_wakeEvent.Wait();
+            s_wakeEvent.wait();
             ATOMIC_DEC(&s_sleepCount);
             m_idle = false;
         }
@@ -182,7 +182,7 @@ void PoolThread::ThreadMain()
 
 void ThreadPoolImpl::pokeIdleThread()
 {
-    PoolThread::s_wakeEvent.Trigger();
+    PoolThread::s_wakeEvent.trigger();
 }
 
 ThreadPoolImpl *ThreadPoolImpl::instance;
@@ -234,7 +234,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
         {
             new (buffer)PoolThread(*this);
             buffer += sizeof(PoolThread);
-            m_ok = m_ok && m_threads[i].Start();
+            m_ok = m_ok && m_threads[i].start();
         }
 
         // Wait for threads to spin up and idle
@@ -271,7 +271,7 @@ void ThreadPoolImpl::Stop()
         // join each thread to cleanup resources
         for (int i = 0; i < m_numThreads; i++)
         {
-            m_threads[i].Stop();
+            m_threads[i].stop();
         }
     }
 }

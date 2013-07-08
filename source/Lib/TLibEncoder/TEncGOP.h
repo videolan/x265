@@ -120,7 +120,7 @@ public:
 
 protected:
 
-    void ThreadMain();
+    void threadMain();
 
     Void compressGOP(Int iPOCLast, Int iNumPicRcvd);
 
