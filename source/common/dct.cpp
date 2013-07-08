@@ -535,7 +535,7 @@ void dct16_c(short *src, int *dst, intptr_t stride)
 #undef N
 }
 
-void xDCT32_C(short *src, int *dst, intptr_t nStride)
+void dct32_c(short *src, int *dst, intptr_t stride)
 {
     const int shift_1st = 4;
     const int shift_2nd = 11;
@@ -545,7 +545,7 @@ void xDCT32_C(short *src, int *dst, intptr_t nStride)
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&block[i * 32], &src[i * nStride], 32 * sizeof(short));
+        memcpy(&block[i * 32], &src[i * stride], 32 * sizeof(short));
     }
 
     partialButterfly32(block, coef, shift_1st, 32);
@@ -837,7 +837,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dct[DCT_4x4] = dct4_c;
     p.dct[DCT_8x8] = dct8_c;
     p.dct[DCT_16x16] = dct16_c;
-    p.dct[DCT_32x32] = xDCT32_C;
+    p.dct[DCT_32x32] = dct32_c;
     p.idct[IDST_4x4] = xIDST4_C;
     p.idct[IDCT_4x4] = xIDCT4_C;
     p.idct[IDCT_8x8] = xIDCT8_C;
