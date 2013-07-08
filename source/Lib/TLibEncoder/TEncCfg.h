@@ -392,6 +392,8 @@ public:
 
     UInt      getDecodingRefreshType()      { return m_uiDecodingRefreshType; }
 
+    Int       getNumGOPThreads() { return m_gopThreads; }
+
     Int       getGOPSize()      { return m_iGOPSize; }
 
     Int       getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }

@@ -154,11 +154,15 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         m_curGOPEncoder->addPicture(++m_pocLast, pic);
     }
 
-    int batchSize = m_openGOP ? getGOPSize() : m_uiIntraPeriod;
-    // ugly hack for our B-frame random access mode, the second I frame will be
-    // one mini-gop before the full keyframe interval because of re-ordering
-    if (getGOPSize() == 8 && m_picsEncoded == 0)
-        batchSize = m_uiIntraPeriod - 8 + 1;
+    int batchSize = m_picsEncoded == 0 ? 1 : getGOPSize();
+    if (m_gopThreads > 1)
+    {
+        batchSize = m_uiIntraPeriod;
+        // ugly hack for our B-frame random access mode, the second I frame will be
+        // one mini-gop before the full keyframe interval because of re-ordering
+        if (getGOPSize() == 8 && m_picsEncoded == 0)
+            batchSize = m_uiIntraPeriod - 8 + 1;
+    }
 
     if (flush)
     {

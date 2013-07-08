@@ -179,7 +179,7 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     m_cFrameEncoders = new x265::FrameEncoder(pcTEncTop->getThreadPool());
     m_cFrameEncoders->init(pcTEncTop, numRows);
 
-    int maxGOP = m_pcCfg->getIntraPeriod() > 1 ? m_pcCfg->getIntraPeriod() : 1;
+    int maxGOP = m_pcCfg->getNumGOPThreads() > 1 ? m_pcCfg->getIntraPeriod() : 1;
     maxGOP = X265_MAX(maxGOP, m_pcCfg->getGOPSize()) + m_pcCfg->getGOPSize();
     m_recon = new x265_picture_t[maxGOP];
 
