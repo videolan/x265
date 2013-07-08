@@ -2188,7 +2188,7 @@ inline void inversedst(short *tmp, short *block, int shift)  // input tmp, outpu
     blend8s<2, 6, 10, 14, 3, 7, 11, 15>(half0, half1).store_a(block + 8);
 }
 
-void xIDST4(int *src, short *dst, intptr_t stride)
+void idst4(int *src, short *dst, intptr_t stride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12;
@@ -2228,7 +2228,7 @@ ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
     {  -74, -29, -74, -29, -74, -29, -74, -29 }
 };
 
-void xIDST4(int *src, short *dst, intptr_t stride)
+void idst4(int *src, short *dst, intptr_t stride)
 {
     __m128i m128iAdd, S0, S8, m128iTmp1, m128iTmp2, m128iAC, m128iBD, m128iA, m128iD;
 
@@ -4093,7 +4093,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.dct[DCT_32x32] = dct32;
 #endif
     // TODO: I am not sure the IDCT works on 16bpp mode
-    p.idct[IDST_4x4] = xIDST4;
+    p.idct[IDST_4x4] = idst4;
     p.idct[IDCT_4x4] = xIDCT4;
     p.idct[IDCT_8x8] = xIDCT8;
     p.idct[IDCT_16x16] = xIDCT16;
