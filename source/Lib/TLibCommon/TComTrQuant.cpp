@@ -1119,11 +1119,11 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
  *  \param uiStride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  */
-Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, UInt uiStride, Int width, Int height)
+Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     assert(width == height);
-    UInt uiLog2TrSize = g_aucConvertToBit[width] + 2;
-    Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - uiLog2TrSize;
+    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
     UInt transformSkipShift;
     Int  j, k;
     if (shift > 0)
@@ -1131,7 +1131,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, U
         transformSkipShift = shift;
         for (j = 0; j < height; j++)
         {
-            x265::primitives.cvt32to16_shr(&pResidual[j * uiStride], &plCoef[j * width], shift, width);
+            x265::primitives.cvt32to16_shr(&residual[j * stride], &coef[j * width], shift, width);
         }
     }
     else
@@ -1142,7 +1142,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, U
         {
             for (k = 0; k < width; k++)
             {
-                pResidual[j * uiStride + k] =  plCoef[j * width + k] << transformSkipShift;
+                residual[j * stride + k] =  coef[j * width + k] << transformSkipShift;
             }
         }
     }
