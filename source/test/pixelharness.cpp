@@ -85,7 +85,7 @@ PixelHarness::~PixelHarness()
 #define INCR 16
 #define STRIDE 16
 
-bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
+bool PixelHarness::check_pixelcmp(pixelcmp ref, pixelcmp opt)
 {
     int j = 0;
 
@@ -102,7 +102,7 @@ bool PixelHarness::check_pixel_primitive(pixelcmp ref, pixelcmp opt)
     return true;
 }
 
-bool PixelHarness::check_pixel_sp_primitive(pixelcmp_sp ref, pixelcmp_sp opt)
+bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp ref, pixelcmp_sp opt)
 {
     int j = 0;
 
@@ -119,7 +119,7 @@ bool PixelHarness::check_pixel_sp_primitive(pixelcmp_sp ref, pixelcmp_sp opt)
     return true;
 }
 
-bool PixelHarness::check_pixel_ss_primitive(pixelcmp_ss ref, pixelcmp_ss opt)
+bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss ref, pixelcmp_ss opt)
 {
     int j = 0;
 
@@ -136,7 +136,7 @@ bool PixelHarness::check_pixel_ss_primitive(pixelcmp_ss ref, pixelcmp_ss opt)
     return true;
 }
 
-bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
+bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
 {
     int j = INCR;
 
@@ -156,7 +156,7 @@ bool PixelHarness::check_pixel_primitive_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
     return true;
 }
 
-bool PixelHarness::check_pixel_primitive_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
+bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
 {
     int j = INCR;
 
@@ -331,7 +331,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.satd[curpar])
         {
-            if (!check_pixel_primitive(ref.satd[curpar], opt.satd[curpar]))
+            if (!check_pixelcmp(ref.satd[curpar], opt.satd[curpar]))
             {
                 printf("satd[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -340,7 +340,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sa8d_inter[curpar])
         {
-            if (!check_pixel_primitive(ref.sa8d_inter[curpar], opt.sa8d_inter[curpar]))
+            if (!check_pixelcmp(ref.sa8d_inter[curpar], opt.sa8d_inter[curpar]))
             {
                 printf("sa8d_inter[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -349,7 +349,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sad[curpar])
         {
-            if (!check_pixel_primitive(ref.sad[curpar], opt.sad[curpar]))
+            if (!check_pixelcmp(ref.sad[curpar], opt.sad[curpar]))
             {
                 printf("sad[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -358,7 +358,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sse_pp[curpar])
         {
-            if (!check_pixel_primitive(ref.sse_pp[curpar], opt.sse_pp[curpar]))
+            if (!check_pixelcmp(ref.sse_pp[curpar], opt.sse_pp[curpar]))
             {
                 printf("sse_pp[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -367,7 +367,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sse_sp[curpar])
         {
-            if (!check_pixel_sp_primitive(ref.sse_sp[curpar], opt.sse_sp[curpar]))
+            if (!check_pixelcmp_sp(ref.sse_sp[curpar], opt.sse_sp[curpar]))
             {
                 printf("sse_sp[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -376,7 +376,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sse_ss[curpar])
         {
-            if (!check_pixel_ss_primitive(ref.sse_ss[curpar], opt.sse_ss[curpar]))
+            if (!check_pixelcmp_ss(ref.sse_ss[curpar], opt.sse_ss[curpar]))
             {
                 printf("sse_ss[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -385,7 +385,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sad_x3[curpar])
         {
-            if (!check_pixel_primitive_x3(ref.sad_x3[curpar], opt.sad_x3[curpar]))
+            if (!check_pixelcmp_x3(ref.sad_x3[curpar], opt.sad_x3[curpar]))
             {
                 printf("sad_x3[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -394,7 +394,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
         if (opt.sad_x4[curpar])
         {
-            if (!check_pixel_primitive_x4(ref.sad_x4[curpar], opt.sad_x4[curpar]))
+            if (!check_pixelcmp_x4(ref.sad_x4[curpar], opt.sad_x4[curpar]))
             {
                 printf("sad_x4[%s]: failed!\n", FuncNames[curpar]);
                 return false;
@@ -422,7 +422,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
         if (opt.sa8d[i])
         {
-            if (!check_pixel_primitive(ref.sa8d[i], opt.sa8d[i]))
+            if (!check_pixelcmp(ref.sa8d[i], opt.sa8d[i]))
             {
                 printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
