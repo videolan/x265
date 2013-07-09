@@ -36,16 +36,16 @@
     \todo     this should be merged with TComPicYuv
 */
 
+#include "CommonDef.h"
+#include "TComYuv.h"
+#include "TShortYUV.h"
+#include "TComPrediction.h"
+#include "primitives.h"
+
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
 #include <math.h>
-
-#include "CommonDef.h"
-#include "TComYuv.h"
-#include "TComInterpolationFilter.h"
-#include "TShortYUV.h"
-#include "primitives.h"
 
 //! \ingroup TLibCommon
 //! \{

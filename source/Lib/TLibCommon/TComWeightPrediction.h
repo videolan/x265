@@ -42,8 +42,6 @@
 #include "TComPic.h"
 #include "TComMotionInfo.h"
 #include "TComPattern.h"
-#include "TComTrQuant.h"
-#include "TComInterpolationFilter.h"
 
 // ====================================================================================================================
 // Class definition

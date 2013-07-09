@@ -43,12 +43,17 @@
 #include "TComMotionInfo.h"
 #include "TComPattern.h"
 #include "TComTrQuant.h"
-#include "TComInterpolationFilter.h"
 #include "TComWeightPrediction.h"
 #include "TShortYUV.h"
 
 //! \ingroup TLibCommon
 //! \{
+
+#define NTAPS_LUMA        8 ///< Number of taps for luma
+#define NTAPS_CHROMA      4 ///< Number of taps for chroma
+#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
+#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
+#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 // ====================================================================================================================
 // Class definition
@@ -75,8 +80,6 @@ protected:
     /*This holds intermediate values for filtering operations which need to maintain Short precision*/
     TShortYUV filteredBlockTmp[4]; //This
 
-    TComInterpolationFilter m_if;
-
     Pel*   m_pLumaRecBuffer;     ///< array for downsampled reconstructed luma sample
     Int    m_iLumaRecStride;     ///< stride of #m_pLumaRecBuffer array
 
@@ -96,6 +99,9 @@ protected:
 
 public:
      Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
+
+    static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
+    static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
     TComPrediction();
     virtual ~TComPrediction();

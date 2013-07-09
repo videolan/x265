@@ -239,7 +239,6 @@ struct EncoderPrimitives
     cvt32to16_t     cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
 
-    ipfilter_t      ipfilter[NUM_FILTER];
     ipfilter_pp_t   ipfilter_pp[NUM_IPFILTER_P_P];
     ipfilter_ps_t   ipfilter_ps[NUM_IPFILTER_P_S];
     ipfilter_sp_t   ipfilter_sp[NUM_IPFILTER_S_P];

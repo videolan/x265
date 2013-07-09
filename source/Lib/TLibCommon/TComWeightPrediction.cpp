@@ -38,7 +38,7 @@
 // Include files
 #include "TComSlice.h"
 #include "TComWeightPrediction.h"
-#include "TComInterpolationFilter.h"
+#include "TComPrediction.h"
 
 static inline Pel weightBidirY(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
 {
