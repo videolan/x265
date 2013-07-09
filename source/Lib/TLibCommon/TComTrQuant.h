@@ -130,14 +130,13 @@ public:
               Bool bUseAdaptQpSelect = false);
 
     // transform & inverse transform functions
-    Void transformNxN(TComDataCU * pcCU,
+    UInt transformNxN(TComDataCU * pcCU,
                       Short *      pcResidual,
                       UInt         uiStride,
                       TCoeff *     rpcCoeff,
-                      Int * &      rpcArlCoeff,
+                      Int *        rpcArlCoeff,
                       UInt         uiWidth,
                       UInt         uiHeight,
-                      UInt &       uiAbsSum,
                       TextType     eTType,
                       UInt         uiAbsPartIdx,
                       Bool         useTransformSkip = false);
@@ -234,27 +233,24 @@ private:
     Void signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height);
 
     // quantization
-    Void xQuant(TComDataCU * pcCU,
-                Int *        pSrc,
-                TCoeff *     pDes,
-                Int * &      pArlDes,
-                Int          iWidth,
-                Int          iHeight,
-                UInt &       uiAcSum,
+    UInt xQuant(TComDataCU * cu,
+                Int *        src,
+                TCoeff *     dst,
+                Int *        arlDes,
+                Int          width,
+                Int          height,
                 TextType     eTType,
-                UInt         uiAbsPartIdx);
+                UInt         absPartIdx);
 
     // RDOQ functions
-
-    Void           xRateDistOptQuant(TComDataCU * pcCU,
-                                     Int *        plSrcCoeff,
-                                     TCoeff *     piDstCoeff,
-                                     Int * &      piArlDstCoeff,
-                                     UInt         uiWidth,
-                                     UInt         uiHeight,
-                                     UInt &       uiAbsSum,
-                                     TextType     eTType,
-                                     UInt         uiAbsPartIdx);
+    UInt xRateDistOptQuant(TComDataCU * cu,
+                           Int *        srcCoeff,
+                           TCoeff *     dstCoeff,
+                           Int *        arlDstCoeff,
+                           UInt         width,
+                           UInt         height,
+                           TextType     eTType,
+                           UInt         absPartIdx);
 
     __inline UInt xGetCodedLevel(Double& rd64CodedCost,
                                  Double& rd64CodedCost0,
@@ -293,13 +289,13 @@ private:
     __inline Double xGetIEPRate() const           { return 32768; }             ///< Get the cost of an equal probable bit
 
     // dequantization
-    Void xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType);
+    Void xDeQuant(Int bitDepth, const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
 
     // inverse transform
-    Void xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight);
+    Void xIT(Int bitDepth, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
 
     // inverse skipping transform
-    Void xITransformSkip(Int bitDepth, Int* plCoef, Short* pResidual, UInt uiStride, Int width, Int height);
+    Void xITransformSkip(Int bitDepth, Int* coeff, Short* residual, UInt stride, Int width, Int height);
 }; // END CLASS DEFINITION TComTrQuant
 
 //! \}

@@ -957,7 +957,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
 
     m_pcTrQuant->selectLambda(TEXT_LUMA);
 
-    m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, uiAbsSum, TEXT_LUMA, uiAbsPartIdx, useTransformSkip);
+    uiAbsSum = m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, TEXT_LUMA, uiAbsPartIdx, useTransformSkip);
 
     //--- set coded block flag ---
     pcCU->setCbfSubParts((uiAbsSum ? 1 : 0) << uiTrDepth, TEXT_LUMA, uiAbsPartIdx, uiFullDepth);
@@ -1095,7 +1095,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
 
         m_pcTrQuant->selectLambda(TEXT_CHROMA);
 
-        m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, uiAbsSum, eText, uiAbsPartIdx, useTransformSkipChroma);
+        uiAbsSum = m_pcTrQuant->transformNxN(pcCU, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, eText, uiAbsPartIdx, useTransformSkipChroma);
         //--- set coded block flag ---
         pcCU->setCbfSubParts((uiAbsSum ? 1 : 0) << uiOrgTrDepth, eText, uiAbsPartIdx, pcCU->getDepth(0) + uiTrDepth);
         //--- inverse transform ---
@@ -4191,8 +4191,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
         m_pcTrQuant->selectLambda(TEXT_LUMA);
 
-        m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->width, pcCoeffCurrY,
-                                  pcArlCoeffCurrY, trWidth, trHeight, uiAbsSumY, TEXT_LUMA, uiAbsPartIdx);
+        uiAbsSumY = m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->width, pcCoeffCurrY,
+                                              pcArlCoeffCurrY, trWidth, trHeight, TEXT_LUMA, uiAbsPartIdx);
 
         pcCU->setCbfSubParts(uiAbsSumY ? uiSetCbf : 0, TEXT_LUMA, uiAbsPartIdx, uiDepth);
 
@@ -4208,13 +4208,13 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
             m_pcTrQuant->selectLambda(TEXT_CHROMA);
 
-            m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrU,
-                                      pcArlCoeffCurrU, trWidthC, trHeightC, uiAbsSumU, TEXT_CHROMA_U, uiAbsPartIdx);
+            uiAbsSumU = m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrU,
+                                                  pcArlCoeffCurrU, trWidthC, trHeightC, TEXT_CHROMA_U, uiAbsPartIdx);
 
             curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCrQpOffset() + pcCU->getSlice()->getSliceQpDeltaCr();
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_CHROMA, pcCU->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
-            m_pcTrQuant->transformNxN(pcCU, pcResi->getCrAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrV,
-                                      pcArlCoeffCurrV, trWidthC, trHeightC, uiAbsSumV, TEXT_CHROMA_V, uiAbsPartIdx);
+            uiAbsSumV = m_pcTrQuant->transformNxN(pcCU, pcResi->getCrAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrV,
+                                                  pcArlCoeffCurrV, trWidthC, trHeightC, TEXT_CHROMA_V, uiAbsPartIdx);
 
             pcCU->setCbfSubParts(uiAbsSumU ? uiSetCbf : 0, TEXT_CHROMA_U, uiAbsPartIdx, pcCU->getDepth(0) + uiTrModeC);
             pcCU->setCbfSubParts(uiAbsSumV ? uiSetCbf : 0, TEXT_CHROMA_V, uiAbsPartIdx, pcCU->getDepth(0) + uiTrModeC);
@@ -4497,8 +4497,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
             m_pcTrQuant->selectLambda(TEXT_LUMA);
-            m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->width, pcCoeffCurrY,
-                                      pcArlCoeffCurrY, trWidth, trHeight, uiAbsSumTransformSkipY, TEXT_LUMA, uiAbsPartIdx, true);
+            uiAbsSumTransformSkipY = m_pcTrQuant->transformNxN(pcCU, pcResi->getLumaAddr(absTUPartIdx), pcResi->width, pcCoeffCurrY,
+                                                               pcArlCoeffCurrY, trWidth, trHeight, TEXT_LUMA, uiAbsPartIdx, true);
             pcCU->setCbfSubParts(uiAbsSumTransformSkipY ? uiSetCbf : 0, TEXT_LUMA, uiAbsPartIdx, uiDepth);
 
             if (uiAbsSumTransformSkipY != 0)
@@ -4581,12 +4581,12 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
             m_pcTrQuant->selectLambda(TEXT_CHROMA);
 
-            m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrU,
-                                      pcArlCoeffCurrU, trWidthC, trHeightC, uiAbsSumTransformSkipU, TEXT_CHROMA_U, uiAbsPartIdx, true);
+            uiAbsSumTransformSkipU = m_pcTrQuant->transformNxN(pcCU, pcResi->getCbAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrU,
+                                                               pcArlCoeffCurrU, trWidthC, trHeightC, TEXT_CHROMA_U, uiAbsPartIdx, true);
             curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCrQpOffset() + pcCU->getSlice()->getSliceQpDeltaCr();
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_CHROMA, pcCU->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
-            m_pcTrQuant->transformNxN(pcCU, pcResi->getCrAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrV,
-                                      pcArlCoeffCurrV, trWidthC, trHeightC, uiAbsSumTransformSkipV, TEXT_CHROMA_V, uiAbsPartIdx, true);
+            uiAbsSumTransformSkipV = m_pcTrQuant->transformNxN(pcCU, pcResi->getCrAddr(absTUPartIdxC), pcResi->Cwidth, pcCoeffCurrV,
+                                                               pcArlCoeffCurrV, trWidthC, trHeightC, TEXT_CHROMA_V, uiAbsPartIdx, true);
 
             pcCU->setCbfSubParts(uiAbsSumTransformSkipU ? uiSetCbf : 0, TEXT_CHROMA_U, uiAbsPartIdx, pcCU->getDepth(0) + uiTrModeC);
             pcCU->setCbfSubParts(uiAbsSumTransformSkipV ? uiSetCbf : 0, TEXT_CHROMA_V, uiAbsPartIdx, pcCU->getDepth(0) + uiTrModeC);

@@ -337,22 +337,22 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
     } // TU loop
 }
 
-Void TComTrQuant::xQuant(TComDataCU* cu,
+UInt TComTrQuant::xQuant(TComDataCU* cu,
                          Int*        coef,
                          TCoeff*     qCoef,
-                         Int*&       arlCCoef,
+                         Int*        arlCCoef,
                          Int         width,
                          Int         height,
-                         UInt&       acSum,
                          TextType    eTType,
                          UInt        absPartIdx)
 {
+    UInt acSum = 0;
     Int add = 0;
     Bool useRDOQ = cu->getTransformSkip(absPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
     {
-        xRateDistOptQuant(cu, coef, qCoef, arlCCoef, width, height, acSum, eTType, absPartIdx);
+        acSum = xRateDistOptQuant(cu, coef, qCoef, arlCCoef, width, height, eTType, absPartIdx);
     }
     else
     {
@@ -420,14 +420,11 @@ Void TComTrQuant::xQuant(TComDataCU* cu,
         {
             acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
         }
-        if (cu->getSlice()->getPPS()->getSignHideFlag())
-        {
-            if (acSum >= 2)
-            {
-                signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
-            }
-        }
+        if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
+            signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
     }
+
+    return acSum;
 }
 
 Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
@@ -502,22 +499,20 @@ Void TComTrQuant::init(UInt maxTrSize,
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
-Void TComTrQuant::transformNxN(TComDataCU* CU,
+UInt TComTrQuant::transformNxN(TComDataCU* CU,
                                Short*      residual,
                                UInt        stride,
                                TCoeff*     coeff,
-                               Int*&       arlCoeff,
+                               Int*        arlCoeff,
                                UInt        width,
                                UInt        height,
-                               UInt&       absSum,
                                TextType    eTType,
                                UInt        absPartIdx,
-                               Bool        useTransformSkip
-                               )
+                               Bool        useTransformSkip)
 {
     if (CU->getCUTransquantBypass(absPartIdx))
     {
-        absSum = 0;
+        UInt absSum = 0;
         for (UInt k = 0; k < height; k++)
         {
             for (UInt j = 0; j < width; j++)
@@ -526,9 +521,9 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
                 absSum += abs(residual[k * stride + j]);
             }
         }
-
-        return;
+        return absSum;
     }
+
     UInt mode; //luma intra pred
     if (eTType == TEXT_LUMA && CU->getPredictionMode(absPartIdx) == MODE_INTRA)
     {
@@ -539,7 +534,6 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
         mode = REG_DCT;
     }
 
-    absSum = 0;
     assert((CU->getSlice()->getSPS()->getMaxTrSize() >= width));
     Int bitDepth = eTType == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     if (useTransformSkip)
@@ -548,18 +542,14 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
     }
     else
     {
-        // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
-        assert(bitDepth == 8);
-
+        // TODO: this may need larger data types for bitDepth > 8
         const UInt log2BlockSize = g_aucConvertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_plTempCoeff, stride);
-
-        assert(width == height);
     }
-    xQuant(CU, m_plTempCoeff, coeff, arlCoeff, width, height, absSum, eTType, absPartIdx);
+    return xQuant(CU, m_plTempCoeff, coeff, arlCoeff, width, height, eTType, absPartIdx);
 }
 
-Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff*   coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
+Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
 {
     if (transQuantBypass)
     {
@@ -570,25 +560,18 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
                 residual[k * stride + j] = (Short)(coeff[k * width + j]);
             }
         }
-
         return;
     }
+
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
 
-#if 0
-    xDeQuant(bitDepth, coeff, m_plTempCoeff, width, height, scalingListType);
-#endif
-
-#if 1
-    // Values need to pass as input parameter in xDeQuant
+    // Values need to pass as input parameter in dequant
     Int per = m_cQP.m_iPer;
     Int rem = m_cQP.m_iRem;
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_aucConvertToBit[width] + 2;
     Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
-
     x265::primitives.dequant(bitDepth, coeff, m_plTempCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
-#endif
 
     if (useTransformSkip == true)
     {
@@ -596,9 +579,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     }
     else
     {
-        // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
-        assert(bitDepth == 8);
-
+        // TODO: this may need larger data types for bitDepth > 8
         const UInt log2BlockSize = g_aucConvertToBit[width];
         x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_plTempCoeff, residual, stride);
     }
@@ -668,10 +649,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
-    // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
-    assert(bitDepth == 8);
-
-    //xITrMxN(bitDepth, coeff, block, width, height, mode);
+    // TODO: this may need larger data types for bitDepth > 8
     const UInt log2BlockSize = g_aucConvertToBit[width];
     x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coef, residual, stride);
 }
@@ -757,18 +735,17 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-Void TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
+UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                                     Int*        srcCoeff,
                                     TCoeff*     dstCoeff,
-                                    Int*&       arlDstCoeff,
+                                    Int*        arlDstCoeff,
                                     UInt        width,
                                     UInt        height,
-                                    UInt&       absSum,
                                     TextType    eTType,
                                     UInt        absPartIdx)
 {
     UInt log2TrSize = g_aucConvertToBit[width] + 2;
-
+    UInt absSum = 0;
     UInt bitDepth = eTType == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
     UInt       goRiceParam       = 0;
@@ -1046,7 +1023,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     //===== estimate last position =====
     if (lastScanPos < 0)
     {
-        return;
+        return absSum;
     }
 
     Double  bestCost         = 0;
@@ -1258,6 +1235,8 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
             }
         }
     }
+
+    return absSum;
 }
 
 /** Pattern decision for context derivation process of significant_coeff_flag
