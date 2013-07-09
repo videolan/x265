@@ -749,8 +749,7 @@ Void TComTrQuant::xQuant(TComDataCU* cu,
                          TextType    eTType,
                          UInt        absPartIdx)
 {
-    Int   add = 0;
-
+    Int add = 0;
     Bool useRDOQ = cu->getTransformSkip(absPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
@@ -759,8 +758,7 @@ Void TComTrQuant::xQuant(TComDataCU* cu,
     }
     else
     {
-        const UInt   log2BlockSize   = g_aucConvertToBit[width] + 2;
-
+        const UInt log2BlockSize = g_aucConvertToBit[width] + 2;
         UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, cu->isIntra(absPartIdx));
         const UInt *scan = g_auiSigLastScan[scanIdx][log2BlockSize - 1];
 
@@ -1008,21 +1006,21 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     }
 }
 
-Void TComTrQuant::invRecurTransformNxN(TComDataCU* CU, UInt absPartIdx, TextType eTxt, Short* residual, UInt addr, UInt stride, UInt width, UInt height, UInt maxTrMode, UInt trMode, TCoeff* coeff)
+Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType eTxt, Short* residual, UInt addr, UInt stride, UInt width, UInt height, UInt maxTrMode, UInt trMode, TCoeff* coeff)
 {
-    if (!CU->getCbf(absPartIdx, eTxt, trMode))
+    if (!cu->getCbf(absPartIdx, eTxt, trMode))
     {
         return;
     }
-    const UInt stopTrMode = CU->getTransformIdx(absPartIdx);
+    const UInt stopTrMode = cu->getTransformIdx(absPartIdx);
 
     if (trMode == stopTrMode)
     {
-        UInt depth      = CU->getDepth(absPartIdx) + trMode;
-        UInt log2TrSize = g_aucConvertToBit[CU->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
+        UInt depth      = cu->getDepth(absPartIdx) + trMode;
+        UInt log2TrSize = g_aucConvertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
         if (eTxt != TEXT_LUMA && log2TrSize == 2)
         {
-            UInt qpDiv = CU->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
+            UInt qpDiv = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx % qpDiv) != 0)
             {
                 return;
@@ -1031,9 +1029,9 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* CU, UInt absPartIdx, TextType
             height <<= 1;
         }
         Short* resi = residual + addr;
-        Int scalingListType = (CU->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
+        Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
         assert(scalingListType < 6);
-        invtransformNxN(CU->getCUTransquantBypass(absPartIdx), eTxt, REG_DCT, resi, stride, coeff, width, height, scalingListType, CU->getTransformSkip(absPartIdx, eTxt));
+        invtransformNxN(cu->getCUTransquantBypass(absPartIdx), eTxt, REG_DCT, resi, stride, coeff, width, height, scalingListType, cu->getTransformSkip(absPartIdx, eTxt));
     }
     else
     {
@@ -1043,18 +1041,18 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* CU, UInt absPartIdx, TextType
         Int trWidth = width, trHeight = height;
         UInt addrOffset = trHeight * stride;
         UInt coefOffset = trWidth * trHeight;
-        UInt partOffset = CU->getTotalNumPart() >> (trMode << 1);
+        UInt partOffset = cu->getTotalNumPart() >> (trMode << 1);
         {
-            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr, stride, width, height, maxTrMode, trMode, coeff);
+            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr, stride, width, height, maxTrMode, trMode, coeff);
             coeff += coefOffset;
             absPartIdx += partOffset;
-            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + trWidth, stride, width, height, maxTrMode, trMode, coeff);
+            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + trWidth, stride, width, height, maxTrMode, trMode, coeff);
             coeff += coefOffset;
             absPartIdx += partOffset;
-            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + addrOffset, stride, width, height, maxTrMode, trMode, coeff);
+            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + addrOffset, stride, width, height, maxTrMode, trMode, coeff);
             coeff += coefOffset;
             absPartIdx += partOffset;
-            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + addrOffset + trWidth, stride, width, height, maxTrMode, trMode, coeff);
+            invRecurTransformNxN(cu, absPartIdx, eTxt, residual, addr + addrOffset + trWidth, stride, width, height, maxTrMode, trMode, coeff);
         }
     }
 }
@@ -1161,7 +1159,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
+Void TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                                     Int*        srcCoeff,
                                     TCoeff*     dstCoeff,
                                     Int*&       arlDstCoeff,
@@ -1179,7 +1177,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
     Double     blockUncodedCost = 0;
     const UInt log2BlkSize       = g_aucConvertToBit[width] + 2;
     const UInt maxNumCoeff       = width * height;
-    Int scalingListType = (CU->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
+    Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
 
     assert(scalingListType < 6);
 
@@ -1190,7 +1188,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
     Double *errScale = errScaleOrg;
     Int qbitsC = qbits - ARL_C_PRECISION;
     Int addc =  1 << (qbitsC - 1);
-    UInt scanIdx = CU->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, CU->isIntra(absPartIdx));
+    UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, cu->isIntra(absPartIdx));
 
     Double costCoeff[32 * 32];
     Double costSig[32 * 32];
@@ -1456,7 +1454,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
     Double  bestCost         = 0;
     Int     ctxCbf          = 0;
     Int     bestLastIdxp1      = 0;
-    if (!CU->isIntra(absPartIdx) && eTType == TEXT_LUMA && CU->getTransformIdx(absPartIdx) == 0)
+    if (!cu->isIntra(absPartIdx) && eTType == TEXT_LUMA && cu->getTransformIdx(absPartIdx) == 0)
     {
         ctxCbf   = 0;
         bestCost  = blockUncodedCost + xGetICost(m_pcEstBitsSbac->blockRootCbpBits[ctxCbf][0]);
@@ -1464,7 +1462,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
     }
     else
     {
-        ctxCbf   = CU->getCtxQtCbf(eTType, CU->getTransformIdx(absPartIdx));
+        ctxCbf   = cu->getCtxQtCbf(eTType, cu->getTransformIdx(absPartIdx));
         ctxCbf   = (eTType ? TEXT_CHROMA : eTType) * NUM_QT_CBF_CTX + ctxCbf;
         bestCost  = blockUncodedCost + xGetICost(m_pcEstBitsSbac->blockCbpBits[ctxCbf][0]);
         baseCost += xGetICost(m_pcEstBitsSbac->blockCbpBits[ctxCbf][1]);
@@ -1532,7 +1530,7 @@ Void TComTrQuant::xRateDistOptQuant(TComDataCU* CU,
         dstCoeff[scan[scanPos]] = 0;
     }
 
-    if (CU->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
+    if (cu->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
     {
         Int64 rdFactor = (Int64)(
                 g_invQuantScales[m_cQP.rem()] * g_invQuantScales[m_cQP.rem()] * (1 << (2 * m_cQP.m_iPer))
