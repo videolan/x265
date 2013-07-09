@@ -328,7 +328,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
     TComOutputBitstream*  pcBitstreamRedirect = new TComOutputBitstream;
     TComOutputBitstream*  outStreams = NULL;
     x265::FrameEncoder*   frameEncoder = &m_cFrameEncoders[0];
-    TEncEntropy*          entropyCoder = frameEncoder->getEntropyEncoder(0);
+    TEncEntropy*          entropyCoder = frameEncoder->getEntropyCoder(0);
     TEncSlice*            sliceEncoder = frameEncoder->getSliceEncoder();
     TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();
     TEncSbac*             sbacCoder    = frameEncoder->getSingletonSbac();

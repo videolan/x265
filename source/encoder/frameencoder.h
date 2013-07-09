@@ -42,19 +42,19 @@ class CTURow
 {
 public:
 
-    TEncSbac               m_cSbacCoder;
-    TEncSbac               m_cRDGoOnSbacCoder;
-    TEncSbac               m_cBufferSbacCoder;
-    TEncBinCABAC           m_cBinCoderCABAC;
-    TEncBinCABACCounter    m_cRDGoOnBinCodersCABAC;
-    TComBitCounter         m_cBitCounter;
-    TComRdCost             m_cRdCost;
-    TEncEntropy            m_cEntropyCoder;
-    TEncSearch             m_cSearch;
-    TEncCu                 m_cCuEncoder;
-    TComTrQuant            m_cTrQuant;
-    TEncSbac            ***m_pppcRDSbacCoders;
-    TEncBinCABACCounter ***m_pppcBinCodersCABAC;
+    TEncSbac               m_sbacCoder;
+    TEncSbac               m_rdGoOnSbacCoder;
+    TEncSbac               m_bufferSbacCoder;
+    TEncBinCABAC           m_binCoderCABAC;
+    TEncBinCABACCounter    m_rdGoOnBinCodersCABAC;
+    TComBitCounter         m_bitCounter;
+    TComRdCost             m_rdCost;
+    TEncEntropy            m_entropyCoder;
+    TEncSearch             m_search;
+    TEncCu                 m_cuCoder;
+    TComTrQuant            m_trQuant;
+    TEncSbac            ***m_rdSbacCoders;
+    TEncBinCABACCounter ***m_binCodersCABAC;
 
     void create(TEncTop* top);
 
@@ -66,7 +66,7 @@ public:
         m_curCol = 0;
     }
 
-    inline void processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferSBac, bool bSaveCabac);
+    inline void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
 
     /* Threading */
     Lock                m_lock;
@@ -92,19 +92,19 @@ public:
     void processRow(int row);
 
     /* Config broadcast methods */
-    void setAdaptiveSearchRange(int iDir, int iRefIdx, int iNewSR)
+    void setAdaptiveSearchRange(int dir, int refIdx, int newSR)
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cSearch.setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
+            m_rows[i].m_search.setAdaptiveSearchRange(dir, refIdx, newSR);
         }
     }
 
-    void setQPLambda(Int QP, double dLambdaLuma, double dLambdaChroma)
+    void setQPLambda(Int QP, double lumaLambda, double chromaLambda)
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cSearch.setQPLambda(QP, dLambdaLuma, dLambdaChroma);
+            m_rows[i].m_search.setQPLambda(QP, lumaLambda, chromaLambda);
         }
     }
 
@@ -112,7 +112,7 @@ public:
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cRdCost.setCbDistortionWeight(weight);
+            m_rows[i].m_rdCost.setCbDistortionWeight(weight);
         }
     }
 
@@ -120,7 +120,7 @@ public:
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cRdCost.setCrDistortionWeight(weight);
+            m_rows[i].m_rdCost.setCrDistortionWeight(weight);
         }
     }
 
@@ -128,7 +128,7 @@ public:
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cTrQuant.setFlatScalingList();
+            m_rows[i].m_trQuant.setFlatScalingList();
         }
     }
 
@@ -136,7 +136,7 @@ public:
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            m_rows[i].m_cTrQuant.setUseScalingList(flag);
+            m_rows[i].m_trQuant.setUseScalingList(flag);
         }
     }
 
@@ -144,60 +144,60 @@ public:
     {
         for (int i = 0; i < m_numRows; i++)
         {
-            this->m_rows[i].m_cTrQuant.setScalingList(list);
+            this->m_rows[i].m_trQuant.setScalingList(list);
         }
     }
 
-    TEncEntropy* getEntropyEncoder(int row)    { return &this->m_rows[row].m_cEntropyCoder; }
+    TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
 
-    TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_cSbacCoder; }
+    TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
 
-    TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_cRDGoOnSbacCoder; }
+    TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
 
-    TEncSbac***  getRDSbacCoders(int row)      { return this->m_rows[row].m_pppcRDSbacCoders; }
+    TEncSbac***  getRDSbacCoders(int row)      { return this->m_rows[row].m_rdSbacCoders; }
 
-    TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_cBufferSbacCoder; }
+    TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
 
-    TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cCuEncoder; }
+    TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cuCoder; }
 
-    TComSlice*   getSlice()                    { return m_pcSlice; }
+    TComSlice*   getSlice()                    { return m_slice; }
 
     /* Frame singletons, last the life of the encoder */
-    TEncSbac*               getSingletonSbac() { return &m_cSbacCoder; }
-    TComLoopFilter*         getLoopFilter()    { return &m_cLoopFilter; }
-    TEncSampleAdaptiveOffset* getSAO()         { return &m_cEncSAO; }
-    TEncCavlc*              getCavlcCoder()    { return &m_cCavlcCoder; }
-    TEncBinCABAC*           getBinCABAC()      { return &m_cBinCoderCABAC; }
-    TComBitCounter*         getBitCounter()    { return &m_cBitCounter; }
-    TEncSlice*              getSliceEncoder()  { return &m_cSliceEncoder; }
+    TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
+    TComLoopFilter*         getLoopFilter()    { return &m_loopFilter; }
+    TEncSampleAdaptiveOffset* getSAO()         { return &m_sao; }
+    TEncCavlc*              getCavlcCoder()    { return &m_cavlcCoder; }
+    TEncBinCABAC*           getBinCABAC()      { return &m_binCoderCABAC; }
+    TComBitCounter*         getBitCounter()    { return &m_bitCounter; }
+    TEncSlice*              getSliceEncoder()  { return &m_sliceEncoder; }
 
     void resetEntropy(TComSlice *pcSlice)
     {
         for (int i = 0; i < this->m_numRows; i++)
         {
-            this->m_rows[i].m_cEntropyCoder.setEntropyCoder(&this->m_rows[i].m_cSbacCoder, pcSlice);
-            this->m_rows[i].m_cEntropyCoder.resetEntropy();
+            this->m_rows[i].m_entropyCoder.setEntropyCoder(&this->m_rows[i].m_sbacCoder, pcSlice);
+            this->m_rows[i].m_entropyCoder.resetEntropy();
         }
     }
 
     void resetEncoder()
     {
         // Initialize global singletons (these should eventually be per-slice)
-        m_cSbacCoder.init((TEncBinIf*)&m_cBinCoderCABAC);
+        m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
 
 protected:
 
-    TEncSbac                 m_cSbacCoder;
-    TEncBinCABAC             m_cBinCoderCABAC;
-    TEncCavlc                m_cCavlcCoder;
-    TComLoopFilter           m_cLoopFilter;
-    TEncSampleAdaptiveOffset m_cEncSAO;
-    TComBitCounter           m_cBitCounter;
-    TEncSlice                m_cSliceEncoder;
-    TEncCfg*                 m_pcCfg;
+    TEncSbac                 m_sbacCoder;
+    TEncBinCABAC             m_binCoderCABAC;
+    TEncCavlc                m_cavlcCoder;
+    TComLoopFilter           m_loopFilter;
+    TEncSampleAdaptiveOffset m_sao;
+    TComBitCounter           m_bitCounter;
+    TEncSlice                m_sliceEncoder;
+    TEncCfg*                 m_cfg;
 
-    TComSlice*               m_pcSlice;
+    TComSlice*               m_slice;
     TComPic*                 m_pic;
 
     int                      m_numRows;

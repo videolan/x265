@@ -31,79 +31,79 @@ using namespace x265;
 
 void CTURow::create(TEncTop* top)
 {
-    m_cRDGoOnSbacCoder.init(&m_cRDGoOnBinCodersCABAC);
-    m_cSbacCoder.init(&m_cBinCoderCABAC);
-    m_cSearch.init(top, &m_cRdCost, &m_cTrQuant);
+    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
+    m_sbacCoder.init(&m_binCoderCABAC);
+    m_search.init(top, &m_rdCost, &m_trQuant);
 
-    m_cCuEncoder.create((UChar)g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
-    m_cCuEncoder.init(top);
+    m_cuCoder.create((UChar)g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
+    m_cuCoder.init(top);
 
     if (top->getUseAdaptiveQP())
     {
-        m_cTrQuant.initSliceQpDelta();
+        m_trQuant.initSliceQpDelta();
     }
-    m_cTrQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(),
-                    top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
+    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(),
+                   top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
 
-    m_pppcRDSbacCoders = new TEncSbac * *[g_uiMaxCUDepth + 1];
-    m_pppcBinCodersCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
+    m_rdSbacCoders = new TEncSbac * *[g_uiMaxCUDepth + 1];
+    m_binCodersCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
 
-    for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+    for (UInt depth = 0; depth < g_uiMaxCUDepth + 1; depth++)
     {
-        m_pppcRDSbacCoders[iDepth]  = new TEncSbac*[CI_NUM];
-        m_pppcBinCodersCABAC[iDepth] = new TEncBinCABACCounter*[CI_NUM];
+        m_rdSbacCoders[depth]  = new TEncSbac*[CI_NUM];
+        m_binCodersCABAC[depth] = new TEncBinCABACCounter*[CI_NUM];
 
-        for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
+        for (Int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
-            m_pppcRDSbacCoders[iDepth][iCIIdx] = new TEncSbac;
-            m_pppcBinCodersCABAC[iDepth][iCIIdx] = new TEncBinCABACCounter;
-            m_pppcRDSbacCoders[iDepth][iCIIdx]->init(m_pppcBinCodersCABAC[iDepth][iCIIdx]);
+            m_rdSbacCoders[depth][ciIdx] = new TEncSbac;
+            m_binCodersCABAC[depth][ciIdx] = new TEncBinCABACCounter;
+            m_rdSbacCoders[depth][ciIdx]->init(m_binCodersCABAC[depth][ciIdx]);
         }
     }
 
-    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
-    m_cCuEncoder.set_pppcRDSbacCoder(m_pppcRDSbacCoders);
-    m_cCuEncoder.set_pcEntropyCoder(&m_cEntropyCoder);
-    m_cCuEncoder.set_pcPredSearch(&m_cSearch);
-    m_cCuEncoder.set_pcTrQuant(&m_cTrQuant);
-    m_cCuEncoder.set_pcRdCost(&m_cRdCost);
+    m_cuCoder.set_pcRdCost(&m_rdCost);
+    m_cuCoder.set_pppcRDSbacCoder(m_rdSbacCoders);
+    m_cuCoder.set_pcEntropyCoder(&m_entropyCoder);
+    m_cuCoder.set_pcPredSearch(&m_search);
+    m_cuCoder.set_pcTrQuant(&m_trQuant);
+    m_cuCoder.set_pcRdCost(&m_rdCost);
 }
 
-void CTURow::processCU(TComDataCU *pcCU, TComSlice *pcSlice, TEncSbac *pcBufferSBac, bool bSaveSBac)
+void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {
-    TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)m_pppcRDSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
+    TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)m_rdSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
     pcRDSbacCoder->setBinCountingEnableFlag(false);
     pcRDSbacCoder->setBinsCoded(0);
 
-    if (pcBufferSBac)
+    if (bufferSbac)
     {
         // Load SBAC coder context from previous row.
-        m_pppcRDSbacCoders[0][CI_CURR_BEST]->loadContexts(pcBufferSBac);
+        m_rdSbacCoders[0][CI_CURR_BEST]->loadContexts(bufferSbac);
     }
 
-    m_cEntropyCoder.setEntropyCoder(&m_cRDGoOnSbacCoder, pcSlice);
-    m_cEntropyCoder.setBitstream(&m_cBitCounter);
-    ((TEncBinCABAC*)m_cRDGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
-    m_cCuEncoder.set_pcRDGoOnSbacCoder(&m_cRDGoOnSbacCoder);
+    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, slice);
+    m_entropyCoder.setBitstream(&m_bitCounter);
+    ((TEncBinCABAC*)m_rdGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
+    m_cuCoder.set_pcRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
-    m_cCuEncoder.compressCU(pcCU); // Does all the CU analysis
+    m_cuCoder.compressCU(cu); // Does all the CU analysis
 
     // restore entropy coder to an initial state
-    m_cEntropyCoder.setEntropyCoder(m_pppcRDSbacCoders[0][CI_CURR_BEST], pcSlice);
-    m_cEntropyCoder.setBitstream(&m_cBitCounter);
-    m_cCuEncoder.setBitCounter(&m_cBitCounter);
+    m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
+    m_entropyCoder.setBitstream(&m_bitCounter);
+    m_cuCoder.setBitCounter(&m_bitCounter);
     pcRDSbacCoder->setBinCountingEnableFlag(true);
-    m_cBitCounter.resetBits();
+    m_bitCounter.resetBits();
     pcRDSbacCoder->setBinsCoded(0);
 
-    m_cCuEncoder.encodeCU(pcCU);  // Count bits
+    m_cuCoder.encodeCU(cu);  // Count bits
 
     pcRDSbacCoder->setBinCountingEnableFlag(false);
     
     if (bSaveSBac)
     {
         // Save CABAC state for next row
-        m_cBufferSbacCoder.loadContexts(m_pppcRDSbacCoders[0][CI_CURR_BEST]);
+        m_bufferSbacCoder.loadContexts(m_rdSbacCoders[0][CI_CURR_BEST]);
     }
 }
 
@@ -113,26 +113,26 @@ void CTURow::destroy()
     {
         for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
         {
-            delete m_pppcRDSbacCoders[iDepth][iCIIdx];
-            delete m_pppcBinCodersCABAC[iDepth][iCIIdx];
+            delete m_rdSbacCoders[iDepth][iCIIdx];
+            delete m_binCodersCABAC[iDepth][iCIIdx];
         }
     }
 
     for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
     {
-        delete [] m_pppcRDSbacCoders[iDepth];
-        delete [] m_pppcBinCodersCABAC[iDepth];
+        delete [] m_rdSbacCoders[iDepth];
+        delete [] m_binCodersCABAC[iDepth];
     }
 
-    delete[] m_pppcRDSbacCoders;
-    delete[] m_pppcBinCodersCABAC;
-    m_cCuEncoder.destroy();
+    delete[] m_rdSbacCoders;
+    delete[] m_binCodersCABAC;
+    m_cuCoder.destroy();
 }
 
 FrameEncoder::FrameEncoder(ThreadPool* pool)
     : WaveFront(pool)
-    , m_pcCfg(NULL)
-    , m_pcSlice(NULL)
+    , m_cfg(NULL)
+    , m_slice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
 {}
@@ -151,32 +151,32 @@ void FrameEncoder::destroy()
         delete[] m_rows;
     }
 
-    m_cSliceEncoder.destroy();
-    if (m_pcCfg->getUseSAO())
+    m_sliceEncoder.destroy();
+    if (m_cfg->getUseSAO())
     {
-        m_cEncSAO.destroy();
-        m_cEncSAO.destroyEncBuffer();
+        m_sao.destroy();
+        m_sao.destroyEncBuffer();
     }
-    m_cLoopFilter.destroy();
+    m_loopFilter.destroy();
 }
 
 void FrameEncoder::init(TEncTop *top, int numRows)
 {
-    m_pcCfg = top;
+    m_cfg = top;
     m_numRows = numRows;
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
 
-    m_cSliceEncoder.init(top);
-    m_cSliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, (UChar) g_uiMaxCUDepth);
+    m_sliceEncoder.init(top);
+    m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, (UChar) g_uiMaxCUDepth);
     if (top->getUseSAO())
     {
-        m_cEncSAO.setSaoLcuBoundary(top->getSaoLcuBoundary());
-        m_cEncSAO.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
-        m_cEncSAO.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
-        m_cEncSAO.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
-        m_cEncSAO.createEncBuffer();
+        m_sao.setSaoLcuBoundary(top->getSaoLcuBoundary());
+        m_sao.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
+        m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
+        m_sao.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
+        m_sao.createEncBuffer();
     }
-    m_cLoopFilter.create(g_uiMaxCUDepth);
+    m_loopFilter.create(g_uiMaxCUDepth);
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
@@ -191,19 +191,19 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     }
 }
 
-void FrameEncoder::encode(TComPic *pic, TComSlice *pcSlice)
+void FrameEncoder::encode(TComPic *pic, TComSlice *slice)
 {
     m_pic = pic;
-    m_pcSlice = pcSlice;
+    m_slice = slice;
 
     // reset entropy coders
-    m_cSbacCoder.init(&m_cBinCoderCABAC);
+    m_sbacCoder.init(&m_binCoderCABAC);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init();
-        m_rows[i].m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
-        m_rows[i].m_cEntropyCoder.resetEntropy();
-        m_rows[i].m_pppcRDSbacCoders[0][CI_CURR_BEST]->load(&m_cSbacCoder);
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
+        m_rows[i].m_entropyCoder.resetEntropy();
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
     }
 
     if (!m_pool || !m_enableWpp)
@@ -233,17 +233,17 @@ void FrameEncoder::processRow(int row)
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    for (UInt uiCol = curRow.m_curCol; uiCol < numCols; uiCol++)
+    for (UInt col = curRow.m_curCol; col < numCols; col++)
     {
-        const uint32_t uiCUAddr = lineStartCUAddr + uiCol;
-        TComDataCU* pcCU = m_pic->getCU(uiCUAddr);
-        pcCU->initCU(m_pic, uiCUAddr);
+        const uint32_t cuAddr = lineStartCUAddr + col;
+        TComDataCU* pcCU = m_pic->getCU(cuAddr);
+        pcCU->initCU(m_pic, cuAddr);
 
-        codeRow.m_cEntropyCoder.setEntropyCoder(&m_cSbacCoder, m_pcSlice);
-        codeRow.m_cEntropyCoder.resetEntropy();
+        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
+        codeRow.m_entropyCoder.resetEntropy();
 
-        TEncSbac *pcBufSBac = (m_enableWpp && uiCol == 0 && row > 0) ? &m_rows[row - 1].m_cBufferSbacCoder : NULL;
-        codeRow.processCU(pcCU, m_pcSlice, pcBufSBac, m_enableWpp && uiCol == 1);
+        TEncSbac *bufSbac = (m_enableWpp && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        codeRow.processCU(pcCU, m_slice, bufSbac, m_enableWpp && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
         // pcCU->getTotalBits();

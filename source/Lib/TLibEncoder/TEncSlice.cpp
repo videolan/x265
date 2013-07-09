@@ -508,7 +508,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
     TComSlice* pcSlice = pcPic->getSlice();
 
     // choose entropy coder
-    TEncEntropy *pcEntropyCoder = pcEncodeFrame->getEntropyEncoder(0);
+    TEncEntropy *pcEntropyCoder = pcEncodeFrame->getEntropyCoder(0);
     TEncSbac *pcSbacCoder = pcEncodeFrame->getSingletonSbac();
 
     pcEncodeFrame->resetEncoder();
