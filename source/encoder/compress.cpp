@@ -216,19 +216,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& pcCU, PartSize eSize)
     pcCU->setLumaIntraDirSubParts(uiOrgMode, uiPartOffset, uiDepth + uiInitTrDepth);
 
     // set context models
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
-
-    // determine residual for partition
-    //UInt   uiPUDistY = 0;
-    //UInt   uiPUDistC = 0;
-    //UInt64 dPUCost   = 0;
-    //m_pcPredSearch->xRecurIntraCodingQT(pcCU, uiInitTrDepth, uiPartOffset, true, m_ppcOrigYuv[uiDepth], m_ppcPredYuvMode[index][uiDepth], m_ppcResiYuvTemp[uiDepth], uiPUDistY, uiPUDistC, false, dPUCost);
-
-    //UInt partEnum = PartitionFromSizes(pcCU->getWidth(0), pcCU->getHeight(0));
-    // UInt SATD = primitives.satd[partEnum]((pixel*)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
-    // (pixel*)m_ppcPredYuvMode[index][uiDepth]->getLumaAddr(),  m_ppcPredYuvMode[index][uiDepth]->getStride());
-
-    // pcCU->getTotalCost() = SATD;
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);    
 }
 
 /** check RD costs for a CU block encoded with merge
