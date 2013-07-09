@@ -1539,14 +1539,14 @@ Void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* pcEstBitsSbac, T
 
         for (Int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_LUMA; ctxIdx++)
         {
-            pcEstBitsSbac->m_greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
-            pcEstBitsSbac->m_greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
+            pcEstBitsSbac->greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
+            pcEstBitsSbac->greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
         }
 
         for (Int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_LUMA; ctxIdx++)
         {
-            pcEstBitsSbac->m_levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
-            pcEstBitsSbac->m_levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
+            pcEstBitsSbac->levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
+            pcEstBitsSbac->levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
         }
     }
     else
@@ -1556,14 +1556,14 @@ Void TEncSbac::estSignificantCoefficientsBit(estBitsSbacStruct* pcEstBitsSbac, T
 
         for (Int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            pcEstBitsSbac->m_greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
-            pcEstBitsSbac->m_greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
+            pcEstBitsSbac->greaterOneBits[ctxIdx][0] = ctxOne[ctxIdx].getEntropyBits(0);
+            pcEstBitsSbac->greaterOneBits[ctxIdx][1] = ctxOne[ctxIdx].getEntropyBits(1);
         }
 
         for (Int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            pcEstBitsSbac->m_levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
-            pcEstBitsSbac->m_levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
+            pcEstBitsSbac->levelAbsBits[ctxIdx][0] = ctxAbs[ctxIdx].getEntropyBits(0);
+            pcEstBitsSbac->levelAbsBits[ctxIdx][1] = ctxAbs[ctxIdx].getEntropyBits(1);
         }
     }
 }
