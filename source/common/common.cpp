@@ -270,6 +270,14 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 
     g_PCMBitDepthLuma = inputBitDepth;
     g_PCMBitDepthChroma = inputBitDepth;
+
+    // initialize partition order
+    UInt* tmp = &g_zscanToRaster[0];
+    initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
+    initRasterToZscan(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+
+    // initialize conversion matrix from partition index to pel
+    initRasterToPelXY(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
 }
 
 void x265_print_params(x265_param_t *param)

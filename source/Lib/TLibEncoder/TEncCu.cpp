@@ -169,14 +169,6 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_LCUPredictionSAD = 0;
     m_addSADDepth      = 0;
     m_temporalSAD      = 0;
-
-    // initialize partition order.
-    UInt* piTmp = &g_zscanToRaster[0];
-    initZscanToRaster(m_uhTotalDepth, 1, 0, piTmp);
-    initRasterToZscan(uiMaxWidth, uiMaxHeight, m_uhTotalDepth);
-
-    // initialize conversion matrix from partition index to pel
-    initRasterToPelXY(uiMaxWidth, uiMaxHeight, m_uhTotalDepth);
 }
 
 Void TEncCu::destroy()
