@@ -39,7 +39,7 @@ public:
 
     Input()           {}
 
-    static Input* Open(const char *filename);
+    static Input* open(const char *filename);
 
     virtual void setDimensions(int width, int height) = 0;
 

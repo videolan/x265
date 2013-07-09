@@ -350,7 +350,7 @@ struct CLIOptions
             log(X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
             return true;
         }
-        this->input = x265::Input::Open(inputfn);
+        this->input = x265::Input::open(inputfn);
         if (!this->input || this->input->isFail())
         {
             log(X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -393,7 +393,7 @@ struct CLIOptions
 
         if (reconfn)
         {
-            this->recon = x265::Output::Open(reconfn, param->sourceWidth, param->sourceHeight, outputBitDepth, param->frameRate);
+            this->recon = x265::Output::open(reconfn, param->sourceWidth, param->sourceHeight, outputBitDepth, param->frameRate);
             if (this->recon->isFail())
             {
                 log(X265_LOG_WARNING, "unable to write reconstruction file\n");
