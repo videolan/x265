@@ -53,6 +53,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     m_filterHeight = height + s_tmpMarginY * 2;
     m_next = NULL;
 
+    /* directly reference the pre-extended integer pel plane */
     m_lumaPlane[0][0] = (pixel*)pic->m_apiPicBufY + m_startPad;
 
     /* Create buffers for Hpel/Qpel Planes */
