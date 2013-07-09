@@ -44,31 +44,31 @@ const int x265_bit_depth = 10;
 const int x265_bit_depth = 8;
 #endif
 
-void x265_log(x265_param_t *param, int i_level, const char *fmt, ...)
+void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {
-    if (i_level > param->logLevel)
+    if (level > param->logLevel)
         return;
-    std::string s_level;
-    switch (i_level)
+    string log_level;
+    switch (level)
     {
     case X265_LOG_ERROR:
-        s_level = "error";
+        log_level = "error";
         break;
     case X265_LOG_WARNING:
-        s_level = "warning";
+        log_level = "warning";
         break;
     case X265_LOG_INFO:
-        s_level = "info";
+        log_level = "info";
         break;
     case X265_LOG_DEBUG:
-        s_level = "debug";
+        log_level = "debug";
         break;
     default:
-        s_level = "unknown";
+        log_level = "unknown";
         break;
     }
 
-    fprintf(stderr, "x265 [%s]: ", s_level.c_str());
+    fprintf(stderr, "x265 [%s]: ", log_level.c_str());
     va_list arg;
     va_start(arg, fmt);
     vfprintf(stderr, fmt, arg);
@@ -114,8 +114,7 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     if (!profile)
         return 0;
     if (!strcmp(profile, "main"))
-    {
-    }
+    {}
     else if (!strcmp(profile, "main10"))
     {
 #if HIGH_BIT_DEPTH
@@ -151,7 +150,7 @@ int x265_check_params(x265_param_t *param)
 {
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
-    uint32_t maxCUDepth = (uint32_t) g_aucConvertToBit[param->maxCUSize];
+    uint32_t maxCUDepth = (uint32_t)g_aucConvertToBit[param->maxCUSize];
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
@@ -176,7 +175,7 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->keyframeInterval < -1,
             "Keyframe interval must be -1 (open-GOP) 0 (auto) 1 (intra-only) or greater than 1");
     CONFIRM(param->maxCUdQPDepth > maxCUDepth - 1,
-	            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
+            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
@@ -194,11 +193,9 @@ int x265_check_params(x265_param_t *param)
     CONFIRM((param->sourceHeight % (param->maxCUSize >> (maxCUDepth - 1))) != 0,
             "Resulting coded frame height must be a multiple of the minimum CU size");
 
-    
     CONFIRM((1u << tuQTMaxLog2Size) > param->maxCUSize,
             "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
 
-   
     CONFIRM(param->tuQTMaxInterDepth < 1,
             "QuadtreeTUMaxDepthInter must be greater than or equal to 1");
     CONFIRM(param->maxCUSize < (1u << (tuQTMinLog2Size + param->tuQTMaxInterDepth - 1)),
@@ -244,7 +241,7 @@ int x265_check_params(x265_param_t *param)
 
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 {
-    uint32_t maxCUDepth = (uint32_t) g_aucConvertToBit[param->maxCUSize];
+    uint32_t maxCUDepth = (uint32_t)g_aucConvertToBit[param->maxCUSize];
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     // set max CU width & height
@@ -316,7 +313,7 @@ void x265_print_params(x265_param_t *param)
     TOOLOPT(param->bEnableFastMergeDecision, "fdm");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     TOOLOPT(param->bEnableEarlySkip, "esd");
-    if(param->bEnableRDO)
+    if (param->bEnableRDO)
         fprintf(stderr, "rdo ");
     else
         fprintf(stderr, "no-rdo ");

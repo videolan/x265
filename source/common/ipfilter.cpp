@@ -34,7 +34,7 @@
 
 namespace {
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int cStride = srcStride;
 
@@ -89,7 +89,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int cStride = 1;
 
@@ -139,7 +139,7 @@ void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *ds
 }
 
 template<int N>
-void filterVertical_short_short(int /* bitDepth */, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_s_s(int /* bitDepth */, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -199,7 +199,7 @@ void filterVertical_short_short(int /* bitDepth */, short *src, int srcStride, s
 }
 
 template<int N>
-void filterVertical_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -221,8 +221,8 @@ void filterVertical_pel_short(int bitDepth, pixel *src, int srcStride, short *ds
         c[7] = coeff[7];
     }
 
-    int cStride =  srcStride;
-    src -= (N / 2 - 1) * cStride;
+    int Stride =  srcStride;
+    src -= (N / 2 - 1) * Stride;
     Int offset;
     Int headRoom = IF_INTERNAL_PREC - bitDepth;
     Int shift = IF_FILTER_PREC;
@@ -237,22 +237,22 @@ void filterVertical_pel_short(int bitDepth, pixel *src, int srcStride, short *ds
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * Stride] * c[0];
+            sum += src[col + 1 * Stride] * c[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * Stride] * c[2];
+                sum += src[col + 3 * Stride] * c[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * Stride] * c[4];
+                sum += src[col + 5 * Stride] * c[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * Stride] * c[6];
+                sum += src[col + 7 * Stride] * c[7];
             }
 
             short val = (short)((sum + offset) >> shift);
@@ -265,11 +265,11 @@ void filterVertical_pel_short(int bitDepth, pixel *src, int srcStride, short *ds
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
+void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
-    int cStride = 1;
+    int Stride = 1;
 
-    src -= (N / 2 - 1) * cStride;
+    src -= (N / 2 - 1) * Stride;
 
     int offset;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
@@ -285,22 +285,22 @@ void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * coeff[0];
-            sum += src[col + 1 * cStride] * coeff[1];
+            sum  = src[col + 0 * Stride] * coeff[0];
+            sum += src[col + 1 * Stride] * coeff[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * coeff[2];
-                sum += src[col + 3 * cStride] * coeff[3];
+                sum += src[col + 2 * Stride] * coeff[2];
+                sum += src[col + 3 * Stride] * coeff[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * coeff[4];
-                sum += src[col + 5 * cStride] * coeff[5];
+                sum += src[col + 4 * Stride] * coeff[4];
+                sum += src[col + 5 * Stride] * coeff[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * coeff[6];
-                sum += src[col + 7 * cStride] * coeff[7];
+                sum += src[col + 6 * Stride] * coeff[6];
+                sum += src[col + 7 * Stride] * coeff[7];
             }
 
             short val = (short)(sum + offset) >> shift;
@@ -356,7 +356,7 @@ void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst
 }
 
 template<int N>
-void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
+void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     short c[8];
 
@@ -378,8 +378,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
         c[7] = coeff[7];
     }
 
-    int cStride = srcStride;
-    src -= (N / 2 - 1) * cStride;
+    int Stride = srcStride;
+    src -= (N / 2 - 1) * Stride;
 
     int offset;
     short maxVal;
@@ -399,22 +399,22 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
         {
             int sum;
 
-            sum  = src[col + 0 * cStride] * c[0];
-            sum += src[col + 1 * cStride] * c[1];
+            sum  = src[col + 0 * Stride] * c[0];
+            sum += src[col + 1 * Stride] * c[1];
             if (N >= 4)
             {
-                sum += src[col + 2 * cStride] * c[2];
-                sum += src[col + 3 * cStride] * c[3];
+                sum += src[col + 2 * Stride] * c[2];
+                sum += src[col + 3 * Stride] * c[3];
             }
             if (N >= 6)
             {
-                sum += src[col + 4 * cStride] * c[4];
-                sum += src[col + 5 * cStride] * c[5];
+                sum += src[col + 4 * Stride] * c[4];
+                sum += src[col + 5 * Stride] * c[5];
             }
             if (N == 8)
             {
-                sum += src[col + 6 * cStride] * c[6];
-                sum += src[col + 7 * cStride] * c[7];
+                sum += src[col + 6 * Stride] * c[6];
+                sum += src[col + 7 * Stride] * c[7];
             }
 
             short val = (short)((sum + offset) >> shift);
@@ -431,9 +431,9 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
 void filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
 {
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
 }
 
 void extendPicCompBorder(pixel* piTxt, int stride, int width, int height, int marginX, int marginY)
@@ -468,9 +468,9 @@ void extendPicCompBorder(pixel* piTxt, int stride, int width, int height, int ma
 
 void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterVertical_short_pel<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
     extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
@@ -479,9 +479,9 @@ void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pix
 void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
 {
     filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterHorizontal_pel_short<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
     filterConvertShortToPel(bitDepth, midA, midStride, pDstA, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midB, midStride, pDstB, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midC, midStride, pDstC, pDstStride, block_width, block_height);
@@ -502,20 +502,18 @@ namespace x265 {
 
 void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 {
-    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
-    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
-    p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_pel_short<8>;
-    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
-    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
-    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
-    p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_pel_short<4>;
-    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
-
-    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
-    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
-
-    p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_short_short<8>;
-    p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_short_short<4>;
+    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
+    p.ipfilter_ps[FILTER_V_P_S_8] = filterVertical_p_s<8>;
+    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_s_p<8>;
+    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_p_p<4>;
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
+    p.ipfilter_ps[FILTER_V_P_S_4] = filterVertical_p_s<4>;
+    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_s_p<4>;
+    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
+    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
+    p.ipfilter_ss[FILTER_V_S_S_8] = filterVertical_s_s<8>;
+    p.ipfilter_ss[FILTER_V_S_S_4] = filterVertical_s_s<4>;
 
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;
