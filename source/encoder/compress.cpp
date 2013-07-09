@@ -439,51 +439,84 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         Bool earlyDetectionSkip = false;
         xComputeCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], &earlyDetectionSkip);
         
-        /*Compute 2Nx2N mode costs*/
-        xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
-
-        bTrySplitDQP = bTrySplit;
-
-        if ((Int)uiDepth <= m_addSADDepth)
+        if(!earlyDetectionSkip)
         {
-            m_LCUPredictionSAD += m_temporalSAD;
-            m_addSADDepth = uiDepth;
-        }
+            /*Compute 2Nx2N mode costs*/
+            xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
 
-        /*Compute Rect costs*/
-        if (m_pcEncCfg->getUseRectInter())
-        {
-            xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);
-            xComputeCostInter(m_InterCU_2NxN[uiDepth], SIZE_2NxN, 2);
-        }
+            bTrySplitDQP = bTrySplit;
 
-        /*Choose best mode; initialise rpcBestCU to 2Nx2N*/
-        rpcBestCU = m_InterCU_2Nx2N[uiDepth];
+            if ((Int)uiDepth <= m_addSADDepth)
+            {
+                m_LCUPredictionSAD += m_temporalSAD;
+                m_addSADDepth = uiDepth;
+            }
 
-        YuvTemp = m_ppcPredYuvMode[0][uiDepth];
-        m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
-        m_ppcPredYuvBest[uiDepth] = YuvTemp;
-        
-        if (m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
-        {
-            rpcBestCU = m_InterCU_Nx2N[uiDepth];
+            /*Compute Rect costs*/
+            if (m_pcEncCfg->getUseRectInter())
+            {
+                xComputeCostInter(m_InterCU_Nx2N[uiDepth], SIZE_Nx2N, 1);
+                xComputeCostInter(m_InterCU_2NxN[uiDepth], SIZE_2NxN, 2);
+            }
 
-            YuvTemp = m_ppcPredYuvMode[1][uiDepth];
-            m_ppcPredYuvMode[1][uiDepth] = m_ppcPredYuvBest[uiDepth];
+            /*Choose best mode; initialise rpcBestCU to 2Nx2N*/
+            rpcBestCU = m_InterCU_2Nx2N[uiDepth];
+
+            YuvTemp = m_ppcPredYuvMode[0][uiDepth];
+            m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
-        }
-        if (m_InterCU_2NxN[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
-        {
-            rpcBestCU = m_InterCU_2NxN[uiDepth];
-
-            YuvTemp = m_ppcPredYuvMode[2][uiDepth];
-            m_ppcPredYuvMode[2][uiDepth] = m_ppcPredYuvBest[uiDepth];
-            m_ppcPredYuvBest[uiDepth] = YuvTemp;
-        }
-
-        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
         
-        if(m_MergeBestCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+            if (m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+            {
+                rpcBestCU = m_InterCU_Nx2N[uiDepth];
+
+                YuvTemp = m_ppcPredYuvMode[1][uiDepth];
+                m_ppcPredYuvMode[1][uiDepth] = m_ppcPredYuvBest[uiDepth];
+                m_ppcPredYuvBest[uiDepth] = YuvTemp;
+            }
+            if (m_InterCU_2NxN[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+            {
+                rpcBestCU = m_InterCU_2NxN[uiDepth];
+
+                YuvTemp = m_ppcPredYuvMode[2][uiDepth];
+                m_ppcPredYuvMode[2][uiDepth] = m_ppcPredYuvBest[uiDepth];
+                m_ppcPredYuvBest[uiDepth] = YuvTemp;
+            }
+
+            m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        
+            if(m_MergeBestCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+            {
+                rpcBestCU = m_MergeBestCU[uiDepth];
+                YuvTemp = m_ppcPredYuvMode[3][uiDepth];
+                m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
+                m_ppcPredYuvBest[uiDepth] = YuvTemp;
+                m_ppcResiYuvBest[uiDepth]->clear();
+                m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
+            }
+
+            /*compute intra cost */
+            if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
+                rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
+                rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
+            {
+                xComputeCostIntrainInter(m_IntrainInterCU[uiDepth], SIZE_2Nx2N);
+                xEncodeIntrainInter(m_IntrainInterCU[uiDepth], m_ppcOrigYuv[uiDepth], m_ppcPredYuvMode[5][uiDepth], m_ppcResiYuvTemp[uiDepth],  m_ppcRecoYuvTemp[uiDepth]);
+
+                if (m_IntrainInterCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+                {
+                    rpcBestCU = m_IntrainInterCU[uiDepth];
+
+                    YuvTemp = m_ppcPredYuvMode[5][uiDepth];
+                    m_ppcPredYuvMode[5][uiDepth] = m_ppcPredYuvBest[uiDepth];
+                    m_ppcPredYuvBest[uiDepth] = YuvTemp;
+                    TComYuv* tmpPic = m_ppcRecoYuvBest[uiDepth];
+                    m_ppcRecoYuvBest[uiDepth] =  m_ppcRecoYuvTemp[uiDepth];
+                    m_ppcRecoYuvTemp[uiDepth] = tmpPic;
+                }
+            }
+        }
+        else
         {
             rpcBestCU = m_MergeBestCU[uiDepth];
             YuvTemp = m_ppcPredYuvMode[3][uiDepth];
@@ -493,26 +526,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
         }
 
-        /*compute intra cost */
-        if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
-            rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
-            rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
-        {
-            xComputeCostIntrainInter(m_IntrainInterCU[uiDepth], SIZE_2Nx2N);
-            xEncodeIntrainInter(m_IntrainInterCU[uiDepth], m_ppcOrigYuv[uiDepth], m_ppcPredYuvMode[5][uiDepth], m_ppcResiYuvTemp[uiDepth],  m_ppcRecoYuvTemp[uiDepth]);
-
-            if (m_IntrainInterCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
-            {
-                rpcBestCU = m_IntrainInterCU[uiDepth];
-
-                YuvTemp = m_ppcPredYuvMode[5][uiDepth];
-                m_ppcPredYuvMode[5][uiDepth] = m_ppcPredYuvBest[uiDepth];
-                m_ppcPredYuvBest[uiDepth] = YuvTemp;
-                TComYuv* tmpPic = m_ppcRecoYuvBest[uiDepth];
-                m_ppcRecoYuvBest[uiDepth] =  m_ppcRecoYuvTemp[uiDepth];
-                m_ppcRecoYuvTemp[uiDepth] = tmpPic;
-            }
-        }
 
         /* Disable recursive analysis for whole CUs temporarily*/
         if ((rpcBestCU != 0) && (rpcBestCU->isSkipped(0)))
