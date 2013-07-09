@@ -9,7 +9,6 @@ project (x265)
 cmake_minimum_required (VERSION 2.6)
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
-include(version)
 
 if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
     set(X64 1)
@@ -81,7 +80,6 @@ if(ENABLE_TOOLS)
     add_subdirectory(tools)
 endif(ENABLE_TOOLS)
 
-
 # Visual leak detector
 if (WIN32)
     find_package(VLD)
@@ -104,6 +102,7 @@ if(ENABLE_CLI)
         set_source_files_properties(compat/msvc/getopt.c PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
     endif()
 
+    include(version) # determine X265_VERSION
     set_source_files_properties(x265.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
     add_executable(x265 ${EXTRAS} ../COPYING
         x265.cpp x265opts.h
