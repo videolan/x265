@@ -50,7 +50,7 @@
 // Constants
 // ====================================================================================================================
 
-#define QP_BITS                 15
+#define QP_BITS 15
 
 // ====================================================================================================================
 // Type definition
@@ -121,7 +121,7 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt uiMaxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool bEnc, Bool useTransformSkipFast, Bool bUseAdaptQpSelect);
+    Void init(UInt uiMaxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool bUseAdaptQpSelect);
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, Int* arlCoeff, UInt width, UInt height,
@@ -196,7 +196,6 @@ protected:
 
     UInt     m_uiRDOQOffset;
     UInt     m_uiMaxTrSize;
-    Bool     m_bEnc;
     Bool     m_useRDOQ;
     Bool     m_useRDOQTS;
     Bool     m_bUseAdaptQpSelect;

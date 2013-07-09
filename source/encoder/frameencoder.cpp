@@ -42,7 +42,7 @@ void CTURow::create(TEncTop* top)
     {
         m_cTrQuant.initSliceQpDelta();
     }
-    m_cTrQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(), true,
+    m_cTrQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(),
                     top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
 
     m_pppcRDSbacCoders = new TEncSbac * *[g_uiMaxCUDepth + 1];
