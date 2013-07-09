@@ -21,10 +21,10 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "x265.h"
-#include "common.h"
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComSlice.h"
+#include "x265.h"
+#include "common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -352,21 +352,4 @@ int64_t x265_mdate(void)
     gettimeofday(&tv_date, NULL);
     return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
 #endif
-}
-
-int dumpBuffer(void * pbuf, size_t bufsize, const char * filename)
-{
-    const char * mode = "wb";
-
-    FILE * fp = fopen(filename, mode);
-
-    if (!fp)
-    {
-        printf("ERROR: dumpBuffer: fopen('%s','%s') failed\n", filename, mode);
-        return -1;
-    }
-    fwrite(pbuf, 1, bufsize, fp);
-    fclose(fp);
-    printf("dumpBuffer: dumped %8ld bytes into %s\n", (long)bufsize, filename);
-    return 0;
 }
