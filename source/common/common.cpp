@@ -260,16 +260,11 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
     g_maxCUDepth = maxCUDepth;
 
     // set internal bit-depth and constants
-#if HIGH_BIT_DEPTH
-    g_bitDepthY = param->internalBitDepth;
-    g_bitDepthC = param->internalBitDepth;
-#else
-    g_bitDepthY = g_bitDepthC = 8;
-    g_PCMBitDepthLuma = g_PCMBitDepthChroma = 8;
+#if !HIGH_BIT_DEPTH
+    inputBitDepth = 8;
 #endif
-
-    g_PCMBitDepthLuma = inputBitDepth;
-    g_PCMBitDepthChroma = inputBitDepth;
+    g_bitDepthY = g_bitDepthC = param->internalBitDepth;
+    g_PCMBitDepthLuma = g_PCMBitDepthChroma = inputBitDepth;
 
     // initialize partition order
     UInt* tmp = &g_zscanToRaster[0];
