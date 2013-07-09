@@ -2115,7 +2115,7 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* pcCU,
     UInt  uiMaxMode   = 4;
     UInt  uiBestMode  = MAX_UINT;
     UInt  uiMinSAD    = MAX_UINT;
-    x265::pixelcmp sa8d = x265::primitives.sa8d[(int)g_aucConvertToBit[uiWidth]];
+    x265::pixelcmp_t sa8d = x265::primitives.sa8d[(int)g_aucConvertToBit[uiWidth]];
     for (UInt uiMode  = uiMinMode; uiMode < uiMaxMode; uiMode++)
     {
         //--- get prediction ---
@@ -2189,7 +2189,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* pcCU,
         UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
         Int numModesForFullRD = g_aucIntraModeNumFast[uiWidthBit];
         Int nLog2SizeMinus2 = g_aucConvertToBit[uiWidth];
-        x265::pixelcmp sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
+        x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
 
         Bool doFastSearch = (numModesForFullRD != numModesAvailable);
         if (doFastSearch)

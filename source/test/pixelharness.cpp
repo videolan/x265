@@ -85,7 +85,7 @@ PixelHarness::~PixelHarness()
 #define INCR 16
 #define STRIDE 16
 
-bool PixelHarness::check_pixelcmp(pixelcmp ref, pixelcmp opt)
+bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
 {
     int j = 0;
 
@@ -102,7 +102,7 @@ bool PixelHarness::check_pixelcmp(pixelcmp ref, pixelcmp opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp ref, pixelcmp_sp opt)
+bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
 {
     int j = 0;
 
@@ -119,7 +119,7 @@ bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp ref, pixelcmp_sp opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss ref, pixelcmp_ss opt)
+bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
 {
     int j = 0;
 
@@ -136,7 +136,7 @@ bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss ref, pixelcmp_ss opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
+bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt)
 {
     int j = INCR;
 
@@ -156,7 +156,7 @@ bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3 ref, pixelcmp_x3 opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
+bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
 {
     int j = INCR;
 
@@ -176,7 +176,7 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4 ref, pixelcmp_x4 opt)
     return true;
 }
 
-bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p opt)
+bool PixelHarness::check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -199,7 +199,7 @@ bool PixelHarness::check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p o
     return true;
 }
 
-bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt)
+bool PixelHarness::check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_sp_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -222,7 +222,7 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s
     return true;
 }
 
-bool PixelHarness::check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s_c opt)
+bool PixelHarness::check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_sc_t opt)
 {
     ALIGN_VAR_16(short, ref_dest[64 * 64]);
     ALIGN_VAR_16(short, opt_dest[64 * 64]);
@@ -245,7 +245,7 @@ bool PixelHarness::check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s
     return true;
 }
 
-bool PixelHarness::check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt)
+bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_ps_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);

@@ -178,22 +178,22 @@ enum IPFilterConf_S_S
 // Returns a Partitions enum for the given size, always expected to return a valid enum
 int PartitionFromSizes(int width, int height);
 
-typedef int  (*pixelcmp)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
-typedef int  (*pixelcmp_ss)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
-typedef int  (*pixelcmp_sp)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
-typedef void (*pixelcmp_x3)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
-typedef void (*pixelcmp_x4)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
-typedef void (*IPFilter)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (*IPFilter_p_p)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilter_p_s)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilter_s_p)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilter_s_s)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*IPFilterConvert_p_s)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
-typedef void (*IPFilterConvert_s_p)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
-typedef void (*blockcpy_p_p)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_s_p)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_p_s)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_s_c)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
+typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
+typedef int  (*pixelcmp_ss_t)(short *fenc, intptr_t fencstride, short *fref, intptr_t frefstride);
+typedef int  (*pixelcmp_sp_t)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
+typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
+typedef void (*ipfilter_t)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
+typedef void (*ipfilter_pp_t)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*ipfilter_ps_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*ipfilter_sp_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*ipfilter_ss_t)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*ipfilter_p2s_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
+typedef void (*ipfilter_s2p_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_sc_t)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
 typedef void (*intra_dc_t)(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int bFilter);
 typedef void (*intra_planar_t)(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width);
 typedef void (*intra_ang_t)(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
@@ -220,26 +220,26 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
 struct EncoderPrimitives
 {
     /* All pixel comparison functions take the same arguments */
-    pixelcmp sad[NUM_PARTITIONS];        // Sum of Differences for each size
-    pixelcmp_x3 sad_x3[NUM_PARTITIONS];  // Sum of Differences 3x for each size
-    pixelcmp_x4 sad_x4[NUM_PARTITIONS];  // Sum of Differences 4x for each size
-    pixelcmp sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss sse_ss[NUM_PARTITIONS];  // Sum of Square Error (short, short) fenc alignment not assumed
-    pixelcmp_sp sse_sp[NUM_PARTITIONS];  // Sum of Square Error (short, pixel) fenc alignment not assumed
-    pixelcmp satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
-    pixelcmp sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
-    pixelcmp sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
-    IPFilter filter[NUM_FILTER];
-    IPFilter_p_p ipFilter_p_p[NUM_IPFILTER_P_P];
-    IPFilter_p_s ipFilter_p_s[NUM_IPFILTER_P_S];
-    IPFilter_s_p ipFilter_s_p[NUM_IPFILTER_S_P];
-    IPFilter_s_s ipFilter_s_s[NUM_IPFILTER_S_S];
-    IPFilterConvert_p_s ipfilterConvert_p_s;
-    IPFilterConvert_s_p ipfilterConvert_s_p;
-    blockcpy_p_p cpyblock;     // pixel from pixel
-    blockcpy_p_s cpyblock_p_s; // pixel from short
-    blockcpy_s_p cpyblock_s_p; // short from pixel
-    blockcpy_s_c cpyblock_s_c; // short from unsigned char
+    pixelcmp_t sad[NUM_PARTITIONS];        // Sum of Differences for each size
+    pixelcmp_x3_t sad_x3[NUM_PARTITIONS];  // Sum of Differences 3x for each size
+    pixelcmp_x4_t sad_x4[NUM_PARTITIONS];  // Sum of Differences 4x for each size
+    pixelcmp_t sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss_t sse_ss[NUM_PARTITIONS];  // Sum of Square Error (short, short) fenc alignment not assumed
+    pixelcmp_sp_t sse_sp[NUM_PARTITIONS];  // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixelcmp_t satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
+    pixelcmp_t sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
+    pixelcmp_t sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
+    ipfilter_t filter[NUM_FILTER];
+    ipfilter_pp_t ipFilter_p_p[NUM_IPFILTER_P_P];
+    ipfilter_ps_t ipFilter_p_s[NUM_IPFILTER_P_S];
+    ipfilter_sp_t ipFilter_s_p[NUM_IPFILTER_S_P];
+    ipfilter_ss_t ipFilter_s_s[NUM_IPFILTER_S_S];
+    ipfilter_p2s_t ipfilterConvert_p_s;
+    ipfilter_s2p_t ipfilterConvert_s_p;
+    blockcpy_pp_t cpyblock;     // pixel from pixel
+    blockcpy_ps_t cpyblock_p_s; // pixel from short
+    blockcpy_sp_t cpyblock_s_p; // short from pixel
+    blockcpy_sc_t cpyblock_s_c; // short from unsigned char
     intra_dc_t intra_pred_dc;
     intra_planar_t intra_pred_planar;
     intra_ang_t intra_pred_ang;

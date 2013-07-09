@@ -35,15 +35,15 @@ protected:
 
     short *sbuf1, *sbuf2;
 
-    bool check_pixelcmp(x265::pixelcmp ref, x265::pixelcmp opt);
-    bool check_pixelcmp_sp(x265::pixelcmp_sp ref, x265::pixelcmp_sp opt);
-    bool check_pixelcmp_ss(x265::pixelcmp_ss ref, x265::pixelcmp_ss opt);
-    bool check_pixelcmp_x3(x265::pixelcmp_x3 ref, x265::pixelcmp_x3 opt);
-    bool check_pixelcmp_x4(x265::pixelcmp_x4 ref, x265::pixelcmp_x4 opt);
-    bool check_block_copy(x265::blockcpy_p_p ref, x265::blockcpy_p_p opt);
-    bool check_block_copy_s_p(x265::blockcpy_s_p ref, x265::blockcpy_s_p opt);
-    bool check_block_copy_p_s(x265::blockcpy_p_s ref, x265::blockcpy_p_s opt);
-    bool check_block_copy_s_c(x265::blockcpy_s_c ref, x265::blockcpy_s_c opt);
+    bool check_pixelcmp(x265::pixelcmp_t ref, x265::pixelcmp_t opt);
+    bool check_pixelcmp_sp(x265::pixelcmp_sp_t ref, x265::pixelcmp_sp_t opt);
+    bool check_pixelcmp_ss(x265::pixelcmp_ss_t ref, x265::pixelcmp_ss_t opt);
+    bool check_pixelcmp_x3(x265::pixelcmp_x3_t ref, x265::pixelcmp_x3_t opt);
+    bool check_pixelcmp_x4(x265::pixelcmp_x4_t ref, x265::pixelcmp_x4_t opt);
+    bool check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t opt);
+    bool check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_sp_t opt);
+    bool check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_ps_t opt);
+    bool check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_sc_t opt);
     bool check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt);
     bool check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt);
 

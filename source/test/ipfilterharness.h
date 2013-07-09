@@ -40,11 +40,11 @@ protected:
 
     int ipf_t_size;
 
-    bool check_IPFilter_primitive(x265::IPFilter_p_p ref, x265::IPFilter_p_p opt);
-    bool check_IPFilter_primitive(x265::IPFilter_p_s ref, x265::IPFilter_p_s opt);
-    bool check_IPFilter_primitive(x265::IPFilter_s_p ref, x265::IPFilter_s_p opt);
-    bool check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x265::IPFilterConvert_p_s opt);
-    bool check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x265::IPFilterConvert_s_p opt);
+    bool check_IPFilter_primitive(x265::ipfilter_pp_t ref, x265::ipfilter_pp_t opt);
+    bool check_IPFilter_primitive(x265::ipfilter_ps_t ref, x265::ipfilter_ps_t opt);
+    bool check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ipfilter_sp_t opt);
+    bool check_IPFilter_primitive(x265::ipfilter_p2s_t ref, x265::ipfilter_p2s_t opt);
+    bool check_IPFilter_primitive(x265::ipfilter_s2p_t ref, x265::ipfilter_s2p_t opt);
     bool check_filterVMultiplane(x265::filterVmulti_t ref, x265::filterVmulti_t opt);
     bool check_filterHMultiplane(x265::filterHmulti_t ref, x265::filterHmulti_t opt);
 

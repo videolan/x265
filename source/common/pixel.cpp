@@ -571,13 +571,13 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     //sse
 #if HIGH_BIT_DEPTH
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp, short, short)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp, short, short)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, short, short)
 #else
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp, pixel, pixel)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp, short, pixel)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss, short, short)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixelcmp_t, pixel, pixel)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, short, pixel)
+    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, short, short)
 #endif
     p.cpyblock     = blockcopy_p_p;
     p.cpyblock_s_p = blockcopy_s_p;

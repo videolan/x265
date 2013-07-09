@@ -111,7 +111,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& pcCU, PartSize eSize)
     UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
     UInt numModesForFullRD = g_aucIntraModeNumFast[uiWidthBit];
     Int nLog2SizeMinus2 = g_aucConvertToBit[uiWidth];
-    x265::pixelcmp sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
+    x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
     {
         assert(numModesForFullRD < numModesAvailable);
 

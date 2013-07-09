@@ -81,7 +81,7 @@ IPFilterHarness::~IPFilterHarness()
     free(pixel_buff);
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_p_p ref, x265::IPFilter_p_p opt)
+bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_pp_t ref, x265::ipfilter_pp_t opt)
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
@@ -118,7 +118,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_p_p ref, x265::IPF
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_p_s ref, x265::IPFilter_p_s opt)
+bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_ps_t ref, x265::ipfilter_ps_t opt)
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
@@ -155,7 +155,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_p_s ref, x265::IPF
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_s_p ref, x265::IPFilter_s_p opt)
+bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ipfilter_sp_t opt)
 {
     int rand_height = rand() % 100;                 // Randomly generated Height
     int rand_width = rand() % 100;                  // Randomly generated Width
@@ -192,7 +192,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilter_s_p ref, x265::IPF
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x265::IPFilterConvert_p_s opt)
+bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_p2s_t ref, x265::ipfilter_p2s_t opt)
 {
     short rand_height = (short)rand() % 100;                 // Randomly generated Height
     short rand_width = (short)rand() % 100;                  // Randomly generated Width
@@ -226,7 +226,7 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_p_s ref, x2
     return true;
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(x265::IPFilterConvert_s_p ref, x265::IPFilterConvert_s_p opt)
+bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_s2p_t ref, x265::ipfilter_s2p_t opt)
 {
     short rand_height = (short)rand() % 100;                 // Randomly generated Height
     short rand_width = (short)rand() % 100;                  // Randomly generated Width

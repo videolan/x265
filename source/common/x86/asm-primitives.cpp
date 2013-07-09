@@ -33,7 +33,7 @@ bool hasXOP(void); // instr_detect.cpp
 namespace {
 
 /* template for building arbitrary partition sizes from full optimized primitives */
-template<int lx, int ly, int dx, int dy, x265::pixelcmp compare>
+template<int lx, int ly, int dx, int dy, x265::pixelcmp_t compare>
 int cmp(pixel * piOrg, intptr_t strideOrg, pixel * piCur, intptr_t strideCur)
 {
     int sum = 0;
@@ -76,14 +76,14 @@ namespace x265 {
 #define INIT8( name, cpu ) INIT8_NAME( name, name, cpu )
 
 #define ASSGN_SSE(type,width,suffix) \
-    p.sse_##type[PARTITION_##width##x64] = (pixelcmp) x265_pixel_ssd_##width##x64_##suffix; \
-    p.sse_##type[PARTITION_##width##x48] = (pixelcmp) x265_pixel_ssd_##width##x48_##suffix; \
-    p.sse_##type[PARTITION_##width##x32] = (pixelcmp) x265_pixel_ssd_##width##x32_##suffix; \
-    p.sse_##type[PARTITION_##width##x24] = (pixelcmp) x265_pixel_ssd_##width##x24_##suffix; \
-    p.sse_##type[PARTITION_##width##x16] = (pixelcmp) x265_pixel_ssd_##width##x16_##suffix; \
-    p.sse_##type[PARTITION_##width##x12] = (pixelcmp) x265_pixel_ssd_##width##x12_##suffix; \
-    p.sse_##type[PARTITION_##width##x8] = (pixelcmp) x265_pixel_ssd_##width##x8_##suffix; \
-    p.sse_##type[PARTITION_##width##x4] = (pixelcmp) x265_pixel_ssd_##width##x4_##suffix; \
+    p.sse_##type[PARTITION_##width##x64] = (pixelcmp_t) x265_pixel_ssd_##width##x64_##suffix; \
+    p.sse_##type[PARTITION_##width##x48] = (pixelcmp_t) x265_pixel_ssd_##width##x48_##suffix; \
+    p.sse_##type[PARTITION_##width##x32] = (pixelcmp_t) x265_pixel_ssd_##width##x32_##suffix; \
+    p.sse_##type[PARTITION_##width##x24] = (pixelcmp_t) x265_pixel_ssd_##width##x24_##suffix; \
+    p.sse_##type[PARTITION_##width##x16] = (pixelcmp_t) x265_pixel_ssd_##width##x16_##suffix; \
+    p.sse_##type[PARTITION_##width##x12] = (pixelcmp_t) x265_pixel_ssd_##width##x12_##suffix; \
+    p.sse_##type[PARTITION_##width##x8] = (pixelcmp_t) x265_pixel_ssd_##width##x8_##suffix; \
+    p.sse_##type[PARTITION_##width##x4] = (pixelcmp_t) x265_pixel_ssd_##width##x4_##suffix; \
 
 #if _MSC_VER
 #pragma warning(disable: 4100) // unused param, temporary issue until alignment problems are resolved

@@ -333,9 +333,9 @@ namespace x265 {
 
 void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
 {
-    SET_FUNC_PRIMITIVE_TABLE(sad, sad_, pixelcmp)
-    SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3)
-    SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4)
+    SET_FUNC_PRIMITIVE_TABLE(sad, sad_, pixelcmp_t)
+    SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3_t)
+    SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4_t)
 
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
@@ -344,16 +344,16 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.cvt32to16_shr = convert32to16_shr;
 
 #if HIGH_BIT_DEPTH
-    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_ss, pixelcmp)
-    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_ss, pixelcmp_sp)
-    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
+    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_ss, pixelcmp_t)
+    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_ss, pixelcmp_sp_t)
+    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss_t)
     p.satd[PARTITION_4x4] = satd_4x4;
     p.satd[PARTITION_4x8] = satd<4, 8>;
     p.satd[PARTITION_16x4] = satd<16, 4>;
 #else
-    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp)
-    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp)
-    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss)
+    SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp_t)
+    SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp_t)
+    SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss_t)
 
     p.calcresidual[BLOCK_4x4] = getResidual4;
     p.calcresidual[BLOCK_8x8] = getResidual8;

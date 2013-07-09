@@ -43,11 +43,11 @@ protected:
     pixel *fencplane;
     intptr_t fencLumaStride;
 
-    pixelcmp sad;
-    pixelcmp satd;
-    pixelcmp sa8d;
-    pixelcmp_x3 sad_x3;
-    pixelcmp_x4 sad_x4;
+    pixelcmp_t sad;
+    pixelcmp_t satd;
+    pixelcmp_t sa8d;
+    pixelcmp_x3_t sad_x3;
+    pixelcmp_x4_t sad_x4;
 
     intptr_t blockOffset;
     int partEnum;
