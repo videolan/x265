@@ -909,8 +909,8 @@ Void TComTrQuant::init(UInt maxTrSize,
 Void TComTrQuant::transformNxN(TComDataCU* CU,
                                Short*      residual,
                                UInt        stride,
-                               TCoeff*     rpcCoeff,
-                               Int*&       rpcArlCoeff,
+                               TCoeff*     coeff,
+                               Int*&       arlCoeff,
                                UInt        width,
                                UInt        height,
                                UInt&       absSum,
@@ -926,21 +926,21 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
         {
             for (UInt j = 0; j < width; j++)
             {
-                rpcCoeff[k * width + j] = ((Short)residual[k * stride + j]);
+                coeff[k * width + j] = ((Short)residual[k * stride + j]);
                 absSum += abs(residual[k * stride + j]);
             }
         }
 
         return;
     }
-    UInt uiMode; //luma intra pred
+    UInt mode; //luma intra pred
     if (eTType == TEXT_LUMA && CU->getPredictionMode(absPartIdx) == MODE_INTRA)
     {
-        uiMode = CU->getLumaIntraDir(absPartIdx);
+        mode = CU->getLumaIntraDir(absPartIdx);
     }
     else
     {
-        uiMode = REG_DCT;
+        mode = REG_DCT;
     }
 
     absSum = 0;
@@ -955,12 +955,12 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
         // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
         assert(bitDepth == 8);
 
-        const UInt uiLog2BlockSize = g_aucConvertToBit[width];
-        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((width == 4) && (uiMode != REG_DCT))](residual, m_plTempCoeff, stride);
+        const UInt log2BlockSize = g_aucConvertToBit[width];
+        x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_plTempCoeff, stride);
 
         assert(width == height);
     }
-    xQuant(CU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, width, height, absSum, eTType, absPartIdx);
+    xQuant(CU, m_plTempCoeff, coeff, arlCoeff, width, height, absSum, eTType, absPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
