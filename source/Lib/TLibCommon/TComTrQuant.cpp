@@ -739,7 +739,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
     } // TU loop
 }
 
-Void TComTrQuant::xQuant(TComDataCU* CU,
+Void TComTrQuant::xQuant(TComDataCU* cu,
                          Int*        coef,
                          TCoeff*     qCoef,
                          Int*&       arlCCoef,
@@ -751,26 +751,26 @@ Void TComTrQuant::xQuant(TComDataCU* CU,
 {
     Int   add = 0;
 
-    Bool useRDOQ = CU->getTransformSkip(absPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
+    Bool useRDOQ = cu->getTransformSkip(absPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
     {
-        xRateDistOptQuant(CU, coef, qCoef, arlCCoef, width, height, acSum, eTType, absPartIdx);
+        xRateDistOptQuant(cu, coef, qCoef, arlCCoef, width, height, acSum, eTType, absPartIdx);
     }
     else
     {
         const UInt   log2BlockSize   = g_aucConvertToBit[width] + 2;
 
-        UInt scanIdx = CU->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, CU->isIntra(absPartIdx));
+        UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, cu->isIntra(absPartIdx));
         const UInt *scan = g_auiSigLastScan[scanIdx][log2BlockSize - 1];
 
         Int deltaU[32 * 32];
 
         QpParam cQpBase;
-        Int qpbase = CU->getSlice()->getSliceQpBase();
+        Int qpbase = cu->getSlice()->getSliceQpBase();
 
         Int qpScaled;
-        Int qpBDOffset = (eTType == TEXT_LUMA) ? CU->getSlice()->getSPS()->getQpBDOffsetY() : CU->getSlice()->getSPS()->getQpBDOffsetC();
+        Int qpBDOffset = (eTType == TEXT_LUMA) ? cu->getSlice()->getSPS()->getQpBDOffsetY() : cu->getSlice()->getSPS()->getQpBDOffsetC();
 
         if (eTType == TEXT_LUMA)
         {
@@ -781,11 +781,11 @@ Void TComTrQuant::xQuant(TComDataCU* CU,
             Int chromaQPOffset;
             if (eTType == TEXT_CHROMA_U)
             {
-                chromaQPOffset = CU->getSlice()->getPPS()->getChromaCbQpOffset() + CU->getSlice()->getSliceQpDeltaCb();
+                chromaQPOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
             }
             else
             {
-                chromaQPOffset = CU->getSlice()->getPPS()->getChromaCrQpOffset() + CU->getSlice()->getSliceQpDeltaCr();
+                chromaQPOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
             }
             qpbase = qpbase + chromaQPOffset;
 
@@ -803,7 +803,7 @@ Void TComTrQuant::xQuant(TComDataCU* CU,
         cQpBase.setQpParam(qpScaled);
 
         UInt log2TrSize = g_aucConvertToBit[width] + 2;
-        Int scalingListType = (CU->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
+        Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
         assert(scalingListType < 6);
         Int *quantCoeff = 0;
         quantCoeff = getQuantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
@@ -812,7 +812,7 @@ Void TComTrQuant::xQuant(TComDataCU* CU,
         Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
 
         Int qbits = QUANT_SHIFT + cQpBase.m_iPer + transformShift;
-        add = (CU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
+        add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
         Int qbitsC = QUANT_SHIFT + cQpBase.m_iPer + transformShift - ARL_C_PRECISION;
 
         Int numCoeff = width * height;
@@ -824,7 +824,7 @@ Void TComTrQuant::xQuant(TComDataCU* CU,
         {
             acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
         }
-        if (CU->getSlice()->getPPS()->getSignHideFlag())
+        if (cu->getSlice()->getPPS()->getSignHideFlag())
         {
             if (acSum >= 2)
             {
