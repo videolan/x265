@@ -1008,53 +1008,53 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     }
 }
 
-Void TComTrQuant::invRecurTransformNxN(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eTxt, Short* rpcResidual, UInt uiAddr, UInt uiStride, UInt uiWidth, UInt uiHeight, UInt uiMaxTrMode, UInt uiTrMode, TCoeff* rpcCoeff)
+Void TComTrQuant::invRecurTransformNxN(TComDataCU* CU, UInt absPartIdx, TextType eTxt, Short* residual, UInt addr, UInt stride, UInt width, UInt height, UInt maxTrMode, UInt trMode, TCoeff* coeff)
 {
-    if (!pcCU->getCbf(uiAbsPartIdx, eTxt, uiTrMode))
+    if (!CU->getCbf(absPartIdx, eTxt, trMode))
     {
         return;
     }
-    const UInt stopTrMode = pcCU->getTransformIdx(uiAbsPartIdx);
+    const UInt stopTrMode = CU->getTransformIdx(absPartIdx);
 
-    if (uiTrMode == stopTrMode)
+    if (trMode == stopTrMode)
     {
-        UInt uiDepth      = pcCU->getDepth(uiAbsPartIdx) + uiTrMode;
-        UInt uiLog2TrSize = g_aucConvertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth() >> uiDepth] + 2;
-        if (eTxt != TEXT_LUMA && uiLog2TrSize == 2)
+        UInt depth      = CU->getDepth(absPartIdx) + trMode;
+        UInt log2TrSize = g_aucConvertToBit[CU->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
+        if (eTxt != TEXT_LUMA && log2TrSize == 2)
         {
-            UInt uiQPDiv = pcCU->getPic()->getNumPartInCU() >> ((uiDepth - 1) << 1);
-            if ((uiAbsPartIdx % uiQPDiv) != 0)
+            UInt qpDiv = CU->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
+            if ((absPartIdx % qpDiv) != 0)
             {
                 return;
             }
-            uiWidth  <<= 1;
-            uiHeight <<= 1;
+            width  <<= 1;
+            height <<= 1;
         }
-        Short* pResi = rpcResidual + uiAddr;
-        Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
+        Short* resi = residual + addr;
+        Int scalingListType = (CU->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
         assert(scalingListType < 6);
-        invtransformNxN(pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt));
+        invtransformNxN(CU->getCUTransquantBypass(absPartIdx), eTxt, REG_DCT, resi, stride, coeff, width, height, scalingListType, CU->getTransformSkip(absPartIdx, eTxt));
     }
     else
     {
-        uiTrMode++;
-        uiWidth  >>= 1;
-        uiHeight >>= 1;
-        Int trWidth = uiWidth, trHeight = uiHeight;
-        UInt uiAddrOffset = trHeight * uiStride;
-        UInt uiCoefOffset = trWidth * trHeight;
-        UInt uiPartOffset = pcCU->getTotalNumPart() >> (uiTrMode << 1);
+        trMode++;
+        width  >>= 1;
+        height >>= 1;
+        Int trWidth = width, trHeight = height;
+        UInt addrOffset = trHeight * stride;
+        UInt coefOffset = trWidth * trHeight;
+        UInt partOffset = CU->getTotalNumPart() >> (trMode << 1);
         {
-            invRecurTransformNxN(pcCU, uiAbsPartIdx, eTxt, rpcResidual, uiAddr, uiStride, uiWidth, uiHeight, uiMaxTrMode, uiTrMode, rpcCoeff);
-            rpcCoeff += uiCoefOffset;
-            uiAbsPartIdx += uiPartOffset;
-            invRecurTransformNxN(pcCU, uiAbsPartIdx, eTxt, rpcResidual, uiAddr + trWidth, uiStride, uiWidth, uiHeight, uiMaxTrMode, uiTrMode, rpcCoeff);
-            rpcCoeff += uiCoefOffset;
-            uiAbsPartIdx += uiPartOffset;
-            invRecurTransformNxN(pcCU, uiAbsPartIdx, eTxt, rpcResidual, uiAddr + uiAddrOffset, uiStride, uiWidth, uiHeight, uiMaxTrMode, uiTrMode, rpcCoeff);
-            rpcCoeff += uiCoefOffset;
-            uiAbsPartIdx += uiPartOffset;
-            invRecurTransformNxN(pcCU, uiAbsPartIdx, eTxt, rpcResidual, uiAddr + uiAddrOffset + trWidth, uiStride, uiWidth, uiHeight, uiMaxTrMode, uiTrMode, rpcCoeff);
+            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr, stride, width, height, maxTrMode, trMode, coeff);
+            coeff += coefOffset;
+            absPartIdx += partOffset;
+            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + trWidth, stride, width, height, maxTrMode, trMode, coeff);
+            coeff += coefOffset;
+            absPartIdx += partOffset;
+            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + addrOffset, stride, width, height, maxTrMode, trMode, coeff);
+            coeff += coefOffset;
+            absPartIdx += partOffset;
+            invRecurTransformNxN(CU, absPartIdx, eTxt, residual, addr + addrOffset + trWidth, stride, width, height, maxTrMode, trMode, coeff);
         }
     }
 }
