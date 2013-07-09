@@ -759,6 +759,7 @@ void filterHorizontal_p_p(int bitDepth,
     }
 }
 
+#if INSTRSET > 4
 void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
                                       pixel *src, int srcStride,
                                       short *intF, short* intA, short* intB, short* intC, int intStride,
@@ -767,14 +768,11 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
                                       int marginX, int marginY)
 {
     int row, col;
+    int headRoom = IF_INTERNAL_PREC - 8;
+    int shift = IF_FILTER_PREC - headRoom;
+    int offset = -IF_INTERNAL_OFFS << shift;
 
     src -= (8 / 2 - 1);
-    int offset;
-    int headRoom = IF_INTERNAL_PREC - 8;
-    int shift = IF_FILTER_PREC;
-    shift -= headRoom;
-    offset = -IF_INTERNAL_OFFS << shift;
-
     __m128i vec_src0;
     __m128i vec_offset = _mm_set1_epi16(offset);
     __m128i sumaL, sumbL, sumcL, tmp, exp1;
@@ -874,9 +872,9 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
 
         //Extend First column
         __m128i ma, mb, mc;
-        ma = _mm_shuffle_epi8(tmp16a , _mm_set1_epi8(0)); 
-        mb = _mm_shuffle_epi8(tmp16b , _mm_set1_epi8(0)); 
-        mc = _mm_shuffle_epi8(tmp16c , _mm_set1_epi8(0)); 
+        ma = _mm_shuffle_epi8(tmp16a, _mm_set1_epi8(0)); 
+        mb = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(0)); 
+        mc = _mm_shuffle_epi8(tmp16c, _mm_set1_epi8(0)); 
 
         for (int i = -marginX; i < -16; i += 16) 
         { 
@@ -1064,6 +1062,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
     for (int y = 1; y <= marginY; y++)
         memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
 }
+#endif
 
 template<int N>
 void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)

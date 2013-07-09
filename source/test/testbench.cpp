@@ -135,14 +135,14 @@ int main(int argc, char *argv[])
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         Setup_Vector_Primitives(vecprim, i);
-        printf("Testing vector class primitives: %s (%d)\n", CpuType[i], i);
+        printf("Testing intrinsic primitives: %s (%d)\n", CpuType[i], i);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
                 continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
-                fprintf(stderr, "\nx265: vector primitive has failed. Go and fix that Right Now!\n");
+                fprintf(stderr, "\nx265: intrinsic primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
         }
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
             /* Here it should be asmprim and not vecprim. Right? */
             if (!harness[h]->testCorrectness(cprim, asmprim))
             {
-                fprintf(stderr, "\nx265: ASM primitive has failed. Go and fix that Right Now!\n");
+                fprintf(stderr, "\nx265: asm primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
         }
