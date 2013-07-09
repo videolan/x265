@@ -331,9 +331,9 @@ public:
 
     Void          setTrIdxSubParts(UInt uiTrIdx, UInt uiAbsPartIdx, UInt uiDepth);
 
-    UChar*        getTransformSkip(TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]]; }
+    UChar*        getTransformSkip(TextType eType)    { return m_puhTransformSkip[g_convertTxtTypeToIdx[eType]]; }
 
-    UChar         getTransformSkip(UInt uiIdx, TextType eType)    { return m_puhTransformSkip[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
+    UChar         getTransformSkip(UInt uiIdx, TextType eType)    { return m_puhTransformSkip[g_convertTxtTypeToIdx[eType]][uiIdx]; }
 
     Void          setTransformSkipSubParts(UInt useTransformSkip, TextType eType, UInt uiAbsPartIdx, UInt uiDepth);
     Void          setTransformSkipSubParts(UInt useTransformSkipY, UInt useTransformSkipU, UInt useTransformSkipV, UInt uiAbsPartIdx, UInt uiDepth);
@@ -360,13 +360,13 @@ public:
 
     Pel*&         getPCMSampleCr()                        { return m_pcIPCMSampleCr; }
 
-    UChar         getCbf(UInt uiIdx, TextType eType)                  { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx]; }
+    UChar         getCbf(UInt uiIdx, TextType eType)                  { return m_puhCbf[g_convertTxtTypeToIdx[eType]][uiIdx]; }
 
-    UChar*        getCbf(TextType eType)                              { return m_puhCbf[g_aucConvertTxtTypeToIdx[eType]]; }
+    UChar*        getCbf(TextType eType)                              { return m_puhCbf[g_convertTxtTypeToIdx[eType]]; }
 
     UChar         getCbf(UInt uiIdx, TextType eType, UInt uiTrDepth)  { return (getCbf(uiIdx, eType) >> uiTrDepth) & 0x1; }
 
-    Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_aucConvertTxtTypeToIdx[eType]][uiIdx] = uh; }
+    Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_convertTxtTypeToIdx[eType]][uiIdx] = uh; }
 
     Void          clearCbf(UInt uiIdx, TextType eType, UInt uiNumParts);
     UChar         getQtRootCbf(UInt uiIdx)                      { return getCbf(uiIdx, TEXT_LUMA, 0) || getCbf(uiIdx, TEXT_CHROMA_U, 0) || getCbf(uiIdx, TEXT_CHROMA_V, 0); }

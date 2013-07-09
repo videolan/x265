@@ -332,10 +332,10 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode
     Pel *ptrSrc;
     Pel *refLft, *refAbv;
 
-    assert(g_aucConvertToBit[iSize] >= 0);   //   4x  4
-    assert(g_aucConvertToBit[iSize] <= 5);   // 128x128
+    assert(g_convertToBit[iSize] >= 0);   //   4x  4
+    assert(g_convertToBit[iSize] <= 5);   // 128x128
 
-    char log2BlkSize = g_aucConvertToBit[iSize] + 2;
+    char log2BlkSize = g_convertToBit[iSize] + 2;
 
     ptrSrc = m_piPredBuf;
     assert(log2BlkSize >= 2 && log2BlkSize < 7);

@@ -92,7 +92,7 @@ Void TEncTop::create()
     if (m_RCEnableRateControl)
     {
         m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
-                         g_uiMaxCUWidth, g_uiMaxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
+                         g_maxCUWidth, g_maxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
     }
 }
 
@@ -284,11 +284,11 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     pcSPS->setPicWidthInLumaSamples(m_iSourceWidth);
     pcSPS->setPicHeightInLumaSamples(m_iSourceHeight);
     pcSPS->setConformanceWindow(m_conformanceWindow);
-    pcSPS->setMaxCUWidth(g_uiMaxCUWidth);
-    pcSPS->setMaxCUHeight(g_uiMaxCUHeight);
-    pcSPS->setMaxCUDepth(g_uiMaxCUDepth);
+    pcSPS->setMaxCUWidth(g_maxCUWidth);
+    pcSPS->setMaxCUHeight(g_maxCUHeight);
+    pcSPS->setMaxCUDepth(g_maxCUDepth);
 
-    Int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_uiAddCUDepth);
+    Int minCUSize = pcSPS->getMaxCUWidth() >> (pcSPS->getMaxCUDepth() - g_addCUDepth);
     Int log2MinCUSize = 0;
     while (minCUSize > 1)
     {
@@ -297,7 +297,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     }
 
     pcSPS->setLog2MinCodingBlockSize(log2MinCUSize);
-    pcSPS->setLog2DiffMaxMinCodingBlockSize(pcSPS->getMaxCUDepth() - g_uiAddCUDepth);
+    pcSPS->setLog2DiffMaxMinCodingBlockSize(pcSPS->getMaxCUDepth() - g_addCUDepth);
 
     pcSPS->setPCMLog2MinSize(m_uiPCMLog2MinSize);
     pcSPS->setUsePCM(m_usePCM);
@@ -315,14 +315,14 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     Int i;
 
-    for (i = 0; i < g_uiMaxCUDepth - g_uiAddCUDepth; i++)
+    for (i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
         pcSPS->setAMPAcc(i, m_useAMP);
     }
 
     pcSPS->setUseAMP(m_useAMP);
 
-    for (i = g_uiMaxCUDepth - g_uiAddCUDepth; i < g_uiMaxCUDepth; i++)
+    for (i = g_maxCUDepth - g_addCUDepth; i < g_maxCUDepth; i++)
     {
         pcSPS->setAMPAcc(i, 0);
     }
@@ -343,8 +343,8 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
         pcSPS->setNumReorderPics(m_numReorderPics[i], i);
     }
 
-    pcSPS->setPCMBitDepthLuma(g_uiPCMBitDepthLuma);
-    pcSPS->setPCMBitDepthChroma(g_uiPCMBitDepthChroma);
+    pcSPS->setPCMBitDepthLuma(g_PCMBitDepthLuma);
+    pcSPS->setPCMBitDepthChroma(g_PCMBitDepthChroma);
     pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 
     pcSPS->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);

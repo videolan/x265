@@ -109,8 +109,8 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& pcCU, PartSize eSize)
     Pel* piPred        = m_ppcPredYuvMode[5][uiDepth]->getLumaAddr(0, uiWidth);
     UInt uiStride      = m_ppcPredYuvMode[5][uiDepth]->getStride();
     UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
-    UInt numModesForFullRD = g_aucIntraModeNumFast[uiWidthBit];
-    Int nLog2SizeMinus2 = g_aucConvertToBit[uiWidth];
+    UInt numModesForFullRD = g_intraModeNumFast[uiWidthBit];
+    Int nLog2SizeMinus2 = g_convertToBit[uiWidth];
     x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
     {
         assert(numModesForFullRD < numModesAvailable);
@@ -559,7 +559,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 #endif
 
 // further split
-    if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
+    if (bSubBranch && bTrySplitDQP && uiDepth < g_maxCUDepth - g_addCUDepth)
     {
         rpcTempCU->initEstData(uiDepth, iQP);
         UChar       uhNextDepth         = (UChar)(uiDepth + 1);
@@ -607,7 +607,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
-        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        if ((g_maxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             Bool hasResidual = false;
             for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)

@@ -76,8 +76,8 @@ private:
 
     static Int getAddrOffset(UInt uiPartUnitIdx, UInt width)
     {
-        Int blkX = g_auiRasterToPelX[g_auiZscanToRaster[uiPartUnitIdx]];
-        Int blkY = g_auiRasterToPelY[g_auiZscanToRaster[uiPartUnitIdx]];
+        Int blkX = g_rasterToPelX[g_zscanToRaster[uiPartUnitIdx]];
+        Int blkY = g_rasterToPelY[g_zscanToRaster[uiPartUnitIdx]];
 
         return blkX + blkY * width;
     }

@@ -1025,7 +1025,7 @@ public:
     // AMP accuracy
     Int       getAMPAcc(UInt uiDepth) const      { return m_iAMPAcc[uiDepth]; }
 
-    Void      setAMPAcc(UInt uiDepth, Int iAccu) { assert(uiDepth < g_uiMaxCUDepth);  m_iAMPAcc[uiDepth] = iAccu; }
+    Void      setAMPAcc(UInt uiDepth, Int iAccu) { assert(uiDepth < g_maxCUDepth);  m_iAMPAcc[uiDepth] = iAccu; }
 
     // Bit-depth
     Int      getBitDepthY() const { return m_bitDepthY; }

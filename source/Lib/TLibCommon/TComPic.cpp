@@ -157,8 +157,8 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 
     LCUX      = getCU(uiAddr)->getCUPelX();
     LCUY      = getCU(uiAddr)->getCUPelY();
-    LPelX     = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[firstCUInStartLCU]];
-    TPelY     = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[firstCUInStartLCU]];
+    LPelX     = LCUX + g_rasterToPelX[g_zscanToRaster[firstCUInStartLCU]];
+    TPelY     = LCUY + g_rasterToPelY[g_zscanToRaster[firstCUInStartLCU]];
     currSU    = firstCUInStartLCU;
 
     Bool bMoveToNextLCU = false;
@@ -174,8 +174,8 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
             break;
         }
 
-        LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
-        TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
+        LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[currSU]];
+        TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[currSU]];
     }
 
     if (currSU != firstCUInStartLCU)
@@ -233,8 +233,8 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
     currSU   = startSU;
     while (currSU <= endSU)
     {
-        LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
-        TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
+        LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[currSU]];
+        TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[currSU]];
 
         while (!(LPelX < picWidth) || !(TPelY < picHeight))
         {
@@ -243,8 +243,8 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
             {
                 break;
             }
-            LPelX = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[currSU]];
-            TPelY = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[currSU]];
+            LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[currSU]];
+            TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[currSU]];
         }
 
         if (currSU >= maxNumSUInLCU || currSU > endSU)
@@ -267,8 +267,8 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
             {
                 break;
             }
-            uiLPelX_su   = LCUX + g_auiRasterToPelX[g_auiZscanToRaster[uiIdx]];
-            uiTPelY_su   = LCUY + g_auiRasterToPelY[g_auiZscanToRaster[uiIdx]];
+            uiLPelX_su   = LCUX + g_rasterToPelX[g_zscanToRaster[uiIdx]];
+            uiTPelY_su   = LCUY + g_rasterToPelY[g_zscanToRaster[uiIdx]];
             if (!(uiLPelX_su < picWidth) || !(uiTPelY_su < picHeight))
             {
                 continue;
@@ -278,8 +278,8 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
 
         NDBFBlock.endSU = uiLastValidSU;
 
-        UInt rTLSU = g_auiZscanToRaster[NDBFBlock.startSU];
-        UInt rBRSU = g_auiZscanToRaster[NDBFBlock.endSU];
+        UInt rTLSU = g_zscanToRaster[NDBFBlock.startSU];
+        UInt rBRSU = g_zscanToRaster[NDBFBlock.endSU];
         NDBFBlock.widthSU  = (rBRSU % maxNumSUInLCUWidth) - (rTLSU % maxNumSUInLCUWidth) + 1;
         NDBFBlock.heightSU = (UInt)(rBRSU / maxNumSUInLCUWidth) - (UInt)(rTLSU / maxNumSUInLCUWidth) + 1;
         NDBFBlock.width    = NDBFBlock.widthSU  * getMinCUWidth();

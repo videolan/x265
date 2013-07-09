@@ -50,7 +50,7 @@ using namespace x265;
 
 #define   EDGE_VER    0
 #define   EDGE_HOR    1
-#define   QpUV(iQpY)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_aucChromaScale[(iQpY)]))
+#define   QpUV(iQpY)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[(iQpY)]))
 
 #define DEFAULT_INTRA_TC_OFFSET 2 ///< Default intra TC offset
 
@@ -177,8 +177,8 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDe
     {
         for (UInt uiPartIdx = 0; uiPartIdx < 4; uiPartIdx++, uiAbsZorderIdx += uiQNumParts)
         {
-            UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsZorderIdx]];
-            UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsZorderIdx]];
+            UInt uiLPelX   = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
+            UInt uiTPelY   = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
             if ((uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples()))
             {
                 xDeblockCU(pcCU, uiAbsZorderIdx, uiDepth + 1, Edge);
@@ -197,7 +197,7 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDe
     for (UInt uiPartIdx = uiAbsZorderIdx; uiPartIdx < uiAbsZorderIdx + uiCurNumParts; uiPartIdx++)
     {
         UInt uiBSCheck;
-        if ((g_uiMaxCUWidth >> g_uiMaxCUDepth) == 4)
+        if ((g_maxCUWidth >> g_maxCUDepth) == 4)
         {
             uiBSCheck = (iDir == EDGE_VER && uiPartIdx % 2 == 0) || (iDir == EDGE_HOR && (uiPartIdx - ((uiPartIdx >> 2) << 2)) / 2 == 0);
         }
@@ -212,7 +212,7 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDe
         }
     }
 
-    UInt uiPelsInPart = g_uiMaxCUWidth >> g_uiMaxCUDepth;
+    UInt uiPelsInPart = g_maxCUWidth >> g_maxCUDepth;
     UInt PartIdxIncr = DEBLOCK_SMALLEST_BLOCK / uiPelsInPart ? DEBLOCK_SMALLEST_BLOCK / uiPelsInPart : 1;
 
     UInt uiSizeInPU = pcPic->getNumPartInWidth() >> (uiDepth);
@@ -270,8 +270,8 @@ Void TComLoopFilter::xSetEdgefilterTU(TComDataCU* pcCU, UInt absTUPartIdx, UInt 
     Int trWidth  = pcCU->getWidth(uiAbsZorderIdx) >> pcCU->getTransformIdx(uiAbsZorderIdx);
     Int trHeight = pcCU->getHeight(uiAbsZorderIdx) >> pcCU->getTransformIdx(uiAbsZorderIdx);
 
-    UInt uiWidthInBaseUnits  = trWidth / (g_uiMaxCUWidth >> g_uiMaxCUDepth);
-    UInt uiHeightInBaseUnits = trHeight / (g_uiMaxCUWidth >> g_uiMaxCUDepth);
+    UInt uiWidthInBaseUnits  = trWidth / (g_maxCUWidth >> g_maxCUDepth);
+    UInt uiHeightInBaseUnits = trHeight / (g_maxCUWidth >> g_maxCUDepth);
 
     xSetEdgefilterMultiple(pcCU, absTUPartIdx, uiDepth, EDGE_VER, 0, m_stLFCUParam.bInternalEdge, uiWidthInBaseUnits, uiHeightInBaseUnits);
     xSetEdgefilterMultiple(pcCU, absTUPartIdx, uiDepth, EDGE_HOR, 0, m_stLFCUParam.bInternalEdge, uiWidthInBaseUnits, uiHeightInBaseUnits);
@@ -341,8 +341,8 @@ Void TComLoopFilter::xSetEdgefilterPU(TComDataCU* pcCU, UInt uiAbsZorderIdx)
 
 Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* pcCU, UInt uiAbsZorderIdx)
 {
-    UInt uiX           = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsZorderIdx]];
-    UInt uiY           = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsZorderIdx]];
+    UInt uiX           = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
+    UInt uiY           = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
 
     TComDataCU* pcTempCU;
     UInt        uiTempPartIdx;
@@ -532,7 +532,7 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt
     Int iQP_Q = 0;
     UInt uiNumParts = pcCU->getPic()->getNumPartInWidth() >> uiDepth;
 
-    UInt  uiPelsInPart = g_uiMaxCUWidth >> g_uiMaxCUDepth;
+    UInt  uiPelsInPart = g_maxCUWidth >> g_maxCUDepth;
     UInt  uiBsAbsIdx = 0, uiBs = 0;
     Int   iOffset, iSrcStep;
 
@@ -642,7 +642,7 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UI
     Int iQP_P = 0;
     Int iQP_Q = 0;
 
-    UInt  uiPelsInPartChroma = g_uiMaxCUWidth >> (g_uiMaxCUDepth + 1);
+    UInt  uiPelsInPartChroma = g_maxCUWidth >> (g_maxCUDepth + 1);
 
     Int   iOffset, iSrcStep;
 
@@ -658,8 +658,8 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* pcCU, UInt uiAbsZorderIdx, UI
     Int tcOffsetDiv2 = pcCU->getSlice()->getDeblockingFilterTcOffsetDiv2();
 
     // Vertical Position
-    UInt uiEdgeNumInLCUVert = g_auiZscanToRaster[uiAbsZorderIdx] % uiLCUWidthInBaseUnits + iEdge;
-    UInt uiEdgeNumInLCUHor = g_auiZscanToRaster[uiAbsZorderIdx] / uiLCUWidthInBaseUnits + iEdge;
+    UInt uiEdgeNumInLCUVert = g_zscanToRaster[uiAbsZorderIdx] % uiLCUWidthInBaseUnits + iEdge;
+    UInt uiEdgeNumInLCUHor = g_zscanToRaster[uiAbsZorderIdx] / uiLCUWidthInBaseUnits + iEdge;
 
     if ((uiPelsInPartChroma < DEBLOCK_SMALLEST_BLOCK) && (((uiEdgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK / uiPelsInPartChroma)) && (iDir == 0)) || ((uiEdgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK / uiPelsInPartChroma)) && iDir)))
     {

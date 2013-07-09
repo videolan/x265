@@ -29,7 +29,7 @@
 #include <assert.h>
 #include <smmintrin.h>
 
-extern char g_aucConvertToBit[];
+extern char g_convertToBit[];
 extern unsigned char IntraFilterType[][35];
 
 using namespace x265;
@@ -420,7 +420,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
 void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int filter)
 {
     int sum = 0;
-    int logSize = g_aucConvertToBit[width] + 2;
+    int logSize = g_convertToBit[width] + 2;
     pixel *srcAbove = &src[-srcStride];
     pixel *srcLeft = &src[-1];
 
@@ -925,7 +925,7 @@ void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
     Vec8s v_bottomRow = v_bottomLeft - v_topRow;
     Vec8s v_rightColumn = v_topRight - v_leftColumn;
 
-    int shift = g_aucConvertToBit[8];          // Using value corresponding to width = 8
+    int shift = g_convertToBit[8];          // Using value corresponding to width = 8
     v_topRow = v_topRow << (2 + shift);
     v_leftColumn = v_leftColumn << (2 + shift);
 
@@ -987,7 +987,7 @@ void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
     Vec8s v_bottomRow = v_bottomLeft - v_topRow;
     Vec8s v_rightColumn = v_topRight - v_leftColumn;
 
-    int shift = g_aucConvertToBit[8];         // Using value corresponding to width = 8
+    int shift = g_convertToBit[8];         // Using value corresponding to width = 8
     v_topRow = v_topRow << (2 + shift);
     v_leftColumn = v_leftColumn << (2 + shift);
 
@@ -1134,7 +1134,7 @@ void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t ds
     Vec8s v_bottomRow_hi = v_bottomLeft - v_topRow_hi;
     Vec8s v_rightColumn = v_topRight - v_leftColumn;
 
-    int shift = g_aucConvertToBit[16];         // Using value corresponding to width = 8
+    int shift = g_convertToBit[16];         // Using value corresponding to width = 8
     v_topRow_lo = v_topRow_lo << (2 + shift);
     v_topRow_hi = v_topRow_hi << (2 + shift);
     v_leftColumn = v_leftColumn << (2 + shift);
@@ -1220,7 +1220,7 @@ void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t ds
     Vec8s v_bottomRow_hi = v_bottomLeft - v_topRow_hi;
     Vec8s v_rightColumn = v_topRight - v_leftColumn;
 
-    int shift = g_aucConvertToBit[16];         // Using value corresponding to width = 8
+    int shift = g_convertToBit[16];         // Using value corresponding to width = 8
     v_topRow_lo = v_topRow_lo << (2 + shift);
     v_topRow_hi = v_topRow_hi << (2 + shift);
     v_leftColumn = v_leftColumn << (2 + shift);
@@ -1536,7 +1536,7 @@ intra_pred_planar_t *intraPlanarN[] =
 
 void intra_pred_planar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width)
 {
-    int nLog2Size = g_aucConvertToBit[width] + 2;
+    int nLog2Size = g_convertToBit[width] + 2;
 
 #if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5)
     intraPlanarN[nLog2Size - 2](src, srcStride, dst, dstStride);

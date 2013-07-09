@@ -190,14 +190,14 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
         if (m_pcCfg->getUseAdaptiveQP())
         {
             TEncPic* pcEPic = new TEncPic;
-            pcEPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+            pcEPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
                            m_cPPS.getMaxCuDQPDepth() + 1, m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
             pcPic = pcEPic;
         }
         else
         {
             pcPic = new TComPic;
-            pcPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+            pcPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
                           m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
         }
         if (m_pcCfg->getUseSAO())
@@ -754,15 +754,15 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
 
         UInt uiInternalAddress = pic->getNumPartInCU() - 4;
         UInt uiExternalAddress = pic->getPicSym()->getNumberOfCUsInFrame() - 1;
-        UInt uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-        UInt uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+        UInt uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+        UInt uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
         UInt uiWidth = m_cSPS.getPicWidthInLumaSamples();
         UInt uiHeight = m_cSPS.getPicHeightInLumaSamples();
         while (uiPosX >= uiWidth || uiPosY >= uiHeight)
         {
             uiInternalAddress--;
-            uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-            uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+            uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+            uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
         }
 
         uiInternalAddress++;
@@ -1088,15 +1088,15 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
 
         uiInternalAddress = (slice->getSliceCurEndCUAddr() - 1) % pic->getNumPartInCU();
         uiExternalAddress = (slice->getSliceCurEndCUAddr() - 1) / pic->getNumPartInCU();
-        uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-        uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+        uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+        uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
         uiWidth = m_cSPS.getPicWidthInLumaSamples();
         uiHeight = m_cSPS.getPicHeightInLumaSamples();
         while (uiPosX >= uiWidth || uiPosY >= uiHeight)
         {
             uiInternalAddress--;
-            uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-            uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+            uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+            uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
         }
 
         uiInternalAddress++;

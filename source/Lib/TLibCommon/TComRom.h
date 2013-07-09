@@ -69,23 +69,23 @@ Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int heigh
 // ====================================================================================================================
 
 // flexible conversion from relative to absolute index
-extern UInt g_auiZscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern UInt g_auiRasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern UInt g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-Void initZscanToRaster(Int iMaxDepth, Int iDepth, UInt uiStartVal, UInt*& rpuiCurrIdx);
-Void initRasterToZscan(UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth);
+Void initZscanToRaster(Int maxDepth, Int depth, UInt startVal, UInt*& curIdx);
+Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
 
 // conversion of partition index to picture pel position
-extern UInt g_auiRasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern UInt g_auiRasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern UInt g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-Void initRasterToPelXY(UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth);
+Void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
-extern UInt g_uiMaxCUWidth;
-extern UInt g_uiMaxCUHeight;
-extern UInt g_uiMaxCUDepth;
-extern UInt g_uiAddCUDepth;
+extern UInt g_maxCUWidth;
+extern UInt g_maxCUHeight;
+extern UInt g_maxCUDepth;
+extern UInt g_addCUDepth;
 
 #define MAX_TS_WIDTH  4
 #define MAX_TS_HEIGHT 4
@@ -102,28 +102,28 @@ extern UInt g_auiPUOffset[8];
 
 extern Int g_quantScales[6];     // Q(QP%6)
 extern Int g_invQuantScales[6];  // IQ(QP%6)
-extern const Short g_aiT4[4][4];
-extern const Short g_aiT8[8][8];
-extern const Short g_aiT16[16][16];
-extern const Short g_aiT32[32][32];
+extern const Short g_t4[4][4];
+extern const Short g_t8[8][8];
+extern const Short g_t16[16][16];
+extern const Short g_t32[32][32];
 
 // ====================================================================================================================
 // Luma QP to Chroma QP mapping
 // ====================================================================================================================
 
-extern const UChar g_aucChromaScale[58];
+extern const UChar g_chromaScale[58];
 
 // ====================================================================================================================
 // Scanning order & context mapping table
 // ====================================================================================================================
 
-extern UInt* g_auiSigLastScan[3][MAX_CU_DEPTH];  // raster index from scanning index (diag, hor, ver)
+extern UInt* g_sigLastScan[3][MAX_CU_DEPTH];  // raster index from scanning index (diag, hor, ver)
 
-extern const UInt g_uiGroupIdx[32];
-extern const UInt g_uiMinInGroup[10];
+extern const UInt g_groupIdx[32];
+extern const UInt g_minInGroup[10];
 
-extern const UInt g_auiGoRiceRange[5];      //!< maximum value coded with Rice codes
-extern const UInt g_auiGoRicePrefixLen[5];  //!< prefix length for each maximum value
+extern const UInt g_goRiceRange[5];      //!< maximum value coded with Rice codes
+extern const UInt g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
 extern const UInt g_sigLastScan8x8[3][4];   //!< coefficient group scan order for 8x8 TUs
 extern       UInt g_sigLastScanCG32x32[64];
@@ -132,7 +132,7 @@ extern       UInt g_sigLastScanCG32x32[64];
 // ADI table
 // ====================================================================================================================
 
-extern const UChar g_aucIntraModeNumFast[7];
+extern const UChar g_intraModeNumFast[7];
 
 // ====================================================================================================================
 // Bit-depth
@@ -140,27 +140,20 @@ extern const UChar g_aucIntraModeNumFast[7];
 
 extern  Int g_bitDepthY;
 extern  Int g_bitDepthC;
-extern UInt g_uiPCMBitDepthLuma;
-extern UInt g_uiPCMBitDepthChroma;
+extern UInt g_PCMBitDepthLuma;
+extern UInt g_PCMBitDepthChroma;
 
 // ====================================================================================================================
 // Texture type to integer mapping
 // ====================================================================================================================
 
-extern const UChar g_aucConvertTxtTypeToIdx[4];
-
-// ==========================================
-// Mode-Dependent DST Matrices
-extern const Short g_as_DST_MAT_4[4][4];
-extern const UChar g_aucDCTDSTMode_Vert[NUM_INTRA_MODE];
-extern const UChar g_aucDCTDSTMode_Hor[NUM_INTRA_MODE];
-// ==========================================
+extern const UChar g_convertTxtTypeToIdx[4];
 
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
-extern Char g_aucConvertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern Char g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
 #ifndef ENC_DEC_TRACE
 # define ENC_DEC_TRACE 0

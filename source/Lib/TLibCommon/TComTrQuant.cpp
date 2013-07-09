@@ -195,7 +195,7 @@ Void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chr
         }
         else
         {
-            qpScaled = g_aucChromaScale[qpScaled] + qpBdOffset;
+            qpScaled = g_chromaScale[qpScaled] + qpBdOffset;
         }
     }
     m_cQP.setQpParam(qpScaled);
@@ -344,9 +344,9 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
     }
     else
     {
-        const UInt log2BlockSize = g_aucConvertToBit[width] + 2;
+        const UInt log2BlockSize = g_convertToBit[width] + 2;
         UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
-        const UInt *scan = g_auiSigLastScan[scanIdx][log2BlockSize - 1];
+        const UInt *scan = g_sigLastScan[scanIdx][log2BlockSize - 1];
 
         Int deltaU[32 * 32];
 
@@ -381,12 +381,12 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
             }
             else
             {
-                qpScaled = g_aucChromaScale[qpScaled] + qpBDOffset;
+                qpScaled = g_chromaScale[qpScaled] + qpBDOffset;
             }
         }
         cQpBase.setQpParam(qpScaled);
 
-        UInt log2TrSize = g_aucConvertToBit[width] + 2;
+        UInt log2TrSize = g_convertToBit[width] + 2;
         Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
         assert(scalingListType < 6);
         Int *quantCoeff = 0;
@@ -424,7 +424,7 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     }
 
     Int shift, add, coeffQ;
-    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    UInt log2TrSize = g_convertToBit[width] + 2;
 
     Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
 
@@ -525,7 +525,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     else
     {
         // TODO: this may need larger data types for bitDepth > 8
-        const UInt log2BlockSize = g_aucConvertToBit[width];
+        const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
     return xQuant(cu, m_tmpCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
@@ -551,7 +551,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     Int per = m_cQP.m_iPer;
     Int rem = m_cQP.m_iRem;
     Bool useScalingList = getUseScalingList();
-    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    UInt log2TrSize = g_convertToBit[width] + 2;
     Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
     x265::primitives.dequant(bitDepth, coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
@@ -562,7 +562,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     else
     {
         // TODO: this may need larger data types for bitDepth > 8
-        const UInt log2BlockSize = g_aucConvertToBit[width];
+        const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
 }
@@ -578,7 +578,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
     if (trMode == stopTrMode)
     {
         UInt depth      = cu->getDepth(absPartIdx) + trMode;
-        UInt log2TrSize = g_aucConvertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
+        UInt log2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
         if (eTxt != TEXT_LUMA && log2TrSize == 2)
         {
             UInt qpDiv = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
@@ -632,7 +632,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
 Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     // TODO: this may need larger data types for bitDepth > 8
-    const UInt log2BlockSize = g_aucConvertToBit[width];
+    const UInt log2BlockSize = g_convertToBit[width];
     x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coef, residual, stride);
 }
 
@@ -645,7 +645,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt 
 Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int* coeff, Int width, Int height)
 {
     assert(width == height);
-    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    UInt log2TrSize = g_convertToBit[width] + 2;
     Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
     UInt transformSkipShift;
     Int  j, k;
@@ -678,7 +678,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
 Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     assert(width == height);
-    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    UInt log2TrSize = g_convertToBit[width] + 2;
     Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
     UInt transformSkipShift;
     Int  j, k;
@@ -726,13 +726,13 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                                     TextType    ttype,
                                     UInt        absPartIdx)
 {
-    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
     UInt bitDepth = ttype == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
     UInt       goRiceParam      = 0;
     Double     blockUncodedCost = 0;
-    const UInt log2BlkSize      = g_aucConvertToBit[width] + 2;
+    const UInt log2BlkSize      = g_convertToBit[width] + 2;
     const UInt maxNumCoeff      = width * height;
     Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
 
@@ -757,7 +757,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     Int deltaU[32 * 32];
 
     const UInt * scanCG;
-    scanCG = g_auiSigLastScan[scanIdx][log2BlkSize > 3 ? log2BlkSize - 2 - 1 : 0];
+    scanCG = g_sigLastScan[scanIdx][log2BlkSize > 3 ? log2BlkSize - 2 - 1 : 0];
     if (log2BlkSize == 3)
     {
         scanCG = g_sigLastScan8x8[scanIdx];
@@ -781,7 +781,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     Int    cgLastScanPos = -1;
     Int    baseLevel;
 
-    const UInt *scan = g_auiSigLastScan[scanIdx][log2BlkSize - 1];
+    const UInt *scan = g_sigLastScan[scanIdx][log2BlkSize - 1];
 
     ::memset(sigCoeffGroupFlag, 0, sizeof(UInt) * MLS_GRP_NUM);
 
@@ -1455,7 +1455,7 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
     if (absLevel >= baseLevel)
     {
         UInt uiSymbol   = absLevel - baseLevel;
-        UInt uiMaxVlc   = g_auiGoRiceRange[absGoRice];
+        UInt uiMaxVlc   = g_goRiceRange[absGoRice];
         Bool bExpGolomb = (uiSymbol > uiMaxVlc);
 
         if (bExpGolomb)
@@ -1470,7 +1470,7 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
         }
 
         UShort ui16PrefLen = UShort(uiSymbol >> absGoRice) + 1;
-        UShort ui16NumBins = min<UInt>(ui16PrefLen, g_auiGoRicePrefixLen[absGoRice]) + absGoRice;
+        UShort ui16NumBins = min<UInt>(ui16PrefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
 
         iRate += ui16NumBins << 15;
 
@@ -1511,8 +1511,8 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
  */
 __inline Double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
 {
-    UInt ctxX = g_uiGroupIdx[posx];
-    UInt ctxY = g_uiGroupIdx[posy];
+    UInt ctxX = g_groupIdx[posx];
+    UInt ctxY = g_groupIdx[posy];
     Double cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
 
     if (ctxX > 3)
@@ -1601,7 +1601,7 @@ Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
  */
 Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
-    UInt uiLog2TrSize = g_aucConvertToBit[g_scalingListSizeX[size]] + 2;
+    UInt uiLog2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
     Int bitDepth = (size < SCALING_LIST_32x32 && list != 0 && list != 3) ? g_bitDepthC : g_bitDepthY;
     Int iTransformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - uiLog2TrSize; // Represents scaling through forward transform
 

@@ -1282,7 +1282,7 @@ Void TEncCavlc::codeScalingList(TComScalingList* scalingList)
 Void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId)
 {
     Int coefNum = min(MAX_MATRIX_COEF_NUM, (Int)g_scalingListSize[sizeId]);
-    UInt* scan  = (sizeId == 0) ? g_auiSigLastScan[SCAN_DIAG][1] :  g_sigLastScanCG32x32;
+    UInt* scan  = (sizeId == 0) ? g_sigLastScan[SCAN_DIAG][1] :  g_sigLastScanCG32x32;
     Int nextCoef = SCALING_LIST_START_VALUE;
     Int data;
     Int *src = scalingList->getScalingListAddress(sizeId, listId);

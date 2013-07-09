@@ -35,7 +35,7 @@ void CTURow::create(TEncTop* top)
     m_sbacCoder.init(&m_binCoderCABAC);
     m_search.init(top, &m_rdCost, &m_trQuant);
 
-    m_cuCoder.create((UChar)g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight);
+    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth, g_maxCUHeight);
     m_cuCoder.init(top);
 
     if (top->getUseAdaptiveQP())
@@ -45,10 +45,10 @@ void CTURow::create(TEncTop* top)
     m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(),
                    top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
 
-    m_rdSbacCoders = new TEncSbac * *[g_uiMaxCUDepth + 1];
-    m_binCodersCABAC = new TEncBinCABACCounter * *[g_uiMaxCUDepth + 1];
+    m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
+    m_binCodersCABAC = new TEncBinCABACCounter * *[g_maxCUDepth + 1];
 
-    for (UInt depth = 0; depth < g_uiMaxCUDepth + 1; depth++)
+    for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
         m_rdSbacCoders[depth]  = new TEncSbac*[CI_NUM];
         m_binCodersCABAC[depth] = new TEncBinCABACCounter*[CI_NUM];
@@ -109,7 +109,7 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
 
 void CTURow::destroy()
 {
-    for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+    for (UInt iDepth = 0; iDepth < g_maxCUDepth + 1; iDepth++)
     {
         for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx++)
         {
@@ -118,7 +118,7 @@ void CTURow::destroy()
         }
     }
 
-    for (UInt iDepth = 0; iDepth < g_uiMaxCUDepth + 1; iDepth++)
+    for (UInt iDepth = 0; iDepth < g_maxCUDepth + 1; iDepth++)
     {
         delete [] m_rdSbacCoders[iDepth];
         delete [] m_binCodersCABAC[iDepth];
@@ -167,16 +167,16 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
 
     m_sliceEncoder.init(top);
-    m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, (UChar) g_uiMaxCUDepth);
+    m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar) g_maxCUDepth);
     if (top->getUseSAO())
     {
         m_sao.setSaoLcuBoundary(top->getSaoLcuBoundary());
         m_sao.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
-        m_sao.create(top->getSourceWidth(), top->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight);
+        m_sao.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight);
         m_sao.createEncBuffer();
     }
-    m_loopFilter.create(g_uiMaxCUDepth);
+    m_loopFilter.create(g_maxCUDepth);
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)

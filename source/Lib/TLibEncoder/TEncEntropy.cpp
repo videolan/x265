@@ -214,7 +214,7 @@ Void TEncEntropy::encodeIPCMInfo(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD)
 Void TEncEntropy::xEncodeTransform(TComDataCU* pcCU, UInt offsetLuma, UInt offsetChroma, UInt uiAbsPartIdx, UInt uiDepth, UInt width, UInt height, UInt uiTrIdx, Bool& bCodeDQP)
 {
     const UInt uiSubdiv = pcCU->getTransformIdx(uiAbsPartIdx) + pcCU->getDepth(uiAbsPartIdx) > uiDepth;
-    const UInt uiLog2TrafoSize = g_aucConvertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth()] + 2 - uiDepth;
+    const UInt uiLog2TrafoSize = g_convertToBit[pcCU->getSlice()->getSPS()->getMaxCUWidth()] + 2 - uiDepth;
     UInt cbfY = pcCU->getCbf(uiAbsPartIdx, TEXT_LUMA, uiTrIdx);
     UInt cbfU = pcCU->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, uiTrIdx);
     UInt cbfV = pcCU->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, uiTrIdx);

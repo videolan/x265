@@ -409,7 +409,7 @@ Void TEncSbac::codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 
     if (pcCU->isIntra(uiAbsPartIdx))
     {
-        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+        if (uiDepth == g_maxCUDepth - g_addCUDepth)
         {
             m_pcBinIf->encodeBin(eSize == SIZE_2Nx2N ? 1 : 0, m_cCUPartSizeSCModel.get(0, 0, 0));
         }
@@ -449,7 +449,7 @@ Void TEncSbac::codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     {
         m_pcBinIf->encodeBin(0, m_cCUPartSizeSCModel.get(0, 0, 0));
         m_pcBinIf->encodeBin(0, m_cCUPartSizeSCModel.get(0, 0, 1));
-        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && !(pcCU->getWidth(uiAbsPartIdx) == 8 && pcCU->getHeight(uiAbsPartIdx) == 8))
+        if (uiDepth == g_maxCUDepth - g_addCUDepth && !(pcCU->getWidth(uiAbsPartIdx) == 8 && pcCU->getHeight(uiAbsPartIdx) == 8))
         {
             m_pcBinIf->encodeBin(1, m_cCUPartSizeSCModel.get(0, 0, 2));
         }
@@ -469,7 +469,7 @@ Void TEncSbac::codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     }
     case SIZE_NxN:
     {
-        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && !(pcCU->getWidth(uiAbsPartIdx) == 8 && pcCU->getHeight(uiAbsPartIdx) == 8))
+        if (uiDepth == g_maxCUDepth - g_addCUDepth && !(pcCU->getWidth(uiAbsPartIdx) == 8 && pcCU->getHeight(uiAbsPartIdx) == 8))
         {
             m_pcBinIf->encodeBin(0, m_cCUPartSizeSCModel.get(0, 0, 0));
             m_pcBinIf->encodeBin(0, m_cCUPartSizeSCModel.get(0, 0, 1));
@@ -584,7 +584,7 @@ Void TEncSbac::codeMergeIndex(TComDataCU* pcCU, UInt uiAbsPartIdx)
 
 Void TEncSbac::codeSplitFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 {
-    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+    if (uiDepth == g_maxCUDepth - g_addCUDepth)
         return;
 
     UInt uiCtx           = pcCU->getCtxSplitFlag(uiAbsPartIdx, uiDepth);
@@ -1000,21 +1000,21 @@ Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int he
     UInt uiCtxLast;
     ContextModel *pCtxX = m_cCuCtxLastX.get(0, eTType);
     ContextModel *pCtxY = m_cCuCtxLastY.get(0, eTType);
-    UInt uiGroupIdxX    = g_uiGroupIdx[uiPosX];
-    UInt uiGroupIdxY    = g_uiGroupIdx[uiPosY];
+    UInt uiGroupIdxX    = g_groupIdx[uiPosX];
+    UInt uiGroupIdxY    = g_groupIdx[uiPosY];
 
     Int blkSizeOffsetX, blkSizeOffsetY, shiftX, shiftY;
-    blkSizeOffsetX = eTType ? 0 : (g_aucConvertToBit[width] * 3 + ((g_aucConvertToBit[width] + 1) >> 2));
-    blkSizeOffsetY = eTType ? 0 : (g_aucConvertToBit[height] * 3 + ((g_aucConvertToBit[height] + 1) >> 2));
-    shiftX = eTType ? g_aucConvertToBit[width] : ((g_aucConvertToBit[width] + 3) >> 2);
-    shiftY = eTType ? g_aucConvertToBit[height] : ((g_aucConvertToBit[height] + 3) >> 2);
+    blkSizeOffsetX = eTType ? 0 : (g_convertToBit[width] * 3 + ((g_convertToBit[width] + 1) >> 2));
+    blkSizeOffsetY = eTType ? 0 : (g_convertToBit[height] * 3 + ((g_convertToBit[height] + 1) >> 2));
+    shiftX = eTType ? g_convertToBit[width] : ((g_convertToBit[width] + 3) >> 2);
+    shiftY = eTType ? g_convertToBit[height] : ((g_convertToBit[height] + 3) >> 2);
     // posX
     for (uiCtxLast = 0; uiCtxLast < uiGroupIdxX; uiCtxLast++)
     {
         m_pcBinIf->encodeBin(1, *(pCtxX + blkSizeOffsetX + (uiCtxLast >> shiftX)));
     }
 
-    if (uiGroupIdxX < g_uiGroupIdx[width - 1])
+    if (uiGroupIdxX < g_groupIdx[width - 1])
     {
         m_pcBinIf->encodeBin(0, *(pCtxX + blkSizeOffsetX + (uiCtxLast >> shiftX)));
     }
@@ -1025,20 +1025,20 @@ Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int he
         m_pcBinIf->encodeBin(1, *(pCtxY + blkSizeOffsetY + (uiCtxLast >> shiftY)));
     }
 
-    if (uiGroupIdxY < g_uiGroupIdx[height - 1])
+    if (uiGroupIdxY < g_groupIdx[height - 1])
     {
         m_pcBinIf->encodeBin(0, *(pCtxY + blkSizeOffsetY + (uiCtxLast >> shiftY)));
     }
     if (uiGroupIdxX > 3)
     {
         UInt uiCount = (uiGroupIdxX - 2) >> 1;
-        uiPosX       = uiPosX - g_uiMinInGroup[uiGroupIdxX];
+        uiPosX       = uiPosX - g_minInGroup[uiGroupIdxX];
         m_pcBinIf->encodeBinsEP( uiPosX, uiCount );
     }
     if (uiGroupIdxY > 3)
     {
         UInt uiCount = (uiGroupIdxY - 2) >> 1;
-        uiPosY       = uiPosY - g_uiMinInGroup[uiGroupIdxY];
+        uiPosY       = uiPosY - g_minInGroup[uiGroupIdxY];
         m_pcBinIf->encodeBinsEP( uiPosY, uiCount );
     }
 }
@@ -1063,9 +1063,9 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
     DTRACE_CABAC_T("\tCU-addr=")
     DTRACE_CABAC_V(pcCU->getAddr())
     DTRACE_CABAC_T("\tinCU-X=")
-    DTRACE_CABAC_V(g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]])
+    DTRACE_CABAC_V(g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]])
     DTRACE_CABAC_T("\tinCU-Y=")
-    DTRACE_CABAC_V(g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]])
+    DTRACE_CABAC_V(g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]])
     DTRACE_CABAC_T("\tpredmode=")
     DTRACE_CABAC_V(pcCU->getPredictionMode(uiAbsPartIdx))
     DTRACE_CABAC_T("\n")
@@ -1090,9 +1090,9 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
     eTType = eTType == TEXT_LUMA ? TEXT_LUMA : (eTType == TEXT_NONE ? TEXT_NONE : TEXT_CHROMA);
 
     //----- encode significance map -----
-    const UInt   uiLog2BlockSize = g_aucConvertToBit[uiWidth] + 2;
+    const UInt   uiLog2BlockSize = g_convertToBit[uiWidth] + 2;
     UInt uiScanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, uiWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
-    const UInt *scan = g_auiSigLastScan[uiScanIdx][uiLog2BlockSize - 1];
+    const UInt *scan = g_sigLastScan[uiScanIdx][uiLog2BlockSize - 1];
 
     Bool beValid;
     if (pcCU->getCUTransquantBypass(uiAbsPartIdx))
@@ -1110,7 +1110,7 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx,
 
     const UInt * scanCG;
     {
-        scanCG = g_auiSigLastScan[uiScanIdx][uiLog2BlockSize > 3 ? uiLog2BlockSize - 2 - 1 : 0];
+        scanCG = g_sigLastScan[uiScanIdx][uiLog2BlockSize > 3 ? uiLog2BlockSize - 2 - 1 : 0];
         if (uiLog2BlockSize == 3)
         {
             scanCG = g_sigLastScan8x8[uiScanIdx];
@@ -1498,14 +1498,14 @@ Void TEncSbac::estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, Int width,
     Int iBitsX = 0, iBitsY = 0;
     Int blkSizeOffsetX, blkSizeOffsetY, shiftX, shiftY;
 
-    blkSizeOffsetX = eTType ? 0 : (g_aucConvertToBit[width] * 3 + ((g_aucConvertToBit[width] + 1) >> 2));
-    blkSizeOffsetY = eTType ? 0 : (g_aucConvertToBit[height] * 3 + ((g_aucConvertToBit[height] + 1) >> 2));
-    shiftX = eTType ? g_aucConvertToBit[width] : ((g_aucConvertToBit[width] + 3) >> 2);
-    shiftY = eTType ? g_aucConvertToBit[height] : ((g_aucConvertToBit[height] + 3) >> 2);
+    blkSizeOffsetX = eTType ? 0 : (g_convertToBit[width] * 3 + ((g_convertToBit[width] + 1) >> 2));
+    blkSizeOffsetY = eTType ? 0 : (g_convertToBit[height] * 3 + ((g_convertToBit[height] + 1) >> 2));
+    shiftX = eTType ? g_convertToBit[width] : ((g_convertToBit[width] + 3) >> 2);
+    shiftY = eTType ? g_convertToBit[height] : ((g_convertToBit[height] + 3) >> 2);
 
     Int ctx;
     ContextModel *pCtxX      = m_cCuCtxLastX.get(0, eTType);
-    for (ctx = 0; ctx < g_uiGroupIdx[width - 1]; ctx++)
+    for (ctx = 0; ctx < g_groupIdx[width - 1]; ctx++)
     {
         Int ctxOffset = blkSizeOffsetX + (ctx >> shiftX);
         pcEstBitsSbac->lastXBits[ctx] = iBitsX + pCtxX[ctxOffset].getEntropyBits(0);
@@ -1514,7 +1514,7 @@ Void TEncSbac::estSignificantMapBit(estBitsSbacStruct* pcEstBitsSbac, Int width,
 
     pcEstBitsSbac->lastXBits[ctx] = iBitsX;
     ContextModel *pCtxY      = m_cCuCtxLastY.get(0, eTType);
-    for (ctx = 0; ctx < g_uiGroupIdx[height - 1]; ctx++)
+    for (ctx = 0; ctx < g_groupIdx[height - 1]; ctx++)
     {
         Int ctxOffset = blkSizeOffsetY + (ctx >> shiftY);
         pcEstBitsSbac->lastYBits[ctx] = iBitsY + pCtxY[ctxOffset].getEntropyBits(0);

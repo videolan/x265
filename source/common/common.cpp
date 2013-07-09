@@ -150,7 +150,7 @@ int x265_check_params(x265_param_t *param)
 {
 #define CONFIRM(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
-    uint32_t maxCUDepth = (uint32_t)g_aucConvertToBit[param->maxCUSize];
+    uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
@@ -241,23 +241,23 @@ int x265_check_params(x265_param_t *param)
 
 void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
 {
-    uint32_t maxCUDepth = (uint32_t)g_aucConvertToBit[param->maxCUSize];
+    uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     // set max CU width & height
-    g_uiMaxCUWidth  = param->maxCUSize;
-    g_uiMaxCUHeight = param->maxCUSize;
+    g_maxCUWidth  = param->maxCUSize;
+    g_maxCUHeight = param->maxCUSize;
 
     // compute actual CU depth with respect to config depth and max transform size
-    g_uiAddCUDepth  = 0;
-    while ((param->maxCUSize >> maxCUDepth) > (1u << (tuQTMinLog2Size + g_uiAddCUDepth)))
+    g_addCUDepth  = 0;
+    while ((param->maxCUSize >> maxCUDepth) > (1u << (tuQTMinLog2Size + g_addCUDepth)))
     {
-        g_uiAddCUDepth++;
+        g_addCUDepth++;
     }
 
-    maxCUDepth += g_uiAddCUDepth;
-    g_uiAddCUDepth++;
-    g_uiMaxCUDepth = maxCUDepth;
+    maxCUDepth += g_addCUDepth;
+    g_addCUDepth++;
+    g_maxCUDepth = maxCUDepth;
 
     // set internal bit-depth and constants
 #if HIGH_BIT_DEPTH
@@ -265,11 +265,11 @@ void x265_set_globals(x265_param_t *param, uint32_t inputBitDepth)
     g_bitDepthC = param->internalBitDepth;
 #else
     g_bitDepthY = g_bitDepthC = 8;
-    g_uiPCMBitDepthLuma = g_uiPCMBitDepthChroma = 8;
+    g_PCMBitDepthLuma = g_PCMBitDepthChroma = 8;
 #endif
 
-    g_uiPCMBitDepthLuma = inputBitDepth;
-    g_uiPCMBitDepthChroma = inputBitDepth;
+    g_PCMBitDepthLuma = inputBitDepth;
+    g_PCMBitDepthChroma = inputBitDepth;
 }
 
 void x265_print_params(x265_param_t *param)

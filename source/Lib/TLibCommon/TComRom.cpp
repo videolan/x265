@@ -49,27 +49,27 @@
 // initialize ROM variables
 Void initROM()
 {
-    if (g_auiSigLastScan[0][0] == 0)
+    if (g_sigLastScan[0][0] == 0)
     {
         Int i, c;
 
-        // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
-        ::memset(g_aucConvertToBit, -1, sizeof(g_aucConvertToBit));
+        // g_convertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
+        ::memset(g_convertToBit, -1, sizeof(g_convertToBit));
         c = 0;
         for (i = 4; i < MAX_CU_SIZE; i *= 2)
         {
-            g_aucConvertToBit[i] = c;
+            g_convertToBit[i] = c;
             c++;
         }
-        g_aucConvertToBit[i] = c;
+        g_convertToBit[i] = c;
 
         c = 2;
         for (i = 0; i < MAX_CU_DEPTH; i++)
         {
-            g_auiSigLastScan[0][i] = new UInt[c * c];
-            g_auiSigLastScan[1][i] = new UInt[c * c];
-            g_auiSigLastScan[2][i] = new UInt[c * c];
-            initSigLastScan(g_auiSigLastScan[0][i], g_auiSigLastScan[1][i], g_auiSigLastScan[2][i], c, c);
+            g_sigLastScan[0][i] = new UInt[c * c];
+            g_sigLastScan[1][i] = new UInt[c * c];
+            g_sigLastScan[2][i] = new UInt[c * c];
+            initSigLastScan(g_sigLastScan[0][i], g_sigLastScan[1][i], g_sigLastScan[2][i], c, c);
 
             c <<= 1;
         }
@@ -78,15 +78,15 @@ Void initROM()
 
 Void destroyROM()
 {
-    if (g_auiSigLastScan[0][0])
+    if (g_sigLastScan[0][0])
     {
         for (Int i = 0; i < MAX_CU_DEPTH; i++)
         {
-            delete[] g_auiSigLastScan[0][i];
-            delete[] g_auiSigLastScan[1][i];
-            delete[] g_auiSigLastScan[2][i];
+            delete[] g_sigLastScan[0][i];
+            delete[] g_sigLastScan[1][i];
+            delete[] g_sigLastScan[2][i];
         }
-        g_auiSigLastScan[0][0] = NULL;
+        g_sigLastScan[0][0] = NULL;
     }
 }
 
@@ -94,80 +94,80 @@ Void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
-UInt g_uiMaxCUWidth  = MAX_CU_SIZE;
-UInt g_uiMaxCUHeight = MAX_CU_SIZE;
-UInt g_uiMaxCUDepth  = MAX_CU_DEPTH;
-UInt g_uiAddCUDepth  = 0;
-UInt g_auiZscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_auiRasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_auiRasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-UInt g_auiRasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+UInt g_maxCUWidth  = MAX_CU_SIZE;
+UInt g_maxCUHeight = MAX_CU_SIZE;
+UInt g_maxCUDepth  = MAX_CU_DEPTH;
+UInt g_addCUDepth  = 0;
+UInt g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+UInt g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
 UInt g_auiPUOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-Void initZscanToRaster(Int iMaxDepth, Int iDepth, UInt uiStartVal, UInt*& rpuiCurrIdx)
+Void initZscanToRaster(Int maxDepth, Int depth, UInt startVal, UInt*& curIdx)
 {
-    Int iStride = 1 << (iMaxDepth - 1);
+    Int stride = 1 << (maxDepth - 1);
 
-    if (iDepth == iMaxDepth)
+    if (depth == maxDepth)
     {
-        rpuiCurrIdx[0] = uiStartVal;
-        rpuiCurrIdx++;
+        curIdx[0] = startVal;
+        curIdx++;
     }
     else
     {
-        Int iStep = iStride >> iDepth;
-        initZscanToRaster(iMaxDepth, iDepth + 1, uiStartVal,                     rpuiCurrIdx);
-        initZscanToRaster(iMaxDepth, iDepth + 1, uiStartVal + iStep,               rpuiCurrIdx);
-        initZscanToRaster(iMaxDepth, iDepth + 1, uiStartVal + iStep * iStride,       rpuiCurrIdx);
-        initZscanToRaster(iMaxDepth, iDepth + 1, uiStartVal + iStep * iStride + iStep, rpuiCurrIdx);
+        Int step = stride >> depth;
+        initZscanToRaster(maxDepth, depth + 1, startVal,                        curIdx);
+        initZscanToRaster(maxDepth, depth + 1, startVal + step,                 curIdx);
+        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride,        curIdx);
+        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride + step, curIdx);
     }
 }
 
-Void initRasterToZscan(UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth)
+Void initRasterToZscan(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
 {
-    UInt  uiMinCUWidth  = uiMaxCUWidth  >> (uiMaxDepth - 1);
-    UInt  uiMinCUHeight = uiMaxCUHeight >> (uiMaxDepth - 1);
+    UInt  minWidth  = maxCUWidth  >> (maxDepth - 1);
+    UInt  minHeight = maxCUHeight >> (maxDepth - 1);
 
-    UInt  uiNumPartInWidth  = (UInt)uiMaxCUWidth  / uiMinCUWidth;
-    UInt  uiNumPartInHeight = (UInt)uiMaxCUHeight / uiMinCUHeight;
+    UInt  numPartInWidth  = (UInt)maxCUWidth  / minWidth;
+    UInt  numPartInHeight = (UInt)maxCUHeight / minHeight;
 
-    for (UInt i = 0; i < uiNumPartInWidth * uiNumPartInHeight; i++)
+    for (UInt i = 0; i < numPartInWidth * numPartInHeight; i++)
     {
-        g_auiRasterToZscan[g_auiZscanToRaster[i]] = i;
+        g_rasterToZscan[g_zscanToRaster[i]] = i;
     }
 }
 
-Void initRasterToPelXY(UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth)
+Void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
 {
-    UInt    i;
+    UInt i;
 
-    UInt* uiTempX = &g_auiRasterToPelX[0];
-    UInt* uiTempY = &g_auiRasterToPelY[0];
+    UInt* tempX = &g_rasterToPelX[0];
+    UInt* tempY = &g_rasterToPelY[0];
 
-    UInt  uiMinCUWidth  = uiMaxCUWidth  >> (uiMaxDepth - 1);
-    UInt  uiMinCUHeight = uiMaxCUHeight >> (uiMaxDepth - 1);
+    UInt  minWidth  = maxCUWidth  >> (maxDepth - 1);
+    UInt  minHeight = maxCUHeight >> (maxDepth - 1);
 
-    UInt  uiNumPartInWidth  = uiMaxCUWidth  / uiMinCUWidth;
-    UInt  uiNumPartInHeight = uiMaxCUHeight / uiMinCUHeight;
+    UInt  numPartInWidth  = maxCUWidth  / minWidth;
+    UInt  numPartInHeight = maxCUHeight / minHeight;
 
-    uiTempX[0] = 0;
-    uiTempX++;
-    for (i = 1; i < uiNumPartInWidth; i++)
+    tempX[0] = 0;
+    tempX++;
+    for (i = 1; i < numPartInWidth; i++)
     {
-        uiTempX[0] = uiTempX[-1] + uiMinCUWidth;
-        uiTempX++;
+        tempX[0] = tempX[-1] + minWidth;
+        tempX++;
     }
 
-    for (i = 1; i < uiNumPartInHeight; i++)
+    for (i = 1; i < numPartInHeight; i++)
     {
-        memcpy(uiTempX, uiTempX - uiNumPartInWidth, sizeof(UInt) * uiNumPartInWidth);
-        uiTempX += uiNumPartInWidth;
+        memcpy(tempX, tempX - numPartInWidth, sizeof(UInt) * numPartInWidth);
+        tempX += numPartInWidth;
     }
 
-    for (i = 1; i < uiNumPartInWidth * uiNumPartInHeight; i++)
+    for (i = 1; i < numPartInWidth * numPartInHeight; i++)
     {
-        uiTempY[i] = (i / uiNumPartInWidth) * uiMinCUWidth;
+        tempY[i] = (i / numPartInWidth) * minWidth;
     }
 }
 
@@ -181,7 +181,7 @@ Int g_invQuantScales[6] =
     40, 45, 51, 57, 64, 72
 };
 
-const Short g_aiT4[4][4] =
+const Short g_t4[4][4] =
 {
     { 64, 64, 64, 64 },
     { 83, 36, -36, -83 },
@@ -189,7 +189,7 @@ const Short g_aiT4[4][4] =
     { 36, -83, 83, -36 }
 };
 
-const Short g_aiT8[8][8] =
+const Short g_t8[8][8] =
 {
     { 64, 64, 64, 64, 64, 64, 64, 64 },
     { 89, 75, 50, 18, -18, -50, -75, -89 },
@@ -201,7 +201,7 @@ const Short g_aiT8[8][8] =
     { 18, -50, 75, -89, 89, -75, 50, -18 }
 };
 
-const Short g_aiT16[16][16] =
+const Short g_t16[16][16] =
 {
     { 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64 },
     { 90, 87, 80, 70, 57, 43, 25,  9, -9, -25, -43, -57, -70, -80, -87, -90 },
@@ -221,7 +221,7 @@ const Short g_aiT16[16][16] =
     {  9, -25, 43, -57, 70, -80, 87, -90, 90, -87, 80, -70, 57, -43, 25, -9 }
 };
 
-const Short g_aiT32[32][32] =
+const Short g_t32[32][32] =
 {
     { 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64 },
     { 90, 90, 88, 85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13,  4, -4, -13, -22, -31, -38, -46, -54, -61, -67, -73, -78, -82, -85, -88, -90, -90 },
@@ -257,7 +257,7 @@ const Short g_aiT32[32][32] =
     {  4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4 }
 };
 
-const UChar g_aucChromaScale[58] =
+const UChar g_chromaScale[58] =
 {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32,
@@ -265,20 +265,11 @@ const UChar g_aucChromaScale[58] =
     45, 46, 47, 48, 49, 50, 51
 };
 
-// Mode-Dependent DCT/DST
-const Short g_as_DST_MAT_4[4][4] =
-{
-    { 29,   55,    74,   84 },
-    { 74,   74,    0,  -74 },
-    { 84,  -29,   -74,   55 },
-    { 55,  -84,    74,  -29 },
-};
-
 // ====================================================================================================================
 // ADI
 // ====================================================================================================================
 
-const UChar g_aucIntraModeNumFast[7] =
+const UChar g_intraModeNumFast[7] =
 {
     3, //   2x2
     8, //   4x4
@@ -291,7 +282,7 @@ const UChar g_aucIntraModeNumFast[7] =
 
 // chroma
 
-const UChar g_aucConvertTxtTypeToIdx[4] = { 0, 1, 1, 2 };
+const UChar g_convertTxtTypeToIdx[4] = { 0, 1, 1, 2 };
 
 // ====================================================================================================================
 // Bit-depth
@@ -300,14 +291,14 @@ const UChar g_aucConvertTxtTypeToIdx[4] = { 0, 1, 1, 2 };
 Int  g_bitDepthY = 8;
 Int  g_bitDepthC = 8;
 
-UInt g_uiPCMBitDepthLuma     = 8;    // PCM bit-depth
-UInt g_uiPCMBitDepthChroma   = 8;    // PCM bit-depth
+UInt g_PCMBitDepthLuma   = 8;    // PCM bit-depth
+UInt g_PCMBitDepthChroma = 8;    // PCM bit-depth
 
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
-Char  g_aucConvertToBit[MAX_CU_SIZE + 1];
+Char g_convertToBit[MAX_CU_SIZE + 1];
 
 #if ENC_DEC_TRACE
 FILE*  g_hTrace = NULL;
@@ -317,12 +308,13 @@ Bool   g_HLSTraceEnable = true;
 Bool   g_bJustDoIt = false;
 UInt64 g_nSymbolCounter = 0;
 #endif
+
 // ====================================================================================================================
 // Scanning order & context model mapping
 // ====================================================================================================================
 
 // scanning order table
-UInt* g_auiSigLastScan[3][MAX_CU_DEPTH];
+UInt* g_sigLastScan[3][MAX_CU_DEPTH];
 
 const UInt g_sigLastScan8x8[3][4] =
 {
@@ -332,122 +324,116 @@ const UInt g_sigLastScan8x8[3][4] =
 };
 UInt g_sigLastScanCG32x32[64];
 
-const UInt g_uiMinInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
-const UInt g_uiGroupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+const UInt g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
+const UInt g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
 
 // Rice parameters for absolute transform levels
-const UInt g_auiGoRiceRange[5] =
-{
-    7, 14, 26, 46, 78
-};
+const UInt g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
-const UInt g_auiGoRicePrefixLen[5] =
-{
-    8, 7, 6, 5, 4
-};
+const UInt g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
 
-Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int iHeight)
+Void initSigLastScan(UInt* buffD, UInt* buffH, UInt* buffV, Int width, Int height)
 {
-    const UInt  uiNumScanPos  = UInt(iWidth * iWidth);
-    UInt        uiNextScanPos = 0;
+    const UInt  numScanPos  = UInt(width * width);
+    UInt        nextScanPos = 0;
 
-    if (iWidth < 16)
+    if (width < 16)
     {
-        UInt* pBuffTemp = pBuffD;
-        if (iWidth == 8)
+        UInt* buffTemp = buffD;
+        if (width == 8)
         {
-            pBuffTemp = g_sigLastScanCG32x32;
+            buffTemp = g_sigLastScanCG32x32;
         }
-        for (UInt uiScanLine = 0; uiNextScanPos < uiNumScanPos; uiScanLine++)
+        for (UInt scanLine = 0; nextScanPos < numScanPos; scanLine++)
         {
-            Int    iPrimDim  = Int(uiScanLine);
-            Int    iScndDim  = 0;
-            while (iPrimDim >= iWidth)
+            Int primDim = Int(scanLine);
+            Int scndDim = 0;
+            while (primDim >= width)
             {
-                iScndDim++;
-                iPrimDim--;
+                scndDim++;
+                primDim--;
             }
 
-            while (iPrimDim >= 0 && iScndDim < iWidth)
+            while (primDim >= 0 && scndDim < width)
             {
-                pBuffTemp[uiNextScanPos] = iPrimDim * iWidth + iScndDim;
-                uiNextScanPos++;
-                iScndDim++;
-                iPrimDim--;
+                buffTemp[nextScanPos] = primDim * width + scndDim;
+                nextScanPos++;
+                scndDim++;
+                primDim--;
             }
         }
     }
-    if (iWidth > 4)
+    if (width > 4)
     {
-        UInt uiNumBlkSide = iWidth >> 2;
-        UInt uiNumBlks    = uiNumBlkSide * uiNumBlkSide;
-        UInt log2Blk      = g_aucConvertToBit[uiNumBlkSide] + 1;
+        UInt numBlkSide = width >> 2;
+        UInt numBlks    = numBlkSide * numBlkSide;
+        UInt log2Blk    = g_convertToBit[numBlkSide] + 1;
 
-        for (UInt uiBlk = 0; uiBlk < uiNumBlks; uiBlk++)
+        for (UInt blk = 0; blk < numBlks; blk++)
         {
-            uiNextScanPos   = 0;
-            UInt initBlkPos = g_auiSigLastScan[SCAN_DIAG][log2Blk][uiBlk];
-            if (iWidth == 32)
+            nextScanPos   = 0;
+            UInt initBlkPos = g_sigLastScan[SCAN_DIAG][log2Blk][blk];
+            if (width == 32)
             {
-                initBlkPos = g_sigLastScanCG32x32[uiBlk];
+                initBlkPos = g_sigLastScanCG32x32[blk];
             }
-            UInt offsetY    = initBlkPos / uiNumBlkSide;
-            UInt offsetX    = initBlkPos - offsetY * uiNumBlkSide;
-            UInt offsetD    = 4 * (offsetX + offsetY * iWidth);
-            UInt offsetScan = 16 * uiBlk;
-            for (UInt uiScanLine = 0; uiNextScanPos < 16; uiScanLine++)
+            UInt offsetY    = initBlkPos / numBlkSide;
+            UInt offsetX    = initBlkPos - offsetY * numBlkSide;
+            UInt offsetD    = 4 * (offsetX + offsetY * width);
+            UInt offsetScan = 16 * blk;
+            for (UInt scanLine = 0; nextScanPos < 16; scanLine++)
             {
-                Int    iPrimDim  = Int(uiScanLine);
-                Int    iScndDim  = 0;
-                while (iPrimDim >= 4)
+                Int primDim = Int(scanLine);
+                Int scndDim = 0;
+                while (primDim >= 4)
                 {
-                    iScndDim++;
-                    iPrimDim--;
+                    scndDim++;
+                    primDim--;
                 }
 
-                while (iPrimDim >= 0 && iScndDim < 4)
+                while (primDim >= 0 && scndDim < 4)
                 {
-                    pBuffD[uiNextScanPos + offsetScan] = iPrimDim * iWidth + iScndDim + offsetD;
-                    uiNextScanPos++;
-                    iScndDim++;
-                    iPrimDim--;
+                    buffD[nextScanPos + offsetScan] = primDim * width + scndDim + offsetD;
+                    nextScanPos++;
+                    scndDim++;
+                    primDim--;
                 }
             }
         }
     }
 
-    UInt uiCnt = 0;
-    if (iWidth > 2)
+    UInt cnt = 0;
+    if (width > 2)
     {
-        UInt numBlkSide = iWidth >> 2;
+        UInt numBlkSide = width >> 2;
         for (Int blkY = 0; blkY < numBlkSide; blkY++)
         {
             for (Int blkX = 0; blkX < numBlkSide; blkX++)
             {
-                UInt offset    = blkY * 4 * iWidth + blkX * 4;
+                UInt offset = blkY * 4 * width + blkX * 4;
                 for (Int y = 0; y < 4; y++)
                 {
                     for (Int x = 0; x < 4; x++)
                     {
-                        pBuffH[uiCnt] = y * iWidth + x + offset;
-                        uiCnt++;
+                        buffH[cnt] = y * width + x + offset;
+                        cnt++;
                     }
                 }
             }
         }
 
-        uiCnt = 0;
+        cnt = 0;
         for (Int blkX = 0; blkX < numBlkSide; blkX++)
         {
             for (Int blkY = 0; blkY < numBlkSide; blkY++)
             {
-                UInt offset    = blkY * 4 * iWidth + blkX * 4;
+                UInt offset    = blkY * 4 * width + blkX * 4;
                 for (Int x = 0; x < 4; x++)
                 {
                     for (Int y = 0; y < 4; y++)
                     {
-                        pBuffV[uiCnt] = y * iWidth + x + offset;
-                        uiCnt++;
+                        buffV[cnt] = y * width + x + offset;
+                        cnt++;
                     }
                 }
             }
@@ -455,22 +441,22 @@ Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int i
     }
     else
     {
-        for (Int iY = 0; iY < iHeight; iY++)
+        for (Int y = 0; y < height; y++)
         {
-            for (Int iX = 0; iX < iWidth; iX++)
+            for (Int iX = 0; iX < width; iX++)
             {
-                pBuffH[uiCnt] = iY * iWidth + iX;
-                uiCnt++;
+                buffH[cnt] = y * width + iX;
+                cnt++;
             }
         }
 
-        uiCnt = 0;
-        for (Int iX = 0; iX < iWidth; iX++)
+        cnt = 0;
+        for (Int x = 0; x < width; x++)
         {
-            for (Int iY = 0; iY < iHeight; iY++)
+            for (Int iY = 0; iY < height; iY++)
             {
-                pBuffV[uiCnt] = iY * iWidth + iX;
-                uiCnt++;
+                buffV[cnt] = iY * width + x;
+                cnt++;
             }
         }
     }

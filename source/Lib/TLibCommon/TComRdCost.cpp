@@ -130,7 +130,7 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     // set Block Width / Height
     rcDistParam.iCols    = pcPatternKey->getROIYWidth();
     rcDistParam.iRows    = pcPatternKey->getROIYHeight();
-    rcDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_aucConvertToBit[rcDistParam.iCols] + 1];
+    rcDistParam.DistFunc = m_afpDistortFunc[DF_SAD + g_convertToBit[rcDistParam.iCols] + 1];
 
     if (rcDistParam.iCols == 12)
     {
@@ -169,7 +169,7 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     // set distortion function
     if (!bHADME)
     {
-        rcDistParam.DistFunc = m_afpDistortFunc[DF_SADS + g_aucConvertToBit[rcDistParam.iCols] + 1];
+        rcDistParam.DistFunc = m_afpDistortFunc[DF_SADS + g_convertToBit[rcDistParam.iCols] + 1];
 
         if (rcDistParam.iCols == 12)
         {
@@ -186,7 +186,7 @@ Void TComRdCost::setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefSt
     }
     else
     {
-        rcDistParam.DistFunc = m_afpDistortFunc[DF_HADS + g_aucConvertToBit[rcDistParam.iCols] + 1];
+        rcDistParam.DistFunc = m_afpDistortFunc[DF_HADS + g_convertToBit[rcDistParam.iCols] + 1];
     }
 
     // initialize

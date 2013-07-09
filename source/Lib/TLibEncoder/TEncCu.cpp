@@ -171,7 +171,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_temporalSAD      = 0;
 
     // initialize partition order.
-    UInt* piTmp = &g_auiZscanToRaster[0];
+    UInt* piTmp = &g_zscanToRaster[0];
     initZscanToRaster(m_uhTotalDepth, 1, 0, piTmp);
     initRasterToZscan(uiMaxWidth, uiMaxHeight, m_uhTotalDepth);
 
@@ -694,7 +694,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         xCheckRDCostIntra(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
         rpcTempCU->initEstData(uiDepth, iQP);
 
-        if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+        if (uiDepth == g_maxCUDepth - g_addCUDepth)
         {
             if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
             {
@@ -731,7 +731,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     rpcTempCU->initEstData(uiDepth, iQP);
 
     // further split
-    if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
+    if (bSubBranch && bTrySplitDQP && uiDepth < g_maxCUDepth - g_addCUDepth)
     {
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
@@ -787,7 +787,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
-        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        if ((g_maxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             Bool hasResidual = false;
             for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
@@ -940,7 +940,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 // 2Nx2N, NxN
                 if (!((rpcBestCU->getWidth(0) == 8) && (rpcBestCU->getHeight(0) == 8)))
                 {
-                    if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth && doNotBlockPu)
+                    if (uiDepth == g_maxCUDepth - g_addCUDepth && doNotBlockPu)
                     {
                         xCheckRDCostInter(rpcBestCU, rpcTempCU, SIZE_NxN);
                         rpcTempCU->initEstData(uiDepth, iQP);
@@ -1070,7 +1070,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
                 xCheckRDCostIntrainInter(rpcBestCU, rpcTempCU, SIZE_2Nx2N);
                 rpcTempCU->initEstData(uiDepth, iQP);
 
-                if (uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth)
+                if (uiDepth == g_maxCUDepth - g_addCUDepth)
                 {
                     if (rpcTempCU->getWidth(0) > (1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize()))
                     {
@@ -1128,7 +1128,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     rpcTempCU->initEstData(uiDepth, iQP);
 
     // further split
-    if (bSubBranch && bTrySplitDQP && uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth)
+    if (bSubBranch && bTrySplitDQP && uiDepth < g_maxCUDepth - g_addCUDepth)
     {
         UChar       uhNextDepth         = uiDepth + 1;
         TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
@@ -1182,7 +1182,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
-        if ((g_uiMaxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+        if ((g_maxCUWidth >> uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
         {
             Bool hasResidual = false;
             for (UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx++)
@@ -1315,16 +1315,16 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
 
     UInt uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
     UInt uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
-    UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-    UInt uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+    UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+    UInt uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
     UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
     UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
 
     while (uiPosX >= uiWidth || uiPosY >= uiHeight)
     {
         uiInternalAddress--;
-        uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_uiMaxCUWidth + g_auiRasterToPelX[g_auiZscanToRaster[uiInternalAddress]];
-        uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_uiMaxCUHeight + g_auiRasterToPelY[g_auiZscanToRaster[uiInternalAddress]];
+        uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+        uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
     }
 
     uiInternalAddress++;
@@ -1341,9 +1341,9 @@ Void TEncCu::finishCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     {
         bTerminateSlice = true;
     }
-    UInt uiGranularityWidth = g_uiMaxCUWidth;
-    uiPosX = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]];
-    uiPosY = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
+    UInt uiGranularityWidth = g_maxCUWidth;
+    uiPosX = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]];
+    uiPosY = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]];
     Bool granularityBoundary = ((uiPosX + pcCU->getWidth(uiAbsPartIdx)) % uiGranularityWidth == 0 || (uiPosX + pcCU->getWidth(uiAbsPartIdx) == uiWidth))
         && ((uiPosY + pcCU->getHeight(uiAbsPartIdx)) % uiGranularityWidth == 0 || (uiPosY + pcCU->getHeight(uiAbsPartIdx) == uiHeight));
 
@@ -1419,10 +1419,10 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
     TComPic* pcPic = pcCU->getPic();
 
     Bool bBoundary = false;
-    UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]];
-    UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
-    UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
-    UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
+    UInt uiLPelX   = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]];
+    UInt uiRPelX   = uiLPelX + (g_maxCUWidth >> uiDepth)  - 1;
+    UInt uiTPelY   = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]];
+    UInt uiBPelY   = uiTPelY + (g_maxCUHeight >> uiDepth) - 1;
 
     TComSlice * pcSlice = pcCU->getPic()->getSlice();
 
@@ -1438,17 +1438,17 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
         bBoundary = true;
     }
 
-    if (((uiDepth < pcCU->getDepth(uiAbsPartIdx)) && (uiDepth < (g_uiMaxCUDepth - g_uiAddCUDepth))) || bBoundary)
+    if (((uiDepth < pcCU->getDepth(uiAbsPartIdx)) && (uiDepth < (g_maxCUDepth - g_addCUDepth))) || bBoundary)
     {
         UInt uiQNumParts = (pcPic->getNumPartInCU() >> (uiDepth << 1)) >> 2;
-        if ((g_uiMaxCUWidth >> uiDepth) == pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
+        if ((g_maxCUWidth >> uiDepth) == pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
         {
             setdQPFlag(true);
         }
         for (UInt uiPartUnitIdx = 0; uiPartUnitIdx < 4; uiPartUnitIdx++, uiAbsPartIdx += uiQNumParts)
         {
-            uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsPartIdx]];
-            uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsPartIdx]];
+            uiLPelX   = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]];
+            uiTPelY   = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]];
             Bool bInSlice = pcCU->getSCUAddr() + uiAbsPartIdx < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (uiLPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
             {
@@ -1459,7 +1459,7 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
         return;
     }
 
-    if ((g_uiMaxCUWidth >> uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
+    if ((g_maxCUWidth >> uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
     {
         setdQPFlag(true);
     }
@@ -1845,7 +1845,7 @@ Void TEncCu::xCheckDQP(TComDataCU* pcCU)
 {
     UInt uiDepth = pcCU->getDepth(0);
 
-    if (pcCU->getSlice()->getPPS()->getUseDQP() && (g_uiMaxCUWidth >> uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize())
+    if (pcCU->getSlice()->getPPS()->getUseDQP() && (g_maxCUWidth >> uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize())
     {
         pcCU->setQPSubParts(pcCU->getRefQP(0), 0, uiDepth); // set QP to default QP
     }
@@ -1862,15 +1862,15 @@ Void TEncCu::xCopyAMVPInfo(AMVPInfo* pSrc, AMVPInfo* pDst)
 
 Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UInt uiDepth, UInt uiSrcDepth, TComDataCU* pcCU, UInt uiLPelX, UInt uiTPelY)
 {
-    UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth >> uiDepth)  - 1;
-    UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight >> uiDepth) - 1;
+    UInt uiRPelX   = uiLPelX + (g_maxCUWidth >> uiDepth)  - 1;
+    UInt uiBPelY   = uiTPelY + (g_maxCUHeight >> uiDepth) - 1;
     TComSlice * pcSlice = pcCU->getPic()->getSlice();
     Bool bSliceEnd   = pcSlice->getSliceCurEndCUAddr() > (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx &&
         pcSlice->getSliceCurEndCUAddr() < (pcCU->getAddr()) * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx + (pcCU->getPic()->getNumPartInCU() >> (uiDepth << 1));
 
     if (!bSliceEnd && (uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
-        UInt uiAbsPartIdxInRaster = g_auiZscanToRaster[uiAbsPartIdx];
+        UInt uiAbsPartIdxInRaster = g_zscanToRaster[uiAbsPartIdx];
         UInt uiSrcBlkWidth = rpcPic->getNumPartInWidth() >> (uiSrcDepth);
         UInt uiBlkWidth    = rpcPic->getNumPartInWidth() >> (uiDepth);
         UInt uiPartIdxX = ((uiAbsPartIdxInRaster % rpcPic->getNumPartInWidth()) % uiSrcBlkWidth) / uiBlkWidth;
@@ -1884,8 +1884,8 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt uiAbsPartIdx, UIn
 
         for (UInt uiPartUnitIdx = 0; uiPartUnitIdx < 4; uiPartUnitIdx++, uiAbsPartIdx += uiQNumParts)
         {
-            UInt uiSubCULPelX   = uiLPelX + (g_uiMaxCUWidth >> (uiDepth + 1)) * (uiPartUnitIdx &  1);
-            UInt uiSubCUTPelY   = uiTPelY + (g_uiMaxCUHeight >> (uiDepth + 1)) * (uiPartUnitIdx >> 1);
+            UInt uiSubCULPelX   = uiLPelX + (g_maxCUWidth >> (uiDepth + 1)) * (uiPartUnitIdx &  1);
+            UInt uiSubCUTPelY   = uiTPelY + (g_maxCUHeight >> (uiDepth + 1)) * (uiPartUnitIdx >> 1);
 
             Bool bInSlice = pcCU->getAddr() * pcCU->getPic()->getNumPartInCU() + uiAbsPartIdx < pcSlice->getSliceCurEndCUAddr();
             if (bInSlice && (uiSubCULPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiSubCUTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
@@ -1998,7 +1998,7 @@ Void TEncCu::xLcuCollectARLStats(TComDataCU* rpcCU)
     TCoeff* pCoeffY = rpcCU->getCoeffY();
     Int* pArlCoeffY = rpcCU->getArlCoeffY();
 
-    UInt uiMinCUWidth = g_uiMaxCUWidth >> g_uiMaxCUDepth;
+    UInt uiMinCUWidth = g_maxCUWidth >> g_maxCUDepth;
     UInt uiMinNumCoeffInCU = 1 << uiMinCUWidth;
 
     memset(cSum, 0, sizeof(Double) * (LEVEL_RANGE + 1));

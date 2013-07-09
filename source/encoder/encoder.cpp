@@ -221,7 +221,7 @@ void Encoder::configure(x265_param_t *param)
     setUseRDOQ(param->bEnableRDOQ);
     setUseRDOQTS(param->bEnableRDOQTS);
     setRDpenalty(param->rdPenalty);
-    uint32_t tuQTMaxLog2Size = g_aucConvertToBit[param->maxCUSize] + 2 - 1;
+    uint32_t tuQTMaxLog2Size = g_convertToBit[param->maxCUSize] + 2 - 1;
     setQuadtreeTULog2MaxSize(tuQTMaxLog2Size);
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     setQuadtreeTULog2MinSize(tuQTMinLog2Size);

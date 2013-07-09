@@ -1413,8 +1413,8 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* pcCU, UInt uiAbsZor
     {
         for (UInt uiPartIdx = 0; uiPartIdx < 4; uiPartIdx++, uiAbsZorderIdx += uiQNumParts)
         {
-            UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[g_auiZscanToRaster[uiAbsZorderIdx]];
-            UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[g_auiZscanToRaster[uiAbsZorderIdx]];
+            UInt uiLPelX   = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
+            UInt uiTPelY   = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
             if ((uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples()))
                 xPCMCURestoration(pcCU, uiAbsZorderIdx, uiDepth + 1);
         }
@@ -1457,8 +1457,8 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* pcCU, UInt uiAb
         piSrc = pcPicYuvRec->getLumaAddr(pcCU->getAddr(), uiAbsZorderIdx);
         piPcm = pcCU->getPCMSampleY() + uiLumaOffset;
         uiStride  = pcPicYuvRec->getStride();
-        uiWidth  = (g_uiMaxCUWidth >> uiDepth);
-        uiHeight = (g_uiMaxCUHeight >> uiDepth);
+        uiWidth  = (g_maxCUWidth >> uiDepth);
+        uiHeight = (g_maxCUHeight >> uiDepth);
         if (pcCU->isLosslessCoded(uiAbsZorderIdx) && !pcCU->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;
@@ -1482,8 +1482,8 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* pcCU, UInt uiAb
         }
 
         uiStride = pcPicYuvRec->getCStride();
-        uiWidth  = ((g_uiMaxCUWidth >> uiDepth) / 2);
-        uiHeight = ((g_uiMaxCUWidth >> uiDepth) / 2);
+        uiWidth  = ((g_maxCUWidth >> uiDepth) / 2);
+        uiHeight = ((g_maxCUWidth >> uiDepth) / 2);
         if (pcCU->isLosslessCoded(uiAbsZorderIdx) && !pcCU->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;

@@ -83,8 +83,8 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
     Int numCuInWidth  = m_iPicWidth  / m_iCuWidth  + (m_iPicWidth  % m_iCuWidth  != 0);
     Int numCuInHeight = m_iPicHeight / m_iCuHeight + (m_iPicHeight % m_iCuHeight != 0);
 
-    m_iLumaMarginX    = g_uiMaxCUWidth  + 16; // for 16-byte alignment
-    m_iLumaMarginY    = g_uiMaxCUHeight + 16; // margin for 8-tap filter and infinite padding
+    m_iLumaMarginX    = g_maxCUWidth  + 16; // for 16-byte alignment
+    m_iLumaMarginY    = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
     m_iChromaMarginX  = m_iLumaMarginX;       // keep 16-byte alignment for chroma CTUs
     m_iChromaMarginY  = m_iLumaMarginY >> 1;
@@ -161,8 +161,8 @@ Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UI
     Int numCuInWidth  = m_iPicWidth  / m_iCuWidth  + (m_iPicWidth  % m_iCuWidth  != 0);
     Int numCuInHeight = m_iPicHeight / m_iCuHeight + (m_iPicHeight % m_iCuHeight != 0);
 
-    m_iLumaMarginX    = g_uiMaxCUWidth  + 16; // for 16-byte alignment
-    m_iLumaMarginY    = g_uiMaxCUHeight + 16; // margin for 8-tap filter and infinite padding
+    m_iLumaMarginX    = g_maxCUWidth  + 16; // for 16-byte alignment
+    m_iLumaMarginY    = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
     m_apiPicBufY      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
     m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
