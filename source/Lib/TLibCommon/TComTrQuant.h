@@ -136,11 +136,9 @@ public:
     // Misc functions
     Void setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset);
 
-    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_dLambdaLuma = dLambdaLuma; m_dLambdaChroma = dLambdaChroma; }
+    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_lumaLambda = dLambdaLuma; m_chromaLambda = dLambdaChroma; }
 
-    Void selectLambda(TextType ttype) { m_dLambda = (ttype == TEXT_LUMA) ? m_dLambdaLuma : m_dLambdaChroma; }
-
-    Void setRDOQOffset(UInt uiRDOQOffset) { m_uiRDOQOffset = uiRDOQOffset; }
+    Void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
 
     Void initScalingList();
     Void destroyScalingList();
@@ -179,23 +177,22 @@ public:
 
     static UInt getSigCoeffGroupCtxInc(const UInt* sigCoeffGroupFlag, UInt cGPosX, UInt cGPosY, Int width, Int height);
 
-    estBitsSbacStruct* m_pcEstBitsSbac;
+    estBitsSbacStruct* m_estBitsSbac;
 
 protected:
 
     Int      m_qpDelta[MAX_QP + 1];
     Int      m_sliceNsamples[LEVEL_RANGE + 1];
     Double   m_sliceSumC[LEVEL_RANGE + 1];
-    Int*     m_plTempCoeff;
+    Int*     m_tmpCoeff;
 
     QpParam  m_cQP;
 
-    Double   m_dLambda;
-    Double   m_dLambdaLuma;
-    Double   m_dLambdaChroma;
+    Double   m_lambda;
+    Double   m_lumaLambda;
+    Double   m_chromaLambda;
 
-    UInt     m_uiRDOQOffset;
-    UInt     m_uiMaxTrSize;
+    UInt     m_maxTrSize;
     Bool     m_useRDOQ;
     Bool     m_useRDOQTS;
     Bool     m_bUseAdaptQpSelect;
@@ -228,9 +225,9 @@ private:
 
     __inline Double xGetRateLast(UInt uiPosX, UInt uiPosY) const;
 
-    __inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
-    __inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_dLambda * m_pcEstBitsSbac->significantBits[ctxNumSig][sig]; }
-    __inline Double xGetICost(Double rage) const { return m_dLambda * rage; } ///< Get the cost for a specific rate
+    __inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+    __inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    __inline Double xGetICost(Double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
     __inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     Void xDeQuant(Int bitDepth, const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);

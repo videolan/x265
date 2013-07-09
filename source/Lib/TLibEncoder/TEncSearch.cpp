@@ -947,7 +947,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* pcCU,
     //--- init rate estimation arrays for RDOQ ---
     if (useTransformSkip ? m_pcEncCfg->getUseRDOQTS() : m_pcEncCfg->getUseRDOQ())
     {
-        m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, uiWidth, uiWidth, TEXT_LUMA);
+        m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, uiWidth, uiWidth, TEXT_LUMA);
     }
     //--- transform and quantization ---
     UInt uiAbsSum = 0;
@@ -1077,7 +1077,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* pcCU,
         //--- init rate estimation arrays for RDOQ ---
         if (useTransformSkipChroma ? m_pcEncCfg->getUseRDOQTS() : m_pcEncCfg->getUseRDOQ())
         {
-            m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, uiWidth, uiWidth, eText);
+            m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, uiWidth, uiWidth, eText);
         }
         //--- transform and quantization ---
         UInt uiAbsSum = 0;
@@ -4184,7 +4184,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
         if (m_pcEncCfg->getUseRDOQ())
         {
-            m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA);
+            m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
         }
 
         m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
@@ -4200,7 +4200,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
         {
             if (m_pcEncCfg->getUseRDOQ())
             {
-                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
+                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
             }
 
             Int curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();
@@ -4491,7 +4491,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
             if (m_pcEncCfg->getUseRDOQTS())
             {
-                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA);
+                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
             }
 
             m_pcTrQuant->setQPforQuant(pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0);
@@ -4573,7 +4573,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* pcCU,
 
             if (m_pcEncCfg->getUseRDOQTS())
             {
-                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
+                m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
             }
 
             Int curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();

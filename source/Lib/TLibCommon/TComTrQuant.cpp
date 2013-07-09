@@ -72,26 +72,26 @@ TComTrQuant::TComTrQuant()
 
     // allocate temporary buffers
     // OPT_ME: I may reduce this to short and output matched, bug I am not sure it is right.
-    m_plTempCoeff  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
+    m_tmpCoeff  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
 
     // allocate bit estimation class  (for RDOQ)
-    m_pcEstBitsSbac = new estBitsSbacStruct;
+    m_estBitsSbac = new estBitsSbacStruct;
     initScalingList();
 }
 
 TComTrQuant::~TComTrQuant()
 {
     // delete temporary buffers
-    if (m_plTempCoeff)
+    if (m_tmpCoeff)
     {
-        xFree(m_plTempCoeff);
-        m_plTempCoeff = NULL;
+        xFree(m_tmpCoeff);
+        m_tmpCoeff = NULL;
     }
 
     // delete bit estimation class
-    if (m_pcEstBitsSbac)
+    if (m_estBitsSbac)
     {
-        delete m_pcEstBitsSbac;
+        delete m_estBitsSbac;
     }
     destroyScalingList();
 }
@@ -417,10 +417,10 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
 
 Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
 {
-    if (width > (Int)m_uiMaxTrSize)
+    if (width > (Int)m_maxTrSize)
     {
-        width  = m_uiMaxTrSize;
-        height = m_uiMaxTrSize;
+        width  = m_maxTrSize;
+        height = m_maxTrSize;
     }
 
     Int shift, add, coeffQ;
@@ -474,7 +474,7 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
 
 Void TComTrQuant::init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool useAdaptQpSelect)
 {
-    m_uiMaxTrSize          = maxTrSize;
+    m_maxTrSize          = maxTrSize;
     m_useRDOQ              = useRDOQ;
     m_useRDOQTS            = useRDOQTS;
     m_useTransformSkipFast = useTransformSkipFast;
@@ -520,15 +520,15 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     Int bitDepth = ttype == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     if (useTransformSkip)
     {
-        xTransformSkip(bitDepth, residual, stride, m_plTempCoeff, width, height);
+        xTransformSkip(bitDepth, residual, stride, m_tmpCoeff, width, height);
     }
     else
     {
         // TODO: this may need larger data types for bitDepth > 8
         const UInt log2BlockSize = g_aucConvertToBit[width];
-        x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_plTempCoeff, stride);
+        x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_plTempCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
+    return xQuant(cu, m_tmpCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
@@ -553,17 +553,17 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_aucConvertToBit[width] + 2;
     Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
-    x265::primitives.dequant(bitDepth, coeff, m_plTempCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
+    x265::primitives.dequant(bitDepth, coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
     {
-        xITransformSkip(bitDepth, m_plTempCoeff, residual, stride, width, height);
+        xITransformSkip(bitDepth, m_tmpCoeff, residual, stride, width, height);
     }
     else
     {
         // TODO: this may need larger data types for bitDepth > 8
         const UInt log2BlockSize = g_aucConvertToBit[width];
-        x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_plTempCoeff, residual, stride);
+        x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
 }
 
@@ -852,7 +852,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                     level         = xGetCodedLevel(costCoeff[scanPos], costCoeff0[scanPos], costSig[scanPos],
                                                    levelDouble, maxAbsLevel, ctxSig, oneCtx, absCtx, goRiceParam,
                                                    c1Idx, c2Idx, qbits, scaleFactor, 0);
-                    sigRateDelta[blkPos] = m_pcEstBitsSbac->significantBits[ctxSig][1] - m_pcEstBitsSbac->significantBits[ctxSig][0];
+                    sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((Int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
@@ -863,7 +863,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                 }
                 else // level == 0
                 {
-                    rateIncUp[blkPos] = m_pcEstBitsSbac->greaterOneBits[oneCtx][0];
+                    rateIncUp[blkPos] = m_estBitsSbac->greaterOneBits[oneCtx][0];
                 }
                 dstCoeff[blkPos] = level;
                 baseCost           += costCoeff[scanPos];
@@ -1013,15 +1013,15 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && cu->getTransformIdx(absPartIdx) == 0)
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + xGetICost(m_pcEstBitsSbac->blockRootCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_pcEstBitsSbac->blockRootCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockRootCbpBits[ctxCbf][0]);
+        baseCost += xGetICost(m_estBitsSbac->blockRootCbpBits[ctxCbf][1]);
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
         ctxCbf    = (ttype ? TEXT_CHROMA : ttype) * NUM_QT_CBF_CTX + ctxCbf;
-        bestCost  = blockUncodedCost + xGetICost(m_pcEstBitsSbac->blockCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_pcEstBitsSbac->blockCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][0]);
+        baseCost += xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][1]);
     }
 
     Bool foundLast = false;
@@ -1090,7 +1090,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     {
         Int64 rdFactor = (Int64)(
                 g_invQuantScales[m_cQP.rem()] * g_invQuantScales[m_cQP.rem()] * (1 << (2 * m_cQP.m_iPer))
-                / m_dLambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
+                / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
                 + 0.5);
         Int lastCG = -1;
         Int absSum = 0;
@@ -1418,22 +1418,22 @@ __inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
         }
         if (c1Idx < C1FLAG_NUMBER)
         {
-            iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][1];
+            iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
 
             if (c2Idx < C2FLAG_NUMBER)
             {
-                iRate += m_pcEstBitsSbac->levelAbsBits[ctxNumAbs][1];
+                iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
             }
         }
     }
     else if (absLevel == 1)
     {
-        iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][0];
+        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
     }
     else if (absLevel == 2)
     {
-        iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][1];
-        iRate += m_pcEstBitsSbac->levelAbsBits[ctxNumAbs][0];
+        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+        iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
     }
     else
     {
@@ -1476,11 +1476,11 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
 
         if (c1Idx < C1FLAG_NUMBER)
         {
-            iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][1];
+            iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
 
             if (c2Idx < C2FLAG_NUMBER)
             {
-                iRate += m_pcEstBitsSbac->levelAbsBits[ctxNumAbs][1];
+                iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
             }
         }
     }
@@ -1490,12 +1490,12 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
     }
     else if (absLevel == 1)
     {
-        iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][0];
+        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
     }
     else if (absLevel == 2)
     {
-        iRate += m_pcEstBitsSbac->greaterOneBits[ctxNumOne][1];
-        iRate += m_pcEstBitsSbac->levelAbsBits[ctxNumAbs][0];
+        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+        iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
     }
     else
     {
@@ -1513,7 +1513,7 @@ __inline Double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
 {
     UInt ctxX = g_uiGroupIdx[posx];
     UInt ctxY = g_uiGroupIdx[posy];
-    Double cost = m_pcEstBitsSbac->lastXBits[ctxX] + m_pcEstBitsSbac->lastYBits[ctxY];
+    Double cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
 
     if (ctxX > 3)
     {
