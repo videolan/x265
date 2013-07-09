@@ -28,13 +28,13 @@
 #include "input/input.h"
 #include "output/output.h"
 #include "common.h"
-#include "PPA/ppa.h"
 #include "x265.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */
 #include <vld.h>
 #endif
+#include "PPA/ppa.h"
 
 #include <signal.h>
 #include <getopt.h>
@@ -469,12 +469,12 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, cliopt.recon ? &pic_recon : NULL);
-        outFrameCount += iNumRecon;
-        while (iNumRecon && cliopt.recon)
+        int numRecon = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, cliopt.recon ? &pic_recon : NULL);
+        outFrameCount += numRecon;
+        while (numRecon && cliopt.recon)
         {
             cliopt.recon->writePicture(*pic_recon++);
-            iNumRecon--;
+            numRecon--;
         }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
@@ -485,13 +485,13 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int iNumRecon = x265_encoder_encode(encoder, &p_nal, &nal, NULL, cliopt.recon ? &pic_recon : NULL);
-        int recon = iNumRecon;
-        outFrameCount += iNumRecon;
-        while (iNumRecon && cliopt.recon)
+        int numRecon = x265_encoder_encode(encoder, &p_nal, &nal, NULL, cliopt.recon ? &pic_recon : NULL);
+        int recon = numRecon;
+        outFrameCount += numRecon;
+        while (numRecon && cliopt.recon)
         {
             cliopt.recon->writePicture(*pic_recon++);
-            iNumRecon--;
+            numRecon--;
         }
         if (nal)
             cliopt.writeNALs(p_nal, nal);
