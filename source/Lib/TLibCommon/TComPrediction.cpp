@@ -625,7 +625,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
     Int srcStride = refPic->getStride();
 
-    x265::primitives.cpyblock(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
+    x265::primitives.blockcpy_pp(width, height, (pixel*)dst, dstStride, (pixel*)src, srcStride);
 }
 
 //Motion compensated block for biprediction
@@ -650,16 +650,16 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     {
         if (xFrac == 0)
         {
-            x265::primitives.ipfilterConvert_p_s(g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height);
+            x265::primitives.ipfilter_p2s(g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height);
         }
         else
         {
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[xFrac]);
+            x265::primitives.ipfilter_ps[FILTER_H_P_S_8](g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        x265::primitives.ipFilter_p_s[FILTER_V_P_S_8](g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_V_P_S_8](g_bitDepthY, (pixel*)ref, refStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
     }
     else
     {
@@ -668,8 +668,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
         Int halfFilterSize = (filterSize >> 1);
         Short *tmp = (Short*)xMalloc(Short, width * (height + filterSize - 1));
 
-        x265::primitives.ipFilter_p_s[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(ref - (halfFilterSize - 1) * refStride), refStride, tmp, tmpStride, width, height + filterSize - 1, TComInterpolationFilter::m_lumaFilter[xFrac]);
-        x265::primitives.ipFilter_s_s[FILTER_V_S_S_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_H_P_S_8](g_bitDepthY, (pixel*)(ref - (halfFilterSize - 1) * refStride), refStride, tmp, tmpStride, width, height + filterSize - 1, TComInterpolationFilter::m_lumaFilter[xFrac]);
+        x265::primitives.ipfilter_ss[FILTER_V_S_S_8](g_bitDepthY, tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, TComInterpolationFilter::m_lumaFilter[yFrac]);
 
         xFree(tmp);
     }
@@ -715,30 +715,30 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     {
         if (xFrac == 0)
         {
-            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
-            x265::primitives.cpyblock(cxWidth, cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
+            x265::primitives.blockcpy_pp(cxWidth, cxHeight, (pixel*)dstCb, dstStride, (pixel*)refCb, refStride);
+            x265::primitives.blockcpy_pp(cxWidth, cxHeight, (pixel*)dstCr, dstStride, (pixel*)refCr, refStride);
         }
         else
         {
-            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
-            primitives.ipFilter_p_p[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
+            primitives.ipfilter_pp[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
+            primitives.ipfilter_pp[FILTER_H_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr,  dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
-        primitives.ipFilter_p_p[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+        primitives.ipfilter_pp[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCb, refStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+        primitives.ipfilter_pp[FILTER_V_P_P_4](g_bitDepthC, (pixel*)refCr, refStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
     }
     else
     {
         Int     extStride = cxWidth;
         Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
 
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_if.m_chromaFilter[xFrac]);
-        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
+        primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, m_if.m_chromaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCb, dstStride, cxWidth, cxHeight, m_if.m_chromaFilter[yFrac]);
 
-        primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_if.m_chromaFilter[xFrac]);
-        primitives.ipFilter_s_p[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_if.m_chromaFilter[yFrac]);
+        primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthC, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1,  m_if.m_chromaFilter[xFrac]);
+        primitives.ipfilter_sp[FILTER_V_S_P_4](g_bitDepthC, extY + (halfFilterSize - 1) * extStride, extStride, (pixel*)dstCr, dstStride, cxWidth, cxHeight,  m_if.m_chromaFilter[yFrac]);
 
         xFree(extY);
     }
@@ -773,28 +773,28 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     {
         if (xFrac == 0)
         {
-            x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight);
-            x265::primitives.ipfilterConvert_p_s(g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight);
+            x265::primitives.ipfilter_p2s(g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight);
+            x265::primitives.ipfilter_p2s(g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight);
         }
         else
         {
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
-            x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
+            x265::primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
+            x265::primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[xFrac]);
         }
     }
     else if (xFrac == 0)
     {
-        x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-        x265::primitives.ipFilter_p_s[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCb, refStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_V_P_S_4](g_bitDepthC, (pixel*)refCr, refStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
     }
     else
     {
         Int     extStride = cxWidth;
         Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
-        x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
-        x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
-        x265::primitives.ipFilter_p_s[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
-        x265::primitives.ipFilter_s_s[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCb - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
+        x265::primitives.ipfilter_ss[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
+        x265::primitives.ipfilter_ps[FILTER_H_P_S_4](g_bitDepthY, (pixel*)(refCr - (halfFilterSize - 1) * refStride), refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, TComInterpolationFilter::m_chromaFilter[xFrac]);
+        x265::primitives.ipfilter_ss[FILTER_V_S_S_4](g_bitDepthY, extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, TComInterpolationFilter::m_chromaFilter[yFrac]);
         xFree(extY);
     }
 }

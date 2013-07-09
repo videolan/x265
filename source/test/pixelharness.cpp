@@ -430,36 +430,36 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.cpyblock)
+    if (opt.blockcpy_pp)
     {
-        if (!check_block_copy(ref.cpyblock, opt.cpyblock))
+        if (!check_block_copy(ref.blockcpy_pp, opt.blockcpy_pp))
         {
             printf("block copy failed!\n");
             return false;
         }
     }
 
-    if (opt.cpyblock_p_s)
+    if (opt.blockcpy_ps)
     {
-        if (!check_block_copy_p_s(ref.cpyblock_p_s, opt.cpyblock_p_s))
+        if (!check_block_copy_p_s(ref.blockcpy_ps, opt.blockcpy_ps))
         {
             printf("block copy pixel_short failed!\n");
             return false;
         }
     }
 
-    if (opt.cpyblock_s_p)
+    if (opt.blockcpy_sp)
     {
-        if (!check_block_copy_s_p(ref.cpyblock_s_p, opt.cpyblock_s_p))
+        if (!check_block_copy_s_p(ref.blockcpy_sp, opt.blockcpy_sp))
         {
             printf("block copy short_pixel failed!\n");
             return false;
         }
     }
 
-    if (opt.cpyblock_s_c)
+    if (opt.blockcpy_sc)
     {
-        if (!check_block_copy_s_c(ref.cpyblock_s_c, opt.cpyblock_s_c))
+        if (!check_block_copy_s_c(ref.blockcpy_sc, opt.blockcpy_sc))
         {
             printf("block copy short_char failed!\n");
             return false;
@@ -545,27 +545,27 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    if (opt.cpyblock)
+    if (opt.blockcpy_pp)
     {
         printf("block cpy");
-        REPORT_SPEEDUP(opt.cpyblock, ref.cpyblock, 64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_pp, ref.blockcpy_pp, 64, 64, pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
-    if (opt.cpyblock_p_s)
+    if (opt.blockcpy_ps)
     {
         printf("p_s   cpy");
-        REPORT_SPEEDUP(opt.cpyblock_p_s, ref.cpyblock_p_s, 64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_ps, ref.blockcpy_ps, 64, 64, pbuf1, FENC_STRIDE, (short*)pbuf2, STRIDE);
     }
 
-    if (opt.cpyblock_s_p)
+    if (opt.blockcpy_sp)
     {
         printf("s_p   cpy");
-        REPORT_SPEEDUP(opt.cpyblock_s_p, ref.cpyblock_s_p, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_sp, ref.blockcpy_sp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, STRIDE);
     }
 
-    if (opt.cpyblock_s_c)
+    if (opt.blockcpy_sc)
     {
         printf("s_c   cpy");
-        REPORT_SPEEDUP(opt.cpyblock_s_c, ref.cpyblock_s_c, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
+        REPORT_SPEEDUP(opt.blockcpy_sc, ref.blockcpy_sc, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
     }
 }

@@ -579,10 +579,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, short, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, short, short)
 #endif
-    p.cpyblock     = blockcopy_p_p;
-    p.cpyblock_s_p = blockcopy_s_p;
-    p.cpyblock_p_s = blockcopy_p_s;
-    p.cpyblock_s_c = blockcopy_s_c;
+    p.blockcpy_pp = blockcopy_p_p;
+    p.blockcpy_ps = blockcopy_p_s;
+    p.blockcpy_sp = blockcopy_s_p;
+    p.blockcpy_sc = blockcopy_s_c;
 
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;

@@ -70,7 +70,7 @@ void MotionEstimate::setSourcePU(int offset, int width, int height)
     blockOffset = offset;
 
     /* copy PU block into cache */
-    primitives.cpyblock(width, height, fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
+    primitives.blockcpy_pp(width, height, fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
 
     partEnum = PartitionFromSizes(width, height);
     sad = primitives.sad[partEnum];

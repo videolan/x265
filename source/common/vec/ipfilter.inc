@@ -42,16 +42,18 @@ namespace {
 namespace x265 {
 void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 {
-    p.ipFilter_p_p[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
-    p.ipFilter_p_p[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
-    p.ipFilter_p_s[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
-    p.ipFilter_p_s[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
-    p.ipfilterConvert_p_s = filterConvertPelToShort;
-    p.ipfilterConvert_s_p = filterConvertShortToPel;
-    p.ipFilter_s_p[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
-    p.ipFilter_s_p[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
-    p.ipFilter_p_p[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
-    p.ipFilter_p_p[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
+    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
+
+    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
+    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
+    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
+    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+
+    p.ipfilter_p2s = filterConvertPelToShort;
+    p.ipfilter_s2p = filterConvertShortToPel;
 
 #if !HIGH_BIT_DEPTH
     p.filterVmulti = filterVerticalMultiplaneExtend;
