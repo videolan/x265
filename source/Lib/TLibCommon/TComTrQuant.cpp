@@ -1072,18 +1072,18 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
         } // end if (sigCoeffGroupFlag[ cgBlkPos ])
     } // end for
 
-    for (Int scanPos = 0; scanPos < bestLastIdxp1; scanPos++)
+    for (Int pos = 0; pos < bestLastIdxp1; pos++)
     {
-        Int blkPos = scan[scanPos];
+        Int blkPos = scan[pos];
         Int level  = dstCoeff[blkPos];
         absSum += level;
         dstCoeff[blkPos] = (srcCoeff[blkPos] < 0) ? -level : level;
     }
 
     //===== clean uncoded coefficients =====
-    for (Int scanPos = bestLastIdxp1; scanPos <= lastScanPos; scanPos++)
+    for (Int pos = bestLastIdxp1; pos <= lastScanPos; pos++)
     {
-        dstCoeff[scan[scanPos]] = 0;
+        dstCoeff[scan[pos]] = 0;
     }
 
     if (cu->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
@@ -1093,14 +1093,14 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
                 + 0.5);
         Int lastCG = -1;
-        Int absSum = 0;
+        Int tmpSum = 0;
         Int n;
 
         for (Int subSet = (width * height - 1) >> LOG2_SCAN_SET_SIZE; subSet >= 0; subSet--)
         {
             Int subPos = subSet << LOG2_SCAN_SET_SIZE;
             Int firstNZPosInCG = SCAN_SET_SIZE, lastNZPosInCG = -1;
-            absSum = 0;
+            tmpSum = 0;
 
             for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
             {
@@ -1122,7 +1122,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
 
             for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
             {
-                absSum += dstCoeff[scan[n + subPos]];
+                tmpSum += dstCoeff[scan[n + subPos]];
             }
 
             if (lastNZPosInCG >= 0 && lastCG == -1)
@@ -1133,7 +1133,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {
                 UInt signbit = (dstCoeff[scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
-                if (signbit != (absSum & 0x1)) // hide but need tune
+                if (signbit != (tmpSum & 0x1)) // hide but need tune
                 {
                     // calculate the cost
                     Int64 minCostInc = MAX_INT64, curCost = MAX_INT64;
