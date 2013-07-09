@@ -1070,14 +1070,14 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* CU, UInt absPartIdx, TextType
  *  \param iSize transform size (iSize x iSize)
  *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(Int bitDepth, UInt uiMode, Int* plCoef, Short* pResidual, UInt uiStride, Int iWidth, Int iHeight)
+Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
     assert(bitDepth == 8);
 
-    //xITrMxN(bitDepth, coeff, block, iWidth, iHeight, uiMode);
-    const UInt uiLog2BlockSize = g_aucConvertToBit[iWidth];
-    x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((iWidth == 4) && (uiMode != REG_DCT))](plCoef, pResidual, uiStride);
+    //xITrMxN(bitDepth, coeff, block, width, height, mode);
+    const UInt log2BlockSize = g_aucConvertToBit[width];
+    x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coef, residual, stride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping
