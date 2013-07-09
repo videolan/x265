@@ -891,18 +891,18 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     }
 }
 
-Void TComTrQuant::init(UInt uiMaxTrSize,
-                       Bool bUseRDOQ,
-                       Bool bUseRDOQTS,
-                       Bool bEnc,
+Void TComTrQuant::init(UInt maxTrSize,
+                       Bool useRDOQ,
+                       Bool useRDOQTS,
+                       Bool enc,
                        Bool useTransformSkipFast,
-                       Bool bUseAdaptQpSelect)
+                       Bool useAdaptQpSelect)
 {
-    m_uiMaxTrSize  = uiMaxTrSize;
-    m_bEnc         = bEnc;
-    m_useRDOQ     = bUseRDOQ;
-    m_useRDOQTS     = bUseRDOQTS;
-    m_bUseAdaptQpSelect = bUseAdaptQpSelect;
+    m_uiMaxTrSize  = maxTrSize;
+    m_bEnc         = enc;
+    m_useRDOQ     = useRDOQ;
+    m_useRDOQTS     = useRDOQTS;
+    m_bUseAdaptQpSelect = useAdaptQpSelect;
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
