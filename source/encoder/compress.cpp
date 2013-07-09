@@ -389,7 +389,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         /*Compute  Merge Cost  */
-#if 1
 
         xComputeCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], m_ppcPredYuvMode[3][uiDepth], m_ppcPredYuvMode[4][uiDepth]);
         rpcBestCU = m_MergeBestCU[uiDepth];
@@ -397,7 +396,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
         m_ppcPredYuvBest[uiDepth] = YuvTemp;
 
-#endif
         /*Compute 2Nx2N mode costs*/
         xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
 
@@ -447,7 +445,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
 
         /*compute intra cost */
-#if 1
         if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
             rpcBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
             rpcBestCU->getCbf(0, TEXT_CHROMA_V) != 0)
@@ -467,7 +464,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
                 m_ppcRecoYuvTemp[uiDepth] = tmpPic;
             }
         }
-#endif // if 1
 
         /* Disable recursive analysis for whole CUs temporarily*/
         if ((rpcBestCU != 0) && (rpcBestCU->isSkipped(0)))
