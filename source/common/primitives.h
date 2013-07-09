@@ -219,46 +219,50 @@ typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef,
  * a vectorized primitive, or a C function. */
 struct EncoderPrimitives
 {
-    /* All pixel comparison functions take the same arguments */
-    pixelcmp_t sad[NUM_PARTITIONS];        // Sum of Differences for each size
-    pixelcmp_x3_t sad_x3[NUM_PARTITIONS];  // Sum of Differences 3x for each size
-    pixelcmp_x4_t sad_x4[NUM_PARTITIONS];  // Sum of Differences 4x for each size
-    pixelcmp_t sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss_t sse_ss[NUM_PARTITIONS];  // Sum of Square Error (short, short) fenc alignment not assumed
-    pixelcmp_sp_t sse_sp[NUM_PARTITIONS];  // Sum of Square Error (short, pixel) fenc alignment not assumed
-    pixelcmp_t satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
-    pixelcmp_t sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
-    pixelcmp_t sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
-    ipfilter_t filter[NUM_FILTER];
-    ipfilter_pp_t ipFilter_p_p[NUM_IPFILTER_P_P];
-    ipfilter_ps_t ipFilter_p_s[NUM_IPFILTER_P_S];
-    ipfilter_sp_t ipFilter_s_p[NUM_IPFILTER_S_P];
-    ipfilter_ss_t ipFilter_s_s[NUM_IPFILTER_S_S];
-    ipfilter_p2s_t ipfilterConvert_p_s;
-    ipfilter_s2p_t ipfilterConvert_s_p;
-    blockcpy_pp_t cpyblock;     // pixel from pixel
-    blockcpy_ps_t cpyblock_p_s; // pixel from short
-    blockcpy_sp_t cpyblock_s_p; // short from pixel
-    blockcpy_sc_t cpyblock_s_c; // short from unsigned char
-    intra_dc_t intra_pred_dc;
-    intra_planar_t intra_pred_planar;
-    intra_ang_t intra_pred_ang;
-    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
-    dequant_t dequant;
-    dct_t dct[NUM_DCTS];
-    idct_t idct[NUM_IDCTS];
-    cvt16to32_t cvt16to32;
+    pixelcmp_t      sad[NUM_PARTITIONS];        // Sum of Differences for each size
+    pixelcmp_x3_t   sad_x3[NUM_PARTITIONS];     // Sum of Differences 3x for each size
+    pixelcmp_x4_t   sad_x4[NUM_PARTITIONS];     // Sum of Differences 4x for each size
+    pixelcmp_t      sse_pp[NUM_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss_t   sse_ss[NUM_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
+    pixelcmp_sp_t   sse_sp[NUM_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixelcmp_t      satd[NUM_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
+    pixelcmp_t      sa8d_inter[NUM_PARTITIONS]; // sa8d primitives for motion search partitions
+    pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];    // sa8d primitives for square intra blocks
+
+    blockcpy_pp_t   cpyblock;                   // block copy pixel from pixel
+    blockcpy_ps_t   cpyblock_p_s;               // block copy pixel from short
+    blockcpy_sp_t   cpyblock_s_p;               // block copy short from pixel
+    blockcpy_sc_t   cpyblock_s_c;               // block copy short from unsigned char
+    cvt16to32_t     cvt16to32;
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to16_shl_t cvt16to16_shl;
-    cvt32to16_t cvt32to16;
+    cvt32to16_t     cvt32to16;
     cvt32to16_shr_t cvt32to16_shr;
-    calcresidual_t calcresidual[NUM_SQUARE_BLOCKS];
-    calcrecon_t calcrecon[NUM_SQUARE_BLOCKS];
-    transpose_t transpose[NUM_SQUARE_BLOCKS];
-    filterVmulti_t filterVmulti;
-    filterHmulti_t filterHmulti;
-    quantaq_t quantaq;
-    quant_t quant;
+
+    ipfilter_t      filter[NUM_FILTER];
+    ipfilter_pp_t   ipFilter_p_p[NUM_IPFILTER_P_P];
+    ipfilter_ps_t   ipFilter_p_s[NUM_IPFILTER_P_S];
+    ipfilter_sp_t   ipFilter_s_p[NUM_IPFILTER_S_P];
+    ipfilter_ss_t   ipFilter_s_s[NUM_IPFILTER_S_S];
+    ipfilter_p2s_t  ipfilterConvert_p_s;
+    ipfilter_s2p_t  ipfilterConvert_s_p;
+    filterVmulti_t  filterVmulti;
+    filterHmulti_t  filterHmulti;
+
+    intra_dc_t      intra_pred_dc;
+    intra_planar_t  intra_pred_planar;
+    intra_ang_t     intra_pred_ang;
+    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS];
+
+    dct_t           dct[NUM_DCTS];
+    idct_t          idct[NUM_IDCTS];
+    quant_t         quant;
+    quantaq_t       quantaq;
+    dequant_t       dequant;
+
+    calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
+    calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
+    transpose_t     transpose[NUM_SQUARE_BLOCKS];
 };
 
 /* This copy of the table is what gets used by all by the encoder.
