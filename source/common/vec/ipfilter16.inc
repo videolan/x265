@@ -33,9 +33,7 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
 {
     int row, col;
 
-    int stride =  srcStride;
-
-    src -= (N / 2 - 1) * stride;
+    src -= (N / 2 - 1) * srcStride;
 
     int offset;
     short maxVal;
@@ -65,7 +63,7 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + srcStride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -83,8 +81,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * stride]);
-            row3.load(&src[col + 3 * stride]);
+            row2.load(&src[col + 2 * srcStride]);
+            row3.load(&src[col + 3 * srcStride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -102,8 +100,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * stride]);
-                row5.load(&src[col + 5 * stride]);
+                row4.load(&src[col + 4 * srcStride]);
+                row5.load(&src[col + 5 * srcStride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -119,8 +117,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * stride]);
-                row7.load(&src[col + 7 * stride]);
+                row6.load(&src[col + 6 * srcStride]);
+                row7.load(&src[col + 7 * srcStride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -158,7 +156,7 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + stride]);
+            row1.load(&src[col + srcStride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -170,8 +168,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * stride]);
-            row3.load(&src[col + 3 * stride]);
+            row2.load(&src[col + 2 * srcStride]);
+            row3.load(&src[col + 3 * srcStride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -184,8 +182,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * stride]);
-                row5.load(&src[col + 5 * stride]);
+                row4.load(&src[col + 4 * srcStride]);
+                row5.load(&src[col + 5 * srcStride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -196,8 +194,8 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * stride]);
-                row7.load(&src[col + 7 * stride]);
+                row6.load(&src[col + 6 * srcStride]);
+                row7.load(&src[col + 7 * srcStride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -231,9 +229,7 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 {
     int row, col;
 
-    int stride =  srcStride;
-
-    src -= (N / 2 - 1) * stride;
+    src -= (N / 2 - 1) * srcStride;
 
     int offset;
     short maxVal;
@@ -261,7 +257,7 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + stride]);
+            row1.load(&src[col + srcStride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -279,8 +275,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * stride]);
-            row3.load(&src[col + 3 * stride]);
+            row2.load(&src[col + 2 * srcStride]);
+            row3.load(&src[col + 3 * srcStride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -298,8 +294,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * stride]);
-                row5.load(&src[col + 5 * stride]);
+                row4.load(&src[col + 4 * srcStride]);
+                row5.load(&src[col + 5 * srcStride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -315,8 +311,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * stride]);
-                row7.load(&src[col + 7 * stride]);
+                row6.load(&src[col + 6 * srcStride]);
+                row7.load(&src[col + 7 * srcStride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -354,7 +350,7 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + stride]);
+            row1.load(&src[col + srcStride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -366,8 +362,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * stride]);
-            row3.load(&src[col + 3 * stride]);
+            row2.load(&src[col + 2 * srcStride]);
+            row3.load(&src[col + 3 * srcStride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -380,8 +376,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * stride]);
-                row5.load(&src[col + 5 * stride]);
+                row4.load(&src[col + 4 * srcStride]);
+                row5.load(&src[col + 5 * srcStride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -392,8 +388,8 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * stride]);
-                row7.load(&src[col + 7 * stride]);
+                row6.load(&src[col + 6 * srcStride]);
+                row7.load(&src[col + 7 * srcStride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
