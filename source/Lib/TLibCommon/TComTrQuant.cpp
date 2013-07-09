@@ -963,15 +963,15 @@ Void TComTrQuant::transformNxN(TComDataCU* CU,
     xQuant(CU, m_plTempCoeff, coeff, arlCoeff, width, height, absSum, eTType, absPartIdx);
 }
 
-Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
+Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff*   coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
 {
     if (transQuantBypass)
     {
-        for (UInt k = 0; k < uiHeight; k++)
+        for (UInt k = 0; k < height; k++)
         {
-            for (UInt j = 0; j < uiWidth; j++)
+            for (UInt j = 0; j < width; j++)
             {
-                rpcResidual[k * uiStride + j] = (Short)(pcCoeff[k * uiWidth + j]);
+                residual[k * stride + j] = (Short)(coeff[k * width + j]);
             }
         }
 
@@ -980,31 +980,31 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt ui
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
 
 #if 0
-    xDeQuant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, scalingListType);
+    xDeQuant(bitDepth, coeff, m_plTempCoeff, width, height, scalingListType);
 #endif
 
 #if 1
     // Values need to pass as input parameter in xDeQuant
-    Int iPer = m_cQP.m_iPer;
-    Int iRem = m_cQP.m_iRem;
+    Int per = m_cQP.m_iPer;
+    Int rem = m_cQP.m_iRem;
     Bool useScalingList = getUseScalingList();
-    UInt uiLog2TrSize = g_aucConvertToBit[uiWidth] + 2;
-    Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
+    UInt log2TrSize = g_aucConvertToBit[width] + 2;
+    Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
 
-    x265::primitives.dequant(bitDepth, pcCoeff, m_plTempCoeff, uiWidth, uiHeight, iPer, iRem, useScalingList, uiLog2TrSize, piDequantCoef);
+    x265::primitives.dequant(bitDepth, coeff, m_plTempCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 #endif
 
     if (useTransformSkip == true)
     {
-        xITransformSkip(bitDepth, m_plTempCoeff, rpcResidual, uiStride, uiWidth, uiHeight);
+        xITransformSkip(bitDepth, m_plTempCoeff, residual, stride, width, height);
     }
     else
     {
         // ChECK_ME: I assume we don't use HIGH_BIT_DEPTH here
         assert(bitDepth == 8);
 
-        const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
-        x265::primitives.idct[x265::IDCT_4x4 + uiLog2BlockSize - ((uiWidth == 4) && (uiMode != REG_DCT))](m_plTempCoeff, rpcResidual, uiStride);
+        const UInt log2BlockSize = g_aucConvertToBit[width];
+        x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_plTempCoeff, residual, stride);
     }
 }
 
