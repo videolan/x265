@@ -395,7 +395,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.dct[value])
         {
-            printf("%s\t\t", DctConf_infos[value].name);
+            printf("%s\t", DctConf_infos[value].name);
             REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mintbuf1, DctConf_infos[value].width);
         }
     }
@@ -404,26 +404,26 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.idct[value])
         {
-            printf("%s\t\t", IDctConf_infos[value].name);
+            printf("%s\t", IDctConf_infos[value].name);
             REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mbuf2, IDctConf_infos[value].width);
         }
     }
 
     if (opt.dequant)
     {
-        printf("dequant\t\t\t");
+        printf("dequant\t\t");
         REPORT_SPEEDUP(opt.dequant, ref.dequant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 
     if (opt.quantaq)
     {
-        printf("quantaq\t\t\t");
+        printf("quantaq\t\t");
         REPORT_SPEEDUP(opt.quantaq, ref.quantaq, mintbuf1, mintbuf2, mintbuf3, mintbuf4, mintbuf5, 15, 23, 23785, 32 * 32);
     }
 
     if (opt.quant)
     {
-        printf("quant\t\t\t");
+        printf("quant\t\t");
         REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
     }
 }

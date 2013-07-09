@@ -40,10 +40,10 @@ const short m_lumaFilter[4][8] =
 
 const char* IPFilterPPNames[] =
 {
-    "FilterHorizonal_Pel_Pel<8>",
-    "FilterHorizonal_Pel_Pel<4>",
-    "FilterVertical_Pel_Pel<8>",
-    "FilterVertical_Pel_Pel<4>"
+    "ipfilter_pp<H8>",
+    "ipfilter_pp<H4>",
+    "ipfilter_pp<V8>",
+    "ipfilter_pp<V4>"
 };
 
 IPFilterHarness::IPFilterHarness()
@@ -299,8 +299,9 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
             dstPref + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
 
-        if (memcmp(dstEvec, dstEref, 200 * 200 * sizeof(pixel))
-            || memcmp(dstIvec, dstIref, 200 * 200 * sizeof(pixel)) || memcmp(dstPvec, dstPref, 200 * 200 * sizeof(pixel)))
+        if (memcmp(dstEvec, dstEref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(dstIvec, dstIref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(dstPvec, dstPref, 200 * 200 * sizeof(pixel)))
         {
             return false;
         }
@@ -367,11 +368,10 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
             pDstCref+marginY*rand_dstStride+marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
 
-        if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short))
-            || memcmp(dstIvec, dstIref, 100 * 100 * sizeof(short)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(short))
-            || memcmp(pDstAvec, pDstAref, 200 * 200 * sizeof(pixel)) || memcmp(pDstBvec, pDstBref, 200 * 200 * sizeof(pixel))
-            || memcmp(pDstCvec, pDstCref, 200 * 200 * sizeof(pixel))
-            )
+        if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short)) ||
+            memcmp(dstIvec, dstIref, 100 * 100 * sizeof(short)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(short)) ||
+            memcmp(pDstAvec, pDstAref, 200 * 200 * sizeof(pixel)) || memcmp(pDstBvec, pDstBref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(pDstCvec, pDstCref, 200 * 200 * sizeof(pixel)))
         {
             return false;
         }
@@ -388,7 +388,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_pp[value], opt.ipfilter_pp[value]))
             {
-                printf("\n %s failed\n", IPFilterPPNames[value]);
+                printf("%s failed\n", IPFilterPPNames[value]);
                 return false;
             }
         }
@@ -400,7 +400,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_ps[value], opt.ipfilter_ps[value]))
             {
-                printf("\nfilterHorizontal_pel_short_%d failed\n", 8 / (value + 1));
+                printf("ipfilter_ps %d failed\n", 8 / (value + 1));
                 return false;
             }
         }
@@ -412,7 +412,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         {
             if (!check_IPFilter_primitive(ref.ipfilter_sp[value], opt.ipfilter_sp[value]))
             {
-                printf("\nfilterVertical_short_pel_%d failed\n", 8 / (value + 1));
+                printf("ipfilter_sp %d failed\n", 8 / (value + 1));
                 return false;
             }
         }
@@ -422,7 +422,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (!check_IPFilter_primitive(ref.ipfilter_p2s, opt.ipfilter_p2s))
         {
-            printf("\nfilterConvertPeltoShort failed\n");
+            printf("ipfilter_p2s failed\n");
             return false;
         }
     }
@@ -440,7 +440,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (!check_filterVMultiplane(ref.filterVmulti, opt.filterVmulti))
         {
-            printf("\nFilter-V-multiplane failed\n");
+            printf("Filter-V-multiplane failed\n");
             return false;
         }
     }
@@ -449,7 +449,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
     {
         if (!check_filterHMultiplane(ref.filterHmulti, opt.filterHmulti))
         {
-            printf("\nFilter-H-multiplane failed\n");
+            printf("Filter-H-multiplane failed\n");
             return false;
         }
     }
@@ -469,7 +469,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipfilter_pp[value])
         {
-            printf("%s", IPFilterPPNames[value]);
+            printf("%s\t", IPFilterPPNames[value]);
             REPORT_SPEEDUP(opt.ipfilter_pp[value], ref.ipfilter_pp[value],
                            8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
         }
@@ -479,7 +479,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipfilter_ps[value])
         {
-            printf("filterHorizontal_pel_short_%d", 8 / (value + 1));
+            printf("ipfilter_ps %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_ps[value], ref.ipfilter_ps[value],
                            8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, m_lumaFilter[val]);
         }
@@ -489,7 +489,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.ipfilter_sp[value])
         {
-            printf("filterVertical_short_pel_%d", 8 / (value + 1));
+            printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
                            8, short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
         }
@@ -497,14 +497,14 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.ipfilter_p2s)
     {
-        printf("filterConvertPeltoShort\t");
+        printf("ipfilter_p2s\t");
         REPORT_SPEEDUP(opt.ipfilter_p2s, ref.ipfilter_p2s,
                        8, pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
     if (opt.ipfilter_s2p)
     {
-        printf("filterConvertShorttoPel\t");
+        printf("ipfilter_s2p\t");
         REPORT_SPEEDUP(opt.ipfilter_s2p, ref.ipfilter_s2p,
                        8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
