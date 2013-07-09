@@ -616,7 +616,7 @@ void partialButterflyInverse32(Short *src, Short *dst, Int shift, Int line)
 }
 
 // To minimize the distortion only. No rate is considered.
-Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height)
+Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan, Int* deltaU, Int width, Int height)
 {
     Int lastCG = -1;
     Int absSum = 0;
@@ -630,7 +630,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
 
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
         {
-            if (pQCoef[scan[n + subPos]])
+            if (qCoef[scan[n + subPos]])
             {
                 lastNZPosInCG = n;
                 break;
@@ -639,7 +639,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
 
         for (n = 0; n < SCAN_SET_SIZE; n++)
         {
-            if (pQCoef[scan[n + subPos]])
+            if (qCoef[scan[n + subPos]])
             {
                 firstNZPosInCG = n;
                 break;
@@ -648,7 +648,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
 
         for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
         {
-            absSum += pQCoef[scan[n + subPos]];
+            absSum += qCoef[scan[n + subPos]];
         }
 
         if (lastNZPosInCG >= 0 && lastCG == -1)
@@ -658,7 +658,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
-            UInt signbit = (pQCoef[scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
+            UInt signbit = (qCoef[scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
             if (signbit != (absSum & 0x1)) //compare signbit with sum_parity
             {
                 Int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
@@ -666,7 +666,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
                 for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     UInt blkPos   = scan[n + subPos];
-                    if (pQCoef[blkPos] != 0)
+                    if (qCoef[blkPos] != 0)
                     {
                         if (deltaU[blkPos] > 0)
                         {
@@ -676,7 +676,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
                         else
                         {
                             //curChange =-1;
-                            if (n == firstNZPosInCG && abs(pQCoef[blkPos]) == 1)
+                            if (n == firstNZPosInCG && abs(qCoef[blkPos]) == 1)
                             {
                                 curCost = MAX_INT;
                             }
@@ -691,7 +691,7 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
                     {
                         if (n < firstNZPosInCG)
                         {
-                            UInt thisSignBit = (pCoef[blkPos] >= 0 ? 0 : 1);
+                            UInt thisSignBit = (coef[blkPos] >= 0 ? 0 : 1);
                             if (thisSignBit != signbit)
                             {
                                 curCost = MAX_INT;
@@ -717,18 +717,18 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *sc
                     }
                 } //CG loop
 
-                if (pQCoef[minPos] == 32767 || pQCoef[minPos] == -32768)
+                if (qCoef[minPos] == 32767 || qCoef[minPos] == -32768)
                 {
                     finalChange = -1;
                 }
 
-                if (pCoef[minPos] >= 0)
+                if (coef[minPos] >= 0)
                 {
-                    pQCoef[minPos] += finalChange;
+                    qCoef[minPos] += finalChange;
                 }
                 else
                 {
-                    pQCoef[minPos] -= finalChange;
+                    qCoef[minPos] -= finalChange;
                 }
             } // Hide
         }
