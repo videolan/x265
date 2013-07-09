@@ -417,7 +417,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
     }
 }
 
-void predIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int filter)
+void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int filter)
 {
     int sum = 0;
     int logSize = g_aucConvertToBit[width] + 2;
@@ -703,7 +703,7 @@ void predIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride,
 
 #if HIGH_BIT_DEPTH
 // CHECK_ME: I am not sure the v_rightColumnN will be overflow when input as 12bpp
-void predIntraPlanar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k, bottomLeft, topRight;
     // NOTE: I use 16-bits is enough here, because we have least than 13-bits as input, and shift left by 2, it is 15-bits
@@ -774,7 +774,7 @@ void predIntraPlanar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstSt
 }
 
 #else /* if HIGH_BIT_DEPTH */
-void predIntraPlanar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k;
     pixel bottomLeft, topRight;
@@ -830,7 +830,7 @@ void predIntraPlanar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstSt
 }
 
 #if INSTRSET >= 5
-void predIntraPlanar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
 
@@ -899,7 +899,7 @@ void predIntraPlanar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t 
         store_partial(const_int(16), &dst[X * dstStride], v_im4); \
 }
 
-void predIntraPlanar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k, bottomLeft, topRight;
 
@@ -959,7 +959,7 @@ void predIntraPlanar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstSt
         store_partial(const_int(8), &dst[X * dstStride], v_im5); \
 }
 
-void predIntraPlanar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k;
     pixel bottomLeft, topRight;
@@ -1010,7 +1010,7 @@ void predIntraPlanar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstSt
 #undef COMP_PRED_PLANAR_ROW
 
 #if INSTRSET >= 5
-void predIntraPlanar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
 
@@ -1103,7 +1103,7 @@ void predIntraPlanar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t 
         v_im4_hi.store(&dst[X * dstStride + 8]); \
 }
 
-void predIntraPlanar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k;
     pixel bottomLeft, topRight;
@@ -1190,7 +1190,7 @@ void predIntraPlanar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstS
         store_partial(const_int(16), &dst[X * dstStride], v_im5); \
 }
 
-void predIntraPlanar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k;
     pixel bottomLeft, topRight;
@@ -1259,7 +1259,7 @@ void predIntraPlanar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstS
 #undef COMP_PRED_PLANAR_ROW
 
 #if INSTRSET >= 5
-void predIntraPlanar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[2];
@@ -1329,7 +1329,7 @@ void predIntraPlanar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t
 #endif // INSTRSET >= 5
 
 #if INSTRSET >= 5
-void predIntraPlanar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[4];
@@ -1406,7 +1406,7 @@ void predIntraPlanar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t
 #endif // INSTRSET >= 5
 
 #if INSTRSET >= 5
-void predIntraPlanar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[8];
@@ -1518,26 +1518,24 @@ void predIntraPlanar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t
 
 #endif /* if HIGH_BIT_DEPTH */
 
-typedef void predIntraPlanar_t (pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride);
-predIntraPlanar_t *intraPlanarN[] =
+typedef void intra_pred_planar_t (pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride);
+intra_pred_planar_t *intraPlanarN[] =
 {
 #if !HIGH_BIT_DEPTH && INSTRSET >= 5
-    predIntraPlanar4_sse4,
-    predIntraPlanar8_sse4,
-    predIntraPlanar16_sse4,
-    predIntraPlanar32_sse4,
-    predIntraPlanar64_sse4,
+    intra_pred_planar4_sse4,
+    intra_pred_planar8_sse4,
+    intra_pred_planar16_sse4,
+    intra_pred_planar32_sse4,
+    intra_pred_planar64_sse4,
 #else
-    predIntraPlanar4,
-    predIntraPlanar8,
-    predIntraPlanar16,
+    intra_pred_planar4,
+    intra_pred_planar8,
+    intra_pred_planar16,
 #endif
 };
 
-void predIntraPlanar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width)
+void intra_pred_planar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width)
 {
-    //assert(width == height);
-
     int nLog2Size = g_aucConvertToBit[width] + 2;
 
 #if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5)
@@ -4696,7 +4694,7 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* pDst, int dstStride, int width,
 
 #endif /* if HIGH_BIT_DEPTH */
 
-void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void intra_pred_ang(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
 #if HIGH_BIT_DEPTH
 #else
@@ -4823,39 +4821,6 @@ void xPredIntraAngBufRef(int bitDepth, pixel* pDst, int dstStride, int width, in
                     tmp                 = pDst[k * dstStride + l];
                     pDst[k * dstStride + l] = pDst[l * dstStride + k];
                     pDst[l * dstStride + k] = tmp;
-                }
-            }
-        }
-    }
-}
-
-// TODO: reference code, please optimize it
-template<int size>
-void xPredIntraAngs(pixel *pDst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1, pixel *pLeft1, bool bLuma)
-{
-    int iMode;
-
-    for( iMode = 2; iMode <= 34; iMode++ )
-    {
-        pixel *pLeft = (IntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pLeft1 : pLeft0);
-        pixel *pAbove = (IntraFilterType[(int)g_aucConvertToBit[size]][iMode] ? pAbove1 : pAbove0);
-        pixel *pDst = pDst0 + (iMode-2) * (size * size);
-
-        xPredIntraAngBufRef(8, pDst, size, size, iMode, bLuma, pLeft, pAbove);
-
-        // Optimize code don't flip buffer
-        bool modeHor = (iMode < 18);
-        // Flip the block if this is the horizontal mode
-        if (modeHor)
-        {
-            pixel  tmp;
-            for (int k = 0; k < size - 1; k++)
-            {
-                for (int l = k + 1; l < size; l++)
-                {
-                    tmp                = pDst[k * size + l];
-                    pDst[k * size + l] = pDst[l * size + k];
-                    pDst[l * size + k] = tmp;
                 }
             }
         }
@@ -13057,31 +13022,23 @@ namespace x265 {
 void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
 {
     initFileStaticVars();
-    p.intra_pred_dc = predIntraDC;
-    p.intra_pred_planar = predIntraPlanar;
-    p.intra_pred_ang = xPredIntraAngBufRef;
+    p.intra_pred_dc = intra_pred_dc;
+    p.intra_pred_planar = intra_pred_planar;
+    p.intra_pred_ang = intra_pred_ang;
 
-    /* VC10 and VC11 both generate bad Win32 code for these functions.
-     * They apparently can't deal with register allocation for intrinsic
-     * functions this large */
-#if HIGH_BIT_DEPTH || (INSTRSET < 5) || (defined(_MSC_VER) && (_MSC_VER > 1500) && !defined(_WIN64) && !defined(__INTEL_COMPILER))
-    p.intra_pred_allangs[0] = xPredIntraAngs<4>;
-    p.intra_pred_allangs[1] = xPredIntraAngs<8>;
-    p.intra_pred_allangs[2] = xPredIntraAngs<16>;
-    p.intra_pred_allangs[3] = xPredIntraAngs<32>;
-    p.intra_pred_allangs[4] = xPredIntraAngs<64>;
-#else
+#if INSTRSET > 4 && !HIGH_BIT_DEPTH
+#if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
-#if defined(_MSC_VER) && defined(X86_64) && !defined(__INTEL_COMPILER)
-    p.intra_pred_allangs[2] = xPredIntraAngs<16>;
-    p.intra_pred_allangs[3] = xPredIntraAngs<32>;
-#else
-    p.intra_pred_allangs[2] = predIntraAngs16; // uses PINSERB
+    p.intra_pred_allangs[2] = predIntraAngs16;
     p.intra_pred_allangs[3] = predIntraAngs32;
+#elif defined(_MSC_VER) && defined(X86_64)
+    /* VC10 and VC11 both generate bad Win32 code for all these functions.
+     * They apparently can't deal with register allocation for intrinsic
+     * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */
+    p.intra_pred_allangs[0] = predIntraAngs4;
+    p.intra_pred_allangs[1] = predIntraAngs8;
 #endif
-    p.intra_pred_allangs[4] = xPredIntraAngs<64>;
 #endif
 }
-
 }
