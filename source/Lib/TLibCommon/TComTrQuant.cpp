@@ -906,61 +906,61 @@ Void TComTrQuant::init(UInt maxTrSize,
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
-Void TComTrQuant::transformNxN(TComDataCU* pcCU,
-                               Short*      pcResidual,
-                               UInt        uiStride,
+Void TComTrQuant::transformNxN(TComDataCU* CU,
+                               Short*      residual,
+                               UInt        stride,
                                TCoeff*     rpcCoeff,
                                Int*&       rpcArlCoeff,
-                               UInt        uiWidth,
-                               UInt        uiHeight,
-                               UInt&       uiAbsSum,
+                               UInt        width,
+                               UInt        height,
+                               UInt&       absSum,
                                TextType    eTType,
-                               UInt        uiAbsPartIdx,
+                               UInt        absPartIdx,
                                Bool        useTransformSkip
                                )
 {
-    if (pcCU->getCUTransquantBypass(uiAbsPartIdx))
+    if (CU->getCUTransquantBypass(absPartIdx))
     {
-        uiAbsSum = 0;
-        for (UInt k = 0; k < uiHeight; k++)
+        absSum = 0;
+        for (UInt k = 0; k < height; k++)
         {
-            for (UInt j = 0; j < uiWidth; j++)
+            for (UInt j = 0; j < width; j++)
             {
-                rpcCoeff[k * uiWidth + j] = ((Short)pcResidual[k * uiStride + j]);
-                uiAbsSum += abs(pcResidual[k * uiStride + j]);
+                rpcCoeff[k * width + j] = ((Short)residual[k * stride + j]);
+                absSum += abs(residual[k * stride + j]);
             }
         }
 
         return;
     }
     UInt uiMode; //luma intra pred
-    if (eTType == TEXT_LUMA && pcCU->getPredictionMode(uiAbsPartIdx) == MODE_INTRA)
+    if (eTType == TEXT_LUMA && CU->getPredictionMode(absPartIdx) == MODE_INTRA)
     {
-        uiMode = pcCU->getLumaIntraDir(uiAbsPartIdx);
+        uiMode = CU->getLumaIntraDir(absPartIdx);
     }
     else
     {
         uiMode = REG_DCT;
     }
 
-    uiAbsSum = 0;
-    assert((pcCU->getSlice()->getSPS()->getMaxTrSize() >= uiWidth));
+    absSum = 0;
+    assert((CU->getSlice()->getSPS()->getMaxTrSize() >= width));
     Int bitDepth = eTType == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     if (useTransformSkip)
     {
-        xTransformSkip(bitDepth, pcResidual, uiStride, m_plTempCoeff, uiWidth, uiHeight);
+        xTransformSkip(bitDepth, residual, stride, m_plTempCoeff, width, height);
     }
     else
     {
         // CHECK_ME: we can't use Short when HIGH_BIT_DEPTH=1
         assert(bitDepth == 8);
 
-        const UInt uiLog2BlockSize = g_aucConvertToBit[uiWidth];
-        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((uiWidth == 4) && (uiMode != REG_DCT))](pcResidual, m_plTempCoeff, uiStride);
+        const UInt uiLog2BlockSize = g_aucConvertToBit[width];
+        x265::primitives.dct[x265::DCT_4x4 + uiLog2BlockSize - ((width == 4) && (uiMode != REG_DCT))](residual, m_plTempCoeff, stride);
 
-        assert(uiWidth == uiHeight);
+        assert(width == height);
     }
-    xQuant(pcCU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, uiWidth, uiHeight, uiAbsSum, eTType, uiAbsPartIdx);
+    xQuant(CU, m_plTempCoeff, rpcCoeff, rpcArlCoeff, width, height, absSum, eTType, absPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt uiMode, Short* rpcResidual, UInt uiStride, TCoeff*   pcCoeff, UInt uiWidth, UInt uiHeight,  Int scalingListType, Bool useTransformSkip)
