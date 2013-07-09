@@ -42,15 +42,15 @@ namespace {
 namespace x265 {
 void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 {
-    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_pel_pel<4>;
-    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_pel_pel<8>;
-    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_pel_short<4>;
-    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_pel_short<8>;
+    p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_p_p<4>;
+    p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
 
-    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_short_pel<8>;
-    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_short_pel<4>;
-    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_pel_pel<8>;
-    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_pel_pel<4>;
+    p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_s_p<8>;
+    p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_s_p<4>;
+    p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
+    p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
 
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;

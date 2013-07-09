@@ -29,12 +29,12 @@
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_s_p(int bitDepth, short *src, int srstride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
-    int cstride =  srcStride;
+    int stride =  srstride;
 
-    src -= (N / 2 - 1) * cstride;
+    src -= (N / 2 - 1) * stride;
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
@@ -56,7 +56,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0 = cm0;
             c1 = cm1;
@@ -74,8 +74,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2 = cm2;
             c3 = cm3;
@@ -93,8 +93,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4 = cm4;
                 c5 = cm5;
@@ -110,8 +110,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6 = cm6;
                 c7 = cm7;
@@ -146,7 +146,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0 = cm0;
             c1 = cm1;
@@ -158,8 +158,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2 = cm2;
             c3 = cm3;
@@ -171,8 +171,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             sum_first += row0_first + row1_first;
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4 = cm4;
                 c5 = cm5;
@@ -183,8 +183,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6 = cm6;
                 c7 = cm7;
@@ -205,7 +205,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             sum_uc.store_partial(block_width - col, dst + col);
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 }
@@ -218,7 +218,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
 #if INSTRSET >= 5
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * cstride)); \
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * stride)); \
     a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
     exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
     exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
@@ -258,7 +258,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 }
 #else /* if INSTRSET >= 5 */
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * cstride)); \
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * stride)); \
     a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
     /*  calculation
 
@@ -328,12 +328,12 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 }
 #endif /* if INSTRSET >= 5 */
 
-void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
+void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srstride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
     int row, col;
-    int cstride =  srcStride;
+    int stride =  srstride;
 
-    src -= (8 / 2 - 1) * cstride;
+    src -= (8 / 2 - 1) * stride;
     int offset;
     int headRoom = IF_INTERNAL_PREC - 8;
     int shift = IF_FILTER_PREC;
@@ -359,17 +359,17 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride,
 
     tmp = _mm_loadu_si128((__m128i const*)(src + col));
     a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + stride));
     a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * stride));
     a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * stride));
     a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * stride));
     a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * stride));
     a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * stride));
     a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
 
     for (row = 0; row < block_height; row++)
@@ -390,17 +390,17 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride,
     {
         tmp = _mm_loadu_si128((__m128i const*)(src + col));
         a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + stride));
         a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * stride));
         a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * stride));
         a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * stride));
         a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * stride));
         a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * stride));
         a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
 
         for (row = 0; row < block_height; row++)
@@ -418,17 +418,17 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride,
 
     tmp = _mm_loadu_si128((__m128i const*)(src + col));
     a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + stride));
     a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * stride));
     a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * stride));
     a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * stride));
     a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * stride));
     a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * cstride));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * stride));
     a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
 
     for (row = 0; row < block_height; row++)
@@ -467,13 +467,13 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/, short *src, int srcStride,
 }
 
 template<int N>
-void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_p_p(int bitDepth, pixel *src, int srstride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
-    int cstride =  srcStride;
+    int stride =  srstride;
 
-    src -= (N / 2 - 1) * cstride;
+    src -= (N / 2 - 1) * stride;
 
     int offset;
     short maxVal;
@@ -512,7 +512,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             Vec8s  sum_first, sum_last;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0 = cm[0];
             c1 = cm[1];
@@ -530,8 +530,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2 = cm[2];
             c3 = cm[3];
@@ -549,8 +549,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4 = cm[4];
                 c5 = cm[5];
@@ -566,8 +566,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6 = cm[6];
                 c7 = cm[7];
@@ -607,7 +607,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             Vec8s  sum_first, sum_last;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0 = cm[0];
             c1 = cm[1];
@@ -619,8 +619,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2 = cm[2];
             c3 = cm[3];
@@ -634,8 +634,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4 = cm[4];
                 c5 = cm[5];
@@ -646,8 +646,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6 = cm[6];
                 c7 = cm[7];
@@ -667,18 +667,18 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             sum.store_partial(block_width - col, dst + col);
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_p(int bitDepth, pixel *src, int srstride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 
 {
     int row, col;
 
-    src -= (N / 2 - 1);                                   // Here cStride = 1
+    src -= (N / 2 - 1);                                   // Here stride = 1
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
@@ -750,13 +750,13 @@ void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *ds
             dst[col] = (pixel)val;
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 }
 
 #if INSTRSET < 5
-void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
+void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srstride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
 {
     int row, col;
 
@@ -1021,7 +1021,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
         _mm_storeu_si128((__m128i*)(pDstB + row * pDstStride + block_width + marginX - 16), tmp16b); 
         _mm_storeu_si128((__m128i*)(pDstC + row * pDstStride + block_width + marginX - 16), tmp16c); 
 
-        src += srcStride;
+        src += srstride;
         dstF += dstStride;
         dstA += dstStride;
         dstB += dstStride;
@@ -1052,7 +1052,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
         memcpy(pp - y * pDstStride, pp, block_width + marginX * 2);
 }
 #else
-void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
+void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srstride, short *dstF, short* dstA, short* dstB, short* dstC, int dstStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
 {
     int row, col;
 
@@ -1322,7 +1322,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
         _mm_storeu_si128((__m128i*)(pDstB + row * pDstStride + block_width + marginX - 16), tmp16b); 
         _mm_storeu_si128((__m128i*)(pDstC + row * pDstStride + block_width + marginX - 16), tmp16c); 
 
-        src += srcStride;
+        src += srstride;
         dstF += dstStride;
         dstA += dstStride;
         dstB += dstStride;
@@ -1355,7 +1355,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/, pixel *src, int srcStrid
 #endif
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_s(int bitDepth, pixel *src, int srstride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
@@ -1426,12 +1426,12 @@ void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *
             dst[col] = val;
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 }
 
-void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(int bitDepth, pixel *src, int srstride, short *dst, int dstStride, int width, int height)
 {
     pixel* srcOrg = src;
     short* dstOrg = dst;
@@ -1450,7 +1450,7 @@ void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst
             dst_v.store(dst + col);
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 
@@ -1465,13 +1465,13 @@ void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride, short *dst
             val_v = extend_low(src_v) << shift;
             dst_v = val_v - IF_INTERNAL_OFFS;
             dst_v.store_partial(width - col, dst + col);
-            src += srcStride;
+            src += srstride;
             dst += dstStride;
         }
     }
 }
 
-void filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(int bitDepth, short *src, int srstride, pixel *dst, int dstStride, int width, int height)
 {
     short* srcOrg = src;
     pixel* dstOrg = dst;
@@ -1496,7 +1496,7 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst
             val_uc.store_partial(8, dst + col);
         }
 
-        src += srcStride;
+        src += srstride;
         dst += dstStride;
     }
 
@@ -1513,7 +1513,7 @@ void filterConvertShortToPel(int bitDepth, short *src, int srcStride, pixel *dst
             val_c = min(val_c, maxVal);
             val_uc = compress(val_c, val_zero);
             val_uc.store_partial(width - col, dst + col);
-            src += srcStride;
+            src += srstride;
             dst += dstStride;
         }
     }

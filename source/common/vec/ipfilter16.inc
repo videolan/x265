@@ -29,13 +29,13 @@
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 template<int N>
-void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
-    int cstride =  srcStride;
+    int stride =  srcStride;
 
-    src -= (N / 2 - 1) * cstride;
+    src -= (N / 2 - 1) * stride;
 
     int offset;
     short maxVal;
@@ -83,8 +83,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -102,8 +102,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -119,8 +119,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -158,7 +158,7 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -170,8 +170,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -184,8 +184,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -196,8 +196,8 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -227,13 +227,13 @@ void filterVertical_short_pel(int bitDepth, short *src, int srcStride, pixel *ds
 }
 
 template<int N>
-void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
-    int cstride =  srcStride;
+    int stride =  srcStride;
 
-    src -= (N / 2 - 1) * cstride;
+    src -= (N / 2 - 1) * stride;
 
     int offset;
     short maxVal;
@@ -261,7 +261,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -279,8 +279,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             sum_first = row0_first + row1_first;
             sum_last = row0_last + row1_last;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -298,8 +298,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -315,8 +315,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
                 sum_first += row0_first + row1_first;
                 sum_last += row0_last + row1_last;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -354,7 +354,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
             Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
 
             row0.load(&src[col]);
-            row1.load(&src[col + cstride]);
+            row1.load(&src[col + stride]);
 
             c0.load(cm[0]);
             c1.load(cm[1]);
@@ -366,8 +366,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             sum_first = row0_first + row1_first;
 
-            row2.load(&src[col + 2 * cstride]);
-            row3.load(&src[col + 3 * cstride]);
+            row2.load(&src[col + 2 * stride]);
+            row3.load(&src[col + 3 * stride]);
 
             c2.load(cm[2]);
             c3.load(cm[3]);
@@ -380,8 +380,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * cstride]);
-                row5.load(&src[col + 5 * cstride]);
+                row4.load(&src[col + 4 * stride]);
+                row5.load(&src[col + 5 * stride]);
 
                 c4.load(cm[4]);
                 c5.load(cm[5]);
@@ -392,8 +392,8 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
                 row1_first = row1_first * c5;
                 sum_first += row0_first + row1_first;
 
-                row6.load(&src[col + 6 * cstride]);
-                row7.load(&src[col + 7 * cstride]);
+                row6.load(&src[col + 6 * stride]);
+                row7.load(&src[col + 7 * stride]);
 
                 c6.load(cm[6]);
                 c7.load(cm[7]);
@@ -423,7 +423,7 @@ void filterVertical_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst,
 }
 
 template<int N>
-void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
 
 {
     int row, col;
@@ -529,7 +529,7 @@ void filterHorizontal_pel_pel(int bitDepth, pixel *src, int srcStride, pixel *ds
 }
 
 template<int N>
-void filterHorizontal_pel_short(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
 {
     int row, col;
 
