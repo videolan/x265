@@ -21,12 +21,12 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "intrapredharness.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include "TLibCommon/TComRom.h"
 
 using namespace x265;
 
@@ -227,7 +227,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     {
         if (!check_dc_primitive(ref.intra_pred_dc, opt.intra_pred_dc))
         {
-            printf("intrapred_getIPredDC_pel failed\n");
+            printf("intra_dc failed\n");
             return false;
         }
     }
@@ -235,7 +235,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     {
         if (!check_planar_primitive(ref.intra_pred_planar, opt.intra_pred_planar))
         {
-            printf("intrapred_planar_pel failed\n");
+            printf("intra_planar failed\n");
             return false;
         }
     }
@@ -243,7 +243,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     {
         if (!check_angular_primitive(ref.intra_pred_ang, opt.intra_pred_ang))
         {
-            printf("intrapred_angular_pel failed\n");
+            printf("intra_angular failed\n");
             return false;
         }
     }
@@ -251,7 +251,7 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
     {
         if (!check_allangs_primitive(ref.intra_pred_allangs, opt.intra_pred_allangs))
         {
-            printf("intrapred_angular_33_modes failed\n");
+            printf("intra_allangs failed\n");
             return false;
         }
     }
@@ -266,10 +266,10 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
 
     if (opt.intra_pred_dc)
     {
-        printf("IPred_getIPredDC_pel[filter=0]");
+        printf("intra_dc[filter=0]");
         REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
                        pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width, 0);
-        printf("IPred_getIPredDC_pel[filter=1]");
+        printf("intra_dc[filter=1]");
         REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
                        pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width, 1);
     }
@@ -278,7 +278,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
         for (int ii = 4; ii <= 64; ii <<= 1)
         {
             width = ii;
-            printf("IPred_getIPredPlanar[width=%d]", ii);
+            printf("intra_planar%2dx%d", ii, ii);
             REPORT_SPEEDUP(opt.intra_pred_planar, ref.intra_pred_planar,
                            pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width);
         }
@@ -295,7 +295,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
                 int pmode = p;  //(rand()%33)+2;
-                printf("IPred_getIPredAng[width=%d][mode=%d]", ii, pmode);
+                printf("intra_ang%dx%d[%02d]", ii, ii, pmode);
                 REPORT_SPEEDUP(opt.intra_pred_ang, ref.intra_pred_ang,
                                BIT_DEPTH, pixel_out_vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
             }
@@ -312,7 +312,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 pixel * refAbove = pixel_buff + srcStride;
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
-                printf("IPred_getIPredAngs%d\t\t", (1<<size));
+                printf("intra_allangs%dx%d", 1<<size, 1<<size);
                 REPORT_SPEEDUP(opt.intra_pred_allangs[size-2], ref.intra_pred_allangs[size-2],
                                pixel_out_33_vec, refAbove, refLeft, refAbove, refLeft, bFilter);
             }
