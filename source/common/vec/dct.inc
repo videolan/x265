@@ -36,8 +36,6 @@
 #include <smmintrin.h>
 #include <algorithm>
 
-extern void fastForwardDst(Short *block, Short *coeff, Int shift);
-
 namespace {
 /* Used for filter */
 #define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
@@ -164,36 +162,7 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
     }
 }
 
-#if INSTRSET < 4
-void dst4(short *src, int *dst, intptr_t stride)
-{
-    const int shift_1st = 1;
-    const int shift_2nd = 8;
-
-    ALIGN_VAR_32(Short, coef[4 * 4]);
-    ALIGN_VAR_32(Short, block[4 * 4]);
-
-    for (int i = 0; i < 4; i++)
-    {
-        memcpy(&block[i * 4], &src[i * stride], 4 * sizeof(short));
-    }
-
-    fastForwardDst(block, coef, shift_1st);
-    fastForwardDst(coef, block, shift_2nd);
-#define N (4)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
-
-#undef N
-}
-
-#else // INSTRSET >= 4
-
+#if INSTRSET >= 4
 ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
 {
     { 29, 55, 74, 84, 29, 55, 74, 84 },
@@ -260,7 +229,6 @@ void dst4(short *src, int *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[2 * 4], T60);
     _mm_store_si128((__m128i*)&dst[3 * 4], T61);
 }
-
 #endif // INSTRSET >=4
 
 ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
@@ -4084,7 +4052,6 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.quantaq = quantaq;
     p.quant = quant;
 
-    // TODO: in 16bpp mode, the intermediate must be 32-bits
 #if !HIGH_BIT_DEPTH && INSTRSET > 4
     p.dct[DST_4x4] = dst4;
     p.dct[DCT_4x4] = dct4;
@@ -4092,7 +4059,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.dct[DCT_16x16] = dct16;
     p.dct[DCT_32x32] = dct32;
 #endif
-    // TODO: I am not sure the IDCT works on 16bpp mode
+
     p.idct[IDST_4x4] = idst4;
     p.idct[IDCT_4x4] = idct4;
     p.idct[IDCT_8x8] = idct8;

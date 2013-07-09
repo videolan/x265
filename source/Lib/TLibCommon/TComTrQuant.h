@@ -191,10 +191,10 @@ public:
     Void setScalingListDec(TComScalingList *scalingList);
     Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
-    Void    initSliceQpDelta();
-    Void    storeSliceQpNext(TComSlice* pcSlice);
-    Void    clearSliceARLCnt();
-    Int     getQpDelta(Int qp) { return m_qpDelta[qp]; }
+    Void initSliceQpDelta();
+    Void storeSliceQpNext(TComSlice* pcSlice);
+    Void clearSliceARLCnt();
+    Int  getQpDelta(Int qp) { return m_qpDelta[qp]; }
 
     Int*    getSliceNSamples() { return m_sliceNsamples; }
 

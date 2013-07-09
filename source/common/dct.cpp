@@ -40,10 +40,30 @@
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #endif
 
-extern void fastForwardDst(Short *block, Short *coeff, Int shift);
-
 namespace {
 // anonymous file-static namespace
+
+// Fast DST Algorithm. Full matrix multiplication for DST and Fast DST algorithm
+// give identical results
+void fastForwardDst(short *block, short *coeff, int shift)  // input block, output coeff
+{
+    int c[4];
+    int rnd_factor = 1 << (shift - 1);
+
+    for (int i = 0; i < 4; i++)
+    {
+        // Intermediate Variables
+        c[0] = block[4 * i + 0] + block[4 * i + 3];
+        c[1] = block[4 * i + 1] + block[4 * i + 3];
+        c[2] = block[4 * i + 0] - block[4 * i + 1];
+        c[3] = 74 * block[4 * i + 2];
+
+        coeff[i] =      (short)((29 * c[0] + 55 * c[1]  + c[3] + rnd_factor) >> shift);
+        coeff[4 + i] =  (short)((74 * (block[4 * i + 0] + block[4 * i + 1] - block[4 * i + 3]) + rnd_factor) >> shift);
+        coeff[8 + i] =  (short)((29 * c[2] + 55 * c[0]  - c[3] + rnd_factor) >> shift);
+        coeff[12 + i] = (short)((55 * c[2] - 29 * c[1] + c[3] + rnd_factor) >> shift);
+    }
+}
 
 void inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
@@ -448,7 +468,6 @@ void dst4_c(short *src, int *dst, intptr_t stride)
             dst[i * N + j] = block[i * N + j];
         }
     }
-
 #undef N
 }
 
