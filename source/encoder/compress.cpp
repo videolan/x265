@@ -254,10 +254,6 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth);
     rpcTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
 
-    x265::MotionEstimate me_merge; // TODO: use m_pcPredSearch->m_me here
-    me_merge.setSourcePlane((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(),
-                            m_ppcOrigYuv[uhDepth]->getStride());
-
     for (Int uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
     {
         // set MC parameters
@@ -301,13 +297,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
         }
 
         rpcTempCU->initEstData(uhDepth, orgQP);
-    }
-
-    me_merge.setSourcePU(0, rpcBestCU->getWidth(0), rpcBestCU->getHeight(0));
-
-    rpcBestCU->getTotalCost() = me_merge.bufSATD((pixel*)bestPredYuv->getLumaAddr(),
-                                                 bestPredYuv->getStride());
-    x265_emms();
+    }    
 }
 
 Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG)
@@ -389,13 +379,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         /*Compute  Merge Cost  */
-
         xComputeCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], m_ppcPredYuvMode[3][uiDepth], m_ppcPredYuvMode[4][uiDepth]);
-        rpcBestCU = m_MergeBestCU[uiDepth];
-        YuvTemp = m_ppcPredYuvMode[3][uiDepth];
-        m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
-        m_ppcPredYuvBest[uiDepth] = YuvTemp;
-
+        
         /*Compute 2Nx2N mode costs*/
         xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
 
@@ -415,15 +400,12 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         }
 
         /*Choose best mode; initialise rpcBestCU to 2Nx2N*/
-        if (m_InterCU_2Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
-        {
-            rpcBestCU = m_InterCU_2Nx2N[uiDepth];
+        rpcBestCU = m_InterCU_2Nx2N[uiDepth];
 
-            YuvTemp = m_ppcPredYuvMode[0][uiDepth];
-            m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
-            m_ppcPredYuvBest[uiDepth] = YuvTemp;
-        }
-
+        YuvTemp = m_ppcPredYuvMode[0][uiDepth];
+        m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
+        m_ppcPredYuvBest[uiDepth] = YuvTemp;
+        
         if (m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
         {
             rpcBestCU = m_InterCU_Nx2N[uiDepth];
@@ -441,8 +423,17 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
         }
 
-        if (m_MergeBestCU[uiDepth] != rpcBestCU)
-            m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
+        
+        if(m_MergeBestCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+        {
+            rpcBestCU = m_MergeBestCU[uiDepth];
+            YuvTemp = m_ppcPredYuvMode[3][uiDepth];
+            m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
+            m_ppcPredYuvBest[uiDepth] = YuvTemp;
+            m_ppcResiYuvBest[uiDepth]->clear();
+            m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
+        }
 
         /*compute intra cost */
         if (rpcBestCU->getCbf(0, TEXT_LUMA) != 0   ||
