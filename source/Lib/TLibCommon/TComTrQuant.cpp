@@ -739,61 +739,57 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
     } // TU loop
 }
 
-Void TComTrQuant::xQuant(TComDataCU* pcCU,
-                         Int*        pSrc,
-                         TCoeff*     pDes,
-                         Int*&       pArlDes,
-                         Int         iWidth,
-                         Int         iHeight,
-                         UInt&       uiAcSum,
+Void TComTrQuant::xQuant(TComDataCU* CU,
+                         Int*        coef,
+                         TCoeff*     qCoef,
+                         Int*&       arlCCoef,
+                         Int         width,
+                         Int         height,
+                         UInt&       acSum,
                          TextType    eTType,
-                         UInt        uiAbsPartIdx)
+                         UInt        absPartIdx)
 {
-    Int*   piCoef    = pSrc;
-    TCoeff* piQCoef   = pDes;
+    Int   add = 0;
 
-    Int*   piArlCCoef = pArlDes;
-    Int   iAdd = 0;
-
-    Bool useRDOQ = pcCU->getTransformSkip(uiAbsPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
+    Bool useRDOQ = CU->getTransformSkip(absPartIdx, eTType) ? m_useRDOQTS : m_useRDOQ;
 
     if (useRDOQ && (eTType == TEXT_LUMA || RDOQ_CHROMA))
     {
-        xRateDistOptQuant(pcCU, piCoef, pDes, pArlDes, iWidth, iHeight, uiAcSum, eTType, uiAbsPartIdx);
+        xRateDistOptQuant(CU, coef, qCoef, arlCCoef, width, height, acSum, eTType, absPartIdx);
     }
     else
     {
-        const UInt   log2BlockSize   = g_aucConvertToBit[iWidth] + 2;
+        const UInt   log2BlockSize   = g_aucConvertToBit[width] + 2;
 
-        UInt scanIdx = pcCU->getCoefScanIdx(uiAbsPartIdx, iWidth, eTType == TEXT_LUMA, pcCU->isIntra(uiAbsPartIdx));
+        UInt scanIdx = CU->getCoefScanIdx(absPartIdx, width, eTType == TEXT_LUMA, CU->isIntra(absPartIdx));
         const UInt *scan = g_auiSigLastScan[scanIdx][log2BlockSize - 1];
 
         Int deltaU[32 * 32];
 
         QpParam cQpBase;
-        Int iQpBase = pcCU->getSlice()->getSliceQpBase();
+        Int qpbase = CU->getSlice()->getSliceQpBase();
 
         Int qpScaled;
-        Int qpBDOffset = (eTType == TEXT_LUMA) ? pcCU->getSlice()->getSPS()->getQpBDOffsetY() : pcCU->getSlice()->getSPS()->getQpBDOffsetC();
+        Int qpBDOffset = (eTType == TEXT_LUMA) ? CU->getSlice()->getSPS()->getQpBDOffsetY() : CU->getSlice()->getSPS()->getQpBDOffsetC();
 
         if (eTType == TEXT_LUMA)
         {
-            qpScaled = iQpBase + qpBDOffset;
+            qpScaled = qpbase + qpBDOffset;
         }
         else
         {
             Int chromaQPOffset;
             if (eTType == TEXT_CHROMA_U)
             {
-                chromaQPOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();
+                chromaQPOffset = CU->getSlice()->getPPS()->getChromaCbQpOffset() + CU->getSlice()->getSliceQpDeltaCb();
             }
             else
             {
-                chromaQPOffset = pcCU->getSlice()->getPPS()->getChromaCrQpOffset() + pcCU->getSlice()->getSliceQpDeltaCr();
+                chromaQPOffset = CU->getSlice()->getPPS()->getChromaCrQpOffset() + CU->getSlice()->getSliceQpDeltaCr();
             }
-            iQpBase = iQpBase + chromaQPOffset;
+            qpbase = qpbase + chromaQPOffset;
 
-            qpScaled = Clip3(-qpBDOffset, 57, iQpBase);
+            qpScaled = Clip3(-qpBDOffset, 57, qpbase);
 
             if (qpScaled < 0)
             {
@@ -806,33 +802,33 @@ Void TComTrQuant::xQuant(TComDataCU* pcCU,
         }
         cQpBase.setQpParam(qpScaled);
 
-        UInt uiLog2TrSize = g_aucConvertToBit[iWidth] + 2;
-        Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
+        UInt log2TrSize = g_aucConvertToBit[width] + 2;
+        Int scalingListType = (CU->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
         assert(scalingListType < 6);
-        Int *piQuantCoeff = 0;
-        piQuantCoeff = getQuantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
+        Int *quantCoeff = 0;
+        quantCoeff = getQuantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
 
-        UInt uiBitDepth = eTType == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
-        Int iTransformShift = MAX_TR_DYNAMIC_RANGE - uiBitDepth - uiLog2TrSize; // Represents scaling through forward transform
+        UInt bitDepth = eTType == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
+        Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
 
-        Int iQBits = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift;
-        iAdd = (pcCU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (iQBits - 9);
-        Int iQBitsC = QUANT_SHIFT + cQpBase.m_iPer + iTransformShift - ARL_C_PRECISION;
+        Int qbits = QUANT_SHIFT + cQpBase.m_iPer + transformShift;
+        add = (CU->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
+        Int qbitsC = QUANT_SHIFT + cQpBase.m_iPer + transformShift - ARL_C_PRECISION;
 
-        Int numCoeff = iWidth * iHeight;
+        Int numCoeff = width * height;
         if (m_bUseAdaptQpSelect)
         {
-            uiAcSum += x265::primitives.quantaq(piCoef, piQuantCoeff, deltaU, piQCoef, piArlCCoef, iQBitsC, iQBits, iAdd, numCoeff);
+            acSum += x265::primitives.quantaq(coef, quantCoeff, deltaU, qCoef, arlCCoef, qbitsC, qbits, add, numCoeff);
         }
         else
         {
-            uiAcSum += x265::primitives.quant(piCoef, piQuantCoeff, deltaU, piQCoef, iQBits, iAdd, numCoeff);
+            acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
         }
-        if (pcCU->getSlice()->getPPS()->getSignHideFlag())
+        if (CU->getSlice()->getPPS()->getSignHideFlag())
         {
-            if (uiAcSum >= 2)
+            if (acSum >= 2)
             {
-                signBitHidingHDQ(piQCoef, piCoef, scan, deltaU, iWidth, iHeight);
+                signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
             }
         }
     }
