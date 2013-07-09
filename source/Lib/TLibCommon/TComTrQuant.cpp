@@ -108,10 +108,10 @@ TComTrQuant::~TComTrQuant()
     destroyScalingList();
 }
 
-Void TComTrQuant::storeSliceQpNext(TComSlice* pcSlice)
+Void TComTrQuant::storeSliceQpNext(TComSlice* slice)
 {
-    Int qpBase = pcSlice->getSliceQpBase();
-    Int sliceQpused = pcSlice->getSliceQp();
+    Int qpBase = slice->getSliceQpBase();
+    Int sliceQpused = slice->getSliceQp();
     Int sliceQpnext;
     Double alpha = qpBase < 17 ? 0.5 : 1;
 
