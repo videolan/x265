@@ -487,7 +487,7 @@ Void TComTrQuant::init(UInt maxTrSize,
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
-UInt TComTrQuant::transformNxN(TComDataCU* CU,
+UInt TComTrQuant::transformNxN(TComDataCU* cu,
                                Short*      residual,
                                UInt        stride,
                                TCoeff*     coeff,
@@ -498,7 +498,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* CU,
                                UInt        absPartIdx,
                                Bool        useTransformSkip)
 {
-    if (CU->getCUTransquantBypass(absPartIdx))
+    if (cu->getCUTransquantBypass(absPartIdx))
     {
         UInt absSum = 0;
         for (UInt k = 0; k < height; k++)
@@ -513,16 +513,16 @@ UInt TComTrQuant::transformNxN(TComDataCU* CU,
     }
 
     UInt mode; //luma intra pred
-    if (ttype == TEXT_LUMA && CU->getPredictionMode(absPartIdx) == MODE_INTRA)
+    if (ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA)
     {
-        mode = CU->getLumaIntraDir(absPartIdx);
+        mode = cu->getLumaIntraDir(absPartIdx);
     }
     else
     {
         mode = REG_DCT;
     }
 
-    assert((CU->getSlice()->getSPS()->getMaxTrSize() >= width));
+    assert((cu->getSlice()->getSPS()->getMaxTrSize() >= width));
     Int bitDepth = ttype == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
     if (useTransformSkip)
     {
@@ -534,7 +534,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* CU,
         const UInt log2BlockSize = g_aucConvertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_plTempCoeff, stride);
     }
-    return xQuant(CU, m_plTempCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
+    return xQuant(cu, m_plTempCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
