@@ -511,14 +511,14 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.filterVmulti)
     {
-        printf("Filter-V-multiplane\t");
+        printf("Filter-V-multiplane");
         REPORT_SPEEDUP(opt.filterVmulti, ref.filterVmulti,
                        8, short_buff + 8 * srcStride, srcStride, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
     }
 
     if (opt.filterHmulti)
     {
-        printf("Filter-H-multiplane\t");
+        printf("Filter-H-multiplane");
         REPORT_SPEEDUP(opt.filterHmulti, ref.filterHmulti,
                        8, pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, IPF_vec_output_p+ 64 * 200 + 64, IPF_C_output_p+ 64 * 200 + 64, IPF_vec_output_p+ 64 * 200 + 64, dstStride, width, height,64,64);
     }
