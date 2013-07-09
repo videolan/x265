@@ -834,62 +834,59 @@ Void TComTrQuant::xQuant(TComDataCU* cu,
     }
 }
 
-Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType)
+Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
 {
-    const TCoeff* piQCoef   = pSrc;
-    Int*   piCoef    = pDes;
-
-    if (iWidth > (Int)m_uiMaxTrSize)
+    if (width > (Int)m_uiMaxTrSize)
     {
-        iWidth  = m_uiMaxTrSize;
-        iHeight = m_uiMaxTrSize;
+        width  = m_uiMaxTrSize;
+        height = m_uiMaxTrSize;
     }
 
-    Int iShift, iAdd, iCoeffQ;
-    UInt uiLog2TrSize = g_aucConvertToBit[iWidth] + 2;
+    Int shift, add, coeffQ;
+    UInt log2TrSize = g_aucConvertToBit[width] + 2;
 
-    Int iTransformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - uiLog2TrSize;
+    Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
 
-    iShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - iTransformShift;
+    shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
     TCoeff clipQCoef;
 
     if (getUseScalingList())
     {
-        iShift += 4;
-        Int *piDequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, uiLog2TrSize - 2);
+        shift += 4;
+        Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
 
-        if (iShift > m_cQP.m_iPer)
+        if (shift > m_cQP.m_iPer)
         {
-            iAdd = 1 << (iShift - m_cQP.m_iPer - 1);
+            add = 1 << (shift - m_cQP.m_iPer - 1);
 
-            for (Int n = 0; n < iWidth * iHeight; n++)
+            for (Int n = 0; n < width * height; n++)
             {
-                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-                iCoeffQ = ((clipQCoef * piDequantCoef[n]) + iAdd) >> (iShift -  m_cQP.m_iPer);
-                piCoef[n] = Clip3(-32768, 32767, iCoeffQ);
+                clipQCoef = Clip3(-32768, 32767, qCoef[n]);
+                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_cQP.m_iPer);
+                coef[n] = Clip3(-32768, 32767, coeffQ);
             }
         }
         else
         {
-            for (Int n = 0; n < iWidth * iHeight; n++)
+            for (Int n = 0; n < width * height; n++)
             {
-                clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-                iCoeffQ   = Clip3(-32768, 32767, clipQCoef * piDequantCoef[n]); // Clip to avoid possible overflow in following shift left operation
-                piCoef[n] = Clip3(-32768, 32767, iCoeffQ << (m_cQP.m_iPer - iShift));
+                clipQCoef = Clip3(-32768, 32767, qCoef[n]);
+                coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]); // Clip to avoid possible overflow in following shift left operation
+                coef[n] = Clip3(-32768, 32767, coeffQ << (m_cQP.m_iPer - shift));
             }
         }
     }
     else
     {
-        iAdd = 1 << (iShift - 1);
+        add = 1 << (shift - 1);
         Int scale = g_invQuantScales[m_cQP.m_iRem] << m_cQP.m_iPer;
 
-        for (Int n = 0; n < iWidth * iHeight; n++)
+        for (Int n = 0; n < width * height; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, piQCoef[n]);
-            iCoeffQ = (clipQCoef * scale + iAdd) >> iShift;
-            piCoef[n] = Clip3(-32768, 32767, iCoeffQ);
+            clipQCoef = Clip3(-32768, 32767, qCoef[n]);
+            coeffQ = (clipQCoef * scale + add) >> shift;
+            coef[n] = Clip3(-32768, 32767, coeffQ);
         }
     }
 }
