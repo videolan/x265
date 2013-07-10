@@ -279,11 +279,11 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     rpcTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
 
                     // do MC
-                    m_pcPredSearch->motionCompensation(rpcTempCU, m_ppcPredYuvMode[4][uhDepth]);
+                    m_pcPredSearch->motionCompensation(rpcTempCU, m_ppcPredYuvTemp[uhDepth]);
                     // estimate residual and encode everything
                     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU,
                                                               m_ppcOrigYuv[uhDepth],
-                                                              m_ppcPredYuvMode[4][uhDepth],
+                                                              m_ppcPredYuvTemp[uhDepth],
                                                               m_ppcResiYuvTemp[uhDepth],
                                                               m_ppcResiYuvBest[uhDepth],
                                                               m_ppcRecoYuvTemp[uhDepth],
@@ -308,8 +308,8 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                         // Change Prediction data
                         TComYuv* pcYuv = NULL;
                         pcYuv = m_ppcPredYuvMode[3][uhDepth];
-                        m_ppcPredYuvMode[3][uhDepth]  = m_ppcPredYuvMode[4][uhDepth];
-                        m_ppcPredYuvMode[4][uhDepth] = pcYuv;
+                        m_ppcPredYuvMode[3][uhDepth]  = m_ppcPredYuvTemp[uhDepth];
+                        m_ppcPredYuvTemp[uhDepth] = pcYuv;
                         pcYuv = m_RecoYuvMergeBest[uhDepth];
                         m_RecoYuvMergeBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
                         m_ppcRecoYuvTemp[uhDepth] = pcYuv;
