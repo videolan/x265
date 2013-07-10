@@ -89,11 +89,8 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
     m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
 
-    m_RecoYuvNxN[0] = new TComYuv*[m_uhTotalDepth - 1];
-    m_RecoYuvNxN[1] = new TComYuv*[m_uhTotalDepth - 1];
-    m_RecoYuvNxN[2] = new TComYuv*[m_uhTotalDepth - 1];
-    m_RecoYuvNxN[3] = new TComYuv*[m_uhTotalDepth - 1];
-
+    m_RecoYuvMergeBest = new TComYuv*[m_uhTotalDepth - 1];
+    
     m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
 
     for (Int i = 0; i < m_uhTotalDepth - 1; i++)
@@ -140,13 +137,10 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
         m_ppcRecoYuvTemp[i] = new TComYuv;
         m_ppcRecoYuvTemp[i]->create(uiWidth, uiHeight);
-
-        for (int j = 0; j < 4; j++)
-        {
-            m_RecoYuvNxN[j][i] = new TComYuv;
-            m_RecoYuvNxN[j][i]->create(uiWidth, uiHeight);
-        }
-
+                
+        m_RecoYuvMergeBest[i] = new TComYuv;
+        m_RecoYuvMergeBest[i]->create(uiWidth, uiHeight);
+        
         m_ppcOrigYuv[i] = new TComYuv;
         m_ppcOrigYuv[i]->create(uiWidth, uiHeight);
     }
@@ -252,11 +246,11 @@ Void TEncCu::destroy()
             delete m_ppcRecoYuvTemp[i];
             m_ppcRecoYuvTemp[i] = NULL;
         }
-        for (int j = 0; j < 4; j++)
+        if (m_RecoYuvMergeBest[i])
         {
-            m_RecoYuvNxN[j][i]->destroy();
-            delete m_RecoYuvNxN[0][i];
-            m_RecoYuvNxN[j][i] = NULL;
+            m_RecoYuvMergeBest[i]->destroy();
+            delete m_RecoYuvMergeBest[i];
+            m_RecoYuvMergeBest[i] = NULL;
         }
 
         if (m_ppcOrigYuv[i])
@@ -324,25 +318,10 @@ Void TEncCu::destroy()
         delete [] m_ppcRecoYuvBest;
         m_ppcRecoYuvBest = NULL;
     }
-    if (m_RecoYuvNxN[0])
+    if (m_RecoYuvMergeBest)
     {
-        delete [] m_RecoYuvNxN[0];
-        m_RecoYuvNxN[0] = NULL;
-    }
-    if (m_RecoYuvNxN[1])
-    {
-        delete [] m_RecoYuvNxN[1];
-        m_RecoYuvNxN[1] = NULL;
-    }
-    if (m_RecoYuvNxN[2])
-    {
-        delete [] m_RecoYuvNxN[2];
-        m_RecoYuvNxN[2] = NULL;
-    }
-    if (m_RecoYuvNxN[3])
-    {
-        delete [] m_RecoYuvNxN[3];
-        m_RecoYuvNxN[3] = NULL;
+        delete []m_RecoYuvMergeBest;
+        m_RecoYuvMergeBest = NULL;
     }
     if (m_ppcPredYuvTemp)
     {

@@ -87,7 +87,7 @@ private:
     TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
     TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
     TComYuv**               m_ppcPredYuvMode[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
-    TComYuv**               m_RecoYuvNxN[4];
+    TComYuv**               m_RecoYuvMergeBest;
     TComYuv**               m_ppcOrigYuv;     ///< Original Yuv for each depth
 
     //  Data : encoder control
