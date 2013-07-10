@@ -224,138 +224,6 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& pcCU, PartSize eSize)
  * \param rpcTempCU
  * \returns Void
  */
-
-Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode)
-{
-    assert(rpcTempCU->getSlice()->getSliceType() != I_SLICE);
-    TComMvField  cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
-    UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
-    Int numValidMergeCand = 0;
-
-    for (UInt ui = 0; ui < rpcTempCU->getSlice()->getMaxNumMergeCand(); ++ui)
-    {
-        uhInterDirNeighbours[ui] = 0;
-    }
-
-    UChar uhDepth = rpcTempCU->getDepth(0);
-    rpcTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, uhDepth); // interprets depth relative to LCU level
-    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth);
-    rpcTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
-
-    Int mergeCandBuffer[MRG_MAX_NUM_CANDS];
-    for (Int ui = 0; ui < numValidMergeCand; ++ui)
-    {
-        mergeCandBuffer[ui] = 0;
-    }
-
-    Bool bestIsSkip = false;
-
-    UInt iteration;
-    if (rpcTempCU->isLosslessCoded(0))
-    {
-        iteration = 1;
-    }
-    else
-    {
-        iteration = 2;
-    }
-
-    for (UInt uiNoResidual = 0; uiNoResidual < iteration; ++uiNoResidual)
-    {
-        for (Int uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
-        {
-            if (!(uiNoResidual == 1 && mergeCandBuffer[uiMergeCand] == 1))
-            {
-                if (!(bestIsSkip && uiNoResidual == 0))
-                {
-                    // set MC parameters
-                    rpcTempCU->setPredModeSubParts(MODE_INTER, 0, uhDepth); // interprets depth relative to LCU level
-                    rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(),     0, uhDepth);
-                    rpcTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, uhDepth); // interprets depth relative to LCU level
-                    rpcTempCU->setMergeFlagSubParts(true, 0, 0, uhDepth); // interprets depth relative to LCU level
-                    rpcTempCU->setMergeIndexSubParts(uiMergeCand, 0, 0, uhDepth); // interprets depth relative to LCU level
-                    rpcTempCU->setInterDirSubParts(uhInterDirNeighbours[uiMergeCand], 0, 0, uhDepth); // interprets depth relative to LCU level
-                    rpcTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(cMvFieldNeighbours[0 + 2 * uiMergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
-                    rpcTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
-
-                    // do MC
-                    m_pcPredSearch->motionCompensation(rpcTempCU, m_ppcPredYuvTemp[uhDepth]);
-                    // estimate residual and encode everything
-                    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU,
-                                                              m_ppcOrigYuv[uhDepth],
-                                                              m_ppcPredYuvTemp[uhDepth],
-                                                              m_ppcResiYuvTemp[uhDepth],
-                                                              m_ppcResiYuvBest[uhDepth],
-                                                              m_ppcRecoYuvTemp[uhDepth],
-                                                              (uiNoResidual ? true : false));
-                    /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
-                    if (uiNoResidual == 0)
-                    {
-                        if (rpcTempCU->getQtRootCbf(0) == 0)
-                        {
-                            mergeCandBuffer[uiMergeCand] = 1;
-                        }
-                    }
-
-                    rpcTempCU->setSkipFlagSubParts(rpcTempCU->getQtRootCbf(0) == 0, 0, uhDepth);
-                    Int orgQP = rpcTempCU->getQP(0);
-                    xCheckDQP(rpcTempCU);
-                    if (rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
-                    {
-                        TComDataCU* tmp = rpcTempCU;
-                        rpcTempCU = rpcBestCU;
-                        rpcBestCU = tmp;
-                        // Change Prediction data
-                        TComYuv* pcYuv = NULL;
-                        pcYuv = m_ppcPredYuvMode[3][uhDepth];
-                        m_ppcPredYuvMode[3][uhDepth]  = m_ppcPredYuvTemp[uhDepth];
-                        m_ppcPredYuvTemp[uhDepth] = pcYuv;
-                        pcYuv = m_RecoYuvMergeBest[uhDepth];
-                        m_RecoYuvMergeBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
-                        m_ppcRecoYuvTemp[uhDepth] = pcYuv;
-                    }
-
-                    rpcTempCU->initEstData(uhDepth, orgQP);
-                    if (!bestIsSkip)
-                    {
-                        bestIsSkip = rpcBestCU->getQtRootCbf(0) == 0;
-                    }
-                }
-            }
-        }
-
-        if (uiNoResidual == 0 && m_pcEncCfg->getUseEarlySkipDetection())
-        {
-            if (rpcBestCU->getQtRootCbf(0) == 0)
-            {
-                if (rpcBestCU->getMergeFlag(0))
-                {
-                    *earlyDetectionSkipMode = true;
-                }
-                else
-                {
-                    Int absoulte_MV = 0;
-                    for (UInt uiRefListIdx = 0; uiRefListIdx < 2; uiRefListIdx++)
-                    {
-                        if (rpcBestCU->getSlice()->getNumRefIdx(RefPicList(uiRefListIdx)) > 0)
-                        {
-                            TComCUMvField* pcCUMvField = rpcBestCU->getCUMvField(RefPicList(uiRefListIdx));
-                            Int iHor = abs(pcCUMvField->getMvd(0).x);
-                            Int iVer = abs(pcCUMvField->getMvd(0).y);
-                            absoulte_MV += iHor + iVer;
-                        }
-                    }
-
-                    if (absoulte_MV == 0)
-                    {
-                        *earlyDetectionSkipMode = true;
-                    }
-                }
-            }
-        }
-    }
-}
-
 Void TEncCu::xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG)
 {
     UChar uhDepth = rpcTempCU->getDepth(0);
@@ -436,7 +304,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
         /*Compute  Merge Cost  */
         Bool earlyDetectionSkip = false;
-        xComputeCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], &earlyDetectionSkip);
+        xCheckRDCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], &earlyDetectionSkip, m_ppcPredYuvMode[3][uiDepth], m_RecoYuvMergeBest[uiDepth]);
 
         if (!earlyDetectionSkip)
         {
