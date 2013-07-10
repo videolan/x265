@@ -260,7 +260,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
         iteration = 2;
     }
 
-    for (UInt uiNoResidual = 1; uiNoResidual < iteration; ++uiNoResidual)
+    for (UInt uiNoResidual = 0; uiNoResidual < iteration; ++uiNoResidual)
     {
         for (Int uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
         {
@@ -310,8 +310,8 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                         pcYuv = m_ppcPredYuvMode[3][uhDepth];
                         m_ppcPredYuvMode[3][uhDepth]  = m_ppcPredYuvMode[4][uhDepth];
                         m_ppcPredYuvMode[4][uhDepth] = pcYuv;
-                        pcYuv = m_ppcRecoYuvBest[uhDepth];
-                        m_ppcRecoYuvBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
+                        pcYuv = m_RecoYuvMergeBest[uhDepth];
+                        m_RecoYuvMergeBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
                         m_ppcRecoYuvTemp[uhDepth] = pcYuv;
                     }
 
@@ -491,8 +491,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
                 YuvTemp = m_ppcPredYuvMode[3][uiDepth];
                 m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
                 m_ppcPredYuvBest[uiDepth] = YuvTemp;
-                m_ppcResiYuvBest[uiDepth]->clear();
-                m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
+                
+                YuvTemp = m_ppcRecoYuvBest[uiDepth];
+                m_ppcRecoYuvBest[uiDepth] = m_RecoYuvMergeBest[uiDepth];
+                m_RecoYuvMergeBest[uiDepth] = YuvTemp;            
             }
 
             /*compute intra cost */
@@ -522,8 +524,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             YuvTemp = m_ppcPredYuvMode[3][uiDepth];
             m_ppcPredYuvMode[3][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
-            m_ppcResiYuvBest[uiDepth]->clear();
-            m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
+            
+            YuvTemp = m_ppcRecoYuvBest[uiDepth];
+            m_ppcRecoYuvBest[uiDepth] = m_RecoYuvMergeBest[uiDepth];
+            m_RecoYuvMergeBest[uiDepth] = YuvTemp;            
         }
 
         /* Disable recursive analysis for whole CUs temporarily*/
