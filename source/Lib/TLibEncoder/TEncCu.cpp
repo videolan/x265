@@ -230,7 +230,7 @@ Void TEncCu::destroy()
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
             m_ppcPredYuvMode[j][i]->destroy();
-            delete m_ppcPredYuvMode[0][i];
+            delete m_ppcPredYuvMode[j][i];
             m_ppcPredYuvMode[j][i] = NULL;
         }
 
