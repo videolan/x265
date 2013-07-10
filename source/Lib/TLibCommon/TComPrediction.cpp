@@ -410,18 +410,18 @@ Void TComPrediction::predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred,
 }
 
 /** Function for checking identical motion.
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param UInt PartAddr
  */
-Bool TComPrediction::xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr)
+Bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr)
 {
-    if (pcCU->getSlice()->isInterB() && !pcCU->getSlice()->getPPS()->getWPBiPred())
+    if (cu->getSlice()->isInterB() && !cu->getSlice()->getPPS()->getWPBiPred())
     {
-        if (pcCU->getCUMvField(REF_PIC_LIST_0)->getRefIdx(PartAddr) >= 0 && pcCU->getCUMvField(REF_PIC_LIST_1)->getRefIdx(PartAddr) >= 0)
+        if (cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(PartAddr) >= 0 && cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(PartAddr) >= 0)
         {
-            Int RefPOCL0 = pcCU->getSlice()->getRefPic(REF_PIC_LIST_0, pcCU->getCUMvField(REF_PIC_LIST_0)->getRefIdx(PartAddr))->getPOC();
-            Int RefPOCL1 = pcCU->getSlice()->getRefPic(REF_PIC_LIST_1, pcCU->getCUMvField(REF_PIC_LIST_1)->getRefIdx(PartAddr))->getPOC();
-            if (RefPOCL0 == RefPOCL1 && pcCU->getCUMvField(REF_PIC_LIST_0)->getMv(PartAddr) == pcCU->getCUMvField(REF_PIC_LIST_1)->getMv(PartAddr))
+            Int RefPOCL0 = cu->getSlice()->getRefPic(REF_PIC_LIST_0, cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(PartAddr))->getPOC();
+            Int RefPOCL1 = cu->getSlice()->getRefPic(REF_PIC_LIST_1, cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(PartAddr))->getPOC();
+            if (RefPOCL0 == RefPOCL1 && cu->getCUMvField(REF_PIC_LIST_0)->getMv(PartAddr) == cu->getCUMvField(REF_PIC_LIST_1)->getMv(PartAddr))
             {
                 return true;
             }
@@ -430,189 +430,189 @@ Bool TComPrediction::xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr)
     return false;
 }
 
-Void TComPrediction::motionCompensation(TComDataCU* pcCU, TComYuv* pcYuvPred, RefPicList eRefPicList, Int iPartIdx)
+Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList, Int partIdx)
 {
     Int         iWidth;
     Int         iHeight;
-    UInt        uiPartAddr;
+    UInt        partAddr;
 
-    if (iPartIdx >= 0)
+    if (partIdx >= 0)
     {
-        pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iWidth, iHeight);
-        if (eRefPicList != REF_PIC_LIST_X)
+        cu->getPartIndexAndSize(partIdx, partAddr, iWidth, iHeight);
+        if (picList != REF_PIC_LIST_X)
         {
-            if (pcCU->getSlice()->getPPS()->getUseWP())
+            if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_acShortPred[0];
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
-                xWeightedPredictionUni(pcCU, pcMbYuv, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv, true);
+                xWeightedPredictionUni(cu, pcMbYuv, partAddr, iWidth, iHeight, picList, predYuv);
             }
             else
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, picList, predYuv);
             }
         }
         else
         {
-            if (xCheckIdenticalMotion(pcCU, uiPartAddr))
+            if (xCheckIdenticalMotion(cu, partAddr))
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, REF_PIC_LIST_0, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, REF_PIC_LIST_0, predYuv);
             }
             else
             {
-                xPredInterBi(pcCU, uiPartAddr, iWidth, iHeight, pcYuvPred);
+                xPredInterBi(cu, partAddr, iWidth, iHeight, predYuv);
             }
         }
         return;
     }
 
-    for (iPartIdx = 0; iPartIdx < pcCU->getNumPartInter(); iPartIdx++)
+    for (partIdx = 0; partIdx < cu->getNumPartInter(); partIdx++)
     {
-        pcCU->getPartIndexAndSize(iPartIdx, uiPartAddr, iWidth, iHeight);
+        cu->getPartIndexAndSize(partIdx, partAddr, iWidth, iHeight);
 
-        if (eRefPicList != REF_PIC_LIST_X)
+        if (picList != REF_PIC_LIST_X)
         {
-            if (pcCU->getSlice()->getPPS()->getUseWP())
+            if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_acShortPred[0];
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
-                xWeightedPredictionUni(pcCU, pcMbYuv, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv, true);
+                xWeightedPredictionUni(cu, pcMbYuv, partAddr, iWidth, iHeight, picList, predYuv);
             }
             else
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, picList, predYuv);
             }
         }
         else
         {
-            if (xCheckIdenticalMotion(pcCU, uiPartAddr))
+            if (xCheckIdenticalMotion(cu, partAddr))
             {
-                xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, REF_PIC_LIST_0, pcYuvPred);
+                xPredInterUni(cu, partAddr, iWidth, iHeight, REF_PIC_LIST_0, predYuv);
             }
             else
             {
-                xPredInterBi(pcCU, uiPartAddr, iWidth, iHeight, pcYuvPred);
+                xPredInterBi(cu, partAddr, iWidth, iHeight, predYuv);
             }
         }
     }
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int iWidth, Int iHeight, RefPicList picList, TComYuv*& rpcYuvPred, Bool bi)
 {
     assert(bi == false);
-    Int iRefIdx = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+    Int iRefIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
     assert(iRefIdx >= 0);
-    MV cMv = pcCU->getCUMvField(eRefPicList)->getMv(uiPartAddr);
+    MV cMv = cu->getCUMvField(picList)->getMv(partAddr);
 
-    pcCU->clipMv(cMv);
-    xPredInterLumaBlk(pcCU, pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
-    xPredInterChromaBlk(pcCU, pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
+    cu->clipMv(cMv);
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, iRefIdx)->getPicYuvRec(), partAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
+    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, iRefIdx)->getPicYuvRec(), partAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TShortYUV*& rpcYuvPred, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int iWidth, Int iHeight, RefPicList picList, TShortYUV*& rpcYuvPred, Bool bi)
 {
     assert(bi == true);
 
-    Int iRefIdx = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+    Int iRefIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
     assert(iRefIdx >= 0);
-    MV cMv = pcCU->getCUMvField(eRefPicList)->getMv(uiPartAddr);
+    MV cMv = cu->getCUMvField(picList)->getMv(partAddr);
 
-    pcCU->clipMv(cMv);
-    xPredInterLumaBlk(pcCU, pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
-    xPredInterChromaBlk(pcCU, pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
+    cu->clipMv(cMv);
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, iRefIdx)->getPicYuvRec(), partAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
+    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, iRefIdx)->getPicYuvRec(), partAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi);
 }
 
-Void TComPrediction::xPredInterBi(TComDataCU* pcCU, UInt uiPartAddr, Int iWidth, Int iHeight, TComYuv*& rpcYuvPred)
+Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int iWidth, Int iHeight, TComYuv*& rpcYuvPred)
 {
     Int      iRefIdx[2] = { -1, -1 };
 
-    if (pcCU->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartAddr) >= 0 && pcCU->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartAddr) >= 0)
+    if (cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partAddr) >= 0 && cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partAddr) >= 0)
     {
         TShortYUV* pcMbYuv;
-        for (Int iRefList = 0; iRefList < 2; iRefList++)
+        for (Int refList = 0; refList < 2; refList++)
         {
-            RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            iRefIdx[iRefList] = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            iRefIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
-            assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
+            assert(iRefIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
-            pcMbYuv = &m_acShortPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
+            pcMbYuv = &m_acShortPred[refList];
+            xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv, true);
         }
 
-        if (pcCU->getSlice()->getPPS()->getWPBiPred() && pcCU->getSlice()->getSliceType() == B_SLICE)
+        if (cu->getSlice()->getPPS()->getWPBiPred() && cu->getSlice()->getSliceType() == B_SLICE)
         {
-            xWeightedPredictionBi(pcCU, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+            xWeightedPredictionBi(cu, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], partAddr, iWidth, iHeight, rpcYuvPred);
         }
         else
         {
-            rpcYuvPred->addAvg(&m_acShortPred[0], &m_acShortPred[1], uiPartAddr, iWidth, iHeight);
+            rpcYuvPred->addAvg(&m_acShortPred[0], &m_acShortPred[1], partAddr, iWidth, iHeight);
         }
     }
-    else if (pcCU->getSlice()->getPPS()->getWPBiPred() && pcCU->getSlice()->getSliceType() == B_SLICE)
+    else if (cu->getSlice()->getPPS()->getWPBiPred() && cu->getSlice()->getSliceType() == B_SLICE)
     {
         TShortYUV* pcMbYuv;
-        for (Int iRefList = 0; iRefList < 2; iRefList++)
+        for (Int refList = 0; refList < 2; refList++)
         {
-            RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            iRefIdx[iRefList] = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            iRefIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
-            if (iRefIdx[iRefList] < 0)
+            if (iRefIdx[refList] < 0)
             {
                 continue;
             }
 
-            assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
+            assert(iRefIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
-            pcMbYuv = &m_acShortPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
+            pcMbYuv = &m_acShortPred[refList];
+            xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv, true);
         }
 
-        xWeightedPredictionBi(pcCU, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+        xWeightedPredictionBi(cu, &m_acShortPred[0], &m_acShortPred[1], iRefIdx[0], iRefIdx[1], partAddr, iWidth, iHeight, rpcYuvPred);
     }
-    else if (pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType() == P_SLICE)
+    else if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
     {
         TShortYUV* pcMbYuv;
-        for (Int iRefList = 0; iRefList < 2; iRefList++)
+        for (Int refList = 0; refList < 2; refList++)
         {
-            RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            iRefIdx[iRefList] = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            iRefIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
-            if (iRefIdx[iRefList] < 0)
+            if (iRefIdx[refList] < 0)
             {
                 continue;
             }
 
-            assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
+            assert(iRefIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
-            pcMbYuv = &m_acShortPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv, true);
+            pcMbYuv = &m_acShortPred[refList];
+            xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv, true);
         }
 
-        xWeightedPredictionUni(pcCU, &m_acShortPred[0], uiPartAddr, iWidth, iHeight, REF_PIC_LIST_0, rpcYuvPred);
+        xWeightedPredictionUni(cu, &m_acShortPred[0], partAddr, iWidth, iHeight, REF_PIC_LIST_0, rpcYuvPred);
     }
     else
     {
         TComYuv* pcMbYuv;
-        for (Int iRefList = 0; iRefList < 2; iRefList++)
+        for (Int refList = 0; refList < 2; refList++)
         {
-            RefPicList eRefPicList = (iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            iRefIdx[iRefList] = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            iRefIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
 
-            if (iRefIdx[iRefList] < 0)
+            if (iRefIdx[refList] < 0)
             {
                 continue;
             }
 
-            assert(iRefIdx[iRefList] < pcCU->getSlice()->getNumRefIdx(eRefPicList));
+            assert(iRefIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
-            pcMbYuv = &m_acYuvPred[iRefList];
-            xPredInterUni(pcCU, uiPartAddr, iWidth, iHeight, eRefPicList, pcMbYuv);
+            pcMbYuv = &m_acYuvPred[refList];
+            xPredInterUni(cu, partAddr, iWidth, iHeight, picList, pcMbYuv);
         }
 
-        xWeightedAverage(&m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], uiPartAddr, iWidth, iHeight, rpcYuvPred);
+        xWeightedAverage(&m_acYuvPred[0], &m_acYuvPred[1], iRefIdx[0], iRefIdx[1], partAddr, iWidth, iHeight, rpcYuvPred);
     }
 }
 
@@ -836,21 +836,21 @@ Void TComPrediction::xWeightedAverage(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, In
 }
 
 // AMVP
-Void TComPrediction::getMvPredAMVP(TComDataCU* pcCU, UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, MV& rcMvPred)
+Void TComPrediction::getMvPredAMVP(TComDataCU* cu, UInt uiPartIdx, UInt partAddr, RefPicList picList, MV& mvPred)
 {
-    AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
+    AMVPInfo* pcAMVPInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
     if (pcAMVPInfo->iN <= 1)
     {
-        rcMvPred = pcAMVPInfo->m_acMvCand[0];
+        mvPred = pcAMVPInfo->m_acMvCand[0];
 
-        pcCU->setMVPIdxSubParts(0, eRefPicList, uiPartAddr, uiPartIdx, pcCU->getDepth(uiPartAddr));
-        pcCU->setMVPNumSubParts(pcAMVPInfo->iN, eRefPicList, uiPartAddr, uiPartIdx, pcCU->getDepth(uiPartAddr));
+        cu->setMVPIdxSubParts(0, picList, partAddr, uiPartIdx, cu->getDepth(partAddr));
+        cu->setMVPNumSubParts(pcAMVPInfo->iN, picList, partAddr, uiPartIdx, cu->getDepth(partAddr));
         return;
     }
 
-    assert(pcCU->getMVPIdx(eRefPicList, uiPartAddr) >= 0);
-    rcMvPred = pcAMVPInfo->m_acMvCand[pcCU->getMVPIdx(eRefPicList, uiPartAddr)];
+    assert(cu->getMVPIdx(picList, partAddr) >= 0);
+    mvPred = pcAMVPInfo->m_acMvCand[cu->getMVPIdx(picList, partAddr)];
 }
 
 //! \}

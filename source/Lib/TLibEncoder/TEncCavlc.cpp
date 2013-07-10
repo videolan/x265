@@ -1011,47 +1011,47 @@ Void TEncCavlc::codeTerminatingBit(UInt uilsLast)
 Void TEncCavlc::codeSliceFinish()
 {}
 
-Void TEncCavlc::codeMVPIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMVPIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
+Void TEncCavlc::codePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePredMode(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codePredMode(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeIndex(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterModeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode)
+Void TEncCavlc::codeInterModeFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSkipFlag(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSplitFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
+Void TEncCavlc::codeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth)
 {
     assert(0);
 }
@@ -1061,78 +1061,78 @@ Void TEncCavlc::codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx)
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbf(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth)
+Void TEncCavlc::codeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbfZero(TComDataCU* pcCU, TextType eType, UInt uiTrDepth)
+Void TEncCavlc::codeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbfZero(TComDataCU* pcCU)
+Void TEncCavlc::codeQtRootCbfZero(TComDataCU* cu)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType)
+Void TEncCavlc::codeTransformSkipFlags(TComDataCU* cu, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType)
 {
     assert(0);
 }
 
 /** Code I_PCM information.
- * \param pcCU pointer to CU
+ * \param cu pointer to CU
  * \param uiAbsPartIdx CU index
  * \returns Void
  */
-Void TEncCavlc::codeIPCMInfo(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirLumaAng(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool isMultiple)
+Void TEncCavlc::codeIntraDirLumaAng(TComDataCU* cu, UInt uiAbsPartIdx, Bool isMultiple)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirChroma(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeIntraDirChroma(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterDir(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeInterDir(TComDataCU* cu, UInt uiAbsPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeRefFrmIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeRefFrmIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMvd(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMvd(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx)
+Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx)
 {
-    Int iDQp  = pcCU->getQP(uiAbsPartIdx) - pcCU->getRefQP(uiAbsPartIdx);
+    Int iDQp  = cu->getQP(uiAbsPartIdx) - cu->getRefQP(uiAbsPartIdx);
 
-    Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+    Int qpBdOffsetY =  cu->getSlice()->getSPS()->getQpBDOffsetY();
 
     iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY / 2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY / 2);
 
     xWriteSvlc(iDQp);
 }
 
-Void TEncCavlc::codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType)
+Void TEncCavlc::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType)
 {
     assert(0);
 }
@@ -1167,11 +1167,11 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* pcSlice)
     {
         for (Int iNumRef = 0; iNumRef < iNbRef; iNumRef++)
         {
-            RefPicList  eRefPicList = (iNumRef ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            RefPicList  picList = (iNumRef ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
 
-            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(eRefPicList); iRefIdx++)
+            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
             {
-                pcSlice->getWpScaling(eRefPicList, iRefIdx, wp);
+                pcSlice->getWpScaling(picList, iRefIdx, wp);
                 if (!bDenomCoded)
                 {
                     Int iDeltaDenom;
@@ -1190,17 +1190,17 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* pcSlice)
 
             if (bChroma)
             {
-                for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(eRefPicList); iRefIdx++)
+                for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
                 {
-                    pcSlice->getWpScaling(eRefPicList, iRefIdx, wp);
+                    pcSlice->getWpScaling(picList, iRefIdx, wp);
                     WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");   // u(1): chroma_weight_lX_flag
                     uiTotalSignalledWeightFlags += 2 * wp[1].bPresentFlag;
                 }
             }
 
-            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(eRefPicList); iRefIdx++)
+            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
             {
-                pcSlice->getWpScaling(eRefPicList, iRefIdx, wp);
+                pcSlice->getWpScaling(picList, iRefIdx, wp);
                 if (wp[0].bPresentFlag)
                 {
                     Int iDeltaWeight = (wp[0].iWeight - (1 << wp[0].uiLog2WeightDenom));

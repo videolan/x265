@@ -1871,12 +1871,12 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     if (pcSlice->isIntra())
         return;
     Int numLists = pcSlice->isInterP() ? 1 : 2;
-    for (Int iRefList = 0; iRefList < numLists; iRefList++)
+    for (Int refList = 0; refList < numLists; refList++)
     {
-        printf(" [L%d ", iRefList);
-        for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
+        printf(" [L%d ", refList);
+        for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(refList)); iRefIndex++)
         {
-            printf("%d ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex) - pcSlice->getLastIDR());
+            printf("%d ", pcSlice->getRefPOC(RefPicList(refList), iRefIndex) - pcSlice->getLastIDR());
         }
 
         printf("]");

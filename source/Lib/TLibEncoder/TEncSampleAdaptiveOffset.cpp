@@ -94,20 +94,20 @@ inline Double xRoundIbdi(Int bitDepth, Double x)
 }
 
 /** process SAO for one partition
- * \param  *psQTPart, iPartIdx, dLambda
+ * \param  *psQTPart, partIdx, dLambda
  */
-Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, Double dLambda, Int yCbCr)
+Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double dLambda, Int yCbCr)
 {
     Int iTypeIdx;
     Int iNumTotalType = MAX_NUM_SAO_TYPE;
-    SAOQTPart*  pOnePart = &(psQTPart[iPartIdx]);
+    SAOQTPart*  pOnePart = &(psQTPart[partIdx]);
 
     Int64 iEstDist;
     Int iClassIdx;
     Int uiShift = 2 * DISTORTION_PRECISION_ADJUSTMENT((yCbCr == 0 ? g_bitDepthY : g_bitDepthC) - 8);
     UInt uiDepth = pOnePart->PartLevel;
 
-    m_iDistOrg[iPartIdx] =  0;
+    m_iDistOrg[partIdx] =  0;
 
     Double  bestRDCostTableBo = MAX_DOUBLE;
     Int     bestClassTableBo    = 0;
@@ -160,7 +160,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
 
         if (iTypeIdx >= 0)
         {
-            iEstDist = estSaoTypeDist(iPartIdx, iTypeIdx, uiShift, dLambda, currentDistortionTableBo, currentRdCostTableBo);
+            iEstDist = estSaoTypeDist(partIdx, iTypeIdx, uiShift, dLambda, currentDistortionTableBo, currentRdCostTableBo);
             if (iTypeIdx == SAO_BO)
             {
                 // Estimate Best Position
@@ -220,32 +220,32 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
                     saoLcuParamRdo.length = m_iNumClass[iTypeIdx];
                     for (iClassIdx = 0; iClassIdx < saoLcuParamRdo.length; iClassIdx++)
                     {
-                        saoLcuParamRdo.offset[iClassIdx] = (Int)m_iOffset[iPartIdx][iTypeIdx][iClassIdx + saoLcuParamRdo.subTypeIdx + 1];
+                        saoLcuParamRdo.offset[iClassIdx] = (Int)m_iOffset[partIdx][iTypeIdx][iClassIdx + saoLcuParamRdo.subTypeIdx + 1];
                     }
 
                     m_pcEntropyCoder->encodeSaoUnitInterleaving(yCbCr, 1, rx, ry,  &saoLcuParamRdo, 1,  1,  allowMergeLeft, allowMergeUp);
                 }
             }
 
-            m_iDist[iPartIdx][iTypeIdx] = iEstDist;
-            m_iRate[iPartIdx][iTypeIdx] = m_pcEntropyCoder->getNumberOfWrittenBits();
+            m_iDist[partIdx][iTypeIdx] = iEstDist;
+            m_iRate[partIdx][iTypeIdx] = m_pcEntropyCoder->getNumberOfWrittenBits();
 
-            m_dCost[iPartIdx][iTypeIdx] = (Double)((Double)m_iDist[iPartIdx][iTypeIdx] + dLambda * (Double)m_iRate[iPartIdx][iTypeIdx]);
+            m_dCost[partIdx][iTypeIdx] = (Double)((Double)m_iDist[partIdx][iTypeIdx] + dLambda * (Double)m_iRate[partIdx][iTypeIdx]);
 
-            if (m_dCost[iPartIdx][iTypeIdx] < m_dCostPartBest[iPartIdx])
+            if (m_dCost[partIdx][iTypeIdx] < m_dCostPartBest[partIdx])
             {
-                m_iDistOrg[iPartIdx] = 0;
-                m_dCostPartBest[iPartIdx] = m_dCost[iPartIdx][iTypeIdx];
-                m_iTypePartBest[iPartIdx] = iTypeIdx;
+                m_iDistOrg[partIdx] = 0;
+                m_dCostPartBest[partIdx] = m_dCost[partIdx][iTypeIdx];
+                m_iTypePartBest[partIdx] = iTypeIdx;
                 m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
             }
         }
         else
         {
-            if (m_iDistOrg[iPartIdx] < m_dCostPartBest[iPartIdx])
+            if (m_iDistOrg[partIdx] < m_dCostPartBest[partIdx])
             {
-                m_dCostPartBest[iPartIdx] = (Double)m_iDistOrg[iPartIdx] + m_pcEntropyCoder->getNumberOfWrittenBits() * dLambda;
-                m_iTypePartBest[iPartIdx] = -1;
+                m_dCostPartBest[partIdx] = (Double)m_iDistOrg[partIdx] + m_pcEntropyCoder->getNumberOfWrittenBits() * dLambda;
+                m_iTypePartBest[partIdx] = -1;
                 m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[pOnePart->PartLevel][CI_TEMP_BEST]);
             }
         }
@@ -253,10 +253,10 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
 
     pOnePart->bProcessed = true;
     pOnePart->bSplit     = false;
-    pOnePart->iMinDist   =        m_iTypePartBest[iPartIdx] >= 0 ? m_iDist[iPartIdx][m_iTypePartBest[iPartIdx]] : m_iDistOrg[iPartIdx];
-    pOnePart->iMinRate   = (Int)(m_iTypePartBest[iPartIdx] >= 0 ? m_iRate[iPartIdx][m_iTypePartBest[iPartIdx]] : 0);
+    pOnePart->iMinDist   =        m_iTypePartBest[partIdx] >= 0 ? m_iDist[partIdx][m_iTypePartBest[partIdx]] : m_iDistOrg[partIdx];
+    pOnePart->iMinRate   = (Int)(m_iTypePartBest[partIdx] >= 0 ? m_iRate[partIdx][m_iTypePartBest[partIdx]] : 0);
     pOnePart->dMinCost   = pOnePart->iMinDist + dLambda * pOnePart->iMinRate;
-    pOnePart->iBestType  = m_iTypePartBest[iPartIdx];
+    pOnePart->iBestType  = m_iTypePartBest[partIdx];
     if (pOnePart->iBestType != -1)
     {
         //     pOnePart->bEnableFlag =  1;
@@ -269,7 +269,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
         }
         for (Int i = 0; i < pOnePart->iLength; i++)
         {
-            pOnePart->iOffset[i] = (Int)m_iOffset[iPartIdx][pOnePart->iBestType][minIndex + i + 1];
+            pOnePart->iOffset[i] = (Int)m_iOffset[partIdx][pOnePart->iBestType][minIndex + i + 1];
         }
     }
     else
@@ -281,9 +281,9 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, 
 
 /** Run partition tree disable
  */
-Void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int iPartIdx)
+Void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int partIdx)
 {
-    SAOQTPart*  pOnePart = &(psQTPart[iPartIdx]);
+    SAOQTPart*  pOnePart = &(psQTPart[partIdx]);
 
     pOnePart->bSplit      = false;
     pOnePart->iLength     =  0;
@@ -299,16 +299,16 @@ Void TEncSampleAdaptiveOffset::disablePartTree(SAOQTPart *psQTPart, Int iPartIdx
 }
 
 /** Run quadtree decision function
- * \param  iPartIdx, pcPicOrg, pcPicDec, pcPicRest, &dCostFinal
+ * \param  partIdx, pcPicOrg, pcPicDec, pcPicRest, &dCostFinal
  */
-Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int iPartIdx, Double &dCostFinal, Int iMaxLevel, Double dLambda, Int yCbCr)
+Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &dCostFinal, Int iMaxLevel, Double dLambda, Int yCbCr)
 {
-    SAOQTPart*  pOnePart = &(psQTPart[iPartIdx]);
+    SAOQTPart*  pOnePart = &(psQTPart[partIdx]);
 
     UInt uiDepth = pOnePart->PartLevel;
     UInt uhNextDepth = uiDepth + 1;
 
-    if (iPartIdx == 0)
+    if (partIdx == 0)
     {
         dCostFinal = 0;
     }
@@ -316,7 +316,7 @@ Void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *psQTPart, Int iPar
     //SAO for this part
     if (!pOnePart->bProcessed)
     {
-        rdoSaoOnePart(psQTPart, iPartIdx, dLambda, yCbCr);
+        rdoSaoOnePart(psQTPart, partIdx, dLambda, yCbCr);
     }
 
     //SAO for sub 4 parts
@@ -890,17 +890,17 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsBlock(Pel* pRecStart, Pel* pOrgStart,
 }
 
 /** Calculate SAO statistics for current LCU
- * \param  iAddr,  iPartIdx,  iYCbCr
+ * \param  iAddr,  partIdx,  iYCbCr
  */
-Void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int iAddr, Int iPartIdx, Int iYCbCr)
+Void TEncSampleAdaptiveOffset::calcSaoStatsCu(Int iAddr, Int partIdx, Int iYCbCr)
 {
-    calcSaoStatsCuOrg(iAddr, iPartIdx, iYCbCr);
+    calcSaoStatsCuOrg(iAddr, partIdx, iYCbCr);
 }
 
 /** Calculate SAO statistics for current LCU without non-crossing slice
- * \param  iAddr,  iPartIdx,  iYCbCr
+ * \param  iAddr,  partIdx,  iYCbCr
  */
-Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr)
+Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYCbCr)
 {
     Int x, y;
     TComDataCU *pTmpCu = m_pcPic->getCU(iAddr);
@@ -962,8 +962,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
             numSkipLine = iIsChroma ? 1 : 3;
             numSkipLineRight = iIsChroma ? 2 : 4;
         }
-        iStats = m_iOffsetOrg[iPartIdx][SAO_BO];
-        iCount = m_iCount[iPartIdx][SAO_BO];
+        iStats = m_iOffsetOrg[partIdx][SAO_BO];
+        iCount = m_iCount[partIdx][SAO_BO];
 
         pOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
         pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
@@ -1003,8 +1003,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
                 numSkipLine = iIsChroma ? 1 : 3;
                 numSkipLineRight = iIsChroma ? 3 : 5;
             }
-            iStats = m_iOffsetOrg[iPartIdx][SAO_EO_0];
-            iCount = m_iCount[iPartIdx][SAO_EO_0];
+            iStats = m_iOffsetOrg[partIdx][SAO_EO_0];
+            iCount = m_iCount[partIdx][SAO_EO_0];
 
             pOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
@@ -1036,8 +1036,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
                 numSkipLine = iIsChroma ? 2 : 4;
                 numSkipLineRight = iIsChroma ? 2 : 4;
             }
-            iStats = m_iOffsetOrg[iPartIdx][SAO_EO_1];
-            iCount = m_iCount[iPartIdx][SAO_EO_1];
+            iStats = m_iOffsetOrg[partIdx][SAO_EO_1];
+            iCount = m_iCount[partIdx][SAO_EO_1];
 
             pOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
@@ -1079,8 +1079,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
                 numSkipLine = iIsChroma ? 2 : 4;
                 numSkipLineRight = iIsChroma ? 3 : 5;
             }
-            iStats = m_iOffsetOrg[iPartIdx][SAO_EO_2];
-            iCount = m_iCount[iPartIdx][SAO_EO_2];
+            iStats = m_iOffsetOrg[partIdx][SAO_EO_2];
+            iCount = m_iCount[partIdx][SAO_EO_2];
 
             pOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
@@ -1129,8 +1129,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iY
                 numSkipLine = iIsChroma ? 2 : 4;
                 numSkipLineRight = iIsChroma ? 3 : 5;
             }
-            iStats = m_iOffsetOrg[iPartIdx][SAO_EO_3];
-            iCount = m_iCount[iPartIdx][SAO_EO_3];
+            iStats = m_iOffsetOrg[partIdx][SAO_EO_3];
+            iCount = m_iCount[partIdx][SAO_EO_3];
 
             pOrg = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
@@ -1488,7 +1488,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
  */
 Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int iYCbCr)
 {
-    Int iLevelIdx, iPartIdx, iTypeIdx, iClassIdx;
+    Int iLevelIdx, partIdx, iTypeIdx, iClassIdx;
     Int i;
     Int iNumTotalType = MAX_NUM_SAO_TYPE;
     Int LcuIdxX;
@@ -1502,28 +1502,28 @@ Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int iYCbCr)
 
     if (m_uiMaxSplitLevel == 0)
     {
-        iPartIdx = 0;
-        pOnePart = &(psQTPart[iPartIdx]);
+        partIdx = 0;
+        pOnePart = &(psQTPart[partIdx]);
         for (LcuIdxY = pOnePart->StartCUY; LcuIdxY <= pOnePart->EndCUY; LcuIdxY++)
         {
             for (LcuIdxX = pOnePart->StartCUX; LcuIdxX <= pOnePart->EndCUX; LcuIdxX++)
             {
                 iAddr = LcuIdxY * iFrameWidthInCU + LcuIdxX;
-                calcSaoStatsCu(iAddr, iPartIdx, iYCbCr);
+                calcSaoStatsCu(iAddr, partIdx, iYCbCr);
             }
         }
     }
     else
     {
-        for (iPartIdx = m_aiNumCulPartsLevel[m_uiMaxSplitLevel - 1]; iPartIdx < m_aiNumCulPartsLevel[m_uiMaxSplitLevel]; iPartIdx++)
+        for (partIdx = m_aiNumCulPartsLevel[m_uiMaxSplitLevel - 1]; partIdx < m_aiNumCulPartsLevel[m_uiMaxSplitLevel]; partIdx++)
         {
-            pOnePart = &(psQTPart[iPartIdx]);
+            pOnePart = &(psQTPart[partIdx]);
             for (LcuIdxY = pOnePart->StartCUY; LcuIdxY <= pOnePart->EndCUY; LcuIdxY++)
             {
                 for (LcuIdxX = pOnePart->StartCUX; LcuIdxX <= pOnePart->EndCUX; LcuIdxX++)
                 {
                     iAddr = LcuIdxY * iFrameWidthInCU + LcuIdxX;
-                    calcSaoStatsCu(iAddr, iPartIdx, iYCbCr);
+                    calcSaoStatsCu(iAddr, partIdx, iYCbCr);
                 }
             }
         }
@@ -1533,9 +1533,9 @@ Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int iYCbCr)
             iPartStart = (iLevelIdx > 0) ? m_aiNumCulPartsLevel[iLevelIdx - 1] : 0;
             iPartEnd   = m_aiNumCulPartsLevel[iLevelIdx];
 
-            for (iPartIdx = iPartStart; iPartIdx < iPartEnd; iPartIdx++)
+            for (partIdx = iPartStart; partIdx < iPartEnd; partIdx++)
             {
-                pOnePart = &(psQTPart[iPartIdx]);
+                pOnePart = &(psQTPart[partIdx]);
                 for (i = 0; i < NUM_DOWN_PART; i++)
                 {
                     iDownPartIdx = pOnePart->DownPartsIdx[i];
@@ -1543,8 +1543,8 @@ Void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, Int iYCbCr)
                     {
                         for (iClassIdx = 0; iClassIdx < (iTypeIdx < SAO_BO ? m_iNumClass[iTypeIdx] : SAO_MAX_BO_CLASSES) + 1; iClassIdx++)
                         {
-                            m_iOffsetOrg[iPartIdx][iTypeIdx][iClassIdx] += m_iOffsetOrg[iDownPartIdx][iTypeIdx][iClassIdx];
-                            m_iCount[iPartIdx][iTypeIdx][iClassIdx]    += m_iCount[iDownPartIdx][iTypeIdx][iClassIdx];
+                            m_iOffsetOrg[partIdx][iTypeIdx][iClassIdx] += m_iOffsetOrg[iDownPartIdx][iTypeIdx][iClassIdx];
+                            m_iCount[partIdx][iTypeIdx][iClassIdx]    += m_iCount[iDownPartIdx][iTypeIdx][iClassIdx];
                         }
                     }
                 }

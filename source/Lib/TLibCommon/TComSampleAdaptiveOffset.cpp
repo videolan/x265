@@ -358,13 +358,13 @@ Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *pcSaoParam)
 Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel, Int iPartRow, Int iPartCol, Int iParentPartIdx, Int StartCUX, Int EndCUX, Int StartCUY, Int EndCUY, Int iYCbCr)
 {
     Int j;
-    Int iPartIdx = convertLevelRowCol2Idx(iPartLevel, iPartRow, iPartCol);
+    Int partIdx = convertLevelRowCol2Idx(iPartLevel, iPartRow, iPartCol);
 
     SAOQTPart* pSaoPart;
 
-    pSaoPart = &(pcSaoParam->psSaoPart[iYCbCr][iPartIdx]);
+    pSaoPart = &(pcSaoParam->psSaoPart[iYCbCr][partIdx]);
 
-    pSaoPart->PartIdx   = iPartIdx;
+    pSaoPart->PartIdx   = partIdx;
     pSaoPart->PartLevel = iPartLevel;
     pSaoPart->PartRow   = iPartRow;
     pSaoPart->PartCol   = iPartCol;
@@ -413,7 +413,7 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel
 
         pSaoPart->DownPartsIdx[0] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, iPartIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
 
         DownStartCUX = StartCUX + NumCULeft;
         DownEndCUX   = EndCUX;
@@ -424,7 +424,7 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel
 
         pSaoPart->DownPartsIdx[1] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, iPartIdx,  DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx,  DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
 
         DownStartCUX = StartCUX;
         DownEndCUX   = DownStartCUX + NumCULeft - 1;
@@ -435,7 +435,7 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel
 
         pSaoPart->DownPartsIdx[2] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, iPartIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
 
         DownStartCUX = StartCUX + NumCULeft;
         DownEndCUX   = EndCUX;
@@ -446,7 +446,7 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel
 
         pSaoPart->DownPartsIdx[3] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, iPartIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
     }
     else
     {
@@ -1389,58 +1389,58 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
     {
         for (UInt uiCUAddr = 0; uiCUAddr < pcPic->getNumCUsInFrame(); uiCUAddr++)
         {
-            TComDataCU* pcCU = pcPic->getCU(uiCUAddr);
+            TComDataCU* cu = pcPic->getCU(uiCUAddr);
 
-            xPCMCURestoration(pcCU, 0, 0);
+            xPCMCURestoration(cu, 0, 0);
         }
     }
 }
 
 /** PCM CU restoration.
- * \param pcCU pointer to current CU
+ * \param cu pointer to current CU
  * \param uiAbsPartIdx part index
  * \param uiDepth CU depth
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth)
+Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth)
 {
-    TComPic* pcPic     = pcCU->getPic();
+    TComPic* pcPic     = cu->getPic();
     UInt uiCurNumParts = pcPic->getNumPartInCU() >> (uiDepth << 1);
     UInt uiQNumParts   = uiCurNumParts >> 2;
 
     // go to sub-CU
-    if (pcCU->getDepth(uiAbsZorderIdx) > uiDepth)
+    if (cu->getDepth(uiAbsZorderIdx) > uiDepth)
     {
         for (UInt uiPartIdx = 0; uiPartIdx < 4; uiPartIdx++, uiAbsZorderIdx += uiQNumParts)
         {
-            UInt uiLPelX   = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
-            UInt uiTPelY   = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
-            if ((uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples()))
-                xPCMCURestoration(pcCU, uiAbsZorderIdx, uiDepth + 1);
+            UInt uiLPelX   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
+            UInt uiTPelY   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
+            if ((uiLPelX < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
+                xPCMCURestoration(cu, uiAbsZorderIdx, uiDepth + 1);
         }
 
         return;
     }
 
     // restore PCM samples
-    if ((pcCU->getIPCMFlag(uiAbsZorderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || pcCU->isLosslessCoded(uiAbsZorderIdx))
+    if ((cu->getIPCMFlag(uiAbsZorderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(uiAbsZorderIdx))
     {
-        xPCMSampleRestoration(pcCU, uiAbsZorderIdx, uiDepth, TEXT_LUMA);
-        xPCMSampleRestoration(pcCU, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_U);
-        xPCMSampleRestoration(pcCU, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_V);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_LUMA);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_U);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_V);
     }
 }
 
 /** PCM sample restoration.
- * \param pcCU pointer to current CU
+ * \param cu pointer to current CU
  * \param uiAbsPartIdx part index
  * \param uiDepth CU depth
  * \param ttText texture component type
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText)
+Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText)
 {
-    TComPicYuv* pcPicYuvRec = pcCU->getPic()->getPicYuvRec();
+    TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* piSrc;
     Pel* piPcm;
     UInt uiStride;
@@ -1448,49 +1448,49 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* pcCU, UInt uiAb
     UInt uiHeight;
     UInt uiPcmLeftShiftBit;
     UInt uiX, uiY;
-    UInt uiMinCoeffSize = pcCU->getPic()->getMinCUWidth() * pcCU->getPic()->getMinCUHeight();
+    UInt uiMinCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
     UInt uiLumaOffset   = uiMinCoeffSize * uiAbsZorderIdx;
     UInt uiChromaOffset = uiLumaOffset >> 2;
 
     if (ttText == TEXT_LUMA)
     {
-        piSrc = pcPicYuvRec->getLumaAddr(pcCU->getAddr(), uiAbsZorderIdx);
-        piPcm = pcCU->getPCMSampleY() + uiLumaOffset;
+        piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), uiAbsZorderIdx);
+        piPcm = cu->getPCMSampleY() + uiLumaOffset;
         uiStride  = pcPicYuvRec->getStride();
         uiWidth  = (g_maxCUWidth >> uiDepth);
         uiHeight = (g_maxCUHeight >> uiDepth);
-        if (pcCU->isLosslessCoded(uiAbsZorderIdx) && !pcCU->getIPCMFlag(uiAbsZorderIdx))
+        if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;
         }
         else
         {
-            uiPcmLeftShiftBit = g_bitDepthY - pcCU->getSlice()->getSPS()->getPCMBitDepthLuma();
+            uiPcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
         }
     }
     else
     {
         if (ttText == TEXT_CHROMA_U)
         {
-            piSrc = pcPicYuvRec->getCbAddr(pcCU->getAddr(), uiAbsZorderIdx);
-            piPcm = pcCU->getPCMSampleCb() + uiChromaOffset;
+            piSrc = pcPicYuvRec->getCbAddr(cu->getAddr(), uiAbsZorderIdx);
+            piPcm = cu->getPCMSampleCb() + uiChromaOffset;
         }
         else
         {
-            piSrc = pcPicYuvRec->getCrAddr(pcCU->getAddr(), uiAbsZorderIdx);
-            piPcm = pcCU->getPCMSampleCr() + uiChromaOffset;
+            piSrc = pcPicYuvRec->getCrAddr(cu->getAddr(), uiAbsZorderIdx);
+            piPcm = cu->getPCMSampleCr() + uiChromaOffset;
         }
 
         uiStride = pcPicYuvRec->getCStride();
         uiWidth  = ((g_maxCUWidth >> uiDepth) / 2);
         uiHeight = ((g_maxCUWidth >> uiDepth) / 2);
-        if (pcCU->isLosslessCoded(uiAbsZorderIdx) && !pcCU->getIPCMFlag(uiAbsZorderIdx))
+        if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;
         }
         else
         {
-            uiPcmLeftShiftBit = g_bitDepthC - pcCU->getSlice()->getSPS()->getPCMBitDepthChroma();
+            uiPcmLeftShiftBit = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
         }
     }
 

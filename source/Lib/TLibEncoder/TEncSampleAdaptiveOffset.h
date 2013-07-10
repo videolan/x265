@@ -87,14 +87,14 @@ public:
     Void resetStats();
     Void SAOProcess(SAOParam *pcSaoParam, Double dLambda, Double dLambdaChroma, Int depth);
 
-    Void runQuadTreeDecision(SAOQTPart *psQTPart, Int iPartIdx, Double &dCostFinal, Int iMaxLevel, Double dLambda, Int yCbCr);
-    Void rdoSaoOnePart(SAOQTPart *psQTPart, Int iPartIdx, Double dLambda, Int yCbCr);
+    Void runQuadTreeDecision(SAOQTPart *psQTPart, Int partIdx, Double &dCostFinal, Int iMaxLevel, Double dLambda, Int yCbCr);
+    Void rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, Double dLambda, Int yCbCr);
 
-    Void disablePartTree(SAOQTPart *psQTPart, Int iPartIdx);
+    Void disablePartTree(SAOQTPart *psQTPart, Int partIdx);
     Void getSaoStats(SAOQTPart *psQTPart, Int iYCbCr);
-    Void calcSaoStatsCu(Int iAddr, Int iPartIdx, Int iYCbCr);
+    Void calcSaoStatsCu(Int iAddr, Int partIdx, Int iYCbCr);
     Void calcSaoStatsBlock(Pel* pRecStart, Pel* pOrgStart, Int stride, Int64** ppStats, Int64** ppCount, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
-    Void calcSaoStatsCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr);
+    Void calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYCbCr);
     Void calcSaoStatsCu_BeforeDblk(TComPic* pcPic);
     Void destroyEncBuffer();
     Void createEncBuffer();

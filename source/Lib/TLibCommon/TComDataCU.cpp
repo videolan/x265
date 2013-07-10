@@ -554,25 +554,25 @@ Void TComDataCU::initEstData(UInt uiDepth, Int qp)
 }
 
 // initialize Sub partition
-Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Int qp)
+Void TComDataCU::initSubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt uiDepth, Int qp)
 {
     assert(uiPartUnitIdx < 4);
 
-    UInt uiPartOffset = (pcCU->getTotalNumPart() >> 2) * uiPartUnitIdx;
+    UInt uiPartOffset = (cu->getTotalNumPart() >> 2) * uiPartUnitIdx;
 
-    m_pcPic              = pcCU->getPic();
+    m_pcPic              = cu->getPic();
     m_pcSlice            = m_pcPic->getSlice();
-    m_uiCUAddr           = pcCU->getAddr();
-    m_uiAbsIdxInLCU      = pcCU->getZorderIdxInCU() + uiPartOffset;
+    m_uiCUAddr           = cu->getAddr();
+    m_uiAbsIdxInLCU      = cu->getZorderIdxInCU() + uiPartOffset;
 
-    m_uiCUPelX           = pcCU->getCUPelX() + (g_maxCUWidth >> uiDepth) * (uiPartUnitIdx &  1);
-    m_uiCUPelY           = pcCU->getCUPelY() + (g_maxCUHeight >> uiDepth) * (uiPartUnitIdx >> 1);
+    m_uiCUPelX           = cu->getCUPelX() + (g_maxCUWidth >> uiDepth) * (uiPartUnitIdx &  1);
+    m_uiCUPelY           = cu->getCUPelY() + (g_maxCUHeight >> uiDepth) * (uiPartUnitIdx >> 1);
 
     m_dTotalCost         = MAX_INT64;
     m_uiTotalDistortion  = 0;
     m_uiTotalBits        = 0;
     m_uiTotalBins        = 0;
-    m_uiNumPartition     = pcCU->getTotalNumPart() >> 2;
+    m_uiNumPartition     = cu->getTotalNumPart() >> 2;
 
     Int iSizeInUchar = sizeof(UChar) * m_uiNumPartition;
     Int iSizeInBool  = sizeof(Bool) * m_uiNumPartition;
@@ -625,13 +625,13 @@ Void TComDataCU::initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, I
     m_acCUMvField[0].clearMvField();
     m_acCUMvField[1].clearMvField();
 
-    m_pcCULeft        = pcCU->getCULeft();
-    m_pcCUAbove       = pcCU->getCUAbove();
-    m_pcCUAboveLeft   = pcCU->getCUAboveLeft();
-    m_pcCUAboveRight  = pcCU->getCUAboveRight();
+    m_pcCULeft        = cu->getCULeft();
+    m_pcCUAbove       = cu->getCUAbove();
+    m_pcCUAboveLeft   = cu->getCUAboveLeft();
+    m_pcCUAboveRight  = cu->getCUAboveRight();
 
-    m_apcCUColocated[0] = pcCU->getCUColocated(REF_PIC_LIST_0);
-    m_apcCUColocated[1] = pcCU->getCUColocated(REF_PIC_LIST_1);
+    m_apcCUColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
+    m_apcCUColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 }
 
 Void TComDataCU::setOutsideCUPart(UInt uiAbsPartIdx, UInt uiDepth)
@@ -651,199 +651,199 @@ Void TComDataCU::setOutsideCUPart(UInt uiAbsPartIdx, UInt uiDepth)
 // Copy
 // --------------------------------------------------------------------------------------------------------------------
 
-Void TComDataCU::copySubCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
+Void TComDataCU::copySubCU(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth)
 {
     UInt uiPart = uiAbsPartIdx;
 
-    m_pcPic              = pcCU->getPic();
-    m_pcSlice            = pcCU->getSlice();
-    m_uiCUAddr           = pcCU->getAddr();
+    m_pcPic              = cu->getPic();
+    m_pcSlice            = cu->getSlice();
+    m_uiCUAddr           = cu->getAddr();
     m_uiAbsIdxInLCU      = uiAbsPartIdx;
 
-    m_uiCUPelX           = pcCU->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]];
-    m_uiCUPelY           = pcCU->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]];
+    m_uiCUPelX           = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsPartIdx]];
+    m_uiCUPelY           = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsPartIdx]];
 
     UInt uiWidth         = g_maxCUWidth  >> uiDepth;
     UInt uiHeight        = g_maxCUHeight >> uiDepth;
 
-    m_skipFlag = pcCU->getSkipFlag()          + uiPart;
+    m_skipFlag = cu->getSkipFlag()          + uiPart;
 
-    m_phQP = pcCU->getQP()                    + uiPart;
-    m_pePartSize = pcCU->getPartitionSize() + uiPart;
-    m_pePredMode = pcCU->getPredictionMode()  + uiPart;
-    m_CUTransquantBypass  = pcCU->getCUTransquantBypass() + uiPart;
+    m_phQP = cu->getQP()                    + uiPart;
+    m_pePartSize = cu->getPartitionSize() + uiPart;
+    m_pePredMode = cu->getPredictionMode()  + uiPart;
+    m_CUTransquantBypass  = cu->getCUTransquantBypass() + uiPart;
 
-    m_pbMergeFlag         = pcCU->getMergeFlag()        + uiPart;
-    m_puhMergeIndex       = pcCU->getMergeIndex()       + uiPart;
+    m_pbMergeFlag         = cu->getMergeFlag()        + uiPart;
+    m_puhMergeIndex       = cu->getMergeIndex()       + uiPart;
 
-    m_puhLumaIntraDir     = pcCU->getLumaIntraDir()     + uiPart;
-    m_puhChromaIntraDir   = pcCU->getChromaIntraDir()   + uiPart;
-    m_puhInterDir         = pcCU->getInterDir()         + uiPart;
-    m_puhTrIdx            = pcCU->getTransformIdx()     + uiPart;
-    m_puhTransformSkip[0] = pcCU->getTransformSkip(TEXT_LUMA)     + uiPart;
-    m_puhTransformSkip[1] = pcCU->getTransformSkip(TEXT_CHROMA_U) + uiPart;
-    m_puhTransformSkip[2] = pcCU->getTransformSkip(TEXT_CHROMA_V) + uiPart;
+    m_puhLumaIntraDir     = cu->getLumaIntraDir()     + uiPart;
+    m_puhChromaIntraDir   = cu->getChromaIntraDir()   + uiPart;
+    m_puhInterDir         = cu->getInterDir()         + uiPart;
+    m_puhTrIdx            = cu->getTransformIdx()     + uiPart;
+    m_puhTransformSkip[0] = cu->getTransformSkip(TEXT_LUMA)     + uiPart;
+    m_puhTransformSkip[1] = cu->getTransformSkip(TEXT_CHROMA_U) + uiPart;
+    m_puhTransformSkip[2] = cu->getTransformSkip(TEXT_CHROMA_V) + uiPart;
 
-    m_puhCbf[0] = pcCU->getCbf(TEXT_LUMA)            + uiPart;
-    m_puhCbf[1] = pcCU->getCbf(TEXT_CHROMA_U)        + uiPart;
-    m_puhCbf[2] = pcCU->getCbf(TEXT_CHROMA_V)        + uiPart;
+    m_puhCbf[0] = cu->getCbf(TEXT_LUMA)            + uiPart;
+    m_puhCbf[1] = cu->getCbf(TEXT_CHROMA_U)        + uiPart;
+    m_puhCbf[2] = cu->getCbf(TEXT_CHROMA_V)        + uiPart;
 
-    m_puhDepth = pcCU->getDepth()                     + uiPart;
-    m_puhWidth = pcCU->getWidth()                     + uiPart;
-    m_puhHeight = pcCU->getHeight()                   + uiPart;
+    m_puhDepth = cu->getDepth()                     + uiPart;
+    m_puhWidth = cu->getWidth()                     + uiPart;
+    m_puhHeight = cu->getHeight()                   + uiPart;
 
-    m_apiMVPIdx[0] = pcCU->getMVPIdx(REF_PIC_LIST_0)  + uiPart;
-    m_apiMVPIdx[1] = pcCU->getMVPIdx(REF_PIC_LIST_1)  + uiPart;
-    m_apiMVPNum[0] = pcCU->getMVPNum(REF_PIC_LIST_0)  + uiPart;
-    m_apiMVPNum[1] = pcCU->getMVPNum(REF_PIC_LIST_1)  + uiPart;
+    m_apiMVPIdx[0] = cu->getMVPIdx(REF_PIC_LIST_0)  + uiPart;
+    m_apiMVPIdx[1] = cu->getMVPIdx(REF_PIC_LIST_1)  + uiPart;
+    m_apiMVPNum[0] = cu->getMVPNum(REF_PIC_LIST_0)  + uiPart;
+    m_apiMVPNum[1] = cu->getMVPNum(REF_PIC_LIST_1)  + uiPart;
 
-    m_pbIPCMFlag         = pcCU->getIPCMFlag()        + uiPart;
+    m_pbIPCMFlag         = cu->getIPCMFlag()        + uiPart;
 
-    m_pcCUAboveLeft      = pcCU->getCUAboveLeft();
-    m_pcCUAboveRight     = pcCU->getCUAboveRight();
-    m_pcCUAbove          = pcCU->getCUAbove();
-    m_pcCULeft           = pcCU->getCULeft();
+    m_pcCUAboveLeft      = cu->getCUAboveLeft();
+    m_pcCUAboveRight     = cu->getCUAboveRight();
+    m_pcCUAbove          = cu->getCUAbove();
+    m_pcCULeft           = cu->getCULeft();
 
-    m_apcCUColocated[0] = pcCU->getCUColocated(REF_PIC_LIST_0);
-    m_apcCUColocated[1] = pcCU->getCUColocated(REF_PIC_LIST_1);
+    m_apcCUColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
+    m_apcCUColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 
     UInt uiTmp = uiWidth * uiHeight;
-    UInt uiMaxCuWidth = pcCU->getSlice()->getSPS()->getMaxCUWidth();
-    UInt uiMaxCuHeight = pcCU->getSlice()->getSPS()->getMaxCUHeight();
+    UInt uiMaxCuWidth = cu->getSlice()->getSPS()->getMaxCUWidth();
+    UInt uiMaxCuHeight = cu->getSlice()->getSPS()->getMaxCUHeight();
 
-    UInt uiCoffOffset = uiMaxCuWidth * uiMaxCuHeight * uiAbsPartIdx / pcCU->getPic()->getNumPartInCU();
+    UInt uiCoffOffset = uiMaxCuWidth * uiMaxCuHeight * uiAbsPartIdx / cu->getPic()->getNumPartInCU();
 
-    m_pcTrCoeffY = pcCU->getCoeffY() + uiCoffOffset;
-    m_pcArlCoeffY = pcCU->getArlCoeffY() + uiCoffOffset;
-    m_pcIPCMSampleY = pcCU->getPCMSampleY() + uiCoffOffset;
+    m_pcTrCoeffY = cu->getCoeffY() + uiCoffOffset;
+    m_pcArlCoeffY = cu->getArlCoeffY() + uiCoffOffset;
+    m_pcIPCMSampleY = cu->getPCMSampleY() + uiCoffOffset;
 
     uiTmp >>= 2;
     uiCoffOffset >>= 2;
-    m_pcTrCoeffCb = pcCU->getCoeffCb() + uiCoffOffset;
-    m_pcTrCoeffCr = pcCU->getCoeffCr() + uiCoffOffset;
-    m_pcArlCoeffCb = pcCU->getArlCoeffCb() + uiCoffOffset;
-    m_pcArlCoeffCr = pcCU->getArlCoeffCr() + uiCoffOffset;
-    m_pcIPCMSampleCb = pcCU->getPCMSampleCb() + uiCoffOffset;
-    m_pcIPCMSampleCr = pcCU->getPCMSampleCr() + uiCoffOffset;
+    m_pcTrCoeffCb = cu->getCoeffCb() + uiCoffOffset;
+    m_pcTrCoeffCr = cu->getCoeffCr() + uiCoffOffset;
+    m_pcArlCoeffCb = cu->getArlCoeffCb() + uiCoffOffset;
+    m_pcArlCoeffCr = cu->getArlCoeffCr() + uiCoffOffset;
+    m_pcIPCMSampleCb = cu->getPCMSampleCb() + uiCoffOffset;
+    m_pcIPCMSampleCr = cu->getPCMSampleCr() + uiCoffOffset;
 
-    m_acCUMvField[0].linkToWithOffset(pcCU->getCUMvField(REF_PIC_LIST_0), uiPart);
-    m_acCUMvField[1].linkToWithOffset(pcCU->getCUMvField(REF_PIC_LIST_1), uiPart);
+    m_acCUMvField[0].linkToWithOffset(cu->getCUMvField(REF_PIC_LIST_0), uiPart);
+    m_acCUMvField[1].linkToWithOffset(cu->getCUMvField(REF_PIC_LIST_1), uiPart);
 }
 
 // Copy inter prediction info from the biggest CU
-Void TComDataCU::copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList)
+Void TComDataCU::copyInterPredInfoFrom(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList picList)
 {
-    m_pcPic              = pcCU->getPic();
-    m_pcSlice            = pcCU->getSlice();
-    m_uiCUAddr           = pcCU->getAddr();
+    m_pcPic              = cu->getPic();
+    m_pcSlice            = cu->getSlice();
+    m_uiCUAddr           = cu->getAddr();
     m_uiAbsIdxInLCU      = uiAbsPartIdx;
 
     Int iRastPartIdx     = g_zscanToRaster[uiAbsPartIdx];
-    m_uiCUPelX           = pcCU->getCUPelX() + m_pcPic->getMinCUWidth() * (iRastPartIdx % m_pcPic->getNumPartInWidth());
-    m_uiCUPelY           = pcCU->getCUPelY() + m_pcPic->getMinCUHeight() * (iRastPartIdx / m_pcPic->getNumPartInWidth());
+    m_uiCUPelX           = cu->getCUPelX() + m_pcPic->getMinCUWidth() * (iRastPartIdx % m_pcPic->getNumPartInWidth());
+    m_uiCUPelY           = cu->getCUPelY() + m_pcPic->getMinCUHeight() * (iRastPartIdx / m_pcPic->getNumPartInWidth());
 
-    m_pcCUAboveLeft      = pcCU->getCUAboveLeft();
-    m_pcCUAboveRight     = pcCU->getCUAboveRight();
-    m_pcCUAbove          = pcCU->getCUAbove();
-    m_pcCULeft           = pcCU->getCULeft();
+    m_pcCUAboveLeft      = cu->getCUAboveLeft();
+    m_pcCUAboveRight     = cu->getCUAboveRight();
+    m_pcCUAbove          = cu->getCUAbove();
+    m_pcCULeft           = cu->getCULeft();
 
-    m_apcCUColocated[0]  = pcCU->getCUColocated(REF_PIC_LIST_0);
-    m_apcCUColocated[1]  = pcCU->getCUColocated(REF_PIC_LIST_1);
+    m_apcCUColocated[0]  = cu->getCUColocated(REF_PIC_LIST_0);
+    m_apcCUColocated[1]  = cu->getCUColocated(REF_PIC_LIST_1);
 
-    m_skipFlag           = pcCU->getSkipFlag()             + uiAbsPartIdx;
+    m_skipFlag           = cu->getSkipFlag()             + uiAbsPartIdx;
 
-    m_pePartSize         = pcCU->getPartitionSize()        + uiAbsPartIdx;
-    m_pePredMode         = pcCU->getPredictionMode()        + uiAbsPartIdx;
-    m_CUTransquantBypass = pcCU->getCUTransquantBypass()    + uiAbsPartIdx;
-    m_puhInterDir        = pcCU->getInterDir()        + uiAbsPartIdx;
+    m_pePartSize         = cu->getPartitionSize()        + uiAbsPartIdx;
+    m_pePredMode         = cu->getPredictionMode()        + uiAbsPartIdx;
+    m_CUTransquantBypass = cu->getCUTransquantBypass()    + uiAbsPartIdx;
+    m_puhInterDir        = cu->getInterDir()        + uiAbsPartIdx;
 
-    m_puhDepth           = pcCU->getDepth()                + uiAbsPartIdx;
-    m_puhWidth           = pcCU->getWidth()                + uiAbsPartIdx;
-    m_puhHeight          = pcCU->getHeight()                + uiAbsPartIdx;
+    m_puhDepth           = cu->getDepth()                + uiAbsPartIdx;
+    m_puhWidth           = cu->getWidth()                + uiAbsPartIdx;
+    m_puhHeight          = cu->getHeight()                + uiAbsPartIdx;
 
-    m_pbMergeFlag        = pcCU->getMergeFlag()             + uiAbsPartIdx;
-    m_puhMergeIndex      = pcCU->getMergeIndex()            + uiAbsPartIdx;
+    m_pbMergeFlag        = cu->getMergeFlag()             + uiAbsPartIdx;
+    m_puhMergeIndex      = cu->getMergeIndex()            + uiAbsPartIdx;
 
-    m_apiMVPIdx[eRefPicList] = pcCU->getMVPIdx(eRefPicList) + uiAbsPartIdx;
-    m_apiMVPNum[eRefPicList] = pcCU->getMVPNum(eRefPicList) + uiAbsPartIdx;
+    m_apiMVPIdx[picList] = cu->getMVPIdx(picList) + uiAbsPartIdx;
+    m_apiMVPNum[picList] = cu->getMVPNum(picList) + uiAbsPartIdx;
 
-    m_acCUMvField[eRefPicList].linkToWithOffset(pcCU->getCUMvField(eRefPicList), uiAbsPartIdx);
+    m_acCUMvField[picList].linkToWithOffset(cu->getCUMvField(picList), uiAbsPartIdx);
 }
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis)
+Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis)
 {
     assert(uiPartUnitIdx < 4);
     if (isRDObasedAnalysis)
-        m_dTotalCost         += pcCU->getTotalCost();
+        m_dTotalCost         += cu->getTotalCost();
 
-    m_uiTotalDistortion  += pcCU->getTotalDistortion();
-    m_uiTotalBits        += pcCU->getTotalBits();
+    m_uiTotalDistortion  += cu->getTotalDistortion();
+    m_uiTotalBits        += cu->getTotalBits();
 
-    UInt uiOffset         = pcCU->getTotalNumPart() * uiPartUnitIdx;
+    UInt uiOffset         = cu->getTotalNumPart() * uiPartUnitIdx;
 
-    UInt uiNumPartition = pcCU->getTotalNumPart();
+    UInt uiNumPartition = cu->getTotalNumPart();
     Int iSizeInUchar  = sizeof(UChar) * uiNumPartition;
     Int iSizeInBool   = sizeof(Bool) * uiNumPartition;
 
     Int sizeInChar  = sizeof(Char) * uiNumPartition;
-    memcpy(m_skipFlag   + uiOffset, pcCU->getSkipFlag(),       sizeof(*m_skipFlag)   * uiNumPartition);
-    memcpy(m_phQP       + uiOffset, pcCU->getQP(),             sizeInChar);
-    memcpy(m_pePartSize + uiOffset, pcCU->getPartitionSize(),  sizeof(*m_pePartSize) * uiNumPartition);
-    memcpy(m_pePredMode + uiOffset, pcCU->getPredictionMode(), sizeof(*m_pePredMode) * uiNumPartition);
-    memcpy(m_CUTransquantBypass + uiOffset, pcCU->getCUTransquantBypass(), sizeof(*m_CUTransquantBypass) * uiNumPartition);
-    memcpy(m_pbMergeFlag         + uiOffset, pcCU->getMergeFlag(),         iSizeInBool);
-    memcpy(m_puhMergeIndex       + uiOffset, pcCU->getMergeIndex(),        iSizeInUchar);
-    memcpy(m_puhLumaIntraDir     + uiOffset, pcCU->getLumaIntraDir(),      iSizeInUchar);
-    memcpy(m_puhChromaIntraDir   + uiOffset, pcCU->getChromaIntraDir(),    iSizeInUchar);
-    memcpy(m_puhInterDir         + uiOffset, pcCU->getInterDir(),          iSizeInUchar);
-    memcpy(m_puhTrIdx            + uiOffset, pcCU->getTransformIdx(),      iSizeInUchar);
-    memcpy(m_puhTransformSkip[0] + uiOffset, pcCU->getTransformSkip(TEXT_LUMA),     iSizeInUchar);
-    memcpy(m_puhTransformSkip[1] + uiOffset, pcCU->getTransformSkip(TEXT_CHROMA_U), iSizeInUchar);
-    memcpy(m_puhTransformSkip[2] + uiOffset, pcCU->getTransformSkip(TEXT_CHROMA_V), iSizeInUchar);
+    memcpy(m_skipFlag   + uiOffset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * uiNumPartition);
+    memcpy(m_phQP       + uiOffset, cu->getQP(),             sizeInChar);
+    memcpy(m_pePartSize + uiOffset, cu->getPartitionSize(),  sizeof(*m_pePartSize) * uiNumPartition);
+    memcpy(m_pePredMode + uiOffset, cu->getPredictionMode(), sizeof(*m_pePredMode) * uiNumPartition);
+    memcpy(m_CUTransquantBypass + uiOffset, cu->getCUTransquantBypass(), sizeof(*m_CUTransquantBypass) * uiNumPartition);
+    memcpy(m_pbMergeFlag         + uiOffset, cu->getMergeFlag(),         iSizeInBool);
+    memcpy(m_puhMergeIndex       + uiOffset, cu->getMergeIndex(),        iSizeInUchar);
+    memcpy(m_puhLumaIntraDir     + uiOffset, cu->getLumaIntraDir(),      iSizeInUchar);
+    memcpy(m_puhChromaIntraDir   + uiOffset, cu->getChromaIntraDir(),    iSizeInUchar);
+    memcpy(m_puhInterDir         + uiOffset, cu->getInterDir(),          iSizeInUchar);
+    memcpy(m_puhTrIdx            + uiOffset, cu->getTransformIdx(),      iSizeInUchar);
+    memcpy(m_puhTransformSkip[0] + uiOffset, cu->getTransformSkip(TEXT_LUMA),     iSizeInUchar);
+    memcpy(m_puhTransformSkip[1] + uiOffset, cu->getTransformSkip(TEXT_CHROMA_U), iSizeInUchar);
+    memcpy(m_puhTransformSkip[2] + uiOffset, cu->getTransformSkip(TEXT_CHROMA_V), iSizeInUchar);
 
-    memcpy(m_puhCbf[0] + uiOffset, pcCU->getCbf(TEXT_LUMA), iSizeInUchar);
-    memcpy(m_puhCbf[1] + uiOffset, pcCU->getCbf(TEXT_CHROMA_U), iSizeInUchar);
-    memcpy(m_puhCbf[2] + uiOffset, pcCU->getCbf(TEXT_CHROMA_V), iSizeInUchar);
+    memcpy(m_puhCbf[0] + uiOffset, cu->getCbf(TEXT_LUMA), iSizeInUchar);
+    memcpy(m_puhCbf[1] + uiOffset, cu->getCbf(TEXT_CHROMA_U), iSizeInUchar);
+    memcpy(m_puhCbf[2] + uiOffset, cu->getCbf(TEXT_CHROMA_V), iSizeInUchar);
 
-    memcpy(m_puhDepth  + uiOffset, pcCU->getDepth(),  iSizeInUchar);
-    memcpy(m_puhWidth  + uiOffset, pcCU->getWidth(),  iSizeInUchar);
-    memcpy(m_puhHeight + uiOffset, pcCU->getHeight(), iSizeInUchar);
+    memcpy(m_puhDepth  + uiOffset, cu->getDepth(),  iSizeInUchar);
+    memcpy(m_puhWidth  + uiOffset, cu->getWidth(),  iSizeInUchar);
+    memcpy(m_puhHeight + uiOffset, cu->getHeight(), iSizeInUchar);
 
-    memcpy(m_apiMVPIdx[0] + uiOffset, pcCU->getMVPIdx(REF_PIC_LIST_0), iSizeInUchar);
-    memcpy(m_apiMVPIdx[1] + uiOffset, pcCU->getMVPIdx(REF_PIC_LIST_1), iSizeInUchar);
-    memcpy(m_apiMVPNum[0] + uiOffset, pcCU->getMVPNum(REF_PIC_LIST_0), iSizeInUchar);
-    memcpy(m_apiMVPNum[1] + uiOffset, pcCU->getMVPNum(REF_PIC_LIST_1), iSizeInUchar);
+    memcpy(m_apiMVPIdx[0] + uiOffset, cu->getMVPIdx(REF_PIC_LIST_0), iSizeInUchar);
+    memcpy(m_apiMVPIdx[1] + uiOffset, cu->getMVPIdx(REF_PIC_LIST_1), iSizeInUchar);
+    memcpy(m_apiMVPNum[0] + uiOffset, cu->getMVPNum(REF_PIC_LIST_0), iSizeInUchar);
+    memcpy(m_apiMVPNum[1] + uiOffset, cu->getMVPNum(REF_PIC_LIST_1), iSizeInUchar);
 
-    memcpy(m_pbIPCMFlag + uiOffset, pcCU->getIPCMFlag(), iSizeInBool);
+    memcpy(m_pbIPCMFlag + uiOffset, cu->getIPCMFlag(), iSizeInBool);
 
-    m_pcCUAboveLeft      = pcCU->getCUAboveLeft();
-    m_pcCUAboveRight     = pcCU->getCUAboveRight();
-    m_pcCUAbove          = pcCU->getCUAbove();
-    m_pcCULeft           = pcCU->getCULeft();
+    m_pcCUAboveLeft      = cu->getCUAboveLeft();
+    m_pcCUAboveRight     = cu->getCUAboveRight();
+    m_pcCUAbove          = cu->getCUAbove();
+    m_pcCULeft           = cu->getCULeft();
 
-    m_apcCUColocated[0] = pcCU->getCUColocated(REF_PIC_LIST_0);
-    m_apcCUColocated[1] = pcCU->getCUColocated(REF_PIC_LIST_1);
+    m_apcCUColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
+    m_apcCUColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 
-    m_acCUMvField[0].copyFrom(pcCU->getCUMvField(REF_PIC_LIST_0), pcCU->getTotalNumPart(), uiOffset);
-    m_acCUMvField[1].copyFrom(pcCU->getCUMvField(REF_PIC_LIST_1), pcCU->getTotalNumPart(), uiOffset);
+    m_acCUMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cu->getTotalNumPart(), uiOffset);
+    m_acCUMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), uiOffset);
 
     UInt uiTmp  = g_maxCUWidth * g_maxCUHeight >> (uiDepth << 1);
     UInt uiTmp2 = uiPartUnitIdx * uiTmp;
-    memcpy(m_pcTrCoeffY  + uiTmp2, pcCU->getCoeffY(),  sizeof(TCoeff) * uiTmp);
-    memcpy(m_pcArlCoeffY  + uiTmp2, pcCU->getArlCoeffY(),  sizeof(Int) * uiTmp);
-    memcpy(m_pcIPCMSampleY + uiTmp2, pcCU->getPCMSampleY(), sizeof(Pel) * uiTmp);
+    memcpy(m_pcTrCoeffY  + uiTmp2, cu->getCoeffY(),  sizeof(TCoeff) * uiTmp);
+    memcpy(m_pcArlCoeffY  + uiTmp2, cu->getArlCoeffY(),  sizeof(Int) * uiTmp);
+    memcpy(m_pcIPCMSampleY + uiTmp2, cu->getPCMSampleY(), sizeof(Pel) * uiTmp);
 
     uiTmp >>= 2;
     uiTmp2 >>= 2;
-    memcpy(m_pcTrCoeffCb + uiTmp2, pcCU->getCoeffCb(), sizeof(TCoeff) * uiTmp);
-    memcpy(m_pcTrCoeffCr + uiTmp2, pcCU->getCoeffCr(), sizeof(TCoeff) * uiTmp);
-    memcpy(m_pcArlCoeffCb + uiTmp2, pcCU->getArlCoeffCb(), sizeof(Int) * uiTmp);
-    memcpy(m_pcArlCoeffCr + uiTmp2, pcCU->getArlCoeffCr(), sizeof(Int) * uiTmp);
-    memcpy(m_pcIPCMSampleCb + uiTmp2, pcCU->getPCMSampleCb(), sizeof(Pel) * uiTmp);
-    memcpy(m_pcIPCMSampleCr + uiTmp2, pcCU->getPCMSampleCr(), sizeof(Pel) * uiTmp);
-    m_uiTotalBins += pcCU->getTotalBins();
+    memcpy(m_pcTrCoeffCb + uiTmp2, cu->getCoeffCb(), sizeof(TCoeff) * uiTmp);
+    memcpy(m_pcTrCoeffCr + uiTmp2, cu->getCoeffCr(), sizeof(TCoeff) * uiTmp);
+    memcpy(m_pcArlCoeffCb + uiTmp2, cu->getArlCoeffCb(), sizeof(Int) * uiTmp);
+    memcpy(m_pcArlCoeffCr + uiTmp2, cu->getArlCoeffCr(), sizeof(Int) * uiTmp);
+    memcpy(m_pcIPCMSampleCb + uiTmp2, cu->getPCMSampleCb(), sizeof(Pel) * uiTmp);
+    memcpy(m_pcIPCMSampleCr + uiTmp2, cu->getPCMSampleCr(), sizeof(Pel) * uiTmp);
+    m_uiTotalBins += cu->getTotalBins();
 }
 
 // Copy current predicted part to a CU in picture.
@@ -1534,15 +1534,15 @@ UInt TComDataCU::getCtxSplitFlag(UInt uiAbsPartIdx, UInt uiDepth)
     return uiCtx;
 }
 
-UInt TComDataCU::getCtxQtCbf(TextType eType, UInt uiTrDepth)
+UInt TComDataCU::getCtxQtCbf(TextType eType, UInt trDepth)
 {
     if (eType)
     {
-        return uiTrDepth;
+        return trDepth;
     }
     else
     {
-        const UInt uiCtx = (uiTrDepth == 0 ? 1 : 0);
+        const UInt uiCtx = (trDepth == 0 ? 1 : 0);
         return uiCtx;
     }
 }
@@ -1663,23 +1663,23 @@ Void TComDataCU::setPredModeSubParts(PredMode eMode, UInt uiAbsPartIdx, UInt uiD
     memset(m_pePredMode + uiAbsPartIdx, eMode, m_pcPic->getNumPartInCU() >> (2 * uiDepth));
 }
 
-Void TComDataCU::setQPSubCUs(Int qp, TComDataCU* pcCU, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf)
+Void TComDataCU::setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf)
 {
     UInt currPartNumb = m_pcPic->getNumPartInCU() >> (depth << 1);
     UInt currPartNumQ = currPartNumb >> 2;
 
     if (!foundNonZeroCbf)
     {
-        if (pcCU->getDepth(absPartIdx) > depth)
+        if (cu->getDepth(absPartIdx) > depth)
         {
             for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
             {
-                pcCU->setQPSubCUs(qp, pcCU, absPartIdx + partUnitIdx * currPartNumQ, depth + 1, foundNonZeroCbf);
+                cu->setQPSubCUs(qp, cu, absPartIdx + partUnitIdx * currPartNumQ, depth + 1, foundNonZeroCbf);
             }
         }
         else
         {
-            if (pcCU->getCbf(absPartIdx, TEXT_LUMA) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_U) || pcCU->getCbf(absPartIdx, TEXT_CHROMA_V))
+            if (cu->getCbf(absPartIdx, TEXT_LUMA) || cu->getCbf(absPartIdx, TEXT_CHROMA_U) || cu->getCbf(absPartIdx, TEXT_CHROMA_V))
             {
                 foundNonZeroCbf = true;
             }
@@ -1829,14 +1829,14 @@ Void TComDataCU::setInterDirSubParts(UInt uiDir, UInt uiAbsPartIdx, UInt uiPartI
     setSubPart<UChar>(uiDir, m_puhInterDir, uiAbsPartIdx, uiDepth, uiPartIdx);
 }
 
-Void TComDataCU::setMVPIdxSubParts(Int iMVPIdx, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth)
+Void TComDataCU::setMVPIdxSubParts(Int iMVPIdx, RefPicList picList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth)
 {
-    setSubPart<Char>(iMVPIdx, m_apiMVPIdx[eRefPicList], uiAbsPartIdx, uiDepth, uiPartIdx);
+    setSubPart<Char>(iMVPIdx, m_apiMVPIdx[picList], uiAbsPartIdx, uiDepth, uiPartIdx);
 }
 
-Void TComDataCU::setMVPNumSubParts(Int iMVPNum, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth)
+Void TComDataCU::setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth)
 {
-    setSubPart<Char>(iMVPNum, m_apiMVPNum[eRefPicList], uiAbsPartIdx, uiDepth, uiPartIdx);
+    setSubPart<Char>(iMVPNum, m_apiMVPNum[picList], uiAbsPartIdx, uiDepth, uiPartIdx);
 }
 
 Void TComDataCU::setTrIdxSubParts(UInt uiTrIdx, UInt uiAbsPartIdx, UInt uiDepth)
@@ -1947,16 +1947,16 @@ Void TComDataCU::getPartIndexAndSize(UInt uiPartIdx, UInt& ruiPartAddr, Int& riW
     }
 }
 
-Void TComDataCU::getMvField(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList, TComMvField& rcMvField)
+Void TComDataCU::getMvField(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList picList, TComMvField& rcMvField)
 {
-    if (pcCU == NULL)  // OUT OF BOUNDARY
+    if (cu == NULL)  // OUT OF BOUNDARY
     {
         MV cZeroMv(0, 0);
         rcMvField.setMvField(cZeroMv, NOT_VALID);
         return;
     }
 
-    TComCUMvField*  pcCUMvField = pcCU->getCUMvField(eRefPicList);
+    TComCUMvField*  pcCUMvField = cu->getCUMvField(picList);
     rcMvField.setMvField(pcCUMvField->getMv(uiAbsPartIdx), pcCUMvField->getRefIdx(uiAbsPartIdx));
 }
 
@@ -2669,12 +2669,12 @@ Void TComDataCU::getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int&
 
 /** Constructs a list of candidates for AMVP
  * \param uiPartIdx
- * \param uiPartAddr
- * \param eRefPicList
+ * \param partAddr
+ * \param picList
  * \param iRefIdx
  * \param pInfo
  */
-Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, Int iRefIdx, AMVPInfo* pInfo)
+Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt partAddr, RefPicList picList, Int iRefIdx, AMVPInfo* pInfo)
 {
     MV cMvPred;
     Bool bAddedSmvp = false;
@@ -2705,46 +2705,46 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
     }
 
     // Left predictor search
-    bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxLB, MD_BELOW_LEFT);
+    bAdded = xAddMVPCand(pInfo, picList, iRefIdx, uiPartIdxLB, MD_BELOW_LEFT);
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxLB, MD_LEFT);
+        bAdded = xAddMVPCand(pInfo, picList, iRefIdx, uiPartIdxLB, MD_LEFT);
     }
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxLB, MD_BELOW_LEFT);
+        bAdded = xAddMVPCandOrder(pInfo, picList, iRefIdx, uiPartIdxLB, MD_BELOW_LEFT);
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxLB, MD_LEFT);
+            bAdded = xAddMVPCandOrder(pInfo, picList, iRefIdx, uiPartIdxLB, MD_LEFT);
         }
     }
     // Above predictor search
-    bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
+    bAdded = xAddMVPCand(pInfo, picList, iRefIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxRT, MD_ABOVE);
+        bAdded = xAddMVPCand(pInfo, picList, iRefIdx, uiPartIdxRT, MD_ABOVE);
     }
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, eRefPicList, iRefIdx, uiPartIdxLT, MD_ABOVE_LEFT);
+        bAdded = xAddMVPCand(pInfo, picList, iRefIdx, uiPartIdxLT, MD_ABOVE_LEFT);
     }
     bAdded = bAddedSmvp;
     if (pInfo->iN == 2) bAdded = true;
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
+        bAdded = xAddMVPCandOrder(pInfo, picList, iRefIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxRT, MD_ABOVE);
+            bAdded = xAddMVPCandOrder(pInfo, picList, iRefIdx, uiPartIdxRT, MD_ABOVE);
         }
 
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, eRefPicList, iRefIdx, uiPartIdxLT, MD_ABOVE_LEFT);
+            bAdded = xAddMVPCandOrder(pInfo, picList, iRefIdx, uiPartIdxLT, MD_ABOVE_LEFT);
         }
     }
 
@@ -2767,7 +2767,7 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
         Int uiLCUIdx = getAddr();
 
         deriveRightBottomIdx(uiPartIdx, uiPartIdxRB);
-        uiAbsPartAddr = m_uiAbsIdxInLCU + uiPartAddr;
+        uiAbsPartAddr = m_uiAbsIdxInLCU + partAddr;
 
         //----  co-located RightBottom Temporal Predictor (H) ---//
         uiAbsPartIdx = g_zscanToRaster[uiPartIdxRB];
@@ -2803,7 +2803,7 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
                 uiLCUIdx      = -1;
             }
         }
-        if (uiLCUIdx >= 0 && xGetColMVP(eRefPicList, uiLCUIdx, uiAbsPartAddr, cColMv, iRefIdx_Col))
+        if (uiLCUIdx >= 0 && xGetColMVP(picList, uiLCUIdx, uiAbsPartAddr, cColMv, iRefIdx_Col))
         {
             pInfo->m_acMvCand[pInfo->iN++] = cColMv;
         }
@@ -2812,7 +2812,7 @@ Void TComDataCU::fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPic
             UInt uiPartIdxCenter;
             UInt uiCurLCUIdx = getAddr();
             xDeriveCenterIdx(uiPartIdx, uiPartIdxCenter);
-            if (xGetColMVP(eRefPicList, uiCurLCUIdx, uiPartIdxCenter,  cColMv, iRefIdx_Col))
+            if (xGetColMVP(picList, uiCurLCUIdx, uiPartIdxCenter,  cColMv, iRefIdx_Col))
             {
                 pInfo->m_acMvCand[pInfo->iN++] = cColMv;
             }
@@ -2912,7 +2912,7 @@ Bool TComDataCU::isSkipped(UInt uiPartIdx)
 #pragma warning(disable: 4701) // potentially uninitialized local variables
 #endif
 
-Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
+Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
     UInt uiIdx = 0;
@@ -2955,25 +2955,25 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
         return false;
     }
 
-    if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0 && m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC() == pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx)))
+    if (pcTmpCU->getCUMvField(picList)->getRefIdx(uiIdx) >= 0 && m_pcSlice->getRefPic(picList, iRefIdx)->getPOC() == pcTmpCU->getSlice()->getRefPOC(picList, pcTmpCU->getCUMvField(picList)->getRefIdx(uiIdx)))
     {
-        MV cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
+        MV cMvPred = pcTmpCU->getCUMvField(picList)->getMv(uiIdx);
 
         pInfo->m_acMvCand[pInfo->iN++] = cMvPred;
         return true;
     }
 
     RefPicList eRefPicList2nd = REF_PIC_LIST_0;
-    if (eRefPicList == REF_PIC_LIST_0)
+    if (picList == REF_PIC_LIST_0)
     {
         eRefPicList2nd = REF_PIC_LIST_1;
     }
-    else if (eRefPicList == REF_PIC_LIST_1)
+    else if (picList == REF_PIC_LIST_1)
     {
         eRefPicList2nd = REF_PIC_LIST_0;
     }
 
-    Int iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC();
+    Int iCurrRefPOC = m_pcSlice->getRefPic(picList, iRefIdx)->getPOC();
     Int iNeibRefPOC;
 
     if (pcTmpCU->getCUMvField(eRefPicList2nd)->getRefIdx(uiIdx) >= 0)
@@ -2991,13 +2991,13 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefId
 
 /**
  * \param pInfo
- * \param eRefPicList
+ * \param picList
  * \param iRefIdx
  * \param uiPartUnitIdx
  * \param eDir
  * \returns Bool
  */
-Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
+Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
     UInt uiIdx = 0;
@@ -3041,30 +3041,30 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
     }
 
     RefPicList eRefPicList2nd = REF_PIC_LIST_0;
-    if (eRefPicList == REF_PIC_LIST_0)
+    if (picList == REF_PIC_LIST_0)
     {
         eRefPicList2nd = REF_PIC_LIST_1;
     }
-    else if (eRefPicList == REF_PIC_LIST_1)
+    else if (picList == REF_PIC_LIST_1)
     {
         eRefPicList2nd = REF_PIC_LIST_0;
     }
 
     Int iCurrPOC = m_pcSlice->getPOC();
-    Int iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC();
+    Int iCurrRefPOC = m_pcSlice->getRefPic(picList, iRefIdx)->getPOC();
     Int iNeibPOC = iCurrPOC;
     Int iNeibRefPOC;
 
-    Bool bIsCurrRefLongTerm = m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getIsLongTerm();
+    Bool bIsCurrRefLongTerm = m_pcSlice->getRefPic(picList, iRefIdx)->getIsLongTerm();
     Bool bIsNeibRefLongTerm = false;
     //---------------  V1 (END) ------------------//
-    if (pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx) >= 0)
+    if (pcTmpCU->getCUMvField(picList)->getRefIdx(uiIdx) >= 0)
     {
-        iNeibRefPOC = pcTmpCU->getSlice()->getRefPOC(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx));
-        MV cMvPred = pcTmpCU->getCUMvField(eRefPicList)->getMv(uiIdx);
+        iNeibRefPOC = pcTmpCU->getSlice()->getRefPOC(picList, pcTmpCU->getCUMvField(picList)->getRefIdx(uiIdx));
+        MV cMvPred = pcTmpCU->getCUMvField(picList)->getMv(uiIdx);
         MV rcMv;
 
-        bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(eRefPicList, pcTmpCU->getCUMvField(eRefPicList)->getRefIdx(uiIdx))->getIsLongTerm();
+        bIsNeibRefLongTerm = pcTmpCU->getSlice()->getRefPic(picList, pcTmpCU->getCUMvField(picList)->getRefIdx(uiIdx))->getIsLongTerm();
         if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
         {
             if (bIsCurrRefLongTerm || bIsNeibRefLongTerm)
@@ -3122,13 +3122,13 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int i
 }
 
 /**
- * \param eRefPicList
+ * \param picList
  * \param uiCUAddr
  * \param uiPartUnitIdx
  * \param riRefIdx
  * \returns Bool
  */
-Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, MV& rcMv, Int& riRefIdx)
+Bool TComDataCU::xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx, MV& rcMv, Int& riRefIdx)
 {
     UInt uiAbsPartAddr = uiPartUnitIdx;
 
@@ -3145,14 +3145,14 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
         return false;
     }
     iCurrPOC = m_pcSlice->getPOC();
-    iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, riRefIdx)->getPOC();
+    iCurrRefPOC = m_pcSlice->getRefPic(picList, riRefIdx)->getPOC();
     iColPOC = pColCU->getSlice()->getPOC();
 
     if (pColCU->isIntra(uiAbsPartAddr))
     {
         return false;
     }
-    eColRefPicList = getSlice()->getCheckLDC() ? eRefPicList : RefPicList(getSlice()->getColFromL0Flag());
+    eColRefPicList = getSlice()->getCheckLDC() ? picList : RefPicList(getSlice()->getColFromL0Flag());
 
     Int iColRefIdx = pColCU->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(uiAbsPartAddr);
 
@@ -3171,8 +3171,8 @@ Bool TComDataCU::xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnit
     iColRefPOC = pColCU->getSlice()->getRefPOC(eColRefPicList, iColRefIdx);
     cColMv = pColCU->getCUMvField(eColRefPicList)->getMv(uiAbsPartAddr);
 
-    iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, riRefIdx)->getPOC();
-    Bool bIsCurrRefLongTerm = m_pcSlice->getRefPic(eRefPicList, riRefIdx)->getIsLongTerm();
+    iCurrRefPOC = m_pcSlice->getRefPic(picList, riRefIdx)->getPOC();
+    Bool bIsCurrRefLongTerm = m_pcSlice->getRefPic(picList, riRefIdx)->getIsLongTerm();
     Bool bIsColRefLongTerm = pColCU->getSlice()->getIsUsedAsLongTerm(eColRefPicList, iColRefIdx);
 
     if (bIsCurrRefLongTerm != bIsColRefLongTerm)
@@ -3226,13 +3226,13 @@ Int TComDataCU::xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, 
  */
 Void TComDataCU::xDeriveCenterIdx(UInt uiPartIdx, UInt& ruiPartIdxCenter)
 {
-    UInt uiPartAddr;
+    UInt partAddr;
     Int  iPartWidth;
     Int  iPartHeight;
 
-    getPartIndexAndSize(uiPartIdx, uiPartAddr, iPartWidth, iPartHeight);
+    getPartIndexAndSize(uiPartIdx, partAddr, iPartWidth, iPartHeight);
 
-    ruiPartIdxCenter = m_uiAbsIdxInLCU + uiPartAddr; // partition origin.
+    ruiPartIdxCenter = m_uiAbsIdxInLCU + partAddr; // partition origin.
     ruiPartIdxCenter = g_rasterToZscan[g_zscanToRaster[ruiPartIdxCenter]
                                        + (iPartHeight / m_pcPic->getMinCUHeight()) / 2 * m_pcPic->getNumPartInWidth()
                                        + (iPartWidth / m_pcPic->getMinCUWidth()) / 2];

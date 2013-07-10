@@ -84,7 +84,7 @@ public:
                             Int  iOffsetAbove);
 
     /// set parameters of one color component from CU data for accessing neighbouring pixels
-    Void setPatternParamCU(TComDataCU* pcCU,
+    Void setPatternParamCU(TComDataCU* cu,
                            UChar       iComp,
                            UChar       iRoiWidth,
                            UChar       iRoiHeight,
@@ -135,15 +135,15 @@ public:
                      Int  iOffsetLeft,
                      Int  iOffsetAbove);
 
-    Void initAdiPattern(TComDataCU* pcCU, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
+    Void initAdiPattern(TComDataCU* cu, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
 
     /// set parameters from CU data for accessing neighbouring pixels
-    Void  initPattern(TComDataCU* pcCU,
+    Void  initPattern(TComDataCU* cu,
                       UInt        uiPartDepth,
                       UInt        uiAbsPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
-    Void  initAdiPattern(TComDataCU* pcCU,
+    Void  initAdiPattern(TComDataCU* cu,
                          UInt        uiZorderIdxInPart,
                          UInt        uiPartDepth,
                          Pel*        piAdiBuf,
@@ -151,7 +151,7 @@ public:
                          Int         iOrgBufHeight);
 
     /// set chroma parameters from CU data for accessing ADI data
-    Void  initAdiPatternChroma(TComDataCU* pcCU,
+    Void  initAdiPatternChroma(TComDataCU* cu,
                                UInt        uiZorderIdxInPart,
                                UInt        uiPartDepth,
                                Pel*        piAdiBuf,
@@ -164,11 +164,11 @@ private:
     Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride);
 
     /// constrained intra prediction
-    Bool  isAboveLeftAvailable(TComDataCU* pcCU, UInt uiPartIdxLT);
-    Int   isAboveAvailable(TComDataCU* pcCU, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
-    Int   isLeftAvailable(TComDataCU* pcCU, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
-    Int   isAboveRightAvailable(TComDataCU* pcCU, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
-    Int   isBelowLeftAvailable(TComDataCU* pcCU, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
+    Bool  isAboveLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT);
+    Int   isAboveAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
+    Int   isLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
+    Int   isAboveRightAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
+    Int   isBelowLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
 };
 
 //! \}

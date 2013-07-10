@@ -195,11 +195,11 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
-    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList eRefPicList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
 
     Void          deriveRightBottomIdx(UInt uiPartIdx, UInt& ruiPartIdxRB);
-    Bool          xGetColMVP(RefPicList eRefPicList, Int uiCUAddr, Int uiPartUnitIdx, x265::MV& rcMv, Int& riRefIdx);
+    Bool          xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx, x265::MV& rcMv, Int& riRefIdx);
 
     /// compute scaling factor from POC difference
     Int           xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, Int iColRefPOC);
@@ -220,12 +220,12 @@ public:
 
     Void          initCU(TComPic* pcPic, UInt uiCUAddr);
     Void          initEstData(UInt uiDepth, Int qp);
-    Void          initSubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Int qp);
+    Void          initSubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt uiDepth, Int qp);
     Void          setOutsideCUPart(UInt uiAbsPartIdx, UInt uiDepth);
 
-    Void          copySubCU(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth);
-    Void          copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList);
-    Void          copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis = true);
+    Void          copySubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt uiDepth);
+    Void          copyInterPredInfoFrom(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList picList);
+    Void          copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis = true);
 
     Void          copyToPic(UChar uiDepth);
     Void          copyToPic(UChar uiDepth, UInt uiPartIdx, UInt uiPartDepth);
@@ -318,7 +318,7 @@ public:
     Void          setQPSubParts(Int qp,   UInt uiAbsPartIdx, UInt uiDepth);
     Int           getLastValidPartIdx(Int iAbsPartIdx);
     Char          getLastCodedQP(UInt uiAbsPartIdx);
-    Void          setQPSubCUs(Int qp, TComDataCU* pcCU, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
+    Void          setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
     Void          setCodedQP(Char qp)               { m_codedQP = qp; }
 
     Char          getCodedQP()                        { return m_codedQP; }
@@ -364,7 +364,7 @@ public:
 
     UChar*        getCbf(TextType eType)                              { return m_puhCbf[g_convertTxtTypeToIdx[eType]]; }
 
-    UChar         getCbf(UInt uiIdx, TextType eType, UInt uiTrDepth)  { return (getCbf(uiIdx, eType) >> uiTrDepth) & 0x1; }
+    UChar         getCbf(UInt uiIdx, TextType eType, UInt trDepth)  { return (getCbf(uiIdx, eType) >> trDepth) & 0x1; }
 
     Void          setCbf(UInt uiIdx, TextType eType, UChar uh)        { m_puhCbf[g_convertTxtTypeToIdx[eType]][uiIdx] = uh; }
 
@@ -449,32 +449,32 @@ public:
     // member functions for motion vector
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void          getMvField(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefPicList, TComMvField& rcMvField);
+    Void          getMvField(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList picList, TComMvField& rcMvField);
 
-    Void          fillMvpCand(UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefPicList, Int iRefIdx, AMVPInfo* pInfo);
+    Void          fillMvpCand(UInt uiPartIdx, UInt partAddr, RefPicList picList, Int iRefIdx, AMVPInfo* pInfo);
     Bool          isDiffMER(Int xN, Int yN, Int xP, Int yP);
     Void          getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int& nPSH);
-    Void          setMVPIdx(RefPicList eRefPicList, UInt uiIdx, Int iMVPIdx)  { m_apiMVPIdx[eRefPicList][uiIdx] = (Char)iMVPIdx; }
+    Void          setMVPIdx(RefPicList picList, UInt uiIdx, Int iMVPIdx)  { m_apiMVPIdx[picList][uiIdx] = (Char)iMVPIdx; }
 
-    Int           getMVPIdx(RefPicList eRefPicList, UInt uiIdx)               { return m_apiMVPIdx[eRefPicList][uiIdx]; }
+    Int           getMVPIdx(RefPicList picList, UInt uiIdx)               { return m_apiMVPIdx[picList][uiIdx]; }
 
-    Char*         getMVPIdx(RefPicList eRefPicList)                          { return m_apiMVPIdx[eRefPicList]; }
+    Char*         getMVPIdx(RefPicList picList)                          { return m_apiMVPIdx[picList]; }
 
-    Void          setMVPNum(RefPicList eRefPicList, UInt uiIdx, Int iMVPNum) { m_apiMVPNum[eRefPicList][uiIdx] = (Char)iMVPNum; }
+    Void          setMVPNum(RefPicList picList, UInt uiIdx, Int iMVPNum) { m_apiMVPNum[picList][uiIdx] = (Char)iMVPNum; }
 
-    Int           getMVPNum(RefPicList eRefPicList, UInt uiIdx)              { return m_apiMVPNum[eRefPicList][uiIdx]; }
+    Int           getMVPNum(RefPicList picList, UInt uiIdx)              { return m_apiMVPNum[picList][uiIdx]; }
 
-    Char*         getMVPNum(RefPicList eRefPicList)                          { return m_apiMVPNum[eRefPicList]; }
+    Char*         getMVPNum(RefPicList picList)                          { return m_apiMVPNum[picList]; }
 
-    Void          setMVPIdxSubParts(Int iMVPIdx, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
-    Void          setMVPNumSubParts(Int iMVPNum, RefPicList eRefPicList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
+    Void          setMVPIdxSubParts(Int iMVPIdx, RefPicList picList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
+    Void          setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth);
 
     Void          clipMv(x265::MV& rcMv);
-    Void          getMvPredLeft(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldA.getMv(); }
+    Void          getMvPredLeft(x265::MV& mvPred)   { mvPred = m_cMvFieldA.getMv(); }
 
-    Void          getMvPredAbove(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldB.getMv(); }
+    Void          getMvPredAbove(x265::MV& mvPred)   { mvPred = m_cMvFieldB.getMv(); }
 
-    Void          getMvPredAboveRight(x265::MV& rcMvPred)   { rcMvPred = m_cMvFieldC.getMv(); }
+    Void          getMvPredAboveRight(x265::MV& mvPred)   { mvPred = m_cMvFieldC.getMv(); }
 
     Void          compressMV();
 
@@ -490,7 +490,7 @@ public:
 
     TComDataCU*   getCUAboveRight() { return m_pcCUAboveRight; }
 
-    TComDataCU*   getCUColocated(RefPicList eRefPicList) { return m_apcCUColocated[eRefPicList]; }
+    TComDataCU*   getCUColocated(RefPicList picList) { return m_apcCUColocated[picList]; }
 
     TComDataCU*   getPULeft(UInt& uiLPartUnitIdx,
                             UInt  uiCurrPartUnitIdx,
@@ -546,7 +546,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     UInt          getCtxSplitFlag(UInt uiAbsPartIdx, UInt uiDepth);
-    UInt          getCtxQtCbf(TextType eType, UInt uiTrDepth);
+    UInt          getCtxQtCbf(TextType eType, UInt trDepth);
 
     UInt          getCtxSkipFlag(UInt uiAbsPartIdx);
     UInt          getCtxInterDir(UInt uiAbsPartIdx);

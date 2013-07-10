@@ -579,7 +579,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
         }
         pcSbacCoder->load(pcEncodeFrame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
 
-        TComDataCU* pcCU = pcPic->getCU(uiCUAddr);
+        TComDataCU* cu = pcPic->getCU(uiCUAddr);
         if (pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
@@ -590,7 +590,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
             Int ry = uiCUAddr / iNumCuInWidth;
             Int allowMergeLeft = 1;
             Int allowMergeUp   = 1;
-            Int addr = pcCU->getAddr();
+            Int addr = cu->getAddr();
             allowMergeLeft = (rx > 0) && (iCUAddrInSlice != 0);
             allowMergeUp = (ry > 0) && (iCUAddrUpInSlice >= 0);
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
@@ -630,7 +630,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
         }
         else if (pcSlice->getSPS()->getUseSAO())
         {
-            Int addr = pcCU->getAddr();
+            Int addr = cu->getAddr();
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
             for (Int cIdx = 0; cIdx < 3; cIdx++)
             {
@@ -652,7 +652,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
         pcEncodeFrame->getCuEncoder(0)->set_pcEntropyCoder(pcEntropyCoder);
-        pcEncodeFrame->getCuEncoder(0)->encodeCU(pcCU);
+        pcEncodeFrame->getCuEncoder(0)->encodeCU(cu);
 
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;

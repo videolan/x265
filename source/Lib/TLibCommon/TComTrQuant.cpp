@@ -707,7 +707,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
 }
 
 /** RDOQ with CABAC
- * \param pcCU pointer to coding unit structure
+ * \param cu pointer to coding unit structure
  * \param plSrcCoeff pointer to input buffer
  * \param piDstCoeff reference to pointer to output buffer
  * \param uiWidth block width

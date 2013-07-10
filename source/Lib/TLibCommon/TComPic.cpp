@@ -106,8 +106,8 @@ Void TComPic::compressMotion()
 
     for (UInt uiCUAddr = 0; uiCUAddr < pPicSym->getFrameHeightInCU() * pPicSym->getFrameWidthInCU(); uiCUAddr++)
     {
-        TComDataCU* pcCU = pPicSym->getCU(uiCUAddr);
-        pcCU->compressMV();
+        TComDataCU* cu = pPicSym->getCU(uiCUAddr);
+        cu->compressMV();
     }
 }
 
@@ -132,8 +132,8 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 
     for (UInt CUAddr = 0; CUAddr < numLCUInPic; CUAddr++)
     {
-        TComDataCU* pcCU = getCU(CUAddr);
-        pcCU->getNDBFilterBlocks()->clear();
+        TComDataCU* cu = getCU(CUAddr);
+        cu->getNDBFilterBlocks()->clear();
     }
 
     UInt startAddr, endAddr, firstCUInStartLCU, startLCU, endLCU, lastCUInEndLCU, uiAddr;
@@ -196,8 +196,8 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     {
         startSU = (i == startLCU) ? (firstCUInStartLCU) : (0);
         endSU   = (i == endLCU) ? (lastCUInEndLCU) : (maxNumSUInLCU - 1);
-        TComDataCU* pcCU = getCU(i);
-        createNonDBFilterInfoLCU(0, pcCU, startSU, endSU, sliceGranularityDepth, picWidth, picHeight);
+        TComDataCU* cu = getCU(i);
+        createNonDBFilterInfoLCU(0, cu, startSU, endSU, sliceGranularityDepth, picWidth, picHeight);
     }
 
     //step 3: border availability
@@ -210,17 +210,17 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 /** Create non-deblocked filter information for LCU
  * \param tileID tile index
  * \param sliceID slice index
- * \param pcCU CU data pointer
+ * \param cu CU data pointer
  * \param startSU start SU index in LCU
  * \param endSU end SU index in LCU
  * \param sliceGranularyDepth slice granularity
  * \param picWidth picture width
  * \param picHeight picture height
  */
-Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
+Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight)
 {
-    UInt LCUX          = pcCU->getCUPelX();
-    UInt LCUY          = pcCU->getCUPelY();
+    UInt LCUX          = cu->getCUPelX();
+    UInt LCUY          = cu->getCUPelY();
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt maxNumSUInSGU = maxNumSUInLCU >> (sliceGranularyDepth << 1);
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
@@ -283,7 +283,7 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* pcCU, UInt start
         NDBFBlock.width    = NDBFBlock.widthSU  * getMinCUWidth();
         NDBFBlock.height   = NDBFBlock.heightSU * getMinCUHeight();
 
-        pcCU->getNDBFilterBlocks()->push_back(NDBFBlock);
+        cu->getNDBFilterBlocks()->push_back(NDBFBlock);
 
         currSU += maxNumSUInSGU;
     }
@@ -295,8 +295,8 @@ Void TComPic::destroyNonDBFilterInfo()
 {
     for (UInt CUAddr = 0; CUAddr < getNumCUsInFrame(); CUAddr++)
     {
-        TComDataCU* pcCU = getCU(CUAddr);
-        pcCU->getNDBFilterBlocks()->clear();
+        TComDataCU* cu = getCU(CUAddr);
+        cu->getNDBFilterBlocks()->clear();
     }
 }
 

@@ -497,7 +497,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* pcYuvSrc0, UInt iPartUnitIdx,
 //=======================================================
 
 /** derivation of wp tables
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param iRefIdx0
  * \param iRefIdx1
  * \param wpScalingParam *&wp0
@@ -505,10 +505,10 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* pcYuvSrc0, UInt iPartUnitIdx,
  * \param ibdi
  * \returns Void
  */
-Void TComWeightPrediction::getWpScaling(TComDataCU* pcCU, Int iRefIdx0, Int iRefIdx1, wpScalingParam *&wp0, wpScalingParam *&wp1)
+Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int iRefIdx0, Int iRefIdx1, wpScalingParam *&wp0, wpScalingParam *&wp1)
 {
-    TComSlice*      pcSlice = pcCU->getSlice();
-    const TComPPS*  pps     = pcCU->getSlice()->getPPS();
+    TComSlice*      pcSlice = cu->getSlice();
+    const TComPPS*  pps     = cu->getSlice()->getPPS();
     Bool            wpBiPred = pps->getWPBiPred();
     wpScalingParam* pwp;
     Bool            bBiDir   = (iRefIdx0 >= 0 && iRefIdx1 >= 0);
@@ -571,7 +571,7 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* pcCU, Int iRefIdx0, Int iRef
 }
 
 /** weighted prediction for bi-pred
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param TComYuv* pcYuvSrc0
  * \param TComYuv* pcYuvSrc1
  * \param iRefIdx0
@@ -582,14 +582,14 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* pcCU, Int iRefIdx0, Int iRef
  * \param TComYuv* rpcYuvDst
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
+Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
 {
     wpScalingParam  *pwp0, *pwp1;
-    const TComPPS   *pps = pcCU->getSlice()->getPPS();
+    const TComPPS   *pps = cu->getSlice()->getPPS();
 
     assert(pps->getWPBiPred());
 
-    getWpScaling(pcCU, iRefIdx0, iRefIdx1, pwp0, pwp1);
+    getWpScaling(cu, iRefIdx0, iRefIdx1, pwp0, pwp1);
 
     if (iRefIdx0 >= 0 && iRefIdx1 >= 0)
     {
@@ -610,7 +610,7 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYu
 }
 
 /** weighted prediction for bi-pred
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param TShortYuv* pcYuvSrc0
  * \param TShortYuv* pcYuvSrc1
  * \param iRefIdx0
@@ -621,14 +621,14 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TComYuv* pcYu
  * \param TComYuv* rpcYuvDst
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
+Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, Int iRefIdx0, Int iRefIdx1, UInt uiPartIdx, Int iWidth, Int iHeight, TComYuv* rpcYuvDst)
 {
     wpScalingParam  *pwp0, *pwp1;
-    const TComPPS   *pps = pcCU->getSlice()->getPPS();
+    const TComPPS   *pps = cu->getSlice()->getPPS();
 
     assert(pps->getWPBiPred());
 
-    getWpScaling(pcCU, iRefIdx0, iRefIdx1, pwp0, pwp1);
+    getWpScaling(cu, iRefIdx0, iRefIdx1, pwp0, pwp1);
 
     if (iRefIdx0 >= 0 && iRefIdx1 >= 0)
     {
@@ -649,67 +649,67 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* pcCU, TShortYUV* pc
 }
 
 /** weighted prediction for uni-pred
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param TComYuv* pcYuvSrc
- * \param uiPartAddr
+ * \param partAddr
  * \param iWidth
  * \param iHeight
- * \param eRefPicList
+ * \param picList
  * \param TComYuv*& rpcYuvPred
- * \param iPartIdx
+ * \param partIdx
  * \param iRefIdx
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* pcCU, TComYuv* pcYuvSrc, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Int iRefIdx)
+Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuvSrc, UInt partAddr, Int iWidth, Int iHeight, RefPicList picList, TComYuv*& rpcYuvPred, Int iRefIdx)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
     if (iRefIdx < 0)
     {
-        iRefIdx   = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+        iRefIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
     assert(iRefIdx >= 0);
 
-    if (eRefPicList == REF_PIC_LIST_0)
+    if (picList == REF_PIC_LIST_0)
     {
-        getWpScaling(pcCU, iRefIdx, -1, pwp, pwpTmp);
+        getWpScaling(cu, iRefIdx, -1, pwp, pwpTmp);
     }
     else
     {
-        getWpScaling(pcCU, -1, iRefIdx, pwpTmp, pwp);
+        getWpScaling(cu, -1, iRefIdx, pwpTmp, pwp);
     }
-    addWeightUni(pcYuvSrc, uiPartAddr, iWidth, iHeight, pwp, rpcYuvPred);
+    addWeightUni(pcYuvSrc, partAddr, iWidth, iHeight, pwp, rpcYuvPred);
 }
 
 /** weighted prediction for uni-pred
- * \param TComDataCU* pcCU
+ * \param TComDataCU* cu
  * \param TShortYuv* pcYuvSrc
- * \param uiPartAddr
+ * \param partAddr
  * \param iWidth
  * \param iHeight
- * \param eRefPicList
+ * \param picList
  * \param TComYuv*& rpcYuvPred
- * \param iPartIdx
+ * \param partIdx
  * \param iRefIdx
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* pcCU, TShortYUV* pcYuvSrc, UInt uiPartAddr, Int iWidth, Int iHeight, RefPicList eRefPicList, TComYuv*& rpcYuvPred, Int iRefIdx)
+Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* pcYuvSrc, UInt partAddr, Int iWidth, Int iHeight, RefPicList picList, TComYuv*& rpcYuvPred, Int iRefIdx)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
     if (iRefIdx < 0)
     {
-        iRefIdx   = pcCU->getCUMvField(eRefPicList)->getRefIdx(uiPartAddr);
+        iRefIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
     assert(iRefIdx >= 0);
 
-    if (eRefPicList == REF_PIC_LIST_0)
+    if (picList == REF_PIC_LIST_0)
     {
-        getWpScaling(pcCU, iRefIdx, -1, pwp, pwpTmp);
+        getWpScaling(cu, iRefIdx, -1, pwp, pwpTmp);
     }
     else
     {
-        getWpScaling(pcCU, -1, iRefIdx, pwpTmp, pwp);
+        getWpScaling(cu, -1, iRefIdx, pwpTmp, pwp);
     }
-    addWeightUni(pcYuvSrc, uiPartAddr, iWidth, iHeight, pwp, rpcYuvPred);
+    addWeightUni(pcYuvSrc, partAddr, iWidth, iHeight, pwp, rpcYuvPred);
 }

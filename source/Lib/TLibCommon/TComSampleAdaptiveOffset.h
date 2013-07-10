@@ -106,8 +106,8 @@ protected:
     Bool    m_saoLcuBasedOptimization;
 
     Void xPCMRestoration(TComPic* pcPic);
-    Void xPCMCURestoration(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth);
-    Void xPCMSampleRestoration(TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText);
+    Void xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth);
+    Void xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText);
 
 public:
 
@@ -128,7 +128,7 @@ public:
     Void processSaoCu(Int iAddr, Int iSaoType, Int iYCbCr);
     Pel* getPicYuvAddr(TComPicYuv* pcPicYuv, Int iYCbCr, Int iAddr = 0);
 
-    Void processSaoCuOrg(Int iAddr, Int iPartIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
+    Void processSaoCuOrg(Int iAddr, Int partIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pcPic);
     Void destroyPicSaoInfo();
     Void processSaoBlock(Pel* pDec, Pel* pRest, Int stride, Int iSaoType, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);

@@ -239,19 +239,19 @@ void FrameEncoder::processRow(int row)
     for (UInt col = curRow.m_curCol; col < numCols; col++)
     {
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* pcCU = m_pic->getCU(cuAddr);
-        pcCU->initCU(m_pic, cuAddr);
+        TComDataCU* cu = m_pic->getCU(cuAddr);
+        cu->initCU(m_pic, cuAddr);
 
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
         codeRow.m_entropyCoder.resetEntropy();
 
         TEncSbac *bufSbac = (m_enableWpp && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        codeRow.processCU(pcCU, m_slice, bufSbac, m_enableWpp && col == 1);
+        codeRow.processCU(cu, m_slice, bufSbac, m_enableWpp && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
-        // pcCU->getTotalBits();
-        // pcCU->getTotalCost();
-        // pcCU->getTotalDistortion();
+        // cu->getTotalBits();
+        // cu->getTotalCost();
+        // cu->getTotalDistortion();
 
         // Completed CU processing
         curRow.m_curCol++;

@@ -76,36 +76,36 @@ public:
     virtual Void  codeTilesWPPEntryPoint(TComSlice* pSlice)     = 0;
     virtual Void  codeTerminatingBit(UInt uilsLast)                                       = 0;
     virtual Void  codeSliceFinish()                                                      = 0;
-    virtual Void codeMVPIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList) = 0;
+    virtual Void codeMVPIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList) = 0;
     virtual Void codeScalingList(TComScalingList* scalingList)      = 0;
 
 public:
 
-    virtual Void codeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeSkipFlag(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeMergeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeMergeIndex(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeSplitFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth) = 0;
+    virtual Void codeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth) = 0;
 
-    virtual Void codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth) = 0;
-    virtual Void codePredMode(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
+    virtual Void codePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth) = 0;
+    virtual Void codePredMode(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
 
-    virtual Void codeIPCMInfo(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
+    virtual Void codeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
 
     virtual Void codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx) = 0;
-    virtual Void codeQtCbf(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth) = 0;
-    virtual Void codeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeQtCbfZero(TComDataCU* pcCU, TextType eType, UInt uiTrDepth) = 0;
-    virtual Void codeQtRootCbfZero(TComDataCU* pcCU) = 0;
-    virtual Void codeIntraDirLumaAng(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool isMultiplePU) = 0;
+    virtual Void codeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth) = 0;
+    virtual Void codeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth) = 0;
+    virtual Void codeQtRootCbfZero(TComDataCU* cu) = 0;
+    virtual Void codeIntraDirLumaAng(TComDataCU* cu, UInt uiAbsPartIdx, Bool isMultiplePU) = 0;
 
-    virtual Void codeIntraDirChroma(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeInterDir(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeRefFrmIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
-    virtual Void codeMvd(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
-    virtual Void codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx) = 0;
-    virtual Void codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType) = 0;
-    virtual Void codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType) = 0;
+    virtual Void codeIntraDirChroma(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeInterDir(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeRefFrmIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
+    virtual Void codeMvd(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)      = 0;
+    virtual Void codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx) = 0;
+    virtual Void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType) = 0;
+    virtual Void codeTransformSkipFlags(TComDataCU* cu, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType) = 0;
     virtual Void codeSAOSign(UInt code) = 0;
     virtual Void codeSaoMaxUvlc(UInt code, UInt maxSymbol) = 0;
     virtual Void codeSaoMerge(UInt uiCode) = 0;
@@ -160,30 +160,30 @@ public:
     // SPS
     Void encodeSPS(TComSPS* pcSPS);
     Void encodePPS(TComPPS* pcPPS);
-    Void encodeSplitFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false);
-    Void encodeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodeSkipFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodePUWise(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false);
+    Void encodeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodePUWise(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
     Void encodeInterDirPU(TComDataCU* pcSubCU, UInt uiAbsPartIdx);
     Void encodeRefFrmIdxPU(TComDataCU* pcSubCU, UInt uiAbsPartIdx, RefPicList eRefList);
     Void encodeMvdPU(TComDataCU* pcSubCU, UInt uiAbsPartIdx, RefPicList eRefList);
     Void encodeMVPIdxPU(TComDataCU* pcSubCU, UInt uiAbsPartIdx, RefPicList eRefList);
-    Void encodeMergeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void encodeMergeIndex(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodePredMode(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false);
-    Void encodeIPCMInfo(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodePredInfo(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
-    Void encodeIntraDirModeLuma(TComDataCU* pcCU, UInt absPartIdx, Bool isMultiplePU = false);
+    Void encodeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void encodeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodePredMode(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false);
+    Void encodeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodePredInfo(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodeIntraDirModeLuma(TComDataCU* cu, UInt absPartIdx, Bool isMultiplePU = false);
 
-    Void encodeIntraDirModeChroma(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodeIntraDirModeChroma(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
 
     Void encodeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx);
-    Void encodeQtCbf(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth);
-    Void encodeQtCbfZero(TComDataCU* pcCU, TextType eType, UInt uiTrDepth);
-    Void encodeQtRootCbfZero(TComDataCU* pcCU);
-    Void encodeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void encodeQP(TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false);
+    Void encodeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth);
+    Void encodeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth);
+    Void encodeQtRootCbfZero(TComDataCU* cu);
+    Void encodeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void encodeQP(TComDataCU* cu, UInt uiAbsPartIdx, Bool bRD = false);
     Void updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteFinish)   { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, bExecuteFinish);     }
 
     Void updateContextTables(SliceType eSliceType, Int iQp)                        { m_pcEntropyCoderIf->updateContextTables(eSliceType, iQp, true);               }
@@ -192,13 +192,13 @@ public:
 
 private:
 
-    Void xEncodeTransform(TComDataCU* pcCU, UInt offsetLumaOffset, UInt offsetChroma, UInt uiAbsPartIdx, UInt uiDepth, UInt width, UInt height, UInt uiTrIdx, Bool& bCodeDQP);
+    Void xEncodeTransform(TComDataCU* cu, UInt offsetLumaOffset, UInt offsetChroma, UInt uiAbsPartIdx, UInt uiDepth, UInt width, UInt height, UInt uiTrIdx, Bool& bCodeDQP);
 
 public:
 
-    Void encodeCoeff(TComDataCU* pcCU,                 UInt uiAbsPartIdx, UInt uiDepth, UInt uiWidth, UInt uiHeight, Bool& bCodeDQP);
+    Void encodeCoeff(TComDataCU* cu,                 UInt uiAbsPartIdx, UInt uiDepth, UInt uiWidth, UInt uiHeight, Bool& bCodeDQP);
 
-    Void encodeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoeff, UInt uiAbsPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt uiDepth, TextType eType);
+    Void encodeCoeffNxN(TComDataCU* cu, TCoeff* pcCoeff, UInt uiAbsPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt uiDepth, TextType eType);
 
     Void estimateBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
     Void    encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx);

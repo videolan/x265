@@ -98,7 +98,7 @@ public:
     Void  codeTerminatingBit(UInt uilsLast);
     Void  codeSliceFinish();
 
-    Void codeMVPIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList);
+    Void codeMVPIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
 
     Void codeSAOSign(UInt) { printf("Not supported\n"); assert(0); }
 
@@ -114,34 +114,34 @@ public:
 
     Void updateContextTables(SliceType, Int) {}
 
-    Void codeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeSkipFlag(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeMergeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeMergeIndex(TComDataCU* pcCU, UInt uiAbsPartIdx);
+    Void codeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx);
 
-    Void codeInterModeFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode);
-    Void codeSplitFlag(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth);
+    Void codeInterModeFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode);
+    Void codeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth);
 
-    Void codePartSize(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth);
-    Void codePredMode(TComDataCU* pcCU, UInt uiAbsPartIdx);
+    Void codePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth);
+    Void codePredMode(TComDataCU* cu, UInt uiAbsPartIdx);
 
-    Void codeIPCMInfo(TComDataCU* pcCU, UInt uiAbsPartIdx);
+    Void codeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx);
 
     Void codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx);
-    Void codeQtCbf(TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth);
-    Void codeQtRootCbf(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeQtCbfZero(TComDataCU* pcCU, TextType eType, UInt uiTrDepth);
-    Void codeQtRootCbfZero(TComDataCU* pcCU);
-    Void codeIntraDirLumaAng(TComDataCU* pcCU, UInt absPartIdx, Bool isMultiple);
-    Void codeIntraDirChroma(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeInterDir(TComDataCU* pcCU, UInt uiAbsPartIdx);
-    Void codeRefFrmIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList);
-    Void codeMvd(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList);
+    Void codeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth);
+    Void codeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth);
+    Void codeQtRootCbfZero(TComDataCU* cu);
+    Void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple);
+    Void codeIntraDirChroma(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeInterDir(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeRefFrmIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
+    Void codeMvd(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
 
-    Void codeDeltaQP(TComDataCU* pcCU, UInt uiAbsPartIdx);
+    Void codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx);
 
-    Void codeCoeffNxN(TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType);
-    Void codeTransformSkipFlags(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType);
+    Void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType);
+    Void codeTransformSkipFlags(TComDataCU* cu, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType);
 
     Void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
 
