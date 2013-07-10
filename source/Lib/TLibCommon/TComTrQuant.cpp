@@ -1395,7 +1395,7 @@ __inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
                                             UInt   c1Idx,
                                             UInt   c2Idx) const
 {
-    Double iRate = xGetIEPRate();
+    Double rate = xGetIEPRate();
     UInt baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
 
     if (absLevel >= baseLevel)
@@ -1405,7 +1405,7 @@ __inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
         if (symbol < (COEF_REMAIN_BIN_REDUCTION << absGoRice))
         {
             length = symbol >> absGoRice;
-            iRate += (length + 1 + absGoRice) << 15;
+            rate += (length + 1 + absGoRice) << 15;
         }
         else
         {
@@ -1416,32 +1416,32 @@ __inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
                 symbol -=  (1 << (length++));
             }
 
-            iRate += (COEF_REMAIN_BIN_REDUCTION + length + 1 - absGoRice + length) << 15;
+            rate += (COEF_REMAIN_BIN_REDUCTION + length + 1 - absGoRice + length) << 15;
         }
         if (c1Idx < C1FLAG_NUMBER)
         {
-            iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
 
             if (c2Idx < C2FLAG_NUMBER)
             {
-                iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
+                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
             }
         }
     }
     else if (absLevel == 1)
     {
-        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
+        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
     }
     else if (absLevel == 2)
     {
-        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
+        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
     }
     else
     {
         assert(0);
     }
-    return xGetICost(iRate);
+    return xGetICost(rate);
 }
 
 __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
