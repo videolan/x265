@@ -1451,38 +1451,38 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
                                      UInt   c1Idx,
                                      UInt   c2Idx) const
 {
-    Int iRate = 0;
+    Int rate = 0;
     UInt baseLevel = (c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx < C2FLAG_NUMBER)) : 1;
 
     if (absLevel >= baseLevel)
     {
-        UInt uiSymbol   = absLevel - baseLevel;
-        UInt uiMaxVlc   = g_goRiceRange[absGoRice];
-        Bool bExpGolomb = (uiSymbol > uiMaxVlc);
+        UInt symbol   = absLevel - baseLevel;
+        UInt maxVlc   = g_goRiceRange[absGoRice];
+        Bool expGolomb = (symbol > maxVlc);
 
-        if (bExpGolomb)
+        if (expGolomb)
         {
-            absLevel = uiSymbol - uiMaxVlc;
-            Int iEGS = 1;
-            for (UInt uiMax = 2; absLevel >= uiMax; uiMax <<= 1, iEGS += 2)
+            absLevel = symbol - maxVlc;
+            Int egs = 1;
+            for (UInt max = 2; absLevel >= max; max <<= 1, egs += 2)
             {}
 
-            iRate   += iEGS << 15;
-            uiSymbol = min<UInt>(uiSymbol, (uiMaxVlc + 1));
+            rate   += egs << 15;
+            symbol = min<UInt>(symbol, (maxVlc + 1));
         }
 
-        UShort ui16PrefLen = UShort(uiSymbol >> absGoRice) + 1;
-        UShort ui16NumBins = min<UInt>(ui16PrefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
+        UShort prefLen = UShort(symbol >> absGoRice) + 1;
+        UShort numBins = min<UInt>(prefLen, g_goRicePrefixLen[absGoRice]) + absGoRice;
 
-        iRate += ui16NumBins << 15;
+        rate += numBins << 15;
 
         if (c1Idx < C1FLAG_NUMBER)
         {
-            iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+            rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
 
             if (c2Idx < C2FLAG_NUMBER)
             {
-                iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
+                rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][1];
             }
         }
     }
@@ -1492,18 +1492,18 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
     }
     else if (absLevel == 1)
     {
-        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
+        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][0];
     }
     else if (absLevel == 2)
     {
-        iRate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
-        iRate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
+        rate += m_estBitsSbac->greaterOneBits[ctxNumOne][1];
+        rate += m_estBitsSbac->levelAbsBits[ctxNumAbs][0];
     }
     else
     {
         assert(0);
     }
-    return iRate;
+    return rate;
 }
 
 /** Calculates the cost of signaling the last significant coefficient in the block
