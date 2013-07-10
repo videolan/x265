@@ -316,8 +316,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     }
 
                     rpcTempCU->initEstData(uhDepth, orgQP);
-
-                    if (m_pcEncCfg->getUseFastDecisionForMerge() && !bestIsSkip)
+                    if (!bestIsSkip)
                     {
                         bestIsSkip = rpcBestCU->getQtRootCbf(0) == 0;
                     }
