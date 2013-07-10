@@ -387,8 +387,8 @@ struct CLIOptions
         if (this->cli_log_level >= X265_LOG_INFO)
         {
             fprintf(stderr, "%s  [info]: %dx%d %dHz, frames %u - %d of %d\n", input->getName(),
-                param->sourceWidth, param->sourceHeight, param->frameRate,
-                this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
+                    param->sourceWidth, param->sourceHeight, param->frameRate,
+                    this->frameSkip, this->frameSkip + this->framesToBeEncoded - 1, numRemainingFrames);
         }
 
         if (reconfn)
@@ -434,7 +434,7 @@ int main(int argc, char **argv)
 
 #if CU_STAT_LOGFILE
     fp = fopen("Log_CU_stats.txt", "w");
-    fp1 = fopen("LOG_CU_COST.txt","w");
+    fp1 = fopen("LOG_CU_COST.txt", "w");
 #endif
     x265_param_t param;
     CLIOptions   cliopt;
@@ -476,6 +476,7 @@ int main(int argc, char **argv)
             cliopt.recon->writePicture(*pic_recon++);
             numRecon--;
         }
+
         if (nal)
             cliopt.writeNALs(p_nal, nal);
         // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
@@ -493,6 +494,7 @@ int main(int argc, char **argv)
             cliopt.recon->writePicture(*pic_recon++);
             numRecon--;
         }
+
         if (nal)
             cliopt.writeNALs(p_nal, nal);
         cliopt.printStatus(outFrameCount, &param);
@@ -512,8 +514,8 @@ int main(int argc, char **argv)
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.frameRate;
-    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s\n", 
-        outFrameCount, elapsed, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
+    printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s\n",
+           outFrameCount, elapsed, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
 
     x265_cleanup(); /* Free library singletons */
 

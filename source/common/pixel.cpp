@@ -32,14 +32,14 @@ template<typename T>
 inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x)); }
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 4,  DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 8,  DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 12, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 16, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 24, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 32, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 48, DATA_TYPE1, DATA_TYPE2 >;  \
-    p. FUNC_PREFIX [PARTITION_##WIDTH##x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF < WIDTH, 64, DATA_TYPE1, DATA_TYPE2 >;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 4,  DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x8]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 8,  DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x12]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 12, DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x16]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 16, DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x24]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 24, DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x32]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 32, DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x48]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 48, DATA_TYPE1, DATA_TYPE2>;  \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x64]  = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 64, DATA_TYPE1, DATA_TYPE2>;  \
 
 #define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(4,  FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
@@ -52,16 +52,16 @@ inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x));
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(64, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, WIDTH) \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x4]  = FUNC_PREFIX<WIDTH,  4>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x8]  = FUNC_PREFIX<WIDTH,  8>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x12] = FUNC_PREFIX<WIDTH, 12>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x16] = FUNC_PREFIX<WIDTH, 16>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x24] = FUNC_PREFIX<WIDTH, 24>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x32] = FUNC_PREFIX<WIDTH, 32>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x48] = FUNC_PREFIX<WIDTH, 48>; \
-    p.FUNC_PREFIX[PARTITION_##WIDTH##x64] = FUNC_PREFIX<WIDTH, 64>;
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4]  = FUNC_PREFIX<WIDTH,  4>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x8]  = FUNC_PREFIX<WIDTH,  8>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x12] = FUNC_PREFIX<WIDTH, 12>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x16] = FUNC_PREFIX<WIDTH, 16>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x24] = FUNC_PREFIX<WIDTH, 24>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x32] = FUNC_PREFIX<WIDTH, 32>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x48] = FUNC_PREFIX<WIDTH, 48>; \
+    p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x64] = FUNC_PREFIX<WIDTH, 64>;
 
-#define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX)\
+#define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  4) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX,  8) \
     SET_FUNC_PRIMITIVE_TABLE_C_SUBSET2(FUNC_PREFIX, 12) \
@@ -236,7 +236,8 @@ int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
     return (((sum_t)sum) + (sum >> BITS_PER_SUM)) >> 1;
 }
 
-template<int w, int h> // calculate satd in blocks of 4x4
+template<int w, int h>
+// calculate satd in blocks of 4x4
 int satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
@@ -253,7 +254,8 @@ int satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
     return satd;
 }
 
-template<int w, int h> // calculate satd in blocks of 8x4
+template<int w, int h>
+// calculate satd in blocks of 8x4
 int satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
     int satd = 0;
@@ -324,23 +326,37 @@ int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return (sum + 2) >> 2;
 }
 
-template<int w, int h> // Calculate sa8d in blocks of 8x8
+template<int w, int h>
+// Calculate sa8d in blocks of 8x8
 int sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int cost = 0;
+
     for (int y = 0; y < h; y += 8)
+    {
         for (int x = 0; x < w; x += 8)
+        {
             cost += sa8d_8x8(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
+        }
+    }
+
     return cost;
 }
 
-template<int w, int h> // Calculate sa8d in blocks of 16x16
+template<int w, int h>
+// Calculate sa8d in blocks of 16x16
 int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int cost = 0;
+
     for (int y = 0; y < h; y += 16)
+    {
         for (int x = 0; x < w; x += 16)
+        {
             cost += sa8d_16x16(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
+        }
+    }
+
     return cost;
 }
 
@@ -414,7 +430,7 @@ void convert16to32_shl(int *dst, short *src, intptr_t iStride, int shift, int si
     {
         for (int j = 0; j < size; j++)
         {
-            dst[i*size+j] = ((int)src[i*iStride+j]) << shift;
+            dst[i * size + j] = ((int)src[i * iStride + j]) << shift;
         }
     }
 }
@@ -429,14 +445,15 @@ void convert32to16(int *src, short *dst, int num)
 
 void convert32to16_shr(short *dst, int *src, int shift, int num)
 {
-    int round = 1 << (shift-1);
+    int round = 1 << (shift - 1);
+
     for (int i = 0; i < num; i++)
     {
         dst[i] = (short)((src[i] + round) >> shift);
     }
 }
 
-template <int blockSize>
+template<int blockSize>
 void getResidual(pixel *fenc, pixel *pred, short *residual, int stride)
 {
     for (int uiY = 0; uiY < blockSize; uiY++)
@@ -452,14 +469,14 @@ void getResidual(pixel *fenc, pixel *pred, short *residual, int stride)
     }
 }
 
-template <int blockSize>
+template<int blockSize>
 void calcRecons(pixel* pred, short* residual, pixel* recon, short* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
 {
     for (int uiY = 0; uiY < blockSize; uiY++)
     {
         for (int uiX = 0; uiX < blockSize; uiX++)
         {
-            recon[uiX] = (pixel) ClipY(static_cast<short>(pred[uiX]) + residual[uiX]);
+            recon[uiX] = (pixel)ClipY(static_cast<short>(pred[uiX]) + residual[uiX]);
             recqt[uiX] = (short)recon[uiX];
             recipred[uiX] = recon[uiX];
         }
@@ -472,7 +489,7 @@ void calcRecons(pixel* pred, short* residual, pixel* recon, short* recqt, pixel*
     }
 }
 
-template <int blockSize>
+template<int blockSize>
 void transpose(pixel* dst, pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
@@ -483,7 +500,6 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
         }
     }
 }
-
 }  // end anonymous namespace
 
 namespace x265 {
@@ -495,7 +511,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad_x3)
     SET_FUNC_PRIMITIVE_TABLE_C2(sad_x4)
-    
+
     // satd
     p.satd[PARTITION_4x4]   = satd_4x4;
     p.satd[PARTITION_4x8]   = satd4<4, 8>;
@@ -567,7 +583,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[PARTITION_64x24] = satd8<64, 24>;
     p.satd[PARTITION_64x32] = satd8<64, 32>;
     p.satd[PARTITION_64x48] = satd8<64, 48>;
-    p.satd[PARTITION_64x64] = satd8<64, 64>;   
+    p.satd[PARTITION_64x64] = satd8<64, 64>;
 
     //sse
 #if HIGH_BIT_DEPTH

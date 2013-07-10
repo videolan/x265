@@ -624,7 +624,7 @@ Void TEncCavlc::codeSliceHeader(TComSlice* pcSlice)
             {
                 for (Int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
                 {
-                    assert (!rps->getUsed(picIdx));
+                    assert(!rps->getUsed(picIdx));
                 }
             }
 

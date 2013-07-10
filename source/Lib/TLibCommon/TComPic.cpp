@@ -53,12 +53,10 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-{
-}
+{}
 
 TComPic::~TComPic()
-{
-}
+{}
 
 Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
 {
@@ -145,7 +143,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 
     //1st step: decide the real start address
     startAddr = 0;
-    endAddr   = lastSliceCUAddr-1;
+    endAddr   = lastSliceCUAddr - 1;
 
     startLCU            = startAddr / maxNumSUInLCU;
     firstCUInStartLCU   = startAddr % maxNumSUInLCU;

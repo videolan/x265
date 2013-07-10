@@ -30,7 +30,6 @@
 namespace x265 {
 // x265 private namespace
 
-
 // Generic wave-front scheduler, manages busy-state of frame rows as a priority
 // queue
 //
@@ -39,6 +38,7 @@ namespace x265 {
 class WaveFront : public JobProvider
 {
 private:
+
     //< bitmap of rows queued for processing, uses atomic intrinsics to
     //< set and clear bits, for thread safety
     uint64_t volatile *m_queuedBitmap;
@@ -69,7 +69,6 @@ public:
     //< finished, ThreadPoolDequeue() must be called.
     virtual void processRow(int row) = 0;
 };
-
 } // end namespace x265
 
 #endif // ifndef _WAVEFRONT_H_

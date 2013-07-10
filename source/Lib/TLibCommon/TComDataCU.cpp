@@ -775,7 +775,7 @@ Void TComDataCU::copyInterPredInfoFrom(TComDataCU* pcCU, UInt uiAbsPartIdx, RefP
 Void TComDataCU::copyPartFrom(TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Bool isRDObasedAnalysis)
 {
     assert(uiPartUnitIdx < 4);
-    if(isRDObasedAnalysis)
+    if (isRDObasedAnalysis)
         m_dTotalCost         += pcCU->getTotalCost();
 
     m_uiTotalDistortion  += pcCU->getTotalDistortion();
@@ -3234,8 +3234,8 @@ Void TComDataCU::xDeriveCenterIdx(UInt uiPartIdx, UInt& ruiPartIdxCenter)
 
     ruiPartIdxCenter = m_uiAbsIdxInLCU + uiPartAddr; // partition origin.
     ruiPartIdxCenter = g_rasterToZscan[g_zscanToRaster[ruiPartIdxCenter]
-                                          + (iPartHeight / m_pcPic->getMinCUHeight()) / 2 * m_pcPic->getNumPartInWidth()
-                                          + (iPartWidth / m_pcPic->getMinCUWidth()) / 2];
+                                       + (iPartHeight / m_pcPic->getMinCUHeight()) / 2 * m_pcPic->getNumPartInWidth()
+                                       + (iPartWidth / m_pcPic->getMinCUWidth()) / 2];
 }
 
 Void TComDataCU::compressMV()

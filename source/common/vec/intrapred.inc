@@ -39,8 +39,7 @@ using namespace x265;
     Vec16uc tmp16_1, tmp16_2;   \
     Vec2uq tmp2uq;  \
     Vec8s v_deltaFract, v_deltaPos(0), thirty2(32), thirty1(31), v_ipAngle(0);  \
-    bool modeHor = (dirMode < 18);                                              
-
+    bool modeHor = (dirMode < 18);
 
 #define PRED_INTRA_ANG4_END \
     v_deltaFract = v_deltaPos & thirty1;    \
@@ -96,7 +95,7 @@ using namespace x265;
     absAng             = angTable[absAng];  \
     intraPredAngle     = signAng * absAng;  \
     if (modeHor)         /* Near horizontal modes*/   \
-    {\
+    { \
         Vec16uc tmp;    \
         Vec8s row11, row12; \
         Vec16uc row1, row2, row3, row4, tmp16_1, tmp16_2;   \
@@ -106,46 +105,46 @@ using namespace x265;
         v_ipAngle = intraPredAngle; \
 
 #define PRED_INTRA_ANG8_MIDDLE   \
-        /* Flip the block */    \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
-        row1 = tmp16_1; \
-        row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
-        row3 = tmp16_1; \
-        row4 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
-        row1 = tmp16_1; \
-        row2 = tmp16_2; \
-        tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
-        tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
-        row3 = tmp16_1; \
-        row4 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3);    \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3);    \
-        row1 = tmp16_1; \
-        row3 = tmp16_2; \
-        tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4);    \
-        tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4);    \
-        row2 = tmp16_1; \
-        row4 = tmp16_2; \
-        store_partial(const_int(8), pDst, row1);   /*row1*/   \
-        store_partial(const_int(8), pDst + (2 * dstStride), row3);   /*row3*/   \
-        store_partial(const_int(8), pDst + (4 * dstStride), row2);   /*row5*/   \
-        store_partial(const_int(8), pDst + (6 * dstStride), row4);   /*row7*/   \
-        row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1); \
-        store_partial(const_int(8), pDst + (1 * dstStride), row1);   /*row2*/   \
-        row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3); \
-        store_partial(const_int(8), pDst + (3 * dstStride), row1);   /*row4*/   \
-        row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2);    \
-        store_partial(const_int(8), pDst + (5 * dstStride), row1);   /*row6*/   \
-        row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4); \
-        store_partial(const_int(8), pDst + (7 * dstStride), row1);   /*row8*/   \
+    /* Flip the block */    \
+    tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
+    tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
+    row1 = tmp16_1; \
+    row2 = tmp16_2; \
+    tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
+    tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
+    row3 = tmp16_1; \
+    row4 = tmp16_2; \
+    tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row1, row2);    \
+    tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row1, row2);  \
+    row1 = tmp16_1; \
+    row2 = tmp16_2; \
+    tmp16_1 = blend16uc<0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23>(row3, row4);    \
+    tmp16_2 = blend16uc<8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31>(row3, row4);  \
+    row3 = tmp16_1; \
+    row4 = tmp16_2; \
+    tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row1, (Vec4i)row3);    \
+    tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row1, (Vec4i)row3);    \
+    row1 = tmp16_1; \
+    row3 = tmp16_2; \
+    tmp16_1 = blend4i<0, 4, 1, 5>((Vec4i)row2, (Vec4i)row4);    \
+    tmp16_2 = blend4i<2, 6, 3, 7>((Vec4i)row2, (Vec4i)row4);    \
+    row2 = tmp16_1; \
+    row4 = tmp16_2; \
+    store_partial(const_int(8), pDst, row1);       /*row1*/   \
+    store_partial(const_int(8), pDst + (2 * dstStride), row3);       /*row3*/   \
+    store_partial(const_int(8), pDst + (4 * dstStride), row2);       /*row5*/   \
+    store_partial(const_int(8), pDst + (6 * dstStride), row4);       /*row7*/   \
+    row1 = blend2q<1, 3>((Vec2q)row1, (Vec2q)row1); \
+    store_partial(const_int(8), pDst + (1 * dstStride), row1);       /*row2*/   \
+    row1 = blend2q<1, 3>((Vec2q)row3, (Vec2q)row3); \
+    store_partial(const_int(8), pDst + (3 * dstStride), row1);       /*row4*/   \
+    row1 = blend2q<1, 3>((Vec2q)row2, (Vec2q)row2);    \
+    store_partial(const_int(8), pDst + (5 * dstStride), row1);       /*row6*/   \
+    row1 = blend2q<1, 3>((Vec2q)row4, (Vec2q)row4); \
+    store_partial(const_int(8), pDst + (7 * dstStride), row1);       /*row8*/   \
     }   \
     else                         /* Vertical modes*/    \
-    {\
+    { \
         Vec8s row11, row12; \
         Vec8s v_deltaFract, v_deltaPos, thirty2(32), thirty1(31), v_ipAngle;    \
         Vec16uc tmp;    \
@@ -459,7 +458,7 @@ void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStrid
         m0.load(srcAbove + 24);
         sumAbove += m0;
         break;
-        //case 64:
+    //case 64:
     default:
         // CHECK_ME: the max support bit_depth is 13-bits
         m0.load(srcAbove);
@@ -1791,6 +1790,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* pDst, int dstStride, int width, int d
 void PredIntraAng4_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     Vec16uc tmp16_1, tmp16_2;
+
     tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 2);
     store_partial(const_int(4), pDst, tmp16_1);
     tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain + 3);
@@ -1805,7 +1805,8 @@ void PredIntraAng4_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1); 
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
 
     tmp2uq = reinterpret_i(tmp16_1);
@@ -1833,15 +1834,15 @@ void PredIntraAng4_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     row42 = extend_low(tmp16_2);    //offsets(4,5,6,7)
 
     v_deltaPos = v_ipAngle = 26;
-    
+
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
 
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
 
@@ -1871,11 +1872,11 @@ void PredIntraAng4_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
 
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
 
@@ -1905,11 +1906,12 @@ void PredIntraAng4_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
 
     tmp2uq = reinterpret_i(tmp16_1);
@@ -1934,11 +1936,12 @@ void PredIntraAng4_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -1959,11 +1962,12 @@ void PredIntraAng4_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -1981,11 +1985,12 @@ void PredIntraAng4_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain + 1);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2003,11 +2008,12 @@ void PredIntraAng4_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
-   PRED_INTRA_ANG4_START
+    PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2025,11 +2031,12 @@ void PredIntraAng4_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);
+
     row11 = extend_low(tmp16_1);    //offsets(0,1,2,3)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2047,11 +2054,12 @@ void PredIntraAng4_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+
     row41 = extend_low(tmp16_1);    //offsets(-2,-1,0,1)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2074,11 +2082,12 @@ void PredIntraAng4_m_9(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 1);
+
     row41 = extend_low(tmp16_1);    //offsets(-2,-1,0,1)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2101,11 +2110,12 @@ void PredIntraAng4_m_13(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+
     row41 = extend_low(tmp16_1);    //offsets(-3,-2,-1,0)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2128,15 +2138,16 @@ void PredIntraAng4_m_17(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     row12 = extend_low(tmp16_2);    //offsets(-1,0,1,2)
 
     v_deltaPos = v_ipAngle = -17;
-    
+
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 2);
+
     row41 = extend_low(tmp16_1);    //offsets(-3,-2,-1,0)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2163,11 +2174,12 @@ void PredIntraAng4_m_21(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng4_m_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     PRED_INTRA_ANG4_START
 
-    tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 3);
+        tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain - 3);
+
     row41 = extend_low(tmp16_1);    //offsets(-4,-3,-2,-1)
     tmp2uq = reinterpret_i(tmp16_1);
     tmp2uq = tmp2uq >> 8;
@@ -2197,9 +2209,10 @@ void PredIntraAng4_m_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     PRED_INTRA_ANG4_END
 }
 
-void PredIntraAng4_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/) 
+void PredIntraAng4_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     Vec16uc tmp16_1, tmp16_2;
+
     tmp16_1 = (Vec16uc)load_partial(const_int(8), refMain);    //-1,0,1,2
     store_partial(const_int(4), pDst, tmp16_1);
     tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 1); //-2,-1,0,1
@@ -2207,11 +2220,12 @@ void PredIntraAng4_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMod
     tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 2);
     store_partial(const_int(4), pDst + 2 * dstStride, tmp16_2);
     tmp16_2 = (Vec16uc)load_partial(const_int(8), refMain - 3);
-    store_partial(const_int(4), pDst + 3 * dstStride, tmp16_2);    
+    store_partial(const_int(4), pDst + 3 * dstStride, tmp16_2);
 }
 
 typedef void (*PredIntraAng4x4_table)(pixel* pDst, int dstStride, pixel *refMain, int dirMode);
-PredIntraAng4x4_table PredIntraAng4[] = {
+PredIntraAng4x4_table PredIntraAng4[] =
+{
     /* PredIntraAng4_0 is replaced with PredIntraAng4_2. For PredIntraAng4_0 we are going through default path in the xPredIntraAng4x4 because we cannot afford to pass large number arguments for this function. */
     PredIntraAng4_32,
     PredIntraAng4_26,
@@ -2221,7 +2235,7 @@ PredIntraAng4x4_table PredIntraAng4[] = {
     PredIntraAng4_9,
     PredIntraAng4_5,
     PredIntraAng4_2,
-    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here. 
+    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here.
     PredIntraAng4_m_2,
     PredIntraAng4_m_5,
     PredIntraAng4_m_9,
@@ -2237,7 +2251,7 @@ PredIntraAng4x4_table PredIntraAng4[] = {
     PredIntraAng4_m_9,
     PredIntraAng4_m_5,
     PredIntraAng4_m_2,
-    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here. 
+    PredIntraAng4_2,    //Intentionally wrong! It should be "PredIntraAng4_0" here.
     PredIntraAng4_2,
     PredIntraAng4_5,
     PredIntraAng4_9,
@@ -2250,10 +2264,10 @@ PredIntraAng4x4_table PredIntraAng4[] = {
 void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     assert(dirMode > 1); //no planar and dc
-    static const int mode_to_angle_table[] = {32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32};
-    static const int mode_to_invAng_table[] = {256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256};
-    int intraPredAngle = mode_to_angle_table[dirMode-2];
-    int invAngle       = mode_to_invAng_table[dirMode-2];
+    static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
+    static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
+    int intraPredAngle = mode_to_angle_table[dirMode - 2];
+    int invAngle       = mode_to_invAng_table[dirMode - 2];
 
     bool modeHor       = (dirMode < 18);
     bool modeVer       = !modeHor;
@@ -2352,7 +2366,7 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
     }
     else
     {
-        PredIntraAng4[dirMode-2](pDst, dstStride, refMain, dirMode);
+        PredIntraAng4[dirMode - 2](pDst, dstStride, refMain, dirMode);
     }
 }
 
@@ -2385,9 +2399,10 @@ void xPredIntraAng4x4(int /*bitDepth*/, pixel* pDst, int dstStride, int width, i
         RES = ((thirty2 - v_deltaFract) * ROW1 + (v_deltaFract * ROW2) + 16) >> 5; \
 }
 
-void PredIntraAng8_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/) 
+void PredIntraAng8_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     Vec8s tmp;
+
     tmp = load_partial(const_int(8), refMain + 2);        //-1,0,1,2
     store_partial(const_int(8), pDst, tmp);
     tmp = load_partial(const_int(8), refMain + 3);     //-2,-1,0,1
@@ -2406,7 +2421,7 @@ void PredIntraAng8_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*
     store_partial(const_int(8), pDst + 7 * dstStride, tmp);
 }
 
-void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
     // Map the mode index to main prediction direction and angle
     bool modeHor       = (dirMode < 18);
@@ -2418,6 +2433,7 @@ void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 
     // Set bitshifts and scale the angle parameter to block size
     int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
+
     absAng             = angTable[absAng];
     intraPredAngle     = signAng * absAng;
 
@@ -2444,9 +2460,7 @@ void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
         PREDANG_CALCROW_HOR(7, tmp2);
         row4 = compress(tmp1, tmp2);
 
-        PRED_INTRA_ANG8_MIDDLE
-
-        PREDANG_CALCROW_VER(0);
+        PRED_INTRA_ANG8_MIDDLE PREDANG_CALCROW_VER(0);
         PREDANG_CALCROW_VER(1);
         PREDANG_CALCROW_VER(2);
         PREDANG_CALCROW_VER(3);
@@ -2457,185 +2471,170 @@ void PredIntraAng8_26(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
     }
 }
 
-void PredIntraAng8_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng8_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
-        PRED_INTRA_ANG8_START
+    PRED_INTRA_ANG8_START LOADROW(row11, 0);
+    LOADROW(row12, 1);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row1 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row2 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row3 = compress(tmp1, tmp2);
+    row11 = row12;
+    LOADROW(row12, 2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row4 = compress(tmp1, tmp2);
 
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        row11 = row12;
-        LOADROW(row12, 2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
-
-        PRED_INTRA_ANG8_MIDDLE
-
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-        row11 = row12;
-        LOADROW(row12, 2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-    }
+    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, 0);
+    LOADROW(row12, 1);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+    row11 = row12;
+    LOADROW(row12, 2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+}
 }
 
-void PredIntraAng8_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng8_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
-        PRED_INTRA_ANG8_START
+    PRED_INTRA_ANG8_START LOADROW(row11, 0);
+    LOADROW(row12, 1);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row1 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row2 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row3 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row4 = compress(tmp1, tmp2);
 
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
-
-        PRED_INTRA_ANG8_MIDDLE
-
-        LOADROW(row11, 0);
-        LOADROW(row12, 1);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-    }
+    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, 0);
+    LOADROW(row12, 1);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + dstStride, compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+}
 }
 
-void PredIntraAng8_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng8_m_2(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
-        PRED_INTRA_ANG8_START
+    PRED_INTRA_ANG8_START LOADROW(row11, -1);
+    LOADROW(row12, 0);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row1 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row2 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row3 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row4 = compress(tmp1, tmp2);
 
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
-
-        PRED_INTRA_ANG8_MIDDLE
-
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-    }
+    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, -1);
+    LOADROW(row12, 0);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+}
 }
 
-void PredIntraAng8_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode) 
+void PredIntraAng8_m_5(pixel* pDst, int dstStride, pixel *refMain, int dirMode)
 {
-        PRED_INTRA_ANG8_START
+    PRED_INTRA_ANG8_START LOADROW(row11, -1);
+    LOADROW(row12, 0);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row1 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row2 = compress(tmp1, tmp2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row3 = compress(tmp1, tmp2);
+    row12 = row11;
+    LOADROW(row11, -2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    row4 = compress(tmp1, tmp2);
 
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row1 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row2 = compress(tmp1, tmp2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row3 = compress(tmp1, tmp2);
-        row12 = row11;
-        LOADROW(row11, -2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        row4 = compress(tmp1, tmp2);
+    PRED_INTRA_ANG8_MIDDLE LOADROW(row11, -1);
+    LOADROW(row12, 0);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst, compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
+    row12 = row11;
+    LOADROW(row11, -2);
+    CALCROW(tmp1, row11, row12);
+    CALCROW(tmp2, row11, row12);
+    store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
+    store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
+}
+}
 
-        PRED_INTRA_ANG8_MIDDLE
-
-        LOADROW(row11, -1);
-        LOADROW(row12, 0);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst, compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (2 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (3 * dstStride), compress(tmp2, tmp2));
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (4 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (5 * dstStride), compress(tmp2, tmp2));
-        row12 = row11;
-        LOADROW(row11, -2);
-        CALCROW(tmp1, row11, row12);
-        CALCROW(tmp2, row11, row12);
-        store_partial(const_int(8), pDst + (6 * dstStride), compress(tmp1, tmp1));
-        store_partial(const_int(8), pDst + (7 * dstStride), compress(tmp2, tmp2));
-    }
-}     
-
-void PredIntraAng8_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/) 
+void PredIntraAng8_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMode*/)
 {
     Vec16uc tmp;
+
     tmp = load_partial(const_int(8), refMain);        //-1,0,1,2
     store_partial(const_int(8), pDst, tmp);
     tmp = load_partial(const_int(8), refMain - 1);     //-2,-1,0,1
@@ -2655,18 +2654,19 @@ void PredIntraAng8_m_32(pixel* pDst, int dstStride, pixel *refMain, int /*dirMod
 }
 
 typedef void (*PredIntraAng8x8_table)(pixel* pDst, int dstStride, pixel *refMain, int dirMode);
-PredIntraAng8x8_table PredIntraAng8[] = {
-    /* 
-    PredIntraAng8_0 is replaced with PredIntraAng8_2. For PredIntraAng8_0 we are going through default path in the xPredIntraAng8x8 because we cannot afford to pass large number arguments for this function. 
+PredIntraAng8x8_table PredIntraAng8[] =
+{
+    /*
+    PredIntraAng8_0 is replaced with PredIntraAng8_2. For PredIntraAng8_0 we are going through default path in the xPredIntraAng8x8 because we cannot afford to pass large number arguments for this function.
     Path for PredIntraAng8_21, PredIntraAng8_m_21, PredIntraAng8_17, PredIntraAng8_m_17, PredIntraAng8_13, PredIntraAng8_m_13, PredIntraAng8_9, PredIntraAng8_m_9 is same as PredIntraAng8_26.
     */
     PredIntraAng8_32,
     PredIntraAng8_26,
-    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.      
+    PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_21" here.
     PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_17" here.
     PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_13" here.
     PredIntraAng8_26,       //Intentionally wrong! It should be "PredIntraAng8_9" here.
-    PredIntraAng8_5,    
+    PredIntraAng8_5,
     PredIntraAng8_2,
     PredIntraAng8_2,        //Intentionally wrong! It should be "PredIntraAng8_0" here.
     PredIntraAng8_m_2,
@@ -2695,17 +2695,16 @@ PredIntraAng8x8_table PredIntraAng8[] = {
     PredIntraAng8_32
 };
 
-
 void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize        = width;
 
     assert(dirMode > 1); //no planar and dc
-    static const int mode_to_angle_table[] = {32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32};
-    static const int mode_to_invAng_table[] = {256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256};
-    int intraPredAngle = mode_to_angle_table[dirMode-2];
-    int invAngle       = mode_to_invAng_table[dirMode-2];
+    static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
+    static const int mode_to_invAng_table[] = { 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256, 315, 390, 482, 630, 910, 1638, 4096, 0, 4096, 1638, 910, 630, 482, 390, 315, 256 };
+    int intraPredAngle = mode_to_angle_table[dirMode - 2];
+    int invAngle       = mode_to_invAng_table[dirMode - 2];
     bool modeHor       = (dirMode < 18);
     bool modeVer       = !modeHor;
     pixel* refMain;
@@ -2830,8 +2829,8 @@ void xPredIntraAng8x8(int bitDepth, pixel* pDst, int dstStride, int width, int d
     }
     else
     {
-        PredIntraAng8[dirMode-2](pDst, dstStride, refMain, dirMode);
-    }    
+        PredIntraAng8[dirMode - 2](pDst, dstStride, refMain, dirMode);
+    }
 }
 
 #undef PREDANG_CALCROW_VER
@@ -4837,7 +4836,7 @@ ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
     { 9, 0, 0, 1, 2, 3, 4, 5, 1, 0, 0, 9, 10, 11, 12, 13 },     //  5
     { 11, 10, 9, 0, 0, 1, 2, 3, 4, 2, 1, 0, 0, 9, 10, 11 },     //  6
     { 15, 12, 11, 10, 9, 0, 0, 1, 7, 4, 3, 2, 1, 0, 0, 9 },     //  7
-    { 0, 10, 11, 13, 1, 0, 10, 11, 3, 2, 0, 10, 5, 4, 2, 0},    //  8
+    { 0, 10, 11, 13, 1, 0, 10, 11, 3, 2, 0, 10, 5, 4, 2, 0 },    //  8
 
     { 1, 2, 2, 3, 3, 4, 4,  5,  5,  6,  6,  7,  7,  8,  8,  9 },    //  9
     { 2, 3, 3, 4, 4, 5, 5,  6,  6,  7,  7,  8,  8,  9,  9, 10 },    // 10
@@ -4849,7 +4848,7 @@ ALIGN_VAR_32(static const unsigned char, tab_angle_0[][16]) =
     { 2, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 16
     { 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 17
     { 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 18
-    { 14, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6},           // 19
+    { 14, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 },           // 19
     { 7, 4, 4, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13 },      // 20
     { 13, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7 },            // 21
     { 6, 0, 0, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14 },    // 22
@@ -4884,40 +4883,41 @@ ALIGN_VAR_32(static const unsigned char, tab_angle_2[][16]) =
 ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
 {
 #define MAKE_COEF8(a) \
-    { 32-(a), (a), 32-(a), (a), 32-(a), (a), 32-(a), (a), 32-(a), (a), 32-(a), (a), 32-(a), (a), 32-(a), (a) },
+    { 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a), 32 - (a), (a) \
+    },
 
-    MAKE_COEF8(  0 )
-    MAKE_COEF8(  1 )
-    MAKE_COEF8(  2 )
-    MAKE_COEF8(  3 )
-    MAKE_COEF8(  4 )
-    MAKE_COEF8(  5 )
-    MAKE_COEF8(  6 )
-    MAKE_COEF8(  7 )
-    MAKE_COEF8(  8 )
-    MAKE_COEF8(  9 )
-    MAKE_COEF8( 10 )
-    MAKE_COEF8( 11 )
-    MAKE_COEF8( 12 )
-    MAKE_COEF8( 13 )
-    MAKE_COEF8( 14 )
-    MAKE_COEF8( 15 )
-    MAKE_COEF8( 16 )
-    MAKE_COEF8( 17 )
-    MAKE_COEF8( 18 )
-    MAKE_COEF8( 19 )
-    MAKE_COEF8( 20 )
-    MAKE_COEF8( 21 )
-    MAKE_COEF8( 22 )
-    MAKE_COEF8( 23 )
-    MAKE_COEF8( 24 )
-    MAKE_COEF8( 25 )
-    MAKE_COEF8( 26 )
-    MAKE_COEF8( 27 )
-    MAKE_COEF8( 28 )
-    MAKE_COEF8( 29 )
-    MAKE_COEF8( 30 )
-    MAKE_COEF8( 31 )
+    MAKE_COEF8(0)
+    MAKE_COEF8(1)
+    MAKE_COEF8(2)
+    MAKE_COEF8(3)
+    MAKE_COEF8(4)
+    MAKE_COEF8(5)
+    MAKE_COEF8(6)
+    MAKE_COEF8(7)
+    MAKE_COEF8(8)
+    MAKE_COEF8(9)
+    MAKE_COEF8(10)
+    MAKE_COEF8(11)
+    MAKE_COEF8(12)
+    MAKE_COEF8(13)
+    MAKE_COEF8(14)
+    MAKE_COEF8(15)
+    MAKE_COEF8(16)
+    MAKE_COEF8(17)
+    MAKE_COEF8(18)
+    MAKE_COEF8(19)
+    MAKE_COEF8(20)
+    MAKE_COEF8(21)
+    MAKE_COEF8(22)
+    MAKE_COEF8(23)
+    MAKE_COEF8(24)
+    MAKE_COEF8(25)
+    MAKE_COEF8(26)
+    MAKE_COEF8(27)
+    MAKE_COEF8(28)
+    MAKE_COEF8(29)
+    MAKE_COEF8(30)
+    MAKE_COEF8(31)
 
 #undef MAKE_COEF8
 };
@@ -4928,7 +4928,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     (void)left1;
     (void)above1;
 
-    pixel (*dstN)[4*4] = (pixel(*)[4*4])dst;
+    pixel(*dstN)[4 * 4] = (pixel(*)[4 * 4])dst;
 
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
     __m128i T10, T11, T12, T13;
@@ -4937,19 +4937,19 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     __m128i R00, R10, R20, R30;
     __m128i R01, R11, R21, R31;
 
-    R00 = _mm_loadu_si128((__m128i*)(left0+1));    // [-- -- -- -- -- -- --  -- -08 -07 -06 -05 -04 -03 -02 -01]
+    R00 = _mm_loadu_si128((__m128i*)(left0 + 1));    // [-- -- -- -- -- -- --  -- -08 -07 -06 -05 -04 -03 -02 -01]
     R10 = _mm_srli_si128(R00, 1);                   // [-- -- -- -- -- -- --  --  -- -08 -07 -06 -05 -04 -03 -02]
     R20 = _mm_srli_si128(R00, 2);                   // [-- -- -- -- -- -- --  --  --  -- -08 -07 -06 -05 -04 -03]
     R30 = _mm_srli_si128(R00, 3);                   // [-- -- -- -- -- -- --  --  --  --  -- -08 -07 -06 -05 -04]
 
-    R01 = _mm_loadu_si128((__m128i*)(above0+1));   // [-- -- -- -- -- -- --  --  08  07  06  05  04  03  02  01]
+    R01 = _mm_loadu_si128((__m128i*)(above0 + 1));   // [-- -- -- -- -- -- --  --  08  07  06  05  04  03  02  01]
     R11 = _mm_srli_si128(R01, 1);                   // [-- -- -- -- -- -- --  --  --  08  07  06  05  04  03  02]
     R21 = _mm_srli_si128(R01, 2);                   // [-- -- -- -- -- -- --  --  --  --  08  07  06  05  04  03]
     R31 = _mm_srli_si128(R01, 3);                   // [-- -- -- -- -- -- --  --  --  --  --  08  07  06  05  04]
 
     T00 = _mm_unpacklo_epi32(R00, R00);
     T00 = _mm_unpacklo_epi64(T00, T00);
-    _mm_store_si128((__m128i*)dstN[ 8], T00);
+    _mm_store_si128((__m128i*)dstN[8], T00);
 
     T00 = _mm_unpacklo_epi32(R01, R01);
     T00 = _mm_unpacklo_epi64(T00, T00);
@@ -4973,16 +4973,16 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 
         int tmp0;
         tmp0 = _mm_cvtsi128_si32(T00);
-        dstN[ 8][0*4] = tmp0 & 0xFF;
-        dstN[ 8][1*4] = (tmp0>>8) & 0xFF;
-        dstN[ 8][2*4] = (tmp0>>16) & 0xFF;
-        dstN[ 8][3*4] = (tmp0>>24) & 0xFF;
+        dstN[8][0 * 4] = tmp0 & 0xFF;
+        dstN[8][1 * 4] = (tmp0 >> 8) & 0xFF;
+        dstN[8][2 * 4] = (tmp0 >> 16) & 0xFF;
+        dstN[8][3 * 4] = (tmp0 >> 24) & 0xFF;
 
         tmp0 = _mm_cvtsi128_si32(T01);
-        dstN[24][0*4] = tmp0 & 0xFF;
-        dstN[24][1*4] = (tmp0>>8) & 0xFF;
-        dstN[24][2*4] = (tmp0>>16) & 0xFF;
-        dstN[24][3*4] = (tmp0>>24) & 0xFF;
+        dstN[24][0 * 4] = tmp0 & 0xFF;
+        dstN[24][1 * 4] = (tmp0 >> 8) & 0xFF;
+        dstN[24][2 * 4] = (tmp0 >> 16) & 0xFF;
+        dstN[24][3 * 4] = (tmp0 >> 24) & 0xFF;
     }
 
     const __m128i c_16 = _mm_set1_epi16(16);
@@ -4990,21 +4990,21 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T00 = _mm_shufflelo_epi16(R10, 0x94);
     T01 = _mm_shufflelo_epi16(R20, 0x94);
     T00 = _mm_unpacklo_epi32(T00, T01);
-    _mm_store_si128((__m128i*)dstN[ 0], T00);
+    _mm_store_si128((__m128i*)dstN[0], T00);
 
     T00 = _mm_shufflelo_epi16(R11, 0x94);
     T01 = _mm_shufflelo_epi16(R21, 0x94);
     T00 = _mm_unpacklo_epi32(T00, T01);
     _mm_store_si128((__m128i*)dstN[32], T00);
 
-    T00 = _mm_shuffle_epi8( R00, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T01 = _mm_shuffle_epi8( R10, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T02 = _mm_shuffle_epi8( R20, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T03 = _mm_shuffle_epi8( R30, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T04 = _mm_shuffle_epi8( R01, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T05 = _mm_shuffle_epi8( R11, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T06 = _mm_shuffle_epi8( R21, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    T07 = _mm_shuffle_epi8( R31, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
+    T00 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T01 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T02 = _mm_shuffle_epi8(R20, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T03 = _mm_shuffle_epi8(R30, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T04 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T05 = _mm_shuffle_epi8(R11, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T06 = _mm_shuffle_epi8(R21, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    T07 = _mm_shuffle_epi8(R31, _mm_load_si128((__m128i*)tab_angle_0[0]));
     T00 = _mm_unpacklo_epi64(T00, T04);
     T01 = _mm_unpacklo_epi64(T01, T05);
     T02 = _mm_unpacklo_epi64(T02, T06);
@@ -5013,13 +5013,13 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[14]));
-    T13 = _mm_maddubs_epi16(T03, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T13 = _mm_maddubs_epi16(T03, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 1], T20);
+    _mm_store_si128((__m128i*)dstN[1], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5036,7 +5036,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 2], T20);
+    _mm_store_si128((__m128i*)dstN[2], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5045,15 +5045,15 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     _mm_store_si128((__m128i*)dstN[30], T22);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T12 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T13 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T13 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 3], T20);
+    _mm_store_si128((__m128i*)dstN[3], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5063,14 +5063,14 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
-    T12 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T12 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T13 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 4], T20);
+    _mm_store_si128((__m128i*)dstN[4], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5078,16 +5078,16 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T22 = _mm_packus_epi16(T22, T23);
     _mm_store_si128((__m128i*)dstN[28], T22);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
-    T13 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T13 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 5], T20);
+    _mm_store_si128((__m128i*)dstN[5], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5095,7 +5095,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T22 = _mm_packus_epi16(T22, T23);
     _mm_store_si128((__m128i*)dstN[27], T22);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T13 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -5104,7 +5104,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 6], T20);
+    _mm_store_si128((__m128i*)dstN[6], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5112,16 +5112,16 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T22 = _mm_packus_epi16(T22, T23);
     _mm_store_si128((__m128i*)dstN[26], T22);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T13 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T13 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 7], T20);
+    _mm_store_si128((__m128i*)dstN[7], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5139,8 +5139,8 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     R21 = _mm_srli_si128(R01, 2);                   // [-- -- -- -- -- -- --   --  --  08  07  06  05  04  03  02]
     R31 = _mm_srli_si128(R01, 3);                   // [-- -- -- -- -- -- --   --  --  --  08  07  06  05  04  03]
 
-    T00 = _mm_shuffle_epi8( R00, _mm_load_si128((__m128i*)tab_angle_0[ 0]));    // [ -- -08 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02 -02 -01 -01  00]
-    T04 = _mm_shuffle_epi8( R01, _mm_load_si128((__m128i*)tab_angle_0[ 0]));    // [ --  08  07  06  06  05  05  04  04  03  03  02  02  01  01  00]
+    T00 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[0]));    // [ -- -08 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02 -02 -01 -01  00]
+    T04 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[0]));    // [ --  08  07  06  06  05  05  04  04  03  03  02  02  01  01  00]
     T00 = _mm_unpacklo_epi64(T00, T04);     // [ 04  03  03  02  02  01  01  00 -04 -03 -03 -02 -02 -01 -01  00]
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -5152,7 +5152,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T20 = _mm_srai_epi16(_mm_add_epi16(T20, c_16), 5);
     T21 = _mm_srai_epi16(_mm_add_epi16(T21, c_16), 5);
     T20 = _mm_packus_epi16(T20, T21);
-    _mm_store_si128((__m128i*)dstN[ 9], T20);
+    _mm_store_si128((__m128i*)dstN[9], T20);
     T22 = _mm_unpackhi_epi64(T10, T11);
     T23 = _mm_unpackhi_epi64(T12, T13);
     T22 = _mm_srai_epi16(_mm_add_epi16(T22, c_16), 5);
@@ -5180,7 +5180,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T30 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[1]));
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
-    T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T12 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T13 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
@@ -5197,7 +5197,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 
     T30 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[2]));
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T11 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T12 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T13 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T20 = _mm_unpacklo_epi64(T10, T11);
@@ -5234,7 +5234,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T31 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[4]));
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[22]));
-    T12 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T12 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T13 = _mm_maddubs_epi16(T31, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T20 = _mm_unpacklo_epi64(T10, T11);
     T21 = _mm_unpacklo_epi64(T12, T13);
@@ -5252,7 +5252,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T30 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[5]));
     T31 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[6]));
     T32 = _mm_shuffle_epi8(T00, _mm_load_si128((__m128i*)tab_angle_0[7]));
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T11 = _mm_maddubs_epi16(T30, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T12 = _mm_maddubs_epi16(T31, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T13 = _mm_maddubs_epi16(T32, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -5276,7 +5276,7 @@ void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
 #define N   (8)
-    pixel (*dstN)[8*8] = (pixel(*)[8*8])dst;
+    pixel(*dstN)[8 * 8] = (pixel(*)[8 * 8])dst;
 
     __m128i T00, T01, T02, T03;
     __m128i R00, R01;
@@ -5284,20 +5284,20 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     __m128i R20, R21;
     __m128i R30, R31;
 
-    R00 = _mm_loadu_si128((__m128i*)(left0+1));    // [-16 -15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01]
-    R10 = _mm_loadu_si128((__m128i*)(above0+1));   // [ 16  15  14  13  12  11  10  09  08  07  06  05  04  03  02  01]
+    R00 = _mm_loadu_si128((__m128i*)(left0 + 1));    // [-16 -15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01]
+    R10 = _mm_loadu_si128((__m128i*)(above0 + 1));   // [ 16  15  14  13  12  11  10  09  08  07  06  05  04  03  02  01]
 
     T00 = _mm_unpacklo_epi64(R00, R00);
-    _mm_store_si128((__m128i*)&dstN[ 8][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][6*N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][6 * N], T00);
 
     T00 = _mm_unpacklo_epi64(R10, R10);
-    _mm_store_si128((__m128i*)&dstN[24][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[24][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[24][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[24][6*N], T00);
+    _mm_store_si128((__m128i*)&dstN[24][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[24][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[24][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[24][6 * N], T00);
 
     if (filter)
     {
@@ -5314,22 +5314,22 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
         T01 = _mm_add_epi16(roundV, pT);
         T00 = _mm_packus_epi16(T00, T01);
 
-        ALIGN_VAR_32(pixel, tmp[2*N]);
+        ALIGN_VAR_32(pixel, tmp[2 * N]);
         _mm_store_si128((__m128i*)tmp, T00);
-        for(int i = 0; i < N; i++)
+        for (int i = 0; i < N; i++)
         {
-            dstN[ 8][i*N] = tmp[i  ];
-            dstN[24][i*N] = tmp[i+N];
+            dstN[8][i * N] = tmp[i];
+            dstN[24][i * N] = tmp[i + N];
         }
     }
 
     const __m128i c_16 = _mm_set1_epi16(16);
 
-    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 0])); // [-09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02 -02 -01]
-    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 9])); // [-10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02]
+    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[0])); // [-09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02 -02 -01]
+    R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[9])); // [-10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02]
 
-    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 9]));
+    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[9]));
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -5341,8 +5341,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 1][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[31][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[1][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[31][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -5354,21 +5354,21 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 2][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[30][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[2][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[30][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[17]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[17]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 3][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[29][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[3][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[29][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -5380,12 +5380,12 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 4][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[28][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[4][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[28][0 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[20]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5393,12 +5393,12 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 4][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[28][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[4][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[28][2 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[18]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5406,21 +5406,21 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 5][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[27][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[5][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[27][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[27]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 5][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[27][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[5][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[27][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -5432,12 +5432,12 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 5][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[27][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[5][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[27][4 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[10]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5445,8 +5445,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 6][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[26][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[6][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[26][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -5458,8 +5458,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 6][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[26][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[6][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[26][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -5471,47 +5471,47 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 6][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[26][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[6][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[26][4 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 6][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[26][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[6][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[26][6 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 7][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[25][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[7][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[25][0 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 7][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[25][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[7][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[25][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -5523,8 +5523,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 7][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[25][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[7][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[25][4 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[16]));
@@ -5536,8 +5536,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 7][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[25][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[7][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[25][6 * N], T01);
 
     R20 = R21;                                                              // [-10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03 -03 -02]
     R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[10])); // [-11 -10 -10 -09 -09 -08 -08 -07 -07 -06 -06 -05 -05 -04 -04 -03]
@@ -5554,25 +5554,25 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 2][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[30][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[2][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[30][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 3][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[29][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[3][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[29][2 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[14]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5580,53 +5580,52 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 4][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[28][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[4][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[28][4 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[31]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[31]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 5][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[27][6*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[5][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[27][6 * N], T01);
 
     R20 = R21;
     R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[11]));
     R30 = R31;
     R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[11]));
 
-    T00 = _mm_loadl_epi64((__m128i*)&dstN[ 4][5*N]);
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T02 = _mm_load_si128((__m128i*)&dstN[28][4*N]);
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T00 = _mm_loadl_epi64((__m128i*)&dstN[4][5 * N]);
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T02 = _mm_load_si128((__m128i*)&dstN[28][4 * N]);
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T01 = _mm_packus_epi16(T01, T03);
-    _mm_storel_epi64((__m128i*)&dstN[ 4][7*N], T01);
-    _mm_storeh_pi((__m64*)&dstN[28][7*N], _mm_castsi128_ps(T01));
+    _mm_storel_epi64((__m128i*)&dstN[4][7 * N], T01);
+    _mm_storeh_pi((__m64*)&dstN[28][7 * N], _mm_castsi128_ps(T01));
     T00 = _mm_unpacklo_epi64(T00, T01);
     T01 = _mm_unpackhi_epi64(T02, T01);
-    _mm_store_si128((__m128i*)&dstN[ 1][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[31][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[1][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[31][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T01 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
-    _mm_storel_epi64((__m128i*)&dstN[ 4][6*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[28][6*N], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dstN[4][6 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[28][6 * N], _mm_castsi128_ps(T00));
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[30]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5634,22 +5633,21 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 2][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[30][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[2][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[30][4 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[21]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[21]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 3][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[29][4*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[3][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[29][4 * N], T01);
 
     R20 = R21;
     R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[12]));
@@ -5657,21 +5655,21 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[12]));
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[23]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[23]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 3][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[29][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[3][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[29][6 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[28]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5679,9 +5677,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 1][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[31][4*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[1][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[31][4 * N], T01);
 
     R20 = R21;
     R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[13]));
@@ -5689,18 +5686,17 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     R31 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[13]));
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 2][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[30][6*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[2][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[30][6 * N], T01);
 
     R20 = R21;
     R21 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[14]));
@@ -5717,17 +5713,16 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 1][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[31][6*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[1][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[31][6 * N], T01);
 
     // ***********************************************************************
     R00 = _mm_loadu_si128((__m128i*)(left0));      // [-15 -14 -13 -12 -11 -10 -09 -08 -07 -06 -05 -04 -03 -02 -01  00]
     R01 = _mm_unpacklo_epi64(R00, R10);             // [ 08  07  06  05  04  03  02  01 -07 -06 -05 -04 -03 -02 -01  00]
     R10 = _mm_loadu_si128((__m128i*)(above0));     // [ 15  14  13  12  11  10  09  08  07  06  05  04  03  02  01  00]
 
-    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
-    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[ 0]));
+    R20 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[0]));
+    R30 = _mm_shuffle_epi8(R10, _mm_load_si128((__m128i*)tab_angle_0[0]));
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -5739,8 +5734,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 9][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[23][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[9][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[23][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -5752,8 +5747,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 9][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[23][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[9][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[23][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -5765,8 +5760,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 9][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[23][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[9][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[23][4 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[16]));
@@ -5778,8 +5773,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[ 9][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[23][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[9][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[23][6 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -5791,8 +5786,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[10][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[22][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[10][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[22][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -5804,21 +5799,21 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[10][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[22][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[10][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[22][2 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[10][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[22][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[10][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[22][4 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -5830,24 +5825,23 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[11][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[21][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[11][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[21][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[19]));
-    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[12][0*N], T00);
+    _mm_store_si128((__m128i*)&dstN[12][0 * N], T00);
 //     _mm_storeh_pi((__m64*)&dstN[15][0*N], _mm_castsi128_ps(T00));
-    _mm_store_si128((__m128i*)&dstN[20][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[20][0 * N], T01);
 //     _mm_storeh_pi((__m64*)&dstN[17][0*N], _mm_castsi128_ps(T01));
-
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[15]));
     R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[16]));
@@ -5862,8 +5856,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[13][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[19][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[13][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[19][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -5875,8 +5869,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[14][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[18][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[14][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[18][0 * N], T01);
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -5888,31 +5882,30 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[12][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[20][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[12][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[20][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[13]));
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[13]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_storel_epi64((__m128i*)&dstN[13][2*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[14][2*N], _mm_castsi128_ps(T00));
-    _mm_storel_epi64((__m128i*)&dstN[19][2*N], T01);
-    _mm_storeh_pi((__m64*)&dstN[18][2*N], _mm_castsi128_ps(T01));
-
+    _mm_storel_epi64((__m128i*)&dstN[13][2 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[14][2 * N], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dstN[19][2 * N], T01);
+    _mm_storeh_pi((__m64*)&dstN[18][2 * N], _mm_castsi128_ps(T01));
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[17]));
     R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[18]));
 
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[28]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -5920,8 +5913,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[11][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[21][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[11][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[21][2 * N], T01);
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -5933,16 +5926,16 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[11][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[21][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[11][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[21][4 * N], T01);
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
-    _mm_storel_epi64((__m128i*)&dstN[11][6*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[21][6*N], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dstN[11][6 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[21][6 * N], _mm_castsi128_ps(T00));
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[19]));
     R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[20]));
@@ -5952,9 +5945,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
-    _mm_storel_epi64((__m128i*)&dstN[11][7*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[21][7*N], _mm_castsi128_ps(T00));
-
+    _mm_storel_epi64((__m128i*)&dstN[11][7 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[21][7 * N], _mm_castsi128_ps(T00));
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[21]));
     R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[22]));
@@ -5969,8 +5961,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[10][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[22][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[10][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[22][6 * N], T01);
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[23]));
     R31 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[24]));
@@ -5985,15 +5977,15 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[12][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[20][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[12][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[20][4 * N], T01);
 
     R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[25]));
     R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[26]));
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[24]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -6001,8 +5993,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[12][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[20][6*N], T01);
+    _mm_store_si128((__m128i*)&dstN[12][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[20][6 * N], T01);
 
     R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[27]));
     R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[28]));
@@ -6017,35 +6009,35 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_storeu_si128((__m128i*)&dstN[13][3*N], T00);
-    _mm_storeu_si128((__m128i*)&dstN[19][3*N], T01);
+    _mm_storeu_si128((__m128i*)&dstN[13][3 * N], T00);
+    _mm_storeu_si128((__m128i*)&dstN[19][3 * N], T01);
 
     R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[29]));
     R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[30]));
 
     T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[26]));
-    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[26]));
-    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_storeu_si128((__m128i*)&dstN[13][5*N], T00);
-    _mm_storeu_si128((__m128i*)&dstN[19][5*N], T01);
+    _mm_storeu_si128((__m128i*)&dstN[13][5 * N], T00);
+    _mm_storeu_si128((__m128i*)&dstN[19][5 * N], T01);
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[31]));
-    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128( (left0[6] << 8) | left0[8] ));
+    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128((left0[6] << 8) | left0[8]));
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
-    _mm_storel_epi64((__m128i*)&dstN[13][7*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[19][7*N], _mm_castsi128_ps(T00));
+    _mm_storel_epi64((__m128i*)&dstN[13][7 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[19][7 * N], _mm_castsi128_ps(T00));
 
     R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[32]));
     R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[33]));
@@ -6062,15 +6054,15 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_storeu_si128((__m128i*)&dstN[14][3*N], T00);
-    _mm_storeu_si128((__m128i*)&dstN[18][3*N], T01);
+    _mm_storeu_si128((__m128i*)&dstN[14][3 * N], T00);
+    _mm_storeu_si128((__m128i*)&dstN[18][3 * N], T01);
 
     R20 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[36]));
     R30 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[37]));
 
-    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T01 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[13]));
-    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T02 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T03 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
@@ -6078,20 +6070,19 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_storeu_si128((__m128i*)&dstN[14][5*N], T00);
-    _mm_storeu_si128((__m128i*)&dstN[18][5*N], T01);
+    _mm_storeu_si128((__m128i*)&dstN[14][5 * N], T00);
+    _mm_storeu_si128((__m128i*)&dstN[18][5 * N], T01);
 
     R21 = _mm_shuffle_epi8(R01, _mm_load_si128((__m128i*)tab_angle_0[38]));
-    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128( (left0[6] << 8) | left0[8] ));
+    R31 = _mm_or_si128(_mm_slli_si128(R30, 2), _mm_cvtsi32_si128((left0[6] << 8) | left0[8]));
 
     T00 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T01 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
-    _mm_storel_epi64((__m128i*)&dstN[14][7*N], T00);
-    _mm_storeh_pi((__m64*)&dstN[18][7*N], _mm_castsi128_ps(T00));
-
+    _mm_storel_epi64((__m128i*)&dstN[14][7 * N], T00);
+    _mm_storeh_pi((__m64*)&dstN[18][7 * N], _mm_castsi128_ps(T00));
 
     R00 = _mm_loadl_epi64((__m128i*)&left0[1]);
     R01 = _mm_loadl_epi64((__m128i*)above0);
@@ -6109,8 +6100,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 
     R20 = _mm_unpacklo_epi8(R01, R00);
     R30 = _mm_unpacklo_epi8(R11, R10);
-    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T00 = _mm_maddubs_epi16(R20, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[6]));
     R00 = R01;
     R10 = R11;
     R01 = _mm_shuffle_epi8(R00, _mm_load_si128((__m128i*)tab_angle_0[40]));
@@ -6125,8 +6116,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[15][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[17][0*N], T01);
+    _mm_store_si128((__m128i*)&dstN[15][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[17][0 * N], T01);
 
     R00 = R01;
     R10 = R11;
@@ -6150,8 +6141,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[15][2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[17][2*N], T01);
+    _mm_store_si128((__m128i*)&dstN[15][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[17][2 * N], T01);
 
     R00 = R01;
     R10 = R11;
@@ -6163,16 +6154,16 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T02 = _mm_maddubs_epi16(R30, _mm_load_si128((__m128i*)tab_angle_1[30]));
     R21 = _mm_unpacklo_epi8(R01, R00);
     R31 = _mm_unpacklo_epi8(R11, R10);
-    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T01 = _mm_maddubs_epi16(R21, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T03 = _mm_maddubs_epi16(R31, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T00 = _mm_srai_epi16(_mm_add_epi16(T00, c_16), 5);
     T01 = _mm_srai_epi16(_mm_add_epi16(T01, c_16), 5);
     T02 = _mm_srai_epi16(_mm_add_epi16(T02, c_16), 5);
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[15][4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[17][4*N], T01);
+    _mm_store_si128((__m128i*)&dstN[15][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[17][4 * N], T01);
 
     R00 = R01;
     R10 = R11;
@@ -6196,9 +6187,8 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
     T03 = _mm_srai_epi16(_mm_add_epi16(T03, c_16), 5);
     T00 = _mm_packus_epi16(T00, T01);
     T01 = _mm_packus_epi16(T02, T03);
-    _mm_store_si128((__m128i*)&dstN[15][6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[17][6*N], T01);
-
+    _mm_store_si128((__m128i*)&dstN[15][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[17][6 * N], T01);
 
     // 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -6, -7,
     R00 = _mm_loadl_epi64((__m128i*)left1);
@@ -6211,40 +6201,40 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 
     R01 = _mm_srli_si128(R00, 1);
     T00 = _mm_unpacklo_epi64(R01, R00);
-    _mm_store_si128((__m128i*)&dstN[16][6*N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][6 * N], T00);
 
     R00 = _mm_srli_si128(R00, 2);
     R01 = _mm_srli_si128(R01, 2);
     T00 = _mm_unpacklo_epi64(R01, R00);
-    _mm_store_si128((__m128i*)&dstN[16][4*N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][4 * N], T00);
 
     R00 = _mm_srli_si128(R00, 2);
     R01 = _mm_srli_si128(R01, 2);
     T00 = _mm_unpacklo_epi64(R01, R00);
-    _mm_store_si128((__m128i*)&dstN[16][2*N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][2 * N], T00);
 
     R00 = _mm_srli_si128(R00, 2);
     R01 = _mm_srli_si128(R01, 2);
     T00 = _mm_unpacklo_epi64(R01, R00);
-    _mm_store_si128((__m128i*)&dstN[16][0*N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][0 * N], T00);
 
     T00 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&left1[2]), _mm_loadl_epi64((__m128i*)&left1[3]));
     T01 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&left1[4]), _mm_loadl_epi64((__m128i*)&left1[5]));
     T02 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&left1[6]), _mm_loadl_epi64((__m128i*)&left1[7]));
     T03 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&left1[8]), _mm_loadl_epi64((__m128i*)&left1[9]));
-    _mm_store_si128((__m128i*)&dstN[ 0][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 0][2*N], T01);
-    _mm_store_si128((__m128i*)&dstN[ 0][4*N], T02);
-    _mm_store_si128((__m128i*)&dstN[ 0][6*N], T03);
+    _mm_store_si128((__m128i*)&dstN[0][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[0][2 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][4 * N], T02);
+    _mm_store_si128((__m128i*)&dstN[0][6 * N], T03);
 
     T00 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&above1[2]), _mm_loadl_epi64((__m128i*)&above1[3]));
     T01 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&above1[4]), _mm_loadl_epi64((__m128i*)&above1[5]));
     T02 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&above1[6]), _mm_loadl_epi64((__m128i*)&above1[7]));
     T03 = _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)&above1[8]), _mm_loadl_epi64((__m128i*)&above1[9]));
-    _mm_store_si128((__m128i*)&dstN[32][0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[32][2*N], T01);
-    _mm_store_si128((__m128i*)&dstN[32][4*N], T02);
-    _mm_store_si128((__m128i*)&dstN[32][6*N], T03);
+    _mm_store_si128((__m128i*)&dstN[32][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[32][2 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][4 * N], T02);
+    _mm_store_si128((__m128i*)&dstN[32][6 * N], T03);
 
 #undef N
 }
@@ -6252,47 +6242,47 @@ void predIntraAngs8(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixe
 void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
 #define N   (16)
-    pixel (*dstN)[N*N] = (pixel(*)[N*N])dst0;
+    pixel(*dstN)[N * N] = (pixel(*)[N * N])dst0;
 
     const __m128i c_16 = _mm_set1_epi16(16);
     __m128i T00, T01, T02, T03;
     __m128i T10, T11, T12, T13, T14;
 
-    T00 = _mm_loadu_si128((__m128i*)(left0+1));
-    T01 = _mm_loadu_si128((__m128i*)(above0+1));
+    T00 = _mm_loadu_si128((__m128i*)(left0 + 1));
+    T01 = _mm_loadu_si128((__m128i*)(above0 + 1));
 
-    _mm_store_si128((__m128i*)&dstN[ 8][ 0*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 1*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 2*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 3*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 4*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 5*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 6*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 7*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 8*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][ 9*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][10*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][11*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][12*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][13*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][14*N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 8][15*N], T00);
-    _mm_store_si128((__m128i*)&dstN[24][ 0*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 1*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 2*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 3*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 4*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 5*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 6*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 7*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 8*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][ 9*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][10*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][11*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][12*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][13*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][14*N], T01);
-    _mm_store_si128((__m128i*)&dstN[24][15*N], T01);
+    _mm_store_si128((__m128i*)&dstN[8][0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][1 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][3 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][5 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][7 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][8 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][9 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][10 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][11 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][12 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][13 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][14 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[8][15 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[24][0 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][1 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][2 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][3 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][4 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][5 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][6 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][7 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][8 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][9 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][10 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][11 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][12 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][13 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][14 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[24][15 * N], T01);
 
     if (filter)
     {
@@ -6320,80 +6310,79 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
         _mm_store_si128((__m128i*)tmp0, T00);
         _mm_store_si128((__m128i*)tmp1, T02);
 
-        for(int i = 0; i < N; i++)
+        for (int i = 0; i < N; i++)
         {
-            dstN[ 8][i*N] = tmp0[i];
-            dstN[24][i*N] = tmp1[i];
+            dstN[8][i * N] = tmp0[i];
+            dstN[24][i * N] = tmp1[i];
         }
     }
 
+    T00 = _mm_loadu_si128((__m128i*)(left0 + 0));
+    T01 = _mm_loadu_si128((__m128i*)(left0 + 1));
+    T02 = _mm_loadu_si128((__m128i*)(left0 + 2));
 
-    T00 = _mm_loadu_si128((__m128i*)(left0+0));
-    T01 = _mm_loadu_si128((__m128i*)(left0+1));
-    T02 = _mm_loadu_si128((__m128i*)(left0+2));
+    _mm_store_si128((__m128i*)&dstN[9][15 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[7][15 * N], T02);
 
-    _mm_store_si128((__m128i*)&dstN[ 9][15 * N], T00);
-    _mm_store_si128((__m128i*)&dstN[ 7][15 * N], T02);
-
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][0 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][14 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][1 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][2 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][3 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][11 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -6404,11 +6393,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][4 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][10 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -6419,11 +6408,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][5 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -6434,16 +6423,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][6 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][8 * N], T13);
 
     T13 = _mm_avg_epu8(T01, T02);
     T14 = _mm_avg_epu8(T01, T00);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 7 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 7 * N], T14);
+    _mm_store_si128((__m128i*)&dstN[7][7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][7 * N], T14);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -6454,11 +6443,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][8 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -6469,11 +6458,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][9 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -6484,11 +6473,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][10 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -6499,11 +6488,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][11 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -6514,11 +6503,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][12 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -6529,11 +6518,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][13 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[9][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -6544,76 +6533,75 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 7][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[7][14 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 9][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[9][0 * N], T13);
 
     // **********************************************************************
-    T00 = _mm_loadu_si128((__m128i*)(above0+0));
-    T01 = _mm_loadu_si128((__m128i*)(above0+1));
-    T02 = _mm_loadu_si128((__m128i*)(above0+2));
+    T00 = _mm_loadu_si128((__m128i*)(above0 + 0));
+    T01 = _mm_loadu_si128((__m128i*)(above0 + 1));
+    T02 = _mm_loadu_si128((__m128i*)(above0 + 2));
 
     _mm_store_si128((__m128i*)&dstN[23][15 * N], T00);
     _mm_store_si128((__m128i*)&dstN[25][15 * N], T02);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][0 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[23][14 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][1 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[23][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][2 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[23][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T12 = _mm_maddubs_epi16(T02, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5);
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][3 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
@@ -6628,7 +6616,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][4 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
@@ -6643,11 +6631,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][5 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -6658,11 +6646,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][6 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[16]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[16]));
@@ -6673,11 +6661,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][7 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -6688,11 +6676,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][8 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -6703,11 +6691,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T11, T12);
     T14 = _mm_unpackhi_epi16(T11, T12);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[25][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[25][9 * N], T13);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -6722,7 +6710,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -6737,7 +6725,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -6752,7 +6740,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -6767,7 +6755,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[23][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -6782,12 +6770,11 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[23][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[23][0 * N], T13);
 
     // **********************************************************************
-    T00 = _mm_loadu_si128((__m128i*)(left1+0));
-    T01 = _mm_loadu_si128((__m128i*)(left1+1));
+    T00 = _mm_loadu_si128((__m128i*)(left1 + 0));
+    T01 = _mm_loadu_si128((__m128i*)(left1 + 1));
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -6796,7 +6783,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -6805,7 +6792,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -6814,7 +6801,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -6823,25 +6810,25 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][3 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -6850,7 +6837,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -6859,16 +6846,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -6877,17 +6864,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][0 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 1 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[15][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -6896,7 +6883,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -6905,8 +6892,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[14][0 * N], T13);
 
     // **********************************************************************
     T01 = T00;
@@ -6920,7 +6906,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -6929,7 +6915,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -6938,7 +6924,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -6947,10 +6933,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[10][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[10][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -6958,8 +6944,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[10][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7000,7 +6986,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[10][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, above1[4], 0);
     T01 = _mm_loadu_si128((__m128i*)(left1));
@@ -7012,7 +6997,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -7021,7 +7006,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -7030,20 +7015,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 6 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[11][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[7], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -7052,7 +7036,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -7061,17 +7045,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[11][8 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[11][ 9 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[11][9 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[11], 0);
@@ -7103,15 +7086,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[11][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[11][13 * N], T13);
-
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[14], 0);
@@ -7128,7 +7110,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[11][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, above1[2], 0);
     T01 = _mm_loadu_si128((__m128i*)(left1));
@@ -7141,7 +7122,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -7150,7 +7131,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -7159,7 +7140,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -7168,7 +7149,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -7177,19 +7158,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][2 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[31]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[31]));
@@ -7198,7 +7179,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -7207,19 +7188,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[7], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -7228,7 +7209,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -7237,7 +7218,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][8 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[10], 0);
@@ -7249,7 +7230,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[12][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[12][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -7260,8 +7241,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[12][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7305,7 +7286,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[12][15 * N], T13);
 
-
     // **********************************************************************
     T01 = T03;
     T00 = _mm_insert_epi8(_mm_slli_si128(T03, 1), above1[4], 0);
@@ -7317,7 +7297,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -7326,10 +7306,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][4 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -7338,19 +7318,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 8], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[8], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -7359,19 +7339,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][7 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][8 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -7380,10 +7360,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[13][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[13][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7403,8 +7383,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[13][11 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7424,8 +7404,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[13][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7439,7 +7419,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[13][15 * N], T13);
 
-
     // **********************************************************************
     T01 = T03;
     T00 = _mm_insert_epi8(_mm_slli_si128(T03, 1), above1[3], 0);
@@ -7451,10 +7430,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][3 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -7463,19 +7442,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][5 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -7484,10 +7463,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 8], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[8], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -7496,19 +7475,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][7 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][8 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -7517,7 +7496,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[14][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[14][9 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[11], 0);
@@ -7531,15 +7510,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[14][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[14][11 * N], T13);
-
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[12], 0);
@@ -7565,8 +7543,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[14][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7580,7 +7558,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[14][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, above1[1], 0);
     T01 = _mm_loadu_si128((__m128i*)left1);
@@ -7592,10 +7569,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][1 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 2], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[2], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -7604,10 +7581,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][2 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 4], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[4], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -7616,10 +7593,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][3 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -7628,19 +7605,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][5 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -7649,16 +7626,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[7], 0);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[15][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][7 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -7667,7 +7644,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][8 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[10], 0);
@@ -7679,10 +7656,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[15][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[15][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7693,8 +7670,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), above1[11], 0);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -7740,24 +7717,23 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[15][15 * N], T00);
 
-
     // **********************************************************************
-    T02 = _mm_loadu_si128((__m128i*)(left1+ 1));
-    T03 = _mm_loadu_si128((__m128i*)(left1+17));
+    T02 = _mm_loadu_si128((__m128i*)(left1 + 1));
+    T03 = _mm_loadu_si128((__m128i*)(left1 + 17));
     T00 = T02;
     T01 = _mm_alignr_epi8(T03, T02,  1);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 0 * N], T01);
-    _mm_store_si128((__m128i*)&dstN[ 0][15 * N], T03);
+    _mm_store_si128((__m128i*)&dstN[0][0 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][15 * N], T03);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -7766,7 +7742,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -7775,7 +7751,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -7784,7 +7760,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[25]));
@@ -7793,7 +7769,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -7802,16 +7778,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -7820,7 +7796,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -7829,7 +7805,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -7838,7 +7814,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -7847,8 +7823,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 1 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -7857,7 +7833,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[21]));
@@ -7866,32 +7842,31 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][0 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  2);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 1 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][1 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -7900,8 +7875,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 8 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -7910,7 +7885,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -7919,7 +7894,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][10 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -7928,17 +7903,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][11 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 3 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[5][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -7947,7 +7921,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[31]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[31]));
@@ -7956,17 +7930,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 6 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][2 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -7975,17 +7949,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 3 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -7994,7 +7968,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -8003,33 +7977,32 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 1 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][1 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  3);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 2 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][2 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][12 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][13 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -8038,7 +8011,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][14 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[16]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[16]));
@@ -8047,16 +8020,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 6][15 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[6][15 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -8065,7 +8038,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -8074,7 +8047,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -8083,8 +8056,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 5 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -8093,16 +8066,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[21]));
@@ -8111,7 +8084,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -8120,23 +8093,22 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 3 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][3 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  4);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 3 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][3 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][10 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -8145,7 +8117,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][11 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[21]));
@@ -8154,8 +8126,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][12 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -8164,27 +8136,27 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][13 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 7 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][3 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -8193,44 +8165,44 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][4 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  5);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 4 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][4 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 5][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][14 * N], T13);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[ 5][15 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[5][15 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][ 9 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -8239,7 +8211,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][10 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -8248,17 +8220,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][11 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[25]));
@@ -8267,7 +8239,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -8276,23 +8248,22 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 6 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][6 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  6);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 5 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][5 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][12 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -8301,8 +8272,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][13 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -8311,7 +8282,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -8320,16 +8291,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[29]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[29]));
@@ -8338,27 +8309,26 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 8 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][8 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  7);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 6 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][6 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 4][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][14 * N], T13);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[ 4][15 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[4][15 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -8367,7 +8337,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][11 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[29]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[29]));
@@ -8376,7 +8346,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][12 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -8385,14 +8355,13 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][ 9 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[2][9 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  8);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 7 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][7 * N], T01);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -8401,7 +8370,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][13 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[31]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[31]));
@@ -8410,16 +8379,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 3][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][14 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][10 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][10 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[28]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[28]));
@@ -8428,7 +8397,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][11 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][11 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -8437,17 +8406,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 8 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[1][8 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  9);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 8 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][8 * N], T01);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[ 3][15 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[3][15 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -8456,16 +8424,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][12 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -8474,23 +8442,22 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][10 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[1][10 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 10);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][ 9 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][9 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][13 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][13 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -8499,7 +8466,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 2][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][14 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -8508,17 +8475,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][11 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[1][11 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 11);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][10 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][10 * N], T01);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[ 2][15 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[2][15 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -8527,14 +8493,13 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][12 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[1][12 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 12);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][11 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][11 * N], T01);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -8543,49 +8508,46 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][13 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[1][13 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 13);
 
-    _mm_store_si128((__m128i*)&dstN[ 0][12 * N], T01);
-    _mm_store_si128((__m128i*)&dstN[ 1][15 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][12 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[1][15 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[ 1][14 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[1][14 * N], T13);
 
     T01 = _mm_alignr_epi8(T03, T02, 14);
-    _mm_store_si128((__m128i*)&dstN[ 0][13 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[0][13 * N], T01);
     T01 = _mm_alignr_epi8(T03, T02, 15);
-    _mm_store_si128((__m128i*)&dstN[ 0][14 * N], T01);
-
-
+    _mm_store_si128((__m128i*)&dstN[0][14 * N], T01);
 
     // **********************************************************************
-    T02 = _mm_loadu_si128((__m128i*)(above1+ 1));
-    T03 = _mm_loadu_si128((__m128i*)(above1+17));
+    T02 = _mm_loadu_si128((__m128i*)(above1 + 1));
+    T03 = _mm_loadu_si128((__m128i*)(above1 + 17));
     T00 = T02;
     T01 = _mm_alignr_epi8(T03, T02,  1);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 0 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][0 * N], T01);
     _mm_store_si128((__m128i*)&dstN[32][15 * N], T03);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -8594,7 +8556,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -8603,7 +8565,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -8612,7 +8574,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[25]));
@@ -8621,7 +8583,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -8630,16 +8592,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -8648,7 +8610,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -8657,7 +8619,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -8666,7 +8628,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -8675,8 +8637,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 1 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -8685,7 +8647,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[21]));
@@ -8694,32 +8656,31 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][0 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  2);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 1 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][1 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -8728,8 +8689,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 8 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[27][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -8738,7 +8699,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[26][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[26][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -8758,15 +8719,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[26][11 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 3 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[27][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -8775,7 +8735,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[31]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[31]));
@@ -8784,17 +8744,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 6 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[30][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[30][2 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -8803,17 +8763,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 3 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -8822,7 +8782,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -8831,27 +8791,26 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 1 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][1 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  3);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 2 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][2 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[26][12 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[28][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -8877,14 +8836,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[26][15 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -8893,7 +8852,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -8902,7 +8861,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[27][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[27][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -8911,8 +8870,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 5 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -8921,16 +8880,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[21]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[21]));
@@ -8939,7 +8898,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[20]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[20]));
@@ -8948,17 +8907,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 3 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][3 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  4);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 3 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][3 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -8983,7 +8941,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[27][12 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[28][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -8993,26 +8951,26 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[27][13 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[30][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[30][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 7 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][3 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -9021,25 +8979,25 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][6 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[30][4 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  5);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 4 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][4 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9050,15 +9008,15 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[27][15 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[28][ 9 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[28][9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -9077,16 +9035,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[28][11 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[25]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[25]));
@@ -9095,7 +9053,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -9104,17 +9062,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 6 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][6 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  6);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 5 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][5 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9130,7 +9087,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[28][13 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -9139,7 +9096,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[29][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[29][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -9150,14 +9107,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[29][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[30][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[29]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[29]));
@@ -9166,17 +9123,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 8 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][8 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  7);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 6 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][6 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9186,7 +9142,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[28][15 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[31][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -9213,14 +9169,13 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[30][ 9 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[30][9 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  8);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 7 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][7 * N], T01);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -9240,8 +9195,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[29][14 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9265,14 +9220,13 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[31][ 8 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[31][8 * N], T13);
 
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02,  9);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 8 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][8 * N], T01);
 
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[29][15 * N], T13);
@@ -9286,14 +9240,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[30][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[31][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[31][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -9304,15 +9258,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[31][10 * N], T13);
 
-
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 10);
 
-    _mm_store_si128((__m128i*)&dstN[32][ 9 * N], T01);
+    _mm_store_si128((__m128i*)&dstN[32][9 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9338,7 +9291,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[31][11 * N], T13);
 
-
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 11);
@@ -9357,7 +9309,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[31][12 * N], T13);
 
-
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 12);
@@ -9373,7 +9324,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[31][13 * N], T13);
 
-
     // **********************************************************************
     T00 = T01;
     T01 = _mm_alignr_epi8(T03, T02, 13);
@@ -9381,8 +9331,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[32][12 * N], T01);
     _mm_store_si128((__m128i*)&dstN[31][15 * N], T01);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9395,10 +9345,9 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01 = _mm_alignr_epi8(T03, T02, 15);
     _mm_store_si128((__m128i*)&dstN[32][14 * N], T01);
 
-
     // **********************************************************************
-    T00 = _mm_loadu_si128((__m128i*)(above1+0));
-    T01 = _mm_loadu_si128((__m128i*)(above1+1));
+    T00 = _mm_loadu_si128((__m128i*)(above1 + 0));
+    T01 = _mm_loadu_si128((__m128i*)(above1 + 1));
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[27]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[27]));
@@ -9407,7 +9356,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -9416,7 +9365,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -9425,7 +9374,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -9434,25 +9383,25 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][3 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][5 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -9461,7 +9410,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -9470,16 +9419,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -9488,17 +9437,17 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][0 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 1 * N], T13);
-    _mm_store_si128((__m128i*)&dstN[17][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -9507,7 +9456,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 0 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][0 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -9516,8 +9465,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 0 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[18][0 * N], T13);
 
     // **********************************************************************
     T01 = T00;
@@ -9531,7 +9479,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][6 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -9540,7 +9488,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -9549,7 +9497,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][8 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -9558,10 +9506,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[22][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[22][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9569,8 +9517,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[22][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9611,7 +9559,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[22][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, left1[4], 0);
     T01 = _mm_loadu_si128((__m128i*)(above1));
@@ -9623,7 +9570,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[19]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[19]));
@@ -9632,7 +9579,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -9641,20 +9588,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 6 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[21][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[7], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -9663,7 +9609,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[15]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[15]));
@@ -9672,17 +9618,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[21][8 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 6]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[6]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[6]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[21][ 9 * N], T13);
-
+    _mm_store_si128((__m128i*)&dstN[21][9 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[11], 0);
@@ -9714,15 +9659,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[21][12 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[21][13 * N], T13);
-
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[14], 0);
@@ -9739,7 +9683,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[21][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, left1[2], 0);
     T01 = _mm_loadu_si128((__m128i*)(above1));
@@ -9752,7 +9695,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[12]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[12]));
@@ -9761,7 +9704,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -9770,7 +9713,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][1 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -9779,7 +9722,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][2 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -9788,19 +9731,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][1 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][2 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[31]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[31]));
@@ -9809,7 +9752,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][4 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -9818,19 +9761,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[7], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -9839,7 +9782,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][7 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -9848,7 +9791,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][8 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[10], 0);
@@ -9860,7 +9803,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[20][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[20][9 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[17]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[17]));
@@ -9871,8 +9814,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[20][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -9916,7 +9859,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[20][15 * N], T13);
 
-
     // **********************************************************************
     T01 = T03;
     T00 = _mm_insert_epi8(_mm_slli_si128(T03, 1), left1[4], 0);
@@ -9928,7 +9870,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][3 * N], T13);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[11]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[11]));
@@ -9937,10 +9879,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][4 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[26]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[26]));
@@ -9949,19 +9891,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][5 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 9]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[9]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[9]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 8], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[8], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -9970,19 +9912,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][7 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 7]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[7]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[7]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][8 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -9991,10 +9933,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[19][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[19][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10014,8 +9956,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[19][11 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10035,8 +9977,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[19][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 1]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[1]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[1]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10050,7 +9992,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[19][15 * N], T13);
 
-
     // **********************************************************************
     T01 = T03;
     T00 = _mm_insert_epi8(_mm_slli_si128(T03, 1), left1[3], 0);
@@ -10062,10 +10003,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][3 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[23]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[23]));
@@ -10074,19 +10015,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][5 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[13]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[13]));
@@ -10095,10 +10036,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 8], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[8], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -10107,19 +10048,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][7 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 3]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[3]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[3]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][8 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[14]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[14]));
@@ -10128,7 +10069,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[18][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[18][9 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[11], 0);
@@ -10142,15 +10083,14 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[18][10 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[18][11 * N], T13);
-
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[12], 0);
@@ -10176,8 +10116,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_packus_epi16(T13, T14);
     _mm_store_si128((__m128i*)&dstN[18][13 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 5]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[5]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[5]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10191,7 +10131,6 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_avg_epu8(T00, T01);
     _mm_store_si128((__m128i*)&dstN[18][15 * N], T13);
 
-
     // **********************************************************************
     T00 = _mm_insert_epi8(T03, left1[1], 0);
     T01 = _mm_loadu_si128((__m128i*)above1);
@@ -10203,10 +10142,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 1 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][1 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 2], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[2], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[18]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[18]));
@@ -10215,10 +10154,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 2 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][2 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 4], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[4], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[24]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[24]));
@@ -10227,10 +10166,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 3 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][3 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 5], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[5], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[30]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[30]));
@@ -10239,19 +10178,19 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 4 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][4 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 4]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[4]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[4]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 5 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][5 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 6], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[6], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[10]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[10]));
@@ -10260,16 +10199,16 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 6 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][6 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 7], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[7], 0);
 
     T13 = _mm_avg_epu8(T00, T01);
-    _mm_store_si128((__m128i*)&dstN[17][ 7 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][7 * N], T13);
 
     T01 = T00;
-    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[ 9], 0);
+    T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[9], 0);
 
     T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[22]));
     T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[22]));
@@ -10278,7 +10217,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 8 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][8 * N], T13);
 
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[10], 0);
@@ -10290,10 +10229,10 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T13 = _mm_unpacklo_epi16(T10, T11);
     T14 = _mm_unpackhi_epi16(T10, T11);
     T13 = _mm_packus_epi16(T13, T14);
-    _mm_store_si128((__m128i*)&dstN[17][ 9 * N], T13);
+    _mm_store_si128((__m128i*)&dstN[17][9 * N], T13);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 2]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[2]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[2]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10304,8 +10243,8 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01 = T00;
     T00 = _mm_insert_epi8(_mm_slli_si128(T00, 1), left1[11], 0);
 
-    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
-    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[ 8]));
+    T10 = _mm_maddubs_epi16(T00, _mm_load_si128((__m128i*)tab_angle_1[8]));
+    T11 = _mm_maddubs_epi16(T01, _mm_load_si128((__m128i*)tab_angle_1[8]));
     T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5);
     T11 = _mm_srai_epi16(_mm_add_epi16(T11, c_16), 5);
     T13 = _mm_unpacklo_epi16(T10, T11);
@@ -10352,7 +10291,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[17][15 * N], T00);
 
     T01 = _mm_shuffle_epi8(_mm_loadu_si128((__m128i*)left1), _mm_load_si128((__m128i*)tab_angle_2[0]));
-    T02 = _mm_loadu_si128((__m128i*)(above1+1));
+    T02 = _mm_loadu_si128((__m128i*)(above1 + 1));
 
     _mm_store_si128((__m128i*)&dstN[16][15 * N], T01);
     T00 = _mm_alignr_epi8(T02, T01,  1);
@@ -10366,25 +10305,25 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T00 = _mm_alignr_epi8(T02, T01,  5);
     _mm_store_si128((__m128i*)&dstN[16][10 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01,  6);
-    _mm_store_si128((__m128i*)&dstN[16][ 9 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][9 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01,  7);
-    _mm_store_si128((__m128i*)&dstN[16][ 8 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][8 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01,  8);
-    _mm_store_si128((__m128i*)&dstN[16][ 7 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][7 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01,  9);
-    _mm_store_si128((__m128i*)&dstN[16][ 6 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][6 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 10);
-    _mm_store_si128((__m128i*)&dstN[16][ 5 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][5 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 11);
-    _mm_store_si128((__m128i*)&dstN[16][ 4 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][4 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 12);
-    _mm_store_si128((__m128i*)&dstN[16][ 3 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][3 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 13);
-    _mm_store_si128((__m128i*)&dstN[16][ 2 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][2 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 14);
-    _mm_store_si128((__m128i*)&dstN[16][ 1 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][1 * N], T00);
     T00 = _mm_alignr_epi8(T02, T01, 15);
-    _mm_store_si128((__m128i*)&dstN[16][ 0 * N], T00);
+    _mm_store_si128((__m128i*)&dstN[16][0 * N], T00);
 
 #undef N
 }
@@ -10392,7 +10331,7 @@ void predIntraAngs16(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool /*bLuma*/)
 {
 #define N   (32)
-    pixel (*dstN)[N*N] = (pixel(*)[N*N])dst0;
+    pixel(*dstN)[N * N] = (pixel(*)[N * N])dst0;
     const __m128i c_16 = _mm_set1_epi16(16);
     __m128i T00A, T00B;
     __m128i T01A, T01B;
@@ -10404,41 +10343,40 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(above0 +  1));
     T01B = _mm_loadu_si128((__m128i*)(above0 + 17));
 
-    for(int i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
     {
-        _mm_store_si128((__m128i*)&dstN[ 8][i * N     ], T00A);
-        _mm_store_si128((__m128i*)&dstN[ 8][i * N + 16], T00B);
-        _mm_store_si128((__m128i*)&dstN[24][i * N     ], T01A);
+        _mm_store_si128((__m128i*)&dstN[8][i * N], T00A);
+        _mm_store_si128((__m128i*)&dstN[8][i * N + 16], T00B);
+        _mm_store_si128((__m128i*)&dstN[24][i * N], T01A);
         _mm_store_si128((__m128i*)&dstN[24][i * N + 16], T01B);
     }
 
-
 #define HALF(m, n, o, a, b, t, d) { \
-    __m128i T10, T12; \
-    T10 = _mm_maddubs_epi16(T0 ## a, _mm_load_si128((__m128i*)tab_angle_1[(t)])); \
-    T12 = _mm_maddubs_epi16(T0 ## b, _mm_load_si128((__m128i*)tab_angle_1[(t)])); \
-    T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5); \
-    T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5); \
-    d   = _mm_unpacklo_epi16(T10, T12); \
-    T10 = _mm_unpackhi_epi16(T10, T12); \
-    d = _mm_packus_epi16(d, T10); \
-    _mm_store_si128((__m128i*)&dstN[(m) - 2][ (n) * N + (o) * 16], d); \
+        __m128i T10, T12; \
+        T10 = _mm_maddubs_epi16(T0 ## a, _mm_load_si128((__m128i*)tab_angle_1[(t)])); \
+        T12 = _mm_maddubs_epi16(T0 ## b, _mm_load_si128((__m128i*)tab_angle_1[(t)])); \
+        T10 = _mm_srai_epi16(_mm_add_epi16(T10, c_16), 5); \
+        T12 = _mm_srai_epi16(_mm_add_epi16(T12, c_16), 5); \
+        d   = _mm_unpacklo_epi16(T10, T12); \
+        T10 = _mm_unpackhi_epi16(T10, T12); \
+        d = _mm_packus_epi16(d, T10); \
+        _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + (o) * 16], d); \
 }
+
 #define LINE(m, n, a, b, t) { \
-    HALF(m, n, 0, a ## A, b ## A, t, T20A) \
-    HALF(m, n, 1, a ## B, b ## B, t, T20B) \
+        HALF(m, n, 0, a ## A, b ## A, t, T20A) \
+        HALF(m, n, 1, a ## B, b ## B, t, T20B) \
 }
 
 #define COPY(m, n) { \
-    _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 0 * 16], T20A); \
-    _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 1 * 16], T20B); \
+        _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 0 * 16], T20A); \
+        _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 1 * 16], T20B); \
 }
 
 #define AVGS(m, n) { \
-    _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 0 * 16], _mm_avg_epu8(T00A, T01A)); \
-    _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 1 * 16], _mm_avg_epu8(T00B, T01B)); \
+        _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 0 * 16], _mm_avg_epu8(T00A, T01A)); \
+        _mm_store_si128((__m128i*)&dstN[(m) - 2][(n) * N + 1 * 16], _mm_avg_epu8(T00B, T01B)); \
 }
-
 
     // ***********************************************************************
     T00A = _mm_loadu_si128((__m128i*)(left1 +  1));
@@ -10446,40 +10384,39 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  2));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 18));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 0 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 0 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][0 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][0 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[9 - 2][15 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[9 - 2][15 * N + 1 * 16], T01B);
-    AVGS( 9,  7);
-    LINE( 9,  0, 0, 1,  2);
-    LINE( 9,  1, 0, 1,  4);
-    LINE( 9,  2, 0, 1,  6);
-    LINE( 9,  3, 0, 1,  8);
-    LINE( 9,  4, 0, 1, 10);
-    COPY( 8,  1);
-    LINE( 9,  5, 0, 1, 12);
-    LINE( 9,  6, 0, 1, 14);
-    LINE( 9,  8, 0, 1, 18);
-    COPY( 7,  1);
-    LINE( 9,  9, 0, 1, 20);
-    COPY( 8,  3);
-    LINE( 9, 10, 0, 1, 22);
-    LINE( 9, 11, 0, 1, 24);
-    LINE( 9, 12, 0, 1, 26);
-    COPY( 3,  0);
-    COPY( 6,  1);
-    LINE( 9, 13, 0, 1, 28);
-    LINE( 9, 14, 0, 1, 30);
-    COPY( 8,  5);
-    LINE( 4,  0, 0, 1, 21);
-    LINE( 5,  0, 0, 1, 17);
-    LINE( 6,  0, 0, 1, 13);
-    LINE( 7,  0, 0, 1,  9);
-    LINE( 7,  2, 0, 1, 27);
-    LINE( 8,  0, 0, 1,  5);
-    LINE( 8,  2, 0, 1, 15);
-    LINE( 8,  4, 0, 1, 25);
-
+    AVGS(9,  7);
+    LINE(9,  0, 0, 1,  2);
+    LINE(9,  1, 0, 1,  4);
+    LINE(9,  2, 0, 1,  6);
+    LINE(9,  3, 0, 1,  8);
+    LINE(9,  4, 0, 1, 10);
+    COPY(8,  1);
+    LINE(9,  5, 0, 1, 12);
+    LINE(9,  6, 0, 1, 14);
+    LINE(9,  8, 0, 1, 18);
+    COPY(7,  1);
+    LINE(9,  9, 0, 1, 20);
+    COPY(8,  3);
+    LINE(9, 10, 0, 1, 22);
+    LINE(9, 11, 0, 1, 24);
+    LINE(9, 12, 0, 1, 26);
+    COPY(3,  0);
+    COPY(6,  1);
+    LINE(9, 13, 0, 1, 28);
+    LINE(9, 14, 0, 1, 30);
+    COPY(8,  5);
+    LINE(4,  0, 0, 1, 21);
+    LINE(5,  0, 0, 1, 17);
+    LINE(6,  0, 0, 1, 13);
+    LINE(7,  0, 0, 1,  9);
+    LINE(7,  2, 0, 1, 27);
+    LINE(8,  0, 0, 1,  5);
+    LINE(8,  2, 0, 1, 15);
+    LINE(8,  4, 0, 1, 25);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10487,43 +10424,42 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  3));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 19));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 1 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 1 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][1 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][1 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[9 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[9 - 2][31 * N + 1 * 16], T01B);
-    AVGS( 9, 23);
-    LINE( 9, 16, 0, 1,  2);
-    COPY( 5,  1);
-    LINE( 9, 17, 0, 1,  4);
-    COPY( 7,  3);
-    LINE( 9, 18, 0, 1,  6);
-    LINE( 9, 19, 0, 1,  8);
-    COPY( 8,  7);
-    LINE( 9, 20, 0, 1, 10);
-    COPY( 4,  1);
-    LINE( 9, 21, 0, 1, 12);
-    LINE( 9, 22, 0, 1, 14);
-    LINE( 9, 24, 0, 1, 18);
-    COPY( 8,  9);
-    LINE( 9, 25, 0, 1, 20);
-    COPY( 3,  1);
-    COPY( 6,  3);
-    LINE( 9, 26, 0, 1, 22);
-    COPY( 7,  5);
-    LINE( 9, 27, 0, 1, 24);
-    LINE( 9, 28, 0, 1, 26);
-    LINE( 9, 29, 0, 1, 28);
-    COPY( 8, 11);
-    LINE( 9, 30, 0, 1, 30);
-    LINE( 8,  6, 0, 1,  3);
-    LINE( 8,  8, 0, 1, 13);
-    COPY( 7,  4);
-    LINE( 8, 10, 0, 1, 23);
-    LINE( 7,  6, 0, 1, 31);
-    COPY( 4,  2);
-    LINE( 6,  2, 0, 1,  7);
-    LINE( 5,  2, 0, 1, 19);
-
+    AVGS(9, 23);
+    LINE(9, 16, 0, 1,  2);
+    COPY(5,  1);
+    LINE(9, 17, 0, 1,  4);
+    COPY(7,  3);
+    LINE(9, 18, 0, 1,  6);
+    LINE(9, 19, 0, 1,  8);
+    COPY(8,  7);
+    LINE(9, 20, 0, 1, 10);
+    COPY(4,  1);
+    LINE(9, 21, 0, 1, 12);
+    LINE(9, 22, 0, 1, 14);
+    LINE(9, 24, 0, 1, 18);
+    COPY(8,  9);
+    LINE(9, 25, 0, 1, 20);
+    COPY(3,  1);
+    COPY(6,  3);
+    LINE(9, 26, 0, 1, 22);
+    COPY(7,  5);
+    LINE(9, 27, 0, 1, 24);
+    LINE(9, 28, 0, 1, 26);
+    LINE(9, 29, 0, 1, 28);
+    COPY(8, 11);
+    LINE(9, 30, 0, 1, 30);
+    LINE(8,  6, 0, 1,  3);
+    LINE(8,  8, 0, 1, 13);
+    COPY(7,  4);
+    LINE(8, 10, 0, 1, 23);
+    LINE(7,  6, 0, 1, 31);
+    COPY(4,  2);
+    LINE(6,  2, 0, 1,  7);
+    LINE(5,  2, 0, 1, 19);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10531,26 +10467,25 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  4));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 20));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 2 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 2 * N + 1 * 16], T01B);
-    AVGS( 8, 15);
-    LINE( 8, 12, 0, 1,  1);
-    COPY( 6,  4);
-    LINE( 8, 13, 0, 1,  6);
-    LINE( 8, 14, 0, 1, 11);
-    LINE( 8, 16, 0, 1, 21);
-    COPY( 5,  4);
-    LINE( 8, 17, 0, 1, 26);
-    COPY( 7,  9);
-    LINE( 8, 18, 0, 1, 31);
-    LINE( 4,  3, 0, 1, 20);
-    LINE( 5,  3, 0, 1,  4);
-    LINE( 6,  5, 0, 1, 14);
-    COPY( 3,  2);
-    LINE( 6,  6, 0, 1, 27);
-    LINE( 7,  7, 0, 1,  8);
-    LINE( 7,  8, 0, 1, 17);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][2 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][2 * N + 1 * 16], T01B);
+    AVGS(8, 15);
+    LINE(8, 12, 0, 1,  1);
+    COPY(6,  4);
+    LINE(8, 13, 0, 1,  6);
+    LINE(8, 14, 0, 1, 11);
+    LINE(8, 16, 0, 1, 21);
+    COPY(5,  4);
+    LINE(8, 17, 0, 1, 26);
+    COPY(7,  9);
+    LINE(8, 18, 0, 1, 31);
+    LINE(4,  3, 0, 1, 20);
+    LINE(5,  3, 0, 1,  4);
+    LINE(6,  5, 0, 1, 14);
+    COPY(3,  2);
+    LINE(6,  6, 0, 1, 27);
+    LINE(7,  7, 0, 1,  8);
+    LINE(7,  8, 0, 1, 17);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10558,26 +10493,25 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  5));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 21));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 3 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 3 * N + 1 * 16], T01B);
-    LINE( 8, 19, 0, 1,  4);
-    LINE( 8, 20, 0, 1,  9);
-    COPY( 4,  4);
-    LINE( 8, 21, 0, 1, 14);
-    LINE( 8, 22, 0, 1, 19);
-    LINE( 8, 23, 0, 1, 24);
-    LINE( 8, 24, 0, 1, 29);
-    LINE( 7, 10, 0, 1,  3);
-    LINE( 7, 11, 0, 1, 12);
-    LINE( 7, 12, 0, 1, 21);
-    COPY( 6,  8);
-    LINE( 7, 13, 0, 1, 30);
-    COPY( 4,  5);
-    LINE( 6,  7, 0, 1,  8);
-    COPY( 3,  3);
-    LINE( 5,  5, 0, 1,  6);
-    LINE( 5,  6, 0, 1, 23);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][3 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][3 * N + 1 * 16], T01B);
+    LINE(8, 19, 0, 1,  4);
+    LINE(8, 20, 0, 1,  9);
+    COPY(4,  4);
+    LINE(8, 21, 0, 1, 14);
+    LINE(8, 22, 0, 1, 19);
+    LINE(8, 23, 0, 1, 24);
+    LINE(8, 24, 0, 1, 29);
+    LINE(7, 10, 0, 1,  3);
+    LINE(7, 11, 0, 1, 12);
+    LINE(7, 12, 0, 1, 21);
+    COPY(6,  8);
+    LINE(7, 13, 0, 1, 30);
+    COPY(4,  5);
+    LINE(6,  7, 0, 1,  8);
+    COPY(3,  3);
+    LINE(5,  5, 0, 1,  6);
+    LINE(5,  6, 0, 1, 23);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10585,28 +10519,27 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  6));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 22));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 4 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 4 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][4 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][4 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[8 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[8 - 2][31 * N + 1 * 16], T01B);
-    AVGS( 7, 15);
-    LINE( 8, 25, 0, 1,  2);
-    COPY( 3,  4);
-    LINE( 8, 26, 0, 1,  7);
-    COPY( 7, 14);
-    LINE( 8, 27, 0, 1, 12);
-    LINE( 8, 28, 0, 1, 17);
-    LINE( 8, 29, 0, 1, 22);
-    LINE( 8, 30, 0, 1, 27);
-    LINE( 7, 16, 0, 1, 25);
-    COPY( 5,  8);
-    LINE( 6,  9, 0, 1,  2);
-    LINE( 6, 10, 0, 1, 15);
-    LINE( 6, 11, 0, 1, 28);
-    COPY( 3,  5);
-    LINE( 5,  7, 0, 1,  8);
-    LINE( 4,  6, 0, 1, 19);
-
+    AVGS(7, 15);
+    LINE(8, 25, 0, 1,  2);
+    COPY(3,  4);
+    LINE(8, 26, 0, 1,  7);
+    COPY(7, 14);
+    LINE(8, 27, 0, 1, 12);
+    LINE(8, 28, 0, 1, 17);
+    LINE(8, 29, 0, 1, 22);
+    LINE(8, 30, 0, 1, 27);
+    LINE(7, 16, 0, 1, 25);
+    COPY(5,  8);
+    LINE(6,  9, 0, 1,  2);
+    LINE(6, 10, 0, 1, 15);
+    LINE(6, 11, 0, 1, 28);
+    COPY(3,  5);
+    LINE(5,  7, 0, 1,  8);
+    LINE(4,  6, 0, 1, 19);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10614,20 +10547,19 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  7));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 23));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 5 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 5 * N + 1 * 16], T01B);
-    LINE( 4,  7, 0, 1,  8);
-    LINE( 5,  9, 0, 1, 10);
-    LINE( 5, 10, 0, 1, 27);
-    LINE( 6, 12, 0, 1,  9);
-    LINE( 6, 13, 0, 1, 22);
-    COPY( 3,  6);
-    LINE( 7, 17, 0, 1,  2);
-    LINE( 7, 18, 0, 1, 11);
-    LINE( 7, 19, 0, 1, 20);
-    LINE( 7, 20, 0, 1, 29);
-    COPY( 4,  8);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][5 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][5 * N + 1 * 16], T01B);
+    LINE(4,  7, 0, 1,  8);
+    LINE(5,  9, 0, 1, 10);
+    LINE(5, 10, 0, 1, 27);
+    LINE(6, 12, 0, 1,  9);
+    LINE(6, 13, 0, 1, 22);
+    COPY(3,  6);
+    LINE(7, 17, 0, 1,  2);
+    LINE(7, 18, 0, 1, 11);
+    LINE(7, 19, 0, 1, 20);
+    LINE(7, 20, 0, 1, 29);
+    COPY(4,  8);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10635,19 +10567,18 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  8));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 24));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 6 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 6 * N + 1 * 16], T01B);
-    AVGS( 6, 15);
-    AVGS( 3,  7);
-    LINE( 4,  9, 0, 1, 18);
-    LINE( 5, 11, 0, 1, 12);
-    LINE( 6, 14, 0, 1,  3);
-    LINE( 6, 16, 0, 1, 29);
-    COPY( 5, 12);
-    LINE( 7, 21, 0, 1,  6);
-    LINE( 7, 22, 0, 1, 15);
-    LINE( 7, 23, 0, 1, 24);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][6 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][6 * N + 1 * 16], T01B);
+    AVGS(6, 15);
+    AVGS(3,  7);
+    LINE(4,  9, 0, 1, 18);
+    LINE(5, 11, 0, 1, 12);
+    LINE(6, 14, 0, 1,  3);
+    LINE(6, 16, 0, 1, 29);
+    COPY(5, 12);
+    LINE(7, 21, 0, 1,  6);
+    LINE(7, 22, 0, 1, 15);
+    LINE(7, 23, 0, 1, 24);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10655,20 +10586,19 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 +  9));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 25));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 7 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 7 * N + 1 * 16], T01B);
-    LINE( 7, 24, 0, 1,  1);
-    LINE( 7, 25, 0, 1, 10);
-    COPY( 6, 17);
-    COPY( 3,  8);
-    LINE( 7, 26, 0, 1, 19);
-    LINE( 7, 27, 0, 1, 28);
-    COPY( 4, 11);
-    LINE( 6, 18, 0, 1, 23);
-    LINE( 5, 13, 0, 1, 14);
-    LINE( 5, 14, 0, 1, 31);
-    LINE( 4, 10, 0, 1,  7);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][7 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][7 * N + 1 * 16], T01B);
+    LINE(7, 24, 0, 1,  1);
+    LINE(7, 25, 0, 1, 10);
+    COPY(6, 17);
+    COPY(3,  8);
+    LINE(7, 26, 0, 1, 19);
+    LINE(7, 27, 0, 1, 28);
+    COPY(4, 11);
+    LINE(6, 18, 0, 1, 23);
+    LINE(5, 13, 0, 1, 14);
+    LINE(5, 14, 0, 1, 31);
+    LINE(4, 10, 0, 1,  7);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10676,21 +10606,20 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 + 10));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 26));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 8 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 8 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][8 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][8 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[7 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[7 - 2][31 * N + 1 * 16], T01B);
-    LINE( 7, 28, 0, 1,  5);
-    LINE( 7, 29, 0, 1, 14);
-    LINE( 7, 30, 0, 1, 23);
-    LINE( 6, 19, 0, 1,  4);
-    COPY( 3,  9);
-    LINE( 6, 20, 0, 1, 17);
-    COPY( 4, 12);
-    LINE( 6, 21, 0, 1, 30);
-    COPY( 3, 10);
-    AVGS( 5, 15);
-
+    LINE(7, 28, 0, 1,  5);
+    LINE(7, 29, 0, 1, 14);
+    LINE(7, 30, 0, 1, 23);
+    LINE(6, 19, 0, 1,  4);
+    COPY(3,  9);
+    LINE(6, 20, 0, 1, 17);
+    COPY(4, 12);
+    LINE(6, 21, 0, 1, 30);
+    COPY(3, 10);
+    AVGS(5, 15);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10698,16 +10627,15 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(left1 + 11));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 27));
 
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 9 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[2 - 2][ 9 * N + 1 * 16], T01B);
-    LINE( 4, 13, 0, 1,  6);
-    LINE( 4, 14, 0, 1, 27);
-    LINE( 5, 16, 0, 1,  1);
-    LINE( 5, 17, 0, 1, 18);
-    LINE( 6, 22, 0, 1, 11);
-    LINE( 6, 23, 0, 1, 24);
-    COPY( 3, 11);
-
+    _mm_store_si128((__m128i*)&dstN[2 - 2][9 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[2 - 2][9 * N + 1 * 16], T01B);
+    LINE(4, 13, 0, 1,  6);
+    LINE(4, 14, 0, 1, 27);
+    LINE(5, 16, 0, 1,  1);
+    LINE(5, 17, 0, 1, 18);
+    LINE(6, 22, 0, 1, 11);
+    LINE(6, 23, 0, 1, 24);
+    COPY(3, 11);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10717,13 +10645,13 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][10 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][10 * N + 1 * 16], T01B);
-    AVGS( 4, 15);
-    LINE( 5, 18, 0, 1,  3);
-    LINE( 5, 19, 0, 1, 20);
-    LINE( 6, 24, 0, 1,  5);
-    LINE( 6, 25, 0, 1, 18);
-    COPY( 3, 12);
-    LINE( 6, 26, 0, 1, 31);
+    AVGS(4, 15);
+    LINE(5, 18, 0, 1,  3);
+    LINE(5, 19, 0, 1, 20);
+    LINE(6, 24, 0, 1,  5);
+    LINE(6, 25, 0, 1, 18);
+    COPY(3, 12);
+    LINE(6, 26, 0, 1, 31);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10733,14 +10661,13 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][11 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][11 * N + 1 * 16], T01B);
-    LINE( 5, 20, 0, 1,  5);
-    COPY( 4, 16);
-    LINE( 5, 21, 0, 1, 22);
-    LINE( 6, 27, 0, 1, 12);
-    COPY( 3, 13);
-    LINE( 6, 28, 0, 1, 25);
-    LINE( 4, 17, 0, 1, 26);
-
+    LINE(5, 20, 0, 1,  5);
+    COPY(4, 16);
+    LINE(5, 21, 0, 1, 22);
+    LINE(6, 27, 0, 1, 12);
+    COPY(3, 13);
+    LINE(6, 28, 0, 1, 25);
+    LINE(4, 17, 0, 1, 26);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10754,13 +10681,12 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[3 - 2][15 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[6 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[6 - 2][31 * N + 1 * 16], T01B);
-    LINE( 3, 14, 0, 1,  6);
-    COPY( 6, 29);
-    LINE( 4, 18, 0, 1, 15);
-    LINE( 5, 22, 0, 1,  7);
-    LINE( 5, 23, 0, 1, 24);
-    LINE( 6, 30, 0, 1, 19);
-    
+    LINE(3, 14, 0, 1,  6);
+    COPY(6, 29);
+    LINE(4, 18, 0, 1, 15);
+    LINE(5, 22, 0, 1,  7);
+    LINE(5, 23, 0, 1, 24);
+    LINE(6, 30, 0, 1, 19);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10770,12 +10696,11 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][13 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][13 * N + 1 * 16], T01B);
-    LINE( 3, 16, 0, 1, 26);
-    COPY( 5, 25);
-    LINE( 4, 19, 0, 1,  4);
-    LINE( 4, 20, 0, 1, 25);
-    LINE( 5, 24, 0, 1,  9);
-
+    LINE(3, 16, 0, 1, 26);
+    COPY(5, 25);
+    LINE(4, 19, 0, 1,  4);
+    LINE(4, 20, 0, 1, 25);
+    LINE(5, 24, 0, 1,  9);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10785,11 +10710,10 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][14 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][14 * N + 1 * 16], T01B);
-    LINE( 3, 17, 0, 1, 20);
-    LINE( 4, 21, 0, 1, 14);
-    LINE( 5, 26, 0, 1, 11);
-    LINE( 5, 27, 0, 1, 28);
-
+    LINE(3, 17, 0, 1, 20);
+    LINE(4, 21, 0, 1, 14);
+    LINE(5, 26, 0, 1, 11);
+    LINE(5, 27, 0, 1, 28);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10799,12 +10723,11 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][15 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][15 * N + 1 * 16], T01B);
-    LINE( 3, 18, 0, 1, 14);
-    LINE( 4, 22, 0, 1,  3);
-    LINE( 4, 23, 0, 1, 24);
-    LINE( 5, 28, 0, 1, 13);
-    LINE( 5, 29, 0, 1, 30);
-
+    LINE(3, 18, 0, 1, 14);
+    LINE(4, 22, 0, 1,  3);
+    LINE(4, 23, 0, 1, 24);
+    LINE(5, 28, 0, 1, 13);
+    LINE(5, 29, 0, 1, 30);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10816,10 +10739,9 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[2 - 2][16 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[5 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[5 - 2][31 * N + 1 * 16], T01B);
-    LINE( 3, 19, 0, 1,  8);
-    LINE( 4, 24, 0, 1, 13);
-    LINE( 5, 30, 0, 1, 15);
-
+    LINE(3, 19, 0, 1,  8);
+    LINE(4, 24, 0, 1, 13);
+    LINE(5, 30, 0, 1, 15);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10829,11 +10751,10 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][17 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][17 * N + 1 * 16], T01B);
-    LINE( 3, 20, 0, 1,  2);
-    COPY( 4, 25);
-    LINE( 3, 21, 0, 1, 28);
-    LINE( 4, 26, 0, 1, 23);
-
+    LINE(3, 20, 0, 1,  2);
+    COPY(4, 25);
+    LINE(3, 21, 0, 1, 28);
+    LINE(4, 26, 0, 1, 23);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10843,9 +10764,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][18 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][18 * N + 1 * 16], T01B);
-    LINE( 3, 22, 0, 1, 22);
-    LINE( 4, 27, 0, 1, 12);
-
+    LINE(3, 22, 0, 1, 22);
+    LINE(4, 27, 0, 1, 12);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10855,10 +10775,9 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][19 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][19 * N + 1 * 16], T01B);
-    AVGS( 3, 23);
-    LINE( 4, 28, 0, 1,  1);
-    LINE( 4, 29, 0, 1, 22);
-
+    AVGS(3, 23);
+    LINE(4, 28, 0, 1,  1);
+    LINE(4, 29, 0, 1, 22);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10870,9 +10789,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[2 - 2][20 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[4 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[4 - 2][31 * N + 1 * 16], T01B);
-    LINE( 3, 24, 0, 1, 10);
-    LINE( 4, 30, 0, 1, 11);
-
+    LINE(3, 24, 0, 1, 10);
+    LINE(4, 30, 0, 1, 11);
 
     // ***********************************************************************
     T00A = T01A;
@@ -10882,8 +10800,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][21 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][21 * N + 1 * 16], T01B);
-    LINE( 3, 25, 0, 1,  4);
-    LINE( 3, 26, 0, 1, 30);
+    LINE(3, 25, 0, 1,  4);
+    LINE(3, 26, 0, 1, 30);
 
     T00A = T01A;
     T00B = T01B;
@@ -10892,7 +10810,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][22 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][22 * N + 1 * 16], T01B);
-    LINE( 3, 27, 0, 1, 24);
+    LINE(3, 27, 0, 1, 24);
 
     T00A = T01A;
     T00B = T01B;
@@ -10901,7 +10819,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][23 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][23 * N + 1 * 16], T01B);
-    LINE( 3, 28, 0, 1, 18);
+    LINE(3, 28, 0, 1, 18);
 
     T00A = T01A;
     T00B = T01B;
@@ -10910,7 +10828,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[2 - 2][24 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][24 * N + 1 * 16], T01B);
-    LINE( 3, 29, 0, 1, 12);
+    LINE(3, 29, 0, 1, 12);
 
     T00A = T01A;
     T00B = T01B;
@@ -10921,7 +10839,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[2 - 2][25 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[3 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[3 - 2][31 * N + 1 * 16], T01B);
-    LINE( 3, 30, 0, 1,  6);
+    LINE(3, 30, 0, 1,  6);
 
     T01A = _mm_loadu_si128((__m128i*)(left1 + 28));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 44));
@@ -10952,7 +10870,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01B = _mm_loadu_si128((__m128i*)(left1 + 49));
     _mm_store_si128((__m128i*)&dstN[2 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[2 - 2][31 * N + 1 * 16], T01B);
-
 
     // ***********************************************************************
     T00A = _mm_loadu_si128((__m128i*)(left1 +  0));
@@ -11017,7 +10934,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(11, 29, 0, 1,  4);
     LINE(11, 30, 0, 1,  2);
 
-    T00A = _mm_insert_epi8(T30A, above1[ 6], 0);
+    T00A = _mm_insert_epi8(T30A, above1[6], 0);
 
     LINE(12,  6, 0, 1, 29);
     LINE(12,  7, 0, 1, 24);
@@ -11065,9 +10982,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(12, 29, 0, 1, 10);
     LINE(12, 30, 0, 1,  5);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, above1[ 4], 0);
+    T00A = _mm_insert_epi8(T30A, above1[4], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(left1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 16));
@@ -11080,7 +10996,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[7], 0);
 
     LINE(13,  7, 0, 1, 24);
     LINE(13,  8, 0, 1, 15);
@@ -11145,9 +11061,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(13, 29, 0, 1, 18);
     LINE(13, 30, 0, 1,  9);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, above1[ 2], 0);
+    T00A = _mm_insert_epi8(T30A, above1[2], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(left1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 16));
@@ -11164,7 +11079,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[5], 0);
 
     LINE(14,  4, 0, 1, 31);
     LINE(14,  5, 0, 1, 18);
@@ -11173,7 +11088,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[7], 0);
 
     LINE(14,  7, 0, 1, 24);
     LINE(14,  8, 0, 1, 11);
@@ -11256,12 +11171,11 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(14, 29, 0, 1, 26);
     LINE(14, 30, 0, 1, 13);
 
-
     // ***********************************************************************
     T01A = T30A;
     T01B = T30B;
     T00B = _mm_alignr_epi8(T30B, T30A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), above1[ 4], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), above1[4], 0);
 
     LINE(15,  3, 0, 1, 28);
     LINE(15,  4, 0, 1, 11);
@@ -11269,7 +11183,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[6], 0);
 
     LINE(15,  5, 0, 1, 26);
     LINE(15,  6, 0, 1,  9);
@@ -11277,7 +11191,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 8], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[8], 0);
 
     LINE(15,  7, 0, 1, 24);
     LINE(15,  8, 0, 1,  7);
@@ -11285,7 +11199,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[9], 0);
 
     LINE(15,  9, 0, 1, 22);
     LINE(15, 10, 0, 1,  5);
@@ -11378,19 +11292,18 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[15 - 2][31 * N + 1 * 16], T00B);
     LINE(15, 30, 0, 1, 17);
 
-
     // ***********************************************************************
     T01A = T30A;
     T01B = T30B;
     T00B = _mm_alignr_epi8(T30B, T30A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), above1[ 3], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), above1[3], 0);
 
     LINE(16,  3, 0, 1, 12);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[5], 0);
 
     LINE(16,  4, 0, 1, 23);
     LINE(16,  5, 0, 1,  2);
@@ -11398,14 +11311,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[6], 0);
 
     LINE(16,  6, 0, 1, 13);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 8], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[8], 0);
 
     LINE(16,  7, 0, 1, 24);
     LINE(16,  8, 0, 1,  3);
@@ -11413,7 +11326,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[9], 0);
 
     LINE(16,  9, 0, 1, 14);
 
@@ -11524,9 +11437,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[16 - 2][31 * N + 1 * 16], T00B);
     LINE(16, 30, 0, 1, 21);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, above1[ 1], 0);
+    T00A = _mm_insert_epi8(T30A, above1[1], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(left1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(left1 + 16));
@@ -11536,21 +11448,21 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 2], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[2], 0);
 
     LINE(17,  2, 0, 1, 18);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 4], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[4], 0);
 
     LINE(17,  3, 0, 1, 24);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[5], 0);
 
     LINE(17,  4, 0, 1, 30);
     LINE(17,  5, 0, 1,  4);
@@ -11558,21 +11470,21 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[6], 0);
 
     LINE(17,  6, 0, 1, 10);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[7], 0);
 
     AVGS(17,  7);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), above1[9], 0);
 
     LINE(17,  8, 0, 1, 22);
 
@@ -11709,17 +11621,16 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[17 - 2][31 * N + 1 * 16], T00B);
     LINE(17, 30, 0, 1, 26);
 
-
     // ***********************************************************************
     T00A = _mm_loadu_si128((__m128i*)(above1 +  0));
     T00B = _mm_loadu_si128((__m128i*)(above1 + 16));
     T01A = _mm_loadu_si128((__m128i*)(left1  +  1));
     T01A = _mm_shuffle_epi8(T01A, _mm_load_si128((__m128i*)tab_angle_2[0]));
 
-    for(int i = 0; i < N / 2; i++)
+    for (int i = 0; i < N / 2; i++)
     {
-        _mm_store_si128((__m128i*)&dstN[18 - 2][ i * N + 0 * 16], T00A);
-        _mm_store_si128((__m128i*)&dstN[18 - 2][ i * N + 1 * 16], T00B);
+        _mm_store_si128((__m128i*)&dstN[18 - 2][i * N + 0 * 16], T00A);
+        _mm_store_si128((__m128i*)&dstN[18 - 2][i * N + 1 * 16], T00B);
         T00B = _mm_alignr_epi8(T00B, T00A, 15);
         T00A = _mm_alignr_epi8(T00A, T01A, 15);
         T01A = _mm_slli_si128(T01A, 1);
@@ -11730,13 +11641,13 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 
     _mm_store_si128((__m128i*)&dstN[18 - 2][16 * N + 0 * 16], T00A);
     _mm_store_si128((__m128i*)&dstN[18 - 2][16 * N + 1 * 16], T00B);
-    for(int i = 17; i < N; i++)
+    for (int i = 17; i < N; i++)
     {
         T00B = _mm_alignr_epi8(T00B, T00A, 15);
         T00A = _mm_alignr_epi8(T00A, T01A, 15);
         T01A = _mm_slli_si128(T01A, 1);
-        _mm_store_si128((__m128i*)&dstN[18 - 2][ i * N + 0 * 16], T00A);
-        _mm_store_si128((__m128i*)&dstN[18 - 2][ i * N + 1 * 16], T00B);
+        _mm_store_si128((__m128i*)&dstN[18 - 2][i * N + 0 * 16], T00A);
+        _mm_store_si128((__m128i*)&dstN[18 - 2][i * N + 1 * 16], T00B);
     }
 
     // ***********************************************************************
@@ -11745,8 +11656,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = _mm_loadu_si128((__m128i*)(above1 +  2));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 18));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 0 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 0 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][0 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][0 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[27 - 2][15 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[27 - 2][15 * N + 1 * 16], T01B);
     AVGS(27,  7);
@@ -11779,15 +11690,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(28,  2, 0, 1, 15);
     LINE(28,  4, 0, 1, 25);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  3));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 19));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 1 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 1 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][1 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][1 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[27 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[27 - 2][31 * N + 1 * 16], T01B);
     AVGS(27, 23);
@@ -11823,15 +11733,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(30,  2, 0, 1,  7);
     LINE(31,  2, 0, 1, 19);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  4));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 20));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 2 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 2 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][2 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][2 * N + 1 * 16], T01B);
     AVGS(28, 15);
     LINE(28, 12, 0, 1,  1);
     COPY(30,  4);
@@ -11850,15 +11759,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(29,  7, 0, 1,  8);
     LINE(29,  8, 0, 1, 17);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  5));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 21));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 3 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 3 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][3 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][3 * N + 1 * 16], T01B);
     LINE(28, 19, 0, 1,  4);
     LINE(28, 20, 0, 1,  9);
     COPY(32,  4);
@@ -11877,15 +11785,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(31,  5, 0, 1,  6);
     LINE(31,  6, 0, 1, 23);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  6));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 22));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 4 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 4 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][4 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][4 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[28 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[28 - 2][31 * N + 1 * 16], T01B);
     AVGS(29, 15);
@@ -11906,15 +11813,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(31,  7, 0, 1,  8);
     LINE(32,  6, 0, 1, 19);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  7));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 23));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 5 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 5 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][5 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][5 * N + 1 * 16], T01B);
     LINE(32,  7, 0, 1,  8);
     LINE(31,  9, 0, 1, 10);
     LINE(31, 10, 0, 1, 27);
@@ -11927,15 +11833,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(29, 20, 0, 1, 29);
     COPY(32,  8);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  8));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 24));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 6 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 6 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][6 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][6 * N + 1 * 16], T01B);
     AVGS(30, 15);
     AVGS(33,  7);
     LINE(32,  9, 0, 1, 18);
@@ -11947,15 +11852,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(29, 22, 0, 1, 15);
     LINE(29, 23, 0, 1, 24);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  9));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 25));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 7 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 7 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][7 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][7 * N + 1 * 16], T01B);
     LINE(29, 24, 0, 1,  1);
     LINE(29, 25, 0, 1, 10);
     COPY(30, 17);
@@ -11968,15 +11872,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(31, 14, 0, 1, 31);
     LINE(32, 10, 0, 1,  7);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 + 10));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 26));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 8 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 8 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][8 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][8 * N + 1 * 16], T01B);
     _mm_store_si128((__m128i*)&dstN[29 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[29 - 2][31 * N + 1 * 16], T01B);
     LINE(29, 28, 0, 1,  5);
@@ -11990,15 +11893,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     COPY(33, 10);
     AVGS(31, 15);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
     T01A = _mm_loadu_si128((__m128i*)(above1 + 11));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 27));
 
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 9 * N + 0 * 16], T01A);
-    _mm_store_si128((__m128i*)&dstN[34 - 2][ 9 * N + 1 * 16], T01B);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][9 * N + 0 * 16], T01A);
+    _mm_store_si128((__m128i*)&dstN[34 - 2][9 * N + 1 * 16], T01B);
     LINE(32, 13, 0, 1,  6);
     LINE(32, 14, 0, 1, 27);
     LINE(31, 16, 0, 1,  1);
@@ -12006,7 +11908,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(30, 22, 0, 1, 11);
     LINE(30, 23, 0, 1, 24);
     COPY(33, 11);
-
 
     // ***********************************************************************
     T00A = T01A;
@@ -12040,7 +11941,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(30, 28, 0, 1, 25);
     LINE(32, 17, 0, 1, 26);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12059,7 +11959,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(31, 22, 0, 1,  7);
     LINE(31, 23, 0, 1, 24);
     LINE(30, 30, 0, 1, 19);
-    
 
     // ***********************************************************************
     T00A = T01A;
@@ -12075,7 +11974,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(32, 20, 0, 1, 25);
     LINE(31, 24, 0, 1,  9);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12088,7 +11986,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(32, 21, 0, 1, 14);
     LINE(31, 26, 0, 1, 11);
     LINE(31, 27, 0, 1, 28);
-
 
     // ***********************************************************************
     T00A = T01A;
@@ -12104,7 +12001,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(31, 28, 0, 1, 13);
     LINE(31, 29, 0, 1, 30);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12119,7 +12015,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(32, 24, 0, 1, 13);
     LINE(31, 30, 0, 1, 15);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12133,7 +12028,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(33, 21, 0, 1, 28);
     LINE(32, 26, 0, 1, 23);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12144,7 +12038,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[34 - 2][18 * N + 1 * 16], T01B);
     LINE(33, 22, 0, 1, 22);
     LINE(32, 27, 0, 1, 12);
-
 
     // ***********************************************************************
     T00A = T01A;
@@ -12158,7 +12051,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(32, 28, 0, 1,  1);
     LINE(32, 29, 0, 1, 22);
 
-
     // ***********************************************************************
     T00A = T01A;
     T00B = T01B;
@@ -12171,7 +12063,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[32 - 2][31 * N + 1 * 16], T01B);
     LINE(33, 24, 0, 1, 10);
     LINE(32, 30, 0, 1, 11);
-
 
     // ***********************************************************************
     T00A = T01A;
@@ -12252,7 +12143,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[34 - 2][31 * N + 0 * 16], T01A);
     _mm_store_si128((__m128i*)&dstN[34 - 2][31 * N + 1 * 16], T01B);
 
-
     // ***********************************************************************
     T00A = _mm_loadu_si128((__m128i*)(above1 +  0));
     T00B = _mm_loadu_si128((__m128i*)(above1 + 16));
@@ -12316,7 +12206,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(25, 29, 0, 1,  4);
     LINE(25, 30, 0, 1,  2);
 
-    T00A = _mm_insert_epi8(T30A, left1[ 6], 0);
+    T00A = _mm_insert_epi8(T30A, left1[6], 0);
 
     LINE(24,  6, 0, 1, 29);
     LINE(24,  7, 0, 1, 24);
@@ -12364,9 +12254,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(24, 29, 0, 1, 10);
     LINE(24, 30, 0, 1,  5);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, left1[ 4], 0);
+    T00A = _mm_insert_epi8(T30A, left1[4], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 16));
@@ -12379,7 +12268,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[7], 0);
 
     LINE(23,  7, 0, 1, 24);
     LINE(23,  8, 0, 1, 15);
@@ -12444,9 +12333,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(23, 29, 0, 1, 18);
     LINE(23, 30, 0, 1,  9);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, left1[ 2], 0);
+    T00A = _mm_insert_epi8(T30A, left1[2], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 16));
@@ -12463,7 +12351,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[5], 0);
 
     LINE(22,  4, 0, 1, 31);
     LINE(22,  5, 0, 1, 18);
@@ -12472,7 +12360,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[7], 0);
 
     LINE(22,  7, 0, 1, 24);
     LINE(22,  8, 0, 1, 11);
@@ -12555,12 +12443,11 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     LINE(22, 29, 0, 1, 26);
     LINE(22, 30, 0, 1, 13);
 
-
     // ***********************************************************************
     T01A = T30A;
     T01B = T30B;
     T00B = _mm_alignr_epi8(T30B, T30A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), left1[ 4], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), left1[4], 0);
 
     LINE(21,  3, 0, 1, 28);
     LINE(21,  4, 0, 1, 11);
@@ -12568,7 +12455,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[6], 0);
 
     LINE(21,  5, 0, 1, 26);
     LINE(21,  6, 0, 1,  9);
@@ -12576,7 +12463,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 8], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[8], 0);
 
     LINE(21,  7, 0, 1, 24);
     LINE(21,  8, 0, 1,  7);
@@ -12584,7 +12471,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[9], 0);
 
     LINE(21,  9, 0, 1, 22);
     LINE(21, 10, 0, 1,  5);
@@ -12677,19 +12564,18 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[21 - 2][31 * N + 1 * 16], T00B);
     LINE(21, 30, 0, 1, 17);
 
-
     // ***********************************************************************
     T01A = T30A;
     T01B = T30B;
     T00B = _mm_alignr_epi8(T30B, T30A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), left1[ 3], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T30A, 1), left1[3], 0);
 
     LINE(20,  3, 0, 1, 12);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[5], 0);
 
     LINE(20,  4, 0, 1, 23);
     LINE(20,  5, 0, 1,  2);
@@ -12697,14 +12583,14 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[6], 0);
 
     LINE(20,  6, 0, 1, 13);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 8], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[8], 0);
 
     LINE(20,  7, 0, 1, 24);
     LINE(20,  8, 0, 1,  3);
@@ -12712,7 +12598,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[9], 0);
 
     LINE(20,  9, 0, 1, 14);
 
@@ -12823,9 +12709,8 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     _mm_store_si128((__m128i*)&dstN[20 - 2][31 * N + 1 * 16], T00B);
     LINE(20, 30, 0, 1, 21);
 
-
     // ***********************************************************************
-    T00A = _mm_insert_epi8(T30A, left1[ 1], 0);
+    T00A = _mm_insert_epi8(T30A, left1[1], 0);
     T00B = T30B;
     T01A = _mm_loadu_si128((__m128i*)(above1 +  0));
     T01B = _mm_loadu_si128((__m128i*)(above1 + 16));
@@ -12835,21 +12720,21 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 2], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[2], 0);
 
     LINE(19,  2, 0, 1, 18);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 4], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[4], 0);
 
     LINE(19,  3, 0, 1, 24);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 5], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[5], 0);
 
     LINE(19,  4, 0, 1, 30);
     LINE(19,  5, 0, 1,  4);
@@ -12857,21 +12742,21 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 6], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[6], 0);
 
     LINE(19,  6, 0, 1, 10);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 7], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[7], 0);
 
     AVGS(19,  7);
 
     T01A = T00A;
     T01B = T00B;
     T00B = _mm_alignr_epi8(T00B, T00A, 15);
-    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[ 9], 0);
+    T00A = _mm_insert_epi8(_mm_slli_si128(T00A, 1), left1[9], 0);
 
     LINE(19,  8, 0, 1, 22);
 
@@ -13013,7 +12898,6 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
-
 }
 
 #include "utils.h"
@@ -13033,12 +12917,13 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.intra_pred_allangs[2] = predIntraAngs16;
     p.intra_pred_allangs[3] = predIntraAngs32;
 #elif defined(_MSC_VER) && defined(X86_64)
+
     /* VC10 and VC11 both generate bad Win32 code for all these functions.
      * They apparently can't deal with register allocation for intrinsic
      * functions this large.  Even Win64 cannot handle 16x16 and 32x32 */
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
 #endif
-#endif
+#endif /* if INSTRSET > 4 && !HIGH_BIT_DEPTH */
 }
 }

@@ -226,8 +226,11 @@ private:
     __inline Double xGetRateLast(UInt uiPosX, UInt uiPosY) const;
 
     __inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+
     __inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+
     __inline Double xGetICost(Double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
+
     __inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     Void xDeQuant(Int bitDepth, const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);

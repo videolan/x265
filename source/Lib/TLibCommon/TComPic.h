@@ -54,6 +54,7 @@
 class TComPic
 {
 private:
+
     TComPicSym*           m_pcPicSym;             // Symbols
     TComPicYuv*           m_pcPicYuvOrg;
     TComPicYuv*           m_pcPicYuvRec;

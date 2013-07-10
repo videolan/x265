@@ -120,7 +120,9 @@ void MotionReference::generateReferencePlanes()
     {
         /* serial path for when no thread pool is present */
         for (int i = 0; i < 4; i++)
+        {
             generateReferencePlane(i);
+        }
     }
     else
     {

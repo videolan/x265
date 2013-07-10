@@ -115,14 +115,12 @@ TEncGOP::TEncGOP()
 }
 
 TEncGOP::~TEncGOP()
-{
-}
+{}
 
 /** Create list to contain pointers to LCU start addresses of slice.
  */
 Void  TEncGOP::create()
-{
-}
+{}
 
 Void TEncGOP::destroy()
 {
@@ -218,6 +216,7 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
             break;
         m_outputLock.release();
     }
+
     m_inputLock.acquire();
 
     // move access units from member variable list to end of user's container
@@ -229,7 +228,10 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
         {
             TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
             while (iterPic != m_cListPic.end() && (*iterPic)->getPOC() != (m_startPOC + i))
+            {
                 iterPic++;
+            }
+
             TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
             x265_picture_t& recon = m_recon[i];
             recon.planes[0] = recpic->getLumaAddr();
@@ -240,6 +242,7 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
             recon.stride[2] = recpic->getCStride();
             recon.bitDepth = sizeof(Pel) * 8;
         }
+
         *pic_out = m_recon;
     }
     m_outputLock.release();
@@ -268,6 +271,7 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
             return;
         }
     }
+
     assert(!"No room for added picture");
 }
 
@@ -823,6 +827,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 m_cSPS.setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
                 m_cSPS.setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
             }
+
             if (m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled())
             {
                 // CHECK_ME: maybe HM's bug
@@ -904,6 +909,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     i++;
                 }
             }
+
             SOPDescriptionSEI.m_numPicsInSopMinus1 = i - 1;
 
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, SOPDescriptionSEI, slice->getSPS());
@@ -991,7 +997,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 UInt offsetPosition = bActiveParameterSetSEIPresentInAU; // Insert BP SEI after APS SEI
                 AccessUnit::iterator it = accessUnit.begin();
                 for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
+                {
                     it++;
+                }
 
                 accessUnit.insert(it, new NALUnitEBSP(nalu));
                 bBufferingPeriodSEIPresentInAU = true;
@@ -1010,7 +1018,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
                 AccessUnit::iterator it = accessUnit.begin();
                 for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
+                {
                     it++;
+                }
 
                 accessUnit.insert(it, new NALUnitEBSP(naluTmp));
                 bNestedBufferingPeriodSEIPresentInAU = true;
@@ -1215,7 +1225,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         if ((m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled()) &&
             (m_cSPS.getVuiParametersPresentFlag()) &&
             ((m_cSPS.getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag())
-                || (m_cSPS.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())) &&
+             || (m_cSPS.getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag())) &&
             (m_cSPS.getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag()))
         {
             UInt numNalus = 0;
@@ -1428,7 +1438,10 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU;
                     AccessUnit::iterator it = accessUnit.begin();
                     for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
+                    {
                         it++;
+                    }
+
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
                     bPictureTimingSEIPresentInAU = true;
                 }
@@ -1443,12 +1456,15 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
                     // Insert PT SEI after APS and BP SEI
                     UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
-                                          bBufferingPeriodSEIPresentInAU +
-                                          bPictureTimingSEIPresentInAU +
-                                          bNestedBufferingPeriodSEIPresentInAU;
+                        bBufferingPeriodSEIPresentInAU +
+                        bPictureTimingSEIPresentInAU +
+                        bNestedBufferingPeriodSEIPresentInAU;
                     AccessUnit::iterator it = accessUnit.begin();
                     for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
+                    {
                         it++;
+                    }
+
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
                 }
             }
@@ -1475,10 +1491,13 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                         UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
                         // Insert DU info SEI after APS, BP and PT SEI
                         UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
-                                              bBufferingPeriodSEIPresentInAU +
-                                              bPictureTimingSEIPresentInAU;
+                            bBufferingPeriodSEIPresentInAU +
+                            bPictureTimingSEIPresentInAU;
                         for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
+                        {
                             it++;
+                        }
+
                         accessUnit.insert(it, new NALUnitEBSP(onalu));
                     }
                     else
@@ -1666,6 +1685,7 @@ static const Char* nalUnitTypeToString(NalUnitType type)
     default:                              return "UNK";
     }
 }
+
 #endif // if VERBOSE_RATE
 
 // TODO:
@@ -1691,48 +1711,79 @@ static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHei
             pOrg += iStride;
             pRec += iStride;
         }
+
         return uiSSD;
     }
     Int y = 0;
     /* Consume Y in chunks of 64 */
-    for (; y + 64 <= iHeight ; y += 64)
+    for (; y + 64 <= iHeight; y += 64)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
+        for (; x + 64 <= iWidth; x += 64)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 16 <= iWidth; x += 16)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 4 <= iWidth; x += 4)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
         pOrg += iStride * 64;
         pRec += iStride * 64;
     }
+
     /* Consume Y in chunks of 16 */
-    for (;y + 16 <= iHeight ; y += 16)
+    for (; y + 16 <= iHeight; y += 16)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
+        for (; x + 64 <= iWidth; x += 64)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 16 <= iWidth; x += 16)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 4 <= iWidth; x += 4)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
         pOrg += iStride * 16;
         pRec += iStride * 16;
     }
+
     /* Consume Y in chunks of 4 */
-    for (;y + 4 <= iHeight ; y += 4)
+    for (; y + 4 <= iHeight; y += 4)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth ; x += 64)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 16 <= iWidth ; x += 16)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
-        for (; x + 4 <= iWidth ; x += 4)
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel *)pOrg + x, (intptr_t)iStride, (pixel *)pRec + x, iStride);
+        for (; x + 64 <= iWidth; x += 64)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 16 <= iWidth; x += 16)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
+        for (; x + 4 <= iWidth; x += 4)
+        {
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+        }
+
         pOrg += iStride * 4;
         pRec += iStride * 4;
     }
+
     return uiSSD;
 }
 
@@ -1777,6 +1828,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
             numRBSPBytes += numRBSPBytes_nal;
         }
     }
+
     UInt uibits = numRBSPBytes * 8;
 
     /* Acquire encoder global lock to accumulate statistics and print debug info to console */
@@ -1802,9 +1854,9 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
         return;
 
     Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
-    
+
     if (!pcSlice->isReferenced())
-        c += 32;  // lower case if unreferenced
+        c += 32; // lower case if unreferenced
 
     printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            pcSlice->getPOC(),

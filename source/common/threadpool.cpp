@@ -68,7 +68,7 @@ private:
     bool           m_dirty;
 
     bool           m_idle;
-    
+
     bool           m_exited;
 
 public:
@@ -264,7 +264,9 @@ void ThreadPoolImpl::Stop()
             GIVE_UP_TIME();
             exited_count = 0;
             for (int i = 0; i < m_numThreads; i++)
+            {
                 exited_count += m_threads[i].isExited() ? 1 : 0;
+            }
         }
         while (exited_count < m_numThreads);
 

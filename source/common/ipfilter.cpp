@@ -488,7 +488,7 @@ void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, s
 
     extendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
-    extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY); 
+    extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
 }
 }
 

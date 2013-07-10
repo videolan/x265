@@ -35,6 +35,7 @@ namespace x265 {
 class Encoder : public TEncTop
 {
 protected:
+
     bool InitializeGOP(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
 

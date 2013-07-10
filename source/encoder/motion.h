@@ -84,27 +84,27 @@ public:
     inline int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
 
     int motionEstimate(MotionReference *ref,
-                       const MV &mvmin,
-                       const MV &mvmax,
-                       const MV &qmvp,
-                       int numCandidates,
-                       const MV *mvc,
-                       int merange,
-                       MV &outQMv);
+                       const MV &       mvmin,
+                       const MV &       mvmax,
+                       const MV &       qmvp,
+                       int              numCandidates,
+                       const MV *       mvc,
+                       int              merange,
+                       MV &             outQMv);
 
 protected:
 
     static const int COST_MAX = 1 << 28;
 
     inline void StarPatternSearch(MotionReference *ref,
-                                  const MV &mvmin,
-                                  const MV &mvmax,
-                                  MV &bmv,
-                                  int &bcost,
-                                  int &bPointNr,
-                                  int &bDistance,
-                                  int earlyExitIters,
-                                  int merange);
+                                  const MV &       mvmin,
+                                  const MV &       mvmax,
+                                  MV &             bmv,
+                                  int &            bcost,
+                                  int &            bPointNr,
+                                  int &            bDistance,
+                                  int              earlyExitIters,
+                                  int              merange);
 };
 }
 

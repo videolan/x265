@@ -218,82 +218,82 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride,
 
 #if INSTRSET >= 5
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
-    a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-    exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
-    exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
-    exp3 = _mm_mullo_epi32(a3, _mm_set1_epi32(17)); \
-    exp4 = _mm_mullo_epi32(a4, _mm_set1_epi32(17)); \
-    exp5 = _mm_mullo_epi32(a4, _mm_set1_epi32(40)); \
-    exp6 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a6, _mm_cvtsi32_si128(2)), a7), _mm_mullo_epi32(a5, _mm_set1_epi32(10))); \
-    sume = _mm_add_epi32(exp1, _mm_add_epi32(_mm_add_epi32(exp2, exp3), \
-                                        _mm_add_epi32(_mm_add_epi32(a3, exp4), \
-                                                        _mm_add_epi32(_mm_mullo_epi32(a5, _mm_set1_epi32(-5)), \
-                                                                    a6) \
-                                                        ) \
-                                        ) \
-                            ); \
-    sumi = _mm_sub_epi32(_mm_add_epi32(_mm_add_epi32(exp1, exp2), _mm_add_epi32(exp5, exp6)), \
-                            _mm_add_epi32(a2, a5)); \
-    sump = _mm_add_epi32(a1, _mm_add_epi32(_mm_add_epi32(exp3, exp4), \
-                                        _mm_add_epi32(_mm_add_epi32(exp5, exp6), \
-                                                        _mm_add_epi32(_mm_mullo_epi32(a2, _mm_set1_epi32(-5)), \
-                                                                    a4) \
-                                                        ) \
-                                        ) \
-                            ); \
-    /* store results */ \
-    sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-    sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
-    sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-    sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
-    sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-    sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
+        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
+        exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
+        exp3 = _mm_mullo_epi32(a3, _mm_set1_epi32(17)); \
+        exp4 = _mm_mullo_epi32(a4, _mm_set1_epi32(17)); \
+        exp5 = _mm_mullo_epi32(a4, _mm_set1_epi32(40)); \
+        exp6 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a6, _mm_cvtsi32_si128(2)), a7), _mm_mullo_epi32(a5, _mm_set1_epi32(10))); \
+        sume = _mm_add_epi32(exp1, _mm_add_epi32(_mm_add_epi32(exp2, exp3), \
+                                                 _mm_add_epi32(_mm_add_epi32(a3, exp4), \
+                                                               _mm_add_epi32(_mm_mullo_epi32(a5, _mm_set1_epi32(-5)), \
+                                                                             a6) \
+                                                               ) \
+                                                 ) \
+                             ); \
+        sumi = _mm_sub_epi32(_mm_add_epi32(_mm_add_epi32(exp1, exp2), _mm_add_epi32(exp5, exp6)), \
+                             _mm_add_epi32(a2, a5)); \
+        sump = _mm_add_epi32(a1, _mm_add_epi32(_mm_add_epi32(exp3, exp4), \
+                                               _mm_add_epi32(_mm_add_epi32(exp5, exp6), \
+                                                             _mm_add_epi32(_mm_mullo_epi32(a2, _mm_set1_epi32(-5)), \
+                                                                           a4) \
+                                                             ) \
+                                               ) \
+                             ); \
+        /* store results */ \
+        sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
+        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
+        sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
+        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
+        sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
+        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
 #else /* if INSTRSET >= 5 */
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-    tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
-    a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-    /*  calculation
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
+        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        /*  calculation
 
-        The coefficients for different planes are :
-        e:    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-        i:    { -1, 4, -11, 40, 40, -11, 4, -1 },
-        p:    {  0, 1,  -5, 17, 58, -10, 4, -1 }
-        Thus the expressions are:
-        sume = 4*a1 -a0 - 10*a2 + 58*a3 + 17*a4 -  5*a5 +   a6     ;
-        sumi = 4*a1 -a0 - 11*a2 + 40*a3 + 40*a4 - 11*a5 + 4*a6  -a7;
-        sump =   a1      - 5*a2 + 17*a3 + 58*a4 - 10*a5 + 4*a6  -a7;
-        */\
-    exp1 = (a1 << 2) - a0 - 10 * a2; \
-    exp2 = 40 * a3; \
-    exp3 = 17 * a3; \
-    exp4 = 17 * a4; \
-    exp5 = 40 * a4; \
-    exp6 = (a6 << 2) - a7 - 10 * a5; \
-    sume = exp1 + exp2 + exp3 + a3 + exp4 - 5 * a5 +   a6; \
-    sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
-    sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
-    /* store results */ \
-    sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-    sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
-    sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-    sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
-    sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-    tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-    sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-    *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
-    }
+            The coefficients for different planes are :
+            e:    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+            i:    { -1, 4, -11, 40, 40, -11, 4, -1 },
+            p:    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+            Thus the expressions are:
+            sume = 4*a1 -a0 - 10*a2 + 58*a3 + 17*a4 -  5*a5 +   a6     ;
+            sumi = 4*a1 -a0 - 11*a2 + 40*a3 + 40*a4 - 11*a5 + 4*a6  -a7;
+            sump =   a1      - 5*a2 + 17*a3 + 58*a4 - 10*a5 + 4*a6  -a7;
+            */                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+        exp1 = (a1 << 2) - a0 - 10 * a2; \
+        exp2 = 40 * a3; \
+        exp3 = 17 * a3; \
+        exp4 = 17 * a4; \
+        exp5 = 40 * a4; \
+        exp6 = (a6 << 2) - a7 - 10 * a5; \
+        sume = exp1 + exp2 + exp3 + a3 + exp4 - 5 * a5 +   a6; \
+        sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
+        sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
+        /* store results */ \
+        sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
+        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
+        sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
+        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
+        sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
+        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
+        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
+}
 #endif /* if INSTRSET >= 5 */
 
 #if INSTRSET >= 5
@@ -444,28 +444,45 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/,
         PROCESSROW(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL((block_width + marginX), 3) row++;
         PROCESSROW(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL((block_width + marginX), 3)
     }
+
     // Extending bottom rows
     pixel *pe, *pi, *pp;
     pe = dstE + (block_height - 1) * dstStride - marginX;
     pi = dstI + (block_height - 1) * dstStride - marginX;
     pp = dstP + (block_height - 1) * dstStride - marginX;
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pe + y * dstStride, pe, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pi + y * dstStride, pi, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pp + y * dstStride, pp, block_width + marginX * 2);
+    }
 
     // Extending top rows
     pe -= ((block_height - 1) * dstStride);
     pi -= ((block_height - 1) * dstStride);
     pp -= ((block_height - 1) * dstStride);
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pe - y * dstStride, pe, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pi - y * dstStride, pi, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
+    }
 }
 
 template<int N>
@@ -684,6 +701,7 @@ void filterHorizontal_p_p(int bitDepth,
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - bitDepth;
+
     offset =  (1 << (headRoom - 1));
     maxVal = (1 << bitDepth) - 1;
     src -= (N / 2 - 1);
@@ -778,259 +796,259 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
     __m128i sumaL, sumbL, sumcL, tmp, exp1;
     __m128i tmp16a, tmp16b, tmp16c;
 
-    // Load Ai, ai += Ai*coefi      
+    // Load Ai, ai += Ai*coefi
     for (row = 0; row < block_height; row++)
     {
         col = 0;
 
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col));
-        sumbL = (_mm_unpacklo_epi8(vec_src0,_mm_setzero_si128()));
+        sumbL = (_mm_unpacklo_epi8(vec_src0, _mm_setzero_si128()));
         sumbL = _mm_sub_epi16(_mm_setzero_si128(), sumbL);
 
         // a = b+=4*a1,  c+=1*a1
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 1));
-        sumcL = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-        sumbL = _mm_add_epi16(sumbL, _mm_sll_epi16(sumcL,_mm_cvtsi32_si128(2)));
+        sumcL = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+        sumbL = _mm_add_epi16(sumbL, _mm_sll_epi16(sumcL, _mm_cvtsi32_si128(2)));
         sumaL = sumbL;
- 
+
         // a +=-10*a2    b+=-11*a2      c+=-5*a2
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 2));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
         sumbL = _mm_sub_epi16(sumbL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
         sumcL = _mm_add_epi16(sumcL, tmp);
-        tmp = _mm_sll_epi16(tmp,_mm_cvtsi32_si128(1));
+        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
         sumaL = _mm_add_epi16(sumaL, tmp);
         sumbL = _mm_add_epi16(sumbL, tmp);
 
-
         // a +=58*a3    b+=40*a3      c+=17*a3
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 3));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-        _mm_storeu_si128((__m128i*)(intF+col),_mm_sub_epi16(_mm_sll_epi16(tmp,_mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
-        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp,_mm_cvtsi32_si128(4)));
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+        _mm_storeu_si128((__m128i*)(intF + col), _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
+        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
         sumcL = _mm_add_epi16(sumcL, exp1);
         sumaL = _mm_add_epi16(sumaL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
         sumbL = _mm_add_epi16(sumbL, tmp);
         sumaL = _mm_add_epi16(sumaL, _mm_add_epi16(exp1, tmp));
- 
+
         // a +=17*a4    b+=40*a4      c+=58*a4
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 4));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp,_mm_cvtsi32_si128(4)));
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
         sumaL = _mm_add_epi16(sumaL, exp1);
         sumcL = _mm_add_epi16(sumcL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
         sumbL = _mm_add_epi16(sumbL, tmp);
         sumcL = _mm_add_epi16(sumcL, _mm_add_epi16(exp1, tmp));
- 
+
         // a +=-5*a5    b+=-11*a5      c+=-10*a5
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 5));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
         sumbL = _mm_sub_epi16(sumbL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
         sumaL = _mm_add_epi16(sumaL, tmp);
-        tmp =_mm_sll_epi16(tmp,_mm_cvtsi32_si128(1));
+        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
         sumcL = _mm_add_epi16(sumcL, tmp);
         sumbL = _mm_add_epi16(sumbL, tmp);
 
         // a +=1*a6    b+=4*a6      c+=4*a6
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 6));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
         sumaL = _mm_add_epi16(sumaL, tmp);
-        tmp = _mm_sll_epi16(tmp,_mm_cvtsi32_si128(2));
+        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(2));
         sumbL = _mm_add_epi16(sumbL, tmp);
         sumcL = _mm_add_epi16(sumcL, tmp);
 
         // a +=0*a7    b+=-1*a7      c+=-1*a7
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 7));
-        tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+        tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
         sumbL = _mm_sub_epi16(sumbL, tmp);
         sumcL = _mm_sub_epi16(sumcL, tmp);
         sumaL = _mm_add_epi16(sumaL, vec_offset);
         sumbL = _mm_add_epi16(sumbL, vec_offset);
         sumcL = _mm_add_epi16(sumcL, vec_offset);
 
-        _mm_storeu_si128((__m128i*)(intA+col),sumaL);
+        _mm_storeu_si128((__m128i*)(intA + col), sumaL);
         sumaL = _mm_add_epi16(sumaL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-        sumaL = _mm_sra_epi16(sumaL,_mm_cvtsi32_si128(6));
-        tmp16a = _mm_packus_epi16(sumaL,sumaL);            
-        _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col),tmp16a);
+        sumaL = _mm_sra_epi16(sumaL, _mm_cvtsi32_si128(6));
+        tmp16a = _mm_packus_epi16(sumaL, sumaL);
+        _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col), tmp16a);
 
-        _mm_storeu_si128((__m128i*)(intB+col),sumbL);
+        _mm_storeu_si128((__m128i*)(intB + col), sumbL);
         sumbL = _mm_add_epi16(sumbL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-        sumbL = _mm_sra_epi16(sumbL,_mm_cvtsi32_si128(6));
-        tmp16b = _mm_packus_epi16(sumbL,sumbL);            
-        _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col),tmp16b);
+        sumbL = _mm_sra_epi16(sumbL, _mm_cvtsi32_si128(6));
+        tmp16b = _mm_packus_epi16(sumbL, sumbL);
+        _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col), tmp16b);
 
-        _mm_storeu_si128((__m128i*)(intC+col),sumcL);
+        _mm_storeu_si128((__m128i*)(intC + col), sumcL);
         sumcL = _mm_add_epi16(sumcL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-        sumcL = _mm_sra_epi16(sumcL,_mm_cvtsi32_si128(6));
-        tmp16c = _mm_packus_epi16(sumcL,sumcL);            
-        _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col),tmp16c);
+        sumcL = _mm_sra_epi16(sumcL, _mm_cvtsi32_si128(6));
+        tmp16c = _mm_packus_epi16(sumcL, sumcL);
+        _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col), tmp16c);
 
         //Extend First column
         __m128i ma, mb, mc;
-        ma = _mm_shuffle_epi8(tmp16a, _mm_set1_epi8(0)); 
-        mb = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(0)); 
-        mc = _mm_shuffle_epi8(tmp16c, _mm_set1_epi8(0)); 
+        ma = _mm_shuffle_epi8(tmp16a, _mm_set1_epi8(0));
+        mb = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(0));
+        mc = _mm_shuffle_epi8(tmp16c, _mm_set1_epi8(0));
 
-        for (int i = -marginX; i < -16; i += 16) 
-        { 
+        for (int i = -marginX; i < -16; i += 16)
+        {
             _mm_storeu_si128((__m128i*)(dstA + row * dstStride +  i), ma);
-            _mm_storeu_si128((__m128i*)(dstB + row * dstStride +  i), mb); 
-            _mm_storeu_si128((__m128i*)(dstC + row * dstStride +  i), mc); 
-        } 
-        _mm_storeu_si128((__m128i*)(dstA + row * dstStride - 16), ma); /*Assuming marginX > 16*/ 
-        _mm_storeu_si128((__m128i*)(dstB + row * dstStride - 16), mb); 
-        _mm_storeu_si128((__m128i*)(dstC + row * dstStride - 16), mc); 
+            _mm_storeu_si128((__m128i*)(dstB + row * dstStride +  i), mb);
+            _mm_storeu_si128((__m128i*)(dstC + row * dstStride +  i), mc);
+        }
 
-         col+=8;
+        _mm_storeu_si128((__m128i*)(dstA + row * dstStride - 16), ma); /*Assuming marginX > 16*/
+        _mm_storeu_si128((__m128i*)(dstB + row * dstStride - 16), mb);
+        _mm_storeu_si128((__m128i*)(dstC + row * dstStride - 16), mc);
 
-        for (; col + 8/*16*/ <= (block_width); col += 8/*16*/)               // Iterations multiple of 8
+        col += 8;
+
+        for (; col + 8 /*16*/ <= (block_width); col += 8 /*16*/)               // Iterations multiple of 8
         {
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col));
-            sumbL = (_mm_unpacklo_epi8(vec_src0,_mm_setzero_si128()));
+            sumbL = (_mm_unpacklo_epi8(vec_src0, _mm_setzero_si128()));
             sumbL = _mm_sub_epi16(_mm_setzero_si128(), sumbL);
 
             // a = b+=4*a1,  c+=1*a1
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 1));
-            sumcL = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-            sumbL = _mm_add_epi16(sumbL, _mm_sll_epi16(sumcL,_mm_cvtsi32_si128(2)));
+            sumcL = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+            sumbL = _mm_add_epi16(sumbL, _mm_sll_epi16(sumcL, _mm_cvtsi32_si128(2)));
             sumaL = sumbL;
- 
+
             // a +=-10*a2    b+=-11*a2      c+=-5*a2
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 2));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
             sumbL = _mm_sub_epi16(sumbL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
             sumcL = _mm_add_epi16(sumcL, tmp);
-            tmp = _mm_sll_epi16(tmp,_mm_cvtsi32_si128(1));
+            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
             sumaL = _mm_add_epi16(sumaL, tmp);
             sumbL = _mm_add_epi16(sumbL, tmp);
 
-
             // a +=58*a3    b+=40*a3      c+=17*a3
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 3));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-            _mm_storeu_si128((__m128i*)(intF+col),_mm_sub_epi16(_mm_sll_epi16(tmp,_mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
-            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp,_mm_cvtsi32_si128(4)));
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+            _mm_storeu_si128((__m128i*)(intF + col), _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
+            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
             sumcL = _mm_add_epi16(sumcL, exp1);
             sumaL = _mm_add_epi16(sumaL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
             sumbL = _mm_add_epi16(sumbL, tmp);
             sumaL = _mm_add_epi16(sumaL, _mm_add_epi16(exp1, tmp));
- 
+
             // a +=17*a4    b+=40*a4      c+=58*a4
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 4));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp,_mm_cvtsi32_si128(4)));
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
             sumaL = _mm_add_epi16(sumaL, exp1);
             sumcL = _mm_add_epi16(sumcL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
             sumbL = _mm_add_epi16(sumbL, tmp);
             sumcL = _mm_add_epi16(sumcL, _mm_add_epi16(exp1, tmp));
- 
+
             // a +=-5*a5    b+=-11*a5      c+=-10*a5
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 5));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
             sumbL = _mm_sub_epi16(sumbL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
             sumaL = _mm_add_epi16(sumaL, tmp);
-            tmp =_mm_sll_epi16(tmp,_mm_cvtsi32_si128(1));
+            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
             sumcL = _mm_add_epi16(sumcL, tmp);
             sumbL = _mm_add_epi16(sumbL, tmp);
 
             // a +=1*a6    b+=4*a6      c+=4*a6
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 6));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
             sumaL = _mm_add_epi16(sumaL, tmp);
-            tmp = _mm_sll_epi16(tmp,_mm_cvtsi32_si128(2));
+            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(2));
             sumbL = _mm_add_epi16(sumbL, tmp);
             sumcL = _mm_add_epi16(sumcL, tmp);
 
             // a +=0*a7    b+=-1*a7      c+=-1*a7
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 7));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
             sumbL = _mm_sub_epi16(sumbL, tmp);
             sumcL = _mm_sub_epi16(sumcL, tmp);
             sumaL = _mm_add_epi16(sumaL, vec_offset);
             sumbL = _mm_add_epi16(sumbL, vec_offset);
             sumcL = _mm_add_epi16(sumcL, vec_offset);
 
-            _mm_storeu_si128((__m128i*)(intA+col),sumaL);
+            _mm_storeu_si128((__m128i*)(intA + col), sumaL);
             sumaL = _mm_add_epi16(sumaL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-            sumaL = _mm_sra_epi16(sumaL,_mm_cvtsi32_si128(6));
-            tmp16a = _mm_packus_epi16(sumaL,sumaL);            
-            _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col),tmp16a);
+            sumaL = _mm_sra_epi16(sumaL, _mm_cvtsi32_si128(6));
+            tmp16a = _mm_packus_epi16(sumaL, sumaL);
+            _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col), tmp16a);
 
-            _mm_storeu_si128((__m128i*)(intB+col),sumbL);
+            _mm_storeu_si128((__m128i*)(intB + col), sumbL);
             sumbL = _mm_add_epi16(sumbL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-            sumbL = _mm_sra_epi16(sumbL,_mm_cvtsi32_si128(6));
-            tmp16b = _mm_packus_epi16(sumbL,sumbL);            
-            _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col),tmp16b);
+            sumbL = _mm_sra_epi16(sumbL, _mm_cvtsi32_si128(6));
+            tmp16b = _mm_packus_epi16(sumbL, sumbL);
+            _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col), tmp16b);
 
-            _mm_storeu_si128((__m128i*)(intC+col),sumcL);
+            _mm_storeu_si128((__m128i*)(intC + col), sumcL);
             sumcL = _mm_add_epi16(sumcL, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-            sumcL = _mm_sra_epi16(sumcL,_mm_cvtsi32_si128(6));
-            tmp16c = _mm_packus_epi16(sumcL,sumcL);            
-            _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col),tmp16c);
-
+            sumcL = _mm_sra_epi16(sumcL, _mm_cvtsi32_si128(6));
+            tmp16c = _mm_packus_epi16(sumcL, sumcL);
+            _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col), tmp16c);
         }
 
         if (block_width - col > 0)
         {
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + block_width - 5));
-            tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());
-            _mm_storeu_si128((__m128i*)(intF + block_width - 8),_mm_sub_epi16(_mm_sll_epi16(tmp,_mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
-            __m128i a, b, c, sum1, sum2, sum3=_mm_setzero_si128();
+            tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
+            _mm_storeu_si128((__m128i*)(intF + block_width - 8), _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS)));
+            __m128i a, b, c, sum1, sum2, sum3 = _mm_setzero_si128();
             for (; col < block_width; col++)                           // Remaining iterations
             {
                 vec_src0 = _mm_loadu_si128((__m128i const*)(src + col));
-                tmp = _mm_unpacklo_epi8(vec_src0,_mm_setzero_si128());    // Assuming that there is no overflow (Everywhere in this function!)
+                tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());    // Assuming that there is no overflow (Everywhere in this function!)
                 a = _mm_setr_epi16(-1, 4, -10, 58, 17,  -5, 1,  0);
                 a = _mm_mullo_epi16(tmp, a);
                 b = _mm_setr_epi16(-1, 4, -11, 40, 40, -11, 4, -1);
                 b = _mm_mullo_epi16(tmp, b);
                 c = _mm_setr_epi16(0, 1,  -5, 17, 58, -10, 4, -1);
                 c = _mm_mullo_epi16(tmp, c);
-                sum1  = _mm_hadd_epi16(a,b);                   // horizontally add 8 elements in 3 steps
-                sum2  = _mm_hadd_epi16(c,c);
-                sum2  = _mm_hadd_epi16(sum1,sum2);
-                sum3  = _mm_hadd_epi16(sum2,sum2);
+                sum1  = _mm_hadd_epi16(a, b);                   // horizontally add 8 elements in 3 steps
+                sum2  = _mm_hadd_epi16(c, c);
+                sum2  = _mm_hadd_epi16(sum1, sum2);
+                sum3  = _mm_hadd_epi16(sum2, sum2);
                 sum3  = _mm_add_epi16(sum3, vec_offset);
-                sum3  = _mm_sra_epi16(sum3,_mm_cvtsi32_si128(shift));
-                intA[col] = _mm_cvtsi128_si32(sum3);  
+                sum3  = _mm_sra_epi16(sum3, _mm_cvtsi32_si128(shift));
+                intA[col] = _mm_cvtsi128_si32(sum3);
                 intB[col] = _mm_extract_epi16(sum3, 1);
                 intC[col] = _mm_extract_epi16(sum3, 2);
                 sum3 = _mm_add_epi16(sum3, _mm_set1_epi16(IF_INTERNAL_OFFS + 32));
-                sum3 = _mm_sra_epi16(sum3,_mm_cvtsi32_si128(6));
+                sum3 = _mm_sra_epi16(sum3, _mm_cvtsi32_si128(6));
                 sum3 = _mm_packus_epi16(sum3, sum3);
                 dstA[row * dstStride + col] = _mm_extract_epi8(sum3, 0);
                 dstB[row * dstStride + col] = _mm_extract_epi8(sum3, 1);
                 dstC[row * dstStride + col] = _mm_extract_epi8(sum3, 2);
             }
-            tmp16a = _mm_shuffle_epi8(sum3 , _mm_set1_epi8(0)); 
-            tmp16b = _mm_shuffle_epi8(sum3 , _mm_set1_epi8(1)); 
-            tmp16c = _mm_shuffle_epi8(sum3 , _mm_set1_epi8(2)); 
+
+            tmp16a = _mm_shuffle_epi8(sum3, _mm_set1_epi8(0));
+            tmp16b = _mm_shuffle_epi8(sum3, _mm_set1_epi8(1));
+            tmp16c = _mm_shuffle_epi8(sum3, _mm_set1_epi8(2));
         }
         else
         {
-            tmp16a = _mm_shuffle_epi8(tmp16a , _mm_set1_epi8(15)); 
-            tmp16b = _mm_shuffle_epi8(tmp16b , _mm_set1_epi8(15)); 
-            tmp16c = _mm_shuffle_epi8(tmp16c , _mm_set1_epi8(15)); 
+            tmp16a = _mm_shuffle_epi8(tmp16a, _mm_set1_epi8(15));
+            tmp16b = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(15));
+            tmp16c = _mm_shuffle_epi8(tmp16c, _mm_set1_epi8(15));
         }
         //Extend last column
-        for (int i = -marginX; i < -16; i += 16) 
-        { 
+        for (int i = -marginX; i < -16; i += 16)
+        {
             _mm_storeu_si128((__m128i*)(dstA + row * dstStride + block_width + marginX + i), tmp16a);
-            _mm_storeu_si128((__m128i*)(dstB + row * dstStride + block_width + marginX + i), tmp16b); 
-            _mm_storeu_si128((__m128i*)(dstC + row * dstStride + block_width + marginX + i), tmp16c); 
-        } 
-        _mm_storeu_si128((__m128i*)(dstA + row * dstStride + block_width + marginX - 16), tmp16a); /*Assuming marginX > 16*/ 
-        _mm_storeu_si128((__m128i*)(dstB + row * dstStride + block_width + marginX - 16), tmp16b); 
-        _mm_storeu_si128((__m128i*)(dstC + row * dstStride + block_width + marginX - 16), tmp16c); 
+            _mm_storeu_si128((__m128i*)(dstB + row * dstStride + block_width + marginX + i), tmp16b);
+            _mm_storeu_si128((__m128i*)(dstC + row * dstStride + block_width + marginX + i), tmp16c);
+        }
+
+        _mm_storeu_si128((__m128i*)(dstA + row * dstStride + block_width + marginX - 16), tmp16a); /*Assuming marginX > 16*/
+        _mm_storeu_si128((__m128i*)(dstB + row * dstStride + block_width + marginX - 16), tmp16b);
+        _mm_storeu_si128((__m128i*)(dstC + row * dstStride + block_width + marginX - 16), tmp16c);
 
         src += srcStride;
         intF += intStride;
@@ -1045,24 +1063,41 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
     pi = dstB + (block_height - 1) * dstStride - marginX;
     pp = dstC + (block_height - 1) * dstStride - marginX;
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pe + y * dstStride, pe, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pi + y * dstStride, pi, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pp + y * dstStride, pp, block_width + marginX * 2);
+    }
 
     // Extending top rows
     pe  = dstA - marginX;
     pi  = dstB - marginX;
     pp  = dstC - marginX;
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pe - y * dstStride, pe, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pi - y * dstStride, pi, block_width + marginX * 2);
+    }
+
     for (int y = 1; y <= marginY; y++)
+    {
         memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
+    }
 }
-#endif
+
+#endif /* if INSTRSET > 4 */
 
 template<int N>
 void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)

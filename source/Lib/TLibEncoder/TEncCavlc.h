@@ -101,11 +101,17 @@ public:
     Void codeMVPIdx(TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList);
 
     Void codeSAOSign(UInt) { printf("Not supported\n"); assert(0); }
+
     Void codeSaoMaxUvlc(UInt, UInt) { printf("Not supported\n"); assert(0); }
+
     Void codeSaoMerge(UInt) { printf("Not supported\n"); assert(0); }
+
     Void codeSaoTypeIdx(UInt) { printf("Not supported\n"); assert(0); }
+
     Void codeSaoUflc(UInt, UInt) { printf("Not supported\n"); assert(0); }
+
     Void updateContextTables(SliceType, Int, Bool) {}
+
     Void updateContextTables(SliceType, Int) {}
 
     Void codeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartIdx);

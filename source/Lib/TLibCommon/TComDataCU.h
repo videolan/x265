@@ -229,7 +229,7 @@ public:
 
     Void          copyToPic(UChar uiDepth);
     Void          copyToPic(UChar uiDepth, UInt uiPartIdx, UInt uiPartDepth);
-    
+
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ public:
 
     Void          setDepthSubParts(UInt uiDepth, UInt uiAbsPartIdx);
 
-    Bool          getDecSubCu() { return m_bDecSubCu;}
+    Bool          getDecSubCu() { return m_bDecSubCu; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU data

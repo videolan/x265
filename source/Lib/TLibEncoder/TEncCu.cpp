@@ -239,6 +239,7 @@ Void TEncCu::destroy()
             delete m_ppcPredYuvMode[0][i];
             m_ppcPredYuvMode[j][i] = NULL;
         }
+
         if (m_ppcResiYuvTemp[i])
         {
             m_ppcResiYuvTemp[i]->destroy();
@@ -257,6 +258,7 @@ Void TEncCu::destroy()
             delete m_RecoYuvNxN[0][i];
             m_RecoYuvNxN[j][i] = NULL;
         }
+
         if (m_ppcOrigYuv[i])
         {
             m_ppcOrigYuv[i]->destroy();
@@ -451,7 +453,7 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
         xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
     else
     {
-        if(!m_pcEncCfg->getUseRDO())
+        if (!m_pcEncCfg->getUseRDO())
         {
             TComDataCU* rpcBestCU = NULL;
 
@@ -1597,11 +1599,12 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     //PPAScopeEvent(TEncCU_xCheckRDCostIntra + uiDepth);
     UInt uiDepth = rpcTempCU->getDepth(0);
     UInt uiPreCalcDistC = 0;
+
     rpcTempCU->setSkipFlagSubParts(false, 0, uiDepth);
     rpcTempCU->setPartSizeSubParts(eSize, 0, uiDepth);
     rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, uiDepth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth);
-    
+
     m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC, true);
 
     m_ppcRecoYuvTemp[uiDepth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
@@ -1678,11 +1681,11 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
 
     rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
     rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    if(!m_pcEncCfg->getUseRDO())
+    if (!m_pcEncCfg->getUseRDO())
     {
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SATD = primitives.satd[partEnum]((pixel *)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
-                                            (pixel *)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
+        UInt SATD = primitives.satd[partEnum]((pixel*)m_ppcOrigYuv[uiDepth]->getLumaAddr(), m_ppcOrigYuv[uiDepth]->getStride(),
+                                              (pixel*)m_ppcPredYuvTemp[uiDepth]->getLumaAddr(), m_ppcPredYuvTemp[uiDepth]->getStride());
         x265_emms();
         rpcTempCU->getTotalDistortion() = SATD;
     }

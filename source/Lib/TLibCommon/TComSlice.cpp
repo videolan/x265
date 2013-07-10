@@ -142,7 +142,6 @@ Void TComSlice::setReferenced(Bool b)
         m_pcPic->getPicYuvRec()->clearReferences();
 }
 
-
 Bool TComSlice::getRapPicFlag()
 {
     return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
@@ -404,6 +403,7 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
     {
         rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
     }
+
     assert(cIdx == numPocTotalCurr);
 
     if (m_eSliceType == B_SLICE)
@@ -423,17 +423,18 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
         {
             rpsCurrList1[cIdx] = RefPicSetLtCurr[i];
         }
+
         assert(cIdx == numPocTotalCurr);
     }
 
     ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
 
-    for (Int rIdx = 0; rIdx < m_aiNumRefIdx[0]; rIdx ++)
+    for (Int rIdx = 0; rIdx < m_aiNumRefIdx[0]; rIdx++)
     {
         cIdx = m_RefPicListModification.getRefPicListModificationFlagL0() ? m_RefPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
         assert(cIdx >= 0 && cIdx < numPocTotalCurr);
-        m_apcRefPicList[0][rIdx] = rpsCurrList0[ cIdx ];
-        m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
+        m_apcRefPicList[0][rIdx] = rpsCurrList0[cIdx];
+        m_bIsUsedAsLongTerm[0][rIdx] = (cIdx >= NumPocStCurr0 + NumPocStCurr1);
     }
 
     if (m_eSliceType != B_SLICE)
@@ -443,12 +444,12 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTot
     }
     else
     {
-        for (Int rIdx = 0; rIdx < m_aiNumRefIdx[1]; rIdx ++)
+        for (Int rIdx = 0; rIdx < m_aiNumRefIdx[1]; rIdx++)
         {
             cIdx = m_RefPicListModification.getRefPicListModificationFlagL1() ? m_RefPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
             assert(cIdx >= 0 && cIdx < numPocTotalCurr);
-            m_apcRefPicList[1][rIdx] = rpsCurrList1[ cIdx ];
-            m_bIsUsedAsLongTerm[1][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
+            m_apcRefPicList[1][rIdx] = rpsCurrList1[cIdx];
+            m_bIsUsedAsLongTerm[1][rIdx] = (cIdx >= NumPocStCurr0 + NumPocStCurr1);
         }
     }
 }

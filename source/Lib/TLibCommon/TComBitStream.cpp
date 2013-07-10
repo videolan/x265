@@ -206,6 +206,7 @@ Int TComOutputBitstream::countStartCodeEmulations()
 
     return cnt;
 }
+
 /**
  * insert the contents of the bytealigned (and flushed) bitstream src
  * into this at byte position pos.

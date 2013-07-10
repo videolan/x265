@@ -164,11 +164,17 @@ public:
 
     /* Frame singletons, last the life of the encoder */
     TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
+
     TComLoopFilter*         getLoopFilter()    { return &m_loopFilter; }
+
     TEncSampleAdaptiveOffset* getSAO()         { return &m_sao; }
+
     TEncCavlc*              getCavlcCoder()    { return &m_cavlcCoder; }
+
     TEncBinCABAC*           getBinCABAC()      { return &m_binCoderCABAC; }
+
     TComBitCounter*         getBitCounter()    { return &m_bitCounter; }
+
     TEncSlice*              getSliceEncoder()  { return &m_sliceEncoder; }
 
     void resetEntropy(TComSlice *pcSlice)

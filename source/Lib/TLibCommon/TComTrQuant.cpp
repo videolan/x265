@@ -503,6 +503,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
                 absSum += abs(residual[k * stride + j]);
             }
         }
+
         return absSum;
     }
 
@@ -542,6 +543,7 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
                 residual[k * stride + j] = (Short)(coeff[k * width + j]);
             }
         }
+
         return;
     }
 
@@ -1146,7 +1148,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
                         {
                             Int64 costUp   = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
                             Int64 costDown = rdFactor * (deltaU[blkPos]) + rateIncDown[blkPos] -
-                                             (abs(dstCoeff[blkPos]) == 1 ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
+                                (abs(dstCoeff[blkPos]) == 1 ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
 
                             if (lastCG == 1 && lastNZPosInCG == n && abs(dstCoeff[blkPos]) == 1)
                             {
@@ -1258,11 +1260,11 @@ Int TComTrQuant::calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, U
  * \param textureType texture type (TEXT_LUMA...)
  * \returns ctxInc for current scan position
  */
-Int TComTrQuant::getSigCtxInc(Int  patternSigCtx,
-                              UInt scanIdx,
-                              Int  posX,
-                              Int  posY,
-                              Int  log2BlockSize,
+Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
+                              UInt     scanIdx,
+                              Int      posX,
+                              Int      posY,
+                              Int      log2BlockSize,
                               TextType ttype)
 {
     const Int ctxIndMap[16] =

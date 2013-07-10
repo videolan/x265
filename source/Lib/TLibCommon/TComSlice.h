@@ -1318,7 +1318,7 @@ public:
 
     UInt getLog2ParallelMergeLevelMinus2() const    { return m_log2ParallelMergeLevelMinus2; }
 
-    Void setLog2ParallelMergeLevelMinus2(UInt mrgLevel){ m_log2ParallelMergeLevelMinus2 = mrgLevel; }
+    Void setLog2ParallelMergeLevelMinus2(UInt mrgLevel) { m_log2ParallelMergeLevelMinus2 = mrgLevel; }
 
     Int getNumExtraSliceHeaderBits() const             { return m_numExtraSliceHeaderBits; }
 
@@ -1512,9 +1512,9 @@ public:
 
     TComPic*  getPic()                            { return m_pcPic;                      }
 
-    TComPic*  getRefPic(RefPicList e, Int iRefIdx){ return m_apcRefPicList[e][iRefIdx];  }
+    TComPic*  getRefPic(RefPicList e, Int iRefIdx) { return m_apcRefPicList[e][iRefIdx];  }
 
-    Int       getRefPOC(RefPicList e, Int iRefIdx){ return m_aiRefPOCList[e][iRefIdx];   }
+    Int       getRefPOC(RefPicList e, Int iRefIdx) { return m_aiRefPOCList[e][iRefIdx];   }
 
     Int       getDepth()                          { return m_iDepth;                     }
 

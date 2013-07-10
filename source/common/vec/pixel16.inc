@@ -2054,5 +2054,3 @@ int satd(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 
     return uiSum;
 }
-
-

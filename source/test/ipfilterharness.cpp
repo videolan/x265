@@ -351,21 +351,21 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
     {
         rand_height = (rand() % 32) + 1;
         rand_width = (rand() % 32) + 8;
-        marginX = (rand()%16)+16;
-        marginY = (rand()%16)+16;
+        marginX = (rand() % 16) + 16;
+        marginY = (rand() % 16) + 16;
         rand_srcStride = rand_width;               // Can be randomly generated
-        rand_dstStride = rand_width+2*marginX;
+        rand_dstStride = rand_width + 2 * marginX;
         opt(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
             dstAvec, dstEvec, dstIvec, dstPvec, rand_dstStride,
-            pDstAvec+marginY*rand_dstStride+marginX,
-            pDstBvec+marginY*rand_dstStride+marginX,
-            pDstCvec+marginY*rand_dstStride+marginX, rand_dstStride,
+            pDstAvec + marginY * rand_dstStride + marginX,
+            pDstBvec + marginY * rand_dstStride + marginX,
+            pDstCvec + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
         ref(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
             dstAref, dstEref, dstIref, dstPref, rand_dstStride,
-            pDstAref+marginY*rand_dstStride+marginX,
-            pDstBref+marginY*rand_dstStride+marginX,
-            pDstCref+marginY*rand_dstStride+marginX, rand_dstStride,
+            pDstAref + marginY * rand_dstStride + marginX,
+            pDstBref + marginY * rand_dstStride + marginX,
+            pDstCref + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
 
         if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short)) ||
@@ -520,6 +520,6 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         printf("Filter-H-multiplane");
         REPORT_SPEEDUP(opt.filterHmulti, ref.filterHmulti,
-                       8, pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, IPF_vec_output_p+ 64 * 200 + 64, IPF_C_output_p+ 64 * 200 + 64, IPF_vec_output_p+ 64 * 200 + 64, dstStride, width, height,64,64);
+                       8, pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
     }
 }

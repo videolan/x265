@@ -1720,8 +1720,10 @@ void getResidual4(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     for (int y = 0; y < 4; y++)
     {
-        Vec16uc f; f.fromUint32(*(uint32_t*)fenc);
-        Vec16uc p; p.fromUint32(*(uint32_t*)pred);
+        Vec16uc f;
+        f.fromUint32(*(uint32_t*)fenc);
+        Vec16uc p;
+        p.fromUint32(*(uint32_t*)pred);
         Vec8s r = extend_low(f) - extend_low(p);
         store_partial(const_int(8), resi, r);
 
@@ -1735,8 +1737,10 @@ void getResidual8(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     for (int y = 0; y < 8; y++)
     {
-        Vec16uc f; f.load(fenc);
-        Vec16uc p; p.load(pred);
+        Vec16uc f;
+        f.load(fenc);
+        Vec16uc p;
+        p.load(pred);
         Vec8s r = extend_low(f) - extend_low(p);
         r.store(resi);
 
@@ -1750,6 +1754,7 @@ void getResidual16(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
+
     for (int y = 0; y < 16; y++)
     {
         f.load_a(fenc);
@@ -1769,6 +1774,7 @@ void getResidual32(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
+
     for (int y = 0; y < 32; y++)
     {
         f.load_a(fenc);
@@ -1795,6 +1801,7 @@ void getResidual64(pixel *fenc, pixel *pred, short *resi, int stride)
 {
     Vec16uc f, p;
     Vec8s r;
+
     for (int y = 0; y < 64; y++)
     {
         f.load_a(fenc);

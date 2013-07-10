@@ -105,10 +105,10 @@ public:
         else
             fprintf(stderr, "x265 [info]: frame %c:%-6d ", cDelim - 32, m_uiNumPic);
         fprintf(stderr, "kb/s: %-8.2lf PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf\n",
-            getBits() * dScale,
-            getPsnrY() / (Double)getNumPic(),
-            getPsnrU() / (Double)getNumPic(),
-            getPsnrV() / (Double)getNumPic());
+                getBits() * dScale,
+                getPsnrY() / (Double)getNumPic(),
+                getPsnrU() / (Double)getNumPic(),
+                getPsnrV() / (Double)getNumPic());
     }
 
     Void    printSummaryOut()

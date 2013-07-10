@@ -229,6 +229,7 @@ void dst4(short *src, int *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[2 * 4], T60);
     _mm_store_si128((__m128i*)&dst[3 * 4], T61);
 }
+
 #endif // INSTRSET >=4
 
 ALIGN_VAR_32(static const short, tab_dct_4[][8]) =

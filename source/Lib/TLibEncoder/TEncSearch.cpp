@@ -5123,12 +5123,12 @@ Void TEncSearch::xExtDIFUpSamplingH(TComPattern* pattern, Bool biPred)
 
     intPtr = filteredBlockTmp[0].getLumaAddr();
     primitives.ipfilter_p2s(g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr,
-                                   intStride, width + 1, height + filterSize);
+                            intStride, width + 1, height + filterSize);
 
     intPtr = filteredBlockTmp[0].getLumaAddr() + (halfFilterSize - 1) * intStride + 1;
     dstPtr = m_filteredBlock[2][0].getLumaAddr();
     primitives.ipfilter_sp[FILTER_V_S_P_8](g_bitDepthY, intPtr, intStride, (pixel*)dstPtr,
-                                            dstStride, width, height + 1, m_lumaFilter[2]);
+                                           dstStride, width, height + 1, m_lumaFilter[2]);
 
     intPtr = filteredBlockTmp[2].getLumaAddr();
     primitives.ipfilter_ps[FILTER_H_P_S_8](g_bitDepthY, (pixel*)srcPtr, srcStride, intPtr, intStride, width + 1, height + filterSize,  m_lumaFilter[2]);

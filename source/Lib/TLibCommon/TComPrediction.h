@@ -70,7 +70,6 @@ protected:
     Int       m_iPredBufHeight;
 
     //reference sample for IntraPrediction
-   
 
     TComYuv   m_acYuvPred[2];
     TShortYUV   m_acShortPred[2];
@@ -98,7 +97,8 @@ protected:
     Bool xCheckIdenticalMotion(TComDataCU* pcCU, UInt PartAddr);
 
 public:
-     Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
+
+    Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
 
     static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
     static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps

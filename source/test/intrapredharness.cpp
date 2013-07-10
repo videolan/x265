@@ -138,7 +138,7 @@ bool IntraPredHarness::check_angular_primitive(x265::intra_ang_t ref, x265::intr
     {
         for (int i = 0; i <= 100; i++)
         {
-            bFilter = (width <= 16) && (rand()%2);
+            bFilter = (width <= 16) && (rand() % 2);
             for (int p = 2; p <= 34; p++)
             {
                 pmode = p;
@@ -158,7 +158,7 @@ bool IntraPredHarness::check_angular_primitive(x265::intra_ang_t ref, x265::intr
                 {
                     if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                     {
-                        printf("\nFailed for width %d mode %d bfilter %d row %d \t",width, p, bFilter, k);
+                        printf("\nFailed for width %d mode %d bfilter %d row %d \t", width, p, bFilter, k);
                         return false;
                     }
                 }
@@ -179,36 +179,36 @@ bool IntraPredHarness::check_allangs_primitive(const x265::intra_allangs_t ref[]
 
     for (int size = 2; size <= 5; size++)
     {
-        if (opt[size-2] == NULL) continue;
+        if (opt[size - 2] == NULL) continue;
 
-        const int width = (1<<size);
+        const int width = (1 << size);
 
         for (int i = 0; i <= 100; i++)
         {
-            isLuma = (width <= 16) && (rand()%2);
+            isLuma = (width <= 16) && (rand() % 2);
 
             pixel * refAbove0 = pixel_buff + j;
             pixel * refLeft0 = refAbove0 + 3 * width;
 
             pixel * refAbove1 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0]
             pixel * refLeft1 = refAbove1 + 3 * width + FENC_STRIDE;
-            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];;
+            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];
 
 #if _DEBUG
             memset(pixel_out_33_vec, 0xCD, out_size_33);
             memset(pixel_out_33_c, 0xCD, out_size_33);
 #endif
 
-            ref[size-2](pixel_out_33_c,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-            opt[size-2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-            for (int p = 2-2; p <= 34-2; p++)
+            ref[size - 2](pixel_out_33_c,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            opt[size - 2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+            for (int p = 2 - 2; p <= 34 - 2; p++)
             {
                 for (int k = 0; k < width; k++)
                 {
-                    if (memcmp(pixel_out_33_c + p * (width *width) + k * width, pixel_out_33_vec + p * (width *width) + k * width, width))
+                    if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width))
                     {
-                        printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p+2, k, isLuma);
-                        opt[size-2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
+                        printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p + 2, k, isLuma);
+                        opt[size - 2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
                         return false;
                     }
                 }
@@ -303,7 +303,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     }
     for (int size = 2; size <= 6; size++)
     {
-        if (opt.intra_pred_allangs[size-2])
+        if (opt.intra_pred_allangs[size - 2])
         {
             for (int ii = 4; ii <= 4; ii <<= 1)
             {
@@ -312,8 +312,8 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 pixel * refAbove = pixel_buff + srcStride;
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
-                printf("intra_allangs%dx%d", 1<<size, 1<<size);
-                REPORT_SPEEDUP(opt.intra_pred_allangs[size-2], ref.intra_pred_allangs[size-2],
+                printf("intra_allangs%dx%d", 1 << size, 1 << size);
+                REPORT_SPEEDUP(opt.intra_pred_allangs[size - 2], ref.intra_pred_allangs[size - 2],
                                pixel_out_33_vec, refAbove, refLeft, refAbove, refLeft, bFilter);
             }
         }

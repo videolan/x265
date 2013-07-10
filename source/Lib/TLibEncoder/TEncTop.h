@@ -97,8 +97,11 @@ public:
     Void init();
 
     TComScalingList*        getScalingList()   { return &m_scalingList; }
+
     TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
+
     x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
+
     void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     Void xInitSPS(TComSPS *pcSPS);
@@ -112,7 +115,6 @@ public:
 protected:
 
     int flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
-
 };
 
 //! \}

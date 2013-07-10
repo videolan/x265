@@ -61,6 +61,7 @@ Void initROM()
             g_convertToBit[i] = c;
             c++;
         }
+
         g_convertToBit[i] = c;
 
         c = 2;
@@ -86,6 +87,7 @@ Void destroyROM()
             delete[] g_sigLastScan[1][i];
             delete[] g_sigLastScan[2][i];
         }
+
         g_sigLastScan[0][0] = NULL;
     }
 }

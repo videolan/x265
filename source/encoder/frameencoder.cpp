@@ -72,6 +72,7 @@ void CTURow::create(TEncTop* top)
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
 {
     TEncBinCABAC* pcRDSbacCoder = (TEncBinCABAC*)m_rdSbacCoders[0][CI_CURR_BEST]->getEncBinIf();
+
     pcRDSbacCoder->setBinCountingEnableFlag(false);
     pcRDSbacCoder->setBinsCoded(0);
 
@@ -99,7 +100,7 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
     m_cuCoder.encodeCU(cu);  // Count bits
 
     pcRDSbacCoder->setBinCountingEnableFlag(false);
-    
+
     if (bSaveSBac)
     {
         // Save CABAC state for next row
@@ -167,7 +168,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_enableWpp = top->getWaveFrontsynchro() ? true : false;
 
     m_sliceEncoder.init(top);
-    m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar) g_maxCUDepth);
+    m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
     if (top->getUseSAO())
     {
         m_sao.setSaoLcuBoundary(top->getSaoLcuBoundary());
@@ -209,7 +210,9 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *slice)
     if (!m_pool || !m_enableWpp)
     {
         for (int i = 0; i < this->m_numRows; i++)
+        {
             processRow(i);
+        }
     }
     else
     {

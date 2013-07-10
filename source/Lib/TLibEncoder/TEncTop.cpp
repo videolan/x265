@@ -86,7 +86,10 @@ Void TEncTop::create()
     // create processing unit classes
     m_GOPEncoders = new TEncGOP[m_gopThreads];
     for (int i = 0; i < m_gopThreads; i++)
+    {
         m_GOPEncoders[i].create();
+    }
+
     m_curGOPEncoder = m_GOPEncoders;
 
     if (m_RCEnableRateControl)
@@ -102,7 +105,10 @@ Void TEncTop::destroy()
     if (m_GOPEncoders)
     {
         for (int i = 0; i < m_gopThreads; i++)
+        {
             m_GOPEncoders[i].destroy();
+        }
+
         delete [] m_GOPEncoders;
     }
     m_cRateCtrl.destroy();
@@ -117,7 +123,9 @@ Void TEncTop::init()
 
     // initialize processing unit classes
     for (int i = 0; i < m_gopThreads; i++)
+    {
         m_GOPEncoders[i].init(this);
+    }
 
     m_gcAnalyzeAll.setFrmRate(getFrameRate());
     m_gcAnalyzeI.setFrmRate(getFrameRate());
@@ -141,6 +149,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     Int ret = 0;
 
     intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
+
     if (m_busyGOPs & (1 << cur))
     {
         /* block for this GOP coder to complete before giving it new pictures */
@@ -215,6 +224,7 @@ int TEncTop::flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& acc
      * and return their outputs */
 
     intptr_t cur = m_curGOPEncoder - m_GOPEncoders;
+
     while (m_busyGOPs)
     {
         if (m_busyGOPs & (1 << cur))

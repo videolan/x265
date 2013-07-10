@@ -216,7 +216,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& pcCU, PartSize eSize)
     pcCU->setLumaIntraDirSubParts(uiOrgMode, uiPartOffset, uiDepth + uiInitTrDepth);
 
     // set context models
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);    
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
 }
 
 /** check RD costs for a CU block encoded with merge
@@ -314,7 +314,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                         m_ppcRecoYuvBest[uhDepth] = m_ppcRecoYuvTemp[uhDepth];
                         m_ppcRecoYuvTemp[uhDepth] = pcYuv;
                     }
-                    
+
                     rpcTempCU->initEstData(uhDepth, orgQP);
 
                     if (m_pcEncCfg->getUseFastDecisionForMerge() && !bestIsSkip)
@@ -438,8 +438,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
         /*Compute  Merge Cost  */
         Bool earlyDetectionSkip = false;
         xComputeCostMerge2Nx2N(m_MergeBestCU[uiDepth], m_MergeCU[uiDepth], &earlyDetectionSkip);
-        
-        if(!earlyDetectionSkip)
+
+        if (!earlyDetectionSkip)
         {
             /*Compute 2Nx2N mode costs*/
             xComputeCostInter(m_InterCU_2Nx2N[uiDepth], SIZE_2Nx2N, 0);
@@ -465,7 +465,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             YuvTemp = m_ppcPredYuvMode[0][uiDepth];
             m_ppcPredYuvMode[0][uiDepth] = m_ppcPredYuvBest[uiDepth];
             m_ppcPredYuvBest[uiDepth] = YuvTemp;
-        
+
             if (m_InterCU_Nx2N[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
             {
                 rpcBestCU = m_InterCU_Nx2N[uiDepth];
@@ -484,8 +484,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
 
             m_pcPredSearch->encodeResAndCalcRdInterCU(rpcBestCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvBest[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth], false);
-        
-            if(m_MergeBestCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
+
+            if (m_MergeBestCU[uiDepth]->getTotalCost() < rpcBestCU->getTotalCost())
             {
                 rpcBestCU = m_MergeBestCU[uiDepth];
                 YuvTemp = m_ppcPredYuvMode[3][uiDepth];
@@ -525,7 +525,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             m_ppcResiYuvBest[uiDepth]->clear();
             m_ppcPredYuvBest[uiDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiDepth], 0);
         }
-
 
         /* Disable recursive analysis for whole CUs temporarily*/
         if ((rpcBestCU != 0) && (rpcBestCU->isSkipped(0)))

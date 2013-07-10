@@ -132,7 +132,7 @@ protected:
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
-    Bool      m_useRectInter;    
+    Bool      m_useRectInter;
     //======= Transform =============
     UInt      m_uiQuadtreeTULog2MaxSize;
     UInt      m_uiQuadtreeTULog2MinSize;
@@ -353,7 +353,7 @@ public:
     Void      setUseAMP(Bool b)          { m_useAMP = b; }
 
     //====== Quality control ========
-    Void      setUseRDO(Bool b)         { m_useRDO = b;}
+    Void      setUseRDO(Bool b)         { m_useRDO = b; }
 
     Bool      getUseRDO() const         { return m_useRDO; }
 

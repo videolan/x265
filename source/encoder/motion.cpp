@@ -62,7 +62,7 @@ MotionEstimate::MotionEstimate()
         init_scales();
 
     // fenc must be 16 byte aligned
-    fenc = (pixel *)((char*)fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15));
+    fenc = (pixel*)((char*)fenc_buf + ((16 - (size_t)(&fenc_buf[0])) & 15));
 }
 
 void MotionEstimate::setSourcePU(int offset, int width, int height)
@@ -244,13 +244,13 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
     }
 
 int MotionEstimate::motionEstimate(MotionReference *ref,
-                                   const MV &mvmin,
-                                   const MV &mvmax,
-                                   const MV &qmvp,
-                                   int       numCandidates,
-                                   const MV *mvc,
-                                   int       merange,
-                                   MV &      outQMv)
+                                   const MV &       mvmin,
+                                   const MV &       mvmax,
+                                   const MV &       qmvp,
+                                   int              numCandidates,
+                                   const MV *       mvc,
+                                   int              merange,
+                                   MV &             outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
     size_t stride = ref->m_lumaStride;
@@ -285,7 +285,7 @@ int MotionEstimate::motionEstimate(MotionReference *ref,
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
     {
-        int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(MV(0,0));
+        int cost = sad(fenc, FENC_STRIDE, fref, stride) + mvcost(MV(0, 0));
         if (cost < bcost)
         {
             bcost = cost;
@@ -751,14 +751,14 @@ me_hex2:
 }
 
 void MotionEstimate::StarPatternSearch(MotionReference *ref,
-                                       const MV &mvmin,
-                                       const MV &mvmax,
-                                       MV &bmv,
-                                       int &bcost,
-                                       int &bPointNr,
-                                       int &bDistance,
-                                       int earlyExitIters,
-                                       int merange)
+                                       const MV &       mvmin,
+                                       const MV &       mvmax,
+                                       MV &             bmv,
+                                       int &            bcost,
+                                       int &            bPointNr,
+                                       int &            bDistance,
+                                       int              earlyExitIters,
+                                       int              merange)
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->m_lumaPlane[0][0] + blockOffset;

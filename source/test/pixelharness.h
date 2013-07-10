@@ -47,7 +47,6 @@ protected:
     bool check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt);
     bool check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt);
 
-
 public:
 
     PixelHarness();

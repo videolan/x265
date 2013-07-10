@@ -72,7 +72,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
         level = "3.1";
     }
     if (samplesPerSec > 33177600 || lumaSamples > 983040 || bitrate > 10000)
-    { 
+    {
         m_level = Level::LEVEL4;
         level = "4";
     }
@@ -187,7 +187,7 @@ void Encoder::configure(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
     setWaveFrontSynchro(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
-  
+
     m_iGOPSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);
@@ -457,7 +457,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         {
             param->keyframeInterval += m_iGOPSize - remain;
             x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                m_iGOPSize, param->keyframeInterval);
+                     m_iGOPSize, param->keyframeInterval);
         }
         if (param->bframes && param->keyframeInterval < 16)
         {
@@ -875,7 +875,8 @@ int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_
         *pp_nal = &encoder->m_nals[0];
         if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
     }
-    else if (pi_nal) *pi_nal = 0;
+    else if (pi_nal)
+        *pi_nal = 0;
     return iNumEncoded;
 }
 
