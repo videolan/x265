@@ -42,8 +42,6 @@ OPT("no-amp",          param->bEnableAMP,                   no_argument, 0, "Dis
 OPT("rdo",             param->bEnableRDO,                   no_argument, 0, "Enable rate distortion-based mode decision")
 OPT("no-rdo",          param->bEnableRDO,                   no_argument, 0, "Enable mode decision without rate distortion optimization")
 OPT("max-merge",       param->maxNumMergeCand,        required_argument, 0, "Maximum number of merge candidates (default: 5)")
-OPT("fdm",             param->bEnableFastMergeDecision,     no_argument, 0, "Enable fast decision for Merge RD Cost")
-OPT("no-fdm",          param->bEnableFastMergeDecision,     no_argument, 0, "Disable fast decision for Merge RD Cost")
 OPT("early-skip",      param->bEnableEarlySkip,             no_argument, 0, "Enable early SKIP detection")
 OPT("no-early-skip",   param->bEnableEarlySkip,             no_argument, 0, "Disable early SKIP detection")
 OPT("merge-level",     param->log2ParallelMergeLevel, required_argument, 0, "Parallel merge estimation region")

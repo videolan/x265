@@ -227,7 +227,6 @@ void Encoder::configure(x265_param_t *param)
     setQuadtreeTULog2MinSize(tuQTMinLog2Size);
     setQuadtreeTUMaxDepthInter(param->tuQTMaxInterDepth);
     setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
-    setUseFastDecisionForMerge(param->bEnableFastMergeDecision);
     setUseCbfFastMode(param->bEnableCbfFastMode);
     setUseEarlySkipDetection(param->bEnableEarlySkip);
     setUseTransformSkip(param->bEnableTransformSkip);

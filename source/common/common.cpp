@@ -100,7 +100,6 @@ void x265_param_default(x265_param_t *param)
     param->maxNumMergeCand = 5u;
     param->TMVPModeId = 1;
     param->bEnableSignHiding = 1;
-    param->bEnableFastMergeDecision = 1;
     param->bEnableStrongIntraSmoothing = 1;
     param->bEnableRDOQ = 1;
     param->bEnableRDOQTS = 1;
@@ -313,7 +312,6 @@ void x265_print_params(x265_param_t *param)
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
-    TOOLOPT(param->bEnableFastMergeDecision, "fdm");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     if (param->bEnableRDO)

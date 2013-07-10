@@ -198,7 +198,6 @@ typedef struct x265_param_t
 
     int       bEnableAMP;                      ///< enable asymmetrical motion predictions
     int       bEnableRectInter;                ///< enable rectangular inter modes 2NxN, Nx2N
-    int       bEnableFastMergeDecision;        ///< enable fast merge decision from rd-cost
     int       bEnableCbfFastMode;              ///< enable use of Cbf flags for fast mode decision
     int       bEnableEarlySkip;                ///< enable early skip (merge) detection
     int       bEnableRDO;                      ///< enable full rate distortion optimization
