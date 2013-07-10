@@ -1339,12 +1339,12 @@ __inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
                                           UInt    c2Idx,
                                           Int     qbits,
                                           Double  scaleFactor,
-                                          Bool    bLast) const
+                                          Bool    last) const
 {
     Double curCostSig   = 0;
     UInt   bestAbsLevel = 0;
 
-    if (!bLast && maxAbsLevel < 3)
+    if (!last && maxAbsLevel < 3)
     {
         codedCostSig = xGetRateSigCoef(0, ctxNumSig);
         codedCost    = codedCost0 + codedCostSig;
@@ -1358,7 +1358,7 @@ __inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
         codedCost = MAX_DOUBLE;
     }
 
-    if (!bLast)
+    if (!last)
     {
         curCostSig = xGetRateSigCoef(1, ctxNumSig);
     }
