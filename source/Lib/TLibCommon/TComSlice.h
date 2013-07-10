@@ -1023,9 +1023,9 @@ public:
     Void setUseLossless(Bool b) { m_useLossless  = b; }
 
     // AMP accuracy
-    Int       getAMPAcc(UInt uiDepth) const      { return m_iAMPAcc[uiDepth]; }
+    Int       getAMPAcc(UInt depth) const      { return m_iAMPAcc[depth]; }
 
-    Void      setAMPAcc(UInt uiDepth, Int iAccu) { assert(uiDepth < g_maxCUDepth);  m_iAMPAcc[uiDepth] = iAccu; }
+    Void      setAMPAcc(UInt depth, Int iAccu) { assert(depth < g_maxCUDepth);  m_iAMPAcc[depth] = iAccu; }
 
     // Bit-depth
     Int      getBitDepthY() const { return m_bitDepthY; }

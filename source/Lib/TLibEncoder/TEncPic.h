@@ -82,7 +82,7 @@ public:
     TEncPicQPAdaptationLayer();
     virtual ~TEncPicQPAdaptationLayer();
 
-    Void  create(Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight);
+    Void  create(Int width, Int height, UInt uiAQPartWidth, UInt uiAQPartHeight);
     Void  destroy();
 
     UInt                   getAQPartWidth()        { return m_uiAQPartWidth;       }
@@ -115,14 +115,14 @@ public:
     TEncPic();
     virtual ~TEncPic();
 
-    Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
+    Void          create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
                          Window &conformanceWindow, Window &defaultDisplayWindow);
 
     Void          preanalyze();
 
     virtual Void  destroy();
 
-    TEncPicQPAdaptationLayer* getAQLayer(UInt uiDepth)  { return &m_acAQLayer[uiDepth]; }
+    TEncPicQPAdaptationLayer* getAQLayer(UInt depth)  { return &m_acAQLayer[depth]; }
 
     UInt                      getMaxAQDepth()           { return m_uiMaxAQDepth;        }
 };

@@ -70,18 +70,18 @@ TEncPicQPAdaptationLayer::~TEncPicQPAdaptationLayer()
 }
 
 /** Initialize member variables
- * \param iWidth Picture width
- * \param iHeight Picture height
+ * \param width Picture width
+ * \param height Picture height
  * \param uiAQPartWidth Width of unit block for analyzing local image characteristics
  * \param uiAQPartHeight Height of unit block for analyzing local image characteristics
  * \return Void
  */
-Void TEncPicQPAdaptationLayer::create(Int iWidth, Int iHeight, UInt uiAQPartWidth, UInt uiAQPartHeight)
+Void TEncPicQPAdaptationLayer::create(Int width, Int height, UInt uiAQPartWidth, UInt uiAQPartHeight)
 {
     m_uiAQPartWidth = uiAQPartWidth;
     m_uiAQPartHeight = uiAQPartHeight;
-    m_uiNumAQPartInWidth = (iWidth + m_uiAQPartWidth - 1) / m_uiAQPartWidth;
-    m_uiNumAQPartInHeight = (iHeight + m_uiAQPartHeight - 1) / m_uiAQPartHeight;
+    m_uiNumAQPartInWidth = (width + m_uiAQPartWidth - 1) / m_uiAQPartWidth;
+    m_uiNumAQPartInHeight = (height + m_uiAQPartHeight - 1) / m_uiAQPartHeight;
     m_acTEncAQU = new TEncQPAdaptationUnit[m_uiNumAQPartInWidth * m_uiNumAQPartInHeight];
 }
 
@@ -112,8 +112,8 @@ TEncPic::~TEncPic()
 }
 
 /** Initialize member variables
- * \param iWidth Picture width
- * \param iHeight Picture height
+ * \param width Picture width
+ * \param height Picture height
  * \param uiMaxWidth Maximum CU width
  * \param uiMaxHeight Maximum CU height
  * \param uiMaxDepth Maximum CU depth
@@ -121,10 +121,10 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  * \return Void
  */
-Void TEncPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
+Void TEncPic::create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
                      Window &conformanceWindow, Window &defaultDisplayWindow)
 {
-    TComPic::create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, conformanceWindow, defaultDisplayWindow);
+    TComPic::create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth, conformanceWindow, defaultDisplayWindow);
 
     m_uiMaxAQDepth = uiMaxAQDepth;
     if (uiMaxAQDepth > 0)
@@ -132,7 +132,7 @@ Void TEncPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight,
         m_acAQLayer = new TEncPicQPAdaptationLayer[m_uiMaxAQDepth];
         for (UInt d = 0; d < m_uiMaxAQDepth; d++)
         {
-            m_acAQLayer[d].create(iWidth, iHeight, uiMaxWidth >> d, uiMaxHeight >> d);
+            m_acAQLayer[d].create(width, height, uiMaxWidth >> d, uiMaxHeight >> d);
         }
     }
 }
@@ -144,8 +144,8 @@ Void TEncPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight,
 Void TEncPic::preanalyze()
 {
     TComPicYuv* pcPicYuv = getPicYuvOrg();
-    const Int iWidth = pcPicYuv->getWidth();
-    const Int iHeight = pcPicYuv->getHeight();
+    const Int width = pcPicYuv->getWidth();
+    const Int height = pcPicYuv->getHeight();
     const Int iStride = pcPicYuv->getStride();
 
     for (UInt d = 0; d < m_uiMaxAQDepth; d++)
@@ -157,12 +157,12 @@ Void TEncPic::preanalyze()
         TEncQPAdaptationUnit* pcAQU = pcAQLayer->getQPAdaptationUnit();
 
         Double dSumAct = 0.0;
-        for (UInt y = 0; y < iHeight; y += uiAQPartHeight)
+        for (UInt y = 0; y < height; y += uiAQPartHeight)
         {
-            const UInt uiCurrAQPartHeight = min(uiAQPartHeight, iHeight - y);
-            for (UInt x = 0; x < iWidth; x += uiAQPartWidth, pcAQU++)
+            const UInt uiCurrAQPartHeight = min(uiAQPartHeight, height - y);
+            for (UInt x = 0; x < width; x += uiAQPartWidth, pcAQU++)
             {
-                const UInt uiCurrAQPartWidth = min(uiAQPartWidth, iWidth - x);
+                const UInt uiCurrAQPartWidth = min(uiAQPartWidth, width - x);
                 const Pel* pBlkY = &pLineY[x];
                 UInt64 uiSum[4] = { 0, 0, 0, 0 };
                 UInt64 uiSumSq[4] = { 0, 0, 0, 0 };

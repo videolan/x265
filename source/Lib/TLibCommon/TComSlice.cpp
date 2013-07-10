@@ -600,42 +600,42 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
     }
 }
 
-Void TComSlice::copySliceInfo(TComSlice *pSrc)
+Void TComSlice::copySliceInfo(TComSlice *src)
 {
-    assert(pSrc != NULL);
+    assert(src != NULL);
 
     Int i, j, k;
 
-    m_iPOC                 = pSrc->m_iPOC;
-    m_eNalUnitType         = pSrc->m_eNalUnitType;
-    m_eSliceType           = pSrc->m_eSliceType;
-    m_iSliceQp             = pSrc->m_iSliceQp;
-    m_iSliceQpBase         = pSrc->m_iSliceQpBase;
-    m_deblockingFilterDisable   = pSrc->m_deblockingFilterDisable;
-    m_deblockingFilterOverrideFlag = pSrc->m_deblockingFilterOverrideFlag;
-    m_deblockingFilterBetaOffsetDiv2 = pSrc->m_deblockingFilterBetaOffsetDiv2;
-    m_deblockingFilterTcOffsetDiv2 = pSrc->m_deblockingFilterTcOffsetDiv2;
+    m_iPOC                 = src->m_iPOC;
+    m_eNalUnitType         = src->m_eNalUnitType;
+    m_eSliceType           = src->m_eSliceType;
+    m_iSliceQp             = src->m_iSliceQp;
+    m_iSliceQpBase         = src->m_iSliceQpBase;
+    m_deblockingFilterDisable   = src->m_deblockingFilterDisable;
+    m_deblockingFilterOverrideFlag = src->m_deblockingFilterOverrideFlag;
+    m_deblockingFilterBetaOffsetDiv2 = src->m_deblockingFilterBetaOffsetDiv2;
+    m_deblockingFilterTcOffsetDiv2 = src->m_deblockingFilterTcOffsetDiv2;
 
     for (i = 0; i < 2; i++)
     {
-        m_aiNumRefIdx[i]     = pSrc->m_aiNumRefIdx[i];
+        m_aiNumRefIdx[i]     = src->m_aiNumRefIdx[i];
     }
 
     for (i = 0; i < MAX_NUM_REF; i++)
     {
-        m_list1IdxToList0Idx[i] = pSrc->m_list1IdxToList0Idx[i];
+        m_list1IdxToList0Idx[i] = src->m_list1IdxToList0Idx[i];
     }
 
-    m_bCheckLDC             = pSrc->m_bCheckLDC;
-    m_iSliceQpDelta        = pSrc->m_iSliceQpDelta;
-    m_iSliceQpDeltaCb      = pSrc->m_iSliceQpDeltaCb;
-    m_iSliceQpDeltaCr      = pSrc->m_iSliceQpDeltaCr;
+    m_bCheckLDC             = src->m_bCheckLDC;
+    m_iSliceQpDelta        = src->m_iSliceQpDelta;
+    m_iSliceQpDeltaCb      = src->m_iSliceQpDeltaCb;
+    m_iSliceQpDeltaCr      = src->m_iSliceQpDeltaCr;
     for (i = 0; i < 2; i++)
     {
         for (j = 0; j < MAX_NUM_REF; j++)
         {
-            m_apcRefPicList[i][j]  = pSrc->m_apcRefPicList[i][j];
-            m_aiRefPOCList[i][j]   = pSrc->m_aiRefPOCList[i][j];
+            m_apcRefPicList[i][j]  = src->m_apcRefPicList[i][j];
+            m_aiRefPOCList[i][j]   = src->m_aiRefPOCList[i][j];
         }
     }
 
@@ -643,59 +643,59 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     {
         for (j = 0; j < MAX_NUM_REF + 1; j++)
         {
-            m_bIsUsedAsLongTerm[i][j] = pSrc->m_bIsUsedAsLongTerm[i][j];
+            m_bIsUsedAsLongTerm[i][j] = src->m_bIsUsedAsLongTerm[i][j];
         }
     }
 
-    m_iDepth               = pSrc->m_iDepth;
+    m_iDepth               = src->m_iDepth;
 
     // referenced slice
-    m_bReferenced          = pSrc->m_bReferenced;
+    m_bReferenced          = src->m_bReferenced;
 
     // access channel
-    m_pcSPS                = pSrc->m_pcSPS;
-    m_pcPPS                = pSrc->m_pcPPS;
-    m_pcRPS                = pSrc->m_pcRPS;
-    m_iLastIDR             = pSrc->m_iLastIDR;
+    m_pcSPS                = src->m_pcSPS;
+    m_pcPPS                = src->m_pcPPS;
+    m_pcRPS                = src->m_pcRPS;
+    m_iLastIDR             = src->m_iLastIDR;
 
-    m_pcPic                = pSrc->m_pcPic;
+    m_pcPic                = src->m_pcPic;
 
-    m_colFromL0Flag        = pSrc->m_colFromL0Flag;
-    m_colRefIdx            = pSrc->m_colRefIdx;
-    m_dLambdaLuma          = pSrc->m_dLambdaLuma;
-    m_dLambdaChroma        = pSrc->m_dLambdaChroma;
+    m_colFromL0Flag        = src->m_colFromL0Flag;
+    m_colRefIdx            = src->m_colRefIdx;
+    m_dLambdaLuma          = src->m_dLambdaLuma;
+    m_dLambdaChroma        = src->m_dLambdaChroma;
     for (i = 0; i < 2; i++)
     {
         for (j = 0; j < MAX_NUM_REF; j++)
         {
             for (k = 0; k < MAX_NUM_REF; k++)
             {
-                m_abEqualRef[i][j][k] = pSrc->m_abEqualRef[i][j][k];
+                m_abEqualRef[i][j][k] = src->m_abEqualRef[i][j][k];
             }
         }
     }
 
-    m_uiTLayer                      = pSrc->m_uiTLayer;
-    m_bTLayerSwitchingFlag          = pSrc->m_bTLayerSwitchingFlag;
+    m_uiTLayer                      = src->m_uiTLayer;
+    m_bTLayerSwitchingFlag          = src->m_bTLayerSwitchingFlag;
 
-    m_sliceCurEndCUAddr            = pSrc->m_sliceCurEndCUAddr;
-    m_nextSlice                    = pSrc->m_nextSlice;
+    m_sliceCurEndCUAddr            = src->m_sliceCurEndCUAddr;
+    m_nextSlice                    = src->m_nextSlice;
     for (Int e = 0; e < 2; e++)
     {
         for (Int n = 0; n < MAX_NUM_REF; n++)
         {
-            memcpy(m_weightPredTable[e][n], pSrc->m_weightPredTable[e][n], sizeof(wpScalingParam) * 3);
+            memcpy(m_weightPredTable[e][n], src->m_weightPredTable[e][n], sizeof(wpScalingParam) * 3);
         }
     }
 
-    m_saoEnabledFlag = pSrc->m_saoEnabledFlag;
-    m_saoEnabledFlagChroma = pSrc->m_saoEnabledFlagChroma;
-    m_cabacInitFlag                = pSrc->m_cabacInitFlag;
-    m_numEntryPointOffsets  = pSrc->m_numEntryPointOffsets;
+    m_saoEnabledFlag = src->m_saoEnabledFlag;
+    m_saoEnabledFlagChroma = src->m_saoEnabledFlagChroma;
+    m_cabacInitFlag                = src->m_cabacInitFlag;
+    m_numEntryPointOffsets  = src->m_numEntryPointOffsets;
 
-    m_bLMvdL1Zero = pSrc->m_bLMvdL1Zero;
-    m_enableTMVPFlag                = pSrc->m_enableTMVPFlag;
-    m_maxNumMergeCand               = pSrc->m_maxNumMergeCand;
+    m_bLMvdL1Zero = src->m_bLMvdL1Zero;
+    m_enableTMVPFlag                = src->m_enableTMVPFlag;
+    m_maxNumMergeCand               = src->m_maxNumMergeCand;
 }
 
 Int TComSlice::m_prevPOC = 0;

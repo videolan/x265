@@ -1011,47 +1011,47 @@ Void TEncCavlc::codeTerminatingBit(UInt uilsLast)
 Void TEncCavlc::codeSliceFinish()
 {}
 
-Void TEncCavlc::codeMVPIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth)
+Void TEncCavlc::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePredMode(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codePredMode(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeMergeFlag(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeMergeIndex(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterModeFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode)
+Void TEncCavlc::codeInterModeFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt uiEncMode)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeSkipFlag(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth)
+Void TEncCavlc::codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth)
 {
     assert(0);
 }
@@ -1061,17 +1061,17 @@ Void TEncCavlc::codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx)
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth)
+Void TEncCavlc::codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeQtRootCbf(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth)
+Void TEncCavlc::codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth)
 {
     assert(0);
 }
@@ -1081,49 +1081,49 @@ Void TEncCavlc::codeQtRootCbfZero(TComDataCU* cu)
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSkipFlags(TComDataCU* cu, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType)
+Void TEncCavlc::codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType)
 {
     assert(0);
 }
 
 /** Code I_PCM information.
  * \param cu pointer to CU
- * \param uiAbsPartIdx CU index
+ * \param absPartIdx CU index
  * \returns Void
  */
-Void TEncCavlc::codeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeIPCMInfo(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirLumaAng(TComDataCU* cu, UInt uiAbsPartIdx, Bool isMultiple)
+Void TEncCavlc::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirChroma(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterDir(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeInterDir(TComDataCU* cu, UInt absPartIdx)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeRefFrmIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMvd(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx)
+Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
 {
-    Int iDQp  = cu->getQP(uiAbsPartIdx) - cu->getRefQP(uiAbsPartIdx);
+    Int iDQp  = cu->getQP(absPartIdx) - cu->getRefQP(absPartIdx);
 
     Int qpBdOffsetY =  cu->getSlice()->getSPS()->getQpBDOffsetY();
 
@@ -1132,7 +1132,7 @@ Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx)
     xWriteSvlc(iDQp);
 }
 
-Void TEncCavlc::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType)
+Void TEncCavlc::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType)
 {
     assert(0);
 }
@@ -1156,14 +1156,14 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* pcSlice)
     Bool            bChroma     = true; // color always present in HEVC ?
     Int             iNbRef       = (pcSlice->getSliceType() == B_SLICE) ? (2) : (1);
     Bool            bDenomCoded  = false;
-    UInt            uiMode = 0;
+    UInt            mode = 0;
     UInt            uiTotalSignalledWeightFlags = 0;
 
     if ((pcSlice->getSliceType() == P_SLICE && pcSlice->getPPS()->getUseWP()) || (pcSlice->getSliceType() == B_SLICE && pcSlice->getPPS()->getWPBiPred()))
     {
-        uiMode = 1; // explicit
+        mode = 1; // explicit
     }
-    if (uiMode == 1)
+    if (mode == 1)
     {
         for (Int iNumRef = 0; iNumRef < iNbRef; iNumRef++)
         {

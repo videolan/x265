@@ -58,16 +58,16 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-Void TComPic::create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
+Void TComPic::create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
 {
     m_pcPicSym = new TComPicSym;
-    m_pcPicSym->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_pcPicSym->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
     m_pcPicYuvOrg = new TComPicYuv;
-    m_pcPicYuvOrg->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_pcPicYuvOrg->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
     m_pcPicYuvRec = new TComPicYuv;
-    m_pcPicYuvRec->create(iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_pcPicYuvRec->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
 
     /* store conformance window parameters with picture */
     m_conformanceWindow = conformanceWindow;

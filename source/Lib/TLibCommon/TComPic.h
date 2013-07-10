@@ -72,7 +72,7 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
+    Void          create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
 
     virtual Void  destroy();
 

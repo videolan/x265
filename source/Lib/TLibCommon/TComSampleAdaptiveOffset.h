@@ -106,8 +106,8 @@ protected:
     Bool    m_saoLcuBasedOptimization;
 
     Void xPCMRestoration(TComPic* pcPic);
-    Void xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth);
-    Void xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText);
+    Void xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth);
+    Void xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, TextType ttText);
 
 public:
 

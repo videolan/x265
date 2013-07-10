@@ -629,7 +629,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  *  \param pResidual output data (residual)
  *  \param uiStride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
- *  \param uiMode is Intra Prediction mode used in Mode-Dependent DCT/DST only
+ *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
@@ -710,11 +710,11 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
  * \param cu pointer to coding unit structure
  * \param plSrcCoeff pointer to input buffer
  * \param piDstCoeff reference to pointer to output buffer
- * \param uiWidth block width
- * \param uiHeight block height
+ * \param width block width
+ * \param height block height
  * \param uiAbsSum reference to absolute sum of quantized transform coefficient
  * \param ttype plane type / luminance or chrominance
- * \param uiAbsPartIdx absolute partition index
+ * \param absPartIdx absolute partition index
  * \returns Void
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC

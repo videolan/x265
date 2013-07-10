@@ -68,7 +68,7 @@ TComRdCostWeightPrediction::~TComRdCostWeightPrediction()
 UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
 {
     Pel  pred;
-    Pel* piOrg   = pcDtParam->pOrg;
+    Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
@@ -109,7 +109,7 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
  */
 UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
 {
-    Pel* piOrg   = pcDtParam->pOrg;
+    Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Pel  pred;
     Int  iRows   = pcDtParam->iRows;
@@ -424,7 +424,7 @@ UInt TComRdCostWeightPrediction::xCalcHADs8x8w(Pel *piOrg, Pel *piCur, Int iStri
  */
 UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
 {
-    Pel* piOrg   = pcDtParam->pOrg;
+    Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideCur = pcDtParam->iStrideCur;
@@ -452,7 +452,7 @@ UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
  */
 UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
 {
-    Pel* piOrg   = pcDtParam->pOrg;
+    Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideCur = pcDtParam->iStrideCur;
@@ -488,7 +488,7 @@ UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
  */
 UInt TComRdCostWeightPrediction::xGetHADsw(DistParam* pcDtParam)
 {
-    Pel* piOrg   = pcDtParam->pOrg;
+    Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;

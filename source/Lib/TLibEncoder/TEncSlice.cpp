@@ -76,7 +76,7 @@ Void TEncSlice::initCtxMem(UInt i)
     CTXMem.resize(i);
 }
 
-Void TEncSlice::create(Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth)
+Void TEncSlice::create(Int width, Int height, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth)
 {
 }
 

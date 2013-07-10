@@ -113,7 +113,7 @@ class DistParam
 {
 public:
 
-    Pel*  pOrg;
+    Pel*  fenc;
     Pel*  pCur;
     Int   iStrideOrg;
     Int   iStrideCur;
@@ -132,7 +132,7 @@ public:
 
     DistParam()
     {
-        pOrg = NULL;
+        fenc = NULL;
         pCur = NULL;
         iStrideOrg = 0;
         iStrideCur = 0;
@@ -204,8 +204,8 @@ public:
     // Distortion Functions
     Void    init();
 
-    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
-    Void    setDistParam(TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
+    Void    setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
+    Void    setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
 
 private:
 

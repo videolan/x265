@@ -65,14 +65,14 @@ private:
 protected:
 
     /// CU-level deblocking function
-    Void xDeblockCU(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, Int Edge);
+    Void xDeblockCU(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int Edge);
 
     // set / get functions
     Void xSetLoopfilterParam(TComDataCU* cu, UInt uiAbsZorderIdx);
     // filtering functions
-    Void xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt uiAbsZorderIdx, UInt uiDepth);
+    Void xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt uiAbsZorderIdx, UInt depth);
     Void xSetEdgefilterPU(TComDataCU* cu, UInt uiAbsZorderIdx);
-    Void xGetBoundaryStrengthSingle(TComDataCU* cu, Int iDir, UInt uiPartIdx);
+    Void xGetBoundaryStrengthSingle(TComDataCU* cu, Int iDir, UInt partIdx);
     UInt xCalcBsIdx(TComDataCU* cu, UInt uiAbsZorderIdx, Int iDir, Int iEdgeIdx, Int iBaseUnitIdx)
     {
         TComPic* const pcPic = cu->getPic();
@@ -88,10 +88,10 @@ protected:
         }
     }
 
-    Void xSetEdgefilterMultiple(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdgeIdx, Bool bValue, UInt uiWidthInBaseUnits = 0, UInt uiHeightInBaseUnits = 0);
+    Void xSetEdgefilterMultiple(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int iDir, Int iEdgeIdx, Bool bValue, UInt uiWidthInBaseUnits = 0, UInt uiHeightInBaseUnits = 0);
 
-    Void xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdge);
-    Void xEdgeFilterChroma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, Int iDir, Int iEdge);
+    Void xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int iDir, Int iEdge);
+    Void xEdgeFilterChroma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int iDir, Int iEdge);
 
     __inline Void xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ);
     __inline Void xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter);

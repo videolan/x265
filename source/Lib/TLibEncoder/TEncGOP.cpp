@@ -760,9 +760,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         UInt uiExternalAddress = pic->getPicSym()->getNumberOfCUsInFrame() - 1;
         UInt uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
         UInt uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
-        UInt uiWidth = m_cSPS.getPicWidthInLumaSamples();
-        UInt uiHeight = m_cSPS.getPicHeightInLumaSamples();
-        while (uiPosX >= uiWidth || uiPosY >= uiHeight)
+        UInt width = m_cSPS.getPicWidthInLumaSamples();
+        UInt height = m_cSPS.getPicHeightInLumaSamples();
+        while (uiPosX >= width || uiPosY >= height)
         {
             uiInternalAddress--;
             uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
@@ -1100,9 +1100,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         uiExternalAddress = (slice->getSliceCurEndCUAddr() - 1) / pic->getNumPartInCU();
         uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
         uiPosY = (uiExternalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
-        uiWidth = m_cSPS.getPicWidthInLumaSamples();
-        uiHeight = m_cSPS.getPicHeightInLumaSamples();
-        while (uiPosX >= uiWidth || uiPosY >= uiHeight)
+        width = m_cSPS.getPicWidthInLumaSamples();
+        height = m_cSPS.getPicHeightInLumaSamples();
+        while (uiPosX >= width || uiPosY >= height)
         {
             uiInternalAddress--;
             uiPosX = (uiExternalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
@@ -1693,22 +1693,22 @@ static const Char* nalUnitTypeToString(NalUnitType type)
 //       (we do not yet have a switch to disable PSNR reporting)
 //   2 - it would be better to accumulate SSD of each CTU at the end of processCTU() while it is cache-hot
 //       in fact, we almost certainly are already measuring the CTU distortion and not accumulating it
-static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHeight)
+static UInt64 computeSSD(Pel *fenc, Pel *pRec, Int iStride, Int width, Int height)
 {
     UInt64 uiSSD = 0;
 
-    if ((iWidth | iHeight) & 3)
+    if ((width | height) & 3)
     {
         /* Slow Path */
-        for (Int y = 0; y < iHeight; y++)
+        for (Int y = 0; y < height; y++)
         {
-            for (Int x = 0; x < iWidth; x++)
+            for (Int x = 0; x < width; x++)
             {
-                Int iDiff = (Int)(pOrg[x] - pRec[x]);
+                Int iDiff = (Int)(fenc[x] - pRec[x]);
                 uiSSD += iDiff * iDiff;
             }
 
-            pOrg += iStride;
+            fenc += iStride;
             pRec += iStride;
         }
 
@@ -1716,71 +1716,71 @@ static UInt64 computeSSD(Pel *pOrg, Pel *pRec, Int iStride, Int iWidth, Int iHei
     }
     Int y = 0;
     /* Consume Y in chunks of 64 */
-    for (; y + 64 <= iHeight; y += 64)
+    for (; y + 64 <= height; y += 64)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth; x += 64)
+        for (; x + 64 <= width; x += 64)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 16 <= iWidth; x += 16)
+        for (; x + 16 <= width; x += 16)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 4 <= iWidth; x += 4)
+        for (; x + 4 <= width; x += 4)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        pOrg += iStride * 64;
+        fenc += iStride * 64;
         pRec += iStride * 64;
     }
 
     /* Consume Y in chunks of 16 */
-    for (; y + 16 <= iHeight; y += 16)
+    for (; y + 16 <= height; y += 16)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth; x += 64)
+        for (; x + 64 <= width; x += 64)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 16 <= iWidth; x += 16)
+        for (; x + 16 <= width; x += 16)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 4 <= iWidth; x += 4)
+        for (; x + 4 <= width; x += 4)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        pOrg += iStride * 16;
+        fenc += iStride * 16;
         pRec += iStride * 16;
     }
 
     /* Consume Y in chunks of 4 */
-    for (; y + 4 <= iHeight; y += 4)
+    for (; y + 4 <= height; y += 4)
     {
         Int x = 0;
-        for (; x + 64 <= iWidth; x += 64)
+        for (; x + 64 <= width; x += 64)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 16 <= iWidth; x += 16)
+        for (; x + 16 <= width; x += 16)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        for (; x + 4 <= iWidth; x += 4)
+        for (; x + 4 <= width; x += 4)
         {
-            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel*)pOrg + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
+            uiSSD += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel*)fenc + x, (intptr_t)iStride, (pixel*)pRec + x, iStride);
         }
 
-        pOrg += iStride * 4;
+        fenc += iStride * 4;
         pRec += iStride * 4;
     }
 
@@ -1791,18 +1791,18 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 {
     //===== calculate PSNR =====
     Int iStride = pcPicD->getStride();
-    Int iWidth  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
-    Int iHeight = pcPicD->getHeight() - m_pcEncTop->getPad(1);
-    Int iSize = iWidth * iHeight;
+    Int width  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
+    Int height = pcPicD->getHeight() - m_pcEncTop->getPad(1);
+    Int iSize = width * height;
 
-    UInt64 uiSSDY = computeSSD(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDY = computeSSD(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, width, height);
 
-    iHeight >>= 1;
-    iWidth  >>= 1;
+    height >>= 1;
+    width  >>= 1;
     iStride = pcPicD->getCStride();
 
-    UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, iWidth, iHeight);
-    UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, iWidth, iHeight);
+    UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), iStride, width, height);
+    UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), iStride, width, height);
 
     Int maxvalY = 255 << (g_bitDepthY - 8);
     Int maxvalC = 255 << (g_bitDepthC - 8);

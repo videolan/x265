@@ -1398,25 +1398,25 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
 
 /** PCM CU restoration.
  * \param cu pointer to current CU
- * \param uiAbsPartIdx part index
- * \param uiDepth CU depth
+ * \param absPartIdx part index
+ * \param depth CU depth
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth)
+Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth)
 {
     TComPic* pcPic     = cu->getPic();
-    UInt uiCurNumParts = pcPic->getNumPartInCU() >> (uiDepth << 1);
+    UInt uiCurNumParts = pcPic->getNumPartInCU() >> (depth << 1);
     UInt uiQNumParts   = uiCurNumParts >> 2;
 
     // go to sub-CU
-    if (cu->getDepth(uiAbsZorderIdx) > uiDepth)
+    if (cu->getDepth(uiAbsZorderIdx) > depth)
     {
-        for (UInt uiPartIdx = 0; uiPartIdx < 4; uiPartIdx++, uiAbsZorderIdx += uiQNumParts)
+        for (UInt partIdx = 0; partIdx < 4; partIdx++, uiAbsZorderIdx += uiQNumParts)
         {
             UInt uiLPelX   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
             UInt uiTPelY   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
             if ((uiLPelX < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
-                xPCMCURestoration(cu, uiAbsZorderIdx, uiDepth + 1);
+                xPCMCURestoration(cu, uiAbsZorderIdx, depth + 1);
         }
 
         return;
@@ -1425,27 +1425,27 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorde
     // restore PCM samples
     if ((cu->getIPCMFlag(uiAbsZorderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(uiAbsZorderIdx))
     {
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_LUMA);
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_U);
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, uiDepth, TEXT_CHROMA_V);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_LUMA);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_CHROMA_U);
+        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_CHROMA_V);
     }
 }
 
 /** PCM sample restoration.
  * \param cu pointer to current CU
- * \param uiAbsPartIdx part index
- * \param uiDepth CU depth
+ * \param absPartIdx part index
+ * \param depth CU depth
  * \param ttText texture component type
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt uiDepth, TextType ttText)
+Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* piSrc;
     Pel* piPcm;
     UInt uiStride;
-    UInt uiWidth;
-    UInt uiHeight;
+    UInt width;
+    UInt height;
     UInt uiPcmLeftShiftBit;
     UInt uiX, uiY;
     UInt uiMinCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
@@ -1457,8 +1457,8 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
         piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), uiAbsZorderIdx);
         piPcm = cu->getPCMSampleY() + uiLumaOffset;
         uiStride  = pcPicYuvRec->getStride();
-        uiWidth  = (g_maxCUWidth >> uiDepth);
-        uiHeight = (g_maxCUHeight >> uiDepth);
+        width  = (g_maxCUWidth >> depth);
+        height = (g_maxCUHeight >> depth);
         if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;
@@ -1482,8 +1482,8 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
         }
 
         uiStride = pcPicYuvRec->getCStride();
-        uiWidth  = ((g_maxCUWidth >> uiDepth) / 2);
-        uiHeight = ((g_maxCUWidth >> uiDepth) / 2);
+        width  = ((g_maxCUWidth >> depth) / 2);
+        height = ((g_maxCUWidth >> depth) / 2);
         if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
         {
             uiPcmLeftShiftBit = 0;
@@ -1494,14 +1494,14 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
         }
     }
 
-    for (uiY = 0; uiY < uiHeight; uiY++)
+    for (uiY = 0; uiY < height; uiY++)
     {
-        for (uiX = 0; uiX < uiWidth; uiX++)
+        for (uiX = 0; uiX < width; uiX++)
         {
             piSrc[uiX] = (piPcm[uiX] << uiPcmLeftShiftBit);
         }
 
-        piPcm += uiWidth;
+        piPcm += width;
         piSrc += uiStride;
     }
 }

@@ -99,7 +99,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    create(UInt iWidth, UInt iHeight);              ///< Create  YUV buffer
+    Void    create(UInt width, UInt height);              ///< Create  YUV buffer
     Void    destroy();                                      ///< Destroy YUV buffer
     Void    clear();                                        ///< clear   YUV buffer
 
@@ -108,9 +108,9 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Copy YUV buffer to picture buffer
-    Void    copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt uiPartIdx = 0);
-    Void    copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt uiPartIdx = 0);
-    Void    copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt uiPartIdx = 0);
+    Void    copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
+    Void    copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
+    Void    copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
 
     //  Copy YUV buffer from picture buffer
     Void    copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx);
@@ -128,39 +128,39 @@ public:
     Void    copyPartToChroma(TComYuv* pcYuvDst,    UInt uiSrcPartIdx);
 
     //  Copy YUV partition buffer to other YUV partition buffer
-    Void    copyPartToPartYuv(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    Void    copyPartToPartYuv(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    Void    copyPartToPartLuma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    Void    copyPartToPartLuma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
-    Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt uiWidth, UInt uiHeight);
+    Void    copyPartToPartYuv(TComYuv* pcYuvDst, UInt partIdx, UInt width, UInt height);
+    Void    copyPartToPartYuv(TShortYUV* pcYuvDst, UInt partIdx, UInt width, UInt height);
+    Void    copyPartToPartLuma(TComYuv* pcYuvDst, UInt partIdx, UInt width, UInt height);
+    Void    copyPartToPartLuma(TShortYUV* pcYuvDst, UInt partIdx, UInt width, UInt height);
+    Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt partIdx, UInt width, UInt height);
+    Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt partIdx, UInt width, UInt height);
 
-    Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId);
-    Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt uiPartIdx, UInt iWidth, UInt iHeight, UInt chromaId);
+    Void    copyPartToPartChroma(TComYuv* pcYuvDst, UInt partIdx, UInt width, UInt height, UInt chromaId);
+    Void    copyPartToPartChroma(TShortYUV* pcYuvDst, UInt partIdx, UInt width, UInt height, UInt chromaId);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
     // ------------------------------------------------------------------------------------------------------------------
 
-    //  Clip(pcYuvSrc0 + pcYuvSrc1) -> m_apiBuf
-    Void    addClip(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    addClip(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    addClipLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    addClipLuma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    addClipChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    addClipChroma(TComYuv* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
+    //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
+    Void    addClip(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize);
 
-    //  pcYuvSrc0 - pcYuvSrc1 -> m_apiBuf
-    Void    subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
-    Void    subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt uiTrUnitIdx, UInt uiPartSize);
+    //  srcYuv0 - srcYuv1 -> m_apiBuf
+    Void    subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
+    Void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
 
-    //  (pcYuvSrc0 + pcYuvSrc1)/2 for YUV partition
-    Void    addAvg(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, UInt iPartUnitIdx, UInt iWidth, UInt iHeight);
-    Void    addAvg(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, UInt iPartUnitIdx, UInt iWidth, UInt iHeight);
+    //  (srcYuv0 + srcYuv1)/2 for YUV partition
+    Void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height);
+    Void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height);
 
     //   Remove High frequency
-    Void    removeHighFreq(TComYuv* pcYuvSrc, UInt uiPartIdx, UInt uiWidht, UInt uiHeight);
+    Void    removeHighFreq(TComYuv* pcYuvSrc, UInt partIdx, UInt uiWidht, UInt height);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Access function for YUV buffer

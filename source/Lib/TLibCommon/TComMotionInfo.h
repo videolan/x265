@@ -104,7 +104,7 @@ private:
     AMVPInfo  m_cAMVPInfo;
 
     template<typename T>
-    Void setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int partIdx);
+    Void setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx);
 
 public:
 
@@ -145,10 +145,10 @@ public:
     // set
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    setAllMv(x265::MV const & rcMv,            PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int partIdx = 0);
-    Void    setAllMvd(x265::MV const & rcMvd,          PartSize eCUMode, Int iPartAddr, UInt uiDepth, Int partIdx = 0);
-    Void    setAllRefIdx(Int iRefIdx,                  PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int partIdx = 0);
-    Void    setAllMvField(TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int partIdx = 0);
+    Void    setAllMv(x265::MV const & rcMv,            PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
+    Void    setAllMvd(x265::MV const & rcMvd,          PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
+    Void    setAllRefIdx(Int iRefIdx,                  PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
+    Void    setAllMvField(TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
 
     Void setNumPartition(Int iNumPart)
     {

@@ -111,8 +111,8 @@ private:
     Void  xWriteEpExGolomb(UInt uiSymbol, UInt uiCount);
     Void  xWriteCoefRemainExGolomb(UInt symbol, UInt &rParam);
 
-    Void  xCopyFrom(TEncSbac* pSrc);
-    Void  xCopyContextsFrom(TEncSbac* pSrc);
+    Void  xCopyFrom(TEncSbac* src);
+    Void  xCopyContextsFrom(TEncSbac* src);
 
     Void codeDFFlag(UInt /*uiCode*/, const Char* /*pSymbolName*/)       { printf("Not supported in codeDFFlag()\n"); assert(0); exit(1); }
 
@@ -130,33 +130,33 @@ protected:
 
 public:
 
-    Void codeCUTransquantBypassFlag(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeSkipFlag(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeMergeFlag(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeMergeIndex(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeSplitFlag(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth);
-    Void codeMVPIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
+    Void codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx);
+    Void codeSkipFlag(TComDataCU* cu, UInt absPartIdx);
+    Void codeMergeFlag(TComDataCU* cu, UInt absPartIdx);
+    Void codeMergeIndex(TComDataCU* cu, UInt absPartIdx);
+    Void codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth);
+    Void codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
 
-    Void codePartSize(TComDataCU* cu, UInt uiAbsPartIdx, UInt uiDepth);
-    Void codePredMode(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeIPCMInfo(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth);
+    Void codePredMode(TComDataCU* cu, UInt absPartIdx);
+    Void codeIPCMInfo(TComDataCU* cu, UInt absPartIdx);
     Void codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx);
-    Void codeQtCbf(TComDataCU* cu, UInt uiAbsPartIdx, TextType eType, UInt trDepth);
-    Void codeQtRootCbf(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeQtCbfZero(TComDataCU* cu, TextType eType, UInt trDepth);
+    Void codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth);
+    Void codeQtRootCbf(TComDataCU* cu, UInt absPartIdx);
+    Void codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth);
     Void codeQtRootCbfZero(TComDataCU* cu);
     Void codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple);
 
-    Void codeIntraDirChroma(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeInterDir(TComDataCU* cu, UInt uiAbsPartIdx);
-    Void codeRefFrmIdx(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
-    Void codeMvd(TComDataCU* cu, UInt uiAbsPartIdx, RefPicList eRefList);
+    Void codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx);
+    Void codeInterDir(TComDataCU* cu, UInt absPartIdx);
+    Void codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
+    Void codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList);
 
-    Void codeDeltaQP(TComDataCU* cu, UInt uiAbsPartIdx);
+    Void codeDeltaQP(TComDataCU* cu, UInt absPartIdx);
 
     Void codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int height, TextType eTType, UInt uiScanIdx);
-    Void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType);
-    void codeTransformSkipFlags(TComDataCU* cu, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType);
+    Void codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType);
+    void codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType);
 
     // -------------------------------------------------------------------------------------------------------------------
     // for RD-optimizatioon

@@ -140,7 +140,7 @@ public:
     /// set parameters from CU data for accessing neighbouring pixels
     Void  initPattern(TComDataCU* cu,
                       UInt        uiPartDepth,
-                      UInt        uiAbsPartIdx);
+                      UInt        absPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
     Void  initAdiPattern(TComDataCU* cu,
@@ -161,7 +161,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt uiWidth, UInt uiHeight, Int iPicStride);
+    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt width, UInt height, Int iPicStride);
 
     /// constrained intra prediction
     Bool  isAboveLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT);

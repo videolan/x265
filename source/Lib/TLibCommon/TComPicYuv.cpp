@@ -250,19 +250,19 @@ Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
     m_bIsBorderExtended = true;
 }
 
-Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int iHeight, Int iMarginX, Int iMarginY)
+Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int width, Int height, Int iMarginX, Int iMarginY)
 {
     Int   x, y;
     Pel*  pi;
 
     /* TODO: this should become a performance primitive */
     pi = piTxt;
-    for (y = 0; y < iHeight; y++)
+    for (y = 0; y < height; y++)
     {
         for (x = 0; x < iMarginX; x++)
         {
             pi[-iMarginX + x] = pi[0];
-            pi[iWidth + x] = pi[iWidth - 1];
+            pi[width + x] = pi[width - 1];
         }
 
         pi += iStride;
@@ -271,13 +271,13 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int iWidth, Int i
     pi -= (iStride + iMarginX);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi + (y + 1) * iStride, pi, sizeof(Pel) * (iWidth + (iMarginX << 1)));
+        ::memcpy(pi + (y + 1) * iStride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 
-    pi -= ((iHeight - 1) * iStride);
+    pi -= ((height - 1) * iStride);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi - (y + 1) * iStride, pi, sizeof(Pel) * (iWidth + (iMarginX << 1)));
+        ::memcpy(pi - (y + 1) * iStride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 }
 
