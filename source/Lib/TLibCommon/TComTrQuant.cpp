@@ -1603,22 +1603,22 @@ Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
  */
 Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
-    UInt uiLog2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
+    UInt log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
     Int bitDepth = (size < SCALING_LIST_32x32 && list != 0 && list != 3) ? g_bitDepthC : g_bitDepthY;
-    Int iTransformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - uiLog2TrSize; // Represents scaling through forward transform
+    Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
 
-    UInt i, uiMaxNumCoeff = g_scalingListSize[size];
-    Int *piQuantcoeff;
-    Double *pdErrScale;
+    UInt i, maxNumCoeff = g_scalingListSize[size];
+    Int *quantCoeff;
+    Double *errScale;
 
-    piQuantcoeff   = getQuantCoeff(list, qp, size);
-    pdErrScale     = getErrScaleCoeff(list, size, qp);
+    quantCoeff   = getQuantCoeff(list, qp, size);
+    errScale     = getErrScaleCoeff(list, size, qp);
 
-    Double dErrScale = (Double)(1 << SCALE_BITS);                          // Compensate for scaling of bitcount in Lagrange cost function
-    dErrScale = dErrScale * pow(2.0, -2.0 * iTransformShift);              // Compensate for scaling through forward transform
-    for (i = 0; i < uiMaxNumCoeff; i++)
+    Double scalingBits = (Double)(1 << SCALE_BITS);                          // Compensate for scaling of bitcount in Lagrange cost function
+    scalingBits = scalingBits * pow(2.0, -2.0 * transformShift);              // Compensate for scaling through forward transform
+    for (i = 0; i < maxNumCoeff; i++)
     {
-        pdErrScale[i] = dErrScale / piQuantcoeff[i] / piQuantcoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)));
+        errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)));
     }
 }
 
