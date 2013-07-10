@@ -814,7 +814,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             mergeFlag = 1;
 #endif
             // SKIP
-            xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode); //by Merge for inter_2Nx2N
+            xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode, m_ppcPredYuvBest[uiDepth], m_ppcRecoYuvBest[uiDepth]); //by Merge for inter_2Nx2N
 #if CU_STAT_LOGFILE
             mergeFlag = 0;
 #endif
@@ -1421,7 +1421,7 @@ Void TEncCu::xEncodeCU(TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
  * \param rpcTempCU
  * \returns Void
  */
-Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode)
+Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode, TComYuv*& rpcYuvPredBest, TComYuv*& rpcYuvReconBest)
 {
     assert(rpcTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField  cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
@@ -1496,7 +1496,21 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     rpcTempCU->setSkipFlagSubParts(rpcTempCU->getQtRootCbf(0) == 0, 0, uhDepth);
                     Int orgQP = rpcTempCU->getQP(0);
                     xCheckDQP(rpcTempCU);
-                    xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
+                    if (rpcTempCU->getTotalCost() < rpcBestCU->getTotalCost())
+                    {
+                        TComDataCU* tmp = rpcTempCU;
+                        rpcTempCU = rpcBestCU;
+                        rpcBestCU = tmp;
+                        // Change Prediction data
+                        TComYuv* pcYuv = NULL;
+                        pcYuv = rpcYuvPredBest;
+                        rpcYuvPredBest  = m_ppcPredYuvTemp[uhDepth];
+                        m_ppcPredYuvTemp[uhDepth] = pcYuv;
+                        
+                        pcYuv = rpcYuvReconBest;
+                        rpcYuvReconBest = m_ppcRecoYuvTemp[uhDepth];
+                        m_ppcRecoYuvTemp[uhDepth] = pcYuv;
+                    }
                     rpcTempCU->initEstData(uhDepth, orgQP);
                     if (!bestIsSkip)
                     {
