@@ -173,7 +173,6 @@ protected:
 
     //====== Tool list ========
     Bool      m_bUseASR;
-    Bool      m_bUseHADME;
     Bool      m_useRDOQ;
     Bool      m_useRDOQTS;
     UInt      m_rdPenalty;
@@ -443,8 +442,6 @@ public:
     //==== Tool list ========
     Void      setUseASR(Bool b)     { m_bUseASR     = b; }
 
-    Void      setUseHADME(Bool b)     { m_bUseHADME   = b; }
-
     Void      setUseRDOQ(Bool b)     { m_useRDOQ    = b; }
 
     Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
@@ -470,8 +467,6 @@ public:
     Void      setdQPs(Int* p)     { m_aidQP       = p; }
 
     Bool      getUseASR()      { return m_bUseASR;     }
-
-    Bool      getUseHADME()      { return m_bUseHADME;   }
 
     Bool      getUseRDOQ()       { return m_useRDOQ;    }
 

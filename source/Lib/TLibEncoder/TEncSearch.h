@@ -144,64 +144,46 @@ public:
     virtual ~TEncSearch();
 
     Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant *pcTrQuant);
-    UInt  xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
-    UInt  xUpdateCandList(UInt uiMode, UInt64 uiCost, UInt uiFastCandNum, UInt * CandModeList, UInt64 * CandCostList);
+    UInt xModeBitsIntra(TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth);
+    UInt xUpdateCandList(UInt uiMode, UInt64 uiCost, UInt uiFastCandNum, UInt * CandModeList, UInt64 * CandCostList);
 
 protected:
 
-    /// sub-function for motion vector refinement used in fractional-pel accuracy
-    UInt  xPatternRefinement(TComPattern * pcPatternKey,
-                             x265::MV baseRefMv,
-                             Int iFrac,
-                             x265::MV & rcMvFrac,
-                             TComPicYuv * refPic,
-                             Int offset,
-                             TComDataCU * pcCU,
-                             UInt);
-
+    // integer motion search
     typedef struct
     {
-        Pel*  piRefY;
-        Int   iYStride;
-        Int   iBestX;
-        Int   iBestY;
-        UInt  uiBestRound;
-        UInt  uiBestDistance;
-        UInt  uiBestSad;
-        UChar ucPointNr;
+        Pel*  fref;
+        Int   lumaStride;
+        Int   bestx;
+        Int   besty;
+        UInt  bestRound;
+        UInt  bestDistance;
+        UInt  bcost;
+        UChar bestPointDir;
     } IntTZSearchStruct;
 
-    // sub-functions for ME
-    __inline Void xTZSearchHelp(TComPattern* pcPatternKey, IntTZSearchStruct& rcStruct, const Int iSearchX, const Int iSearchY, const UChar ucPointNr, const UInt uiDistance);
-    __inline Void xTZ2PointSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, x265::MV* pcMvSrchRngLT, x265::MV* pcMvSrchRngRB);
-    __inline Void xTZ8PointDiamondSearch(TComPattern* pcPatternKey, IntTZSearchStruct& rcStrukt, x265::MV* pcMvSrchRngLT, x265::MV* pcMvSrchRngRB, const Int iStartX, const Int iStartY, const Int iDist);
+    inline Void xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance);
+    inline Void xTZ2PointSearch(TComPattern* patternKey, IntTZSearchStruct& data, x265::MV* mvmin, x265::MV* mvmax);
+    inline Void xTZ8PointDiamondSearch(TComPattern* patternKey, IntTZSearchStruct& data, x265::MV* mvmin, x265::MV* mvmax,
+                                       Int startX, Int startY, Int distance);
 
-    Void xGetInterPredictionError(TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, UInt& ruiSAD, Bool Hadamard);
+    /// motion vector refinement used in fractional-pel accuracy
+    UInt  xPatternRefinement(TComPattern* patternKey, x265::MV baseRefMv, Int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, Int offset,
+                             TComDataCU* cu, UInt partAddr);
+
+    UInt xGetInterPredictionError(TComDataCU* cu, TComYuv* fencYuv, Int partIdx);
 
 public:
 
-    Void  preestChromaPredMode(TComDataCU* pcCU,
-                               TComYuv*    pcOrgYuv,
-                               TComYuv*    pcPredYuv);
-    Void  estIntraPredQT(TComDataCU* pcCU,
-                         TComYuv*    pcOrgYuv,
-                         TComYuv*    pcPredYuv,
-                         TShortYUV*  pcResiYuv,
-                         TComYuv*    pcRecoYuv,
-                         UInt&       ruiDistC,
-                         Bool        bLumaOnly);
-    Void  estIntraPredChromaQT(TComDataCU* pcCU,
-                               TComYuv*    pcOrgYuv,
-                               TComYuv*    pcPredYuv,
-                               TShortYUV*  pcResiYuv,
-                               TComYuv*    pcRecoYuv,
-                               UInt        uiPreCalcDistC);
+    Void  preestChromaPredMode(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* pcPredYuv);
+    Void  estIntraPredQT(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* pcPredYuv, TShortYUV* pcResiYuv, TComYuv* pcRecoYuv,
+                         UInt& ruiDistC, Bool bLumaOnly);
+
+    Void  estIntraPredChromaQT(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* pcPredYuv, TShortYUV* pcResiYuv,
+                               TComYuv* pcRecoYuv, UInt uiPreCalcDistC);
 
     /// encoder estimation - inter prediction (non-skip)
-    Void predInterSearch(TComDataCU* pcCU,
-                         TComYuv*    pcOrgYuv,
-                         TComYuv*&   rpcPredYuv,
-                         Bool        bUseMRG = false);
+    Void predInterSearch(TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, Bool bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
     Void encodeResAndCalcRdInterCU(TComDataCU* pcCU,

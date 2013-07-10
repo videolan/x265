@@ -282,7 +282,6 @@ void Encoder::configure(x265_param_t *param)
     setFrameOnlyConstraintFlag(0);
     setDecodingRefreshType(2); // 1 == CRA, 2 == IDR
     setUseASR(0);   // adapt search range based on temporal distances
-    setUseHADME(1); // For HM/Full search mode subpel refine
     setdQPs(NULL);
     setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);
     setRecoveryPointSEIEnabled(0);

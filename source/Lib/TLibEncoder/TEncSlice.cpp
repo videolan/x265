@@ -231,12 +231,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     if (pcSlice->getSliceType() != I_SLICE) dLambda *= 1.55;
 #endif
 
-    // if hadamard is used in ME process
-    if (!m_pcCfg->getUseHADME() && pcSlice->getSliceType() != I_SLICE)
-    {
-        dLambda *= 0.95;
-    }
-
     iQP = max(-pSPS->getQpBDOffsetY(), min(MAX_QP, (Int)floor(dQP + 0.5)));
 
     if (pcSlice->getSliceType() != I_SLICE)
