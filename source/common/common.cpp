@@ -279,9 +279,9 @@ void x265_print_params(x265_param_t *param)
     x265_log(param, X265_LOG_INFO, "CU size                      : %d\n", param->maxCUSize);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
-    x265_log(param, X265_LOG_INFO, "ME type / range / merge cand : %s / %d / %d\n",
+    x265_log(param, X265_LOG_INFO, "ME method / range / maxmerge : %s / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->maxNumMergeCand);
-    x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->keyframeInterval);
+    x265_log(param, X265_LOG_INFO, "Keyframe Interval            : %d\n", param->keyframeInterval);
     if (param->bEnableWavefront)
     {
         x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize);
