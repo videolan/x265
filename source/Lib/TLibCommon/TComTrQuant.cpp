@@ -390,14 +390,14 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
         Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
         assert(scalingListType < 6);
         Int *quantCoeff = 0;
-        quantCoeff = getQuantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
+        quantCoeff = getQuantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
 
         UInt bitDepth = ttype == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
         Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
 
-        Int qbits = QUANT_SHIFT + cQpBase.m_iPer + transformShift;
+        Int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
-        Int qbitsC = QUANT_SHIFT + cQpBase.m_iPer + transformShift - ARL_C_PRECISION;
+        Int qbitsC = QUANT_SHIFT + cQpBase.m_per + transformShift - ARL_C_PRECISION;
 
         Int numCoeff = width * height;
         if (m_bUseAdaptQpSelect)
@@ -435,16 +435,16 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     if (getUseScalingList())
     {
         shift += 4;
-        Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
+        Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
 
-        if (shift > m_cQP.m_iPer)
+        if (shift > m_cQP.m_per)
         {
-            add = 1 << (shift - m_cQP.m_iPer - 1);
+            add = 1 << (shift - m_cQP.m_per - 1);
 
             for (Int n = 0; n < width * height; n++)
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
-                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_cQP.m_iPer);
+                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_cQP.m_per);
                 coef[n] = Clip3(-32768, 32767, coeffQ);
             }
         }
@@ -454,14 +454,14 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
                 coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]); // Clip to avoid possible overflow in following shift left operation
-                coef[n] = Clip3(-32768, 32767, coeffQ << (m_cQP.m_iPer - shift));
+                coef[n] = Clip3(-32768, 32767, coeffQ << (m_cQP.m_per - shift));
             }
         }
     }
     else
     {
         add = 1 << (shift - 1);
-        Int scale = g_invQuantScales[m_cQP.m_iRem] << m_cQP.m_iPer;
+        Int scale = g_invQuantScales[m_cQP.m_rem] << m_cQP.m_per;
 
         for (Int n = 0; n < width * height; n++)
         {
@@ -550,11 +550,11 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
 
     // Values need to pass as input parameter in dequant
-    Int per = m_cQP.m_iPer;
-    Int rem = m_cQP.m_iRem;
+    Int per = m_cQP.m_per;
+    Int rem = m_cQP.m_rem;
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
+    Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
     x265::primitives.dequant(bitDepth, coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
@@ -740,9 +740,9 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
 
     assert(scalingListType < 6);
 
-    Int qbits = QUANT_SHIFT + m_cQP.m_iPer + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
-    Double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_cQP.m_iRem);
-    Int *qCoefOrg = getQuantCoeff(scalingListType, m_cQP.m_iRem, log2TrSize - 2);
+    Int qbits = QUANT_SHIFT + m_cQP.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
+    Double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_cQP.m_rem);
+    Int *qCoefOrg = getQuantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
     Int *qCoef = qCoefOrg;
     Double *errScale = errScaleOrg;
     Int qbitsC = qbits - ARL_C_PRECISION;
@@ -1091,7 +1091,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     if (cu->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
     {
         Int64 rdFactor = (Int64)(
-                g_invQuantScales[m_cQP.rem()] * g_invQuantScales[m_cQP.rem()] * (1 << (2 * m_cQP.m_iPer))
+                g_invQuantScales[m_cQP.rem()] * g_invQuantScales[m_cQP.rem()] * (1 << (2 * m_cQP.m_per))
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
                 + 0.5);
         Int lastCG = -1;

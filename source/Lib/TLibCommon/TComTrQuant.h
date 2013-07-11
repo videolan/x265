@@ -79,37 +79,37 @@ public:
 
     QpParam() {}
 
-    Int m_iQP;
-    Int m_iPer;
-    Int m_iRem;
+    Int m_qp;
+    Int m_per;
+    Int m_rem;
+
+    Int m_bits;
 
 public:
 
-    Int m_iBits;
-
     Void setQpParam(Int qpScaled)
     {
-        m_iQP   = qpScaled;
-        m_iPer  = qpScaled / 6;
-        m_iRem  = qpScaled % 6;
-        m_iBits = QP_BITS + m_iPer;
+        m_qp   = qpScaled;
+        m_per  = qpScaled / 6;
+        m_rem  = qpScaled % 6;
+        m_bits = QP_BITS + m_per;
     }
 
     Void clear()
     {
-        m_iQP   = 0;
-        m_iPer  = 0;
-        m_iRem  = 0;
-        m_iBits = 0;
+        m_qp   = 0;
+        m_per  = 0;
+        m_rem  = 0;
+        m_bits = 0;
     }
 
-    Int per()   const { return m_iPer; }
+    Int per()   const { return m_per; }
 
-    Int rem()   const { return m_iRem; }
+    Int rem()   const { return m_rem; }
 
-    Int bits()  const { return m_iBits; }
+    Int bits()  const { return m_bits; }
 
-    Int qp() { return m_iQP; }
+    Int qp() { return m_qp; }
 };
 
 /// transform and quantization class
