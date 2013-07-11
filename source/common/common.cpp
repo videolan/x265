@@ -97,7 +97,6 @@ void x265_param_default(x265_param_t *param)
     param->maxSAOOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
     param->maxNumMergeCand = 5u;
-    param->TMVPModeId = 1;
     param->bEnableSignHiding = 1;
     param->bEnableStrongIntraSmoothing = 1;
     param->bEnableRDOQ = 1;
@@ -280,8 +279,8 @@ void x265_print_params(x265_param_t *param)
     x265_log(param, X265_LOG_INFO, "CU size                      : %d\n", param->maxCUSize);
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
-    x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->searchRange);
-    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d TMVPMode:%d\n", param->maxNumMergeCand, param->TMVPModeId);
+    x265_log(param, X265_LOG_INFO, "ME type / range / merge cand : %s / %d / %d\n",
+             x265_motion_est_names[param->searchMethod], param->searchRange, param->maxNumMergeCand);
     x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->keyframeInterval);
     if (param->bEnableWavefront)
     {

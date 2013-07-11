@@ -238,16 +238,11 @@ void Encoder::configure(x265_param_t *param)
     setSaoLcuBoundary(param->saoLcuBoundary);
     setSaoLcuBasedOptimization(param->saoLcuBasedOptimization);
 
-    //====== Parallel Merge Estimation ========
-    setLog2ParallelMergeLevelMinus2(0);
-
     //====== Weighted Prediction ========
     setUseWP(param->bEnableWeightedPred);
     setWPBiPred(param->bEnableWeightedBiPred);
 
-    setTMVPModeId(param->TMVPModeId);
     setSignHideFlag(param->bEnableSignHiding);
-
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
     //====== HM Settings not exposed for configuration ======
@@ -273,6 +268,8 @@ void Encoder::configure(x265_param_t *param)
     setVPS(&vps);
     setMaxTempLayer(m_maxTempLayer);
 
+    setLog2ParallelMergeLevelMinus2(0);
+    setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto
     setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
