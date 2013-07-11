@@ -817,28 +817,22 @@ Void TEncSearch::xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
     }
 }
 
-UInt TEncSearch::xGetIntraBitsQT(TComDataCU* cu,
-                                 UInt        trDepth,
-                                 UInt        uiAbsPartIdx,
-                                 Bool        bLuma,
-                                 Bool        bChroma,
-                                 Bool        bRealCoeff /* just for test */)
+UInt TEncSearch::xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma, Bool bRealCoeff)
 {
     m_pcEntropyCoder->resetBits();
-    xEncIntraHeader(cu, trDepth, uiAbsPartIdx, bLuma, bChroma);
-    xEncSubdivCbfQT(cu, trDepth, uiAbsPartIdx, bLuma, bChroma);
+    xEncIntraHeader(cu, trDepth, absPartIdx, bLuma, bChroma);
+    xEncSubdivCbfQT(cu, trDepth, absPartIdx, bLuma, bChroma);
 
     if (bLuma)
     {
-        xEncCoeffQT(cu, trDepth, uiAbsPartIdx, TEXT_LUMA,      bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_LUMA, bRealCoeff);
     }
     if (bChroma)
     {
-        xEncCoeffQT(cu, trDepth, uiAbsPartIdx, TEXT_CHROMA_U,  bRealCoeff);
-        xEncCoeffQT(cu, trDepth, uiAbsPartIdx, TEXT_CHROMA_V,  bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_U, bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_V, bRealCoeff);
     }
-    UInt   uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
-    return uiBits;
+    return m_pcEntropyCoder->getNumberOfWrittenBits();
 }
 
 UInt TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu,
