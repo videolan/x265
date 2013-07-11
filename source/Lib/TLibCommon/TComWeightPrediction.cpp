@@ -39,6 +39,7 @@
 #include "TComSlice.h"
 #include "TComWeightPrediction.h"
 #include "TComPrediction.h"
+#include "primitives.h"
 
 static inline Pel weightBidirY(Int w0, Short P0, Int w1, Short P1, Int round, Int shift, Int offset)
 {
@@ -402,15 +403,14 @@ Void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt iPartUnitIdx, UIn
  * \param TComYuv* rpcYuvDst
  * \returns Void
  */
+
 Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* rpcYuvDst)
 {
-    Int x, y;
-
     Short* pSrcY0  = srcYuv0->getLumaAddr(iPartUnitIdx);
     Short* pSrcU0  = srcYuv0->getCbAddr(iPartUnitIdx);
     Short* pSrcV0  = srcYuv0->getCrAddr(iPartUnitIdx);
 
-    Pel* pDstY   = rpcYuvDst->getLumaAddr(iPartUnitIdx);
+    Pel* dstY   = rpcYuvDst->getLumaAddr(iPartUnitIdx);
     Pel* dstU   = rpcYuvDst->getCbAddr(iPartUnitIdx);
     Pel* dstV   = rpcYuvDst->getCrAddr(iPartUnitIdx);
 
@@ -420,27 +420,10 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     Int shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     Int shift   = wp0[0].shift + shiftNum;
     Int round   = shift ? (1 << (shift - 1)) : 0;
-    UInt  iSrc0Stride = srcYuv0->width;
-    UInt  dststride  = rpcYuvDst->getStride();
+    UInt  srcStride = srcYuv0->width;
+    UInt  dstStride  = rpcYuvDst->getStride();
 
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: luma min width is 4
-            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
-            x--;
-            pDstY[x] = weightUnidirY(w0, pSrcY0[x], round, shift, offset);
-            x--;
-        }
-
-        pSrcY0 += iSrc0Stride;
-        pDstY  += dststride;
-    }
+   x265::primitives.weightpUni(pSrcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthY);
 
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
@@ -449,26 +432,13 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    iSrc0Stride = srcYuv0->Cwidth;
-    dststride  = rpcYuvDst->getCStride();
+    srcStride = srcYuv0->Cwidth;
+    dstStride  = rpcYuvDst->getCStride();
 
     width  >>= 1;
     height >>= 1;
 
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: chroma min width is 2
-            dstU[x] = weightUnidirC(w0, pSrcU0[x], round, shift, offset);
-            x--;
-            dstU[x] = weightUnidirC(w0, pSrcU0[x], round, shift, offset);
-            x--;
-        }
-
-        pSrcU0 += iSrc0Stride;
-        dstU  += dststride;
-    }
+    x265::primitives.weightpUni(pSrcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
 
     // Chroma V : --------------------------------------------
     w0      = wp0[2].w;
@@ -476,20 +446,8 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     shift   = wp0[2].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    for (y = height - 1; y >= 0; y--)
-    {
-        for (x = width - 1; x >= 0; )
-        {
-            // note: chroma min width is 2
-            dstV[x] = weightUnidirC(w0, pSrcV0[x], round, shift, offset);
-            x--;
-            dstV[x] = weightUnidirC(w0, pSrcV0[x], round, shift, offset);
-            x--;
-        }
+    x265::primitives.weightpUni(pSrcU0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
 
-        pSrcV0 += iSrc0Stride;
-        dstV  += dststride;
-    }
 }
 
 //=======================================================
