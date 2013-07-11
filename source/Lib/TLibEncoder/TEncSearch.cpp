@@ -1551,116 +1551,86 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
     }
 }
 
-Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu,
-                                    UInt        trDepth,
-                                    UInt        uiAbsPartIdx,
-                                    Bool        bLumaOnly)
+Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly)
 {
-    UInt uiFullDepth  = cu->getDepth(0) + trDepth;
-    UInt uiTrMode     = cu->getTransformIdx(uiAbsPartIdx);
+    UInt fullDepth = cu->getDepth(0) + trDepth;
+    UInt trMode    = cu->getTransformIdx(absPartIdx);
 
-    assert(uiTrMode == trDepth);
-    UInt uiLog2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
-    UInt uiQTLayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrSize;
+    assert(trMode == trDepth);
+    UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    UInt qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
-    Bool bSkipChroma  = false;
-    Bool bChromaSame  = false;
-    if (!bLumaOnly && uiLog2TrSize == 2)
+    Bool bSkipChroma = false;
+    Bool bChromaSame = false;
+    if (!bLumaOnly && trSizeLog2 == 2)
     {
         assert(trDepth > 0);
-        UInt uiQPDiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth - 1) << 1);
-        bSkipChroma  = ((uiAbsPartIdx % uiQPDiv) != 0);
-        bChromaSame  = true;
+        UInt qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth - 1) << 1);
+        bSkipChroma = ((absPartIdx % qpdiv) != 0);
+        bChromaSame = true;
     }
 
     //===== copy transform coefficients =====
-    UInt uiNumCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (uiFullDepth << 1);
-    UInt uiNumCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
-    TCoeff* pcCoeffDstY = m_ppcQTTempCoeffY[uiQTLayer] + (uiNumCoeffIncY * uiAbsPartIdx);
-    TCoeff* pcCoeffSrcY = m_pcQTTempTUCoeffY;
+    UInt numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
+    UInt numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+    TCoeff* coeffDstY = m_ppcQTTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
+    TCoeff* coeffSrcY = m_pcQTTempTUCoeffY;
+    ::memcpy(coeffDstY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
 
-    ::memcpy(pcCoeffDstY, pcCoeffSrcY, sizeof(TCoeff) * uiNumCoeffY);
-    Int* pcArlCoeffDstY = m_ppcQTTempArlCoeffY[uiQTLayer] + (uiNumCoeffIncY * uiAbsPartIdx);
-    Int* pcArlCoeffSrcY = m_ppcQTTempTUArlCoeffY;
-    ::memcpy(pcArlCoeffDstY, pcArlCoeffSrcY, sizeof(Int) * uiNumCoeffY);
+    Int* arlCoeffDstY = m_ppcQTTempArlCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
+    Int* arlCoeffSrcY = m_ppcQTTempTUArlCoeffY;
+    ::memcpy(arlCoeffDstY, arlCoeffSrcY, sizeof(Int) * numCoeffY);
+
     if (!bLumaOnly && !bSkipChroma)
     {
-        UInt uiNumCoeffC    = (bChromaSame ? uiNumCoeffY    : uiNumCoeffY    >> 2);
-        UInt uiNumCoeffIncC = uiNumCoeffIncY >> 2;
-        TCoeff* pcCoeffDstU = m_ppcQTTempCoeffCb[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        TCoeff* pcCoeffDstV = m_ppcQTTempCoeffCr[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        TCoeff* pcCoeffSrcU = m_pcQTTempTUCoeffCb;
-        TCoeff* pcCoeffSrcV = m_pcQTTempTUCoeffCr;
-        ::memcpy(pcCoeffDstU, pcCoeffSrcU, sizeof(TCoeff) * uiNumCoeffC);
-        ::memcpy(pcCoeffDstV, pcCoeffSrcV, sizeof(TCoeff) * uiNumCoeffC);
-        Int* pcArlCoeffDstU = m_ppcQTTempArlCoeffCb[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        Int* pcArlCoeffDstV = m_ppcQTTempArlCoeffCr[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        Int* pcArlCoeffSrcU = m_ppcQTTempTUArlCoeffCb;
-        Int* pcArlCoeffSrcV = m_ppcQTTempTUArlCoeffCr;
-        ::memcpy(pcArlCoeffDstU, pcArlCoeffSrcU, sizeof(Int) * uiNumCoeffC);
-        ::memcpy(pcArlCoeffDstV, pcArlCoeffSrcV, sizeof(Int) * uiNumCoeffC);
+        UInt numCoeffC    = (bChromaSame ? numCoeffY : numCoeffY >> 2);
+        UInt numCoeffIncC = numCoeffIncY >> 2;
+        TCoeff* coeffDstU = m_ppcQTTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffDstV = m_ppcQTTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffSrcU = m_pcQTTempTUCoeffCb;
+        TCoeff* coeffSrcV = m_pcQTTempTUCoeffCr;
+        ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
+        ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
+
+        Int* arlCoeffDstU = m_ppcQTTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
+        Int* arlCoeffDstV = m_ppcQTTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
+        Int* arlCoeffSrcU = m_ppcQTTempTUArlCoeffCb;
+        Int* arlCoeffSrcV = m_ppcQTTempTUArlCoeffCr;
+        ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
+        ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
     }
 
     //===== copy reconstruction =====
-    m_pcQTTempTransformSkipTComYuv.copyPartToPartLuma(&m_pcQTTempTComYuv[uiQTLayer], uiAbsPartIdx, 1 << uiLog2TrSize, 1 << uiLog2TrSize);
+    m_pcQTTempTransformSkipTComYuv.copyPartToPartLuma(&m_pcQTTempTComYuv[qtlayer], absPartIdx, 1 << trSizeLog2, 1 << trSizeLog2);
 
     if (!bLumaOnly && !bSkipChroma)
     {
-        UInt uiLog2TrSizeChroma = (bChromaSame ? uiLog2TrSize : uiLog2TrSize - 1);
-        m_pcQTTempTransformSkipTComYuv.copyPartToPartChroma(&m_pcQTTempTComYuv[uiQTLayer], uiAbsPartIdx, 1 << uiLog2TrSizeChroma, 1 << uiLog2TrSizeChroma);
+        UInt trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
+        m_pcQTTempTransformSkipTComYuv.copyPartToPartChroma(&m_pcQTTempTComYuv[qtlayer], absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
     }
 
-    UInt    uiZOrder          = cu->getZorderIdxInCU() + uiAbsPartIdx;
-    Pel*    piRecIPred        = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), uiZOrder);
-    UInt    uiRecIPredStride  = cu->getPic()->getPicYuvRec()->getStride();
-    Short*    piRecQt           = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
-    UInt    uiRecQtStride     = m_pcQTTempTComYuv[uiQTLayer].width;
-    UInt    uiWidth           = cu->getWidth(0) >> trDepth;
-    UInt    uiHeight          = cu->getHeight(0) >> trDepth;
-    Short* pRecQt     = piRecQt;
-    Pel* pRecIPred  = piRecIPred;
-    for (UInt uiY = 0; uiY < uiHeight; uiY++)
-    {
-        for (UInt uiX = 0; uiX < uiWidth; uiX++)
-        {
-            pRecIPred[uiX] = (Pel)pRecQt[uiX];
-        }
-
-        pRecQt    += uiRecQtStride;
-        pRecIPred += uiRecIPredStride;
-    }
+    UInt   zOrder           = cu->getZorderIdxInCU() + absPartIdx;
+    Pel*   reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zOrder);
+    UInt   reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
+    Short* reconQt          = m_pcQTTempTComYuv[qtlayer].getLumaAddr(absPartIdx);
+    UInt   reconQtStride    = m_pcQTTempTComYuv[qtlayer].width;
+    UInt   width            = cu->getWidth(0) >> trDepth;
+    UInt   height           = cu->getHeight(0) >> trDepth;
+    x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
 
     if (!bLumaOnly && !bSkipChroma)
     {
-        piRecIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), uiZOrder);
-        piRecQt    = m_pcQTTempTComYuv[uiQTLayer].getCbAddr(uiAbsPartIdx);
-        pRecQt     = piRecQt;
-        pRecIPred  = piRecIPred;
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pRecIPred[uiX] = (Pel)pRecQt[uiX];
-            }
+        width >>= 1;
+        height >>= 1;
+        reconIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zOrder);
+        reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
+        reconQt = m_pcQTTempTComYuv[qtlayer].getCbAddr(absPartIdx);
+        reconQtStride = m_pcQTTempTComYuv[qtlayer].Cwidth;
+        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
 
-            pRecQt    += uiRecQtStride;
-            pRecIPred += uiRecIPredStride;
-        }
-
-        piRecIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), uiZOrder);
-        piRecQt    = m_pcQTTempTComYuv[uiQTLayer].getCrAddr(uiAbsPartIdx);
-        pRecQt     = piRecQt;
-        pRecIPred  = piRecIPred;
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
-        {
-            for (UInt uiX = 0; uiX < uiWidth; uiX++)
-            {
-                pRecIPred[uiX] = (Pel)pRecQt[uiX];
-            }
-
-            pRecQt    += uiRecQtStride;
-            pRecIPred += uiRecIPredStride;
-        }
+        reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zOrder);
+        reconQt    = m_pcQTTempTComYuv[qtlayer].getCrAddr(absPartIdx);
+        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
     }
 }
 
