@@ -1770,41 +1770,41 @@ Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
 
 Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                            UInt        trDepth,
-                                           UInt        uiAbsPartIdx,
+                                           UInt        absPartIdx,
                                            TComYuv*    fencYuv,
-                                           TComYuv*    pcPredYuv,
-                                           TShortYUV*  pcResiYuv,
-                                           UInt&       ruiDist)
+                                           TComYuv*    predYuv,
+                                           TShortYUV*  resiYuv,
+                                           UInt&       outDist)
 {
-    UInt uiFullDepth = cu->getDepth(0) +  trDepth;
-    UInt uiTrMode    = cu->getTransformIdx(uiAbsPartIdx);
+    UInt fullDepth = cu->getDepth(0) + trDepth;
+    UInt trMode    = cu->getTransformIdx(absPartIdx);
 
-    if (uiTrMode == trDepth)
+    if (trMode == trDepth)
     {
         Bool checkTransformSkip = cu->getSlice()->getPPS()->getUseTransformSkip();
-        UInt uiLog2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
+        UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
 
         UInt actualTrDepth = trDepth;
-        if (uiLog2TrSize == 2)
+        if (trSizeLog2 == 2)
         {
             assert(trDepth > 0);
             actualTrDepth--;
-            UInt uiQPDiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + actualTrDepth) << 1);
-            Bool bFirstQ = ((uiAbsPartIdx % uiQPDiv) == 0);
+            UInt qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + actualTrDepth) << 1);
+            Bool bFirstQ = ((absPartIdx % qpdiv) == 0);
             if (!bFirstQ)
             {
                 return;
             }
         }
 
-        checkTransformSkip &= (uiLog2TrSize <= 3);
+        checkTransformSkip &= (trSizeLog2 <= 3);
         if (m_pcEncCfg->getUseTransformSkipFast())
         {
-            checkTransformSkip &= (uiLog2TrSize < 3);
+            checkTransformSkip &= (trSizeLog2 < 3);
             if (checkTransformSkip)
             {
                 Int nbLumaSkip = 0;
-                for (UInt absPartIdxSub = uiAbsPartIdx; absPartIdxSub < uiAbsPartIdx + 4; absPartIdxSub++)
+                for (UInt absPartIdxSub = absPartIdx; absPartIdxSub < absPartIdx + 4; absPartIdxSub++)
                 {
                     nbLumaSkip += cu->getTransformSkip(absPartIdxSub, TEXT_LUMA);
                 }
@@ -1816,11 +1816,11 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         if (checkTransformSkip)
         {
             // use RDO to decide whether Cr/Cb takes TS
-            m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiFullDepth][CI_QT_TRAFO_ROOT]);
+            m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[fullDepth][CI_QT_TRAFO_ROOT]);
 
             for (Int chromaId = 0; chromaId < 2; chromaId++)
             {
-                UInt64  dSingleCost    = MAX_INT64;
+                UInt64  singleCost     = MAX_INT64;
                 Int     bestModeId     = 0;
                 UInt    singleDistC    = 0;
                 UInt    singleCbfC     = 0;
@@ -1833,7 +1833,7 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
 
                 for (Int chromaModeId = firstCheckId; chromaModeId < 2; chromaModeId++)
                 {
-                    cu->setTransformSkipSubParts(chromaModeId, (TextType)(chromaId + 2), uiAbsPartIdx, cu->getDepth(0) +  actualTrDepth);
+                    cu->setTransformSkipSubParts(chromaModeId, (TextType)(chromaId + 2), absPartIdx, cu->getDepth(0) + actualTrDepth);
                     if (chromaModeId == firstCheckId)
                     {
                         default0Save1Load2 = 1;
@@ -1843,8 +1843,8 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                         default0Save1Load2 = 2;
                     }
                     singleDistCTmp = 0;
-                    xIntraCodingChromaBlk(cu, trDepth, uiAbsPartIdx, fencYuv, pcPredYuv, pcResiYuv, singleDistCTmp, chromaId, default0Save1Load2);
-                    singleCbfCTmp = cu->getCbf(uiAbsPartIdx, (TextType)(chromaId + 2), trDepth);
+                    xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, singleDistCTmp, chromaId, default0Save1Load2);
+                    singleCbfCTmp = cu->getCbf(absPartIdx, (TextType)(chromaId + 2), trDepth);
 
                     if (chromaModeId == 1 && singleCbfCTmp == 0)
                     {
@@ -1853,69 +1853,69 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                     }
                     else
                     {
-                        UInt bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, uiAbsPartIdx, chromaId + 2);
+                        UInt bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, absPartIdx, chromaId + 2);
                         singleCostTmp = m_pcRdCost->calcRdCost(singleDistCTmp, bitsTmp);
                     }
 
-                    if (singleCostTmp < dSingleCost)
+                    if (singleCostTmp < singleCost)
                     {
-                        dSingleCost = singleCostTmp;
+                        singleCost  = singleCostTmp;
                         singleDistC = singleDistCTmp;
                         bestModeId  = chromaModeId;
                         singleCbfC  = singleCbfCTmp;
 
                         if (bestModeId == firstCheckId)
                         {
-                            xStoreIntraResultChromaQT(cu, trDepth, uiAbsPartIdx, chromaId);
-                            m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiFullDepth][CI_TEMP_BEST]);
+                            xStoreIntraResultChromaQT(cu, trDepth, absPartIdx, chromaId);
+                            m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[fullDepth][CI_TEMP_BEST]);
                         }
                     }
                     if (chromaModeId == firstCheckId)
                     {
-                        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiFullDepth][CI_QT_TRAFO_ROOT]);
+                        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[fullDepth][CI_QT_TRAFO_ROOT]);
                     }
                 }
 
                 if (bestModeId == firstCheckId)
                 {
-                    xLoadIntraResultChromaQT(cu, trDepth, uiAbsPartIdx, chromaId);
-                    cu->setCbfSubParts(singleCbfC << trDepth, (TextType)(chromaId + 2), uiAbsPartIdx, cu->getDepth(0) + actualTrDepth);
-                    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiFullDepth][CI_TEMP_BEST]);
+                    xLoadIntraResultChromaQT(cu, trDepth, absPartIdx, chromaId);
+                    cu->setCbfSubParts(singleCbfC << trDepth, (TextType)(chromaId + 2), absPartIdx, cu->getDepth(0) + actualTrDepth);
+                    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[fullDepth][CI_TEMP_BEST]);
                 }
-                cu->setTransformSkipSubParts(bestModeId, (TextType)(chromaId + 2), uiAbsPartIdx, cu->getDepth(0) +  actualTrDepth);
-                ruiDist += singleDistC;
+                cu->setTransformSkipSubParts(bestModeId, (TextType)(chromaId + 2), absPartIdx, cu->getDepth(0) +  actualTrDepth);
+                outDist += singleDistC;
 
                 if (chromaId == 0)
                 {
-                    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiFullDepth][CI_QT_TRAFO_ROOT]);
+                    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[fullDepth][CI_QT_TRAFO_ROOT]);
                 }
             }
         }
         else
         {
-            cu->setTransformSkipSubParts(0, TEXT_CHROMA_U, uiAbsPartIdx, cu->getDepth(0) +  actualTrDepth);
-            cu->setTransformSkipSubParts(0, TEXT_CHROMA_V, uiAbsPartIdx, cu->getDepth(0) +  actualTrDepth);
-            xIntraCodingChromaBlk(cu, trDepth, uiAbsPartIdx, fencYuv, pcPredYuv, pcResiYuv, ruiDist, 0);
-            xIntraCodingChromaBlk(cu, trDepth, uiAbsPartIdx, fencYuv, pcPredYuv, pcResiYuv, ruiDist, 1);
+            cu->setTransformSkipSubParts(0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) +  actualTrDepth);
+            cu->setTransformSkipSubParts(0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) +  actualTrDepth);
+            xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, outDist, 0);
+            xIntraCodingChromaBlk(cu, trDepth, absPartIdx, fencYuv, predYuv, resiYuv, outDist, 1);
         }
     }
     else
     {
-        UInt uiSplitCbfU     = 0;
-        UInt uiSplitCbfV     = 0;
-        UInt uiQPartsDiv     = cu->getPic()->getNumPartInCU() >> ((uiFullDepth + 1) << 1);
-        UInt uiAbsPartIdxSub = uiAbsPartIdx;
-        for (UInt uiPart = 0; uiPart < 4; uiPart++, uiAbsPartIdxSub += uiQPartsDiv)
+        UInt splitCbfU     = 0;
+        UInt splitCbfV     = 0;
+        UInt qPartsDiv     = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        UInt absPartIdxSub = absPartIdx;
+        for (UInt part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            xRecurIntraChromaCodingQT(cu, trDepth + 1, uiAbsPartIdxSub, fencYuv, pcPredYuv, pcResiYuv, ruiDist);
-            uiSplitCbfU |= cu->getCbf(uiAbsPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
-            uiSplitCbfV |= cu->getCbf(uiAbsPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
+            xRecurIntraChromaCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, outDist);
+            splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
+            splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
         }
 
-        for (UInt uiOffs = 0; uiOffs < 4 * uiQPartsDiv; uiOffs++)
+        for (UInt offs = 0; offs < 4 * qPartsDiv; offs++)
         {
-            cu->getCbf(TEXT_CHROMA_U)[uiAbsPartIdx + uiOffs] |= (uiSplitCbfU << trDepth);
-            cu->getCbf(TEXT_CHROMA_V)[uiAbsPartIdx + uiOffs] |= (uiSplitCbfV << trDepth);
+            cu->getCbf(TEXT_CHROMA_U)[absPartIdx + offs] |= (splitCbfU << trDepth);
+            cu->getCbf(TEXT_CHROMA_V)[absPartIdx + offs] |= (splitCbfV << trDepth);
         }
     }
 }
