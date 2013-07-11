@@ -90,22 +90,27 @@ TEncSearch::TEncSearch()
     m_qtTempArlCoeffY  = NULL;
     m_qtTempArlCoeffCb = NULL;
     m_qtTempArlCoeffCr = NULL;
-    m_qtTempTrIdx   = NULL;
-    m_qtTempCbf[0] = m_qtTempCbf[1] = m_qtTempCbf[2] = NULL;
-    m_qtTempTComYuv  = NULL;
-    m_cfg = NULL;
-    m_entropyCoder = NULL;
-    m_tempPel = NULL;
-    m_sharedPredTransformSkip[0] = m_sharedPredTransformSkip[1] = m_sharedPredTransformSkip[2] = NULL;
-    m_qtTempTUCoeffY   = NULL;
-    m_qtTempTUCoeffCb  = NULL;
-    m_qtTempTUCoeffCr  = NULL;
+    m_qtTempTrIdx = NULL;
+    m_qtTempTComYuv = NULL;
+    m_qtTempTUCoeffY  = NULL;
+    m_qtTempTUCoeffCb = NULL;
+    m_qtTempTUCoeffCr = NULL;
     m_qtTempTUArlCoeffY  = NULL;
     m_qtTempTUArlCoeffCb = NULL;
     m_qtTempTUArlCoeffCr = NULL;
-    m_qtTempTransformSkipFlag[0] = NULL;
-    m_qtTempTransformSkipFlag[1] = NULL;
-    m_qtTempTransformSkipFlag[2] = NULL;
+    for (int i = 0; i < 3; i++)
+    {
+        m_sharedPredTransformSkip[i] = NULL;
+        m_qtTempCbf[i] = NULL;
+        m_qtTempTransformSkipFlag[i] = NULL;
+    }
+    m_cfg = NULL;
+    m_rdCost  = NULL;
+    m_trQuant = NULL;
+    m_tempPel = NULL;
+    m_entropyCoder = NULL;
+    m_rdSbacCoders    = NULL;
+    m_rdGoOnSbacCoder = NULL;
     setWpScalingDistParam(NULL, -1, REF_PIC_LIST_X);
 }
 
@@ -119,16 +124,16 @@ TEncSearch::~TEncSearch()
 
     if (m_cfg)
     {
-        const UInt uiNumLayersAllocated = m_cfg->getQuadtreeTULog2MaxSize() - m_cfg->getQuadtreeTULog2MinSize() + 1;
-        for (UInt ui = 0; ui < uiNumLayersAllocated; ++ui)
+        const UInt numLayersToAllocate = m_cfg->getQuadtreeTULog2MaxSize() - m_cfg->getQuadtreeTULog2MinSize() + 1;
+        for (UInt i = 0; i < numLayersToAllocate; ++i)
         {
-            delete[] m_qtTempCoeffY[ui];
-            delete[] m_qtTempCoeffCb[ui];
-            delete[] m_qtTempCoeffCr[ui];
-            delete[] m_qtTempArlCoeffY[ui];
-            delete[] m_qtTempArlCoeffCb[ui];
-            delete[] m_qtTempArlCoeffCr[ui];
-            m_qtTempTComYuv[ui].destroy();
+            delete[] m_qtTempCoeffY[i];
+            delete[] m_qtTempCoeffCb[i];
+            delete[] m_qtTempCoeffCr[i];
+            delete[] m_qtTempArlCoeffY[i];
+            delete[] m_qtTempArlCoeffCb[i];
+            delete[] m_qtTempArlCoeffCr[i];
+            m_qtTempTComYuv[i].destroy();
         }
     }
     delete[] m_qtTempCoeffY;
@@ -138,39 +143,35 @@ TEncSearch::~TEncSearch()
     delete[] m_qtTempArlCoeffCb;
     delete[] m_qtTempArlCoeffCr;
     delete[] m_qtTempTrIdx;
-    delete[] m_qtTempCbf[0];
-    delete[] m_qtTempCbf[1];
-    delete[] m_qtTempCbf[2];
     delete[] m_qtTempTComYuv;
-    delete[] m_sharedPredTransformSkip[0];
-    delete[] m_sharedPredTransformSkip[1];
-    delete[] m_sharedPredTransformSkip[2];
     delete[] m_qtTempTUCoeffY;
     delete[] m_qtTempTUCoeffCb;
     delete[] m_qtTempTUCoeffCr;
     delete[] m_qtTempTUArlCoeffY;
     delete[] m_qtTempTUArlCoeffCb;
     delete[] m_qtTempTUArlCoeffCr;
-    delete[] m_qtTempTransformSkipFlag[0];
-    delete[] m_qtTempTransformSkipFlag[1];
-    delete[] m_qtTempTransformSkipFlag[2];
+    for (UInt i = 0; i < 3; ++i)
+    {
+        delete[] m_qtTempCbf[i];
+        delete[] m_sharedPredTransformSkip[i];
+        delete[] m_qtTempTransformSkipFlag[i];
+    }
     m_qtTempTransformSkipTComYuv.destroy();
     m_tmpYuvPred.destroy();
 }
 
-Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTrQuant)
+Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 {
-    m_cfg          = pcEncCfg;
-    m_trQuant         = pcTrQuant;
-    m_rdCost          = pcRdCost;
-    m_searchRange      = pcEncCfg->getSearchRange();
-    m_bipredSearchRange = pcEncCfg->getBipredSearchRange();
-    m_searchMethod     = pcEncCfg->getSearchMethod();
-    m_entropyCoder    = NULL;
-    m_rdSbacCoders   = NULL;
-    m_rdGoOnSbacCoder = NULL;
+    m_cfg     = cfg;
+    m_trQuant = trQuant;
+    m_rdCost  = rdCost;
+
+    m_searchRange       = cfg->getSearchRange();
+    m_searchMethod      = cfg->getSearchMethod();
+    m_bipredSearchRange = cfg->getBipredSearchRange();
     m_me.setSearchMethod(m_searchMethod);
 
+    // default to no adaptive range
     for (Int dir = 0; dir < 2; dir++)
     {
         for (Int ref = 0; ref < 33; ref++)
@@ -195,7 +196,7 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTr
 
     m_tempPel = new Pel[g_maxCUWidth * g_maxCUHeight];
 
-    const UInt numLayersToAllocate = pcEncCfg->getQuadtreeTULog2MaxSize() - pcEncCfg->getQuadtreeTULog2MinSize() + 1;
+    const UInt numLayersToAllocate = cfg->getQuadtreeTULog2MaxSize() - cfg->getQuadtreeTULog2MinSize() + 1;
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCr = new TCoeff*[numLayersToAllocate];
@@ -247,7 +248,7 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 
 inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance)
 {
-    Pel*  fref = data.fref + searchY * data.lumaStride + searchX;
+    Pel* fref = data.fref + searchY * data.lumaStride + searchX;
     m_rdCost->setDistParam(patternKey, fref, data.lumaStride, m_cDistParam);
 
     if (m_cDistParam.iRows > 12)
@@ -258,14 +259,12 @@ inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct
 
     // distortion
     m_cDistParam.bitDepth = g_bitDepthY;
-    UInt sad = m_cDistParam.DistFunc(&m_cDistParam);
+    UInt cost = m_cDistParam.DistFunc(&m_cDistParam) + 
+                m_bc.mvcost(MV(searchX, searchY) << m_rdCost->m_iCostScale);
 
-    // motion cost
-    sad += m_bc.mvcost(MV(searchX, searchY) << m_rdCost->m_iCostScale);
-
-    if (sad < data.bcost)
+    if (cost < data.bcost)
     {
-        data.bcost        = sad;
+        data.bcost        = cost;
         data.bestx        = searchX;
         data.besty        = searchY;
         data.bestDistance = distance;
@@ -405,7 +404,7 @@ inline Void TEncSearch::xTZ2PointSearch(TComPattern* patternKey, IntTZSearchStru
     } // switch( rcStruct.ucPointNr )
 }
 
-__inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* patternKey, IntTZSearchStruct& data, MV* mvmin, MV* mvmax, Int startX, Int startY, Int distance)
+inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* patternKey, IntTZSearchStruct& data, MV* mvmin, MV* mvmax, Int startX, Int startY, Int distance)
 {
     assert(distance != 0);
     Int srchRngHorLeft   = mvmin->x;
@@ -897,6 +896,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     //--- set coded block flag ---
     cu->setCbfSubParts((absSum ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+
     //--- inverse transform ---
     if (absSum)
     {
@@ -916,7 +916,6 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     }
 
     //===== reconstruction =====
-
     primitives.calcrecon[(Int)g_convertToBit[width]]((pixel*)pred, residual, (pixel*)recon, reconQt, (pixel*)reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
