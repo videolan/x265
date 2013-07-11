@@ -2671,7 +2671,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& pre
 
     MV mvmin;
     MV mvmax;
-    MV mvzero;
+    MV mvzero(0, 0);
     MV mvtmp;
     MV mv[2];
     MV mvBidir[2];
@@ -3149,42 +3149,40 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& pre
 }
 
 // AMVP
-Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt partIdx, RefPicList picList, Int refIfx, MV& mvPred, Bool bFilled, UInt* puiDistBiP)
+Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt partIdx, RefPicList picList, Int refIfx, MV& mvPred, Bool bFilled, UInt* distBiP)
 {
     AMVPInfo* pcAMVPInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
-    MV      cBestMv;
-    Int     iBestIdx = 0;
-    MV      cZeroMv;
-    MV      cMvPred;
-    UInt    uiBestCost = MAX_INT;
-    UInt    partAddr = 0;
-    Int     iRoiWidth, iRoiHeight;
-    Int     i;
+    MV   bestMv;
+    Int  bestIdx = 0;
+    UInt bestCost = MAX_INT;
+    UInt partAddr = 0;
+    Int  roiWidth, roiHeight;
+    Int  i;
 
-    cu->getPartIndexAndSize(partIdx, partAddr, iRoiWidth, iRoiHeight);
+    cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
     // Fill the MV Candidates
     if (!bFilled)
     {
         cu->fillMvpCand(partIdx, partAddr, picList, refIfx, pcAMVPInfo);
     }
 
-    // initialize Mvp index & Mvp
-    iBestIdx = 0;
-    cBestMv  = pcAMVPInfo->m_acMvCand[0];
+    bestIdx = 0;
+    bestMv  = pcAMVPInfo->m_acMvCand[0];
     if (pcAMVPInfo->iN <= 1)
     {
-        mvPred = cBestMv;
+        mvPred = bestMv;
 
-        cu->setMVPIdxSubParts(iBestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
+        cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
         cu->setMVPNumSubParts(pcAMVPInfo->iN, picList, partAddr, partIdx, cu->getDepth(partAddr));
 
         if (cu->getSlice()->getMvdL1ZeroFlag() && picList == REF_PIC_LIST_1)
         {
-            (*puiDistBiP) = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, iRoiWidth, iRoiHeight);
+            (*distBiP) = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
         }
         return;
     }
+
     if (bFilled)
     {
         assert(cu->getMVPIdx(picList, partAddr) >= 0);
@@ -3197,22 +3195,21 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
     //-- Check Minimum Cost.
     for (i = 0; i < pcAMVPInfo->iN; i++)
     {
-        UInt uiTmpCost;
-        uiTmpCost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, iRoiWidth, iRoiHeight);
-        if (uiBestCost > uiTmpCost)
+        UInt cost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+        if (bestCost > cost)
         {
-            uiBestCost = uiTmpCost;
-            cBestMv   = pcAMVPInfo->m_acMvCand[i];
-            iBestIdx  = i;
-            (*puiDistBiP) = uiTmpCost;
+            bestCost = cost;
+            bestMv   = pcAMVPInfo->m_acMvCand[i];
+            bestIdx  = i;
+            (*distBiP) = cost;
         }
     }
 
     m_cYuvPredTemp.clear();
 
     // Setting Best MVP
-    mvPred = cBestMv;
-    cu->setMVPIdxSubParts(iBestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
+    mvPred = bestMv;
+    cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
     cu->setMVPNumSubParts(pcAMVPInfo->iN, picList, partAddr, partIdx, cu->getDepth(partAddr));
 }
 
@@ -3223,23 +3220,23 @@ UInt TEncSearch::xGetMvpIdxBits(Int idx, Int num)
     if (num == 1)
         return 0;
 
-    UInt uiLength = 1;
-    Int iTemp = idx;
-    if (iTemp == 0)
+    UInt length = 1;
+    Int temp = idx;
+    if (temp == 0)
     {
-        return uiLength;
+        return length;
     }
 
-    Bool bCodeLast = (num - 1 > iTemp);
+    Bool bCodeLast = (num - 1 > temp);
 
-    uiLength += (iTemp - 1);
+    length += (temp - 1);
 
     if (bCodeLast)
     {
-        uiLength++;
+        length++;
     }
 
-    return uiLength;
+    return length;
 }
 
 Void TEncSearch::xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt lastMode, UInt blockBit[3])
@@ -3339,40 +3336,37 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mv
 }
 
 UInt TEncSearch::xGetTemplateCost(TComDataCU* cu,
-                                  UInt        uiPartIdx,
+                                  UInt        partIdx,
                                   UInt        partAddr,
                                   TComYuv*    fencYuv,
-                                  TComYuv*    pcTemplateCand,
-                                  MV          cMvCand,
-                                  Int         iMVPIdx,
-                                  Int         iMVPNum,
+                                  TComYuv*    templateCand,
+                                  MV          mvCand,
+                                  Int         mvpIdx,
+                                  Int         mvpCandCount,
                                   RefPicList  picList,
                                   Int         refIfx,
-                                  Int         iSizeX,
-                                  Int         iSizeY)
+                                  Int         sizex,
+                                  Int         sizey)
 {
-    UInt uiCost  = MAX_INT;
-
-    TComPicYuv* pcPicYuvRef = cu->getSlice()->getRefPic(picList, refIfx)->getPicYuvRec();
-
-    cu->clipMv(cMvCand);
+    cu->clipMv(mvCand);
 
     // prediction pattern
+    TComPicYuv* frefYuv = cu->getSlice()->getRefPic(picList, refIfx)->getPicYuvRec();
     if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
     {
-        TShortYUV *pcMbYuv = &m_acShortPred[0];
-        xPredInterLumaBlk(cu, pcPicYuvRef, partAddr, &cMvCand, iSizeX, iSizeY, pcMbYuv, true);
-        xWeightedPredictionUni(cu, pcMbYuv, partAddr, iSizeX, iSizeY, picList, pcTemplateCand, refIfx);
+        TShortYUV *mbYuv = &m_acShortPred[0];
+        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, mbYuv, true);
+        xWeightedPredictionUni(cu, mbYuv, partAddr, sizex, sizey, picList, templateCand, refIfx);
     }
     else
     {
-        xPredInterLumaBlk(cu, pcPicYuvRef, partAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, false);
+        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, templateCand, false);
     }
 
     // calc distortion
-    uiCost = m_me.bufSAD((pixel*)pcTemplateCand->getLumaAddr(partAddr), pcTemplateCand->getStride());
+    UInt cost = m_me.bufSAD((pixel*)templateCand->getLumaAddr(partAddr), templateCand->getStride());
     x265_emms();
-    return m_pcRdCost->calcRdSADCost(uiCost, m_mvpIdxCost[iMVPIdx][iMVPNum]);
+    return m_pcRdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
 }
 
 Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int PartIdx, RefPicList picList, MV* pcMvPred, Int RefIdxPred, MV& rcMv, UInt& outBits, UInt& outCost, Bool Bi)
