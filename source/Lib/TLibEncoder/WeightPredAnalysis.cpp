@@ -141,9 +141,9 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
     {
         for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
         {
-            for (Int iComp = 0; iComp < 3; iComp++)
+            for (Int comp = 0; comp < 3; comp++)
             {
-                wpScalingParam  *pwp = &(m_wp[list][refIdx][iComp]);
+                wpScalingParam  *pwp = &(m_wp[list][refIdx][comp]);
                 iPresentCnt += (Int)pwp->bPresentFlag;
             }
         }
@@ -157,9 +157,9 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
         {
             for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
             {
-                for (Int iComp = 0; iComp < 3; iComp++)
+                for (Int comp = 0; comp < 3; comp++)
                 {
-                    wpScalingParam  *pwp = &(m_wp[list][refIdx][iComp]);
+                    wpScalingParam  *pwp = &(m_wp[list][refIdx][comp]);
                     pwp->bPresentFlag      = false;
                     pwp->uiLog2WeightDenom = 0;
                     pwp->iWeight           = 1;
@@ -317,12 +317,12 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             Double dRatio = ((Double)iSADWP / (Double)iSADnoWP);
             if (dRatio >= (Double)DTHRESH)
             {
-                for (Int iComp = 0; iComp < 3; iComp++)
+                for (Int comp = 0; comp < 3; comp++)
                 {
-                    weightPredTable[refList][refIdxTmp][iComp].bPresentFlag = false;
-                    weightPredTable[refList][refIdxTmp][iComp].iOffset = (Int)0;
-                    weightPredTable[refList][refIdxTmp][iComp].iWeight = (Int)iDefaultWeight;
-                    weightPredTable[refList][refIdxTmp][iComp].uiLog2WeightDenom = (Int)iDenom;
+                    weightPredTable[refList][refIdxTmp][comp].bPresentFlag = false;
+                    weightPredTable[refList][refIdxTmp][comp].iOffset = (Int)0;
+                    weightPredTable[refList][refIdxTmp][comp].iWeight = (Int)iDefaultWeight;
+                    weightPredTable[refList][refIdxTmp][comp].uiLog2WeightDenom = (Int)iDenom;
                 }
             }
         }
@@ -340,13 +340,13 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
 Int64 WeightPredAnalysis::xCalcDCValueSlice(TComSlice *slice, Pel *pPel, Int *iSample)
 {
     TComPicYuv* pPic = slice->getPic()->getPicYuvOrg();
-    Int iStride = pPic->getStride();
+    Int stride = pPic->getStride();
 
     *iSample = 0;
     Int width  = pPic->getWidth();
     Int height = pPic->getHeight();
     *iSample = width * height;
-    Int64 iDC = xCalcDCValue(pPel, width, height, iStride);
+    Int64 iDC = xCalcDCValue(pPel, width, height, stride);
 
     return iDC;
 }
@@ -360,11 +360,11 @@ Int64 WeightPredAnalysis::xCalcDCValueSlice(TComSlice *slice, Pel *pPel, Int *iS
 Int64 WeightPredAnalysis::xCalcACValueSlice(TComSlice *slice, Pel *pPel, Int64 iDC)
 {
     TComPicYuv* pPic = slice->getPic()->getPicYuvOrg();
-    Int iStride = pPic->getStride();
+    Int stride = pPic->getStride();
 
     Int width  = pPic->getWidth();
     Int height = pPic->getHeight();
-    Int64 iAC = xCalcACValue(pPel, width, height, iStride, iDC);
+    Int64 iAC = xCalcACValue(pPel, width, height, stride, iDC);
 
     return iAC;
 }
@@ -411,10 +411,10 @@ Int64 WeightPredAnalysis::xCalcACValueUVSlice(TComSlice *slice, Pel *pPel, Int64
  * \param Pel *pPel
  * \param Int width
  * \param Int height
- * \param Int iStride
+ * \param Int stride
  * \returns Int64
  */
-Int64 WeightPredAnalysis::xCalcDCValue(Pel *pPel, Int width, Int height, Int iStride)
+Int64 WeightPredAnalysis::xCalcDCValue(Pel *pPel, Int width, Int height, Int stride)
 {
     Int x, y;
     Int64 iDC = 0;
@@ -426,7 +426,7 @@ Int64 WeightPredAnalysis::xCalcDCValue(Pel *pPel, Int width, Int height, Int iSt
             iDC += (Int)(pPel[x]);
         }
 
-        pPel += iStride;
+        pPel += stride;
     }
 
     return iDC;
@@ -436,11 +436,11 @@ Int64 WeightPredAnalysis::xCalcDCValue(Pel *pPel, Int width, Int height, Int iSt
  * \param Pel *pPel
  * \param Int width
  * \param Int height
- * \param Int iStride
+ * \param Int stride
  * \param Int iDC
  * \returns Int64
  */
-Int64 WeightPredAnalysis::xCalcACValue(Pel *pPel, Int width, Int height, Int iStride, Int64 iDC)
+Int64 WeightPredAnalysis::xCalcACValue(Pel *pPel, Int width, Int height, Int stride, Int64 iDC)
 {
     Int x, y;
     Int64 iAC = 0;
@@ -452,7 +452,7 @@ Int64 WeightPredAnalysis::xCalcACValue(Pel *pPel, Int width, Int height, Int iSt
             iAC += abs((Int)pPel[x] - (Int)iDC);
         }
 
-        pPel += iStride;
+        pPel += stride;
     }
 
     return iAC;

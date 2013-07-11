@@ -791,7 +791,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
     Int x, y;
     TComDataCU *pTmpCu = m_pcPic->getCU(iAddr);
     Pel* pRec;
-    Int  iStride;
+    Int  stride;
     Int  iLcuWidth  = m_uiMaxCUWidth;
     Int  iLcuHeight = m_uiMaxCUHeight;
     UInt uiLPelX    = pTmpCu->getCUPelX();
@@ -839,17 +839,17 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
     if (iYCbCr == 0)
     {
         pRec       = m_pcPic->getPicYuvRec()->getLumaAddr(iAddr);
-        iStride    = m_pcPic->getStride();
+        stride    = m_pcPic->getStride();
     }
     else if (iYCbCr == 1)
     {
         pRec       = m_pcPic->getPicYuvRec()->getCbAddr(iAddr);
-        iStride    = m_pcPic->getCStride();
+        stride    = m_pcPic->getCStride();
     }
     else
     {
         pRec       = m_pcPic->getPicYuvRec()->getCrAddr(iAddr);
-        iStride    = m_pcPic->getCStride();
+        stride    = m_pcPic->getCStride();
     }
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
@@ -859,10 +859,10 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
         for (Int i = 0; i < iCuHeightTmp + 1; i++)
         {
             m_pTmpL2[i] = pRec[iShift];
-            pRec += iStride;
+            pRec += stride;
         }
 
-        pRec -= (iStride * (iCuHeightTmp + 1));
+        pRec -= (stride * (iCuHeightTmp + 1));
 
         pTmpL = m_pTmpL1;
         pTmpU = &(m_pTmpU1[uiLPelX]);
@@ -889,7 +889,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
                 pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
             }
 
-            pRec += iStride;
+            pRec += stride;
         }
 
         break;
@@ -900,7 +900,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
         iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight;
         if (uiTPelY == 0)
         {
-            pRec += iStride;
+            pRec += stride;
         }
         for (x = 0; x < iLcuWidth; x++)
         {
@@ -911,14 +911,14 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
         {
             for (x = 0; x < iLcuWidth; x++)
             {
-                iSignDown  = xSign(pRec[x] - pRec[x + iStride]);
+                iSignDown  = xSign(pRec[x] - pRec[x + stride]);
                 uiEdgeType = iSignDown + m_iUpBuff1[x] + 2;
                 m_iUpBuff1[x] = -iSignDown;
 
                 pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
             }
 
-            pRec += iStride;
+            pRec += stride;
         }
 
         break;
@@ -933,7 +933,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
 
         if (uiTPelY == 0)
         {
-            pRec += iStride;
+            pRec += stride;
         }
 
         for (x = iStartX; x < iEndX; x++)
@@ -943,10 +943,10 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
 
         for (y = iStartY; y < iEndY; y++)
         {
-            iSignDown2 = xSign(pRec[iStride + iStartX] - pTmpL[y]);
+            iSignDown2 = xSign(pRec[stride + iStartX] - pTmpL[y]);
             for (x = iStartX; x < iEndX; x++)
             {
-                iSignDown1      =  xSign(pRec[x] - pRec[x + iStride + 1]);
+                iSignDown1      =  xSign(pRec[x] - pRec[x + stride + 1]);
                 uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
                 m_iUpBufft[x + 1] = -iSignDown1;
                 pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
@@ -958,7 +958,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
             m_iUpBuff1 = m_iUpBufft;
             m_iUpBufft = ipSwap;
 
-            pRec += iStride;
+            pRec += stride;
         }
 
         break;
@@ -973,7 +973,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
 
         if (iStartY == 1)
         {
-            pRec += iStride;
+            pRec += stride;
         }
 
         for (x = iStartX - 1; x < iEndX; x++)
@@ -990,15 +990,15 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
             pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
             for (x = iStartX + 1; x < iEndX; x++)
             {
-                iSignDown1      =  xSign(pRec[x] - pRec[x + iStride - 1]);
+                iSignDown1      =  xSign(pRec[x] - pRec[x + stride - 1]);
                 uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
                 m_iUpBuff1[x - 1] = -iSignDown1;
                 pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
             }
 
-            m_iUpBuff1[iEndX - 1] = xSign(pRec[iEndX - 1 + iStride] - pRec[iEndX]);
+            m_iUpBuff1[iEndX - 1] = xSign(pRec[iEndX - 1 + stride] - pRec[iEndX]);
 
-            pRec += iStride;
+            pRec += stride;
         }
 
         break;
@@ -1012,7 +1012,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
                 pRec[x] = pOffsetBo[pRec[x]];
             }
 
-            pRec += iStride;
+            pRec += stride;
         }
 
         break;
@@ -1146,7 +1146,7 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
             picWidthTmp = m_iPicWidth >> 1;
         }
 
-        //     pRec += iStride*(m_uiMaxCUHeight-1);
+        //     pRec += stride*(m_uiMaxCUHeight-1);
         for (i = 0; i < (m_uiMaxCUHeight >> isChroma) + 1; i++)
         {
             m_pTmpL1[i] = pRec[0];
@@ -1402,32 +1402,32 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
  * \param depth CU depth
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth)
+Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
 {
     TComPic* pcPic     = cu->getPic();
     UInt uiCurNumParts = pcPic->getNumPartInCU() >> (depth << 1);
     UInt uiQNumParts   = uiCurNumParts >> 2;
 
     // go to sub-CU
-    if (cu->getDepth(uiAbsZorderIdx) > depth)
+    if (cu->getDepth(absZOrderIdx) > depth)
     {
-        for (UInt partIdx = 0; partIdx < 4; partIdx++, uiAbsZorderIdx += uiQNumParts)
+        for (UInt partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += uiQNumParts)
         {
-            UInt uiLPelX   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[uiAbsZorderIdx]];
-            UInt uiTPelY   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[uiAbsZorderIdx]];
+            UInt uiLPelX   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
+            UInt uiTPelY   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
             if ((uiLPelX < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (uiTPelY < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
-                xPCMCURestoration(cu, uiAbsZorderIdx, depth + 1);
+                xPCMCURestoration(cu, absZOrderIdx, depth + 1);
         }
 
         return;
     }
 
     // restore PCM samples
-    if ((cu->getIPCMFlag(uiAbsZorderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(uiAbsZorderIdx))
+    if ((cu->getIPCMFlag(absZOrderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(absZOrderIdx))
     {
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_LUMA);
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_CHROMA_U);
-        xPCMSampleRestoration(cu, uiAbsZorderIdx, depth, TEXT_CHROMA_V);
+        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_LUMA);
+        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_CHROMA_U);
+        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_CHROMA_V);
     }
 }
 
@@ -1438,7 +1438,7 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt uiAbsZorde
  * \param ttText texture component type
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, TextType ttText)
+Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* piSrc;
@@ -1449,17 +1449,17 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
     UInt uiPcmLeftShiftBit;
     UInt uiX, uiY;
     UInt uiMinCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
-    UInt uiLumaOffset   = uiMinCoeffSize * uiAbsZorderIdx;
+    UInt uiLumaOffset   = uiMinCoeffSize * absZOrderIdx;
     UInt uiChromaOffset = uiLumaOffset >> 2;
 
     if (ttText == TEXT_LUMA)
     {
-        piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), uiAbsZorderIdx);
+        piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
         piPcm = cu->getPCMSampleY() + uiLumaOffset;
         stride  = pcPicYuvRec->getStride();
         width  = (g_maxCUWidth >> depth);
         height = (g_maxCUHeight >> depth);
-        if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
+        if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             uiPcmLeftShiftBit = 0;
         }
@@ -1472,19 +1472,19 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
     {
         if (ttText == TEXT_CHROMA_U)
         {
-            piSrc = pcPicYuvRec->getCbAddr(cu->getAddr(), uiAbsZorderIdx);
+            piSrc = pcPicYuvRec->getCbAddr(cu->getAddr(), absZOrderIdx);
             piPcm = cu->getPCMSampleCb() + uiChromaOffset;
         }
         else
         {
-            piSrc = pcPicYuvRec->getCrAddr(cu->getAddr(), uiAbsZorderIdx);
+            piSrc = pcPicYuvRec->getCrAddr(cu->getAddr(), absZOrderIdx);
             piPcm = cu->getPCMSampleCr() + uiChromaOffset;
         }
 
         stride = pcPicYuvRec->getCStride();
         width  = ((g_maxCUWidth >> depth) / 2);
         height = ((g_maxCUWidth >> depth) / 2);
-        if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
+        if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             uiPcmLeftShiftBit = 0;
         }

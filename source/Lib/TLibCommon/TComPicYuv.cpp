@@ -250,7 +250,7 @@ Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
     m_bIsBorderExtended = true;
 }
 
-Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int width, Int height, Int iMarginX, Int iMarginY)
+Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
 {
     Int   x, y;
     Pel*  pi;
@@ -265,19 +265,19 @@ Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int iStride, Int width, Int he
             pi[width + x] = pi[width - 1];
         }
 
-        pi += iStride;
+        pi += stride;
     }
 
-    pi -= (iStride + iMarginX);
+    pi -= (stride + iMarginX);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi + (y + 1) * iStride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(pi + (y + 1) * stride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 
-    pi -= ((height - 1) * iStride);
+    pi -= ((height - 1) * stride);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi - (y + 1) * iStride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(pi - (y + 1) * stride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 }
 
@@ -300,20 +300,20 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
     Int   x, y;
     UChar uc;
 
-    Pel*  piY   = getLumaAddr();
-    Pel*  piCb  = getCbAddr();
-    Pel*  piCr  = getCrAddr();
+    Pel*  pelY   = getLumaAddr();
+    Pel*  pelCb  = getCbAddr();
+    Pel*  pelCr  = getCrAddr();
 
     for (y = 0; y < m_iPicHeight; y++)
     {
         for (x = 0; x < m_iPicWidth; x++)
         {
-            uc = (UChar)Clip3<Pel>(0, 255, (piY[x] + offset) >> shift);
+            uc = (UChar)Clip3<Pel>(0, 255, (pelY[x] + offset) >> shift);
 
             fwrite(&uc, sizeof(UChar), 1, pFile);
         }
 
-        piY += getStride();
+        pelY += getStride();
     }
 
     shift = g_bitDepthC - 8;
@@ -323,22 +323,22 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
     {
         for (x = 0; x < m_iPicWidth >> 1; x++)
         {
-            uc = (UChar)Clip3<Pel>(0, 255, (piCb[x] + offset) >> shift);
+            uc = (UChar)Clip3<Pel>(0, 255, (pelCb[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
         }
 
-        piCb += getCStride();
+        pelCb += getCStride();
     }
 
     for (y = 0; y < m_iPicHeight >> 1; y++)
     {
         for (x = 0; x < m_iPicWidth >> 1; x++)
         {
-            uc = (UChar)Clip3<Pel>(0, 255, (piCr[x] + offset) >> shift);
+            uc = (UChar)Clip3<Pel>(0, 255, (pelCr[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
         }
 
-        piCr += getCStride();
+        pelCr += getCStride();
     }
 
     fclose(pFile);

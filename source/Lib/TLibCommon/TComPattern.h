@@ -32,7 +32,7 @@
  */
 
 /** \file     TComPattern.h
-    \brief    neighbouring pixel access classes (header)
+    \brief    neighboring pixel access classes (header)
 */
 
 #ifndef __TCOMPATTERN__
@@ -51,110 +51,111 @@
 
 class TComDataCU;
 
-/// neighbouring pixel access class for one component
+/// neighboring pixel access class for one component
 class TComPatternParam
 {
 private:
 
-    Int   m_iOffsetLeft;
-    Int   m_iOffsetAbove;
-    Pel*  m_piPatternOrigin;
+    Int   m_offsetLeft;
+    Int   m_offsetAbove;
+    Pel*  m_patternOrigin;
 
 public:
 
-    Int   m_iROIWidth;
-    Int   m_iROIHeight;
-    Int   m_iPatternStride;
+    Int   m_roiWidth;
+    Int   m_roiHeight;
+    Int   m_patternStride;
 
     /// return starting position of buffer
-    Pel*  getPatternOrigin()        { return m_piPatternOrigin; }
+    Pel*  getPatternOrigin()        { return m_patternOrigin; }
 
     /// return starting position of ROI (ROI = &pattern[AboveOffset][LeftOffset])
-    __inline Pel*  getROIOrigin()
+    inline Pel* getROIOrigin()
     {
-        return m_piPatternOrigin + m_iPatternStride * m_iOffsetAbove + m_iOffsetLeft;
+        return m_patternOrigin + m_patternStride * m_offsetAbove + m_offsetLeft;
     }
 
-    /// set parameters from Pel buffer for accessing neighbouring pixels
+    /// set parameters from Pel buffer for accessing neighboring pixels
     Void setPatternParamPel(Pel* piTexture,
-                            Int  iRoiWidth,
-                            Int  iRoiHeight,
-                            Int  iStride,
-                            Int  iOffsetLeft,
-                            Int  iOffsetAbove);
+                            Int  roiWidth,
+                            Int  roiHeight,
+                            Int  stride,
+                            Int  offsetLeft,
+                            Int  offsetAbove);
 
-    /// set parameters of one color component from CU data for accessing neighbouring pixels
+    /// set parameters of one color component from CU data for accessing neighboring pixels
     Void setPatternParamCU(TComDataCU* cu,
-                           UChar       iComp,
-                           UChar       iRoiWidth,
-                           UChar       iRoiHeight,
-                           Int         iOffsetLeft,
-                           Int         iOffsetAbove,
-                           UInt        uiAbsZorderIdx);
+                           UChar       comp,
+                           UChar       roiWidth,
+                           UChar       roiHeight,
+                           Int         offsetLeft,
+                           Int         offsetAbove,
+                           UInt        absZOrderIdx);
 };
 
-/// neighbouring pixel access class for all components
+/// neighboring pixel access class for all components
 class TComPattern
 {
 private:
 
-    TComPatternParam  m_cPatternY;
-    TComPatternParam  m_cPatternCb;
-    TComPatternParam  m_cPatternCr;
+    TComPatternParam  m_patternY;
+    TComPatternParam  m_patternCb;
+    TComPatternParam  m_patternCr;
 
-    static const UChar m_aucIntraFilter[5];
+    static const UChar m_intraFilter[5];
 
 public:
 
     // ROI & pattern information, (ROI = &pattern[AboveOffset][LeftOffset])
-    Pel*  getROIY()                 { return m_cPatternY.getROIOrigin(); }
+    Pel*  getROIY()                 { return m_patternY.getROIOrigin(); }
 
-    Int   getROIYWidth()            { return m_cPatternY.m_iROIWidth; }
+    Int   getROIYWidth()            { return m_patternY.m_roiWidth; }
 
-    Int   getROIYHeight()           { return m_cPatternY.m_iROIHeight; }
+    Int   getROIYHeight()           { return m_patternY.m_roiHeight; }
 
-    Int   getPatternLStride()       { return m_cPatternY.m_iPatternStride; }
+    Int   getPatternLStride()       { return m_patternY.m_patternStride; }
 
     // access functions of ADI buffers
-    Pel*  getAdiOrgBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
-    Pel*  getAdiCbBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
-    Pel*  getAdiCrBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
+    Pel*  getAdiOrgBuf(Int cuWidth, Int cuHeight, Pel* adiBuf);
+    Pel*  getAdiCbBuf(Int cuWidth, Int cuHeight, Pel* adiBuf);
+    Pel*  getAdiCrBuf(Int cuWidth, Int cuHeight, Pel* adiBuf);
 
-    Pel*  getPredictorPtr(UInt dirMode, UInt uiWidthBits, Pel* piAdiBuf);
+    Pel*  getPredictorPtr(UInt dirMode, UInt uiWidthBits, Pel* adiBuf);
+
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
     // -------------------------------------------------------------------------------------------------------------------
 
-    /// set parameters from Pel buffers for accessing neighbouring pixels
-    Void initPattern(Pel* piY,
-                     Pel* piCb,
-                     Pel* piCr,
-                     Int  iRoiWidth,
-                     Int  iRoiHeight,
-                     Int  iStride,
-                     Int  iOffsetLeft,
-                     Int  iOffsetAbove);
+    /// set parameters from Pel buffers for accessing neighboring pixels
+    Void initPattern(Pel* y,
+                     Pel* cb,
+                     Pel* cr,
+                     Int  roiWidth,
+                     Int  roiHeight,
+                     Int  stride,
+                     Int  offsetLeft,
+                     Int  offsetAbove);
 
-    Void initAdiPattern(TComDataCU* cu, UInt uiZorderIdxInPart, UInt uiPartDepth, Pel* piAdiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
+    Void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
 
-    /// set parameters from CU data for accessing neighbouring pixels
+    /// set parameters from CU data for accessing neighboring pixels
     Void  initPattern(TComDataCU* cu,
-                      UInt        uiPartDepth,
+                      UInt        partDepth,
                       UInt        absPartIdx);
 
     /// set luma parameters from CU data for accessing ADI data
     Void  initAdiPattern(TComDataCU* cu,
-                         UInt        uiZorderIdxInPart,
-                         UInt        uiPartDepth,
-                         Pel*        piAdiBuf,
+                         UInt        zOrderIdxInPart,
+                         UInt        partDepth,
+                         Pel*        adiBuf,
                          Int         iOrgBufStride,
                          Int         iOrgBufHeight);
 
     /// set chroma parameters from CU data for accessing ADI data
     Void  initAdiPatternChroma(TComDataCU* cu,
-                               UInt        uiZorderIdxInPart,
-                               UInt        uiPartDepth,
-                               Pel*        piAdiBuf,
+                               UInt        zOrderIdxInPart,
+                               UInt        partDepth,
+                               Pel*        adiBuf,
                                Int         iOrgBufStride,
                                Int         iOrgBufHeight);
 

@@ -424,13 +424,13 @@ void convert16to32(short *src, int *dst, int num)
     }
 }
 
-void convert16to32_shl(int *dst, short *src, intptr_t iStride, int shift, int size)
+void convert16to32_shl(int *dst, short *src, intptr_t stride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
-            dst[i * size + j] = ((int)src[i * iStride + j]) << shift;
+            dst[i * size + j] = ((int)src[i * stride + j]) << shift;
         }
     }
 }

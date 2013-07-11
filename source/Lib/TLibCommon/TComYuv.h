@@ -108,14 +108,14 @@ public:
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Copy YUV buffer to picture buffer
-    Void    copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
-    Void    copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
-    Void    copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth = 0, UInt partIdx = 0);
+    Void    copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
+    Void    copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
+    Void    copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth = 0, UInt partIdx = 0);
 
     //  Copy YUV buffer from picture buffer
-    Void    copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx);
-    Void    copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx);
-    Void    copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx);
+    Void    copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx);
+    Void    copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx);
+    Void    copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx);
 
     //  Copy Small YUV buffer to the part of other Big YUV buffer
     Void    copyToPartYuv(TComYuv* pcYuvDst,    UInt uiDstPartIdx);

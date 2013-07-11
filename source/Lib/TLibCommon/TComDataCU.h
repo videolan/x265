@@ -228,7 +228,7 @@ public:
     Void          copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bool isRDObasedAnalysis = true);
 
     Void          copyToPic(UChar depth);
-    Void          copyToPic(UChar depth, UInt partIdx, UInt uiPartDepth);
+    Void          copyToPic(UChar depth, UInt partIdx, UInt partDepth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description
@@ -480,7 +480,7 @@ public:
     Void          compressMV();
 
     // -------------------------------------------------------------------------------------------------------------------
-    // utility functions for neighbouring information
+    // utility functions for neighboring information
     // -------------------------------------------------------------------------------------------------------------------
 
     TComDataCU*   getCULeft() { return m_pcCULeft; }
@@ -516,8 +516,8 @@ public:
     Void          deriveLeftRightTopIdx(UInt partIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT);
     Void          deriveLeftBottomIdx(UInt partIdx, UInt& ruiPartIdxLB);
 
-    Void          deriveLeftRightTopIdxAdi(UInt& ruiPartIdxLT, UInt& ruiPartIdxRT, UInt partOffset, UInt uiPartDepth);
-    Void          deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt  partOffset, UInt uiPartDepth);
+    Void          deriveLeftRightTopIdxAdi(UInt& ruiPartIdxLT, UInt& ruiPartIdxRT, UInt partOffset, UInt partDepth);
+    Void          deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt  partOffset, UInt partDepth);
 
     Bool          hasEqualMotion(UInt absPartIdx, TComDataCU* pcCandCU, UInt uiCandAbsPartIdx);
     Void          getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvField* pcMFieldNeighbours, UChar* puhInterDirNeighbours, Int& numValidMergeCand, Int mrgCandIdx = -1);

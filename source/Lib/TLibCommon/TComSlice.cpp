@@ -1082,10 +1082,10 @@ Void  TComSlice::getWpAcDcParam(wpACDCParam *&wp)
  */
 Void  TComSlice::initWpAcDcParam()
 {
-    for (Int iComp = 0; iComp < 3; iComp++)
+    for (Int comp = 0; comp < 3; comp++)
     {
-        m_weightACDCParam[iComp].iAC = 0;
-        m_weightACDCParam[iComp].iDC = 0;
+        m_weightACDCParam[comp].iAC = 0;
+        m_weightACDCParam[comp].iDC = 0;
     }
 }
 

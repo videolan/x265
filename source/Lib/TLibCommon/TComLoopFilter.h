@@ -65,40 +65,40 @@ private:
 protected:
 
     /// CU-level deblocking function
-    Void xDeblockCU(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int Edge);
+    Void xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int Edge);
 
     // set / get functions
-    Void xSetLoopfilterParam(TComDataCU* cu, UInt uiAbsZorderIdx);
+    Void xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx);
     // filtering functions
-    Void xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt uiAbsZorderIdx, UInt depth);
-    Void xSetEdgefilterPU(TComDataCU* cu, UInt uiAbsZorderIdx);
+    Void xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt absZOrderIdx, UInt depth);
+    Void xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx);
     Void xGetBoundaryStrengthSingle(TComDataCU* cu, Int dir, UInt partIdx);
-    UInt xCalcBsIdx(TComDataCU* cu, UInt uiAbsZorderIdx, Int dir, Int iEdgeIdx, Int iBaseUnitIdx)
+    UInt xCalcBsIdx(TComDataCU* cu, UInt absZOrderIdx, Int dir, Int iEdgeIdx, Int iBaseUnitIdx)
     {
         TComPic* const pcPic = cu->getPic();
         const UInt uiLCUWidthInBaseUnits = pcPic->getNumPartInWidth();
 
         if (dir == 0)
         {
-            return g_rasterToZscan[g_zscanToRaster[uiAbsZorderIdx] + iBaseUnitIdx * uiLCUWidthInBaseUnits + iEdgeIdx];
+            return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + iBaseUnitIdx * uiLCUWidthInBaseUnits + iEdgeIdx];
         }
         else
         {
-            return g_rasterToZscan[g_zscanToRaster[uiAbsZorderIdx] + iEdgeIdx * uiLCUWidthInBaseUnits + iBaseUnitIdx];
+            return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + iEdgeIdx * uiLCUWidthInBaseUnits + iBaseUnitIdx];
         }
     }
 
-    Void xSetEdgefilterMultiple(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int dir, Int iEdgeIdx, Bool bValue, UInt uiWidthInBaseUnits = 0, UInt uiHeightInBaseUnits = 0);
+    Void xSetEdgefilterMultiple(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int iEdgeIdx, Bool bValue, UInt uiWidthInBaseUnits = 0, UInt uiHeightInBaseUnits = 0);
 
-    Void xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int dir, Int iEdge);
-    Void xEdgeFilterChroma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt depth, Int dir, Int iEdge);
+    Void xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int iEdge);
+    Void xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt depth, Int dir, Int iEdge);
 
-    __inline Void xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ);
-    __inline Void xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter);
+    inline Void xPelFilterLuma(Pel* piSrc, Int iOffset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ);
+    inline Void xPelFilterChroma(Pel* piSrc, Int iOffset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter);
 
-    __inline Bool xUseStrongFiltering(Int offset, Int d, Int beta, Int tc, Pel* piSrc);
-    __inline Int xCalcDP(Pel* piSrc, Int iOffset);
-    __inline Int xCalcDQ(Pel* piSrc, Int iOffset);
+    inline Bool xUseStrongFiltering(Int offset, Int d, Int beta, Int tc, Pel* piSrc);
+    inline Int xCalcDP(Pel* piSrc, Int iOffset);
+    inline Int xCalcDQ(Pel* piSrc, Int iOffset);
 
     static const UChar sm_tcTable[54];
     static const UChar sm_betaTable[52];

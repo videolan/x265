@@ -146,7 +146,7 @@ Void TEncPic::preanalyze()
     TComPicYuv* pcPicYuv = getPicYuvOrg();
     const Int width = pcPicYuv->getWidth();
     const Int height = pcPicYuv->getHeight();
-    const Int iStride = pcPicYuv->getStride();
+    const Int stride = pcPicYuv->getStride();
 
     for (UInt d = 0; d < m_uiMaxAQDepth; d++)
     {
@@ -183,7 +183,7 @@ Void TEncPic::preanalyze()
                         uiSumSq[1] += pBlkY[bx] * pBlkY[bx];
                     }
 
-                    pBlkY += iStride;
+                    pBlkY += stride;
                 }
 
                 for (; by < uiCurrAQPartHeight; by++)
@@ -201,7 +201,7 @@ Void TEncPic::preanalyze()
                         uiSumSq[3] += pBlkY[bx] * pBlkY[bx];
                     }
 
-                    pBlkY += iStride;
+                    pBlkY += stride;
                 }
 
                 Double dMinVar = MAX_DOUBLE;
@@ -217,7 +217,7 @@ Void TEncPic::preanalyze()
                 dSumAct += dActivity;
             }
 
-            pLineY += iStride * uiCurrAQPartHeight;
+            pLineY += stride * uiCurrAQPartHeight;
         }
 
         const Double dAvgAct = dSumAct / (pcAQLayer->getNumAQPartInWidth() * pcAQLayer->getNumAQPartInHeight());

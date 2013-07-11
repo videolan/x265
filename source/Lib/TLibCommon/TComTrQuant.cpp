@@ -1326,7 +1326,7 @@ Int TComTrQuant::getSigCtxInc(Int      patternSigCtx,
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
-__inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
+inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
                                           Double& codedCost0,
                                           Double& codedCostSig,
                                           Int     levelDouble,
@@ -1388,7 +1388,7 @@ __inline UInt TComTrQuant::xGetCodedLevel(Double& codedCost,
  * \param absGoRice Rice parameter for coeff_abs_level_minus3
  * \returns cost of given absolute transform level
  */
-__inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
+inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
                                             UShort ctxNumOne,
                                             UShort ctxNumAbs,
                                             UShort absGoRice,
@@ -1444,7 +1444,7 @@ __inline Double TComTrQuant::xGetICRateCost(UInt   absLevel,
     return xGetICost(rate);
 }
 
-__inline Int TComTrQuant::xGetICRate(UInt   absLevel,
+inline Int TComTrQuant::xGetICRate(UInt   absLevel,
                                      UShort ctxNumOne,
                                      UShort ctxNumAbs,
                                      UShort absGoRice,
@@ -1511,7 +1511,7 @@ __inline Int TComTrQuant::xGetICRate(UInt   absLevel,
  * \param posy Y coordinate of the last significant coefficient
  * \returns cost of last significant coefficient
  */
-__inline Double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
+inline Double TComTrQuant::xGetRateLast(UInt posx, UInt posy) const
 {
     UInt ctxX = g_groupIdx[posx];
     UInt ctxY = g_groupIdx[posy];

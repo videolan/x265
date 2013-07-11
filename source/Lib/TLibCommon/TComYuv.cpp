@@ -92,21 +92,21 @@ Void TComYuv::clear()
     ::memset(m_apiBufV, 0, (m_iCWidth * m_iCHeight) * sizeof(Pel));
 }
 
-Void TComYuv::copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth, UInt partIdx)
+Void TComYuv::copyToPicYuv(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth, UInt partIdx)
 {
-    copyToPicLuma(pcPicYuvDst, iCuAddr, uiAbsZorderIdx, uiPartDepth, partIdx);
-    copyToPicChroma(pcPicYuvDst, iCuAddr, uiAbsZorderIdx, uiPartDepth, partIdx);
+    copyToPicLuma(pcPicYuvDst, iCuAddr, absZOrderIdx, partDepth, partIdx);
+    copyToPicChroma(pcPicYuvDst, iCuAddr, absZOrderIdx, partDepth, partIdx);
 }
 
-Void TComYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth, UInt partIdx)
+Void TComYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth, UInt partIdx)
 {
     Int width, height;
 
-    width  = m_iWidth >> uiPartDepth;
-    height = m_iHeight >> uiPartDepth;
+    width  = m_iWidth >> partDepth;
+    height = m_iHeight >> partDepth;
 
     Pel* src = getLumaAddr(partIdx, width);
-    Pel* dst = pcPicYuvDst->getLumaAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* dst = pcPicYuvDst->getLumaAddr(iCuAddr, absZOrderIdx);
 
     UInt  srcstride = getStride();
     UInt  dststride = pcPicYuvDst->getStride();
@@ -114,17 +114,17 @@ Void TComYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZor
     x265::primitives.blockcpy_pp(width, height, (pixel*)dst, dststride, (pixel*)src, srcstride);
 }
 
-Void TComYuv::copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZorderIdx, UInt uiPartDepth, UInt partIdx)
+Void TComYuv::copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt absZOrderIdx, UInt partDepth, UInt partIdx)
 {
     Int width, height;
 
-    width  = m_iCWidth >> uiPartDepth;
-    height = m_iCHeight >> uiPartDepth;
+    width  = m_iCWidth >> partDepth;
+    height = m_iCHeight >> partDepth;
 
     Pel* srcU = getCbAddr(partIdx, width);
     Pel* srcV = getCrAddr(partIdx, width);
-    Pel* dstU = pcPicYuvDst->getCbAddr(iCuAddr, uiAbsZorderIdx);
-    Pel* dstV = pcPicYuvDst->getCrAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* dstU = pcPicYuvDst->getCbAddr(iCuAddr, absZOrderIdx);
+    Pel* dstV = pcPicYuvDst->getCrAddr(iCuAddr, absZOrderIdx);
 
     UInt srcstride = getCStride();
     UInt dststride = pcPicYuvDst->getCStride();
@@ -133,16 +133,16 @@ Void TComYuv::copyToPicChroma(TComPicYuv* pcPicYuvDst, UInt iCuAddr, UInt uiAbsZ
     x265::primitives.blockcpy_pp(width, height, (pixel*)dstV, dststride, (pixel*)srcV, srcstride);
 }
 
-Void TComYuv::copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx)
+Void TComYuv::copyFromPicYuv(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx)
 {
-    copyFromPicLuma(pcPicYuvSrc, iCuAddr, uiAbsZorderIdx);
-    copyFromPicChroma(pcPicYuvSrc, iCuAddr, uiAbsZorderIdx);
+    copyFromPicLuma(pcPicYuvSrc, iCuAddr, absZOrderIdx);
+    copyFromPicChroma(pcPicYuvSrc, iCuAddr, absZOrderIdx);
 }
 
-Void TComYuv::copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx)
+Void TComYuv::copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx)
 {
     Pel* dst = m_apiBufY;
-    Pel* src = pcPicYuvSrc->getLumaAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* src = pcPicYuvSrc->getLumaAddr(iCuAddr, absZOrderIdx);
 
     UInt  dststride = getStride();
     UInt  srcstride = pcPicYuvSrc->getStride();
@@ -150,12 +150,12 @@ Void TComYuv::copyFromPicLuma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZ
     x265::primitives.blockcpy_pp(m_iWidth, m_iHeight, (pixel*)dst, dststride, (pixel*)src, srcstride);
 }
 
-Void TComYuv::copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx)
+Void TComYuv::copyFromPicChroma(TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt absZOrderIdx)
 {
     Pel* dstU = m_apiBufU;
     Pel* dstV = m_apiBufV;
-    Pel* srcU = pcPicYuvSrc->getCbAddr(iCuAddr, uiAbsZorderIdx);
-    Pel* srcV = pcPicYuvSrc->getCrAddr(iCuAddr, uiAbsZorderIdx);
+    Pel* srcU = pcPicYuvSrc->getCbAddr(iCuAddr, absZOrderIdx);
+    Pel* srcV = pcPicYuvSrc->getCrAddr(iCuAddr, absZOrderIdx);
 
     UInt  dststride = getCStride();
     UInt  srcstride = pcPicYuvSrc->getCStride();

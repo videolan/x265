@@ -908,7 +908,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
 
     Pel* fenc;
     Pel* pRec;
-    Int iStride;
+    Int stride;
     Int iLcuHeight = pTmpSPS->getMaxCUHeight();
     Int iLcuWidth  = pTmpSPS->getMaxCUWidth();
     UInt uiLPelX   = pTmpCu->getCUPelX();
@@ -953,7 +953,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
     iLcuWidth     = uiRPelX - uiLPelX;
     iLcuHeight    = uiBPelY - uiTPelY;
 
-    iStride    =  (iYCbCr == 0) ? m_pcPic->getStride() : m_pcPic->getCStride();
+    stride    =  (iYCbCr == 0) ? m_pcPic->getStride() : m_pcPic->getCStride();
 
 //if(iSaoType == BO_0 || iSaoType == BO_1)
     {
@@ -982,8 +982,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
                 }
             }
 
-            fenc += iStride;
-            pRec += iStride;
+            fenc += stride;
+            pRec += stride;
         }
     }
     Int iSignLeft;
@@ -1024,8 +1024,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
                     iCount[m_auiEoTable[uiEdgeType]]++;
                 }
 
-                fenc += iStride;
-                pRec += iStride;
+                fenc += stride;
+                pRec += stride;
             }
         }
 
@@ -1047,20 +1047,20 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
             if (uiTPelY == 0)
             {
-                fenc += iStride;
-                pRec += iStride;
+                fenc += stride;
+                pRec += stride;
             }
 
             for (x = 0; x < iLcuWidth; x++)
             {
-                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - iStride]);
+                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - stride]);
             }
 
             for (y = iStartY; y < iEndY; y++)
             {
                 for (x = 0; x < iEndX; x++)
                 {
-                    iSignDown     =  xSign(pRec[x] - pRec[x + iStride]);
+                    iSignDown     =  xSign(pRec[x] - pRec[x + stride]);
                     uiEdgeType    =  iSignDown + m_iUpBuff1[x] + 2;
                     m_iUpBuff1[x] = -iSignDown;
 
@@ -1068,8 +1068,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
                     iCount[m_auiEoTable[uiEdgeType]]++;
                 }
 
-                fenc += iStride;
-                pRec += iStride;
+                fenc += stride;
+                pRec += stride;
             }
         }
         //if (iSaoType == EO_2)
@@ -1092,21 +1092,21 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
             if (uiTPelY == 0)
             {
-                fenc += iStride;
-                pRec += iStride;
+                fenc += stride;
+                pRec += stride;
             }
 
             for (x = iStartX; x < iEndX; x++)
             {
-                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - iStride - 1]);
+                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - stride - 1]);
             }
 
             for (y = iStartY; y < iEndY; y++)
             {
-                iSignDown2 = xSign(pRec[iStride + iStartX] - pRec[iStartX - 1]);
+                iSignDown2 = xSign(pRec[stride + iStartX] - pRec[iStartX - 1]);
                 for (x = iStartX; x < iEndX; x++)
                 {
-                    iSignDown1      =  xSign(pRec[x] - pRec[x + iStride + 1]);
+                    iSignDown1      =  xSign(pRec[x] - pRec[x + stride + 1]);
                     uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
                     m_iUpBufft[x + 1] = -iSignDown1;
                     iStats[m_auiEoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
@@ -1118,8 +1118,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
                 m_iUpBuff1 = m_iUpBufft;
                 m_iUpBufft = ipSwap;
 
-                pRec += iStride;
-                fenc += iStride;
+                pRec += stride;
+                fenc += stride;
             }
         }
         //if (iSaoType == EO_3  )
@@ -1142,30 +1142,30 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
             if (iStartY == 1)
             {
-                fenc += iStride;
-                pRec += iStride;
+                fenc += stride;
+                pRec += stride;
             }
 
             for (x = iStartX - 1; x < iEndX; x++)
             {
-                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - iStride + 1]);
+                m_iUpBuff1[x] = xSign(pRec[x] - pRec[x - stride + 1]);
             }
 
             for (y = iStartY; y < iEndY; y++)
             {
                 for (x = iStartX; x < iEndX; x++)
                 {
-                    iSignDown1      =  xSign(pRec[x] - pRec[x + iStride - 1]);
+                    iSignDown1      =  xSign(pRec[x] - pRec[x + stride - 1]);
                     uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
                     m_iUpBuff1[x - 1] = -iSignDown1;
                     iStats[m_auiEoTable[uiEdgeType]] += (fenc[x] - pRec[x]);
                     iCount[m_auiEoTable[uiEdgeType]]++;
                 }
 
-                m_iUpBuff1[iEndX - 1] = xSign(pRec[iEndX - 1 + iStride] - pRec[iEndX]);
+                m_iUpBuff1[iEndX - 1] = xSign(pRec[iEndX - 1 + stride] - pRec[iEndX]);
 
-                pRec += iStride;
-                fenc += iStride;
+                pRec += stride;
+                fenc += stride;
             }
         }
     }

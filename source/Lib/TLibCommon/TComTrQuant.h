@@ -215,23 +215,23 @@ private:
     UInt xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, Int* arlDstCoeff, UInt width, UInt height,
                            TextType ttype, UInt absPartIdx);
 
-    __inline UInt xGetCodedLevel(Double& codedCost, Double& codedCost0, Double& codedCostSig, Int levelDouble,
+    inline UInt xGetCodedLevel(Double& codedCost, Double& codedCost0, Double& codedCostSig, Int levelDouble,
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
                                  UInt c1Idx, UInt c2Idx, Int qbits, Double scale, Bool bLast) const;
 
-    __inline Double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
+    inline Double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
-    __inline Int    xGetICRate(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
+    inline Int    xGetICRate(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
-    __inline Double xGetRateLast(UInt posx, UInt posy) const;
+    inline Double xGetRateLast(UInt posx, UInt posy) const;
 
-    __inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+    inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 
-    __inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    inline Double xGetRateSigCoef(UShort sig, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
 
-    __inline Double xGetICost(Double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
+    inline Double xGetICost(Double rage) const { return m_lambda * rage; } ///< Get the cost for a specific rate
 
-    __inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
+    inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
     Void xDeQuant(Int bitDepth, const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
 

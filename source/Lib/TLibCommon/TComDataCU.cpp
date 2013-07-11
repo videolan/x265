@@ -913,10 +913,10 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     rpcCU->getTotalBins() = m_uiTotalBins;
 }
 
-Void TComDataCU::copyToPic(UChar uhDepth, UInt partIdx, UInt uiPartDepth)
+Void TComDataCU::copyToPic(UChar uhDepth, UInt partIdx, UInt partDepth)
 {
     TComDataCU*   rpcCU       = m_pcPic->getCU(m_uiCUAddr);
-    UInt          uiQNumPart  = m_uiNumPartition >> (uiPartDepth << 1);
+    UInt          uiQNumPart  = m_uiNumPartition >> (partDepth << 1);
 
     UInt uiPartStart          = partIdx * uiQNumPart;
     UInt partOffset         = m_uiAbsIdxInLCU + uiPartStart;
@@ -961,7 +961,7 @@ Void TComDataCU::copyToPic(UChar uhDepth, UInt partIdx, UInt uiPartDepth)
 
     memcpy(rpcCU->getIPCMFlag() + partOffset, m_pbIPCMFlag,         iSizeInBool);
 
-    UInt uiTmp  = (g_maxCUWidth * g_maxCUHeight) >> ((uhDepth + uiPartDepth) << 1);
+    UInt uiTmp  = (g_maxCUWidth * g_maxCUHeight) >> ((uhDepth + partDepth) << 1);
     UInt uiTmp2 = partOffset * m_pcPic->getMinCUWidth() * m_pcPic->getMinCUHeight();
     memcpy(rpcCU->getCoeffY()  + uiTmp2, m_pcTrCoeffY,  sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getArlCoeffY()  + uiTmp2, m_pcArlCoeffY,  sizeof(Int) * uiTmp);
@@ -2147,7 +2147,7 @@ Void TComDataCU::deriveLeftBottomIdx(UInt partIdx,      UInt&      ruiPartIdxLB)
     }
 }
 
-/** Derives the partition index of neighbouring bottom right block
+/** Derives the partition index of neighboring bottom right block
  * \param [in]  cuMode
  * \param [in]  partIdx
  * \param [out] ruiPartIdxRB
@@ -2188,22 +2188,22 @@ Void TComDataCU::deriveRightBottomIdx(UInt partIdx,      UInt&      ruiPartIdxRB
     }
 }
 
-Void TComDataCU::deriveLeftRightTopIdxAdi(UInt& ruiPartIdxLT, UInt& ruiPartIdxRT, UInt partOffset, UInt uiPartDepth)
+Void TComDataCU::deriveLeftRightTopIdxAdi(UInt& ruiPartIdxLT, UInt& ruiPartIdxRT, UInt partOffset, UInt partDepth)
 {
-    UInt uiNumPartInWidth = (m_puhWidth[0] / m_pcPic->getMinCUWidth()) >> uiPartDepth;
+    UInt uiNumPartInWidth = (m_puhWidth[0] / m_pcPic->getMinCUWidth()) >> partDepth;
 
     ruiPartIdxLT = m_uiAbsIdxInLCU + partOffset;
     ruiPartIdxRT = g_rasterToZscan[g_zscanToRaster[ruiPartIdxLT] + uiNumPartInWidth - 1];
 }
 
-Void TComDataCU::deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt partOffset, UInt uiPartDepth)
+Void TComDataCU::deriveLeftBottomIdxAdi(UInt& ruiPartIdxLB, UInt partOffset, UInt partDepth)
 {
     UInt uiAbsIdx;
     UInt uiMinCuWidth, uiWidthInMinCus;
 
     uiMinCuWidth    = getPic()->getMinCUWidth();
-    uiWidthInMinCus = (getWidth(0) / uiMinCuWidth) >> uiPartDepth;
-    uiAbsIdx        = getZorderIdxInCU() + partOffset + (m_uiNumPartition >> (uiPartDepth << 1)) - 1;
+    uiWidthInMinCus = (getWidth(0) / uiMinCuWidth) >> partDepth;
+    uiAbsIdx        = getZorderIdxInCU() + partOffset + (m_uiNumPartition >> (partDepth << 1)) - 1;
     uiAbsIdx        = g_zscanToRaster[uiAbsIdx] - (uiWidthInMinCus - 1);
     ruiPartIdxLB    = g_rasterToZscan[uiAbsIdx];
 }
