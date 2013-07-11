@@ -642,59 +642,55 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
     return bcost;
 }
 
-Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu,
-                                 UInt        trDepth,
-                                 UInt        uiAbsPartIdx,
-                                 Bool        bLuma,
-                                 Bool        bChroma)
+Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
 {
-    UInt  uiFullDepth     = cu->getDepth(0) + trDepth;
-    UInt  uiTrMode        = cu->getTransformIdx(uiAbsPartIdx);
-    UInt  uiSubdiv        = (uiTrMode > trDepth ? 1 : 0);
-    UInt  uiLog2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - uiFullDepth;
+    UInt  fullDepth  = cu->getDepth(0) + trDepth;
+    UInt  trMode     = cu->getTransformIdx(absPartIdx);
+    UInt  subdiv     = (trMode > trDepth ? 1 : 0);
+    UInt  trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - fullDepth;
 
     if (cu->getPredictionMode(0) == MODE_INTRA && cu->getPartitionSize(0) == SIZE_NxN && trDepth == 0)
     {
-        assert(uiSubdiv);
+        assert(subdiv);
     }
-    else if (uiLog2TrafoSize > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
+    else if (trSizeLog2 > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
     {
-        assert(uiSubdiv);
+        assert(subdiv);
     }
-    else if (uiLog2TrafoSize == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
+    else if (trSizeLog2 == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
     {
-        assert(!uiSubdiv);
+        assert(!subdiv);
     }
-    else if (uiLog2TrafoSize == cu->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx))
+    else if (trSizeLog2 == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
-        assert(!uiSubdiv);
+        assert(!subdiv);
     }
     else
     {
-        assert(uiLog2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx));
+        assert(trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
         if (bLuma)
         {
-            m_pcEntropyCoder->encodeTransformSubdivFlag(uiSubdiv, 5 - uiLog2TrafoSize);
+            m_pcEntropyCoder->encodeTransformSubdivFlag(subdiv, 5 - trSizeLog2);
         }
     }
 
     if (bChroma)
     {
-        if (uiLog2TrafoSize > 2)
+        if (trSizeLog2 > 2)
         {
-            if (trDepth == 0 || cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, trDepth - 1))
-                m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_CHROMA_U, trDepth);
-            if (trDepth == 0 || cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, trDepth - 1))
-                m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_CHROMA_V, trDepth);
+            if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepth - 1))
+                m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepth);
+            if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepth - 1))
+                m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepth);
         }
     }
 
-    if (uiSubdiv)
+    if (subdiv)
     {
-        UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> ((uiFullDepth + 1) << 1);
-        for (UInt uiPart = 0; uiPart < 4; uiPart++)
+        UInt qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        for (UInt part = 0; part < 4; part++)
         {
-            xEncSubdivCbfQT(cu, trDepth + 1, uiAbsPartIdx + uiPart * uiQPartNum, bLuma, bChroma);
+            xEncSubdivCbfQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, bLuma, bChroma);
         }
 
         return;
@@ -703,7 +699,7 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu,
     //===== Cbfs =====
     if (bLuma)
     {
-        m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_LUMA, uiTrMode);
+        m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
     }
 }
 
