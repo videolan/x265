@@ -703,35 +703,31 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
     }
 }
 
-Void TEncSearch::xEncCoeffQT(TComDataCU* cu,
-                             UInt        trDepth,
-                             UInt        uiAbsPartIdx,
-                             TextType    eTextType,
-                             Bool        bRealCoeff)
+Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype, Bool bRealCoeff)
 {
-    UInt  uiFullDepth     = cu->getDepth(0) + trDepth;
-    UInt  uiTrMode        = cu->getTransformIdx(uiAbsPartIdx);
-    UInt  uiSubdiv        = (uiTrMode > trDepth ? 1 : 0);
-    UInt  uiLog2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - uiFullDepth;
-    UInt  uiChroma        = (eTextType != TEXT_LUMA ? 1 : 0);
+    UInt fullDepth  = cu->getDepth(0) + trDepth;
+    UInt trMode     = cu->getTransformIdx(absPartIdx);
+    UInt subdiv     = (trMode > trDepth ? 1 : 0);
+    UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth()] + 2 - fullDepth;
+    UInt chroma     = (ttype != TEXT_LUMA ? 1 : 0);
 
-    if (uiSubdiv)
+    if (subdiv)
     {
-        UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> ((uiFullDepth + 1) << 1);
-        for (UInt uiPart = 0; uiPart < 4; uiPart++)
+        UInt qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        for (UInt part = 0; part < 4; part++)
         {
-            xEncCoeffQT(cu, trDepth + 1, uiAbsPartIdx + uiPart * uiQPartNum, eTextType, bRealCoeff);
+            xEncCoeffQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype, bRealCoeff);
         }
 
         return;
     }
 
-    if (eTextType != TEXT_LUMA && uiLog2TrafoSize == 2)
+    if (ttype != TEXT_LUMA && trSizeLog2 == 2)
     {
         assert(trDepth > 0);
         trDepth--;
-        UInt uiQPDiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
-        Bool bFirstQ = ((uiAbsPartIdx % uiQPDiv) == 0);
+        UInt qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
+        Bool bFirstQ = ((absPartIdx % qpdiv) == 0);
         if (!bFirstQ)
         {
             return;
@@ -739,25 +735,22 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu,
     }
 
     //===== coefficients =====
-    UInt    uiWidth         = cu->getWidth(0) >> (trDepth + uiChroma);
-    UInt    uiHeight        = cu->getHeight(0) >> (trDepth + uiChroma);
-    UInt    uiCoeffOffset   = (cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight() * uiAbsPartIdx) >> (uiChroma << 1);
-    UInt    uiQTLayer       = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrafoSize;
-    TCoeff* pcCoeff         = 0;
-    switch (eTextType)
+    UInt width = cu->getWidth(0) >> (trDepth + chroma);
+    UInt height = cu->getHeight(0) >> (trDepth + chroma);
+    UInt coeffOffset = (cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight() * absPartIdx) >> (chroma << 1);
+    UInt qtLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
+    TCoeff* coeff = 0;
+    switch (ttype)
     {
-    case TEXT_LUMA:     pcCoeff = (bRealCoeff ? cu->getCoeffY() : m_ppcQTTempCoeffY[uiQTLayer]);
-        break;
-    case TEXT_CHROMA_U: pcCoeff = (bRealCoeff ? cu->getCoeffCb() : m_ppcQTTempCoeffCb[uiQTLayer]);
-        break;
-    case TEXT_CHROMA_V: pcCoeff = (bRealCoeff ? cu->getCoeffCr() : m_ppcQTTempCoeffCr[uiQTLayer]);
-        break;
-    default:            assert(0);
+    case TEXT_LUMA:     coeff = (bRealCoeff ? cu->getCoeffY() : m_ppcQTTempCoeffY[qtLayer]);   break;
+    case TEXT_CHROMA_U: coeff = (bRealCoeff ? cu->getCoeffCb() : m_ppcQTTempCoeffCb[qtLayer]); break;
+    case TEXT_CHROMA_V: coeff = (bRealCoeff ? cu->getCoeffCr() : m_ppcQTTempCoeffCr[qtLayer]); break;
+    default: assert(0);
     }
 
-    pcCoeff += uiCoeffOffset;
+    coeff += coeffOffset;
 
-    m_pcEntropyCoder->encodeCoeffNxN(cu, pcCoeff, uiAbsPartIdx, uiWidth, uiHeight, uiFullDepth, eTextType);
+    m_pcEntropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, width, height, fullDepth, ttype);
 }
 
 Void TEncSearch::xEncIntraHeader(TComDataCU* cu,
