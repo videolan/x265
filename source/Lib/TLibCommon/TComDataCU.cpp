@@ -2257,15 +2257,15 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
 
     Int iCount = 0;
 
-    UInt uiPartIdxLT, uiPartIdxRT, uiPartIdxLB;
+    UInt partIdxLT, partIdxRT, partIdxLB;
     PartSize cCurPS = getPartitionSize(absPartIdx);
-    deriveLeftRightTopIdxGeneral(absPartIdx, uiPUIdx, uiPartIdxLT, uiPartIdxRT);
-    deriveLeftBottomIdxGeneral(absPartIdx, uiPUIdx, uiPartIdxLB);
+    deriveLeftRightTopIdxGeneral(absPartIdx, uiPUIdx, partIdxLT, partIdxRT);
+    deriveLeftBottomIdxGeneral(absPartIdx, uiPUIdx, partIdxLB);
 
     //left
     UInt uiLeftPartIdx = 0;
     TComDataCU* pcCULeft = 0;
-    pcCULeft = getPULeft(uiLeftPartIdx, uiPartIdxLB);
+    pcCULeft = getPULeft(uiLeftPartIdx, partIdxLB);
     Bool isAvailableA1 = pcCULeft &&
         pcCULeft->isDiffMER(xP - 1, yP + nPSH - 1, xP, yP) &&
         !(uiPUIdx == 1 && (cCurPS == SIZE_Nx2N || cCurPS == SIZE_nLx2N || cCurPS == SIZE_nRx2N)) &&
@@ -2296,7 +2296,7 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
     // above
     UInt uiAbovePartIdx = 0;
     TComDataCU* pcCUAbove = 0;
-    pcCUAbove = getPUAbove(uiAbovePartIdx, uiPartIdxRT);
+    pcCUAbove = getPUAbove(uiAbovePartIdx, partIdxRT);
     Bool isAvailableB1 = pcCUAbove &&
         pcCUAbove->isDiffMER(xP + nPSW - 1, yP - 1, xP, yP) &&
         !(uiPUIdx == 1 && (cCurPS == SIZE_2NxN || cCurPS == SIZE_2NxnU || cCurPS == SIZE_2NxnD)) &&
@@ -2327,7 +2327,7 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
     // above right
     UInt uiAboveRightPartIdx = 0;
     TComDataCU* pcCUAboveRight = 0;
-    pcCUAboveRight = getPUAboveRight(uiAboveRightPartIdx, uiPartIdxRT);
+    pcCUAboveRight = getPUAboveRight(uiAboveRightPartIdx, partIdxRT);
     Bool isAvailableB0 = pcCUAboveRight &&
         pcCUAboveRight->isDiffMER(xP + nPSW, yP - 1, xP, yP) &&
         !pcCUAboveRight->isIntra(uiAboveRightPartIdx);
@@ -2357,7 +2357,7 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
     //left bottom
     UInt uiLeftBottomPartIdx = 0;
     TComDataCU* pcCULeftBottom = 0;
-    pcCULeftBottom = this->getPUBelowLeft(uiLeftBottomPartIdx, uiPartIdxLB);
+    pcCULeftBottom = this->getPUBelowLeft(uiLeftBottomPartIdx, partIdxLB);
     Bool isAvailableA0 = pcCULeftBottom &&
         pcCULeftBottom->isDiffMER(xP - 1, yP + nPSH, xP, yP) &&
         !pcCULeftBottom->isIntra(uiLeftBottomPartIdx);
@@ -2686,65 +2686,65 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
     }
 
     //-- Get Spatial MV
-    UInt uiPartIdxLT, uiPartIdxRT, uiPartIdxLB;
+    UInt partIdxLT, partIdxRT, partIdxLB;
     UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
     Bool bAdded = false;
 
-    deriveLeftRightTopIdx(partIdx, uiPartIdxLT, uiPartIdxRT);
-    deriveLeftBottomIdx(partIdx, uiPartIdxLB);
+    deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
+    deriveLeftBottomIdx(partIdx, partIdxLB);
 
     TComDataCU* tmpCU = NULL;
     UInt idx;
-    tmpCU = getPUBelowLeft(idx, uiPartIdxLB);
+    tmpCU = getPUBelowLeft(idx, partIdxLB);
     bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
 
     if (!bAddedSmvp)
     {
-        tmpCU = getPULeft(idx, uiPartIdxLB);
+        tmpCU = getPULeft(idx, partIdxLB);
         bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
     }
 
     // Left predictor search
-    bAdded = xAddMVPCand(pInfo, picList, refIdx, uiPartIdxLB, MD_BELOW_LEFT);
+    bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxLB, MD_BELOW_LEFT);
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, picList, refIdx, uiPartIdxLB, MD_LEFT);
+        bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxLB, MD_LEFT);
     }
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, uiPartIdxLB, MD_BELOW_LEFT);
+        bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, partIdxLB, MD_BELOW_LEFT);
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, uiPartIdxLB, MD_LEFT);
+            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, partIdxLB, MD_LEFT);
         }
     }
     // Above predictor search
-    bAdded = xAddMVPCand(pInfo, picList, refIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
+    bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, picList, refIdx, uiPartIdxRT, MD_ABOVE);
+        bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxRT, MD_ABOVE);
     }
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCand(pInfo, picList, refIdx, uiPartIdxLT, MD_ABOVE_LEFT);
+        bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
     }
     bAdded = bAddedSmvp;
     if (pInfo->iN == 2) bAdded = true;
 
     if (!bAdded)
     {
-        bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, uiPartIdxRT, MD_ABOVE_RIGHT);
+        bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, uiPartIdxRT, MD_ABOVE);
+            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, partIdxRT, MD_ABOVE);
         }
 
         if (!bAdded)
         {
-            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, uiPartIdxLT, MD_ABOVE_LEFT);
+            bAdded = xAddMVPCandOrder(pInfo, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
         }
     }
 

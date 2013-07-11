@@ -136,7 +136,7 @@ public:
                      Int  offsetLeft,
                      Int  offsetAbove);
 
-    Void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int iOrgBufStride, Int iOrgBufHeight, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
+    Void initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt);
 
     /// set parameters from CU data for accessing neighboring pixels
     Void  initPattern(TComDataCU* cu,
@@ -148,28 +148,28 @@ public:
                          UInt        zOrderIdxInPart,
                          UInt        partDepth,
                          Pel*        adiBuf,
-                         Int         iOrgBufStride,
-                         Int         iOrgBufHeight);
+                         Int         strideOrig,
+                         Int         heightOrig);
 
     /// set chroma parameters from CU data for accessing ADI data
     Void  initAdiPatternChroma(TComDataCU* cu,
                                UInt        zOrderIdxInPart,
                                UInt        partDepth,
                                Pel*        adiBuf,
-                               Int         iOrgBufStride,
-                               Int         iOrgBufHeight);
+                               Int         strideOrig,
+                               Int         heightOrig);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void  fillReferenceSamples(Int bitDepth, Pel* piRoiOrigin, Pel* piAdiTemp, Bool* bNeighborFlags, Int iNumIntraNeighbor, Int iUnitSize, Int iNumUnitsInCu, Int iTotalUnits, UInt uiCuWidth, UInt uiCuHeight, UInt width, UInt height, Int iPicStride);
+    Void  fillReferenceSamples(Int bitDepth, Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride);
 
     /// constrained intra prediction
-    Bool  isAboveLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT);
-    Int   isAboveAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
-    Int   isLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
-    Int   isAboveRightAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool* bValidFlags);
-    Int   isBelowLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool* bValidFlags);
+    Bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);
+    Int   isAboveAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, Bool* bValidFlags);
+    Int   isLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, Bool* bValidFlags);
+    Int   isAboveRightAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxRT, Bool* bValidFlags);
+    Int   isBelowLeftAvailable(TComDataCU* cu, UInt partIdxLT, UInt partIdxLB, Bool* bValidFlags);
 };
 
 //! \}
