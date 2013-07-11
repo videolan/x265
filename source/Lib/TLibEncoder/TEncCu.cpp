@@ -380,15 +380,15 @@ Void TEncCu::destroy()
  */
 Void TEncCu::init(TEncTop* pcEncTop)
 {
-    m_pcEncCfg           = pcEncTop;
-    m_pcPredSearch       = NULL;
-    m_pcTrQuant          = NULL;
-    m_pcRdCost           = NULL;
-    m_pcEntropyCoder     = NULL;
-    m_pppcRDSbacCoder    = NULL;
-    m_pcRDGoOnSbacCoder  = NULL;
-    m_pcBitCounter       = NULL;
-    m_pcRateCtrl         = pcEncTop->getRateCtrl();
+    m_pcEncCfg        = pcEncTop;
+    m_pcPredSearch    = NULL;
+    m_pcTrQuant       = NULL;
+    m_pcRdCost        = NULL;
+    m_entropyCoder    = NULL;
+    m_rdSbacCoders    = NULL;
+    m_rdGoOnSbacCoder = NULL;
+    m_pcBitCounter    = NULL;
+    m_pcRateCtrl      = pcEncTop->getRateCtrl();
 }
 
 // ====================================================================================================================
@@ -422,9 +422,9 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
     m_LCUPredictionSAD = 0;
     m_temporalSAD      = 0;
 
-    m_pcPredSearch->setRDSbacCoder(m_pppcRDSbacCoder);
-    m_pcPredSearch->setEntropyCoder(m_pcEntropyCoder);
-    m_pcPredSearch->setRDGoOnSbacCoder(m_pcRDGoOnSbacCoder);
+    m_pcPredSearch->setRDSbacCoder(m_rdSbacCoders);
+    m_pcPredSearch->setEntropyCoder(m_entropyCoder);
+    m_pcPredSearch->setRDGoOnSbacCoder(m_rdGoOnSbacCoder);
 
     // analysis of CU
 
@@ -613,10 +613,10 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
-        rpcBestCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits(); // split bits
-        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        m_entropyCoder->resetBits();
+        m_entropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
+        rpcBestCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         rpcBestCU->getTotalCost()  = m_pcRdCost->calcRdCost(rpcBestCU->getTotalDistortion(), rpcBestCU->getTotalBits());
 
         // Early CU determination
@@ -656,11 +656,11 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
                 }
                 else
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]);
                 }
 
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
@@ -689,11 +689,11 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
         if (!bBoundary)
         {
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
+            m_entropyCoder->resetBits();
+            m_entropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
 
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+            rpcTempCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits();     // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
@@ -723,7 +723,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
-        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+        m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 #if CU_STAT_LOGFILE
         if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
@@ -1004,10 +1004,10 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
-        rpcBestCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits(); // split bits
-        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        m_entropyCoder->resetBits();
+        m_entropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
+        rpcBestCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         rpcBestCU->getTotalCost()  = m_pcRdCost->calcRdCost(rpcBestCU->getTotalDistortion(), rpcBestCU->getTotalBits());
 
         // Early CU determination
@@ -1054,11 +1054,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
                 }
                 else
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]);
                 }
 
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
@@ -1084,11 +1084,11 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
 
         if (!bBoundary)
         {
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
+            m_entropyCoder->resetBits();
+            m_entropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
 
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+            rpcTempCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits();     // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
@@ -1118,7 +1118,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             }
         }
 
-        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+        m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 #if  CU_STAT_LOGFILE
         if (rpcBestCU->getTotalCost() < rpcTempCU->getTotalCost())
         {
@@ -1261,13 +1261,13 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     {
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
-            m_pcEntropyCoder->encodeTerminatingBit(bTerminateSlice ? 1 : 0);
+            m_entropyCoder->encodeTerminatingBit(bTerminateSlice ? 1 : 0);
     }
 
     Int numberOfWrittenBits = 0;
     if (m_pcBitCounter)
     {
-        numberOfWrittenBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+        numberOfWrittenBits = m_entropyCoder->getNumberOfWrittenBits();
     }
 
     // Calculate slice end IF this CU puts us over slice bit size.
@@ -1283,7 +1283,7 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
         pcSlice->setSliceSegmentBits(pcSlice->getSliceSegmentBits() + numberOfWrittenBits);
         if (m_pcBitCounter)
         {
-            m_pcEntropyCoder->resetBits();
+            m_entropyCoder->resetBits();
         }
     }
 }
@@ -1341,7 +1341,7 @@ Void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     // We need to split, so don't try these modes.
     if ((uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples()))
     {
-        m_pcEntropyCoder->encodeSplitFlag(cu, absPartIdx, depth);
+        m_entropyCoder->encodeSplitFlag(cu, absPartIdx, depth);
     }
     else
     {
@@ -1375,26 +1375,26 @@ Void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     }
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(cu, absPartIdx);
+        m_entropyCoder->encodeCUTransquantBypassFlag(cu, absPartIdx);
     }
     if (!cu->getSlice()->isIntra())
     {
-        m_pcEntropyCoder->encodeSkipFlag(cu, absPartIdx);
+        m_entropyCoder->encodeSkipFlag(cu, absPartIdx);
     }
 
     if (cu->isSkipped(absPartIdx))
     {
-        m_pcEntropyCoder->encodeMergeIndex(cu, absPartIdx);
+        m_entropyCoder->encodeMergeIndex(cu, absPartIdx);
         finishCU(cu, absPartIdx, depth);
         return;
     }
-    m_pcEntropyCoder->encodePredMode(cu, absPartIdx);
+    m_entropyCoder->encodePredMode(cu, absPartIdx);
 
-    m_pcEntropyCoder->encodePartSize(cu, absPartIdx, depth);
+    m_entropyCoder->encodePartSize(cu, absPartIdx, depth);
 
     if (cu->isIntra(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N)
     {
-        m_pcEntropyCoder->encodeIPCMInfo(cu, absPartIdx);
+        m_entropyCoder->encodeIPCMInfo(cu, absPartIdx);
 
         if (cu->getIPCMFlag(absPartIdx))
         {
@@ -1405,11 +1405,11 @@ Void TEncCu::xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     }
 
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
-    m_pcEntropyCoder->encodePredInfo(cu, absPartIdx);
+    m_entropyCoder->encodePredInfo(cu, absPartIdx);
 
     // Encode Coefficients
     Bool bCodeDQP = getdQPFlag();
-    m_pcEntropyCoder->encodeCoeff(cu, absPartIdx, depth, cu->getWidth(absPartIdx), cu->getHeight(absPartIdx), bCodeDQP);
+    m_entropyCoder->encodeCoeff(cu, absPartIdx, depth, cu->getWidth(absPartIdx), cu->getHeight(absPartIdx), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
     // --- write terminating bit ---
@@ -1603,26 +1603,26 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
 
     m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC);
 
-    m_pcEntropyCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
     }
-    m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
-    m_pcEntropyCoder->encodePredInfo(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
+    m_entropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePredMode(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
+    m_entropyCoder->encodePredInfo(rpcTempCU, 0,          true);
+    m_entropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
 
     // Encode Coefficients
     Bool bCodeDQP = getdQPFlag();
-    m_pcEntropyCoder->encodeCoeff(rpcTempCU, 0, depth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(rpcTempCU, 0, depth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
-    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-    rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
-    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    rpcTempCU->getTotalBits() = m_entropyCoder->getNumberOfWrittenBits();
+    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
     rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
     xCheckDQP(rpcTempCU);
@@ -1653,26 +1653,26 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
 
     m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC);
 
-    m_pcEntropyCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0, true);
     }
-    m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
-    m_pcEntropyCoder->encodePredInfo(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
+    m_entropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePredMode(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
+    m_entropyCoder->encodePredInfo(rpcTempCU, 0,          true);
+    m_entropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
 
     // Encode Coefficients
     Bool bCodeDQP = getdQPFlag();
-    m_pcEntropyCoder->encodeCoeff(rpcTempCU, 0, depth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(rpcTempCU, 0, depth, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
-    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-    rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
-    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    rpcTempCU->getTotalBits() = m_entropyCoder->getNumberOfWrittenBits();
+    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
     if (!m_pcEncCfg->getUseRDO())
     {
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
@@ -1711,22 +1711,22 @@ Void TEncCu::xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU)
 
     m_pcPredSearch->IPCMSearch(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth]);
 
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
-    m_pcEntropyCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0,          true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(rpcTempCU, 0,          true);
     }
-    m_pcEntropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePredMode(rpcTempCU, 0,          true);
-    m_pcEntropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
-    m_pcEntropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
+    m_entropyCoder->encodeSkipFlag(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePredMode(rpcTempCU, 0,          true);
+    m_entropyCoder->encodePartSize(rpcTempCU, 0, depth, true);
+    m_entropyCoder->encodeIPCMInfo(rpcTempCU, 0, true);
 
-    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-    rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
-    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    rpcTempCU->getTotalBits() = m_entropyCoder->getNumberOfWrittenBits();
+    rpcTempCU->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
     rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
     xCheckDQP(rpcTempCU);
@@ -1761,7 +1761,7 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
         pcYuv = NULL;
         cu  = NULL;
 
-        m_pppcRDSbacCoder[depth][CI_TEMP_BEST]->store(m_pppcRDSbacCoder[depth][CI_NEXT_BEST]);
+        m_rdSbacCoders[depth][CI_TEMP_BEST]->store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
     }
 }
 

@@ -100,11 +100,11 @@ private:
     TComBitCounter*         m_pcBitCounter;
     TComRdCost*             m_pcRdCost;
 
-    TEncEntropy*            m_pcEntropyCoder;
+    TEncEntropy*            m_entropyCoder;
 
     // SBAC RD
-    TEncSbac***             m_pppcRDSbacCoder;
-    TEncSbac*               m_pcRDGoOnSbacCoder;
+    TEncSbac***             m_rdSbacCoders;
+    TEncSbac*               m_rdGoOnSbacCoder;
     TEncRateCtrl*           m_pcRateCtrl;
     UInt                    m_LCUPredictionSAD;
     Int                     m_addSADDepth;
@@ -114,13 +114,13 @@ private:
 
 public:
 
-    Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+    Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_rdSbacCoders = pppcRDSbacCoder; }
 
-    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
+    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_entropyCoder = pcEntropyCoder; }
 
     Void set_pcPredSearch(TEncSearch* pcPredSearch) { m_pcPredSearch = pcPredSearch; }
 
-    Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
+    Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_rdGoOnSbacCoder = pcRDGoOnSbacCoder; }
 
     Void set_pcTrQuant(TComTrQuant* pcTrQuant) { m_pcTrQuant = pcTrQuant; }
 

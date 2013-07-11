@@ -58,26 +58,26 @@ Void TEncCu::xEncodeIntrainInter(TComDataCU*& cu, TComYuv* fencYuv, TComYuv* pre
     outReconYuv->copyToPicLuma(cu->getPic()->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU());
 
     m_pcPredSearch->estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv, uiPUDistC);
-    m_pcEntropyCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        m_pcEntropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
+        m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0, true);
     }
-    m_pcEntropyCoder->encodeSkipFlag(cu, 0,          true);
-    m_pcEntropyCoder->encodePredMode(cu, 0,          true);
-    m_pcEntropyCoder->encodePartSize(cu, 0, depth, true);
-    m_pcEntropyCoder->encodePredInfo(cu, 0,          true);
-    m_pcEntropyCoder->encodeIPCMInfo(cu, 0, true);
+    m_entropyCoder->encodeSkipFlag(cu, 0,          true);
+    m_entropyCoder->encodePredMode(cu, 0,          true);
+    m_entropyCoder->encodePartSize(cu, 0, depth, true);
+    m_entropyCoder->encodePredInfo(cu, 0,          true);
+    m_entropyCoder->encodeIPCMInfo(cu, 0, true);
 
     // Encode Coefficients
     Bool bCodeDQP = getdQPFlag();
-    m_pcEntropyCoder->encodeCoeff(cu, 0, depth, cu->getWidth(0), cu->getHeight(0), bCodeDQP);
+    m_entropyCoder->encodeCoeff(cu, 0, depth, cu->getWidth(0), cu->getHeight(0), bCodeDQP);
     setdQPFlag(bCodeDQP);
 
-    m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
-    cu->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
-    cu->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+    cu->getTotalBits() = m_entropyCoder->getNumberOfWrittenBits();
+    cu->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
     cu->getTotalCost() = m_pcRdCost->calcRdCost(cu->getTotalDistortion(), cu->getTotalBits());
 }
 
@@ -216,7 +216,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
     cu->setLumaIntraDirSubParts(uiOrgMode, partOffset, depth + uiInitTrDepth);
 
     // set context models
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+    m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 }
 
 /** check RD costs for a CU block encoded with merge
@@ -410,10 +410,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             bSubBranch = true;
         }
 
-        m_pcEntropyCoder->resetBits();
-        m_pcEntropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
-        rpcBestCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits(); // split bits
-        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+        m_entropyCoder->resetBits();
+        m_entropyCoder->encodeSplitFlag(rpcBestCU, 0, depth, true);
+        rpcBestCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+        rpcBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         rpcBestCU->getTotalCost()  = m_pcRdCost->calcRdCost(rpcBestCU->getTotalDistortion(), rpcBestCU->getTotalBits());
     }
     else if (!(bSliceEnd && bInsidePicture))
@@ -448,11 +448,11 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             {
                 if (0 == uiPartUnitIdx) //initialize RD with previous depth buffer
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
                 }
                 else
                 {
-                    m_pppcRDSbacCoder[uhNextDepth][CI_CURR_BEST]->load(m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]);
+                    m_rdSbacCoders[uhNextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]);
                 }
                 xCompressInterCU(pcSubBestPartCU, pcSubTempPartCU, rpcTempCU, uhNextDepth, uiPartUnitIdx);
 
@@ -469,11 +469,11 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
 
         if (!bBoundary)
         {
-            m_pcEntropyCoder->resetBits();
-            m_pcEntropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
+            m_entropyCoder->resetBits();
+            m_entropyCoder->encodeSplitFlag(rpcTempCU, 0, depth, true);
 
-            rpcTempCU->getTotalBits() += m_pcEntropyCoder->getNumberOfWrittenBits();     // split bits
-            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
+            rpcTempCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits();     // split bits
+            rpcTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         }
         rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost(rpcTempCU->getTotalDistortion(), rpcTempCU->getTotalBits());
 
@@ -503,7 +503,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
             }
         }
 
-        m_pppcRDSbacCoder[uhNextDepth][CI_NEXT_BEST]->store(m_pppcRDSbacCoder[depth][CI_TEMP_BEST]);
+        m_rdSbacCoders[uhNextDepth][CI_NEXT_BEST]->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
 #if  CU_STAT_LOGFILE
         if (rpcBestCU != 0)
