@@ -70,26 +70,28 @@ public:
     x265::MotionEstimate m_me;
     x265::BitCost        m_bc; // TODO: m_bc will go away with HM ME
 
-    TCoeff**        m_ppcQTTempCoeffY;
-    TCoeff**        m_ppcQTTempCoeffCb;
-    TCoeff**        m_ppcQTTempCoeffCr;
-    Int**           m_ppcQTTempArlCoeffY;
-    Int**           m_ppcQTTempArlCoeffCb;
-    Int**           m_ppcQTTempArlCoeffCr;
-    UChar*          m_puhQTTempTrIdx;
-    UChar*          m_puhQTTempCbf[3];
+    TShortYUV*      m_qtTempTComYuv;
+    Pel*            m_sharedPredTransformSkip[3];
 
-    TShortYUV*      m_pcQTTempTComYuv;
-    TComYuv         m_tmpYuvPred; // To be used in xGetInterPredictionError() to avoid constant memory allocation/deallocation
-    Pel*            m_pSharedPredTransformSkip[3];
-    TCoeff*         m_pcQTTempTUCoeffY;
-    TCoeff*         m_pcQTTempTUCoeffCb;
-    TCoeff*         m_pcQTTempTUCoeffCr;
-    UChar*          m_puhQTTempTransformSkipFlag[3];
-    TComYuv         m_pcQTTempTransformSkipTComYuv;
-    Int*            m_ppcQTTempTUArlCoeffY;
-    Int*            m_ppcQTTempTUArlCoeffCb;
-    Int*            m_ppcQTTempTUArlCoeffCr;
+    TCoeff**        m_qtTempCoeffY;
+    TCoeff**        m_qtTempCoeffCb;
+    TCoeff**        m_qtTempCoeffCr;
+    Int**           m_qtTempArlCoeffY;
+    Int**           m_qtTempArlCoeffCb;
+    Int**           m_qtTempArlCoeffCr;
+    UChar*          m_qtTempTrIdx;
+    UChar*          m_qtTempCbf[3];
+
+    TCoeff*         m_qtTempTUCoeffY;
+    TCoeff*         m_qtTempTUCoeffCb;
+    TCoeff*         m_qtTempTUCoeffCr;
+    Int*            m_qtTempTUArlCoeffY;
+    Int*            m_qtTempTUArlCoeffCb;
+    Int*            m_qtTempTUArlCoeffCr;
+    UChar*          m_qtTempTransformSkipFlag[3];
+    TComYuv         m_qtTempTransformSkipTComYuv;
+
+    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
 
 protected:
 
