@@ -3838,13 +3838,13 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
     if (bCheckFull)
     {
         const UInt numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
-        const UInt qtTempAccessLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
-        TCoeff *coeffCurY = m_ppcQTTempCoeffY[qtTempAccessLayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
-        TCoeff *coeffCurU = m_ppcQTTempCoeffCb[qtTempAccessLayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        TCoeff *coeffCurV = m_ppcQTTempCoeffCr[qtTempAccessLayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        Int *arlCoeffCurY = m_ppcQTTempArlCoeffY[qtTempAccessLayer] +  (numCoeffPerAbsPartIdxIncrement * absPartIdx);
-        Int *arlCoeffCurU = m_ppcQTTempArlCoeffCb[qtTempAccessLayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        Int *arlCoeffCurV = m_ppcQTTempArlCoeffCr[qtTempAccessLayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        const UInt qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
+        TCoeff *coeffCurY = m_ppcQTTempCoeffY[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
+        TCoeff *coeffCurU = m_ppcQTTempCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        TCoeff *coeffCurV = m_ppcQTTempCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        Int *arlCoeffCurY = m_ppcQTTempArlCoeffY[qtlayer] +  (numCoeffPerAbsPartIdxIncrement * absPartIdx);
+        Int *arlCoeffCurU = m_ppcQTTempArlCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        Int *arlCoeffCurV = m_ppcQTTempArlCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
 
         Int trWidth = 0, trHeight = 0, trWidthC = 0, trHeightC = 0;
         UInt absTUPartIdxC = absPartIdx;
@@ -3937,16 +3937,16 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         }
         if (absSumY)
         {
-            Short *curResiY = m_pcQTTempTComYuv[qtTempAccessLayer].getLumaAddr(absTUPartIdx);
+            Short *curResiY = m_pcQTTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
 
             m_pcTrQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
             Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
             assert(scalingListType < 6);
-            m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_pcQTTempTComYuv[qtTempAccessLayer].width,  coeffCurY, trWidth, trHeight, scalingListType); //this is for inter mode only
+            m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_pcQTTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType); //this is for inter mode only
 
-            const UInt nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width, m_pcQTTempTComYuv[qtTempAccessLayer].getLumaAddr(absTUPartIdx),
-                                                                  m_pcQTTempTComYuv[qtTempAccessLayer].width);
+            const UInt nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width, m_pcQTTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
+                                                                  m_pcQTTempTComYuv[qtlayer].width);
             if (cu->isLosslessCoded(0))
             {
                 distY = nonZeroDistY;
@@ -3987,8 +3987,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
         if (!absSumY)
         {
-            Short *ptr =  m_pcQTTempTComYuv[qtTempAccessLayer].getLumaAddr(absTUPartIdx);
-            const UInt stride = m_pcQTTempTComYuv[qtTempAccessLayer].width;
+            Short *ptr =  m_pcQTTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            const UInt stride = m_pcQTTempTComYuv[qtlayer].width;
             for (UInt y = 0; y < trHeight; ++y)
             {
                 ::memset(ptr, 0, sizeof(Short) * trWidth);
@@ -4010,18 +4010,18 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             }
             if (absSumU)
             {
-                Short *pcResiCurrU = m_pcQTTempTComYuv[qtTempAccessLayer].getCbAddr(absTUPartIdxC);
+                Short *pcResiCurrU = m_pcQTTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
 
                 Int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_pcTrQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_U];
                 assert(scalingListType < 6);
-                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, pcResiCurrU, m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType);
+                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, pcResiCurrU, m_pcQTTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth, 
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].getCbAddr(absTUPartIdxC),
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth);
+                                                         m_pcQTTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                         m_pcQTTempTComYuv[qtlayer].Cwidth);
                 const UInt nonZeroDistU = m_pcRdCost->scaleChromaDistCb(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -4063,8 +4063,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             }
             if (!absSumU)
             {
-                Short *ptr = m_pcQTTempTComYuv[qtTempAccessLayer].getCbAddr(absTUPartIdxC);
-                const UInt stride = m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth;
+                Short *ptr = m_pcQTTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
+                const UInt stride = m_pcQTTempTComYuv[qtlayer].Cwidth;
                 for (UInt y = 0; y < trHeightC; ++y)
                 {
                     ::memset(ptr, 0, sizeof(Short) * trWidthC);
@@ -4079,17 +4079,17 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             }
             if (absSumV)
             {
-                Short *curResiV = m_pcQTTempTComYuv[qtTempAccessLayer].getCrAddr(absTUPartIdxC);
+                Short *curResiV = m_pcQTTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
                 Int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_pcTrQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
 
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_V];
                 assert(scalingListType < 6);
-                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType);
+                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_pcQTTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth, 
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].getCrAddr(absTUPartIdxC),
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth);
+                                                         m_pcQTTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                         m_pcQTTempTComYuv[qtlayer].Cwidth);
                 const UInt nonZeroDistV = m_pcRdCost->scaleChromaDistCr(dist);
 
                 if (cu->isLosslessCoded(0))
@@ -4131,8 +4131,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             }
             if (!absSumV)
             {
-                Short *ptr =  m_pcQTTempTComYuv[qtTempAccessLayer].getCrAddr(absTUPartIdxC);
-                const UInt stride = m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth;
+                Short *ptr =  m_pcQTTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
+                const UInt stride = m_pcQTTempTComYuv[qtlayer].Cwidth;
                 for (UInt y = 0; y < trHeightC; ++y)
                 {
                     ::memset(ptr, 0, sizeof(Short) * trWidthC);
@@ -4152,8 +4152,8 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             UInt nonZeroDistY = 0, absSumTransformSkipY;
             UInt64 singleCostY = MAX_INT64;
 
-            Short *curResiY = m_pcQTTempTComYuv[qtTempAccessLayer].getLumaAddr(absTUPartIdx);
-            UInt resiStride = m_pcQTTempTComYuv[qtTempAccessLayer].width;
+            Short *curResiY = m_pcQTTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx);
+            UInt resiStride = m_pcQTTempTComYuv[qtlayer].width;
 
             TCoeff bestCoeffY[32 * 32];
             memcpy(bestCoeffY, coeffCurY, sizeof(TCoeff) * numSamplesLuma);
@@ -4195,11 +4195,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
                 assert(scalingListType < 6);
 
-                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_pcQTTempTComYuv[qtTempAccessLayer].width,  coeffCurY, trWidth, trHeight, scalingListType, true);
+                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_pcQTTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType, true);
 
                 nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width,
-                                                           m_pcQTTempTComYuv[qtTempAccessLayer].getLumaAddr(absTUPartIdx),
-                                                           m_pcQTTempTComYuv[qtTempAccessLayer].width);
+                                                           m_pcQTTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
+                                                           m_pcQTTempTComYuv[qtlayer].width);
 
                 singleCostY = m_pcRdCost->calcRdCost(nonZeroDistY, skipSingleBitsY);
             }
@@ -4230,9 +4230,9 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             UInt64 singleCostU = MAX_INT64;
             UInt64 singleCostV = MAX_INT64;
 
-            Short *curResiU = m_pcQTTempTComYuv[qtTempAccessLayer].getCbAddr(absTUPartIdxC);
-            Short *curResiV = m_pcQTTempTComYuv[qtTempAccessLayer].getCrAddr(absTUPartIdxC);
-            UInt stride = m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth;
+            Short *curResiU = m_pcQTTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC);
+            Short *curResiV = m_pcQTTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC);
+            UInt stride = m_pcQTTempTComYuv[qtlayer].Cwidth;
 
             TCoeff bestCoeffU[32 * 32], bestCoeffV[32 * 32];
             memcpy(bestCoeffU, coeffCurU, sizeof(TCoeff) * numSamplesChroma);
@@ -4289,11 +4289,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_U];
                 assert(scalingListType < 6);
 
-                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiU, m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true);
+                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiU, m_pcQTTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth,
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].getCbAddr(absTUPartIdxC),
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth);
+                                                         m_pcQTTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
+                                                         m_pcQTTempTComYuv[qtlayer].Cwidth);
                 nonZeroDistU = m_pcRdCost->scaleChromaDistCb(dist);
                 singleCostU = m_pcRdCost->calcRdCost(nonZeroDistU, singleBitsU);
             }
@@ -4328,11 +4328,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_V];
                 assert(scalingListType < 6);
 
-                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true);
+                m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_pcQTTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth,
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].getCrAddr(absTUPartIdxC),
-                                                         m_pcQTTempTComYuv[qtTempAccessLayer].Cwidth);
+                                                         m_pcQTTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
+                                                         m_pcQTTempTComYuv[qtlayer].Cwidth);
                 nonZeroDistV = m_pcRdCost->scaleChromaDistCr(dist);
                 singleCostV = m_pcRdCost->calcRdCost(nonZeroDistV, singleBitsV);
             }
@@ -4574,7 +4574,7 @@ Void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt quadrant, UInt absPartI
     if (curTrMode == trMode)
     {
         const UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
-        const UInt qtTempAccessLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
+        const UInt qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         Bool  bCodeChroma   = true;
         UInt  trModeC     = trMode;
@@ -4591,34 +4591,34 @@ Void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt quadrant, UInt absPartI
         {
             Int trWidth  = 1 << trSizeLog2;
             Int trHeight = 1 << trSizeLog2;
-            m_pcQTTempTComYuv[qtTempAccessLayer].copyPartToPartLuma(resiYuv, absTUPartIdx, trWidth, trHeight);
+            m_pcQTTempTComYuv[qtlayer].copyPartToPartLuma(resiYuv, absTUPartIdx, trWidth, trHeight);
 
             if (bCodeChroma)
             {
-                m_pcQTTempTComYuv[qtTempAccessLayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
+                m_pcQTTempTComYuv[qtlayer].copyPartToPartChroma(resiYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
             }
         }
         else
         {
             UInt uiNumCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
             UInt uiNumCoeffY = (1 << (trSizeLog2 << 1));
-            TCoeff* pcCoeffSrcY = m_ppcQTTempCoeffY[qtTempAccessLayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
+            TCoeff* pcCoeffSrcY = m_ppcQTTempCoeffY[qtlayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             TCoeff* pcCoeffDstY = cu->getCoeffY() + uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             ::memcpy(pcCoeffDstY, pcCoeffSrcY, sizeof(TCoeff) * uiNumCoeffY);
-            Int* pcArlCoeffSrcY = m_ppcQTTempArlCoeffY[qtTempAccessLayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
+            Int* pcArlCoeffSrcY = m_ppcQTTempArlCoeffY[qtlayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             Int* pcArlCoeffDstY = cu->getArlCoeffY() + uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             ::memcpy(pcArlCoeffDstY, pcArlCoeffSrcY, sizeof(Int) * uiNumCoeffY);
             if (bCodeChroma)
             {
                 UInt    uiNumCoeffC = (1 << (trSizeCLog2 << 1));
-                TCoeff* pcCoeffSrcU = m_ppcQTTempCoeffCb[qtTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                TCoeff* pcCoeffSrcV = m_ppcQTTempCoeffCr[qtTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+                TCoeff* pcCoeffSrcU = m_ppcQTTempCoeffCb[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+                TCoeff* pcCoeffSrcV = m_ppcQTTempCoeffCr[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 TCoeff* pcCoeffDstU = cu->getCoeffCb() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 TCoeff* pcCoeffDstV = cu->getCoeffCr() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 ::memcpy(pcCoeffDstU, pcCoeffSrcU, sizeof(TCoeff) * uiNumCoeffC);
                 ::memcpy(pcCoeffDstV, pcCoeffSrcV, sizeof(TCoeff) * uiNumCoeffC);
-                Int* pcArlCoeffSrcU = m_ppcQTTempArlCoeffCb[qtTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                Int* pcArlCoeffSrcV = m_ppcQTTempArlCoeffCr[qtTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+                Int* pcArlCoeffSrcU = m_ppcQTTempArlCoeffCb[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+                Int* pcArlCoeffSrcV = m_ppcQTTempArlCoeffCr[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 Int* pcArlCoeffDstU = cu->getArlCoeffCb() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 Int* pcArlCoeffDstV = cu->getArlCoeffCr() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 ::memcpy(pcArlCoeffDstU, pcArlCoeffSrcU, sizeof(Int) * uiNumCoeffC);
