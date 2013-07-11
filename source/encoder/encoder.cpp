@@ -239,7 +239,7 @@ void Encoder::configure(x265_param_t *param)
     setSaoLcuBasedOptimization(param->saoLcuBasedOptimization);
 
     //====== Parallel Merge Estimation ========
-    setLog2ParallelMergeLevelMinus2(param->log2ParallelMergeLevel - 2);
+    setLog2ParallelMergeLevelMinus2(0);
 
     //====== Weighted Prediction ========
     setUseWP(param->bEnableWeightedPred);

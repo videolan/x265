@@ -96,7 +96,6 @@ void x265_param_default(x265_param_t *param)
     param->bEnableSAO = 0;
     param->maxSAOOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
-    param->log2ParallelMergeLevel = 2;
     param->maxNumMergeCand = 5u;
     param->TMVPModeId = 1;
     param->bEnableSignHiding = 1;
@@ -229,9 +228,6 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
 
-    CONFIRM(param->log2ParallelMergeLevel < 2,
-            "Log2ParallelMergeLevel should be larger than or equal to 2");
-
     CONFIRM(param->bEnableWavefront && param->bEnableAdaptQpSelect,
             "Adaptive QP Select cannot be used together with WPP");
 
@@ -285,7 +281,7 @@ void x265_print_params(x265_param_t *param)
     x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra  : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
     x265_log(param, X265_LOG_INFO, "Motion search / range        : %s / %d\n", x265_motion_est_names[param->searchMethod], param->searchRange);
-    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d PME:%d TMVPMode:%d\n", param->maxNumMergeCand, param->log2ParallelMergeLevel, param->TMVPModeId);
+    x265_log(param, X265_LOG_INFO, "Max Num Merge Candidates     : %d TMVPMode:%d\n", param->maxNumMergeCand, param->TMVPModeId);
     x265_log(param, X265_LOG_INFO, "Intra period                 : %d\n", param->keyframeInterval);
     if (param->bEnableWavefront)
     {

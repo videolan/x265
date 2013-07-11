@@ -190,7 +190,6 @@ typedef struct x265_param_t
     int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, HM, FULL)
     int       searchRange;                     ///< ME search range
     int       bipredSearchRange;               ///< ME search range for bipred refinement
-    uint32_t  log2ParallelMergeLevel;          ///< Parallel merge estimation region
     uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
     int       TMVPModeId;                      ///< TMVP mode 0: TMVP disabled for all slices. 1: TMVP enabled for all slices (default) 2: TMVP enabled for certain slices only
     int       bEnableWeightedPred;             ///< enable weighted prediction in P slices
