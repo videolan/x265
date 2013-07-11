@@ -477,11 +477,11 @@ Void TComSlice::initEqualRef()
 {
     for (Int iDir = 0; iDir < 2; iDir++)
     {
-        for (Int iRefIdx1 = 0; iRefIdx1 < MAX_NUM_REF; iRefIdx1++)
+        for (Int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
         {
-            for (Int iRefIdx2 = iRefIdx1; iRefIdx2 < MAX_NUM_REF; iRefIdx2++)
+            for (Int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
             {
-                m_abEqualRef[iDir][iRefIdx1][iRefIdx2] = m_abEqualRef[iDir][iRefIdx2][iRefIdx1] = (iRefIdx1 == iRefIdx2 ? true : false);
+                m_abEqualRef[iDir][refIdx1][refIdx2] = m_abEqualRef[iDir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
             }
         }
     }

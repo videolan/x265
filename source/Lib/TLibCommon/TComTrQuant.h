@@ -205,7 +205,7 @@ protected:
 
 private:
 
-    Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height);
+    Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt stride, Int* psCoeff, Int width, Int height);
 
     Void signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height);
 

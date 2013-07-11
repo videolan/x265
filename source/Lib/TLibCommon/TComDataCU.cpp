@@ -3253,7 +3253,7 @@ UInt TComDataCU::getCoefScanIdx(UInt absPartIdx, UInt width, Bool bIsLuma, Bool 
 {
     UInt uiCTXIdx;
     UInt uiScanIdx;
-    UInt uiDirMode;
+    UInt dirMode;
 
     if (!bIsIntra)
     {
@@ -3281,29 +3281,29 @@ UInt TComDataCU::getCoefScanIdx(UInt absPartIdx, UInt width, Bool bIsLuma, Bool 
 
     if (bIsLuma)
     {
-        uiDirMode = getLumaIntraDir(absPartIdx);
+        dirMode = getLumaIntraDir(absPartIdx);
         uiScanIdx = SCAN_DIAG;
         if (uiCTXIdx > 3 && uiCTXIdx < 6) //if multiple scans supported for transform size
         {
-            uiScanIdx = abs((Int)uiDirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((Int)uiDirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
+            uiScanIdx = abs((Int)dirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((Int)dirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
         }
     }
     else
     {
-        uiDirMode = getChromaIntraDir(absPartIdx);
-        if (uiDirMode == DM_CHROMA_IDX)
+        dirMode = getChromaIntraDir(absPartIdx);
+        if (dirMode == DM_CHROMA_IDX)
         {
             // get number of partitions in current CU
             UInt depth = getDepth(absPartIdx);
             UInt numParts = getPic()->getNumPartInCU() >> (2 * depth);
 
             // get luma mode from upper-left corner of current CU
-            uiDirMode = getLumaIntraDir((absPartIdx / numParts) * numParts);
+            dirMode = getLumaIntraDir((absPartIdx / numParts) * numParts);
         }
         uiScanIdx = SCAN_DIAG;
         if (uiCTXIdx > 4 && uiCTXIdx < 7) //if multiple scans supported for transform size
         {
-            uiScanIdx = abs((Int)uiDirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((Int)uiDirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
+            uiScanIdx = abs((Int)dirMode - VER_IDX) < 5 ? SCAN_HOR : (abs((Int)dirMode - HOR_IDX) < 5 ? SCAN_VER : SCAN_DIAG);
         }
     }
 

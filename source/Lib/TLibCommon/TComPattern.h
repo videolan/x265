@@ -120,7 +120,7 @@ public:
     Pel*  getAdiCbBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
     Pel*  getAdiCrBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf);
 
-    Pel*  getPredictorPtr(UInt uiDirMode, UInt uiWidthBits, Pel* piAdiBuf);
+    Pel*  getPredictorPtr(UInt dirMode, UInt uiWidthBits, Pel* piAdiBuf);
     // -------------------------------------------------------------------------------------------------------------------
     // initialization functions
     // -------------------------------------------------------------------------------------------------------------------

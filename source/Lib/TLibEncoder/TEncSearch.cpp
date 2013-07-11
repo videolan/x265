@@ -859,7 +859,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     if (default0Save1Load2 != 2)
     {
         cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
-        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
         predIntraLumaAng(cu->getPattern(), lumaPredMode, pred, stride, width);
         // save prediction
@@ -889,7 +889,6 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
-
     m_trQuant->selectLambda(TEXT_LUMA);
 
     absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, arlCoeff, width, height, TEXT_LUMA, absPartIdx, useTransformSkip);
@@ -982,11 +981,11 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     {
         cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
 
-        cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
-        Pel* pPatChroma = (chromaId > 0 ? cu->getPattern()->getAdiCrBuf(width, height, m_piPredBuf) : cu->getPattern()->getAdiCbBuf(width, height, m_piPredBuf));
+        cu->getPattern()->initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight);
+        Pel* chromaPred = (chromaId > 0 ? cu->getPattern()->getAdiCrBuf(width, height, m_predBuf) : cu->getPattern()->getAdiCbBuf(width, height, m_predBuf));
 
         //===== get prediction signal =====
-        predIntraChromaAng(pPatChroma, chromaPredMode, pred, stride, width);
+        predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, width);
 
         // save prediction
         if (default0Save1Load2 == 1)
@@ -1962,9 +1961,9 @@ Void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     //===== init pattern =====
     assert(width == height);
     cu->getPattern()->initPattern(cu, 0, 0);
-    cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
-    Pel* patChromaU = cu->getPattern()->getAdiCbBuf(width, height, m_piPredBuf);
-    Pel* patChromaV = cu->getPattern()->getAdiCrBuf(width, height, m_piPredBuf);
+    cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_predBuf, m_predBufStride, m_predBufHeight);
+    Pel* patChromaU = cu->getPattern()->getAdiCbBuf(width, height, m_predBuf);
+    Pel* patChromaV = cu->getPattern()->getAdiCrBuf(width, height, m_predBuf);
 
     //===== get best prediction modes (using SAD) =====
     UInt minMode  = 0;
@@ -2030,7 +2029,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         cu->getPattern()->initPattern(cu, initTrDepth, partOffset);
 
         // Reference sample smoothing
-        cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         Int numModesAvailable = 35; //total number of Intra modes
@@ -2055,7 +2054,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             UInt modeCosts[35];
             Bool bFilter = (width <= 16);
-            pixel *src = (pixel*) m_piPredBuf;
+            pixel *src = (pixel*) m_predBuf;
 
             // 1
             primitives.intra_pred_dc((pixel*)src + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width, bFilter);
@@ -2636,9 +2635,9 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  */
 Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, Bool bUseMRG)
 {
-    m_acYuvPred[0].clear();
-    m_acYuvPred[1].clear();
-    m_cYuvPredTemp.clear();
+    m_predYuv[0].clear();
+    m_predYuv[1].clear();
+    m_predTempYuv.clear();
     predYuv->clear();
 
     MV mvmin;
@@ -2861,7 +2860,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& pre
                     refIdxBidir[1] = bestBiPRefIdxL1;
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(mvBidir[1], partSize, partAddr, 0, partIdx);
                     cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(refIdxBidir[1], partSize, partAddr, 0, partIdx);
-                    TComYuv* predYuv = &m_acYuvPred[1];
+                    TComYuv* predYuv = &m_predYuv[1];
                     motionCompensation(cu, predYuv, REF_PIC_LIST_1, partIdx);
 
                     motBits[0] = bits[0] - mbBits[0];
@@ -2899,7 +2898,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& pre
                 {
                     cu->getCUMvField(RefPicList(1 - refList))->setAllMv(mv[1 - refList], partSize, partAddr, 0, partIdx);
                     cu->getCUMvField(RefPicList(1 - refList))->setAllRefIdx(refIdx[1 - refList], partSize, partAddr, 0, partIdx);
-                    TComYuv*  predYuv = &m_acYuvPred[1 - refList];
+                    TComYuv*  predYuv = &m_predYuv[1 - refList];
                     motionCompensation(cu, predYuv, RefPicList(1 - refList), partIdx);
                 }
                 RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
@@ -3150,7 +3149,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
 
         if (cu->getSlice()->getMvdL1ZeroFlag() && picList == REF_PIC_LIST_1)
         {
-            (*distBiP) = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+            (*distBiP) = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_predTempYuv, mvPred, 0, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
         }
         return;
     }
@@ -3162,12 +3161,12 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
         return;
     }
 
-    m_cYuvPredTemp.clear();
+    m_predTempYuv.clear();
 
     //-- Check Minimum Cost.
     for (i = 0; i < pcAMVPInfo->iN; i++)
     {
-        UInt cost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_cYuvPredTemp, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+        UInt cost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_predTempYuv, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
         if (bestCost > cost)
         {
             bestCost = cost;
@@ -3177,7 +3176,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
         }
     }
 
-    m_cYuvPredTemp.clear();
+    m_predTempYuv.clear();
 
     // Setting Best MVP
     mvPred = bestMv;
@@ -3326,7 +3325,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu,
     TComPicYuv* frefYuv = cu->getSlice()->getRefPic(picList, refIfx)->getPicYuvRec();
     if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
     {
-        TShortYUV *mbYuv = &m_acShortPred[0];
+        TShortYUV *mbYuv = &m_predShortYuv[0];
         xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, mbYuv, true);
         xWeightedPredictionUni(cu, mbYuv, partAddr, sizex, sizey, picList, templateCand, refIfx);
     }
@@ -3357,8 +3356,8 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     int cost_shift = 0;
     if (bi)
     {
-        TComYuv* yuvOther = &m_acYuvPred[1 - (Int)picList];
-        yuv = &m_cYuvPredTemp;
+        TComYuv* yuvOther = &m_predYuv[1 - (Int)picList];
+        yuv = &m_predTempYuv;
         fencYuv->copyPartToPartYuv(yuv, partAddr, width, height);
         yuv->removeHighFreq(yuvOther, partAddr, width, height);
         cost_shift = 1;

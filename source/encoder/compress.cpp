@@ -106,8 +106,8 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
     //===== determine set of modes to be tested (using prediction signal only) =====
     UInt numModesAvailable = 35; //total number of Intra modes
     Pel* piOrg         = m_ppcOrigYuv[depth]->getLumaAddr(0, width);
-    Pel* piPred        = m_ppcPredYuvMode[5][depth]->getLumaAddr(0, width);
-    UInt uiStride      = m_ppcPredYuvMode[5][depth]->getStride();
+    Pel* pred        = m_ppcPredYuvMode[5][depth]->getLumaAddr(0, width);
+    UInt stride      = m_ppcPredYuvMode[5][depth]->getStride();
     UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
     UInt numModesForFullRD = g_intraModeNumFast[uiWidthBit];
     Int nLog2SizeMinus2 = g_convertToBit[width];
@@ -126,16 +126,16 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
         Pel *ptrSrc = m_pcPredSearch->getPredicBuf();
 
         // 1
-        primitives.intra_pred_dc((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, width, bFilter);
-        uiSads[DC_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+        primitives.intra_pred_dc((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width, bFilter);
+        uiSads[DC_IDX] = sa8d((pixel*)piOrg, stride, (pixel*)pred, stride);
 
         // 0
         if (width >= 8 && width <= 32)
         {
             ptrSrc += ADI_BUF_STRIDE * (2 * width + 1);
         }
-        primitives.intra_pred_planar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, width);
-        uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+        primitives.intra_pred_planar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width);
+        uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, stride, (pixel*)pred, stride);
 
         // 33 Angle modes once
         if (width <= 16)
@@ -144,7 +144,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
             ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
 
             // Transpose NxN
-            x265::primitives.transpose[nLog2SizeMinus2]((pixel*)buf1, (pixel*)piOrg, uiStride);
+            x265::primitives.transpose[nLog2SizeMinus2]((pixel*)buf1, (pixel*)piOrg, stride);
 
             Pel *pAbove0 = m_pcPredSearch->refAbove    + width - 1;
             Pel *pAbove1 = m_pcPredSearch->refAboveFlt + width - 1;
@@ -158,7 +158,7 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
             {
                 bool modeHor = (mode < 18);
                 Pel *src = (modeHor ? buf1 : piOrg);
-                intptr_t srcStride = (modeHor ? width : uiStride);
+                intptr_t srcStride = (modeHor ? width : stride);
 
                 // use hadamard transform here
                 UInt uiSad = sa8d((pixel*)src, srcStride, (pixel*)&tmp[(mode - 2) * (width * width)], width);
@@ -169,10 +169,10 @@ Void TEncCu::xComputeCostIntrainInter(TComDataCU*& cu, PartSize eSize)
         {
             for (UInt mode = 2; mode < numModesAvailable; mode++)
             {
-                m_pcPredSearch->predIntraLumaAng(cu->getPattern(), mode, piPred, uiStride, width);
+                m_pcPredSearch->predIntraLumaAng(cu->getPattern(), mode, pred, stride, width);
 
                 // use hadamard transform here
-                UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
+                UInt uiSad = sa8d((pixel*)piOrg, stride, (pixel*)pred, stride);
                 uiSads[mode] = uiSad;
             }
         }

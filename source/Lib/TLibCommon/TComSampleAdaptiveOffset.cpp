@@ -1443,7 +1443,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
     Pel* piSrc;
     Pel* piPcm;
-    UInt uiStride;
+    UInt stride;
     UInt width;
     UInt height;
     UInt uiPcmLeftShiftBit;
@@ -1456,7 +1456,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
     {
         piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), uiAbsZorderIdx);
         piPcm = cu->getPCMSampleY() + uiLumaOffset;
-        uiStride  = pcPicYuvRec->getStride();
+        stride  = pcPicYuvRec->getStride();
         width  = (g_maxCUWidth >> depth);
         height = (g_maxCUHeight >> depth);
         if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
@@ -1481,7 +1481,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
             piPcm = cu->getPCMSampleCr() + uiChromaOffset;
         }
 
-        uiStride = pcPicYuvRec->getCStride();
+        stride = pcPicYuvRec->getCStride();
         width  = ((g_maxCUWidth >> depth) / 2);
         height = ((g_maxCUWidth >> depth) / 2);
         if (cu->isLosslessCoded(uiAbsZorderIdx) && !cu->getIPCMFlag(uiAbsZorderIdx))
@@ -1502,7 +1502,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt uiAbsZ
         }
 
         piPcm += width;
-        piSrc += uiStride;
+        piSrc += stride;
     }
 }
 

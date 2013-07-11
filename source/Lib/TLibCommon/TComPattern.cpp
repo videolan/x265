@@ -558,21 +558,21 @@ Pel* TComPattern::getAdiCrBuf(Int iCuWidth, Int iCuHeight, Pel* piAdiBuf)
 }
 
 /** Get pointer to reference samples for intra prediction
- * \param uiDirMode   prediction mode index
+ * \param dirMode     prediction mode index
  * \param log2BlkSize size of block (2 = 4x4, 3 = 8x8, 4 = 16x16, 5 = 32x32, 6 = 64x64)
  * \param piAdiBuf    pointer to unfiltered reference samples
  * \return            pointer to (possibly filtered) reference samples
  *
  * The prediction mode index is used to determine whether a smoothed reference sample buffer is returned.
  */
-Pel* TComPattern::getPredictorPtr(UInt uiDirMode, UInt log2BlkSize, Pel* piAdiBuf)
+Pel* TComPattern::getPredictorPtr(UInt dirMode, UInt log2BlkSize, Pel* piAdiBuf)
 {
     Pel* piSrc;
 
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
-    Int diff = min<Int>(abs((Int)uiDirMode - HOR_IDX), abs((Int)uiDirMode - VER_IDX));
+    Int diff = min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
     UChar ucFiltIdx = diff > m_aucIntraFilter[log2BlkSize - 2] ? 1 : 0;
-    if (uiDirMode == DC_IDX)
+    if (dirMode == DC_IDX)
     {
         ucFiltIdx = 0; //no smoothing for DC or LM chroma
     }

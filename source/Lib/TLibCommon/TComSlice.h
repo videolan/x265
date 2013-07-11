@@ -1601,15 +1601,15 @@ public:
     Double    getLambdaChroma()             { return m_dLambdaChroma; }
 
     Void      initEqualRef();
-    Bool      isEqualRef(RefPicList e, Int iRefIdx1, Int iRefIdx2)
+    Bool      isEqualRef(RefPicList e, Int refIdx1, Int refIdx2)
     {
-        if (iRefIdx1 < 0 || iRefIdx2 < 0) return false;
-        return m_abEqualRef[e][iRefIdx1][iRefIdx2];
+        if (refIdx1 < 0 || refIdx2 < 0) return false;
+        return m_abEqualRef[e][refIdx1][refIdx2];
     }
 
-    Void setEqualRef(RefPicList e, Int iRefIdx1, Int iRefIdx2, Bool b)
+    Void setEqualRef(RefPicList e, Int refIdx1, Int refIdx2, Bool b)
     {
-        m_abEqualRef[e][iRefIdx1][iRefIdx2] = m_abEqualRef[e][iRefIdx2][iRefIdx1] = b;
+        m_abEqualRef[e][refIdx1][refIdx2] = m_abEqualRef[e][refIdx2][refIdx1] = b;
     }
 
     static Void      sortPicList(TComList<TComPic*>& rcListPic);

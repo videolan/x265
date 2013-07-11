@@ -58,35 +58,36 @@ class TComPrediction : public TComWeightPrediction
 {
 protected:
 
-    Pel*      m_piPredBuf;
-    Pel*      m_piPredAngBufs;
-    Int       m_iPredBufStride;
-    Int       m_iPredBufHeight;
+    Pel*      m_predBuf;
+    Pel*      m_predAllAngsBuf;
+    Int       m_predBufStride;
+    Int       m_predBufHeight;
 
-    //reference sample for IntraPrediction
+    // references sample for IntraPrediction
+    TComYuv   m_predYuv[2];
+    TShortYUV m_predShortYuv[2];
+    TComYuv   m_predTempYuv;
 
-    TComYuv   m_acYuvPred[2];
-    TShortYUV m_acShortPred[2];
-    TComYuv   m_cYuvPredTemp;
-    /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
+    /* This holds final interpolated pixel values (0-255). Hence memory is stored as Pel. */
     TComYuv   m_filteredBlock[4][4];
-    /*This holds intermediate values for filtering operations which need to maintain Short precision*/
-    TShortYUV filteredBlockTmp[4]; //This
 
-    Pel*   m_pLumaRecBuffer;     ///< array for downsampled reconstructed luma sample
-    Int    m_iLumaRecStride;     ///< stride of #m_pLumaRecBuffer array
+    /* This holds intermediate values for filtering operations which need to maintain Short precision */
+    TShortYUV filteredBlockTmp[4];
+
+    Pel*   m_lumaRecBuffer;     ///< array for down-sampled reconstructed luma sample
+    Int    m_lumaRecStride;     ///< stride of #m_pLumaRecBuffer array
 
     // motion compensation functions
-    Void xPredInterUni(TComDataCU* cu,                          UInt partAddr,               Int width, Int height, RefPicList picList, TComYuv*& rpcYuvPred, Bool bi = false);
-    Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV*& rpcYuvPred, Bool bi);
-    Void xPredInterBi(TComDataCU* cu,                          UInt partAddr,               Int width, Int height,                         TComYuv*& rpcYuvPred);
+    Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Bool bi = false);
+    Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV*& outPredYuv, Bool bi);
+    Void xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv);
     Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
     Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *&dstPic, Bool bi);
     Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
     Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *&dstPic, Bool bi);
-    Void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int iRefIdx0, Int iRefIdx1, UInt partAddr, Int width, Int height, TComYuv*& rpcYuvDst);
+    Void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partAddr, Int width, Int height, TComYuv*& outDstYuv);
 
-    Void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* pDst0, Int dststride, UInt width, UInt height, UInt uiExt0);
+    Void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* dst0, Int dststride, UInt width, UInt height, UInt ext0);
 
     Bool xCheckIdenticalMotion(TComDataCU* cu, UInt PartAddr);
 
@@ -106,14 +107,14 @@ public:
     Void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
 
     // Angular Intra
-    Void predIntraLumaAng(TComPattern* pcTComPattern, UInt uiDirMode, Pel* piPred, UInt uiStride, Int width);
-    Void predIntraChromaAng(Pel* piSrc, UInt uiDirMode, Pel* piPred, UInt uiStride, Int width);
+    Void predIntraLumaAng(TComPattern* pcTComPattern, UInt dirMode, Pel* pred, UInt stride, Int width);
+    Void predIntraChromaAng(Pel* piSrc, UInt dirMode, Pel* pred, UInt stride, Int width);
 
-    Pel* getPredicBuf()             { return m_piPredBuf; }
+    Pel* getPredicBuf()             { return m_predBuf; }
 
-    Int  getPredicBufWidth()        { return m_iPredBufStride; }
+    Int  getPredicBufWidth()        { return m_predBufStride; }
 
-    Int  getPredicBufHeight()       { return m_iPredBufHeight; }
+    Int  getPredicBufHeight()       { return m_predBufHeight; }
 };
 
 //! \}

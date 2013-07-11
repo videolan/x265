@@ -627,7 +627,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
 /** Wrapper function between HM interface and core NxN inverse transform (2D)
  *  \param plCoef input data (transform coefficients)
  *  \param pResidual output data (residual)
- *  \param uiStride stride of input residual data
+ *  \param stride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
@@ -641,7 +641,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt 
 /** Wrapper function between HM interface and core 4x4 transform skipping
  *  \param piBlkResi input data (residual)
  *  \param psCoeff output data (transform coefficients)
- *  \param uiStride stride of input residual data
+ *  \param stride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  */
 Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int* coeff, Int width, Int height)
@@ -674,7 +674,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
 /** Wrapper function between HM interface and core NxN transform skipping
  *  \param plCoef input data (coefficients)
  *  \param pResidual output data (residual)
- *  \param uiStride stride of input residual data
+ *  \param stride stride of input residual data
  *  \param iSize transform size (iSize x iSize)
  */
 Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt stride, Int width, Int height)
