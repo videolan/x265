@@ -123,11 +123,11 @@ public:
     TEncSbac***     m_rdSbacCoders;
     TEncSbac*       m_rdGoOnSbacCoder;
 
-    Void set_pppcRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
+    Void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
-    Void set_pcEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
+    Void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
-    Void set_pcRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
+    Void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
     Void setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma);
 
