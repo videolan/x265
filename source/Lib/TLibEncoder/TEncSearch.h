@@ -125,7 +125,7 @@ protected:
     const UInt*     m_puiDFilter;
 
     // AMVP cost computation
-    UInt            m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1]; //th array bounds
+    UInt            m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
 
 public:
 
@@ -284,8 +284,8 @@ protected:
     // T & Q & Q-1 & T-1
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, const UInt depth, Bool bSubdivAndCbf, TextType ttype);
-    Void xEstimateResidualQT(TComDataCU* cu, UInt quadrant, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, const UInt depth, UInt64 &rdCost, UInt &outBits, UInt &outDist, UInt *puiZeroDist);
+    Void xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, UInt depth, Bool bSubdivAndCbf, TextType ttype);
+    Void xEstimateResidualQT(TComDataCU* cu, UInt quadrant, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, UInt64 &rdCost, UInt &outBits, UInt &outDist, UInt *puiZeroDist);
     Void xSetResidualQTData(TComDataCU* cu, UInt quadrant, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial);
 
     // -------------------------------------------------------------------------------------------------------------------
