@@ -3376,7 +3376,6 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     m_iSearchRange = m_adaptiveRange[picList][refIdxPred];
 
     Int merange = (bi ? m_bipredSearchRange : m_iSearchRange);
-    TComPattern* patternKey = cu->getPattern();
 
     UInt partAddr;
     Int width, height;
@@ -3393,8 +3392,9 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
         cost_shift = 1;
     }
 
-    //  Search key pattern initialization
-    patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width,  height, yuv->getStride(), 0, 0);
+    // Search key pattern initialization
+    TComPattern* patternKey = cu->getPattern();
+    patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width, height, yuv->getStride(), 0, 0);
 
     MV cMvPred = *mvp;
     MV mvmin, mvmax;
@@ -3457,36 +3457,36 @@ Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin,
     mvmax >>= 2;
 }
 
-Void TEncSearch::xPatternSearch(TComPattern* pcPatternKey, Pel* RefY, Int RefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
+Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
-    Int SrchRngHorLeft   = pcMvSrchRngLT->x;
-    Int SrchRngHorRight  = pcMvSrchRngRB->x;
-    Int SrchRngVerTop    = pcMvSrchRngLT->y;
-    Int SrchRngVerBottom = pcMvSrchRngRB->y;
+    Int srchRngHorLeft   = mvmin->x;
+    Int srchRngHorRight  = mvmax->x;
+    Int srchRngVerTop    = mvmin->y;
+    Int srchRngVerBottom = mvmax->y;
 
-    m_pcRdCost->setDistParam(pcPatternKey, RefY, RefStride,  m_cDistParam);
+    m_pcRdCost->setDistParam(patternKey, refY, stride, m_cDistParam);
     m_cDistParam.bitDepth = g_bitDepthY;
-    RefY += (SrchRngVerTop * RefStride);
+    refY += (srchRngVerTop * stride);
 
     // find min. distortion position
-    UInt SadBest = MAX_UINT;
-    for (Int y = SrchRngVerTop; y <= SrchRngVerBottom; y++)
+    UInt bcost = MAX_UINT;
+    for (Int y = srchRngVerTop; y <= srchRngVerBottom; y++)
     {
-        for (Int x = SrchRngHorLeft; x <= SrchRngHorRight; x++)
+        for (Int x = srchRngHorLeft; x <= srchRngHorRight; x++)
         {
             MV mv(x, y);
-            m_cDistParam.pCur = RefY + x;
-            UInt Sad = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(mv << 2);
+            m_cDistParam.pCur = refY + x;
+            UInt cost = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(mv << 2);
 
-            if (Sad < SadBest)
+            if (cost < bcost)
             {
-                SadBest = Sad;
-                rcMv = mv;
+                bcost = cost;
+                mv = mv;
             }
         }
-        RefY += RefStride;
+        refY += stride;
     }
-    ruiSAD = SadBest - m_bc.mvcost(rcMv << 2);
+    outcost = bcost - m_bc.mvcost(outmv << 2);
 }
 
 Void TEncSearch::xPatternSearchFast(TComDataCU* cu, TComPattern* pcPatternKey, Pel* RefY, Int RefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
