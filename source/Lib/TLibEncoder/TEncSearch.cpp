@@ -3369,76 +3369,75 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu,
     return m_pcRdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
 }
 
-Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int PartIdx, RefPicList picList, MV* pcMvPred, Int RefIdxPred, MV& rcMv, UInt& outBits, UInt& outCost, Bool Bi)
+Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred, MV& outmv, UInt& outBits, UInt& outCost, Bool bi)
 {
     CYCLE_COUNTER_START(ME);
+
+    m_iSearchRange = m_adaptiveRange[picList][refIdxPred];
+
+    Int merange = (bi ? m_bipredSearchRange : m_iSearchRange);
+    TComPattern* patternKey = cu->getPattern();
+
+    UInt partAddr;
+    Int width, height;
+    cu->getPartIndexAndSize(partIdx, partAddr, width, height);
+
+    TComYuv* yuv = fencYuv;
     int cost_shift = 0;
-    UInt PartAddr;
-    Int RoiWidth;
-    Int RoiHeight;
-
-    MV cMvHalf, cMvQter;
-    MV cMvSrchRngLT;
-    MV cMvSrchRngRB;
-
-    TComYuv* pcYuv = fencYuv;
-    m_iSearchRange = m_adaptiveRange[picList][RefIdxPred];
-    Int SrchRng = (Bi ? m_bipredSearchRange : m_iSearchRange);
-    TComPattern*  pcPatternKey  = cu->getPattern();
-    cu->getPartIndexAndSize(PartIdx, PartAddr, RoiWidth, RoiHeight);
-
-    if (Bi)
+    if (bi)
     {
-        TComYuv*  pcYuvOther = &m_acYuvPred[1 - (Int)picList];
-        pcYuv  = &m_cYuvPredTemp;
-        fencYuv->copyPartToPartYuv(pcYuv, PartAddr, RoiWidth, RoiHeight);
-        pcYuv->removeHighFreq(pcYuvOther, PartAddr, RoiWidth, RoiHeight);
+        TComYuv* yuvOther = &m_acYuvPred[1 - (Int)picList];
+        yuv = &m_cYuvPredTemp;
+        fencYuv->copyPartToPartYuv(yuv, partAddr, width, height);
+        yuv->removeHighFreq(yuvOther, partAddr, width, height);
         cost_shift = 1;
     }
 
     //  Search key pattern initialization
-    pcPatternKey->initPattern(pcYuv->getLumaAddr(PartAddr), pcYuv->getCbAddr(PartAddr), pcYuv->getCrAddr(PartAddr), RoiWidth,  RoiHeight, pcYuv->getStride(), 0, 0);
+    patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width,  height, yuv->getStride(), 0, 0);
 
-    Pel* piRefY = cu->getSlice()->getRefPic(picList, RefIdxPred)->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + PartAddr);
-    Int  RefStride  = cu->getSlice()->getRefPic(picList, RefIdxPred)->getPicYuvRec()->getStride();
-    TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, RefIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
+    MV cMvPred = *mvp;
+    MV mvmin, mvmax;
 
-    MV cMvPred = *pcMvPred;
-
-    if (Bi)
-        xSetSearchRange(cu, rcMv, SrchRng, cMvSrchRngLT, cMvSrchRngRB);
+    if (bi)
+        xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
     else
-        xSetSearchRange(cu, cMvPred, SrchRng, cMvSrchRngLT, cMvSrchRngRB);
+        xSetSearchRange(cu, cMvPred, merange, mvmin, mvmax);
+
+    setWpScalingDistParam(cu, refIdxPred, picList);
+
+    Pel* fref = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
+    Int  stride  = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getStride();
 
     // Configure the MV bit cost calculator
-    m_bc.setMVP(*pcMvPred);
-
-    setWpScalingDistParam(cu, RefIdxPred, picList);
+    m_bc.setMVP(*mvp);
 
     // Do integer search
     m_pcRdCost->setCostScale(2);
-    if (Bi || m_iSearchMethod == X265_FULL_SEARCH)
+    if (bi || m_iSearchMethod == X265_FULL_SEARCH)
     {
-        xPatternSearch(pcPatternKey, piRefY, RefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, outCost);
+        xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
     }
     else
     {
-        rcMv = *pcMvPred;
-        xPatternSearchFast(cu, pcPatternKey, piRefY, RefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, outCost);
+        outmv = *mvp;
+        xPatternSearchFast(cu, patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
     }
 
+    TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
     m_pcRdCost->setCostScale(1);
-    xPatternSearchFracDIF(cu, pcPatternKey, piRefY, RefStride, &rcMv, cMvHalf, cMvQter, outCost, Bi, refPic, PartAddr);
+    MV mvHpel, mvQpel;
+    xPatternSearchFracDIF(cu, patternKey, fref, stride, &outmv, mvHpel, mvQpel, outCost, bi, refPic, partAddr);
     m_pcRdCost->setCostScale(0);
 
-    rcMv <<= 2;
-    rcMv += (cMvHalf <<= 1);
-    rcMv += cMvQter;
+    outmv <<= 2;
+    outmv += (mvHpel <<= 1);
+    outmv += mvQpel;
 
-    UInt MvBits = m_bc.bitcost(rcMv);
+    UInt mvbits = m_bc.bitcost(outmv);
 
-    outBits += MvBits;
-    outCost = ((outCost - m_pcRdCost->getCost(MvBits)) >> cost_shift) + m_pcRdCost->getCost(outBits);
+    outBits += mvbits;
+    outCost = ((outCost - m_pcRdCost->getCost(mvbits)) >> cost_shift) + m_pcRdCost->getCost(outBits);
 
     CYCLE_COUNTER_STOP(ME);
 }
