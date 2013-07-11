@@ -199,11 +199,11 @@ public:
 
     UInt estimateHeaderBits(TComDataCU* cu, UInt absPartIdx);
 
-    Void  xRecurIntraCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* fencYuv,
-                              TComYuv* predYuv, TShortYUV* resiYuv, UInt& distY, UInt& distC, Bool bCheckFirst,
-                              UInt64& dRDCost);
+    Void xRecurIntraCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* fencYuv,
+                             TComYuv* predYuv, TShortYUV* resiYuv, UInt& distY, UInt& distC, Bool bCheckFirst,
+                             UInt64& dRDCost);
 
-    Void  xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv);
+    Void xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv);
 
 protected:
 
@@ -211,25 +211,25 @@ protected:
     // Intra search
     // --------------------------------------------------------------------------------------------
 
-    Void  xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
+    Void xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
 
-    Void  xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype);
-    Void  xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
-    UInt  xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
-    UInt  xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt uiChromaId);
-    Void  xIntraCodingLumaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                              TShortYUV* resiYuv, UInt& outDist, Int default0Save1Load2 = 0);
+    Void xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype);
+    Void xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
+    UInt xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
+    UInt xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt uiChromaId);
+    Void xIntraCodingLumaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                             TShortYUV* resiYuv, UInt& outDist, Int default0Save1Load2 = 0);
 
-    Void  xIntraCodingChromaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                TShortYUV* resiYuv, UInt& outDist, UInt uiChromaId, Int default0Save1Load2 = 0);
+    Void xIntraCodingChromaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                               TShortYUV* resiYuv, UInt& outDist, UInt uiChromaId, Int default0Save1Load2 = 0);
 
-    Void  xRecurIntraChromaCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv,
-                                    TComYuv* predYuv, TShortYUV* resiYuv, UInt& outDist);
+    Void xRecurIntraChromaCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv,
+                                   TComYuv* predYuv, TShortYUV* resiYuv, UInt& outDist);
 
-    Void  xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv);
+    Void xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv);
 
-    Void  xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
-    Void  xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
+    Void xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
+    Void xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
     Void xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2);
     Void xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt stateU0V1Both2);
 
@@ -295,7 +295,7 @@ protected:
     Void xAddSymbolBitsInter(TComDataCU* cu, UInt qp, UInt trMode, UInt& outBits,
                              TShortYUV*& outReconYuv, TComYuv* predYuv, TShortYUV*& outResiYuv);
 
-    Void  setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList);
+    Void setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList);
 };
 
 //! \}
