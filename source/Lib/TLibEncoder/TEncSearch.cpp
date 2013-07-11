@@ -1920,61 +1920,59 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
     }
 }
 
-Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu,
-                                         UInt        trDepth,
-                                         UInt        uiAbsPartIdx,
-                                         TComYuv*    pcRecoYuv)
+Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv)
 {
-    UInt uiFullDepth  = cu->getDepth(0) + trDepth;
-    UInt uiTrMode     = cu->getTransformIdx(uiAbsPartIdx);
+    UInt fullDepth = cu->getDepth(0) + trDepth;
+    UInt trMode    = cu->getTransformIdx(absPartIdx);
 
-    if (uiTrMode == trDepth)
+    if (trMode == trDepth)
     {
-        UInt uiLog2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
-        UInt uiQTLayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrSize;
+        UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+        UInt qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
         Bool bChromaSame  = false;
-        if (uiLog2TrSize == 2)
+        if (trSizeLog2 == 2)
         {
             assert(trDepth > 0);
-            UInt uiQPDiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth - 1) << 1);
-            if ((uiAbsPartIdx % uiQPDiv) != 0)
+            UInt qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth - 1) << 1);
+            if ((absPartIdx % qpdiv) != 0)
             {
                 return;
             }
-            bChromaSame     = true;
+            bChromaSame = true;
         }
 
         //===== copy transform coefficients =====
-        UInt uiNumCoeffC    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (uiFullDepth << 1);
+        UInt numCoeffC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
         if (!bChromaSame)
         {
-            uiNumCoeffC     >>= 2;
+            numCoeffC >>= 2;
         }
-        UInt uiNumCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
-        TCoeff* pcCoeffSrcU = m_ppcQTTempCoeffCb[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        TCoeff* pcCoeffSrcV = m_ppcQTTempCoeffCr[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        TCoeff* pcCoeffDstU = cu->getCoeffCb()              + (uiNumCoeffIncC * uiAbsPartIdx);
-        TCoeff* pcCoeffDstV = cu->getCoeffCr()              + (uiNumCoeffIncC * uiAbsPartIdx);
-        ::memcpy(pcCoeffDstU, pcCoeffSrcU, sizeof(TCoeff) * uiNumCoeffC);
-        ::memcpy(pcCoeffDstV, pcCoeffSrcV, sizeof(TCoeff) * uiNumCoeffC);
-        Int* pcArlCoeffSrcU = m_ppcQTTempArlCoeffCb[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        Int* pcArlCoeffSrcV = m_ppcQTTempArlCoeffCr[uiQTLayer] + (uiNumCoeffIncC * uiAbsPartIdx);
-        Int* pcArlCoeffDstU = cu->getArlCoeffCb()              + (uiNumCoeffIncC * uiAbsPartIdx);
-        Int* pcArlCoeffDstV = cu->getArlCoeffCr()              + (uiNumCoeffIncC * uiAbsPartIdx);
-        ::memcpy(pcArlCoeffDstU, pcArlCoeffSrcU, sizeof(Int) * uiNumCoeffC);
-        ::memcpy(pcArlCoeffDstV, pcArlCoeffSrcV, sizeof(Int) * uiNumCoeffC);
+        UInt numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
+        TCoeff* coeffSrcU = m_ppcQTTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffSrcV = m_ppcQTTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffDstU = cu->getCoeffCb()            + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffDstV = cu->getCoeffCr()            + (numCoeffIncC * absPartIdx);
+        ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
+        ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
+
+        Int* arlCoeffSrcU = m_ppcQTTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
+        Int* arlCoeffSrcV = m_ppcQTTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
+        Int* arlCoeffDstU = cu->getArlCoeffCb()            + (numCoeffIncC * absPartIdx);
+        Int* arlCoeffDstV = cu->getArlCoeffCr()            + (numCoeffIncC * absPartIdx);
+        ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
+        ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
 
         //===== copy reconstruction =====
-        UInt uiLog2TrSizeChroma = (bChromaSame ? uiLog2TrSize : uiLog2TrSize - 1);
-        m_pcQTTempTComYuv[uiQTLayer].copyPartToPartChroma(pcRecoYuv, uiAbsPartIdx, 1 << uiLog2TrSizeChroma, 1 << uiLog2TrSizeChroma);
+        UInt trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
+        m_pcQTTempTComYuv[qtlayer].copyPartToPartChroma(reconYuv, absPartIdx, 1 << trSizeCLog2, 1 << trSizeCLog2);
     }
     else
     {
-        UInt uiNumQPart  = cu->getPic()->getNumPartInCU() >> ((uiFullDepth + 1) << 1);
-        for (UInt uiPart = 0; uiPart < 4; uiPart++)
+        UInt numQPart = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        for (UInt part = 0; part < 4; part++)
         {
-            xSetIntraResultChromaQT(cu, trDepth + 1, uiAbsPartIdx + uiPart * uiNumQPart, pcRecoYuv);
+            xSetIntraResultChromaQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
         }
     }
 }
