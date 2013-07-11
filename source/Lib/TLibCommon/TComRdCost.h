@@ -114,17 +114,17 @@ class DistParam
 public:
 
     Pel*  fenc;
-    Pel*  pCur;
-    Int   strideOrg;
-    Int   strideCur;
-    Int   iRows;
-    Int   iCols;
-    Int   iStep;
-    FpDistFunc DistFunc;
+    Pel*  fref;
+    Int   fencstride;
+    Int   frefstride;
+    Int   rows;
+    Int   cols;
+    Int   step;
+    FpDistFunc distFunc;
     Int   bitDepth;
 
-    Bool            bApplyWeight;   // whether weithed prediction is used or not
-    wpScalingParam  *wpCur;         // weithed prediction scaling parameters for current ref
+    Bool            bApplyWeight;   // whether weighted prediction is used or not
+    wpScalingParam  *wpCur;         // weighted prediction scaling parameters for current ref
 
     // (vertical) subsampling shift (for reducing complexity)
     // - 0 = no subsampling, 1 = even rows, 2 = every 4th, etc.
@@ -133,13 +133,13 @@ public:
     DistParam()
     {
         fenc = NULL;
-        pCur = NULL;
-        strideOrg = 0;
-        strideCur = 0;
-        iRows = 0;
-        iCols = 0;
-        iStep = 1;
-        DistFunc = NULL;
+        fref = NULL;
+        fencstride = 0;
+        frefstride = 0;
+        rows = 0;
+        cols = 0;
+        step = 1;
+        distFunc = NULL;
         iSubShift = 0;
         bitDepth = 0;
     }
@@ -158,15 +158,15 @@ class TComRdCost : public TComRdCostWeightPrediction
 {
 private:
 
-    FpDistFunc              m_afpDistortFunc[64]; // [eDFunc]
+    FpDistFunc              m_distortionFunctions[64]; // [eDFunc]
 
-    Double                  m_dLambda;
+    Double                  m_lambda2;
 
-    Double                  m_sqrtLambda;
+    Double                  m_lambda;
 
-    UInt64                  m_uiLambdaMotionSSE;  // m_dLambda w/ 16 bits of fraction
+    UInt64                  m_lambdaMotionSSE;  // m_lambda2 w/ 16 bits of fraction
 
-    UInt64                  m_uiLambdaMotionSAD;  // m_sqrtLambda w/ 16 bits of fraction
+    UInt64                  m_lambdaMotionSAD;  // m_lambda w/ 16 bits of fraction
 
     UInt                    m_cbDistortionWeight;
 
@@ -174,68 +174,61 @@ private:
 
 public:
 
-    Int                     m_iCostScale;
-
     TComRdCost();
 
     virtual ~TComRdCost();
 
-    Void setLambda(Double dLambda);
+    Void setLambda(Double lambda2);
 
     Void setCbDistortionWeight(Double cbDistortionWeight);
 
     Void setCrDistortionWeight(Double crDistortionWeight);
 
-    Double  getSqrtLambda()                               { return m_sqrtLambda; }
+    inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_lambdaMotionSSE + 32768) >> 16); }
 
-    inline UInt64  calcRdCost(UInt distortion, UInt bits) { return distortion + ((bits * m_uiLambdaMotionSSE + 32768) >> 16); }
+    inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
-    inline UInt64  calcRdSADCost(UInt sadCost, UInt bits) { return sadCost + ((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
-
-    inline UInt    getCost(UInt bits)                     { return (UInt)((bits * m_uiLambdaMotionSAD + 32768) >> 16); }
+    inline UInt    getCost(UInt bits)                     { return (UInt)((bits * m_lambdaMotionSAD + 32768) >> 16); }
 
     inline UInt    scaleChromaDistCb(UInt dist)           { return ((dist * m_cbDistortionWeight) + 128) >> 8; }
 
     inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
-    // for motion cost
-    Void    setCostScale(Int iCostScale)                  { m_iCostScale = iCostScale; }
-
     // Distortion Functions
     Void    init();
 
-    Void    setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride,            DistParam& rcDistParam);
-    Void    setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME = false);
+    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride,           DistParam& distParam);
+    Void    setDistParam(TComPattern* patternKey, Pel* refy, Int refstride, Int step, DistParam& distParam, Bool bHADME = false);
 
 private:
 
-    static UInt xGetSSE(DistParam* pcDtParam);
-    static UInt xGetSSE4(DistParam* pcDtParam);
-    static UInt xGetSSE8(DistParam* pcDtParam);
-    static UInt xGetSSE16(DistParam* pcDtParam);
-    static UInt xGetSSE32(DistParam* pcDtParam);
-    static UInt xGetSSE64(DistParam* pcDtParam);
-    static UInt xGetSSE16N(DistParam* pcDtParam);
+    static UInt xGetSSE(DistParam* dtParam);
+    static UInt xGetSSE4(DistParam* dtParam);
+    static UInt xGetSSE8(DistParam* dtParam);
+    static UInt xGetSSE16(DistParam* dtParam);
+    static UInt xGetSSE32(DistParam* dtParam);
+    static UInt xGetSSE64(DistParam* dtParam);
+    static UInt xGetSSE16N(DistParam* dtParam);
 
-    static UInt xGetSAD(DistParam* pcDtParam);
-    static UInt xGetSAD4(DistParam* pcDtParam);
-    static UInt xGetSAD8(DistParam* pcDtParam);
-    static UInt xGetSAD16(DistParam* pcDtParam);
-    static UInt xGetSAD32(DistParam* pcDtParam);
-    static UInt xGetSAD64(DistParam* pcDtParam);
-    static UInt xGetSAD16N(DistParam* pcDtParam);
+    static UInt xGetSAD(DistParam* dtParam);
+    static UInt xGetSAD4(DistParam* dtParam);
+    static UInt xGetSAD8(DistParam* dtParam);
+    static UInt xGetSAD16(DistParam* dtParam);
+    static UInt xGetSAD32(DistParam* dtParam);
+    static UInt xGetSAD64(DistParam* dtParam);
+    static UInt xGetSAD16N(DistParam* dtParam);
 
-    static UInt xGetSAD12(DistParam* pcDtParam);
-    static UInt xGetSAD24(DistParam* pcDtParam);
-    static UInt xGetSAD48(DistParam* pcDtParam);
+    static UInt xGetSAD12(DistParam* dtParam);
+    static UInt xGetSAD24(DistParam* dtParam);
+    static UInt xGetSAD48(DistParam* dtParam);
 
-    static UInt xGetHADs4(DistParam* pcDtParam);
-    static UInt xGetHADs8(DistParam* pcDtParam);
-    static UInt xGetHADs(DistParam* pcDtParam);
+    static UInt xGetHADs4(DistParam* dtParam);
+    static UInt xGetHADs8(DistParam* dtParam);
+    static UInt xGetHADs(DistParam* dtParam);
 
-    static UInt xCalcHADs4x4(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
-    static UInt xCalcHADs8x8(Pel *piOrg, Pel *piCurr, Int iStrideOrg, Int iStrideCur, Int iStep);
-}; // END CLASS DEFINITION TComRdCost
+    static UInt xCalcHADs4x4(Pel *fenc, Pel *fref, Int fencstride, Int frefstride, Int step);
+    static UInt xCalcHADs8x8(Pel *fenc, Pel *fref, Int fencstride, Int frefstride, Int step);
+};
 
 //! \}
 

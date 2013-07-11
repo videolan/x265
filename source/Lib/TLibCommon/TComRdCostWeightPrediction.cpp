@@ -69,11 +69,11 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
 {
     Pel  pred;
     Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->pCur;
-    Int  iRows   = pcDtParam->iRows;
-    Int  iCols   = pcDtParam->iCols;
-    Int  iStrideCur = pcDtParam->strideCur;
-    Int  iStrideOrg = pcDtParam->strideOrg;
+    Pel* piCur   = pcDtParam->fref;
+    Int  iRows   = pcDtParam->rows;
+    Int  iCols   = pcDtParam->cols;
+    Int  iStrideCur = pcDtParam->frefstride;
+    Int  iStrideOrg = pcDtParam->fencstride;
 
     wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
     Int   w0      = wpCur->w,
@@ -110,12 +110,12 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
 UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
 {
     Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->pCur;
+    Pel* piCur   = pcDtParam->fref;
     Pel  pred;
-    Int  iRows   = pcDtParam->iRows;
-    Int  iCols   = pcDtParam->iCols;
-    Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->strideCur;
+    Int  iRows   = pcDtParam->rows;
+    Int  iCols   = pcDtParam->cols;
+    Int  iStrideOrg = pcDtParam->fencstride;
+    Int  iStrideCur = pcDtParam->frefstride;
 
     assert(pcDtParam->iSubShift == 0);
 
@@ -425,11 +425,11 @@ UInt TComRdCostWeightPrediction::xCalcHADs8x8w(Pel *piOrg, Pel *piCur, Int iStri
 UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
 {
     Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->pCur;
-    Int  iRows   = pcDtParam->iRows;
-    Int  iStrideCur = pcDtParam->strideCur;
-    Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStep  = pcDtParam->iStep;
+    Pel* piCur   = pcDtParam->fref;
+    Int  iRows   = pcDtParam->rows;
+    Int  iStrideCur = pcDtParam->frefstride;
+    Int  iStrideOrg = pcDtParam->fencstride;
+    Int  iStep  = pcDtParam->step;
     Int  y;
     Int  iOffsetOrg = iStrideOrg << 2;
     Int  iOffsetCur = iStrideCur << 2;
@@ -453,11 +453,11 @@ UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
 UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
 {
     Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->pCur;
-    Int  iRows   = pcDtParam->iRows;
-    Int  iStrideCur = pcDtParam->strideCur;
-    Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStep  = pcDtParam->iStep;
+    Pel* piCur   = pcDtParam->fref;
+    Int  iRows   = pcDtParam->rows;
+    Int  iStrideCur = pcDtParam->frefstride;
+    Int  iStrideOrg = pcDtParam->fencstride;
+    Int  iStep  = pcDtParam->step;
     Int  y;
 
     UInt uiSum = 0;
@@ -489,12 +489,12 @@ UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
 UInt TComRdCostWeightPrediction::xGetHADsw(DistParam* pcDtParam)
 {
     Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->pCur;
-    Int  iRows   = pcDtParam->iRows;
-    Int  iCols   = pcDtParam->iCols;
-    Int  iStrideCur = pcDtParam->strideCur;
-    Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStep  = pcDtParam->iStep;
+    Pel* piCur   = pcDtParam->fref;
+    Int  iRows   = pcDtParam->rows;
+    Int  iCols   = pcDtParam->cols;
+    Int  iStrideCur = pcDtParam->frefstride;
+    Int  iStrideOrg = pcDtParam->fencstride;
+    Int  iStep  = pcDtParam->step;
 
     Int  x, y;
 

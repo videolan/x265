@@ -249,18 +249,18 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance)
 {
     Pel* fref = data.fref + searchY * data.lumaStride + searchX;
-    m_rdCost->setDistParam(patternKey, fref, data.lumaStride, m_cDistParam);
+    m_rdCost->setDistParam(patternKey, fref, data.lumaStride, m_distParam);
 
-    if (m_cDistParam.iRows > 12)
+    if (m_distParam.rows > 12)
     {
         // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
-        m_cDistParam.iSubShift = 1;
+        m_distParam.iSubShift = 1;
     }
 
     // distortion
-    m_cDistParam.bitDepth = g_bitDepthY;
-    UInt cost = m_cDistParam.DistFunc(&m_cDistParam) + 
-                m_bc.mvcost(MV(searchX, searchY) << m_rdCost->m_iCostScale);
+    m_distParam.bitDepth = g_bitDepthY;
+    UInt cost = m_distParam.distFunc(&m_distParam) + 
+                m_bc.mvcost(MV(searchX, searchY) << m_mvCostScale);
 
     if (cost < data.bcost)
     {
@@ -580,8 +580,8 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
     UInt  bestDir = 0;
     Int   stride = refPic->getStride();
 
-    m_rdCost->setDistParam(patternKey, refPic->getLumaFilterBlock(0, 0, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_cDistParam, true);
-    m_cDistParam.bitDepth = g_bitDepthY;
+    m_rdCost->setDistParam(patternKey, refPic->getLumaFilterBlock(0, 0, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_distParam, true);
+    m_distParam.bitDepth = g_bitDepthY;
 
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
     for (int i = 0; i < 9; i++)
@@ -598,10 +598,10 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
         {
             fref -= stride;
         }
-        m_cDistParam.pCur = fref;
+        m_distParam.fref = fref;
 
         cMvTest = outFracMv + mvRefine[i];
-        cost = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(cMvTest * fracBits);
+        cost = m_distParam.distFunc(&m_distParam) + m_bc.mvcost(cMvTest * fracBits);
 
         if (cost < bcost)
         {
@@ -3385,7 +3385,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     m_bc.setMVP(*mvp);
 
     // Do integer search
-    m_rdCost->setCostScale(2);
+    m_mvCostScale = 2;
     if (bi || m_searchMethod == X265_FULL_SEARCH)
     {
         xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
@@ -3397,17 +3397,14 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
     }
 
     TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
-    m_rdCost->setCostScale(1);
     MV mvHpel, mvQpel;
     xPatternSearchFracDIF(cu, patternKey, fref, stride, &outmv, mvHpel, mvQpel, outCost, bi, refPic, partAddr);
-    m_rdCost->setCostScale(0);
 
     outmv <<= 2;
     outmv += (mvHpel <<= 1);
     outmv += mvQpel;
 
     UInt mvbits = m_bc.bitcost(outmv);
-
     outBits += mvbits;
     outCost = ((outCost - m_rdCost->getCost(mvbits)) >> cost_shift) + m_rdCost->getCost(outBits);
 
@@ -3436,8 +3433,8 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     Int srchRngVerTop    = mvmin->y;
     Int srchRngVerBottom = mvmax->y;
 
-    m_rdCost->setDistParam(patternKey, refY, stride, m_cDistParam);
-    m_cDistParam.bitDepth = g_bitDepthY;
+    m_rdCost->setDistParam(patternKey, refY, stride, m_distParam);
+    m_distParam.bitDepth = g_bitDepthY;
     refY += (srchRngVerTop * stride);
 
     // find min. distortion position
@@ -3447,8 +3444,8 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
         for (Int x = srchRngHorLeft; x <= srchRngHorRight; x++)
         {
             MV mv(x, y);
-            m_cDistParam.pCur = refY + x;
-            UInt cost = m_cDistParam.DistFunc(&m_cDistParam) + m_bc.mvcost(mv << 2);
+            m_distParam.fref = refY + x;
+            UInt cost = m_distParam.distFunc(&m_distParam) + m_bc.mvcost(mv << 2);
 
             if (cost < bcost)
             {
@@ -3566,14 +3563,13 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
                                        UInt         partAddr)
 {
     Int offset = mvfpel->x + mvfpel->y * stride;
-
     MV baseRefMv(0, 0);
 
     outMvHPel = *mvfpel;
     outMvHPel <<= 1;
 
+    m_mvCostScale = 1;
     outCost = xPatternRefinement(patternKey, baseRefMv, 2, outMvHPel, refPic, offset, cu, partAddr);
-    m_rdCost->setCostScale(0);
 
     baseRefMv = outMvHPel;
     baseRefMv <<= 1;
@@ -3583,6 +3579,7 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
     outMvQPel += outMvHPel;
     outMvQPel <<= 1;
 
+    m_mvCostScale = 0;
     outCost = xPatternRefinement(patternKey, baseRefMv, 1, outMvQPel, refPic, offset, cu, partAddr);
 }
 
@@ -4960,15 +4957,15 @@ Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIfx, RefPicList p
 {
     if (refIfx < 0)
     {
-        m_cDistParam.bApplyWeight = false;
+        m_distParam.bApplyWeight = false;
         return;
     }
 
     TComSlice       *pcSlice  = cu->getSlice();
     TComPPS         *pps      = cu->getSlice()->getPPS();
     wpScalingParam  *wp0, *wp1;
-    m_cDistParam.bApplyWeight = (pcSlice->getSliceType() == P_SLICE && pps->getUseWP()) || (pcSlice->getSliceType() == B_SLICE && pps->getWPBiPred());
-    if (!m_cDistParam.bApplyWeight) return;
+    m_distParam.bApplyWeight = (pcSlice->getSliceType() == P_SLICE && pps->getUseWP()) || (pcSlice->getSliceType() == B_SLICE && pps->getWPBiPred());
+    if (!m_distParam.bApplyWeight) return;
 
     Int refIdx0 = (picList == REF_PIC_LIST_0) ? refIfx : (-1);
     Int refIdx1 = (picList == REF_PIC_LIST_1) ? refIfx : (-1);
@@ -4978,15 +4975,15 @@ Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIfx, RefPicList p
     if (refIdx0 < 0) wp0 = NULL;
     if (refIdx1 < 0) wp1 = NULL;
 
-    m_cDistParam.wpCur  = NULL;
+    m_distParam.wpCur  = NULL;
 
     if (picList == REF_PIC_LIST_0)
     {
-        m_cDistParam.wpCur = wp0;
+        m_distParam.wpCur = wp0;
     }
     else
     {
-        m_cDistParam.wpCur = wp1;
+        m_distParam.wpCur = wp1;
     }
 }
 

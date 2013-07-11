@@ -111,6 +111,7 @@ protected:
 
     // RD computation
     DistParam       m_distParam;
+    Int             m_mvCostScale;
 
     TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
     Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
