@@ -216,11 +216,6 @@ typedef struct x265_param_t
     int       crQpOffset;                      ///< Chroma Cr QP Offset (0:default)
     int       rdPenalty;                       ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
 
-    int       bEnableAdaptiveQP;               ///< Flag for enabling QP adaptation based on a psycho-visual model
-    int       bEnableAdaptQpSelect;            ///< TODO: What does this flag enable?
-    uint32_t  maxCUdQPDepth;                   ///< Max. depth for a minimum CuDQPSize (0:default)
-    int       qpAdaptionRange;                 ///< dQP range by QP adaptation
-
     // debugging
     int       bEnableDecodedPictureHashSEI;    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }

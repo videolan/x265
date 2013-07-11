@@ -209,13 +209,8 @@ void Encoder::configure(x265_param_t *param)
 
     //====== Quality control ========
     setUseRDO(param->bEnableRDO);
-    setMaxCuDQPDepth(param->maxCUdQPDepth);
     setChromaCbQpOffset(param->cbQpOffset);
     setChromaCrQpOffset(param->crQpOffset);
-    setUseAdaptQpSelect(param->bEnableAdaptQpSelect);
-
-    setUseAdaptiveQP(param->bEnableAdaptiveQP);
-    setQPAdaptationRange(param->qpAdaptionRange);
 
     //====== Coding Tools ========
     setUseRDOQ(param->bEnableRDOQ);
@@ -267,6 +262,10 @@ void Encoder::configure(x265_param_t *param)
     setVPS(&vps);
     setMaxTempLayer(m_maxTempLayer);
 
+    setUseAdaptQpSelect(0);
+    setMaxCuDQPDepth(0);
+    setUseAdaptiveQP(0);
+    setQPAdaptationRange(6);
     setMaxNumOffsetsPerPic(2048);
     setLog2ParallelMergeLevelMinus2(0);
     setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto

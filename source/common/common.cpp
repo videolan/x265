@@ -92,7 +92,6 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRectInter = 1;
     param->bEnableRDO = 1;
     param->qp = 32;
-    param->qpAdaptionRange = 6;
     param->bEnableSAO = 0;
     param->saoLcuBasedOptimization = 1;
     param->maxNumMergeCand = 5u;
@@ -171,16 +170,12 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be more than 0");
     CONFIRM(param->keyframeInterval < -1,
             "Keyframe interval must be -1 (open-GOP) 0 (auto) 1 (intra-only) or greater than 1");
-    CONFIRM(param->maxCUdQPDepth > maxCUDepth - 1,
-            "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth");
 
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CONFIRM(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
     CONFIRM(param->crQpOffset >  12, "Max. Chroma Cr QP Offset is  12");
 
-    CONFIRM(param->qpAdaptionRange <= 0,
-            "QP Adaptation Range must be more than 0");
     CONFIRM((param->maxCUSize >> maxCUDepth) < 4,
             "Minimum partition width size should be larger than or equal to 8");
     CONFIRM(param->maxCUSize < 16,
@@ -205,11 +200,6 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CONFIRM(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
-    CONFIRM(param->bEnableAdaptQpSelect && param->qp < 0,
-            "AdaptiveQpSelection must be disabled when QP < 0.");
-    CONFIRM(param->bEnableAdaptQpSelect && (param->cbQpOffset != 0 || param->crQpOffset != 0),
-            "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
-
     //TODO:ChromaFmt assumes 4:2:0 below
     CONFIRM(param->sourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0,
             "Picture width must be an integer multiple of the specified chroma subsampling");
@@ -226,9 +216,6 @@ int x265_check_params(x265_param_t *param)
     }
 
     CONFIRM(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
-
-    CONFIRM(param->bEnableWavefront && param->bEnableAdaptQpSelect,
-            "Adaptive QP Select cannot be used together with WPP");
 
     return check_failed;
 }
@@ -287,17 +274,9 @@ void x265_print_params(x265_param_t *param)
         x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize);
     }
     x265_log(param, X265_LOG_INFO, "QP                           : %d\n", param->qp);
-    if (param->maxCUdQPDepth)
-    {
-        x265_log(param, X265_LOG_INFO, "Max dQP signaling depth      : %d\n", param->maxCUdQPDepth);
-    }
     if (param->cbQpOffset || param->crQpOffset)
     {
         x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
-    }
-    if (param->bEnableAdaptiveQP)
-    {
-        x265_log(param, X265_LOG_INFO, "QP adaptation                : %d (range=%d)\n", param->bEnableAdaptiveQP, param->qpAdaptionRange);
     }
     if (param->rdPenalty)
     {
@@ -305,7 +284,6 @@ void x265_print_params(x265_param_t *param)
     }
     x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
-    TOOLOPT(param->bEnableAdaptQpSelect, "aq");
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
