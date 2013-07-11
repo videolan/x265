@@ -851,103 +851,104 @@ UInt TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPar
 
 Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
                                      UInt        trDepth,
-                                     UInt        uiAbsPartIdx,
+                                     UInt        absPartIdx,
                                      TComYuv*    fencYuv,
-                                     TComYuv*    pcPredYuv,
-                                     TShortYUV*  pcResiYuv,
-                                     UInt&       ruiDist,
+                                     TComYuv*    predYuv,
+                                     TShortYUV*  resiYuv,
+                                     UInt&       outDist,
                                      Int         default0Save1Load2)
 {
-    UInt    uiLumaPredMode    = cu->getLumaIntraDir(uiAbsPartIdx);
-    UInt    uiFullDepth       = cu->getDepth(0)  + trDepth;
-    UInt    uiWidth           = cu->getWidth(0) >> trDepth;
-    UInt    uiHeight          = cu->getHeight(0) >> trDepth;
-    UInt    uiStride          = fencYuv->getStride();
-    Pel*    piOrg             = fencYuv->getLumaAddr(uiAbsPartIdx);
-    Pel*    piPred            = pcPredYuv->getLumaAddr(uiAbsPartIdx);
-    Short*  piResi            = pcResiYuv->getLumaAddr(uiAbsPartIdx);
-    Pel*    piReco            = pcPredYuv->getLumaAddr(uiAbsPartIdx);
+    UInt    lumaPredMode = cu->getLumaIntraDir(absPartIdx);
+    UInt    fullDepth    = cu->getDepth(0)  + trDepth;
+    UInt    width        = cu->getWidth(0) >> trDepth;
+    UInt    height       = cu->getHeight(0) >> trDepth;
+    UInt    stride       = fencYuv->getStride();
+    Pel*    fenc         = fencYuv->getLumaAddr(absPartIdx);
+    Pel*    pred         = predYuv->getLumaAddr(absPartIdx);
+    Short*  residual     = resiYuv->getLumaAddr(absPartIdx);
+    Pel*    recon        = predYuv->getLumaAddr(absPartIdx);
 
-    UInt    uiLog2TrSize      = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> uiFullDepth] + 2;
-    UInt    uiQTLayer         = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrSize;
-    UInt    uiNumCoeffPerInc  = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
-    TCoeff* pcCoeff           = m_ppcQTTempCoeffY[uiQTLayer] + uiNumCoeffPerInc * uiAbsPartIdx;
+    UInt    trSizeLog2     = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
+    UInt    qtLayer        = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
+    UInt    numCoeffPerInc = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+    TCoeff* coeff          = m_ppcQTTempCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
 
-    Int*    pcArlCoeff        = m_ppcQTTempArlCoeffY[uiQTLayer] + uiNumCoeffPerInc * uiAbsPartIdx;
-    Short*  piRecQt           = m_pcQTTempTComYuv[uiQTLayer].getLumaAddr(uiAbsPartIdx);
-    UInt    uiRecQtStride     = m_pcQTTempTComYuv[uiQTLayer].width;
+    Int*    arlCoeff       = m_ppcQTTempArlCoeffY[qtLayer] + numCoeffPerInc * absPartIdx;
+    Short*  reconQt        = m_pcQTTempTComYuv[qtLayer].getLumaAddr(absPartIdx);
+    UInt    reconQtStride  = m_pcQTTempTComYuv[qtLayer].width;
 
-    UInt    uiZOrder          = cu->getZorderIdxInCU() + uiAbsPartIdx;
-    Pel*    piRecIPred        = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), uiZOrder);
-    UInt    uiRecIPredStride  = cu->getPic()->getPicYuvRec()->getStride();
-    Bool    useTransformSkip  = cu->getTransformSkip(uiAbsPartIdx, TEXT_LUMA);
+    UInt    zorder           = cu->getZorderIdxInCU() + absPartIdx;
+    Pel*    reconIPred       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
+    UInt    reconIPredStride = cu->getPic()->getPicYuvRec()->getStride();
+    Bool    useTransformSkip = cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
     //===== init availability pattern =====
 
     if (default0Save1Load2 != 2)
     {
-        cu->getPattern()->initPattern(cu, trDepth, uiAbsPartIdx);
-        cu->getPattern()->initAdiPattern(cu, uiAbsPartIdx, trDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
+        cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
-        predIntraLumaAng(cu->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth);
+        predIntraLumaAng(cu->getPattern(), lumaPredMode, pred, stride, width);
         // save prediction
         if (default0Save1Load2 == 1)
         {
-            primitives.blockcpy_pp((int)uiWidth, uiHeight, (pixel*)m_pSharedPredTransformSkip[0], uiWidth, (pixel*)piPred, uiStride);
+            primitives.blockcpy_pp((int)width, height, (pixel*)m_pSharedPredTransformSkip[0], width, (pixel*)pred, stride);
         }
     }
     else
     {
-        primitives.blockcpy_pp((int)uiWidth, uiHeight, (pixel*)piPred, uiStride, (pixel*)m_pSharedPredTransformSkip[0], uiWidth);
+        primitives.blockcpy_pp((int)width, height, (pixel*)pred, stride, (pixel*)m_pSharedPredTransformSkip[0], width);
     }
 
     //===== get residual signal =====
 
-    primitives.calcresidual[(Int)g_convertToBit[uiWidth]]((pixel*)piOrg, (pixel*)piPred, piResi, uiStride);
+    primitives.calcresidual[(Int)g_convertToBit[width]]((pixel*)fenc, (pixel*)pred, residual, stride);
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
     if (useTransformSkip ? m_pcEncCfg->getUseRDOQTS() : m_pcEncCfg->getUseRDOQ())
     {
-        m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, uiWidth, uiWidth, TEXT_LUMA);
+        m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_estBitsSbac, width, width, TEXT_LUMA);
     }
+
     //--- transform and quantization ---
-    UInt uiAbsSum = 0;
-    cu->setTrIdxSubParts(trDepth, uiAbsPartIdx, uiFullDepth);
+    UInt absSum = 0;
+    cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
     m_pcTrQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, cu->getSlice()->getSPS()->getQpBDOffsetY(), 0);
 
     m_pcTrQuant->selectLambda(TEXT_LUMA);
 
-    uiAbsSum = m_pcTrQuant->transformNxN(cu, piResi, uiStride, pcCoeff, pcArlCoeff, uiWidth, uiHeight, TEXT_LUMA, uiAbsPartIdx, useTransformSkip);
+    absSum = m_pcTrQuant->transformNxN(cu, residual, stride, coeff, arlCoeff, width, height, TEXT_LUMA, absPartIdx, useTransformSkip);
 
     //--- set coded block flag ---
-    cu->setCbfSubParts((uiAbsSum ? 1 : 0) << trDepth, TEXT_LUMA, uiAbsPartIdx, uiFullDepth);
+    cu->setCbfSubParts((absSum ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
     //--- inverse transform ---
-    if (uiAbsSum)
+    if (absSum)
     {
         Int scalingListType = 0 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);
-        m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA, cu->getLumaIntraDir(uiAbsPartIdx), piResi, uiStride, pcCoeff, uiWidth, uiHeight, scalingListType, useTransformSkip);
+        m_pcTrQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip);
     }
     else
     {
-        Short* pResi = piResi;
-        memset(pcCoeff, 0, sizeof(TCoeff) * uiWidth * uiHeight);
-        for (UInt uiY = 0; uiY < uiHeight; uiY++)
+        Short* resiTmp = residual;
+        memset(coeff, 0, sizeof(TCoeff) * width * height);
+        for (UInt y = 0; y < height; y++)
         {
-            memset(pResi, 0, sizeof(Short) * uiWidth);
-            pResi += uiStride;
+            memset(resiTmp, 0, sizeof(Short) * width);
+            resiTmp += stride;
         }
     }
 
     //===== reconstruction =====
 
-    primitives.calcrecon[(Int)g_convertToBit[uiWidth]]((pixel*)piPred, piResi, (pixel*)piReco, piRecQt, (pixel*)piRecIPred, uiStride, uiRecQtStride, uiRecIPredStride);
+    primitives.calcrecon[(Int)g_convertToBit[width]]((pixel*)pred, residual, (pixel*)recon, reconQt, (pixel*)reconIPred, stride, reconQtStride, reconIPredStride);
 
     //===== update distortion =====
-    int Part = PartitionFromSizes(uiWidth, uiHeight);
-    ruiDist += primitives.sse_pp[Part]((pixel*)piOrg, (intptr_t)uiStride, (pixel*)piReco, uiStride);
+    int part = PartitionFromSizes(width, height);
+    outDist += primitives.sse_pp[part]((pixel*)fenc, (intptr_t)stride, (pixel*)recon, stride);
 }
 
 Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
