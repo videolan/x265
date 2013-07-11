@@ -184,10 +184,10 @@ typedef int  (*pixelcmp_sp_t)(short *fenc, intptr_t fencstride, pixel *fref, int
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
 typedef void (*ipfilter_t)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (*ipfilter_pp_t)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*ipfilter_ps_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*ipfilter_sp_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff);
-typedef void (*ipfilter_ss_t)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff);
+typedef void (*ipfilter_pp_t)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ps_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_sp_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ss_t)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
 typedef void (*ipfilter_p2s_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
 typedef void (*ipfilter_s2p_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
@@ -208,9 +208,11 @@ typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, short *residual, int stride);
 typedef void (*calcrecon_t)(pixel* pred, short* residual, pixel* recon, short* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY);
-typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY);
-typedef void (*dequant_t)(int bitDepth, const int* pSrc, int* pDes, int iWidth, int iHeight, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int uiLog2TrSize, int *piDequantCoef);
+typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
+                               int block_width, int block_height, int marginX, int marginY);
+typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
+                               pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
+typedef void (*dequant_t)(int bitDepth, const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int trSizeLog2, int *dequantCoef);
 typedef uint32_t (*quantaq_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int *arlCCoef, int qBitsC, int qBits, int add, int numCoeff);
 typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
 

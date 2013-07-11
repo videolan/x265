@@ -29,7 +29,7 @@
 #define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 template<int N>
-void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -225,7 +225,7 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride, pixel *dst, int
 }
 
 template<int N>
-void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -419,7 +419,7 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 }
 
 template<int N>
-void filterHorizontal_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
 
 {
     int row, col;
@@ -525,7 +525,7 @@ void filterHorizontal_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, i
 }
 
 template<int N>
-void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 

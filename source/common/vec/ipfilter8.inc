@@ -30,7 +30,7 @@
 
 template<int N>
 void filterVertical_s_p(int bitDepth, short *src, int srcStride,
-                        pixel *dst, int dstStride, int block_width, int block_height, short const *coeff)
+                        pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
@@ -490,7 +490,7 @@ void filterVertical_p_p(int bitDepth,
                         pixel *src, int srcStride,
                         pixel *dst, int dstStride,
                         int block_width, int block_height,
-                        short const *coeff)
+                        const short *coeff)
 {
     int row, col;
     int offset;
@@ -695,7 +695,7 @@ void filterHorizontal_p_p(int bitDepth,
                           pixel *src, int srcStride,
                           pixel *dst, int dstStride,
                           int block_width, int block_height,
-                          short const *coeff)
+                          const short *coeff)
 {
     int row, col;
     int offset;
@@ -1100,7 +1100,7 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
 #endif /* if INSTRSET > 4 */
 
 template<int N>
-void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, short const *coeff)
+void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
