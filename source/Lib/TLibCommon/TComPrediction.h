@@ -49,12 +49,6 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define NTAPS_LUMA        8 ///< Number of taps for luma
-#define NTAPS_CHROMA      4 ///< Number of taps for chroma
-#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
-#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
-#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
-
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -72,10 +66,10 @@ protected:
     //reference sample for IntraPrediction
 
     TComYuv   m_acYuvPred[2];
-    TShortYUV   m_acShortPred[2];
+    TShortYUV m_acShortPred[2];
     TComYuv   m_cYuvPredTemp;
     /*This holds final interpolated pixel values (0-255). Hence memory is stored as Pel.*/
-    TComYuv m_filteredBlock[4][4];
+    TComYuv   m_filteredBlock[4][4];
     /*This holds intermediate values for filtering operations which need to maintain Short precision*/
     TShortYUV filteredBlockTmp[4]; //This
 
@@ -99,9 +93,6 @@ protected:
 public:
 
     Pel *refAbove, *refAboveFlt, *refLeft, *refLeftFlt;
-
-    static const Short m_lumaFilter[4][NTAPS_LUMA];   ///< Luma filter taps
-    static const Short m_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
     TComPrediction();
     virtual ~TComPrediction();

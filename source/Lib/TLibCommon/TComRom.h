@@ -51,10 +51,10 @@
 // ====================================================================================================================
 
 #define MAX_CU_DEPTH            6                           // log2(LCUSize)
-#define MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))         // maximum allowable size of CU
+#define MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))       // maximum allowable size of CU
 #define MIN_PU_SIZE             4
-#define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE)   // maximum number of SPU in horizontal line
-#define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)        // alignment to 16 bytes
+#define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
+#define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
 
 // ====================================================================================================================
 // Initialize / destroy functions
@@ -106,6 +106,19 @@ extern const Short g_t4[4][4];
 extern const Short g_t8[8][8];
 extern const Short g_t16[16][16];
 extern const Short g_t32[32][32];
+
+// ====================================================================================================================
+// Subpel interpolation defines and constants
+// ====================================================================================================================
+
+#define NTAPS_LUMA        8                            ///< Number of taps for luma
+#define NTAPS_CHROMA      4                            ///< Number of taps for chroma
+#define IF_INTERNAL_PREC 14                            ///< Number of bits for internal precision
+#define IF_FILTER_PREC    6                            ///< Log2 of sum of filter taps
+#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
+
+extern const Short g_lumaFilter[4][NTAPS_LUMA];     ///< Luma filter taps
+extern const Short g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
 // ====================================================================================================================
 // Luma QP to Chroma QP mapping

@@ -22,6 +22,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "ipfilterharness.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,20 +31,12 @@
 
 using namespace x265;
 
-const short m_lumaFilter[4][8] =
-{
-    { 0, 0,   0, 64,  0,   0, 0,  0 },
-    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-    { -1, 4, -11, 40, 40, -11, 4, -1 },
-    { 0, 1,  -5, 17, 58, -10, 4, -1 }
-};
-
 const char* IPFilterPPNames[] =
 {
-    "ipfilter_pp<H8>",
-    "ipfilter_pp<H4>",
-    "ipfilter_pp<V8>",
-    "ipfilter_pp<V4>"
+    "ipfilterH_pp<8>",
+    "ipfilterH_pp<4>",
+    "ipfilterV_pp<8>",
+    "ipfilterV_pp<4>"
 };
 
 IPFilterHarness::IPFilterHarness()
@@ -101,14 +94,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_pp_t ref, x265::ip
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
         ref(8, pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
@@ -138,14 +131,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_ps_t ref, x265::ip
             IPF_vec_output_s,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
         ref(8, pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_s,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
 
         if (memcmp(IPF_vec_output_s, IPF_C_output_s, ipf_t_size))
@@ -175,14 +168,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ip
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
         ref(8, short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
             rand_width,
-            rand_height,  m_lumaFilter[rand_val]
+            rand_height, g_lumaFilter[rand_val]
             );
 
         if (memcmp(IPF_vec_output_p, IPF_C_output_p, ipf_t_size))
@@ -471,7 +464,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("%s\t", IPFilterPPNames[value]);
             REPORT_SPEEDUP(opt.ipfilter_pp[value], ref.ipfilter_pp[value],
-                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
+                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -481,7 +474,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_ps %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_ps[value], ref.ipfilter_ps[value],
-                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, m_lumaFilter[val]);
+                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -491,7 +484,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
-                           8, short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, m_lumaFilter[val]);
+                           8, short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 

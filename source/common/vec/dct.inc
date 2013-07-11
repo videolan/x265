@@ -30,6 +30,7 @@
 
 #include "primitives.h"
 #include "TLibCommon/TypeDef.h"    // TCoeff, Int, UInt
+#include "TLibCommon/TComRom.h"
 
 #include <assert.h>
 #include <string.h>
@@ -37,10 +38,6 @@
 #include <algorithm>
 
 namespace {
-/* Used for filter */
-#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
-#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
-#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
 {

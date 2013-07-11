@@ -23,9 +23,10 @@
  *****************************************************************************/
 
 #include "primitives.h"
+#include "TLibCommon/TComRom.h"
+
 #include <cstring>
 #include <assert.h>
-#include "TLibCommon/TComPrediction.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -431,9 +432,9 @@ void filterVertical_p_p(int bitDepth, pixel *src, int srcStride, pixel *dst, int
 
 void filterVertical_short_pel_multiplane(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height)
 {
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, g_lumaFilter[1]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, g_lumaFilter[3]);
 }
 
 void extendPicCompBorder(pixel* piTxt, int stride, int width, int height, int marginX, int marginY)
@@ -468,9 +469,9 @@ void extendPicCompBorder(pixel* piTxt, int stride, int width, int height, int ma
 
 void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY)
 {
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstI, dstStride, block_width, block_height, g_lumaFilter[2]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstE, dstStride, block_width, block_height, g_lumaFilter[1]);
+    filterVertical_s_p<8>(bitDepth, src, srcStride, dstP, dstStride, block_width, block_height, g_lumaFilter[3]);
     extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
@@ -479,9 +480,9 @@ void filterVerticalMultiplaneExtend(int bitDepth, short *src, int srcStride, pix
 void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY)
 {
     filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
-    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, TComPrediction::m_lumaFilter[2]);
-    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, TComPrediction::m_lumaFilter[1]);
-    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, TComPrediction::m_lumaFilter[3]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
     filterConvertShortToPel(bitDepth, midA, midStride, pDstA, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midB, midStride, pDstB, pDstStride, block_width, block_height);
     filterConvertShortToPel(bitDepth, midC, midStride, pDstC, pDstStride, block_width, block_height);

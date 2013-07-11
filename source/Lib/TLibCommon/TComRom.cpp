@@ -173,6 +173,26 @@ Void initRasterToPelXY(UInt maxCUWidth, UInt maxCUHeight, UInt maxDepth)
     }
 }
 
+const Short g_lumaFilter[4][NTAPS_LUMA] =
+{
+    {  0, 0,   0, 64,  0,   0, 0,  0 },
+    { -1, 4, -10, 58, 17,  -5, 1,  0 },
+    { -1, 4, -11, 40, 40, -11, 4, -1 },
+    {  0, 1,  -5, 17, 58, -10, 4, -1 }
+};
+
+const Short g_chromaFilter[8][NTAPS_CHROMA] =
+{
+    {  0, 64,  0,  0 },
+    { -2, 58, 10, -2 },
+    { -4, 54, 16, -2 },
+    { -6, 46, 28, -4 },
+    { -4, 36, 36, -4 },
+    { -4, 28, 46, -6 },
+    { -2, 16, 54, -4 },
+    { -2, 10, 58, -2 }
+};
+
 Int g_quantScales[6] =
 {
     26214, 23302, 20560, 18396, 16384, 14564

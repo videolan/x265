@@ -26,15 +26,10 @@
  *****************************************************************************/
 
 #include "Lib/TLibCommon/CommonDef.h"
-#include "Lib/TLibCommon/TComROM.h"
+#include "Lib/TLibCommon/TComRom.h"
 #include "primitives.h"
 #include <algorithm>
 #include <string.h>
-
-/* Used for filter */
-#define IF_INTERNAL_PREC 14 ///< Number of bits for internal precision
-#define IF_FILTER_PREC    6 ///< Log2 of sum of filter taps
-#define IF_INTERNAL_OFFS (1 << (IF_INTERNAL_PREC - 1)) ///< Offset used internally
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
