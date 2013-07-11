@@ -3620,23 +3620,23 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
  * \param predYuv
  * \param outResiYuv
  * \param rpcYuvResiBest
- * \param rpcYuvRec
+ * \param outReconYuv
  * \param bSkipRes
  * \returns Void
  */
-Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TShortYUV*& rpcYuvResiBest, TComYuv*& rpcYuvRec, Bool bSkipRes)
+Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TShortYUV*& outBestResiYuv, TComYuv*& outReconYuv, Bool bSkipRes)
 {
     if (cu->isIntra(0))
     {
         return;
     }
 
-    Bool      bHighPass    = cu->getSlice()->getDepth() ? true : false;
-    UInt      uiBits       = 0, uiBitsBest = 0;
-    UInt      uiDistortion = 0, uiDistortionBest = 0;
+    Bool bHighPass = cu->getSlice()->getDepth() ? true : false;
+    UInt bits = 0, bestBits = 0;
+    UInt distortion = 0, bestDistortion = 0;
 
-    UInt      uiWidth      = cu->getWidth(0);
-    UInt      uiHeight     = cu->getHeight(0);
+    UInt width  = cu->getWidth(0);
+    UInt height = cu->getHeight(0);
 
     //  No residual coding : SKIP mode
     if (bSkipRes)
@@ -3645,11 +3645,11 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         outResiYuv->clear();
 
-        predYuv->copyToPartYuv(rpcYuvRec, 0);
+        predYuv->copyToPartYuv(outReconYuv, 0);
 
-        uiDistortion = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)]((pixel*)fencYuv->getLumaAddr(), (intptr_t)fencYuv->getStride(), (pixel*)rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
-        uiDistortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel*)fencYuv->getCbAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
-        uiDistortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel*)fencYuv->getCrAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
+        distortion = primitives.sse_pp[PartitionFromSizes(width, height)]((pixel*)fencYuv->getLumaAddr(), (intptr_t)fencYuv->getStride(), (pixel*)outReconYuv->getLumaAddr(), outReconYuv->getStride());
+        distortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(width >> 1, height >> 1)]((pixel*)fencYuv->getCbAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+        distortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(width >> 1, height >> 1)]((pixel*)fencYuv->getCrAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
         m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[cu->getDepth(0)][CI_CURR_BEST]);
         m_pcEntropyCoder->resetBits();
@@ -3660,77 +3660,74 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_pcEntropyCoder->encodeSkipFlag(cu, 0, true);
         m_pcEntropyCoder->encodeMergeIndex(cu, 0, true);
 
-        uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+        bits = m_pcEntropyCoder->getNumberOfWrittenBits();
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[cu->getDepth(0)][CI_TEMP_BEST]);
 
-        cu->getTotalBits()       = uiBits;
-        cu->getTotalDistortion() = uiDistortion;
-        cu->getTotalCost()       = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
+        cu->getTotalBits()       = bits;
+        cu->getTotalDistortion() = distortion;
+        cu->getTotalCost()       = m_pcRdCost->calcRdCost(distortion, bits);
 
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[cu->getDepth(0)][CI_TEMP_BEST]);
 
         cu->setCbfSubParts(0, 0, 0, 0, cu->getDepth(0));
         cu->setTrIdxSubParts(0, 0, cu->getDepth(0));
-
         return;
     }
 
     //  Residual coding.
     Int     qp, qpBest = 0;
-    UInt64  uiCost, uiCostBest = MAX_INT64;
+    UInt64  cost, bcost = MAX_INT64;
 
-    UInt uiTrLevel = 0;
+    UInt trLevel = 0;
     if ((cu->getWidth(0) > cu->getSlice()->getSPS()->getMaxTrSize()))
     {
-        while (cu->getWidth(0) > (cu->getSlice()->getSPS()->getMaxTrSize() << uiTrLevel))
+        while (cu->getWidth(0) > (cu->getSlice()->getSPS()->getMaxTrSize() << trLevel))
         {
-            uiTrLevel++;
+            trLevel++;
         }
     }
-    UInt uiMaxTrMode = 1 + uiTrLevel;
+    UInt maxTrLevel = 1 + trLevel;
 
-    while ((uiWidth >> uiMaxTrMode) < (g_maxCUWidth >> g_maxCUDepth))
+    while ((width >> maxTrLevel) < (g_maxCUWidth >> g_maxCUDepth))
     {
-        uiMaxTrMode--;
+        maxTrLevel--;
     }
 
     qp = bHighPass ? Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, (Int)cu->getQP(0)) : cu->getQP(0);
 
-    outResiYuv->subtract(fencYuv, predYuv, 0, uiWidth);
+    outResiYuv->subtract(fencYuv, predYuv, 0, width);
 
-    uiCost = 0;
-    uiBits = 0;
-    uiDistortion = 0;
+    cost = 0;
+    bits = 0;
+    distortion = 0;
     m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[cu->getDepth(0)][CI_CURR_BEST]);
 
-    UInt uiZeroDistortion = 0;
-    xEstimateResidualQT(cu, 0, 0, 0, outResiYuv,  cu->getDepth(0), uiCost, uiBits, uiDistortion, &uiZeroDistortion);
-
-    UInt zeroResiBits;
+    UInt zeroDistortion = 0;
+    xEstimateResidualQT(cu, 0, 0, 0, outResiYuv, cu->getDepth(0), cost, bits, distortion, &zeroDistortion);
 
     m_pcEntropyCoder->resetBits();
     m_pcEntropyCoder->encodeQtRootCbfZero(cu);
-    zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+    UInt zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
 
-    UInt64 uiZeroCost = m_pcRdCost->calcRdCost(uiZeroDistortion, zeroResiBits);
+    UInt64 zeroCost = m_pcRdCost->calcRdCost(zeroDistortion, zeroResiBits);
     if (cu->isLosslessCoded(0))
     {
-        uiZeroCost = uiCost + 1;
+        zeroCost = cost + 1;
     }
-    if (uiZeroCost < uiCost)
+    if (zeroCost < cost)
     {
-        uiCost       = uiZeroCost;
-        uiBits       = 0;
-        uiDistortion = uiZeroDistortion;
+        cost       = zeroCost;
+        bits       = 0;
+        distortion = zeroDistortion;
 
         const UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> (cu->getDepth(0) << 1);
         ::memset(cu->getTransformIdx(), 0, uiQPartNum * sizeof(UChar));
         ::memset(cu->getCbf(TEXT_LUMA), 0, uiQPartNum * sizeof(UChar));
         ::memset(cu->getCbf(TEXT_CHROMA_U), 0, uiQPartNum * sizeof(UChar));
         ::memset(cu->getCbf(TEXT_CHROMA_V), 0, uiQPartNum * sizeof(UChar));
-        ::memset(cu->getCoeffY(), 0, uiWidth * uiHeight * sizeof(TCoeff));
-        ::memset(cu->getCoeffCb(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
-        ::memset(cu->getCoeffCr(), 0, uiWidth * uiHeight * sizeof(TCoeff) >> 2);
+        ::memset(cu->getCoeffY(), 0, width * height * sizeof(TCoeff));
+        ::memset(cu->getCoeffCb(), 0, width * height * sizeof(TCoeff) >> 2);
+        ::memset(cu->getCoeffCr(), 0, width * height * sizeof(TCoeff) >> 2);
         cu->setTransformSkipSubParts(0, 0, 0, 0, cu->getDepth(0));
     }
     else
@@ -3740,46 +3737,46 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[cu->getDepth(0)][CI_CURR_BEST]);
 
-    uiBits = 0;
+    bits = 0;
     {
-        TShortYUV *pDummy = NULL;
-        xAddSymbolBitsInter(cu, 0, 0, uiBits, pDummy, NULL, pDummy);
+        TShortYUV *tmpYuv = NULL;
+        xAddSymbolBitsInter(cu, 0, 0, bits, tmpYuv, NULL, tmpYuv);
     }
 
-    UInt64 dExactCost = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
-    uiCost = dExactCost;
+    UInt64 exactCost = m_pcRdCost->calcRdCost(distortion, bits);
+    cost = exactCost;
 
-    if (uiCost < uiCostBest)
+    if (cost < bcost)
     {
         if (!cu->getQtRootCbf(0))
         {
-            rpcYuvResiBest->clear();
+            outBestResiYuv->clear();
         }
         else
         {
-            xSetResidualQTData(cu, 0, 0, 0, rpcYuvResiBest, cu->getDepth(0), true);
+            xSetResidualQTData(cu, 0, 0, 0, outBestResiYuv, cu->getDepth(0), true);
         }
 
-        uiBitsBest       = uiBits;
-        uiDistortionBest = uiDistortion;
-        uiCostBest       = uiCost;
-        qpBest           = qp;
+        bestBits       = bits;
+        bestDistortion = distortion;
+        bcost          = cost;
+        qpBest         = qp;
         m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[cu->getDepth(0)][CI_TEMP_BEST]);
     }
 
-    assert(uiCostBest != MAX_INT64);
+    assert(bcost != MAX_INT64);
 
-    rpcYuvRec->addClip(predYuv, rpcYuvResiBest, 0, uiWidth);
+    outReconYuv->addClip(predYuv, outBestResiYuv, 0, width);
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    uiDistortionBest = primitives.sse_pp[PartitionFromSizes(uiWidth, uiHeight)]((pixel*)fencYuv->getLumaAddr(), (intptr_t)fencYuv->getStride(), (pixel*)rpcYuvRec->getLumaAddr(), rpcYuvRec->getStride());
-    uiDistortionBest += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel*)fencYuv->getCbAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)rpcYuvRec->getCbAddr(), rpcYuvRec->getCStride()));
-    uiDistortionBest += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(uiWidth >> 1, uiHeight >> 1)]((pixel*)fencYuv->getCrAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)rpcYuvRec->getCrAddr(), rpcYuvRec->getCStride()));
-    uiCostBest = m_pcRdCost->calcRdCost(uiDistortionBest, uiBitsBest);
+    bestDistortion = primitives.sse_pp[PartitionFromSizes(width, height)]((pixel*)fencYuv->getLumaAddr(), (intptr_t)fencYuv->getStride(), (pixel*)outReconYuv->getLumaAddr(), outReconYuv->getStride());
+    bestDistortion += m_pcRdCost->scaleChromaDistCb(primitives.sse_pp[PartitionFromSizes(width >> 1, height >> 1)]((pixel*)fencYuv->getCbAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+    bestDistortion += m_pcRdCost->scaleChromaDistCr(primitives.sse_pp[PartitionFromSizes(width >> 1, height >> 1)]((pixel*)fencYuv->getCrAddr(), (intptr_t)fencYuv->getCStride(), (pixel*)outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+    bcost = m_pcRdCost->calcRdCost(bestDistortion, bestBits);
 
-    cu->getTotalBits()       = uiBitsBest;
-    cu->getTotalDistortion() = uiDistortionBest;
-    cu->getTotalCost()       = uiCostBest;
+    cu->getTotalBits()       = bestBits;
+    cu->getTotalDistortion() = bestDistortion;
+    cu->getTotalCost()       = bcost;
 
     if (cu->isSkipped(0))
     {
