@@ -2493,72 +2493,63 @@ Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, P
  * \param rpcRecoYuv
  * \returns Void
  */
-Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& rpcPredYuv, TShortYUV*& rpcResiYuv, TComYuv*& rpcRecoYuv)
+Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, TShortYUV*& resiYuv, TComYuv*& reconYuv)
 {
-    UInt   uiDepth        = cu->getDepth(0);
-    UInt   uiWidth        = cu->getWidth(0);
-    UInt   uiHeight       = cu->getHeight(0);
-    UInt   uiStride       = rpcPredYuv->getStride();
-    UInt   uiStrideC      = rpcPredYuv->getCStride();
-    UInt   uiWidthC       = uiWidth  >> 1;
-    UInt   uiHeightC      = uiHeight >> 1;
-    UInt   uiDistortion = 0;
-    UInt   uiBits;
+    UInt depth      = cu->getDepth(0);
+    UInt width      = cu->getWidth(0);
+    UInt height     = cu->getHeight(0);
+    UInt stride     = predYuv->getStride();
+    UInt strideC    = predYuv->getCStride();
+    UInt widthC     = width  >> 1;
+    UInt heightC    = height >> 1;
+    UInt distortion = 0;
+    UInt bits;
+    UInt64 cost;
 
-    UInt64 uiCost;
-
-    Pel*    pOrig;
-    Short*  pResi;
-    Pel*    pReco;
-    Pel*    pPred;
-    Pel*    pPCM;
-
-    UInt uiAbsPartIdx = 0;
-
-    UInt uiMinCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
-    UInt uiLumaOffset   = uiMinCoeffSize * uiAbsPartIdx;
-    UInt uiChromaOffset = uiLumaOffset >> 2;
+    UInt absPartIdx = 0;
+    UInt minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
+    UInt lumaOffset   = minCoeffSize * absPartIdx;
+    UInt chromaOffset = lumaOffset >> 2;
 
     // Luminance
-    pOrig    = fencYuv->getLumaAddr(0, uiWidth);
-    pResi    = rpcResiYuv->getLumaAddr(0, uiWidth);
-    pPred    = rpcPredYuv->getLumaAddr(0, uiWidth);
-    pReco    = rpcRecoYuv->getLumaAddr(0, uiWidth);
-    pPCM     = cu->getPCMSampleY() + uiLumaOffset;
+    Pel*   fenc = fencYuv->getLumaAddr(0, width);
+    Short* resi = resiYuv->getLumaAddr(0, width);
+    Pel*   pred = predYuv->getLumaAddr(0, width);
+    Pel*   recon = reconYuv->getLumaAddr(0, width);
+    Pel*   pcm  = cu->getPCMSampleY() + lumaOffset;
 
-    xEncPCM(cu, 0, pOrig, pPCM, pPred, pResi, pReco, uiStride, uiWidth, uiHeight, TEXT_LUMA);
+    xEncPCM(cu, 0, fenc, pcm, pred, resi, recon, stride, width, height, TEXT_LUMA);
 
     // Chroma U
-    pOrig    = fencYuv->getCbAddr();
-    pResi    = rpcResiYuv->getCbAddr();
-    pPred    = rpcPredYuv->getCbAddr();
-    pReco    = rpcRecoYuv->getCbAddr();
-    pPCM     = cu->getPCMSampleCb() + uiChromaOffset;
+    fenc = fencYuv->getCbAddr();
+    resi = resiYuv->getCbAddr();
+    pred = predYuv->getCbAddr();
+    recon = reconYuv->getCbAddr();
+    pcm  = cu->getPCMSampleCb() + chromaOffset;
 
-    xEncPCM(cu, 0, pOrig, pPCM, pPred, pResi, pReco, uiStrideC, uiWidthC, uiHeightC, TEXT_CHROMA_U);
+    xEncPCM(cu, 0, fenc, pcm, pred, resi, recon, strideC, widthC, heightC, TEXT_CHROMA_U);
 
     // Chroma V
-    pOrig    = fencYuv->getCrAddr();
-    pResi    = rpcResiYuv->getCrAddr();
-    pPred    = rpcPredYuv->getCrAddr();
-    pReco    = rpcRecoYuv->getCrAddr();
-    pPCM     = cu->getPCMSampleCr() + uiChromaOffset;
+    fenc = fencYuv->getCrAddr();
+    resi = resiYuv->getCrAddr();
+    pred = predYuv->getCrAddr();
+    recon = reconYuv->getCrAddr();
+    pcm  = cu->getPCMSampleCr() + chromaOffset;
 
-    xEncPCM(cu, 0, pOrig, pPCM, pPred, pResi, pReco, uiStrideC, uiWidthC, uiHeightC, TEXT_CHROMA_V);
+    xEncPCM(cu, 0, fenc, pcm, pred, resi, recon, strideC, widthC, heightC, TEXT_CHROMA_V);
 
     m_pcEntropyCoder->resetBits();
-    xEncIntraHeader(cu, uiDepth, uiAbsPartIdx, true, false);
-    uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+    xEncIntraHeader(cu, depth, absPartIdx, true, false);
+    bits = m_pcEntropyCoder->getNumberOfWrittenBits();
+    cost = m_pcRdCost->calcRdCost(distortion, bits);
 
-    uiCost = m_pcRdCost->calcRdCost(uiDistortion, uiBits);
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+    cu->getTotalBits()       = bits;
+    cu->getTotalCost()       = cost;
+    cu->getTotalDistortion() = distortion;
 
-    cu->getTotalBits()       = uiBits;
-    cu->getTotalCost()       = uiCost;
-    cu->getTotalDistortion() = uiDistortion;
-
-    cu->copyToPic(uiDepth, 0, 0);
+    cu->copyToPic(depth, 0, 0);
 }
 
 UInt TEncSearch::xGetInterPredictionError(TComDataCU* cu, TComYuv* fencYuv, Int partIdx)
