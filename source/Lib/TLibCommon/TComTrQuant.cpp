@@ -68,13 +68,13 @@ typedef struct
 
 TComTrQuant::TComTrQuant()
 {
-    m_cQP.clear();
+    m_qpParam.clear();
 
     // allocate temporary buffers
-    // OPT_ME: I may reduce this to short and output matched, bug I am not sure it is right.
-    m_tmpCoeff  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
+    // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
+    m_tmpCoeff = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
 
-    // allocate bit estimation class  (for RDOQ)
+    // allocate bit estimation class (for RDOQ)
     m_estBitsSbac = new estBitsSbacStruct;
     initScalingList();
 }
@@ -198,7 +198,7 @@ Void TComTrQuant::setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chr
             qpScaled = g_chromaScale[qpScaled] + qpBdOffset;
         }
     }
-    m_cQP.setQpParam(qpScaled);
+    m_qpParam.setQpParam(qpScaled);
 }
 
 // To minimize the distortion only. No rate is considered.
@@ -390,7 +390,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
         Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
         assert(scalingListType < 6);
         Int *quantCoeff = 0;
-        quantCoeff = getQuantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
+        quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
         UInt bitDepth = ttype == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
         Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
@@ -435,16 +435,16 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     if (getUseScalingList())
     {
         shift += 4;
-        Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
+        Int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
-        if (shift > m_cQP.m_per)
+        if (shift > m_qpParam.m_per)
         {
-            add = 1 << (shift - m_cQP.m_per - 1);
+            add = 1 << (shift - m_qpParam.m_per - 1);
 
             for (Int n = 0; n < width * height; n++)
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
-                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_cQP.m_per);
+                coeffQ = ((clipQCoef * dequantCoef[n]) + add) >> (shift -  m_qpParam.m_per);
                 coef[n] = Clip3(-32768, 32767, coeffQ);
             }
         }
@@ -454,14 +454,14 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
             {
                 clipQCoef = Clip3(-32768, 32767, qCoef[n]);
                 coeffQ   = Clip3(-32768, 32767, clipQCoef * dequantCoef[n]); // Clip to avoid possible overflow in following shift left operation
-                coef[n] = Clip3(-32768, 32767, coeffQ << (m_cQP.m_per - shift));
+                coef[n] = Clip3(-32768, 32767, coeffQ << (m_qpParam.m_per - shift));
             }
         }
     }
     else
     {
         add = 1 << (shift - 1);
-        Int scale = g_invQuantScales[m_cQP.m_rem] << m_cQP.m_per;
+        Int scale = g_invQuantScales[m_qpParam.m_rem] << m_qpParam.m_per;
 
         for (Int n = 0; n < width * height; n++)
         {
@@ -550,11 +550,11 @@ Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mo
     Int bitDepth = eText == TEXT_LUMA ? g_bitDepthY : g_bitDepthC;
 
     // Values need to pass as input parameter in dequant
-    Int per = m_cQP.m_per;
-    Int rem = m_cQP.m_rem;
+    Int per = m_qpParam.m_per;
+    Int rem = m_qpParam.m_rem;
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int *dequantCoef = getDequantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
+    Int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
     x265::primitives.dequant(bitDepth, coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
@@ -631,20 +631,20 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
+Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height)
 {
     // TODO: this may need larger data types for bitDepth > 8
     const UInt log2BlockSize = g_convertToBit[width];
-    x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coef, residual, stride);
+    x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coeff, residual, stride);
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping
- *  \param piBlkResi input data (residual)
+ *  \param resiBlock input data (residual)
  *  \param psCoeff output data (transform coefficients)
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int* coeff, Int width, Int height)
+Void TComTrQuant::xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
@@ -653,7 +653,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
     Int  j, k;
     if (shift >= 0)
     {
-        x265::primitives.cvt16to32_shl(coeff, blkResi, stride, shift, width);
+        x265::primitives.cvt16to32_shl(coeff, resiBlock, stride, shift, width);
     }
     else
     {
@@ -665,7 +665,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
         {
             for (k = 0; k < width; k++)
             {
-                coeff[j * height + k] = (blkResi[j * stride + k] + offset) >> transformSkipShift;
+                coeff[j * height + k] = (resiBlock[j * stride + k] + offset) >> transformSkipShift;
             }
         }
     }
@@ -740,9 +740,9 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
 
     assert(scalingListType < 6);
 
-    Int qbits = QUANT_SHIFT + m_cQP.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
-    Double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_cQP.m_rem);
-    Int *qCoefOrg = getQuantCoeff(scalingListType, m_cQP.m_rem, log2TrSize - 2);
+    Int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
+    Double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
+    Int *qCoefOrg = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
     Int *qCoef = qCoefOrg;
     Double *errScale = errScaleOrg;
     Int qbitsC = qbits - ARL_C_PRECISION;
@@ -1091,7 +1091,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     if (cu->getSlice()->getPPS()->getSignHideFlag() && absSum >= 2)
     {
         Int64 rdFactor = (Int64)(
-                g_invQuantScales[m_cQP.rem()] * g_invQuantScales[m_cQP.rem()] * (1 << (2 * m_cQP.m_per))
+                g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
                 / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
                 + 0.5);
         Int lastCG = -1;

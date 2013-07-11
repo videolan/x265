@@ -981,27 +981,27 @@ Void TEncSbac::codeQtRootCbfZero(TComDataCU* cu)
 }
 
 /** Encode (X,Y) position of the last significant coefficient
- * \param uiPosX X component of last coefficient
- * \param uiPosY Y component of last coefficient
+ * \param posx X component of last coefficient
+ * \param posy Y component of last coefficient
  * \param width  Block width
  * \param height Block height
  * \param eTType plane type / luminance or chrominance
  * \param uiScanIdx scan type (zig-zag, hor, ver)
  * This method encodes the X and Y component within a block of the last significant coefficient.
  */
-Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int height, TextType eTType, UInt uiScanIdx)
+Void TEncSbac::codeLastSignificantXY(UInt posx, UInt posy, Int width, Int height, TextType eTType, UInt uiScanIdx)
 {
     // swap
     if (uiScanIdx == SCAN_VER)
     {
-        swap(uiPosX, uiPosY);
+        swap(posx, posy);
     }
 
     UInt uiCtxLast;
     ContextModel *pCtxX = m_cCuCtxLastX.get(0, eTType);
     ContextModel *pCtxY = m_cCuCtxLastY.get(0, eTType);
-    UInt uiGroupIdxX    = g_groupIdx[uiPosX];
-    UInt uiGroupIdxY    = g_groupIdx[uiPosY];
+    UInt uiGroupIdxX    = g_groupIdx[posx];
+    UInt uiGroupIdxY    = g_groupIdx[posy];
 
     Int blkSizeOffsetX, blkSizeOffsetY, shiftX, shiftY;
     blkSizeOffsetX = eTType ? 0 : (g_convertToBit[width] * 3 + ((g_convertToBit[width] + 1) >> 2));
@@ -1032,14 +1032,14 @@ Void TEncSbac::codeLastSignificantXY(UInt uiPosX, UInt uiPosY, Int width, Int he
     if (uiGroupIdxX > 3)
     {
         UInt uiCount = (uiGroupIdxX - 2) >> 1;
-        uiPosX       = uiPosX - g_minInGroup[uiGroupIdxX];
-        m_pcBinIf->encodeBinsEP(uiPosX, uiCount);
+        posx       = posx - g_minInGroup[uiGroupIdxX];
+        m_pcBinIf->encodeBinsEP(posx, uiCount);
     }
     if (uiGroupIdxY > 3)
     {
         UInt uiCount = (uiGroupIdxY - 2) >> 1;
-        uiPosY       = uiPosY - g_minInGroup[uiGroupIdxY];
-        m_pcBinIf->encodeBinsEP(uiPosY, uiCount);
+        posy       = posy - g_minInGroup[uiGroupIdxY];
+        m_pcBinIf->encodeBinsEP(posy, uiCount);
     }
 }
 
@@ -1131,9 +1131,9 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
         posLast = scan[++scanPosLast];
 
         // get L1 sig map
-        UInt uiPosY    = posLast >> uiLog2BlockSize;
-        UInt uiPosX    = posLast - (uiPosY << uiLog2BlockSize);
-        UInt uiBlkIdx  = uiNumBlkSide * (uiPosY >> uiShift) + (uiPosX >> uiShift);
+        UInt posy    = posLast >> uiLog2BlockSize;
+        UInt posx    = posLast - (posy << uiLog2BlockSize);
+        UInt uiBlkIdx  = uiNumBlkSide * (posy >> uiShift) + (posx >> uiShift);
         if (pcCoef[posLast])
         {
             uiSigCoeffGroupFlag[uiBlkIdx] = 1;
@@ -1196,16 +1196,16 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
         if (uiSigCoeffGroupFlag[iCGBlkPos])
         {
             Int patternSigCtx = TComTrQuant::calcPatternSigCtx(uiSigCoeffGroupFlag, iCGPosX, iCGPosY, width, height);
-            UInt uiBlkPos, uiPosY, uiPosX, uiSig, uiCtxSig;
+            UInt uiBlkPos, posy, posx, uiSig, uiCtxSig;
             for (; iScanPosSig >= iSubPos; iScanPosSig--)
             {
                 uiBlkPos  = scan[iScanPosSig];
-                uiPosY    = uiBlkPos >> uiLog2BlockSize;
-                uiPosX    = uiBlkPos - (uiPosY << uiLog2BlockSize);
+                posy    = uiBlkPos >> uiLog2BlockSize;
+                posx    = uiBlkPos - (posy << uiLog2BlockSize);
                 uiSig     = (pcCoef[uiBlkPos] != 0);
                 if (iScanPosSig > iSubPos || iSubSet == 0 || numNonZero)
                 {
-                    uiCtxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, uiScanIdx, uiPosX, uiPosY, uiLog2BlockSize, eTType);
+                    uiCtxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, uiScanIdx, posx, posy, uiLog2BlockSize, eTType);
                     m_pcBinIf->encodeBin(uiSig, baseCtx[uiCtxSig]);
                 }
                 if (uiSig)

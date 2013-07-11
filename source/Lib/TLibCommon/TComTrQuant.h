@@ -121,7 +121,7 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt uiMaxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool bUseAdaptQpSelect);
+    Void init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool bUseAdaptQpSelect);
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, Int* arlCoeff, UInt width, UInt height,
@@ -136,7 +136,7 @@ public:
     // Misc functions
     Void setQPforQuant(Int qpy, TextType ttype, Int qpBdOffset, Int chromaQPOffset);
 
-    Void setLambda(Double dLambdaLuma, Double dLambdaChroma) { m_lumaLambda = dLambdaLuma; m_chromaLambda = dLambdaChroma; }
+    Void setLambda(Double lambdaLuma, Double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
 
     Void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
 
@@ -186,7 +186,7 @@ protected:
     Double   m_sliceSumC[LEVEL_RANGE + 1];
     Int*     m_tmpCoeff;
 
-    QpParam  m_cQP;
+    QpParam  m_qpParam;
 
     Double   m_lambda;
     Double   m_lumaLambda;
@@ -205,9 +205,9 @@ protected:
 
 private:
 
-    Void xTransformSkip(Int bitDepth, Short* piBlkResi, UInt stride, Int* psCoeff, Int width, Int height);
+    Void xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
 
-    Void signBitHidingHDQ(TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height);
+    Void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
     UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int* arlDes, Int width, Int height, TextType ttype, UInt absPartIdx);
 
@@ -219,11 +219,11 @@ private:
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,
                                  UInt c1Idx, UInt c2Idx, Int qbits, Double scale, Bool bLast) const;
 
-    __inline Double xGetICRateCost(UInt uiAbsLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
+    __inline Double xGetICRateCost(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
-    __inline Int    xGetICRate(UInt uiAbsLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
+    __inline Int    xGetICRate(UInt absLevel, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice, UInt c1Idx, UInt c2Idx) const;
 
-    __inline Double xGetRateLast(UInt uiPosX, UInt uiPosY) const;
+    __inline Double xGetRateLast(UInt posx, UInt posy) const;
 
     __inline Double xGetRateSigCoeffGroup(UShort sigCoeffGroup, UShort ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 

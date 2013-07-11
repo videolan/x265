@@ -1225,16 +1225,16 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 
     UInt uiInternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) % pcPic->getNumPartInCU();
     UInt uiExternalAddress = (pcSlice->getSliceCurEndCUAddr() - 1) / pcPic->getNumPartInCU();
-    UInt uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
-    UInt uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
+    UInt posx = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+    UInt posy = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
     UInt width = pcSlice->getSPS()->getPicWidthInLumaSamples();
     UInt height = pcSlice->getSPS()->getPicHeightInLumaSamples();
 
-    while (uiPosX >= width || uiPosY >= height)
+    while (posx >= width || posy >= height)
     {
         uiInternalAddress--;
-        uiPosX = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
-        uiPosY = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
+        posx = (uiExternalAddress % pcPic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[uiInternalAddress]];
+        posy = (uiExternalAddress / pcPic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[uiInternalAddress]];
     }
 
     uiInternalAddress++;
@@ -1252,10 +1252,10 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
         bTerminateSlice = true;
     }
     UInt uiGranularityWidth = g_maxCUWidth;
-    uiPosX = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-    uiPosY = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-    Bool granularityBoundary = ((uiPosX + cu->getWidth(absPartIdx)) % uiGranularityWidth == 0 || (uiPosX + cu->getWidth(absPartIdx) == width))
-        && ((uiPosY + cu->getHeight(absPartIdx)) % uiGranularityWidth == 0 || (uiPosY + cu->getHeight(absPartIdx) == height));
+    posx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
+    posy = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
+    Bool granularityBoundary = ((posx + cu->getWidth(absPartIdx)) % uiGranularityWidth == 0 || (posx + cu->getWidth(absPartIdx) == width))
+        && ((posy + cu->getHeight(absPartIdx)) % uiGranularityWidth == 0 || (posy + cu->getHeight(absPartIdx) == height));
 
     if (granularityBoundary)
     {
