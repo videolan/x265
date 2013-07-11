@@ -64,32 +64,18 @@ typedef struct _AMVPInfo
 /// class for motion vector with reference index
 class TComMvField
 {
-private:
-
-    x265::MV  m_acMv;
-    Int       m_iRefIdx;
-
 public:
 
-    TComMvField() : m_iRefIdx(NOT_VALID) {}
+    x265::MV  mv;
+    Int       refIdx;
 
-    Void setMvField(x265::MV const & cMv, Int refIdx)
+    TComMvField() : refIdx(NOT_VALID) {}
+
+    Void setMvField(const x265::MV & _mv, Int _refIdx)
     {
-        m_acMv    = cMv;
-        m_iRefIdx = refIdx;
+        mv     = _mv;
+        refIdx = _refIdx;
     }
-
-    Void setRefIdx(Int refIdx) { m_iRefIdx = refIdx; }
-
-    x265::MV const & getMv() const { return m_acMv; }
-
-    x265::MV       & getMv()       { return m_acMv; }
-
-    Int getRefIdx() const { return m_iRefIdx;       }
-
-    Int getHor() const { return m_acMv.x; }
-
-    Int getVer() const { return m_acMv.y; }
 };
 
 /// class for motion information in one CU

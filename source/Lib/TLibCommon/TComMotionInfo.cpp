@@ -328,8 +328,8 @@ Void TComCUMvField::setAllRefIdx(Int refIdx, PartSize eCUMode, Int iPartAddr, UI
 
 Void TComCUMvField::setAllMvField(TComMvField const & mvField, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx)
 {
-    setAllMv(mvField.getMv(),     eCUMode, iPartAddr, depth, partIdx);
-    setAllRefIdx(mvField.getRefIdx(), eCUMode, iPartAddr, depth, partIdx);
+    setAllMv(mvField.mv, eCUMode, iPartAddr, depth, partIdx);
+    setAllRefIdx(mvField.refIdx, eCUMode, iPartAddr, depth, partIdx);
 }
 
 /**Subsampling of the stored prediction mode, reference index and motion vector

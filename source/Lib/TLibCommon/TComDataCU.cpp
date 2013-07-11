@@ -2246,8 +2246,8 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
     for (UInt ui = 0; ui < getSlice()->getMaxNumMergeCand(); ++ui)
     {
         abCandIsInter[ui] = false;
-        pcMvFieldNeighbours[(ui << 1)].setRefIdx(NOT_VALID);
-        pcMvFieldNeighbours[(ui << 1) + 1].setRefIdx(NOT_VALID);
+        pcMvFieldNeighbours[(ui << 1)].refIdx = NOT_VALID;
+        pcMvFieldNeighbours[(ui << 1) + 1].refIdx = NOT_VALID;
     }
 
     numValidMergeCand = getSlice()->getMaxNumMergeCand();
@@ -2530,12 +2530,12 @@ Void TComDataCU::getInterMergeCandidates(UInt absPartIdx, UInt uiPUIdx, TComMvFi
                 puhInterDirNeighbours[uiArrayAddr] = 3;
 
                 // get Mv from cand[i] and cand[j]
-                pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(pcMvFieldNeighbours[i << 1].getMv(), pcMvFieldNeighbours[i << 1].getRefIdx());
-                pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(pcMvFieldNeighbours[(j << 1) + 1].getMv(), pcMvFieldNeighbours[(j << 1) + 1].getRefIdx());
+                pcMvFieldNeighbours[uiArrayAddr << 1].setMvField(pcMvFieldNeighbours[i << 1].mv, pcMvFieldNeighbours[i << 1].refIdx);
+                pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].setMvField(pcMvFieldNeighbours[(j << 1) + 1].mv, pcMvFieldNeighbours[(j << 1) + 1].refIdx);
 
-                Int iRefPOCL0 = m_pcSlice->getRefPOC(REF_PIC_LIST_0, pcMvFieldNeighbours[(uiArrayAddr << 1)].getRefIdx());
-                Int iRefPOCL1 = m_pcSlice->getRefPOC(REF_PIC_LIST_1, pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].getRefIdx());
-                if (iRefPOCL0 == iRefPOCL1 && pcMvFieldNeighbours[(uiArrayAddr << 1)].getMv() == pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].getMv())
+                Int iRefPOCL0 = m_pcSlice->getRefPOC(REF_PIC_LIST_0, pcMvFieldNeighbours[(uiArrayAddr << 1)].refIdx);
+                Int iRefPOCL1 = m_pcSlice->getRefPOC(REF_PIC_LIST_1, pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].refIdx);
+                if (iRefPOCL0 == iRefPOCL1 && pcMvFieldNeighbours[(uiArrayAddr << 1)].mv == pcMvFieldNeighbours[(uiArrayAddr << 1) + 1].mv)
                 {
                     abCandIsInter[uiArrayAddr] = false;
                 }

@@ -470,11 +470,12 @@ public:
     Void          setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
 
     Void          clipMv(x265::MV& rcMv);
-    Void          getMvPredLeft(x265::MV& mvPred)   { mvPred = m_cMvFieldA.getMv(); }
 
-    Void          getMvPredAbove(x265::MV& mvPred)   { mvPred = m_cMvFieldB.getMv(); }
+    Void          getMvPredLeft(x265::MV& mvPred)       { mvPred = m_cMvFieldA.mv; }
 
-    Void          getMvPredAboveRight(x265::MV& mvPred)   { mvPred = m_cMvFieldC.getMv(); }
+    Void          getMvPredAbove(x265::MV& mvPred)      { mvPred = m_cMvFieldB.mv; }
+
+    Void          getMvPredAboveRight(x265::MV& mvPred) { mvPred = m_cMvFieldC.mv; }
 
     Void          compressMV();
 
