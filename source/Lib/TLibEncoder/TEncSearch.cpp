@@ -1977,53 +1977,51 @@ Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absP
     }
 }
 
-Void TEncSearch::preestChromaPredMode(TComDataCU* cu,
-                                      TComYuv*    fencYuv,
-                                      TComYuv*    pcPredYuv)
+Void TEncSearch::preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
 {
-    UInt  uiWidth     = cu->getWidth(0) >> 1;
-    UInt  uiHeight    = cu->getHeight(0) >> 1;
-    UInt  uiStride    = fencYuv->getCStride();
-    Pel*  piOrgU      = fencYuv->getCbAddr(0);
-    Pel*  piOrgV      = fencYuv->getCrAddr(0);
-    Pel*  piPredU     = pcPredYuv->getCbAddr(0);
-    Pel*  piPredV     = pcPredYuv->getCrAddr(0);
+    UInt width  = cu->getWidth(0) >> 1;
+    UInt height = cu->getHeight(0) >> 1;
+    UInt stride = fencYuv->getCStride();
+    Pel* fencU  = fencYuv->getCbAddr(0);
+    Pel* fencV  = fencYuv->getCrAddr(0);
+    Pel* predU  = predYuv->getCbAddr(0);
+    Pel* predV  = predYuv->getCrAddr(0);
 
     //===== init pattern =====
-    assert(uiWidth == uiHeight);
+    assert(width == height);
     cu->getPattern()->initPattern(cu, 0, 0);
     cu->getPattern()->initAdiPatternChroma(cu, 0, 0, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight);
-    Pel*  pPatChromaU = cu->getPattern()->getAdiCbBuf(uiWidth, uiHeight, m_piPredBuf);
-    Pel*  pPatChromaV = cu->getPattern()->getAdiCrBuf(uiWidth, uiHeight, m_piPredBuf);
+    Pel* patChromaU = cu->getPattern()->getAdiCbBuf(width, height, m_piPredBuf);
+    Pel* patChromaV = cu->getPattern()->getAdiCrBuf(width, height, m_piPredBuf);
 
     //===== get best prediction modes (using SAD) =====
-    UInt  uiMinMode   = 0;
-    UInt  uiMaxMode   = 4;
-    UInt  uiBestMode  = MAX_UINT;
-    UInt  uiMinSAD    = MAX_UINT;
-    x265::pixelcmp_t sa8d = x265::primitives.sa8d[(int)g_convertToBit[uiWidth]];
-    for (UInt uiMode  = uiMinMode; uiMode < uiMaxMode; uiMode++)
+    UInt minMode  = 0;
+    UInt maxMode  = 4;
+    UInt bestMode = MAX_UINT;
+    UInt minSAD   = MAX_UINT;
+    x265::pixelcmp_t sa8d = x265::primitives.sa8d[(int)g_convertToBit[width]];
+    for (UInt mode = minMode; mode < maxMode; mode++)
     {
         //--- get prediction ---
-        predIntraChromaAng(pPatChromaU, uiMode, piPredU, uiStride, uiWidth);
-        predIntraChromaAng(pPatChromaV, uiMode, piPredV, uiStride, uiWidth);
+        predIntraChromaAng(patChromaU, mode, predU, stride, width);
+        predIntraChromaAng(patChromaV, mode, predV, stride, width);
 
         //--- get SAD ---
-        UInt uiSAD = sa8d((pixel*)piOrgU, uiStride, (pixel*)piPredU, uiStride) +
-            sa8d((pixel*)piOrgV, uiStride, (pixel*)piPredV, uiStride);
+        UInt uiSAD = sa8d((pixel*)fencU, stride, (pixel*)predU, stride) +
+                     sa8d((pixel*)fencV, stride, (pixel*)predV, stride);
 
         //--- check ---
-        if (uiSAD < uiMinSAD)
+        if (uiSAD < minSAD)
         {
-            uiMinSAD   = uiSAD;
-            uiBestMode = uiMode;
+            minSAD   = uiSAD;
+            bestMode = mode;
         }
     }
 
     x265_emms();
 
     //===== set chroma pred mode =====
-    cu->setChromIntraDirSubParts(uiBestMode, 0, cu->getDepth(0));
+    cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
 Void TEncSearch::estIntraPredQT(TComDataCU* cu,
@@ -2034,11 +2032,11 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                                 UInt&       ruiDistC,
                                 Bool        bLumaOnly)
 {
-    UInt    uiDepth        = cu->getDepth(0);
+    UInt    depth        = cu->getDepth(0);
     UInt    uiNumPU        = cu->getNumPartInter();
     UInt    uiInitTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    UInt    uiWidth        = cu->getWidth(0) >> uiInitTrDepth;
-    UInt    uiHeight       = cu->getHeight(0) >> uiInitTrDepth;
+    UInt    width        = cu->getWidth(0) >> uiInitTrDepth;
+    UInt    height       = cu->getHeight(0) >> uiInitTrDepth;
     UInt    uiQNumParts    = cu->getTotalNumPart() >> 2;
     UInt    uiWidthBit     = cu->getIntraSizeIdx(0);
     UInt    uiOverallDistY = 0;
@@ -2046,35 +2044,35 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
     UInt    CandNum;
     UInt64  CandCostList[FAST_UDI_MAX_RDMODE_NUM];
 
-    assert(uiWidth == uiHeight);
+    assert(width == height);
 
     //===== set QP and clear Cbf =====
     if (cu->getSlice()->getPPS()->getUseDQP() == true)
     {
-        cu->setQPSubParts(cu->getQP(0), 0, uiDepth);
+        cu->setQPSubParts(cu->getQP(0), 0, depth);
     }
     else
     {
-        cu->setQPSubParts(cu->getSlice()->getSliceQp(), 0, uiDepth);
+        cu->setQPSubParts(cu->getSlice()->getSliceQp(), 0, depth);
     }
 
     //===== loop over partitions =====
-    UInt uiPartOffset = 0;
-    for (UInt uiPU = 0; uiPU < uiNumPU; uiPU++, uiPartOffset += uiQNumParts)
+    UInt partOffset = 0;
+    for (UInt uiPU = 0; uiPU < uiNumPU; uiPU++, partOffset += uiQNumParts)
     {
         //===== init pattern for luma prediction =====
-        cu->getPattern()->initPattern(cu, uiInitTrDepth, uiPartOffset);
+        cu->getPattern()->initPattern(cu, uiInitTrDepth, partOffset);
         // Reference sample smoothing
-        cu->getPattern()->initAdiPattern(cu, uiPartOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
+        cu->getPattern()->initAdiPattern(cu, partOffset, uiInitTrDepth, m_piPredBuf, m_iPredBufStride, m_iPredBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
 
         //===== determine set of modes to be tested (using prediction signal only) =====
         Int numModesAvailable = 35; //total number of Intra modes
-        Pel* piOrg         = fencYuv->getLumaAddr(uiPU, uiWidth);
-        Pel* piPred        = pcPredYuv->getLumaAddr(uiPU, uiWidth);
+        Pel* piOrg         = fencYuv->getLumaAddr(uiPU, width);
+        Pel* piPred        = pcPredYuv->getLumaAddr(uiPU, width);
         UInt uiStride      = pcPredYuv->getStride();
         UInt uiRdModeList[FAST_UDI_MAX_RDMODE_NUM];
         Int numModesForFullRD = g_intraModeNumFast[uiWidthBit];
-        Int nLog2SizeMinus2 = g_convertToBit[uiWidth];
+        Int nLog2SizeMinus2 = g_convertToBit[width];
         x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
 
         Bool doFastSearch = (numModesForFullRD != numModesAvailable);
@@ -2089,23 +2087,23 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
 
             CandNum = 0;
             UInt uiSads[35];
-            Bool bFilter = (uiWidth <= 16);
+            Bool bFilter = (width <= 16);
             Pel *ptrSrc = m_piPredBuf;
 
             // 1
-            primitives.intra_pred_dc((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, uiWidth, bFilter);
+            primitives.intra_pred_dc((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, width, bFilter);
             uiSads[DC_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 
             // 0
-            if (uiWidth >= 8 && uiWidth <= 32)
+            if (width >= 8 && width <= 32)
             {
-                ptrSrc += ADI_BUF_STRIDE * (2 * uiWidth + 1);
+                ptrSrc += ADI_BUF_STRIDE * (2 * width + 1);
             }
-            primitives.intra_pred_planar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, uiWidth);
+            primitives.intra_pred_planar((pixel*)ptrSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)piPred, uiStride, width);
             uiSads[PLANAR_IDX] = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
 
             // 33 Angle modes once
-            if (uiWidth <= 32)
+            if (width <= 32)
             {
                 ALIGN_VAR_32(Pel, buf1[MAX_CU_SIZE * MAX_CU_SIZE]);
                 ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
@@ -2113,48 +2111,48 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                 // Transpose NxN
                 x265::primitives.transpose[nLog2SizeMinus2]((pixel*)buf1, (pixel*)piOrg, uiStride);
 
-                Pel *pAbove0 = refAbove    + uiWidth - 1;
-                Pel *pAbove1 = refAboveFlt + uiWidth - 1;
-                Pel *pLeft0  = refLeft     + uiWidth - 1;
-                Pel *pLeft1  = refLeftFlt  + uiWidth - 1;
+                Pel *pAbove0 = refAbove    + width - 1;
+                Pel *pAbove1 = refAboveFlt + width - 1;
+                Pel *pLeft0  = refLeft     + width - 1;
+                Pel *pLeft1  = refLeftFlt  + width - 1;
 
-                x265::primitives.intra_pred_allangs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (uiWidth <= 16));
+                x265::primitives.intra_pred_allangs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (width <= 16));
 
                 // TODO: We need SATD_x4 here
-                for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
+                for (UInt mode = 2; mode < numModesAvailable; mode++)
                 {
-                    bool modeHor = (uiMode < 18);
-                    Pel *pSrc = (modeHor ? buf1 : piOrg);
-                    intptr_t srcStride = (modeHor ? uiWidth : uiStride);
+                    bool modeHor = (mode < 18);
+                    Pel *src = (modeHor ? buf1 : piOrg);
+                    intptr_t srcStride = (modeHor ? width : uiStride);
 
                     // use hadamard transform here
-                    UInt uiSad = sa8d((pixel*)pSrc, srcStride, (pixel*)&tmp[(uiMode - 2) * (uiWidth * uiWidth)], uiWidth);
-                    uiSads[uiMode] = uiSad;
+                    UInt uiSad = sa8d((pixel*)src, srcStride, (pixel*)&tmp[(mode - 2) * (width * width)], width);
+                    uiSads[mode] = uiSad;
                 }
             }
             else
             {
-                for (UInt uiMode = 2; uiMode < numModesAvailable; uiMode++)
+                for (UInt mode = 2; mode < numModesAvailable; mode++)
                 {
-                    predIntraLumaAng(cu->getPattern(), uiMode, piPred, uiStride, uiWidth);
+                    predIntraLumaAng(cu->getPattern(), mode, piPred, uiStride, width);
 
                     // use hadamard transform here
                     UInt uiSad = sa8d((pixel*)piOrg, uiStride, (pixel*)piPred, uiStride);
-                    uiSads[uiMode] = uiSad;
+                    uiSads[mode] = uiSad;
                 }
             }
 
-            for (UInt uiMode = 0; uiMode < numModesAvailable; uiMode++)
+            for (UInt mode = 0; mode < numModesAvailable; mode++)
             {
-                UInt uiSad = uiSads[uiMode];
-                UInt iModeBits = xModeBitsIntra(cu, uiMode, uiPU, uiPartOffset, uiDepth, uiInitTrDepth);
+                UInt uiSad = uiSads[mode];
+                UInt iModeBits = xModeBitsIntra(cu, mode, uiPU, partOffset, depth, uiInitTrDepth);
                 UInt64 cost = m_pcRdCost->calcRdSADCost(uiSad, iModeBits);
-                CandNum += xUpdateCandList(uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
+                CandNum += xUpdateCandList(mode, cost, numModesForFullRD, uiRdModeList, CandCostList);    //Find N least cost  modes. N = numModesForFullRD
             }
 
             Int uiPreds[3] = { -1, -1, -1 };
             Int iMode = -1;
-            Int numCand = cu->getIntraDirLumaPredictor(uiPartOffset, uiPreds, &iMode);
+            Int numCand = cu->getIntraDirLumaPredictor(partOffset, uiPreds, &iMode);
             if (iMode >= 0)
             {
                 numCand = iMode;
@@ -2190,21 +2188,21 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
         UInt    uiBestPUDistY = 0;
         UInt    uiBestPUDistC = 0;
         UInt64  dBestPUCost   = MAX_INT64;
-        for (UInt uiMode = 0; uiMode < numModesForFullRD; uiMode++)
+        for (UInt mode = 0; mode < numModesForFullRD; mode++)
         {
             // set luma prediction mode
-            UInt uiOrgMode = uiRdModeList[uiMode];
+            UInt uiOrgMode = uiRdModeList[mode];
 
-            cu->setLumaIntraDirSubParts(uiOrgMode, uiPartOffset, uiDepth + uiInitTrDepth);
+            cu->setLumaIntraDirSubParts(uiOrgMode, partOffset, depth + uiInitTrDepth);
 
             // set context models
-            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 
             // determine residual for partition
             UInt   uiPUDistY = 0;
             UInt   uiPUDistC = 0;
             UInt64 dPUCost   = 0.0;
-            xRecurIntraCodingQT(cu, uiInitTrDepth, uiPartOffset, bLumaOnly, fencYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, true, dPUCost);
+            xRecurIntraCodingQT(cu, uiInitTrDepth, partOffset, bLumaOnly, fencYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, true, dPUCost);
 
             // check r-d cost
             if (dPUCost < dBestPUCost)
@@ -2214,32 +2212,32 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                 uiBestPUDistC = uiPUDistC;
                 dBestPUCost   = dPUCost;
 
-                xSetIntraResultQT(cu, uiInitTrDepth, uiPartOffset, bLumaOnly, pcRecoYuv);
+                xSetIntraResultQT(cu, uiInitTrDepth, partOffset, bLumaOnly, pcRecoYuv);
 
                 UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + uiInitTrDepth) << 1);
-                ::memcpy(m_puhQTTempTrIdx,  cu->getTransformIdx() + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[0], cu->getCbf(TEXT_LUMA) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTrIdx,  cu->getTransformIdx() + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[0], cu->getCbf(TEXT_LUMA) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + partOffset, uiQPartNum * sizeof(UChar));
             }
         } // Mode loop
 
         {
             UInt uiOrgMode = uiBestPUMode;
 
-            cu->setLumaIntraDirSubParts(uiOrgMode, uiPartOffset, uiDepth + uiInitTrDepth);
+            cu->setLumaIntraDirSubParts(uiOrgMode, partOffset, depth + uiInitTrDepth);
 
             // set context models
-            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 
             // determine residual for partition
             UInt   uiPUDistY = 0;
             UInt   uiPUDistC = 0;
             UInt64 dPUCost   = 0;
-            xRecurIntraCodingQT(cu, uiInitTrDepth, uiPartOffset, bLumaOnly, fencYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, false, dPUCost);
+            xRecurIntraCodingQT(cu, uiInitTrDepth, partOffset, bLumaOnly, fencYuv, pcPredYuv, pcResiYuv, uiPUDistY, uiPUDistC, false, dPUCost);
 
             // check r-d cost
             if (dPUCost < dBestPUCost)
@@ -2249,16 +2247,16 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                 uiBestPUDistC = uiPUDistC;
                 dBestPUCost   = dPUCost;
 
-                xSetIntraResultQT(cu, uiInitTrDepth, uiPartOffset, bLumaOnly, pcRecoYuv);
+                xSetIntraResultQT(cu, uiInitTrDepth, partOffset, bLumaOnly, pcRecoYuv);
 
                 UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + uiInitTrDepth) << 1);
-                ::memcpy(m_puhQTTempTrIdx,  cu->getTransformIdx()       + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[0], cu->getCbf(TEXT_LUMA) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U) + uiPartOffset, uiQPartNum * sizeof(UChar));
-                ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + uiPartOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTrIdx,  cu->getTransformIdx()       + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[0], cu->getCbf(TEXT_LUMA) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U) + partOffset, uiQPartNum * sizeof(UChar));
+                ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + partOffset, uiQPartNum * sizeof(UChar));
             }
         } // Mode loop
 
@@ -2268,20 +2266,20 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
 
         //--- update transform index and cbf ---
         UInt uiQPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + uiInitTrDepth) << 1);
-        ::memcpy(cu->getTransformIdx()       + uiPartOffset, m_puhQTTempTrIdx,  uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getCbf(TEXT_LUMA) + uiPartOffset, m_puhQTTempCbf[0], uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getCbf(TEXT_CHROMA_U) + uiPartOffset, m_puhQTTempCbf[1], uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getCbf(TEXT_CHROMA_V) + uiPartOffset, m_puhQTTempCbf[2], uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getTransformSkip(TEXT_LUMA)     + uiPartOffset, m_puhQTTempTransformSkipFlag[0], uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + uiPartOffset, m_puhQTTempTransformSkipFlag[1], uiQPartNum * sizeof(UChar));
-        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + uiPartOffset, m_puhQTTempTransformSkipFlag[2], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getTransformIdx()       + partOffset, m_puhQTTempTrIdx,  uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getCbf(TEXT_LUMA) + partOffset, m_puhQTTempCbf[0], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_puhQTTempCbf[1], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_puhQTTempCbf[2], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getTransformSkip(TEXT_LUMA)     + partOffset, m_puhQTTempTransformSkipFlag[0], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + partOffset, m_puhQTTempTransformSkipFlag[1], uiQPartNum * sizeof(UChar));
+        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + partOffset, m_puhQTTempTransformSkipFlag[2], uiQPartNum * sizeof(UChar));
         //--- set reconstruction for next intra prediction blocks ---
         if (uiPU != uiNumPU - 1)
         {
             Bool bSkipChroma  = false;
             Bool bChromaSame  = false;
-            UInt uiLog2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> (cu->getDepth(0) + uiInitTrDepth)] + 2;
-            if (!bLumaOnly && uiLog2TrSize == 2)
+            UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> (cu->getDepth(0) + uiInitTrDepth)] + 2;
+            if (!bLumaOnly && trSizeLog2 == 2)
             {
                 assert(uiInitTrDepth  > 0);
                 bSkipChroma  = (uiPU != 0);
@@ -2290,10 +2288,10 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
 
             UInt    uiCompWidth   = cu->getWidth(0) >> uiInitTrDepth;
             UInt    uiCompHeight  = cu->getHeight(0) >> uiInitTrDepth;
-            UInt    uiZOrder      = cu->getZorderIdxInCU() + uiPartOffset;
+            UInt    uiZOrder      = cu->getZorderIdxInCU() + partOffset;
             Pel*    piDes         = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), uiZOrder);
             UInt    uiDesStride   = cu->getPic()->getPicYuvRec()->getStride();
-            Pel*    piSrc         = pcRecoYuv->getLumaAddr(uiPartOffset);
+            Pel*    piSrc         = pcRecoYuv->getLumaAddr(partOffset);
             UInt    uiSrcStride   = pcRecoYuv->getStride();
             for (UInt uiY = 0; uiY < uiCompHeight; uiY++, piSrc += uiSrcStride, piDes += uiDesStride)
             {
@@ -2312,7 +2310,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                 }
                 piDes         = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), uiZOrder);
                 uiDesStride   = cu->getPic()->getPicYuvRec()->getCStride();
-                piSrc         = pcRecoYuv->getCbAddr(uiPartOffset);
+                piSrc         = pcRecoYuv->getCbAddr(partOffset);
                 uiSrcStride   = pcRecoYuv->getCStride();
                 for (UInt uiY = 0; uiY < uiCompHeight; uiY++, piSrc += uiSrcStride, piDes += uiDesStride)
                 {
@@ -2323,7 +2321,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
                 }
 
                 piDes         = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), uiZOrder);
-                piSrc         = pcRecoYuv->getCrAddr(uiPartOffset);
+                piSrc         = pcRecoYuv->getCrAddr(partOffset);
                 for (UInt uiY = 0; uiY < uiCompHeight; uiY++, piSrc += uiSrcStride, piDes += uiDesStride)
                 {
                     for (UInt uiX = 0; uiX < uiCompWidth; uiX++)
@@ -2335,8 +2333,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
         }
 
         //=== update PU data ====
-        cu->setLumaIntraDirSubParts(uiBestPUMode, uiPartOffset, uiDepth + uiInitTrDepth);
-        cu->copyToPic(uiDepth, uiPU, uiInitTrDepth);
+        cu->setLumaIntraDirSubParts(uiBestPUMode, partOffset, depth + uiInitTrDepth);
+        cu->copyToPic(depth, uiPU, uiInitTrDepth);
     } // PU loop
 
     if (uiNumPU > 1)
@@ -2344,12 +2342,12 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
         UInt uiCombCbfY = 0;
         UInt uiCombCbfU = 0;
         UInt uiCombCbfV = 0;
-        UInt uiPartIdx  = 0;
-        for (UInt uiPart = 0; uiPart < 4; uiPart++, uiPartIdx += uiQNumParts)
+        UInt partIdx  = 0;
+        for (UInt uiPart = 0; uiPart < 4; uiPart++, partIdx += uiQNumParts)
         {
-            uiCombCbfY |= cu->getCbf(uiPartIdx, TEXT_LUMA,     1);
-            uiCombCbfU |= cu->getCbf(uiPartIdx, TEXT_CHROMA_U, 1);
-            uiCombCbfV |= cu->getCbf(uiPartIdx, TEXT_CHROMA_V, 1);
+            uiCombCbfY |= cu->getCbf(partIdx, TEXT_LUMA,     1);
+            uiCombCbfU |= cu->getCbf(partIdx, TEXT_CHROMA_U, 1);
+            uiCombCbfV |= cu->getCbf(partIdx, TEXT_CHROMA_V, 1);
         }
 
         for (UInt uiOffs = 0; uiOffs < 4 * uiQNumParts; uiOffs++)
@@ -2361,7 +2359,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu,
     }
 
     //===== reset context models =====
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 
     //===== set distortion (rate and r-d costs are determined later) =====
     ruiDistC                   = uiOverallDistC;
