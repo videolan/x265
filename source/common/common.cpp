@@ -305,31 +305,31 @@ void x265_print_params(x265_param_t *param)
     }
     x265_log(param, X265_LOG_INFO, "enabled coding tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
+    TOOLOPT(param->bEnableAdaptQpSelect, "aq");
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
+    TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     if (param->bEnableRDO)
         fprintf(stderr, "rdo ");
     else
         fprintf(stderr, "no-rdo ");
     TOOLOPT(param->bEnableRDOQ, "rdoq");
+    if (param->bEnableSAO)
+    {
+        TOOLOPT(param->bEnableSAO, "sao");
+        TOOLOPT(param->saoLcuBasedOptimization, "sao-lcu");
+    }
+    TOOLOPT(param->bEnableSignHiding, "sign-hide");
     if (param->bEnableTransformSkip)
     {
         TOOLOPT(param->bEnableTransformSkip, "tskip");
         TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
         TOOLOPT(param->bEnableRDOQTS, "rdoqts");
     }
-    if (param->bEnableSAO)
-    {
-        TOOLOPT(param->bEnableSAO, "sao");
-        TOOLOPT(param->saoLcuBasedOptimization, "sao-lcu");
-    }
     TOOLOPT(param->bEnableWeightedPred, "weightp");
     TOOLOPT(param->bEnableWeightedBiPred, "weightbp");
-    TOOLOPT(param->bEnableAdaptQpSelect, "aq");
-    TOOLOPT(param->bEnableSignHiding, "sign-hide");
-    TOOLOPT(param->bEnableConstrainedIntra, "cip");
     fprintf(stderr, "\n");
     fflush(stderr);
 }
