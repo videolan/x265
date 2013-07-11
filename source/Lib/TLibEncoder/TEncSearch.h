@@ -203,7 +203,7 @@ public:
                               TComYuv* predYuv, TShortYUV* resiYuv, UInt& distY, UInt& distC, Bool bCheckFirst,
                               UInt64& dRDCost);
 
-    Void  xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* pcRecoYuv);
+    Void  xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly, TComYuv* reconYuv);
 
 protected:
 
@@ -217,16 +217,16 @@ protected:
     Void  xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma);
     UInt  xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma, Bool bRealCoeff);
     UInt  xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt uiChromaId, Bool bRealCoeff);
-    Void  xIntraCodingLumaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* pcPredYuv,
-                              TShortYUV* pcResiYuv, UInt& outDist, Int default0Save1Load2 = 0);
+    Void  xIntraCodingLumaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                              TShortYUV* resiYuv, UInt& outDist, Int default0Save1Load2 = 0);
 
-    Void  xIntraCodingChromaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* pcPredYuv,
-                                TShortYUV* pcResiYuv, UInt& outDist, UInt uiChromaId, Int default0Save1Load2 = 0);
+    Void  xIntraCodingChromaBlk(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                                TShortYUV* resiYuv, UInt& outDist, UInt uiChromaId, Int default0Save1Load2 = 0);
 
     Void  xRecurIntraChromaCodingQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* fencYuv,
-                                    TComYuv* pcPredYuv, TShortYUV* pcResiYuv, UInt& outDist);
+                                    TComYuv* predYuv, TShortYUV* resiYuv, UInt& outDist);
 
-    Void  xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* pcRecoYuv);
+    Void  xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TComYuv* reconYuv);
 
     Void  xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
     Void  xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLumaOnly);
@@ -238,7 +238,7 @@ protected:
     // --------------------------------------------------------------------------------------------
 
     Void xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt partIdx, RefPicList picList,
-                             Int refIdx, x265::MV& mvPred, Bool bFilled = false, UInt* puiDistBiP = NULL);
+                             Int refIdx, x265::MV& mvPred, Bool bFilled = false, UInt* distBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* cu, RefPicList picList, x265::MV cMv, x265::MV& mvPred, Int& mvpIdx,
                        UInt& outBits, UInt& outCost);
