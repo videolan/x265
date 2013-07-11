@@ -2340,67 +2340,66 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
 Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                                       TComYuv*    fencYuv,
-                                      TComYuv*    pcPredYuv,
-                                      TShortYUV*  pcResiYuv,
-                                      TComYuv*    pcRecoYuv,
-                                      UInt        uiPreCalcDistC)
+                                      TComYuv*    predYuv,
+                                      TShortYUV*  resiYuv,
+                                      TComYuv*    reconYuv,
+                                      UInt        preCalcDistC)
 {
-    UInt    uiDepth     = cu->getDepth(0);
-    UInt    uiBestMode  = 0;
-    UInt    uiBestDist  = 0;
-    UInt64  uiBestCost  = MAX_INT64;
+    UInt   depth     = cu->getDepth(0);
+    UInt   bestMode  = 0;
+    UInt   bestDist  = 0;
+    UInt64 bestCost  = MAX_INT64;
 
     //----- init mode list -----
-    UInt  uiMinMode = 0;
-    UInt  uiModeList[NUM_CHROMA_MODE];
-
-    cu->getAllowedChromaDir(0, uiModeList);
-    UInt  uiMaxMode = NUM_CHROMA_MODE;
+    UInt minMode = 0;
+    UInt maxMode = NUM_CHROMA_MODE;
+    UInt modeList[NUM_CHROMA_MODE];
+    cu->getAllowedChromaDir(0, modeList);
 
     //----- check chroma modes -----
-    for (UInt uiMode = uiMinMode; uiMode < uiMaxMode; uiMode++)
+    for (UInt mode = minMode; mode < maxMode; mode++)
     {
         //----- restore context models -----
-        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+        m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 
         //----- chroma coding -----
-        UInt    uiDist = 0;
-        cu->setChromIntraDirSubParts(uiModeList[uiMode], 0, uiDepth);
-        xRecurIntraChromaCodingQT(cu,   0, 0, fencYuv, pcPredYuv, pcResiYuv, uiDist);
+        UInt dist = 0;
+        cu->setChromIntraDirSubParts(modeList[mode], 0, depth);
+        xRecurIntraChromaCodingQT(cu, 0, 0, fencYuv, predYuv, resiYuv, dist);
         if (cu->getSlice()->getPPS()->getUseTransformSkip())
         {
-            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+            m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
         }
 
-        UInt    uiBits = xGetIntraBitsQT(cu,   0, 0, false, true);
-        UInt64  uiCost  = m_pcRdCost->calcRdCost(uiDist, uiBits);
+        UInt   bits = xGetIntraBitsQT(cu, 0, 0, false, true);
+        UInt64 cost  = m_pcRdCost->calcRdCost(dist, bits);
 
         //----- compare -----
-        if (uiCost < uiBestCost)
+        if (cost < bestCost)
         {
-            uiBestCost  = uiCost;
-            uiBestDist  = uiDist;
-            uiBestMode  = uiModeList[uiMode];
-            UInt  uiQPN = cu->getPic()->getNumPartInCU() >> (uiDepth << 1);
-            xSetIntraResultChromaQT(cu, 0, 0, pcRecoYuv);
-            ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U), uiQPN * sizeof(UChar));
-            ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V), uiQPN * sizeof(UChar));
-            ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U), uiQPN * sizeof(UChar));
-            ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V), uiQPN * sizeof(UChar));
+            bestCost = cost;
+            bestDist = dist;
+            bestMode = modeList[mode];
+            UInt qpn = cu->getPic()->getNumPartInCU() >> (depth << 1);
+            xSetIntraResultChromaQT(cu, 0, 0, reconYuv);
+            ::memcpy(m_puhQTTempCbf[1], cu->getCbf(TEXT_CHROMA_U), qpn * sizeof(UChar));
+            ::memcpy(m_puhQTTempCbf[2], cu->getCbf(TEXT_CHROMA_V), qpn * sizeof(UChar));
+            ::memcpy(m_puhQTTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U), qpn * sizeof(UChar));
+            ::memcpy(m_puhQTTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V), qpn * sizeof(UChar));
         }
     }
 
     //----- set data -----
-    UInt  uiQPN = cu->getPic()->getNumPartInCU() >> (uiDepth << 1);
-    ::memcpy(cu->getCbf(TEXT_CHROMA_U), m_puhQTTempCbf[1], uiQPN * sizeof(UChar));
-    ::memcpy(cu->getCbf(TEXT_CHROMA_V), m_puhQTTempCbf[2], uiQPN * sizeof(UChar));
-    ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U), m_puhQTTempTransformSkipFlag[1], uiQPN * sizeof(UChar));
-    ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V), m_puhQTTempTransformSkipFlag[2], uiQPN * sizeof(UChar));
-    cu->setChromIntraDirSubParts(uiBestMode, 0, uiDepth);
-    cu->getTotalDistortion() += uiBestDist - uiPreCalcDistC;
+    UInt qpn = cu->getPic()->getNumPartInCU() >> (depth << 1);
+    ::memcpy(cu->getCbf(TEXT_CHROMA_U), m_puhQTTempCbf[1], qpn * sizeof(UChar));
+    ::memcpy(cu->getCbf(TEXT_CHROMA_V), m_puhQTTempCbf[2], qpn * sizeof(UChar));
+    ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U), m_puhQTTempTransformSkipFlag[1], qpn * sizeof(UChar));
+    ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V), m_puhQTTempTransformSkipFlag[2], qpn * sizeof(UChar));
+    cu->setChromIntraDirSubParts(bestMode, 0, depth);
+    cu->getTotalDistortion() += bestDist - preCalcDistC;
 
     //----- restore context models -----
-    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
+    m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
 }
 
 /** Function for encoding and reconstructing luma/chroma samples of a PCM mode CU.
