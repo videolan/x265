@@ -3582,36 +3582,36 @@ Void TEncSearch::xPatternSearchFast(TComDataCU* cu, TComPattern* patternKey, Pel
 }
 
 Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
-                                       TComPattern* pcPatternKey,
-                                       Pel*         piRefY,
-                                       Int          iRefStride,
-                                       MV*          pcMvInt,
-                                       MV&          rcMvHalf,
-                                       MV&          rcMvQter,
+                                       TComPattern* patternKey,
+                                       Pel*         refY,
+                                       Int          stride,
+                                       MV*          mvfpel,
+                                       MV&          outMvHPel,
+                                       MV&          outMvQPel,
                                        UInt&        outCost,
                                        Bool         biPred,
                                        TComPicYuv * refPic,
                                        UInt         partAddr)
 {
-    Int         iOffset    = pcMvInt->x + pcMvInt->y * iRefStride;
+    Int offset = mvfpel->x + mvfpel->y * stride;
 
     MV baseRefMv(0, 0);
 
-    rcMvHalf = *pcMvInt;
-    rcMvHalf <<= 1;
+    outMvHPel = *mvfpel;
+    outMvHPel <<= 1;
 
-    outCost =  xPatternRefinement(pcPatternKey, baseRefMv, 2, rcMvHalf, refPic, iOffset, cu, partAddr);
+    outCost = xPatternRefinement(patternKey, baseRefMv, 2, outMvHPel, refPic, offset, cu, partAddr);
     m_pcRdCost->setCostScale(0);
 
-    baseRefMv = rcMvHalf;
+    baseRefMv = outMvHPel;
     baseRefMv <<= 1;
 
-    rcMvQter = *pcMvInt;
-    rcMvQter <<= 1;                         // for mv-cost
-    rcMvQter += rcMvHalf;
-    rcMvQter <<= 1;
+    outMvQPel = *mvfpel;
+    outMvQPel <<= 1;
+    outMvQPel += outMvHPel;
+    outMvQPel <<= 1;
 
-    outCost = xPatternRefinement(pcPatternKey, baseRefMv, 1, rcMvQter, refPic, iOffset, cu, partAddr);
+    outCost = xPatternRefinement(patternKey, baseRefMv, 1, outMvQPel, refPic, offset, cu, partAddr);
 }
 
 /** encode residual and calculate rate-distortion for a CU block
