@@ -753,16 +753,12 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Text
     m_pcEntropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, width, height, fullDepth, ttype);
 }
 
-Void TEncSearch::xEncIntraHeader(TComDataCU* cu,
-                                 UInt        trDepth,
-                                 UInt        uiAbsPartIdx,
-                                 Bool        bLuma,
-                                 Bool        bChroma)
+Void TEncSearch::xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
 {
     if (bLuma)
     {
         // CU header
-        if (uiAbsPartIdx == 0)
+        if (absPartIdx == 0)
         {
             if (!cu->getSlice()->isIntra())
             {
@@ -789,32 +785,32 @@ Void TEncSearch::xEncIntraHeader(TComDataCU* cu,
         // luma prediction mode
         if (cu->getPartitionSize(0) == SIZE_2Nx2N)
         {
-            if (uiAbsPartIdx == 0)
+            if (absPartIdx == 0)
             {
                 m_pcEntropyCoder->encodeIntraDirModeLuma(cu, 0);
             }
         }
         else
         {
-            UInt uiQNumParts = cu->getTotalNumPart() >> 2;
+            UInt qtNumParts = cu->getTotalNumPart() >> 2;
             if (trDepth == 0)
             {
-                assert(uiAbsPartIdx == 0);
-                for (UInt uiPart = 0; uiPart < 4; uiPart++)
+                assert(absPartIdx == 0);
+                for (UInt part = 0; part < 4; part++)
                 {
-                    m_pcEntropyCoder->encodeIntraDirModeLuma(cu, uiPart * uiQNumParts);
+                    m_pcEntropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts);
                 }
             }
-            else if ((uiAbsPartIdx % uiQNumParts) == 0)
+            else if ((absPartIdx % qtNumParts) == 0)
             {
-                m_pcEntropyCoder->encodeIntraDirModeLuma(cu, uiAbsPartIdx);
+                m_pcEntropyCoder->encodeIntraDirModeLuma(cu, absPartIdx);
             }
         }
     }
     if (bChroma)
     {
         // chroma prediction mode
-        if (uiAbsPartIdx == 0)
+        if (absPartIdx == 0)
         {
             m_pcEntropyCoder->encodeIntraDirModeChroma(cu, 0, true);
         }
