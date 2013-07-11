@@ -361,7 +361,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
                 
                 YuvTemp = m_ppcRecoYuvBest[depth];
                 m_ppcRecoYuvBest[depth] = m_RecoYuvMergeBest[depth];
-                m_RecoYuvMergeBest[depth] = YuvTemp;            
+                m_RecoYuvMergeBest[depth] = YuvTemp;
             }
 
             /*compute intra cost */
