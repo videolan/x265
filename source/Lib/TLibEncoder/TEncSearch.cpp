@@ -2404,90 +2404,84 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
 
 /** Function for encoding and reconstructing luma/chroma samples of a PCM mode CU.
  * \param cu pointer to current CU
- * \param uiAbsPartIdx part index
- * \param piOrg pointer to original sample arrays
- * \param piPCM pointer to PCM code arrays
- * \param piPred pointer to prediction signal arrays
- * \param piResi pointer to residual signal arrays
- * \param piReco pointer to reconstructed sample arrays
- * \param uiStride stride of the original/prediction/residual sample arrays
- * \param uiWidth block width
- * \param uiHeight block height
+ * \param absPartIdx part index
+ * \param fenc pointer to original sample arrays
+ * \param pcm pointer to PCM code arrays
+ * \param pred pointer to prediction signal arrays
+ * \param resi pointer to residual signal arrays
+ * \param reco pointer to reconstructed sample arrays
+ * \param stride stride of the original/prediction/residual sample arrays
+ * \param width block width
+ * \param height block height
  * \param ttText texture component type
  * \returns Void
  */
-Void TEncSearch::xEncPCM(TComDataCU* cu, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Short* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText)
+Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, Short* resi, Pel* recon, UInt stride, UInt width, UInt height, TextType eText)
 {
-    UInt uiX, uiY;
-    UInt uiReconStride;
-    Pel* pOrg  = piOrg;
-    Pel* pPCM  = piPCM;
-    Pel* pPred = piPred;
-    Short* pResi = piResi;
-    Pel* pReco = piReco;
-    Pel* pRecoPic;
+    UInt x, y;
+    UInt reconStride;
+    Pel* pcmTmp = pcm;
+    Pel* reconPic;
     Int shiftPcm;
 
     if (eText == TEXT_LUMA)
     {
-        uiReconStride = cu->getPic()->getPicYuvRec()->getStride();
-        pRecoPic      = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + uiAbsPartIdx);
+        reconStride = cu->getPic()->getPicYuvRec()->getStride();
+        reconPic    = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + absPartIdx);
         shiftPcm = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
     }
     else
     {
-        uiReconStride = cu->getPic()->getPicYuvRec()->getCStride();
-
+        reconStride = cu->getPic()->getPicYuvRec()->getCStride();
         if (eText == TEXT_CHROMA_U)
         {
-            pRecoPic = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + uiAbsPartIdx);
+            reconPic = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + absPartIdx);
         }
         else
         {
-            pRecoPic = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + uiAbsPartIdx);
+            reconPic = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + absPartIdx);
         }
         shiftPcm = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
     }
 
-    // Reset pred and residual
-    for (uiY = 0; uiY < uiHeight; uiY++)
+    // zero prediction and residual
+    for (y = 0; y < height; y++)
     {
-        for (uiX = 0; uiX < uiWidth; uiX++)
+        for (x = 0; x < width; x++)
         {
-            pPred[uiX] = 0;
-            pResi[uiX] = 0;
+            pred[x] = resi[x] = 0;
         }
 
-        pPred += uiStride;
-        pResi += uiStride;
+        pred += stride;
+        resi += stride;
     }
 
     // Encode
-    for (uiY = 0; uiY < uiHeight; uiY++)
+    for (y = 0; y < height; y++)
     {
-        for (uiX = 0; uiX < uiWidth; uiX++)
+        for (x = 0; x < width; x++)
         {
-            pPCM[uiX] = pOrg[uiX] >> shiftPcm;
+            pcmTmp[x] = fenc[x] >> shiftPcm;
         }
 
-        pPCM += uiWidth;
-        pOrg += uiStride;
+        pcmTmp += width;
+        fenc += stride;
     }
 
-    pPCM  = piPCM;
+    pcmTmp = pcm;
 
     // Reconstruction
-    for (uiY = 0; uiY < uiHeight; uiY++)
+    for (y = 0; y < height; y++)
     {
-        for (uiX = 0; uiX < uiWidth; uiX++)
+        for (x = 0; x < width; x++)
         {
-            pReco[uiX] = pPCM[uiX] << shiftPcm;
-            pRecoPic[uiX] = pReco[uiX];
+            recon[x] = pcmTmp[x] << shiftPcm;
+            reconPic[x] = recon[x];
         }
 
-        pPCM += uiWidth;
-        pReco += uiStride;
-        pRecoPic += uiReconStride;
+        pcmTmp   += width;
+        recon    += stride;
+        reconPic += reconStride;
     }
 }
 
