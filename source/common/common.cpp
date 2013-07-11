@@ -97,6 +97,7 @@ void x265_param_default(x265_param_t *param)
     param->maxSAOOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
     param->maxNumMergeCand = 5u;
+    param->bEnableCbfFastMode = 1;
     param->bEnableSignHiding = 1;
     param->bEnableStrongIntraSmoothing = 1;
     param->bEnableRDOQ = 1;
