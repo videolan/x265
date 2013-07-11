@@ -125,7 +125,7 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStri
     rcDistParam.pCur = piRefY;
 
     rcDistParam.strideOrg = patternKey->getPatternLStride();
-    rcDistParam.iStrideCur = iRefStride;
+    rcDistParam.strideCur = iRefStride;
 
     // set Block Width / Height
     rcDistParam.iCols    = patternKey->getROIYWidth();
@@ -157,7 +157,7 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStri
     rcDistParam.pCur = piRefY;
 
     rcDistParam.strideOrg = patternKey->getPatternLStride();
-    rcDistParam.iStrideCur = iRefStride * iStep;
+    rcDistParam.strideCur = iRefStride * iStep;
 
     // set Step for interpolated buffer
     rcDistParam.iStep = iStep;
@@ -212,7 +212,7 @@ UInt TComRdCost::xGetSAD(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     Int  iStrideOrg = pcDtParam->strideOrg;
     UInt uiSum = 0;
 
@@ -242,7 +242,7 @@ UInt TComRdCost::xGetSAD4(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -273,7 +273,7 @@ UInt TComRdCost::xGetSAD8(DistParam* pcDtParam)
     Int  iRows      = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -308,7 +308,7 @@ UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -351,7 +351,7 @@ UInt TComRdCost::xGetSAD12(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
 
     UInt uiSum = 0;
@@ -387,7 +387,7 @@ UInt TComRdCost::xGetSAD16N(DistParam* pcDtParam)
     Int  iCols   = pcDtParam->iCols;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -433,7 +433,7 @@ UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -492,7 +492,7 @@ UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
     UInt uiSum = 0;
 
@@ -543,7 +543,7 @@ UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
 
     UInt uiSum = 0;
@@ -635,7 +635,7 @@ UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iSubShift  = pcDtParam->iSubShift;
     Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->iStrideCur * iSubStep;
+    Int  iStrideCur = pcDtParam->strideCur * iSubStep;
     Int  iStrideOrg = pcDtParam->strideOrg * iSubStep;
 
     UInt uiSum = 0;
@@ -734,7 +734,7 @@ UInt TComRdCost::xGetSSE(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
@@ -798,7 +798,7 @@ UInt TComRdCost::xGetSSE4(DistParam* pcDtParam)
 
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
 
@@ -872,7 +872,7 @@ UInt TComRdCost::xGetSSE8(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
 
@@ -959,7 +959,7 @@ UInt TComRdCost::xGetSSE16(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
 
@@ -1050,7 +1050,7 @@ UInt TComRdCost::xGetSSE16N(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
@@ -1170,7 +1170,7 @@ UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
@@ -1355,7 +1355,7 @@ UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideOrg = pcDtParam->strideOrg;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
 
     UInt uiSum = 0;
     UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
@@ -1590,7 +1590,7 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
     UInt uiSum = 0;
@@ -1616,7 +1616,7 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
     Int  y;
@@ -1653,7 +1653,7 @@ UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
-    Int  iStrideCur = pcDtParam->iStrideCur;
+    Int  iStrideCur = pcDtParam->strideCur;
     Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
 
