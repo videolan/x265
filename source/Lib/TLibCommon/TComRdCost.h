@@ -115,7 +115,7 @@ public:
 
     Pel*  fenc;
     Pel*  pCur;
-    Int   iStrideOrg;
+    Int   strideOrg;
     Int   iStrideCur;
     Int   iRows;
     Int   iCols;
@@ -134,7 +134,7 @@ public:
     {
         fenc = NULL;
         pCur = NULL;
-        iStrideOrg = 0;
+        strideOrg = 0;
         iStrideCur = 0;
         iRows = 0;
         iCols = 0;

@@ -73,7 +73,7 @@ UInt TComRdCostWeightPrediction::xGetSADw(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
     Int  iStrideCur = pcDtParam->iStrideCur;
-    Int  iStrideOrg = pcDtParam->iStrideOrg;
+    Int  iStrideOrg = pcDtParam->strideOrg;
 
     wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
     Int   w0      = wpCur->w,
@@ -114,7 +114,7 @@ UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
     Pel  pred;
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
-    Int  iStrideOrg = pcDtParam->iStrideOrg;
+    Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStrideCur = pcDtParam->iStrideCur;
 
     assert(pcDtParam->iSubShift == 0);
@@ -428,7 +428,7 @@ UInt TComRdCostWeightPrediction::xGetHADs4w(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideCur = pcDtParam->iStrideCur;
-    Int  iStrideOrg = pcDtParam->iStrideOrg;
+    Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
     Int  y;
     Int  iOffsetOrg = iStrideOrg << 2;
@@ -456,7 +456,7 @@ UInt TComRdCostWeightPrediction::xGetHADs8w(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->pCur;
     Int  iRows   = pcDtParam->iRows;
     Int  iStrideCur = pcDtParam->iStrideCur;
-    Int  iStrideOrg = pcDtParam->iStrideOrg;
+    Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
     Int  y;
 
@@ -493,7 +493,7 @@ UInt TComRdCostWeightPrediction::xGetHADsw(DistParam* pcDtParam)
     Int  iRows   = pcDtParam->iRows;
     Int  iCols   = pcDtParam->iCols;
     Int  iStrideCur = pcDtParam->iStrideCur;
-    Int  iStrideOrg = pcDtParam->iStrideOrg;
+    Int  iStrideOrg = pcDtParam->strideOrg;
     Int  iStep  = pcDtParam->iStep;
 
     Int  x, y;
