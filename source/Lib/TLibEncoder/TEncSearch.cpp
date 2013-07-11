@@ -82,13 +82,6 @@ static const MV s_mvRefineQPel[9] =
     MV(1,  1)   // 8
 };
 
-static const UInt s_dFilter[9] =
-{
-    0, 1, 0,
-    2, 3, 2,
-    0, 1, 0
-};
-
 TEncSearch::TEncSearch()
 {
     m_qtTempCoeffY  = NULL;
@@ -102,7 +95,7 @@ TEncSearch::TEncSearch()
     m_qtTempTComYuv  = NULL;
     m_cfg = NULL;
     m_entropyCoder = NULL;
-    m_pTempPel = NULL;
+    m_tempPel = NULL;
     m_sharedPredTransformSkip[0] = m_sharedPredTransformSkip[1] = m_sharedPredTransformSkip[2] = NULL;
     m_qtTempTUCoeffY   = NULL;
     m_qtTempTUCoeffCb  = NULL;
@@ -118,10 +111,10 @@ TEncSearch::TEncSearch()
 
 TEncSearch::~TEncSearch()
 {
-    if (m_pTempPel)
+    if (m_tempPel)
     {
-        delete [] m_pTempPel;
-        m_pTempPel = NULL;
+        delete [] m_tempPel;
+        m_tempPel = NULL;
     }
 
     if (m_cfg)
@@ -186,47 +179,45 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTr
         }
     }
 
-    m_puiDFilter = s_dFilter + 4;
-
     // initialize motion cost
-    for (Int iNum = 0; iNum < AMVP_MAX_NUM_CANDS + 1; iNum++)
+    for (Int num = 0; num < AMVP_MAX_NUM_CANDS + 1; num++)
     {
-        for (Int iIdx = 0; iIdx < AMVP_MAX_NUM_CANDS; iIdx++)
+        for (Int idx = 0; idx < AMVP_MAX_NUM_CANDS; idx++)
         {
-            if (iIdx < iNum)
-                m_mvpIdxCost[iIdx][iNum] = xGetMvpIdxBits(iIdx, iNum);
+            if (idx < num)
+                m_mvpIdxCost[idx][num] = xGetMvpIdxBits(idx, num);
             else
-                m_mvpIdxCost[iIdx][iNum] = MAX_INT;
+                m_mvpIdxCost[idx][num] = MAX_INT;
         }
     }
 
     initTempBuff();
 
-    m_pTempPel = new Pel[g_maxCUWidth * g_maxCUHeight];
+    m_tempPel = new Pel[g_maxCUWidth * g_maxCUHeight];
 
-    const UInt uiNumLayersToAllocate = pcEncCfg->getQuadtreeTULog2MaxSize() - pcEncCfg->getQuadtreeTULog2MinSize() + 1;
-    m_qtTempCoeffY  = new TCoeff*[uiNumLayersToAllocate];
-    m_qtTempCoeffCb = new TCoeff*[uiNumLayersToAllocate];
-    m_qtTempCoeffCr = new TCoeff*[uiNumLayersToAllocate];
-    m_qtTempArlCoeffY  = new Int*[uiNumLayersToAllocate];
-    m_qtTempArlCoeffCb = new Int*[uiNumLayersToAllocate];
-    m_qtTempArlCoeffCr = new Int*[uiNumLayersToAllocate];
+    const UInt numLayersToAllocate = pcEncCfg->getQuadtreeTULog2MaxSize() - pcEncCfg->getQuadtreeTULog2MinSize() + 1;
+    m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
+    m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
+    m_qtTempCoeffCr = new TCoeff*[numLayersToAllocate];
+    m_qtTempArlCoeffY  = new Int*[numLayersToAllocate];
+    m_qtTempArlCoeffCb = new Int*[numLayersToAllocate];
+    m_qtTempArlCoeffCr = new Int*[numLayersToAllocate];
 
-    const UInt uiNumPartitions = 1 << (g_maxCUDepth << 1);
-    m_qtTempTrIdx   = new UChar[uiNumPartitions];
-    m_qtTempCbf[0]  = new UChar[uiNumPartitions];
-    m_qtTempCbf[1]  = new UChar[uiNumPartitions];
-    m_qtTempCbf[2]  = new UChar[uiNumPartitions];
-    m_qtTempTComYuv  = new TShortYUV[uiNumLayersToAllocate];
-    for (UInt ui = 0; ui < uiNumLayersToAllocate; ++ui)
+    const UInt numPartitions = 1 << (g_maxCUDepth << 1);
+    m_qtTempTrIdx   = new UChar[numPartitions];
+    m_qtTempCbf[0]  = new UChar[numPartitions];
+    m_qtTempCbf[1]  = new UChar[numPartitions];
+    m_qtTempCbf[2]  = new UChar[numPartitions];
+    m_qtTempTComYuv  = new TShortYUV[numLayersToAllocate];
+    for (UInt i = 0; i < numLayersToAllocate; ++i)
     {
-        m_qtTempCoeffY[ui]  = new TCoeff[g_maxCUWidth * g_maxCUHeight];
-        m_qtTempCoeffCb[ui] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempCoeffCr[ui] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempArlCoeffY[ui]  = new Int[g_maxCUWidth * g_maxCUHeight];
-        m_qtTempArlCoeffCb[ui] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempArlCoeffCr[ui] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempTComYuv[ui].create(g_maxCUWidth, g_maxCUHeight);
+        m_qtTempCoeffY[i]  = new TCoeff[g_maxCUWidth * g_maxCUHeight];
+        m_qtTempCoeffCb[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
+        m_qtTempCoeffCr[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
+        m_qtTempArlCoeffY[i]  = new Int[g_maxCUWidth * g_maxCUHeight];
+        m_qtTempArlCoeffCb[i] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
+        m_qtTempArlCoeffCr[i] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
+        m_qtTempTComYuv[i].create(g_maxCUWidth, g_maxCUHeight);
     }
 
     m_sharedPredTransformSkip[0] = new Pel[MAX_TS_WIDTH * MAX_TS_HEIGHT];
@@ -240,9 +231,9 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTr
     m_qtTempTUArlCoeffCr = new Int[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight);
 
-    m_qtTempTransformSkipFlag[0] = new UChar[uiNumPartitions];
-    m_qtTempTransformSkipFlag[1] = new UChar[uiNumPartitions];
-    m_qtTempTransformSkipFlag[2] = new UChar[uiNumPartitions];
+    m_qtTempTransformSkipFlag[0] = new UChar[numPartitions];
+    m_qtTempTransformSkipFlag[1] = new UChar[numPartitions];
+    m_qtTempTransformSkipFlag[2] = new UChar[numPartitions];
     m_tmpYuvPred.create(MAX_CU_SIZE, MAX_CU_SIZE);
 }
 
@@ -3908,10 +3899,10 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         const UInt numSamplesLuma = 1 << (trSizeLog2 << 1);
         const UInt numSamplesChroma = 1 << (trSizeCLog2 << 1);
 
-        ::memset(m_pTempPel, 0, sizeof(Pel) * numSamplesLuma); // not necessary needed for inside of recursion (only at the beginning)
+        ::memset(m_tempPel, 0, sizeof(Pel) * numSamplesLuma); // not necessary needed for inside of recursion (only at the beginning)
 
         int partSize = PartitionFromSizes(trWidth, trHeight);
-        UInt distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), (intptr_t)resiYuv->width, (pixel*)m_pTempPel, trWidth);
+        UInt distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absTUPartIdx), (intptr_t)resiYuv->width, (pixel*)m_tempPel, trWidth);
 
         if (outZeroDist)
         {
@@ -3984,7 +3975,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         int partSizeC = x265::PartitionFromSizes(trWidthC, trHeightC);
         if (bCodeChroma)
         {
-            distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), (intptr_t)resiYuv->Cwidth, (pixel*)m_pTempPel, trWidthC));
+            distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), (intptr_t)resiYuv->Cwidth, (pixel*)m_tempPel, trWidthC));
 
             if (outZeroDist)
             {
@@ -4054,7 +4045,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 }
             }
 
-            distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), (intptr_t)resiYuv->Cwidth, (pixel*)m_pTempPel, trWidthC));
+            distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), (intptr_t)resiYuv->Cwidth, (pixel*)m_tempPel, trWidthC));
             if (outZeroDist)
             {
                 *outZeroDist += distV;

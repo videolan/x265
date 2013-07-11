@@ -114,8 +114,7 @@ protected:
     DistParam       m_cDistParam;
 
     // Misc.
-    Pel*            m_pTempPel;
-    const UInt*     m_puiDFilter;
+    Pel*            m_tempPel;
 
     // AMVP cost computation
     UInt            m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
