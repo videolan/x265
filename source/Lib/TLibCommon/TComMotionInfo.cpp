@@ -321,9 +321,9 @@ Void TComCUMvField::setAllMvd(MV const & mvd, PartSize eCUMode, Int iPartAddr, U
     setAll(m_pcMvd, mvd, eCUMode, iPartAddr, depth, partIdx);
 }
 
-Void TComCUMvField::setAllRefIdx(Int iRefIdx, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx)
+Void TComCUMvField::setAllRefIdx(Int refIdx, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx)
 {
-    setAll(m_piRefIdx, static_cast<Char>(iRefIdx), eCUMode, iPartAddr, depth, partIdx);
+    setAll(m_piRefIdx, static_cast<Char>(refIdx), eCUMode, iPartAddr, depth, partIdx);
 }
 
 Void TComCUMvField::setAllMvField(TComMvField const & mvField, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx)
@@ -346,16 +346,16 @@ Void TComCUMvField::compress(Char* pePredMode, Int scale)
     {
         MV cMv(0, 0);
         PredMode predMode = MODE_INTRA;
-        Int iRefIdx = 0;
+        Int refIdx = 0;
 
         cMv = m_pcMv[partIdx];
         predMode = static_cast<PredMode>(pePredMode[partIdx]);
-        iRefIdx = m_piRefIdx[partIdx];
+        refIdx = m_piRefIdx[partIdx];
         for (Int i = 0; i < N; i++)
         {
             m_pcMv[partIdx + i] = cMv;
             pePredMode[partIdx + i] = predMode;
-            m_piRefIdx[partIdx + i] = iRefIdx;
+            m_piRefIdx[partIdx + i] = refIdx;
         }
     }
 }

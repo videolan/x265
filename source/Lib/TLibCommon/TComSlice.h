@@ -1512,9 +1512,9 @@ public:
 
     TComPic*  getPic()                            { return m_pcPic;                      }
 
-    TComPic*  getRefPic(RefPicList e, Int iRefIdx) { return m_apcRefPicList[e][iRefIdx];  }
+    TComPic*  getRefPic(RefPicList e, Int refIdx) { return m_apcRefPicList[e][refIdx];  }
 
-    Int       getRefPOC(RefPicList e, Int iRefIdx) { return m_aiRefPOCList[e][iRefIdx];   }
+    Int       getRefPOC(RefPicList e, Int refIdx) { return m_aiRefPOCList[e][refIdx];   }
 
     Int       getDepth()                          { return m_iDepth;                     }
 
@@ -1568,9 +1568,9 @@ public:
 
     Void      setDeblockingFilterTcOffsetDiv2(Int i)   { m_deblockingFilterTcOffsetDiv2 = i; }
 
-    Void      setRefPic(TComPic* p, RefPicList e, Int iRefIdx) { m_apcRefPicList[e][iRefIdx] = p; }
+    Void      setRefPic(TComPic* p, RefPicList e, Int refIdx) { m_apcRefPicList[e][refIdx] = p; }
 
-    Void      setRefPOC(Int i, RefPicList e, Int iRefIdx) { m_aiRefPOCList[e][iRefIdx] = i; }
+    Void      setRefPOC(Int i, RefPicList e, Int refIdx) { m_aiRefPOCList[e][refIdx] = i; }
 
     Void      setNumRefIdx(RefPicList e, Int i)   { m_aiNumRefIdx[e]    = i;      }
 
@@ -1656,7 +1656,7 @@ public:
 
     Void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3); }
 
-    Void  getWpScaling(RefPicList e, Int iRefIdx, wpScalingParam *&wp);
+    Void  getWpScaling(RefPicList e, Int refIdx, wpScalingParam *&wp);
 
     Void  resetWpScaling();
     Void  initWpScaling();

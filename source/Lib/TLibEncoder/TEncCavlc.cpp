@@ -1169,9 +1169,9 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* pcSlice)
         {
             RefPicList  picList = (iNumRef ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
 
-            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
+            for (Int refIdx = 0; refIdx < pcSlice->getNumRefIdx(picList); refIdx++)
             {
-                pcSlice->getWpScaling(picList, iRefIdx, wp);
+                pcSlice->getWpScaling(picList, refIdx, wp);
                 if (!bDenomCoded)
                 {
                     Int iDeltaDenom;
@@ -1190,17 +1190,17 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* pcSlice)
 
             if (bChroma)
             {
-                for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
+                for (Int refIdx = 0; refIdx < pcSlice->getNumRefIdx(picList); refIdx++)
                 {
-                    pcSlice->getWpScaling(picList, iRefIdx, wp);
+                    pcSlice->getWpScaling(picList, refIdx, wp);
                     WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");   // u(1): chroma_weight_lX_flag
                     uiTotalSignalledWeightFlags += 2 * wp[1].bPresentFlag;
                 }
             }
 
-            for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(picList); iRefIdx++)
+            for (Int refIdx = 0; refIdx < pcSlice->getNumRefIdx(picList); refIdx++)
             {
-                pcSlice->getWpScaling(picList, iRefIdx, wp);
+                pcSlice->getWpScaling(picList, refIdx, wp);
                 if (wp[0].bPresentFlag)
                 {
                     Int iDeltaWeight = (wp[0].iWeight - (1 << wp[0].uiLog2WeightDenom));

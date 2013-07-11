@@ -195,8 +195,8 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
-    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int iRefIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
 
     Void          deriveRightBottomIdx(UInt partIdx, UInt& ruiPartIdxRB);
     Bool          xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx, x265::MV& rcMv, Int& riRefIdx);
@@ -451,7 +451,7 @@ public:
 
     Void          getMvField(TComDataCU* cu, UInt absPartIdx, RefPicList picList, TComMvField& rcMvField);
 
-    Void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, Int iRefIdx, AMVPInfo* pInfo);
+    Void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, Int refIdx, AMVPInfo* pInfo);
     Bool          isDiffMER(Int xN, Int yN, Int xP, Int yP);
     Void          getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int& nPSH);
     Void          setMVPIdx(RefPicList picList, UInt uiIdx, Int mvpIdx)  { m_apiMVPIdx[picList][uiIdx] = (Char)mvpIdx; }

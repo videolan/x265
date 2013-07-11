@@ -73,10 +73,10 @@ public:
 
     TComMvField() : m_iRefIdx(NOT_VALID) {}
 
-    Void setMvField(x265::MV const & cMv, Int iRefIdx)
+    Void setMvField(x265::MV const & cMv, Int refIdx)
     {
         m_acMv    = cMv;
-        m_iRefIdx = iRefIdx;
+        m_iRefIdx = refIdx;
     }
 
     Void setRefIdx(Int refIdx) { m_iRefIdx = refIdx; }
@@ -147,7 +147,7 @@ public:
 
     Void    setAllMv(x265::MV const & rcMv,            PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
     Void    setAllMvd(x265::MV const & rcMvd,          PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
-    Void    setAllRefIdx(Int iRefIdx,                  PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
+    Void    setAllRefIdx(Int refIdx,                  PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
     Void    setAllMvField(TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
 
     Void setNumPartition(Int iNumPart)

@@ -438,16 +438,16 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, Int iDir, UInt a
             }
             if (pcSlice->isInterB() || pcCUP->getSlice()->isInterB())
             {
-                Int iRefIdx;
+                Int refIdx;
                 TComPic *piRefP0, *piRefP1, *piRefQ0, *piRefQ1;
-                iRefIdx = pcCUP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartP);
-                piRefP0 = (iRefIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_0, iRefIdx);
-                iRefIdx = pcCUP->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartP);
-                piRefP1 = (iRefIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_1, iRefIdx);
-                iRefIdx = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartQ);
-                piRefQ0 = (iRefIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_0, iRefIdx);
-                iRefIdx = pcCUQ->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartQ);
-                piRefQ1 = (iRefIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_1, iRefIdx);
+                refIdx = pcCUP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartP);
+                piRefP0 = (refIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
+                refIdx = pcCUP->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartP);
+                piRefP1 = (refIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_1, refIdx);
+                refIdx = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartQ);
+                piRefQ0 = (refIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_0, refIdx);
+                refIdx = pcCUQ->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiPartQ);
+                piRefQ1 = (refIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_1, refIdx);
 
                 MV pcMvP0 = pcCUP->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartP);
                 MV pcMvP1 = pcCUP->getCUMvField(REF_PIC_LIST_1)->getMv(uiPartP);
@@ -498,12 +498,12 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, Int iDir, UInt a
             }
             else // pcSlice->isInterP()
             {
-                Int iRefIdx;
+                Int refIdx;
                 TComPic *piRefP0, *piRefQ0;
-                iRefIdx = pcCUP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartP);
-                piRefP0 = (iRefIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_0, iRefIdx);
-                iRefIdx = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartQ);
-                piRefQ0 = (iRefIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_0, iRefIdx);
+                refIdx = pcCUP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartP);
+                piRefP0 = (refIdx < 0) ? NULL : pcCUP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
+                refIdx = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiPartQ);
+                piRefQ0 = (refIdx < 0) ? NULL : pcSlice->getRefPic(REF_PIC_LIST_0, refIdx);
                 MV pcMvP0 = pcCUP->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartP);
                 MV pcMvQ0 = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartQ);
 

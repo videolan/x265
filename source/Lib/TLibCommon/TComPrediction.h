@@ -72,19 +72,19 @@ protected:
     TComYuv   m_filteredBlock[4][4];
 
     /* This holds intermediate values for filtering operations which need to maintain Short precision */
-    TShortYUV filteredBlockTmp[4];
+    TShortYUV m_filteredBlockTmp[4];
 
-    Pel*   m_lumaRecBuffer;     ///< array for down-sampled reconstructed luma sample
-    Int    m_lumaRecStride;     ///< stride of #m_pLumaRecBuffer array
+    Pel*      m_lumaRecBuffer; ///< array for down-sampled reconstructed luma sample
+    Int       m_lumaRecStride; ///< stride of #m_pLumaRecBuffer array
 
     // motion compensation functions
     Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Bool bi = false);
     Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV*& outPredYuv, Bool bi);
     Void xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv);
-    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
-    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *&dstPic, Bool bi);
-    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *&dstPic, Bool bi);
-    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *&dstPic, Bool bi);
+    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic, Bool bi);
+    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic, Bool bi);
+    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic, Bool bi);
+    Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic, Bool bi);
     Void xWeightedAverage(TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partAddr, Int width, Int height, TComYuv*& outDstYuv);
 
     Void xGetLLSPrediction(TComPattern* pcPattern, Int* src0, Int srcstride, Pel* dst0, Int dststride, UInt width, UInt height, UInt ext0);

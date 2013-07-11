@@ -615,26 +615,26 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcY
  * \param picList
  * \param TComYuv*& outPredYuv
  * \param partIdx
- * \param iRefIdx
+ * \param refIdx
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int iRefIdx)
+Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int refIdx)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
-    if (iRefIdx < 0)
+    if (refIdx < 0)
     {
-        iRefIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
+        refIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
-    assert(iRefIdx >= 0);
+    assert(refIdx >= 0);
 
     if (picList == REF_PIC_LIST_0)
     {
-        getWpScaling(cu, iRefIdx, -1, pwp, pwpTmp);
+        getWpScaling(cu, refIdx, -1, pwp, pwpTmp);
     }
     else
     {
-        getWpScaling(cu, -1, iRefIdx, pwpTmp, pwp);
+        getWpScaling(cu, -1, refIdx, pwpTmp, pwp);
     }
     addWeightUni(pcYuvSrc, partAddr, width, height, pwp, outPredYuv);
 }
@@ -648,26 +648,26 @@ Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuv
  * \param picList
  * \param TComYuv*& outPredYuv
  * \param partIdx
- * \param iRefIdx
+ * \param refIdx
  * \returns Void
  */
-Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int iRefIdx)
+Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int refIdx)
 {
     wpScalingParam  *pwp, *pwpTmp;
 
-    if (iRefIdx < 0)
+    if (refIdx < 0)
     {
-        iRefIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
+        refIdx   = cu->getCUMvField(picList)->getRefIdx(partAddr);
     }
-    assert(iRefIdx >= 0);
+    assert(refIdx >= 0);
 
     if (picList == REF_PIC_LIST_0)
     {
-        getWpScaling(cu, iRefIdx, -1, pwp, pwpTmp);
+        getWpScaling(cu, refIdx, -1, pwp, pwpTmp);
     }
     else
     {
-        getWpScaling(cu, -1, iRefIdx, pwpTmp, pwp);
+        getWpScaling(cu, -1, refIdx, pwpTmp, pwp);
     }
     addWeightUni(pcYuvSrc, partAddr, width, height, pwp, outPredYuv);
 }

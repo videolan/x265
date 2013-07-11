@@ -60,8 +60,8 @@ public:
     Void  addWeightUni(TComYuv* srcYuv0, UInt iPartUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv);
     Void  addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv);
 
-    Void  xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int iRefIdx = -1);
-    Void  xWeightedPredictionUni(TComDataCU* cu, TShortYUV* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int iRefIdx = -1);
+    Void  xWeightedPredictionUni(TComDataCU* cu, TComYuv* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int refIdx = -1);
+    Void  xWeightedPredictionUni(TComDataCU* cu, TShortYUV* pcYuvSrc, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Int refIdx = -1);
     Void  xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv);
     Void  xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv);
 };

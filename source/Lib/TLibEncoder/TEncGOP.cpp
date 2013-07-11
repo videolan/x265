@@ -132,8 +132,8 @@ Void TEncGOP::destroy()
     Thread::stop();
 
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
-    Int iSize = Int(m_cListPic.size());
-    for (Int i = 0; i < iSize; i++)
+    Int size = Int(m_cListPic.size());
+    for (Int i = 0; i < size; i++)
     {
         TComPic* pcPic = *(iterPic++);
 
@@ -1793,7 +1793,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     Int iStride = pcPicD->getStride();
     Int width  = pcPicD->getWidth() - m_pcEncTop->getPad(0);
     Int height = pcPicD->getHeight() - m_pcEncTop->getPad(1);
-    Int iSize = width * height;
+    Int size = width * height;
 
     UInt64 uiSSDY = computeSSD(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), iStride, width, height);
 
@@ -1806,8 +1806,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     Int maxvalY = 255 << (g_bitDepthY - 8);
     Int maxvalC = 255 << (g_bitDepthC - 8);
-    Double fRefValueY = (Double)maxvalY * maxvalY * iSize;
-    Double fRefValueC = (Double)maxvalC * maxvalC * iSize / 4.0;
+    Double fRefValueY = (Double)maxvalY * maxvalY * size;
+    Double fRefValueC = (Double)maxvalC * maxvalC * size / 4.0;
     Double dYPSNR = (uiSSDY ? 10.0 * log10(fRefValueY / (Double)uiSSDY) : 99.99);
     Double dUPSNR = (uiSSDU ? 10.0 * log10(fRefValueC / (Double)uiSSDU) : 99.99);
     Double dVPSNR = (uiSSDV ? 10.0 * log10(fRefValueC / (Double)uiSSDV) : 99.99);

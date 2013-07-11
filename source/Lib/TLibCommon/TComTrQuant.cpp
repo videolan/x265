@@ -628,7 +628,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  *  \param plCoef input data (transform coefficients)
  *  \param pResidual output data (residual)
  *  \param stride stride of input residual data
- *  \param iSize transform size (iSize x iSize)
+ *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
 Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt stride, Int width, Int height)
@@ -642,7 +642,7 @@ Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coef, Short* residual, UInt 
  *  \param piBlkResi input data (residual)
  *  \param psCoeff output data (transform coefficients)
  *  \param stride stride of input residual data
- *  \param iSize transform size (iSize x iSize)
+ *  \param size transform size (size x size)
  */
 Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int* coeff, Int width, Int height)
 {
@@ -675,7 +675,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* blkResi, UInt stride, Int*
  *  \param plCoef input data (coefficients)
  *  \param pResidual output data (residual)
  *  \param stride stride of input residual data
- *  \param iSize transform size (iSize x iSize)
+ *  \param size transform size (size x size)
  */
 Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt stride, Int width, Int height)
 {

@@ -50,11 +50,11 @@ WeightPredAnalysis::WeightPredAnalysis()
     m_weighted_bipred_flag = false;
     for (Int iList = 0; iList < 2; iList++)
     {
-        for (Int iRefIdx = 0; iRefIdx < MAX_NUM_REF; iRefIdx++)
+        for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
         {
             for (Int comp = 0; comp < 3; comp++)
             {
-                wpScalingParam  *pwp   = &(m_wp[iList][iRefIdx][comp]);
+                wpScalingParam  *pwp   = &(m_wp[iList][refIdx][comp]);
                 pwp->bPresentFlag      = false;
                 pwp->uiLog2WeightDenom = 0;
                 pwp->iWeight           = 1;
@@ -139,11 +139,11 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
 
     for (Int iList = 0; iList < 2; iList++)
     {
-        for (Int iRefIdx = 0; iRefIdx < MAX_NUM_REF; iRefIdx++)
+        for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
         {
             for (Int iComp = 0; iComp < 3; iComp++)
             {
-                wpScalingParam  *pwp = &(m_wp[iList][iRefIdx][iComp]);
+                wpScalingParam  *pwp = &(m_wp[iList][refIdx][iComp]);
                 iPresentCnt += (Int)pwp->bPresentFlag;
             }
         }
@@ -155,11 +155,11 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
         slice->getPPS()->setWPBiPred(false);
         for (Int iList = 0; iList < 2; iList++)
         {
-            for (Int iRefIdx = 0; iRefIdx < MAX_NUM_REF; iRefIdx++)
+            for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
             {
                 for (Int iComp = 0; iComp < 3; iComp++)
                 {
-                    wpScalingParam  *pwp = &(m_wp[iList][iRefIdx][iComp]);
+                    wpScalingParam  *pwp = &(m_wp[iList][refIdx][iComp]);
                     pwp->bPresentFlag      = false;
                     pwp->uiLog2WeightDenom = 0;
                     pwp->iWeight           = 1;
@@ -474,7 +474,7 @@ Int64 WeightPredAnalysis::xCalcSADvalueWP(Int bitDepth, Pel *pOrgPel, Pel *pRefP
 {
     Int x, y;
     Int64 iSAD = 0;
-    Int64 iSize   = width * height;
+    Int64 size   = width * height;
     Int64 iRealDenom = iDenom + bitDepth - 8;
 
     for (y = 0; y < height; y++)
@@ -488,5 +488,5 @@ Int64 WeightPredAnalysis::xCalcSADvalueWP(Int bitDepth, Pel *pOrgPel, Pel *pRefP
         pRefPel += iRefStride;
     }
 
-    return iSAD / iSize;
+    return iSAD / size;
 }

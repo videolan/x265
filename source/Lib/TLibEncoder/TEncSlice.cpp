@@ -373,12 +373,12 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice, FrameEncoder *pcEncodeframe)
     for (Int iDir = 0; iDir <= iNumPredDir; iDir++)
     {
         RefPicList  e = (iDir ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (Int iRefIdx = 0; iRefIdx < pcSlice->getNumRefIdx(e); iRefIdx++)
+        for (Int refIdx = 0; refIdx < pcSlice->getNumRefIdx(e); refIdx++)
         {
-            Int iRefPOC = pcSlice->getRefPic(e, iRefIdx)->getPOC();
+            Int iRefPOC = pcSlice->getRefPic(e, refIdx)->getPOC();
             Int iNewSR = Clip3(8, iMaxSR, (iMaxSR * ADAPT_SR_SCALE * abs(iCurrPOC - iRefPOC) + iOffset) / iGOPSize);
 
-            pcEncodeframe->setAdaptiveSearchRange(iDir, iRefIdx, iNewSR);
+            pcEncodeframe->setAdaptiveSearchRange(iDir, refIdx, iNewSR);
         }
     }
 }
