@@ -325,6 +325,33 @@ bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
     return true;
 }
 
+bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
+    memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
+    int j = 0;
+    int width = 8;
+    int height = 8;
+    int w0 = rand() % 256;
+    int shift = rand() % 12;
+    int round   = shift ? (1 << (shift - 1)) : 0;
+    int offset = (rand() % 256) - 128;
+    for (int i = 0; i <= 100; i++)
+    {
+        opt(sbuf1+j, opt_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
+        ref(sbuf1+j, ref_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += 4;
+    }
+    return true;
+}
+
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -465,6 +492,16 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+    
+    if (opt.weightpUni)
+    {
+        if (!check_weightpUni(ref.weightpUni, opt.weightpUni))
+        {
+            printf("Weighted Prediction for Unidir failed!\n");
+            return false;
+        }
+    }
+
 
     return true;
 }
@@ -567,5 +604,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("s_c   cpy");
         REPORT_SPEEDUP(opt.blockcpy_sc, ref.blockcpy_sc, 64, 64, (short*)pbuf1, FENC_STRIDE, (uint8_t*)pbuf2, STRIDE);
+    }
+
+    if (opt.weightpUni)
+    {
+        printf("WeightpUni");
+        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, sbuf1, pbuf1, 64, 64, 32, 32, 128, 1<<9, 10, 100, BIT_DEPTH);
     }
 }

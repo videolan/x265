@@ -27,9 +27,9 @@
 #include "primitives.h"
 #include <algorithm>
 #include <stdlib.h> // abs()
+#include "TLibCommon/CommonDef.h"
+#include "TLibCommon/TComPrediction.h"
 
-template<typename T>
-inline T ClipY(T x) { return std::min<T>(T((1 << 8) - 1), std::max<T>(T(0), x)); }
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \
     p.FUNC_PREFIX[PARTITION_ ## WIDTH ## x4]   = (FUNC_TYPE_CAST)FUNC_PREFIX_DEF<WIDTH, 4,  DATA_TYPE1, DATA_TYPE2>;  \
@@ -500,6 +500,26 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
         }
     }
 }
+
+void weightUnidir(short *pSrcY0, pixel *pDstY, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset, int bitDepth)
+{
+    int x, y;
+    for (y = height - 1; y >= 0; y--)
+    {
+        for (x = width - 1; x >= 0; )
+        {
+            // note: luma min width is 4
+            pDstY[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (pSrcY0[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            x--;
+            pDstY[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (pSrcY0[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            x--;
+        }
+
+        pSrcY0 += srcStride;
+        pDstY  += dstStride;
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -699,5 +719,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[2] = transpose<16>;
     p.transpose[3] = transpose<32>;
     p.transpose[4] = transpose<64>;
+
+    p.weightpUni = weightUnidir;
 }
 }
