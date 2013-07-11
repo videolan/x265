@@ -2577,55 +2577,55 @@ UInt TEncSearch::xGetInterPredictionError(TComDataCU* cu, TComYuv* fencYuv, Int 
  * \param bValid
  * \returns Void
  */
-Void TEncSearch::xMergeEstimation(TComDataCU* cu, TComYuv* fencYuv, Int iPUIdx, UInt& uiInterDir, TComMvField* pacMvField, UInt& uiMergeIndex, UInt& outCost, TComMvField* cMvFieldNeighbours, UChar* uhInterDirNeighbours, Int& numValidMergeCand)
+Void TEncSearch::xMergeEstimation(TComDataCU* cu, TComYuv* fencYuv, Int puIdx, UInt& interDir, TComMvField* mvField, UInt& mergeIndex, UInt& outCost, TComMvField* mvFieldNeighbours, UChar* interDirNeighbours, Int& numValidMergeCand)
 {
-    UInt uiAbsPartIdx = 0;
-    Int iWidth = 0;
-    Int iHeight = 0;
+    UInt absPartIdx = 0;
+    Int width = 0;
+    Int height = 0;
 
-    cu->getPartIndexAndSize(iPUIdx, uiAbsPartIdx, iWidth, iHeight);
-    UInt uiDepth = cu->getDepth(uiAbsPartIdx);
+    cu->getPartIndexAndSize(puIdx, absPartIdx, width, height);
+    UInt depth = cu->getDepth(absPartIdx);
     PartSize partSize = cu->getPartitionSize(0);
     if (cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && partSize != SIZE_2Nx2N && cu->getWidth(0) <= 8)
     {
-        cu->setPartSizeSubParts(SIZE_2Nx2N, 0, uiDepth);
-        if (iPUIdx == 0)
+        cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+        if (puIdx == 0)
         {
-            cu->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
+            cu->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
         }
-        cu->setPartSizeSubParts(partSize, 0, uiDepth);
+        cu->setPartSizeSubParts(partSize, 0, depth);
     }
     else
     {
-        cu->getInterMergeCandidates(uiAbsPartIdx, iPUIdx, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
+        cu->getInterMergeCandidates(absPartIdx, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
     }
-    xRestrictBipredMergeCand(cu, iPUIdx, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
+    xRestrictBipredMergeCand(cu, puIdx, mvFieldNeighbours, interDirNeighbours, numValidMergeCand);
 
     outCost = MAX_UINT;
-    for (UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
+    for (UInt mergeCand = 0; mergeCand < numValidMergeCand; ++mergeCand)
     {
-        UInt uiCostCand = MAX_UINT;
-        UInt uiBitsCand = 0;
+        UInt costCand = MAX_UINT;
+        UInt bitsCand = 0;
 
-        PartSize ePartSize = cu->getPartitionSize(0);
+        PartSize size = cu->getPartitionSize(0);
 
-        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(cMvFieldNeighbours[0 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
-        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], ePartSize, uiAbsPartIdx, 0, iPUIdx);
+        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[0 + 2 * mergeCand], size, absPartIdx, 0, puIdx);
+        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[1 + 2 * mergeCand], size, absPartIdx, 0, puIdx);
 
-        uiCostCand = xGetInterPredictionError(cu, fencYuv, iPUIdx);
-        uiBitsCand = uiMergeCand + 1;
-        if (uiMergeCand == m_pcEncCfg->getMaxNumMergeCand() - 1)
+        costCand = xGetInterPredictionError(cu, fencYuv, puIdx);
+        bitsCand = mergeCand + 1;
+        if (mergeCand == m_pcEncCfg->getMaxNumMergeCand() - 1)
         {
-            uiBitsCand--;
+            bitsCand--;
         }
-        uiCostCand = uiCostCand + m_pcRdCost->getCost(uiBitsCand);
-        if (uiCostCand < outCost)
+        costCand = costCand + m_pcRdCost->getCost(bitsCand);
+        if (costCand < outCost)
         {
-            outCost = uiCostCand;
-            pacMvField[0] = cMvFieldNeighbours[0 + 2 * uiMergeCand];
-            pacMvField[1] = cMvFieldNeighbours[1 + 2 * uiMergeCand];
-            uiInterDir = uhInterDirNeighbours[uiMergeCand];
-            uiMergeIndex = uiMergeCand;
+            outCost = costCand;
+            mvField[0] = mvFieldNeighbours[0 + 2 * mergeCand];
+            mvField[1] = mvFieldNeighbours[1 + 2 * mergeCand];
+            interDir = interDirNeighbours[mergeCand];
+            mergeIndex = mergeCand;
         }
     }
 }
