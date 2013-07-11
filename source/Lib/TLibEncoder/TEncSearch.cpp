@@ -4470,104 +4470,96 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
     }
 }
 
-Void TEncSearch::xEncodeResidualQT(TComDataCU* cu, UInt uiAbsPartIdx, const UInt uiDepth, Bool bSubdivAndCbf, TextType eType)
+Void TEncSearch::xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, const UInt depth, Bool bSubdivAndCbf, TextType ttype)
 {
-    assert(cu->getDepth(0) == cu->getDepth(uiAbsPartIdx));
-    const UInt uiCurrTrMode = uiDepth - cu->getDepth(0);
-    const UInt uiTrMode = cu->getTransformIdx(uiAbsPartIdx);
+    assert(cu->getDepth(0) == cu->getDepth(absPartIdx));
+    const UInt curTrMode = depth - cu->getDepth(0);
+    const UInt trMode = cu->getTransformIdx(absPartIdx);
+    const Bool bSubdiv = curTrMode != trMode;
+    const UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> depth] + 2;
 
-    const Bool bSubdiv = uiCurrTrMode != uiTrMode;
-
-    const UInt uiLog2TrSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> uiDepth] + 2;
-
+    if (bSubdivAndCbf && trSizeLog2 <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() && trSizeLog2 > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
-        if (bSubdivAndCbf && uiLog2TrSize <= cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() && uiLog2TrSize > cu->getQuadtreeTULog2MinSizeInCU(uiAbsPartIdx))
-        {
-            m_pcEntropyCoder->encodeTransformSubdivFlag(bSubdiv, 5 - uiLog2TrSize);
-        }
+        m_pcEntropyCoder->encodeTransformSubdivFlag(bSubdiv, 5 - trSizeLog2);
     }
 
+    assert(cu->getPredictionMode(absPartIdx) != MODE_INTRA);
+    if (bSubdivAndCbf)
     {
-        assert(cu->getPredictionMode(uiAbsPartIdx) != MODE_INTRA);
-        if (bSubdivAndCbf)
+        const Bool bFirstCbfOfCU = curTrMode == 0;
+        if (bFirstCbfOfCU || trSizeLog2 > 2)
         {
-            const Bool bFirstCbfOfCU = uiCurrTrMode == 0;
-            if (bFirstCbfOfCU || uiLog2TrSize > 2)
+            if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode - 1))
             {
-                if (bFirstCbfOfCU || cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, uiCurrTrMode - 1))
-                {
-                    m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_CHROMA_U, uiCurrTrMode);
-                }
-                if (bFirstCbfOfCU || cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, uiCurrTrMode - 1))
-                {
-                    m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_CHROMA_V, uiCurrTrMode);
-                }
+                m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, curTrMode);
             }
-            else if (uiLog2TrSize == 2)
+            if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode - 1))
             {
-                assert(cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, uiCurrTrMode) == cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, uiCurrTrMode - 1));
-                assert(cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, uiCurrTrMode) == cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, uiCurrTrMode - 1));
+                m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, curTrMode);
             }
+        }
+        else if (trSizeLog2 == 2)
+        {
+            assert(cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, curTrMode - 1));
+            assert(cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, curTrMode - 1));
         }
     }
 
     if (!bSubdiv)
     {
-        const UInt uiNumCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
+        const UInt numCoeffPerAbsPartIdxIncrement = cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight() >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         //assert( 16 == uiNumCoeffPerAbsPartIdxIncrement ); // check
-        const UInt uiQTTempAccessLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - uiLog2TrSize;
-        TCoeff *coeffCurrY = m_ppcQTTempCoeffY[uiQTTempAccessLayer] +  uiNumCoeffPerAbsPartIdxIncrement * uiAbsPartIdx;
-        TCoeff *coeffCurrU = m_ppcQTTempCoeffCb[uiQTTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * uiAbsPartIdx >> 2);
-        TCoeff *coeffCurrV = m_ppcQTTempCoeffCr[uiQTTempAccessLayer] + (uiNumCoeffPerAbsPartIdxIncrement * uiAbsPartIdx >> 2);
+        const UInt qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
+        TCoeff *coeffCurY = m_ppcQTTempCoeffY[qtlayer] +  numCoeffPerAbsPartIdxIncrement * absPartIdx;
+        TCoeff *coeffCurU = m_ppcQTTempCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
+        TCoeff *coeffCurV = m_ppcQTTempCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
 
-        Bool  bCodeChroma   = true;
-        UInt  uiTrModeC     = uiTrMode;
-        UInt  uiLog2TrSizeC = uiLog2TrSize - 1;
-        if (uiLog2TrSize == 2)
+        Bool  bCodeChroma = true;
+        UInt  trModeC     = trMode;
+        UInt  trSizeCLog2 = trSizeLog2 - 1;
+        if (trSizeLog2 == 2)
         {
-            uiLog2TrSizeC++;
-            uiTrModeC--;
-            UInt  uiQPDiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + uiTrModeC) << 1);
-            bCodeChroma   = ((uiAbsPartIdx % uiQPDiv) == 0);
+            trSizeCLog2++;
+            trModeC--;
+            UInt qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trModeC) << 1);
+            bCodeChroma = ((absPartIdx % qpdiv) == 0);
         }
 
         if (bSubdivAndCbf)
         {
-            {
-                m_pcEntropyCoder->encodeQtCbf(cu, uiAbsPartIdx, TEXT_LUMA,     uiTrMode);
-            }
+            m_pcEntropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
         }
         else
         {
-            if (eType == TEXT_LUMA     && cu->getCbf(uiAbsPartIdx, TEXT_LUMA,     uiTrMode))
+            if (ttype == TEXT_LUMA && cu->getCbf(absPartIdx, TEXT_LUMA, trMode))
             {
-                Int trWidth  = 1 << uiLog2TrSize;
-                Int trHeight = 1 << uiLog2TrSize;
-                m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurrY, uiAbsPartIdx, trWidth, trHeight,    uiDepth, TEXT_LUMA);
+                Int trWidth  = 1 << trSizeLog2;
+                Int trHeight = 1 << trSizeLog2;
+                m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, trWidth, trHeight, depth, TEXT_LUMA);
             }
             if (bCodeChroma)
             {
-                Int trWidth  = 1 << uiLog2TrSizeC;
-                Int trHeight = 1 << uiLog2TrSizeC;
-                if (eType == TEXT_CHROMA_U && cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_U, uiTrMode))
+                Int trWidth  = 1 << trSizeCLog2;
+                Int trHeight = 1 << trSizeCLog2;
+                if (ttype == TEXT_CHROMA_U && cu->getCbf(absPartIdx, TEXT_CHROMA_U, trMode))
                 {
-                    m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurrU, uiAbsPartIdx, trWidth, trHeight, uiDepth, TEXT_CHROMA_U);
+                    m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_U);
                 }
-                if (eType == TEXT_CHROMA_V && cu->getCbf(uiAbsPartIdx, TEXT_CHROMA_V, uiTrMode))
+                if (ttype == TEXT_CHROMA_V && cu->getCbf(absPartIdx, TEXT_CHROMA_V, trMode))
                 {
-                    m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurrV, uiAbsPartIdx, trWidth, trHeight, uiDepth, TEXT_CHROMA_V);
+                    m_pcEntropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, trWidth, trHeight, depth, TEXT_CHROMA_V);
                 }
             }
         }
     }
     else
     {
-        if (bSubdivAndCbf || cu->getCbf(uiAbsPartIdx, eType, uiCurrTrMode))
+        if (bSubdivAndCbf || cu->getCbf(absPartIdx, ttype, curTrMode))
         {
-            const UInt uiQPartNumSubdiv = cu->getPic()->getNumPartInCU() >> ((uiDepth + 1) << 1);
-            for (UInt ui = 0; ui < 4; ++ui)
+            const UInt qpartNumSubdiv = cu->getPic()->getNumPartInCU() >> ((depth + 1) << 1);
+            for (UInt i = 0; i < 4; ++i)
             {
-                xEncodeResidualQT(cu, uiAbsPartIdx + ui * uiQPartNumSubdiv, uiDepth + 1, bSubdivAndCbf, eType);
+                xEncodeResidualQT(cu, absPartIdx + i * qpartNumSubdiv, depth + 1, bSubdivAndCbf, ttype);
             }
         }
     }
