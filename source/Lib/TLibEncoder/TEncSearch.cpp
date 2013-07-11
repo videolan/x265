@@ -3489,106 +3489,96 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     outcost = bcost - m_bc.mvcost(outmv << 2);
 }
 
-Void TEncSearch::xPatternSearchFast(TComDataCU* cu, TComPattern* pcPatternKey, Pel* RefY, Int RefStride, MV* pcMvSrchRngLT, MV* pcMvSrchRngRB, MV& rcMv, UInt& ruiSAD)
+Void TEncSearch::xPatternSearchFast(TComDataCU* cu, TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
 {
-    const Int  Raster = 5;
-	const Bool AlwaysRasterSearch = 0;
-    const Bool TestZeroVector = 1;
-    const Bool FirstSearchStop = 1;
-    const UInt FirstSearchRounds = 3; /* first search stop X rounds after best match (must be >=1) */
-    const Bool EnableRasterSearch = 1;
-    const Bool StarRefinementEnable = 1; /* enable either star refinement or raster refinement */
-    const UInt StarRefinementRounds = 2; /* star refinement stop X rounds after best match (must be >=1) */
+    const Int  rasterThreshold = 5;
+    const Bool firstSearchStop = 1;
+    const UInt firstSearchRounds = 3; /* first search stop X rounds after best match (must be >=1) */
+    const UInt starRefinementRounds = 2; /* star refinement stop X rounds after best match (must be >=1) */
 
-    Int SrchRngHorLeft   = pcMvSrchRngLT->x;
-    Int SrchRngHorRight  = pcMvSrchRngRB->x;
-    Int SrchRngVerTop    = pcMvSrchRngLT->y;
-    Int SrchRngVerBottom = pcMvSrchRngRB->y;
-    UInt SearchRange = m_iSearchRange;
+    Int srchRngHorLeft   = mvmin->x;
+    Int srchRngHorRight  = mvmax->x;
+    Int srchRngVerTop    = mvmin->y;
+    Int srchRngVerBottom = mvmax->y;
+    UInt merange = m_iSearchRange;
 
-    cu->clipMv(rcMv);
-    rcMv >>= 2;
+    cu->clipMv(outmv);
+    outmv >>= 2;
 
     // init TZSearchStruct
-    IntTZSearchStruct cStruct;
-    cStruct.lumaStride    = RefStride;
-    cStruct.fref      = RefY;
-    cStruct.bcost   = MAX_UINT;
+    IntTZSearchStruct data;
+    data.lumaStride = stride;
+    data.fref       = refY;
+    data.bcost      = MAX_UINT;
 
-    // set rcMv (Median predictor) as start point and as best point
-    xTZSearchHelp(pcPatternKey, cStruct, rcMv.x, rcMv.y, 0, 0);
+    // set outmv (Median predictor) as start point and as best point
+    xTZSearchHelp(patternKey, data, outmv.x, outmv.y, 0, 0);
 
     // test whether zero Mv is better start point than Median predictor
-    if (TestZeroVector)
-    {
-        xTZSearchHelp(pcPatternKey, cStruct, 0, 0, 0, 0);
-    }
+    xTZSearchHelp(patternKey, data, 0, 0, 0, 0);
 
     // start search
-    Int Dist = 0;
-    Int StartX = cStruct.bestx;
-    Int StartY = cStruct.besty;
+    Int distance = 0;
+    Int startx = data.bestx;
+    Int starty = data.besty;
 
     // first search
-    for (Dist = 1; Dist <= (Int)SearchRange; Dist *= 2)
+    for (distance = 1; distance <= (Int)merange; distance *= 2)
     {
-        xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, StartX, StartY, Dist);
+        xTZ8PointDiamondSearch(patternKey, data, mvmin, mvmax, startx, starty, distance);
 
-        if (FirstSearchStop && (cStruct.bestRound >= FirstSearchRounds)) // stop criterion
+        if (firstSearchStop && (data.bestRound >= firstSearchRounds)) // stop criterion
         {
             break;
         }
     }
 
     // calculate only 2 missing points instead 8 points if cStruct.uiBestDistance == 1
-    if (cStruct.bestDistance == 1)
+    if (data.bestDistance == 1)
     {
-        cStruct.bestDistance = 0;
-        xTZ2PointSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB);
+        data.bestDistance = 0;
+        xTZ2PointSearch(patternKey, data, mvmin, mvmax);
     }
 
     // raster search if distance is too big
-    if (EnableRasterSearch && (((Int)(cStruct.bestDistance) > Raster) || AlwaysRasterSearch))
+    if ((Int)(data.bestDistance) > rasterThreshold)
     {
-        cStruct.bestDistance = Raster;
-        for (StartY = SrchRngVerTop; StartY <= SrchRngVerBottom; StartY += Raster)
+        data.bestDistance = rasterThreshold;
+        for (starty = srchRngVerTop; starty <= srchRngVerBottom; starty += rasterThreshold)
         {
-            for (StartX = SrchRngHorLeft; StartX <= SrchRngHorRight; StartX += Raster)
+            for (startx = srchRngHorLeft; startx <= srchRngHorRight; startx += rasterThreshold)
             {
-                xTZSearchHelp(pcPatternKey, cStruct, StartX, StartY, 0, Raster);
+                xTZSearchHelp(patternKey, data, startx, starty, 0, rasterThreshold);
             }
         }
     }
 
-    // start refinement
-    if (StarRefinementEnable && cStruct.bestDistance > 0)
+    // star refinement
+    while (data.bestDistance > 0)
     {
-        while (cStruct.bestDistance > 0)
+        startx = data.bestx;
+        starty = data.besty;
+        data.bestDistance = 0;
+        data.bestPointDir = 0;
+        for (distance = 1; distance < (Int)merange + 1; distance *= 2)
         {
-            StartX = cStruct.bestx;
-            StartY = cStruct.besty;
-            cStruct.bestDistance = 0;
-            cStruct.bestPointDir = 0;
-            for (Dist = 1; Dist < (Int)SearchRange + 1; Dist *= 2)
-            {
-                xTZ8PointDiamondSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB, StartX, StartY, Dist);
-            }
+            xTZ8PointDiamondSearch(patternKey, data, mvmin, mvmax, startx, starty, distance);
+        }
 
-            // calculate only 2 missing points instead 8 points if cStrukt.uiBestDistance == 1
-            if (cStruct.bestDistance == 1)
+        // calculate only 2 missing points instead 8 points if cStrukt.uiBestDistance == 1
+        if (data.bestDistance == 1)
+        {
+            data.bestDistance = 0;
+            if (data.bestPointDir != 0)
             {
-                cStruct.bestDistance = 0;
-                if (cStruct.bestPointDir != 0)
-                {
-                    xTZ2PointSearch(pcPatternKey, cStruct, pcMvSrchRngLT, pcMvSrchRngRB);
-                }
+                xTZ2PointSearch(patternKey, data, mvmin, mvmax);
             }
         }
     }
 
     // write out best match
-    rcMv = MV(cStruct.bestx, cStruct.besty);
-    ruiSAD = cStruct.bcost - m_bc.mvcost(rcMv << 2);
+    outmv = MV(data.bestx, data.besty);
+    outcost = data.bcost - m_bc.mvcost(outmv << 2);
 }
 
 Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
