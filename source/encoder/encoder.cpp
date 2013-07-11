@@ -234,7 +234,6 @@ void Encoder::configure(x265_param_t *param)
     setUseConstrainedIntraPred(param->bEnableConstrainedIntra);
     setMaxNumMergeCand(param->maxNumMergeCand);
     setUseSAO(param->bEnableSAO);
-    setMaxNumOffsetsPerPic(param->maxSAOOffsetsPerPic);
     setSaoLcuBoundary(param->saoLcuBoundary);
     setSaoLcuBasedOptimization(param->saoLcuBasedOptimization);
 
@@ -268,6 +267,7 @@ void Encoder::configure(x265_param_t *param)
     setVPS(&vps);
     setMaxTempLayer(m_maxTempLayer);
 
+    setMaxNumOffsetsPerPic(2048);
     setLog2ParallelMergeLevelMinus2(0);
     setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto
     setConformanceWindow(0, 0, 0, 0);

@@ -94,7 +94,6 @@ void x265_param_default(x265_param_t *param)
     param->qp = 32;
     param->qpAdaptionRange = 6;
     param->bEnableSAO = 0;
-    param->maxSAOOffsetsPerPic = 2048;
     param->saoLcuBasedOptimization = 1;
     param->maxNumMergeCand = 5u;
     param->bEnableCbfFastMode = 1;

@@ -85,7 +85,6 @@ OPT("no-signhide",     param->bEnableSignHiding,            no_argument, 0, "Dis
 HELP("Sample Adaptive Offset loop filter:")
 OPT("sao",             param->bEnableSAO,                   no_argument, 0, "Enable Sample Adaptive Offset")
 OPT("no-sao",          param->bEnableSAO,                   no_argument, 0, "Disable Sample Adaptive Offset")
-OPT("sao-max-offsets", param->maxSAOOffsetsPerPic,    required_argument, 0, "Max number of SAO offset per picture (Default: 2048)")
 OPT("sao-lcu-bounds",  param->saoLcuBoundary,         required_argument, 0, "0: right/bottom boundary areas skipped  1: non-deblocked pixels are used")
 OPT("sao-lcu-opt",     param->saoLcuBasedOptimization,required_argument, 0, "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
 

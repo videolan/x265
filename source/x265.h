@@ -207,7 +207,6 @@ typedef struct x265_param_t
 
     // SAO loop filter
     int       bEnableSAO;                      ///< Enable SAO filter
-    int       maxSAOOffsetsPerPic;             ///< SAO maximum number of offset per picture
     int       saoLcuBoundary;                  ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     int       saoLcuBasedOptimization;         ///< SAO LCU-based optimization
 
