@@ -703,7 +703,7 @@ Void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
     }
 }
 
-Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype, Bool bRealCoeff)
+Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, TextType ttype)
 {
     UInt fullDepth  = cu->getDepth(0) + trDepth;
     UInt trMode     = cu->getTransformIdx(absPartIdx);
@@ -716,7 +716,7 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Text
         UInt qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
         for (UInt part = 0; part < 4; part++)
         {
-            xEncCoeffQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype, bRealCoeff);
+            xEncCoeffQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype);
         }
 
         return;
@@ -742,9 +742,9 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Text
     TCoeff* coeff = 0;
     switch (ttype)
     {
-    case TEXT_LUMA:     coeff = (bRealCoeff ? cu->getCoeffY() : m_ppcQTTempCoeffY[qtLayer]);   break;
-    case TEXT_CHROMA_U: coeff = (bRealCoeff ? cu->getCoeffCb() : m_ppcQTTempCoeffCb[qtLayer]); break;
-    case TEXT_CHROMA_V: coeff = (bRealCoeff ? cu->getCoeffCr() : m_ppcQTTempCoeffCr[qtLayer]); break;
+    case TEXT_LUMA:     coeff = m_ppcQTTempCoeffY[qtLayer];  break;
+    case TEXT_CHROMA_U: coeff = m_ppcQTTempCoeffCb[qtLayer]; break;
+    case TEXT_CHROMA_V: coeff = m_ppcQTTempCoeffCr[qtLayer]; break;
     default: assert(0);
     }
 
@@ -817,7 +817,7 @@ Void TEncSearch::xEncIntraHeader(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
     }
 }
 
-UInt TEncSearch::xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma, Bool bRealCoeff)
+UInt TEncSearch::xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Bool bLuma, Bool bChroma)
 {
     m_pcEntropyCoder->resetBits();
     xEncIntraHeader(cu, trDepth, absPartIdx, bLuma, bChroma);
@@ -825,34 +825,28 @@ UInt TEncSearch::xGetIntraBitsQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, 
 
     if (bLuma)
     {
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_LUMA, bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_LUMA);
     }
     if (bChroma)
     {
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_U, bRealCoeff);
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_V, bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
     }
     return m_pcEntropyCoder->getNumberOfWrittenBits();
 }
 
-UInt TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu,
-                                       UInt        trDepth,
-                                       UInt        uiAbsPartIdx,
-                                       UInt        uiChromaId,
-                                       Bool        bRealCoeff /* just for test */)
+UInt TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, UInt trDepth, UInt absPartIdx, UInt chromaId)
 {
     m_pcEntropyCoder->resetBits();
-    if (uiChromaId == TEXT_CHROMA_U)
+    if (chromaId == TEXT_CHROMA_U)
     {
-        xEncCoeffQT(cu, trDepth, uiAbsPartIdx, TEXT_CHROMA_U,  bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
     }
-    else if (uiChromaId == TEXT_CHROMA_V)
+    else if (chromaId == TEXT_CHROMA_V)
     {
-        xEncCoeffQT(cu, trDepth, uiAbsPartIdx, TEXT_CHROMA_V,  bRealCoeff);
+        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
     }
-
-    UInt   uiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
-    return uiBits;
+    return m_pcEntropyCoder->getNumberOfWrittenBits();
 }
 
 Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
@@ -1219,7 +1213,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 }
                 else
                 {
-                    UInt uiSingleBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly, false);
+                    UInt uiSingleBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly);
                     singleCostTmp = m_pcRdCost->calcRdCost(singleDistYTmp + singleDistCTmp, uiSingleBits);
                 }
 
@@ -1308,7 +1302,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 }
             }
             //----- determine rate and r-d cost -----
-            UInt uiSingleBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly, false);
+            UInt uiSingleBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly);
             if (m_pcEncCfg->getRDpenalty() && (uiLog2TrSize == 5) && !isIntraSlice)
             {
                 uiSingleBits = uiSingleBits * 4;
@@ -1370,7 +1364,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiFullDepth][CI_QT_TRAFO_ROOT]);
 
         //----- determine rate and r-d cost -----
-        UInt uiSplitBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly, false);
+        UInt uiSplitBits = xGetIntraBitsQT(cu, trDepth, uiAbsPartIdx, true, !bLumaOnly);
         dSplitCost       = m_pcRdCost->calcRdCost(uiSplitDistY + uiSplitDistC, uiSplitBits);
 
         //===== compare and set best =====
@@ -1933,7 +1927,7 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                     }
                     else
                     {
-                        UInt bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, uiAbsPartIdx, chromaId + 2, false);
+                        UInt bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, uiAbsPartIdx, chromaId + 2);
                         singleCostTmp = m_pcRdCost->calcRdCost(singleDistCTmp, bitsTmp);
                     }
 
@@ -2484,7 +2478,7 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
             m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
         }
 
-        UInt    uiBits = xGetIntraBitsQT(cu,   0, 0, false, true, false);
+        UInt    uiBits = xGetIntraBitsQT(cu,   0, 0, false, true);
         UInt64  uiCost  = m_pcRdCost->calcRdCost(uiDist, uiBits);
 
         //----- compare -----
