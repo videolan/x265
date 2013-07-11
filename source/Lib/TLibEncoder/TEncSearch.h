@@ -73,15 +73,9 @@ public:
     TCoeff**        m_ppcQTTempCoeffY;
     TCoeff**        m_ppcQTTempCoeffCb;
     TCoeff**        m_ppcQTTempCoeffCr;
-    TCoeff*         m_pcQTTempCoeffY;
-    TCoeff*         m_pcQTTempCoeffCb;
-    TCoeff*         m_pcQTTempCoeffCr;
     Int**           m_ppcQTTempArlCoeffY;
     Int**           m_ppcQTTempArlCoeffCb;
     Int**           m_ppcQTTempArlCoeffCr;
-    Int*            m_pcQTTempArlCoeffY;
-    Int*            m_pcQTTempArlCoeffCb;
-    Int*            m_pcQTTempArlCoeffCr;
     UChar*          m_puhQTTempTrIdx;
     UChar*          m_puhQTTempCbf[3];
 

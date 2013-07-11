@@ -94,15 +94,9 @@ TEncSearch::TEncSearch()
     m_ppcQTTempCoeffY  = NULL;
     m_ppcQTTempCoeffCb = NULL;
     m_ppcQTTempCoeffCr = NULL;
-    m_pcQTTempCoeffY   = NULL;
-    m_pcQTTempCoeffCb  = NULL;
-    m_pcQTTempCoeffCr  = NULL;
     m_ppcQTTempArlCoeffY  = NULL;
     m_ppcQTTempArlCoeffCb = NULL;
     m_ppcQTTempArlCoeffCr = NULL;
-    m_pcQTTempArlCoeffY   = NULL;
-    m_pcQTTempArlCoeffCb  = NULL;
-    m_pcQTTempArlCoeffCr  = NULL;
     m_puhQTTempTrIdx   = NULL;
     m_puhQTTempCbf[0] = m_puhQTTempCbf[1] = m_puhQTTempCbf[2] = NULL;
     m_pcQTTempTComYuv  = NULL;
@@ -147,15 +141,9 @@ TEncSearch::~TEncSearch()
     delete[] m_ppcQTTempCoeffY;
     delete[] m_ppcQTTempCoeffCb;
     delete[] m_ppcQTTempCoeffCr;
-    delete[] m_pcQTTempCoeffY;
-    delete[] m_pcQTTempCoeffCb;
-    delete[] m_pcQTTempCoeffCr;
     delete[] m_ppcQTTempArlCoeffY;
     delete[] m_ppcQTTempArlCoeffCb;
     delete[] m_ppcQTTempArlCoeffCr;
-    delete[] m_pcQTTempArlCoeffY;
-    delete[] m_pcQTTempArlCoeffCb;
-    delete[] m_pcQTTempArlCoeffCr;
     delete[] m_puhQTTempTrIdx;
     delete[] m_puhQTTempCbf[0];
     delete[] m_puhQTTempCbf[1];
@@ -220,15 +208,9 @@ Void TEncSearch::init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant* pcTr
     m_ppcQTTempCoeffY  = new TCoeff*[uiNumLayersToAllocate];
     m_ppcQTTempCoeffCb = new TCoeff*[uiNumLayersToAllocate];
     m_ppcQTTempCoeffCr = new TCoeff*[uiNumLayersToAllocate];
-    m_pcQTTempCoeffY   = new TCoeff[g_maxCUWidth * g_maxCUHeight];
-    m_pcQTTempCoeffCb  = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-    m_pcQTTempCoeffCr  = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
     m_ppcQTTempArlCoeffY  = new Int*[uiNumLayersToAllocate];
     m_ppcQTTempArlCoeffCb = new Int*[uiNumLayersToAllocate];
     m_ppcQTTempArlCoeffCr = new Int*[uiNumLayersToAllocate];
-    m_pcQTTempArlCoeffY   = new Int[g_maxCUWidth * g_maxCUHeight];
-    m_pcQTTempArlCoeffCb  = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
-    m_pcQTTempArlCoeffCr  = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
 
     const UInt uiNumPartitions = 1 << (g_maxCUDepth << 1);
     m_puhQTTempTrIdx   = new UChar[uiNumPartitions];
