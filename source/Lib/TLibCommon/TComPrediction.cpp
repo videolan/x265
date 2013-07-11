@@ -313,7 +313,7 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
     }
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv*& outPredYuv, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv, Bool bi)
 {
     assert(bi == false);
     Int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
@@ -326,7 +326,7 @@ Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int
     xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &cMv, width, height, outPredYuv, bi);
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV*& outPredYuv, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv, Bool bi)
 {
     assert(bi == true);
 
