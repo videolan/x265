@@ -695,14 +695,14 @@ Int TComPattern::isLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartId
 
 Int TComPattern::isAboveRightAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxRT, Bool *bValidFlags)
 {
-    const UInt uiNumUnitsInPU = g_zscanToRaster[uiPartIdxRT] - g_zscanToRaster[uiPartIdxLT] + 1;
+    const UInt numUnitsInPU = g_zscanToRaster[uiPartIdxRT] - g_zscanToRaster[uiPartIdxLT] + 1;
     Bool *pbValidFlags = bValidFlags;
     Int iNumIntra = 0;
 
-    for (UInt uiOffset = 1; uiOffset <= uiNumUnitsInPU; uiOffset++)
+    for (UInt offset = 1; offset <= numUnitsInPU; offset++)
     {
         UInt uiPartAboveRight;
-        TComDataCU* pcCUAboveRight = cu->getPUAboveRightAdi(uiPartAboveRight, uiPartIdxRT, uiOffset);
+        TComDataCU* pcCUAboveRight = cu->getPUAboveRightAdi(uiPartAboveRight, uiPartIdxRT, offset);
         if (cu->getSlice()->getPPS()->getConstrainedIntraPred())
         {
             if (pcCUAboveRight && pcCUAboveRight->getPredictionMode(uiPartAboveRight) == MODE_INTRA)
@@ -735,14 +735,14 @@ Int TComPattern::isAboveRightAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt ui
 
 Int TComPattern::isBelowLeftAvailable(TComDataCU* cu, UInt uiPartIdxLT, UInt uiPartIdxLB, Bool *bValidFlags)
 {
-    const UInt uiNumUnitsInPU = (g_zscanToRaster[uiPartIdxLB] - g_zscanToRaster[uiPartIdxLT]) / cu->getPic()->getNumPartInWidth() + 1;
+    const UInt numUnitsInPU = (g_zscanToRaster[uiPartIdxLB] - g_zscanToRaster[uiPartIdxLT]) / cu->getPic()->getNumPartInWidth() + 1;
     Bool *pbValidFlags = bValidFlags;
     Int iNumIntra = 0;
 
-    for (UInt uiOffset = 1; uiOffset <= uiNumUnitsInPU; uiOffset++)
+    for (UInt offset = 1; offset <= numUnitsInPU; offset++)
     {
         UInt uiPartBelowLeft;
-        TComDataCU* pcCUBelowLeft = cu->getPUBelowLeftAdi(uiPartBelowLeft, uiPartIdxLB, uiOffset);
+        TComDataCU* pcCUBelowLeft = cu->getPUBelowLeftAdi(uiPartBelowLeft, uiPartIdxLB, offset);
         if (cu->getSlice()->getPPS()->getConstrainedIntraPred())
         {
             if (pcCUBelowLeft && pcCUBelowLeft->getPredictionMode(uiPartBelowLeft) == MODE_INTRA)

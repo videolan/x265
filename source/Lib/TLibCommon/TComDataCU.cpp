@@ -121,49 +121,49 @@ TComDataCU::TComDataCU()
 TComDataCU::~TComDataCU()
 {}
 
-Void TComDataCU::create(UInt uiNumPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer)
+Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer)
 {
     m_bDecSubCu = bDecSubCu;
 
     m_pcPic              = NULL;
     m_pcSlice            = NULL;
-    m_uiNumPartition     = uiNumPartition;
+    m_uiNumPartition     = numPartition;
     m_unitSize = unitSize;
 
     if (!bDecSubCu)
     {
-        m_phQP               = (Char*)xMalloc(Char,     uiNumPartition);
-        m_puhDepth           = (UChar*)xMalloc(UChar,    uiNumPartition);
-        m_puhWidth           = (UChar*)xMalloc(UChar,    uiNumPartition);
-        m_puhHeight          = (UChar*)xMalloc(UChar,    uiNumPartition);
+        m_phQP               = (Char*)xMalloc(Char,     numPartition);
+        m_puhDepth           = (UChar*)xMalloc(UChar,    numPartition);
+        m_puhWidth           = (UChar*)xMalloc(UChar,    numPartition);
+        m_puhHeight          = (UChar*)xMalloc(UChar,    numPartition);
 
-        m_skipFlag           = new Bool[uiNumPartition];
+        m_skipFlag           = new Bool[numPartition];
 
-        m_pePartSize         = new Char[uiNumPartition];
-        memset(m_pePartSize, SIZE_NONE, uiNumPartition * sizeof(*m_pePartSize));
-        m_pePredMode         = new Char[uiNumPartition];
-        m_CUTransquantBypass = new Bool[uiNumPartition];
-        m_pbMergeFlag        = (Bool*)xMalloc(Bool,   uiNumPartition);
-        m_puhMergeIndex      = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhLumaIntraDir    = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhChromaIntraDir  = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhInterDir        = (UChar*)xMalloc(UChar,  uiNumPartition);
+        m_pePartSize         = new Char[numPartition];
+        memset(m_pePartSize, SIZE_NONE, numPartition * sizeof(*m_pePartSize));
+        m_pePredMode         = new Char[numPartition];
+        m_CUTransquantBypass = new Bool[numPartition];
+        m_pbMergeFlag        = (Bool*)xMalloc(Bool,   numPartition);
+        m_puhMergeIndex      = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhLumaIntraDir    = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhChromaIntraDir  = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhInterDir        = (UChar*)xMalloc(UChar,  numPartition);
 
-        m_puhTrIdx           = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhTransformSkip[0] = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhTransformSkip[1] = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhTransformSkip[2] = (UChar*)xMalloc(UChar,  uiNumPartition);
+        m_puhTrIdx           = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhTransformSkip[0] = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhTransformSkip[1] = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhTransformSkip[2] = (UChar*)xMalloc(UChar,  numPartition);
 
-        m_puhCbf[0]          = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhCbf[1]          = (UChar*)xMalloc(UChar,  uiNumPartition);
-        m_puhCbf[2]          = (UChar*)xMalloc(UChar,  uiNumPartition);
+        m_puhCbf[0]          = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhCbf[1]          = (UChar*)xMalloc(UChar,  numPartition);
+        m_puhCbf[2]          = (UChar*)xMalloc(UChar,  numPartition);
 
-        m_apiMVPIdx[0]       = new Char[uiNumPartition];
-        m_apiMVPIdx[1]       = new Char[uiNumPartition];
-        m_apiMVPNum[0]       = new Char[uiNumPartition];
-        m_apiMVPNum[1]       = new Char[uiNumPartition];
-        memset(m_apiMVPIdx[0], -1, uiNumPartition * sizeof(Char));
-        memset(m_apiMVPIdx[1], -1, uiNumPartition * sizeof(Char));
+        m_apiMVPIdx[0]       = new Char[numPartition];
+        m_apiMVPIdx[1]       = new Char[numPartition];
+        m_apiMVPNum[0]       = new Char[numPartition];
+        m_apiMVPNum[1]       = new Char[numPartition];
+        memset(m_apiMVPIdx[0], -1, numPartition * sizeof(Char));
+        memset(m_apiMVPIdx[1], -1, numPartition * sizeof(Char));
 
         m_pcTrCoeffY         = (TCoeff*)xMalloc(TCoeff, width * height);
         m_pcTrCoeffCb        = (TCoeff*)xMalloc(TCoeff, width * height / 4);
@@ -191,18 +191,18 @@ Void TComDataCU::create(UInt uiNumPartition, UInt width, UInt height, Bool bDecS
             m_pcArlCoeffCr       = (Int*)xMalloc(Int, width * height / 4);
         }
 
-        m_pbIPCMFlag         = (Bool*)xMalloc(Bool, uiNumPartition);
+        m_pbIPCMFlag         = (Bool*)xMalloc(Bool, numPartition);
         m_pcIPCMSampleY      = (Pel*)xMalloc(Pel, width * height);
         m_pcIPCMSampleCb     = (Pel*)xMalloc(Pel, width * height / 4);
         m_pcIPCMSampleCr     = (Pel*)xMalloc(Pel, width * height / 4);
 
-        m_acCUMvField[0].create(uiNumPartition);
-        m_acCUMvField[1].create(uiNumPartition);
+        m_acCUMvField[0].create(numPartition);
+        m_acCUMvField[1].create(numPartition);
     }
     else
     {
-        m_acCUMvField[0].setNumPartition(uiNumPartition);
-        m_acCUMvField[1].setNumPartition(uiNumPartition);
+        m_acCUMvField[0].setNumPartition(numPartition);
+        m_acCUMvField[1].setNumPartition(numPartition);
     }
 
     // create pattern memory
@@ -636,8 +636,8 @@ Void TComDataCU::initSubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Int q
 
 Void TComDataCU::setOutsideCUPart(UInt absPartIdx, UInt depth)
 {
-    UInt uiNumPartition = m_uiNumPartition >> (depth << 1);
-    UInt uiSizeInUchar = sizeof(UChar) * uiNumPartition;
+    UInt numPartition = m_uiNumPartition >> (depth << 1);
+    UInt uiSizeInUchar = sizeof(UChar) * numPartition;
 
     UChar uhWidth  = g_maxCUWidth  >> depth;
     UChar uhHeight = g_maxCUHeight >> depth;
@@ -781,42 +781,42 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bo
     m_uiTotalDistortion  += cu->getTotalDistortion();
     m_uiTotalBits        += cu->getTotalBits();
 
-    UInt uiOffset         = cu->getTotalNumPart() * uiPartUnitIdx;
+    UInt offset         = cu->getTotalNumPart() * uiPartUnitIdx;
 
-    UInt uiNumPartition = cu->getTotalNumPart();
-    Int iSizeInUchar  = sizeof(UChar) * uiNumPartition;
-    Int iSizeInBool   = sizeof(Bool) * uiNumPartition;
+    UInt numPartition = cu->getTotalNumPart();
+    Int iSizeInUchar  = sizeof(UChar) * numPartition;
+    Int iSizeInBool   = sizeof(Bool) * numPartition;
 
-    Int sizeInChar  = sizeof(Char) * uiNumPartition;
-    memcpy(m_skipFlag   + uiOffset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * uiNumPartition);
-    memcpy(m_phQP       + uiOffset, cu->getQP(),             sizeInChar);
-    memcpy(m_pePartSize + uiOffset, cu->getPartitionSize(),  sizeof(*m_pePartSize) * uiNumPartition);
-    memcpy(m_pePredMode + uiOffset, cu->getPredictionMode(), sizeof(*m_pePredMode) * uiNumPartition);
-    memcpy(m_CUTransquantBypass + uiOffset, cu->getCUTransquantBypass(), sizeof(*m_CUTransquantBypass) * uiNumPartition);
-    memcpy(m_pbMergeFlag         + uiOffset, cu->getMergeFlag(),         iSizeInBool);
-    memcpy(m_puhMergeIndex       + uiOffset, cu->getMergeIndex(),        iSizeInUchar);
-    memcpy(m_puhLumaIntraDir     + uiOffset, cu->getLumaIntraDir(),      iSizeInUchar);
-    memcpy(m_puhChromaIntraDir   + uiOffset, cu->getChromaIntraDir(),    iSizeInUchar);
-    memcpy(m_puhInterDir         + uiOffset, cu->getInterDir(),          iSizeInUchar);
-    memcpy(m_puhTrIdx            + uiOffset, cu->getTransformIdx(),      iSizeInUchar);
-    memcpy(m_puhTransformSkip[0] + uiOffset, cu->getTransformSkip(TEXT_LUMA),     iSizeInUchar);
-    memcpy(m_puhTransformSkip[1] + uiOffset, cu->getTransformSkip(TEXT_CHROMA_U), iSizeInUchar);
-    memcpy(m_puhTransformSkip[2] + uiOffset, cu->getTransformSkip(TEXT_CHROMA_V), iSizeInUchar);
+    Int sizeInChar  = sizeof(Char) * numPartition;
+    memcpy(m_skipFlag   + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
+    memcpy(m_phQP       + offset, cu->getQP(),             sizeInChar);
+    memcpy(m_pePartSize + offset, cu->getPartitionSize(),  sizeof(*m_pePartSize) * numPartition);
+    memcpy(m_pePredMode + offset, cu->getPredictionMode(), sizeof(*m_pePredMode) * numPartition);
+    memcpy(m_CUTransquantBypass + offset, cu->getCUTransquantBypass(), sizeof(*m_CUTransquantBypass) * numPartition);
+    memcpy(m_pbMergeFlag         + offset, cu->getMergeFlag(),         iSizeInBool);
+    memcpy(m_puhMergeIndex       + offset, cu->getMergeIndex(),        iSizeInUchar);
+    memcpy(m_puhLumaIntraDir     + offset, cu->getLumaIntraDir(),      iSizeInUchar);
+    memcpy(m_puhChromaIntraDir   + offset, cu->getChromaIntraDir(),    iSizeInUchar);
+    memcpy(m_puhInterDir         + offset, cu->getInterDir(),          iSizeInUchar);
+    memcpy(m_puhTrIdx            + offset, cu->getTransformIdx(),      iSizeInUchar);
+    memcpy(m_puhTransformSkip[0] + offset, cu->getTransformSkip(TEXT_LUMA),     iSizeInUchar);
+    memcpy(m_puhTransformSkip[1] + offset, cu->getTransformSkip(TEXT_CHROMA_U), iSizeInUchar);
+    memcpy(m_puhTransformSkip[2] + offset, cu->getTransformSkip(TEXT_CHROMA_V), iSizeInUchar);
 
-    memcpy(m_puhCbf[0] + uiOffset, cu->getCbf(TEXT_LUMA), iSizeInUchar);
-    memcpy(m_puhCbf[1] + uiOffset, cu->getCbf(TEXT_CHROMA_U), iSizeInUchar);
-    memcpy(m_puhCbf[2] + uiOffset, cu->getCbf(TEXT_CHROMA_V), iSizeInUchar);
+    memcpy(m_puhCbf[0] + offset, cu->getCbf(TEXT_LUMA), iSizeInUchar);
+    memcpy(m_puhCbf[1] + offset, cu->getCbf(TEXT_CHROMA_U), iSizeInUchar);
+    memcpy(m_puhCbf[2] + offset, cu->getCbf(TEXT_CHROMA_V), iSizeInUchar);
 
-    memcpy(m_puhDepth  + uiOffset, cu->getDepth(),  iSizeInUchar);
-    memcpy(m_puhWidth  + uiOffset, cu->getWidth(),  iSizeInUchar);
-    memcpy(m_puhHeight + uiOffset, cu->getHeight(), iSizeInUchar);
+    memcpy(m_puhDepth  + offset, cu->getDepth(),  iSizeInUchar);
+    memcpy(m_puhWidth  + offset, cu->getWidth(),  iSizeInUchar);
+    memcpy(m_puhHeight + offset, cu->getHeight(), iSizeInUchar);
 
-    memcpy(m_apiMVPIdx[0] + uiOffset, cu->getMVPIdx(REF_PIC_LIST_0), iSizeInUchar);
-    memcpy(m_apiMVPIdx[1] + uiOffset, cu->getMVPIdx(REF_PIC_LIST_1), iSizeInUchar);
-    memcpy(m_apiMVPNum[0] + uiOffset, cu->getMVPNum(REF_PIC_LIST_0), iSizeInUchar);
-    memcpy(m_apiMVPNum[1] + uiOffset, cu->getMVPNum(REF_PIC_LIST_1), iSizeInUchar);
+    memcpy(m_apiMVPIdx[0] + offset, cu->getMVPIdx(REF_PIC_LIST_0), iSizeInUchar);
+    memcpy(m_apiMVPIdx[1] + offset, cu->getMVPIdx(REF_PIC_LIST_1), iSizeInUchar);
+    memcpy(m_apiMVPNum[0] + offset, cu->getMVPNum(REF_PIC_LIST_0), iSizeInUchar);
+    memcpy(m_apiMVPNum[1] + offset, cu->getMVPNum(REF_PIC_LIST_1), iSizeInUchar);
 
-    memcpy(m_pbIPCMFlag + uiOffset, cu->getIPCMFlag(), iSizeInBool);
+    memcpy(m_pbIPCMFlag + offset, cu->getIPCMFlag(), iSizeInBool);
 
     m_pcCUAboveLeft      = cu->getCUAboveLeft();
     m_pcCUAboveRight     = cu->getCUAboveRight();
@@ -826,8 +826,8 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bo
     m_apcCUColocated[0] = cu->getCUColocated(REF_PIC_LIST_0);
     m_apcCUColocated[1] = cu->getCUColocated(REF_PIC_LIST_1);
 
-    m_acCUMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cu->getTotalNumPart(), uiOffset);
-    m_acCUMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), uiOffset);
+    m_acCUMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cu->getTotalNumPart(), offset);
+    m_acCUMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), offset);
 
     UInt uiTmp  = g_maxCUWidth * g_maxCUHeight >> (depth << 1);
     UInt uiTmp2 = uiPartUnitIdx * uiTmp;
@@ -2148,7 +2148,7 @@ Void TComDataCU::deriveLeftBottomIdx(UInt partIdx,      UInt&      ruiPartIdxLB)
 }
 
 /** Derives the partition index of neighbouring bottom right block
- * \param [in]  eCUMode
+ * \param [in]  cuMode
  * \param [in]  partIdx
  * \param [out] ruiPartIdxRB
  */
@@ -3219,7 +3219,7 @@ Int TComDataCU::xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, 
 }
 
 /**
- * \param eCUMode
+ * \param cuMode
  * \param partIdx
  * \param ruiPartIdxCenter
  * \returns Void

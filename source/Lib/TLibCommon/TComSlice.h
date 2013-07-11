@@ -1681,7 +1681,7 @@ public:
 
     UInt getTileLocation(Int idx)                { return m_tileByteLocation[idx];           }
 
-    Void setTileOffstForMultES(UInt uiOffset)    { m_uiTileOffstForMultES = uiOffset;        }
+    Void setTileOffstForMultES(UInt offset)    { m_uiTileOffstForMultES = offset;        }
 
     UInt getTileOffstForMultES()                 { return m_uiTileOffstForMultES;            }
 

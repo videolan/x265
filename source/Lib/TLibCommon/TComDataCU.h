@@ -215,7 +215,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void          create(UInt uiNumPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer = false);
+    Void          create(UInt numPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer = false);
     Void          destroy();
 
     Void          initCU(TComPic* pcPic, UInt uiCUAddr);

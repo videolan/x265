@@ -559,9 +559,9 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt d
         piTmpSrc += iEdge * uiPelsInPart * iStride;
     }
 
-    for (UInt iIdx = 0; iIdx < uiNumParts; iIdx++)
+    for (UInt idx = 0; idx < uiNumParts; idx++)
     {
-        uiBsAbsIdx = xCalcBsIdx(cu, uiAbsZorderIdx, dir, iEdge, iIdx);
+        uiBsAbsIdx = xCalcBsIdx(cu, uiAbsZorderIdx, dir, iEdge, idx);
         uiBs = m_aapucBS[dir][uiBsAbsIdx];
         if (uiBs)
         {
@@ -592,10 +592,10 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt d
             UInt  uiBlocksInPart = uiPelsInPart / 4 ? uiPelsInPart / 4 : 1;
             for (UInt iBlkIdx = 0; iBlkIdx < uiBlocksInPart; iBlkIdx++)
             {
-                Int dp0 = xCalcDP(piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 0), iOffset);
-                Int dq0 = xCalcDQ(piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 0), iOffset);
-                Int dp3 = xCalcDP(piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 3), iOffset);
-                Int dq3 = xCalcDQ(piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 3), iOffset);
+                Int dp0 = xCalcDP(piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 0), iOffset);
+                Int dq0 = xCalcDQ(piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 0), iOffset);
+                Int dp3 = xCalcDP(piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 3), iOffset);
+                Int dq3 = xCalcDQ(piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 3), iOffset);
                 Int d0 = dp0 + dq0;
                 Int d3 = dp3 + dq3;
 
@@ -619,12 +619,12 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt d
                     Bool bFilterP = (dp < iSideThreshold);
                     Bool bFilterQ = (dq < iSideThreshold);
 
-                    Bool sw =  xUseStrongFiltering(iOffset, 2 * d0, iBeta, iTc, piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 0))
-                        && xUseStrongFiltering(iOffset, 2 * d3, iBeta, iTc, piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + 3));
+                    Bool sw =  xUseStrongFiltering(iOffset, 2 * d0, iBeta, iTc, piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 0))
+                        && xUseStrongFiltering(iOffset, 2 * d3, iBeta, iTc, piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + 3));
 
                     for (Int i = 0; i < DEBLOCK_SMALLEST_BLOCK / 2; i++)
                     {
-                        xPelFilterLuma(piTmpSrc + iSrcStep * (iIdx * uiPelsInPart + iBlkIdx * 4 + i), iOffset, iTc, sw, bPartPNoFilter, bPartQNoFilter, iThrCut, bFilterP, bFilterQ);
+                        xPelFilterLuma(piTmpSrc + iSrcStep * (idx * uiPelsInPart + iBlkIdx * 4 + i), iOffset, iTc, sw, bPartPNoFilter, bPartQNoFilter, iThrCut, bFilterP, bFilterQ);
                     }
                 }
             }
@@ -689,11 +689,11 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt
         piTmpSrcCr += iEdge * iStride * uiPelsInPartChroma;
     }
 
-    for (UInt iIdx = 0; iIdx < uiNumParts; iIdx++)
+    for (UInt idx = 0; idx < uiNumParts; idx++)
     {
         ucBs = 0;
 
-        uiBsAbsIdx = xCalcBsIdx(cu, uiAbsZorderIdx, dir, iEdge, iIdx);
+        uiBsAbsIdx = xCalcBsIdx(cu, uiAbsZorderIdx, dir, iEdge, idx);
         ucBs = m_aapucBS[dir][uiBsAbsIdx];
 
         if (ucBs > 1)
@@ -736,7 +736,7 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt uiAbsZorderIdx, UInt
 
                 for (UInt uiStep = 0; uiStep < uiPelsInPartChroma; uiStep++)
                 {
-                    xPelFilterChroma(piTmpSrcChroma + iSrcStep * (uiStep + iIdx * uiPelsInPartChroma), iOffset, iTc, bPartPNoFilter, bPartQNoFilter);
+                    xPelFilterChroma(piTmpSrcChroma + iSrcStep * (uiStep + idx * uiPelsInPartChroma), iOffset, iTc, bPartPNoFilter, bPartQNoFilter);
                 }
             }
         }

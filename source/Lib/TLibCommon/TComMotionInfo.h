@@ -83,18 +83,18 @@ class TComCUMvField
 {
 private:
 
-    x265::MV* m_pcMv;
-    x265::MV* m_pcMvd;
-    Char*     m_piRefIdx;
-    UInt      m_uiNumPartition;
+    x265::MV* m_mv;
+    x265::MV* m_mvd;
+    Char*     m_refIdx;
+    UInt      m_numPartitions;
     AMVPInfo  m_cAMVPInfo;
 
     template<typename T>
-    Void setAll(T *p, T const & val, PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx);
+    Void setAll(T *p, T const & val, PartSize cuMode, Int partAddr, UInt depth, Int partIdx);
 
 public:
 
-    TComCUMvField() : m_pcMv(NULL), m_pcMvd(NULL), m_piRefIdx(NULL), m_uiNumPartition(0) {}
+    TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
 
     ~TComCUMvField() {}
 
@@ -102,28 +102,28 @@ public:
     // create / destroy
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    create(UInt uiNumPartition);
-    Void    destroy();
+    Void create(UInt numPartition);
+    Void destroy();
 
     // ------------------------------------------------------------------------------------------------------------------
     // clear / copy
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    clearMvField();
+    Void clearMvField();
 
-    Void    copyFrom(TComCUMvField const * pcCUMvFieldSrc, Int iNumPartSrc, Int iPartAddrDst);
-    Void    copyTo(TComCUMvField* pcCUMvFieldDst, Int iPartAddrDst) const;
-    Void    copyTo(TComCUMvField* pcCUMvFieldDst, Int iPartAddrDst, UInt uiOffset, UInt uiNumPart) const;
+    Void copyFrom(const TComCUMvField * cuMvFieldSrc, Int numPartSrc, Int partAddrDst);
+    Void copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst) const;
+    Void copyTo(TComCUMvField* cuMvFieldDst, Int partAddrDst, UInt offset, UInt numPart) const;
 
     // ------------------------------------------------------------------------------------------------------------------
     // get
     // ------------------------------------------------------------------------------------------------------------------
 
-    x265::MV const & getMv(Int iIdx) const { return m_pcMv[iIdx]; }
+    const x265::MV & getMv(Int idx) const { return m_mv[idx]; }
 
-    x265::MV const & getMvd(Int iIdx) const { return m_pcMvd[iIdx]; }
+    const x265::MV & getMvd(Int idx) const { return m_mvd[idx]; }
 
-    Int            getRefIdx(Int iIdx) const { return m_piRefIdx[iIdx]; }
+    Int getRefIdx(Int idx) const { return m_refIdx[idx]; }
 
     AMVPInfo* getAMVPInfo() { return &m_cAMVPInfo; }
 
@@ -131,21 +131,21 @@ public:
     // set
     // ------------------------------------------------------------------------------------------------------------------
 
-    Void    setAllMv(x265::MV const & rcMv,            PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
-    Void    setAllMvd(x265::MV const & rcMvd,          PartSize eCUMode, Int iPartAddr, UInt depth, Int partIdx = 0);
-    Void    setAllRefIdx(Int refIdx,                  PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
-    Void    setAllMvField(TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt depth, Int partIdx = 0);
+    Void    setAllMv(const x265::MV& mv,              PartSize cuMode, Int partAddr, UInt depth, Int partIdx = 0);
+    Void    setAllMvd(const x265::MV& mvd,            PartSize cuMode, Int partAddr, UInt depth, Int partIdx = 0);
+    Void    setAllRefIdx(Int refIdx,                  PartSize mbMode, Int partAddr, UInt depth, Int partIdx = 0);
+    Void    setAllMvField(const TComMvField& mvField, PartSize mbMode, Int partAddr, UInt depth, Int partIdx = 0);
 
-    Void setNumPartition(Int iNumPart)
+    Void setNumPartition(Int numPart)
     {
-        m_uiNumPartition = iNumPart;
+        m_numPartitions = numPart;
     }
 
-    Void linkToWithOffset(TComCUMvField const * src, Int offset)
+    Void linkToWithOffset(const TComCUMvField* src, Int offset)
     {
-        m_pcMv     = src->m_pcMv     + offset;
-        m_pcMvd    = src->m_pcMvd    + offset;
-        m_piRefIdx = src->m_piRefIdx + offset;
+        m_mv     = src->m_mv     + offset;
+        m_mvd    = src->m_mvd    + offset;
+        m_refIdx = src->m_refIdx + offset;
     }
 
     Void compress(Char* pePredMode, Int scale);
