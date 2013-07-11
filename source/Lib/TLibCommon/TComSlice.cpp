@@ -265,11 +265,11 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
 
 Void TComSlice::setRefPOCList()
 {
-    for (Int iDir = 0; iDir < 2; iDir++)
+    for (Int dir = 0; dir < 2; dir++)
     {
-        for (Int iNumRefIdx = 0; iNumRefIdx < m_aiNumRefIdx[iDir]; iNumRefIdx++)
+        for (Int iNumRefIdx = 0; iNumRefIdx < m_aiNumRefIdx[dir]; iNumRefIdx++)
         {
-            m_aiRefPOCList[iDir][iNumRefIdx] = m_apcRefPicList[iDir][iNumRefIdx]->getPOC();
+            m_aiRefPOCList[dir][iNumRefIdx] = m_apcRefPicList[dir][iNumRefIdx]->getPOC();
         }
     }
 }
@@ -475,13 +475,13 @@ Int TComSlice::getNumRpsCurrTempList()
 
 Void TComSlice::initEqualRef()
 {
-    for (Int iDir = 0; iDir < 2; iDir++)
+    for (Int dir = 0; dir < 2; dir++)
     {
         for (Int refIdx1 = 0; refIdx1 < MAX_NUM_REF; refIdx1++)
         {
             for (Int refIdx2 = refIdx1; refIdx2 < MAX_NUM_REF; refIdx2++)
             {
-                m_abEqualRef[iDir][refIdx1][refIdx2] = m_abEqualRef[iDir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
+                m_abEqualRef[dir][refIdx1][refIdx2] = m_abEqualRef[dir][refIdx2][refIdx1] = (refIdx1 == refIdx2 ? true : false);
             }
         }
     }

@@ -48,13 +48,13 @@ WeightPredAnalysis::WeightPredAnalysis()
 {
     m_weighted_pred_flag = false;
     m_weighted_bipred_flag = false;
-    for (Int iList = 0; iList < 2; iList++)
+    for (Int list = 0; list < 2; list++)
     {
         for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
         {
             for (Int comp = 0; comp < 3; comp++)
             {
-                wpScalingParam  *pwp   = &(m_wp[iList][refIdx][comp]);
+                wpScalingParam  *pwp   = &(m_wp[list][refIdx][comp]);
                 pwp->bPresentFlag      = false;
                 pwp->uiLog2WeightDenom = 0;
                 pwp->iWeight           = 1;
@@ -137,13 +137,13 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
 {
     Int iPresentCnt = 0;
 
-    for (Int iList = 0; iList < 2; iList++)
+    for (Int list = 0; list < 2; list++)
     {
         for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
         {
             for (Int iComp = 0; iComp < 3; iComp++)
             {
-                wpScalingParam  *pwp = &(m_wp[iList][refIdx][iComp]);
+                wpScalingParam  *pwp = &(m_wp[list][refIdx][iComp]);
                 iPresentCnt += (Int)pwp->bPresentFlag;
             }
         }
@@ -153,13 +153,13 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
     {
         slice->getPPS()->setUseWP(false);
         slice->getPPS()->setWPBiPred(false);
-        for (Int iList = 0; iList < 2; iList++)
+        for (Int list = 0; list < 2; list++)
         {
             for (Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++)
             {
                 for (Int iComp = 0; iComp < 3; iComp++)
                 {
-                    wpScalingParam  *pwp = &(m_wp[iList][refIdx][iComp]);
+                    wpScalingParam  *pwp = &(m_wp[list][refIdx][iComp]);
                     pwp->bPresentFlag      = false;
                     pwp->uiLog2WeightDenom = 0;
                     pwp->iWeight           = 1;
