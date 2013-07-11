@@ -96,24 +96,21 @@ public:
 protected:
 
     // interface to option
-    TEncCfg*        m_pcEncCfg;
+    TEncCfg*        m_cfg;
 
     // interface to classes
-    TComTrQuant*    m_pcTrQuant;
-    TComRdCost*     m_pcRdCost;
-    TEncEntropy*    m_pcEntropyCoder;
+    TComTrQuant*    m_trQuant;
+    TComRdCost*     m_rdCost;
+    TEncEntropy*    m_entropyCoder;
 
     // ME parameters
-    Int             m_iSearchRange;
+    Int             m_searchRange;
     Int             m_bipredSearchRange; // Search range for bi-prediction
-    Int             m_iSearchMethod;
+    Int             m_searchMethod;
     Int             m_adaptiveRange[2][33];
-    x265::MV        m_cSrchRngLT;
-    x265::MV        m_cSrchRngRB;
     x265::MV        m_mvPredictors[3];
 
     // RD computation
-
     DistParam       m_cDistParam;
 
     // Misc.
@@ -130,7 +127,7 @@ public:
 
     Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
 
-    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_pcEntropyCoder = pcEntropyCoder; }
+    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_entropyCoder = pcEntropyCoder; }
 
     Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
 
