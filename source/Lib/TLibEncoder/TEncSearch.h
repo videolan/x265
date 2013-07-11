@@ -68,7 +68,8 @@ class TEncSearch : public TComPrediction
 public:
 
     x265::MotionEstimate m_me;
-    x265::BitCost        m_bc; // TODO: m_bc will go away with HM ME
+
+protected:
 
     TShortYUV*      m_qtTempTComYuv;
     Pel*            m_sharedPredTransformSkip[3];
@@ -91,9 +92,7 @@ public:
     UChar*          m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipTComYuv;
 
-    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
-
-protected:
+    x265::BitCost   m_bc; // TODO: m_bc will go away with HM ME
 
     // interface to option
     TEncCfg*        m_cfg;
@@ -113,29 +112,29 @@ protected:
     // RD computation
     DistParam       m_cDistParam;
 
-    // Misc.
-    Pel*            m_tempPel;
+    TComYuv         m_tmpYuvPred; // to avoid constant memory allocation/deallocation in xGetInterPredictionError()
+    Pel*            m_tempPel;    // avoid mallocs in xEstimateResidualQT
 
-    // AMVP cost computation
+    // AMVP cost of a given mvp index for a given mvp candidate count
     UInt            m_mvpIdxCost[AMVP_MAX_NUM_CANDS + 1][AMVP_MAX_NUM_CANDS + 1];
 
 public:
 
-    TEncSbac***     m_pppcRDSbacCoder;
-    TEncSbac*       m_pcRDGoOnSbacCoder;
+    TEncSbac***     m_rdSbacCoders;
+    TEncSbac*       m_rdGoOnSbacCoder;
 
-    Void set_pppcRDSbacCoder(TEncSbac*** pppcRDSbacCoder) { m_pppcRDSbacCoder = pppcRDSbacCoder; }
+    Void set_pppcRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
-    Void set_pcEntropyCoder(TEncEntropy* pcEntropyCoder) { m_entropyCoder = pcEntropyCoder; }
+    Void set_pcEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
-    Void set_pcRDGoOnSbacCoder(TEncSbac* pcRDGoOnSbacCoder) { m_pcRDGoOnSbacCoder = pcRDGoOnSbacCoder; }
+    Void set_pcRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
     Void setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma);
 
     TEncSearch();
     virtual ~TEncSearch();
 
-    Void init(TEncCfg* pcEncCfg, TComRdCost* pcRdCost, TComTrQuant *pcTrQuant);
+    Void init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant *trQuant);
 
 protected:
 

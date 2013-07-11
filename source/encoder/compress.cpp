@@ -44,7 +44,7 @@ Void TEncCu::xEncodeIntrainInter(TComDataCU*& cu, TComYuv* fencYuv, TComYuv* pre
     UInt    uiInitTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
     // set context models
-    m_pcPredSearch->m_pcRDGoOnSbacCoder->load(m_pcPredSearch->m_pppcRDSbacCoder[depth][CI_CURR_BEST]);
+    m_pcPredSearch->m_rdGoOnSbacCoder->load(m_pcPredSearch->m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     m_pcPredSearch->xRecurIntraCodingQT(cu, uiInitTrDepth, 0, true, fencYuv, predYuv, outResiYuv, uiPUDistY, uiPUDistC, false, dPUCost);
     m_pcPredSearch->xSetIntraResultQT(cu, uiInitTrDepth, 0, true, outReconYuv);
