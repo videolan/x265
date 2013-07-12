@@ -102,7 +102,7 @@ void MD5Frame::initialize(int cols, int rows)
     this->numrows = rows;
     this->numcols = cols;
 
-    if (!this->WaveFront::initJobQueue(rows))
+    if (!this->WaveFront::init(rows))
     {
         assert(!"Unable to initialize job queue");
     }

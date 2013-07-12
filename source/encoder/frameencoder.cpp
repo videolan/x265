@@ -188,7 +188,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_rows[i].create(top);
     }
 
-    if (!WaveFront::initJobQueue(m_numRows))
+    if (!WaveFront::init(m_numRows))
     {
         assert(!"Unable to initialize job queue.");
         m_pool = NULL;

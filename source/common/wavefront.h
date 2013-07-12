@@ -58,7 +58,7 @@ public:
     virtual ~WaveFront();
 
     // If returns false, the frame must be encoded in series.
-    bool initJobQueue(int numRows);
+    bool init(int numRows);
 
     // Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
     // This provider must be enqueued in the pool before enqueuing a row

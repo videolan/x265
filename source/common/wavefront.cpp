@@ -47,7 +47,7 @@
 #include <intrin.h>
 
 #if !_WIN64
-inline int _BitScanReverse64(DWORD *id, uint64_t x64)
+inline int _BitScanReverse64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 {
     uint32_t high32 = (uint32_t)(x64 >> 32);
     uint32_t low32 = (uint32_t)x64;
@@ -63,14 +63,12 @@ inline int _BitScanReverse64(DWORD *id, uint64_t x64)
     else
         return *id = 0;
 }
-
 #endif // if !_WIN64
 
 #if _WIN32_WINNT <= _WIN32_WINNT_WINXP
-/* XP did not define this intrinsic */
+/* Windows XP did not define this intrinsic */
 FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
-                                      __in    LONGLONG           Value
-                                      )
+                                      __in    LONGLONG           Value)
 {
     LONGLONG Old;
 
@@ -78,9 +76,7 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
     {
         Old = *Destination;
     }
-    while (_InterlockedCompareExchange64(Destination,
-                                         Old | Value,
-                                         Old) != Old);
+    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
 
     return Old;
 }
@@ -101,7 +97,7 @@ FORCEINLINE LONGLONG _InterlockedOr64(__inout LONGLONG volatile *Destination,
 namespace x265 {
 // x265 private namespace
 
-bool WaveFront::initJobQueue(int numRows)
+bool WaveFront::init(int numRows)
 {
     m_numRows = numRows;
 
@@ -109,7 +105,8 @@ bool WaveFront::initJobQueue(int numRows)
     {
         m_numWords = (numRows + 63) >> 6;
         m_queuedBitmap = new uint64_t[m_numWords];
-        memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
+        if (m_queuedBitmap)
+            memset((void*)m_queuedBitmap, 0, sizeof(uint64_t) * m_numWords);
         return m_queuedBitmap != NULL;
     }
 
@@ -153,10 +150,11 @@ bool WaveFront::findJob()
 
             if (ATOMIC_CAS(&m_queuedBitmap[w], oldval, newval) == oldval)
             {
-                // if the bit was actually flipped, process row, else try again
+                // we cleared the bit, process row
                 processRow(w * 64 + id);
                 return true;
             }
+            // some other thread cleared the bit, try another bit
         }
     }
 
