@@ -423,7 +423,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     UInt  srcStride = srcYuv0->width;
     UInt  dstStride  = outDstYuv->getStride();
 
-   x265::primitives.weightpUni(pSrcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthY);
+   x265::primitives.weightpUni(pSrcY0, (pixel*)dstY, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthY);
 
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
@@ -438,7 +438,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     width  >>= 1;
     height >>= 1;
 
-    x265::primitives.weightpUni(pSrcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
+    x265::primitives.weightpUni(pSrcU0, (pixel*)dstU, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
 
     // Chroma V : --------------------------------------------
     w0      = wp0[2].w;
@@ -446,8 +446,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
     shift   = wp0[2].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    x265::primitives.weightpUni(pSrcU0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
-
+    x265::primitives.weightpUni(pSrcU0, (pixel*)dstV, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
 }
 
 //=======================================================

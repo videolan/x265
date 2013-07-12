@@ -868,12 +868,12 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         // save prediction
         if (default0Save1Load2 == 1)
         {
-            primitives.blockcpy_pp((int)width, height, (pixel*)m_sharedPredTransformSkip[0], width, (pixel*)pred, stride);
+            primitives.blockcpy_pp(width, height, (pixel*)m_sharedPredTransformSkip[0], width, (pixel*)pred, stride);
         }
     }
     else
     {
-        primitives.blockcpy_pp((int)width, height, (pixel*)pred, stride, (pixel*)m_sharedPredTransformSkip[0], width);
+        primitives.blockcpy_pp(width, height, (pixel*)pred, stride, (pixel*)m_sharedPredTransformSkip[0], width);
     }
 
     //===== get residual signal =====
@@ -1377,7 +1377,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         UInt  srcstride = m_qtTempTComYuv[qtLayer].width;
         Pel*  dst       = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
         UInt  dststride = cu->getPic()->getPicYuvRec()->getStride();
-        x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+        x265::primitives.blockcpy_ps(width, height, (pixel*)dst, dststride, src, srcstride);
 
         if (!bLumaOnly)
         {
@@ -1387,11 +1387,11 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             srcstride = m_qtTempTComYuv[qtLayer].Cwidth;
             dst       = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             dststride = cu->getPic()->getPicYuvRec()->getCStride();
-            x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+            x265::primitives.blockcpy_ps(width, height, (pixel*)dst, dststride, src, srcstride);
 
             src = m_qtTempTComYuv[qtLayer].getCrAddr(absPartIdx);
             dst = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
-            x265::primitives.blockcpy_ps(width, height, dst, dststride, src, srcstride);
+            x265::primitives.blockcpy_ps(width, height, (pixel*)dst, dststride, src, srcstride);
         }
     }
 
@@ -1590,7 +1590,7 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
     UInt   reconQtStride    = m_qtTempTComYuv[qtlayer].width;
     UInt   width            = cu->getWidth(0) >> trDepth;
     UInt   height           = cu->getHeight(0) >> trDepth;
-    x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+    x265::primitives.blockcpy_ps(width, height, (pixel*)reconIPred, reconIPredStride, reconQt, reconQtStride);
 
     if (!bLumaOnly && !bSkipChroma)
     {
@@ -1600,11 +1600,11 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
         reconIPredStride = cu->getPic()->getPicYuvRec()->getCStride();
         reconQt = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
         reconQtStride = m_qtTempTComYuv[qtlayer].Cwidth;
-        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+        x265::primitives.blockcpy_ps(width, height, (pixel*)reconIPred, reconIPredStride, reconQt, reconQtStride);
 
         reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zOrder);
         reconQt    = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
-        x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+        x265::primitives.blockcpy_ps(width, height, (pixel*)reconIPred, reconIPredStride, reconQt, reconQtStride);
     }
 }
 
@@ -1731,13 +1731,13 @@ Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder);
             Short* reconQt  = m_qtTempTComYuv[qtlayer].getCbAddr(absPartIdx);
-            x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+            x265::primitives.blockcpy_ps(width, height, (pixel*)reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
         if (stateU0V1Both2 == 1 || stateU0V1Both2 == 2)
         {
             Pel* reconIPred = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
             Short* reconQt  = m_qtTempTComYuv[qtlayer].getCrAddr(absPartIdx);
-            x265::primitives.blockcpy_ps(width, height, reconIPred, reconIPredStride, reconQt, reconQtStride);
+            x265::primitives.blockcpy_ps(width, height, (pixel*)reconIPred, reconIPredStride, reconQt, reconQtStride);
         }
     }
 }
@@ -2057,7 +2057,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             UInt modeCosts[35];
             Bool bFilter = (width <= 16);
-            pixel *predSrc = (pixel*)m_predBuf;
+            pixel* predSrc = (pixel*)m_predBuf;
 
             // 1
             primitives.intra_pred_dc((pixel*)predSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width, bFilter);
@@ -2257,7 +2257,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             UInt dststride   = cu->getPic()->getPicYuvRec()->getStride();
             Pel* src         = reconYuv->getLumaAddr(partOffset);
             UInt srcstride   = reconYuv->getStride();
-            x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+            x265::primitives.blockcpy_pp(compWidth, compHeight, (pixel*)dst, dststride, (pixel*)src, srcstride);
 
             if (!bLumaOnly && !bSkipChroma)
             {
@@ -2270,11 +2270,11 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 dststride   = cu->getPic()->getPicYuvRec()->getCStride();
                 src         = reconYuv->getCbAddr(partOffset);
                 srcstride   = reconYuv->getCStride();
-                x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                x265::primitives.blockcpy_pp(compWidth, compHeight, (pixel*)dst, dststride, (pixel*)src, srcstride);
 
                 dst         = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder);
                 src         = reconYuv->getCrAddr(partOffset);
-                x265::primitives.blockcpy_pp(compWidth, compHeight, dst, dststride, src, srcstride);
+                x265::primitives.blockcpy_pp(compWidth, compHeight, (pixel*)dst, dststride, (pixel*)src, srcstride);
             }
         }
 
