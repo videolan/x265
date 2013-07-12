@@ -53,8 +53,8 @@
 /// parameters for AMVP
 typedef struct _AMVPInfo
 {
-    x265::MV m_acMvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
-    Int    iN;                              ///< number of motion vector predictor candidates
+    x265::MV m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
+    Int      m_num;                             ///< number of motion vector predictor candidates
 } AMVPInfo;
 
 // ====================================================================================================================

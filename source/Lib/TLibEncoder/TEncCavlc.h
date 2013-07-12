@@ -67,7 +67,7 @@ protected:
     UInt          m_uiCoeffCost;
 
     Void codeShortTermRefPicSet(TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx);
-    Bool findMatchingLTRP(TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag);
+    Bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag);
 
 public:
 
@@ -90,7 +90,7 @@ public:
     Void  codeVUI(TComVUI *pcVUI, TComSPS* pcSPS);
     Void  codeSPS(TComSPS* pcSPS);
     Void  codePPS(TComPPS* pcPPS);
-    Void  codeSliceHeader(TComSlice* pcSlice);
+    Void  codeSliceHeader(TComSlice* slice);
     Void  codePTL(TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
     Void  codeProfileTier(ProfileTierLevel* ptl);
     Void  codeHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
@@ -145,7 +145,7 @@ public:
 
     Void estBit(estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
 
-    Void xCodePredWeightTable(TComSlice* pcSlice);
+    Void xCodePredWeightTable(TComSlice* slice);
 
     Void codeScalingList(TComScalingList* scalingList);
     Void xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt listId);

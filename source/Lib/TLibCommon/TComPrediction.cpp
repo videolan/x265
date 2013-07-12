@@ -655,17 +655,17 @@ Void TComPrediction::getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, 
 {
     AMVPInfo* pcAMVPInfo = cu->getCUMvField(picList)->getAMVPInfo();
 
-    if (pcAMVPInfo->iN <= 1)
+    if (pcAMVPInfo->m_num <= 1)
     {
-        mvPred = pcAMVPInfo->m_acMvCand[0];
+        mvPred = pcAMVPInfo->m_mvCand[0];
 
         cu->setMVPIdxSubParts(0, picList, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(pcAMVPInfo->iN, picList, partAddr, partIdx, cu->getDepth(partAddr));
+        cu->setMVPNumSubParts(pcAMVPInfo->m_num, picList, partAddr, partIdx, cu->getDepth(partAddr));
         return;
     }
 
     assert(cu->getMVPIdx(picList, partAddr) >= 0);
-    mvPred = pcAMVPInfo->m_acMvCand[cu->getMVPIdx(picList, partAddr)];
+    mvPred = pcAMVPInfo->m_mvCand[cu->getMVPIdx(picList, partAddr)];
 }
 
 //! \}

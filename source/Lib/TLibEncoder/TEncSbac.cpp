@@ -252,7 +252,7 @@ Void TEncSbac::codePPS(TComPPS* pcPPS)
     assert(0);
 }
 
-Void TEncSbac::codeSliceHeader(TComSlice* pcSlice)
+Void TEncSbac::codeSliceHeader(TComSlice* slice)
 {
     assert(0);
 }

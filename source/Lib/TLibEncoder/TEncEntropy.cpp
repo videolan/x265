@@ -42,24 +42,24 @@
 //! \ingroup TLibEncoder
 //! \{
 
-Void TEncEntropy::setEntropyCoder(TEncEntropyIf* e, TComSlice* pcSlice)
+Void TEncEntropy::setEntropyCoder(TEncEntropyIf* e, TComSlice* slice)
 {
     m_pcEntropyCoderIf = e;
-    m_pcEntropyCoderIf->setSlice(pcSlice);
+    m_pcEntropyCoderIf->setSlice(slice);
 }
 
-Void TEncEntropy::encodeSliceHeader(TComSlice* pcSlice)
+Void TEncEntropy::encodeSliceHeader(TComSlice* slice)
 {
-    if (pcSlice->getSPS()->getUseSAO())
+    if (slice->getSPS()->getUseSAO())
     {
-        SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
-        pcSlice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
+        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
         {
-            pcSlice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
+            slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
         }
     }
 
-    m_pcEntropyCoderIf->codeSliceHeader(pcSlice);
+    m_pcEntropyCoderIf->codeSliceHeader(slice);
 }
 
 Void  TEncEntropy::encodeTilesWPPEntryPoint(TComSlice* pSlice)
@@ -453,13 +453,13 @@ Void TEncEntropy::encodePUWise(TComDataCU* cu, UInt absPartIdx, Bool bRD)
         else
         {
             encodeInterDirPU(cu, uiSubPartIdx);
-            for (UInt uiRefListIdx = 0; uiRefListIdx < 2; uiRefListIdx++)
+            for (UInt refListIdx = 0; refListIdx < 2; refListIdx++)
             {
-                if (cu->getSlice()->getNumRefIdx(RefPicList(uiRefListIdx)) > 0)
+                if (cu->getSlice()->getNumRefIdx(RefPicList(refListIdx)) > 0)
                 {
-                    encodeRefFrmIdxPU(cu, uiSubPartIdx, RefPicList(uiRefListIdx));
-                    encodeMvdPU(cu, uiSubPartIdx, RefPicList(uiRefListIdx));
-                    encodeMVPIdxPU(cu, uiSubPartIdx, RefPicList(uiRefListIdx));
+                    encodeRefFrmIdxPU(cu, uiSubPartIdx, RefPicList(refListIdx));
+                    encodeMvdPU(cu, uiSubPartIdx, RefPicList(refListIdx));
+                    encodeMVPIdxPU(cu, uiSubPartIdx, RefPicList(refListIdx));
                 }
             }
         }

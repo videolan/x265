@@ -465,7 +465,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt iPartUnitIdx, U
  */
 Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1, wpScalingParam *&wp0, wpScalingParam *&wp1)
 {
-    TComSlice*      pcSlice = cu->getSlice();
+    TComSlice*      slice = cu->getSlice();
     const TComPPS*  pps     = cu->getSlice()->getPPS();
     Bool            wpBiPred = pps->getWPBiPred();
     wpScalingParam* pwp;
@@ -476,11 +476,11 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
     { // explicit --------------------
         if (refIdx0 >= 0)
         {
-            pcSlice->getWpScaling(REF_PIC_LIST_0, refIdx0, wp0);
+            slice->getWpScaling(REF_PIC_LIST_0, refIdx0, wp0);
         }
         if (refIdx1 >= 0)
         {
-            pcSlice->getWpScaling(REF_PIC_LIST_1, refIdx1, wp1);
+            slice->getWpScaling(REF_PIC_LIST_1, refIdx1, wp1);
         }
     }
     else

@@ -93,7 +93,7 @@ public:
     Void  codeVPS(TComVPS* pcVPS);
     Void  codeSPS(TComSPS* pcSPS);
     Void  codePPS(TComPPS* pcPPS);
-    Void  codeSliceHeader(TComSlice* pcSlice);
+    Void  codeSliceHeader(TComSlice* slice);
     Void  codeTilesWPPEntryPoint(TComSlice* pSlice);
     Void  codeTerminatingBit(UInt uilsLast);
     Void  codeSliceFinish();

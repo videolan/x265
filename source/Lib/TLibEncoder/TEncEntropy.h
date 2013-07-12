@@ -71,7 +71,7 @@ public:
     virtual Void  codeVPS(TComVPS* pcVPS)                                      = 0;
     virtual Void  codeSPS(TComSPS* pcSPS)                                      = 0;
     virtual Void  codePPS(TComPPS* pcPPS)                                      = 0;
-    virtual Void  codeSliceHeader(TComSlice* pcSlice)                                  = 0;
+    virtual Void  codeSliceHeader(TComSlice* slice)                                  = 0;
 
     virtual Void  codeTilesWPPEntryPoint(TComSlice* pSlice)     = 0;
     virtual Void  codeTerminatingBit(UInt uilsLast)                                       = 0;
@@ -133,7 +133,7 @@ private:
 
 public:
 
-    Void    setEntropyCoder(TEncEntropyIf* e, TComSlice* pcSlice);
+    Void    setEntropyCoder(TEncEntropyIf* e, TComSlice* slice);
     Void    setBitstream(TComBitIf* p)          { m_pcEntropyCoderIf->setBitstream(p);  }
 
     Void    resetBits()                        { m_pcEntropyCoderIf->resetBits();      }
@@ -148,7 +148,7 @@ public:
 
     Void    determineCabacInitIdx()                        { m_pcEntropyCoderIf->determineCabacInitIdx(); }
 
-    Void    encodeSliceHeader(TComSlice* pcSlice);
+    Void    encodeSliceHeader(TComSlice* slice);
     Void    encodeTilesWPPEntryPoint(TComSlice* pSlice);
     Void    encodeTerminatingBit(UInt uiIsLast);
     Void    encodeSliceFinish();

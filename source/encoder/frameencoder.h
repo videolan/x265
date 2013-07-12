@@ -87,7 +87,7 @@ public:
 
     void destroy();
 
-    void encode(TComPic *pic, TComSlice* pcSlice);
+    void encode(TComPic *pic, TComSlice* slice);
 
     void processRow(int row);
 
@@ -177,11 +177,11 @@ public:
 
     TEncSlice*              getSliceEncoder()  { return &m_sliceEncoder; }
 
-    void resetEntropy(TComSlice *pcSlice)
+    void resetEntropy(TComSlice *slice)
     {
         for (int i = 0; i < this->m_numRows; i++)
         {
-            this->m_rows[i].m_entropyCoder.setEntropyCoder(&this->m_rows[i].m_sbacCoder, pcSlice);
+            this->m_rows[i].m_entropyCoder.setEntropyCoder(&this->m_rows[i].m_sbacCoder, slice);
             this->m_rows[i].m_entropyCoder.resetEntropy();
         }
     }

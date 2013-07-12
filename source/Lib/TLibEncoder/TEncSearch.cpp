@@ -2854,7 +2854,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& pre
                     xCopyAMVPInfo(&amvpInfo[1][bestBiPRefIdxL1], cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo());
                     cu->setMVPIdxSubParts(bestBiPMvpL1, REF_PIC_LIST_1, partAddr, partIdx, cu->getDepth(partAddr));
                     mvpIdxBi[1][bestBiPRefIdxL1] = bestBiPMvpL1;
-                    mvPredBi[1][bestBiPRefIdxL1] = cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo()->m_acMvCand[bestBiPMvpL1];
+                    mvPredBi[1][bestBiPRefIdxL1] = cu->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo()->m_mvCand[bestBiPMvpL1];
 
                     mvBidir[1] = mvPredBi[1][bestBiPRefIdxL1];
                     refIdxBidir[1] = bestBiPRefIdxL1;
@@ -3137,13 +3137,13 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
     }
 
     bestIdx = 0;
-    bestMv  = amvpInfo->m_acMvCand[0];
-    if (amvpInfo->iN <= 1)
+    bestMv  = amvpInfo->m_mvCand[0];
+    if (amvpInfo->m_num <= 1)
     {
         mvPred = bestMv;
 
         cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
-        cu->setMVPNumSubParts(amvpInfo->iN, picList, partAddr, partIdx, cu->getDepth(partAddr));
+        cu->setMVPNumSubParts(amvpInfo->m_num, picList, partAddr, partIdx, cu->getDepth(partAddr));
 
         if (cu->getSlice()->getMvdL1ZeroFlag() && picList == REF_PIC_LIST_1)
         {
@@ -3155,20 +3155,20 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
     if (bFilled)
     {
         assert(cu->getMVPIdx(picList, partAddr) >= 0);
-        mvPred = amvpInfo->m_acMvCand[cu->getMVPIdx(picList, partAddr)];
+        mvPred = amvpInfo->m_mvCand[cu->getMVPIdx(picList, partAddr)];
         return;
     }
 
     m_predTempYuv.clear();
 
     //-- Check Minimum Cost.
-    for (i = 0; i < amvpInfo->iN; i++)
+    for (i = 0; i < amvpInfo->m_num; i++)
     {
-        UInt cost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_predTempYuv, amvpInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
+        UInt cost = xGetTemplateCost(cu, partIdx, partAddr, fencYuv, &m_predTempYuv, amvpInfo->m_mvCand[i], i, AMVP_MAX_NUM_CANDS, picList, refIfx, roiWidth, roiHeight);
         if (bestCost > cost)
         {
             bestCost = cost;
-            bestMv   = amvpInfo->m_acMvCand[i];
+            bestMv   = amvpInfo->m_mvCand[i];
             bestIdx  = i;
             (*distBiP) = cost;
         }
@@ -3179,7 +3179,7 @@ Void TEncSearch::xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt part
     // Setting Best MVP
     mvPred = bestMv;
     cu->setMVPIdxSubParts(bestIdx, picList, partAddr, partIdx, cu->getDepth(partAddr));
-    cu->setMVPNumSubParts(amvpInfo->iN, picList, partAddr, partIdx, cu->getDepth(partAddr));
+    cu->setMVPNumSubParts(amvpInfo->m_num, picList, partAddr, partIdx, cu->getDepth(partAddr));
 }
 
 UInt TEncSearch::xGetMvpIdxBits(Int idx, Int num)
@@ -3259,10 +3259,10 @@ Void TEncSearch::xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt la
 
 Void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 {
-    dst->iN = src->iN;
-    for (Int i = 0; i < src->iN; i++)
+    dst->m_num = src->m_num;
+    for (Int i = 0; i < src->m_num; i++)
     {
-        dst->m_acMvCand[i] = src->m_acMvCand[i];
+        dst->m_mvCand[i] = src->m_mvCand[i];
     }
 }
 
@@ -3270,20 +3270,20 @@ Void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mvPred, Int& outMvpIdx, UInt& outBits, UInt& outCost)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
-    assert(amvpInfo->m_acMvCand[outMvpIdx] == mvPred);
-    if (amvpInfo->iN < 2) return;
+    assert(amvpInfo->m_mvCand[outMvpIdx] == mvPred);
+    if (amvpInfo->m_num < 2) return;
 
     m_me.setMVP(mvPred);
     Int bestMvpIdx = outMvpIdx;
     Int mvBitsOrig = m_me.bitcost(mv) + m_mvpIdxCost[outMvpIdx][AMVP_MAX_NUM_CANDS];
     Int bestMvBits = mvBitsOrig;
 
-    for (Int mvpIdx = 0; mvpIdx < amvpInfo->iN; mvpIdx++)
+    for (Int mvpIdx = 0; mvpIdx < amvpInfo->m_num; mvpIdx++)
     {
         if (mvpIdx == outMvpIdx)
             continue;
 
-        m_me.setMVP(amvpInfo->m_acMvCand[mvpIdx]);
+        m_me.setMVP(amvpInfo->m_mvCand[mvpIdx]);
         Int mvbits = m_me.bitcost(mv) + m_mvpIdxCost[mvpIdx][AMVP_MAX_NUM_CANDS];
 
         if (mvbits < bestMvBits)
@@ -3295,7 +3295,7 @@ Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mv
 
     if (bestMvpIdx != outMvpIdx) // if changed
     {
-        mvPred = amvpInfo->m_acMvCand[bestMvpIdx];
+        mvPred = amvpInfo->m_mvCand[bestMvpIdx];
 
         outMvpIdx = bestMvpIdx;
         UInt origOutBits = outBits;
@@ -4697,8 +4697,8 @@ UInt  TEncSearch::estimateHeaderBits(TComDataCU* cu, UInt absPartIdx)
     UInt tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
     UInt bpely = tpely + (g_maxCUHeight >>  cu->getDepth(0)) - 1;
 
-    TComSlice * pcSlice = cu->getPic()->getSlice();
-    if ((rpelx < pcSlice->getSPS()->getPicWidthInLumaSamples()) && (bpely < pcSlice->getSPS()->getPicHeightInLumaSamples()))
+    TComSlice * slice = cu->getPic()->getSlice();
+    if ((rpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (bpely < slice->getSPS()->getPicHeightInLumaSamples()))
     {
         m_entropyCoder->encodeSplitFlag(cu, absPartIdx,  cu->getDepth(0));
     }

@@ -651,7 +651,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             }
             else
             {
-                // Note: pcSlice->getColFromL0Flag() is assumed to be always 0 and getcolRefIdx() is always 0.
+                // Note: slice->getColFromL0Flag() is assumed to be always 0 and getcolRefIdx() is always 0.
                 slice->setEnableTMVPFlag(1);
             }
             m_cSPS.setTMVPFlagsPresent(1);
@@ -1836,16 +1836,16 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     //===== add PSNR =====
     m_pcEncTop->m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
-    TComSlice*  pcSlice = pcPic->getSlice();
-    if (pcSlice->isIntra())
+    TComSlice*  slice = pcPic->getSlice();
+    if (slice->isIntra())
     {
         m_pcEncTop->m_gcAnalyzeI.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
-    if (pcSlice->isInterP())
+    if (slice->isInterP())
     {
         m_pcEncTop->m_gcAnalyzeP.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
-    if (pcSlice->isInterB())
+    if (slice->isInterB())
     {
         m_pcEncTop->m_gcAnalyzeB.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
     }
@@ -1853,30 +1853,30 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     if (m_pcCfg->getLogLevel() < X265_LOG_DEBUG)
         return;
 
-    Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
+    Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
 
-    if (!pcSlice->isReferenced())
+    if (!slice->isReferenced())
         c += 32; // lower case if unreferenced
 
     printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
-           pcSlice->getPOC(),
-           pcSlice->getTLayer(),
+           slice->getPOC(),
+           slice->getTLayer(),
            c,
-           pcSlice->getSliceQpBase(),
-           pcSlice->getSliceQp(),
+           slice->getSliceQpBase(),
+           slice->getSliceQp(),
            uibits);
 
     printf(" [Y:%6.2lf U:%6.2lf V:%6.2lf]", dYPSNR, dUPSNR, dVPSNR);
 
-    if (pcSlice->isIntra())
+    if (slice->isIntra())
         return;
-    Int numLists = pcSlice->isInterP() ? 1 : 2;
+    Int numLists = slice->isInterP() ? 1 : 2;
     for (Int refList = 0; refList < numLists; refList++)
     {
         printf(" [L%d ", refList);
-        for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(refList)); iRefIndex++)
+        for (Int iRefIndex = 0; iRefIndex < slice->getNumRefIdx(RefPicList(refList)); iRefIndex++)
         {
-            printf("%d ", pcSlice->getRefPOC(RefPicList(refList), iRefIndex) - pcSlice->getLastIDR());
+            printf("%d ", slice->getRefPOC(RefPicList(refList), iRefIndex) - slice->getLastIDR());
         }
 
         printf("]");
@@ -1950,9 +1950,9 @@ Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUn
 
 // Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
-Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice)
+Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice)
 {
-    TComReferencePictureSet *rps = pcSlice->getRPS();
+    TComReferencePictureSet *rps = slice->getRPS();
 
     if (!rps->getNumberOfLongtermPictures())
     {
@@ -2032,13 +2032,13 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice)
     ctr = 0;
     Int currMSB = 0, currLSB = 0;
     // currPicPoc = currMSB + currLSB
-    currLSB = getLSB(pcSlice->getPOC(), maxPicOrderCntLSB);
-    currMSB = pcSlice->getPOC() - currLSB;
+    currLSB = getLSB(slice->getPOC(), maxPicOrderCntLSB);
+    currMSB = slice->getPOC() - currLSB;
 
     for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
     {
         rps->setPOC(i, longtermPicsPoc[ctr]);
-        rps->setDeltaPOC(i, -pcSlice->getPOC() + longtermPicsPoc[ctr]);
+        rps->setDeltaPOC(i, -slice->getPOC() + longtermPicsPoc[ctr]);
         rps->setUsed(i, tempArray[ctr]);
         rps->setPocLSBLT(i, longtermPicsLSB[ctr]);
         rps->setDeltaPocMSBCycleLT(i, (currMSB - (longtermPicsPoc[ctr] - longtermPicsLSB[ctr])) / maxPicOrderCntLSB);

@@ -1694,7 +1694,7 @@ Void TComDataCU::setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth
 Void TComDataCU::setQPSubParts(Int qp, UInt absPartIdx, UInt depth)
 {
     UInt uiCurrPartNumb = m_pcPic->getNumPartInCU() >> (depth << 1);
-    TComSlice * pcSlice = getPic()->getSlice();
+    TComSlice * slice = getPic()->getSlice();
 
     for (UInt uiSCUIdx = absPartIdx; uiSCUIdx < absPartIdx + uiCurrPartNumb; uiSCUIdx++)
     {
@@ -2215,12 +2215,12 @@ Bool TComDataCU::hasEqualMotion(UInt absPartIdx, TComDataCU* pcCandCU, UInt uiCa
         return false;
     }
 
-    for (UInt uiRefListIdx = 0; uiRefListIdx < 2; uiRefListIdx++)
+    for (UInt refListIdx = 0; refListIdx < 2; refListIdx++)
     {
-        if (getInterDir(absPartIdx) & (1 << uiRefListIdx))
+        if (getInterDir(absPartIdx) & (1 << refListIdx))
         {
-            if (getCUMvField(RefPicList(uiRefListIdx))->getMv(absPartIdx)     != pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getMv(uiCandAbsPartIdx) ||
-                getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(absPartIdx) != pcCandCU->getCUMvField(RefPicList(uiRefListIdx))->getRefIdx(uiCandAbsPartIdx))
+            if (getCUMvField(RefPicList(refListIdx))->getMv(absPartIdx)     != pcCandCU->getCUMvField(RefPicList(refListIdx))->getMv(uiCandAbsPartIdx) ||
+                getCUMvField(RefPicList(refListIdx))->getRefIdx(absPartIdx) != pcCandCU->getCUMvField(RefPicList(refListIdx))->getRefIdx(uiCandAbsPartIdx))
             {
                 return false;
             }
@@ -2679,7 +2679,7 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
     MV cMvPred;
     Bool bAddedSmvp = false;
 
-    pInfo->iN = 0;
+    pInfo->m_num = 0;
     if (refIdx < 0)
     {
         return;
@@ -2732,7 +2732,7 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
         bAdded = xAddMVPCand(pInfo, picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
     }
     bAdded = bAddedSmvp;
-    if (pInfo->iN == 2) bAdded = true;
+    if (pInfo->m_num == 2) bAdded = true;
 
     if (!bAdded)
     {
@@ -2748,11 +2748,11 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
         }
     }
 
-    if (pInfo->iN == 2)
+    if (pInfo->m_num == 2)
     {
-        if (pInfo->m_acMvCand[0] == pInfo->m_acMvCand[1])
+        if (pInfo->m_mvCand[0] == pInfo->m_mvCand[1])
         {
-            pInfo->iN = 1;
+            pInfo->m_num = 1;
         }
     }
 
@@ -2805,7 +2805,7 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
         }
         if (uiLCUIdx >= 0 && xGetColMVP(picList, uiLCUIdx, uiAbsPartAddr, cColMv, iRefIdx_Col))
         {
-            pInfo->m_acMvCand[pInfo->iN++] = cColMv;
+            pInfo->m_mvCand[pInfo->m_num++] = cColMv;
         }
         else
         {
@@ -2814,20 +2814,20 @@ Void TComDataCU::fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, In
             xDeriveCenterIdx(partIdx, uiPartIdxCenter);
             if (xGetColMVP(picList, uiCurLCUIdx, uiPartIdxCenter,  cColMv, iRefIdx_Col))
             {
-                pInfo->m_acMvCand[pInfo->iN++] = cColMv;
+                pInfo->m_mvCand[pInfo->m_num++] = cColMv;
             }
         }
         //----  co-located RightBottom Temporal Predictor  ---//
     }
 
-    if (pInfo->iN > AMVP_MAX_NUM_CANDS)
+    if (pInfo->m_num > AMVP_MAX_NUM_CANDS)
     {
-        pInfo->iN = AMVP_MAX_NUM_CANDS;
+        pInfo->m_num = AMVP_MAX_NUM_CANDS;
     }
-    while (pInfo->iN < AMVP_MAX_NUM_CANDS)
+    while (pInfo->m_num < AMVP_MAX_NUM_CANDS)
     {
-        pInfo->m_acMvCand[pInfo->iN] = 0;
-        pInfo->iN++;
+        pInfo->m_mvCand[pInfo->m_num] = 0;
+        pInfo->m_num++;
     }
 }
 
@@ -2959,7 +2959,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UI
     {
         MV cMvPred = pcTmpCU->getCUMvField(picList)->getMv(uiIdx);
 
-        pInfo->m_acMvCand[pInfo->iN++] = cMvPred;
+        pInfo->m_mvCand[pInfo->m_num++] = cMvPred;
         return true;
     }
 
@@ -2982,7 +2982,7 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UI
         if (iNeibRefPOC == iCurrRefPOC) // Same Reference Frame But Diff List//
         {
             MV cMvPred = pcTmpCU->getCUMvField(eRefPicList2nd)->getMv(uiIdx);
-            pInfo->m_acMvCand[pInfo->iN++] = cMvPred;
+            pInfo->m_mvCand[pInfo->m_num++] = cMvPred;
             return true;
         }
     }
@@ -3083,7 +3083,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refId
                     rcMv = scaleMv(cMvPred, iScale);
                 }
             }
-            pInfo->m_acMvCand[pInfo->iN++] = rcMv;
+            pInfo->m_mvCand[pInfo->m_num++] = rcMv;
             return true;
         }
     }
@@ -3113,7 +3113,7 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refId
                     rcMv = scaleMv(cMvPred, iScale);
                 }
             }
-            pInfo->m_acMvCand[pInfo->iN++] = rcMv;
+            pInfo->m_mvCand[pInfo->m_num++] = rcMv;
             return true;
         }
     }
@@ -3334,7 +3334,7 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
                                                      , Bool bIndependentTileBoundaryEnabled)
 {
     UInt numSUInLCU = numSUInLCUWidth * numSUInLCUHeight;
-    UInt uiLPelX, uiTPelY;
+    UInt lpelx, tpely;
     UInt width, height;
     Bool bPicRBoundary, bPicBBoundary, bPicTBoundary, bPicLBoundary;
     Bool bLCURBoundary = false, bLCUBBoundary = false, bLCUTBoundary = false, bLCULBoundary = false;
@@ -3352,8 +3352,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
     {
         NDBFBlockInfo& rSGU = m_vNDFBlock[i];
 
-        uiLPelX = rSGU.posX;
-        uiTPelY = rSGU.posY;
+        lpelx = rSGU.posX;
+        tpely = rSGU.posY;
         width   = rSGU.width;
         height  = rSGU.height;
         rTLSU     = g_zscanToRaster[rSGU.startSU];
@@ -3362,10 +3362,10 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
 
         pbAvailBorder = rSGU.isBorderAvailable;
 
-        bPicTBoundary = (uiTPelY == 0) ? (true) : (false);
-        bPicLBoundary = (uiLPelX == 0) ? (true) : (false);
-        bPicRBoundary = (!(uiLPelX + width < picWidth)) ? (true) : (false);
-        bPicBBoundary = (!(uiTPelY + height < picHeight)) ? (true) : (false);
+        bPicTBoundary = (tpely == 0) ? (true) : (false);
+        bPicLBoundary = (lpelx == 0) ? (true) : (false);
+        bPicRBoundary = (!(lpelx + width < picWidth)) ? (true) : (false);
+        bPicBBoundary = (!(tpely + height < picHeight)) ? (true) : (false);
 
         bLCULBoundary = (rTLSU % numSUInLCUWidth == 0) ? (true) : (false);
         bLCURBoundary = ((rTLSU + widthSU) % numSUInLCUWidth == 0) ? (true) : (false);

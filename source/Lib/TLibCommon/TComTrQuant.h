@@ -162,7 +162,7 @@ public:
     Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void initSliceQpDelta();
-    Void storeSliceQpNext(TComSlice* pcSlice);
+    Void storeSliceQpNext(TComSlice* slice);
     Void clearSliceARLCnt();
 
     Int     getQpDelta(Int qp) { return m_qpDelta[qp]; }

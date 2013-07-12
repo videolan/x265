@@ -911,10 +911,10 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
     Int stride;
     Int iLcuHeight = pTmpSPS->getMaxCUHeight();
     Int iLcuWidth  = pTmpSPS->getMaxCUWidth();
-    UInt uiLPelX   = pTmpCu->getCUPelX();
-    UInt uiTPelY   = pTmpCu->getCUPelY();
-    UInt uiRPelX;
-    UInt uiBPelY;
+    UInt lpelx   = pTmpCu->getCUPelX();
+    UInt tpely   = pTmpCu->getCUPelY();
+    UInt rpelx;
+    UInt bpely;
     Int64* iStats;
     Int64* iCount;
     Int iClassIdx;
@@ -944,14 +944,14 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
     iPicHeightTmp = m_iPicHeight >> iIsChroma;
     iLcuWidth     = iLcuWidth    >> iIsChroma;
     iLcuHeight    = iLcuHeight   >> iIsChroma;
-    uiLPelX       = uiLPelX      >> iIsChroma;
-    uiTPelY       = uiTPelY      >> iIsChroma;
-    uiRPelX       = uiLPelX + iLcuWidth;
-    uiBPelY       = uiTPelY + iLcuHeight;
-    uiRPelX       = uiRPelX > iPicWidthTmp  ? iPicWidthTmp  : uiRPelX;
-    uiBPelY       = uiBPelY > iPicHeightTmp ? iPicHeightTmp : uiBPelY;
-    iLcuWidth     = uiRPelX - uiLPelX;
-    iLcuHeight    = uiBPelY - uiTPelY;
+    lpelx       = lpelx      >> iIsChroma;
+    tpely       = tpely      >> iIsChroma;
+    rpelx       = lpelx + iLcuWidth;
+    bpely       = tpely + iLcuHeight;
+    rpelx       = rpelx > iPicWidthTmp  ? iPicWidthTmp  : rpelx;
+    bpely       = bpely > iPicHeightTmp ? iPicHeightTmp : bpely;
+    iLcuWidth     = rpelx - lpelx;
+    iLcuHeight    = bpely - tpely;
 
     stride    =  (iYCbCr == 0) ? m_pcPic->getStride() : m_pcPic->getCStride();
 
@@ -968,8 +968,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
         fenc = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
         pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
 
-        iEndX   = (uiRPelX == iPicWidthTmp) ? iLcuWidth : iLcuWidth - numSkipLineRight;
-        iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight : iLcuHeight - numSkipLine;
+        iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth : iLcuWidth - numSkipLineRight;
+        iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight : iLcuHeight - numSkipLine;
         for (y = 0; y < iEndY; y++)
         {
             for (x = 0; x < iEndX; x++)
@@ -1009,8 +1009,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             fenc = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
 
-            iStartX = (uiLPelX == 0) ? 1 : 0;
-            iEndX   = (uiRPelX == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
+            iStartX = (lpelx == 0) ? 1 : 0;
+            iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
             for (y = 0; y < iLcuHeight - numSkipLine; y++)
             {
                 iSignLeft = xSign(pRec[iStartX] - pRec[iStartX - 1]);
@@ -1042,10 +1042,10 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             fenc = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
 
-            iStartY = (uiTPelY == 0) ? 1 : 0;
-            iEndX   = (uiRPelX == iPicWidthTmp) ? iLcuWidth : iLcuWidth - numSkipLineRight;
-            iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
-            if (uiTPelY == 0)
+            iStartY = (tpely == 0) ? 1 : 0;
+            iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth : iLcuWidth - numSkipLineRight;
+            iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
+            if (tpely == 0)
             {
                 fenc += stride;
                 pRec += stride;
@@ -1085,12 +1085,12 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             fenc = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
 
-            iStartX = (uiLPelX == 0) ? 1 : 0;
-            iEndX   = (uiRPelX == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
+            iStartX = (lpelx == 0) ? 1 : 0;
+            iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
 
-            iStartY = (uiTPelY == 0) ? 1 : 0;
-            iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
-            if (uiTPelY == 0)
+            iStartY = (tpely == 0) ? 1 : 0;
+            iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
+            if (tpely == 0)
             {
                 fenc += stride;
                 pRec += stride;
@@ -1135,11 +1135,11 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
             fenc = getPicYuvAddr(m_pcPic->getPicYuvOrg(), iYCbCr, iAddr);
             pRec = getPicYuvAddr(m_pcPic->getPicYuvRec(), iYCbCr, iAddr);
 
-            iStartX = (uiLPelX == 0) ? 1 : 0;
-            iEndX   = (uiRPelX == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
+            iStartX = (lpelx == 0) ? 1 : 0;
+            iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth - numSkipLineRight;
 
-            iStartY = (uiTPelY == 0) ? 1 : 0;
-            iEndY   = (uiBPelY == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
+            iStartY = (tpely == 0) ? 1 : 0;
+            iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight - numSkipLine;
             if (iStartY == 1)
             {
                 fenc += stride;

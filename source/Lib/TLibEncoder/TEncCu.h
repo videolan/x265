@@ -160,7 +160,7 @@ protected:
     Void xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU);
     Void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     Void xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt depth, UInt uiSrcDepth, TComDataCU* cu,
-                      UInt uiLPelX, UInt uiTPelY);
+                      UInt lpelx, UInt tpely);
     Void xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt depth);
     Void xCopyYuv2Best(UInt partUnitIdx, UInt uiNextDepth);
 
@@ -172,10 +172,10 @@ protected:
     Void xLcuCollectARLStats(TComDataCU* cu);
     Int  xTuCollectARLStats(TCoeff* coeff, Int* arlCoeff, Int numCoeffInCU, Double* coeffSum, UInt* numSamples);
 
-    Void deriveTestModeAMP(TComDataCU*& outBestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
+    Void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
                            Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
 
-    Void xFillPCMBuffer(TComDataCU*& outCU, TComYuv* origYuv);
+    Void xFillPCMBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
 
 //! \}
