@@ -561,7 +561,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 8)
     {
-        INIT2( sad_x3, _avx2 );
+        //INIT2( sad_x3, _avx2 );
         INIT2( sad_x4, _avx2 );
         INIT4( satd, _avx2 );
         INIT2_NAME( sse_pp, ssd, _avx2 );
