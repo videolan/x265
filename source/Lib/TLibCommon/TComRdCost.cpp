@@ -201,7 +201,7 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStri
 
 UInt TComRdCost::xGetSAD(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -230,7 +230,7 @@ UInt TComRdCost::xGetSAD(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD4(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -261,7 +261,7 @@ UInt TComRdCost::xGetSAD4(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD8(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -296,7 +296,7 @@ UInt TComRdCost::xGetSAD8(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -339,7 +339,7 @@ UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD12(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -421,7 +421,7 @@ UInt TComRdCost::xGetSAD16N(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -480,7 +480,7 @@ UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -531,7 +531,7 @@ UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -623,7 +623,7 @@ UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSADw(pcDtParam);
     }
@@ -724,7 +724,7 @@ UInt xGetSSEHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows
 
 UInt TComRdCost::xGetSSE(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSSEw(pcDtParam);
     }
@@ -788,7 +788,7 @@ UInt xGetSSE4Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
 
 UInt TComRdCost::xGetSSE4(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         assert(pcDtParam->cols == 4);
         return xGetSSEw(pcDtParam);
@@ -860,7 +860,7 @@ UInt xGetSSE8Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRow
 
 UInt TComRdCost::xGetSSE8(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         assert(pcDtParam->cols == 8);
         return xGetSSEw(pcDtParam);
@@ -948,7 +948,7 @@ UInt xGetSSE16Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
 
 UInt TComRdCost::xGetSSE16(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         assert(pcDtParam->cols == 16);
         return xGetSSEw(pcDtParam);
@@ -1039,7 +1039,7 @@ UInt xGetSSE16NHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iR
 
 UInt TComRdCost::xGetSSE16N(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetSSEw(pcDtParam);
     }
@@ -1159,7 +1159,7 @@ UInt xGetSSE32Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
 
 UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         assert(pcDtParam->cols == 32);
         return xGetSSEw(pcDtParam);
@@ -1344,7 +1344,7 @@ UInt xGetSSE64Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRo
 
 UInt TComRdCost::xGetSSE64(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         assert(pcDtParam->cols == 64);
         return xGetSSEw(pcDtParam);
@@ -1581,7 +1581,7 @@ UInt TComRdCost::xCalcHADs8x8(Pel *piOrg, Pel *piCur, Int iStrideOrg, Int iStrid
 
 UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetHADs4w(pcDtParam);
     }
@@ -1607,7 +1607,7 @@ UInt TComRdCost::xGetHADs4(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetHADs8w(pcDtParam);
     }
@@ -1643,7 +1643,7 @@ UInt TComRdCost::xGetHADs8(DistParam* pcDtParam)
 
 UInt TComRdCost::xGetHADs(DistParam* pcDtParam)
 {
-    if (pcDtParam->bApplyWeight)
+    if (pcDtParam->applyWeight)
     {
         return xGetHADsw(pcDtParam);
     }

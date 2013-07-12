@@ -123,7 +123,7 @@ public:
     FpDistFunc distFunc;
     Int   bitDepth;
 
-    Bool            bApplyWeight;   // whether weighted prediction is used or not
+    Bool            applyWeight;   // whether weighted prediction is used or not
     wpScalingParam  *wpCur;         // weighted prediction scaling parameters for current ref
 
     // (vertical) subsampling shift (for reducing complexity)

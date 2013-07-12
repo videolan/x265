@@ -4959,15 +4959,15 @@ Void  TEncSearch::setWpScalingDistParam(TComDataCU* cu, Int refIfx, RefPicList p
 {
     if (refIfx < 0)
     {
-        m_distParam.bApplyWeight = false;
+        m_distParam.applyWeight = false;
         return;
     }
 
     TComSlice       *slice = cu->getSlice();
     TComPPS         *pps   = cu->getSlice()->getPPS();
     wpScalingParam  *wp0, *wp1;
-    m_distParam.bApplyWeight = (slice->getSliceType() == P_SLICE && pps->getUseWP()) || (slice->getSliceType() == B_SLICE && pps->getWPBiPred());
-    if (!m_distParam.bApplyWeight) return;
+    m_distParam.applyWeight = (slice->getSliceType() == P_SLICE && pps->getUseWP()) || (slice->getSliceType() == B_SLICE && pps->getWPBiPred());
+    if (!m_distParam.applyWeight) return;
 
     Int refIdx0 = (picList == REF_PIC_LIST_0) ? refIfx : (-1);
     Int refIdx1 = (picList == REF_PIC_LIST_1) ? refIfx : (-1);
