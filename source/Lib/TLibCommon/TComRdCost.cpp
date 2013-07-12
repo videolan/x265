@@ -259,39 +259,39 @@ UInt TComRdCost::xGetSAD4(DistParam* distParam)
     return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
-UInt TComRdCost::xGetSAD8(DistParam* pcDtParam)
+UInt TComRdCost::xGetSAD8(DistParam* distParam)
 {
-    if (pcDtParam->applyWeight)
+    if (distParam->applyWeight)
     {
-        return xGetSADw(pcDtParam);
+        return xGetSADw(distParam);
     }
 
-    Pel* piOrg      = pcDtParam->fenc;
-    Pel* piCur      = pcDtParam->fref;
-    Int  iRows      = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->subShift;
-    Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->frefstride * iSubStep;
-    Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
-    UInt uiSum = 0;
+    Pel* org      = distParam->fenc;
+    Pel* cur      = distParam->fref;
+    Int  rows     = distParam->rows;
+    Int  shift  = distParam->subShift;
+    Int  step   = (1 << shift);
+    Int  strideCur = distParam->frefstride * step;
+    Int  strideOrg = distParam->fencstride * step;
+    UInt sum = 0;
 
-    for (; iRows != 0; iRows -= iSubStep)
+    for (; rows != 0; rows -= step)
     {
-        uiSum += abs(piOrg[0] - piCur[0]);
-        uiSum += abs(piOrg[1] - piCur[1]);
-        uiSum += abs(piOrg[2] - piCur[2]);
-        uiSum += abs(piOrg[3] - piCur[3]);
-        uiSum += abs(piOrg[4] - piCur[4]);
-        uiSum += abs(piOrg[5] - piCur[5]);
-        uiSum += abs(piOrg[6] - piCur[6]);
-        uiSum += abs(piOrg[7] - piCur[7]);
+        sum += abs(org[0] - cur[0]);
+        sum += abs(org[1] - cur[1]);
+        sum += abs(org[2] - cur[2]);
+        sum += abs(org[3] - cur[3]);
+        sum += abs(org[4] - cur[4]);
+        sum += abs(org[5] - cur[5]);
+        sum += abs(org[6] - cur[6]);
+        sum += abs(org[7] - cur[7]);
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    uiSum <<= iSubShift;
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
+    sum <<= shift;
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
 UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
