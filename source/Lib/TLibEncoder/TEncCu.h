@@ -38,18 +38,17 @@
 #ifndef __TENCCU__
 #define __TENCCU__
 
-// Include files
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComDataCU.h"
+#include "TShortYUV.h"
 
 #include "TEncEntropy.h"
 #include "TEncSearch.h"
 #include "TEncRateCtrl.h"
-#include "TShortYUV.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -68,49 +67,48 @@ class TEncCu
 {
 private:
 
-    TComDataCU**            m_InterCU_2Nx2N;
-    TComDataCU**            m_InterCU_2NxN;
-    TComDataCU**            m_InterCU_Nx2N;
-    TComDataCU**            m_IntraInInterCU;
-    TComDataCU**            m_MergeCU;
-    TComDataCU**            m_MergeBestCU;
-    TComDataCU**            m_ppcBestCU;    ///< Best CUs in each depth
-    TComDataCU**            m_ppcTempCU;    ///< Temporary CUs in each depth
-    UChar                   m_uhTotalDepth;
-
     static const int MAX_PRED_TYPES = 6;
 
-    TComYuv**               m_ppcPredYuvBest; ///< Best Prediction Yuv for each depth
-    TShortYUV**             m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
-    TComYuv**               m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
-    TComYuv**               m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
-    TShortYUV**             m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
-    TComYuv**               m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
-    TComYuv**               m_ppcPredYuvMode[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
-    TComYuv**               m_RecoYuvMergeBest;
-    TComYuv**               m_ppcOrigYuv;     ///< Original Yuv for each depth
+    TComDataCU** m_InterCU_2Nx2N;
+    TComDataCU** m_InterCU_2NxN;
+    TComDataCU** m_InterCU_Nx2N;
+    TComDataCU** m_IntraInInterCU;
+    TComDataCU** m_MergeCU;
+    TComDataCU** m_MergeBestCU;
+    TComDataCU** m_ppcBestCU;    ///< Best CUs in each depth
+    TComDataCU** m_ppcTempCU;    ///< Temporary CUs in each depth
+    UChar        m_uhTotalDepth;
 
-    //  Data : encoder control
-    Bool                    m_bEncodeDQP;
+    TComYuv**    m_ppcPredYuvBest; ///< Best Prediction Yuv for each depth
+    TShortYUV**  m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
+    TComYuv**    m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
+    TComYuv**    m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
+    TShortYUV**  m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
+    TComYuv**    m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
+    TComYuv**    m_ppcPredYuvMode[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
+    TComYuv**    m_RecoYuvMergeBest;
+    TComYuv**    m_ppcOrigYuv;     ///< Original Yuv for each depth
 
-    //  Access channel
-    TEncCfg*                m_pcEncCfg;
-    TEncSearch*             m_pcPredSearch;
-    TComTrQuant*            m_pcTrQuant;
-    TComBitCounter*         m_pcBitCounter;
-    TComRdCost*             m_pcRdCost;
+    // Data : encoder control
+    Bool         m_bEncodeDQP;
 
-    TEncEntropy*            m_entropyCoder;
+    TEncCfg*     m_pcEncCfg;
+    TEncSearch*  m_pcPredSearch;
+    TComTrQuant* m_pcTrQuant;
+    TComRdCost*  m_pcRdCost;
+    TEncEntropy* m_entropyCoder;
+    TComBitCounter* m_pcBitCounter;
 
     // SBAC RD
-    TEncSbac***             m_rdSbacCoders;
-    TEncSbac*               m_rdGoOnSbacCoder;
-    TEncRateCtrl*           m_pcRateCtrl;
-    UInt                    m_LCUPredictionSAD;
-    Int                     m_addSADDepth;
-    Int                     m_temporalSAD;
+    TEncSbac***  m_rdSbacCoders;
+    TEncSbac*    m_rdGoOnSbacCoder;
+    TEncRateCtrl* m_pcRateCtrl;
 
-    Bool                    m_abortFlag; // This flag is used to abort the recursive CU check when the child CU cost is greater than the parent CU
+    UInt         m_LCUPredictionSAD;
+    Int          m_addSADDepth;
+    Int          m_temporalSAD;
+
+    Bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
 
 public:
 
@@ -127,19 +125,19 @@ public:
     Void set_pcRdCost(TComRdCost* pcRdCost) { m_pcRdCost = pcRdCost; }
 
     /// copy parameters from encoder class
-    Void  init(TEncTop* pcEncTop);
+    Void init(TEncTop* pcEncTop);
 
     /// create internal buffers
-    Void  create(UChar uhTotalDepth, UInt iMaxWidth, UInt iMaxHeight);
+    Void create(UChar uhTotalDepth, UInt iMaxWidth, UInt iMaxHeight);
 
     /// destroy internal buffers
-    Void  destroy();
+    Void destroy();
 
     /// CU analysis function
-    Void  compressCU(TComDataCU* rpcCU);
+    Void compressCU(TComDataCU* rpcCU);
 
     /// CU encoding function
-    Void  encodeCU(TComDataCU* cu);
+    Void encodeCU(TComDataCU* cu);
 
     Void setBitCounter(TComBitCounter* pcBitCounter) { m_pcBitCounter = pcBitCounter; }
 
@@ -147,33 +145,33 @@ public:
 
 protected:
 
-    Void  finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
-    Void  xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt depth, UInt uiPartUnitIdx, PartSize eParentPartSize = SIZE_NONE);
-    Void  xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt depth, PartSize eParentPartSize = SIZE_NONE);
-    Void  xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex);
-    Void  xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
+    Void finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
+    Void xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt depth, UInt uiPartUnitIdx, PartSize eParentPartSize = SIZE_NONE);
+    Void xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU* rpcParentCU,  UInt depth, PartSize eParentPartSize = SIZE_NONE);
+    Void xCompressInterCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex);
+    Void xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
 
-    Int   xComputeQP(TComDataCU* cu, UInt depth);
-    Void  xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt depth);
+    Int  xComputeQP(TComDataCU* cu, UInt depth);
+    Void xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt depth);
 
-    Void  xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode, TComYuv*& rpcYuvPredBest, TComYuv*& rpcYuvReconBest);    
-    Void  xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize);
-    Void  xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
-    Void  xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
-    Void  xEncodeIntrainInter(TComDataCU*& cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TComYuv*& outReconYuv);
-    Void  xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
-    Void  xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize);
-    Void  xCheckDQP(TComDataCU* cu);
+    Void xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode, TComYuv*& rpcYuvPredBest, TComYuv*& rpcYuvReconBest);    
+    Void xComputeCostIntrainInter(TComDataCU*& rpcTempCU, PartSize eSize);
+    Void xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize, Bool bUseMRG = false);
+    Void xComputeCostInter(TComDataCU*& rpcTempCU, PartSize ePartSize, UInt Index, Bool bUseMRG = false);
+    Void xEncodeIntrainInter(TComDataCU*& cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TComYuv*& outReconYuv);
+    Void xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize);
+    Void xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize eSize);
+    Void xCheckDQP(TComDataCU* cu);
 
-    Void  xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
-    Void  xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
-    Void  xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt absPartIdx, UInt depth, UInt uiSrcDepth, TComDataCU* cu, UInt uiLPelX, UInt uiTPelY);
-    Void  xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt depth);
-    Void  xCopyYuv2Best(UInt uiPartUnitIdx, UInt uiNextDepth);
+    Void xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU);
+    Void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
+    Void xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt absPartIdx, UInt depth, UInt uiSrcDepth, TComDataCU* cu, UInt uiLPelX, UInt uiTPelY);
+    Void xCopyYuv2Tmp(UInt uhPartUnitIdx, UInt depth);
+    Void xCopyYuv2Best(UInt uiPartUnitIdx, UInt uiNextDepth);
 
-    Bool getdQPFlag()                      { return m_bEncodeDQP; }
+    Bool getdQPFlag()        { return m_bEncodeDQP; }
 
-    Void setdQPFlag(Bool b)                { m_bEncodeDQP = b; }
+    Void setdQPFlag(Bool b)  { m_bEncodeDQP = b; }
 
     // Adaptive reconstruction level (ARL) statistics collection functions
     Void xLcuCollectARLStats(TComDataCU* rpcCU);
