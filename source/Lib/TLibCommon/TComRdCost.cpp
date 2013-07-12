@@ -621,80 +621,80 @@ UInt TComRdCost::xGetSAD64(DistParam* distParam)
     return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
-UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
+UInt TComRdCost::xGetSAD48(DistParam* distParam)
 {
-    if (pcDtParam->applyWeight)
+    if (distParam->applyWeight)
     {
-        return xGetSADw(pcDtParam);
+        return xGetSADw(distParam);
     }
 
-    Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->fref;
-    Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->subShift;
-    Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->frefstride * iSubStep;
-    Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
+    Pel* org = distParam->fenc;
+    Pel* cur = distParam->fref;
+    Int  rows  = distParam->rows;
+    Int  shift = distParam->subShift;
+    Int  step  = (1 << shift);
+    Int  strideCur = distParam->frefstride * step;
+    Int  strideOrg = distParam->fencstride * step;
 
-    UInt uiSum = 0;
+    UInt sum = 0;
 
-    for (; iRows != 0; iRows -= iSubStep)
+    for (; rows != 0; rows -= step)
     {
-        uiSum += abs(piOrg[0] - piCur[0]);
-        uiSum += abs(piOrg[1] - piCur[1]);
-        uiSum += abs(piOrg[2] - piCur[2]);
-        uiSum += abs(piOrg[3] - piCur[3]);
-        uiSum += abs(piOrg[4] - piCur[4]);
-        uiSum += abs(piOrg[5] - piCur[5]);
-        uiSum += abs(piOrg[6] - piCur[6]);
-        uiSum += abs(piOrg[7] - piCur[7]);
-        uiSum += abs(piOrg[8] - piCur[8]);
-        uiSum += abs(piOrg[9] - piCur[9]);
-        uiSum += abs(piOrg[10] - piCur[10]);
-        uiSum += abs(piOrg[11] - piCur[11]);
-        uiSum += abs(piOrg[12] - piCur[12]);
-        uiSum += abs(piOrg[13] - piCur[13]);
-        uiSum += abs(piOrg[14] - piCur[14]);
-        uiSum += abs(piOrg[15] - piCur[15]);
-        uiSum += abs(piOrg[16] - piCur[16]);
-        uiSum += abs(piOrg[17] - piCur[17]);
-        uiSum += abs(piOrg[18] - piCur[18]);
-        uiSum += abs(piOrg[19] - piCur[19]);
-        uiSum += abs(piOrg[20] - piCur[20]);
-        uiSum += abs(piOrg[21] - piCur[21]);
-        uiSum += abs(piOrg[22] - piCur[22]);
-        uiSum += abs(piOrg[23] - piCur[23]);
-        uiSum += abs(piOrg[24] - piCur[24]);
-        uiSum += abs(piOrg[25] - piCur[25]);
-        uiSum += abs(piOrg[26] - piCur[26]);
-        uiSum += abs(piOrg[27] - piCur[27]);
-        uiSum += abs(piOrg[28] - piCur[28]);
-        uiSum += abs(piOrg[29] - piCur[29]);
-        uiSum += abs(piOrg[30] - piCur[30]);
-        uiSum += abs(piOrg[31] - piCur[31]);
-        uiSum += abs(piOrg[32] - piCur[32]);
-        uiSum += abs(piOrg[33] - piCur[33]);
-        uiSum += abs(piOrg[34] - piCur[34]);
-        uiSum += abs(piOrg[35] - piCur[35]);
-        uiSum += abs(piOrg[36] - piCur[36]);
-        uiSum += abs(piOrg[37] - piCur[37]);
-        uiSum += abs(piOrg[38] - piCur[38]);
-        uiSum += abs(piOrg[39] - piCur[39]);
-        uiSum += abs(piOrg[40] - piCur[40]);
-        uiSum += abs(piOrg[41] - piCur[41]);
-        uiSum += abs(piOrg[42] - piCur[42]);
-        uiSum += abs(piOrg[43] - piCur[43]);
-        uiSum += abs(piOrg[44] - piCur[44]);
-        uiSum += abs(piOrg[45] - piCur[45]);
-        uiSum += abs(piOrg[46] - piCur[46]);
-        uiSum += abs(piOrg[47] - piCur[47]);
+        sum += abs(org[0] - cur[0]);
+        sum += abs(org[1] - cur[1]);
+        sum += abs(org[2] - cur[2]);
+        sum += abs(org[3] - cur[3]);
+        sum += abs(org[4] - cur[4]);
+        sum += abs(org[5] - cur[5]);
+        sum += abs(org[6] - cur[6]);
+        sum += abs(org[7] - cur[7]);
+        sum += abs(org[8] - cur[8]);
+        sum += abs(org[9] - cur[9]);
+        sum += abs(org[10] - cur[10]);
+        sum += abs(org[11] - cur[11]);
+        sum += abs(org[12] - cur[12]);
+        sum += abs(org[13] - cur[13]);
+        sum += abs(org[14] - cur[14]);
+        sum += abs(org[15] - cur[15]);
+        sum += abs(org[16] - cur[16]);
+        sum += abs(org[17] - cur[17]);
+        sum += abs(org[18] - cur[18]);
+        sum += abs(org[19] - cur[19]);
+        sum += abs(org[20] - cur[20]);
+        sum += abs(org[21] - cur[21]);
+        sum += abs(org[22] - cur[22]);
+        sum += abs(org[23] - cur[23]);
+        sum += abs(org[24] - cur[24]);
+        sum += abs(org[25] - cur[25]);
+        sum += abs(org[26] - cur[26]);
+        sum += abs(org[27] - cur[27]);
+        sum += abs(org[28] - cur[28]);
+        sum += abs(org[29] - cur[29]);
+        sum += abs(org[30] - cur[30]);
+        sum += abs(org[31] - cur[31]);
+        sum += abs(org[32] - cur[32]);
+        sum += abs(org[33] - cur[33]);
+        sum += abs(org[34] - cur[34]);
+        sum += abs(org[35] - cur[35]);
+        sum += abs(org[36] - cur[36]);
+        sum += abs(org[37] - cur[37]);
+        sum += abs(org[38] - cur[38]);
+        sum += abs(org[39] - cur[39]);
+        sum += abs(org[40] - cur[40]);
+        sum += abs(org[41] - cur[41]);
+        sum += abs(org[42] - cur[42]);
+        sum += abs(org[43] - cur[43]);
+        sum += abs(org[44] - cur[44]);
+        sum += abs(org[45] - cur[45]);
+        sum += abs(org[46] - cur[46]);
+        sum += abs(org[47] - cur[47]);
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    uiSum <<= iSubShift;
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
+    sum <<= shift;
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
