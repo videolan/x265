@@ -20,9 +20,10 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/../.hg_archival.txt)
         string(SUBSTRING "${hg_node}" 0 16 hg_id)
         set(HG_REVISION "${hg_latesttag}+${hg_latesttagdistance}-${hg_id}")
     endif()
+    # zip file version should never change, go ahead and cache it
     set(X265_VERSION ${HG_REVISION} CACHE STRING "x265 version string.")
 elseif(DEFINED ENV{X265_VERSION})
-    set(X265_VERSION $ENV{X265_VERSION} CACHE STRING "x265 version string.")
+    set(X265_VERSION $ENV{X265_REVISION})
 elseif(HG_EXECUTABLE)
     execute_process(COMMAND
         ${HG_EXECUTABLE} log -r. --template "{latesttag}"
@@ -68,4 +69,4 @@ else()
     set(X265_VERSION "unknown")
 endif()
 
-message(STATUS "xhevc version ${X265_VERSION}")
+message(STATUS "x265 version ${X265_VERSION}")

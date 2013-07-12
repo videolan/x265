@@ -59,3 +59,10 @@ build/ sub-folder for your preferred compiler.  They will open the cmake-gui
 to configure build options, click configure until no more red options remain,
 then click generate and exit.  There should now be an x265.sln file in the
 same folder, open this in Visual Studio and build it.
+
+= Version number considerations =
+
+Note that cmake will update X265_VERSION each time cmake runs, if you are
+building out of a Mercurial source repository.  If you are building out of
+a release source package, the version will not change.  If Mercurial is not
+found, the version will be "unknown".
