@@ -57,7 +57,7 @@
 using namespace x265;
 using namespace std;
 
-static const char short_options[] = "h:o:f:r:i:b:s:d:q:w:V";
+static const char short_options[] = "o:f:r:i:b:s:q:whV";
 static struct option long_options[] =
 {
 #define HELP(message)
