@@ -69,28 +69,25 @@ private:
 
     static const int MAX_PRED_TYPES = 6;
 
-    TComDataCU** m_InterCU_2Nx2N;
-    TComDataCU** m_InterCU_2NxN;
-    TComDataCU** m_InterCU_Nx2N;
-    TComDataCU** m_IntraInInterCU;
-    TComDataCU** m_MergeCU;
-    TComDataCU** m_MergeBestCU;
-    TComDataCU** m_ppcBestCU;    ///< Best CUs in each depth
-    TComDataCU** m_ppcTempCU;    ///< Temporary CUs in each depth
-    UChar        m_uhTotalDepth;
+    TComDataCU** m_interCU_2Nx2N;
+    TComDataCU** m_interCU_2NxN;
+    TComDataCU** m_interCU_Nx2N;
+    TComDataCU** m_intraInInterCU;
+    TComDataCU** m_mergeCU;
+    TComDataCU** m_bestMergeCU;
+    TComDataCU** m_bestCU;      ///< Best CUs at each depth
+    TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
 
-    TComYuv**    m_ppcPredYuvBest; ///< Best Prediction Yuv for each depth
-    TShortYUV**  m_ppcResiYuvBest; ///< Best Residual Yuv for each depth
-    TComYuv**    m_ppcRecoYuvBest; ///< Best Reconstruction Yuv for each depth
-    TComYuv**    m_ppcPredYuvTemp; ///< Temporary Prediction Yuv for each depth
-    TShortYUV**  m_ppcResiYuvTemp; ///< Temporary Residual Yuv for each depth
-    TComYuv**    m_ppcRecoYuvTemp; ///< Temporary Reconstruction Yuv for each depth
-    TComYuv**    m_ppcPredYuvMode[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
-    TComYuv**    m_RecoYuvMergeBest;
-    TComYuv**    m_ppcOrigYuv;     ///< Original Yuv for each depth
+    TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
+    TShortYUV**  m_bestResiYuv; ///< Best Residual Yuv for each depth
+    TComYuv**    m_bestRecoYuv; ///< Best Reconstruction Yuv for each depth
 
-    // Data : encoder control
-    Bool         m_bEncodeDQP;
+    TComYuv**    m_tmpPredYuv;  ///< Temporary Prediction Yuv for each depth
+    TShortYUV**  m_tmpResiYuv;  ///< Temporary Residual Yuv for each depth
+    TComYuv**    m_tmpRecoYuv;  ///< Temporary Reconstruction Yuv for each depth
+    TComYuv**    m_modePredYuv[MAX_PRED_TYPES]; ///< Prediction buffers for inter, intra, rect(2) and merge
+    TComYuv**    m_bestMergeRecoYuv;
+    TComYuv**    m_origYuv;     ///< Original Yuv at each depth
 
     TEncCfg*     m_pcEncCfg;
     TEncSearch*  m_pcPredSearch;
@@ -107,7 +104,9 @@ private:
     UInt         m_LCUPredictionSAD;
     Int          m_addSADDepth;
     Int          m_temporalSAD;
+    UChar        m_totalDepth;
 
+    Bool         m_bEncodeDQP;
     Bool         m_abortFlag; // aborts recursion when the child CU costs more than parent CU
 
 public:

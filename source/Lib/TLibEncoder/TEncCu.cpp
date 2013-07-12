@@ -64,85 +64,85 @@ using namespace x265;
  */
 Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 {
-    m_uhTotalDepth   = uhTotalDepth + 1;
-    m_InterCU_2Nx2N  = new TComDataCU*[m_uhTotalDepth - 1];
-    m_InterCU_2NxN   = new TComDataCU*[m_uhTotalDepth - 1];
-    m_InterCU_Nx2N   = new TComDataCU*[m_uhTotalDepth - 1];
-    m_IntraInInterCU = new TComDataCU*[m_uhTotalDepth - 1];
-    m_MergeCU        = new TComDataCU*[m_uhTotalDepth - 1];
-    m_MergeBestCU    = new TComDataCU*[m_uhTotalDepth - 1];
-    m_ppcBestCU      = new TComDataCU*[m_uhTotalDepth - 1];
-    m_ppcTempCU      = new TComDataCU*[m_uhTotalDepth - 1];
+    m_totalDepth   = uhTotalDepth + 1;
+    m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
+    m_interCU_2NxN   = new TComDataCU*[m_totalDepth - 1];
+    m_interCU_Nx2N   = new TComDataCU*[m_totalDepth - 1];
+    m_intraInInterCU = new TComDataCU*[m_totalDepth - 1];
+    m_mergeCU        = new TComDataCU*[m_totalDepth - 1];
+    m_bestMergeCU    = new TComDataCU*[m_totalDepth - 1];
+    m_bestCU      = new TComDataCU*[m_totalDepth - 1];
+    m_tempCU      = new TComDataCU*[m_totalDepth - 1];
 
-    m_ppcPredYuvBest = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcResiYuvBest = new TShortYUV*[m_uhTotalDepth - 1];
-    m_ppcRecoYuvBest = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
+    m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
+    m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
+    m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
 
-    m_ppcPredYuvMode[0] = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvMode[1] = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvMode[2] = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvMode[3] = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvMode[4] = new TComYuv*[m_uhTotalDepth - 1];
-    m_ppcPredYuvMode[5] = new TComYuv*[m_uhTotalDepth - 1];
+    m_modePredYuv[0] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[1] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[2] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[3] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[4] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[5] = new TComYuv*[m_totalDepth - 1];
 
-    m_ppcResiYuvTemp = new TShortYUV*[m_uhTotalDepth - 1];
-    m_ppcRecoYuvTemp = new TComYuv*[m_uhTotalDepth - 1];
+    m_tmpResiYuv = new TShortYUV*[m_totalDepth - 1];
+    m_tmpRecoYuv = new TComYuv*[m_totalDepth - 1];
 
-    m_RecoYuvMergeBest = new TComYuv*[m_uhTotalDepth - 1];
+    m_bestMergeRecoYuv = new TComYuv*[m_totalDepth - 1];
     
-    m_ppcOrigYuv     = new TComYuv*[m_uhTotalDepth - 1];
+    m_origYuv     = new TComYuv*[m_totalDepth - 1];
 
-    for (Int i = 0; i < m_uhTotalDepth - 1; i++)
+    for (Int i = 0; i < m_totalDepth - 1; i++)
     {
-        UInt uiNumPartitions = 1 << ((m_uhTotalDepth - i - 1) << 1);
+        UInt uiNumPartitions = 1 << ((m_totalDepth - i - 1) << 1);
         UInt width  = uiMaxWidth  >> i;
         UInt height = uiMaxHeight >> i;
 
-        m_ppcBestCU[i] = new TComDataCU;
-        m_ppcBestCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_ppcTempCU[i] = new TComDataCU;
-        m_ppcTempCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
+        m_bestCU[i] = new TComDataCU;
+        m_bestCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_tempCU[i] = new TComDataCU;
+        m_tempCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
 
-        m_InterCU_2Nx2N[i] = new TComDataCU;
-        m_InterCU_2Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_InterCU_2NxN[i] = new TComDataCU;
-        m_InterCU_2NxN[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_InterCU_Nx2N[i] = new TComDataCU;
-        m_InterCU_Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_IntraInInterCU[i] = new TComDataCU;
-        m_IntraInInterCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_MergeCU[i] = new TComDataCU;
-        m_MergeCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_MergeBestCU[i] = new TComDataCU;
-        m_MergeBestCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_uhTotalDepth - 1));
-        m_ppcPredYuvBest[i] = new TComYuv;
-        m_ppcPredYuvBest[i]->create(width, height);
-        m_ppcResiYuvBest[i] = new TShortYUV;
-        m_ppcResiYuvBest[i]->create(width, height);
-        m_ppcRecoYuvBest[i] = new TComYuv;
-        m_ppcRecoYuvBest[i]->create(width, height);
+        m_interCU_2Nx2N[i] = new TComDataCU;
+        m_interCU_2Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_interCU_2NxN[i] = new TComDataCU;
+        m_interCU_2NxN[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_interCU_Nx2N[i] = new TComDataCU;
+        m_interCU_Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_intraInInterCU[i] = new TComDataCU;
+        m_intraInInterCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_mergeCU[i] = new TComDataCU;
+        m_mergeCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_bestMergeCU[i] = new TComDataCU;
+        m_bestMergeCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_bestPredYuv[i] = new TComYuv;
+        m_bestPredYuv[i]->create(width, height);
+        m_bestResiYuv[i] = new TShortYUV;
+        m_bestResiYuv[i]->create(width, height);
+        m_bestRecoYuv[i] = new TComYuv;
+        m_bestRecoYuv[i]->create(width, height);
 
-        m_ppcPredYuvTemp[i] = new TComYuv;
-        m_ppcPredYuvTemp[i]->create(width, height);
+        m_tmpPredYuv[i] = new TComYuv;
+        m_tmpPredYuv[i]->create(width, height);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            m_ppcPredYuvMode[j][i] = new TComYuv;
-            m_ppcPredYuvMode[j][i]->create(width, height);
+            m_modePredYuv[j][i] = new TComYuv;
+            m_modePredYuv[j][i]->create(width, height);
         }
 
-        m_ppcResiYuvTemp[i] = new TShortYUV;
-        m_ppcResiYuvTemp[i]->create(width, height);
+        m_tmpResiYuv[i] = new TShortYUV;
+        m_tmpResiYuv[i]->create(width, height);
 
-        m_ppcRecoYuvTemp[i] = new TComYuv;
-        m_ppcRecoYuvTemp[i]->create(width, height);
+        m_tmpRecoYuv[i] = new TComYuv;
+        m_tmpRecoYuv[i]->create(width, height);
                 
-        m_RecoYuvMergeBest[i] = new TComYuv;
-        m_RecoYuvMergeBest[i]->create(width, height);
+        m_bestMergeRecoYuv[i] = new TComYuv;
+        m_bestMergeRecoYuv[i]->create(width, height);
         
-        m_ppcOrigYuv[i] = new TComYuv;
-        m_ppcOrigYuv[i]->create(width, height);
+        m_origYuv[i] = new TComYuv;
+        m_origYuv[i]->create(width, height);
     }
 
     m_bEncodeDQP = false;
@@ -153,226 +153,226 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
 Void TEncCu::destroy()
 {
-    for (Int i = 0; i < m_uhTotalDepth - 1; i++)
+    for (Int i = 0; i < m_totalDepth - 1; i++)
     {
-        if (m_InterCU_2Nx2N[i])
+        if (m_interCU_2Nx2N[i])
         {
-            m_InterCU_2Nx2N[i]->destroy();
-            delete m_InterCU_2Nx2N[i];
-            m_InterCU_2Nx2N[i] = NULL;
+            m_interCU_2Nx2N[i]->destroy();
+            delete m_interCU_2Nx2N[i];
+            m_interCU_2Nx2N[i] = NULL;
         }
-        if (m_InterCU_2NxN[i])
+        if (m_interCU_2NxN[i])
         {
-            m_InterCU_2NxN[i]->destroy();
-            delete m_InterCU_2NxN[i];
-            m_InterCU_2NxN[i] = NULL;
+            m_interCU_2NxN[i]->destroy();
+            delete m_interCU_2NxN[i];
+            m_interCU_2NxN[i] = NULL;
         }
-        if (m_InterCU_Nx2N[i])
+        if (m_interCU_Nx2N[i])
         {
-            m_InterCU_Nx2N[i]->destroy();
-            delete m_InterCU_Nx2N[i];
-            m_InterCU_Nx2N[i] = NULL;
+            m_interCU_Nx2N[i]->destroy();
+            delete m_interCU_Nx2N[i];
+            m_interCU_Nx2N[i] = NULL;
         }
-        if (m_IntraInInterCU[i])
+        if (m_intraInInterCU[i])
         {
-            m_IntraInInterCU[i]->destroy();
-            delete m_IntraInInterCU[i];
-            m_IntraInInterCU[i] = NULL;
+            m_intraInInterCU[i]->destroy();
+            delete m_intraInInterCU[i];
+            m_intraInInterCU[i] = NULL;
         }
-        if (m_MergeCU[i])
+        if (m_mergeCU[i])
         {
-            m_MergeCU[i]->destroy();
-            delete m_MergeCU[i];
-            m_MergeCU[i] = NULL;
+            m_mergeCU[i]->destroy();
+            delete m_mergeCU[i];
+            m_mergeCU[i] = NULL;
         }
-        if (m_MergeBestCU[i])
+        if (m_bestMergeCU[i])
         {
-            m_MergeBestCU[i]->destroy();
-            delete m_MergeBestCU[i];
-            m_MergeBestCU[i] = NULL;
+            m_bestMergeCU[i]->destroy();
+            delete m_bestMergeCU[i];
+            m_bestMergeCU[i] = NULL;
         }
-        if (m_ppcBestCU[i])
+        if (m_bestCU[i])
         {
-            m_ppcBestCU[i]->destroy();
-            delete m_ppcBestCU[i];
-            m_ppcBestCU[i] = NULL;
+            m_bestCU[i]->destroy();
+            delete m_bestCU[i];
+            m_bestCU[i] = NULL;
         }
-        if (m_ppcTempCU[i])
+        if (m_tempCU[i])
         {
-            m_ppcTempCU[i]->destroy();
-            delete m_ppcTempCU[i];
-            m_ppcTempCU[i] = NULL;
+            m_tempCU[i]->destroy();
+            delete m_tempCU[i];
+            m_tempCU[i] = NULL;
         }
-        if (m_ppcPredYuvBest[i])
+        if (m_bestPredYuv[i])
         {
-            m_ppcPredYuvBest[i]->destroy();
-            delete m_ppcPredYuvBest[i];
-            m_ppcPredYuvBest[i] = NULL;
+            m_bestPredYuv[i]->destroy();
+            delete m_bestPredYuv[i];
+            m_bestPredYuv[i] = NULL;
         }
-        if (m_ppcResiYuvBest[i])
+        if (m_bestResiYuv[i])
         {
-            m_ppcResiYuvBest[i]->destroy();
-            delete m_ppcResiYuvBest[i];
-            m_ppcResiYuvBest[i] = NULL;
+            m_bestResiYuv[i]->destroy();
+            delete m_bestResiYuv[i];
+            m_bestResiYuv[i] = NULL;
         }
-        if (m_ppcRecoYuvBest[i])
+        if (m_bestRecoYuv[i])
         {
-            m_ppcRecoYuvBest[i]->destroy();
-            delete m_ppcRecoYuvBest[i];
-            m_ppcRecoYuvBest[i] = NULL;
+            m_bestRecoYuv[i]->destroy();
+            delete m_bestRecoYuv[i];
+            m_bestRecoYuv[i] = NULL;
         }
-        if (m_ppcPredYuvTemp[i])
+        if (m_tmpPredYuv[i])
         {
-            m_ppcPredYuvTemp[i]->destroy();
-            delete m_ppcPredYuvTemp[i];
-            m_ppcPredYuvTemp[i] = NULL;
+            m_tmpPredYuv[i]->destroy();
+            delete m_tmpPredYuv[i];
+            m_tmpPredYuv[i] = NULL;
         }
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            m_ppcPredYuvMode[j][i]->destroy();
-            delete m_ppcPredYuvMode[j][i];
-            m_ppcPredYuvMode[j][i] = NULL;
+            m_modePredYuv[j][i]->destroy();
+            delete m_modePredYuv[j][i];
+            m_modePredYuv[j][i] = NULL;
         }
 
-        if (m_ppcResiYuvTemp[i])
+        if (m_tmpResiYuv[i])
         {
-            m_ppcResiYuvTemp[i]->destroy();
-            delete m_ppcResiYuvTemp[i];
-            m_ppcResiYuvTemp[i] = NULL;
+            m_tmpResiYuv[i]->destroy();
+            delete m_tmpResiYuv[i];
+            m_tmpResiYuv[i] = NULL;
         }
-        if (m_ppcRecoYuvTemp[i])
+        if (m_tmpRecoYuv[i])
         {
-            m_ppcRecoYuvTemp[i]->destroy();
-            delete m_ppcRecoYuvTemp[i];
-            m_ppcRecoYuvTemp[i] = NULL;
+            m_tmpRecoYuv[i]->destroy();
+            delete m_tmpRecoYuv[i];
+            m_tmpRecoYuv[i] = NULL;
         }
-        if (m_RecoYuvMergeBest[i])
+        if (m_bestMergeRecoYuv[i])
         {
-            m_RecoYuvMergeBest[i]->destroy();
-            delete m_RecoYuvMergeBest[i];
-            m_RecoYuvMergeBest[i] = NULL;
+            m_bestMergeRecoYuv[i]->destroy();
+            delete m_bestMergeRecoYuv[i];
+            m_bestMergeRecoYuv[i] = NULL;
         }
 
-        if (m_ppcOrigYuv[i])
+        if (m_origYuv[i])
         {
-            m_ppcOrigYuv[i]->destroy();
-            delete m_ppcOrigYuv[i];
-            m_ppcOrigYuv[i] = NULL;
+            m_origYuv[i]->destroy();
+            delete m_origYuv[i];
+            m_origYuv[i] = NULL;
         }
     }
 
-    if (m_InterCU_2Nx2N)
+    if (m_interCU_2Nx2N)
     {
-        delete [] m_InterCU_2Nx2N;
-        m_InterCU_2Nx2N = NULL;
+        delete [] m_interCU_2Nx2N;
+        m_interCU_2Nx2N = NULL;
     }
 
-    if (m_InterCU_2NxN)
+    if (m_interCU_2NxN)
     {
-        delete [] m_InterCU_2NxN;
-        m_InterCU_2NxN = NULL;
+        delete [] m_interCU_2NxN;
+        m_interCU_2NxN = NULL;
     }
-    if (m_InterCU_Nx2N)
+    if (m_interCU_Nx2N)
     {
-        delete [] m_InterCU_Nx2N;
-        m_InterCU_Nx2N = NULL;
+        delete [] m_interCU_Nx2N;
+        m_interCU_Nx2N = NULL;
     }
-    if (m_IntraInInterCU)
+    if (m_intraInInterCU)
     {
-        delete [] m_IntraInInterCU;
-        m_IntraInInterCU = NULL;
+        delete [] m_intraInInterCU;
+        m_intraInInterCU = NULL;
     }
-    if (m_MergeCU)
+    if (m_mergeCU)
     {
-        delete [] m_MergeCU;
-        m_MergeCU = NULL;
+        delete [] m_mergeCU;
+        m_mergeCU = NULL;
     }
-    if (m_MergeBestCU)
+    if (m_bestMergeCU)
     {
-        delete [] m_MergeBestCU;
-        m_MergeBestCU = NULL;
+        delete [] m_bestMergeCU;
+        m_bestMergeCU = NULL;
     }
-    if (m_ppcBestCU)
+    if (m_bestCU)
     {
-        delete [] m_ppcBestCU;
-        m_ppcBestCU = NULL;
+        delete [] m_bestCU;
+        m_bestCU = NULL;
     }
-    if (m_ppcTempCU)
+    if (m_tempCU)
     {
-        delete [] m_ppcTempCU;
-        m_ppcTempCU = NULL;
-    }
-
-    if (m_ppcPredYuvBest)
-    {
-        delete [] m_ppcPredYuvBest;
-        m_ppcPredYuvBest = NULL;
-    }
-    if (m_ppcResiYuvBest)
-    {
-        delete [] m_ppcResiYuvBest;
-        m_ppcResiYuvBest = NULL;
-    }
-    if (m_ppcRecoYuvBest)
-    {
-        delete [] m_ppcRecoYuvBest;
-        m_ppcRecoYuvBest = NULL;
-    }
-    if (m_RecoYuvMergeBest)
-    {
-        delete []m_RecoYuvMergeBest;
-        m_RecoYuvMergeBest = NULL;
-    }
-    if (m_ppcPredYuvTemp)
-    {
-        delete [] m_ppcPredYuvTemp;
-        m_ppcPredYuvTemp = NULL;
-    }
-    if (m_ppcPredYuvMode[0])
-    {
-        delete [] m_ppcPredYuvMode[0];
-        m_ppcPredYuvMode[0] = NULL;
-    }
-    if (m_ppcPredYuvMode[1])
-    {
-        delete [] m_ppcPredYuvMode[1];
-        m_ppcPredYuvMode[1] = NULL;
-    }
-    if (m_ppcPredYuvMode[2])
-    {
-        delete [] m_ppcPredYuvMode[2];
-        m_ppcPredYuvMode[2] = NULL;
-    }
-    if (m_ppcPredYuvMode[3])
-    {
-        delete [] m_ppcPredYuvMode[3];
-        m_ppcPredYuvMode[3] = NULL;
-    }
-    if (m_ppcPredYuvMode[4])
-    {
-        delete [] m_ppcPredYuvMode[4];
-        m_ppcPredYuvMode[4] = NULL;
-    }
-    if (m_ppcPredYuvMode[5])
-    {
-        delete [] m_ppcPredYuvMode[5];
-        m_ppcPredYuvMode[5] = NULL;
+        delete [] m_tempCU;
+        m_tempCU = NULL;
     }
 
-    if (m_ppcResiYuvTemp)
+    if (m_bestPredYuv)
     {
-        delete [] m_ppcResiYuvTemp;
-        m_ppcResiYuvTemp = NULL;
+        delete [] m_bestPredYuv;
+        m_bestPredYuv = NULL;
     }
-    if (m_ppcRecoYuvTemp)
+    if (m_bestResiYuv)
     {
-        delete [] m_ppcRecoYuvTemp;
-        m_ppcRecoYuvTemp = NULL;
+        delete [] m_bestResiYuv;
+        m_bestResiYuv = NULL;
     }
-    if (m_ppcOrigYuv)
+    if (m_bestRecoYuv)
     {
-        delete [] m_ppcOrigYuv;
-        m_ppcOrigYuv = NULL;
+        delete [] m_bestRecoYuv;
+        m_bestRecoYuv = NULL;
+    }
+    if (m_bestMergeRecoYuv)
+    {
+        delete []m_bestMergeRecoYuv;
+        m_bestMergeRecoYuv = NULL;
+    }
+    if (m_tmpPredYuv)
+    {
+        delete [] m_tmpPredYuv;
+        m_tmpPredYuv = NULL;
+    }
+    if (m_modePredYuv[0])
+    {
+        delete [] m_modePredYuv[0];
+        m_modePredYuv[0] = NULL;
+    }
+    if (m_modePredYuv[1])
+    {
+        delete [] m_modePredYuv[1];
+        m_modePredYuv[1] = NULL;
+    }
+    if (m_modePredYuv[2])
+    {
+        delete [] m_modePredYuv[2];
+        m_modePredYuv[2] = NULL;
+    }
+    if (m_modePredYuv[3])
+    {
+        delete [] m_modePredYuv[3];
+        m_modePredYuv[3] = NULL;
+    }
+    if (m_modePredYuv[4])
+    {
+        delete [] m_modePredYuv[4];
+        m_modePredYuv[4] = NULL;
+    }
+    if (m_modePredYuv[5])
+    {
+        delete [] m_modePredYuv[5];
+        m_modePredYuv[5] = NULL;
+    }
+
+    if (m_tmpResiYuv)
+    {
+        delete [] m_tmpResiYuv;
+        m_tmpResiYuv = NULL;
+    }
+    if (m_tmpRecoYuv)
+    {
+        delete [] m_tmpRecoYuv;
+        m_tmpRecoYuv = NULL;
+    }
+    if (m_origYuv)
+    {
+        delete [] m_origYuv;
+        m_origYuv = NULL;
     }
 }
 
@@ -409,8 +409,8 @@ bool mergeFlag = 0;
 Void TEncCu::compressCU(TComDataCU* pcCu)
 {
     // initialize CU data
-    m_ppcBestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
-    m_ppcTempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
+    m_bestCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
+    m_tempCU[0]->initCU(pcCu->getPic(), pcCu->getAddr());
 #if CU_STAT_LOGFILE
     totalCU++;
     if (pcCu->getSlice()->getSliceType() != I_SLICE)
@@ -428,8 +428,8 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
 
     // analysis of CU
 
-    if (m_ppcBestCU[0]->getSlice()->getSliceType() == I_SLICE)
-        xCompressIntraCU(m_ppcBestCU[0], m_ppcTempCU[0], NULL, 0);
+    if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
+        xCompressIntraCU(m_bestCU[0], m_tempCU[0], NULL, 0);
     else
     {
         if (!m_pcEncCfg->getUseRDO())
@@ -438,10 +438,10 @@ Void TEncCu::compressCU(TComDataCU* pcCu)
 
             /* At the start of analysis, the best CU is a null pointer
             On return, it points to the CU encode with best chosen mode*/
-            xCompressInterCU(rpcBestCU, m_ppcTempCU[0], pcCu, 0, 0);
+            xCompressInterCU(rpcBestCU, m_tempCU[0], pcCu, 0, 0);
         }
         else
-            xCompressCU(m_ppcBestCU[0], m_ppcTempCU[0], pcCu, 0, 0);
+            xCompressCU(m_bestCU[0], m_tempCU[0], pcCu, 0, 0);
     }
     if (m_pcEncCfg->getUseAdaptQpSelect())
     {
@@ -551,7 +551,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
     // get Original YUV data from picture
-    m_ppcOrigYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    m_origYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -645,8 +645,8 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TC
     {
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
-            pcSubBestPartCU[uiPartUnitIdx]     = m_ppcBestCU[uhNextDepth];
-            pcSubTempPartCU[uiPartUnitIdx]     = m_ppcTempCU[uhNextDepth];
+            pcSubBestPartCU[uiPartUnitIdx]     = m_bestCU[uhNextDepth];
+            pcSubTempPartCU[uiPartUnitIdx]     = m_tempCU[uhNextDepth];
 
             pcSubBestPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
             pcSubTempPartCU[uiPartUnitIdx]->initSubCU(rpcTempCU, uiPartUnitIdx, uhNextDepth, iQP);     // clear sub partition datas or init.
@@ -767,7 +767,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     //PPAScopeEvent(TEncCu_xCompressCU + depth);
 
     // get Original YUV data from picture
-    m_ppcOrigYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
+    m_origYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), rpcBestCU->getAddr(), rpcBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool    bTrySplit    = true;
@@ -814,7 +814,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
             mergeFlag = 1;
 #endif
             // SKIP
-            xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode, m_ppcPredYuvBest[depth], m_ppcRecoYuvBest[depth]); //by Merge for inter_2Nx2N
+            xCheckRDCostMerge2Nx2N(rpcBestCU, rpcTempCU, &earlyDetectionSkipMode, m_bestPredYuv[depth], m_bestRecoYuv[depth]); //by Merge for inter_2Nx2N
 #if CU_STAT_LOGFILE
             mergeFlag = 0;
 #endif
@@ -1032,7 +1032,7 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     // copy original YUV samples to PCM buffer
     if (rpcBestCU->isLosslessCoded(0) && (rpcBestCU->getIPCMFlag(0) == false))
     {
-        xFillPCMBuffer(rpcBestCU, m_ppcOrigYuv[depth]);
+        xFillPCMBuffer(rpcBestCU, m_origYuv[depth]);
     }
 
     rpcTempCU->initEstData(depth, iQP);
@@ -1041,8 +1041,8 @@ Void TEncCu::xCompressCU(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, TComDat
     if (bSubBranch && bTrySplitDQP && depth < g_maxCUDepth - g_addCUDepth)
     {
         UChar       uhNextDepth         = depth + 1;
-        TComDataCU* pcSubBestPartCU     = m_ppcBestCU[uhNextDepth];
-        TComDataCU* pcSubTempPartCU     = m_ppcTempCU[uhNextDepth];
+        TComDataCU* pcSubBestPartCU     = m_bestCU[uhNextDepth];
+        TComDataCU* pcSubTempPartCU     = m_tempCU[uhNextDepth];
         UInt uiPartUnitIdx = 0;
         for (; uiPartUnitIdx < 4; uiPartUnitIdx++)
         {
@@ -1475,14 +1475,14 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                     rpcTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(cMvFieldNeighbours[1 + 2 * uiMergeCand], SIZE_2Nx2N, 0, 0); // interprets depth relative to rpcTempCU level
 
                     // do MC
-                    m_pcPredSearch->motionCompensation(rpcTempCU, m_ppcPredYuvTemp[uhDepth]);
+                    m_pcPredSearch->motionCompensation(rpcTempCU, m_tmpPredYuv[uhDepth]);
                     // estimate residual and encode everything
                     m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU,
-                                                              m_ppcOrigYuv[uhDepth],
-                                                              m_ppcPredYuvTemp[uhDepth],
-                                                              m_ppcResiYuvTemp[uhDepth],
-                                                              m_ppcResiYuvBest[uhDepth],
-                                                              m_ppcRecoYuvTemp[uhDepth],
+                                                              m_origYuv[uhDepth],
+                                                              m_tmpPredYuv[uhDepth],
+                                                              m_tmpResiYuv[uhDepth],
+                                                              m_bestResiYuv[uhDepth],
+                                                              m_tmpRecoYuv[uhDepth],
                                                               (uiNoResidual ? true : false));
                     /*Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low?*/
                     if (uiNoResidual == 0)
@@ -1504,12 +1504,12 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& rpcBestCU, TComDataCU*& rpcTemp
                         // Change Prediction data
                         TComYuv* pcYuv = NULL;
                         pcYuv = rpcYuvPredBest;
-                        rpcYuvPredBest  = m_ppcPredYuvTemp[uhDepth];
-                        m_ppcPredYuvTemp[uhDepth] = pcYuv;
+                        rpcYuvPredBest  = m_tmpPredYuv[uhDepth];
+                        m_tmpPredYuv[uhDepth] = pcYuv;
                         
                         pcYuv = rpcYuvReconBest;
-                        rpcYuvReconBest = m_ppcRecoYuvTemp[uhDepth];
-                        m_ppcRecoYuvTemp[uhDepth] = pcYuv;
+                        rpcYuvReconBest = m_tmpRecoYuv[uhDepth];
+                        m_tmpRecoYuv[uhDepth] = pcYuv;
                     }
                     rpcTempCU->initEstData(uhDepth, orgQP);
                     if (!bestIsSkip)
@@ -1565,21 +1565,21 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(),      0, uhDepth);
 
     rpcTempCU->setMergeAMP(true);
-    m_ppcRecoYuvTemp[uhDepth]->clear();
-    m_ppcResiYuvTemp[uhDepth]->clear();
-    m_pcPredSearch->predInterSearch(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], bUseMRG);
+    m_tmpRecoYuv[uhDepth]->clear();
+    m_tmpResiYuv[uhDepth]->clear();
+    m_pcPredSearch->predInterSearch(rpcTempCU, m_origYuv[uhDepth], m_tmpPredYuv[uhDepth], bUseMRG);
 
     if (m_pcEncCfg->getUseRateCtrl() && m_pcEncCfg->getLCULevelRC() && ePartSize == SIZE_2Nx2N && uhDepth <= m_addSADDepth)
     {
         /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SAD = primitives.sad[partEnum]((pixel*)m_ppcOrigYuv[uhDepth]->getLumaAddr(), m_ppcOrigYuv[uhDepth]->getStride(),
-                                            (pixel*)m_ppcPredYuvTemp[uhDepth]->getLumaAddr(), m_ppcPredYuvTemp[uhDepth]->getStride());
+        UInt SAD = primitives.sad[partEnum]((pixel*)m_origYuv[uhDepth]->getLumaAddr(), m_origYuv[uhDepth]->getStride(),
+                                            (pixel*)m_tmpPredYuv[uhDepth]->getLumaAddr(), m_tmpPredYuv[uhDepth]->getStride());
         m_temporalSAD = (Int)SAD;
         x265_emms();
     }
 
-    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false);
+    m_pcPredSearch->encodeResAndCalcRdInterCU(rpcTempCU, m_origYuv[uhDepth], m_tmpPredYuv[uhDepth], m_tmpResiYuv[uhDepth], m_bestResiYuv[uhDepth], m_tmpRecoYuv[uhDepth], false);
 
     xCheckDQP(rpcTempCU);
 
@@ -1597,11 +1597,11 @@ Void TEncCu::xCheckRDCostIntra(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, P
     rpcTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, depth);
 
-    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC, true);
+    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], uiPreCalcDistC, true);
 
-    m_ppcRecoYuvTemp[depth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
+    m_tmpRecoYuv[depth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
 
-    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC);
+    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], uiPreCalcDistC);
 
     m_entropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
@@ -1645,13 +1645,13 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
     UInt uiPreCalcDistC      = 0;
     if (!bSeparateLumaChroma)
     {
-        m_pcPredSearch->preestChromaPredMode(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth]);
+        m_pcPredSearch->preestChromaPredMode(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth]);
     }
-    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC, bSeparateLumaChroma);
+    m_pcPredSearch->estIntraPredQT(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], uiPreCalcDistC, bSeparateLumaChroma);
 
-    m_ppcRecoYuvTemp[depth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
+    m_tmpRecoYuv[depth]->copyToPicLuma(rpcTempCU->getPic()->getPicYuvRec(), rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU());
 
-    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth], uiPreCalcDistC);
+    m_pcPredSearch->estIntraPredChromaQT(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], uiPreCalcDistC);
 
     m_entropyCoder->resetBits();
     if (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
@@ -1676,8 +1676,8 @@ Void TEncCu::xCheckRDCostIntrainInter(TComDataCU*& rpcBestCU, TComDataCU*& rpcTe
     if (!m_pcEncCfg->getUseRDO())
     {
         UInt partEnum = PartitionFromSizes(rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-        UInt SATD = primitives.satd[partEnum]((pixel*)m_ppcOrigYuv[depth]->getLumaAddr(), m_ppcOrigYuv[depth]->getStride(),
-                                              (pixel*)m_ppcPredYuvTemp[depth]->getLumaAddr(), m_ppcPredYuvTemp[depth]->getStride());
+        UInt SATD = primitives.satd[partEnum]((pixel*)m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                              (pixel*)m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
         x265_emms();
         rpcTempCU->getTotalDistortion() = SATD;
     }
@@ -1709,7 +1709,7 @@ Void TEncCu::xCheckIntraPCM(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU)
     rpcTempCU->setTrIdxSubParts(0, 0, depth);
     rpcTempCU->setCUTransquantBypassSubParts(m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, depth);
 
-    m_pcPredSearch->IPCMSearch(rpcTempCU, m_ppcOrigYuv[depth], m_ppcPredYuvTemp[depth], m_ppcResiYuvTemp[depth], m_ppcRecoYuvTemp[depth]);
+    m_pcPredSearch->IPCMSearch(rpcTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
@@ -1749,14 +1749,14 @@ Void TEncCu::xCheckBestMode(TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt
         rpcTempCU = cu;
 
         // Change Prediction data
-        pcYuv = m_ppcPredYuvBest[depth];
-        m_ppcPredYuvBest[depth] = m_ppcPredYuvTemp[depth];
-        m_ppcPredYuvTemp[depth] = pcYuv;
+        pcYuv = m_bestPredYuv[depth];
+        m_bestPredYuv[depth] = m_tmpPredYuv[depth];
+        m_tmpPredYuv[depth] = pcYuv;
 
         // Change Reconstruction data
-        pcYuv = m_ppcRecoYuvBest[depth];
-        m_ppcRecoYuvBest[depth] = m_ppcRecoYuvTemp[depth];
-        m_ppcRecoYuvTemp[depth] = pcYuv;
+        pcYuv = m_bestRecoYuv[depth];
+        m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
+        m_tmpRecoYuv[depth] = pcYuv;
 
         pcYuv = NULL;
         cu  = NULL;
@@ -1800,7 +1800,7 @@ Void TEncCu::xCopyYuv2Pic(TComPic* rpcPic, UInt uiCUAddr, UInt absPartIdx, UInt 
         UInt uiPartIdxX = ((uiAbsPartIdxInRaster % rpcPic->getNumPartInWidth()) % uiSrcBlkWidth) / uiBlkWidth;
         UInt uiPartIdxY = ((uiAbsPartIdxInRaster / rpcPic->getNumPartInWidth()) % uiSrcBlkWidth) / uiBlkWidth;
         UInt partIdx = uiPartIdxY * (uiSrcBlkWidth / uiBlkWidth) + uiPartIdxX;
-        m_ppcRecoYuvBest[uiSrcDepth]->copyToPicYuv(rpcPic->getPicYuvRec(), uiCUAddr, absPartIdx, depth - uiSrcDepth, partIdx);
+        m_bestRecoYuv[uiSrcDepth]->copyToPicYuv(rpcPic->getPicYuvRec(), uiCUAddr, absPartIdx, depth - uiSrcDepth, partIdx);
     }
     else
     {
@@ -1824,14 +1824,14 @@ Void TEncCu::xCopyYuv2Tmp(UInt uiPartUnitIdx, UInt uiNextDepth)
 {
     UInt uiCurrDepth = uiNextDepth - 1;
 
-    m_ppcRecoYuvBest[uiNextDepth]->copyToPartYuv(m_ppcRecoYuvTemp[uiCurrDepth], uiPartUnitIdx);
+    m_bestRecoYuv[uiNextDepth]->copyToPartYuv(m_tmpRecoYuv[uiCurrDepth], uiPartUnitIdx);
 }
 
 Void TEncCu::xCopyYuv2Best(UInt uiPartUnitIdx, UInt uiNextDepth)
 {
     UInt uiCurrDepth = uiNextDepth - 1;
 
-    m_ppcRecoYuvTemp[uiNextDepth]->copyToPartYuv(m_ppcRecoYuvBest[uiCurrDepth], uiPartUnitIdx);
+    m_tmpRecoYuv[uiNextDepth]->copyToPartYuv(m_bestRecoYuv[uiCurrDepth], uiPartUnitIdx);
 }
 
 /** Function for filling the PCM buffer of a CU using its original sample array
