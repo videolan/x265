@@ -151,8 +151,8 @@ protected:
                                 TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
     Void xComputeCostIntraInInter(TComDataCU*& outTempCU, PartSize partSize);
     Void xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, Bool bUseMRG = false);
-    Void xComputeCostInter(TComDataCU*& outTempCU, PartSize partSize, UInt Index, Bool bUseMRG = false);
-    Void xEncodeIntraInInter(TComDataCU*& cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TComYuv*& outReconYuv);
+    Void xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt Index, Bool bUseMRG = false);
+    Void xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv, TComYuv* outReconYuv);
     Void xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     Void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     Void xCheckDQP(TComDataCU* cu);
