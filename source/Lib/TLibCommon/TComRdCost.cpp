@@ -827,35 +827,35 @@ UInt TComRdCost::xGetSSE4(DistParam* distParam)
 }
 
 template<typename T1, typename T2>
-UInt xGetSSE8Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows, UInt uiShift)
+UInt xGetSSE8Help(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, UInt shift)
 {
-    UInt uiSum = 0;
-    Int iTemp;
+    UInt sum = 0;
+    Int temp;
 
-    for (; iRows != 0; iRows--)
+    for (; rows != 0; rows--)
     {
-        iTemp = piOrg[0] - piCur[0];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[1] - piCur[1];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[2] - piCur[2];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[3] - piCur[3];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[4] - piCur[4];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[5] - piCur[5];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[6] - piCur[6];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[7] - piCur[7];
-        uiSum += (iTemp * iTemp) >> uiShift;
+        temp = org[0] - cur[0];
+        sum += (temp * temp) >> shift;
+        temp = org[1] - cur[1];
+        sum += (temp * temp) >> shift;
+        temp = org[2] - cur[2];
+        sum += (temp * temp) >> shift;
+        temp = org[3] - cur[3];
+        sum += (temp * temp) >> shift;
+        temp = org[4] - cur[4];
+        sum += (temp * temp) >> shift;
+        temp = org[5] - cur[5];
+        sum += (temp * temp) >> shift;
+        temp = org[6] - cur[6];
+        sum += (temp * temp) >> shift;
+        temp = org[7] - cur[7];
+        sum += (temp * temp) >> shift;
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    return uiSum;
+    return sum;
 }
 
 UInt TComRdCost::xGetSSE8(DistParam* pcDtParam)
