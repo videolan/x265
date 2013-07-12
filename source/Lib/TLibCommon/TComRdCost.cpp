@@ -987,54 +987,54 @@ UInt TComRdCost::xGetSSE16(DistParam* distParam)
 }
 
 template<typename T1, typename T2>
-UInt xGetSSE16NHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows, Int iCols, UInt uiShift)
+UInt xGetSSE16NHelp(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, Int cols, UInt shift)
 {
-    UInt uiSum = 0;
-    Int iTemp;
+    UInt sum = 0;
+    Int temp;
 
-    for (; iRows != 0; iRows--)
+    for (; rows != 0; rows--)
     {
-        for (Int n = 0; n < iCols; n += 16)
+        for (Int n = 0; n < cols; n += 16)
         {
-            iTemp = piOrg[n + 0] - piCur[n + 0];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 1] - piCur[n + 1];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 2] - piCur[n + 2];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 3] - piCur[n + 3];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 4] - piCur[n + 4];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 5] - piCur[n + 5];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 6] - piCur[n + 6];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 7] - piCur[n + 7];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 8] - piCur[n + 8];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 9] - piCur[n + 9];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 10] - piCur[n + 10];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 11] - piCur[n + 11];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 12] - piCur[n + 12];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 13] - piCur[n + 13];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 14] - piCur[n + 14];
-            uiSum += (iTemp * iTemp) >> uiShift;
-            iTemp = piOrg[n + 15] - piCur[n + 15];
-            uiSum += (iTemp * iTemp) >> uiShift;
+            temp = org[n + 0] - cur[n + 0];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 1] - cur[n + 1];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 2] - cur[n + 2];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 3] - cur[n + 3];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 4] - cur[n + 4];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 5] - cur[n + 5];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 6] - cur[n + 6];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 7] - cur[n + 7];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 8] - cur[n + 8];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 9] - cur[n + 9];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 10] - cur[n + 10];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 11] - cur[n + 11];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 12] - cur[n + 12];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 13] - cur[n + 13];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 14] - cur[n + 14];
+            sum += (temp * temp) >> shift;
+            temp = org[n + 15] - cur[n + 15];
+            sum += (temp * temp) >> shift;
         }
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    return uiSum;
+    return sum;
 }
 
 UInt TComRdCost::xGetSSE16N(DistParam* pcDtParam)
