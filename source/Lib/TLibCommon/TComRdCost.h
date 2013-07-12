@@ -128,7 +128,7 @@ public:
 
     // (vertical) subsampling shift (for reducing complexity)
     // - 0 = no subsampling, 1 = even rows, 2 = every 4th, etc.
-    Int   iSubShift;
+    Int   subShift;
 
     DistParam()
     {
@@ -140,7 +140,7 @@ public:
         cols = 0;
         step = 1;
         distFunc = NULL;
-        iSubShift = 0;
+        subShift = 0;
         bitDepth = 0;
     }
 };

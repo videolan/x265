@@ -144,7 +144,7 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStri
     }
 
     // initialize
-    rcDistParam.iSubShift  = 0;
+    rcDistParam.subShift  = 0;
 }
 
 // Setting the Distortion Parameter for Inter (subpel ME with step)
@@ -188,7 +188,7 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStri
     }
 
     // initialize
-    rcDistParam.iSubShift  = 0;
+    rcDistParam.subShift  = 0;
 }
 
 // ====================================================================================================================
@@ -238,7 +238,7 @@ UInt TComRdCost::xGetSAD4(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -269,7 +269,7 @@ UInt TComRdCost::xGetSAD8(DistParam* pcDtParam)
     Pel* piOrg      = pcDtParam->fenc;
     Pel* piCur      = pcDtParam->fref;
     Int  iRows      = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -304,7 +304,7 @@ UInt TComRdCost::xGetSAD16(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -347,7 +347,7 @@ UInt TComRdCost::xGetSAD12(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -383,7 +383,7 @@ UInt TComRdCost::xGetSAD16N(DistParam* pcDtParam)
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
     Int  iCols   = pcDtParam->cols;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -429,7 +429,7 @@ UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -488,7 +488,7 @@ UInt TComRdCost::xGetSAD24(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -539,7 +539,7 @@ UInt TComRdCost::xGetSAD64(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
@@ -631,7 +631,7 @@ UInt TComRdCost::xGetSAD48(DistParam* pcDtParam)
     Pel* piOrg   = pcDtParam->fenc;
     Pel* piCur   = pcDtParam->fref;
     Int  iRows   = pcDtParam->rows;
-    Int  iSubShift  = pcDtParam->iSubShift;
+    Int  iSubShift  = pcDtParam->subShift;
     Int  iSubStep   = (1 << iSubShift);
     Int  iStrideCur = pcDtParam->frefstride * iSubStep;
     Int  iStrideOrg = pcDtParam->fencstride * iSubStep;

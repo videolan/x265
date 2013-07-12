@@ -257,7 +257,7 @@ inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct
     if (m_distParam.rows > 12)
     {
         // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
-        m_distParam.iSubShift = 1;
+        m_distParam.subShift = 1;
     }
 
     // distortion
