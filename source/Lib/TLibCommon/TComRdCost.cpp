@@ -148,47 +148,47 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride,
 }
 
 // Setting the Distortion Parameter for Inter (subpel ME with step)
-Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME)
+Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride, Int step, DistParam& distParam, Bool hadMe)
 {
     // set Original & Curr Pointer / Stride
-    rcDistParam.fenc = patternKey->getROIY();
-    rcDistParam.fref = piRefY;
+    distParam.fenc = patternKey->getROIY();
+    distParam.fref = refY;
 
-    rcDistParam.fencstride = patternKey->getPatternLStride();
-    rcDistParam.frefstride = iRefStride * iStep;
+    distParam.fencstride = patternKey->getPatternLStride();
+    distParam.frefstride = refStride * step;
 
     // set Step for interpolated buffer
-    rcDistParam.step = iStep;
+    distParam.step = step;
 
     // set Block Width / Height
-    rcDistParam.cols    = patternKey->getROIYWidth();
-    rcDistParam.rows    = patternKey->getROIYHeight();
+    distParam.cols = patternKey->getROIYWidth();
+    distParam.rows = patternKey->getROIYHeight();
 
     // set distortion function
-    if (!bHADME)
+    if (!hadMe)
     {
-        rcDistParam.distFunc = m_distortionFunctions[DF_SADS + g_convertToBit[rcDistParam.cols] + 1];
+        distParam.distFunc = m_distortionFunctions[DF_SADS + g_convertToBit[distParam.cols] + 1];
 
-        if (rcDistParam.cols == 12)
+        if (distParam.cols == 12)
         {
-            rcDistParam.distFunc = m_distortionFunctions[46];
+            distParam.distFunc = m_distortionFunctions[46];
         }
-        else if (rcDistParam.cols == 24)
+        else if (distParam.cols == 24)
         {
-            rcDistParam.distFunc = m_distortionFunctions[47];
+            distParam.distFunc = m_distortionFunctions[47];
         }
-        else if (rcDistParam.cols == 48)
+        else if (distParam.cols == 48)
         {
-            rcDistParam.distFunc = m_distortionFunctions[48];
+            distParam.distFunc = m_distortionFunctions[48];
         }
     }
     else
     {
-        rcDistParam.distFunc = m_distortionFunctions[DF_HADS + g_convertToBit[rcDistParam.cols] + 1];
+        distParam.distFunc = m_distortionFunctions[DF_HADS + g_convertToBit[distParam.cols] + 1];
     }
 
     // initialize
-    rcDistParam.subShift  = 0;
+    distParam.subShift = 0;
 }
 
 // ====================================================================================================================
