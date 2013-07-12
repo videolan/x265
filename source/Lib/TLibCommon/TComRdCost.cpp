@@ -722,44 +722,44 @@ UInt xGetSSEHelp(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, Int c
     return sum;
 }
 
-UInt TComRdCost::xGetSSE(DistParam* pcDtParam)
+UInt TComRdCost::xGetSSE(DistParam* distParam)
 {
-    if (pcDtParam->applyWeight)
+    if (distParam->applyWeight)
     {
-        return xGetSSEw(pcDtParam);
+        return xGetSSEw(distParam);
     }
 
-    Int  iRows   = pcDtParam->rows;
-    Int  iCols   = pcDtParam->cols;
-    Int  iStrideOrg = pcDtParam->fencstride;
-    Int  iStrideCur = pcDtParam->frefstride;
+    Int  rows = distParam->rows;
+    Int  cols = distParam->cols;
+    Int  strideOrg = distParam->fencstride;
+    Int  strideCur = distParam->frefstride;
 
-    UInt uiSum = 0;
-    UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
-    Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->fref;
+    UInt sum = 0;
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    Pel* org   = distParam->fenc;
+    Pel* cur   = distParam->fref;
 
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+    if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
-        uiSum = xGetSSEHelp<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
+        sum = xGetSSEHelp<Pel, Pel>(org, strideOrg, cur, strideCur, rows, cols, shift);
     }
     else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
-        piOrg_s = DtParam->ptr1;
-        piCur_s = DtParam->ptr2;
-        if ((piOrg == NULL) && (piCur == NULL))
+        Short* org_s;
+        Short* cur_s;
+        DistParamSSE* dtParam = reinterpret_cast<DistParamSSE*>(distParam);
+        org_s = dtParam->ptr1;
+        cur_s = dtParam->ptr2;
+        if ((org == NULL) && (cur == NULL))
         {
-            uiSum = xGetSSEHelp<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, iCols, uiShift);
+            sum = xGetSSEHelp<Short, Short>(org_s, strideOrg, cur_s, strideCur, rows, cols, shift);
         }
         else
         {
-            uiSum = xGetSSEHelp<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, iCols, uiShift);
+            sum = xGetSSEHelp<Short, Pel>(org_s, strideOrg, cur, strideCur, rows, cols, shift);
         }
     }
-    return uiSum;
+    return sum;
 }
 
 template<typename T1, typename T2>
