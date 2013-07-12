@@ -74,12 +74,6 @@ if(ENABLE_TESTS)
     add_subdirectory(test)
 endif(ENABLE_TESTS)
 
-# Tool applications
-option(ENABLE_TOOLS "Enable debug and regression tools" OFF)
-if(ENABLE_TOOLS)
-    add_subdirectory(tools)
-endif(ENABLE_TOOLS)
-
 # Visual leak detector
 if (WIN32)
     find_package(VLD)
