@@ -377,46 +377,46 @@ UInt TComRdCost::xGetSAD12(DistParam* distparam)
     return sum >> DISTORTION_PRECISION_ADJUSTMENT(distparam->bitDepth - 8);
 }
 
-UInt TComRdCost::xGetSAD16N(DistParam* pcDtParam)
+UInt TComRdCost::xGetSAD16N(DistParam* distParam)
 {
-    Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->fref;
-    Int  iRows   = pcDtParam->rows;
-    Int  iCols   = pcDtParam->cols;
-    Int  iSubShift  = pcDtParam->subShift;
-    Int  iSubStep   = (1 << iSubShift);
-    Int  iStrideCur = pcDtParam->frefstride * iSubStep;
-    Int  iStrideOrg = pcDtParam->fencstride * iSubStep;
-    UInt uiSum = 0;
+    Pel* org = distParam->fenc;
+    Pel* cur = distParam->fref;
+    Int  rows  = distParam->rows;
+    Int  cols  = distParam->cols;
+    Int  shift = distParam->subShift;
+    Int  step  = (1 << shift);
+    Int  strideCur = distParam->frefstride * step;
+    Int  strideOrg = distParam->fencstride * step;
+    UInt sum = 0;
 
-    for (; iRows != 0; iRows -= iSubStep)
+    for (; rows != 0; rows -= step)
     {
-        for (Int n = 0; n < iCols; n += 16)
+        for (Int n = 0; n < cols; n += 16)
         {
-            uiSum += abs(piOrg[n + 0] - piCur[n + 0]);
-            uiSum += abs(piOrg[n + 1] - piCur[n + 1]);
-            uiSum += abs(piOrg[n + 2] - piCur[n + 2]);
-            uiSum += abs(piOrg[n + 3] - piCur[n + 3]);
-            uiSum += abs(piOrg[n + 4] - piCur[n + 4]);
-            uiSum += abs(piOrg[n + 5] - piCur[n + 5]);
-            uiSum += abs(piOrg[n + 6] - piCur[n + 6]);
-            uiSum += abs(piOrg[n + 7] - piCur[n + 7]);
-            uiSum += abs(piOrg[n + 8] - piCur[n + 8]);
-            uiSum += abs(piOrg[n + 9] - piCur[n + 9]);
-            uiSum += abs(piOrg[n + 10] - piCur[n + 10]);
-            uiSum += abs(piOrg[n + 11] - piCur[n + 11]);
-            uiSum += abs(piOrg[n + 12] - piCur[n + 12]);
-            uiSum += abs(piOrg[n + 13] - piCur[n + 13]);
-            uiSum += abs(piOrg[n + 14] - piCur[n + 14]);
-            uiSum += abs(piOrg[n + 15] - piCur[n + 15]);
+            sum += abs(org[n + 0] - cur[n + 0]);
+            sum += abs(org[n + 1] - cur[n + 1]);
+            sum += abs(org[n + 2] - cur[n + 2]);
+            sum += abs(org[n + 3] - cur[n + 3]);
+            sum += abs(org[n + 4] - cur[n + 4]);
+            sum += abs(org[n + 5] - cur[n + 5]);
+            sum += abs(org[n + 6] - cur[n + 6]);
+            sum += abs(org[n + 7] - cur[n + 7]);
+            sum += abs(org[n + 8] - cur[n + 8]);
+            sum += abs(org[n + 9] - cur[n + 9]);
+            sum += abs(org[n + 10] - cur[n + 10]);
+            sum += abs(org[n + 11] - cur[n + 11]);
+            sum += abs(org[n + 12] - cur[n + 12]);
+            sum += abs(org[n + 13] - cur[n + 13]);
+            sum += abs(org[n + 14] - cur[n + 14]);
+            sum += abs(org[n + 15] - cur[n + 15]);
         }
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    uiSum <<= iSubShift;
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
+    sum <<= shift;
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
 UInt TComRdCost::xGetSAD32(DistParam* pcDtParam)
