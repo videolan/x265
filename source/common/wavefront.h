@@ -30,25 +30,25 @@
 namespace x265 {
 // x265 private namespace
 
-// Generic wave-front scheduler, manages busy-state of frame rows as a priority
-// queue
+// Generic wave-front scheduler, manages busy-state of CU rows as a priority
+// queue (higher CU rows have priority over lower rows)
 //
-// Frame processing classes derive from this class and implement ProcessRow().
-// Processed row may be partially completed and need to be resumed.
+// Derived classes must implement ProcessRow().
 class WaveFront : public JobProvider
 {
 private:
 
-    //< bitmap of rows queued for processing, uses atomic intrinsics to
-    //< set and clear bits, for thread safety
+    // bitmap of rows queued for processing, uses atomic intrinsics
     uint64_t volatile *m_queuedBitmap;
 
+    // number of words in the bitmap
     int m_numWords;
 
     int m_numRows;
 
-    //< WaveFront's internal implementation. Consults queuedBitmap and calls
-    //< ProcessRow(row) for lowest numbered queued row or returns false
+    // WaveFront's implementation of JobProvider::findJob. Consults
+    // m_queuedBitmap and calls ProcessRow(row) for lowest numbered queued row
+    // or returns false
     bool findJob();
 
 public:
@@ -57,16 +57,15 @@ public:
 
     virtual ~WaveFront();
 
-    //< Must be called just once after the frame is allocated.  Returns true on
-    //< success.  It it returns false, the frame must encode in series.
+    // If returns false, the frame must be encoded in series.
     bool initJobQueue(int numRows);
 
-    //< Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
-    //< ThreadPoolEnqueue() must be called before EnqueueRow()
+    // Enqueue a row to be processed. A worker thread will later call ProcessRow(row)
+    // This provider must be enqueued in the pool before enqueuing a row
     void enqueueRow(int row);
 
-    //< Start or resume encode processing of this row.  When the bottom row is
-    //< finished, ThreadPoolDequeue() must be called.
+    // Start or resume encode processing of this row, must be implemented by
+    // derived classes.
     virtual void processRow(int row) = 0;
 };
 } // end namespace x265
