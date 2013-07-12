@@ -32,6 +32,7 @@ namespace x265 {
 #if _MSC_VER
 #pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
 #endif
+
 class MV
 {
 public:
@@ -72,8 +73,6 @@ public:
 
     // Scale down a QPEL mv to FPEL mv, rounding up by one HPEL offset
     MV roundToFPel() const                     { return MV(x + 2, y + 2) >> 2; }
-
-    MV toFPel() const                          { return *this >> 2; }
 
     // Scale up an FPEL mv to QPEL by shifting up two bits
     MV toQPel() const                          { return *this << 2; }
