@@ -117,7 +117,7 @@ UInt TComRdCostWeightPrediction::xGetSSEw(DistParam* pcDtParam)
     Int  iStrideOrg = pcDtParam->fencstride;
     Int  iStrideCur = pcDtParam->frefstride;
 
-    assert(pcDtParam->iSubShift == 0);
+    assert(pcDtParam->subShift == 0);
 
     wpScalingParam  *wpCur    = &(pcDtParam->wpCur[0]);
     Int   w0      = wpCur->w,
