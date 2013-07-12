@@ -199,33 +199,33 @@ Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride,
 // SAD
 // --------------------------------------------------------------------------------------------------------------------
 
-UInt TComRdCost::xGetSAD(DistParam* pcDtParam)
+UInt TComRdCost::xGetSAD(DistParam* distParam)
 {
-    if (pcDtParam->applyWeight)
+    if (distParam->applyWeight)
     {
-        return xGetSADw(pcDtParam);
+        return xGetSADw(distParam);
     }
 
-    Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->fref;
-    Int  iRows   = pcDtParam->rows;
-    Int  iCols   = pcDtParam->cols;
-    Int  iStrideCur = pcDtParam->frefstride;
-    Int  iStrideOrg = pcDtParam->fencstride;
-    UInt uiSum = 0;
+    Pel* org   = distParam->fenc;
+    Pel* cur   = distParam->fref;
+    Int  rows  = distParam->rows;
+    Int  cols  = distParam->cols;
+    Int  strideCur = distParam->frefstride;
+    Int  strideOrg = distParam->fencstride;
+    UInt sum = 0;
 
-    for (; iRows != 0; iRows--)
+    for (; rows != 0; rows--)
     {
-        for (Int n = 0; n < iCols; n++)
+        for (Int n = 0; n < cols; n++)
         {
-            uiSum += abs(piOrg[n] - piCur[n]);
+            sum += abs(org[n] - cur[n]);
         }
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(pcDtParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
 }
 
 UInt TComRdCost::xGetSAD4(DistParam* pcDtParam)
