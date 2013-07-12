@@ -74,10 +74,10 @@ private:
     UInt     m_iCWidth;
     UInt     m_iCHeight;
 
-    static Int getAddrOffset(UInt uiPartUnitIdx, UInt width)
+    static Int getAddrOffset(UInt partUnitIdx, UInt width)
     {
-        Int blkX = g_rasterToPelX[g_zscanToRaster[uiPartUnitIdx]];
-        Int blkY = g_rasterToPelY[g_zscanToRaster[uiPartUnitIdx]];
+        Int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
+        Int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
 
         return blkX + blkY * width;
     }

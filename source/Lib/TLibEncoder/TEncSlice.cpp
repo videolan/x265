@@ -383,7 +383,7 @@ Void TEncSlice::setSearchRange(TComSlice* pcSlice, FrameEncoder *pcEncodeframe)
     }
 }
 
-/** \param rpcPic   picture class
+/** \param outPic   picture class
  */
 #if CU_STAT_LOGFILE
 int cntInter[4], cntIntra[4], cntSplit[4],  totalCU;
@@ -490,13 +490,13 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
 }
 
 /**
- \param  rpcPic        picture class
+ \param  outPic        picture class
  \retval rpcBitstream  bitstream class
  */
 Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, FrameEncoder* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_encodeSlice);
-    UInt       uiCUAddr;
+    UInt       cuAddr;
     UInt       uiStartCUAddr;
     UInt       uiBoundingCUAddr;
     TComSlice* pcSlice = pcPic->getSlice();
@@ -538,17 +538,17 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
 
     UInt uiWidthInLCUs  = pcPic->getPicSym()->getFrameWidthInCU();
     UInt uiCol = 0, uiLin = 0, uiSubStrm = 0;
-    uiCUAddr = (uiStartCUAddr / pcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
+    cuAddr = (uiStartCUAddr / pcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
-                                                              into the real raster scan address (uiCUAddr) via the CUOrderMap */
+                                                              into the real raster scan address (cuAddr) via the CUOrderMap */
     UInt uiEncCUOrder;
     for (uiEncCUOrder = uiStartCUAddr / pcPic->getNumPartInCU();
          uiEncCUOrder < (uiBoundingCUAddr + pcPic->getNumPartInCU() - 1) / pcPic->getNumPartInCU();
-         uiCUAddr = (++uiEncCUOrder))
+         cuAddr = (++uiEncCUOrder))
     {
         //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
-        uiCol     = uiCUAddr % uiWidthInLCUs;
-        uiLin     = uiCUAddr / uiWidthInLCUs;
+        uiCol     = cuAddr % uiWidthInLCUs;
+        uiLin     = cuAddr / uiWidthInLCUs;
         uiSubStrm = uiLin % iNumSubstreams;
 
         pcEntropyCoder->setBitstream(&pcSubstreams[uiSubStrm]);
@@ -557,15 +557,15 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
         if ((iNumSubstreams > 1) && (uiCol == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
-            TComDataCU *pcCUUp = pcPic->getCU(uiCUAddr)->getCUAbove();
+            TComDataCU *pcCUUp = pcPic->getCU(cuAddr)->getCUAbove();
             UInt uiWidthInCU = pcPic->getFrameWidthInCU();
             UInt uiMaxParts = 1 << (pcSlice->getSPS()->getMaxCUDepth() << 1);
             TComDataCU *pcCUTR = NULL;
 
             // CHECK_ME: here can br optimize a little, do it later
-            if (pcCUUp && ((uiCUAddr % uiWidthInCU + 1) < uiWidthInCU))
+            if (pcCUUp && ((cuAddr % uiWidthInCU + 1) < uiWidthInCU))
             {
-                pcCUTR = pcPic->getCU(uiCUAddr - uiWidthInCU + 1);
+                pcCUTR = pcPic->getCU(cuAddr - uiWidthInCU + 1);
             }
             if (true /*bEnforceSliceRestriction*/ && ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL)))
             {
@@ -579,15 +579,15 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
         }
         pcSbacCoder->load(pcEncodeFrame->getSbacCoder(uiSubStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
 
-        TComDataCU* cu = pcPic->getCU(uiCUAddr);
+        TComDataCU* cu = pcPic->getCU(cuAddr);
         if (pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag() || pcSlice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
             Int iNumCuInWidth     = saoParam->numCuInWidth;
-            Int iCUAddrInSlice    = uiCUAddr;
+            Int iCUAddrInSlice    = cuAddr;
             Int iCUAddrUpInSlice  = iCUAddrInSlice - iNumCuInWidth;
-            Int rx = uiCUAddr % iNumCuInWidth;
-            Int ry = uiCUAddr / iNumCuInWidth;
+            Int rx = cuAddr % iNumCuInWidth;
+            Int ry = cuAddr / iNumCuInWidth;
             Int allowMergeLeft = 1;
             Int allowMergeUp   = 1;
             Int addr = cu->getAddr();
@@ -651,7 +651,7 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        pcEncodeFrame->getCuEncoder(0)->set_pcEntropyCoder(pcEntropyCoder);
+        pcEncodeFrame->getCuEncoder(0)->setEntropyCoder(pcEntropyCoder);
         pcEncodeFrame->getCuEncoder(0)->encodeCU(cu);
 
 #if ENC_DEC_TRACE
@@ -683,14 +683,14 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
  * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
  * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
  */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice)
+Void TEncSlice::xDetermineStartAndBoundingCUAddr(TComPic* outPic, Bool bEncodeSlice)
 {
-    TComSlice* pcSlice = rpcPic->getSlice();
+    TComSlice* pcSlice = outPic->getSlice();
     UInt uiBoundingCUAddrSlice;
 
-    UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
+    UInt uiNumberOfCUsInFrame = outPic->getNumCUsInFrame();
 
-    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * rpcPic->getNumPartInCU();
+    uiBoundingCUAddrSlice = uiNumberOfCUsInFrame * outPic->getNumPartInCU();
 
     // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
     pcSlice->setSliceCurEndCUAddr(uiBoundingCUAddrSlice);

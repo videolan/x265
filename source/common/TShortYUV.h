@@ -35,10 +35,10 @@ class TShortYUV
 {
 private:
 
-    static int getAddrOffset(unsigned int uiPartUnitIdx, unsigned int width)
+    static int getAddrOffset(unsigned int partUnitIdx, unsigned int width)
     {
-        int blkX = g_rasterToPelX[g_zscanToRaster[uiPartUnitIdx]];
-        int blkY = g_rasterToPelY[g_zscanToRaster[uiPartUnitIdx]];
+        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
+        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
 
         return blkX + blkY * width;
     }

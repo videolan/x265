@@ -86,12 +86,12 @@ public:
     // compress and encode slice
     Void    compressSlice(TComPic* pcPic, x265::FrameEncoder* pcEncodeFrame);        ///< analysis stage of slice
 
-    Void    encodeSlice(TComPic* rpcPic, TComOutputBitstream* pcSubstreams, x265::FrameEncoder* pcEncodeFrame);
+    Void    encodeSlice(TComPic* outPic, TComOutputBitstream* pcSubstreams, x265::FrameEncoder* pcEncodeFrame);
 
     // misc. functions
     Void    setSearchRange(TComSlice* pcSlice, x265::FrameEncoder *pcEncodeframe);    ///< set ME range adaptively
 
-    Void    xDetermineStartAndBoundingCUAddr(TComPic* rpcPic, Bool bEncodeSlice);
+    Void    xDetermineStartAndBoundingCUAddr(TComPic* outPic, Bool bEncodeSlice);
 
     UInt    getSliceIdx()         { return m_uiSliceIdx; }
 

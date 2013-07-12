@@ -405,18 +405,18 @@ Void TEncSbac::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
 
 Void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
 {
-    PartSize eSize         = cu->getPartitionSize(absPartIdx);
+    PartSize partSize         = cu->getPartitionSize(absPartIdx);
 
     if (cu->isIntra(absPartIdx))
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
-            m_pcBinIf->encodeBin(eSize == SIZE_2Nx2N ? 1 : 0, m_cCUPartSizeSCModel.get(0, 0, 0));
+            m_pcBinIf->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_cCUPartSizeSCModel.get(0, 0, 0));
         }
         return;
     }
 
-    switch (eSize)
+    switch (partSize)
     {
     case SIZE_2Nx2N:
     {
@@ -431,14 +431,14 @@ Void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
         m_pcBinIf->encodeBin(1, m_cCUPartSizeSCModel.get(0, 0, 1));
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            if (eSize == SIZE_2NxN)
+            if (partSize == SIZE_2NxN)
             {
                 m_pcBinIf->encodeBin(1, m_cCUAMPSCModel.get(0, 0, 0));
             }
             else
             {
                 m_pcBinIf->encodeBin(0, m_cCUAMPSCModel.get(0, 0, 0));
-                m_pcBinIf->encodeBinEP((eSize == SIZE_2NxnU ? 0 : 1));
+                m_pcBinIf->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
             }
         }
         break;
@@ -455,14 +455,14 @@ Void TEncSbac::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
         }
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            if (eSize == SIZE_Nx2N)
+            if (partSize == SIZE_Nx2N)
             {
                 m_pcBinIf->encodeBin(1, m_cCUAMPSCModel.get(0, 0, 0));
             }
             else
             {
                 m_pcBinIf->encodeBin(0, m_cCUAMPSCModel.get(0, 0, 0));
-                m_pcBinIf->encodeBinEP((eSize == SIZE_nLx2N ? 0 : 1));
+                m_pcBinIf->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
             }
         }
         break;

@@ -195,11 +195,11 @@ private:
 protected:
 
     /// add possible motion vector predictor candidates
-    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
-    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR eDir);
+    Bool          xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR eDir);
 
     Void          deriveRightBottomIdx(UInt partIdx, UInt& ruiPartIdxRB);
-    Bool          xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx, x265::MV& rcMv, Int& riRefIdx);
+    Bool          xGetColMVP(RefPicList picList, Int cuAddr, Int partUnitIdx, x265::MV& rcMv, Int& riRefIdx);
 
     /// compute scaling factor from POC difference
     Int           xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, Int iColRefPOC);
@@ -218,14 +218,14 @@ public:
     Void          create(UInt numPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer = false);
     Void          destroy();
 
-    Void          initCU(TComPic* pcPic, UInt uiCUAddr);
+    Void          initCU(TComPic* pcPic, UInt cuAddr);
     Void          initEstData(UInt depth, Int qp);
-    Void          initSubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Int qp);
+    Void          initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp);
     Void          setOutsideCUPart(UInt absPartIdx, UInt depth);
 
-    Void          copySubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth);
+    Void          copySubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth);
     Void          copyInterPredInfoFrom(TComDataCU* cu, UInt absPartIdx, RefPicList picList);
-    Void          copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bool isRDObasedAnalysis = true);
+    Void          copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool isRDObasedAnalysis = true);
 
     Void          copyToPic(UChar depth);
     Void          copyToPic(UChar depth, UInt partIdx, UInt partDepth);
@@ -395,7 +395,7 @@ public:
 
     Void          setMergeIndexSubParts(UInt uiMergeIndex, UInt absPartIdx, UInt partIdx, UInt depth);
     template<typename T>
-    Void          setSubPart(T bParameter, T* pbBaseLCU, UInt uiCUAddr, UInt uiCUDepth, UInt uiPUIdx);
+    Void          setSubPart(T bParameter, T* pbBaseLCU, UInt cuAddr, UInt uiCUDepth, UInt uiPUIdx);
 
     Void          setMergeAMP(Bool b)      { m_bIsMergeAMP = b; }
 

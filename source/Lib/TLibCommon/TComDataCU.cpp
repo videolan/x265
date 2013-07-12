@@ -554,19 +554,19 @@ Void TComDataCU::initEstData(UInt depth, Int qp)
 }
 
 // initialize Sub partition
-Void TComDataCU::initSubCU(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Int qp)
+Void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp)
 {
-    assert(uiPartUnitIdx < 4);
+    assert(partUnitIdx < 4);
 
-    UInt partOffset = (cu->getTotalNumPart() >> 2) * uiPartUnitIdx;
+    UInt partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
     m_pcPic              = cu->getPic();
     m_pcSlice            = m_pcPic->getSlice();
     m_uiCUAddr           = cu->getAddr();
     m_uiAbsIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
 
-    m_uiCUPelX           = cu->getCUPelX() + (g_maxCUWidth >> depth) * (uiPartUnitIdx &  1);
-    m_uiCUPelY           = cu->getCUPelY() + (g_maxCUHeight >> depth) * (uiPartUnitIdx >> 1);
+    m_uiCUPelX           = cu->getCUPelX() + (g_maxCUWidth >> depth) * (partUnitIdx &  1);
+    m_uiCUPelY           = cu->getCUPelY() + (g_maxCUHeight >> depth) * (partUnitIdx >> 1);
 
     m_dTotalCost         = MAX_INT64;
     m_uiTotalDistortion  = 0;
@@ -772,16 +772,16 @@ Void TComDataCU::copyInterPredInfoFrom(TComDataCU* cu, UInt absPartIdx, RefPicLi
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bool isRDObasedAnalysis)
+Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool isRDObasedAnalysis)
 {
-    assert(uiPartUnitIdx < 4);
+    assert(partUnitIdx < 4);
     if (isRDObasedAnalysis)
         m_dTotalCost         += cu->getTotalCost();
 
     m_uiTotalDistortion  += cu->getTotalDistortion();
     m_uiTotalBits        += cu->getTotalBits();
 
-    UInt offset         = cu->getTotalNumPart() * uiPartUnitIdx;
+    UInt offset         = cu->getTotalNumPart() * partUnitIdx;
 
     UInt numPartition = cu->getTotalNumPart();
     Int iSizeInUchar  = sizeof(UChar) * numPartition;
@@ -830,7 +830,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt uiPartUnitIdx, UInt depth, Bo
     m_acCUMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), offset);
 
     UInt uiTmp  = g_maxCUWidth * g_maxCUHeight >> (depth << 1);
-    UInt uiTmp2 = uiPartUnitIdx * uiTmp;
+    UInt uiTmp2 = partUnitIdx * uiTmp;
     memcpy(m_pcTrCoeffY  + uiTmp2, cu->getCoeffY(),  sizeof(TCoeff) * uiTmp);
     memcpy(m_pcArlCoeffY  + uiTmp2, cu->getArlCoeffY(),  sizeof(Int) * uiTmp);
     memcpy(m_pcIPCMSampleY + uiTmp2, cu->getPCMSampleY(), sizeof(Pel) * uiTmp);
@@ -1710,36 +1710,36 @@ Void TComDataCU::setLumaIntraDirSubParts(UInt uiDir, UInt absPartIdx, UInt depth
 }
 
 template<typename T>
-Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt uiCUDepth, UInt uiPUIdx)
+Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt cuAddr, UInt uiCUDepth, UInt uiPUIdx)
 {
     assert(sizeof(T) == 1); // Using memset() works only for types of size 1
 
     UInt uiCurrPartNumQ = (m_pcPic->getNumPartInCU() >> (2 * uiCUDepth)) >> 2;
-    switch (m_pePartSize[uiCUAddr])
+    switch (m_pePartSize[cuAddr])
     {
     case SIZE_2Nx2N:
-        memset(puhBaseLCU + uiCUAddr, uiParameter, 4 * uiCurrPartNumQ);
+        memset(puhBaseLCU + cuAddr, uiParameter, 4 * uiCurrPartNumQ);
         break;
     case SIZE_2NxN:
-        memset(puhBaseLCU + uiCUAddr, uiParameter, 2 * uiCurrPartNumQ);
+        memset(puhBaseLCU + cuAddr, uiParameter, 2 * uiCurrPartNumQ);
         break;
     case SIZE_Nx2N:
-        memset(puhBaseLCU + uiCUAddr, uiParameter, uiCurrPartNumQ);
-        memset(puhBaseLCU + uiCUAddr + 2 * uiCurrPartNumQ, uiParameter, uiCurrPartNumQ);
+        memset(puhBaseLCU + cuAddr, uiParameter, uiCurrPartNumQ);
+        memset(puhBaseLCU + cuAddr + 2 * uiCurrPartNumQ, uiParameter, uiCurrPartNumQ);
         break;
     case SIZE_NxN:
-        memset(puhBaseLCU + uiCUAddr, uiParameter, uiCurrPartNumQ);
+        memset(puhBaseLCU + cuAddr, uiParameter, uiCurrPartNumQ);
         break;
     case SIZE_2NxnU:
         if (uiPUIdx == 0)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 1));
-            memset(puhBaseLCU + uiCUAddr + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
         }
         else if (uiPUIdx == 1)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 1));
-            memset(puhBaseLCU + uiCUAddr + uiCurrPartNumQ, uiParameter, ((uiCurrPartNumQ >> 1) + (uiCurrPartNumQ << 1)));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr + uiCurrPartNumQ, uiParameter, ((uiCurrPartNumQ >> 1) + (uiCurrPartNumQ << 1)));
         }
         else
         {
@@ -1749,13 +1749,13 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
     case SIZE_2NxnD:
         if (uiPUIdx == 0)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, ((uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1)));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr, uiParameter, ((uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1)));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
         }
         else if (uiPUIdx == 1)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 1));
-            memset(puhBaseLCU + uiCUAddr + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 1));
+            memset(puhBaseLCU + cuAddr + uiCurrPartNumQ, uiParameter, (uiCurrPartNumQ >> 1));
         }
         else
         {
@@ -1765,17 +1765,17 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
     case SIZE_nLx2N:
         if (uiPUIdx == 0)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
         }
         else if (uiPUIdx == 1)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
         }
         else
         {
@@ -1785,17 +1785,17 @@ Void TComDataCU::setSubPart(T uiParameter, T* puhBaseLCU, UInt uiCUAddr, UInt ui
     case SIZE_nRx2N:
         if (uiPUIdx == 0)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
-            memset(puhBaseLCU + uiCUAddr + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
+            memset(puhBaseLCU + cuAddr + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ + (uiCurrPartNumQ >> 2)));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1) + uiCurrPartNumQ + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
         }
         else if (uiPUIdx == 1)
         {
-            memset(puhBaseLCU + uiCUAddr, uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
-            memset(puhBaseLCU + uiCUAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr, uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1), uiParameter, (uiCurrPartNumQ >> 2));
+            memset(puhBaseLCU + cuAddr + (uiCurrPartNumQ << 1) + (uiCurrPartNumQ >> 1), uiParameter, (uiCurrPartNumQ >> 2));
         }
         else
         {
@@ -2912,7 +2912,7 @@ Bool TComDataCU::isSkipped(UInt partIdx)
 #pragma warning(disable: 4701) // potentially uninitialized local variables
 #endif
 
-Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
+Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
     UInt uiIdx = 0;
@@ -2921,27 +2921,27 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UI
     {
     case MD_LEFT:
     {
-        pcTmpCU = getPULeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPULeft(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE:
     {
-        pcTmpCU = getPUAbove(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAbove(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE_RIGHT:
     {
-        pcTmpCU = getPUAboveRight(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAboveRight(uiIdx, partUnitIdx);
         break;
     }
     case MD_BELOW_LEFT:
     {
-        pcTmpCU = getPUBelowLeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUBelowLeft(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE_LEFT:
     {
-        pcTmpCU = getPUAboveLeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAboveLeft(uiIdx, partUnitIdx);
         break;
     }
     default:
@@ -2993,11 +2993,11 @@ Bool TComDataCU::xAddMVPCand(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UI
  * \param pInfo
  * \param picList
  * \param refIdx
- * \param uiPartUnitIdx
+ * \param partUnitIdx
  * \param eDir
  * \returns Bool
  */
-Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt uiPartUnitIdx, MVP_DIR eDir)
+Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refIdx, UInt partUnitIdx, MVP_DIR eDir)
 {
     TComDataCU* pcTmpCU = NULL;
     UInt uiIdx = 0;
@@ -3006,27 +3006,27 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refId
     {
     case MD_LEFT:
     {
-        pcTmpCU = getPULeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPULeft(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE:
     {
-        pcTmpCU = getPUAbove(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAbove(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE_RIGHT:
     {
-        pcTmpCU = getPUAboveRight(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAboveRight(uiIdx, partUnitIdx);
         break;
     }
     case MD_BELOW_LEFT:
     {
-        pcTmpCU = getPUBelowLeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUBelowLeft(uiIdx, partUnitIdx);
         break;
     }
     case MD_ABOVE_LEFT:
     {
-        pcTmpCU = getPUAboveLeft(uiIdx, uiPartUnitIdx);
+        pcTmpCU = getPUAboveLeft(uiIdx, partUnitIdx);
         break;
     }
     default:
@@ -3123,14 +3123,14 @@ Bool TComDataCU::xAddMVPCandOrder(AMVPInfo* pInfo, RefPicList picList, Int refId
 
 /**
  * \param picList
- * \param uiCUAddr
- * \param uiPartUnitIdx
+ * \param cuAddr
+ * \param partUnitIdx
  * \param riRefIdx
  * \returns Bool
  */
-Bool TComDataCU::xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx, MV& rcMv, Int& riRefIdx)
+Bool TComDataCU::xGetColMVP(RefPicList picList, Int cuAddr, Int partUnitIdx, MV& rcMv, Int& riRefIdx)
 {
-    UInt uiAbsPartAddr = uiPartUnitIdx;
+    UInt uiAbsPartAddr = partUnitIdx;
 
     RefPicList  eColRefPicList;
     Int iColPOC, iColRefPOC, iCurrPOC, iCurrRefPOC, iScale;
@@ -3138,9 +3138,9 @@ Bool TComDataCU::xGetColMVP(RefPicList picList, Int uiCUAddr, Int uiPartUnitIdx,
 
     // use coldir.
     TComPic *pColPic = getSlice()->getRefPic(RefPicList(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0), getSlice()->getColRefIdx());
-    TComDataCU *pColCU = pColPic->getCU(uiCUAddr);
+    TComDataCU *pColCU = pColPic->getCU(cuAddr);
 
-    if (pColCU->getPic() == 0 || pColCU->getPartitionSize(uiPartUnitIdx) == SIZE_NONE)
+    if (pColCU->getPic() == 0 || pColCU->getPartitionSize(partUnitIdx) == SIZE_NONE)
     {
         return false;
     }

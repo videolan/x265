@@ -438,10 +438,10 @@ Void TEncEntropy::encodePUWise(TComDataCU* cu, UInt absPartIdx, Bool bRD)
         absPartIdx = 0;
     }
 
-    PartSize ePartSize = cu->getPartitionSize(absPartIdx);
-    UInt uiNumPU = (ePartSize == SIZE_2Nx2N ? 1 : (ePartSize == SIZE_NxN ? 4 : 2));
+    PartSize partSize = cu->getPartitionSize(absPartIdx);
+    UInt uiNumPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
     UInt depth = cu->getDepth(absPartIdx);
-    UInt uiPUOffset = (g_auiPUOffset[UInt(ePartSize)] << ((cu->getSlice()->getSPS()->getMaxCUDepth() - depth) << 1)) >> 4;
+    UInt uiPUOffset = (g_auiPUOffset[UInt(partSize)] << ((cu->getSlice()->getSPS()->getMaxCUDepth() - depth) << 1)) >> 4;
 
     for (UInt partIdx = 0, uiSubPartIdx = absPartIdx; partIdx < uiNumPU; partIdx++, uiSubPartIdx += uiPUOffset)
     {

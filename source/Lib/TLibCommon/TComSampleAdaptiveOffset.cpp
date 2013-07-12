@@ -1387,9 +1387,9 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
 
     if (bPCMFilter || pcPic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        for (UInt uiCUAddr = 0; uiCUAddr < pcPic->getNumCUsInFrame(); uiCUAddr++)
+        for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
         {
-            TComDataCU* cu = pcPic->getCU(uiCUAddr);
+            TComDataCU* cu = pcPic->getCU(cuAddr);
 
             xPCMCURestoration(cu, 0, 0);
         }

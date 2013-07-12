@@ -130,9 +130,9 @@ Void TComLoopFilter::destroy()
 Void TComLoopFilter::loopFilterPic(TComPic* pcPic)
 {
     // Horizontal filtering
-    for (UInt uiCUAddr = 0; uiCUAddr < pcPic->getNumCUsInFrame(); uiCUAddr++)
+    for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
     {
-        TComDataCU* cu = pcPic->getCU(uiCUAddr);
+        TComDataCU* cu = pcPic->getCU(cuAddr);
 
         ::memset(m_aapucBS[EDGE_VER], 0, sizeof(UChar) * m_uiNumPartitions);
         ::memset(m_aapbEdgeFilter[EDGE_VER], 0, sizeof(Bool) * m_uiNumPartitions);
@@ -142,9 +142,9 @@ Void TComLoopFilter::loopFilterPic(TComPic* pcPic)
     }
 
     // Vertical filtering
-    for (UInt uiCUAddr = 0; uiCUAddr < pcPic->getNumCUsInFrame(); uiCUAddr++)
+    for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
     {
-        TComDataCU* cu = pcPic->getCU(uiCUAddr);
+        TComDataCU* cu = pcPic->getCU(cuAddr);
 
         ::memset(m_aapucBS[EDGE_HOR], 0, sizeof(UChar) * m_uiNumPartitions);
         ::memset(m_aapbEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_uiNumPartitions);

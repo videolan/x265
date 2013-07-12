@@ -94,7 +94,7 @@ public:
 
     UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame; }
 
-    TComDataCU*&  getCU(UInt uiCUAddr)    { return m_apcTComDataCU[uiCUAddr]; }
+    TComDataCU*&  getCU(UInt cuAddr)    { return m_apcTComDataCU[cuAddr]; }
 
     UInt        getNumPartition()         { return m_uiNumPartitions; }
 

@@ -33,10 +33,6 @@ void CTURow::create(TEncTop* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_search.init(top, &m_rdCost, &m_trQuant);
-
-    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth, g_maxCUHeight);
-    m_cuCoder.init(top);
 
     if (top->getUseAdaptiveQP())
     {
@@ -61,12 +57,19 @@ void CTURow::create(TEncTop* top)
         }
     }
 
-    m_cuCoder.set_pcRdCost(&m_rdCost);
-    m_cuCoder.set_pppcRDSbacCoder(m_rdSbacCoders);
-    m_cuCoder.set_pcEntropyCoder(&m_entropyCoder);
-    m_cuCoder.set_pcPredSearch(&m_search);
-    m_cuCoder.set_pcTrQuant(&m_trQuant);
-    m_cuCoder.set_pcRdCost(&m_rdCost);
+    m_search.init(top, &m_rdCost, &m_trQuant);
+    m_search.setRDSbacCoder(m_rdSbacCoders);
+    m_search.setEntropyCoder(&m_entropyCoder);
+    m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+
+    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth, g_maxCUHeight);
+    m_cuCoder.init(top);
+    m_cuCoder.setRdCost(&m_rdCost);
+    m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
+    m_cuCoder.setEntropyCoder(&m_entropyCoder);
+    m_cuCoder.setPredSearch(&m_search);
+    m_cuCoder.setTrQuant(&m_trQuant);
+    m_cuCoder.setRdCost(&m_rdCost);
 }
 
 void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, bool bSaveSBac)
@@ -85,7 +88,7 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, slice);
     m_entropyCoder.setBitstream(&m_bitCounter);
     ((TEncBinCABAC*)m_rdGoOnSbacCoder.getEncBinIf())->setBinCountingEnableFlag(true);
-    m_cuCoder.set_pcRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+    m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
     m_cuCoder.compressCU(cu); // Does all the CU analysis
 

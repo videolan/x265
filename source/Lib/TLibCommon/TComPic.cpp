@@ -104,9 +104,9 @@ Void TComPic::compressMotion()
 {
     TComPicSym* pPicSym = getPicSym();
 
-    for (UInt uiCUAddr = 0; uiCUAddr < pPicSym->getFrameHeightInCU() * pPicSym->getFrameWidthInCU(); uiCUAddr++)
+    for (UInt cuAddr = 0; cuAddr < pPicSym->getFrameHeightInCU() * pPicSym->getFrameWidthInCU(); cuAddr++)
     {
-        TComDataCU* cu = pPicSym->getCU(uiCUAddr);
+        TComDataCU* cu = pPicSym->getCU(cuAddr);
         cu->compressMV();
     }
 }
