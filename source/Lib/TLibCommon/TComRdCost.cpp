@@ -1078,83 +1078,83 @@ UInt TComRdCost::xGetSSE16N(DistParam* distParam)
 }
 
 template<typename T1, typename T2>
-UInt xGetSSE32Help(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows, UInt uiShift)
+UInt xGetSSE32Help(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, UInt shift)
 {
-    UInt uiSum = 0;
-    Int iTemp;
+    UInt sum = 0;
+    Int temp;
 
-    for (; iRows != 0; iRows--)
+    for (; rows != 0; rows--)
     {
-        iTemp = piOrg[0] - piCur[0];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[1] - piCur[1];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[2] - piCur[2];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[3] - piCur[3];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[4] - piCur[4];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[5] - piCur[5];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[6] - piCur[6];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[7] - piCur[7];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[8] - piCur[8];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[9] - piCur[9];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[10] - piCur[10];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[11] - piCur[11];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[12] - piCur[12];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[13] - piCur[13];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[14] - piCur[14];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[15] - piCur[15];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[16] - piCur[16];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[17] - piCur[17];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[18] - piCur[18];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[19] - piCur[19];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[20] - piCur[20];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[21] - piCur[21];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[22] - piCur[22];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[23] - piCur[23];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[24] - piCur[24];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[25] - piCur[25];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[26] - piCur[26];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[27] - piCur[27];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[28] - piCur[28];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[29] - piCur[29];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[30] - piCur[30];
-        uiSum += (iTemp * iTemp) >> uiShift;
-        iTemp = piOrg[31] - piCur[31];
-        uiSum += (iTemp * iTemp) >> uiShift;
+        temp = org[0] - cur[0];
+        sum += (temp * temp) >> shift;
+        temp = org[1] - cur[1];
+        sum += (temp * temp) >> shift;
+        temp = org[2] - cur[2];
+        sum += (temp * temp) >> shift;
+        temp = org[3] - cur[3];
+        sum += (temp * temp) >> shift;
+        temp = org[4] - cur[4];
+        sum += (temp * temp) >> shift;
+        temp = org[5] - cur[5];
+        sum += (temp * temp) >> shift;
+        temp = org[6] - cur[6];
+        sum += (temp * temp) >> shift;
+        temp = org[7] - cur[7];
+        sum += (temp * temp) >> shift;
+        temp = org[8] - cur[8];
+        sum += (temp * temp) >> shift;
+        temp = org[9] - cur[9];
+        sum += (temp * temp) >> shift;
+        temp = org[10] - cur[10];
+        sum += (temp * temp) >> shift;
+        temp = org[11] - cur[11];
+        sum += (temp * temp) >> shift;
+        temp = org[12] - cur[12];
+        sum += (temp * temp) >> shift;
+        temp = org[13] - cur[13];
+        sum += (temp * temp) >> shift;
+        temp = org[14] - cur[14];
+        sum += (temp * temp) >> shift;
+        temp = org[15] - cur[15];
+        sum += (temp * temp) >> shift;
+        temp = org[16] - cur[16];
+        sum += (temp * temp) >> shift;
+        temp = org[17] - cur[17];
+        sum += (temp * temp) >> shift;
+        temp = org[18] - cur[18];
+        sum += (temp * temp) >> shift;
+        temp = org[19] - cur[19];
+        sum += (temp * temp) >> shift;
+        temp = org[20] - cur[20];
+        sum += (temp * temp) >> shift;
+        temp = org[21] - cur[21];
+        sum += (temp * temp) >> shift;
+        temp = org[22] - cur[22];
+        sum += (temp * temp) >> shift;
+        temp = org[23] - cur[23];
+        sum += (temp * temp) >> shift;
+        temp = org[24] - cur[24];
+        sum += (temp * temp) >> shift;
+        temp = org[25] - cur[25];
+        sum += (temp * temp) >> shift;
+        temp = org[26] - cur[26];
+        sum += (temp * temp) >> shift;
+        temp = org[27] - cur[27];
+        sum += (temp * temp) >> shift;
+        temp = org[28] - cur[28];
+        sum += (temp * temp) >> shift;
+        temp = org[29] - cur[29];
+        sum += (temp * temp) >> shift;
+        temp = org[30] - cur[30];
+        sum += (temp * temp) >> shift;
+        temp = org[31] - cur[31];
+        sum += (temp * temp) >> shift;
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    return uiSum;
+    return sum;
 }
 
 UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
