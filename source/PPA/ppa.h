@@ -1,33 +1,25 @@
-/*
- * File             : ppa.h
- *                    ( C++ header file )
+/*****************************************************************************
+ * Copyright (C) 2013 x265 project
  *
- * Description      : Parallel Path Analyzer
- *                    ( This is a source of the PPA SDK. )
- *                    Include this file in your application.
+ * Authors: Steve Borho <steve@borho.org>
  *
- * Copyright        : MulticoreWare Inc.
- *                    ( http://www.multicorewareinc.com )
- *                    Copyright (c) 2011 MulticoreWare Inc. All rights reserved
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * License          : PPA Software License v0.1
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
- *
- * This software is governed by MulticoreWare Inc. Permission to use, reproduce,
- * copy, modify, display, distribute, execute and transmit this software
- * for any purpose and any use of its accompanying documentation is hereby granted.
- * Provided that the above copyright notice appear in all copies, and that
- * this software is not used in advertising or publicity without specific, written
- * prior permission by MulticoreWare Inc, and that the following disclaimer is
- * included.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
- * INCLUDING, WITHOUT LIMITATION, ANY WARRANTY OF DESIGN, MERCHANTABILITY
- * OR FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT WARRANTY AS TO NON-INFRINGEMENT
- * OR THE PERFORMANCE OR RESULTS YOU MAY OBTAIN BY USING THE SOFTWARE.
- */
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at licensing@multicorewareinc.com.
+ *****************************************************************************/
 
 #ifndef _PPA_H_
 #define _PPA_H_
