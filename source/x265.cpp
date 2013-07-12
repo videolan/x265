@@ -419,8 +419,6 @@ struct CLIOptions
 
         x265_setup_primitives(param, cpuid);
 
-        x265_set_globals(param, inputBitDepth);
-
         return false;
     }
 };

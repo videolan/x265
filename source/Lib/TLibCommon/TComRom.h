@@ -153,8 +153,6 @@ extern const UChar g_intraModeNumFast[7];
 
 extern  Int g_bitDepthY;
 extern  Int g_bitDepthC;
-extern UInt g_PCMBitDepthLuma;
-extern UInt g_PCMBitDepthChroma;
 
 // ====================================================================================================================
 // Texture type to integer mapping

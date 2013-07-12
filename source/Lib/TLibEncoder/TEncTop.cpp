@@ -353,8 +353,10 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
         pcSPS->setNumReorderPics(m_numReorderPics[i], i);
     }
 
-    pcSPS->setPCMBitDepthLuma(g_PCMBitDepthLuma);
-    pcSPS->setPCMBitDepthChroma(g_PCMBitDepthChroma);
+    // TODO: it is recommended for this to match the input bit depth
+    pcSPS->setPCMBitDepthLuma(g_bitDepthY);
+    pcSPS->setPCMBitDepthChroma(g_bitDepthC);
+
     pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 
     pcSPS->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);

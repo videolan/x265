@@ -792,10 +792,12 @@ x265_t *x265_encoder_open(x265_param_t *param)
     if (x265_check_params(param))
         return NULL;
 
+    x265_set_globals(param);
+
     x265_t *encoder = new x265_t;
     if (encoder)
     {
-        encoder->configure(param);
+        encoder->configure(param); // this may change params for auto-detect, etc
         x265_print_params(param);
         encoder->create();
         encoder->init();
