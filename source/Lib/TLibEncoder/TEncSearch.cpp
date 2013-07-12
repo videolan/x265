@@ -104,6 +104,7 @@ TEncSearch::TEncSearch()
         m_qtTempCbf[i] = NULL;
         m_qtTempTransformSkipFlag[i] = NULL;
     }
+
     m_cfg = NULL;
     m_rdCost  = NULL;
     m_trQuant = NULL;
@@ -156,6 +157,7 @@ TEncSearch::~TEncSearch()
         delete[] m_sharedPredTransformSkip[i];
         delete[] m_qtTempTransformSkipFlag[i];
     }
+
     m_qtTempTransformSkipTComYuv.destroy();
     m_tmpYuvPred.destroy();
 }
@@ -249,6 +251,7 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance)
 {
     Pel* fref = data.fref + searchY * data.lumaStride + searchX;
+
     m_rdCost->setDistParam(patternKey, fref, data.lumaStride, m_distParam);
 
     if (m_distParam.rows > 12)
@@ -1708,7 +1711,7 @@ Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
             TCoeff* coeffDstV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffSrcV = m_qtTempTUCoeffCr;
             ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-            
+
             Int* arlCoeffDstV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
             Int* arlCoeffSrcV = m_qtTempTUArlCoeffCr;
             ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
@@ -2054,7 +2057,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             UInt modeCosts[35];
             Bool bFilter = (width <= 16);
-            pixel *predSrc = (pixel*) m_predBuf;
+            pixel *predSrc = (pixel*)m_predBuf;
 
             // 1
             primitives.intra_pred_dc((pixel*)predSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width, bFilter);
@@ -2325,6 +2328,7 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
     UInt minMode = 0;
     UInt maxMode = NUM_CHROMA_MODE;
     UInt modeList[NUM_CHROMA_MODE];
+
     cu->getAllowedChromaDir(0, modeList);
 
     //----- check chroma modes -----
@@ -3270,6 +3274,7 @@ Void TEncSearch::xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst)
 Void TEncSearch::xCheckBestMVP(TComDataCU* cu, RefPicList picList, MV mv, MV& mvPred, Int& outMvpIdx, UInt& outBits, UInt& outCost)
 {
     AMVPInfo* amvpInfo = cu->getCUMvField(picList)->getAMVPInfo();
+
     assert(amvpInfo->m_mvCand[outMvpIdx] == mvPred);
     if (amvpInfo->m_num < 2) return;
 
@@ -3450,8 +3455,10 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
                 mv = mv;
             }
         }
+
         refY += stride;
     }
+
     outcost = bcost - m_bc.mvcost(outmv << 2);
 }
 
@@ -3844,7 +3851,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         m_trQuant->selectLambda(TEXT_LUMA);
 
         absSumY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width, coeffCurY,
-                                            arlCoeffCurY, trWidth, trHeight, TEXT_LUMA, absPartIdx);
+                                          arlCoeffCurY, trWidth, trHeight, TEXT_LUMA, absPartIdx);
 
         cu->setCbfSubParts(absSumY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -3861,12 +3868,12 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             m_trQuant->selectLambda(TEXT_CHROMA);
 
             absSumU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth, coeffCurU,
-                                                arlCoeffCurU, trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx);
+                                              arlCoeffCurU, trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx);
 
             curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
             absSumV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth, coeffCurV,
-                                                arlCoeffCurV, trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx);
+                                              arlCoeffCurV, trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx);
 
             cu->setCbfSubParts(absSumU ? setCbf : 0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
             cu->setCbfSubParts(absSumV ? setCbf : 0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
@@ -3986,7 +3993,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 assert(scalingListType < 6);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, pcResiCurrU, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType);
 
-                UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth, 
+                UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
                                                          m_qtTempTComYuv[qtlayer].Cwidth);
                 const UInt nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
@@ -4054,7 +4061,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 assert(scalingListType < 6);
                 m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType);
 
-                UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth, 
+                UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
                                                          m_qtTempTComYuv[qtlayer].Cwidth);
                 const UInt nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
@@ -4147,7 +4154,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
             m_trQuant->selectLambda(TEXT_LUMA);
             absSumTransformSkipY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width, coeffCurY,
-                                                             arlCoeffCurY, trWidth, trHeight, TEXT_LUMA, absPartIdx, true);
+                                                           arlCoeffCurY, trWidth, trHeight, TEXT_LUMA, absPartIdx, true);
             cu->setCbfSubParts(absSumTransformSkipY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
             if (absSumTransformSkipY != 0)
@@ -4231,11 +4238,11 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             m_trQuant->selectLambda(TEXT_CHROMA);
 
             absSumTransformSkipU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth, coeffCurU,
-                                                             arlCoeffCurU, trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx, true);
+                                                           arlCoeffCurU, trWidthC, trHeightC, TEXT_CHROMA_U, absPartIdx, true);
             curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset);
             absSumTransformSkipV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth, coeffCurV,
-                                                             arlCoeffCurV, trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx, true);
+                                                           arlCoeffCurV, trWidthC, trHeightC, TEXT_CHROMA_V, absPartIdx, true);
 
             cu->setCbfSubParts(absSumTransformSkipU ? setCbf : 0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
             cu->setCbfSubParts(absSumTransformSkipV ? setCbf : 0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
