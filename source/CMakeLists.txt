@@ -17,6 +17,13 @@ endif()
 
 # Enforce coding standards.  Full warnings and warnings as errors
 if(MSVC)
+    option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
+    if (STATIC_LINK_CRT)
+        set(CompilerFlags CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_RELEASE)
+        foreach(CompilerFlag ${CompilerFlags})
+            string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+        endforeach()
+    endif (STATIC_LINK_CRT)
     add_definitions(/W4 /WX /D_CRT_SECURE_NO_WARNINGS)
     add_definitions(/Ob2) # always inline
     add_definitions(/Oi)  # enable intrinsics
