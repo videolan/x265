@@ -116,35 +116,35 @@ Void TComRdCost::init()
 }
 
 // Setting the Distortion Parameter for Inter (ME)
-Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* piRefY, Int iRefStride, DistParam& rcDistParam)
+Void TComRdCost::setDistParam(TComPattern* patternKey, Pel* refY, Int refStride, DistParam& distParam)
 {
     // set Original & Curr Pointer / Stride
-    rcDistParam.fenc = patternKey->getROIY();
-    rcDistParam.fref = piRefY;
+    distParam.fenc = patternKey->getROIY();
+    distParam.fref = refY;
 
-    rcDistParam.fencstride = patternKey->getPatternLStride();
-    rcDistParam.frefstride = iRefStride;
+    distParam.fencstride = patternKey->getPatternLStride();
+    distParam.frefstride = refStride;
 
     // set Block Width / Height
-    rcDistParam.cols    = patternKey->getROIYWidth();
-    rcDistParam.rows    = patternKey->getROIYHeight();
-    rcDistParam.distFunc = m_distortionFunctions[DF_SAD + g_convertToBit[rcDistParam.cols] + 1];
+    distParam.cols    = patternKey->getROIYWidth();
+    distParam.rows    = patternKey->getROIYHeight();
+    distParam.distFunc = m_distortionFunctions[DF_SAD + g_convertToBit[distParam.cols] + 1];
 
-    if (rcDistParam.cols == 12)
+    if (distParam.cols == 12)
     {
-        rcDistParam.distFunc = m_distortionFunctions[43];
+        distParam.distFunc = m_distortionFunctions[43];
     }
-    else if (rcDistParam.cols == 24)
+    else if (distParam.cols == 24)
     {
-        rcDistParam.distFunc = m_distortionFunctions[44];
+        distParam.distFunc = m_distortionFunctions[44];
     }
-    else if (rcDistParam.cols == 48)
+    else if (distParam.cols == 48)
     {
-        rcDistParam.distFunc = m_distortionFunctions[45];
+        distParam.distFunc = m_distortionFunctions[45];
     }
 
     // initialize
-    rcDistParam.subShift  = 0;
+    distParam.subShift  = 0;
 }
 
 // Setting the Distortion Parameter for Inter (subpel ME with step)
