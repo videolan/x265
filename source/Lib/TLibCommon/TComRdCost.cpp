@@ -51,9 +51,9 @@ TComRdCost::TComRdCost()
 TComRdCost::~TComRdCost()
 {}
 
-Void TComRdCost::setLambda(Double dLambda)
+Void TComRdCost::setLambda(Double lambda)
 {
-    m_lambda2           = dLambda;
+    m_lambda2           = lambda;
     m_lambda        = sqrt(m_lambda2);
     m_lambdaMotionSAD = (UInt64)floor(65536.0 * m_lambda);
     m_lambdaMotionSSE = (UInt64)floor(65536.0 * m_lambda2);
