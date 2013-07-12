@@ -1157,45 +1157,45 @@ UInt xGetSSE32Help(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, UIn
     return sum;
 }
 
-UInt TComRdCost::xGetSSE32(DistParam* pcDtParam)
+UInt TComRdCost::xGetSSE32(DistParam* distParam)
 {
-    if (pcDtParam->applyWeight)
+    if (distParam->applyWeight)
     {
-        assert(pcDtParam->cols == 32);
-        return xGetSSEw(pcDtParam);
+        assert(distParam->cols == 32);
+        return xGetSSEw(distParam);
     }
-    Pel* piOrg   = pcDtParam->fenc;
-    Pel* piCur   = pcDtParam->fref;
-    Int  iRows   = pcDtParam->rows;
-    Int  iStrideOrg = pcDtParam->fencstride;
-    Int  iStrideCur = pcDtParam->frefstride;
+    Pel* org = distParam->fenc;
+    Pel* cur = distParam->fref;
+    Int  rows = distParam->rows;
+    Int  strideOrg = distParam->fencstride;
+    Int  strideCur = distParam->frefstride;
 
-    UInt uiSum = 0;
-    UInt uiShift = DISTORTION_PRECISION_ADJUSTMENT((pcDtParam->bitDepth - 8) << 1);
+    UInt sum = 0;
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
 
-    if ((sizeof(Pel) == 2) || ((piOrg != NULL) && (piCur != NULL)))
+    if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
-        uiSum = xGetSSE32Help<Pel, Pel>(piOrg, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+        sum = xGetSSE32Help<Pel, Pel>(org, strideOrg, cur, strideCur, rows, shift);
     }
     else
     {
-        Short* piOrg_s;
-        Short* piCur_s;
-        DistParamSSE* DtParam = reinterpret_cast<DistParamSSE*>(pcDtParam);
-        piOrg_s = DtParam->ptr1;
-        piCur_s = DtParam->ptr2;
+        Short* org_s;
+        Short* cur_s;
+        DistParamSSE* dtParam = reinterpret_cast<DistParamSSE*>(distParam);
+        org_s = dtParam->ptr1;
+        cur_s = dtParam->ptr2;
 
-        if ((piOrg == NULL) && (piCur == NULL))
+        if ((org == NULL) && (cur == NULL))
         {
-            uiSum = xGetSSE32Help<Short, Short>(piOrg_s, iStrideOrg, piCur_s, iStrideCur, iRows, uiShift);
+            sum = xGetSSE32Help<Short, Short>(org_s, strideOrg, cur_s, strideCur, rows, shift);
         }
         else
         {
-            uiSum = xGetSSE32Help<Short, Pel>(piOrg_s, iStrideOrg, piCur, iStrideCur, iRows, uiShift);
+            sum = xGetSSE32Help<Short, Pel>(org_s, strideOrg, cur, strideCur, rows, shift);
         }
     }
 
-    return uiSum;
+    return sum;
 }
 
 template<typename T1, typename T2>
