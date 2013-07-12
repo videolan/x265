@@ -175,11 +175,11 @@ public:
                               TComYuv* reconYuv, UInt precalcDistC);
 
     /// encoder estimation - inter prediction (non-skip)
-    Void predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, Bool bUseMRG = false);
+    Void predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, Bool bUseMRG = false);
 
     /// encode residual and compute rd-cost for inter mode
-    Void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& resiYuv, TShortYUV*& bestResiYuv,
-                                   TComYuv*& reconYuv, Bool bSkipRes);
+    Void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TShortYUV* bestResiYuv,
+                                   TComYuv* reconYuv, Bool bSkipRes);
 
     /// set ME search range
     Void setAdaptiveSearchRange(Int dir, Int refIdx, Int merange) { m_adaptiveRange[dir][refIdx] = merange; }
@@ -187,7 +187,7 @@ public:
     Void xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, Pel* pred, Short* residual, Pel* recon, UInt stride,
                  UInt width, UInt height, TextType ttype);
 
-    Void IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, TShortYUV*& resiYuv, TComYuv*& reconYuv);
+    Void IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv);
 
     UInt estimateHeaderBits(TComDataCU* cu, UInt absPartIdx);
 

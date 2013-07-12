@@ -2464,7 +2464,7 @@ Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, P
  * \param rpcRecoYuv
  * \returns Void
  */
-Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, TShortYUV*& resiYuv, TComYuv*& reconYuv)
+Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* resiYuv, TComYuv* reconYuv)
 {
     UInt depth      = cu->getDepth(0);
     UInt width      = cu->getWidth(0);
@@ -2633,7 +2633,7 @@ Void TEncSearch::xRestrictBipredMergeCand(TComDataCU* cu, UInt puIdx, TComMvFiel
  * \param bUseRes
  * \returns Void
  */
-Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv*& predYuv, Bool bUseMRG)
+Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, Bool bUseMRG)
 {
     m_predYuv[0].clear();
     m_predYuv[1].clear();
@@ -3590,7 +3590,8 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU*  cu,
  * \param bSkipRes
  * \returns Void
  */
-Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV*& outResiYuv, TShortYUV*& outBestResiYuv, TComYuv*& outReconYuv, Bool bSkipRes)
+Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TShortYUV* outResiYuv,
+                                           TShortYUV* outBestResiYuv, TComYuv* outReconYuv, Bool bSkipRes)
 {
     if (cu->isIntra(0))
     {
