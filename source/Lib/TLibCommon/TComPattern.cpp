@@ -65,14 +65,10 @@ const UChar TComPattern::m_intraFilter[5] =
  \param  offsetLeft   neighbour offset (left)
  \param  offsetAbove  neighbour offset (above)
  */
-Void TComPatternParam::setPatternParamPel(Pel* piTexture,
-                                          Int  roiWidth,
-                                          Int  roiHeight,
-                                          Int  stride,
-                                          Int  offsetLeft,
-                                          Int  offsetAbove)
+Void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHeight,
+                                          Int stride, Int offsetLeft, Int offsetAbove)
 {
-    m_patternOrigin = piTexture;
+    m_patternOrigin  = texture;
     m_roiWidth       = roiWidth;
     m_roiHeight      = roiHeight;
     m_patternStride  = stride;
@@ -81,26 +77,20 @@ Void TComPatternParam::setPatternParamPel(Pel* piTexture,
 }
 
 /**
- \param  cu          CU data structure
+ \param  cu           CU data structure
  \param  comp         component index (0=Y, 1=Cb, 2=Cr)
  \param  roiWidth     pattern width
  \param  roiHeight    pattern height
  \param  stride       buffer stride
  \param  offsetLeft   neighbour offset (left)
  \param  offsetAbove  neighbour offset (above)
- \param  absPartIdx  part index
+ \param  absPartIdx   part index
  */
-Void TComPatternParam::setPatternParamCU(TComDataCU* cu,
-                                         UChar       comp,
-                                         UChar       roiWidth,
-                                         UChar       roiHeight,
-                                         Int         offsetLeft,
-                                         Int         offsetAbove,
-                                         UInt        absPartIdx)
+Void TComPatternParam::setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
+                                         Int offsetLeft, Int offsetAbove, UInt absPartIdx)
 {
     m_offsetLeft   = offsetLeft;
     m_offsetAbove  = offsetAbove;
-
     m_roiWidth     = roiWidth;
     m_roiHeight    = roiHeight;
 
@@ -129,14 +119,8 @@ Void TComPatternParam::setPatternParamCU(TComDataCU* cu,
 // Public member functions (TComPattern)
 // ====================================================================================================================
 
-Void TComPattern::initPattern(Pel* y,
-                              Pel* cb,
-                              Pel* cr,
-                              Int  roiWidth,
-                              Int  roiHeight,
-                              Int  stride,
-                              Int  offsetLeft,
-                              Int  offsetAbove)
+Void TComPattern::initPattern(Pel* y, Pel* cb, Pel* cr, Int roiWidth, Int roiHeight, Int stride,
+                              Int offsetLeft, Int offsetAbove)
 {
     m_patternY.setPatternParamPel(y,  roiWidth,      roiHeight,      stride,      offsetLeft,      offsetAbove);
     m_patternCb.setPatternParamPel(cb, roiWidth >> 1, roiHeight >> 1, stride >> 1, offsetLeft >> 1, offsetAbove >> 1);
@@ -145,47 +129,48 @@ Void TComPattern::initPattern(Pel* y,
 
 Void TComPattern::initPattern(TComDataCU* cu, UInt partDepth, UInt absPartIdx)
 {
-    Int   uiOffsetLeft  = 0;
-    Int   uiOffsetAbove = 0;
+    Int offsetLeft  = 0;
+    Int offsetAbove = 0;
 
-    UChar width          = cu->getWidth(0) >> partDepth;
-    UChar height         = cu->getHeight(0) >> partDepth;
+    UChar width        = cu->getWidth(0) >> partDepth;
+    UChar height       = cu->getHeight(0) >> partDepth;
 
-    UInt  absZOrderIdx   = cu->getZorderIdxInCU() + absPartIdx;
-    UInt  uiCurrPicPelX    = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-    UInt  uiCurrPicPelY    = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+    UInt absZOrderIdx  = cu->getZorderIdxInCU() + absPartIdx;
+    UInt uiCurrPicPelX = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
+    UInt uiCurrPicPelY = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
 
     if (uiCurrPicPelX != 0)
     {
-        uiOffsetLeft = 1;
+        offsetLeft = 1;
     }
 
     if (uiCurrPicPelY != 0)
     {
-        uiOffsetAbove = 1;
+        offsetAbove = 1;
     }
 
-    m_patternY.setPatternParamCU(cu, 0, width,      height,      uiOffsetLeft, uiOffsetAbove, absPartIdx);
-    m_patternCb.setPatternParamCU(cu, 1, width >> 1, height >> 1, uiOffsetLeft, uiOffsetAbove, absPartIdx);
-    m_patternCr.setPatternParamCU(cu, 2, width >> 1, height >> 1, uiOffsetLeft, uiOffsetAbove, absPartIdx);
+    m_patternY.setPatternParamCU(cu, 0, width,      height,      offsetLeft, offsetAbove, absPartIdx);
+    m_patternCb.setPatternParamCU(cu, 1, width >> 1, height >> 1, offsetLeft, offsetAbove, absPartIdx);
+    m_patternCr.setPatternParamCU(cu, 2, width >> 1, height >> 1, offsetLeft, offsetAbove, absPartIdx);
 }
 
-Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig)
+Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf,
+                                 Int strideOrig, Int heightOrig)
 {
-    Pel*  roiOrigin;
-    Pel*  adiTemp;
-    UInt  cuWidth   = cu->getWidth(0) >> partDepth;
-    UInt  cuHeight  = cu->getHeight(0) >> partDepth;
-    UInt  uiCuWidth2  = cuWidth << 1;
-    UInt  uiCuHeight2 = cuHeight << 1;
-    UInt  width;
-    UInt  height;
-    Int   picStride = cu->getPic()->getStride();
-    Int   unitSize = 0;
-    Int   numUnitsInCU = 0;
-    Int   totalUnits = 0;
-    Bool  bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
-    Int   numIntraNeighbor = 0;
+    Pel* roiOrigin;
+    Pel* adiTemp;
+    UInt cuWidth = cu->getWidth(0) >> partDepth;
+    UInt cuHeight = cu->getHeight(0) >> partDepth;
+    UInt cuWidth2  = cuWidth << 1;
+    UInt cuHeight2 = cuHeight << 1;
+    UInt width;
+    UInt height;
+    Int  picStride = cu->getPic()->getStride();
+    Int  unitSize = 0;
+    Int  numUnitsInCU = 0;
+    Int  totalUnits = 0;
+    Bool bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
+    Int  numIntraNeighbor = 0;
 
     UInt partIdxLT, partIdxRT, partIdxLB;
 
@@ -203,8 +188,8 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
     numIntraNeighbor  += isLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + (numUnitsInCU * 2) - 1);
     numIntraNeighbor  += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + numUnitsInCU   - 1);
 
-    width = uiCuWidth2 + 1;
-    height = uiCuHeight2 + 1;
+    width = cuWidth2 + 1;
+    height = cuHeight2 + 1;
 
     if (((width << 2) > strideOrig) || ((height << 2) > heightOrig))
     {
@@ -216,98 +201,98 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
 
     fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits, cuWidth, cuHeight, width, height, picStride);
 
-    Int   i;
     // generate filtered intra prediction samples
-    Int iBufSize = uiCuHeight2 + uiCuWidth2 + 1; // left and left above border + above and above right border + top left corner = length of 3. filter buffer
+    // left and left above border + above and above right border + top left corner = length of 3. filter buffer
+    Int bufSize = cuHeight2 + cuWidth2 + 1; 
+    UInt wh = ADI_BUF_STRIDE * height;         // number of elements in one buffer
 
-    UInt uiWH = ADI_BUF_STRIDE * height;       // number of elements in one buffer
-
-    Pel* piFilteredBuf1 = adiBuf + uiWH;      // 1. filter buffer
-    Pel* piFilteredBuf2 = piFilteredBuf1 + uiWH; // 2. filter buffer
-    Pel* piFilterBuf = piFilteredBuf2 + uiWH;   // buffer for 2. filtering (sequential)
-    Pel* piFilterBufN = piFilterBuf + iBufSize; // buffer for 1. filtering (sequential)
+    Pel* filteredBuf1 = adiBuf + wh;         // 1. filter buffer
+    Pel* filteredBuf2 = filteredBuf1 + wh; // 2. filter buffer
+    Pel* filterBuf = filteredBuf2 + wh;    // buffer for 2. filtering (sequential)
+    Pel* filterBufN = filterBuf + bufSize; // buffer for 1. filtering (sequential)
 
     Int l = 0;
     // left border from bottom to top
-    for (i = 0; i < uiCuHeight2; i++)
+    for (Int i = 0; i < cuHeight2; i++)
     {
-        piFilterBuf[l++] = adiTemp[ADI_BUF_STRIDE * (uiCuHeight2 - i)];
+        filterBuf[l++] = adiTemp[ADI_BUF_STRIDE * (cuHeight2 - i)];
     }
 
     // top left corner
-    piFilterBuf[l++] = adiTemp[0];
+    filterBuf[l++] = adiTemp[0];
 
     // above border from left to right
-    memcpy(&piFilterBuf[l], &adiTemp[1], uiCuWidth2 * sizeof(*piFilterBuf));
+    memcpy(&filterBuf[l], &adiTemp[1], cuWidth2 * sizeof(*filterBuf));
 
     if (cu->getSlice()->getSPS()->getUseStrongIntraSmoothing())
     {
         Int blkSize = 32;
-        Int bottomLeft = piFilterBuf[0];
-        Int topLeft = piFilterBuf[uiCuHeight2];
-        Int topRight = piFilterBuf[iBufSize - 1];
+        Int bottomLeft = filterBuf[0];
+        Int topLeft = filterBuf[cuHeight2];
+        Int topRight = filterBuf[bufSize - 1];
         Int threshold = 1 << (g_bitDepthY - 5);
-        Bool bilinearLeft = abs(bottomLeft + topLeft - 2 * piFilterBuf[cuHeight]) < threshold;
-        Bool bilinearAbove  = abs(topLeft + topRight - 2 * piFilterBuf[uiCuHeight2 + cuHeight]) < threshold;
+        Bool bilinearLeft = abs(bottomLeft + topLeft - 2 * filterBuf[cuHeight]) < threshold;
+        Bool bilinearAbove  = abs(topLeft + topRight - 2 * filterBuf[cuHeight2 + cuHeight]) < threshold;
 
         if (cuWidth >= blkSize && (bilinearLeft && bilinearAbove))
         {
             Int shift = g_convertToBit[cuWidth] + 3; // log2(uiCuHeight2)
-            piFilterBufN[0] = piFilterBuf[0];
-            piFilterBufN[uiCuHeight2] = piFilterBuf[uiCuHeight2];
-            piFilterBufN[iBufSize - 1] = piFilterBuf[iBufSize - 1];
+            filterBufN[0] = filterBuf[0];
+            filterBufN[cuHeight2] = filterBuf[cuHeight2];
+            filterBufN[bufSize - 1] = filterBuf[bufSize - 1];
             //TODO: Performance Primitive???
-            for (i = 1; i < uiCuHeight2; i++)
+            for (Int i = 1; i < cuHeight2; i++)
             {
-                piFilterBufN[i] = ((uiCuHeight2 - i) * bottomLeft + i * topLeft + cuHeight) >> shift;
+                filterBufN[i] = ((cuHeight2 - i) * bottomLeft + i * topLeft + cuHeight) >> shift;
             }
 
-            for (i = 1; i < uiCuWidth2; i++)
+            for (Int i = 1; i < cuWidth2; i++)
             {
-                piFilterBufN[uiCuHeight2 + i] = ((uiCuWidth2 - i) * topLeft + i * topRight + cuWidth) >> shift;
+                filterBufN[cuHeight2 + i] = ((cuWidth2 - i) * topLeft + i * topRight + cuWidth) >> shift;
             }
         }
         else
         {
             // 1. filtering with [1 2 1]
-            piFilterBufN[0] = piFilterBuf[0];
-            piFilterBufN[iBufSize - 1] = piFilterBuf[iBufSize - 1];
-            for (i = 1; i < iBufSize - 1; i++)
+            filterBufN[0] = filterBuf[0];
+            filterBufN[bufSize - 1] = filterBuf[bufSize - 1];
+            for (Int i = 1; i < bufSize - 1; i++)
             {
-                piFilterBufN[i] = (piFilterBuf[i - 1] + 2 * piFilterBuf[i] + piFilterBuf[i + 1] + 2) >> 2;
+                filterBufN[i] = (filterBuf[i - 1] + 2 * filterBuf[i] + filterBuf[i + 1] + 2) >> 2;
             }
         }
     }
     else
     {
         // 1. filtering with [1 2 1]
-        piFilterBufN[0] = piFilterBuf[0];
-        piFilterBufN[iBufSize - 1] = piFilterBuf[iBufSize - 1];
-        for (i = 1; i < iBufSize - 1; i++)
+        filterBufN[0] = filterBuf[0];
+        filterBufN[bufSize - 1] = filterBuf[bufSize - 1];
+        for (Int i = 1; i < bufSize - 1; i++)
         {
-            piFilterBufN[i] = (piFilterBuf[i - 1] + 2 * piFilterBuf[i] + piFilterBuf[i + 1] + 2) >> 2;
+            filterBufN[i] = (filterBuf[i - 1] + 2 * filterBuf[i] + filterBuf[i + 1] + 2) >> 2;
         }
     }
 
     // fill 1. filter buffer with filtered values
     l = 0;
-    for (i = 0; i < uiCuHeight2; i++)
+    for (Int i = 0; i < cuHeight2; i++)
     {
-        piFilteredBuf1[ADI_BUF_STRIDE * (uiCuHeight2 - i)] = piFilterBufN[l++];
+        filteredBuf1[ADI_BUF_STRIDE * (cuHeight2 - i)] = filterBufN[l++];
     }
 
-    piFilteredBuf1[0] = piFilterBufN[l++];
-    memcpy(&piFilteredBuf1[1], &piFilterBufN[l], uiCuWidth2 * sizeof(*piFilteredBuf1));
+    filteredBuf1[0] = filterBufN[l++];
+    memcpy(&filteredBuf1[1], &filterBufN[l], cuWidth2 * sizeof(*filteredBuf1));
 }
 
-//Overloaded initialiation of ADI buffers to support buffered references for xpredIntraAngBufRef
-Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig, Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
+// Overloaded initialization of ADI buffers to support buffered references for xpredIntraAngBufRef
+Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt partDepth, Pel* adiBuf, Int strideOrig, Int heightOrig,
+                                 Pel* refAbove, Pel* refLeft, Pel* refAboveFlt, Pel* refLeftFlt)
 {
     initAdiPattern(cu, zOrderIdxInPart, partDepth, adiBuf, strideOrig, heightOrig);
-    UInt  cuWidth   = cu->getWidth(0) >> partDepth;
-    UInt  cuHeight  = cu->getHeight(0) >> partDepth;
-    UInt  uiCuWidth2  = cuWidth << 1;
-    UInt  uiCuHeight2 = cuHeight << 1;
+    UInt cuWidth   = cu->getWidth(0) >> partDepth;
+    UInt cuHeight  = cu->getHeight(0) >> partDepth;
+    UInt cuWidth2  = cuWidth << 1;
+    UInt cuHeight2 = cuHeight << 1;
 
     refAbove += cuWidth - 1;
     refAboveFlt += cuWidth - 1;
@@ -315,13 +300,13 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
     refLeftFlt += cuWidth - 1;
 
     //  ADI_BUF_STRIDE * (2 * height + 1);
-    memcpy(refAbove, adiBuf, (uiCuWidth2 + 1) * sizeof(Pel));
-    memcpy(refAboveFlt, adiBuf + ADI_BUF_STRIDE * (2 * cuHeight + 1), (uiCuWidth2 + 1) * sizeof(Pel));
+    memcpy(refAbove, adiBuf, (cuWidth2 + 1) * sizeof(Pel));
+    memcpy(refAboveFlt, adiBuf + ADI_BUF_STRIDE * (2 * cuHeight + 1), (cuWidth2 + 1) * sizeof(Pel));
 
-    for (int k = 0; k < uiCuHeight2 + 1; k++)
+    for (int k = 0; k < cuHeight2 + 1; k++)
     {
         refLeft[k] = adiBuf[k * ADI_BUF_STRIDE];
-        refLeftFlt[k] = (adiBuf + ADI_BUF_STRIDE * (uiCuHeight2 + 1))[k * ADI_BUF_STRIDE];   // Smoothened
+        refLeftFlt[k] = (adiBuf + ADI_BUF_STRIDE * (cuHeight2 + 1))[k * ADI_BUF_STRIDE];   // Smoothened
     }
 }
 
@@ -351,11 +336,11 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
     totalUnits    = (numUnitsInCU << 2) + 1;
 
     bNeighborFlags[numUnitsInCU * 2] = isAboveLeftAvailable(cu, partIdxLT);
-    numIntraNeighbor  += (Int)(bNeighborFlags[numUnitsInCU * 2]);
-    numIntraNeighbor  += isAboveAvailable(cu, partIdxLT, partIdxRT, bNeighborFlags + (numUnitsInCU * 2) + 1);
-    numIntraNeighbor  += isAboveRightAvailable(cu, partIdxLT, partIdxRT, bNeighborFlags + (numUnitsInCU * 3) + 1);
-    numIntraNeighbor  += isLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + (numUnitsInCU * 2) - 1);
-    numIntraNeighbor  += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + numUnitsInCU   - 1);
+    numIntraNeighbor += (Int)(bNeighborFlags[numUnitsInCU * 2]);
+    numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, bNeighborFlags + (numUnitsInCU * 2) + 1);
+    numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, bNeighborFlags + (numUnitsInCU * 3) + 1);
+    numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + (numUnitsInCU * 2) - 1);
+    numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, bNeighborFlags + numUnitsInCU   - 1);
 
     cuWidth = cuWidth >> 1; // for chroma
     cuHeight = cuHeight >> 1; // for chroma
@@ -372,16 +357,20 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
     roiOrigin = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf;
 
-    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits, cuWidth, cuHeight, width, height, picStride);
+    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+                         cuWidth, cuHeight, width, height, picStride);
 
     // get Cr pattern
     roiOrigin = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf + ADI_BUF_STRIDE * height;
 
-    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits, cuWidth, cuHeight, width, height, picStride);
+    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+                         cuWidth, cuHeight, width, height, picStride);
 }
 
-Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride)
+Void TComPattern::fillReferenceSamples(Int bitDepth, Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor,
+                                       Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width,
+                                       UInt height, Int picStride)
 {
     Pel* piRoiTemp;
     Int  i, j;
