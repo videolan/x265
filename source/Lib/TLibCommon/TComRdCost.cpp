@@ -266,11 +266,11 @@ UInt TComRdCost::xGetSAD8(DistParam* distParam)
         return xGetSADw(distParam);
     }
 
-    Pel* org      = distParam->fenc;
-    Pel* cur      = distParam->fref;
-    Int  rows     = distParam->rows;
-    Int  shift  = distParam->subShift;
-    Int  step   = (1 << shift);
+    Pel* org = distParam->fenc;
+    Pel* cur = distParam->fref;
+    Int  rows  = distParam->rows;
+    Int  shift = distParam->subShift;
+    Int  step  = (1 << shift);
     Int  strideCur = distParam->frefstride * step;
     Int  strideOrg = distParam->fencstride * step;
     UInt sum = 0;
