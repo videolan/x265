@@ -702,24 +702,24 @@ UInt TComRdCost::xGetSAD48(DistParam* distParam)
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T1, typename T2>
-UInt xGetSSEHelp(T1* piOrg, Int iStrideOrg, T2* piCur, Int iStrideCur, Int iRows, Int iCols, UInt uiShift)
+UInt xGetSSEHelp(T1* org, Int strideOrg, T2* cur, Int strideCur, Int rows, Int cols, UInt shift)
 {
-    UInt uiSum = 0;
-    Int iTemp;
+    UInt sum = 0;
+    Int temp;
 
-    for (; iRows != 0; iRows--)
+    for (; rows != 0; rows--)
     {
-        for (Int n = 0; n < iCols; n++)
+        for (Int n = 0; n < cols; n++)
         {
-            iTemp = piOrg[n] - piCur[n];
-            uiSum += (iTemp * iTemp) >> uiShift;
+            temp = org[n] - cur[n];
+            sum += (temp * temp) >> shift;
         }
 
-        piOrg += iStrideOrg;
-        piCur += iStrideCur;
+        org += strideOrg;
+        cur += strideCur;
     }
 
-    return uiSum;
+    return sum;
 }
 
 UInt TComRdCost::xGetSSE(DistParam* pcDtParam)
