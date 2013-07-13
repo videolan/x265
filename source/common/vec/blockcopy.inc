@@ -59,19 +59,30 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
 
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
+    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+
+#if INSTRSET >= 8
+    if (!(aligncheck & 31))
     {
-        // slow path, irregular memory alignments or sizes
+        // fast path, multiples of 32 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
-            memcpy(dst, src, bx * sizeof(pixel));
+            for (int x = 0; x < bx; x += 32)
+            {
+                Vec32c word;
+                word.load_a(src + x);
+                word.store_a(dst + x);
+            }
+
             src += sstride;
             dst += dstride;
         }
     }
     else
+#endif
+    if (!(aligncheck & 15))
     {
-        // fast path, multiples of 8 pixel wide blocks
+        // fast path, multiples of 16 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 16)
@@ -85,18 +96,34 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
             dst += dstride;
         }
     }
-}
-
-void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
-{
-    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
+    else
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
         {
-            for (int x = 0; x < bx; x++)
+            memcpy(dst, src, bx * sizeof(pixel));
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+
+void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+
+#if INSTRSET >= 8
+    if (!(aligncheck & 31))
+    {
+        // fast path, multiples of 32 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 32)
             {
-                dst[x] = (pixel)src[x];
+                Vec16us word0, word1;
+                word0.load_a(src + x);
+                word1.load_a(src + x + 16);
+                compress(word0, word1).store_a(dst + x);
             }
 
             src += sstride;
@@ -104,8 +131,10 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
         }
     }
     else
+#endif
+    if (!(aligncheck & 15))
     {
-        // fast path, multiples of 8 pixel wide blocks
+        // fast path, multiples of 16 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 16)
@@ -120,20 +149,39 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
             dst += dstride;
         }
     }
-}
-
-#endif /* if HIGH_BIT_DEPTH */
-
-void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
-{
-    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
+    else
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x++)
             {
-                dst[x] = (short)src[x];
+                dst[x] = (pixel)src[x];
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+}
+
+#endif /* if HIGH_BIT_DEPTH */
+
+void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+#if INSTRSET >= 8
+    if (!(aligncheck & 31))
+    {
+        // fast path, multiples of 32 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 32)
+            {
+                Vec32uc word;
+                word.load_a(src + x);
+                extend_low(word).store_a(dst + x);
+                extend_high(word).store_a(dst + x + 16);
             }
 
             src += sstride;
@@ -141,8 +189,10 @@ void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, i
         }
     }
     else
+#endif
+    if (!(aligncheck & 15))
     {
-        // fast path, multiples of 8 pixel wide blocks
+        // fast path, multiples of 16 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 16)
@@ -151,6 +201,20 @@ void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, i
                 word.load_a(src + x);
                 extend_low(word).store_a(dst + x);
                 extend_high(word).store_a(dst + x + 8);
+            }
+
+            src += sstride;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+            {
+                dst[x] = (short)src[x];
             }
 
             src += sstride;
