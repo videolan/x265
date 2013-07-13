@@ -418,7 +418,7 @@ int sad_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
 }
 
 template<int ly>
-void sad_x3_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -432,18 +432,18 @@ void sad_x3_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
         for (int i = 0; i < 16; i++)
         {
             m1.fromUint32(*(uint32_t*)fenc);
-            n1.fromUint32(*(uint32_t*)Cur1);
-            n2.fromUint32(*(uint32_t*)Cur2);
-            n3.fromUint32(*(uint32_t*)Cur3);
+            n1.fromUint32(*(uint32_t*)fref1);
+            n2.fromUint32(*(uint32_t*)fref2);
+            n3.fromUint32(*(uint32_t*)fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -457,18 +457,18 @@ void sad_x3_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
     while (row++ < ly)
     {
         m1.fromUint32(*(uint32_t*)fenc);
-        n1.fromUint32(*(uint32_t*)Cur1);
-        n2.fromUint32(*(uint32_t*)Cur2);
-        n3.fromUint32(*(uint32_t*)Cur3);
+        n1.fromUint32(*(uint32_t*)fref1);
+        n2.fromUint32(*(uint32_t*)fref2);
+        n3.fromUint32(*(uint32_t*)fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -482,7 +482,7 @@ void sad_x3_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void sad_x3_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -496,18 +496,18 @@ void sad_x3_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -521,18 +521,18 @@ void sad_x3_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -546,7 +546,7 @@ void sad_x3_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefs
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -561,11 +561,11 @@ void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         {
             m1.load_a(fenc);
             m1.cutoff(12);
-            n1.load(Cur1);
+            n1.load(fref1);
             n1.cutoff(12);
-            n2.load(Cur2);
+            n2.load(fref2);
             n2.cutoff(12);
-            n3.load(Cur3);
+            n3.load(fref3);
             n3.cutoff(12);
 
             sad1.addSumAbsDiff(m1, n1);
@@ -573,9 +573,9 @@ void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -590,11 +590,11 @@ void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
     {
         m1.load_a(fenc);
         m1.cutoff(12);
-        n1.load(Cur1);
+        n1.load(fref1);
         n1.cutoff(12);
-        n2.load(Cur2);
+        n2.load(fref2);
         n2.cutoff(12);
-        n3.load(Cur3);
+        n3.load(fref3);
         n3.cutoff(12);
 
         sad1.addSumAbsDiff(m1, n1);
@@ -602,9 +602,9 @@ void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -617,7 +617,7 @@ void sad_x3_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x3_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -631,18 +631,18 @@ void sad_x3_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -656,18 +656,18 @@ void sad_x3_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -680,7 +680,7 @@ void sad_x3_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -694,9 +694,9 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -704,11 +704,11 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 
             m1.load_a(fenc + 16);
             m1.cutoff(8);
-            n1.load(Cur1 + 16);
+            n1.load(fref1 + 16);
             n1.cutoff(8);
-            n2.load(Cur2 + 16);
+            n2.load(fref2 + 16);
             n2.cutoff(8);
-            n3.load(Cur3 + 16);
+            n3.load(fref3 + 16);
             n3.cutoff(8);
 
             sad1.addSumAbsDiff(m1, n1);
@@ -716,9 +716,9 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -732,9 +732,9 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -742,11 +742,11 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 
         m1.load_a(fenc + 16);
         m1.cutoff(8);
-        n1.load(Cur1 + 16);
+        n1.load(fref1 + 16);
         n1.cutoff(8);
-        n2.load(Cur2 + 16);
+        n2.load(fref2 + 16);
         n2.cutoff(8);
-        n3.load(Cur3 + 16);
+        n3.load(fref3 + 16);
         n3.cutoff(8);
 
         sad1.addSumAbsDiff(m1, n1);
@@ -754,9 +754,9 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -769,7 +769,7 @@ void sad_x3_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x3_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -783,27 +783,27 @@ void sad_x3_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         for (int i = 0; i < 8; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -817,27 +817,27 @@ void sad_x3_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         m1.load_a(fenc + 16);
-        n1.load(Cur1 + 16);
-        n2.load(Cur2 + 16);
-        n3.load(Cur3 + 16);
+        n1.load(fref1 + 16);
+        n2.load(fref2 + 16);
+        n3.load(fref3 + 16);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -850,7 +850,7 @@ void sad_x3_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x3_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -864,36 +864,36 @@ void sad_x3_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         for (int i = 0; i < 8; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 32);
-            n1.load(Cur1 + 32);
-            n2.load(Cur2 + 32);
-            n3.load(Cur3 + 32);
+            n1.load(fref1 + 32);
+            n2.load(fref2 + 32);
+            n3.load(fref3 + 32);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -907,36 +907,36 @@ void sad_x3_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         m1.load_a(fenc + 16);
-        n1.load(Cur1 + 16);
-        n2.load(Cur2 + 16);
-        n3.load(Cur3 + 16);
+        n1.load(fref1 + 16);
+        n2.load(fref2 + 16);
+        n3.load(fref3 + 16);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         m1.load_a(fenc + 32);
-        n1.load(Cur1 + 32);
-        n2.load(Cur2 + 32);
-        n3.load(Cur3 + 32);
+        n1.load(fref1 + 32);
+        n2.load(fref2 + 32);
+        n3.load(fref3 + 32);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
         sad3.addSumAbsDiff(m1, n3);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -949,7 +949,7 @@ void sad_x3_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x3_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t frefstride, int *res)
+void sad_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3;
 
@@ -962,45 +962,45 @@ void sad_x3_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
         for (int i = 0; i < 4; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 32);
-            n1.load(Cur1 + 32);
-            n2.load(Cur2 + 32);
-            n3.load(Cur3 + 32);
+            n1.load(fref1 + 32);
+            n2.load(fref2 + 32);
+            n3.load(fref3 + 32);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             m1.load_a(fenc + 48);
-            n1.load(Cur1 + 48);
-            n2.load(Cur2 + 48);
-            n3.load(Cur3 + 48);
+            n1.load(fref1 + 48);
+            n2.load(fref2 + 48);
+            n3.load(fref3 + 48);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
             sad3.addSumAbsDiff(m1, n3);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1017,7 +1017,7 @@ void sad_x3_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, intptr_t fref
 }
 
 template<int ly>
-void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_4(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1031,10 +1031,10 @@ void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         for (int i = 0; i < 16; i++)
         {
             m1.fromUint32(*(uint32_t*)fenc);
-            n1.fromUint32(*(uint32_t*)Cur1);
-            n2.fromUint32(*(uint32_t*)Cur2);
-            n3.fromUint32(*(uint32_t*)Cur3);
-            n4.fromUint32(*(uint32_t*)Cur4);
+            n1.fromUint32(*(uint32_t*)fref1);
+            n2.fromUint32(*(uint32_t*)fref2);
+            n3.fromUint32(*(uint32_t*)fref3);
+            n4.fromUint32(*(uint32_t*)fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1042,10 +1042,10 @@ void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -1061,10 +1061,10 @@ void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     while (row++ < ly)
     {
         m1.fromUint32(*(uint32_t*)fenc);
-        n1.fromUint32(*(uint32_t*)Cur1);
-        n2.fromUint32(*(uint32_t*)Cur2);
-        n3.fromUint32(*(uint32_t*)Cur3);
-        n4.fromUint32(*(uint32_t*)Cur4);
+        n1.fromUint32(*(uint32_t*)fref1);
+        n2.fromUint32(*(uint32_t*)fref2);
+        n3.fromUint32(*(uint32_t*)fref3);
+        n4.fromUint32(*(uint32_t*)fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1072,10 +1072,10 @@ void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -1090,7 +1090,7 @@ void sad_x4_4(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 }
 
 template<int ly>
-void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_8(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1104,10 +1104,10 @@ void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1115,10 +1115,10 @@ void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1);
@@ -1134,10 +1134,10 @@ void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
-        n4.load(Cur4);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+        n4.load(fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1145,10 +1145,10 @@ void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1);
@@ -1164,7 +1164,7 @@ void sad_x4_8(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, i
 
 /* For performance - This function assumes that the *last load* can access 16 elements. */
 template<int ly>
-void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_12(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1179,13 +1179,13 @@ void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         {
             m1.load_a(fenc);
             m1.cutoff(12);
-            n1.load(Cur1);
+            n1.load(fref1);
             n1.cutoff(12);
-            n2.load(Cur2);
+            n2.load(fref2);
             n2.cutoff(12);
-            n3.load(Cur3);
+            n3.load(fref3);
             n3.cutoff(12);
-            n4.load(Cur4);
+            n4.load(fref4);
             n4.cutoff(12);
 
             sad1.addSumAbsDiff(m1, n1);
@@ -1194,10 +1194,10 @@ void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1214,13 +1214,13 @@ void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     {
         m1.load_a(fenc);
         m1.cutoff(12);
-        n1.load(Cur1);
+        n1.load(fref1);
         n1.cutoff(12);
-        n2.load(Cur2);
+        n2.load(fref2);
         n2.cutoff(12);
-        n3.load(Cur3);
+        n3.load(fref3);
         n3.cutoff(12);
-        n4.load(Cur4);
+        n4.load(fref4);
         n4.cutoff(12);
 
         sad1.addSumAbsDiff(m1, n1);
@@ -1229,10 +1229,10 @@ void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1247,7 +1247,7 @@ void sad_x4_12(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 }
 
 template<int ly>
-void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_16(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1261,10 +1261,10 @@ void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1272,10 +1272,10 @@ void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1291,10 +1291,10 @@ void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
-        n4.load(Cur4);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+        n4.load(fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1302,10 +1302,10 @@ void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1320,7 +1320,7 @@ void sad_x4_16(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 }
 
 template<int ly>
-void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_24(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1334,10 +1334,10 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         for (int i = 0; i < 16; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1346,13 +1346,13 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 
             m1.load_a(fenc + 16);
             m1.cutoff(8);
-            n1.load(Cur1 + 16);
+            n1.load(fref1 + 16);
             n1.cutoff(8);
-            n2.load(Cur2 + 16);
+            n2.load(fref2 + 16);
             n2.cutoff(8);
-            n3.load(Cur3 + 16);
+            n3.load(fref3 + 16);
             n3.cutoff(8);
-            n4.load(Cur4 + 16);
+            n4.load(fref4 + 16);
             n4.cutoff(8);
 
             sad1.addSumAbsDiff(m1, n1);
@@ -1361,10 +1361,10 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1380,10 +1380,10 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
-        n4.load(Cur4);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+        n4.load(fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1392,13 +1392,13 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 
         m1.load_a(fenc + 16);
         m1.cutoff(8);
-        n1.load(Cur1 + 16);
+        n1.load(fref1 + 16);
         n1.cutoff(8);
-        n2.load(Cur2 + 16);
+        n2.load(fref2 + 16);
         n2.cutoff(8);
-        n3.load(Cur3 + 16);
+        n3.load(fref3 + 16);
         n3.cutoff(8);
-        n4.load(Cur4 + 16);
+        n4.load(fref4 + 16);
         n4.cutoff(8);
 
         sad1.addSumAbsDiff(m1, n1);
@@ -1407,10 +1407,10 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1425,7 +1425,7 @@ void sad_x4_24(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 }
 
 template<int ly>
-void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1439,10 +1439,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         for (int i = 0; i < 8; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1450,10 +1450,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
-            n4.load(Cur4 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
+            n4.load(fref4 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1461,10 +1461,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1480,10 +1480,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
-        n4.load(Cur4);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+        n4.load(fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1491,10 +1491,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         m1.load_a(fenc + 16);
-        n1.load(Cur1 + 16);
-        n2.load(Cur2 + 16);
-        n3.load(Cur3 + 16);
-        n4.load(Cur4 + 16);
+        n1.load(fref1 + 16);
+        n2.load(fref2 + 16);
+        n3.load(fref3 + 16);
+        n4.load(fref4 + 16);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1502,10 +1502,10 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1520,7 +1520,7 @@ void sad_x4_32(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 }
 
 template<int ly>
-void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_48(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1534,10 +1534,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         for (int i = 0; i < 8; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1545,10 +1545,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
-            n4.load(Cur4 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
+            n4.load(fref4 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1556,10 +1556,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 32);
-            n1.load(Cur1 + 32);
-            n2.load(Cur2 + 32);
-            n3.load(Cur3 + 32);
-            n4.load(Cur4 + 32);
+            n1.load(fref1 + 32);
+            n2.load(fref2 + 32);
+            n3.load(fref3 + 32);
+            n4.load(fref4 + 32);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1567,10 +1567,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1586,10 +1586,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
     while (row++ < ly)
     {
         m1.load_a(fenc);
-        n1.load(Cur1);
-        n2.load(Cur2);
-        n3.load(Cur3);
-        n4.load(Cur4);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+        n4.load(fref4);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1597,10 +1597,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         m1.load_a(fenc + 16);
-        n1.load(Cur1 + 16);
-        n2.load(Cur2 + 16);
-        n3.load(Cur3 + 16);
-        n4.load(Cur4 + 16);
+        n1.load(fref1 + 16);
+        n2.load(fref2 + 16);
+        n3.load(fref3 + 16);
+        n4.load(fref4 + 16);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1608,10 +1608,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         m1.load_a(fenc + 32);
-        n1.load(Cur1 + 32);
-        n2.load(Cur2 + 32);
-        n3.load(Cur3 + 32);
-        n4.load(Cur4 + 32);
+        n1.load(fref1 + 32);
+        n2.load(fref2 + 32);
+        n3.load(fref3 + 32);
+        n4.load(fref4 + 32);
 
         sad1.addSumAbsDiff(m1, n1);
         sad2.addSumAbsDiff(m1, n2);
@@ -1619,10 +1619,10 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         sad4.addSumAbsDiff(m1, n4);
 
         fenc += FENC_STRIDE;
-        Cur1 += frefstride;
-        Cur2 += frefstride;
-        Cur3 += frefstride;
-        Cur4 += frefstride;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+        fref4 += frefstride;
     }
 
     sum1 += extend_low(sad1) + extend_high(sad1);
@@ -1637,7 +1637,7 @@ void sad_x4_48(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
 }
 
 template<int ly>
-void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, intptr_t frefstride, int *res)
+void sad_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec16uc m1, n1, n2, n3, n4;
 
@@ -1650,10 +1650,10 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
         for (int i = 0; i < 4; i++)
         {
             m1.load_a(fenc);
-            n1.load(Cur1);
-            n2.load(Cur2);
-            n3.load(Cur3);
-            n4.load(Cur4);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+            n4.load(fref4);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1661,10 +1661,10 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 16);
-            n1.load(Cur1 + 16);
-            n2.load(Cur2 + 16);
-            n3.load(Cur3 + 16);
-            n4.load(Cur4 + 16);
+            n1.load(fref1 + 16);
+            n2.load(fref2 + 16);
+            n3.load(fref3 + 16);
+            n4.load(fref4 + 16);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1672,10 +1672,10 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 32);
-            n1.load(Cur1 + 32);
-            n2.load(Cur2 + 32);
-            n3.load(Cur3 + 32);
-            n4.load(Cur4 + 32);
+            n1.load(fref1 + 32);
+            n2.load(fref2 + 32);
+            n3.load(fref3 + 32);
+            n4.load(fref4 + 32);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1683,10 +1683,10 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             m1.load_a(fenc + 48);
-            n1.load(Cur1 + 48);
-            n2.load(Cur2 + 48);
-            n3.load(Cur3 + 48);
-            n4.load(Cur4 + 48);
+            n1.load(fref1 + 48);
+            n2.load(fref2 + 48);
+            n3.load(fref3 + 48);
+            n4.load(fref4 + 48);
 
             sad1.addSumAbsDiff(m1, n1);
             sad2.addSumAbsDiff(m1, n2);
@@ -1694,10 +1694,10 @@ void sad_x4_64(pixel *fenc, pixel *Cur1, pixel *Cur2, pixel *Cur3, pixel *Cur4, 
             sad4.addSumAbsDiff(m1, n4);
 
             fenc += FENC_STRIDE;
-            Cur1 += frefstride;
-            Cur2 += frefstride;
-            Cur3 += frefstride;
-            Cur4 += frefstride;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+            fref4 += frefstride;
         }
 
         sum1 += extend_low(sad1) + extend_high(sad1);
