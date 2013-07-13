@@ -43,6 +43,11 @@ if(GCC)
         PROPERTIES COMPILE_FLAGS "-msse4 -Wno-unused-parameter")
     set_source_files_properties(avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp
         PROPERTIES COMPILE_FLAGS "-mavx -Wno-unused-parameter")
+    if("$ENV{CXX}" STREQUAL "icpc")
+		set(PRIMITIVES ${PRIMITIVES} avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp)
+		set_source_files_properties(avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp
+			PROPERTIES COMPILE_FLAGS "-march=core-avx2 -Wno-unused-parameter")
+	endif()
 endif(GCC)
 
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)

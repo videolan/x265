@@ -39,7 +39,7 @@ extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || defined(__GNUC__)
 extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 #endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
+#if defined(_MSC_VER) && _MSC_VER >= 1700 || defined(__INTEL_COMPILER)
 extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 #endif
 
@@ -56,7 +56,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
 #if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__GNUC__)
     if (cpuid > 6) Setup_Vec_Primitives_avx(p);
 #endif
-#if defined(_MSC_VER) && _MSC_VER >= 1700
+#if defined(_MSC_VER) && _MSC_VER >= 1700 || defined(__INTEL_COMPILER)
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
 #endif
 }
