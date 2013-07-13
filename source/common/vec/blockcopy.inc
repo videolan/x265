@@ -27,7 +27,7 @@
 
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    if ((bx & 7) || (((size_t)dst | (size_t)src) & 15))
+    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
@@ -59,7 +59,7 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
 
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    if (((size_t)dst | (size_t)src | bx) & 15)
+    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
@@ -89,7 +89,7 @@ void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, int
 
 void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride)
 {
-    if (((size_t)dst | (size_t)src | bx) & 15)
+    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
@@ -126,7 +126,7 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
 
 void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
-    if (((size_t)dst | (size_t)src | bx) & 15)
+    if (((size_t)dst | (size_t)src | bx | sstride | dstride) & 15)
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
