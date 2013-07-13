@@ -112,7 +112,7 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
 
-#if INSTRSET >= 8
+#if INSTRSET >= 8 && 0
     if (!(aligncheck & 31))
     {
         // fast path, multiples of 32 pixel wide blocks
@@ -170,7 +170,7 @@ void blockcopy_p_s(int bx, int by, pixel *dst, intptr_t dstride, short *src, int
 void blockcopy_s_p(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride)
 {
     size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
-#if INSTRSET >= 8
+#if INSTRSET >= 8 && 0
     if (!(aligncheck & 31))
     {
         // fast path, multiples of 32 pixel wide blocks
