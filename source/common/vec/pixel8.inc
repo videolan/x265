@@ -2032,4 +2032,148 @@ int sad_avx2_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefst
 
     return horizontal_add(sum);
 }
+
+template<int ly>
+void sad_avx2_x3_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+{
+    Vec32uc m1, n1, n2, n3;
+
+    Vec8i sum1(0), sum2(0), sum3(0);
+    Vec16us sad1(0), sad2(0), sad3(0);
+    int max_iterators = (ly >> 4) << 4;
+    int row;
+
+    for (row = 0; row < max_iterators; row += 16)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            m1.load_a(fenc);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+
+            sad1.addSumAbsDiff(m1, n1);
+            sad2.addSumAbsDiff(m1, n2);
+            sad3.addSumAbsDiff(m1, n3);
+
+            fenc += FENC_STRIDE;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+        }
+
+        sum1 += extend_low(sad1) + extend_high(sad1);
+        sum2 += extend_low(sad2) + extend_high(sad2);
+        sum3 += extend_low(sad3) + extend_high(sad3);
+        sad1 = 0;
+        sad2 = 0;
+        sad3 = 0;
+    }
+
+    while (row++ < ly)
+    {
+        m1.load_a(fenc);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+
+        sad1.addSumAbsDiff(m1, n1);
+        sad2.addSumAbsDiff(m1, n2);
+        sad3.addSumAbsDiff(m1, n3);
+
+        fenc += FENC_STRIDE;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+    }
+
+    sum1 += extend_low(sad1) + extend_high(sad1);
+    sum2 += extend_low(sad2) + extend_high(sad2);
+    sum3 += extend_low(sad3) + extend_high(sad3);
+
+    res[0] = horizontal_add(sum1);
+    res[1] = horizontal_add(sum2);
+    res[2] = horizontal_add(sum3);
+}
+
+template<int ly>
+void sad_avx2_x3_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res)
+{
+    Vec32uc m1, n1, n2, n3;
+
+    Vec8i sum1(0), sum2(0), sum3(0);
+    Vec16s sad1(0), sad2(0), sad3(0);
+    int max_iterators = (ly >> 3) << 3;
+    int row;
+
+    for (row = 0; row < max_iterators; row += 8)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            m1.load_a(fenc);
+            n1.load(fref1);
+            n2.load(fref2);
+            n3.load(fref3);
+
+            sad1.addSumAbsDiff(m1, n1);
+            sad2.addSumAbsDiff(m1, n2);
+            sad3.addSumAbsDiff(m1, n3);
+
+            m1.load_a(fenc + 32);
+            n1.load(fref1 + 32);
+            n2.load(fref2 + 32);
+            n3.load(fref3 + 32);
+
+            sad1.addSumAbsDiff(m1, n1);
+            sad2.addSumAbsDiff(m1, n2);
+            sad3.addSumAbsDiff(m1, n3);
+
+            fenc += FENC_STRIDE;
+            fref1 += frefstride;
+            fref2 += frefstride;
+            fref3 += frefstride;
+        }
+
+        sum1 += extend_low(sad1) + extend_high(sad1);
+        sum2 += extend_low(sad2) + extend_high(sad2);
+        sum3 += extend_low(sad3) + extend_high(sad3);
+        sad1 = 0;
+        sad2 = 0;
+        sad3 = 0;
+    }
+
+    while (row++ < ly)
+    {
+        m1.load_a(fenc);
+        n1.load(fref1);
+        n2.load(fref2);
+        n3.load(fref3);
+
+        sad1.addSumAbsDiff(m1, n1);
+        sad2.addSumAbsDiff(m1, n2);
+        sad3.addSumAbsDiff(m1, n3);
+
+        m1.load_a(fenc + 32);
+        n1.load(fref1 + 32);
+        n2.load(fref2 + 32);
+        n3.load(fref3 + 32);
+
+        sad1.addSumAbsDiff(m1, n1);
+        sad2.addSumAbsDiff(m1, n2);
+        sad3.addSumAbsDiff(m1, n3);
+
+        fenc += FENC_STRIDE;
+        fref1 += frefstride;
+        fref2 += frefstride;
+        fref3 += frefstride;
+    }
+
+    sum1 += extend_low(sad1) + extend_high(sad1);
+    sum2 += extend_low(sad2) + extend_high(sad2);
+    sum3 += extend_low(sad3) + extend_high(sad3);
+
+    res[0] = horizontal_add(sum1);
+    res[1] = horizontal_add(sum2);
+    res[2] = horizontal_add(sum3);
+}
 #endif
