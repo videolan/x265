@@ -969,6 +969,10 @@ public:
         *this = Vec32c(*this).cutoff(n * 2);
         return *this;
     }
+    Vec16s & addSumAbsDiff(__m256i const & a, __m256i const & b) {
+        ymm = _mm256_add_epi16(ymm, _mm256_sad_epu8(a, b));
+        return *this;
+    }
     // Member function to change a single element in vector
     // Note: This function is inefficient. Use load function if changing more than one element
     Vec16s const & insert(uint32_t index, int16_t value) {

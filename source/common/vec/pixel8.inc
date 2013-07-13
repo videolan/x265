@@ -1934,3 +1934,102 @@ void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* 
         pRecIPred += ipredstride;
     }
 }
+
+#if INSTRSET >= 8
+template<int size>
+ALWAYSINLINE void unrollFunc_32_avx2(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
+{
+    unrollFunc_32_avx2<1>(fenc, fencstride, fref, frefstride, sad);
+    unrollFunc_32_avx2<size - 1>(fenc + fencstride, fencstride, fref + frefstride, frefstride, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_32_avx2<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
+{
+    Vec32uc m1, n1;
+
+    m1.load_a(fenc);
+    n1.load(fref);
+    sad.addSumAbsDiff(m1, n1);
+}
+
+template<int ly>
+int sad_avx2_32(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
+{
+    Vec8i sum(0);
+    Vec16us sad(0);
+    int max_iterators = (ly >> 4) << 4;
+    int row = 0;
+
+    if (ly < 16)
+    {
+        unrollFunc_32_avx2<ly>(fenc, fencstride, fref, frefstride, sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
+    }
+    for (row = 0; row < max_iterators; row += 16)
+    {
+        unrollFunc_32_avx2<16>(fenc, fencstride, fref, frefstride, sad);
+
+        sum += extend_low(sad) + extend_high(sad);
+        sad = 0;
+        fenc += fencstride * 16;
+        fref += frefstride * 16;
+    }
+    if (ly & 8)
+    {
+        unrollFunc_32_avx2<8>(fenc, fencstride, fref, frefstride, sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
+    }
+    return horizontal_add(sum);
+}
+
+template<int size>
+ALWAYSINLINE void unrollFunc_64_avx2(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16s& sad)
+{
+    unrollFunc_64_avx2<1>(fenc, fencstride, fref, frefstride, sad);
+    unrollFunc_64_avx2<size - 1>(fenc + fencstride, fencstride, fref + frefstride, frefstride, sad);
+}
+
+template<>
+ALWAYSINLINE void unrollFunc_64_avx2<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16s& sad)
+{
+    Vec32uc m1, n1;
+
+    m1.load_a(fenc);
+    n1.load(fref);
+    sad.addSumAbsDiff(m1, n1);
+
+    m1.load_a(fenc + 32);
+    n1.load(fref + 32);
+    sad.addSumAbsDiff(m1, n1);
+}
+
+template<int ly>
+int sad_avx2_64(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefstride)
+{
+    Vec8i sum(0);
+    Vec16s sad;
+    int max_iterators = (ly >> 2) << 2;
+    int row;
+
+    if (ly == 4)
+    {
+        sad = 0;
+        unrollFunc_64_avx2<4>(fenc, fencstride, fref, frefstride, sad);
+        sum += extend_low(sad) + extend_high(sad);
+        return horizontal_add(sum);
+    }
+    for (row = 0; row < max_iterators; row += 4)
+    {
+        sad = 0;
+        unrollFunc_64_avx2<4>(fenc, fencstride, fref, frefstride, sad);
+        sum += extend_low(sad) + extend_high(sad);
+        fenc += fencstride * 4;
+        fref += frefstride * 4;
+    }
+
+    return horizontal_add(sum);
+}
+#endif

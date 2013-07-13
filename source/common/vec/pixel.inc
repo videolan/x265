@@ -337,6 +337,11 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3_t)
     SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4_t)
 
+#if !HIGH_BIT_DEPTH && INSTRSET >= 8 // AVX2
+    SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad, sad_avx2_, pixelcmp_t)
+    SET_FUNC_PRIMITIVE_TABLE_WIDTH(64, sad, sad_avx2_, pixelcmp_t)
+#endif
+
     p.cvt16to32     = convert16to32;
     p.cvt16to32_shl = convert16to32_shl;
     p.cvt16to16_shl = convert16to16_shl;
