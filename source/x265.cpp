@@ -90,6 +90,7 @@ struct CLIOptions
     x265::Input*  input;
     x265::Output* recon;
     fstream bitstreamFile;
+    int bProgress;
     int cli_log_level;
 
     uint32_t frameSkip;                 ///< number of frames to skip from the beginning
@@ -108,6 +109,7 @@ struct CLIOptions
         framesToBeEncoded = frameSkip = 0;
         essentialBytes = 0;
         totalBytes = 0;
+        bProgress = true;
         i_start = x265_mdate();
         i_previous = 0;
         cli_log_level = X265_LOG_INFO;
@@ -176,7 +178,7 @@ struct CLIOptions
         char buf[200];
         int64_t i_time = x265_mdate();
 
-        if (i_previous && i_time - i_previous < UPDATE_INTERVAL)
+        if (!bProgress || (i_previous && i_time - i_previous < UPDATE_INTERVAL))
             return;
         int64_t i_elapsed = i_time - i_start;
         double fps = i_elapsed > 0 ? i_frame * 1000000. / i_elapsed : 0;
