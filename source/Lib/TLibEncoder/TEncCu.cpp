@@ -73,9 +73,9 @@ TEncCu::TEncCu()
  \param    uiMaxWidth    largest CU width
  \param    uiMaxHeight   largest CU height
  */
-Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
+Void TEncCu::create(UChar totalDepth, UInt maxWidth)
 {
-    m_totalDepth   = uhTotalDepth + 1;
+    m_totalDepth   = totalDepth + 1;
     m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
     m_interCU_2NxN   = new TComDataCU*[m_totalDepth - 1];
     m_interCU_Nx2N   = new TComDataCU*[m_totalDepth - 1];
@@ -101,32 +101,32 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
     m_tmpRecoYuv = new TComYuv*[m_totalDepth - 1];
 
     m_bestMergeRecoYuv = new TComYuv*[m_totalDepth - 1];
-    
+
     m_origYuv = new TComYuv*[m_totalDepth - 1];
 
     for (Int i = 0; i < m_totalDepth - 1; i++)
     {
-        UInt uiNumPartitions = 1 << ((m_totalDepth - i - 1) << 1);
-        UInt width  = uiMaxWidth  >> i;
-        UInt height = uiMaxHeight >> i;
+        UInt numPartitions = 1 << ((m_totalDepth - i - 1) << 1);
+        UInt width  = maxWidth  >> i;
+        UInt height = maxWidth >> i;
 
         m_bestCU[i] = new TComDataCU;
-        m_bestCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_bestCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_tempCU[i] = new TComDataCU;
-        m_tempCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_tempCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
 
         m_interCU_2Nx2N[i] = new TComDataCU;
-        m_interCU_2Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_interCU_2Nx2N[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_interCU_2NxN[i] = new TComDataCU;
-        m_interCU_2NxN[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_interCU_2NxN[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_interCU_Nx2N[i] = new TComDataCU;
-        m_interCU_Nx2N[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_interCU_Nx2N[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_intraInInterCU[i] = new TComDataCU;
-        m_intraInInterCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_intraInInterCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_mergeCU[i] = new TComDataCU;
-        m_mergeCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_mergeCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_bestMergeCU[i] = new TComDataCU;
-        m_bestMergeCU[i]->create(uiNumPartitions, width, height, false, uiMaxWidth >> (m_totalDepth - 1));
+        m_bestMergeCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
         m_bestPredYuv[i] = new TComYuv;
         m_bestPredYuv[i]->create(width, height);
         m_bestResiYuv[i] = new TShortYUV;
@@ -148,10 +148,10 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
 
         m_tmpRecoYuv[i] = new TComYuv;
         m_tmpRecoYuv[i]->create(width, height);
-                
+
         m_bestMergeRecoYuv[i] = new TComYuv;
         m_bestMergeRecoYuv[i]->create(width, height);
-        
+
         m_origYuv[i] = new TComYuv;
         m_origYuv[i]->create(width, height);
     }
@@ -330,7 +330,7 @@ Void TEncCu::destroy()
     }
     if (m_bestMergeRecoYuv)
     {
-        delete []m_bestMergeRecoYuv;
+        delete [] m_bestMergeRecoYuv;
         m_bestMergeRecoYuv = NULL;
     }
     if (m_tmpPredYuv)
@@ -346,6 +346,7 @@ Void TEncCu::destroy()
             m_modePredYuv[i] = NULL;
         }
     }
+
     if (m_tmpResiYuv)
     {
         delete [] m_tmpResiYuv;
@@ -717,9 +718,9 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     }
 #endif
     outBestCU->copyToPic(depth); // Copy Best data to Picture for next partition prediction.
-    
+
     // Copy Yuv data to picture Yuv
-    xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpelx); 
+    xCopyYuv2Pic(outBestCU->getPic(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth, depth, outBestCU, lpelx, tpelx);
 
     if (bBoundary || (bSliceEnd && bInsidePicture)) return;
 
@@ -768,7 +769,7 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDat
     Bool bSliceEnd = (slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
                       slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart());
     Bool bInsidePicture = (rpelx < outBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
-                          (bpely < outBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
+        (bpely < outBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     // We need to split, so don't try these modes.
     if (!bSliceEnd && bInsidePicture)
@@ -1483,7 +1484,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                         yuv = outBestPredYuv;
                         outBestPredYuv = m_tmpPredYuv[depth];
                         m_tmpPredYuv[depth] = yuv;
-                        
+
                         yuv = rpcYuvReconBest;
                         rpcYuvReconBest = m_tmpRecoYuv[depth];
                         m_tmpRecoYuv[depth] = yuv;
@@ -1672,7 +1673,7 @@ Void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
 Void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
 {
     //PPAScopeEvent(TEncCU_xCheckIntraPCM);
-    
+
     UInt depth = outTempCU->getDepth(0);
 
     outTempCU->setSkipFlagSubParts(false, 0, depth);
@@ -1762,7 +1763,7 @@ Void TEncCu::xCopyYuv2Pic(TComPic* outPic, UInt cuAddr, UInt absPartIdx, UInt de
     UInt bpely = tpely + (g_maxCUHeight >> depth) - 1;
     TComSlice* slice = cu->getPic()->getSlice();
     Bool bSliceEnd = slice->getSliceCurEndCUAddr() > (cu->getAddr()) * cu->getPic()->getNumPartInCU() + absPartIdx &&
-                     slice->getSliceCurEndCUAddr() < (cu->getAddr()) * cu->getPic()->getNumPartInCU() + absPartIdx + (cu->getPic()->getNumPartInCU() >> (depth << 1));
+        slice->getSliceCurEndCUAddr() < (cu->getAddr()) * cu->getPic()->getNumPartInCU() + absPartIdx + (cu->getPic()->getNumPartInCU() >> (depth << 1));
 
     if (!bSliceEnd && (rpelx < slice->getSPS()->getPicWidthInLumaSamples()) && (bpely < slice->getSPS()->getPicHeightInLumaSamples()))
     {

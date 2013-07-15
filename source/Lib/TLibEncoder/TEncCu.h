@@ -114,7 +114,7 @@ public:
     TEncCu();
 
     Void init(TEncTop* top);
-    Void create(UChar totalDepth, UInt maxWidth, UInt maxHeight);
+    Void create(UChar totalDepth, UInt maxWidth);
     Void destroy();
     Void compressCU(TComDataCU* cu);
     Void encodeCU(TComDataCU* cu);

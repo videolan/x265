@@ -62,7 +62,7 @@ void CTURow::create(TEncTop* top)
     m_search.setEntropyCoder(&m_entropyCoder);
     m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
-    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth, g_maxCUHeight);
+    m_cuCoder.create((UChar)g_maxCUDepth, g_maxCUWidth);
     m_cuCoder.init(top);
     m_cuCoder.setRdCost(&m_rdCost);
     m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
