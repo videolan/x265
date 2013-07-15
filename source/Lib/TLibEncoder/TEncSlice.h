@@ -53,7 +53,8 @@
 class TEncTop;
 class TEncGOP;
 
-namespace x265 { class FrameEncoder; }
+namespace x265 { class FrameEncoder;
+}
 
 // ====================================================================================================================
 // Class definition
@@ -66,8 +67,6 @@ private:
 
     // encoder configuration
     TEncCfg*                m_pcCfg;                            ///< encoder configuration class
-    UInt                    m_uiSliceIdx;
-    std::vector<TEncSbac*>  CTXMem;
 
 public:
 
@@ -92,13 +91,6 @@ public:
     Void    setSearchRange(TComSlice* slice, x265::FrameEncoder *pcEncodeframe);    ///< set ME range adaptively
 
     Void    xDetermineStartAndBoundingCUAddr(TComPic* outPic, Bool bEncodeSlice);
-
-    UInt    getSliceIdx()         { return m_uiSliceIdx; }
-
-    Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i; }
-
-    Void    initCtxMem(UInt i);
-    Void    setCtxMem(TEncSbac* sb, Int b)   { CTXMem[b] = sb; }
 
 private:
 

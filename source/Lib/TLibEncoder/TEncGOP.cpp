@@ -459,7 +459,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         }
 
         //  Slice data initialization
-        sliceEncoder->setSliceIdx(0);
         slice = sliceEncoder->initEncSlice(pic, frameEncoder, gopSize <= 1, pocLast, pocCurr, gopIdx, &m_cSPS, &m_cPPS);
         slice->setLastIDR(m_iLastIDR);
 
@@ -1088,7 +1087,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         }
 
         slice->setNextSlice(false);
-        sliceEncoder->setSliceIdx(0);
 
         // Reconstruction slice
         slice->setNextSlice(true);
