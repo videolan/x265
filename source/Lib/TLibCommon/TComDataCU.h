@@ -166,15 +166,15 @@ private:
     // coding tool information
     // -------------------------------------------------------------------------------------------------------------------
 
-    Bool*         m_pbMergeFlag;      ///< array of merge flags
-    UChar*        m_puhMergeIndex;    ///< array of merge candidate indices
+    Bool*         m_bMergeFlags;      ///< array of merge flags
+    UChar*        m_mergeIndex;    ///< array of merge candidate indices
     Bool          m_bIsMergeAMP;
-    UChar*        m_puhLumaIntraDir;  ///< array of intra directions (luma)
-    UChar*        m_puhChromaIntraDir; ///< array of intra directions (chroma)
-    UChar*        m_puhInterDir;      ///< array of inter directions
-    Char*         m_apiMVPIdx[2];     ///< array of motion vector predictor candidates
-    Char*         m_apiMVPNum[2];     ///< array of number of possible motion vectors predictors
-    Bool*         m_pbIPCMFlag;       ///< array of intra_pcm flags
+    UChar*        m_lumaIntraDir;  ///< array of intra directions (luma)
+    UChar*        m_chromaIntraDir; ///< array of intra directions (chroma)
+    UChar*        m_interDir;      ///< array of inter directions
+    Char*         m_mvpIdx[2];     ///< array of motion vector predictor candidates
+    Char*         m_mvpNum[2];     ///< array of number of possible motion vectors predictors
+    Bool*         m_iPCMFlags;       ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
@@ -373,19 +373,19 @@ public:
     // member functions for coding tool information
     // -------------------------------------------------------------------------------------------------------------------
 
-    Bool*         getMergeFlag()                        { return m_pbMergeFlag; }
+    Bool*         getMergeFlag()                        { return m_bMergeFlags; }
 
-    Bool          getMergeFlag(UInt uiIdx)            { return m_pbMergeFlag[uiIdx]; }
+    Bool          getMergeFlag(UInt uiIdx)            { return m_bMergeFlags[uiIdx]; }
 
-    Void          setMergeFlag(UInt uiIdx, Bool b)    { m_pbMergeFlag[uiIdx] = b; }
+    Void          setMergeFlag(UInt uiIdx, Bool b)    { m_bMergeFlags[uiIdx] = b; }
 
     Void          setMergeFlagSubParts(Bool bMergeFlag, UInt absPartIdx, UInt partIdx, UInt depth);
 
-    UChar*        getMergeIndex()                        { return m_puhMergeIndex; }
+    UChar*        getMergeIndex()                        { return m_mergeIndex; }
 
-    UChar         getMergeIndex(UInt uiIdx)            { return m_puhMergeIndex[uiIdx]; }
+    UChar         getMergeIndex(UInt uiIdx)            { return m_mergeIndex[uiIdx]; }
 
-    Void          setMergeIndex(UInt uiIdx, UInt uiMergeIndex) { m_puhMergeIndex[uiIdx] = (UChar)uiMergeIndex; }
+    Void          setMergeIndex(UInt uiIdx, UInt uiMergeIndex) { m_mergeIndex[uiIdx] = (UChar)uiMergeIndex; }
 
     Void          setMergeIndexSubParts(UInt uiMergeIndex, UInt absPartIdx, UInt partIdx, UInt depth);
     template<typename T>
@@ -395,34 +395,34 @@ public:
 
     Bool          getMergeAMP()             { return m_bIsMergeAMP; }
 
-    UChar*        getLumaIntraDir()                        { return m_puhLumaIntraDir; }
+    UChar*        getLumaIntraDir()                        { return m_lumaIntraDir; }
 
-    UChar         getLumaIntraDir(UInt uiIdx)            { return m_puhLumaIntraDir[uiIdx]; }
+    UChar         getLumaIntraDir(UInt uiIdx)            { return m_lumaIntraDir[uiIdx]; }
 
-    Void          setLumaIntraDir(UInt uiIdx, UChar  uh) { m_puhLumaIntraDir[uiIdx] = uh; }
+    Void          setLumaIntraDir(UInt uiIdx, UChar  uh) { m_lumaIntraDir[uiIdx] = uh; }
 
     Void          setLumaIntraDirSubParts(UInt uiDir,  UInt absPartIdx, UInt depth);
 
-    UChar*        getChromaIntraDir()                        { return m_puhChromaIntraDir; }
+    UChar*        getChromaIntraDir()                        { return m_chromaIntraDir; }
 
-    UChar         getChromaIntraDir(UInt uiIdx)            { return m_puhChromaIntraDir[uiIdx]; }
+    UChar         getChromaIntraDir(UInt uiIdx)            { return m_chromaIntraDir[uiIdx]; }
 
-    Void          setChromaIntraDir(UInt uiIdx, UChar  uh) { m_puhChromaIntraDir[uiIdx] = uh; }
+    Void          setChromaIntraDir(UInt uiIdx, UChar  uh) { m_chromaIntraDir[uiIdx] = uh; }
 
     Void          setChromIntraDirSubParts(UInt uiDir,  UInt absPartIdx, UInt depth);
 
-    UChar*        getInterDir()                        { return m_puhInterDir; }
+    UChar*        getInterDir()                        { return m_interDir; }
 
-    UChar         getInterDir(UInt uiIdx)            { return m_puhInterDir[uiIdx]; }
+    UChar         getInterDir(UInt uiIdx)            { return m_interDir[uiIdx]; }
 
-    Void          setInterDir(UInt uiIdx, UChar  uh) { m_puhInterDir[uiIdx] = uh; }
+    Void          setInterDir(UInt uiIdx, UChar  uh) { m_interDir[uiIdx] = uh; }
 
     Void          setInterDirSubParts(UInt uiDir,  UInt absPartIdx, UInt partIdx, UInt depth);
-    Bool*         getIPCMFlag()                        { return m_pbIPCMFlag; }
+    Bool*         getIPCMFlag()                        { return m_iPCMFlags; }
 
-    Bool          getIPCMFlag(UInt uiIdx)             { return m_pbIPCMFlag[uiIdx]; }
+    Bool          getIPCMFlag(UInt uiIdx)             { return m_iPCMFlags[uiIdx]; }
 
-    Void          setIPCMFlag(UInt uiIdx, Bool b)     { m_pbIPCMFlag[uiIdx] = b; }
+    Void          setIPCMFlag(UInt uiIdx, Bool b)     { m_iPCMFlags[uiIdx] = b; }
 
     Void          setIPCMFlagSubParts(Bool bIpcmFlag, UInt absPartIdx, UInt depth);
 
@@ -448,17 +448,17 @@ public:
     Void          fillMvpCand(UInt partIdx, UInt partAddr, RefPicList picList, Int refIdx, AMVPInfo* info);
     Bool          isDiffMER(Int xN, Int yN, Int xP, Int yP);
     Void          getPartPosition(UInt partIdx, Int& xP, Int& yP, Int& nPSW, Int& nPSH);
-    Void          setMVPIdx(RefPicList picList, UInt uiIdx, Int mvpIdx)  { m_apiMVPIdx[picList][uiIdx] = (Char)mvpIdx; }
+    Void          setMVPIdx(RefPicList picList, UInt uiIdx, Int mvpIdx)  { m_mvpIdx[picList][uiIdx] = (Char)mvpIdx; }
 
-    Int           getMVPIdx(RefPicList picList, UInt uiIdx)               { return m_apiMVPIdx[picList][uiIdx]; }
+    Int           getMVPIdx(RefPicList picList, UInt uiIdx)               { return m_mvpIdx[picList][uiIdx]; }
 
-    Char*         getMVPIdx(RefPicList picList)                          { return m_apiMVPIdx[picList]; }
+    Char*         getMVPIdx(RefPicList picList)                          { return m_mvpIdx[picList]; }
 
-    Void          setMVPNum(RefPicList picList, UInt uiIdx, Int iMVPNum) { m_apiMVPNum[picList][uiIdx] = (Char)iMVPNum; }
+    Void          setMVPNum(RefPicList picList, UInt uiIdx, Int iMVPNum) { m_mvpNum[picList][uiIdx] = (Char)iMVPNum; }
 
-    Int           getMVPNum(RefPicList picList, UInt uiIdx)              { return m_apiMVPNum[picList][uiIdx]; }
+    Int           getMVPNum(RefPicList picList, UInt uiIdx)              { return m_mvpNum[picList][uiIdx]; }
 
-    Char*         getMVPNum(RefPicList picList)                          { return m_apiMVPNum[picList]; }
+    Char*         getMVPNum(RefPicList picList)                          { return m_mvpNum[picList]; }
 
     Void          setMVPIdxSubParts(Int mvpIdx, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
     Void          setMVPNumSubParts(Int iMVPNum, RefPicList picList, UInt absPartIdx, UInt partIdx, UInt depth);
@@ -488,24 +488,24 @@ public:
     TComDataCU*   getCUColocated(RefPicList picList) { return m_cuColocated[picList]; }
 
     TComDataCU*   getPULeft(UInt& uiLPartUnitIdx,
-                            UInt  uiCurrPartUnitIdx,
+                            UInt  curPartUnitIdx,
                             Bool  bEnforceSliceRestriction = true,
                             Bool  bEnforceTileRestriction = true);
     TComDataCU*   getPUAbove(UInt& uiAPartUnitIdx,
-                             UInt  uiCurrPartUnitIdx,
+                             UInt  curPartUnitIdx,
                              Bool  bEnforceSliceRestriction = true,
                              Bool  planarAtLCUBoundary = false,
                              Bool  bEnforceTileRestriction = true);
-    TComDataCU*   getPUAboveLeft(UInt& uiALPartUnitIdx, UInt uiCurrPartUnitIdx, Bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUAboveRight(UInt& uiARPartUnitIdx, UInt uiCurrPartUnitIdx, Bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeft(UInt& uiBLPartUnitIdx, UInt uiCurrPartUnitIdx, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUAboveLeft(UInt& alPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUAboveRight(UInt& uiARPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUBelowLeft(UInt& uiBLPartUnitIdx, UInt curPartUnitIdx, Bool bEnforceSliceRestriction = true);
 
     TComDataCU*   getQpMinCuLeft(UInt& uiLPartUnitIdx, UInt uiCurrAbsIdxInLCU);
     TComDataCU*   getQpMinCuAbove(UInt& aPartUnitIdx, UInt currAbsIdxInLCU);
     Char          getRefQP(UInt uiCurrAbsIdxInLCU);
 
-    TComDataCU*   getPUAboveRightAdi(UInt& uiARPartUnitIdx, UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset = 1, Bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeftAdi(UInt& uiBLPartUnitIdx, UInt uiCurrPartUnitIdx, UInt uiPartUnitOffset = 1, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUAboveRightAdi(UInt& uiARPartUnitIdx, UInt curPartUnitIdx, UInt partUnitOffset = 1, Bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPUBelowLeftAdi(UInt& uiBLPartUnitIdx, UInt curPartUnitIdx, UInt partUnitOffset = 1, Bool bEnforceSliceRestriction = true);
 
     Void          deriveLeftRightTopIdx(UInt partIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT);
     Void          deriveLeftBottomIdx(UInt partIdx, UInt& ruiPartIdxLB);
