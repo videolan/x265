@@ -53,10 +53,6 @@ static MV scaleMv(MV mv, int scale)
 //! \ingroup TLibCommon
 //! \{
 
-Int * TComDataCU::m_pcGlbArlCoeffY  = NULL;
-Int * TComDataCU::m_pcGlbArlCoeffCb = NULL;
-Int * TComDataCU::m_pcGlbArlCoeffCr = NULL;
-
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
@@ -90,10 +86,9 @@ TComDataCU::TComDataCU()
     m_trCoeffY         = NULL;
     m_trCoeffCb        = NULL;
     m_trCoeffCr        = NULL;
-    m_arlCoeffIsAliasedAllocation = false;
     m_arlCoeffY        = NULL;
     m_arlCoeffCb       = NULL;
-    m_pcArlCoeffCr       = NULL;
+    m_arlCoeffCr       = NULL;
 
     m_pbIPCMFlag         = NULL;
     m_iPCMSampleY      = NULL;
@@ -119,71 +114,57 @@ TComDataCU::TComDataCU()
 TComDataCU::~TComDataCU()
 {}
 
-Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize, Bool bGlobalRMARLBuffer)
+Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize)
 {
-    m_pic              = NULL;
-    m_slice            = NULL;
-    m_numPartitions     = numPartition;
+    m_pic           = NULL;
+    m_slice         = NULL;
+    m_numPartitions = numPartition;
     m_unitSize = unitSize;
 
-    m_qp               = (Char*)xMalloc(Char,     numPartition);
-    m_depth           = (UChar*)xMalloc(UChar,    numPartition);
-    m_width           = (UChar*)xMalloc(UChar,    numPartition);
-    m_height          = (UChar*)xMalloc(UChar,    numPartition);
+    m_qp     = (Char*)xMalloc(Char,   numPartition);
+    m_depth  = (UChar*)xMalloc(UChar, numPartition);
+    m_width  = (UChar*)xMalloc(UChar, numPartition);
+    m_height = (UChar*)xMalloc(UChar, numPartition);
 
-    m_skipFlag           = new Bool[numPartition];
+    m_skipFlag = new Bool[numPartition];
 
-    m_partSizes         = new Char[numPartition];
+    m_partSizes = new Char[numPartition];
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
-    m_predModes         = new Char[numPartition];
+    m_predModes = new Char[numPartition];
     m_cuTransquantBypass = new Bool[numPartition];
-    m_pbMergeFlag        = (Bool*)xMalloc(Bool,   numPartition);
-    m_puhMergeIndex      = (UChar*)xMalloc(UChar,  numPartition);
-    m_puhLumaIntraDir    = (UChar*)xMalloc(UChar,  numPartition);
-    m_puhChromaIntraDir  = (UChar*)xMalloc(UChar,  numPartition);
-    m_puhInterDir        = (UChar*)xMalloc(UChar,  numPartition);
 
-    m_trIdx           = (UChar*)xMalloc(UChar,  numPartition);
-    m_transformSkip[0] = (UChar*)xMalloc(UChar,  numPartition);
-    m_transformSkip[1] = (UChar*)xMalloc(UChar,  numPartition);
-    m_transformSkip[2] = (UChar*)xMalloc(UChar,  numPartition);
+    m_pbMergeFlag        = (Bool*)xMalloc(Bool,  numPartition);
+    m_puhMergeIndex      = (UChar*)xMalloc(UChar, numPartition);
+    m_puhLumaIntraDir    = (UChar*)xMalloc(UChar, numPartition);
+    m_puhChromaIntraDir  = (UChar*)xMalloc(UChar, numPartition);
+    m_puhInterDir        = (UChar*)xMalloc(UChar, numPartition);
 
-    m_cbf[0]          = (UChar*)xMalloc(UChar,  numPartition);
-    m_cbf[1]          = (UChar*)xMalloc(UChar,  numPartition);
-    m_cbf[2]          = (UChar*)xMalloc(UChar,  numPartition);
+    m_trIdx            = (UChar*)xMalloc(UChar, numPartition);
+    m_transformSkip[0] = (UChar*)xMalloc(UChar, numPartition);
+    m_transformSkip[1] = (UChar*)xMalloc(UChar, numPartition);
+    m_transformSkip[2] = (UChar*)xMalloc(UChar, numPartition);
 
-    m_apiMVPIdx[0]       = new Char[numPartition];
-    m_apiMVPIdx[1]       = new Char[numPartition];
-    m_apiMVPNum[0]       = new Char[numPartition];
-    m_apiMVPNum[1]       = new Char[numPartition];
+    m_cbf[0] = (UChar*)xMalloc(UChar, numPartition);
+    m_cbf[1] = (UChar*)xMalloc(UChar, numPartition);
+    m_cbf[2] = (UChar*)xMalloc(UChar, numPartition);
+
+    m_apiMVPIdx[0] = new Char[numPartition];
+    m_apiMVPIdx[1] = new Char[numPartition];
+    m_apiMVPNum[0] = new Char[numPartition];
+    m_apiMVPNum[1] = new Char[numPartition];
     memset(m_apiMVPIdx[0], -1, numPartition * sizeof(Char));
     memset(m_apiMVPIdx[1], -1, numPartition * sizeof(Char));
 
-    m_trCoeffY         = (TCoeff*)xMalloc(TCoeff, width * height);
-    m_trCoeffCb        = (TCoeff*)xMalloc(TCoeff, width * height / 4);
-    m_trCoeffCr        = (TCoeff*)xMalloc(TCoeff, width * height / 4);
+    m_trCoeffY  = (TCoeff*)xMalloc(TCoeff, width * height);
+    m_trCoeffCb = (TCoeff*)xMalloc(TCoeff, width * height / 4);
+    m_trCoeffCr = (TCoeff*)xMalloc(TCoeff, width * height / 4);
     memset(m_trCoeffY, 0, width * height * sizeof(TCoeff));
     memset(m_trCoeffCb, 0, width * height / 4 * sizeof(TCoeff));
     memset(m_trCoeffCr, 0, width * height / 4 * sizeof(TCoeff));
-    if (bGlobalRMARLBuffer)
-    {
-        if (m_pcGlbArlCoeffY == NULL)
-        {
-            m_pcGlbArlCoeffY   = (Int*)xMalloc(Int, width * height);
-            m_pcGlbArlCoeffCb  = (Int*)xMalloc(Int, width * height / 4);
-            m_pcGlbArlCoeffCr  = (Int*)xMalloc(Int, width * height / 4);
-        }
-        m_arlCoeffY        = m_pcGlbArlCoeffY;
-        m_arlCoeffCb       = m_pcGlbArlCoeffCb;
-        m_pcArlCoeffCr       = m_pcGlbArlCoeffCr;
-        m_arlCoeffIsAliasedAllocation = true;
-    }
-    else
-    {
-        m_arlCoeffY        = (Int*)xMalloc(Int, width * height);
-        m_arlCoeffCb       = (Int*)xMalloc(Int, width * height / 4);
-        m_pcArlCoeffCr       = (Int*)xMalloc(Int, width * height / 4);
-    }
+
+    m_arlCoeffY        = (Int*)xMalloc(Int, width * height);
+    m_arlCoeffCb       = (Int*)xMalloc(Int, width * height / 4);
+    m_arlCoeffCr       = (Int*)xMalloc(Int, width * height / 4);
 
     m_pbIPCMFlag         = (Bool*)xMalloc(Bool, numPartition);
     m_iPCMSampleY      = (Pel*)xMalloc(Pel, width * height);
@@ -197,14 +178,13 @@ Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     m_pattern = (TComPattern*)xMalloc(TComPattern, 1);
 
     // create motion vector fields
+    m_cuAboveLeft     = NULL;
+    m_cuAboveRight    = NULL;
+    m_cuAbove         = NULL;
+    m_cuLeft          = NULL;
 
-    m_cuAboveLeft      = NULL;
-    m_cuAboveRight     = NULL;
-    m_cuAbove          = NULL;
-    m_cuLeft           = NULL;
-
-    m_cuColocated[0]  = NULL;
-    m_cuColocated[1]  = NULL;
+    m_cuColocated[0] = NULL;
+    m_cuColocated[1] = NULL;
 }
 
 Void TComDataCU::destroy()
@@ -244,18 +224,9 @@ Void TComDataCU::destroy()
     if (m_trCoeffY) { xFree(m_trCoeffY); m_trCoeffY = NULL; }
     if (m_trCoeffCb) { xFree(m_trCoeffCb); m_trCoeffCb = NULL; }
     if (m_trCoeffCr) { xFree(m_trCoeffCr); m_trCoeffCr = NULL; }
-    if (!m_arlCoeffIsAliasedAllocation)
-    {
-        xFree(m_arlCoeffY);
-        m_arlCoeffY = 0;
-        xFree(m_arlCoeffCb);
-        m_arlCoeffCb = 0;
-        xFree(m_pcArlCoeffCr);
-        m_pcArlCoeffCr = 0;
-    }
-    if (m_pcGlbArlCoeffY) { xFree(m_pcGlbArlCoeffY); m_pcGlbArlCoeffY = NULL; }
-    if (m_pcGlbArlCoeffCb) { xFree(m_pcGlbArlCoeffCb); m_pcGlbArlCoeffCb = NULL; }
-    if (m_pcGlbArlCoeffCr) { xFree(m_pcGlbArlCoeffCr); m_pcGlbArlCoeffCr = NULL; }
+    if (m_arlCoeffY) { xFree(m_arlCoeffY); m_arlCoeffY = NULL; }
+    if (m_arlCoeffCb) { xFree(m_arlCoeffCb); m_arlCoeffCb = NULL; }
+    if (m_arlCoeffCr) { xFree(m_arlCoeffCr); m_arlCoeffCr = NULL; }
     if (m_pbIPCMFlag) { xFree(m_pbIPCMFlag); m_pbIPCMFlag = NULL; }
     if (m_iPCMSampleY) { xFree(m_iPCMSampleY); m_iPCMSampleY = NULL; }
     if (m_iPCMSampleCb) { xFree(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
@@ -403,7 +374,7 @@ Void TComDataCU::initCU(TComPic* pic, UInt iCUAddr)
         memset(m_trCoeffCb, 0, sizeof(TCoeff) * uiTmp);
         memset(m_trCoeffCr, 0, sizeof(TCoeff) * uiTmp);
         memset(m_arlCoeffCb, 0, sizeof(Int) * uiTmp);
-        memset(m_pcArlCoeffCr, 0, sizeof(Int) * uiTmp);
+        memset(m_arlCoeffCr, 0, sizeof(Int) * uiTmp);
         memset(m_iPCMSampleCb, 0, sizeof(Pel) * uiTmp);
         memset(m_iPCMSampleCr, 0, sizeof(Pel) * uiTmp);
     }
@@ -424,7 +395,7 @@ Void TComDataCU::initCU(TComPic* pic, UInt iCUAddr)
             m_trCoeffCb[i] = pcFrom->m_trCoeffCb[i];
             m_trCoeffCr[i] = pcFrom->m_trCoeffCr[i];
             m_arlCoeffCb[i] = pcFrom->m_arlCoeffCb[i];
-            m_pcArlCoeffCr[i] = pcFrom->m_pcArlCoeffCr[i];
+            m_arlCoeffCr[i] = pcFrom->m_arlCoeffCr[i];
             m_iPCMSampleCb[i] = pcFrom->m_iPCMSampleCb[i];
             m_iPCMSampleCr[i] = pcFrom->m_iPCMSampleCr[i];
         }
@@ -532,7 +503,7 @@ Void TComDataCU::initEstData(UInt depth, Int qp)
         memset(m_trCoeffCb,    0, uiTmp * sizeof(*m_trCoeffCb));
         memset(m_trCoeffCr,    0, uiTmp * sizeof(*m_trCoeffCr));
         memset(m_arlCoeffCb,   0, uiTmp * sizeof(*m_arlCoeffCb));
-        memset(m_pcArlCoeffCr,   0, uiTmp * sizeof(*m_pcArlCoeffCr));
+        memset(m_arlCoeffCr,   0, uiTmp * sizeof(*m_arlCoeffCr));
         memset(m_iPCMSampleCb, 0, uiTmp * sizeof(*m_iPCMSampleCb));
         memset(m_iPCMSampleCr, 0, uiTmp * sizeof(*m_iPCMSampleCr));
     }
@@ -604,7 +575,7 @@ Void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp)
     memset(m_trCoeffCb, 0, sizeof(TCoeff) * uiTmp);
     memset(m_trCoeffCr, 0, sizeof(TCoeff) * uiTmp);
     memset(m_arlCoeffCb, 0, sizeof(Int) * uiTmp);
-    memset(m_pcArlCoeffCr, 0, sizeof(Int) * uiTmp);
+    memset(m_arlCoeffCr, 0, sizeof(Int) * uiTmp);
     memset(m_iPCMSampleCb, 0, sizeof(Pel) * uiTmp);
     memset(m_iPCMSampleCr, 0, sizeof(Pel) * uiTmp);
     m_cuMvField[0].clearMvField();
@@ -707,7 +678,7 @@ Void TComDataCU::copySubCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     m_trCoeffCb = cu->getCoeffCb() + uiCoffOffset;
     m_trCoeffCr = cu->getCoeffCr() + uiCoffOffset;
     m_arlCoeffCb = cu->getArlCoeffCb() + uiCoffOffset;
-    m_pcArlCoeffCr = cu->getArlCoeffCr() + uiCoffOffset;
+    m_arlCoeffCr = cu->getArlCoeffCr() + uiCoffOffset;
     m_iPCMSampleCb = cu->getPCMSampleCb() + uiCoffOffset;
     m_iPCMSampleCr = cu->getPCMSampleCr() + uiCoffOffset;
 
@@ -825,7 +796,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
     memcpy(m_trCoeffCb + uiTmp2, cu->getCoeffCb(), sizeof(TCoeff) * uiTmp);
     memcpy(m_trCoeffCr + uiTmp2, cu->getCoeffCr(), sizeof(TCoeff) * uiTmp);
     memcpy(m_arlCoeffCb + uiTmp2, cu->getArlCoeffCb(), sizeof(Int) * uiTmp);
-    memcpy(m_pcArlCoeffCr + uiTmp2, cu->getArlCoeffCr(), sizeof(Int) * uiTmp);
+    memcpy(m_arlCoeffCr + uiTmp2, cu->getArlCoeffCr(), sizeof(Int) * uiTmp);
     memcpy(m_iPCMSampleCb + uiTmp2, cu->getPCMSampleCb(), sizeof(Pel) * uiTmp);
     memcpy(m_iPCMSampleCr + uiTmp2, cu->getPCMSampleCr(), sizeof(Pel) * uiTmp);
     m_totalBins += cu->getTotalBins();
@@ -892,7 +863,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     memcpy(rpcCU->getCoeffCb() + uiTmp2, m_trCoeffCb, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getCoeffCr() + uiTmp2, m_trCoeffCr, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getArlCoeffCb() + uiTmp2, m_arlCoeffCb, sizeof(Int) * uiTmp);
-    memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_pcArlCoeffCr, sizeof(Int) * uiTmp);
+    memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_arlCoeffCr, sizeof(Int) * uiTmp);
     memcpy(rpcCU->getPCMSampleCb() + uiTmp2, m_iPCMSampleCb, sizeof(Pel) * uiTmp);
     memcpy(rpcCU->getPCMSampleCr() + uiTmp2, m_iPCMSampleCr, sizeof(Pel) * uiTmp);
     rpcCU->getTotalBins() = m_totalBins;
@@ -957,7 +928,7 @@ Void TComDataCU::copyToPic(UChar uhDepth, UInt partIdx, UInt partDepth)
     memcpy(rpcCU->getCoeffCb() + uiTmp2, m_trCoeffCb, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getCoeffCr() + uiTmp2, m_trCoeffCr, sizeof(TCoeff) * uiTmp);
     memcpy(rpcCU->getArlCoeffCb() + uiTmp2, m_arlCoeffCb, sizeof(Int) * uiTmp);
-    memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_pcArlCoeffCr, sizeof(Int) * uiTmp);
+    memcpy(rpcCU->getArlCoeffCr() + uiTmp2, m_arlCoeffCr, sizeof(Int) * uiTmp);
 
     memcpy(rpcCU->getPCMSampleCb() + uiTmp2, m_iPCMSampleCb, sizeof(Pel) * uiTmp);
     memcpy(rpcCU->getPCMSampleCr() + uiTmp2, m_iPCMSampleCr, sizeof(Pel) * uiTmp);

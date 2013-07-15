@@ -138,14 +138,10 @@ private:
     TCoeff*       m_trCoeffY;       ///< transformed coefficient buffer (Y)
     TCoeff*       m_trCoeffCb;      ///< transformed coefficient buffer (Cb)
     TCoeff*       m_trCoeffCr;      ///< transformed coefficient buffer (Cr)
+
     Int*          m_arlCoeffY;      ///< ARL coefficient buffer (Y)
     Int*          m_arlCoeffCb;     ///< ARL coefficient buffer (Cb)
-    Int*          m_pcArlCoeffCr;     ///< ARL coefficient buffer (Cr)
-    Bool          m_arlCoeffIsAliasedAllocation; ///< ARL coefficient buffer is an alias of the global buffer and must not be free()'d
-
-    static Int*   m_pcGlbArlCoeffY;  // TODO: SJB- these must go away, they violate thread safety
-    static Int*   m_pcGlbArlCoeffCb;
-    static Int*   m_pcGlbArlCoeffCr;
+    Int*          m_arlCoeffCr;   ///< ARL coefficient buffer (Cr)
 
     Pel*          m_iPCMSampleY;    ///< PCM sample buffer (Y)
     Pel*          m_iPCMSampleCb;   ///< PCM sample buffer (Cb)
@@ -215,7 +211,7 @@ public:
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void          create(UInt numPartition, UInt width, UInt height, Int unitSize, Bool bGlobalRMARLBuffer = false);
+    Void          create(UInt numPartition, UInt width, UInt height, Int unitSize);
     Void          destroy();
 
     Void          initCU(TComPic* pic, UInt cuAddr);
@@ -350,7 +346,7 @@ public:
 
     Int*&         getArlCoeffCb()                        { return m_arlCoeffCb; }
 
-    Int*&         getArlCoeffCr()                        { return m_pcArlCoeffCr; }
+    Int*&         getArlCoeffCr()                        { return m_arlCoeffCr; }
 
     Pel*&         getPCMSampleY()                        { return m_iPCMSampleY; }
 

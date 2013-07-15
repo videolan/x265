@@ -111,22 +111,22 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
         UInt height = maxWidth >> i;
 
         m_bestCU[i] = new TComDataCU;
-        m_bestCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_bestCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_tempCU[i] = new TComDataCU;
-        m_tempCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
 
         m_interCU_2Nx2N[i] = new TComDataCU;
-        m_interCU_2Nx2N[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_interCU_2NxN[i] = new TComDataCU;
-        m_interCU_2NxN[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_interCU_2NxN[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_interCU_Nx2N[i] = new TComDataCU;
-        m_interCU_Nx2N[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_interCU_Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_intraInInterCU[i] = new TComDataCU;
-        m_intraInInterCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_intraInInterCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_mergeCU[i] = new TComDataCU;
-        m_mergeCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_mergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_bestMergeCU[i] = new TComDataCU;
-        m_bestMergeCU[i]->create(numPartitions, width, height, false, maxWidth >> (m_totalDepth - 1));
+        m_bestMergeCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_bestPredYuv[i] = new TComYuv;
         m_bestPredYuv[i]->create(width, height);
         m_bestResiYuv[i] = new TShortYUV;

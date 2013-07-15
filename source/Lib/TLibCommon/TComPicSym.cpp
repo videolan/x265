@@ -83,11 +83,11 @@ Void TComPicSym::create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiM
     m_uiNumCUsInFrame   = m_uiWidthInCU * m_uiHeightInCU;
     m_apcTComDataCU     = new TComDataCU*[m_uiNumCUsInFrame];
 
-    m_pcTComSlice      = new TComSlice;
+    m_pcTComSlice = new TComSlice;
     for (i = 0; i < m_uiNumCUsInFrame; i++)
     {
         m_apcTComDataCU[i] = new TComDataCU;
-        m_apcTComDataCU[i]->create(m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUWidth >> m_uhTotalDepth, true);
+        m_apcTComDataCU[i]->create(m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUWidth >> m_uhTotalDepth);
     }
 
     m_saoParam = NULL;
