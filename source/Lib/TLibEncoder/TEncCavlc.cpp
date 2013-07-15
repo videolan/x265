@@ -81,14 +81,14 @@ TEncCavlc::~TEncCavlc()
 Void TEncCavlc::resetEntropy()
 {}
 
-Void TEncCavlc::codeDFFlag(UInt uiCode, const Char *pSymbolName)
+Void TEncCavlc::codeDFFlag(UInt code, const Char *symbolName)
 {
-    WRITE_FLAG(uiCode, pSymbolName);
+    WRITE_FLAG(code, symbolName);
 }
 
-Void TEncCavlc::codeDFSvlc(Int iCode, const Char *pSymbolName)
+Void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
 {
-    WRITE_SVLC(iCode, pSymbolName);
+    WRITE_SVLC(code, symbolName);
 }
 
 #define SCALING_LIST_OUTPUT_RESULT                0 //JCTVC-G880/JCTVC-G1016 quantization matrices

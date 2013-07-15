@@ -149,13 +149,13 @@ Int  TComSampleAdaptiveOffset::convertLevelRowCol2Idx(Int level, Int row, Int co
 /** create SampleAdaptiveOffset memory.
  * \param
  */
-Void TComSampleAdaptiveOffset::create(UInt uiSourceWidth, UInt uiSourceHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight)
+Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight)
 {
-    m_iPicWidth  = uiSourceWidth;
-    m_iPicHeight = uiSourceHeight;
+    m_iPicWidth  = sourceWidth;
+    m_iPicHeight = sourceHeight;
 
-    m_uiMaxCUWidth  = uiMaxCUWidth;
-    m_uiMaxCUHeight = uiMaxCUHeight;
+    m_uiMaxCUWidth  = maxCUWidth;
+    m_uiMaxCUHeight = maxCUHeight;
 
     m_iNumCuInWidth  = m_iPicWidth / m_uiMaxCUWidth;
     m_iNumCuInWidth += (m_iPicWidth % m_uiMaxCUWidth) ? 1 : 0;
@@ -163,32 +163,32 @@ Void TComSampleAdaptiveOffset::create(UInt uiSourceWidth, UInt uiSourceHeight, U
     m_iNumCuInHeight  = m_iPicHeight / m_uiMaxCUHeight;
     m_iNumCuInHeight += (m_iPicHeight % m_uiMaxCUHeight) ? 1 : 0;
 
-    Int iMaxSplitLevelHeight = (Int)(logf((Float)m_iNumCuInHeight) / logf(2.0));
-    Int iMaxSplitLevelWidth  = (Int)(logf((Float)m_iNumCuInWidth) / logf(2.0));
+    Int maxSplitLevelHeight = (Int)(logf((Float)m_iNumCuInHeight) / logf(2.0));
+    Int maxSplitLevelWidth  = (Int)(logf((Float)m_iNumCuInWidth) / logf(2.0));
 
-    m_uiMaxSplitLevel = (iMaxSplitLevelHeight < iMaxSplitLevelWidth) ? (iMaxSplitLevelHeight) : (iMaxSplitLevelWidth);
+    m_uiMaxSplitLevel = (maxSplitLevelHeight < maxSplitLevelWidth) ? (maxSplitLevelHeight) : (maxSplitLevelWidth);
     m_uiMaxSplitLevel = (m_uiMaxSplitLevel < m_uiMaxDepth) ? (m_uiMaxSplitLevel) : (m_uiMaxDepth);
 
     /* various structures are overloaded to store per component data.
      * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
     m_iNumTotalParts  = max(3, m_aiNumCulPartsLevel[m_uiMaxSplitLevel]);
 
-    UInt uiPixelRangeY = 1 << g_bitDepthY;
-    UInt uiBoRangeShiftY = g_bitDepthY - SAO_BO_BITS;
+    UInt pixelRangeY = 1 << g_bitDepthY;
+    UInt boRangeShiftY = g_bitDepthY - SAO_BO_BITS;
 
-    m_lumaTableBo = new Pel[uiPixelRangeY];
-    for (Int k2 = 0; k2 < uiPixelRangeY; k2++)
+    m_lumaTableBo = new Pel[pixelRangeY];
+    for (Int k2 = 0; k2 < pixelRangeY; k2++)
     {
-        m_lumaTableBo[k2] = 1 + (k2 >> uiBoRangeShiftY);
+        m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
     }
 
-    UInt uiPixelRangeC = 1 << g_bitDepthC;
-    UInt uiBoRangeShiftC = g_bitDepthC - SAO_BO_BITS;
+    UInt pixelRangeC = 1 << g_bitDepthC;
+    UInt boRangeShiftC = g_bitDepthC - SAO_BO_BITS;
 
-    m_chromaTableBo = new Pel[uiPixelRangeC];
-    for (Int k2 = 0; k2 < uiPixelRangeC; k2++)
+    m_chromaTableBo = new Pel[pixelRangeC];
+    for (Int k2 = 0; k2 < pixelRangeC; k2++)
     {
-        m_chromaTableBo[k2] = 1 + (k2 >> uiBoRangeShiftC);
+        m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
     }
 
     m_iUpBuff1 = new Int[m_iPicWidth + 2];
@@ -200,55 +200,55 @@ Void TComSampleAdaptiveOffset::create(UInt uiSourceWidth, UInt uiSourceHeight, U
     m_iUpBufft++;
     Short i;
 
-    UInt uiMaxY  = (1 << g_bitDepthY) - 1;
-    UInt uiMinY  = 0;
+    UInt maxY  = (1 << g_bitDepthY) - 1;
+    UInt minY  = 0;
 
-    Int iCRangeExt = uiMaxY >> 1;
+    Int rangeExt = maxY >> 1;
 
-    m_pClipTableBase = new Pel[uiMaxY + 2 * iCRangeExt];
-    m_iOffsetBo      = new Int[uiMaxY + 2 * iCRangeExt];
+    m_pClipTableBase = new Pel[maxY + 2 * rangeExt];
+    m_iOffsetBo      = new Int[maxY + 2 * rangeExt];
 
-    for (i = 0; i < (uiMinY + iCRangeExt); i++)
+    for (i = 0; i < (minY + rangeExt); i++)
     {
-        m_pClipTableBase[i] = uiMinY;
+        m_pClipTableBase[i] = minY;
     }
 
-    for (i = uiMinY + iCRangeExt; i < (uiMaxY +  iCRangeExt); i++)
+    for (i = minY + rangeExt; i < (maxY +  rangeExt); i++)
     {
-        m_pClipTableBase[i] = i - iCRangeExt;
+        m_pClipTableBase[i] = i - rangeExt;
     }
 
-    for (i = uiMaxY + iCRangeExt; i < (uiMaxY + 2 * iCRangeExt); i++)
+    for (i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
     {
-        m_pClipTableBase[i] = uiMaxY;
+        m_pClipTableBase[i] = maxY;
     }
 
-    m_pClipTable = &(m_pClipTableBase[iCRangeExt]);
+    m_pClipTable = &(m_pClipTableBase[rangeExt]);
 
-    UInt uiMaxC  = (1 << g_bitDepthC) - 1;
-    UInt uiMinC  = 0;
+    UInt maxC  = (1 << g_bitDepthC) - 1;
+    UInt minC  = 0;
 
-    Int iCRangeExtC = uiMaxC >> 1;
+    Int rangeExtC = maxC >> 1;
 
-    m_pChromaClipTableBase = new Pel[uiMaxC + 2 * iCRangeExtC];
-    m_iChromaOffsetBo      = new Int[uiMaxC + 2 * iCRangeExtC];
+    m_pChromaClipTableBase = new Pel[maxC + 2 * rangeExtC];
+    m_iChromaOffsetBo      = new Int[maxC + 2 * rangeExtC];
 
-    for (i = 0; i < (uiMinC + iCRangeExtC); i++)
+    for (i = 0; i < (minC + rangeExtC); i++)
     {
-        m_pChromaClipTableBase[i] = uiMinC;
+        m_pChromaClipTableBase[i] = minC;
     }
 
-    for (i = uiMinC + iCRangeExtC; i < (uiMaxC +  iCRangeExtC); i++)
+    for (i = minC + rangeExtC; i < (maxC +  rangeExtC); i++)
     {
-        m_pChromaClipTableBase[i] = i - iCRangeExtC;
+        m_pChromaClipTableBase[i] = i - rangeExtC;
     }
 
-    for (i = uiMaxC + iCRangeExtC; i < (uiMaxC + 2 * iCRangeExtC); i++)
+    for (i = maxC + rangeExtC; i < (maxC + 2 * rangeExtC); i++)
     {
-        m_pChromaClipTableBase[i] = uiMaxC;
+        m_pChromaClipTableBase[i] = maxC;
     }
 
-    m_pChromaClipTable = &(m_pChromaClipTableBase[iCRangeExtC]);
+    m_pChromaClipTable = &(m_pChromaClipTableBase[rangeExtC]);
 
     m_pTmpL1 = new Pel[m_uiMaxCUHeight + 1];
     m_pTmpL2 = new Pel[m_uiMaxCUHeight + 1];
@@ -355,26 +355,26 @@ Void TComSampleAdaptiveOffset::allocSaoParam(SAOParam *pcSaoParam)
 /** initialize SAO parameters
  * \param    *pcSaoParam,  iPartLevel,  iPartRow,  iPartCol,  iParentPartIdx,  StartCUX,  EndCUX,  StartCUY,  EndCUY,  iYCbCr
  */
-Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel, Int iPartRow, Int iPartCol, Int iParentPartIdx, Int StartCUX, Int EndCUX, Int StartCUY, Int EndCUY, Int iYCbCr)
+Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr)
 {
     Int j;
-    Int partIdx = convertLevelRowCol2Idx(iPartLevel, iPartRow, iPartCol);
+    Int partIdx = convertLevelRowCol2Idx(partLevel, partRow, partCol);
 
     SAOQTPart* pSaoPart;
 
-    pSaoPart = &(pcSaoParam->psSaoPart[iYCbCr][partIdx]);
+    pSaoPart = &(pcSaoParam->psSaoPart[yCbCr][partIdx]);
 
     pSaoPart->PartIdx   = partIdx;
-    pSaoPart->PartLevel = iPartLevel;
-    pSaoPart->PartRow   = iPartRow;
-    pSaoPart->PartCol   = iPartCol;
+    pSaoPart->PartLevel = partLevel;
+    pSaoPart->PartRow   = partRow;
+    pSaoPart->PartCol   = partCol;
 
-    pSaoPart->StartCUX  = StartCUX;
-    pSaoPart->EndCUX    = EndCUX;
-    pSaoPart->StartCUY  = StartCUY;
-    pSaoPart->EndCUY    = EndCUY;
+    pSaoPart->StartCUX  = startCUX;
+    pSaoPart->EndCUX    = endCUX;
+    pSaoPart->StartCUY  = startCUY;
+    pSaoPart->EndCUY    = endCUY;
 
-    pSaoPart->UpPartIdx = iParentPartIdx;
+    pSaoPart->UpPartIdx = parentPartIdx;
     pSaoPart->iBestType   = -1;
     pSaoPart->iLength     =  0;
 
@@ -387,66 +387,66 @@ Void TComSampleAdaptiveOffset::initSAOParam(SAOParam *pcSaoParam, Int iPartLevel
 
     if (pSaoPart->PartLevel != m_uiMaxSplitLevel)
     {
-        Int DownLevel    = (iPartLevel + 1);
-        Int DownRowStart = (iPartRow << 1);
-        Int DownColStart = (iPartCol << 1);
+        Int downLevel    = (partLevel + 1);
+        Int downRowStart = (partRow << 1);
+        Int downColStart = (partCol << 1);
 
-        Int iDownRowIdx, iDownColIdx;
-        Int NumCUWidth,  NumCUHeight;
-        Int NumCULeft;
-        Int NumCUTop;
+        Int downRowIdx, downColIdx;
+        Int numCUWidth,  numCUHeight;
+        Int numCULeft;
+        Int numCUTop;
 
-        Int DownStartCUX, DownStartCUY;
-        Int DownEndCUX, DownEndCUY;
+        Int downStartCUX, downStartCUY;
+        Int downEndCUX, downEndCUY;
 
-        NumCUWidth  = EndCUX - StartCUX + 1;
-        NumCUHeight = EndCUY - StartCUY + 1;
-        NumCULeft   = (NumCUWidth  >> 1);
-        NumCUTop    = (NumCUHeight >> 1);
+        numCUWidth  = endCUX - startCUX + 1;
+        numCUHeight = endCUY - startCUY + 1;
+        numCULeft   = (numCUWidth  >> 1);
+        numCUTop    = (numCUHeight >> 1);
 
-        DownStartCUX = StartCUX;
-        DownEndCUX  = DownStartCUX + NumCULeft - 1;
-        DownStartCUY = StartCUY;
-        DownEndCUY  = DownStartCUY + NumCUTop  - 1;
-        iDownRowIdx = DownRowStart + 0;
-        iDownColIdx = DownColStart + 0;
+        downStartCUX = startCUX;
+        downEndCUX  = downStartCUX + numCULeft - 1;
+        downStartCUY = startCUY;
+        downEndCUY  = downStartCUY + numCUTop  - 1;
+        downRowIdx = downRowStart + 0;
+        downColIdx = downColStart + 0;
 
-        pSaoPart->DownPartsIdx[0] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
+        pSaoPart->DownPartsIdx[0] = convertLevelRowCol2Idx(downLevel, downRowIdx, downColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, downLevel, downRowIdx, downColIdx, partIdx, downStartCUX, downEndCUX, downStartCUY, downEndCUY, yCbCr);
 
-        DownStartCUX = StartCUX + NumCULeft;
-        DownEndCUX   = EndCUX;
-        DownStartCUY = StartCUY;
-        DownEndCUY   = DownStartCUY + NumCUTop - 1;
-        iDownRowIdx  = DownRowStart + 0;
-        iDownColIdx  = DownColStart + 1;
+        downStartCUX = startCUX + numCULeft;
+        downEndCUX   = endCUX;
+        downStartCUY = startCUY;
+        downEndCUY   = downStartCUY + numCUTop - 1;
+        downRowIdx  = downRowStart + 0;
+        downColIdx  = downColStart + 1;
 
-        pSaoPart->DownPartsIdx[1] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
+        pSaoPart->DownPartsIdx[1] = convertLevelRowCol2Idx(downLevel, downRowIdx, downColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx,  DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, downLevel, downRowIdx, downColIdx, partIdx,  downStartCUX, downEndCUX, downStartCUY, downEndCUY, yCbCr);
 
-        DownStartCUX = StartCUX;
-        DownEndCUX   = DownStartCUX + NumCULeft - 1;
-        DownStartCUY = StartCUY + NumCUTop;
-        DownEndCUY   = EndCUY;
-        iDownRowIdx  = DownRowStart + 1;
-        iDownColIdx  = DownColStart + 0;
+        downStartCUX = startCUX;
+        downEndCUX   = downStartCUX + numCULeft - 1;
+        downStartCUY = startCUY + numCUTop;
+        downEndCUY   = endCUY;
+        downRowIdx  = downRowStart + 1;
+        downColIdx  = downColStart + 0;
 
-        pSaoPart->DownPartsIdx[2] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
+        pSaoPart->DownPartsIdx[2] = convertLevelRowCol2Idx(downLevel, downRowIdx, downColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, downLevel, downRowIdx, downColIdx, partIdx, downStartCUX, downEndCUX, downStartCUY, downEndCUY, yCbCr);
 
-        DownStartCUX = StartCUX + NumCULeft;
-        DownEndCUX   = EndCUX;
-        DownStartCUY = StartCUY + NumCUTop;
-        DownEndCUY   = EndCUY;
-        iDownRowIdx  = DownRowStart + 1;
-        iDownColIdx  = DownColStart + 1;
+        downStartCUX = startCUX + numCULeft;
+        downEndCUX   = endCUX;
+        downStartCUY = startCUY + numCUTop;
+        downEndCUY   = endCUY;
+        downRowIdx  = downRowStart + 1;
+        downColIdx  = downColStart + 1;
 
-        pSaoPart->DownPartsIdx[3] = convertLevelRowCol2Idx(DownLevel, iDownRowIdx, iDownColIdx);
+        pSaoPart->DownPartsIdx[3] = convertLevelRowCol2Idx(downLevel, downRowIdx, downColIdx);
 
-        initSAOParam(pcSaoParam, DownLevel, iDownRowIdx, iDownColIdx, partIdx, DownStartCUX, DownEndCUX, DownStartCUY, DownEndCUY, iYCbCr);
+        initSAOParam(pcSaoParam, downLevel, downRowIdx, downColIdx, partIdx, downStartCUX, downEndCUX, downStartCUY, downEndCUY, yCbCr);
     }
     else
     {
@@ -487,9 +487,9 @@ Void TComSampleAdaptiveOffset::freeSaoParam(SAOParam *pcSaoParam)
  */
 Void TComSampleAdaptiveOffset::resetSAOParam(SAOParam *pcSaoParam)
 {
-    Int iNumComponet = 3;
+    Int numComponet = 3;
 
-    for (Int c = 0; c < iNumComponet; c++)
+    for (Int c = 0; c < numComponet; c++)
     {
         if (c < 2)
         {
@@ -545,9 +545,9 @@ Void TComSampleAdaptiveOffset::destroyPicSaoInfo()
 /** sample adaptive offset process for one LCU
  * \param   iAddr, iSaoType, iYCbCr
  */
-Void TComSampleAdaptiveOffset::processSaoCu(Int iAddr, Int iSaoType, Int iYCbCr)
+Void TComSampleAdaptiveOffset::processSaoCu(Int addr, Int saoType, Int yCbCr)
 {
-    processSaoCuOrg(iAddr, iSaoType, iYCbCr);
+    processSaoCuOrg(addr, saoType, yCbCr);
 }
 
 /** Perform SAO for non-cross-slice or non-cross-tile process
@@ -786,233 +786,233 @@ Void TComSampleAdaptiveOffset::processSaoBlock(Pel* pDec, Pel* pRest, Int stride
 /** sample adaptive offset process for one LCU crossing LCU boundary
  * \param   iAddr, iSaoType, iYCbCr
  */
-Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCbCr)
+Void TComSampleAdaptiveOffset::processSaoCuOrg(Int addr, Int saoType, Int yCbCr)
 {
     Int x, y;
-    TComDataCU *pTmpCu = m_pcPic->getCU(iAddr);
-    Pel* pRec;
+    TComDataCU *tmpCu = m_pcPic->getCU(addr);
+    Pel* rec;
     Int  stride;
-    Int  iLcuWidth  = m_uiMaxCUWidth;
-    Int  iLcuHeight = m_uiMaxCUHeight;
-    UInt lpelx    = pTmpCu->getCUPelX();
-    UInt tpely    = pTmpCu->getCUPelY();
+    Int  lcuWidth  = m_uiMaxCUWidth;
+    Int  lcuHeight = m_uiMaxCUHeight;
+    UInt lpelx    = tmpCu->getCUPelX();
+    UInt tpely    = tmpCu->getCUPelY();
     UInt rpelx;
     UInt bpely;
-    Int  iSignLeft;
-    Int  iSignRight;
-    Int  iSignDown;
-    Int  iSignDown1;
-    Int  iSignDown2;
-    UInt uiEdgeType;
-    Int iPicWidthTmp;
-    Int iPicHeightTmp;
-    Int iStartX;
-    Int iStartY;
-    Int iEndX;
-    Int iEndY;
-    Int iIsChroma = (iYCbCr != 0) ? 1 : 0;
-    Int iShift;
-    Int iCuHeightTmp;
-    Pel *pTmpLSwap;
-    Pel *pTmpL;
-    Pel *pTmpU;
-    Pel *pClipTbl = NULL;
-    Int *pOffsetBo = NULL;
+    Int  signLeft;
+    Int  signRight;
+    Int  signDown;
+    Int  signDown1;
+    Int  signDown2;
+    UInt edgeType;
+    Int picWidthTmp;
+    Int picHeightTmp;
+    Int startX;
+    Int startY;
+    Int endX;
+    Int endY;
+    Int isChroma = (yCbCr != 0) ? 1 : 0;
+    Int shift;
+    Int cuHeightTmp;
+    Pel *tmpLSwap;
+    Pel *tmpL;
+    Pel *tmpU;
+    Pel *clipTbl = NULL;
+    Int *offsetBo = NULL;
 
-    iPicWidthTmp  = m_iPicWidth  >> iIsChroma;
-    iPicHeightTmp = m_iPicHeight >> iIsChroma;
-    iLcuWidth     = iLcuWidth    >> iIsChroma;
-    iLcuHeight    = iLcuHeight   >> iIsChroma;
-    lpelx       = lpelx      >> iIsChroma;
-    tpely       = tpely      >> iIsChroma;
-    rpelx       = lpelx + iLcuWidth;
-    bpely       = tpely + iLcuHeight;
-    rpelx       = rpelx > iPicWidthTmp  ? iPicWidthTmp  : rpelx;
-    bpely       = bpely > iPicHeightTmp ? iPicHeightTmp : bpely;
-    iLcuWidth     = rpelx - lpelx;
-    iLcuHeight    = bpely - tpely;
+    picWidthTmp  = m_iPicWidth  >> isChroma;
+    picHeightTmp = m_iPicHeight >> isChroma;
+    lcuWidth     = lcuWidth    >> isChroma;
+    lcuHeight    = lcuHeight   >> isChroma;
+    lpelx       = lpelx      >> isChroma;
+    tpely       = tpely      >> isChroma;
+    rpelx       = lpelx + lcuWidth;
+    bpely       = tpely + lcuHeight;
+    rpelx       = rpelx > picWidthTmp  ? picWidthTmp  : rpelx;
+    bpely       = bpely > picHeightTmp ? picHeightTmp : bpely;
+    lcuWidth     = rpelx - lpelx;
+    lcuHeight    = bpely - tpely;
 
-    if (pTmpCu->getPic() == 0)
+    if (tmpCu->getPic() == 0)
     {
         return;
     }
-    if (iYCbCr == 0)
+    if (yCbCr == 0)
     {
-        pRec       = m_pcPic->getPicYuvRec()->getLumaAddr(iAddr);
+        rec       = m_pcPic->getPicYuvRec()->getLumaAddr(addr);
         stride    = m_pcPic->getStride();
     }
-    else if (iYCbCr == 1)
+    else if (yCbCr == 1)
     {
-        pRec       = m_pcPic->getPicYuvRec()->getCbAddr(iAddr);
+        rec       = m_pcPic->getPicYuvRec()->getCbAddr(addr);
         stride    = m_pcPic->getCStride();
     }
     else
     {
-        pRec       = m_pcPic->getPicYuvRec()->getCrAddr(iAddr);
+        rec       = m_pcPic->getPicYuvRec()->getCrAddr(addr);
         stride    = m_pcPic->getCStride();
     }
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        iCuHeightTmp = (m_uiMaxCUHeight >> iIsChroma);
-        iShift = (m_uiMaxCUWidth >> iIsChroma) - 1;
-        for (Int i = 0; i < iCuHeightTmp + 1; i++)
+        cuHeightTmp = (m_uiMaxCUHeight >> isChroma);
+        shift = (m_uiMaxCUWidth >> isChroma) - 1;
+        for (Int i = 0; i < cuHeightTmp + 1; i++)
         {
-            m_pTmpL2[i] = pRec[iShift];
-            pRec += stride;
+            m_pTmpL2[i] = rec[shift];
+            rec += stride;
         }
 
-        pRec -= (stride * (iCuHeightTmp + 1));
+        rec -= (stride * (cuHeightTmp + 1));
 
-        pTmpL = m_pTmpL1;
-        pTmpU = &(m_pTmpU1[lpelx]);
+        tmpL = m_pTmpL1;
+        tmpU = &(m_pTmpU1[lpelx]);
     }
 
-    pClipTbl = (iYCbCr == 0) ? m_pClipTable : m_pChromaClipTable;
-    pOffsetBo = (iYCbCr == 0) ? m_iOffsetBo : m_iChromaOffsetBo;
+    clipTbl = (yCbCr == 0) ? m_pClipTable : m_pChromaClipTable;
+    offsetBo = (yCbCr == 0) ? m_iOffsetBo : m_iChromaOffsetBo;
 
-    switch (iSaoType)
+    switch (saoType)
     {
     case SAO_EO_0: // dir: -
     {
-        iStartX = (lpelx == 0) ? 1 : 0;
-        iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth;
-        for (y = 0; y < iLcuHeight; y++)
+        startX = (lpelx == 0) ? 1 : 0;
+        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
+        for (y = 0; y < lcuHeight; y++)
         {
-            iSignLeft = xSign(pRec[iStartX] - pTmpL[y]);
-            for (x = iStartX; x < iEndX; x++)
+            signLeft = xSign(rec[startX] - tmpL[y]);
+            for (x = startX; x < endX; x++)
             {
-                iSignRight =  xSign(pRec[x] - pRec[x + 1]);
-                uiEdgeType =  iSignRight + iSignLeft + 2;
-                iSignLeft  = -iSignRight;
+                signRight =  xSign(rec[x] - rec[x + 1]);
+                edgeType =  signRight + signLeft + 2;
+                signLeft  = -signRight;
 
-                pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
+                rec[x] = clipTbl[rec[x] + m_iOffsetEo[edgeType]];
             }
 
-            pRec += stride;
+            rec += stride;
         }
 
         break;
     }
     case SAO_EO_1: // dir: |
     {
-        iStartY = (tpely == 0) ? 1 : 0;
-        iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight;
+        startY = (tpely == 0) ? 1 : 0;
+        endY   = (bpely == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
         if (tpely == 0)
         {
-            pRec += stride;
+            rec += stride;
         }
-        for (x = 0; x < iLcuWidth; x++)
+        for (x = 0; x < lcuWidth; x++)
         {
-            m_iUpBuff1[x] = xSign(pRec[x] - pTmpU[x]);
+            m_iUpBuff1[x] = xSign(rec[x] - tmpU[x]);
         }
 
-        for (y = iStartY; y < iEndY; y++)
+        for (y = startY; y < endY; y++)
         {
-            for (x = 0; x < iLcuWidth; x++)
+            for (x = 0; x < lcuWidth; x++)
             {
-                iSignDown  = xSign(pRec[x] - pRec[x + stride]);
-                uiEdgeType = iSignDown + m_iUpBuff1[x] + 2;
-                m_iUpBuff1[x] = -iSignDown;
+                signDown  = xSign(rec[x] - rec[x + stride]);
+                edgeType = signDown + m_iUpBuff1[x] + 2;
+                m_iUpBuff1[x] = -signDown;
 
-                pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
+                rec[x] = clipTbl[rec[x] + m_iOffsetEo[edgeType]];
             }
 
-            pRec += stride;
+            rec += stride;
         }
 
         break;
     }
     case SAO_EO_2: // dir: 135
     {
-        iStartX = (lpelx == 0)            ? 1 : 0;
-        iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth;
+        startX = (lpelx == 0)            ? 1 : 0;
+        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
 
-        iStartY = (tpely == 0) ?             1 : 0;
-        iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight;
+        startY = (tpely == 0) ?             1 : 0;
+        endY   = (bpely == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
 
         if (tpely == 0)
         {
-            pRec += stride;
+            rec += stride;
         }
 
-        for (x = iStartX; x < iEndX; x++)
+        for (x = startX; x < endX; x++)
         {
-            m_iUpBuff1[x] = xSign(pRec[x] - pTmpU[x - 1]);
+            m_iUpBuff1[x] = xSign(rec[x] - tmpU[x - 1]);
         }
 
-        for (y = iStartY; y < iEndY; y++)
+        for (y = startY; y < endY; y++)
         {
-            iSignDown2 = xSign(pRec[stride + iStartX] - pTmpL[y]);
-            for (x = iStartX; x < iEndX; x++)
+            signDown2 = xSign(rec[stride + startX] - tmpL[y]);
+            for (x = startX; x < endX; x++)
             {
-                iSignDown1      =  xSign(pRec[x] - pRec[x + stride + 1]);
-                uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
-                m_iUpBufft[x + 1] = -iSignDown1;
-                pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
+                signDown1      =  xSign(rec[x] - rec[x + stride + 1]);
+                edgeType      =  signDown1 + m_iUpBuff1[x] + 2;
+                m_iUpBufft[x + 1] = -signDown1;
+                rec[x] = clipTbl[rec[x] + m_iOffsetEo[edgeType]];
             }
 
-            m_iUpBufft[iStartX] = iSignDown2;
+            m_iUpBufft[startX] = signDown2;
 
             ipSwap     = m_iUpBuff1;
             m_iUpBuff1 = m_iUpBufft;
             m_iUpBufft = ipSwap;
 
-            pRec += stride;
+            rec += stride;
         }
 
         break;
     }
     case SAO_EO_3: // dir: 45
     {
-        iStartX = (lpelx == 0) ? 1 : 0;
-        iEndX   = (rpelx == iPicWidthTmp) ? iLcuWidth - 1 : iLcuWidth;
+        startX = (lpelx == 0) ? 1 : 0;
+        endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
 
-        iStartY = (tpely == 0) ? 1 : 0;
-        iEndY   = (bpely == iPicHeightTmp) ? iLcuHeight - 1 : iLcuHeight;
+        startY = (tpely == 0) ? 1 : 0;
+        endY   = (bpely == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
 
-        if (iStartY == 1)
+        if (startY == 1)
         {
-            pRec += stride;
+            rec += stride;
         }
 
-        for (x = iStartX - 1; x < iEndX; x++)
+        for (x = startX - 1; x < endX; x++)
         {
-            m_iUpBuff1[x] = xSign(pRec[x] - pTmpU[x + 1]);
+            m_iUpBuff1[x] = xSign(rec[x] - tmpU[x + 1]);
         }
 
-        for (y = iStartY; y < iEndY; y++)
+        for (y = startY; y < endY; y++)
         {
-            x = iStartX;
-            iSignDown1      =  xSign(pRec[x] - pTmpL[y + 1]);
-            uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
-            m_iUpBuff1[x - 1] = -iSignDown1;
-            pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
-            for (x = iStartX + 1; x < iEndX; x++)
+            x = startX;
+            signDown1      =  xSign(rec[x] - tmpL[y + 1]);
+            edgeType      =  signDown1 + m_iUpBuff1[x] + 2;
+            m_iUpBuff1[x - 1] = -signDown1;
+            rec[x] = clipTbl[rec[x] + m_iOffsetEo[edgeType]];
+            for (x = startX + 1; x < endX; x++)
             {
-                iSignDown1      =  xSign(pRec[x] - pRec[x + stride - 1]);
-                uiEdgeType      =  iSignDown1 + m_iUpBuff1[x] + 2;
-                m_iUpBuff1[x - 1] = -iSignDown1;
-                pRec[x] = pClipTbl[pRec[x] + m_iOffsetEo[uiEdgeType]];
+                signDown1      =  xSign(rec[x] - rec[x + stride - 1]);
+                edgeType      =  signDown1 + m_iUpBuff1[x] + 2;
+                m_iUpBuff1[x - 1] = -signDown1;
+                rec[x] = clipTbl[rec[x] + m_iOffsetEo[edgeType]];
             }
 
-            m_iUpBuff1[iEndX - 1] = xSign(pRec[iEndX - 1 + stride] - pRec[iEndX]);
+            m_iUpBuff1[endX - 1] = xSign(rec[endX - 1 + stride] - rec[endX]);
 
-            pRec += stride;
+            rec += stride;
         }
 
         break;
     }
     case SAO_BO:
     {
-        for (y = 0; y < iLcuHeight; y++)
+        for (y = 0; y < lcuHeight; y++)
         {
-            for (x = 0; x < iLcuWidth; x++)
+            for (x = 0; x < lcuWidth; x++)
             {
-                pRec[x] = pOffsetBo[pRec[x]];
+                rec[x] = offsetBo[rec[x]];
             }
 
-            pRec += stride;
+            rec += stride;
         }
 
         break;
@@ -1022,9 +1022,9 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int iAddr, Int iSaoType, Int iYCb
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        pTmpLSwap = m_pTmpL1;
+        tmpLSwap = m_pTmpL1;
         m_pTmpL1  = m_pTmpL2;
-        m_pTmpL2  = pTmpLSwap;
+        m_pTmpL2  = tmpLSwap;
     }
 }
 
@@ -1055,18 +1055,18 @@ Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* pcSaoParam)
     }
 }
 
-Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* pcPicYuv, Int iYCbCr, Int iAddr)
+Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* pcPicYuv, Int yCbCr, Int addr)
 {
-    switch (iYCbCr)
+    switch (yCbCr)
     {
     case 0:
-        return pcPicYuv->getLumaAddr(iAddr);
+        return pcPicYuv->getLumaAddr(addr);
         break;
     case 1:
-        return pcPicYuv->getCbAddr(iAddr);
+        return pcPicYuv->getCbAddr(addr);
         break;
     case 2:
-        return pcPicYuv->getCrAddr(iAddr);
+        return pcPicYuv->getCrAddr(addr);
         break;
     default:
         return NULL;
@@ -1081,32 +1081,32 @@ Pel* TComSampleAdaptiveOffset::getPicYuvAddr(TComPicYuv* pcPicYuv, Int iYCbCr, I
  */
 Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr)
 {
-    Pel *pRec;
+    Pel *rec;
     Int picWidthTmp;
 
     if (yCbCr == 0)
     {
-        pRec        = m_pcPic->getPicYuvRec()->getLumaAddr();
+        rec        = m_pcPic->getPicYuvRec()->getLumaAddr();
         picWidthTmp = m_iPicWidth;
     }
     else if (yCbCr == 1)
     {
-        pRec        = m_pcPic->getPicYuvRec()->getCbAddr();
+        rec        = m_pcPic->getPicYuvRec()->getCbAddr();
         picWidthTmp = m_iPicWidth >> 1;
     }
     else
     {
-        pRec        = m_pcPic->getPicYuvRec()->getCrAddr();
+        rec        = m_pcPic->getPicYuvRec()->getCrAddr();
         picWidthTmp = m_iPicWidth >> 1;
     }
 
-    memcpy(m_pTmpU1, pRec, sizeof(Pel) * picWidthTmp);
+    memcpy(m_pTmpU1, rec, sizeof(Pel) * picWidthTmp);
 
     Int  i;
     UInt edgeType;
-    Pel* ppLumaTable = NULL;
-    Pel* pClipTable = NULL;
-    Int* pOffsetBo = NULL;
+    Pel* lumaTable = NULL;
+    Pel* clipTable = NULL;
+    Int* offsetBo = NULL;
     Int  typeIdx;
 
     Int offset[LUMA_GROUP_NUM + 1];
@@ -1117,11 +1117,11 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
     Int frameHeightInCU = m_pcPic->getFrameHeightInCU();
     Int stride;
     Pel *tmpUSwap;
-    Int isChroma = (yCbCr == 0) ? 0 : 1;
+    Int sChroma = (yCbCr == 0) ? 0 : 1;
     Bool mergeLeftFlag;
     Int saoBitIncrease = (yCbCr == 0) ? m_uiSaoBitIncreaseY : m_uiSaoBitIncreaseC;
 
-    pOffsetBo = (yCbCr == 0) ? m_iOffsetBo : m_iChromaOffsetBo;
+    offsetBo = (yCbCr == 0) ? m_iOffsetBo : m_iChromaOffsetBo;
 
     offset[0] = 0;
     for (idxY = 0; idxY < frameHeightInCU; idxY++)
@@ -1129,33 +1129,33 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
         addr = idxY * frameWidthInCU;
         if (yCbCr == 0)
         {
-            pRec  = m_pcPic->getPicYuvRec()->getLumaAddr(addr);
+            rec  = m_pcPic->getPicYuvRec()->getLumaAddr(addr);
             stride = m_pcPic->getStride();
             picWidthTmp = m_iPicWidth;
         }
         else if (yCbCr == 1)
         {
-            pRec  = m_pcPic->getPicYuvRec()->getCbAddr(addr);
+            rec  = m_pcPic->getPicYuvRec()->getCbAddr(addr);
             stride = m_pcPic->getCStride();
             picWidthTmp = m_iPicWidth >> 1;
         }
         else
         {
-            pRec  = m_pcPic->getPicYuvRec()->getCrAddr(addr);
+            rec  = m_pcPic->getPicYuvRec()->getCrAddr(addr);
             stride = m_pcPic->getCStride();
             picWidthTmp = m_iPicWidth >> 1;
         }
 
         //     pRec += stride*(m_uiMaxCUHeight-1);
-        for (i = 0; i < (m_uiMaxCUHeight >> isChroma) + 1; i++)
+        for (i = 0; i < (m_uiMaxCUHeight >> sChroma) + 1; i++)
         {
-            m_pTmpL1[i] = pRec[0];
-            pRec += stride;
+            m_pTmpL1[i] = rec[0];
+            rec += stride;
         }
 
-        pRec -= (stride << 1);
+        rec -= (stride << 1);
 
-        memcpy(m_pTmpU2, pRec, sizeof(Pel) * picWidthTmp);
+        memcpy(m_pTmpU2, rec, sizeof(Pel) * picWidthTmp);
 
         for (idxX = 0; idxX < frameWidthInCU; idxX++)
         {
@@ -1187,13 +1187,13 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << saoBitIncrease;
                         }
 
-                        ppLumaTable = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
-                        pClipTable = (yCbCr == 0) ? m_pClipTable : m_pChromaClipTable;
+                        lumaTable = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
+                        clipTable = (yCbCr == 0) ? m_pClipTable : m_pChromaClipTable;
 
                         Int bitDepth = (yCbCr == 0) ? g_bitDepthY : g_bitDepthC;
                         for (i = 0; i < (1 << bitDepth); i++)
                         {
-                            pOffsetBo[i] = pClipTable[i + offset[ppLumaTable[i]]];
+                            offsetBo[i] = clipTable[i + offset[lumaTable[i]]];
                         }
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
@@ -1217,24 +1217,24 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
                 {
                     if (yCbCr == 0)
                     {
-                        pRec  = m_pcPic->getPicYuvRec()->getLumaAddr(addr);
+                        rec  = m_pcPic->getPicYuvRec()->getLumaAddr(addr);
                         stride = m_pcPic->getStride();
                     }
                     else if (yCbCr == 1)
                     {
-                        pRec  = m_pcPic->getPicYuvRec()->getCbAddr(addr);
+                        rec  = m_pcPic->getPicYuvRec()->getCbAddr(addr);
                         stride = m_pcPic->getCStride();
                     }
                     else
                     {
-                        pRec  = m_pcPic->getPicYuvRec()->getCrAddr(addr);
+                        rec  = m_pcPic->getPicYuvRec()->getCrAddr(addr);
                         stride = m_pcPic->getCStride();
                     }
-                    Int widthShift = m_uiMaxCUWidth >> isChroma;
-                    for (i = 0; i < (m_uiMaxCUHeight >> isChroma) + 1; i++)
+                    Int widthShift = m_uiMaxCUWidth >> sChroma;
+                    for (i = 0; i < (m_uiMaxCUHeight >> sChroma) + 1; i++)
                     {
-                        m_pTmpL1[i] = pRec[widthShift - 1];
-                        pRec += stride;
+                        m_pTmpL1[i] = rec[widthShift - 1];
+                        rec += stride;
                     }
                 }
             }
@@ -1441,44 +1441,44 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderI
 Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
-    Pel* piSrc;
-    Pel* piPcm;
+    Pel* src;
+    Pel* pcm;
     UInt stride;
     UInt width;
     UInt height;
-    UInt uiPcmLeftShiftBit;
-    UInt uiX, uiY;
-    UInt uiMinCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
-    UInt uiLumaOffset   = uiMinCoeffSize * absZOrderIdx;
-    UInt uiChromaOffset = uiLumaOffset >> 2;
+    UInt pcmLeftShiftBit;
+    UInt x, y;
+    UInt minCoeffSize = cu->getPic()->getMinCUWidth() * cu->getPic()->getMinCUHeight();
+    UInt lumaOffset   = minCoeffSize * absZOrderIdx;
+    UInt chromaOffset = lumaOffset >> 2;
 
     if (ttText == TEXT_LUMA)
     {
-        piSrc = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
-        piPcm = cu->getPCMSampleY() + uiLumaOffset;
+        src = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
+        pcm = cu->getPCMSampleY() + lumaOffset;
         stride  = pcPicYuvRec->getStride();
         width  = (g_maxCUWidth >> depth);
         height = (g_maxCUHeight >> depth);
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
-            uiPcmLeftShiftBit = 0;
+            pcmLeftShiftBit = 0;
         }
         else
         {
-            uiPcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
+            pcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
         }
     }
     else
     {
         if (ttText == TEXT_CHROMA_U)
         {
-            piSrc = pcPicYuvRec->getCbAddr(cu->getAddr(), absZOrderIdx);
-            piPcm = cu->getPCMSampleCb() + uiChromaOffset;
+            src = pcPicYuvRec->getCbAddr(cu->getAddr(), absZOrderIdx);
+            pcm = cu->getPCMSampleCb() + chromaOffset;
         }
         else
         {
-            piSrc = pcPicYuvRec->getCrAddr(cu->getAddr(), absZOrderIdx);
-            piPcm = cu->getPCMSampleCr() + uiChromaOffset;
+            src = pcPicYuvRec->getCrAddr(cu->getAddr(), absZOrderIdx);
+            pcm = cu->getPCMSampleCr() + chromaOffset;
         }
 
         stride = pcPicYuvRec->getCStride();
@@ -1486,23 +1486,23 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOr
         height = ((g_maxCUWidth >> depth) / 2);
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
-            uiPcmLeftShiftBit = 0;
+            pcmLeftShiftBit = 0;
         }
         else
         {
-            uiPcmLeftShiftBit = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
+            pcmLeftShiftBit = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
         }
     }
 
-    for (uiY = 0; uiY < height; uiY++)
+    for (y = 0; y < height; y++)
     {
-        for (uiX = 0; uiX < width; uiX++)
+        for (x = 0; x < width; x++)
         {
-            piSrc[uiX] = (piPcm[uiX] << uiPcmLeftShiftBit);
+            src[x] = (pcm[x] << pcmLeftShiftBit);
         }
 
-        piPcm += width;
-        piSrc += stride;
+        pcm += width;
+        src += stride;
     }
 }
 

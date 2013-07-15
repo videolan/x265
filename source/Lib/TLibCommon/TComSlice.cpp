@@ -94,12 +94,12 @@ TComSlice::TComSlice()
         m_list1IdxToList0Idx[idx] = -1;
     }
 
-    for (Int iNumCount = 0; iNumCount < MAX_NUM_REF; iNumCount++)
+    for (Int numCount = 0; numCount < MAX_NUM_REF; numCount++)
     {
-        m_apcRefPicList[0][iNumCount] = NULL;
-        m_apcRefPicList[1][iNumCount] = NULL;
-        m_aiRefPOCList[0][iNumCount] = 0;
-        m_aiRefPOCList[1][iNumCount] = 0;
+        m_apcRefPicList[0][numCount] = NULL;
+        m_apcRefPicList[1][numCount] = NULL;
+        m_aiRefPOCList[0][numCount] = 0;
+        m_aiRefPOCList[1][numCount] = 0;
     }
 
     resetWpScaling();
@@ -157,10 +157,10 @@ Bool TComSlice::getRapPicFlag()
  .
  \param uiNumSubstreams Number of substreams -- the allocation will be this value - 1.
  */
-Void  TComSlice::allocSubstreamSizes(UInt uiNumSubstreams)
+Void  TComSlice::allocSubstreamSizes(UInt numSubstreams)
 {
     delete[] m_puiSubstreamSizes;
-    m_puiSubstreamSizes = new UInt[uiNumSubstreams > 0 ? uiNumSubstreams - 1 : 0];
+    m_puiSubstreamSizes = new UInt[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
 Void  TComSlice::sortPicList(TComList<TComPic*>& rcListPic)
@@ -267,9 +267,9 @@ Void TComSlice::setRefPOCList()
 {
     for (Int dir = 0; dir < 2; dir++)
     {
-        for (Int iNumRefIdx = 0; iNumRefIdx < m_aiNumRefIdx[dir]; iNumRefIdx++)
+        for (Int numRefIdx = 0; numRefIdx < m_aiNumRefIdx[dir]; numRefIdx++)
         {
-            m_aiRefPOCList[dir][iNumRefIdx] = m_apcRefPicList[dir][iNumRefIdx]->getPOC();
+            m_aiRefPOCList[dir][numRefIdx] = m_apcRefPicList[dir][numRefIdx]->getPOC();
         }
     }
 }
@@ -706,9 +706,9 @@ Int TComSlice::m_prevPOC = 0;
  * the SPS's temporal_id_nesting_flag and the parsed PPS.  Then, current slice's temporal layer ID and
  * temporal_layer_switching_point_flag is set accordingly.
  */
-Void TComSlice::setTLayerInfo(UInt uiTLayer)
+Void TComSlice::setTLayerInfo(UInt layer)
 {
-    m_uiTLayer = uiTLayer;
+    m_uiTLayer = layer;
 }
 
 /** Function for checking if this is a switching-point
@@ -1033,33 +1033,33 @@ Void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*
         Int rIdx =  this->getRPSidx() - pReferencePictureSet->getDeltaRIdxMinus1() - 1;
         Int deltaRPS = pReferencePictureSet->getDeltaRPS();
         const TComReferencePictureSet* pcRefRPS = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
-        Int iRefPics = pcRefRPS->getNumberOfPictures();
-        Int iNewIdc = 0;
-        for (i = 0; i <= iRefPics; i++)
+        Int refPics = pcRefRPS->getNumberOfPictures();
+        Int newIdc = 0;
+        for (i = 0; i <= refPics; i++)
         {
-            Int deltaPOC = ((i != iRefPics) ? pcRefRPS->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
-            Int iRefIdc = 0;
+            Int deltaPOC = ((i != refPics) ? pcRefRPS->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
+            Int refIdc = 0;
             for (j = 0; j < pcRPS->getNumberOfPictures(); j++) // loop through the  pictures in the new RPS
             {
                 if ((deltaPOC + deltaRPS) == pcRPS->getDeltaPOC(j))
                 {
                     if (pcRPS->getUsed(j))
                     {
-                        iRefIdc = 1;
+                        refIdc = 1;
                     }
                     else
                     {
-                        iRefIdc = 2;
+                        refIdc = 2;
                     }
                 }
             }
 
-            pcRPS->setRefIdc(i, iRefIdc);
-            iNewIdc++;
+            pcRPS->setRefIdc(i, refIdc);
+            newIdc++;
         }
 
         pcRPS->setInterRPSPrediction(true);
-        pcRPS->setNumRefIdc(iNewIdc);
+        pcRPS->setNumRefIdc(newIdc);
         pcRPS->setDeltaRPS(deltaRPS);
         pcRPS->setDeltaRIdxMinus1(pReferencePictureSet->getDeltaRIdxMinus1() + this->getSPS()->getRPSList()->getNumberOfReferencePictureSets() - this->getRPSidx());
     }
