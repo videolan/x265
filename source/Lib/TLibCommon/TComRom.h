@@ -277,4 +277,8 @@ extern UInt g_scalingListNum[SCALING_LIST_SIZE_NUM];
 extern Int  g_eTTable[4];
 //! \}
 
+// Map Luma samples to chroma samples
+extern const Int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
+extern const Int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
+
 #endif  //__TCOMROM__

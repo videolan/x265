@@ -66,14 +66,14 @@ class TEncSlice : public WeightPredAnalysis
 private:
 
     // encoder configuration
-    TEncCfg*                m_pcCfg;                            ///< encoder configuration class
+    TEncCfg*                m_cfg;                            ///< encoder configuration class
 
 public:
 
     TEncSlice();
     virtual ~TEncSlice();
 
-    Void    create(Int width, Int height, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth);
+    Void    create(Int width, Int height, UInt maxCUWidth, UInt maxCUHeight, UChar totalDepth);
     Void    destroy();
     Void    init(TEncTop* pcEncTop);
 

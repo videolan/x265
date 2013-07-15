@@ -1175,11 +1175,11 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
                 if (!bDenomCoded)
                 {
                     Int iDeltaDenom;
-                    WRITE_UVLC(wp[0].uiLog2WeightDenom, "luma_log2_weight_denom"); // ue(v): luma_log2_weight_denom
+                    WRITE_UVLC(wp[0].log2WeightDenom, "luma_log2_weight_denom"); // ue(v): luma_log2_weight_denom
 
                     if (bChroma)
                     {
-                        iDeltaDenom = (wp[1].uiLog2WeightDenom - wp[0].uiLog2WeightDenom);
+                        iDeltaDenom = (wp[1].log2WeightDenom - wp[0].log2WeightDenom);
                         WRITE_SVLC(iDeltaDenom, "delta_chroma_log2_weight_denom"); // se(v): delta_chroma_log2_weight_denom
                     }
                     bDenomCoded = true;
@@ -1203,9 +1203,9 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
                 slice->getWpScaling(picList, refIdx, wp);
                 if (wp[0].bPresentFlag)
                 {
-                    Int iDeltaWeight = (wp[0].iWeight - (1 << wp[0].uiLog2WeightDenom));
+                    Int iDeltaWeight = (wp[0].inputWeight - (1 << wp[0].log2WeightDenom));
                     WRITE_SVLC(iDeltaWeight, "delta_luma_weight_lX");          // se(v): delta_luma_weight_lX
-                    WRITE_SVLC(wp[0].iOffset, "luma_offset_lX");               // se(v): luma_offset_lX
+                    WRITE_SVLC(wp[0].inputOffset, "luma_offset_lX");               // se(v): luma_offset_lX
                 }
 
                 if (bChroma)
@@ -1214,11 +1214,11 @@ Void TEncCavlc::xCodePredWeightTable(TComSlice* slice)
                     {
                         for (Int j = 1; j < 3; j++)
                         {
-                            Int iDeltaWeight = (wp[j].iWeight - (1 << wp[1].uiLog2WeightDenom));
+                            Int iDeltaWeight = (wp[j].inputWeight - (1 << wp[1].log2WeightDenom));
                             WRITE_SVLC(iDeltaWeight, "delta_chroma_weight_lX"); // se(v): delta_chroma_weight_lX
 
-                            Int pred = (128 - ((128 * wp[j].iWeight) >> (wp[j].uiLog2WeightDenom)));
-                            Int iDeltaChroma = (wp[j].iOffset - pred);
+                            Int pred = (128 - ((128 * wp[j].inputWeight) >> (wp[j].log2WeightDenom)));
+                            Int iDeltaChroma = (wp[j].inputOffset - pred);
                             WRITE_SVLC(iDeltaChroma, "delta_chroma_offset_lX"); // se(v): delta_chroma_offset_lX
                         }
                     }

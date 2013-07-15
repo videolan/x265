@@ -517,4 +517,7 @@ UInt g_scalingListSizeX[4] = { 4, 8, 16,  32 };
 UInt g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 2 };
 Int  g_eTTable[4] = { 0, 3, 1, 2 };
 
+const Int g_winUnitX[] = { 1, 2, 2, 1 };
+const Int g_winUnitY[] = { 1, 2, 1, 1 };
+
 //! \}

@@ -501,13 +501,13 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
         for (Int yuv = 0; yuv < 3; yuv++)
         {
             Int bitDepth = yuv ? g_bitDepthC : g_bitDepthY;
-            wp0[yuv].w      = wp0[yuv].iWeight;
-            wp0[yuv].o      = wp0[yuv].iOffset * (1 << (bitDepth - 8));
-            wp1[yuv].w      = wp1[yuv].iWeight;
-            wp1[yuv].o      = wp1[yuv].iOffset * (1 << (bitDepth - 8));
+            wp0[yuv].w      = wp0[yuv].inputWeight;
+            wp0[yuv].o      = wp0[yuv].inputOffset * (1 << (bitDepth - 8));
+            wp1[yuv].w      = wp1[yuv].inputWeight;
+            wp1[yuv].o      = wp1[yuv].inputOffset * (1 << (bitDepth - 8));
             wp0[yuv].offset = wp0[yuv].o + wp1[yuv].o;
-            wp0[yuv].shift  = wp0[yuv].uiLog2WeightDenom + 1;
-            wp0[yuv].round  = (1 << wp0[yuv].uiLog2WeightDenom);
+            wp0[yuv].shift  = wp0[yuv].log2WeightDenom + 1;
+            wp0[yuv].round  = (1 << wp0[yuv].log2WeightDenom);
             wp1[yuv].offset = wp0[yuv].offset;
             wp1[yuv].shift  = wp0[yuv].shift;
             wp1[yuv].round  = wp0[yuv].round;
@@ -519,10 +519,10 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
         for (Int yuv = 0; yuv < 3; yuv++)
         {
             Int bitDepth = yuv ? g_bitDepthC : g_bitDepthY;
-            pwp[yuv].w      = pwp[yuv].iWeight;
-            pwp[yuv].offset = pwp[yuv].iOffset * (1 << (bitDepth - 8));
-            pwp[yuv].shift  = pwp[yuv].uiLog2WeightDenom;
-            pwp[yuv].round  = (pwp[yuv].uiLog2WeightDenom >= 1) ? (1 << (pwp[yuv].uiLog2WeightDenom - 1)) : (0);
+            pwp[yuv].w      = pwp[yuv].inputWeight;
+            pwp[yuv].offset = pwp[yuv].inputOffset * (1 << (bitDepth - 8));
+            pwp[yuv].shift  = pwp[yuv].log2WeightDenom;
+            pwp[yuv].round  = (pwp[yuv].log2WeightDenom >= 1) ? (1 << (pwp[yuv].log2WeightDenom - 1)) : (0);
         }
     }
 }

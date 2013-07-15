@@ -59,15 +59,15 @@ TEncSlice::TEncSlice()
 TEncSlice::~TEncSlice()
 {}
 
-Void TEncSlice::create(Int width, Int height, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth)
+Void TEncSlice::create(Int width, Int height, UInt maxCUWidth, UInt maxCUHeight, UChar totalDepth)
 {}
 
 Void TEncSlice::destroy()
 {}
 
-Void TEncSlice::init(TEncTop* pcEncTop)
+Void TEncSlice::init(TEncTop* top)
 {
-    m_pcCfg = pcEncTop;
+    m_cfg = top;
 }
 
 /**
@@ -102,18 +102,18 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     // depth computation based on GOP size
     Int depth;
     {
-        Int poc = slice->getPOC() % m_pcCfg->getGOPSize();
+        Int poc = slice->getPOC() % m_cfg->getGOPSize();
         if (poc == 0)
         {
             depth = 0;
         }
         else
         {
-            Int step = m_pcCfg->getGOPSize();
+            Int step = m_cfg->getGOPSize();
             depth    = 0;
             for (Int i = step >> 1; i >= 1; i >>= 1)
             {
-                for (Int j = i; j < m_pcCfg->getGOPSize(); j += step)
+                for (Int j = i; j < m_cfg->getGOPSize(); j += step)
                 {
                     if (j == poc)
                     {
@@ -132,7 +132,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     SliceType sliceType;
 
     sliceType = B_SLICE;
-    sliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : sliceType;
+    sliceType = (pocLast == 0 || pocCurr % m_cfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : sliceType;
 
     slice->setSliceType(sliceType);
 
@@ -146,7 +146,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     }
     else
     {
-        slice->setTemporalLayerNonReferenceFlag(!m_pcCfg->getGOPEntry(iGOPid).m_refPic);
+        slice->setTemporalLayerNonReferenceFlag(!m_cfg->getGOPEntry(iGOPid).m_refPic);
     }
     slice->setReferenced(true);
 
@@ -154,17 +154,17 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     // QP setting
     // ------------------------------------------------------------------------------------------------------------------
 
-    qpdouble = m_pcCfg->getQP();
+    qpdouble = m_cfg->getQP();
     if (sliceType != I_SLICE)
     {
         if (!((qpdouble == -slice->getSPS()->getQpBDOffsetY()) && (slice->getSPS()->getUseLossless())))
         {
-            qpdouble += m_pcCfg->getGOPEntry(iGOPid).m_QPOffset;
+            qpdouble += m_cfg->getGOPEntry(iGOPid).m_QPOffset;
         }
     }
 
     // modify QP
-    Int* pdQPs = m_pcCfg->getdQPs();
+    Int* pdQPs = m_cfg->getdQPs();
     if (pdQPs)
     {
         qpdouble += pdQPs[slice->getPOC()];
@@ -177,7 +177,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     Int qp;
 
     // compute lambda value
-    Int    NumberBFrames = (m_pcCfg->getGOPSize() - 1);
+    Int    NumberBFrames = (m_cfg->getGOPSize() - 1);
     Int    SHIFT_QP = 12;
     Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
 #if FULL_NBIT
@@ -190,7 +190,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     Double qp_temp_orig = (Double)dQP - SHIFT_QP;
 #endif
     // Case #1: I or P-slices (key-frame)
-    Double qpFactor = m_pcCfg->getGOPEntry(iGOPid).m_QPFactor;
+    Double qpFactor = m_cfg->getGOPEntry(iGOPid).m_QPFactor;
     if (sliceType == I_SLICE)
     {
         qpFactor = 0.57 * lambda_scale;
@@ -217,7 +217,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
 
     if (slice->getSliceType() != I_SLICE)
     {
-        lambda *= m_pcCfg->getLambdaModifier(m_pcCfg->getGOPEntry(iGOPid).m_temporalId);
+        lambda *= m_cfg->getLambdaModifier(m_cfg->getGOPEntry(iGOPid).m_temporalId);
     }
 
     // for RDO
@@ -244,12 +244,12 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
-    sliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : sliceType;
+    sliceType = (pocLast == 0 || pocCurr % m_cfg->getIntraPeriod() == 0 || bForceISlice) ? I_SLICE : sliceType;
 
     slice->setSliceType(sliceType);
 #endif
 
-    if (m_pcCfg->getUseRecalculateQPAccordingToLambda())
+    if (m_cfg->getUseRecalculateQPAccordingToLambda())
     {
         qpdouble = xGetQPValueAccordingToLambda(lambda);
         qp = max(-pSPS->getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
@@ -260,30 +260,30 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
-    slice->setNumRefIdx(REF_PIC_LIST_0, m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
-    slice->setNumRefIdx(REF_PIC_LIST_1, m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
+    slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(iGOPid).m_numRefPicsActive);
+    slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(iGOPid).m_numRefPicsActive);
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
-        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_pcCfg->getLoopFilterOffsetInPPS());
-        slice->setDeblockingFilterOverrideFlag(!m_pcCfg->getLoopFilterOffsetInPPS());
-        slice->getPPS()->setPicDisableDeblockingFilterFlag(m_pcCfg->getLoopFilterDisable());
-        slice->setDeblockingFilterDisable(m_pcCfg->getLoopFilterDisable());
+        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->setDeblockingFilterOverrideFlag(!m_cfg->getLoopFilterOffsetInPPS());
+        slice->getPPS()->setPicDisableDeblockingFilterFlag(m_cfg->getLoopFilterDisable());
+        slice->setDeblockingFilterDisable(m_cfg->getLoopFilterDisable());
         if (!slice->getDeblockingFilterDisable())
         {
-            if (!m_pcCfg->getLoopFilterOffsetInPPS() && sliceType != I_SLICE)
+            if (!m_cfg->getLoopFilterOffsetInPPS() && sliceType != I_SLICE)
             {
-                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_pcCfg->getGOPEntry(iGOPid).m_betaOffsetDiv2 + m_pcCfg->getLoopFilterBetaOffset());
-                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_pcCfg->getGOPEntry(iGOPid).m_tcOffsetDiv2 + m_pcCfg->getLoopFilterTcOffset());
-                slice->setDeblockingFilterBetaOffsetDiv2(m_pcCfg->getGOPEntry(iGOPid).m_betaOffsetDiv2 + m_pcCfg->getLoopFilterBetaOffset());
-                slice->setDeblockingFilterTcOffsetDiv2(m_pcCfg->getGOPEntry(iGOPid).m_tcOffsetDiv2 + m_pcCfg->getLoopFilterTcOffset());
+                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(iGOPid).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());
+                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getGOPEntry(iGOPid).m_tcOffsetDiv2 + m_cfg->getLoopFilterTcOffset());
+                slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(iGOPid).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());
+                slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getGOPEntry(iGOPid).m_tcOffsetDiv2 + m_cfg->getLoopFilterTcOffset());
             }
             else
             {
-                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_pcCfg->getLoopFilterBetaOffset());
-                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_pcCfg->getLoopFilterTcOffset());
-                slice->setDeblockingFilterBetaOffsetDiv2(m_pcCfg->getLoopFilterBetaOffset());
-                slice->setDeblockingFilterTcOffsetDiv2(m_pcCfg->getLoopFilterTcOffset());
+                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+                slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+                slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
             }
         }
     }
@@ -297,14 +297,14 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pcPic, x265::FrameEncoder *pcEncodeF
 
     slice->setDepth(depth);
 
-    pcPic->setTLayer(m_pcCfg->getGOPEntry(iGOPid).m_temporalId);
+    pcPic->setTLayer(m_cfg->getGOPEntry(iGOPid).m_temporalId);
     if (sliceType == I_SLICE)
     {
         pcPic->setTLayer(0);
     }
     slice->setTLayer(pcPic->getTLayer());
 
-    slice->setMaxNumMergeCand(m_pcCfg->getMaxNumMergeCand());
+    slice->setMaxNumMergeCand(m_cfg->getMaxNumMergeCand());
     xStoreWPparam(pPPS->getUseWP(), pPPS->getWPBiPred());
     return slice;
 }
@@ -347,9 +347,9 @@ Void TEncSlice::resetQP(TComPic* pic, FrameEncoder *pcEncodeFrame, Int sliceQP, 
 Void TEncSlice::setSearchRange(TComSlice* slice, FrameEncoder *pcEncodeframe)
 {
     Int currPOC = slice->getPOC();
-    Int gopSize = m_pcCfg->getGOPSize();
+    Int gopSize = m_cfg->getGOPSize();
     Int offset = (gopSize >> 1);
-    Int maxSR = m_pcCfg->getSearchRange();
+    Int maxSR = m_cfg->getSearchRange();
     Int numPredDir = slice->isInterP() ? 1 : 2;
 
     for (Int dir = 0; dir <= numPredDir; dir++)
@@ -373,7 +373,7 @@ int cuInterDistribution[4][4], cuIntraDistribution[4][3], cntIntraNxN;
 int cntSkipCu[4], cntTotalCu[4];
 extern FILE * fp, * fp1;
 #endif
-Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
+Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* pcEncodeFrame)
 {
     PPAScopeEvent(TEncSlice_compressSlice);
 
@@ -400,9 +400,9 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
     cntIntraNxN = 0;
 #endif // if LOGGING
 
-    TComSlice* slice = pcPic->getSlice();
+    TComSlice* slice = pic->getSlice();
     slice->setSliceSegmentBits(0);
-    xDetermineStartAndBoundingCUAddr(pcPic, false);
+    xDetermineStartAndBoundingCUAddr(pic, false);
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -427,7 +427,7 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
         xCheckWPEnable(slice);
     }
 
-    if (m_pcCfg->getUseAdaptQpSelect())
+    if (m_cfg->getUseAdaptQpSelect())
     {
         // TODO: fix this option
         assert(0);
@@ -441,9 +441,9 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
 #endif
     }
 
-    pcEncodeFrame->encode(pcPic, slice);
+    pcEncodeFrame->encode(pic, slice);
 
-    if (m_pcCfg->getWaveFrontsynchro())
+    if (m_cfg->getWaveFrontsynchro())
     {
         slice->setNextSlice(true);
     }
@@ -475,21 +475,21 @@ Void TEncSlice::compressSlice(TComPic* pcPic, FrameEncoder* pcEncodeFrame)
  \param  outPic        picture class
  \retval rpcBitstream  bitstream class
  */
-Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, FrameEncoder* pcEncodeFrame)
+Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, FrameEncoder* frameEncoder)
 {
     PPAScopeEvent(TEncSlice_encodeSlice);
     UInt       cuAddr;
     UInt       startCUAddr;
     UInt       boundingCUAddr;
-    TComSlice* slice = pcPic->getSlice();
+    TComSlice* slice = pic->getSlice();
 
     // choose entropy coder
-    TEncEntropy *pcEntropyCoder = pcEncodeFrame->getEntropyCoder(0);
-    TEncSbac *pcSbacCoder = pcEncodeFrame->getSingletonSbac();
+    TEncEntropy *pcEntropyCoder = frameEncoder->getEntropyCoder(0);
+    TEncSbac *sbacCoder = frameEncoder->getSingletonSbac();
 
-    pcEncodeFrame->resetEncoder();
-    pcEncodeFrame->getCuEncoder(0)->setBitCounter(NULL);
-    pcEntropyCoder->setEntropyCoder(pcSbacCoder, slice);
+    frameEncoder->resetEncoder();
+    frameEncoder->getCuEncoder(0)->setBitCounter(NULL);
+    pcEntropyCoder->setEntropyCoder(sbacCoder, slice);
 
     startCUAddr = 0;
     boundingCUAddr = slice->getSliceCurEndCUAddr();
@@ -501,73 +501,73 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
 #endif
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tPOC: ");
-    DTRACE_CABAC_V(pcPic->getPOC());
+    DTRACE_CABAC_V(pic->getPOC());
     DTRACE_CABAC_T("\n");
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-    const Bool bWaveFrontsynchro = m_pcCfg->getWaveFrontsynchro();
-    const UInt heightInLCUs = pcPic->getPicSym()->getFrameHeightInCU();
+    const Bool bWaveFrontsynchro = m_cfg->getWaveFrontsynchro();
+    const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
     const Int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
     UInt bitsOriginallyInSubstreams = 0;
 
     for (Int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
     {
-        pcEncodeFrame->getBufferSBac(substrmIdx)->loadContexts(pcSbacCoder); //init. state
-        bitsOriginallyInSubstreams += pcSubstreams[substrmIdx].getNumberOfWrittenBits();
+        frameEncoder->getBufferSBac(substrmIdx)->loadContexts(sbacCoder); //init. state
+        bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
     }
 
-    UInt widthInLCUs  = pcPic->getPicSym()->getFrameWidthInCU();
+    UInt widthInLCUs  = pic->getPicSym()->getFrameWidthInCU();
     UInt col = 0, lin = 0, subStrm = 0;
-    cuAddr = (startCUAddr / pcPic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
+    cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
                                                               into the real raster scan address (cuAddr) via the CUOrderMap */
-    UInt uiEncCUOrder;
-    for (uiEncCUOrder = startCUAddr / pcPic->getNumPartInCU();
-         uiEncCUOrder < (boundingCUAddr + pcPic->getNumPartInCU() - 1) / pcPic->getNumPartInCU();
-         cuAddr = (++uiEncCUOrder))
+    UInt encCUOrder;
+    for (encCUOrder = startCUAddr / pic->getNumPartInCU();
+         encCUOrder < (boundingCUAddr + pic->getNumPartInCU() - 1) / pic->getNumPartInCU();
+         cuAddr = (++encCUOrder))
     {
         //UInt uiSliceStartLCU = slice->getSliceCurStartCUAddr();
         col     = cuAddr % widthInLCUs;
         lin     = cuAddr / widthInLCUs;
         subStrm = lin % numSubstreams;
 
-        pcEntropyCoder->setBitstream(&pcSubstreams[subStrm]);
+        pcEntropyCoder->setBitstream(&substreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if ((numSubstreams > 1) && (col == 0) && bWaveFrontsynchro)
         {
             // We'll sync if the TR is available.
-            TComDataCU *pcCUUp = pcPic->getCU(cuAddr)->getCUAbove();
-            UInt uiWidthInCU = pcPic->getFrameWidthInCU();
-            UInt uiMaxParts = 1 << (slice->getSPS()->getMaxCUDepth() << 1);
-            TComDataCU *pcCUTR = NULL;
+            TComDataCU *cuUp = pic->getCU(cuAddr)->getCUAbove();
+            UInt widthInCU = pic->getFrameWidthInCU();
+            UInt maxParts = 1 << (slice->getSPS()->getMaxCUDepth() << 1);
+            TComDataCU *cuTr = NULL;
 
-            // CHECK_ME: here can br optimize a little, do it later
-            if (pcCUUp && ((cuAddr % uiWidthInCU + 1) < uiWidthInCU))
+            // CHECK_ME: here can be optimize a little, do it later
+            if (cuUp && ((cuAddr % widthInCU + 1) < widthInCU))
             {
-                pcCUTR = pcPic->getCU(cuAddr - uiWidthInCU + 1);
+                cuTr = pic->getCU(cuAddr - widthInCU + 1);
             }
-            if (true /*bEnforceSliceRestriction*/ && ((pcCUTR == NULL) || (pcCUTR->getSlice() == NULL)))
+            if (true /*bEnforceSliceRestriction*/ && ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
             {
                 // TR not available.
             }
             else
             {
                 // TR is available, we use it.
-                pcEncodeFrame->getSbacCoder(subStrm)->loadContexts(pcEncodeFrame->getBufferSBac(lin - 1));
+                frameEncoder->getSbacCoder(subStrm)->loadContexts(frameEncoder->getBufferSBac(lin - 1));
             }
         }
-        pcSbacCoder->load(pcEncodeFrame->getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
+        sbacCoder->load(frameEncoder->getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
 
-        TComDataCU* cu = pcPic->getCU(cuAddr);
+        TComDataCU* cu = pic->getCU(cuAddr);
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
             Int numCuInWidth     = saoParam->numCuInWidth;
             Int cuAddrInSlice    = cuAddr;
-            Int cuaAddrUpInSlice  = cuAddrInSlice - numCuInWidth;
+            Int cuaAddrUpInSlice = cuAddrInSlice - numCuInWidth;
             Int rx = cuAddr % numCuInWidth;
             Int ry = cuAddr / numCuInWidth;
             Int allowMergeLeft = 1;
@@ -633,22 +633,22 @@ Void TEncSlice::encodeSlice(TComPic* pcPic, TComOutputBitstream* pcSubstreams, F
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        pcEncodeFrame->getCuEncoder(0)->setEntropyCoder(pcEntropyCoder);
-        pcEncodeFrame->getCuEncoder(0)->encodeCU(cu);
+        frameEncoder->getCuEncoder(0)->setEntropyCoder(pcEntropyCoder);
+        frameEncoder->getCuEncoder(0)->encodeCU(cu);
 
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
-        pcEncodeFrame->getSbacCoder(subStrm)->load(pcSbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
+        frameEncoder->getSbacCoder(subStrm)->load(sbacCoder); //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
 
         // Store probabilities of second LCU in line into buffer
         if ((numSubstreams > 1) && (col == 1) && bWaveFrontsynchro)
         {
-            pcEncodeFrame->getBufferSBac(lin)->loadContexts(pcEncodeFrame->getSbacCoder(subStrm));
+            frameEncoder->getBufferSBac(lin)->loadContexts(frameEncoder->getSbacCoder(subStrm));
         }
     }
 
-    if (m_pcCfg->getUseAdaptQpSelect())
+    if (m_cfg->getUseAdaptQpSelect())
     {
         assert(0);
 #if 0

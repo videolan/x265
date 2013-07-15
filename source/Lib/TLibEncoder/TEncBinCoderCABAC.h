@@ -73,7 +73,7 @@ public:
 
     TEncBinCABAC* getTEncBinCABAC()  { return this; }
 
-    Void  setBinsCoded(UInt uiVal)  { m_uiBinsCoded = uiVal;               }
+    Void  setBinsCoded(UInt val)  { m_uiBinsCoded = val;               }
 
     UInt  getBinsCoded()              { return m_uiBinsCoded;                }
 
