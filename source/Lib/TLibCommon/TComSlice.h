@@ -1360,15 +1360,13 @@ private:
     Int         m_poc;
     Int         m_lastIDR;
 
-    static Int  m_prevPOC;              ///< ugh.. this static int has to go away
-
     TComReferencePictureSet *m_rps;
     TComReferencePictureSet m_localRPS;
     Int         m_bdIdx;
     TComRefPicListModification m_refPicListModification;
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
-    Int         m_iSliceQp;
+    Int         m_sliceQp;
     Bool        m_dependentSliceSegmentFlag;
     Int         m_sliceQpBase;
     Bool        m_deblockingFilterDisable;
@@ -1475,8 +1473,6 @@ public:
 
     Int       getRPSidx()                         { return m_bdIdx; }
 
-    Int       getPrevPOC()                        { return m_prevPOC; }
-
     TComRefPicListModification* getRefPicListModification() { return &m_refPicListModification; }
 
     Void      setLastIDR(Int idrPoc)              { m_lastIDR = idrPoc; }
@@ -1487,7 +1483,7 @@ public:
 
     Int       getPOC()                            { return m_poc; }
 
-    Int       getSliceQp()                        { return m_iSliceQp; }
+    Int       getSliceQp()                        { return m_sliceQp; }
 
     Bool      getDependentSliceSegmentFlag() const   { return m_dependentSliceSegmentFlag; }
 
@@ -1530,13 +1526,14 @@ public:
     Bool      getMvdL1ZeroFlag()                  { return m_bLMvdL1Zero; }
 
     Int       getNumRpsCurrTempList();
+
     Int       getList1IdxToList0Idx(Int list1Idx) { return m_list1IdxToList0Idx[list1Idx]; }
 
     Void      setReferenced(Bool b);
 
     Bool      isReferenced()                   { return m_bReferenced; }
 
-    Void      setPOC(Int i)                    { m_poc = i; if (getTLayer() == 0) m_prevPOC = i; }
+    Void      setPOC(Int i)                    { m_poc = i; }
 
     Void      setNalUnitType(NalUnitType e)    { m_nalUnitType = e; }
 
@@ -1548,13 +1545,13 @@ public:
 
     Bool      isIRAP() const                   { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }
 
-    Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& picList);
+    Void      checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& picList);
 
-    Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
+    Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& picList);
 
     Void      setSliceType(SliceType e)               { m_sliceType = e; }
 
-    Void      setSliceQp(Int i)                       { m_iSliceQp = i; }
+    Void      setSliceQp(Int i)                       { m_sliceQp = i; }
 
     Void      setSliceQpBase(Int i)                   { m_sliceQpBase = i; }
 
@@ -1582,21 +1579,23 @@ public:
 
     Void      setDepth(Int depth)                 { m_depth = depth; }
 
-    Void      setRefPicList(TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false);
+    Void      setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotalCurr = false);
+
     Void      setRefPOCList();
-    Void      setColFromL0Flag(UInt colFromL0)    { m_colFromL0Flag = colFromL0; }
 
-    Void      setColRefIdx(UInt refIdx)           { m_colRefIdx = refIdx; }
+    Void      setColFromL0Flag(UInt colFromL0) { m_colFromL0Flag = colFromL0; }
 
-    Void      setCheckLDC(Bool b)                 { m_bCheckLDC = b; }
+    Void      setColRefIdx(UInt refIdx)     { m_colRefIdx = refIdx; }
 
-    Void      setMvdL1ZeroFlag(Bool b)            { m_bLMvdL1Zero = b; }
+    Void      setCheckLDC(Bool b)           { m_bCheckLDC = b; }
 
-    Bool      isIntra()                           { return m_sliceType == I_SLICE; }
+    Void      setMvdL1ZeroFlag(Bool b)      { m_bLMvdL1Zero = b; }
 
-    Bool      isInterB()                          { return m_sliceType == B_SLICE; }
+    Bool      isIntra()                     { return m_sliceType == I_SLICE; }
 
-    Bool      isInterP()                          { return m_sliceType == P_SLICE; }
+    Bool      isInterB()                    { return m_sliceType == B_SLICE; }
+
+    Bool      isInterP()                    { return m_sliceType == P_SLICE; }
 
     Void      setLambda(Double d, Double e) { m_lumaLambda = d; m_chromaLambda = e; }
 
@@ -1617,21 +1616,21 @@ public:
         m_bEqualRef[e][refIdx1][refIdx2] = m_bEqualRef[e][refIdx2][refIdx1] = b;
     }
 
-    static Void sortPicList(TComList<TComPic*>& rcListPic);
+    static Void sortPicList(TComList<TComPic*>& picList);
 
     Void setList1IdxToList0Idx();
 
     UInt getTLayer()                          { return m_tlayer; }
 
-    Void setTLayer(UInt uiTLayer)             { m_tlayer = uiTLayer; }
+    Void setTLayer(UInt tlayer)               { m_tlayer = tlayer; }
 
-    Void setTLayerInfo(UInt uiTLayer);
-    Void decodingMarking(TComList<TComPic*>& rcListPic, Int iGOPSIze, Int& iMaxRefPicNum);
-    Void applyReferencePictureSet(TComList<TComPic*>& rcListPic, TComReferencePictureSet *RPSList);
-    Bool isTemporalLayerSwitchingPoint(TComList<TComPic*>& rcListPic);
-    Bool isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*>& rcListPic);
-    Int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
-    Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
+    Void setTLayerInfo(UInt tlayer);
+    Void decodingMarking(TComList<TComPic*>& picList, Int gopSize, Int& maxRefPicNum);
+    Void applyReferencePictureSet(TComList<TComPic*>& picList, TComReferencePictureSet *rps);
+    Bool isTemporalLayerSwitchingPoint(TComList<TComPic*>& picList);
+    Bool isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*>& picList);
+    Int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, Int pocRandomAccess = 0);
+    Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool isRAP);
 
     Void setMaxNumMergeCand(UInt val)          { m_maxNumMergeCand = val; }
 
@@ -1717,9 +1716,9 @@ public:
 
 protected:
 
-    TComPic*  xGetRefPic(TComList<TComPic*>& rcListPic, Int poc);
+    TComPic*  xGetRefPic(TComList<TComPic*>& picList, Int poc);
 
-    TComPic*  xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, Bool pocHasMsb);
+    TComPic*  xGetLongTermRefPic(TComList<TComPic*>& picList, Int poc, Bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
 
 template<class T>
