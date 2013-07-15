@@ -62,8 +62,8 @@ const UChar TComPattern::m_intraFilter[5] =
  \param  roiWidth     pattern width
  \param  roiHeight    pattern height
  \param  stride       buffer stride
- \param  offsetLeft   neighbour offset (left)
- \param  offsetAbove  neighbour offset (above)
+ \param  offsetLeft   neighbor offset (left)
+ \param  offsetAbove  neighbor offset (above)
  */
 Void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHeight,
                                           Int stride, Int offsetLeft, Int offsetAbove)
@@ -82,8 +82,8 @@ Void TComPatternParam::setPatternParamPel(Pel* texture, Int roiWidth, Int roiHei
  \param  roiWidth     pattern width
  \param  roiHeight    pattern height
  \param  stride       buffer stride
- \param  offsetLeft   neighbour offset (left)
- \param  offsetAbove  neighbour offset (above)
+ \param  offsetLeft   neighbor offset (left)
+ \param  offsetAbove  neighbor offset (above)
  \param  absPartIdx   part index
  */
 Void TComPatternParam::setPatternParamCU(TComDataCU* cu, UChar comp, UChar roiWidth, UChar roiHeight,
