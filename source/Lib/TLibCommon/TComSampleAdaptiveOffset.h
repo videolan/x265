@@ -105,7 +105,7 @@ protected:
     Bool    m_saoLcuBoundary;
     Bool    m_saoLcuBasedOptimization;
 
-    Void xPCMRestoration(TComPic* pcPic);
+    Void xPCMRestoration(TComPic* pic);
     Void xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth);
     Void xPCMSampleRestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth, TextType ttText);
 
@@ -129,7 +129,7 @@ public:
     Pel* getPicYuvAddr(TComPicYuv* pcPicYuv, Int iYCbCr, Int iAddr = 0);
 
     Void processSaoCuOrg(Int iAddr, Int partIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
-    Void createPicSaoInfo(TComPic* pcPic);
+    Void createPicSaoInfo(TComPic* pic);
     Void destroyPicSaoInfo();
     Void processSaoBlock(Pel* pDec, Pel* pRest, Int stride, Int iSaoType, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
 
@@ -147,7 +147,7 @@ public:
 
     Void resetSaoUnit(SaoLcuParam* saoUnit);
     Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
-    Void PCMLFDisableProcess(TComPic* pcPic);                           ///< interface function for ALF process
+    Void PCMLFDisableProcess(TComPic* pic);                           ///< interface function for ALF process
 };
 
 //! \}

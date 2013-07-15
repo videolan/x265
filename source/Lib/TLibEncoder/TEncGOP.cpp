@@ -135,11 +135,11 @@ Void TEncGOP::destroy()
     Int size = Int(m_cListPic.size());
     for (Int i = 0; i < size; i++)
     {
-        TComPic* pcPic = *(iterPic++);
+        TComPic* pic = *(iterPic++);
 
-        pcPic->destroy();
-        delete pcPic;
-        pcPic = NULL;
+        pic->destroy();
+        delete pic;
+        pic = NULL;
     }
 
     if (m_cFrameEncoders)
@@ -184,26 +184,26 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     // pre-allocate a full keyframe interval of TComPic
     for (int i = 0; i < maxGOP; i++)
     {
-        TComPic *pcPic;
+        TComPic *pic;
         if (m_pcCfg->getUseAdaptiveQP())
         {
             TEncPic* pcEPic = new TEncPic;
             pcEPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
                            m_cPPS.getMaxCuDQPDepth() + 1, m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
-            pcPic = pcEPic;
+            pic = pcEPic;
         }
         else
         {
-            pcPic = new TComPic;
-            pcPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+            pic = new TComPic;
+            pic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
                           m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
         }
         if (m_pcCfg->getUseSAO())
         {
-            pcPic->getPicSym()->allocSaoParam(m_cFrameEncoders->getSAO());
+            pic->getPicSym()->allocSaoParam(m_cFrameEncoders->getSAO());
         }
-        pcPic->getSlice()->setPOC(MAX_INT);
-        m_cListPic.pushBack(pcPic);
+        pic->getSlice()->setPOC(MAX_INT);
+        m_cListPic.pushBack(pic);
     }
 }
 
@@ -249,24 +249,24 @@ int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessU
     return m_batchSize;
 }
 
-void TEncGOP::addPicture(Int poc, const x265_picture_t *pic)
+void TEncGOP::addPicture(Int poc, const x265_picture_t *picture)
 {
     TComSlice::sortPicList(m_cListPic);
 
     TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
     while (iterPic != m_cListPic.end())
     {
-        TComPic *pcPic = *(iterPic++);
-        if (pcPic->getSlice()->isReferenced() == false)
+        TComPic *pic = *(iterPic++);
+        if (pic->getSlice()->isReferenced() == false)
         {
-            pcPic->getSlice()->setPOC(poc);
-            pcPic->getPicYuvOrg()->copyFromPicture(*pic);
-            pcPic->getPicYuvRec()->setBorderExtension(false);
-            pcPic->getSlice()->setReferenced(true);
+            pic->getSlice()->setPOC(poc);
+            pic->getPicYuvOrg()->copyFromPicture(*picture);
+            pic->getPicYuvRec()->setBorderExtension(false);
+            pic->getSlice()->setReferenced(true);
             if (m_pcCfg->getUseAdaptiveQP())
             {
                 // compute image characteristics
-                dynamic_cast<TEncPic*>(pcPic)->preanalyze();
+                dynamic_cast<TEncPic*>(pic)->preanalyze();
             }
             return;
         }
@@ -1785,7 +1785,7 @@ static UInt64 computeSSD(Pel *fenc, Pel *pRec, Int stride, Int width, Int height
     return uiSSD;
 }
 
-Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit& accessUnit)
+Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* pcPicD, const AccessUnit& accessUnit)
 {
     //===== calculate PSNR =====
     Int stride = pcPicD->getStride();
@@ -1793,14 +1793,14 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
     Int height = pcPicD->getHeight() - m_pcEncTop->getPad(1);
     Int size = width * height;
 
-    UInt64 uiSSDY = computeSSD(pcPic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), stride, width, height);
+    UInt64 uiSSDY = computeSSD(pic->getPicYuvOrg()->getLumaAddr(), pcPicD->getLumaAddr(), stride, width, height);
 
     height >>= 1;
     width  >>= 1;
     stride = pcPicD->getCStride();
 
-    UInt64 uiSSDU = computeSSD(pcPic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), stride, width, height);
-    UInt64 uiSSDV = computeSSD(pcPic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), stride, width, height);
+    UInt64 uiSSDU = computeSSD(pic->getPicYuvOrg()->getCbAddr(), pcPicD->getCbAddr(), stride, width, height);
+    UInt64 uiSSDV = computeSSD(pic->getPicYuvOrg()->getCrAddr(), pcPicD->getCrAddr(), stride, width, height);
 
     Int maxvalY = 255 << (g_bitDepthY - 8);
     Int maxvalC = 255 << (g_bitDepthC - 8);
@@ -1834,7 +1834,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const Access
 
     //===== add PSNR =====
     m_pcEncTop->m_gcAnalyzeAll.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
-    TComSlice*  slice = pcPic->getSlice();
+    TComSlice*  slice = pic->getSlice();
     if (slice->isIntra())
     {
         m_pcEncTop->m_gcAnalyzeI.addResult(dYPSNR, dUPSNR, dVPSNR, (Double)uibits);
@@ -2003,13 +2003,13 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice)
         // Check if MSB present flag should be enabled.
         // Check if the buffer contains any pictures that have the same LSB.
         TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
-        TComPic* pcPic;
+        TComPic* pic;
         while (iterPic != m_cListPic.end())
         {
-            pcPic = *iterPic;
-            if ((getLSB(pcPic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
-                (pcPic->getSlice()->isReferenced()) &&                                  // Reference picture
-                (pcPic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
+            pic = *iterPic;
+            if ((getLSB(pic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
+                (pic->getSlice()->isReferenced()) &&                                  // Reference picture
+                (pic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
             {
                 mSBPresentFlag[i] = true;
                 break;

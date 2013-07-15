@@ -242,10 +242,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #endif
     m_abortFlag = false;
 
-    TComPic* pcPic = outTempCU->getPic();
+    TComPic* pic = outTempCU->getPic();
 
     // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool bTrySplit = true;

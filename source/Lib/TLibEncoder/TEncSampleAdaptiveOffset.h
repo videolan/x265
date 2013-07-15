@@ -82,7 +82,7 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    Void startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder);
+    Void startSaoEnc(TComPic* pic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder);
     Void endSaoEnc();
     Void resetStats();
     Void SAOProcess(SAOParam *pcSaoParam, Double dLambda, Double dLambdaChroma, Int depth);
@@ -95,7 +95,7 @@ public:
     Void calcSaoStatsCu(Int iAddr, Int partIdx, Int iYCbCr);
     Void calcSaoStatsBlock(Pel* pRecStart, Pel* pOrgStart, Int stride, Int64** ppStats, Int64** ppCount, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
     Void calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYCbCr);
-    Void calcSaoStatsCu_BeforeDblk(TComPic* pcPic);
+    Void calcSaoStatsCu_BeforeDblk(TComPic* pic);
     Void destroyEncBuffer();
     Void createEncBuffer();
     Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag, Int yCbCr);

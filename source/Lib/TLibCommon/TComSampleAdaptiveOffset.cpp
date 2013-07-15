@@ -531,11 +531,11 @@ inline Int xSign(Int x)
 }
 
 /** initialize variables for SAO process
- * \param  pcPic picture data pointer
+ * \param  pic picture data pointer
  */
-Void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pcPic)
+Void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
 {
-    m_pcPic = pcPic;
+    m_pcPic = pic;
 }
 
 Void TComSampleAdaptiveOffset::destroyPicSaoInfo()
@@ -1029,7 +1029,7 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int addr, Int saoType, Int yCbCr)
 }
 
 /** Sample adaptive offset process
- * \param pcPic, pcSaoParam
+ * \param pic, pcSaoParam
  */
 Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* pcSaoParam)
 {
@@ -1367,29 +1367,29 @@ Void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam*
 }
 
 /** PCM LF disable process.
- * \param pcPic picture (TComPic) pointer
+ * \param pic picture (TComPic) pointer
  * \returns Void
  *
  * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
  */
-Void TComSampleAdaptiveOffset::PCMLFDisableProcess(TComPic* pcPic)
+Void TComSampleAdaptiveOffset::PCMLFDisableProcess(TComPic* pic)
 {
-    xPCMRestoration(pcPic);
+    xPCMRestoration(pic);
 }
 
 /** Picture-level PCM restoration.
- * \param pcPic picture (TComPic) pointer
+ * \param pic picture (TComPic) pointer
  * \returns Void
  */
-Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
+Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pic)
 {
-    Bool  bPCMFilter = (pcPic->getSlice()->getSPS()->getUsePCM() && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    Bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
-    if (bPCMFilter || pcPic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (bPCMFilter || pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
+        for (UInt cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
         {
-            TComDataCU* cu = pcPic->getCU(cuAddr);
+            TComDataCU* cu = pic->getCU(cuAddr);
 
             xPCMCURestoration(cu, 0, 0);
         }
@@ -1404,8 +1404,8 @@ Void TComSampleAdaptiveOffset::xPCMRestoration(TComPic* pcPic)
  */
 Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderIdx, UInt depth)
 {
-    TComPic* pcPic     = cu->getPic();
-    UInt uiCurNumParts = pcPic->getNumPartInCU() >> (depth << 1);
+    TComPic* pic     = cu->getPic();
+    UInt uiCurNumParts = pic->getNumPartInCU() >> (depth << 1);
     UInt qNumParts   = uiCurNumParts >> 2;
 
     // go to sub-CU
@@ -1423,7 +1423,7 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration(TComDataCU* cu, UInt absZOrderI
     }
 
     // restore PCM samples
-    if ((cu->getIPCMFlag(absZOrderIdx) && pcPic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(absZOrderIdx))
+    if ((cu->getIPCMFlag(absZOrderIdx) && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(absZOrderIdx))
     {
         xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_LUMA);
         xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_CHROMA_U);

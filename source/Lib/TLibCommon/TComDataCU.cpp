@@ -322,30 +322,30 @@ const NDBFBlockInfo& NDBFBlockInfo::operator =(const NDBFBlockInfo& src)
  - internal buffers are already created
  - set values before encoding a CU
  .
- \param  pcPic     picture (TComPic) class pointer
+ \param  pic     picture (TComPic) class pointer
  \param  iCUAddr   CU address
  */
-Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
+Void TComDataCU::initCU(TComPic* pic, UInt iCUAddr)
 {
-    m_pcPic              = pcPic;
-    m_pcSlice            = pcPic->getSlice();
+    m_pcPic              = pic;
+    m_pcSlice            = pic->getSlice();
     m_uiCUAddr           = iCUAddr;
-    m_uiCUPelX           = (iCUAddr % pcPic->getFrameWidthInCU()) * g_maxCUWidth;
-    m_uiCUPelY           = (iCUAddr / pcPic->getFrameWidthInCU()) * g_maxCUHeight;
+    m_uiCUPelX           = (iCUAddr % pic->getFrameWidthInCU()) * g_maxCUWidth;
+    m_uiCUPelY           = (iCUAddr / pic->getFrameWidthInCU()) * g_maxCUHeight;
     m_uiAbsIdxInLCU      = 0;
     m_dTotalCost         = MAX_INT64;
     m_uiTotalDistortion  = 0;
     m_uiTotalBits        = 0;
     m_uiTotalBins        = 0;
-    m_uiNumPartition     = pcPic->getNumPartInCU();
+    m_uiNumPartition     = pic->getNumPartInCU();
 
     // CHECK_ME: why partStartIdx always negtive
-    Int partStartIdx = 0 - (iCUAddr) * pcPic->getNumPartInCU();
+    Int partStartIdx = 0 - (iCUAddr) * pic->getNumPartInCU();
 
     Int numElements = min<Int>(partStartIdx, m_uiNumPartition);
     for (Int ui = 0; ui < numElements; ui++)
     {
-        TComDataCU * pcFrom = pcPic->getCU(getAddr());
+        TComDataCU * pcFrom = pic->getCU(getAddr());
         m_skipFlag[ui]   = pcFrom->getSkipFlag(ui);
         m_pePartSize[ui] = pcFrom->getPartitionSize(ui);
         m_pePredMode[ui] = pcFrom->getPredictionMode(ui);
@@ -424,7 +424,7 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
     }
     else
     {
-        TComDataCU * pcFrom = pcPic->getCU(getAddr());
+        TComDataCU * pcFrom = pic->getCU(getAddr());
         m_acCUMvField[0].copyFrom(&pcFrom->m_acCUMvField[0], m_uiNumPartition, 0);
         m_acCUMvField[1].copyFrom(&pcFrom->m_acCUMvField[1], m_uiNumPartition, 0);
         for (Int i = 0; i < uiTmp; i++)
@@ -454,25 +454,25 @@ Void TComDataCU::initCU(TComPic* pcPic, UInt iCUAddr)
     m_apcCUColocated[0] = NULL;
     m_apcCUColocated[1] = NULL;
 
-    UInt uiWidthInCU = pcPic->getFrameWidthInCU();
+    UInt uiWidthInCU = pic->getFrameWidthInCU();
     if (m_uiCUAddr % uiWidthInCU)
     {
-        m_pcCULeft = pcPic->getCU(m_uiCUAddr - 1);
+        m_pcCULeft = pic->getCU(m_uiCUAddr - 1);
     }
 
     if (m_uiCUAddr / uiWidthInCU)
     {
-        m_pcCUAbove = pcPic->getCU(m_uiCUAddr - uiWidthInCU);
+        m_pcCUAbove = pic->getCU(m_uiCUAddr - uiWidthInCU);
     }
 
     if (m_pcCULeft && m_pcCUAbove)
     {
-        m_pcCUAboveLeft = pcPic->getCU(m_uiCUAddr - uiWidthInCU - 1);
+        m_pcCUAboveLeft = pic->getCU(m_uiCUAddr - uiWidthInCU - 1);
     }
 
     if (m_pcCUAbove && ((m_uiCUAddr % uiWidthInCU) < (uiWidthInCU - 1)))
     {
-        m_pcCUAboveRight = pcPic->getCU(m_uiCUAddr - uiWidthInCU + 1);
+        m_pcCUAboveRight = pic->getCU(m_uiCUAddr - uiWidthInCU + 1);
     }
 
     if (getSlice()->getNumRefIdx(REF_PIC_LIST_0) > 0)

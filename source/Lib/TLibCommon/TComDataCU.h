@@ -218,7 +218,7 @@ public:
     Void          create(UInt numPartition, UInt width, UInt height, Bool bDecSubCu, Int unitSize, Bool bGlobalRMARLBuffer = false);
     Void          destroy();
 
-    Void          initCU(TComPic* pcPic, UInt cuAddr);
+    Void          initCU(TComPic* pic, UInt cuAddr);
     Void          initEstData(UInt depth, Int qp);
     Void          initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp);
     Void          setOutsideCUPart(UInt absPartIdx, UInt depth);

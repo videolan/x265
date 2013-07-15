@@ -130,7 +130,7 @@ protected:
 
     NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
 
-    Void   xCalculateAddPSNR(TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&);
+    Void   xCalculateAddPSNR(TComPic* pic, TComPicYuv* pcPicD, const AccessUnit&);
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();

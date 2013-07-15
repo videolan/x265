@@ -525,12 +525,12 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     int boundaryCu = 0;
 #endif
     m_abortFlag = false;
-    TComPic* pcPic = outBestCU->getPic();
+    TComPic* pic = outBestCU->getPic();
 
     //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
     // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool bTrySplit = true;
@@ -738,11 +738,11 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDat
 #if CU_STAT_LOGFILE
     cntTotalCu[depth]++;
 #endif
-    TComPic* pcPic = outBestCU->getPic();
+    TComPic* pic = outBestCU->getPic();
     m_abortFlag = false;
 
     // get Original YUV data from picture
-    m_origYuv[depth]->copyFromPicYuv(pcPic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
+    m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
     // variables for fast encoder decision
     Bool bTrySplit = true;
@@ -859,7 +859,7 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDat
                 }
 
                 // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-                if (pcPic->getSlice()->getSPS()->getAMPAcc(depth))
+                if (pic->getSlice()->getSPS()->getAMPAcc(depth))
                 {
                     Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
                     Bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
@@ -968,9 +968,9 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDat
                 }
             }
             // test PCM
-            if (pcPic->getSlice()->getSPS()->getUsePCM()
-                && outTempCU->getWidth(0) <= (1 << pcPic->getSlice()->getSPS()->getPCMLog2MaxSize())
-                && outTempCU->getWidth(0) >= (1 << pcPic->getSlice()->getSPS()->getPCMLog2MinSize()))
+            if (pic->getSlice()->getSPS()->getUsePCM()
+                && outTempCU->getWidth(0) <= (1 << pic->getSlice()->getSPS()->getPCMLog2MaxSize())
+                && outTempCU->getWidth(0) >= (1 << pic->getSlice()->getSPS()->getPCMLog2MinSize()))
             {
                 UInt rawbits = (2 * g_bitDepthY + g_bitDepthC) * outBestCU->getWidth(0) * outBestCU->getHeight(0) / 2;
                 UInt bestbits = outBestCU->getTotalBits();

@@ -125,14 +125,14 @@ Void TComLoopFilter::destroy()
 /**
  - call deblocking function for every CU
  .
- \param  pcPic   picture class (TComPic) pointer
+ \param  pic   picture class (TComPic) pointer
  */
-Void TComLoopFilter::loopFilterPic(TComPic* pcPic)
+Void TComLoopFilter::loopFilterPic(TComPic* pic)
 {
     // Horizontal filtering
-    for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
+    for (UInt cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
     {
-        TComDataCU* cu = pcPic->getCU(cuAddr);
+        TComDataCU* cu = pic->getCU(cuAddr);
 
         ::memset(m_aapucBS[EDGE_VER], 0, sizeof(UChar) * m_uiNumPartitions);
         ::memset(m_aapbEdgeFilter[EDGE_VER], 0, sizeof(Bool) * m_uiNumPartitions);
@@ -142,9 +142,9 @@ Void TComLoopFilter::loopFilterPic(TComPic* pcPic)
     }
 
     // Vertical filtering
-    for (UInt cuAddr = 0; cuAddr < pcPic->getNumCUsInFrame(); cuAddr++)
+    for (UInt cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
     {
-        TComDataCU* cu = pcPic->getCU(cuAddr);
+        TComDataCU* cu = pic->getCU(cuAddr);
 
         ::memset(m_aapucBS[EDGE_HOR], 0, sizeof(UChar) * m_uiNumPartitions);
         ::memset(m_aapbEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_uiNumPartitions);
@@ -169,8 +169,8 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, I
     {
         return;
     }
-    TComPic* pcPic     = cu->getPic();
-    UInt uiCurNumParts = pcPic->getNumPartInCU() >> (depth << 1);
+    TComPic* pic     = cu->getPic();
+    UInt uiCurNumParts = pic->getNumPartInCU() >> (depth << 1);
     UInt qNumParts   = uiCurNumParts >> 2;
 
     if (cu->getDepth(absZOrderIdx) > depth)
@@ -215,7 +215,7 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, I
     UInt uiPelsInPart = g_maxCUWidth >> g_maxCUDepth;
     UInt PartIdxIncr = DEBLOCK_SMALLEST_BLOCK / uiPelsInPart ? DEBLOCK_SMALLEST_BLOCK / uiPelsInPart : 1;
 
-    UInt uiSizeInPU = pcPic->getNumPartInWidth() >> (depth);
+    UInt uiSizeInPU = pic->getNumPartInWidth() >> (depth);
 
     for (UInt iEdge = 0; iEdge < uiSizeInPU; iEdge += PartIdxIncr)
     {

@@ -75,8 +75,8 @@ protected:
     Void xGetBoundaryStrengthSingle(TComDataCU* cu, Int dir, UInt partIdx);
     UInt xCalcBsIdx(TComDataCU* cu, UInt absZOrderIdx, Int dir, Int iEdgeIdx, Int iBaseUnitIdx)
     {
-        TComPic* const pcPic = cu->getPic();
-        const UInt uiLCUWidthInBaseUnits = pcPic->getNumPartInWidth();
+        TComPic* const pic = cu->getPic();
+        const UInt uiLCUWidthInBaseUnits = pic->getNumPartInWidth();
 
         if (dir == 0)
         {
@@ -115,7 +115,7 @@ public:
     Void setCfg(Bool bLFCrossTileBoundary);
 
     /// picture-level deblocking filter
-    Void loopFilterPic(TComPic* pcPic);
+    Void loopFilterPic(TComPic* pic);
 
     static Int getBeta(Int qp)
     {

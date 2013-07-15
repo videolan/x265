@@ -603,15 +603,15 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
 }
 
 /** Start SAO encoder
- * \param pcPic, pcEntropyCoder, pppcRDSbacCoder, pcRDGoOnSbacCoder
+ * \param pic, pcEntropyCoder, pppcRDSbacCoder, pcRDGoOnSbacCoder
  */
-Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pcPic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder)
+Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* pcEntropyCoder, TEncSbac*** pppcRDSbacCoder, TEncSbac* pcRDGoOnSbacCoder)
 {
-    m_pcPic = pcPic;
+    m_pcPic = pic;
     m_entropyCoder = pcEntropyCoder;
 
     m_rdGoOnSbacCoder = pcRDGoOnSbacCoder;
-    m_entropyCoder->setEntropyCoder(m_rdGoOnSbacCoder, pcPic->getSlice());
+    m_entropyCoder->setEntropyCoder(m_rdGoOnSbacCoder, pic->getSlice());
     m_entropyCoder->resetEntropy();
     m_entropyCoder->resetBits();
 
@@ -1171,11 +1171,11 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCuOrg(Int iAddr, Int partIdx, Int iYC
     }
 }
 
-Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
+Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pic)
 {
     Int addr, yCbCr;
     Int x, y;
-    TComSPS *pTmpSPS =  pcPic->getSlice()->getSPS();
+    TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
 
     Pel* fenc;
     Pel* pRec;
@@ -1215,7 +1215,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
             lcuHeight = pTmpSPS->getMaxCUHeight();
             lcuWidth  = pTmpSPS->getMaxCUWidth();
             addr     = idxX  + frameWidthInCU * idxY;
-            pTmpCu = pcPic->getCU(addr);
+            pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();
             tPelY   = pTmpCu->getCUPelY();
             for (yCbCr = 0; yCbCr < 3; yCbCr++)
@@ -1252,7 +1252,7 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 lcuWidth     = rPelX - lPelX;
                 lcuHeight    = bPelY - tPelY;
 
-                stride    =  (yCbCr == 0) ? pcPic->getStride() : pcPic->getCStride();
+                stride    =  (yCbCr == 0) ? pic->getStride() : pic->getCStride();
                 pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
 
                 //if(iSaoType == BO)
@@ -1263,8 +1263,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 stats = m_offsetOrg_PreDblk[addr][yCbCr][SAO_BO];
                 count = m_count_PreDblk[addr][yCbCr][SAO_BO];
 
-                fenc = getPicYuvAddr(pcPic->getPicYuvOrg(), yCbCr, addr);
-                pRec = getPicYuvAddr(pcPic->getPicYuvRec(), yCbCr, addr);
+                fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+                pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
 
                 startX   = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
                 startY   = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
@@ -1304,8 +1304,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 stats = m_offsetOrg_PreDblk[addr][yCbCr][SAO_EO_0];
                 count = m_count_PreDblk[addr][yCbCr][SAO_EO_0];
 
-                fenc = getPicYuvAddr(pcPic->getPicYuvOrg(), yCbCr, addr);
-                pRec = getPicYuvAddr(pcPic->getPicYuvRec(), yCbCr, addr);
+                fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+                pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
 
                 startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY   = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
@@ -1340,8 +1340,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 stats = m_offsetOrg_PreDblk[addr][yCbCr][SAO_EO_1];
                 count = m_count_PreDblk[addr][yCbCr][SAO_EO_1];
 
-                fenc = getPicYuvAddr(pcPic->getPicYuvOrg(), yCbCr, addr);
-                pRec = getPicYuvAddr(pcPic->getPicYuvRec(), yCbCr, addr);
+                fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+                pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
 
                 startX   = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
                 startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
@@ -1385,8 +1385,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 stats = m_offsetOrg_PreDblk[addr][yCbCr][SAO_EO_2];
                 count = m_count_PreDblk[addr][yCbCr][SAO_EO_2];
 
-                fenc = getPicYuvAddr(pcPic->getPicYuvOrg(), yCbCr, addr);
-                pRec = getPicYuvAddr(pcPic->getPicYuvRec(), yCbCr, addr);
+                fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+                pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
 
                 startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
@@ -1438,8 +1438,8 @@ Void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(TComPic* pcPic)
                 stats = m_offsetOrg_PreDblk[addr][yCbCr][SAO_EO_3];
                 count = m_count_PreDblk[addr][yCbCr][SAO_EO_3];
 
-                fenc = getPicYuvAddr(pcPic->getPicYuvOrg(), yCbCr, addr);
-                pRec = getPicYuvAddr(pcPic->getPicYuvRec(), yCbCr, addr);
+                fenc = getPicYuvAddr(pic->getPicYuvOrg(), yCbCr, addr);
+                pRec = getPicYuvAddr(pic->getPicYuvRec(), yCbCr, addr);
 
                 startX   = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY   = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
