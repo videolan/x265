@@ -1823,31 +1823,4 @@ Void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
     }
 }
 
-/** Collect ARL statistics from one block
-  */
-Int TEncCu::xTuCollectARLStats(TCoeff* coeff, Int* arlCoeff, Int numCoeffInCU, Double* coeffSum, UInt* numSamples)
-{
-    for (Int n = 0; n < numCoeffInCU; n++)
-    {
-        Int u = abs(coeff[n]);
-        Int absc = arlCoeff[n];
-
-        if (u != 0)
-        {
-            if (u < LEVEL_RANGE)
-            {
-                coeffSum[u] += (Double)absc;
-                numSamples[u]++;
-            }
-            else
-            {
-                coeffSum[LEVEL_RANGE] += (Double)absc - (Double)(u << ARL_C_PRECISION);
-                numSamples[LEVEL_RANGE]++;
-            }
-        }
-    }
-
-    return 0;
-}
-
 //! \}

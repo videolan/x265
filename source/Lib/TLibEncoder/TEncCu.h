@@ -166,9 +166,6 @@ protected:
 
     Void setdQPFlag(Bool b)  { m_bEncodeDQP = b; }
 
-    // Adaptive reconstruction level (ARL) statistics collection functions
-    Int  xTuCollectARLStats(TCoeff* coeff, Int* arlCoeff, Int numCoeffInCU, Double* coeffSum, UInt* numSamples);
-
     Void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,
                            Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
 
