@@ -58,54 +58,56 @@ class TComPicSym
 {
 private:
 
-    UInt          m_uiWidthInCU;
-    UInt          m_uiHeightInCU;
+    UInt          m_widthInCU;
+    UInt          m_heightInCU;
 
-    UInt          m_uiMaxCUWidth;
-    UInt          m_uiMaxCUHeight;
-    UInt          m_uiMinCUWidth;
-    UInt          m_uiMinCUHeight;
+    UInt          m_maxCUWidth;
+    UInt          m_maxCUHeight;
+    UInt          m_minCUWidth;
+    UInt          m_minCUHeight;
 
-    UChar         m_uhTotalDepth;     ///< max. depth
-    UInt          m_uiNumPartitions;
-    UInt          m_uiNumPartInWidth;
-    UInt          m_uiNumPartInHeight;
-    UInt          m_uiNumCUsInFrame;
+    UChar         m_totalDepth;
+    UInt          m_numPartitions;
+    UInt          m_numPartInWidth;
+    UInt          m_numPartInHeight;
+    UInt          m_numCUsInFrame;
 
-    TComSlice*    m_pcTComSlice;
-    TComDataCU**  m_apcTComDataCU;      ///< array of CU data
+    TComSlice*    m_slice;
+    TComDataCU**  m_cuData;
 
     SAOParam*     m_saoParam;
 
 public:
 
-    Void        create(Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth);
+    Void        create(Int picWidth, Int picHeight, UInt maxWidth, UInt maxHeight, UInt maxDepth);
     Void        destroy();
 
     TComPicSym();
 
-    TComSlice*  getSlice()                { return m_pcTComSlice; }
+    TComSlice*  getSlice()                { return m_slice; }
 
-    UInt        getFrameWidthInCU()       { return m_uiWidthInCU; }
+    UInt        getFrameWidthInCU()       { return m_widthInCU; }
 
-    UInt        getFrameHeightInCU()      { return m_uiHeightInCU; }
+    UInt        getFrameHeightInCU()      { return m_heightInCU; }
 
-    UInt        getMinCUWidth()           { return m_uiMinCUWidth; }
+    UInt        getMinCUWidth()           { return m_minCUWidth; }
 
-    UInt        getMinCUHeight()          { return m_uiMinCUHeight; }
+    UInt        getMinCUHeight()          { return m_minCUHeight; }
 
-    UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame; }
+    UInt        getNumberOfCUsInFrame()   { return m_numCUsInFrame; }
 
-    TComDataCU*&  getCU(UInt cuAddr)    { return m_apcTComDataCU[cuAddr]; }
+    TComDataCU*&  getCU(UInt cuAddr)      { return m_cuData[cuAddr]; }
 
-    UInt        getNumPartition()         { return m_uiNumPartitions; }
+    UInt        getNumPartition()         { return m_numPartitions; }
 
-    UInt        getNumPartInWidth()       { return m_uiNumPartInWidth; }
+    UInt        getNumPartInWidth()       { return m_numPartInWidth; }
 
-    UInt        getNumPartInHeight()      { return m_uiNumPartInHeight; }
+    UInt        getNumPartInHeight()      { return m_numPartInHeight; }
 
     Void allocSaoParam(TComSampleAdaptiveOffset *sao);
-    SAOParam *getSaoParam() { return m_saoParam; }
+
+    SAOParam *getSaoParam()               { return m_saoParam; }
+
 }; // END CLASS DEFINITION TComPicSym
 
 //! \}
