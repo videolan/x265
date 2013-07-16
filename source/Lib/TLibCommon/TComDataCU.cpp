@@ -85,9 +85,6 @@ TComDataCU::TComDataCU()
     m_trCoeffY = NULL;
     m_trCoeffCb = NULL;
     m_trCoeffCr = NULL;
-    m_arlCoeffY = NULL;
-    m_arlCoeffCb = NULL;
-    m_arlCoeffCr = NULL;
     m_iPCMFlags = NULL;
     m_iPCMSampleY = NULL;
     m_iPCMSampleCb = NULL;
@@ -156,10 +153,6 @@ Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     memset(m_trCoeffCb, 0, width * height / 4 * sizeof(TCoeff));
     memset(m_trCoeffCr, 0, width * height / 4 * sizeof(TCoeff));
 
-    m_arlCoeffY  = (Int*)xMalloc(Int, width * height);
-    m_arlCoeffCb = (Int*)xMalloc(Int, width * height / 4);
-    m_arlCoeffCr = (Int*)xMalloc(Int, width * height / 4);
-
     m_iPCMFlags   = (Bool*)xMalloc(Bool, numPartition);
     m_iPCMSampleY  = (Pel*)xMalloc(Pel, width * height);
     m_iPCMSampleCb = (Pel*)xMalloc(Pel, width * height / 4);
@@ -198,9 +191,6 @@ Void TComDataCU::destroy()
     if (m_trCoeffY) { xFree(m_trCoeffY); m_trCoeffY = NULL; }
     if (m_trCoeffCb) { xFree(m_trCoeffCb); m_trCoeffCb = NULL; }
     if (m_trCoeffCr) { xFree(m_trCoeffCr); m_trCoeffCr = NULL; }
-    if (m_arlCoeffY) { xFree(m_arlCoeffY); m_arlCoeffY = NULL; }
-    if (m_arlCoeffCb) { xFree(m_arlCoeffCb); m_arlCoeffCb = NULL; }
-    if (m_arlCoeffCr) { xFree(m_arlCoeffCr); m_arlCoeffCr = NULL; }
     if (m_iPCMFlags) { xFree(m_iPCMFlags); m_iPCMFlags = NULL; }
     if (m_iPCMSampleY) { xFree(m_iPCMSampleY); m_iPCMSampleY = NULL; }
     if (m_iPCMSampleCb) { xFree(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
@@ -333,13 +323,10 @@ Void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
         m_cuMvField[0].clearMvField();
         m_cuMvField[1].clearMvField();
         memset(m_trCoeffY, 0, sizeof(TCoeff) * tmp);
-        memset(m_arlCoeffY, 0, sizeof(Int) * tmp);
         memset(m_iPCMSampleY, 0, sizeof(Pel) * tmp);
         tmp  >>= 2;
         memset(m_trCoeffCb, 0, sizeof(TCoeff) * tmp);
         memset(m_trCoeffCr, 0, sizeof(TCoeff) * tmp);
-        memset(m_arlCoeffCb, 0, sizeof(Int) * tmp);
-        memset(m_arlCoeffCr, 0, sizeof(Int) * tmp);
         memset(m_iPCMSampleCb, 0, sizeof(Pel) * tmp);
         memset(m_iPCMSampleCr, 0, sizeof(Pel) * tmp);
     }
@@ -351,7 +338,6 @@ Void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
         for (Int i = 0; i < tmp; i++)
         {
             m_trCoeffY[i] = from->m_trCoeffY[i];
-            m_arlCoeffY[i] = from->m_arlCoeffY[i];
             m_iPCMSampleY[i] = from->m_iPCMSampleY[i];
         }
 
@@ -359,8 +345,6 @@ Void TComDataCU::initCU(TComPic* pic, UInt cuAddr)
         {
             m_trCoeffCb[i] = from->m_trCoeffCb[i];
             m_trCoeffCr[i] = from->m_trCoeffCr[i];
-            m_arlCoeffCb[i] = from->m_arlCoeffCb[i];
-            m_arlCoeffCr[i] = from->m_arlCoeffCr[i];
             m_iPCMSampleCb[i] = from->m_iPCMSampleCb[i];
             m_iPCMSampleCr[i] = from->m_iPCMSampleCr[i];
         }
@@ -461,14 +445,11 @@ Void TComDataCU::initEstData(UInt depth, Int qp)
         uiTmp = width * height;
 
         memset(m_trCoeffY,    0, uiTmp * sizeof(*m_trCoeffY));
-        memset(m_arlCoeffY,   0, uiTmp * sizeof(*m_arlCoeffY));
         memset(m_iPCMSampleY, 0, uiTmp * sizeof(*m_iPCMSampleY));
 
         uiTmp >>= 2;
         memset(m_trCoeffCb,    0, uiTmp * sizeof(*m_trCoeffCb));
         memset(m_trCoeffCr,    0, uiTmp * sizeof(*m_trCoeffCr));
-        memset(m_arlCoeffCb,   0, uiTmp * sizeof(*m_arlCoeffCb));
-        memset(m_arlCoeffCr,   0, uiTmp * sizeof(*m_arlCoeffCr));
         memset(m_iPCMSampleCb, 0, uiTmp * sizeof(*m_iPCMSampleCb));
         memset(m_iPCMSampleCr, 0, uiTmp * sizeof(*m_iPCMSampleCr));
     }
@@ -534,13 +515,10 @@ Void TComDataCU::initSubCU(TComDataCU* cu, UInt partUnitIdx, UInt depth, Int qp)
 
     UInt tmp = width * heigth;
     memset(m_trCoeffY, 0, sizeof(TCoeff) * tmp);
-    memset(m_arlCoeffY, 0, sizeof(Int) * tmp);
     memset(m_iPCMSampleY, 0, sizeof(Pel) * tmp);
     tmp >>= 2;
     memset(m_trCoeffCb, 0, sizeof(TCoeff) * tmp);
     memset(m_trCoeffCr, 0, sizeof(TCoeff) * tmp);
-    memset(m_arlCoeffCb, 0, sizeof(Int) * tmp);
-    memset(m_arlCoeffCr, 0, sizeof(Int) * tmp);
     memset(m_iPCMSampleCb, 0, sizeof(Pel) * tmp);
     memset(m_iPCMSampleCr, 0, sizeof(Pel) * tmp);
     m_cuMvField[0].clearMvField();
@@ -634,15 +612,12 @@ Void TComDataCU::copySubCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
     UInt coeffOffset = maxCUWidth * maxCUHeight * absPartIdx / cu->getPic()->getNumPartInCU();
 
     m_trCoeffY = cu->getCoeffY() + coeffOffset;
-    m_arlCoeffY = cu->getArlCoeffY() + coeffOffset;
     m_iPCMSampleY = cu->getPCMSampleY() + coeffOffset;
 
     tmp >>= 2;
     coeffOffset >>= 2;
     m_trCoeffCb = cu->getCoeffCb() + coeffOffset;
     m_trCoeffCr = cu->getCoeffCr() + coeffOffset;
-    m_arlCoeffCb = cu->getArlCoeffCb() + coeffOffset;
-    m_arlCoeffCr = cu->getArlCoeffCr() + coeffOffset;
     m_iPCMSampleCb = cu->getPCMSampleCb() + coeffOffset;
     m_iPCMSampleCr = cu->getPCMSampleCr() + coeffOffset;
 
@@ -752,15 +727,12 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
     UInt uiTmp  = g_maxCUWidth * g_maxCUHeight >> (depth << 1);
     UInt uiTmp2 = partUnitIdx * uiTmp;
     memcpy(m_trCoeffY  + uiTmp2, cu->getCoeffY(),  sizeof(TCoeff) * uiTmp);
-    memcpy(m_arlCoeffY  + uiTmp2, cu->getArlCoeffY(),  sizeof(Int) * uiTmp);
     memcpy(m_iPCMSampleY + uiTmp2, cu->getPCMSampleY(), sizeof(Pel) * uiTmp);
 
     uiTmp >>= 2;
     uiTmp2 >>= 2;
     memcpy(m_trCoeffCb + uiTmp2, cu->getCoeffCb(), sizeof(TCoeff) * uiTmp);
     memcpy(m_trCoeffCr + uiTmp2, cu->getCoeffCr(), sizeof(TCoeff) * uiTmp);
-    memcpy(m_arlCoeffCb + uiTmp2, cu->getArlCoeffCb(), sizeof(Int) * uiTmp);
-    memcpy(m_arlCoeffCr + uiTmp2, cu->getArlCoeffCr(), sizeof(Int) * uiTmp);
     memcpy(m_iPCMSampleCb + uiTmp2, cu->getPCMSampleCb(), sizeof(Pel) * uiTmp);
     memcpy(m_iPCMSampleCr + uiTmp2, cu->getPCMSampleCr(), sizeof(Pel) * uiTmp);
     m_totalBins += cu->getTotalBins();
@@ -819,15 +791,12 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     UInt tmp  = (g_maxCUWidth * g_maxCUHeight) >> (uhDepth << 1);
     UInt tmp2 = m_absIdxInLCU * m_pic->getMinCUWidth() * m_pic->getMinCUHeight();
     memcpy(rpcCU->getCoeffY()     + tmp2, m_trCoeffY,    sizeof(TCoeff) * tmp);
-    memcpy(rpcCU->getArlCoeffY()  + tmp2, m_arlCoeffY,   sizeof(Int) * tmp);
     memcpy(rpcCU->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(Pel) * tmp);
 
     tmp >>= 2;
     tmp2 >>= 2;
     memcpy(rpcCU->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
-    memcpy(rpcCU->getArlCoeffCb() + tmp2, m_arlCoeffCb, sizeof(Int) * tmp);
-    memcpy(rpcCU->getArlCoeffCr() + tmp2, m_arlCoeffCr, sizeof(Int) * tmp);
     memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
     rpcCU->getTotalBins() = m_totalBins;
@@ -884,16 +853,12 @@ Void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     UInt tmp  = (g_maxCUWidth * g_maxCUHeight) >> ((depth + partDepth) << 1);
     UInt tmp2 = partOffset * m_pic->getMinCUWidth() * m_pic->getMinCUHeight();
     memcpy(cu->getCoeffY()  + tmp2, m_trCoeffY,  sizeof(TCoeff) * tmp);
-    memcpy(cu->getArlCoeffY()  + tmp2, m_arlCoeffY,  sizeof(Int) * tmp);
     memcpy(cu->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(Pel) * tmp);
 
     tmp >>= 2;
     tmp2 >>= 2;
     memcpy(cu->getCoeffCb() + tmp2, m_trCoeffCb, sizeof(TCoeff) * tmp);
     memcpy(cu->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
-    memcpy(cu->getArlCoeffCb() + tmp2, m_arlCoeffCb, sizeof(Int) * tmp);
-    memcpy(cu->getArlCoeffCr() + tmp2, m_arlCoeffCr, sizeof(Int) * tmp);
-
     memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
     cu->getTotalBins() = m_totalBins;

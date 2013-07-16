@@ -139,10 +139,6 @@ private:
     TCoeff*       m_trCoeffCb;      ///< transformed coefficient buffer (Cb)
     TCoeff*       m_trCoeffCr;      ///< transformed coefficient buffer (Cr)
 
-    Int*          m_arlCoeffY;      ///< ARL coefficient buffer (Y)
-    Int*          m_arlCoeffCb;     ///< ARL coefficient buffer (Cb)
-    Int*          m_arlCoeffCr;   ///< ARL coefficient buffer (Cr)
-
     Pel*          m_iPCMSampleY;    ///< PCM sample buffer (Y)
     Pel*          m_iPCMSampleCb;   ///< PCM sample buffer (Cb)
     Pel*          m_iPCMSampleCr;   ///< PCM sample buffer (Cr)
@@ -341,12 +337,6 @@ public:
     TCoeff*&      getCoeffCb()                        { return m_trCoeffCb; }
 
     TCoeff*&      getCoeffCr()                        { return m_trCoeffCr; }
-
-    Int*&         getArlCoeffY()                        { return m_arlCoeffY; }
-
-    Int*&         getArlCoeffCb()                        { return m_arlCoeffCb; }
-
-    Int*&         getArlCoeffCr()                        { return m_arlCoeffCr; }
 
     Pel*&         getPCMSampleY()                        { return m_iPCMSampleY; }
 

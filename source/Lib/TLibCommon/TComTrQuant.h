@@ -161,15 +161,6 @@ public:
     Void setScalingListDec(TComScalingList *scalingList);
     Void processScalingListEnc(Int *coeff, Int *quantcoeff, Int quantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
     Void processScalingListDec(Int *coeff, Int *dequantcoeff, Int invQuantScales, UInt height, UInt width, UInt ratio, Int sizuNum, UInt dc);
-    Void initSliceQpDelta();
-    Void storeSliceQpNext(TComSlice* slice);
-    Void clearSliceARLCnt();
-
-    Int     getQpDelta(Int qp) { return m_qpDelta[qp]; }
-
-    Int*    getSliceNSamples() { return m_sliceNsamples; }
-
-    Double* getSliceSumC()     { return m_sliceSumC; }
 
     static Int  calcPatternSigCtx(const UInt* sigCoeffGroupFlag, UInt posXCG, UInt posYCG, Int width, Int height);
 
@@ -180,11 +171,6 @@ public:
     estBitsSbacStruct* m_estBitsSbac;
 
 protected:
-
-    Int      m_qpDelta[MAX_QP + 1];
-    Int      m_sliceNsamples[LEVEL_RANGE + 1];
-    Double   m_sliceSumC[LEVEL_RANGE + 1];
-    Int*     m_tmpCoeff;
 
     QpParam  m_qpParam;
 
@@ -197,8 +183,10 @@ protected:
     Bool     m_useRDOQTS;
     Bool     m_useTransformSkipFast;
     Bool     m_scalingListEnabledFlag;
-    Int     *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
-    Int     *m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
+
+    Int*     m_tmpCoeff;
+    Int*     m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
+    Int*     m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
 
     Double  *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
 

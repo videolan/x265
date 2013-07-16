@@ -77,18 +77,12 @@ protected:
     TCoeff**        m_qtTempCoeffY;
     TCoeff**        m_qtTempCoeffCb;
     TCoeff**        m_qtTempCoeffCr;
-    Int**           m_qtTempArlCoeffY;
-    Int**           m_qtTempArlCoeffCb;
-    Int**           m_qtTempArlCoeffCr;
     UChar*          m_qtTempTrIdx;
     UChar*          m_qtTempCbf[3];
 
     TCoeff*         m_qtTempTUCoeffY;
     TCoeff*         m_qtTempTUCoeffCb;
     TCoeff*         m_qtTempTUCoeffCr;
-    Int*            m_qtTempTUArlCoeffY;
-    Int*            m_qtTempTUArlCoeffCb;
-    Int*            m_qtTempTUArlCoeffCr;
     UChar*          m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipTComYuv;
 

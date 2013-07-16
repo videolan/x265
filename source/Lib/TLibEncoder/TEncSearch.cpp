@@ -87,17 +87,11 @@ TEncSearch::TEncSearch()
     m_qtTempCoeffY  = NULL;
     m_qtTempCoeffCb = NULL;
     m_qtTempCoeffCr = NULL;
-    m_qtTempArlCoeffY  = NULL;
-    m_qtTempArlCoeffCb = NULL;
-    m_qtTempArlCoeffCr = NULL;
     m_qtTempTrIdx = NULL;
     m_qtTempTComYuv = NULL;
     m_qtTempTUCoeffY  = NULL;
     m_qtTempTUCoeffCb = NULL;
     m_qtTempTUCoeffCr = NULL;
-    m_qtTempTUArlCoeffY  = NULL;
-    m_qtTempTUArlCoeffCb = NULL;
-    m_qtTempTUArlCoeffCr = NULL;
     for (int i = 0; i < 3; i++)
     {
         m_sharedPredTransformSkip[i] = NULL;
@@ -131,26 +125,17 @@ TEncSearch::~TEncSearch()
             delete[] m_qtTempCoeffY[i];
             delete[] m_qtTempCoeffCb[i];
             delete[] m_qtTempCoeffCr[i];
-            delete[] m_qtTempArlCoeffY[i];
-            delete[] m_qtTempArlCoeffCb[i];
-            delete[] m_qtTempArlCoeffCr[i];
             m_qtTempTComYuv[i].destroy();
         }
     }
     delete[] m_qtTempCoeffY;
     delete[] m_qtTempCoeffCb;
     delete[] m_qtTempCoeffCr;
-    delete[] m_qtTempArlCoeffY;
-    delete[] m_qtTempArlCoeffCb;
-    delete[] m_qtTempArlCoeffCr;
     delete[] m_qtTempTrIdx;
     delete[] m_qtTempTComYuv;
     delete[] m_qtTempTUCoeffY;
     delete[] m_qtTempTUCoeffCb;
     delete[] m_qtTempTUCoeffCr;
-    delete[] m_qtTempTUArlCoeffY;
-    delete[] m_qtTempTUArlCoeffCb;
-    delete[] m_qtTempTUArlCoeffCr;
     for (UInt i = 0; i < 3; ++i)
     {
         delete[] m_qtTempCbf[i];
@@ -202,9 +187,6 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempCoeffY  = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCb = new TCoeff*[numLayersToAllocate];
     m_qtTempCoeffCr = new TCoeff*[numLayersToAllocate];
-    m_qtTempArlCoeffY  = new Int*[numLayersToAllocate];
-    m_qtTempArlCoeffCb = new Int*[numLayersToAllocate];
-    m_qtTempArlCoeffCr = new Int*[numLayersToAllocate];
 
     const UInt numPartitions = 1 << (g_maxCUDepth << 1);
     m_qtTempTrIdx   = new UChar[numPartitions];
@@ -217,9 +199,6 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
         m_qtTempCoeffY[i]  = new TCoeff[g_maxCUWidth * g_maxCUHeight];
         m_qtTempCoeffCb[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
         m_qtTempCoeffCr[i] = new TCoeff[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempArlCoeffY[i]  = new Int[g_maxCUWidth * g_maxCUHeight];
-        m_qtTempArlCoeffCb[i] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
-        m_qtTempArlCoeffCr[i] = new Int[g_maxCUWidth * g_maxCUHeight >> 2];
         m_qtTempTComYuv[i].create(g_maxCUWidth, g_maxCUHeight);
     }
 
@@ -229,9 +208,6 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeffY  = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTUCoeffCb = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTUCoeffCr = new TCoeff[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUArlCoeffY  = new Int[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUArlCoeffCb = new Int[MAX_TS_WIDTH * MAX_TS_HEIGHT];
-    m_qtTempTUArlCoeffCr = new Int[MAX_TS_WIDTH * MAX_TS_HEIGHT];
     m_qtTempTransformSkipTComYuv.create(g_maxCUWidth, g_maxCUHeight);
 
     m_qtTempTransformSkipFlag[0] = new UChar[numPartitions];
@@ -1422,11 +1398,8 @@ Void TEncSearch::xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx
         UInt numCoeffY    = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (fullDepth << 1);
         UInt numCoeffIncY = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> (cu->getSlice()->getSPS()->getMaxCUDepth() << 1);
         TCoeff* coeffSrcY = m_qtTempCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
-        TCoeff* coeffDestY = cu->getCoeffY()           + (numCoeffIncY * absPartIdx);
+        TCoeff* coeffDestY = cu->getCoeffY()        + (numCoeffIncY * absPartIdx);
         ::memcpy(coeffDestY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
-        Int* arlCoeffSrcY = m_qtTempArlCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
-        Int* arlCoeffDstY = cu->getArlCoeffY()            + (numCoeffIncY * absPartIdx);
-        ::memcpy(arlCoeffDstY, arlCoeffSrcY, sizeof(Int) * numCoeffY);
 
         if (!bLumaOnly && !bSkipChroma)
         {
@@ -1438,12 +1411,6 @@ Void TEncSearch::xSetIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx
             TCoeff* coeffDstV = cu->getCoeffCr()            + (numCoeffIncC * absPartIdx);
             ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
             ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-            Int* arlCoeffSrcU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffSrcV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffDstU = cu->getArlCoeffCb()            + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffDstV = cu->getArlCoeffCr()            + (numCoeffIncC * absPartIdx);
-            ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
-            ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
         }
 
         //===== copy reconstruction =====
@@ -1489,10 +1456,6 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
     TCoeff* coeffDstY = m_qtTempTUCoeffY;
     ::memcpy(coeffDstY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
 
-    Int* arlCoeffSrcY = m_qtTempArlCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
-    Int* arlCoeffDstY = m_qtTempTUArlCoeffY;
-    ::memcpy(arlCoeffDstY, arlCoeffSrcY, sizeof(Int) * numCoeffY);
-
     if (!bLumaOnly && !bSkipChroma)
     {
         UInt numCoeffC    = (bChromaSame ? numCoeffY : numCoeffY >> 2);
@@ -1503,13 +1466,6 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
         TCoeff* coeffDstV = m_qtTempTUCoeffCr;
         ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-
-        Int* arlCoeffSrcU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffSrcV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffDstU = m_qtTempTUArlCoeffCb;
-        Int* arlCoeffDstV = m_qtTempTUArlCoeffCr;
-        ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
-        ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
     }
 
     //===== copy reconstruction =====
@@ -1547,10 +1503,6 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
     TCoeff* coeffSrcY = m_qtTempTUCoeffY;
     ::memcpy(coeffDstY, coeffSrcY, sizeof(TCoeff) * numCoeffY);
 
-    Int* arlCoeffDstY = m_qtTempArlCoeffY[qtlayer] + (numCoeffIncY * absPartIdx);
-    Int* arlCoeffSrcY = m_qtTempTUArlCoeffY;
-    ::memcpy(arlCoeffDstY, arlCoeffSrcY, sizeof(Int) * numCoeffY);
-
     if (!bLumaOnly && !bSkipChroma)
     {
         UInt numCoeffC    = (bChromaSame ? numCoeffY : numCoeffY >> 2);
@@ -1561,13 +1513,6 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
         TCoeff* coeffSrcV = m_qtTempTUCoeffCr;
         ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-
-        Int* arlCoeffDstU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffDstV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffSrcU = m_qtTempTUArlCoeffCb;
-        Int* arlCoeffSrcV = m_qtTempTUArlCoeffCr;
-        ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
-        ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
     }
 
     //===== copy reconstruction =====
@@ -1639,20 +1584,12 @@ Void TEncSearch::xStoreIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt ab
             TCoeff* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffDstU = m_qtTempTUCoeffCb;
             ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
-
-            Int* arlCoeffSrcU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffDstU = m_qtTempTUArlCoeffCb;
-            ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
         }
         if (stateU0V1Both2 == 1 || stateU0V1Both2 == 2)
         {
             TCoeff* coeffSrcV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffDstV = m_qtTempTUCoeffCr;
             ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-
-            Int* arlCoeffSrcV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffDstV = m_qtTempTUArlCoeffCr;
-            ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
         }
 
         //===== copy reconstruction =====
@@ -1697,20 +1634,12 @@ Void TEncSearch::xLoadIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt abs
             TCoeff* coeffDstU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffSrcU = m_qtTempTUCoeffCb;
             ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
-
-            Int* arlCoeffDstU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffSrcU = m_qtTempTUArlCoeffCb;
-            ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
         }
         if (stateU0V1Both2 == 1 || stateU0V1Both2 == 2)
         {
             TCoeff* coeffDstV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
             TCoeff* coeffSrcV = m_qtTempTUCoeffCr;
             ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-
-            Int* arlCoeffDstV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-            Int* arlCoeffSrcV = m_qtTempTUArlCoeffCr;
-            ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
         }
 
         //===== copy reconstruction =====
@@ -1921,17 +1850,10 @@ Void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, UInt trDepth, UInt absP
         UInt numCoeffIncC = (cu->getSlice()->getSPS()->getMaxCUWidth() * cu->getSlice()->getSPS()->getMaxCUHeight()) >> ((cu->getSlice()->getSPS()->getMaxCUDepth() << 1) + 2);
         TCoeff* coeffSrcU = m_qtTempCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
         TCoeff* coeffSrcV = m_qtTempCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-        TCoeff* coeffDstU = cu->getCoeffCb()            + (numCoeffIncC * absPartIdx);
-        TCoeff* coeffDstV = cu->getCoeffCr()            + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffDstU = cu->getCoeffCb()         + (numCoeffIncC * absPartIdx);
+        TCoeff* coeffDstV = cu->getCoeffCr()         + (numCoeffIncC * absPartIdx);
         ::memcpy(coeffDstU, coeffSrcU, sizeof(TCoeff) * numCoeffC);
         ::memcpy(coeffDstV, coeffSrcV, sizeof(TCoeff) * numCoeffC);
-
-        Int* arlCoeffSrcU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffSrcV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffDstU = cu->getArlCoeffCb()            + (numCoeffIncC * absPartIdx);
-        Int* arlCoeffDstV = cu->getArlCoeffCr()            + (numCoeffIncC * absPartIdx);
-        ::memcpy(arlCoeffDstU, arlCoeffSrcU, sizeof(Int) * numCoeffC);
-        ::memcpy(arlCoeffDstV, arlCoeffSrcV, sizeof(Int) * numCoeffC);
 
         //===== copy reconstruction =====
         UInt trSizeCLog2 = (bChromaSame ? trSizeLog2 : trSizeLog2 - 1);
@@ -3786,9 +3708,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
         TCoeff *coeffCurY = m_qtTempCoeffY[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx);
         TCoeff *coeffCurU = m_qtTempCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
         TCoeff *coeffCurV = m_qtTempCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        Int *arlCoeffCurY = m_qtTempArlCoeffY[qtlayer] +  (numCoeffPerAbsPartIdxIncrement * absPartIdx);
-        Int *arlCoeffCurU = m_qtTempArlCoeffCb[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-        Int *arlCoeffCurV = m_qtTempArlCoeffCr[qtlayer] + (numCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
 
         Int trWidth = 0, trHeight = 0, trWidthC = 0, trHeightC = 0;
         UInt absTUPartIdxC = absPartIdx;
@@ -4102,9 +4021,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             TCoeff bestCoeffY[32 * 32];
             memcpy(bestCoeffY, coeffCurY, sizeof(TCoeff) * numSamplesLuma);
 
-            TCoeff bestArlCoeffY[32 * 32];
-            memcpy(bestArlCoeffY, arlCoeffCurY, sizeof(TCoeff) * numSamplesLuma);
-
             Short bestResiY[32 * 32];
             for (Int i = 0; i < trHeight; ++i)
             {
@@ -4152,7 +4068,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             {
                 cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
                 memcpy(coeffCurY, bestCoeffY, sizeof(TCoeff) * numSamplesLuma);
-                memcpy(arlCoeffCurY, bestArlCoeffY, sizeof(TCoeff) * numSamplesLuma);
                 for (Int i = 0; i < trHeight; ++i)
                 {
                     memcpy(curResiY + i * resiStride, &bestResiY[i * trWidth], sizeof(Short) * trWidth);
@@ -4181,10 +4096,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             TCoeff bestCoeffU[32 * 32], bestCoeffV[32 * 32];
             memcpy(bestCoeffU, coeffCurU, sizeof(TCoeff) * numSamplesChroma);
             memcpy(bestCoeffV, coeffCurV, sizeof(TCoeff) * numSamplesChroma);
-
-            TCoeff bestArlCoeffU[32 * 32], bestArlCoeffV[32 * 32];
-            memcpy(bestArlCoeffU, arlCoeffCurU, sizeof(TCoeff) * numSamplesChroma);
-            memcpy(bestArlCoeffV, arlCoeffCurV, sizeof(TCoeff) * numSamplesChroma);
 
             Short bestResiU[32 * 32], bestResiV[32 * 32];
             for (Int i = 0; i < trHeightC; ++i)
@@ -4247,7 +4158,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 cu->setTransformSkipSubParts(0, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
 
                 memcpy(coeffCurU, bestCoeffU, sizeof(TCoeff) * numSamplesChroma);
-                memcpy(arlCoeffCurU, bestArlCoeffU, sizeof(TCoeff) * numSamplesChroma);
                 for (Int i = 0; i < trHeightC; ++i)
                 {
                     memcpy(curResiU + i * stride, &bestResiU[i * trWidthC], sizeof(Short) * trWidthC);
@@ -4286,7 +4196,6 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 cu->setTransformSkipSubParts(0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
 
                 memcpy(coeffCurV, bestCoeffV, sizeof(TCoeff) * numSamplesChroma);
-                memcpy(arlCoeffCurV, bestArlCoeffV, sizeof(TCoeff) * numSamplesChroma);
                 for (Int i = 0; i < trHeightC; ++i)
                 {
                     memcpy(curResiV + i * stride, &bestResiV[i * trWidthC], sizeof(Short) * trWidthC);
@@ -4549,9 +4458,6 @@ Void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUP
             TCoeff* pcCoeffSrcY = m_qtTempCoeffY[qtlayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             TCoeff* pcCoeffDstY = cu->getCoeffY() + uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
             ::memcpy(pcCoeffDstY, pcCoeffSrcY, sizeof(TCoeff) * uiNumCoeffY);
-            Int* pcArlCoeffSrcY = m_qtTempArlCoeffY[qtlayer] +  uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
-            Int* pcArlCoeffDstY = cu->getArlCoeffY() + uiNumCoeffPerAbsPartIdxIncrement * absPartIdx;
-            ::memcpy(pcArlCoeffDstY, pcArlCoeffSrcY, sizeof(Int) * uiNumCoeffY);
             if (bCodeChroma)
             {
                 UInt    uiNumCoeffC = (1 << (trSizeCLog2 << 1));
@@ -4561,12 +4467,6 @@ Void TEncSearch::xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUP
                 TCoeff* pcCoeffDstV = cu->getCoeffCr() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
                 ::memcpy(pcCoeffDstU, pcCoeffSrcU, sizeof(TCoeff) * uiNumCoeffC);
                 ::memcpy(pcCoeffDstV, pcCoeffSrcV, sizeof(TCoeff) * uiNumCoeffC);
-                Int* pcArlCoeffSrcU = m_qtTempArlCoeffCb[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                Int* pcArlCoeffSrcV = m_qtTempArlCoeffCr[qtlayer] + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                Int* pcArlCoeffDstU = cu->getArlCoeffCb() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                Int* pcArlCoeffDstV = cu->getArlCoeffCr() + (uiNumCoeffPerAbsPartIdxIncrement * absPartIdx >> 2);
-                ::memcpy(pcArlCoeffDstU, pcArlCoeffSrcU, sizeof(Int) * uiNumCoeffC);
-                ::memcpy(pcArlCoeffDstV, pcArlCoeffSrcV, sizeof(Int) * uiNumCoeffC);
             }
         }
     }
