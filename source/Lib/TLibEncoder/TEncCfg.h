@@ -96,9 +96,9 @@ protected:
     Int       m_logLevel;
 
     //==== File I/O ========
-    Int       m_iFrameRate;
-    Int       m_iSourceWidth;
-    Int       m_iSourceHeight;
+    Int       m_frameRate;
+    Int       m_sourceWidth;
+    Int       m_sourceHeight;
     Int       m_conformanceMode;
     Window    m_conformanceWindow;
     Int       m_framesToBeEncoded;
@@ -114,36 +114,37 @@ protected:
     Bool m_frameOnlyConstraintFlag;
 
     //====== Coding Structure ========
-    UInt      m_uiIntraPeriod;
-    UInt      m_uiDecodingRefreshType;          ///< the type of decoding refresh employed for the random access.
-    Int       m_iGOPSize;
-    GOPEntry  m_GOPList[MAX_GOP];
+    UInt      m_intraPeriod;
+    UInt      m_decodingRefreshType;          ///< the type of decoding refresh employed for the random access.
+    Int       m_gopSize;
+    GOPEntry  m_gopList[MAX_GOP];
     Int       m_extraRPSs;
     Int       m_maxDecPicBuffering[MAX_TLAYER];
     Int       m_numReorderPics[MAX_TLAYER];
     Int       m_gopThreads;                     // number of TEncGOP instances
-    Int       m_iQP;                            //  if (AdaptiveQP == OFF)
+    Int       m_qp;                            //  if (AdaptiveQP == OFF)
 
-    Int       m_aiPad[2];
+    Int       m_pad[2];
 
-    Int       m_iMaxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
+    Int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
                                                  // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
     Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
     Bool      m_useRectInter;
+
     //======= Transform =============
-    UInt      m_uiQuadtreeTULog2MaxSize;
-    UInt      m_uiQuadtreeTULog2MinSize;
-    UInt      m_uiQuadtreeTUMaxDepthInter;
-    UInt      m_uiQuadtreeTUMaxDepthIntra;
+    UInt      m_quadtreeTULog2MaxSize;
+    UInt      m_quadtreeTULog2MinSize;
+    UInt      m_quadtreeTUMaxDepthInter;
+    UInt      m_quadtreeTUMaxDepthIntra;
 
     //====== Loop/Deblock Filter ========
     Bool      m_bLoopFilterDisable;
     Bool      m_loopFilterOffsetInPPS;
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
-    Bool      m_DeblockingFilterControlPresent;
+    Bool      m_deblockingFilterControlPresent;
     Bool      m_bUseSAO;
     Int       m_maxNumOffsetsPerPic;
     Bool      m_saoLcuBoundary;
@@ -153,20 +154,20 @@ protected:
     Bool      m_useLossless;
 
     //====== Motion search ========
-    Int       m_iSearchMethod;
-    Int       m_iSearchRange;                   //  0:Full frame
+    Int       m_searchMethod;
+    Int       m_searchRange;                   //  0:Full frame
     Int       m_bipredSearchRange;
 
     //====== Quality control ========
     Bool      m_useRDO;
 
-    Int       m_iMaxCuDQPDepth;                 //  Max. depth for a minimum CuDQP (0:default)
+    Int       m_maxCuDQPDepth;                 //  Max. depth for a minimum CuDQP (0:default)
 
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
     Int       m_chromaCrQpOffset;               //  Chroma Cr Qp Offset (0:default)
 
+    // DEATH ROW
     Bool      m_bUseAdaptQpSelect;
-
     Bool      m_bUseAdaptiveQP;
     Int       m_iQPAdaptationRange;
 
@@ -179,22 +180,22 @@ protected:
     Bool      m_useEarlySkipDetection;
     Bool      m_useTransformSkip;
     Bool      m_useTransformSkipFast;
-    Int*      m_aidQP;
+    Int*      m_dqpTable;
 
     Bool      m_bUseConstrainedIntraPred;
     Bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
-    UInt      m_uiPCMLog2MinSize;
+    UInt      m_pcmLog2MinSize;
 
     Bool      m_bPCMInputBitDepthFlag;
-    UInt      m_uiPCMBitDepthLuma;
-    UInt      m_uiPCMBitDepthChroma;
+    UInt      m_pcmBitDepthLuma;
+    UInt      m_pcmBitDepthChroma;
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
 
-    Int       m_iWaveFrontSynchro;
+    Int       m_enableWpp;
 
-    Int       m_decodedPictureHashSEIEnabled;            ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+    Int       m_decodedPictureHashSEIEnabled; ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     Int       m_bufferingPeriodSEIEnabled;
     Int       m_pictureTimingSEIEnabled;
     Int       m_recoveryPointSEIEnabled;
@@ -204,15 +205,18 @@ protected:
     Int       m_decodingUnitInfoSEIEnabled;
     Int       m_SOPDescriptionSEIEnabled;
     Int       m_scalableNestingSEIEnabled;
+
     //====== Weighted Prediction ========
     Bool      m_useWeightedPred;     //< Use of Weighting Prediction (P_SLICE)
-    Bool      m_useWeightedBiPred;  //< Use of Bi-directional Weighting Prediction (B_SLICE)
+    Bool      m_useWeightedBiPred;   //< Use of Bi-directional Weighting Prediction (B_SLICE)
     UInt      m_log2ParallelMergeLevelMinus2;     ///< Parallel merge estimation region
     UInt      m_maxNumMergeCand;                  ///< Maximum number of merge candidates
     Int       m_useScalingListId;          ///< Using quantization matrix i.e. 0=off, 1=default, 2=file.
     Char*     m_scalingListFile;        ///< quantization matrix file name
     Int       m_TMVPModeId;
     Int       m_signHideFlag;
+
+    // DEATH ROW
     Bool      m_RCEnableRateControl;
     Int       m_RCTargetBitrate;
     Bool      m_RCKeepHierarchicalBit;
@@ -220,9 +224,10 @@ protected:
     Bool      m_RCUseLCUSeparateModel;
     Int       m_RCInitialQP;
     Bool      m_RCForceIntraQP;
+
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    TComVPS   m_cVPS;
+    TComVPS   m_vps;
     Bool      m_recalculateQPAccordingToLambda;               ///< recalculate QP value according to the lambda value
     Int       m_activeParameterSetsSEIEnabled;                ///< enable active parameter set SEI message
     Bool      m_vuiParametersPresentFlag;                     ///< enable generation of VUI parameters
@@ -275,55 +280,55 @@ public:
 
     Void      setGopThreads(Int i)     { m_gopThreads = i; }
 
-    Void      setFrameRate(Int i)      { m_iFrameRate = i; }
+    Void      setFrameRate(Int i)      { m_frameRate = i; }
 
-    Void      setSourceWidth(Int i)      { m_iSourceWidth = i; }
+    Void      setSourceWidth(Int i)      { m_sourceWidth = i; }
 
-    Void      setSourceHeight(Int i)      { m_iSourceHeight = i; }
+    Void      setSourceHeight(Int i)      { m_sourceHeight = i; }
 
     Window   &getConformanceWindow()      { return m_conformanceWindow; }
 
     Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
 
     //====== Coding Structure ========
-    Void      setIntraPeriod(Int i)      { m_uiIntraPeriod = (UInt)i; }
+    Void      setIntraPeriod(Int i)      { m_intraPeriod = (UInt)i; }
 
-    Void      setDecodingRefreshType(Int i)      { m_uiDecodingRefreshType = (UInt)i; }
+    Void      setDecodingRefreshType(Int i)      { m_decodingRefreshType = (UInt)i; }
 
-    Void      setGOPSize(Int i)      { m_iGOPSize = i; }
+    Void      setGOPSize(Int i)      { m_gopSize = i; }
 
-    Void      setGopList(GOPEntry* GOPList) {  for (Int i = 0; i < MAX_GOP; i++) { m_GOPList[i] = GOPList[i]; } }
+    Void      setGopList(GOPEntry* GOPList) {  for (Int i = 0; i < MAX_GOP; i++) { m_gopList[i] = GOPList[i]; } }
 
     Void      setExtraRPSs(Int i)      { m_extraRPSs = i; }
 
     Int       getExtraRPSs()          { return m_extraRPSs; }
 
-    GOPEntry  getGOPEntry(Int i)      { return m_GOPList[i]; }
+    GOPEntry  getGOPEntry(Int i)      { return m_gopList[i]; }
 
     Void      setMaxDecPicBuffering(UInt u, UInt tlayer) { m_maxDecPicBuffering[tlayer] = u;    }
 
     Void      setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i;    }
 
-    Void      setQP(Int i)      { m_iQP = i; }
+    Void      setQP(Int i)      { m_qp = i; }
 
-    Void      setPad(Int* iPad)      { for (Int i = 0; i < 2; i++) { m_aiPad[i] = iPad[i]; } }
+    Void      setPad(Int* iPad)      { for (Int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
 
-    Int       getMaxRefPicNum()                              { return m_iMaxRefPicNum;           }
+    Int       getMaxRefPicNum()                              { return m_maxRefPicNum;           }
 
-    Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_iMaxRefPicNum = iMaxRefPicNum;  }
+    Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_maxRefPicNum = iMaxRefPicNum;  }
 
     Bool      getMaxTempLayer()                            { return m_maxTempLayer > 0;        }
 
     Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer;    }
 
     //======== Transform =============
-    Void      setQuadtreeTULog2MaxSize(UInt u)      { m_uiQuadtreeTULog2MaxSize = u; }
+    Void      setQuadtreeTULog2MaxSize(UInt u)      { m_quadtreeTULog2MaxSize = u; }
 
-    Void      setQuadtreeTULog2MinSize(UInt u)      { m_uiQuadtreeTULog2MinSize = u; }
+    Void      setQuadtreeTULog2MinSize(UInt u)      { m_quadtreeTULog2MinSize = u; }
 
-    Void      setQuadtreeTUMaxDepthInter(UInt u)      { m_uiQuadtreeTUMaxDepthInter = u; }
+    Void      setQuadtreeTUMaxDepthInter(UInt u)      { m_quadtreeTUMaxDepthInter = u; }
 
-    Void      setQuadtreeTUMaxDepthIntra(UInt u)      { m_uiQuadtreeTUMaxDepthIntra = u; }
+    Void      setQuadtreeTUMaxDepthIntra(UInt u)      { m_quadtreeTUMaxDepthIntra = u; }
 
     //====== Loop/Deblock Filter ========
     Void      setLoopFilterDisable(Bool b)      { m_bLoopFilterDisable       = b; }
@@ -334,12 +339,12 @@ public:
 
     Void      setLoopFilterTcOffset(Int i)      { m_loopFilterTcOffsetDiv2    = i; }
 
-    Void      setDeblockingFilterControlPresent(Bool b) { m_DeblockingFilterControlPresent = b; }
+    Void      setDeblockingFilterControlPresent(Bool b) { m_deblockingFilterControlPresent = b; }
 
     //====== Motion search ========
-    Void      setSearchMethod(Int i)     { m_iSearchMethod = i; }
+    Void      setSearchMethod(Int i)     { m_searchMethod = i; }
 
-    Void      setSearchRange(Int i)      { m_iSearchRange = i; }
+    Void      setSearchRange(Int i)      { m_searchRange = i; }
 
     Void      setBipredSearchRange(Int i) { m_bipredSearchRange = i; }
 
@@ -354,7 +359,7 @@ public:
 
     Bool      getUseRDO() const         { return m_useRDO; }
 
-    Void      setMaxCuDQPDepth(Int i)      { m_iMaxCuDQPDepth = i; }
+    Void      setMaxCuDQPDepth(Int i)      { m_maxCuDQPDepth = i; }
 
     Void      setChromaCbQpOffset(Int i)      { m_chromaCbQpOffset = i; }
 
@@ -372,11 +377,11 @@ public:
     Void      setUseLossless(Bool b)        { m_useLossless = b;  }
 
     //====== Sequence ========
-    Int       getFrameRate()      { return m_iFrameRate; }
+    Int       getFrameRate()      { return m_frameRate; }
 
-    Int       getSourceWidth()      { return m_iSourceWidth; }
+    Int       getSourceWidth()      { return m_sourceWidth; }
 
-    Int       getSourceHeight()      { return m_iSourceHeight; }
+    Int       getSourceHeight()      { return m_sourceHeight; }
 
     Int       getFramesToBeEncoded()      { return m_framesToBeEncoded; }
 
@@ -385,30 +390,30 @@ public:
     Double    getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
-    UInt      getIntraPeriod()      { return m_uiIntraPeriod; }
+    UInt      getIntraPeriod()      { return m_intraPeriod; }
 
-    UInt      getDecodingRefreshType()      { return m_uiDecodingRefreshType; }
+    UInt      getDecodingRefreshType()      { return m_decodingRefreshType; }
 
     Int       getNumGOPThreads() { return m_gopThreads; }
 
-    Int       getGOPSize()      { return m_iGOPSize; }
+    Int       getGOPSize()      { return m_gopSize; }
 
     Int       getMaxDecPicBuffering(UInt tlayer) { return m_maxDecPicBuffering[tlayer]; }
 
     Int       getNumReorderPics(UInt tlayer) { return m_numReorderPics[tlayer]; }
 
-    Int       getQP()      { return m_iQP; }
+    Int       getQP()      { return m_qp; }
 
-    Int       getPad(Int i)      { assert(i < 2);                      return m_aiPad[i]; }
+    Int       getPad(Int i)      { assert(i < 2);                      return m_pad[i]; }
 
     //======== Transform =============
-    UInt      getQuadtreeTULog2MaxSize()      const { return m_uiQuadtreeTULog2MaxSize; }
+    UInt      getQuadtreeTULog2MaxSize()      const { return m_quadtreeTULog2MaxSize; }
 
-    UInt      getQuadtreeTULog2MinSize()      const { return m_uiQuadtreeTULog2MinSize; }
+    UInt      getQuadtreeTULog2MinSize()      const { return m_quadtreeTULog2MinSize; }
 
-    UInt      getQuadtreeTUMaxDepthInter()      const { return m_uiQuadtreeTUMaxDepthInter; }
+    UInt      getQuadtreeTUMaxDepthInter()      const { return m_quadtreeTUMaxDepthInter; }
 
-    UInt      getQuadtreeTUMaxDepthIntra()      const { return m_uiQuadtreeTUMaxDepthIntra; }
+    UInt      getQuadtreeTUMaxDepthIntra()      const { return m_quadtreeTUMaxDepthIntra; }
 
     //==== Loop/Deblock Filter ========
     Bool      getLoopFilterDisable()      { return m_bLoopFilterDisable;       }
@@ -419,17 +424,17 @@ public:
 
     Int       getLoopFilterTcOffset()      { return m_loopFilterTcOffsetDiv2; }
 
-    Bool      getDeblockingFilterControlPresent()  { return m_DeblockingFilterControlPresent; }
+    Bool      getDeblockingFilterControlPresent()  { return m_deblockingFilterControlPresent; }
 
     //==== Motion search ========
-    Int       getSearchMethod()      { return m_iSearchMethod; }
+    Int       getSearchMethod()      { return m_searchMethod; }
 
-    Int       getSearchRange()       { return m_iSearchRange; }
+    Int       getSearchRange()       { return m_searchRange; }
 
     Int       getBipredSearchRange() { return m_bipredSearchRange; }
 
     //==== Quality control ========
-    Int       getMaxCuDQPDepth()      { return m_iMaxCuDQPDepth; }
+    Int       getMaxCuDQPDepth()      { return m_maxCuDQPDepth; }
 
     Bool      getUseAdaptiveQP()      { return m_bUseAdaptiveQP; }
 
@@ -461,9 +466,9 @@ public:
 
     Void      setPCMLog2MaxSize(UInt u)      { m_pcmLog2MaxSize = u;      }
 
-    Void      setPCMLog2MinSize(UInt u)     { m_uiPCMLog2MinSize = u;      }
+    Void      setPCMLog2MinSize(UInt u)     { m_pcmLog2MinSize = u;      }
 
-    Void      setdQPs(Int* p)     { m_aidQP       = p; }
+    Void      setdQPs(Int* p)     { m_dqpTable       = p; }
 
     Bool      getUseASR()      { return m_bUseASR;     }
 
@@ -487,7 +492,7 @@ public:
 
     UInt      getPCMLog2MaxSize()      { return m_pcmLog2MaxSize;  }
 
-    UInt      getPCMLog2MinSize()      { return m_uiPCMLog2MinSize;  }
+    UInt      getPCMLog2MinSize()      { return m_pcmLog2MinSize;  }
 
     Bool      getUseTransformSkip()      { return m_useTransformSkip;        }
 
@@ -497,7 +502,7 @@ public:
 
     Void      setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
 
-    Int*      getdQPs()      { return m_aidQP;       }
+    Int*      getdQPs()      { return m_dqpTable;       }
 
     Void      setUseSAO(Bool bVal)     { m_bUseSAO = bVal; }
 
@@ -519,9 +524,9 @@ public:
 
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
 
-    Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_iWaveFrontSynchro = iWaveFrontSynchro; }
+    Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_enableWpp = iWaveFrontSynchro; }
 
-    Int   getWaveFrontsynchro()                            { return m_iWaveFrontSynchro; }
+    Int   getWaveFrontsynchro()                            { return m_enableWpp; }
 
     Void  setDecodedPictureHashSEIEnabled(Int b)           { m_decodedPictureHashSEIEnabled = b; }
 
@@ -631,9 +636,9 @@ public:
 
     Void      setCUTransquantBypassFlagValue(Bool flag) { m_CUTransquantBypassFlagValue = flag; }
 
-    Void setVPS(TComVPS *p) { m_cVPS = *p; }
+    Void setVPS(TComVPS *p) { m_vps = *p; }
 
-    TComVPS *getVPS() { return &m_cVPS; }
+    TComVPS *getVPS() { return &m_vps; }
 
     Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b;    }
 

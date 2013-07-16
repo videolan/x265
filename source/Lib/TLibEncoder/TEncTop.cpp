@@ -57,7 +57,7 @@ TEncTop::TEncTop()
     m_framesToBeEncoded = INT_MAX;
     m_picsQueued = 0;
     m_picsEncoded = 0;
-    m_iMaxRefPicNum = 0;
+    m_maxRefPicNum = 0;
     m_busyGOPs = 0;
     ContextModel::buildNextStateTable();
 
@@ -94,8 +94,8 @@ Void TEncTop::create()
 
     if (m_RCEnableRateControl)
     {
-        m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_iFrameRate, m_iGOPSize, m_iSourceWidth, m_iSourceHeight,
-                         g_maxCUWidth, g_maxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList);
+        m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_frameRate, m_gopSize, m_sourceWidth, m_sourceHeight,
+                         g_maxCUWidth, g_maxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_gopList);
     }
 }
 
@@ -119,7 +119,7 @@ Void TEncTop::destroy()
 
 Void TEncTop::init()
 {
-    m_openGOP = (m_uiIntraPeriod == (UInt) -1);
+    m_openGOP = (m_intraPeriod == (UInt) -1);
 
     // initialize processing unit classes
     for (int i = 0; i < m_gopThreads; i++)
@@ -166,11 +166,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     int batchSize = m_picsEncoded == 0 ? 1 : getGOPSize();
     if (m_gopThreads > 1)
     {
-        batchSize = m_uiIntraPeriod;
+        batchSize = m_intraPeriod;
         // ugly hack for our B-frame random access mode, the second I frame will be
         // one mini-gop before the full keyframe interval because of re-ordering
         if (getGOPSize() == 8 && m_picsEncoded == 0)
-            batchSize = m_uiIntraPeriod - 8 + 1;
+            batchSize = m_intraPeriod - 8 + 1;
     }
 
     if (flush)
@@ -291,8 +291,8 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
 
-    pcSPS->setPicWidthInLumaSamples(m_iSourceWidth);
-    pcSPS->setPicHeightInLumaSamples(m_iSourceHeight);
+    pcSPS->setPicWidthInLumaSamples(m_sourceWidth);
+    pcSPS->setPicHeightInLumaSamples(m_sourceHeight);
     pcSPS->setConformanceWindow(m_conformanceWindow);
     pcSPS->setMaxCUWidth(g_maxCUWidth);
     pcSPS->setMaxCUHeight(g_maxCUHeight);
@@ -309,19 +309,19 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     pcSPS->setLog2MinCodingBlockSize(log2MinCUSize);
     pcSPS->setLog2DiffMaxMinCodingBlockSize(pcSPS->getMaxCUDepth() - g_addCUDepth);
 
-    pcSPS->setPCMLog2MinSize(m_uiPCMLog2MinSize);
+    pcSPS->setPCMLog2MinSize(m_pcmLog2MinSize);
     pcSPS->setUsePCM(m_usePCM);
     pcSPS->setPCMLog2MaxSize(m_pcmLog2MaxSize);
 
-    pcSPS->setQuadtreeTULog2MaxSize(m_uiQuadtreeTULog2MaxSize);
-    pcSPS->setQuadtreeTULog2MinSize(m_uiQuadtreeTULog2MinSize);
-    pcSPS->setQuadtreeTUMaxDepthInter(m_uiQuadtreeTUMaxDepthInter);
-    pcSPS->setQuadtreeTUMaxDepthIntra(m_uiQuadtreeTUMaxDepthIntra);
+    pcSPS->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
+    pcSPS->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
+    pcSPS->setQuadtreeTUMaxDepthInter(m_quadtreeTUMaxDepthInter);
+    pcSPS->setQuadtreeTUMaxDepthIntra(m_quadtreeTUMaxDepthIntra);
 
     pcSPS->setTMVPFlagsPresent(false);
     pcSPS->setUseLossless(m_useLossless);
 
-    pcSPS->setMaxTrSize(1 << m_uiQuadtreeTULog2MaxSize);
+    pcSPS->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
     Int i;
 
@@ -430,7 +430,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     if (bUseDQP)
     {
         pcPPS->setUseDQP(true);
-        pcPPS->setMaxCuDQPDepth(m_iMaxCuDQPDepth);
+        pcPPS->setMaxCuDQPDepth(m_maxCuDQPDepth);
         pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }
     else
@@ -450,12 +450,12 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setChromaCbQpOffset(m_chromaCbQpOffset);
     pcPPS->setChromaCrQpOffset(m_chromaCrQpOffset);
 
-    pcPPS->setEntropyCodingSyncEnabledFlag(m_iWaveFrontSynchro > 0);
+    pcPPS->setEntropyCodingSyncEnabledFlag(m_enableWpp > 0);
     pcPPS->setUseWP(m_useWeightedPred);
     pcPPS->setWPBiPred(m_useWeightedBiPred);
     pcPPS->setOutputFlagPresentFlag(false);
     pcPPS->setSignHideFlag(getSignHideFlag());
-    pcPPS->setDeblockingFilterControlPresentFlag(m_DeblockingFilterControlPresent);
+    pcPPS->setDeblockingFilterControlPresentFlag(m_deblockingFilterControlPresent);
     pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
     Int histogram[MAX_NUM_REF + 1];

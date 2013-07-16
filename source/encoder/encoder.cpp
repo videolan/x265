@@ -188,7 +188,7 @@ void Encoder::configure(x265_param_t *param)
     setWaveFrontSynchro(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
 
-    m_iGOPSize = 4;
+    m_gopSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);
     setSourceWidth(param->sourceWidth);
@@ -241,7 +241,7 @@ void Encoder::configure(x265_param_t *param)
 
     //====== HM Settings not exposed for configuration ======
     InitializeGOP(param);
-    setGOPSize(m_iGOPSize);
+    setGOPSize(m_gopSize);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
         setNumReorderPics(m_numReorderPics[i], i);
@@ -366,12 +366,12 @@ bool Encoder::InitializeGOP(x265_param_t *param)
     if (param->keyframeInterval == 1)
     {
         /* encoder_all_I */
-        m_GOPList[0] = GOPEntry();
-        m_GOPList[0].m_QPFactor = 1;
-        m_GOPList[0].m_betaOffsetDiv2 = 0;
-        m_GOPList[0].m_tcOffsetDiv2 = 0;
-        m_GOPList[0].m_POC = 1;
-        m_GOPList[0].m_numRefPicsActive = 4;
+        m_gopList[0] = GOPEntry();
+        m_gopList[0].m_QPFactor = 1;
+        m_gopList[0].m_betaOffsetDiv2 = 0;
+        m_gopList[0].m_tcOffsetDiv2 = 0;
+        m_gopList[0].m_POC = 1;
+        m_gopList[0].m_numRefPicsActive = 4;
     }
     else if (param->bframes > 0) // hacky temporary way to select random access
     {
@@ -382,15 +382,15 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         int rps[] = { 0, 4, 2, 1, -2, -3, 1, -2 };
         for (int i = 0; i < 8; i++)
         {
-            m_GOPList[i].m_POC = pocs[i];
-            m_GOPList[i].m_QPFactor = factors[offsets[i]];
-            m_GOPList[i].m_QPOffset = offsets[i];
-            m_GOPList[i].m_deltaRPS = rps[i];
-            m_GOPList[i].m_sliceType = 'B';
-            m_GOPList[i].m_numRefPicsActive = i ? 2 : 4;
-            m_GOPList[i].m_numRefPics = i == 1 ? 3 : 4;
-            m_GOPList[i].m_interRPSPrediction = i ? 1 : 0;
-            m_GOPList[i].m_numRefIdc = i == 2 ? 4 : 5;
+            m_gopList[i].m_POC = pocs[i];
+            m_gopList[i].m_QPFactor = factors[offsets[i]];
+            m_gopList[i].m_QPOffset = offsets[i];
+            m_gopList[i].m_deltaRPS = rps[i];
+            m_gopList[i].m_sliceType = 'B';
+            m_gopList[i].m_numRefPicsActive = i ? 2 : 4;
+            m_gopList[i].m_numRefPics = i == 1 ? 3 : 4;
+            m_gopList[i].m_interRPSPrediction = i ? 1 : 0;
+            m_gopList[i].m_numRefIdc = i == 2 ? 4 : 5;
         }
 
 #define SET4(id, VAR, a, b, c, d) \
@@ -413,7 +413,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         SET5(5, m_refIdc, 1, 1, 1, 1, 0);
         SET5(6, m_refIdc, 1, 0, 1, 1, 1);
         SET5(7, m_refIdc, 1, 1, 1, 1, 0);
-        m_iGOPSize = 8;
+        m_gopSize = 8;
     }
     else
     {
@@ -421,37 +421,37 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         int offsets[] = { 3, 2, 3, 1 };
         for (int i = 0; i < 4; i++)
         {
-            m_GOPList[i].m_POC = i + 1;
-            m_GOPList[i].m_QPFactor = 0.4624;
-            m_GOPList[i].m_QPOffset = offsets[i];
-            m_GOPList[i].m_numRefPicsActive = 1;
-            m_GOPList[i].m_numRefPics = 1;
-            m_GOPList[i].m_referencePics[0] = -1;
-            m_GOPList[i].m_usedByCurrPic[0] = 1;
-            m_GOPList[i].m_sliceType = 'P';
+            m_gopList[i].m_POC = i + 1;
+            m_gopList[i].m_QPFactor = 0.4624;
+            m_gopList[i].m_QPOffset = offsets[i];
+            m_gopList[i].m_numRefPicsActive = 1;
+            m_gopList[i].m_numRefPics = 1;
+            m_gopList[i].m_referencePics[0] = -1;
+            m_gopList[i].m_usedByCurrPic[0] = 1;
+            m_gopList[i].m_sliceType = 'P';
             if (i > 0)
             {
-                m_GOPList[i].m_interRPSPrediction = 1;
-                m_GOPList[i].m_deltaRPS = -1;
-                m_GOPList[i].m_numRefIdc = 2;
-                m_GOPList[i].m_refIdc[0] = 0;
-                m_GOPList[i].m_refIdc[1] = 1;
+                m_gopList[i].m_interRPSPrediction = 1;
+                m_gopList[i].m_deltaRPS = -1;
+                m_gopList[i].m_numRefIdc = 2;
+                m_gopList[i].m_refIdc[0] = 0;
+                m_gopList[i].m_refIdc[1] = 1;
             }
         }
 
-        m_GOPList[3].m_QPFactor = 0.578;
+        m_gopList[3].m_QPFactor = 0.578;
     }
 
     if (param->keyframeInterval > 0)
     {
-        m_iGOPSize = X265_MIN(param->keyframeInterval, m_iGOPSize);
-        m_iGOPSize = X265_MAX(1, m_iGOPSize);
-        int remain = param->keyframeInterval % m_iGOPSize;
+        m_gopSize = X265_MIN(param->keyframeInterval, m_gopSize);
+        m_gopSize = X265_MAX(1, m_gopSize);
+        int remain = param->keyframeInterval % m_gopSize;
         if (remain)
         {
-            param->keyframeInterval += m_iGOPSize - remain;
+            param->keyframeInterval += m_gopSize - remain;
             x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                     m_iGOPSize, param->keyframeInterval);
+                     m_gopSize, param->keyframeInterval);
         }
         if (param->bframes && param->keyframeInterval < 16)
         {
@@ -463,9 +463,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
     {
         // default keyframe interval of 1 second
         param->keyframeInterval = param->frameRate;
-        int remain = param->keyframeInterval % m_iGOPSize;
+        int remain = param->keyframeInterval % m_gopSize;
         if (remain)
-            param->keyframeInterval += m_iGOPSize - remain;
+            param->keyframeInterval += m_gopSize - remain;
     }
     setIntraPeriod(param->keyframeInterval);
 
@@ -483,22 +483,22 @@ bool Encoder::InitializeGOP(x265_param_t *param)
     }
 
     int numOK = 0;
-    CONFIRM(param->keyframeInterval >= 0 && (param->keyframeInterval % m_iGOPSize != 0), "Intra period must be a multiple of GOPSize, or -1");
+    CONFIRM(param->keyframeInterval >= 0 && (param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
 
-    for (int i = 0; i < m_iGOPSize; i++)
+    for (int i = 0; i < m_gopSize; i++)
     {
-        if (m_GOPList[i].m_POC == m_iGOPSize)
+        if (m_gopList[i].m_POC == m_gopSize)
         {
-            CONFIRM(m_GOPList[i].m_temporalId != 0, "The last frame in each GOP must have temporal ID = 0 ");
+            CONFIRM(m_gopList[i].m_temporalId != 0, "The last frame in each GOP must have temporal ID = 0 ");
         }
     }
 
-    if ((param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable))
+    if ((param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_deblockingFilterControlPresent && (!m_bLoopFilterDisable))
     {
-        for (Int i = 0; i < m_iGOPSize; i++)
+        for (Int i = 0; i < m_gopSize; i++)
         {
-            CONFIRM((m_GOPList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_GOPList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
-            CONFIRM((m_GOPList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_GOPList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
+            CONFIRM((m_gopList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_gopList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
+            CONFIRM((m_gopList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_gopList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
         }
     }
 
@@ -506,9 +506,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
     //start looping through frames in coding order until we can verify that the GOP structure is correct.
     while (!verifiedGOP && !errorGOP)
     {
-        Int curGOP = (checkGOP - 1) % m_iGOPSize;
-        Int curPOC = ((checkGOP - 1) / m_iGOPSize) * m_iGOPSize + m_GOPList[curGOP].m_POC;
-        if (m_GOPList[curGOP].m_POC < 0)
+        Int curGOP = (checkGOP - 1) % m_gopSize;
+        Int curPOC = ((checkGOP - 1) / m_gopSize) * m_gopSize + m_gopList[curGOP].m_POC;
+        if (m_gopList[curGOP].m_POC < 0)
         {
             printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
             errorGOP = true;
@@ -517,9 +517,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         {
             //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
             Bool beforeI = false;
-            for (Int i = 0; i < m_GOPList[curGOP].m_numRefPics; i++)
+            for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
             {
-                Int absPOC = curPOC + m_GOPList[curGOP].m_referencePics[i];
+                Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
                 if (absPOC < 0)
                 {
                     beforeI = true;
@@ -532,15 +532,15 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                         if (refList[j] == absPOC)
                         {
                             found = true;
-                            for (Int k = 0; k < m_iGOPSize; k++)
+                            for (Int k = 0; k < m_gopSize; k++)
                             {
-                                if (absPOC % m_iGOPSize == m_GOPList[k].m_POC % m_iGOPSize)
+                                if (absPOC % m_gopSize == m_gopList[k].m_POC % m_gopSize)
                                 {
-                                    if (m_GOPList[k].m_temporalId == m_GOPList[curGOP].m_temporalId)
+                                    if (m_gopList[k].m_temporalId == m_gopList[curGOP].m_temporalId)
                                     {
-                                        m_GOPList[k].m_refPic = true;
+                                        m_gopList[k].m_refPic = true;
                                     }
-                                    m_GOPList[curGOP].m_usedByCurrPic[i] = m_GOPList[k].m_temporalId <= m_GOPList[curGOP].m_temporalId;
+                                    m_gopList[curGOP].m_usedByCurrPic[i] = m_gopList[k].m_temporalId <= m_gopList[curGOP].m_temporalId;
                                 }
                             }
                         }
@@ -548,7 +548,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 
                     if (!found)
                     {
-                        printf("\nError: ref pic %d is not available for GOP frame %d\n", m_GOPList[curGOP].m_referencePics[i], curGOP + 1);
+                        printf("\nError: ref pic %d is not available for GOP frame %d\n", m_gopList[curGOP].m_referencePics[i], curGOP + 1);
                         errorGOP = true;
                     }
                 }
@@ -561,7 +561,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                 {
                     numOK++;
                     isOK[curGOP] = true;
-                    if (numOK == m_iGOPSize)
+                    if (numOK == m_gopSize)
                     {
                         verifiedGOP = true;
                     }
@@ -570,27 +570,27 @@ bool Encoder::InitializeGOP(x265_param_t *param)
             else
             {
                 //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
-                m_GOPList[m_iGOPSize + m_extraRPSs] = m_GOPList[curGOP];
+                m_gopList[m_gopSize + m_extraRPSs] = m_gopList[curGOP];
                 Int newRefs = 0;
-                for (Int i = 0; i < m_GOPList[curGOP].m_numRefPics; i++)
+                for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
                 {
-                    Int absPOC = curPOC + m_GOPList[curGOP].m_referencePics[i];
+                    Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
                     if (absPOC >= 0)
                     {
-                        m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[newRefs] = m_GOPList[curGOP].m_referencePics[i];
-                        m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[newRefs] = m_GOPList[curGOP].m_usedByCurrPic[i];
+                        m_gopList[m_gopSize + m_extraRPSs].m_referencePics[newRefs] = m_gopList[curGOP].m_referencePics[i];
+                        m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[newRefs] = m_gopList[curGOP].m_usedByCurrPic[i];
                         newRefs++;
                     }
                 }
 
-                Int numPrefRefs = m_GOPList[curGOP].m_numRefPicsActive;
+                Int numPrefRefs = m_gopList[curGOP].m_numRefPicsActive;
 
                 for (Int offset = -1; offset > -checkGOP; offset--)
                 {
                     //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
-                    Int offGOP = (checkGOP - 1 + offset) % m_iGOPSize;
-                    Int offPOC = ((checkGOP - 1 + offset) / m_iGOPSize) * m_iGOPSize + m_GOPList[offGOP].m_POC;
-                    if (offPOC >= 0 && m_GOPList[offGOP].m_temporalId <= m_GOPList[curGOP].m_temporalId)
+                    Int offGOP = (checkGOP - 1 + offset) % m_gopSize;
+                    Int offPOC = ((checkGOP - 1 + offset) / m_gopSize) * m_gopSize + m_gopList[offGOP].m_POC;
+                    if (offPOC >= 0 && m_gopList[offGOP].m_temporalId <= m_gopList[curGOP].m_temporalId)
                     {
                         Bool newRef = false;
                         for (Int i = 0; i < numRefs; i++)
@@ -603,7 +603,7 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 
                         for (Int i = 0; i < newRefs; i++)
                         {
-                            if (m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[i] == offPOC - curPOC)
+                            if (m_gopList[m_gopSize + m_extraRPSs].m_referencePics[i] == offPOC - curPOC)
                             {
                                 newRef = false;
                             }
@@ -613,13 +613,13 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                         {
                             Int insertPoint = newRefs;
                             //this picture can be added, find appropriate place in list and insert it.
-                            if (m_GOPList[offGOP].m_temporalId == m_GOPList[curGOP].m_temporalId)
+                            if (m_gopList[offGOP].m_temporalId == m_gopList[curGOP].m_temporalId)
                             {
-                                m_GOPList[offGOP].m_refPic = true;
+                                m_gopList[offGOP].m_refPic = true;
                             }
                             for (Int j = 0; j < newRefs; j++)
                             {
-                                if (m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j] < offPOC - curPOC || m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j] > 0)
+                                if (m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] < offPOC - curPOC || m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] > 0)
                                 {
                                     insertPoint = j;
                                     break;
@@ -627,13 +627,13 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                             }
 
                             Int prev = offPOC - curPOC;
-                            Int prevUsed = m_GOPList[offGOP].m_temporalId <= m_GOPList[curGOP].m_temporalId;
+                            Int prevUsed = m_gopList[offGOP].m_temporalId <= m_gopList[curGOP].m_temporalId;
                             for (Int j = insertPoint; j < newRefs + 1; j++)
                             {
-                                Int newPrev = m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j];
-                                Int newUsed = m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j];
-                                m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j] = prev;
-                                m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j] = prevUsed;
+                                Int newPrev = m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j];
+                                Int newUsed = m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j];
+                                m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j] = prev;
+                                m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j] = prevUsed;
                                 prevUsed = newUsed;
                                 prev = newPrev;
                             }
@@ -647,29 +647,29 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                     }
                 }
 
-                m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefPics = newRefs;
-                m_GOPList[m_iGOPSize + m_extraRPSs].m_POC = curPOC;
+                m_gopList[m_gopSize + m_extraRPSs].m_numRefPics = newRefs;
+                m_gopList[m_gopSize + m_extraRPSs].m_POC = curPOC;
                 if (m_extraRPSs == 0)
                 {
-                    m_GOPList[m_iGOPSize + m_extraRPSs].m_interRPSPrediction = 0;
-                    m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc = 0;
+                    m_gopList[m_gopSize + m_extraRPSs].m_interRPSPrediction = 0;
+                    m_gopList[m_gopSize + m_extraRPSs].m_numRefIdc = 0;
                 }
                 else
                 {
-                    Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
-                    Int refPOC = m_GOPList[rIdx].m_POC;
-                    Int refPics = m_GOPList[rIdx].m_numRefPics;
+                    Int rIdx =  m_gopSize + m_extraRPSs - 1;
+                    Int refPOC = m_gopList[rIdx].m_POC;
+                    Int refPics = m_gopList[rIdx].m_numRefPics;
                     Int newIdc = 0;
                     for (Int i = 0; i <= refPics; i++)
                     {
-                        Int deltaPOC = ((i != refPics) ? m_GOPList[rIdx].m_referencePics[i] : 0); // check if the reference abs POC is >= 0
+                        Int deltaPOC = ((i != refPics) ? m_gopList[rIdx].m_referencePics[i] : 0); // check if the reference abs POC is >= 0
                         Int absPOCref = refPOC + deltaPOC;
                         Int refIdc = 0;
-                        for (Int j = 0; j < m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefPics; j++)
+                        for (Int j = 0; j < m_gopList[m_gopSize + m_extraRPSs].m_numRefPics; j++)
                         {
-                            if ((absPOCref - curPOC) == m_GOPList[m_iGOPSize + m_extraRPSs].m_referencePics[j])
+                            if ((absPOCref - curPOC) == m_gopList[m_gopSize + m_extraRPSs].m_referencePics[j])
                             {
-                                if (m_GOPList[m_iGOPSize + m_extraRPSs].m_usedByCurrPic[j])
+                                if (m_gopList[m_gopSize + m_extraRPSs].m_usedByCurrPic[j])
                                 {
                                     refIdc = 1;
                                 }
@@ -680,21 +680,21 @@ bool Encoder::InitializeGOP(x265_param_t *param)
                             }
                         }
 
-                        m_GOPList[m_iGOPSize + m_extraRPSs].m_refIdc[newIdc] = refIdc;
+                        m_gopList[m_gopSize + m_extraRPSs].m_refIdc[newIdc] = refIdc;
                         newIdc++;
                     }
 
-                    m_GOPList[m_iGOPSize + m_extraRPSs].m_interRPSPrediction = 1;
-                    m_GOPList[m_iGOPSize + m_extraRPSs].m_numRefIdc = newIdc;
-                    m_GOPList[m_iGOPSize + m_extraRPSs].m_deltaRPS = refPOC - m_GOPList[m_iGOPSize + m_extraRPSs].m_POC;
+                    m_gopList[m_gopSize + m_extraRPSs].m_interRPSPrediction = 1;
+                    m_gopList[m_gopSize + m_extraRPSs].m_numRefIdc = newIdc;
+                    m_gopList[m_gopSize + m_extraRPSs].m_deltaRPS = refPOC - m_gopList[m_gopSize + m_extraRPSs].m_POC;
                 }
-                curGOP = m_iGOPSize + m_extraRPSs;
+                curGOP = m_gopSize + m_extraRPSs;
                 m_extraRPSs++;
             }
             numRefs = 0;
-            for (Int i = 0; i < m_GOPList[curGOP].m_numRefPics; i++)
+            for (Int i = 0; i < m_gopList[curGOP].m_numRefPics; i++)
             {
-                Int absPOC = curPOC + m_GOPList[curGOP].m_referencePics[i];
+                Int absPOC = curPOC + m_gopList[curGOP].m_referencePics[i];
                 if (absPOC >= 0)
                 {
                     refList[numRefs] = absPOC;
@@ -710,13 +710,13 @@ bool Encoder::InitializeGOP(x265_param_t *param)
 
     CONFIRM(errorGOP, "Invalid GOP structure given");
     m_maxTempLayer = 1;
-    for (Int i = 0; i < m_iGOPSize; i++)
+    for (Int i = 0; i < m_gopSize; i++)
     {
-        if (m_GOPList[i].m_temporalId >= m_maxTempLayer)
+        if (m_gopList[i].m_temporalId >= m_maxTempLayer)
         {
-            m_maxTempLayer = m_GOPList[i].m_temporalId + 1;
+            m_maxTempLayer = m_gopList[i].m_temporalId + 1;
         }
-        CONFIRM(m_GOPList[i].m_sliceType != 'B' && m_GOPList[i].m_sliceType != 'P', "Slice type must be equal to B or P");
+        CONFIRM(m_gopList[i].m_sliceType != 'B' && m_gopList[i].m_sliceType != 'P', "Slice type must be equal to B or P");
     }
 
     for (Int i = 0; i < MAX_TLAYER; i++)
@@ -725,16 +725,16 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         m_maxDecPicBuffering[i] = 1;
     }
 
-    for (Int i = 0; i < m_iGOPSize; i++)
+    for (Int i = 0; i < m_gopSize; i++)
     {
-        if (m_GOPList[i].m_numRefPics + 1 > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
+        if (m_gopList[i].m_numRefPics + 1 > m_maxDecPicBuffering[m_gopList[i].m_temporalId])
         {
-            m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
+            m_maxDecPicBuffering[m_gopList[i].m_temporalId] = m_gopList[i].m_numRefPics + 1;
         }
         Int highestDecodingNumberWithLowerPOC = 0;
-        for (Int j = 0; j < m_iGOPSize; j++)
+        for (Int j = 0; j < m_gopSize; j++)
         {
-            if (m_GOPList[j].m_POC <= m_GOPList[i].m_POC)
+            if (m_gopList[j].m_POC <= m_gopList[i].m_POC)
             {
                 highestDecodingNumberWithLowerPOC = j;
             }
@@ -750,9 +750,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
             }
         }
 
-        if (numReorder > m_numReorderPics[m_GOPList[i].m_temporalId])
+        if (numReorder > m_numReorderPics[m_gopList[i].m_temporalId])
         {
-            m_numReorderPics[m_GOPList[i].m_temporalId] = numReorder;
+            m_numReorderPics[m_gopList[i].m_temporalId] = numReorder;
         }
     }
 
