@@ -771,39 +771,6 @@ void dequant_c(int bitDepth, const int* quantCoef, int* coef, int width, int hei
     }
 }
 
-uint32_t quantaq_c(int* coef,
-                   int* quantCoeff,
-                   int* deltaU,
-                   int* qCoef,
-                   int* arlCCoef,
-                   int  qBitsC,
-                   int  qBits,
-                   int  add,
-                   int  numCoeff)
-{
-    int addc   = 1 << (qBitsC - 1);
-    int qBits8 = qBits - 8;
-    uint32_t acSum = 0;
-
-    for (int blockpos = 0; blockpos < numCoeff; blockpos++)
-    {
-        int level;
-        int  sign;
-        level = coef[blockpos];
-        sign  = (level < 0 ? -1 : 1);
-
-        int tmplevel = abs(level) * quantCoeff[blockpos];
-        arlCCoef[blockpos] = ((tmplevel + addc) >> qBitsC);
-        level = ((tmplevel + add) >> qBits);
-        deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
-        acSum += level;
-        level *= sign;
-        qCoef[blockpos] = Clip3(-32768, 32767, level);
-    }
-
-    return acSum;
-}
-
 uint32_t quant_c(int* coef,
                  int* quantCoeff,
                  int* deltaU,
@@ -840,7 +807,6 @@ namespace x265 {
 void Setup_C_DCTPrimitives(EncoderPrimitives& p)
 {
     p.dequant = dequant_c;
-    p.quantaq = quantaq_c;
     p.quant = quant_c;
     p.dct[DST_4x4] = dst4_c;
     p.dct[DCT_4x4] = dct4_c;

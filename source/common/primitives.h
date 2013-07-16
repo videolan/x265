@@ -213,7 +213,6 @@ typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *d
 typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
                                pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*dequant_t)(int bitDepth, const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int trSizeLog2, int *dequantCoef);
-typedef uint32_t (*quantaq_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int *arlCCoef, int qBitsC, int qBits, int add, int numCoeff);
 typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
 typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset, int bitDepth);
 
@@ -259,7 +258,6 @@ struct EncoderPrimitives
     dct_t           dct[NUM_DCTS];
     idct_t          idct[NUM_IDCTS];
     quant_t         quant;
-    quantaq_t       quantaq;
     dequant_t       dequant;
 
     calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];

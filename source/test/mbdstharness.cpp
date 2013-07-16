@@ -233,59 +233,6 @@ bool MBDstHarness::check_dequant_primitive(dequant_t ref, dequant_t opt)
     return true;
 }
 
-bool MBDstHarness::check_quantaq_primitive(quantaq_t ref, quantaq_t opt)
-{
-    int j = 0;
-
-    for (int i = 0; i <= 5; i++)
-    {
-        int width = (rand() % 4 + 1) * 4;
-
-        if (width == 12)
-        {
-            width = 32;
-        }
-        int height = width;
-
-        uint32_t optReturnValue = 0;
-        uint32_t refReturnValue = 0;
-
-        int qbitsc = rand() % 32;
-        int qbits = rand() % 32;
-        int valueToAdd = rand() % (32 * 1024);
-        int cmp_size = sizeof(int) * height * width;
-        int numCoeff = height * width;
-
-        optReturnValue = opt(mintbuf1 + j, mintbuf2 + j, mintbuf3, mintbuf4, mintbuf5, qbitsc, qbits, valueToAdd, numCoeff);
-        refReturnValue = ref(mintbuf1 + j, mintbuf2 + j, mintbuf6, mintbuf7, mintbuf8, qbitsc, qbits, valueToAdd, numCoeff);
-
-        if (memcmp(mintbuf3, mintbuf6, cmp_size))
-            return false;
-
-        if (memcmp(mintbuf4, mintbuf7, cmp_size))
-            return false;
-
-        if (memcmp(mintbuf5, mintbuf8, cmp_size))
-            return false;
-
-        if (optReturnValue != refReturnValue)
-            return false;
-
-        j += 16;
-
-#if _DEBUG
-        memset(mintbuf3, 0, mem_cmp_size);
-        memset(mintbuf4, 0, mem_cmp_size);
-        memset(mintbuf5, 0, mem_cmp_size);
-        memset(mintbuf6, 0, mem_cmp_size);
-        memset(mintbuf7, 0, mem_cmp_size);
-        memset(mintbuf8, 0, mem_cmp_size);
-#endif
-    }
-
-    return true;
-}
-
 bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 {
     int j = 0;
@@ -368,15 +315,6 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.quantaq)
-    {
-        if (!check_quantaq_primitive(ref.quantaq, opt.quantaq))
-        {
-            printf("quantaq: Failed!\n");
-            return false;
-        }
-    }
-
     if (opt.quant)
     {
         if (!check_quant_primitive(ref.quant, opt.quant))
@@ -413,12 +351,6 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("dequant\t\t");
         REPORT_SPEEDUP(opt.dequant, ref.dequant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
-    }
-
-    if (opt.quantaq)
-    {
-        printf("quantaq\t\t");
-        REPORT_SPEEDUP(opt.quantaq, ref.quantaq, mintbuf1, mintbuf2, mintbuf3, mintbuf4, mintbuf5, 15, 23, 23785, 32 * 32);
     }
 
     if (opt.quant)
