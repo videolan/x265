@@ -86,7 +86,7 @@ private:
     UInt                    m_numLongTermRefPicSPS;
     UInt                    m_ltRefPicPocLsbSps[33];
     Bool                    m_ltRefPicUsedByCurrPicFlag[33];
-    Int                     m_iLastIDR;
+    Int                     m_lastIDR;
     UInt                    m_totalCoded;
 
     SEIWriter               m_seiWriter;

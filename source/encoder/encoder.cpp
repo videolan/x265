@@ -185,7 +185,7 @@ void Encoder::configure(x265_param_t *param)
                  getThreadPool()->getThreadCount(), param->gopNumThreads, param->bEnableWavefront);
     else
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
-    setWaveFrontSynchro(param->bEnableWavefront);
+    setEnableWaveFront(param->bEnableWavefront);
     setGopThreads(param->gopNumThreads);
 
     m_gopSize = 4;

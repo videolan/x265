@@ -187,7 +187,7 @@ protected:
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
 
-    Int       m_enableWpp;
+    Bool      m_enableWpp;
 
     Int       m_decodedPictureHashSEIEnabled; ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     Int       m_bufferingPeriodSEIEnabled;
@@ -506,9 +506,9 @@ public:
 
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
 
-    Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_enableWpp = iWaveFrontSynchro; }
+    Void  setEnableWaveFront(Bool b)                       { m_enableWpp = b; }
 
-    Int   getWaveFrontsynchro()                            { return m_enableWpp; }
+    Bool  getEnableWaveFront()                             { return m_enableWpp; }
 
     Void  setDecodedPictureHashSEIEnabled(Int b)           { m_decodedPictureHashSEIEnabled = b; }
 

@@ -162,7 +162,7 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_cfg = top;
     m_numRows = numRows;
-    m_enableWpp = top->getWaveFrontsynchro() ? true : false;
+    m_enableWpp = top->getEnableWaveFront();
 
     m_sliceEncoder.init(top);
     m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);

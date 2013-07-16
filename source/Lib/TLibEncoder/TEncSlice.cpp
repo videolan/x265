@@ -424,7 +424,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
 
     frameEncoder->encode(pic, slice);
 
-    if (m_cfg->getWaveFrontsynchro())
+    if (m_cfg->getEnableWaveFront())
     {
         slice->setNextSlice(true);
     }
@@ -489,7 +489,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-    const Bool bWaveFrontsynchro = m_cfg->getWaveFrontsynchro();
+    const Bool bWaveFrontsynchro = m_cfg->getEnableWaveFront();
     const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
     const Int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
     UInt bitsOriginallyInSubstreams = 0;
