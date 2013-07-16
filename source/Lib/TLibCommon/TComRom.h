@@ -151,8 +151,19 @@ extern const UChar g_intraModeNumFast[7];
 // Bit-depth
 // ====================================================================================================================
 
-extern  Int g_bitDepthY;
-extern  Int g_bitDepthC;
+extern Int g_bitDepthY;
+extern Int g_bitDepthC;
+
+/** clip x, such that 0 <= x <= #g_maxLumaVal */
+template<typename T>
+inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x)); }
+
+template<typename T>
+inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(T(0), x)); }
+
+/** clip a, such that minVal <= a <= maxVal */
+template<typename T>
+inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
 
 // ====================================================================================================================
 // Texture type to integer mapping
@@ -186,7 +197,7 @@ extern UInt64 g_nSymbolCounter;
 #define DTRACE_CABAC_VL(x)    if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "%lld", x);
 #define DTRACE_CABAC_T(x)     if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "%s", x);
 #define DTRACE_CABAC_X(x)     if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "%x", x);
-#define DTRACE_CABAC_R(x, y) if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, x,    y);
+#define DTRACE_CABAC_R(x, y)  if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, x,    y);
 #define DTRACE_CABAC_N        if ((g_nSymbolCounter >= COUNTER_START && g_nSymbolCounter <= COUNTER_END) || g_bJustDoIt) fprintf(g_hTrace, "\n");
 #else // if ENC_DEC_TRACE
 

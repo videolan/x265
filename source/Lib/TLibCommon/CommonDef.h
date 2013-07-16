@@ -71,7 +71,7 @@
 ///< transitions from Golomb-Rice to TU+EG(k)
 
 #define CU_DQP_TU_CMAX              5 ///< max number bins for truncated unary
-#define CU_DQP_EG_k                 0 ///< expgolomb order
+#define CU_DQP_EG_k                 0 ///< exp-golomb order
 
 #define SBH_THRESHOLD               4 ///< I0156: value of the fixed SBH controlling threshold
 
@@ -145,24 +145,11 @@
 #define MIN_QP                      0
 #define MAX_QP                      51
 
-#define NOT_VALID                   -1
+#define NOT_VALID                  -1
 
 // ====================================================================================================================
 // Macro functions
 // ====================================================================================================================
-extern Int g_bitDepthY;
-extern Int g_bitDepthC;
-
-/** clip x, such that 0 <= x <= #g_maxLumaVal */
-template<typename T>
-inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x)); }
-
-template<typename T>
-inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(T(0), x)); }
-
-/** clip a, such that minVal <= a <= maxVal */
-template<typename T>
-inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
 
 #if _WIN32
 #define xMalloc(type, len)        _aligned_malloc(sizeof(type) * (len), 32)
@@ -176,12 +163,6 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 #define xFree(ptr)                free(ptr)
 #endif
 
-#define FATAL_ERROR_0(MESSAGE, EXITCODE) \
-    {                                    \
-        printf(MESSAGE);                 \
-        exit(EXITCODE);                  \
-    }
-
 // ====================================================================================================================
 // Coding tool configuration
 // ====================================================================================================================
@@ -189,11 +170,7 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 // AMVP: advanced motion vector prediction
 #define AMVP_MAX_NUM_CANDS          2 ///< max number of final candidates
 #define AMVP_MAX_NUM_CANDS_MEM      3 ///< max number of candidates
-// MERGE
 #define MRG_MAX_NUM_CANDS           5
-
-// Reference memory management
-#define DYN_REF_FREE                0 ///< dynamic free of reference memories
 
 // Explicit temporal layer QP offset
 #define MAX_TLAYER                  8 ///< max number of temporal layer
@@ -201,8 +178,6 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 
 // Adaptive search range depending on POC difference
 #define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
-
-#define CLIP_TO_709_RANGE           0
 
 #define MAX_CHROMA_FORMAT_IDC       3
 

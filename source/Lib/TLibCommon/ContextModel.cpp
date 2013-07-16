@@ -35,11 +35,13 @@
     \brief    context model class
 */
 
+#include "ContextModel.h"
+#include "TComRom.h"
+
 #include <algorithm>
 
-#include "ContextModel.h"
-
 using namespace std;
+
 //! \ingroup TLibCommon
 //! \{
 
