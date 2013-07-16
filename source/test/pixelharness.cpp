@@ -333,7 +333,7 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
     memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
     int j = 0;
-    int width = 8;
+    int width = (2 * rand()) % 64;
     int height = 8;
     int w0 = rand() % 256;
     int shift = rand() % 12;

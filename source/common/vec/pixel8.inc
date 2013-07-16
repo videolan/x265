@@ -1935,6 +1935,32 @@ void calcRecons(pixel* pPred, short* pResi, pixel* pReco, short* pRecQt, pixel* 
     }
 }
 
+void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset, int /* bitDepth */)
+{
+    int x, y;
+    Vec8s tmp;
+    Vec4i vw0(w0), vsrc, iofs(IF_INTERNAL_OFFS), ofs(offset), vround(round), vdst; 
+    for (y = height - 1; y >= 0; y--)
+    {
+        for (x = 0; x <= width - 4; x += 4)
+        {  
+            tmp  = load_partial(const_int(8), src + x);
+            vsrc = extend_low(tmp);
+            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
+            store_partial(const_int(4), dst+x, compress_unsafe(compress_saturated(vdst, vdst), 0));
+        }
+        if (width > x)
+        {
+            tmp  = load_partial(const_int(4), src + x);
+            vsrc = extend_low(tmp);
+            vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
+            compress_unsafe(compress_saturated(vdst, vdst), 0).store_partial(2, dst + x);
+        }
+        src += srcStride;
+        dst += dstStride;
+    }
+}
+
 #if INSTRSET >= 8
 template<int size>
 ALWAYSINLINE void unrollFunc_32_avx2(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
