@@ -341,14 +341,15 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
     int offset = (rand() % 256) - 128;
     for (int i = 0; i <= 100; i++)
     {
-        opt(sbuf1+j, opt_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
-        ref(sbuf1+j, ref_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
+        opt(sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
+        ref(sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset, BIT_DEPTH);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += 4;
     }
+
     return true;
 }
 
@@ -492,7 +493,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
-    
+
     if (opt.weightpUni)
     {
         if (!check_weightpUni(ref.weightpUni, opt.weightpUni))
@@ -501,7 +502,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
-
 
     return true;
 }
@@ -609,6 +609,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.weightpUni)
     {
         printf("WeightpUni");
-        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, sbuf1, pbuf1, 64, 64, 32, 32, 128, 1<<9, 10, 100, BIT_DEPTH);
+        REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100, BIT_DEPTH);
     }
 }

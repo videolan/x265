@@ -1947,7 +1947,7 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
             tmp  = load_partial(const_int(8), src + x);
             vsrc = extend_low(tmp);
             vdst = ((vw0 * (vsrc + iofs) + vround) >> shift) + ofs;
-            store_partial(const_int(4), dst+x, compress_unsafe(compress_saturated(vdst, vdst), 0));
+            store_partial(const_int(4), dst + x, compress_unsafe(compress_saturated(vdst, vdst), 0));
         }
         if (width > x)
         {
@@ -2002,6 +2002,7 @@ int sad_avx2_32(pixel * fenc, intptr_t fencstride, pixel * fref, intptr_t frefst
         fenc += fencstride * 16;
         fref += frefstride * 16;
     }
+
     if (ly & 8)
     {
         unrollFunc_32_avx2<8>(fenc, fencstride, fref, frefstride, sad);
@@ -2207,6 +2208,7 @@ template<int ly>
 void sad_avx2_x4_32(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec32uc m1, n1, n2, n3, n4;
+
     Vec8i sum1(0), sum2(0), sum3(0), sum4(0);
     Vec16s sad1(0), sad2(0), sad3(0), sad4(0);
     int max_iterators = (ly >> 4) << 4;
@@ -2279,6 +2281,7 @@ template<int ly>
 void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel *fref4, intptr_t frefstride, int *res)
 {
     Vec32uc m1, n1, n2, n3, n4;
+
     Vec8i sum1(0), sum2(0), sum3(0), sum4(0);
     Vec16s sad1(0), sad2(0), sad3(0), sad4(0);
     int max_iterators = (ly >> 3) << 3;
@@ -2368,4 +2371,5 @@ void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel
     res[2] = horizontal_add(sum3);
     res[3] = horizontal_add(sum4);
 }
-#endif
+
+#endif /* if INSTRSET >= 8 */
