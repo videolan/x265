@@ -161,11 +161,11 @@ protected:
     UInt xPatternRefinement(TComPattern* patternKey, x265::MV baseRefMv, Int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, Int offset,
                             TComDataCU* cu, UInt partAddr);
 
-    UInt xGetInterPredictionError(TComDataCU* cu, TComYuv* fencYuv, Int partIdx);
+    UInt xGetInterPredictionError(TComDataCU* cu, Int partIdx);
 
 public:
 
-    UInt xModeBitsIntra(TComDataCU* cu, UInt mode, UInt pu, UInt partOffset, UInt depth, UInt initTrDepth);
+    UInt xModeBitsIntra(TComDataCU* cu, UInt mode, UInt partOffset, UInt depth, UInt initTrDepth);
     UInt xUpdateCandList(UInt mode, UInt64 cost, UInt fastCandNum, UInt* CandModeList, UInt64* CandCostList);
 
     Void preestChromaPredMode(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv);
@@ -229,21 +229,20 @@ protected:
     // Inter search (AMP)
     // --------------------------------------------------------------------------------------------
 
-    Void xEstimateMvPredAMVP(TComDataCU* cu, TComYuv* fencYuv, UInt partIdx, RefPicList picList,
-                             Int refIdx, x265::MV& mvPred, Bool bFilled = false, UInt* distBiP = NULL);
+    Void xEstimateMvPredAMVP(TComDataCU* cu, UInt partIdx, RefPicList picList, Int refIdx,
+                             x265::MV& mvPred, Bool bFilled = false, UInt* distBiP = NULL);
 
     Void xCheckBestMVP(TComDataCU* cu, RefPicList picList, x265::MV cMv, x265::MV& mvPred, Int& mvpIdx,
                        UInt& outBits, UInt& outCost);
 
-    UInt xGetTemplateCost(TComDataCU* cu, UInt partIdx, UInt partAddr, TComYuv* fencYuv,
-                          TComYuv* templateCand, x265::MV mvCand, Int mvpIdx, Int mvpCandCount,
-                          RefPicList picList, Int refIdx, Int sizex, Int sizey);
+    UInt xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templateCand, x265::MV mvCand, Int mvpIdx,
+                          Int mvpCandCount, RefPicList picList, Int refIdx, Int sizex, Int sizey);
 
     Void xCopyAMVPInfo(AMVPInfo* src, AMVPInfo* dst);
     UInt xGetMvpIdxBits(Int idx, Int num);
     Void xGetBlkBits(PartSize cuMode, Bool bPSlice, Int partIdx, UInt lastMode, UInt blockBit[3]);
 
-    Void xMergeEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, UInt& uiInterDir,
+    Void xMergeEstimation(TComDataCU* cu, Int partIdx, UInt& uiInterDir,
                           TComMvField* pacMvField, UInt& mergeIndex, UInt& outCost,
                           TComMvField* mvFieldNeighbors, UChar* interDirNeighbors, Int& numValidMergeCand);
 
@@ -265,27 +264,27 @@ protected:
     Void xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, x265::MV* mvmin, x265::MV* mvmax,
                         x265::MV& outmv, UInt& ruiSAD);
 
-    Void xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, Pel* refY, Int stride,
-                               x265::MV* mvfpel, x265::MV& mvhpel, x265::MV& mvqpel, UInt& outCost,
-                               Bool biPred, TComPicYuv* refPic, UInt partAddr);
+    Void xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, Int stride,
+                               x265::MV* mvfpel, x265::MV& mvhpel, x265::MV& mvqpel,
+                               UInt& outCost, TComPicYuv* refPic, UInt partAddr);
 
-    Void xExtDIFUpSamplingH(TComPattern* pcPattern, Bool biPred);
-    Void xExtDIFUpSamplingQ(TComPattern* patternKey, x265::MV halfPelRef, Bool biPred);
+    Void xExtDIFUpSamplingH(TComPattern* pcPattern);
+    Void xExtDIFUpSamplingQ(TComPattern* patternKey, x265::MV halfPelRef);
 
     // -------------------------------------------------------------------------------------------------------------------
     // T & Q & Q-1 & T-1
     // -------------------------------------------------------------------------------------------------------------------
 
     Void xEncodeResidualQT(TComDataCU* cu, UInt absPartIdx, UInt depth, Bool bSubdivAndCbf, TextType ttype);
-    Void xEstimateResidualQT(TComDataCU* cu, UInt quadrant, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, UInt64 &rdCost, UInt &outBits, UInt &outDist, UInt *puiZeroDist);
-    Void xSetResidualQTData(TComDataCU* cu, UInt quadrant, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial);
+    Void xEstimateResidualQT(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth,
+                             UInt64 &rdCost, UInt &outBits, UInt &outDist, UInt *puiZeroDist);
+    Void xSetResidualQTData(TComDataCU* cu, UInt absPartIdx, UInt absTUPartIdx, TShortYUV* resiYuv, UInt depth, Bool bSpatial);
 
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits
     // -------------------------------------------------------------------------------------------------------------------
 
-    Void xAddSymbolBitsInter(TComDataCU* cu, UInt qp, UInt trMode, UInt& outBits,
-                             TShortYUV*& outReconYuv, TComYuv* predYuv, TShortYUV*& outResiYuv);
+    UInt xSymbolBitsInter(TComDataCU* cu);
 
     Void setWpScalingDistParam(TComDataCU* cu, Int refIdx, RefPicList picList);
 };

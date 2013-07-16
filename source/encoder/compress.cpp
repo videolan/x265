@@ -177,7 +177,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
         for (UInt mode = 0; mode < numModesAvailable; mode++)
         {
             UInt sad = modeCosts[mode];
-            UInt bits = m_search->xModeBitsIntra(cu, mode, 0, partOffset, depth, initTrDepth);
+            UInt bits = m_search->xModeBitsIntra(cu, mode, partOffset, depth, initTrDepth);
             UInt64 cost = m_rdCost->calcRdSADCost(sad, bits);
             CandNum += m_search->xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, CandCostList);
         }
