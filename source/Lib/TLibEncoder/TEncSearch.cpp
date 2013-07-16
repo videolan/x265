@@ -1435,7 +1435,6 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
 {
     UInt fullMode = cu->getDepth(0) + trDepth;
 
-    assert(trMode == trDepth);
     UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullMode] + 2;
     UInt qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
@@ -1482,7 +1481,6 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
 {
     UInt fullDepth = cu->getDepth(0) + trDepth;
 
-    assert(trMode == trDepth);
     UInt trSizeLog2 = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUWidth() >> fullDepth] + 2;
     UInt qtlayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
 
@@ -1928,8 +1926,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     UInt overallDistC = 0;
     UInt candNum;
     UInt64 candCostList[FAST_UDI_MAX_RDMODE_NUM];
-
-    assert(width == height);
 
     //===== set QP and clear Cbf =====
     if (cu->getSlice()->getPPS()->getUseDQP() == true)

@@ -543,8 +543,6 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
 {
     wpScalingParam  *pwp0, *pwp1;
 
-    assert(pps->getWPBiPred());
-
     getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 
     if (refIdx0 >= 0 && refIdx1 >= 0)
@@ -580,8 +578,6 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
 Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv)
 {
     wpScalingParam  *pwp0, *pwp1;
-
-    assert(pps->getWPBiPred());
 
     getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 

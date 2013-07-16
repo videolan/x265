@@ -505,7 +505,7 @@ Void TComSlice::checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRA
         {
             if (!rps->getCheckLTMSBPresent(i))
             {
-                assert(xGetLongTermRefPic(picList, rps->getPOC(i), false)->getPOC() >= pocCRA);
+                //assert(xGetLongTermRefPic(picList, rps->getPOC(i), false)->getPOC() >= pocCRA);
             }
             else
             {
