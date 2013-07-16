@@ -3329,12 +3329,12 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu,
     if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
     {
         TShortYUV *mbYuv = &m_predShortYuv[0];
-        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, mbYuv, true);
+        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, mbYuv);
         xWeightedPredictionUni(cu, mbYuv, partAddr, sizex, sizey, picList, templateCand, refIfx);
     }
     else
     {
-        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, templateCand, false);
+        xPredInterLumaBlk(cu, frefYuv, partAddr, &mvCand, sizex, sizey, templateCand);
     }
 
     // calc distortion

@@ -263,7 +263,7 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
             if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_predShortYuv[0];
-                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv, true);
+                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
             }
             else
@@ -294,7 +294,7 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
             if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_predShortYuv[0];
-                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv, true);
+                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
             }
             else
@@ -316,31 +316,28 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
     }
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv)
 {
-    assert(bi == false);
     Int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
-
     assert(refIdx >= 0);
-    MV cMv = cu->getCUMvField(picList)->getMv(partAddr);
 
-    cu->clipMv(cMv);
-    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &cMv, width, height, outPredYuv, bi);
-    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &cMv, width, height, outPredYuv, bi);
+    MV mv = cu->getCUMvField(picList)->getMv(partAddr);
+    cu->clipMv(mv);
+
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
+    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 }
 
-Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv, Bool bi)
+Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv)
 {
-    assert(bi == true);
-
     Int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
-
     assert(refIdx >= 0);
-    MV cMv = cu->getCUMvField(picList)->getMv(partAddr);
 
-    cu->clipMv(cMv);
-    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &cMv, width, height, outPredYuv, bi);
-    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &cMv, width, height, outPredYuv, bi);
+    MV mv = cu->getCUMvField(picList)->getMv(partAddr);
+    cu->clipMv(mv);
+
+    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
+    xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 }
 
 Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int height, TComYuv*& outPredYuv)
@@ -358,7 +355,7 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
             assert(refIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
             pcMbYuv = &m_predShortYuv[refList];
-            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv, true);
+            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
         }
 
         if (cu->getSlice()->getPPS()->getWPBiPred() && cu->getSlice()->getSliceType() == B_SLICE)
@@ -386,7 +383,7 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
             assert(refIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
             pcMbYuv = &m_predShortYuv[refList];
-            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv, true);
+            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
         }
 
         xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], partAddr, width, height, outPredYuv);
@@ -407,7 +404,7 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
             assert(refIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
 
             pcMbYuv = &m_predShortYuv[refList];
-            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv, true);
+            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
         }
 
         xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv);
@@ -446,7 +443,7 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
  * \param dstPic   Pointer to destination picture
  * \param bi       Flag indicating whether bipred is used
  */
-Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool /* bi */)
+Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
 {
     //assert(bi == false);
 
@@ -466,10 +463,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 }
 
 //Motion compensated block for biprediction
-Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool /*bi*/)
+Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic)
 {
-    //assert(bi == true);
-
     Int refStride = refPic->getStride();
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
     Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
@@ -521,10 +516,8 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
  * \param dstPic   Pointer to destination picture
  * \param bi       Flag indicating whether bipred is used
  */
-Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool /*bi*/)
+Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
 {
-    assert(bi == false);
-
     Int refStride = refPic->getCStride();
     Int dstStride = dstPic->getCStride();
 
@@ -578,11 +571,9 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     }
 }
 
-//Generate motion compensated block when biprediction
-Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool /*bi*/)
+// Generate motion compensated block when biprediction
+Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic)
 {
-    assert(bi == true);
-
     Int refStride = refPic->getCStride();
     Int dstStride = dstPic->Cwidth;
 
