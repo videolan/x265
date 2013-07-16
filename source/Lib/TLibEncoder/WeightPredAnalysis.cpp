@@ -188,7 +188,7 @@ Bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
 
     do
     {
-        validRangeFlag = xUpdatingWPParameters(slice, m_wp, iDenom);
+        validRangeFlag = xUpdatingWPParameters(slice, iDenom);
         if (!validRangeFlag)
         {
             iDenom--; // decrement to satisfy the range limitation
@@ -208,7 +208,7 @@ Bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
  * \param TComSlice *slice
  * \returns Bool
  */
-Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], Int log2Denom)
+Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, Int log2Denom)
 {
     Int numPredDir = slice->isInterP() ? 1 : 2;
 

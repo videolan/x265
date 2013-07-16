@@ -83,11 +83,13 @@ Void TEncCavlc::resetEntropy()
 
 Void TEncCavlc::codeDFFlag(UInt code, const Char *symbolName)
 {
+    (void)symbolName;
     WRITE_FLAG(code, symbolName);
 }
 
 Void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
 {
+    (void)symbolName;
     WRITE_SVLC(code, symbolName);
 }
 
@@ -98,7 +100,7 @@ Void TEncCavlc::codeDFSvlc(Int code, const Char *symbolName)
                                                     // this should be done with encoder only decision
                                                     // but because of the absence of reference frame management, the related code was hard coded currently
 
-Void TEncCavlc::codeShortTermRefPicSet(TComSPS* pcSPS, TComReferencePictureSet* rps, Bool calledFromSliceHeader, Int idx)
+Void TEncCavlc::codeShortTermRefPicSet(TComReferencePictureSet* rps, Bool calledFromSliceHeader, Int idx)
 {
 #if PRINT_RPS_INFO
     Int lastBits = getNumberOfWrittenBits();
@@ -463,7 +465,7 @@ Void TEncCavlc::codeSPS(TComSPS* pcSPS)
     for (Int i = 0; i < rpsList->getNumberOfReferencePictureSets(); i++)
     {
         rps = rpsList->getReferencePictureSet(i);
-        codeShortTermRefPicSet(pcSPS, rps, false, i);
+        codeShortTermRefPicSet(rps, false, i);
     }
 
     WRITE_FLAG(pcSPS->getLongTermRefsPresent() ? 1 : 0,         "long_term_ref_pics_present_flag");
@@ -631,7 +633,7 @@ Void TEncCavlc::codeSliceHeader(TComSlice* slice)
             if (slice->getRPSidx() < 0)
             {
                 WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-                codeShortTermRefPicSet(slice->getSPS(), rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
+                codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
             }
             else
             {
@@ -1005,118 +1007,113 @@ Void  TEncCavlc::codeTilesWPPEntryPoint(TComSlice* pSlice)
     delete [] entryPointOffset;
 }
 
-Void TEncCavlc::codeTerminatingBit(UInt uilsLast)
+Void TEncCavlc::codeTerminatingBit(UInt)
 {}
 
 Void TEncCavlc::codeSliceFinish()
 {}
 
-Void TEncCavlc::codeMVPIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMVPIdx(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePartSize(TComDataCU* cu, UInt absPartIdx, UInt depth)
+Void TEncCavlc::codePartSize(TComDataCU*, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codePredMode(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codePredMode(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeFlag(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeMergeFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMergeIndex(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeMergeIndex(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterModeFlag(TComDataCU* cu, UInt absPartIdx, UInt depth, UInt uiEncMode)
+Void TEncCavlc::codeInterModeFlag(TComDataCU*, UInt, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeCUTransquantBypassFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSkipFlag(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeSkipFlag(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeSplitFlag(TComDataCU* cu, UInt absPartIdx, UInt depth)
+Void TEncCavlc::codeSplitFlag(TComDataCU*, UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSubdivFlag(UInt uiSymbol, UInt uiCtx)
+Void TEncCavlc::codeTransformSubdivFlag(UInt, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbf(TComDataCU* cu, UInt absPartIdx, TextType ttype, UInt trDepth)
+Void TEncCavlc::codeQtCbf(TComDataCU*, UInt, TextType, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbf(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeQtRootCbf(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth)
+Void TEncCavlc::codeQtCbfZero(TComDataCU*, TextType, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeQtRootCbfZero(TComDataCU* cu)
+Void TEncCavlc::codeQtRootCbfZero(TComDataCU*)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeTransformSkipFlags(TComDataCU* cu, UInt absPartIdx, UInt width, UInt height, TextType eTType)
+Void TEncCavlc::codeTransformSkipFlags(TComDataCU*, UInt, UInt, UInt, TextType)
 {
     assert(0);
 }
 
-/** Code I_PCM information.
- * \param cu pointer to CU
- * \param absPartIdx CU index
- * \returns Void
- */
-Void TEncCavlc::codeIPCMInfo(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeIPCMInfo(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirLumaAng(TComDataCU* cu, UInt absPartIdx, Bool isMultiple)
+Void TEncCavlc::codeIntraDirLumaAng(TComDataCU*, UInt, Bool)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeIntraDirChroma(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeIntraDirChroma(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeInterDir(TComDataCU* cu, UInt absPartIdx)
+Void TEncCavlc::codeInterDir(TComDataCU*, UInt)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeRefFrmIdx(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeRefFrmIdx(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
 
-Void TEncCavlc::codeMvd(TComDataCU* cu, UInt absPartIdx, RefPicList eRefList)
+Void TEncCavlc::codeMvd(TComDataCU*, UInt, RefPicList)
 {
     assert(0);
 }
@@ -1132,14 +1129,13 @@ Void TEncCavlc::codeDeltaQP(TComDataCU* cu, UInt absPartIdx)
     xWriteSvlc(iDQp);
 }
 
-Void TEncCavlc::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType)
+Void TEncCavlc::codeCoeffNxN(TComDataCU*, TCoeff*, UInt, UInt, UInt, UInt, TextType)
 {
     assert(0);
 }
 
-Void TEncCavlc::estBit(estBitsSbacStruct* pcEstBitsCabac, Int width, Int height, TextType eTType)
+Void TEncCavlc::estBit(estBitsSbacStruct*, Int, Int, TextType)
 {
-    // printf("error : no VLC mode support in this version\n");
 }
 
 // ====================================================================================================================

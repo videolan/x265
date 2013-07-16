@@ -138,10 +138,8 @@ public:
 protected:
 
     Void finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
-    Void xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU,  UInt depth, UInt partUnitIdx,
-                     PartSize parentSize = SIZE_NONE);
-    Void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU,  UInt depth,
-                          PartSize parentSize = SIZE_NONE);
+    Void xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth, PartSize parentSize = SIZE_NONE);
+    Void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
     Void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt partitionIndex);
     Void xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
     Int  xComputeQP(TComDataCU* cu, UInt depth);

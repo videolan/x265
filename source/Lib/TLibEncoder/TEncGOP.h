@@ -126,7 +126,7 @@ protected:
 
     Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
 
-    Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid);
+    Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
 
     NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
 

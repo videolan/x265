@@ -57,7 +57,7 @@ class WeightPredAnalysis
     Int64   xCalcACValue(Pel *pPel, Int width, Int height, Int stride, Int64 iDC);
     Int64   xCalcSADvalueWP(Int bitDepth, Pel *pOrgPel, Pel *pRefPel, Int width, Int height, Int iOrgStride, Int iRefStride, Int iDenom, Int inputWeight, Int inputOffset);
     Bool    xSelectWP(TComSlice * slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], Int iDenom);
-    Bool    xUpdatingWPParameters(TComSlice * slice, wpScalingParam weightPredTable[2][MAX_NUM_REF][3], Int log2Denom);
+    Bool    xUpdatingWPParameters(TComSlice* slice, Int log2Denom);
 
 public:
 

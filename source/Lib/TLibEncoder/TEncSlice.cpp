@@ -537,7 +537,6 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
             // We'll sync if the TR is available.
             TComDataCU *cuUp = pic->getCU(cuAddr)->getCUAbove();
             UInt widthInCU = pic->getFrameWidthInCU();
-            UInt maxParts = 1 << (slice->getSPS()->getMaxCUDepth() << 1);
             TComDataCU *cuTr = NULL;
 
             // CHECK_ME: here can be optimize a little, do it later
@@ -563,7 +562,6 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
             Int numCuInWidth     = saoParam->numCuInWidth;
             Int cuAddrInSlice    = cuAddr;
-            Int cuAddrUpInSlice  = cuAddrInSlice - numCuInWidth;
             Int rx = cuAddr % numCuInWidth;
             Int ry = cuAddr / numCuInWidth;
             Int allowMergeLeft = 1;

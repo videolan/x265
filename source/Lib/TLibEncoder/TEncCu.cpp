@@ -406,7 +406,7 @@ Void TEncCu::compressCU(TComDataCU* cu)
     // analysis of CU
 
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
-        xCompressIntraCU(m_bestCU[0], m_tempCU[0], NULL, 0);
+        xCompressIntraCU(m_bestCU[0], m_tempCU[0], NULL);
     else
     {
         if (!m_cfg->getUseRDO())
@@ -418,7 +418,7 @@ Void TEncCu::compressCU(TComDataCU* cu)
             xCompressInterCU(outBestCU, m_tempCU[0], cu, 0, 0);
         }
         else
-            xCompressCU(m_bestCU[0], m_tempCU[0], cu, 0, 0);
+            xCompressCU(m_bestCU[0], m_tempCU[0], 0);
     }
     if (m_cfg->getUseAdaptQpSelect())
     {
@@ -518,16 +518,16 @@ Void TEncCu::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, Bool 
  *- for loop of QP value to compress the current CU with all possible QP
 */
 
-Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* rpcParentBestCU, UInt depth, PartSize parentSize)
+Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth)
 {
+    //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
+
 #if CU_STAT_LOGFILE
     cntTotalCu[depth]++;
     int boundaryCu = 0;
 #endif
     m_abortFlag = false;
     TComPic* pic = outBestCU->getPic();
-
-    //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
     // get Original YUV data from picture
     m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
@@ -539,9 +539,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     Bool bSubBranch = true;
 
     // variable for Cbf fast mode PU decision
-    Bool doNotBlockPu = true;
-    Bool earlyDetectionSkipMode = false;
-    Bool bTrySplitDQP  = true;
+    Bool bTrySplitDQP = true;
     Bool bBoundary = false;
 
     UInt lpelx = outBestCU->getCUPelX();
@@ -643,11 +641,11 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                 if (outBestCU->isIntra(0))
                 {
-                    xCompressIntraCU(subBestPartCU[partUnitIdx], subTempPartCU[partUnitIdx], outBestCU, nextDepth, SIZE_NONE);
+                    xCompressIntraCU(subBestPartCU[partUnitIdx], subTempPartCU[partUnitIdx], nextDepth);
                 }
                 else
                 {
-                    xCompressIntraCU(subBestPartCU[partUnitIdx], subTempPartCU[partUnitIdx], outBestCU, nextDepth, outBestCU->getPartitionSize(0));
+                    xCompressIntraCU(subBestPartCU[partUnitIdx], subTempPartCU[partUnitIdx], nextDepth);
                 }
                 {
                     outTempCU->copyPartFrom(subBestPartCU[partUnitIdx], partUnitIdx, nextDepth); // Keep best part data to current temporary data.
@@ -731,7 +729,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     assert(outBestCU->getTotalCost() != MAX_DOUBLE);
 }
 
-Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* rpcParentBestCU, UInt depth, UInt /*partUnitIdx*/, PartSize parentSize)
+Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth, PartSize parentSize)
 {
     //PPAScopeEvent(TEncCu_xCompressCU + depth);
 
@@ -1043,11 +1041,11 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDat
                 // The following if condition has to be commented out in case the early Abort based on comparison of parentCu cost, childCU cost is not required.
                 if (outBestCU->isIntra(0))
                 {
-                    xCompressCU(subBestPartCU, subTempPartCU, outBestCU, nextDepth, SIZE_NONE);
+                    xCompressCU(subBestPartCU, subTempPartCU, nextDepth);
                 }
                 else
                 {
-                    xCompressCU(subBestPartCU, subTempPartCU, outBestCU, nextDepth, outBestCU->getPartitionSize(0));
+                    xCompressCU(subBestPartCU, subTempPartCU, nextDepth);
                 }
 
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.

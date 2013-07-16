@@ -66,7 +66,7 @@ protected:
     TComSlice*    m_pcSlice;
     UInt          m_uiCoeffCost;
 
-    Void codeShortTermRefPicSet(TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx);
+    Void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx);
     Bool findMatchingLTRP(TComSlice* slice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag);
 
 public:

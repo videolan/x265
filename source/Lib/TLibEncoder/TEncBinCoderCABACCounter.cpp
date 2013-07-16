@@ -77,7 +77,7 @@ Void TEncBinCABACCounter::encodeBin(UInt binValue, ContextModel &rcCtxModel)
  *
  * \param binValue bin value
  */
-Void TEncBinCABACCounter::encodeBinEP(UInt binValue)
+Void TEncBinCABACCounter::encodeBinEP(UInt /*binValue*/)
 {
     m_uiBinsCoded += m_binCountIncrement;
     m_fracBits += 32768;
@@ -89,7 +89,7 @@ Void TEncBinCABACCounter::encodeBinEP(UInt binValue)
  * \param binValues bin values
  * \param numBins number of bins
  */
-Void TEncBinCABACCounter::encodeBinsEP(UInt binValues, Int numBins)
+Void TEncBinCABACCounter::encodeBinsEP(UInt /*binValues*/, Int numBins)
 {
     m_uiBinsCoded += numBins & - m_binCountIncrement;
     m_fracBits += 32768 * numBins;

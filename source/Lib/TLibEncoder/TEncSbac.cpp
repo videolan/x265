@@ -237,27 +237,27 @@ Void TEncSbac::updateContextTables(SliceType eSliceType, Int iQp, Bool bExecuteF
     m_pcBinIf->start();
 }
 
-Void TEncSbac::codeVPS(TComVPS* pcVPS)
+Void TEncSbac::codeVPS(TComVPS*)
 {
     assert(0);
 }
 
-Void TEncSbac::codeSPS(TComSPS* pcSPS)
+Void TEncSbac::codeSPS(TComSPS*)
 {
     assert(0);
 }
 
-Void TEncSbac::codePPS(TComPPS* pcPPS)
+Void TEncSbac::codePPS(TComPPS*)
 {
     assert(0);
 }
 
-Void TEncSbac::codeSliceHeader(TComSlice* slice)
+Void TEncSbac::codeSliceHeader(TComSlice*)
 {
     assert(0);
 }
 
-Void TEncSbac::codeTilesWPPEntryPoint(TComSlice* pSlice)
+Void TEncSbac::codeTilesWPPEntryPoint(TComSlice*)
 {
     assert(0);
 }
@@ -964,20 +964,20 @@ Void TEncSbac::codeQtCbfZero(TComDataCU* cu, TextType ttype, UInt trDepth)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
-    UInt uiCbf = 0;
-    UInt uiCtx = cu->getCtxQtCbf(ttype, trDepth);
+    UInt cbf = 0;
+    UInt ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_pcBinIf->encodeBin(uiCbf, m_cCUQtCbfSCModel.get(0, ttype ? TEXT_CHROMA : ttype, uiCtx));
+    m_pcBinIf->encodeBin(cbf, m_cCUQtCbfSCModel.get(0, ttype ? TEXT_CHROMA : ttype, ctx));
 }
 
-Void TEncSbac::codeQtRootCbfZero(TComDataCU* cu)
+Void TEncSbac::codeQtRootCbfZero(TComDataCU*)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
-    UInt uiCbf = 0;
-    UInt uiCtx = 0;
+    UInt cbf = 0;
+    UInt ctx = 0;
 
-    m_pcBinIf->encodeBin(uiCbf, m_cCUQtRootCbfSCModel.get(0, 0, uiCtx));
+    m_pcBinIf->encodeBin(cbf, m_cCUQtRootCbfSCModel.get(0, 0, ctx));
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -1043,7 +1043,7 @@ Void TEncSbac::codeLastSignificantXY(UInt posx, UInt posy, Int width, Int height
     }
 }
 
-Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType)
+Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt /*depth*/, TextType eTType)
 {
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
