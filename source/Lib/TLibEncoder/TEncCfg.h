@@ -81,7 +81,6 @@ struct GOPEntry
     }
 };
 
-std::istringstream &operator >>(std::istringstream &in, GOPEntry &entry);     //input
 //! \ingroup TLibEncoder
 //! \{
 
