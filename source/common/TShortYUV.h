@@ -76,11 +76,11 @@ public:
     short*    getCrAddr()    { return CrBuf; }
 
     //  Access starting position of YUV partition unit buffer
-    short* getLumaAddr(unsigned int iPartUnitIdx) { return YBuf + getAddrOffset(iPartUnitIdx, width); }
+    short* getLumaAddr(unsigned int partUnitIdx) { return YBuf + getAddrOffset(partUnitIdx, width); }
 
-    short* getCbAddr(unsigned int iPartUnitIdx) { return CbBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    short* getCbAddr(unsigned int partUnitIdx) { return CbBuf + (getAddrOffset(partUnitIdx, Cwidth) >> 1); }
 
-    short* getCrAddr(unsigned int iPartUnitIdx) { return CrBuf + (getAddrOffset(iPartUnitIdx, Cwidth) >> 1); }
+    short* getCrAddr(unsigned int partUnitIdx) { return CrBuf + (getAddrOffset(partUnitIdx, Cwidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
     short* getLumaAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }

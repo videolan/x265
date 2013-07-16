@@ -580,21 +580,21 @@ Void TComYuv::subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx,
     }
 }
 
-Void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height)
+Void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height)
 {
     Int x, y;
 
-    Pel* pSrcY0  = srcYuv0->getLumaAddr(iPartUnitIdx);
-    Pel* pSrcU0  = srcYuv0->getCbAddr(iPartUnitIdx);
-    Pel* pSrcV0  = srcYuv0->getCrAddr(iPartUnitIdx);
+    Pel* pSrcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    Pel* pSrcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    Pel* pSrcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Pel* pSrcY1  = srcYuv1->getLumaAddr(iPartUnitIdx);
-    Pel* pSrcU1  = srcYuv1->getCbAddr(iPartUnitIdx);
-    Pel* pSrcV1  = srcYuv1->getCrAddr(iPartUnitIdx);
+    Pel* pSrcY1  = srcYuv1->getLumaAddr(partUnitIdx);
+    Pel* pSrcU1  = srcYuv1->getCbAddr(partUnitIdx);
+    Pel* pSrcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* pDstY   = getLumaAddr(iPartUnitIdx);
-    Pel* dstU   = getCbAddr(iPartUnitIdx);
-    Pel* dstV   = getCrAddr(iPartUnitIdx);
+    Pel* pDstY   = getLumaAddr(partUnitIdx);
+    Pel* dstU   = getCbAddr(partUnitIdx);
+    Pel* dstV   = getCrAddr(partUnitIdx);
 
     UInt  iSrc0Stride = srcYuv0->getStride();
     UInt  iSrc1Stride = srcYuv1->getStride();
@@ -649,21 +649,21 @@ Void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt iPartUnitIdx, UInt
     }
 }
 
-Void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height)
+Void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height)
 {
     Int x, y;
 
-    Short* pSrcY0  = srcYuv0->getLumaAddr(iPartUnitIdx);
-    Short* pSrcU0  = srcYuv0->getCbAddr(iPartUnitIdx);
-    Short* pSrcV0  = srcYuv0->getCrAddr(iPartUnitIdx);
+    Short* pSrcY0  = srcYuv0->getLumaAddr(partUnitIdx);
+    Short* pSrcU0  = srcYuv0->getCbAddr(partUnitIdx);
+    Short* pSrcV0  = srcYuv0->getCrAddr(partUnitIdx);
 
-    Short* pSrcY1  = srcYuv1->getLumaAddr(iPartUnitIdx);
-    Short* pSrcU1  = srcYuv1->getCbAddr(iPartUnitIdx);
-    Short* pSrcV1  = srcYuv1->getCrAddr(iPartUnitIdx);
+    Short* pSrcY1  = srcYuv1->getLumaAddr(partUnitIdx);
+    Short* pSrcU1  = srcYuv1->getCbAddr(partUnitIdx);
+    Short* pSrcV1  = srcYuv1->getCrAddr(partUnitIdx);
 
-    Pel* pDstY   = getLumaAddr(iPartUnitIdx);
-    Pel* dstU   = getCbAddr(iPartUnitIdx);
-    Pel* dstV   = getCrAddr(iPartUnitIdx);
+    Pel* pDstY   = getLumaAddr(partUnitIdx);
+    Pel* dstU   = getCbAddr(partUnitIdx);
+    Pel* dstV   = getCrAddr(partUnitIdx);
 
     UInt  iSrc0Stride = srcYuv0->width;
     UInt  iSrc1Stride = srcYuv1->width;
@@ -721,19 +721,19 @@ Void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt iPartUnitIdx, 
 #define DISABLING_CLIP_FOR_BIPREDME 0  // x265 disables this flag so 8bpp and 16bpp outputs match
                                        // the intent is for all HM bipred to be replaced with x264 logic
 
-Void TComYuv::removeHighFreq(TComYuv* pcYuvSrc, UInt partIdx, UInt uiWidht, UInt height)
+Void TComYuv::removeHighFreq(TComYuv* srcYuv, UInt partIdx, UInt uiWidht, UInt height)
 {
     Int x, y;
 
-    Pel* src  = pcYuvSrc->getLumaAddr(partIdx);
-    Pel* srcU = pcYuvSrc->getCbAddr(partIdx);
-    Pel* srcV = pcYuvSrc->getCrAddr(partIdx);
+    Pel* src  = srcYuv->getLumaAddr(partIdx);
+    Pel* srcU = srcYuv->getCbAddr(partIdx);
+    Pel* srcV = srcYuv->getCrAddr(partIdx);
 
     Pel* dst  = getLumaAddr(partIdx);
     Pel* dstU = getCbAddr(partIdx);
     Pel* dstV = getCrAddr(partIdx);
 
-    Int  srcstride = pcYuvSrc->getStride();
+    Int  srcstride = srcYuv->getStride();
     Int  dststride = getStride();
 
     for (y = height - 1; y >= 0; y--)
@@ -751,7 +751,7 @@ Void TComYuv::removeHighFreq(TComYuv* pcYuvSrc, UInt partIdx, UInt uiWidht, UInt
         dst += dststride;
     }
 
-    srcstride = pcYuvSrc->getCStride();
+    srcstride = srcYuv->getCStride();
     dststride = getCStride();
 
     height >>= 1;

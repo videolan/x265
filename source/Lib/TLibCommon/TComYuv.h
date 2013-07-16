@@ -156,11 +156,11 @@ public:
     Void    subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
-    Void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height);
-    Void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt iPartUnitIdx, UInt width, UInt height);
+    Void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt width, UInt height);
+    Void    addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, UInt width, UInt height);
 
     //   Remove High frequency
-    Void    removeHighFreq(TComYuv* pcYuvSrc, UInt partIdx, UInt uiWidht, UInt height);
+    Void    removeHighFreq(TComYuv* srcYuv, UInt partIdx, UInt uiWidht, UInt height);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Access function for YUV buffer
@@ -174,11 +174,11 @@ public:
     Pel*    getCrAddr()    { return m_apiBufV; }
 
     //  Access starting position of YUV partition unit buffer
-    Pel* getLumaAddr(UInt iPartUnitIdx) { return m_apiBufY +   getAddrOffset(iPartUnitIdx, m_iWidth); }
+    Pel* getLumaAddr(UInt partUnitIdx) { return m_apiBufY +   getAddrOffset(partUnitIdx, m_iWidth); }
 
-    Pel* getCbAddr(UInt iPartUnitIdx) { return m_apiBufU + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1); }
+    Pel* getCbAddr(UInt partUnitIdx) { return m_apiBufU + (getAddrOffset(partUnitIdx, m_iCWidth) >> 1); }
 
-    Pel* getCrAddr(UInt iPartUnitIdx) { return m_apiBufV + (getAddrOffset(iPartUnitIdx, m_iCWidth) >> 1); }
+    Pel* getCrAddr(UInt partUnitIdx) { return m_apiBufV + (getAddrOffset(partUnitIdx, m_iCWidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
     Pel* getLumaAddr(UInt iTransUnitIdx, UInt iBlkSize) { return m_apiBufY + getAddrOffset(iTransUnitIdx, iBlkSize, m_iWidth); }
