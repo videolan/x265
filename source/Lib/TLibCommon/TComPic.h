@@ -55,14 +55,14 @@ class TComPic
 {
 private:
 
-    TComPicSym*           m_pcPicSym;             // Symbols
-    TComPicYuv*           m_pcPicYuvOrg;
-    TComPicYuv*           m_pcPicYuvRec;
+    TComPicSym*           m_picSym;
+    TComPicYuv*           m_origPicYuv;
+    TComPicYuv*           m_reconPicYuv;
 
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    UInt                  m_uiTLayer;             // Temporal layer
+    UInt                  m_tlayer;               // Temporal layer
     Bool                  m_bUsedByCurr;          // Used by current picture
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
@@ -72,13 +72,13 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
+    Void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
 
     virtual Void  destroy();
 
-    UInt          getTLayer()               { return m_uiTLayer; }
+    UInt          getTLayer()               { return m_tlayer; }
 
-    Void          setTLayer(UInt uiTLayer)  { m_uiTLayer = uiTLayer; }
+    Void          setTLayer(UInt tlayer)    { m_tlayer = tlayer; }
 
     Bool          getUsedByCurr()           { return m_bUsedByCurr; }
 
@@ -92,41 +92,41 @@ public:
 
     Bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
 
-    TComPicSym*   getPicSym()             { return m_pcPicSym; }
+    TComPicSym*   getPicSym()             { return m_picSym; }
 
-    TComSlice*    getSlice()              { return m_pcPicSym->getSlice(); }
+    TComSlice*    getSlice()              { return m_picSym->getSlice(); }
 
-    Int           getPOC()                { return m_pcPicSym->getSlice()->getPOC(); }
+    Int           getPOC()                { return m_picSym->getSlice()->getPOC(); }
 
-    TComDataCU*   getCU(UInt cuAddr)    { return m_pcPicSym->getCU(cuAddr); }
+    TComDataCU*   getCU(UInt cuAddr)    { return m_picSym->getCU(cuAddr); }
 
-    TComPicYuv*   getPicYuvOrg()          { return m_pcPicYuvOrg; }
+    TComPicYuv*   getPicYuvOrg()          { return m_origPicYuv; }
 
-    TComPicYuv*   getPicYuvRec()          { return m_pcPicYuvRec; }
+    TComPicYuv*   getPicYuvRec()          { return m_reconPicYuv; }
 
-    UInt          getNumCUsInFrame()      { return m_pcPicSym->getNumberOfCUsInFrame(); }
+    UInt          getNumCUsInFrame()      { return m_picSym->getNumberOfCUsInFrame(); }
 
-    UInt          getNumPartInWidth()     { return m_pcPicSym->getNumPartInWidth(); }
+    UInt          getNumPartInWidth()     { return m_picSym->getNumPartInWidth(); }
 
-    UInt          getNumPartInHeight()    { return m_pcPicSym->getNumPartInHeight(); }
+    UInt          getNumPartInHeight()    { return m_picSym->getNumPartInHeight(); }
 
-    UInt          getNumPartInCU()        { return m_pcPicSym->getNumPartition(); }
+    UInt          getNumPartInCU()        { return m_picSym->getNumPartition(); }
 
-    UInt          getFrameWidthInCU()     { return m_pcPicSym->getFrameWidthInCU(); }
+    UInt          getFrameWidthInCU()     { return m_picSym->getFrameWidthInCU(); }
 
-    UInt          getFrameHeightInCU()    { return m_pcPicSym->getFrameHeightInCU(); }
+    UInt          getFrameHeightInCU()    { return m_picSym->getFrameHeightInCU(); }
 
-    UInt          getMinCUWidth()         { return m_pcPicSym->getMinCUWidth(); }
+    UInt          getMinCUWidth()         { return m_picSym->getMinCUWidth(); }
 
-    UInt          getMinCUHeight()        { return m_pcPicSym->getMinCUHeight(); }
+    UInt          getMinCUHeight()        { return m_picSym->getMinCUHeight(); }
 
-    UInt          getParPelX(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
+    UInt          getParPelX(UChar partIdx) { return getParPelX(partIdx); }
 
-    UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
+    UInt          getParPelY(UChar partIdx) { return getParPelX(partIdx); }
 
-    Int           getStride()             { return m_pcPicYuvRec->getStride(); }
+    Int           getStride()             { return m_reconPicYuv->getStride(); }
 
-    Int           getCStride()            { return m_pcPicYuvRec->getCStride(); }
+    Int           getCStride()            { return m_reconPicYuv->getCStride(); }
 
     Void          compressMotion();
 

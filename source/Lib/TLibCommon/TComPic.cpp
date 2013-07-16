@@ -46,10 +46,10 @@
 // ====================================================================================================================
 
 TComPic::TComPic()
-    : m_pcPicSym(NULL)
-    , m_pcPicYuvOrg(NULL)
-    , m_pcPicYuvRec(NULL)
-    , m_uiTLayer(0)
+    : m_picSym(NULL)
+    , m_origPicYuv(NULL)
+    , m_reconPicYuv(NULL)
+    , m_tlayer(0)
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
@@ -58,16 +58,16 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-Void TComPic::create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
+Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
 {
-    m_pcPicSym = new TComPicSym;
-    m_pcPicSym->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_picSym = new TComPicSym;
+    m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
 
-    m_pcPicYuvOrg = new TComPicYuv;
-    m_pcPicYuvOrg->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_origPicYuv = new TComPicYuv;
+    m_origPicYuv->create(width, height, maxWidth, maxHeight, maxDepth);
 
-    m_pcPicYuvRec = new TComPicYuv;
-    m_pcPicYuvRec->create(width, height, uiMaxWidth, uiMaxHeight, uiMaxDepth);
+    m_reconPicYuv = new TComPicYuv;
+    m_reconPicYuv->create(width, height, maxWidth, maxHeight, maxDepth);
 
     /* store conformance window parameters with picture */
     m_conformanceWindow = conformanceWindow;
@@ -78,35 +78,35 @@ Void TComPic::create(Int width, Int height, UInt uiMaxWidth, UInt uiMaxHeight, U
 
 Void TComPic::destroy()
 {
-    if (m_pcPicSym)
+    if (m_picSym)
     {
-        m_pcPicSym->destroy();
-        delete m_pcPicSym;
-        m_pcPicSym = NULL;
+        m_picSym->destroy();
+        delete m_picSym;
+        m_picSym = NULL;
     }
 
-    if (m_pcPicYuvOrg)
+    if (m_origPicYuv)
     {
-        m_pcPicYuvOrg->destroy();
-        delete m_pcPicYuvOrg;
-        m_pcPicYuvOrg = NULL;
+        m_origPicYuv->destroy();
+        delete m_origPicYuv;
+        m_origPicYuv = NULL;
     }
 
-    if (m_pcPicYuvRec)
+    if (m_reconPicYuv)
     {
-        m_pcPicYuvRec->destroy();
-        delete m_pcPicYuvRec;
-        m_pcPicYuvRec = NULL;
+        m_reconPicYuv->destroy();
+        delete m_reconPicYuv;
+        m_reconPicYuv = NULL;
     }
 }
 
 Void TComPic::compressMotion()
 {
-    TComPicSym* pPicSym = getPicSym();
+    TComPicSym* sym = getPicSym();
 
-    for (UInt cuAddr = 0; cuAddr < pPicSym->getFrameHeightInCU() * pPicSym->getFrameWidthInCU(); cuAddr++)
+    for (UInt cuAddr = 0; cuAddr < sym->getFrameHeightInCU() * sym->getFrameWidthInCU(); cuAddr++)
     {
-        TComDataCU* cu = pPicSym->getCU(cuAddr);
+        TComDataCU* cu = sym->getCU(cuAddr);
         cu->compressMV();
     }
 }
@@ -118,7 +118,7 @@ Void TComPic::compressMotion()
  * \param bNDBFilterCrossSliceBoundary cross-slice-boundary in-loop filtering; true for "cross".
  * \param numTiles number of tiles in picture
  */
-Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth)
+Void TComPic::createNonDBFilterInfo(Int lastSlicecuAddr, Int sliceGranularityDepth)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt numLCUInPic   = getNumCUsInFrame();
@@ -129,9 +129,9 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt maxNumSUInLCUHeight = getNumPartInHeight();
 
-    for (UInt CUAddr = 0; CUAddr < numLCUInPic; CUAddr++)
+    for (UInt cuAddr = 0; cuAddr < numLCUInPic; cuAddr++)
     {
-        TComDataCU* cu = getCU(CUAddr);
+        TComDataCU* cu = getCU(cuAddr);
         cu->getNDBFilterBlocks()->clear();
     }
 
@@ -142,7 +142,7 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
 
     //1st step: decide the real start address
     startAddr = 0;
-    endAddr   = lastSliceCUAddr - 1;
+    endAddr   = lastSlicecuAddr - 1;
 
     startLCU            = startAddr / maxNumSUInLCU;
     firstCUInStartLCU   = startAddr % maxNumSUInLCU;
@@ -223,27 +223,27 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU
     UInt maxNumSUInSGU = maxNumSUInLCU >> (sliceGranularyDepth << 1);
     UInt maxNumSUInLCUWidth = getNumPartInWidth();
     UInt LPelX, TPelY;
-    UInt currSU;
+    UInt curSU;
 
     //get the number of valid NBFilterBLock
-    currSU   = startSU;
-    while (currSU <= endSU)
+    curSU   = startSU;
+    while (curSU <= endSU)
     {
-        LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[currSU]];
-        TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[currSU]];
+        LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[curSU]];
+        TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[curSU]];
 
         while (!(LPelX < picWidth) || !(TPelY < picHeight))
         {
-            currSU += maxNumSUInSGU;
-            if (currSU >= maxNumSUInLCU || currSU > endSU)
+            curSU += maxNumSUInSGU;
+            if (curSU >= maxNumSUInLCU || curSU > endSU)
             {
                 break;
             }
-            LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[currSU]];
-            TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[currSU]];
+            LPelX = LCUX + g_rasterToPelX[g_zscanToRaster[curSU]];
+            TPelY = LCUY + g_rasterToPelY[g_zscanToRaster[curSU]];
         }
 
-        if (currSU >= maxNumSUInLCU || currSU > endSU)
+        if (curSU >= maxNumSUInLCU || curSU > endSU)
         {
             break;
         }
@@ -253,26 +253,26 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU
         NDBFBlock.sliceID = sliceID;
         NDBFBlock.posY    = TPelY;
         NDBFBlock.posX    = LPelX;
-        NDBFBlock.startSU = currSU;
+        NDBFBlock.startSU = curSU;
 
-        UInt uiLastValidSU  = currSU;
-        UInt uiIdx, uiLPelX_su, uiTPelY_su;
-        for (uiIdx = currSU; uiIdx < currSU + maxNumSUInSGU; uiIdx++)
+        UInt lastValidSU  = curSU;
+        UInt idx, lpelXSU, tpelYSU;
+        for (idx = curSU; idx < curSU + maxNumSUInSGU; idx++)
         {
-            if (uiIdx > endSU)
+            if (idx > endSU)
             {
                 break;
             }
-            uiLPelX_su   = LCUX + g_rasterToPelX[g_zscanToRaster[uiIdx]];
-            uiTPelY_su   = LCUY + g_rasterToPelY[g_zscanToRaster[uiIdx]];
-            if (!(uiLPelX_su < picWidth) || !(uiTPelY_su < picHeight))
+            lpelXSU   = LCUX + g_rasterToPelX[g_zscanToRaster[idx]];
+            tpelYSU   = LCUY + g_rasterToPelY[g_zscanToRaster[idx]];
+            if (!(lpelXSU < picWidth) || !(tpelYSU < picHeight))
             {
                 continue;
             }
-            uiLastValidSU = uiIdx;
+            lastValidSU = idx;
         }
 
-        NDBFBlock.endSU = uiLastValidSU;
+        NDBFBlock.endSU = lastValidSU;
 
         UInt rTLSU = g_zscanToRaster[NDBFBlock.startSU];
         UInt rBRSU = g_zscanToRaster[NDBFBlock.endSU];
@@ -283,7 +283,7 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU
 
         cu->getNDBFilterBlocks()->push_back(NDBFBlock);
 
-        currSU += maxNumSUInSGU;
+        curSU += maxNumSUInSGU;
     }
 }
 
@@ -291,9 +291,9 @@ Void TComPic::createNonDBFilterInfoLCU(Int sliceID, TComDataCU* cu, UInt startSU
  */
 Void TComPic::destroyNonDBFilterInfo()
 {
-    for (UInt CUAddr = 0; CUAddr < getNumCUsInFrame(); CUAddr++)
+    for (UInt cuAddr = 0; cuAddr < getNumCUsInFrame(); cuAddr++)
     {
-        TComDataCU* cu = getCU(CUAddr);
+        TComDataCU* cu = getCU(cuAddr);
         cu->getNDBFilterBlocks()->clear();
     }
 }
