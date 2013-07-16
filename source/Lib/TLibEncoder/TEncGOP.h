@@ -69,11 +69,11 @@ class TEncGOP : public x265::Thread
 {
 private:
 
-    TEncTop*                m_pcEncTop;
-    TEncCfg*                m_pcCfg;
-    TEncRateCtrl*           m_pcRateCtrl;
-    x265::FrameEncoder*     m_cFrameEncoders;
-    TComList<TComPic*>      m_cListPic;         ///< dynamic list of input pictures
+    TEncTop*                m_top;
+    TEncCfg*                m_cfg;
+    TEncRateCtrl*           m_rateControl;
+    x265::FrameEncoder*     m_frameEncoders;
+    TComList<TComPic*>      m_picList;         ///< dynamic list of input pictures
     x265_picture_t         *m_recon;
     std::list<AccessUnit>   m_accessUnits;
     Int                     m_startPOC;
@@ -98,8 +98,8 @@ private:
     UInt                    m_tl0Idx;
     UInt                    m_rapIdx;
 
-    TComSPS                 m_cSPS;
-    TComPPS                 m_cPPS;
+    TComSPS                 m_sps;
+    TComPPS                 m_pps;
 
 public:
 
@@ -109,11 +109,11 @@ public:
 
     Void  create();
     Void  destroy();
-    Void  init(TEncTop* pcTEncTop);
+    Void  init(TEncTop* top);
 
     void addPicture(Int poc, const x265_picture_t *pic);
 
-    void processKeyframeInterval(Int POCLast, Int numFrames);
+    void processKeyframeInterval(Int pocLast, Int numFrames);
 
     // returns count of returned pictures
     int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
@@ -122,35 +122,25 @@ protected:
 
     void threadMain();
 
-    Void compressGOP(Int iPOCLast, Int iNumPicRcvd);
+    Void compressGOP(Int pocLast, Int numPicRcvd);
 
-    Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid);
+    Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
 
     Int getReferencePictureSetIdxForSOP(Int pocCur, Int GOPid);
 
-    NalUnitType getNalUnitType(Int pocCurr, Int lastIdr);
+    NalUnitType getNalUnitType(Int curPoc, Int lastIdr);
 
-    Void   xCalculateAddPSNR(TComPic* pic, TComPicYuv* pcPicD, const AccessUnit&);
+    Void xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit&);
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
     Void arrangeLongtermPicturesInRPS(TComSlice *);
 
-    Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
+    Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream*& outBitstreamRedirect);
+
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
 }; // END CLASS DEFINITION TEncGOP
-
-// ====================================================================================================================
-// Enumeration
-// ====================================================================================================================
-
-enum SCALING_LIST_PARAMETER
-{
-    SCALING_LIST_OFF,
-    SCALING_LIST_DEFAULT,
-    SCALING_LIST_FILE_READ
-};
 
 //! \}
 
