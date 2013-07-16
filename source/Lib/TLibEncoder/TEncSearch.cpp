@@ -2059,8 +2059,13 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             Bool bFilter = (width <= 16);
             pixel* predSrc = (pixel*)m_predBuf;
 
+            Pel *pAbove0 = refAbove    + width - 1;
+            Pel *pAbove1 = refAboveFlt + width - 1;
+            Pel *pLeft0  = refLeft     + width - 1;
+            Pel *pLeft1  = refLeftFlt  + width - 1;
+
             // 1
-            primitives.intra_pred_dc((pixel*)predSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width, bFilter);
+            primitives.intra_pred_dc((pixel*)pAbove0 + 1, (pixel*)pLeft0 + 1, (pixel*)pred, stride, width, bFilter);
             modeCosts[DC_IDX] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
 
             // 0
@@ -2079,11 +2084,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
                 // Transpose NxN
                 x265::primitives.transpose[log2SizeMinus2]((pixel*)buf1, (pixel*)fenc, stride);
-
-                Pel *pAbove0 = refAbove    + width - 1;
-                Pel *pAbove1 = refAboveFlt + width - 1;
-                Pel *pLeft0  = refLeft     + width - 1;
-                Pel *pLeft1  = refLeftFlt  + width - 1;
 
                 x265::primitives.intra_pred_allangs[log2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (width <= 16));
 

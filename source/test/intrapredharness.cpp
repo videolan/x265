@@ -77,18 +77,32 @@ bool IntraPredHarness::check_dc_primitive(x265::intra_dc_t ref, x265::intra_dc_t
         int rand_width = 1 << ((rand() % 5) + 2);                  // Randomly generated Width
         int rand_filter = rand() & 1;
 
+        pixel left[MAX_CU_SIZE * 2 + 1];
+        for (int k = 0; k < rand_width * 2 + 1; k++)
+        {
+            left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
+        }
+
 #if _DEBUG
         memset(pixel_out_vec, 0xCD, out_size);
         memset(pixel_out_c, 0xCD, out_size);
 #endif
 
-        opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
-        ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
+        //opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
+        //ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
+        ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
+        opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
 
         for (int k = 0; k < rand_width; k++)
         {
             if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, rand_width))
+            {
+#if _DEBUG
+                ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
+                opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
+#endif
                 return false;
+            }
         }
 
         j += FENC_STRIDE;
@@ -268,10 +282,10 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     {
         printf("intra_dc[filter=0]");
         REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
-                       pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width, 0);
+                       pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width, 0);
         printf("intra_dc[filter=1]");
         REPORT_SPEEDUP(opt.intra_pred_dc, ref.intra_pred_dc,
-                       pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width, 1);
+                       pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width, 1);
     }
     if (opt.intra_pred_planar)
     {

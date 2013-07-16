@@ -38,19 +38,19 @@ unsigned char IntraFilterType[][35] =
 };
 
 namespace {
-pixel predIntraGetPredValDC(pixel* src, intptr_t srcstride, intptr_t width)
+pixel predIntraGetPredValDC(pixel* above, pixel* left, intptr_t width)
 {
     int w, sum = 0;
     pixel pDcVal;
 
     for (w = 0; w < width; w++)
     {
-        sum += src[w - srcstride];
+        sum += above[w];
     }
 
     for (w = 0; w < width; w++)
     {
-        sum += src[w * srcstride - 1];
+        sum += left[w];
     }
 
     pDcVal = (pixel)((sum + width) / (width + width));
@@ -58,31 +58,31 @@ pixel predIntraGetPredValDC(pixel* src, intptr_t srcstride, intptr_t width)
     return pDcVal;
 }
 
-void DCPredFiltering(pixel* src, intptr_t srcstride, pixel* dst, intptr_t dststride, int width, int height)
+void DCPredFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int width, int height)
 {
-    intptr_t x, y, dstride2, sstride2;
+    intptr_t x, y, dstride2;
 
     // boundary pixels processing
-    dst[0] = (pixel)((src[-srcstride] + src[-1] + 2 * dst[0] + 2) >> 2);
+    dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);
 
     for (x = 1; x < width; x++)
     {
-        dst[x] = (pixel)((src[x - srcstride] +  3 * dst[x] + 2) >> 2);
+        dst[x] = (pixel)((above[x] +  3 * dst[x] + 2) >> 2);
     }
 
-    for (y = 1, dstride2 = dststride, sstride2 = srcstride - 1; y < height; y++, dstride2 += dststride, sstride2 += srcstride)
+    for (y = 1, dstride2 = dststride; y < height; y++, dstride2 += dststride)
     {
-        dst[dstride2] = (pixel)((src[sstride2] + 3 * dst[dstride2] + 2) >> 2);
+        dst[dstride2] = (pixel)((left[y] + 3 * dst[dstride2] + 2) >> 2);
     }
 }
 
-void PredIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int bFilter)
+void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter)
 {
     int k, l;
     int blkSize = width;
 
     // Do the DC prediction
-    pixel dcval = (pixel)predIntraGetPredValDC(src, srcStride, width);
+    pixel dcval = (pixel)predIntraGetPredValDC(above, left, width);
 
     for (k = 0; k < blkSize; k++)
     {
@@ -94,7 +94,7 @@ void PredIntraDC(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride,
 
     if (bFilter)
     {
-        DCPredFiltering(src, srcStride, dst, dstStride, width, width);
+        DCPredFiltering(above, left, dst, dstStride, width, width);
     }
 }
 

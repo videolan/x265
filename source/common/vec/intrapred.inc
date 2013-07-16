@@ -231,14 +231,14 @@ static void initFileStaticVars()
 }
 
 static inline
-void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int /*height*/)
+void predDCFiltering(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int /*height*/)
 {
     int y;
     pixel pixDC = *dst;
     int pixDCx3 = pixDC * 3 + 2;
 
     // boundary pixels processing
-    dst[0] = (pixel)((src[-srcStride] + src[-1] + 2 * pixDC + 2) >> 2);
+    dst[0] = (pixel)((above[0] + left[0] + 2 * pixDC + 2) >> 2);
 
     Vec8us im1(pixDCx3);
     Vec8us im2, im3;
@@ -246,76 +246,76 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
     switch (width)
     {
     case 4:
-        im2 = load_partial(const_int(8), &src[1 - srcStride]);
+        im2 = load_partial(const_int(8), &above[1]);
         im2 = (im1 + im2) >> const_int(2);
         store_partial(const_int(8), &dst[1], im2);
         break;
 
     case 8:
-        im2.load(&src[1 - srcStride]);
+        im2.load(&above[1]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1]);
         break;
 
     case 16:
-        im2.load(&src[1 - srcStride]);
+        im2.load(&above[1]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1]);
 
-        im2.load(&src[1 - srcStride + 8]);
+        im2.load(&above[1 + 8]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 8]);
         break;
 
     case 32:
-        im2.load(&src[1 - srcStride]);
+        im2.load(&above[1]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1]);
 
-        im2.load(&src[1 - srcStride + 8]);
+        im2.load(&above[1 + 8]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 8]);
 
-        im2.load(&src[1 - srcStride + 16]);
+        im2.load(&above[1 + 16]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 16]);
 
-        im2.load(&src[1 - srcStride + 24]);
+        im2.load(&above[1 + 24]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 24]);
         break;
 
     //case 64:
     default:
-        im2.load(&src[1 - srcStride]);
+        im2.load(&above[1]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1]);
 
-        im2.load(&src[1 - srcStride + 8]);
+        im2.load(&above[1 + 8]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 8]);
 
-        im2.load(&src[1 - srcStride + 16]);
+        im2.load(&above[1 + 16]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 16]);
 
-        im2.load(&src[1 - srcStride + 24]);
+        im2.load(&above[1 + 24]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 24]);
 
-        im2.load(&src[1 - srcStride + 32]);
+        im2.load(&above[1 + 32]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 32]);
 
-        im2.load(&src[1 - srcStride + 40]);
+        im2.load(&above[1 + 40]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 40]);
 
-        im2.load(&src[1 - srcStride + 48]);
+        im2.load(&above[1 + 48]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 48]);
 
-        im2.load(&src[1 - srcStride + 56]);
+        im2.load(&above[1 + 56]);
         im2 = (im1 + im2) >> const_int(2);
         im2.store(&dst[1 + 56]);
         break;
@@ -326,7 +326,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
     switch (width)
     {
     case 4:
-        pix = load_partial(const_int(4), &src[1 - srcStride]);
+        pix = load_partial(const_int(4), &above[1]);
         im2 = extend_low(pix);
         im2 = (im1 + im2) >> const_int(2);
         pix = compress(im2, im2);
@@ -334,7 +334,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         break;
 
     case 8:
-        pix = load_partial(const_int(8), &src[1 - srcStride]);
+        pix = load_partial(const_int(8), &above[1]);
         im2 = extend_low(pix);
         im2 = (im1 + im2) >> const_int(2);
         pix = compress(im2, im2);
@@ -342,7 +342,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         break;
 
     case 16:
-        pix.load(&src[1 - srcStride]);
+        pix.load(&above[1]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -352,7 +352,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         break;
 
     case 32:
-        pix.load(&src[1 - srcStride]);
+        pix.load(&above[1]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -360,7 +360,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         pix = compress(im2, im3);
         pix.store(&dst[1]);
 
-        pix.load(&src[1 - srcStride + 16]);
+        pix.load(&above[1 + 16]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -371,7 +371,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
 
     //case 64:
     default:
-        pix.load(&src[1 - srcStride]);
+        pix.load(&above[1]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -379,7 +379,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         pix = compress(im2, im3);
         pix.store(&dst[1]);
 
-        pix.load(&src[1 - srcStride + 16]);
+        pix.load(&above[1 + 16]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -387,7 +387,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         pix = compress(im2, im3);
         pix.store(&dst[1 + 16]);
 
-        pix.load(&src[1 - srcStride + 32]);
+        pix.load(&above[1 + 32]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -395,7 +395,7 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
         pix = compress(im2, im3);
         pix.store(&dst[1 + 32]);
 
-        pix.load(&src[1 - srcStride + 48]);
+        pix.load(&above[1 + 48]);
         im2 = extend_low(pix);
         im3 = extend_high(pix);
         im2 = (im1 + im2) >> const_int(2);
@@ -409,77 +409,103 @@ void predDCFiltering(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
 
     for (y = 1; y < width; y++)
     {
-        dst[dstStride] = (pixel)((src[srcStride - 1] + pixDCx3) >> 2);
-        src += srcStride;
+        dst[dstStride] = (pixel)((left[y] + pixDCx3) >> 2);
         dst += dstStride;
     }
 }
 
-void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int filter)
+void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int filter)
 {
-    int sum = 0;
+    int sum;
     int logSize = g_convertToBit[width] + 2;
-    pixel *srcAbove = &src[-srcStride];
-    pixel *srcLeft = &src[-1];
-
-    for (int iInd = 0; iInd < width; iInd++)
-    {
-        sum += *srcLeft;
-        srcLeft += srcStride;
-    }
 
 #if HIGH_BIT_DEPTH
+    Vec8s sumLeft(0);
     Vec8s sumAbove(0);
     Vec8s m0;
 
     switch (width)
     {
     case 4:
-        sumAbove = load_partial(const_int(8), srcAbove);
+        sumLeft  = load_partial(const_int(8), left);
+        sumAbove = load_partial(const_int(8), above);
         break;
     case 8:
-        m0.load(srcAbove);
+        m0.load(left);
+        sumLeft = m0;
+        m0.load(above);
         sumAbove = m0;
         break;
     case 16:
-        m0.load(srcAbove);
+        m0.load(left);
+        sumLeft  = m0;
+        m0.load(left + 8);
+        sumLeft += m0;
+
+        m0.load(above);
         sumAbove  = m0;
-        m0.load(srcAbove + 8);
+        m0.load(above + 8);
         sumAbove += m0;
         break;
     case 32:
-        m0.load(srcAbove);
+        m0.load(left);
+        sumLeft  = m0;
+        m0.load(left + 8);
+        sumLeft += m0;
+        m0.load(left + 16);
+        sumLeft += m0;
+        m0.load(left + 24);
+        sumLeft += m0;
+
+        m0.load(above);
         sumAbove  = m0;
-        m0.load(srcAbove + 8);
+        m0.load(above + 8);
         sumAbove += m0;
-        m0.load(srcAbove + 16);
+        m0.load(above + 16);
         sumAbove += m0;
-        m0.load(srcAbove + 24);
+        m0.load(above + 24);
         sumAbove += m0;
         break;
     //case 64:
     default:
         // CHECK_ME: the max support bit_depth is 13-bits
-        m0.load(srcAbove);
+        m0.load(left);
+        sumLeft  = m0;
+        m0.load(left + 8);
+        sumLeft += m0;
+        m0.load(left + 16);
+        sumLeft += m0;
+        m0.load(left + 24);
+        sumLeft += m0;
+        m0.load(left + 32);
+        sumLeft += m0;
+        m0.load(left + 40);
+        sumLeft += m0;
+        m0.load(left + 48);
+        sumLeft += m0;
+        m0.load(left + 56);
+        sumLeft += m0;
+
+        m0.load(above);
         sumAbove  = m0;
-        m0.load(srcAbove + 8);
+        m0.load(above + 8);
         sumAbove += m0;
-        m0.load(srcAbove + 16);
+        m0.load(above + 16);
         sumAbove += m0;
-        m0.load(srcAbove + 24);
+        m0.load(above + 24);
         sumAbove += m0;
-        m0.load(srcAbove + 32);
+        m0.load(above + 32);
         sumAbove += m0;
-        m0.load(srcAbove + 40);
+        m0.load(above + 40);
         sumAbove += m0;
-        m0.load(srcAbove + 48);
+        m0.load(above + 48);
         sumAbove += m0;
-        m0.load(srcAbove + 56);
+        m0.load(above + 56);
         sumAbove += m0;
         break;
     }
 
-    sum += horizontal_add_x(sumAbove);
+    sum = horizontal_add_x(sumAbove) + horizontal_add_x(sumLeft);
 
     logSize += 1;
     pixel dcVal = (sum + (1 << (logSize - 1))) >> logSize;
@@ -564,53 +590,74 @@ void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStrid
 
     if (filter)
     {
-        predDCFiltering(src, srcStride, dst, dstStride, width, width);
+        predDCFiltering(above, left, dst, dstStride, width, width);
     }
 #else // if !HIGH_BIT_DEPTH
 
     {
-        Vec16uc pix;
+        Vec16uc pixL, pixT;
         Vec8us  im;
         Vec4ui  im1, im2;
 
         switch (width)
         {
         case 4:
-            pix.fromUint32(*(uint32_t*)srcAbove);
-            sum += horizontal_add(extend_low(pix));
+            pixL.fromUint32(*(uint32_t*)left);
+            pixT.fromUint32(*(uint32_t*)above);
+            sum  = horizontal_add(extend_low(pixL));
+            sum += horizontal_add(extend_low(pixT));
             break;
         case 8:
 #if X86_64
-            pix.fromUint64(*(uint64_t*)srcAbove);
+            pixL.fromUint64(*(uint64_t*)left);
+            pixT.fromUint64(*(uint64_t*)above);
 #else
-            pix.load_partial(8, srcAbove);
+            pixL.load_partial(8, left);
+            pixT.load_partial(8, above);
 #endif
-            sum += horizontal_add(extend_low(pix));
+            sum  = horizontal_add(extend_low(pixL));
+            sum += horizontal_add(extend_low(pixT));
             break;
         case 16:
-            pix.load(srcAbove);
-            sum += horizontal_add_x(pix);
+            pixL.load(left);
+            pixT.load(above);
+            sum  = horizontal_add_x(pixL);
+            sum += horizontal_add_x(pixT);
             break;
         case 32:
-            pix.load(srcAbove);
-            im1 = (Vec4ui)(pix.sad(_mm_setzero_si128()));
-            pix.load(srcAbove + 16);
-            im1 += (Vec4ui)(pix.sad(_mm_setzero_si128()));
+            pixL.load(left);
+            im1  = (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+            pixL.load(left + 16);
+            im1 += (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+
+            pixT.load(above);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
+            pixT.load(above + 16);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
             im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
-            sum += toInt32(im1);
+            sum  = toInt32(im1);
             break;
         //case 64:
         default:
-            pix.load(srcAbove);
-            im1 = (Vec4ui)(pix.sad(_mm_setzero_si128()));
-            pix.load(srcAbove + 16);
-            im1 += (Vec4ui)(pix.sad(_mm_setzero_si128()));
-            pix.load(srcAbove + 32);
-            im1 += (Vec4ui)(pix.sad(_mm_setzero_si128()));
-            pix.load(srcAbove + 48);
-            im1 += (Vec4ui)(pix.sad(_mm_setzero_si128()));
+            pixL.load(left);
+            im1  = (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+            pixL.load(left + 16);
+            im1 += (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+            pixL.load(left + 32);
+            im1 += (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+            pixL.load(left + 48);
+            im1 += (Vec4ui)(pixL.sad(_mm_setzero_si128()));
+
+            pixT.load(above);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
+            pixT.load(above + 16);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
+            pixT.load(above + 32);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
+            pixT.load(above + 48);
+            im1 += (Vec4ui)(pixT.sad(_mm_setzero_si128()));
             im1 += (Vec4ui)((Vec128b)im1 >> const_int(64));
-            sum += toInt32(im1);
+            sum  = toInt32(im1);
             break;
         }
     }
@@ -694,7 +741,7 @@ void intra_pred_dc(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStrid
 
     if (filter)
     {
-        predDCFiltering(src, srcStride, dst, dstStride, width, width);
+        predDCFiltering(above, left, dst, dstStride, width, width);
     }
 #endif // if HIGH_BIT_DEPTH
 }

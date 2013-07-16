@@ -187,7 +187,7 @@ Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt dirMode, 
     }
     else if (dirMode == DC_IDX)
     {
-        primitives.intra_pred_dc((pixel*)src + sw + 1, sw, (pixel*)dst, stride, size, bFilter);
+        primitives.intra_pred_dc((pixel*)refAbv + 1, (pixel*)refLft + 1, (pixel*)dst, stride, size, bFilter);
     }
     else
     {
@@ -205,10 +205,6 @@ Void TComPrediction::predIntraChromaAng(Pel* src, UInt dirMode, Pel* dst, UInt s
     {
         primitives.intra_pred_planar((pixel*)src + sw + 1, sw, (pixel*)dst, stride, width);
     }
-    else if (dirMode == DC_IDX)
-    {
-        primitives.intra_pred_dc((pixel*)src + sw + 1, sw, (pixel*)dst, stride, width, false);
-    }
     else
     {
         // Create the prediction
@@ -221,7 +217,14 @@ Void TComPrediction::predIntraChromaAng(Pel* src, UInt dirMode, Pel* dst, UInt s
             refLft[k + width - 1] = src[k * sw];
         }
 
-        primitives.intra_pred_ang(g_bitDepthC, (pixel*)dst, stride, width, dirMode, false, (pixel*)refLft + width - 1, (pixel*)refAbv + width - 1);
+        if (dirMode == DC_IDX)
+        {
+            primitives.intra_pred_dc((pixel*)refAbv + width - 1 + 1, (pixel*)refLft + width - 1 + 1, (pixel*)dst, stride, width, false);
+        }
+        else
+        {
+            primitives.intra_pred_ang(g_bitDepthC, (pixel*)dst, stride, width, dirMode, false, (pixel*)refLft + width - 1, (pixel*)refAbv + width - 1);
+        }
     }
 }
 
