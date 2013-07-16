@@ -405,7 +405,7 @@ Void TEncCu::compressCU(TComDataCU* cu)
     // analysis of CU
 
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
-        xCompressIntraCU(m_bestCU[0], m_tempCU[0], NULL);
+        xCompressIntraCU(m_bestCU[0], m_tempCU[0], 0);
     else
     {
         if (!m_cfg->getUseRDO())
