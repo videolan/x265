@@ -213,9 +213,7 @@ Int TComOutputBitstream::countStartCodeEmulations()
  */
 void TComOutputBitstream::insertAt(const TComOutputBitstream& src, UInt pos)
 {
-    UInt src_bits = src.getNumberOfWrittenBits();
-
-    assert(0 == src_bits % 8);
+    assert(0 == src.getNumberOfWrittenBits() % 8);
 
     vector<uint8_t>::iterator at = this->m_fifo->begin() + pos;
     this->m_fifo->insert(at, src.m_fifo->begin(), src.m_fifo->end());

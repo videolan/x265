@@ -99,7 +99,7 @@ public:
     TComPrediction();
     virtual ~TComPrediction();
 
-    Void    initTempBuff();
+    Void initTempBuff();
 
     // inter
     Void motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPicList picList = REF_PIC_LIST_X, Int partIdx = -1);
@@ -108,8 +108,8 @@ public:
     Void getMvPredAMVP(TComDataCU* cu, UInt partIdx, UInt partAddr, RefPicList picList, x265::MV& mvPred);
 
     // Angular Intra
-    Void predIntraLumaAng(TComPattern* pcTComPattern, UInt dirMode, Pel* pred, UInt stride, Int width);
-    Void predIntraChromaAng(Pel* piSrc, UInt dirMode, Pel* pred, UInt stride, Int width);
+    Void predIntraLumaAng(UInt dirMode, Pel* pred, UInt stride, Int width);
+    Void predIntraChromaAng(Pel* src, UInt dirMode, Pel* pred, UInt stride, Int width);
 
     Pel* getPredicBuf()             { return m_predBuf; }
 

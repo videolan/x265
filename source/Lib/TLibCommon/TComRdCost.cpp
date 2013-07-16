@@ -1387,9 +1387,9 @@ UInt TComRdCost::xGetSSE64(DistParam* distParam)
 // HADAMARD with step (used in fractional search)
 // --------------------------------------------------------------------------------------------------------------------
 
-UInt TComRdCost::xCalcHADs4x4(Pel *org, Pel *cur, Int strideOrg, Int strideCur, Int step)
+UInt TComRdCost::xCalcHADs4x4(Pel *org, Pel *cur, Int strideOrg, Int strideCur, Int /*step*/)
 {
-    assert(step == 1);
+    //assert(step == 1);
 
     Int k, satd = 0, diff[16], m[16], d[16];
 
@@ -1483,9 +1483,9 @@ UInt TComRdCost::xCalcHADs4x4(Pel *org, Pel *cur, Int strideOrg, Int strideCur, 
     return satd;
 }
 
-UInt TComRdCost::xCalcHADs8x8(Pel *org, Pel *cur, Int strideOrg, Int strideCur, Int step)
+UInt TComRdCost::xCalcHADs8x8(Pel *org, Pel *cur, Int strideOrg, Int strideCur, Int /*step*/)
 {
-    assert(step == 1);
+    //assert(step == 1);
     Int k, i, j, jj, sad = 0;
     Int diff[64], m1[8][8], m2[8][8], m3[8][8];
     for (k = 0; k < 64; k += 8)

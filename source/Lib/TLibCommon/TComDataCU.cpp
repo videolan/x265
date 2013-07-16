@@ -1598,7 +1598,6 @@ Void TComDataCU::setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth
 Void TComDataCU::setQPSubParts(Int qp, UInt absPartIdx, UInt depth)
 {
     UInt curPartNum = m_pic->getNumPartInCU() >> (depth << 1);
-    TComSlice* slice = getPic()->getSlice();
 
     for (UInt scuIdx = absPartIdx; scuIdx < absPartIdx + curPartNum; scuIdx++)
     {
@@ -3236,11 +3235,10 @@ UInt TComDataCU::getSCUAddr()
  * \param bRightTileBoundary true means that right boundary coincides tile boundary
  * \param bIndependentTileBoundaryEnabled true for independent tile boundary enabled
  */
-Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt /*numLCUInPicHeight*/, UInt numSUInLCUWidth, UInt numSUInLCUHeight,
+Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt /*numLCUInPicWidth*/, UInt /*numLCUInPicHeight*/, UInt numSUInLCUWidth, UInt numSUInLCUHeight,
                                                      UInt picWidth, UInt picHeight, Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary,
                                                      Bool bRightTileBoundary, Bool bIndependentTileBoundaryEnabled)
 {
-    UInt numSUInLCU = numSUInLCUWidth * numSUInLCUHeight;
     UInt lpelx, tpely;
     UInt width, height;
     Bool bPicRBoundary, bPicBBoundary, bPicTBoundary, bPicLBoundary;
@@ -3248,11 +3246,6 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
     Bool* bAvailBorder;
     Bool* bAvail;
     UInt rTLSU, rBRSU, widthSU;
-    UInt rTRefSU = 0, rBRefSU = 0, rLRefSU = 0, rRRefSU = 0;
-    Int* rRefMapLCU = NULL;
-    Int* lRefMapLCU = NULL;
-    Int* tRefMapLCU = NULL;
-    Int* bRefMapLCU = NULL;
     UInt numSGU = (UInt)m_vNDFBlock.size();
 
     for (Int i = 0; i < numSGU; i++)

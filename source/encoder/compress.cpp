@@ -166,7 +166,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
         {
             for (UInt mode = 2; mode < numModesAvailable; mode++)
             {
-                m_search->predIntraLumaAng(cu->getPattern(), mode, pred, stride, width);
+                m_search->predIntraLumaAng(mode, pred, stride, width);
                 modeCosts[mode] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
             }
         }

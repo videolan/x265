@@ -147,7 +147,7 @@ Void TComPrediction::initTempBuff()
 // Public member functions
 // ====================================================================================================================
 
-Void TComPrediction::predIntraLumaAng(TComPattern* pcTComPattern, UInt dirMode, Pel* dst, UInt stride, Int size)
+Void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, Int size)
 {
     assert(g_convertToBit[size] >= 0);   //   4x  4
     assert(g_convertToBit[size] <= 5);   // 128x128
@@ -446,13 +446,12 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
  * \param dstPic   Pointer to destination picture
  * \param bi       Flag indicating whether bipred is used
  */
-Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool bi)
+Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool /* bi */)
 {
-    assert(bi == false);
+    //assert(bi == false);
 
     Int refStride = refPic->getStride();
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
-    Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
     Int dstStride = dstPic->getStride();
     Pel *dst      = dstPic->getLumaAddr(partAddr);
@@ -467,9 +466,9 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 }
 
 //Motion compensated block for biprediction
-Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool bi)
+Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool /*bi*/)
 {
-    assert(bi == true);
+    //assert(bi == true);
 
     Int refStride = refPic->getStride();
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
@@ -480,9 +479,6 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 
     Int xFrac = mv->x & 0x3;
     Int yFrac = mv->y & 0x3;
-
-    Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Int srcStride = refPic->getStride();
 
     if (yFrac == 0)
     {
@@ -525,7 +521,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
  * \param dstPic   Pointer to destination picture
  * \param bi       Flag indicating whether bipred is used
  */
-Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool bi)
+Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic, Bool /*bi*/)
 {
     assert(bi == false);
 
@@ -583,7 +579,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 }
 
 //Generate motion compensated block when biprediction
-Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool bi)
+Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic, Bool /*bi*/)
 {
     assert(bi == true);
 

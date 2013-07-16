@@ -541,7 +541,7 @@ Pel* TComPattern::getAdiCbBuf(Int /*cuWidth*/, Int /*cuHeight*/, Pel* adiBuf)
     return adiBuf;
 }
 
-Pel* TComPattern::getAdiCrBuf(Int cuWidth, Int cuHeight, Pel* adiBuf)
+Pel* TComPattern::getAdiCrBuf(Int /*cuWidth*/, Int cuHeight, Pel* adiBuf)
 {
     return adiBuf + ADI_BUF_STRIDE * (cuHeight * 2 + 1);
 }

@@ -801,7 +801,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
 
         if (m_cSPS.getUseSAO())
         {
-            pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0, bLFCrossTileBoundary);
+            pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
             sao->createPicSaoInfo(pic);
         }
         entropyCoder->setEntropyCoder(cavlcCoder, slice);

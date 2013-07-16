@@ -489,7 +489,7 @@ Void TComSlice::initEqualRef()
     }
 }
 
-Void TComSlice::checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& picList)
+Void TComSlice::checkCRA(TComReferencePictureSet *rps, Int& pocCRA, Bool& prevRAPisBLA)
 {
     for (Int i = 0; i < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); i++)
     {

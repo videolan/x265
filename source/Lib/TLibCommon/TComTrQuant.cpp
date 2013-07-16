@@ -631,7 +631,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(Int bitDepth, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height)
+Void TComTrQuant::xIT(Int /*bitDepth*/, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
 {
     // TODO: this may need larger data types for bitDepth > 8
     const UInt log2BlockSize = g_convertToBit[width];
@@ -735,7 +735,6 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     UInt       goRiceParam      = 0;
     Double     blockUncodedCost = 0;
     const UInt log2BlkSize      = g_convertToBit[width] + 2;
-    const UInt maxNumCoeff      = width * height;
     Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)ttype];
 
     assert(scalingListType < 6);

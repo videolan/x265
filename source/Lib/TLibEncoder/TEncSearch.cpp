@@ -864,7 +864,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         cu->getPattern()->initPattern(cu, trDepth, absPartIdx);
         cu->getPattern()->initAdiPattern(cu, absPartIdx, trDepth, m_predBuf, m_predBufStride, m_predBufHeight, refAbove, refLeft, refAboveFlt, refLeftFlt);
         //===== get prediction signal =====
-        predIntraLumaAng(cu->getPattern(), lumaPredMode, pred, stride, width);
+        predIntraLumaAng(lumaPredMode, pred, stride, width);
         // save prediction
         if (default0Save1Load2 == 1)
         {
@@ -2100,7 +2100,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             {
                 for (UInt mode = 2; mode < numModesAvailable; mode++)
                 {
-                    predIntraLumaAng(cu->getPattern(), mode, pred, stride, width);
+                    predIntraLumaAng(mode, pred, stride, width);
                     modeCosts[mode] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
                 }
             }

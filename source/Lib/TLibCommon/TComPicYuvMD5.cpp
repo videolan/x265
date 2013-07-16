@@ -147,7 +147,7 @@ void calcCRC(TComPicYuv& pic, UChar digest[3][16])
     compCRC(g_bitDepthC, pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
-static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
+static void compChecksum(Int /*bitdepth*/, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
 {
     UInt checksum = 0;
     UChar xor_mask;
@@ -164,7 +164,6 @@ static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height
             {
                 checksum = (checksum + ((plane[y * stride + x] >> 8) ^ xor_mask)) & 0xffffffff;
             }
-
 #endif
         }
     }

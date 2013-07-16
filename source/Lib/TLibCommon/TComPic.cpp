@@ -117,9 +117,8 @@ Void TComPic::compressMotion()
  * \param sliceGranularityDepth slice granularity
  * \param bNDBFilterCrossSliceBoundary cross-slice-boundary in-loop filtering; true for "cross".
  * \param numTiles number of tiles in picture
- * \param bNDBFilterCrossTileBoundary cross-tile-boundary in-loop filtering; true for "cross".
  */
-Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth, Bool bNDBFilterCrossTileBoundary)
+Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDepth)
 {
     UInt maxNumSUInLCU = getNumPartInCU();
     UInt numLCUInPic   = getNumCUsInFrame();
@@ -160,7 +159,6 @@ Void TComPic::createNonDBFilterInfo(Int lastSliceCUAddr, Int sliceGranularityDep
     currSU    = firstCUInStartLCU;
 
     Bool bMoveToNextLCU = false;
-    Bool bSliceInOneLCU = (startLCU == endLCU);
 
     while (!(LPelX < picWidth) || !(TPelY < picHeight))
     {

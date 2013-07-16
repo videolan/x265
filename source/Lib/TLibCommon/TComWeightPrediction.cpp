@@ -542,7 +542,6 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
 Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv)
 {
     wpScalingParam  *pwp0, *pwp1;
-    const TComPPS   *pps = cu->getSlice()->getPPS();
 
     assert(pps->getWPBiPred());
 
@@ -581,7 +580,6 @@ Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
 Void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TShortYUV* srcYuv0, TShortYUV* srcYuv1, Int refIdx0, Int refIdx1, UInt partIdx, Int width, Int height, TComYuv* outDstYuv)
 {
     wpScalingParam  *pwp0, *pwp1;
-    const TComPPS   *pps = cu->getSlice()->getPPS();
 
     assert(pps->getWPBiPred());
 

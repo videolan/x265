@@ -20,12 +20,10 @@ source_group(TLibCommon FILES ${LIBCOMMON_SRC})
 source_group(TLibCommonH FILES ${LIBCOMMON_HDR})
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "-Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare")
+        "-Wno-sign-compare")
 endif(GCC)
 if(MSVC)
     # ignore these warnings from HM source
-    # /wd4100 unreferenced formal parameter
-    # /wd4189 local variable is initialized but not referenced
     # /wd4244 type conversion, possible loss of data
     # /wd4512 assignment operator could not be generated
     # /wd4127 conditional expression is constant
@@ -33,7 +31,7 @@ if(MSVC)
     # /wd4018 '<' signed/unsigned mismatch
     # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4100 /wd4189 /wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
+        "/wd4244 /wd4512 /wd4127 /wd4389 /wd4018 /wd4800")
 endif(MSVC)
 
 add_library(common
