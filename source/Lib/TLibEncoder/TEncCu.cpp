@@ -39,7 +39,6 @@
 #include "TEncTop.h"
 #include "TEncCu.h"
 #include "TEncAnalyze.h"
-#include "TEncPic.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
 #include "common.h"
@@ -419,13 +418,6 @@ Void TEncCu::compressCU(TComDataCU* cu)
         }
         else
             xCompressCU(m_bestCU[0], m_tempCU[0], 0);
-    }
-    if (m_cfg->getUseAdaptQpSelect())
-    {
-        if (cu->getSlice()->getSliceType() != I_SLICE) //IIII
-        {
-            xLcuCollectARLStats(cu);
-        }
     }
 }
 
@@ -1264,32 +1256,12 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 
 /** Compute QP for each CU
  * \param cu Target CU
- * \param depth CU depth
  * \returns quantization parameter
  */
-Int TEncCu::xComputeQP(TComDataCU* cu, UInt depth)
+Int TEncCu::xComputeQP(TComDataCU* cu)
 {
     Int baseQP = cu->getSlice()->getSliceQp();
-    Int qpOffset = 0;
-
-    if (m_cfg->getUseAdaptiveQP())
-    {
-        TEncPic* encPic = dynamic_cast<TEncPic*>(cu->getPic());
-        UInt aqdepth = min(depth, encPic->getMaxAQDepth() - 1);
-        TEncPicQPAdaptationLayer* aqlayer = encPic->getAQLayer(aqdepth);
-        UInt aqUPosX = cu->getCUPelX() / aqlayer->getAQPartWidth();
-        UInt aqUPosY = cu->getCUPelY() / aqlayer->getAQPartHeight();
-        UInt aqUStride = aqlayer->getAQPartStride();
-        TEncQPAdaptationUnit* acAQU = aqlayer->getQPAdaptationUnit();
-
-        Double maxQScale = pow(2.0, m_cfg->getQPAdaptationRange() / 6.0);
-        Double avgAct = aqlayer->getAvgActivity();
-        Double cuAct = acAQU[aqUPosY * aqUStride + aqUPosX].getActivity();
-        Double dNormAct = (maxQScale * cuAct + avgAct) / (cuAct + maxQScale * avgAct);
-        Double qpOffsetD = log(dNormAct) / log(2.0) * 6.0;
-        qpOffset = Int(floor(qpOffsetD + 0.49999));
-    }
-    return Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, baseQP + qpOffset);
+    return Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, baseQP);
 }
 
 /** encode a CU block recursively
@@ -1876,50 +1848,6 @@ Int TEncCu::xTuCollectARLStats(TCoeff* coeff, Int* arlCoeff, Int numCoeffInCU, D
     }
 
     return 0;
-}
-
-/** Collect ARL statistics from one LCU
- * \param cu
- */
-Void TEncCu::xLcuCollectARLStats(TComDataCU* cu)
-{
-    Double cSum[LEVEL_RANGE + 1];     //: the sum of DCT coefficients corresponding to datatype and quantization output
-    UInt numSamples[LEVEL_RANGE + 1]; //: the number of coefficients corresponding to datatype and quantization output
-
-    TCoeff* coeffY = cu->getCoeffY();
-    Int* arlCoeffY = cu->getArlCoeffY();
-
-    UInt minCUWidth = g_maxCUWidth >> g_maxCUDepth;
-    UInt minNumCoeffInCU = 1 << minCUWidth;
-
-    memset(cSum, 0, sizeof(Double) * (LEVEL_RANGE + 1));
-    memset(numSamples, 0, sizeof(UInt) * (LEVEL_RANGE + 1));
-
-    // Collect stats to cSum[][] and numSamples[][]
-    for (Int i = 0; i < cu->getTotalNumPart(); i++)
-    {
-        UInt trIdx = cu->getTransformIdx(i);
-
-        if (cu->getPredictionMode(i) == MODE_INTER)
-        {
-            if (cu->getCbf(i, TEXT_LUMA, trIdx))
-            {
-                xTuCollectARLStats(coeffY, arlCoeffY, minNumCoeffInCU, cSum, numSamples);
-            } //Note that only InterY is processed. QP rounding is based on InterY data only.
-        }
-
-        coeffY += minNumCoeffInCU;
-        arlCoeffY += minNumCoeffInCU;
-    }
-
-    for (Int u = 1; u < LEVEL_RANGE; u++)
-    {
-        m_trQuant->getSliceSumC()[u] += cSum[u];
-        m_trQuant->getSliceNSamples()[u] += numSamples[u];
-    }
-
-    m_trQuant->getSliceSumC()[LEVEL_RANGE] += cSum[LEVEL_RANGE];
-    m_trQuant->getSliceNSamples()[LEVEL_RANGE] += numSamples[LEVEL_RANGE];
 }
 
 //! \}

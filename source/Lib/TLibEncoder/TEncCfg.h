@@ -161,15 +161,9 @@ protected:
     //====== Quality control ========
     Bool      m_useRDO;
 
-    Int       m_maxCuDQPDepth;                 //  Max. depth for a minimum CuDQP (0:default)
-
+    Int       m_maxCuDQPDepth;                  //  Max. depth for a minimum CuDQP (0:default)
     Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
     Int       m_chromaCrQpOffset;               //  Chroma Cr Qp Offset (0:default)
-
-    // DEATH ROW
-    Bool      m_bUseAdaptQpSelect;
-    Bool      m_bUseAdaptiveQP;
-    Int       m_iQPAdaptationRange;
 
     //====== Tool list ========
     Bool      m_bUseASR;
@@ -365,14 +359,6 @@ public:
 
     Void      setChromaCrQpOffset(Int i)      { m_chromaCrQpOffset = i; }
 
-    Void      setUseAdaptQpSelect(Bool i) { m_bUseAdaptQpSelect    = i; }
-
-    Bool      getUseAdaptQpSelect()           { return m_bUseAdaptQpSelect; }
-
-    Void      setUseAdaptiveQP(Bool b)        { m_bUseAdaptiveQP = b; }
-
-    Void      setQPAdaptationRange(Int i)     { m_iQPAdaptationRange = i; }
-
     //====== Lossless ========
     Void      setUseLossless(Bool b)        { m_useLossless = b;  }
 
@@ -435,10 +421,6 @@ public:
 
     //==== Quality control ========
     Int       getMaxCuDQPDepth()      { return m_maxCuDQPDepth; }
-
-    Bool      getUseAdaptiveQP()      { return m_bUseAdaptiveQP; }
-
-    Int       getQPAdaptationRange()      { return m_iQPAdaptationRange; }
 
     //====== Lossless ========
     Bool      getUseLossless()      { return m_useLossless;  }

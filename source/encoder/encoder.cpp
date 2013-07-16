@@ -262,10 +262,7 @@ void Encoder::configure(x265_param_t *param)
     setVPS(&vps);
     setMaxTempLayer(m_maxTempLayer);
 
-    setUseAdaptQpSelect(0);
     setMaxCuDQPDepth(0);
-    setUseAdaptiveQP(0);
-    setQPAdaptationRange(6);
     setMaxNumOffsetsPerPic(2048);
     setLog2ParallelMergeLevelMinus2(0);
     setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto
@@ -394,9 +391,9 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         }
 
 #define SET4(id, VAR, a, b, c, d) \
-    m_GOPList[id].VAR[0] = a; m_GOPList[id].VAR[1] = b; m_GOPList[id].VAR[2] = c; m_GOPList[id].VAR[3] = d;
+    m_gopList[id].VAR[0] = a; m_gopList[id].VAR[1] = b; m_gopList[id].VAR[2] = c; m_gopList[id].VAR[3] = d;
 #define SET5(id, VAR, a, b, c, d, e) \
-    m_GOPList[id].VAR[0] = a; m_GOPList[id].VAR[1] = b; m_GOPList[id].VAR[2] = c; m_GOPList[id].VAR[3] = d; m_GOPList[id].VAR[4] = e;
+    m_gopList[id].VAR[0] = a; m_gopList[id].VAR[1] = b; m_gopList[id].VAR[2] = c; m_gopList[id].VAR[3] = d; m_gopList[id].VAR[4] = e;
 
         SET4(0, m_referencePics, -8, -10, -12, -16);
         SET4(1, m_referencePics, -4, -6, 4, 0);
@@ -743,8 +740,8 @@ bool Encoder::InitializeGOP(x265_param_t *param)
         Int numReorder = 0;
         for (Int j = 0; j < highestDecodingNumberWithLowerPOC; j++)
         {
-            if (m_GOPList[j].m_temporalId <= m_GOPList[i].m_temporalId &&
-                m_GOPList[j].m_POC > m_GOPList[i].m_POC)
+            if (m_gopList[j].m_temporalId <= m_gopList[i].m_temporalId &&
+                m_gopList[j].m_POC > m_gopList[i].m_POC)
             {
                 numReorder++;
             }

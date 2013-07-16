@@ -38,7 +38,6 @@
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/ContextModel.h"
 #include "TEncTop.h"
-#include "TEncPic.h"
 #include "primitives.h"
 
 #include <limits.h>
@@ -421,10 +420,6 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
         {
             bUseDQP = true;
         }
-    }
-    else
-    {
-        bUseDQP |= getUseAdaptiveQP();
     }
 
     if (bUseDQP)

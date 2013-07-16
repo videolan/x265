@@ -37,7 +37,6 @@
 
 #include "TEncTop.h"
 #include "TEncGOP.h"
-#include "TEncPic.h"
 #include "TEncAnalyze.h"
 #include "TLibCommon/SEI.h"
 #include "TLibCommon/NAL.h"
@@ -185,19 +184,9 @@ Void TEncGOP::init(TEncTop* pcTEncTop)
     for (int i = 0; i < maxGOP; i++)
     {
         TComPic *pic;
-        if (m_pcCfg->getUseAdaptiveQP())
-        {
-            TEncPic* pcEPic = new TEncPic;
-            pcEPic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                           m_cPPS.getMaxCuDQPDepth() + 1, m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
-            pic = pcEPic;
-        }
-        else
-        {
-            pic = new TComPic;
-            pic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                          m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
-        }
+        pic = new TComPic;
+        pic->create(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+                        m_pcCfg->getConformanceWindow(), m_pcCfg->getDefaultDisplayWindow());
         if (m_pcCfg->getUseSAO())
         {
             pic->getPicSym()->allocSaoParam(m_cFrameEncoders->getSAO());
@@ -263,11 +252,6 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *picture)
             pic->getPicYuvOrg()->copyFromPicture(*picture);
             pic->getPicYuvRec()->setBorderExtension(false);
             pic->getSlice()->setReferenced(true);
-            if (m_pcCfg->getUseAdaptiveQP())
-            {
-                // compute image characteristics
-                dynamic_cast<TEncPic*>(pic)->preanalyze();
-            }
             return;
         }
     }
@@ -1070,7 +1054,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 entropyCoder->setBitstream(bitCounter);
 
                 // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                sao->startSaoEnc(pic, entropyCoder, frameEncoder->getRDSbacCoders(0), frameEncoder->getRDGoOnSbacCoder(0));
+                sao->startSaoEnc(pic, entropyCoder, frameEncoder->getRDGoOnSbacCoder(0));
 
                 SAOParam& cSaoParam = *slice->getPic()->getPicSym()->getSaoParam();
 

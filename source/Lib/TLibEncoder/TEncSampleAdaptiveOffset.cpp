@@ -116,7 +116,6 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, D
 
     Int allowMergeLeft;
     Int allowMergeUp;
-    Int frameWidthInCU = m_pic->getFrameWidthInCU();
     SaoLcuParam saoLcuParamRdo;
 
     for (typeIdx = -1; typeIdx < numTotalType; typeIdx++)
@@ -605,7 +604,7 @@ Void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac*** rdSbacCoder, TEncSbac* rdGoOnSbacCoder)
+Void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
 {
     m_pic = pic;
     m_entropyCoder = entropyCoder;
@@ -1612,7 +1611,7 @@ Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam, Double lambdaLuma,
         if (saoParam->bSaoFlag[0])
         {
             convertQT2SaoUnit(saoParam, 0, 0);
-            assignSaoUnitSyntax(saoParam->saoLcuParam[0],  saoParam->saoPart[0], saoParam->oneUnitFlag[0], 0);
+            assignSaoUnitSyntax(saoParam->saoLcuParam[0],  saoParam->saoPart[0], saoParam->oneUnitFlag[0]);
         }
     }
     if (saoParam->bSaoFlag[0])
@@ -1690,7 +1689,7 @@ Void TEncSampleAdaptiveOffset::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam
  * \param oneUnitFlag SAO one unit flag
  * \param yCbCr color component Index
  */
-Void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag, Int yCbCr)
+Void TEncSampleAdaptiveOffset::assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag)
 {
     if (saoPart->bSplit == 0)
     {

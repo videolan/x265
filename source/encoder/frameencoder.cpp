@@ -33,16 +33,10 @@ void CTURow::create(TEncTop* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
+    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(), top->getUseTransformSkipFast());
 
-    if (top->getUseAdaptiveQP())
-    {
-        m_trQuant.initSliceQpDelta();
-    }
-    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(),
-                   top->getUseTransformSkipFast(), top->getUseAdaptQpSelect());
-
-    m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
-    m_binCodersCABAC = new TEncBinCABACCounter * *[g_maxCUDepth + 1];
+    m_rdSbacCoders = new TEncSbac **[g_maxCUDepth + 1];
+    m_binCodersCABAC = new TEncBinCABACCounter **[g_maxCUDepth + 1];
 
     for (UInt depth = 0; depth < g_maxCUDepth + 1; depth++)
     {

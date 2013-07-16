@@ -82,7 +82,7 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    Void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac*** rdSbacCoder, TEncSbac* rdGoOnSbacCoder);
+    Void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
     Void endSaoEnc();
     Void resetStats();
     Void SAOProcess(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth);
@@ -98,8 +98,8 @@ public:
     Void calcSaoStatsCu_BeforeDblk(TComPic* pic);
     Void destroyEncBuffer();
     Void createEncBuffer();
-    Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag, Int yCbCr);
-    Void checkMerge(SaoLcuParam * lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
+    Void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, Bool &oneUnitFlag);
+    Void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, Int dir);
     Void rdoSaoUnitAll(SAOParam *saoParam, Double lambda, Double lambdaChroma, Int depth);
     Void saoComponentParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Int yCbCr, Double lambda, SaoLcuParam *compSaoParam, Double *distortion);
     Void sao2ChromaParamDist(Int allowMergeLeft, Int allowMergeUp, SAOParam *saoParam, Int addr, Int addrUp, Int addrLeft, Double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, Double *distortion);

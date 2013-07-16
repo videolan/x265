@@ -325,14 +325,8 @@ Void TComTrQuant::signBitHidingHDQ(TCoeff* qCoef, TCoeff* coef, UInt const *scan
     } // TU loop
 }
 
-UInt TComTrQuant::xQuant(TComDataCU* cu,
-                         Int*        coef,
-                         TCoeff*     qCoef,
-                         Int*        arlCCoef,
-                         Int         width,
-                         Int         height,
-                         TextType    ttype,
-                         UInt        absPartIdx)
+UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, Int height,
+                         TextType ttype, UInt absPartIdx)
 {
     UInt acSum = 0;
     Int add = 0;
@@ -340,7 +334,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
 
     if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
     {
-        acSum = xRateDistOptQuant(cu, coef, qCoef, arlCCoef, width, height, ttype, absPartIdx);
+        acSum = xRateDistOptQuant(cu, coef, qCoef, width, height, ttype, absPartIdx);
     }
     else
     {
@@ -397,17 +391,10 @@ UInt TComTrQuant::xQuant(TComDataCU* cu,
 
         Int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
-        Int qbitsC = QUANT_SHIFT + cQpBase.m_per + transformShift - ARL_C_PRECISION;
 
         Int numCoeff = width * height;
-        if (m_bUseAdaptQpSelect)
-        {
-            acSum += x265::primitives.quantaq(coef, quantCoeff, deltaU, qCoef, arlCCoef, qbitsC, qbits, add, numCoeff);
-        }
-        else
-        {
-            acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
-        }
+        acSum += x265::primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
+
         if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
             signBitHidingHDQ(qCoef, coef, scan, deltaU, width, height);
     }
@@ -472,20 +459,18 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     }
 }
 
-Void TComTrQuant::init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool useAdaptQpSelect)
+Void TComTrQuant::init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast)
 {
-    m_maxTrSize          = maxTrSize;
+    m_maxTrSize            = maxTrSize;
     m_useRDOQ              = useRDOQ;
     m_useRDOQTS            = useRDOQTS;
     m_useTransformSkipFast = useTransformSkipFast;
-    m_bUseAdaptQpSelect    = useAdaptQpSelect;
 }
 
 UInt TComTrQuant::transformNxN(TComDataCU* cu,
                                Short*      residual,
                                UInt        stride,
                                TCoeff*     coeff,
-                               Int*        arlCoeff,
                                UInt        width,
                                UInt        height,
                                TextType    ttype,
@@ -529,7 +514,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
         const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, arlCoeff, width, height, ttype, absPartIdx);
+    return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx);
 }
 
 Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
@@ -719,14 +704,8 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
  * Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC
  */
-UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
-                                    Int*        srcCoeff,
-                                    TCoeff*     dstCoeff,
-                                    Int*        arlDstCoeff,
-                                    UInt        width,
-                                    UInt        height,
-                                    TextType    ttype,
-                                    UInt        absPartIdx)
+UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height,
+                                    TextType ttype, UInt absPartIdx)
 {
     UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
@@ -744,8 +723,6 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
     Int *qCoefOrg = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
     Int *qCoef = qCoefOrg;
     Double *errScale = errScaleOrg;
-    Int qbitsC = qbits - ARL_C_PRECISION;
-    Int addc = 1 << (qbitsC - 1);
     UInt scanIdx = cu->getCoefScanIdx(absPartIdx, width, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
 
     Double costCoeff[32 * 32];
@@ -809,10 +786,6 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu,
             Int levelDouble    = srcCoeff[blkPos];
             levelDouble        = (Int)min<Int64>((Int64)abs((Int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
 
-            if (m_bUseAdaptQpSelect)
-            {
-                arlDstCoeff[blkPos] = (Int)((levelDouble + addc) >> qbitsC);
-            }
             UInt maxAbsLevel = (levelDouble + (1 << (qbits - 1))) >> qbits;
 
             Double err          = Double(levelDouble);

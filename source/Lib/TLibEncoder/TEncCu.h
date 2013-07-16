@@ -142,7 +142,7 @@ protected:
     Void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
     Void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt partitionIndex);
     Void xEncodeCU(TComDataCU* cu, UInt absPartIdx, UInt depth);
-    Int  xComputeQP(TComDataCU* cu, UInt depth);
+    Int  xComputeQP(TComDataCU* cu);
     Void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt depth);
 
     Void xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool *earlyDetectionSkipMode,
@@ -167,7 +167,6 @@ protected:
     Void setdQPFlag(Bool b)  { m_bEncodeDQP = b; }
 
     // Adaptive reconstruction level (ARL) statistics collection functions
-    Void xLcuCollectARLStats(TComDataCU* cu);
     Int  xTuCollectARLStats(TCoeff* coeff, Int* arlCoeff, Int numCoeffInCU, Double* coeffSum, UInt* numSamples);
 
     Void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver,

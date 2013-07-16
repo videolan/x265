@@ -121,10 +121,10 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast, Bool bUseAdaptQpSelect);
+    Void init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast);
 
     // transform & inverse transform functions
-    UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, Int* arlCoeff, UInt width, UInt height,
+    UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,
                       TextType ttype, UInt absPartIdx, Bool useTransformSkip = false);
 
     Void invtransformNxN(Bool transQuantBypass, TextType ttype, UInt mode, Short* residual, UInt stride, TCoeff* coeff,
@@ -195,7 +195,6 @@ protected:
     UInt     m_maxTrSize;
     Bool     m_useRDOQ;
     Bool     m_useRDOQTS;
-    Bool     m_bUseAdaptQpSelect;
     Bool     m_useTransformSkipFast;
     Bool     m_scalingListEnabledFlag;
     Int     *m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
@@ -209,11 +208,10 @@ private:
 
     Void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
-    UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int* arlDes, Int width, Int height, TextType ttype, UInt absPartIdx);
+    UInt xQuant(TComDataCU* cu, Int* src, TCoeff* dst, Int width, Int height, TextType ttype, UInt absPartIdx);
 
     // RDOQ functions
-    UInt xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, Int* arlDstCoeff, UInt width, UInt height,
-                           TextType ttype, UInt absPartIdx);
+    UInt xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCoeff, UInt width, UInt height, TextType ttype, UInt absPartIdx);
 
     inline UInt xGetCodedLevel(Double& codedCost, Double& codedCost0, Double& codedCostSig, Int levelDouble,
                                  UInt maxAbsLevel, UShort ctxNumSig, UShort ctxNumOne, UShort ctxNumAbs, UShort absGoRice,

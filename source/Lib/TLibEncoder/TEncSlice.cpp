@@ -422,20 +422,6 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
         xCheckWPEnable(slice);
     }
 
-    if (m_cfg->getUseAdaptQpSelect())
-    {
-        // TODO: fix this option
-        assert(0);
-#if 0
-        m_pcTrQuant->clearSliceARLCnt();
-        if (slice->getSliceType() != I_SLICE)
-        {
-            Int qpBase = slice->getSliceQpBase();
-            slice->setSliceQp(qpBase + m_pcTrQuant->getQpDelta(qpBase));
-        }
-#endif
-    }
-
     frameEncoder->encode(pic, slice);
 
     if (m_cfg->getWaveFrontsynchro())
@@ -645,13 +631,6 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
         }
     }
 
-    if (m_cfg->getUseAdaptQpSelect())
-    {
-        assert(0);
-#if 0
-        m_pcTrQuant->storeSliceQpNext(slice);
-#endif
-    }
     if (slice->getPPS()->getCabacInitPresentFlag())
     {
         entropyCoder->determineCabacInitIdx();
