@@ -40,10 +40,11 @@
 
 #include "CommonDef.h"
 #include "TComRom.h"
-#include "TShortYUV.h"
 
 #include "x265.h"
 #include "reference.h"
+
+class TShortYUV;
 
 //! \ingroup TLibCommon
 //! \{
