@@ -44,9 +44,11 @@
 #else
 #include <malloc.h>
 #endif
+
 #include <cstdlib>
 #include <assert.h>
 #include <memory.h>
+#include <stdint.h>
 
 using namespace x265;
 
@@ -55,15 +57,15 @@ using namespace x265;
 
 TComPicYuv::TComPicYuv()
 {
-    m_apiPicBufY      = NULL; // Buffer (including margin)
-    m_apiPicBufU      = NULL;
-    m_apiPicBufV      = NULL;
+    m_picBufY = NULL; // Buffer (including margin)
+    m_picBufU = NULL;
+    m_picBufV = NULL;
 
-    m_piPicOrgY       = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
-    m_piPicOrgU       = NULL;
-    m_piPicOrgV       = NULL;
+    m_picOrgY = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
+    m_picOrgU = NULL;
+    m_picOrgV = NULL;
 
-    m_refList         = NULL;
+    m_refList = NULL;
 
     m_bIsBorderExtended = false;
 }
@@ -73,29 +75,29 @@ TComPicYuv::~TComPicYuv()
 
 Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth)
 {
-    m_iPicWidth       = iPicWidth;
-    m_iPicHeight      = iPicHeight;
+    m_picWidth  = iPicWidth;
+    m_picHeight = iPicHeight;
 
     // --> After config finished!
-    m_iCuWidth        = uiMaxCUWidth;
-    m_iCuHeight       = uiMaxCUHeight;
+    m_cuWidth  = uiMaxCUWidth;
+    m_cuHeight = uiMaxCUHeight;
 
-    Int numCuInWidth  = m_iPicWidth  / m_iCuWidth  + (m_iPicWidth  % m_iCuWidth  != 0);
-    Int numCuInHeight = m_iPicHeight / m_iCuHeight + (m_iPicHeight % m_iCuHeight != 0);
+    Int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
+    Int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
 
-    m_iLumaMarginX    = g_maxCUWidth  + 16; // for 16-byte alignment
-    m_iLumaMarginY    = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
+    m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
+    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
-    m_iChromaMarginX  = m_iLumaMarginX;       // keep 16-byte alignment for chroma CTUs
-    m_iChromaMarginY  = m_iLumaMarginY >> 1;
+    m_chromaMarginX = m_lumaMarginX;       // keep 16-byte alignment for chroma CTUs
+    m_chromaMarginY = m_lumaMarginY >> 1;
 
-    m_apiPicBufY      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-    m_apiPicBufU      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
-    m_apiPicBufV      = (Pel*)xMalloc(Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    m_picBufY = (Pel*)xMalloc(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    m_picBufU = (Pel*)xMalloc(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufV = (Pel*)xMalloc(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 
-    m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
-    m_piPicOrgU       = m_apiPicBufU + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
-    m_piPicOrgV       = m_apiPicBufV + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
+    m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
+    m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
+    m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
     m_bIsBorderExtended = false;
 
@@ -105,8 +107,8 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
     {
         for (Int cuCol = 0; cuCol < numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_iCuHeight + cuCol * m_iCuWidth;
-            m_cuOffsetC[cuRow * numCuInWidth + cuCol] = getCStride() * cuRow * (m_iCuHeight / 2) + cuCol * (m_iCuWidth / 2);
+            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
+            m_cuOffsetC[cuRow * numCuInWidth + cuCol] = getCStride() * cuRow * (m_cuHeight / 2) + cuCol * (m_cuWidth / 2);
         }
     }
 
@@ -124,13 +126,13 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
 
 Void TComPicYuv::destroy()
 {
-    m_piPicOrgY       = NULL;
-    m_piPicOrgU       = NULL;
-    m_piPicOrgV       = NULL;
+    m_picOrgY = NULL;
+    m_picOrgU = NULL;
+    m_picOrgV = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
-    if (m_apiPicBufU) { xFree(m_apiPicBufU);    m_apiPicBufU = NULL; }
-    if (m_apiPicBufV) { xFree(m_apiPicBufV);    m_apiPicBufV = NULL; }
+    if (m_picBufY) { xFree(m_picBufY); m_picBufY = NULL; }
+    if (m_picBufU) { xFree(m_picBufU); m_picBufU = NULL; }
+    if (m_picBufV) { xFree(m_picBufV); m_picBufV = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_cuOffsetC;
@@ -149,23 +151,22 @@ Void  TComPicYuv::clearReferences()
     m_refList = NULL;
 }
 
-Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth)
+Void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
-    m_iPicWidth       = iPicWidth;
-    m_iPicHeight      = iPicHeight;
+    m_picWidth  = picWidth;
+    m_picHeight = picHeight;
 
-    // --> After config finished!
-    m_iCuWidth        = uiMaxCUWidth;
-    m_iCuHeight       = uiMaxCUHeight;
+    m_cuWidth  = maxCUWidth;
+    m_cuHeight = maxCUHeight;
 
-    Int numCuInWidth  = m_iPicWidth  / m_iCuWidth  + (m_iPicWidth  % m_iCuWidth  != 0);
-    Int numCuInHeight = m_iPicHeight / m_iCuHeight + (m_iPicHeight % m_iCuHeight != 0);
+    Int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
+    Int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
 
-    m_iLumaMarginX    = g_maxCUWidth  + 16; // for 16-byte alignment
-    m_iLumaMarginY    = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
+    m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
+    m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
-    m_apiPicBufY      = (Pel*)xMalloc(Pel, (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-    m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
+    m_picBufY = (Pel*)xMalloc(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    m_picOrgY = m_picBufY + m_lumaMarginY * getStride() + m_lumaMarginX;
 
     m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
     m_cuOffsetC = NULL;
@@ -173,26 +174,26 @@ Void TComPicYuv::createLuma(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UI
     {
         for (Int cuCol = 0; cuCol < numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_iCuHeight + cuCol * m_iCuWidth;
+            m_cuOffsetY[cuRow * numCuInWidth + cuCol] = getStride() * cuRow * m_cuHeight + cuCol * m_cuWidth;
         }
     }
 
-    m_buOffsetY = new Int[(size_t)1 << (2 * uiMaxCUDepth)];
+    m_buOffsetY = new Int[(size_t)1 << (2 * maxCUDepth)];
     m_buOffsetC = NULL;
-    for (Int buRow = 0; buRow < (1 << uiMaxCUDepth); buRow++)
+    for (Int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
     {
-        for (Int buCol = 0; buCol < (1 << uiMaxCUDepth); buCol++)
+        for (Int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow << uiMaxCUDepth) + buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
+            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
         }
     }
 }
 
 Void TComPicYuv::destroyLuma()
 {
-    m_piPicOrgY       = NULL;
+    m_picOrgY = NULL;
 
-    if (m_apiPicBufY) { xFree(m_apiPicBufY);    m_apiPicBufY = NULL; }
+    if (m_picBufY) { xFree(m_picBufY); m_picBufY = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_buOffsetY;
@@ -200,36 +201,36 @@ Void TComPicYuv::destroyLuma()
 
 Void  TComPicYuv::copyToPic(TComPicYuv* pcPicYuvDst)
 {
-    assert(m_iPicWidth  == pcPicYuvDst->getWidth());
-    assert(m_iPicHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == pcPicYuvDst->getWidth());
+    assert(m_picHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) * (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst)
 {
-    assert(m_iPicWidth  == pcPicYuvDst->getWidth());
-    assert(m_iPicHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == pcPicYuvDst->getWidth());
+    assert(m_picHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_apiPicBufY, sizeof(Pel) * (m_iPicWidth       + (m_iLumaMarginX << 1)) * (m_iPicHeight       + (m_iLumaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicCb(TComPicYuv* pcPicYuvDst)
 {
-    assert(m_iPicWidth  == pcPicYuvDst->getWidth());
-    assert(m_iPicHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == pcPicYuvDst->getWidth());
+    assert(m_picHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufU(), m_apiPicBufU, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
 Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
 {
-    assert(m_iPicWidth  == pcPicYuvDst->getWidth());
-    assert(m_iPicHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == pcPicYuvDst->getWidth());
+    assert(m_picHeight == pcPicYuvDst->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)));
+    ::memcpy(pcPicYuvDst->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
 Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
@@ -238,10 +239,10 @@ Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
         return;
 
     /* HPEL generation requires luma integer plane to already be extended */
-    xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(), getHeight(), m_iLumaMarginX, m_iLumaMarginY);
+    xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(), getHeight(), m_lumaMarginX, m_lumaMarginY);
 
-    xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
-    xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_iChromaMarginX, m_iChromaMarginY);
+    xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
+    xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
 
     if (m_refList == NULL)
         m_refList = new x265::MotionReference(this, pool);
@@ -250,34 +251,32 @@ Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
     m_bIsBorderExtended = true;
 }
 
-Void TComPicYuv::xExtendPicCompBorder(Pel* piTxt, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
+Void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
 {
     Int   x, y;
-    Pel*  pi;
 
     /* TODO: this should become a performance primitive */
-    pi = piTxt;
     for (y = 0; y < height; y++)
     {
         for (x = 0; x < iMarginX; x++)
         {
-            pi[-iMarginX + x] = pi[0];
-            pi[width + x] = pi[width - 1];
+            recon[-iMarginX + x] = recon[0];
+            recon[width + x] = recon[width - 1];
         }
 
-        pi += stride;
+        recon += stride;
     }
 
-    pi -= (stride + iMarginX);
+    recon -= (stride + iMarginX);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi + (y + 1) * stride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(recon + (y + 1) * stride, recon, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 
-    pi -= ((height - 1) * stride);
+    recon -= ((height - 1) * stride);
     for (y = 0; y < iMarginY; y++)
     {
-        ::memcpy(pi - (y + 1) * stride, pi, sizeof(Pel) * (width + (iMarginX << 1)));
+        ::memcpy(recon - (y + 1) * stride, recon, sizeof(Pel) * (width + (iMarginX << 1)));
     }
 }
 
@@ -294,19 +293,19 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         pFile = fopen(pFileName, "ab");
     }
 
-    Int     shift = g_bitDepthY - 8;
-    Int     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
+    Int shift = g_bitDepthY - 8;
+    Int offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
     Int   x, y;
     UChar uc;
 
-    Pel*  pelY   = getLumaAddr();
-    Pel*  pelCb  = getCbAddr();
-    Pel*  pelCr  = getCrAddr();
+    Pel* pelY   = getLumaAddr();
+    Pel* pelCb  = getCbAddr();
+    Pel* pelCr  = getCrAddr();
 
-    for (y = 0; y < m_iPicHeight; y++)
+    for (y = 0; y < m_picHeight; y++)
     {
-        for (x = 0; x < m_iPicWidth; x++)
+        for (x = 0; x < m_picWidth; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (pelY[x] + offset) >> shift);
 
@@ -319,9 +318,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
     shift = g_bitDepthC - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
-    for (y = 0; y < m_iPicHeight >> 1; y++)
+    for (y = 0; y < m_picHeight >> 1; y++)
     {
-        for (x = 0; x < m_iPicWidth >> 1; x++)
+        for (x = 0; x < m_picWidth >> 1; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (pelCb[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -330,9 +329,9 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         pelCb += getCStride();
     }
 
-    for (y = 0; y < m_iPicHeight >> 1; y++)
+    for (y = 0; y < m_picHeight >> 1; y++)
     {
-        for (x = 0; x < m_iPicWidth >> 1; x++)
+        for (x = 0; x < m_picWidth >> 1; x++)
         {
             uc = (UChar)Clip3<Pel>(0, 255, (pelCr[x] + offset) >> shift);
             fwrite(&uc, sizeof(UChar), 1, pFile);
@@ -345,8 +344,6 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
 }
 
 //! \}
-
-#include <stdint.h>
 
 /* Copy pixels from an input picture (C structure) into internal TComPicYuv instance
  * Upscale pixels from 8bits to 16 bits when required, but do not modify pixels.
@@ -368,9 +365,9 @@ Void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
         assert(pic.bitDepth == 8);
 
         // Manually copy pixels to up-size them
-        for (int r = 0; r < m_iPicHeight; r++)
+        for (int r = 0; r < m_picHeight; r++)
         {
-            for (int c = 0; c < m_iPicWidth; c++)
+            for (int c = 0; c < m_picWidth; c++)
             {
                 Y[c] = (Pel)y[c];
             }
@@ -379,9 +376,9 @@ Void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
             y += pic.stride[0];
         }
 
-        for (int r = 0; r < m_iPicHeight >> 1; r++)
+        for (int r = 0; r < m_picHeight >> 1; r++)
         {
-            for (int c = 0; c < m_iPicWidth >> 1; c++)
+            for (int c = 0; c < m_picWidth >> 1; c++)
             {
                 U[c] = (Pel)u[c];
                 V[c] = (Pel)v[c];
@@ -396,10 +393,10 @@ Void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
     else
 #endif // if HIGH_BIT_DEPTH
     {
-        int width = m_iPicWidth * (pic.bitDepth > 8 ? 2 : 1);
+        int width = m_picWidth * (pic.bitDepth > 8 ? 2 : 1);
 
         // copy pixels by row into encoder's buffer
-        for (int r = 0; r < m_iPicHeight; r++)
+        for (int r = 0; r < m_picHeight; r++)
         {
             memcpy(Y, y, width);
 
@@ -407,7 +404,7 @@ Void TComPicYuv::copyFromPicture(const x265_picture_t& pic)
             y += pic.stride[0];
         }
 
-        for (int r = 0; r < m_iPicHeight >> 1; r++)
+        for (int r = 0; r < m_picHeight >> 1; r++)
         {
             memcpy(U, u, width >> 1);
             memcpy(V, v, width >> 1);

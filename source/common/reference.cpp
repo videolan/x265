@@ -45,7 +45,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     int width = pic->getWidth();
     int height = pic->getHeight();
     m_lumaStride = pic->getStride();
-    m_startPad = pic->m_iLumaMarginY * m_lumaStride + pic->m_iLumaMarginX;
+    m_startPad = pic->m_lumaMarginY * m_lumaStride + pic->m_lumaMarginX;
     m_intStride = width + s_tmpMarginX * 4;
     m_extendOffset = s_tmpMarginY * m_lumaStride + s_tmpMarginX;
     m_offsetToLuma = s_tmpMarginY * 2 * m_intStride  + s_tmpMarginX * 2;
@@ -54,11 +54,11 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     m_next = NULL;
 
     /* directly reference the pre-extended integer pel plane */
-    m_lumaPlane[0][0] = (pixel*)pic->m_apiPicBufY + m_startPad;
+    m_lumaPlane[0][0] = (pixel*)pic->m_picBufY + m_startPad;
 
     /* Create buffers for Hpel/Qpel Planes */
-    size_t padwidth = width + pic->m_iLumaMarginX * 2;
-    size_t padheight = height + pic->m_iLumaMarginY * 2;
+    size_t padwidth = width + pic->m_lumaMarginX * 2;
+    size_t padheight = height + pic->m_lumaMarginY * 2;
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -112,8 +112,8 @@ void MotionReference::generateReferencePlanes()
                                 m_lumaPlane[3][0] + bufOffset, m_lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
                                 m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
                                 m_filterHeight + (2 * s_intMarginY),
-                                m_reconPic->m_iLumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
-                                m_reconPic->m_iLumaMarginY - s_tmpMarginY - s_intMarginY);
+                                m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
+                                m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY);
     }
 
     if (!m_pool)
@@ -173,5 +173,5 @@ void MotionReference::generateReferencePlane(int x)
     pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
 
-    primitives.filterVmulti(g_bitDepthY, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_iLumaMarginX - s_tmpMarginX, m_reconPic->m_iLumaMarginY - s_tmpMarginY);
+    primitives.filterVmulti(g_bitDepthY, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
 }
