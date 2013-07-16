@@ -22,7 +22,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "TLibCommon/CommonDef.h"
+#include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
@@ -31,9 +31,9 @@
 using namespace x265;
 
 #ifdef __GNUC__                         /* GCCs builtin atomics */
-#define ATOMIC_INC(ptr)                 __sync_add_and_fetch((volatile int*)ptr, 1)
+#define ATOMIC_INC(ptr) __sync_add_and_fetch((volatile int*)ptr, 1)
 #elif _MSC_VER
-#define ATOMIC_INC(ptr)                 InterlockedIncrement((volatile LONG*)ptr)
+#define ATOMIC_INC(ptr) InterlockedIncrement((volatile LONG*)ptr)
 #else
 #error "Must define atomic operations for this compiler"
 #endif

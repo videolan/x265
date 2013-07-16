@@ -200,9 +200,9 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     if (depth > 0)
     {
 #if FULL_NBIT
-        dLambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
+        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
 #else
-        dLambda *= Clip3(2.00, 4.00, (qp_temp / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
+        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
 #endif
     }
 #else // if 0
@@ -480,12 +480,12 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
     TComSlice* slice = pic->getSlice();
 
     // choose entropy coder
-    TEncEntropy *pcEntropyCoder = frameEncoder->getEntropyCoder(0);
+    TEncEntropy *entropyCoder = frameEncoder->getEntropyCoder(0);
     TEncSbac *sbacCoder = frameEncoder->getSingletonSbac();
 
     frameEncoder->resetEncoder();
     frameEncoder->getCuEncoder(0)->setBitCounter(NULL);
-    pcEntropyCoder->setEntropyCoder(sbacCoder, slice);
+    entropyCoder->setEntropyCoder(sbacCoder, slice);
 
     startCUAddr = 0;
     boundingCUAddr = slice->getSliceCurEndCUAddr();
@@ -529,7 +529,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
         lin     = cuAddr / widthInLCUs;
         subStrm = lin % numSubstreams;
 
-        pcEntropyCoder->setBitstream(&substreams[subStrm]);
+        entropyCoder->setBitstream(&substreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if ((numSubstreams > 1) && (col == 0) && bWaveFrontsynchro)
@@ -577,7 +577,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
                 Int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
                 if (allowMergeLeft)
                 {
-                    pcEntropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
+                    entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeLeft);
                 }
                 else
                 {
@@ -587,7 +587,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
                 {
                     if (allowMergeUp)
                     {
-                        pcEntropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
+                        entropyCoder->m_pcEntropyCoderIf->codeSaoMerge(mergeUp);
                     }
                     else
                     {
@@ -599,7 +599,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
                         {
                             if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
                             {
-                                pcEntropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
+                                entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
                             }
                         }
                     }
@@ -630,7 +630,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        frameEncoder->getCuEncoder(0)->setEntropyCoder(pcEntropyCoder);
+        frameEncoder->getCuEncoder(0)->setEntropyCoder(entropyCoder);
         frameEncoder->getCuEncoder(0)->encodeCU(cu);
 
 #if ENC_DEC_TRACE
@@ -656,7 +656,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
     }
     if (slice->getPPS()->getCabacInitPresentFlag())
     {
-        pcEntropyCoder->determineCabacInitIdx();
+        entropyCoder->determineCabacInitIdx();
     }
 }
 

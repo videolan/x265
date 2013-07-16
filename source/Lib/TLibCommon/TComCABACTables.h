@@ -38,7 +38,7 @@
 #ifndef __TCOM_CABAC_TABLES__
 #define __TCOM_CABAC_TABLES__
 
-#include "TLibCommon/CommonDef.h"
+#include "CommonDef.h"
 
 //! \ingroup TLibCommon
 //! \{

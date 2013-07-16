@@ -44,6 +44,78 @@
 //! \ingroup TLibCommon
 //! \{
 
+#define NUM_DOWN_PART 4
+
+enum SAOTypeLen
+{
+    SAO_EO_LEN    = 4,
+    SAO_BO_LEN    = 4,
+    SAO_MAX_BO_CLASSES = 32
+};
+
+enum SAOType
+{
+    SAO_EO_0 = 0,
+    SAO_EO_1,
+    SAO_EO_2,
+    SAO_EO_3,
+    SAO_BO,
+    MAX_NUM_SAO_TYPE
+};
+
+typedef struct _SaoQTPart
+{
+    Int         bestType;
+    Int         length;
+    Int         subTypeIdx;                ///< indicates EO class or BO band position
+    Int         offset[4];
+    Int         startCUX;
+    Int         startCUY;
+    Int         endCUX;
+    Int         endCUY;
+
+    Int         partIdx;
+    Int         partLevel;
+    Int         partCol;
+    Int         partRow;
+
+    Int         downPartsIdx[NUM_DOWN_PART];
+    Int         upPartIdx;
+
+    Bool        bSplit;
+
+    //---- encoder only start -----//
+    Bool        bProcessed;
+    Double      minCost;
+    Int64       minDist;
+    Int         minRate;
+    //---- encoder only end -----//
+} SAOQTPart;
+
+typedef struct _SaoLcuParam
+{
+    Bool       mergeUpFlag;
+    Bool       mergeLeftFlag;
+    Int        typeIdx;
+    Int        subTypeIdx;                ///< indicates EO class or BO band position
+    Int        offset[4];
+    Int        partIdx;
+    Int        partIdxTmp;
+    Int        length;
+} SaoLcuParam;
+
+struct SAOParam
+{
+    Bool       bSaoFlag[2];
+    SAOQTPart* saoPart[3];
+    Int        maxSplitLevel;
+    Bool         oneUnitFlag[3];
+    SaoLcuParam* saoLcuParam[3];
+    Int          numCuInHeight;
+    Int          numCuInWidth;
+    ~SAOParam();
+};
+
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
@@ -62,45 +134,46 @@ class TComSampleAdaptiveOffset
 {
 protected:
 
-    TComPic*          m_pcPic;
+    TComPic* m_pic;
 
-    static const UInt m_uiMaxDepth;
-    static const Int m_aiNumCulPartsLevel[5];
-    static const UInt m_auiEoTable[9];
-    Int *m_iOffsetBo;
-    Int *m_iChromaOffsetBo;
-    Int m_iOffsetEo[LUMA_GROUP_NUM];
+    static const UInt m_maxDepth;
+    static const Int m_numCulPartsLevel[5];
+    static const UInt m_eoTable[9];
+    static const Int m_numClass[MAX_NUM_SAO_TYPE];
 
-    Int  m_iPicWidth;
-    Int  m_iPicHeight;
-    UInt m_uiMaxSplitLevel;
-    UInt m_uiMaxCUWidth;
-    UInt m_uiMaxCUHeight;
-    Int  m_iNumCuInWidth;
-    Int  m_iNumCuInHeight;
-    Int  m_iNumTotalParts;
-    static const Int m_iNumClass[MAX_NUM_SAO_TYPE];
+    Int *m_offsetBo;
+    Int *m_chromaOffsetBo;
+    Int m_offsetEo[LUMA_GROUP_NUM];
 
-    UInt m_uiSaoBitIncreaseY;
-    UInt m_uiSaoBitIncreaseC; //for chroma
-    UInt m_uiQP;
+    Int  m_picWidth;
+    Int  m_picHeight;
+    UInt m_maxSplitLevel;
+    UInt m_maxCUWidth;
+    UInt m_maxCUHeight;
+    Int  m_numCuInWidth;
+    Int  m_numCuInHeight;
+    Int  m_numTotalParts;
 
-    Pel   *m_pClipTable;
-    Pel   *m_pClipTableBase;
+    UInt m_saoBitIncreaseY;
+    UInt m_saoBitIncreaseC; //for chroma
+    UInt m_qp;
+
+    Pel   *m_clipTable;
+    Pel   *m_clipTableBase;
     Pel   *m_lumaTableBo;
-    Pel   *m_pChromaClipTable;
-    Pel   *m_pChromaClipTableBase;
+    Pel   *m_chromaClipTable;
+    Pel   *m_chromaClipTableBase;
     Pel   *m_chromaTableBo;
-    Int   *m_iUpBuff1;
-    Int   *m_iUpBuff2;
-    Int   *m_iUpBufft;
-    Int   *ipSwap;
-    TComPicYuv* m_pcYuvTmp;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
+    Int   *m_upBuff1;
+    Int   *m_upBuff2;
+    Int   *m_upBufft;
+    Int   *m_swap;
+    TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
-    Pel* m_pTmpU1;
-    Pel* m_pTmpU2;
-    Pel* m_pTmpL1;
-    Pel* m_pTmpL2;
+    Pel* m_tmpU1;
+    Pel* m_tmpU2;
+    Pel* m_tmpL1;
+    Pel* m_tmpL2;
     Int     m_maxNumOffsetsPerPic;
     Bool    m_saoLcuBoundary;
     Bool    m_saoLcuBasedOptimization;
@@ -114,24 +187,24 @@ public:
     TComSampleAdaptiveOffset();
     virtual ~TComSampleAdaptiveOffset();
 
-    Void create(UInt uiSourceWidth, UInt uiSourceHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight);
+    Void create(UInt sourceWidth, UInt sourceHeight, UInt maxCUWidth, UInt maxCUHeight);
     Void destroy();
 
     Int  convertLevelRowCol2Idx(Int level, Int row, Int col);
 
-    Void initSAOParam(SAOParam *pcSaoParam, Int iPartLevel, Int iPartRow, Int iPartCol, Int iParentPartIdx, Int StartCUX, Int EndCUX, Int StartCUY, Int EndCUY, Int iYCbCr);
-    Void allocSaoParam(SAOParam* pcSaoParam);
-    Void resetSAOParam(SAOParam *pcSaoParam);
-    static Void freeSaoParam(SAOParam *pcSaoParam);
+    Void initSAOParam(SAOParam* saoParam, Int partLevel, Int partRow, Int partCol, Int parentPartIdx, Int startCUX, Int endCUX, Int startCUY, Int endCUY, Int yCbCr);
+    Void allocSaoParam(SAOParam* saoParam);
+    Void resetSAOParam(SAOParam* saoParam);
+    static Void freeSaoParam(SAOParam* saoParam);
 
-    Void SAOProcess(SAOParam* pcSaoParam);
-    Void processSaoCu(Int iAddr, Int iSaoType, Int iYCbCr);
-    Pel* getPicYuvAddr(TComPicYuv* pcPicYuv, Int iYCbCr, Int iAddr = 0);
+    Void SAOProcess(SAOParam* saoParam);
+    Void processSaoCu(Int addr, Int saoType, Int yCbCr);
+    Pel* getPicYuvAddr(TComPicYuv* picYuv, Int yCbCr, Int addr = 0);
 
-    Void processSaoCuOrg(Int iAddr, Int partIdx, Int iYCbCr); //!< LCU-basd SAO process without slice granularity
+    Void processSaoCuOrg(Int addr, Int partIdx, Int yCbCr); //!< LCU-basd SAO process without slice granularity
     Void createPicSaoInfo(TComPic* pic);
     Void destroyPicSaoInfo();
-    Void processSaoBlock(Pel* pDec, Pel* pRest, Int stride, Int iSaoType, UInt width, UInt height, Bool* pbBorderAvail, Int iYCbCr);
+    Void processSaoBlock(Pel* dec, Pel* rest, Int stride, Int saoType, UInt width, UInt height, Bool* bBorderAvail, Int yCbCr);
 
     Void resetLcuPart(SaoLcuParam* saoLcuParam);
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
@@ -147,7 +220,7 @@ public:
 
     Void resetSaoUnit(SaoLcuParam* saoUnit);
     Void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
-    Void PCMLFDisableProcess(TComPic* pic);                           ///< interface function for ALF process
+    Void PCMLFDisableProcess(TComPic* pic); ///< interface function for ALF process
 };
 
 //! \}

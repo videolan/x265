@@ -47,12 +47,87 @@
 //! \{
 
 #ifndef NULL
-#define NULL              0
+#define NULL 0
 #endif
 
 // ====================================================================================================================
 // Common constants
 // ====================================================================================================================
+
+#define MAX_NUM_PICS_IN_SOP         1024
+
+#define MAX_NESTING_NUM_OPS         1024
+#define MAX_NESTING_NUM_LAYER       64
+
+#define MAX_VPS_NUM_HRD_PARAMETERS  1
+#define MAX_VPS_OP_SETS_PLUS1       1024
+#define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
+
+#define MAX_CPB_CNT                 32 ///< Upper bound of (cpb_cnt_minus1 + 1)
+#define MAX_NUM_LAYER_IDS           64
+
+#define COEF_REMAIN_BIN_REDUCTION   3 ///< indicates the level at which the VLC
+
+///< transitions from Golomb-Rice to TU+EG(k)
+
+#define CU_DQP_TU_CMAX              5 ///< max number bins for truncated unary
+#define CU_DQP_EG_k                 0 ///< expgolomb order
+
+#define SBH_THRESHOLD               4 ///< I0156: value of the fixed SBH controlling threshold
+
+#define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
+#define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
+
+#define SAO_ENCODING_RATE           0.75
+#define SAO_ENCODING_RATE_CHROMA    0.5
+
+#define MAX_NUM_VPS                 16
+#define MAX_NUM_SPS                 16
+#define MAX_NUM_PPS                 64
+
+#define MIN_SCAN_POS_CROSS          4
+
+#define MLS_GRP_NUM                 64 ///< G644 : Max number of coefficient groups, max(16, 64)
+#define MLS_CG_SIZE                 4 ///< G644 : Coefficient group size of 4x4
+
+#define ARL_C_PRECISION             7 ///< G382: 7-bit arithmetic precision
+#define LEVEL_RANGE                 30 ///< G382: max coefficient level in statistics collection
+
+#define AMVP_DECIMATION_FACTOR      4
+
+#define SCAN_SET_SIZE               16
+#define LOG2_SCAN_SET_SIZE          4
+
+#define FAST_UDI_MAX_RDMODE_NUM     35 ///< maximum number of RD comparison in fast-UDI estimation loop
+
+#define NUM_INTRA_MODE 36
+#if !REMOVE_LM_CHROMA
+#define LM_CHROMA_IDX  35
+#endif
+
+#define PLANAR_IDX                  0
+#define VER_IDX                     26 // index for intra VERTICAL   mode
+#define HOR_IDX                     10 // index for intra HORIZONTAL mode
+#define DC_IDX                      1 // index for intra DC mode
+#define NUM_CHROMA_MODE             5 // total number of chroma modes
+#define DM_CHROMA_IDX               36 // chroma mode index for derived from luma intra mode
+
+#define FULL_NBIT 0 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
+#if FULL_NBIT || !HIGH_BIT_DEPTH
+# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
+#else
+# define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
+#endif
+
+#define LOG2_MAX_NUM_COLUMNS_MINUS1 7
+#define LOG2_MAX_NUM_ROWS_MINUS1    7
+#define LOG2_MAX_COLUMN_WIDTH       13
+#define LOG2_MAX_ROW_HEIGHT         13
+
+#define REG_DCT                     65535
+
+#define CABAC_INIT_PRESENT_FLAG     1
+#define LAMBDA_PARTITION_SELECT     0.6
 
 #define _SUMMARY_OUT_               0           ///< print-out PSNR results of all slices to summary.txt
 #define _SUMMARY_PIC_               0           ///< print-out PSNR results for each slice type to summary.txt
@@ -87,7 +162,7 @@ inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(
 
 /** clip a, such that minVal <= a <= maxVal */
 template<typename T>
-inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); }                            ///< general min/max clip
+inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal, a), maxVal); } ///< general min/max clip
 
 #if _WIN32
 #define xMalloc(type, len)        _aligned_malloc(sizeof(type) * (len), 32)
@@ -112,24 +187,24 @@ inline T Clip3(T minVal, T maxVal, T a) { return std::min<T>(std::max<T>(minVal,
 // ====================================================================================================================
 
 // AMVP: advanced motion vector prediction
-#define AMVP_MAX_NUM_CANDS          2           ///< max number of final candidates
-#define AMVP_MAX_NUM_CANDS_MEM      3           ///< max number of candidates
+#define AMVP_MAX_NUM_CANDS          2 ///< max number of final candidates
+#define AMVP_MAX_NUM_CANDS_MEM      3 ///< max number of candidates
 // MERGE
 #define MRG_MAX_NUM_CANDS           5
 
 // Reference memory management
-#define DYN_REF_FREE                0           ///< dynamic free of reference memories
+#define DYN_REF_FREE                0 ///< dynamic free of reference memories
 
 // Explicit temporal layer QP offset
-#define MAX_TLAYER                  8           ///< max number of temporal layer
-#define HB_LAMBDA_FOR_LDC           1           ///< use of B-style lambda for non-key pictures in low-delay mode
+#define MAX_TLAYER                  8 ///< max number of temporal layer
+#define HB_LAMBDA_FOR_LDC           1 ///< use of B-style lambda for non-key pictures in low-delay mode
 
 // Adaptive search range depending on POC difference
-#define ADAPT_SR_SCALE              1           ///< division factor for adaptive search range
+#define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
 
 #define CLIP_TO_709_RANGE           0
 
-#define MAX_CHROMA_FORMAT_IDC      3
+#define MAX_CHROMA_FORMAT_IDC       3
 
 //! \}
 

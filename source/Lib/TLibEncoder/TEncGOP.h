@@ -137,7 +137,7 @@ protected:
 
     Void arrangeLongtermPicturesInRPS(TComSlice *);
 
-    Void xAttachSliceDataToNalUnit(TEncEntropy* pcEntropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
+    Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
     Int  xGetFirstSeiLocation(AccessUnit &accessUnit);
 }; // END CLASS DEFINITION TEncGOP
 

@@ -24,11 +24,11 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
+
 #include <algorithm>
 #include <stdlib.h> // abs()
-#include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComPrediction.h"
 
 
 #define SET_FUNC_PRIMITIVE_TABLE_C_SUBSET(WIDTH, FUNC_PREFIX, FUNC_PREFIX_DEF, FUNC_TYPE_CAST, DATA_TYPE1, DATA_TYPE2) \

@@ -504,7 +504,7 @@ public:
 
     Bool      getUseSAO()              { return m_bUseSAO; }
 
-    Void  setMaxNumOffsetsPerPic(Int iVal)            { m_maxNumOffsetsPerPic = iVal; }
+    Void  setMaxNumOffsetsPerPic(Int val)            { m_maxNumOffsetsPerPic = val; }
 
     Int   getMaxNumOffsetsPerPic()                    { return m_maxNumOffsetsPerPic; }
 

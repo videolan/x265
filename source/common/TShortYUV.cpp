@@ -21,14 +21,14 @@
  * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
+#include "TLibCommon/TypeDef.h"
+#include "TLibCommon/TComYuv.h"
+#include "TShortYUV.h"
+
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
 #include <math.h>
-
-#include "TLibCommon/CommonDef.h"
-#include "TShortYUV.h"
-#include "TLibCommon/TComYuv.h"
 
 TShortYUV::TShortYUV()
 {

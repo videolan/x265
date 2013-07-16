@@ -42,6 +42,8 @@
 #include "CommonDef.h"
 #include "TComSlice.h"
 #include "TComDataCU.h"
+
+struct SAOParam;
 class TComSampleAdaptiveOffset;
 
 //! \ingroup TLibCommon

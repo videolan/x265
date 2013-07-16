@@ -35,7 +35,7 @@
     \brief    CAVLC encoder class
 */
 
-#include "../TLibCommon/CommonDef.h"
+#include "TLibCommon/CommonDef.h"
 #include "TEncCavlc.h"
 #include "SEIwrite.h"
 

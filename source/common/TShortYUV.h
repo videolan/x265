@@ -26,7 +26,6 @@
 #ifndef __TSHORTYUV__
 #define __TSHORTYUV__
 
-#include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComRom.h"
 
 class TComYuv;

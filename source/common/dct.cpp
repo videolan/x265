@@ -25,8 +25,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "Lib/TLibCommon/CommonDef.h"
-#include "Lib/TLibCommon/TComRom.h"
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include <algorithm>
 #include <string.h>
