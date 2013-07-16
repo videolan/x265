@@ -26,12 +26,16 @@
 
 // Vector class versions of pixel comparison performance primitives
 
+#include "TLibCommon/TComRom.h"
 #include <assert.h>
-#include "sse.inc"
-#include "utils.h"
 
 namespace {
-/* File for pixels type-explicit functions */
+
+#if HIGH_BIT_DEPTH
+#include "pixel16.inc"
+#else
+#include "pixel8.inc"
+#endif
 
 void convert16to32(short *org, int *dst, int num)
 {
@@ -307,6 +311,9 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
 
 #endif // !HIGH_BIT_DEPTH
 }  // end anonymous namespace
+
+#include "sse.inc"
+#include "utils.h"
 
 namespace x265 {
 // private x265 namespace
