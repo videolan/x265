@@ -3355,7 +3355,7 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
             if (cost < bcost)
             {
                 bcost = cost;
-                mv = mv;
+                outmv = mv;
             }
         }
 
