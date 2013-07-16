@@ -205,16 +205,16 @@ Void  TComSlice::sortPicList(TComList<TComPic*>& picList)
 TComPic* TComSlice::xGetRefPic(TComList<TComPic*>& picList, Int poc)
 {
     TComList<TComPic*>::iterator iterPic = picList.begin();
-    TComPic* pic = *(iterPic);
+    TComPic* pic = NULL;
 
     while (iterPic != picList.end())
     {
+        pic = *iterPic;
         if (pic->getPOC() == poc)
         {
             break;
         }
         iterPic++;
-        pic = *(iterPic);
     }
 
     return pic;
