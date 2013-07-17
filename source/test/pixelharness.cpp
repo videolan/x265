@@ -647,6 +647,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.pixelsub_sp)
     {
         printf("Pixel Sub");
-        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsubsp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsub_sp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 }
