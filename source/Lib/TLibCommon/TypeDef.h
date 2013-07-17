@@ -79,7 +79,7 @@ typedef       unsigned long long  UInt64;
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-typedef       Short           Pel;        ///< 16-bit pixel type
+typedef       UShort          Pel;        ///< 16-bit pixel type
 #else
 typedef       UChar           Pel;        ///< 8-bit pixel type
 #endif

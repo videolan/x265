@@ -1711,17 +1711,17 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
         Int x = 0;
         for (; x + 64 <= width; x += 64)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_64x64]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_64x64](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 16 <= width; x += 16)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_16x64]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_16x64](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x64]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_4x64](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 64;
@@ -1734,17 +1734,17 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
         Int x = 0;
         for (; x + 64 <= width; x += 64)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_64x16]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_64x16](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 16 <= width; x += 16)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_16x16]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_16x16](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x16]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_4x16](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 16;
@@ -1757,17 +1757,17 @@ static UInt64 computeSSD(Pel *fenc, Pel *rec, Int stride, Int width, Int height)
         Int x = 0;
         for (; x + 64 <= width; x += 64)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_64x4]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_64x4](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 16 <= width; x += 16)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_16x4]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_16x4](fenc + x, stride, rec + x, stride);
         }
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += x265::primitives.sse_pp[x265::PARTITION_4x4]((pixel*)fenc + x, (intptr_t)stride, (pixel*)rec + x, stride);
+            ssd += x265::primitives.sse_pp[x265::PARTITION_4x4](fenc + x, stride, rec + x, stride);
         }
 
         fenc += stride * 4;

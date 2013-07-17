@@ -1519,8 +1519,8 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     {
         /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
         UInt partEnum = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-        UInt SAD = primitives.sad[partEnum]((pixel*)m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                            (pixel*)m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
+        UInt SAD = primitives.sad[partEnum](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                            m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
         m_temporalSAD = (Int)SAD;
         x265_emms();
     }
@@ -1622,8 +1622,8 @@ Void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     if (!m_cfg->getUseRDO())
     {
         UInt partEnum = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-        UInt SATD = primitives.satd[partEnum]((pixel*)m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                              (pixel*)m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
+        UInt SATD = primitives.satd[partEnum](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                              m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
         x265_emms();
         outTempCU->getTotalDistortion() = SATD;
     }

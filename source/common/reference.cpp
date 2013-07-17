@@ -54,7 +54,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     m_next = NULL;
 
     /* directly reference the pre-extended integer pel plane */
-    m_lumaPlane[0][0] = (pixel*)pic->m_picBufY + m_startPad;
+    m_lumaPlane[0][0] = pic->m_picBufY + m_startPad;
 
     /* Create buffers for Hpel/Qpel Planes */
     size_t padwidth = width + pic->m_lumaMarginX * 2;
@@ -100,7 +100,7 @@ void MotionReference::generateReferencePlanes()
         short* intPtrC = m_intermediateValues + 3 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
 
         int bufOffset = -(s_tmpMarginY + s_intMarginY) * m_lumaStride - (s_tmpMarginX + s_intMarginX);
-        pixel *srcPtr = (pixel*)m_reconPic->getLumaAddr() + bufOffset;
+        pixel *srcPtr = m_reconPic->getLumaAddr() + bufOffset;
 
         /* This one function call generates the four intermediate (short) planes for each
          * QPEL offset in the horizontal direction.  At the same time it outputs the three

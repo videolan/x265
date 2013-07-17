@@ -131,16 +131,16 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
         Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
 
         // 1
-        primitives.intra_pred_dc((pixel*)pAbove0 + 1, (pixel*)pLeft0 + 1, (pixel*)pred, stride, width, bFilter);
-        modeCosts[DC_IDX] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
+        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, bFilter);
+        modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
 
         // 0
         if (width >= 8 && width <= 32)
         {
             src += ADI_BUF_STRIDE * (2 * width + 1);
         }
-        primitives.intra_pred_planar((pixel*)src + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, (pixel*)pred, stride, width);
-        modeCosts[PLANAR_IDX] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
+        primitives.intra_pred_planar(src + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, pred, stride, width);
+        modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
         // 33 Angle modes once
         if (width <= 16)
@@ -149,9 +149,9 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
             ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
 
             // Transpose NxN
-            x265::primitives.transpose[nLog2SizeMinus2]((pixel*)buf1, (pixel*)fenc, stride);
+            x265::primitives.transpose[nLog2SizeMinus2](buf1, fenc, stride);
 
-            x265::primitives.intra_pred_allangs[nLog2SizeMinus2]((pixel*)tmp, (pixel*)pAbove0, (pixel*)pLeft0, (pixel*)pAbove1, (pixel*)pLeft1, (width <= 16));
+            x265::primitives.intra_pred_allangs[nLog2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
 
             // TODO: We need SATD_x4 here
             for (UInt mode = 2; mode < numModesAvailable; mode++)
@@ -159,7 +159,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
                 bool modeHor = (mode < 18);
                 Pel *src2 = (modeHor ? buf1 : fenc);
                 intptr_t srcStride = (modeHor ? width : stride);
-                modeCosts[mode] = sa8d((pixel*)src2, srcStride, (pixel*)&tmp[(mode - 2) * (width * width)], width);
+                modeCosts[mode] = sa8d(src2, srcStride, &tmp[(mode - 2) * (width * width)], width);
             }
         }
         else
@@ -167,7 +167,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
             for (UInt mode = 2; mode < numModesAvailable; mode++)
             {
                 m_search->predIntraLumaAng(mode, pred, stride, width);
-                modeCosts[mode] = sa8d((pixel*)fenc, stride, (pixel*)pred, stride);
+                modeCosts[mode] = sa8d(fenc, stride, pred, stride);
             }
         }
 
@@ -236,8 +236,7 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     outTempCU->getInterMergeCandidates(0, 0, cMvFieldNeighbours, uhInterDirNeighbours, numValidMergeCand);
 
     x265::MotionEstimate me_merge; // TODO: use m_pcPredSearch->m_me here
-    me_merge.setSourcePlane((pixel*)m_origYuv[depth]->getLumaAddr(),
-                            m_origYuv[depth]->getStride());
+    me_merge.setSourcePlane(m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride());
 
     for (Int uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand)
     {
@@ -254,7 +253,8 @@ Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         // do MC
         m_search->motionCompensation(outTempCU, tmpPredYuv);
 
-        outTempCU->getTotalCost() = primitives.sse_pp[PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0))]((pixel*)m_origYuv[depth]->getLumaAddr(), (intptr_t)m_origYuv[depth]->getStride(), (pixel*)tmpPredYuv->getLumaAddr(), tmpPredYuv->getStride());
+        int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
+        outTempCU->getTotalCost() = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(), tmpPredYuv->getLumaAddr(), tmpPredYuv->getStride());
 
         Int orgQP = outTempCU->getQP(0);
 
@@ -323,7 +323,9 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt in
     m_tmpResiYuv[depth]->clear();
 
     m_search->predInterSearch(outTempCU, m_origYuv[depth], m_modePredYuv[index][depth], bUseMRG);
-    outTempCU->getTotalCost() = primitives.sse_pp[PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0))]((pixel*)m_origYuv[depth]->getLumaAddr(), (intptr_t)m_origYuv[depth]->getStride(), (pixel*)m_modePredYuv[index][depth]->getLumaAddr(),  m_modePredYuv[index][depth]->getStride());
+    int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
+    outTempCU->getTotalCost() = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+                                                        m_modePredYuv[index][depth]->getLumaAddr(), m_modePredYuv[index][depth]->getStride());
 }
 
 Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
