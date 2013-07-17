@@ -422,6 +422,18 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
         xCheckWPEnable(slice);
     }
 
+    Int numPredDir = slice->isInterP() ? 1 : 2;
+
+    for (Int refList = 0; refList < numPredDir; refList++)
+    {
+        RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+        for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+        {
+            // To do: Call the merged IP + weighted frames if weighted prediction enabled
+            slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->extendPicBorder(x265::ThreadPool::getThreadPool()); 
+        }
+    }
+
     frameEncoder->encode(pic, slice);
 
     if (m_cfg->getEnableWaveFront())
