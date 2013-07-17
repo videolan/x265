@@ -491,6 +491,71 @@ void filterHorizontalMultiplaneExtend(int bitDepth, pixel *src, int srcStride, s
     extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
 }
+
+void weightUnidir(int bitDepth, short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset)
+{
+    int x, y;
+    for (y = height - 1; y >= 0; y--)
+    {
+        for (x = width - 1; x >= 0; )
+        {
+            // note: luma min width is 4
+            dst[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            x--;
+            dst[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            x--;
+        }
+
+        src += srcStride;
+        dst  += dstStride;
+    }
+}
+
+// filterHorizontal, Multiplane, Weighted
+void filterHorizontalWeighted(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw)
+{
+    filterConvertPelToShort(bitDepth, src, srcStride, midF, midStride, block_width, block_height);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
+    filterHorizontal_p_s<8>(bitDepth, src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
+
+    weightUnidir(bitDepth, midA,pDstA,midStride,pDstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(bitDepth, midB,pDstB,midStride,pDstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(bitDepth, midC,pDstC,midStride,pDstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+
+    extendPicCompBorder(pDstA, pDstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(pDstB, pDstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
+}
+
+// filterVertical, Multiplane, Weighted
+void filterVerticalWeighted(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw)
+{
+    short* intI, *intE, *intP;    
+    int intStride = block_width;
+
+    intI = (short*)xMalloc(short, block_height * block_width);
+    intE = (short*)xMalloc(short, block_height * block_width);
+    intP = (short*)xMalloc(short, block_height * block_width);
+
+    filterVertical_s_s<8>(bitDepth, src, srcStride, intI, intStride, block_width, block_height, g_lumaFilter[2]);
+    filterVertical_s_s<8>(bitDepth, src, srcStride, intE, intStride, block_width, block_height, g_lumaFilter[1]);
+    filterVertical_s_s<8>(bitDepth, src, srcStride, intP, intStride, block_width, block_height, g_lumaFilter[3]);
+
+    weightUnidir(bitDepth, intI, dstI, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(bitDepth, intE, dstE, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(bitDepth, intP, dstP, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+
+    extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
+    extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
+
+    xFree(intI);
+    xFree(intE);
+    xFree(intP);
+
+}
+
 }
 
 #if _MSC_VER
@@ -521,5 +586,8 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
 
     p.filterVmulti = filterVerticalMultiplaneExtend;
     p.filterHmulti = filterHorizontalMultiplaneExtend;
+
+    p.filterVwghtd = filterVerticalWeighted;         
+    p.filterHwghtd = filterHorizontalWeighted;
 }
 }
