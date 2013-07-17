@@ -98,7 +98,7 @@ void PredIntraDC(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int 
     }
 }
 
-void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
+void PredIntraPlanar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width)
 {
     //assert(width == height);
 
@@ -117,8 +117,8 @@ void PredIntraPlanar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, 
     // Get left and above reference column and row
     for (k = 0; k < blkSize + 1; k++)
     {
-        topRow[k] = above[k];
-        leftColumn[k] = left[k];
+        topRow[k] = src[k - srcStride];
+        leftColumn[k] = src[k * srcStride - 1];
     }
 
     // Prepare intermediate variables used in interpolation

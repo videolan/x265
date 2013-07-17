@@ -117,26 +117,17 @@ bool IntraPredHarness::check_planar_primitive(x265::intra_planar_t ref, x265::in
     {
         for (int i = 0; i <= 100; i++)
         {
-            pixel left[MAX_CU_SIZE * 2 + 1];
-            for (int k = 0; k < width * 2 + 1; k++)
-            {
-                left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
-            }
 #if _DEBUG
             memset(pixel_out_vec, 0xCD, out_size);
             memset(pixel_out_c, 0xCD, out_size);
 #endif
-            ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, width);
-            opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, width);
+            ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_c,   FENC_STRIDE, width);
+            opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_vec, FENC_STRIDE, width);
 
             for (int k = 0; k < width; k++)
             {
                 if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width))
                 {
-#if _DEBUG
-                    ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, width);
-                    opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, width);
-#endif
                     return false;
                 }
             }
@@ -301,7 +292,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             width = ii;
             printf("intra_planar%2dx%d", ii, ii);
             REPORT_SPEEDUP(opt.intra_pred_planar, ref.intra_pred_planar,
-                           pixel_buff + srcStride, pixel_buff, pixel_out_vec, FENC_STRIDE, width);
+                           pixel_buff + srcStride, srcStride, pixel_out_vec, FENC_STRIDE, width);
         }
     }
     if (opt.intra_pred_ang)
