@@ -269,7 +269,7 @@ struct EncoderPrimitives
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
     weightpUni_t    weightpUni;
-    pixelsub_sp_t   pixelsubsp;
+    pixelsub_sp_t   pixelsub_sp;
 
     filterVwghtd_t  filterVwghtd;
     filterHwghtd_t  filterHwghtd;

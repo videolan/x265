@@ -300,12 +300,11 @@ void Setup_Vec_BlockCopyPrimitives(EncoderPrimitives &p)
     p.blockcpy_ps = (x265::blockcpy_ps_t)blockcopy_p_p;
     p.blockcpy_sp = (x265::blockcpy_sp_t)blockcopy_p_p;
     p.blockcpy_sc = (x265::blockcpy_sc_t)blockcopy_s_p;
-    p.pixelsubsp = pixelsub_sp;
 #else
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = blockcopy_p_s;
     p.blockcpy_sp = blockcopy_s_p;
     p.blockcpy_sc = blockcopy_s_p;
-    p.pixelsubsp = pixelsub_sp;
+    p.pixelsub_sp = pixelsub_sp;
 #endif
 }

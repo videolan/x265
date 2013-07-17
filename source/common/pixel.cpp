@@ -520,7 +520,7 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
     }
 }
 
-void pixelsub_sp(int bx, int by, short *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
+void pixelsub_sp_c(int bx, int by, short *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
 {
     for (int y = 0; y < by; y++)
     {
@@ -737,6 +737,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.weightpUni = weightUnidir;
 
-    p.pixelsubsp = pixelsub_sp;
+    p.pixelsub_sp = pixelsub_sp_c;
 }
 }

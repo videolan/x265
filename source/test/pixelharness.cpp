@@ -526,9 +526,9 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.pixelsubsp)
+    if (opt.pixelsub_sp)
     {
-        if (!check_pixelsub_sp(ref.pixelsubsp, opt.pixelsubsp))
+        if (!check_pixelsub_sp(ref.pixelsub_sp, opt.pixelsub_sp))
         {
             printf("Luma Substract failed!\n");
             return false;
@@ -644,9 +644,9 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.weightpUni, ref.weightpUni, sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100, BIT_DEPTH);
     }
 
-    if (opt.pixelsubsp)
+    if (opt.pixelsub_sp)
     {
         printf("Pixel Sub");
-        REPORT_SPEEDUP(opt.pixelsubsp, ref.pixelsubsp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pixelsub_sp, ref.pixelsubsp, 64, 64, (short*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
     }
 }
