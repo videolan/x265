@@ -47,6 +47,7 @@ protected:
     bool check_calresidual(x265::calcresidual_t ref, x265::calcresidual_t opt);
     bool check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt);
     bool check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t opt);
+    bool check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_t opt);
 
 public:
 

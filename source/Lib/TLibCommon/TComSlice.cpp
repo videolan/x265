@@ -323,7 +323,6 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
         {
             refPic = xGetRefPic(picList, getPOC() + m_rps->getDeltaPOC(i));
             refPic->setIsLongTerm(0);
-            refPic->getPicYuvRec()->extendPicBorder(x265::ThreadPool::getThreadPool());
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
             refPic->setCheckLTMSBPresent(false);
@@ -336,7 +335,6 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
         {
             refPic = xGetRefPic(picList, getPOC() + m_rps->getDeltaPOC(i));
             refPic->setIsLongTerm(0);
-            refPic->getPicYuvRec()->extendPicBorder(x265::ThreadPool::getThreadPool());
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
             refPic->setCheckLTMSBPresent(false);
@@ -350,7 +348,6 @@ Void TComSlice::setRefPicList(TComList<TComPic*>& picList, Bool checkNumPocTotal
         {
             refPic = xGetLongTermRefPic(picList, m_rps->getPOC(i), m_rps->getCheckLTMSBPresent(i));
             refPic->setIsLongTerm(1);
-            refPic->getPicYuvRec()->extendPicBorder(x265::ThreadPool::getThreadPool());
             refPicSetLtCurr[numPocLtCurr] = refPic;
             numPocLtCurr++;
         }

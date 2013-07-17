@@ -520,6 +520,21 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
     }
 }
 
+void pixelsub_sp(int bx, int by, short *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (short)(b0[x] - b1[x]);
+        }
+
+        b0 += sstride0;
+        b1 += sstride1;
+        a += dstride;
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -721,5 +736,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[4] = transpose<64>;
 
     p.weightpUni = weightUnidir;
+
+    p.pixelsubsp = pixelsub_sp;
 }
 }

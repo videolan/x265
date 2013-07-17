@@ -30,6 +30,8 @@
 #include <assert.h>
 #include <math.h>
 
+using namespace x265;
+
 TShortYUV::TShortYUV()
 {
     YBuf = NULL;
@@ -76,61 +78,38 @@ void TShortYUV::subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int ui
     subtractChroma(pcYuvSrc0, pcYuvSrc1,  uiTrUnitIdx, uiPartSize >> 1);
 }
 
-void TShortYUV::subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize)
+void TShortYUV::subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    int x, y;
+    int x = partSize, y = partSize;
 
-    Pel* pSrc0 = pcYuvSrc0->getLumaAddr(uiTrUnitIdx, uiPartSize);
-    Pel* pSrc1 = pcYuvSrc1->getLumaAddr(uiTrUnitIdx, uiPartSize);
-    Short* pDst  = getLumaAddr(uiTrUnitIdx, uiPartSize);
+    Pel* src0 = pcYuvSrc0->getLumaAddr(trUnitIdx, partSize);
+    Pel* src1 = pcYuvSrc1->getLumaAddr(trUnitIdx, partSize);
+    Short* dst  = getLumaAddr(trUnitIdx, partSize);
 
-    int  iSrc0Stride = pcYuvSrc0->getStride();
-    int  iSrc1Stride = pcYuvSrc1->getStride();
-    int  iDstStride  = width;
+    int  src0Stride = pcYuvSrc0->getStride();
+    int  src1Stride = pcYuvSrc1->getStride();
+    int  dstStride  = width;
 
-    for (y = uiPartSize - 1; y >= 0; y--)
-    {
-        for (x = uiPartSize - 1; x >= 0; x--)
-        {
-            pDst[x] = static_cast<short>(pSrc0[x]) - static_cast<short>(pSrc1[x]);
-        }
-
-        pSrc0 += iSrc0Stride;
-        pSrc1 += iSrc1Stride;
-        pDst  += iDstStride;
-    }
+    primitives.pixelsubsp(x, y, dst, dstStride, src0, src1, src0Stride, src1Stride);
 }
 
-void TShortYUV::subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize)
+void TShortYUV::subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    int x, y;
+    int x = partSize, y = partSize;
 
-    Pel* pSrcU0 = pcYuvSrc0->getCbAddr(uiTrUnitIdx, uiPartSize);
-    Pel* pSrcU1 = pcYuvSrc1->getCbAddr(uiTrUnitIdx, uiPartSize);
-    Pel* pSrcV0 = pcYuvSrc0->getCrAddr(uiTrUnitIdx, uiPartSize);
-    Pel* pSrcV1 = pcYuvSrc1->getCrAddr(uiTrUnitIdx, uiPartSize);
-    Short* pDstU  = getCbAddr(uiTrUnitIdx, uiPartSize);
-    Short* pDstV  = getCrAddr(uiTrUnitIdx, uiPartSize);
+    Pel* srcU0 = pcYuvSrc0->getCbAddr(trUnitIdx, partSize);
+    Pel* srcU1 = pcYuvSrc1->getCbAddr(trUnitIdx, partSize);
+    Pel* srcV0 = pcYuvSrc0->getCrAddr(trUnitIdx, partSize);
+    Pel* srcV1 = pcYuvSrc1->getCrAddr(trUnitIdx, partSize);
+    Short* dstU  = getCbAddr(trUnitIdx, partSize);
+    Short* dstV  = getCrAddr(trUnitIdx, partSize);
 
-    int  iSrc0Stride = pcYuvSrc0->getCStride();
-    int  iSrc1Stride = pcYuvSrc1->getCStride();
-    int  iDstStride  = Cwidth;
+    int  src0Stride = pcYuvSrc0->getCStride();
+    int  src1Stride = pcYuvSrc1->getCStride();
+    int  dstStride  = Cwidth;
 
-    for (y = uiPartSize - 1; y >= 0; y--)
-    {
-        for (x = uiPartSize - 1; x >= 0; x--)
-        {
-            pDstU[x] = static_cast<short>(pSrcU0[x]) - static_cast<short>(pSrcU1[x]);
-            pDstV[x] = static_cast<short>(pSrcV0[x]) - static_cast<short>(pSrcV1[x]);
-        }
-
-        pSrcU0 += iSrc0Stride;
-        pSrcU1 += iSrc1Stride;
-        pSrcV0 += iSrc0Stride;
-        pSrcV1 += iSrc1Stride;
-        pDstU  += iDstStride;
-        pDstV  += iDstStride;
-    }
+    primitives.pixelsubsp(x, y, dstU, dstStride, srcU0, srcU1, src0Stride, src1Stride);
+    primitives.pixelsubsp(x, y, dstV, dstStride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 void TShortYUV::addClip(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize)
