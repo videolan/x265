@@ -746,8 +746,29 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
 #endif // if HIGH_BIT_DEPTH
 }
 
+#if INSTRSET >= 4  // SSSE3
+    #define BROADCAST16(a, d, x) { \
+        const __m128i mask = _mm_set1_epi16( (((d) * 2) | ((d) * 2 + 1) << 8) ); \
+        (x) = _mm_shuffle_epi8((a), mask); \
+    }
+#else
+    #define BROADCAST16(a, d, x) { \
+        const int dL = (d) & 3; \
+        const int dH = ((d)-4) & 3; \
+        if (d>=4) { \
+            (x) = _mm_shufflehi_epi16((a), dH * 0x55); \
+            (x) = _mm_unpackhi_epi64((x), (x)); \
+        } \
+        else { \
+            (x) = _mm_shufflelo_epi16((a), dL * 0x55); \
+            (x) = _mm_unpacklo_epi64((x), (x)); \
+        } \
+    }
+#endif
+
+
 #if HIGH_BIT_DEPTH
-// CHECK_ME: I am not sure the v_rightColumnN will be overflow when input as 12bpp
+// CHECK_ME: I am not sure the v_rightColumnN will be overflow when input is 12bpp
 void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
 {
     int k, bottomLeft, topRight;
@@ -819,51 +840,45 @@ void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
 }
 
 #else /* if HIGH_BIT_DEPTH */
-void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
-    int k;
     pixel bottomLeft, topRight;
 
     // Get left and above reference column and row
-    Vec16uc im0 = (Vec16uc)load_partial(const_int(4), &src[-srcStride]); // topRow
-    Vec8s v_topRow = extend_low(im0);
+    __m128i im0 = _mm_cvtsi32_si128(*(int*)above); // topRow
+    __m128i v_topRow = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
 
-    int16_t leftColumn[4];
-
-    for (k = 0; k < 4; k++)
-    {
-        leftColumn[k] = src[k * srcStride - 1];
-    }
-
-    Vec8s v_leftColumn = (Vec8s)load_partial(const_int(8), (void*)leftColumn);   // leftColumn
+    __m128i v_leftColumn = _mm_cvtsi32_si128(*(int*)left);  // leftColumn
+    v_leftColumn = _mm_unpacklo_epi8(v_leftColumn, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[4 * srcStride - 1];
-    topRight   = src[4 - srcStride];
+    bottomLeft = left[4];
+    topRight   = above[4];
 
-    Vec8s v_bottomLeft(bottomLeft);
-    Vec8s v_topRight(topRight);
+    __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
+    __m128i v_topRight = _mm_set1_epi16(topRight);
 
-    Vec8s v_bottomRow = v_bottomLeft - v_topRow;
-    Vec8s v_rightColumn = v_topRight - v_leftColumn;
+    __m128i v_bottomRow = _mm_sub_epi16(v_bottomLeft, v_topRow);
+    __m128i v_rightColumn = _mm_sub_epi16(v_topRight, v_leftColumn);
 
-    v_topRow = v_topRow << const_int(2);
-    v_leftColumn = v_leftColumn << const_int(2);
+    v_topRow = _mm_slli_epi16(v_topRow, 2);
+    v_leftColumn = _mm_slli_epi16(v_leftColumn, 2);
 
-    Vec8s v_horPred4 = v_leftColumn + Vec8s(4);
-    const Vec8s v_multi(1, 2, 3, 4, 5, 6, 7, 8);
-    Vec8s v_horPred, v_rightColumnN;
-    Vec8s v_im4;
-    Vec16uc v_im5;
+    __m128i v_horPred4 = _mm_add_epi16(v_leftColumn, _mm_set1_epi16(4));
+    const __m128i v_multi = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
+    __m128i v_horPred, v_rightColumnN;
+    __m128i v_im4;
+    __m128i v_im5;
 
 #define COMP_PRED_PLANAR4_ROW(X) { \
-        v_horPred = broadcast(const_int((X)), v_horPred4); \
-        v_rightColumnN = broadcast(const_int((X)), v_rightColumn) * v_multi; \
-        v_horPred = v_horPred + v_rightColumnN; \
-        v_topRow = v_topRow + v_bottomRow; \
-        v_im4 = (Vec8s)(v_horPred + v_topRow) >> const_int(3); \
-        v_im5 = compress_unsafe(v_im4, v_im4); \
-        store_partial(const_int(4), &dst[(X)*dstStride], v_im5); \
+        BROADCAST16(v_horPred4, (X), v_horPred); \
+        BROADCAST16(v_rightColumn, (X), v_rightColumnN); \
+        v_rightColumnN = _mm_mullo_epi16(v_rightColumnN, v_multi); \
+        v_horPred = _mm_add_epi16(v_horPred, v_rightColumnN); \
+        v_topRow = _mm_add_epi16(v_topRow, v_bottomRow); \
+        v_im4 = _mm_srai_epi16(_mm_add_epi16(v_horPred, v_topRow), 3); \
+        v_im5 = _mm_packus_epi16(v_im4, v_im4); \
+        *(int*)&dst[(X)*dstStride] = _mm_cvtsi128_si32(v_im5); \
 }
 
     COMP_PRED_PLANAR4_ROW(0)
@@ -875,19 +890,19 @@ void intra_pred_planar4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
 }
 
 #if INSTRSET >= 5
-void intra_pred_planar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_cvtsi32_si128(*(uint32_t*)&src[-srcStride]); // topRow
-    __m128i v_topRow = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
+    __m128i im0 = _mm_cvtsi32_si128(*(int*)above); // topRow
+    __m128i v_topRow = _mm_cvtepu8_epi16(im0);
 
     v_topRow = _mm_shuffle_epi32(v_topRow, 0x44);
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[4 * srcStride - 1];
-    topRight   = src[4 - srcStride];
+    bottomLeft = left[4];
+    topRight   = above[4];
 
     __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
     __m128i v_bottomRow   = _mm_sub_epi16(v_bottomLeft, v_topRow);
@@ -904,14 +919,14 @@ void intra_pred_planar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_
     v_bottomRow = _mm_slli_epi16(v_bottomRow, 1);
 
 #define COMP_PRED_PLANAR_2ROW(Y) { \
-        _tmp0 = _mm_cvtsi32_si128((src[((Y)) * srcStride - 1] << 2) + 4); \
+        _tmp0 = _mm_cvtsi32_si128((left[(Y)] << 2) + 4); \
         _tmp0 = _mm_shufflelo_epi16(_tmp0, 0); \
-        _tmp1 = _mm_cvtsi32_si128((src[((Y)+1) * srcStride - 1] << 2) + 4); \
+        _tmp1 = _mm_cvtsi32_si128((left[((Y)+1)] << 2) + 4); \
         _tmp1 = _mm_shufflelo_epi16(_tmp1, 0); \
         v_horPred = _mm_unpacklo_epi64(_tmp0, _tmp1); \
-        _tmp0 = _mm_cvtsi32_si128(topRight - src[((Y)) * srcStride - 1]); \
+        _tmp0 = _mm_cvtsi32_si128(topRight - left[(Y)]); \
         _tmp0 = _mm_shufflelo_epi16(_tmp0, 0); \
-        _tmp1 = _mm_cvtsi32_si128(topRight - src[((Y)+1) * srcStride - 1]); \
+        _tmp1 = _mm_cvtsi32_si128(topRight - left[((Y)+1)]); \
         _tmp1 = _mm_shufflelo_epi16(_tmp1, 0); \
         v_rightColumnN = _mm_unpacklo_epi64(_tmp0, _tmp1); \
         v_rightColumnN = _mm_mullo_epi16(v_rightColumnN, v_multi_2Row); \
@@ -944,7 +959,7 @@ void intra_pred_planar4_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_
         store_partial(const_int(16), &dst[X * dstStride], v_im4); \
 }
 
-void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     int k, bottomLeft, topRight;
 
@@ -1004,27 +1019,20 @@ void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
         store_partial(const_int(8), &dst[X * dstStride], v_im5); \
 }
 
-void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
-    int k;
     pixel bottomLeft, topRight;
-    int16_t leftColumn[8];
 
     // Get left and above reference column and row
-    Vec16uc im0 = (Vec16uc)load_partial(const_int(8), &src[-srcStride]); // topRow
+    Vec16uc im0 = (Vec16uc)load_partial(const_int(8), (void*)above); // topRow
     Vec8s v_topRow = extend_low(im0);
 
-    for (k = 0; k < 8; k++)
-    {
-        leftColumn[k] = src[k * srcStride - 1];
-    }
-
-    Vec8s v_leftColumn;
-    v_leftColumn.load(leftColumn);   // leftColumn
+    Vec8s v_leftColumn = _mm_loadl_epi64((__m128i*)left);   // leftColumn
+    v_leftColumn = _mm_unpacklo_epi8(v_leftColumn, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[8 * srcStride - 1];
-    topRight   = src[8 - srcStride];
+    bottomLeft = left[8];
+    topRight   = above[8];
 
     Vec8s v_bottomLeft(bottomLeft);
     Vec8s v_topRight(topRight);
@@ -1055,29 +1063,20 @@ void intra_pred_planar8(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dst
 #undef COMP_PRED_PLANAR_ROW
 
 #if INSTRSET >= 5
-void intra_pred_planar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_loadl_epi64((__m128i*)&src[0 - srcStride]); // topRow
+    __m128i im0 = _mm_loadl_epi64((__m128i*)above); // topRow
     __m128i v_topRow = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
 
-    __m128i v_leftColumn = _mm_setzero_si128();
-
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[0 * srcStride - 1], 0);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[1 * srcStride - 1], 1);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[2 * srcStride - 1], 2);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[3 * srcStride - 1], 3);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[4 * srcStride - 1], 4);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[5 * srcStride - 1], 5);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[6 * srcStride - 1], 6);
-    v_leftColumn = _mm_insert_epi8(v_leftColumn, src[7 * srcStride - 1], 7);
+    __m128i v_leftColumn = _mm_loadl_epi64((__m128i*)left);
     v_leftColumn = _mm_unpacklo_epi8(v_leftColumn, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[8 * srcStride - 1];
-    topRight   = src[8 - srcStride];
+    bottomLeft = left[8];
+    topRight   = above[8];
 
     __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
     __m128i v_topRight   = _mm_set1_epi16(topRight);
@@ -1094,18 +1093,8 @@ void intra_pred_planar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_
     __m128i v_im5;
 
 #define COMP_PRED_PLANAR_ROW(Y) { \
-        if ((Y) < 4) { \
-            v_horPred = _mm_shufflelo_epi16(v_horPred4, ((Y) & 3) * 0x55); \
-            v_horPred = _mm_unpacklo_epi64(v_horPred, v_horPred); \
-            v_rightColumnN = _mm_shufflelo_epi16(v_rightColumn, ((Y) & 3) * 0x55); \
-            v_rightColumnN = _mm_unpacklo_epi64(v_rightColumnN, v_rightColumnN); \
-        } \
-        else { \
-            v_horPred = _mm_shufflehi_epi16(v_horPred4, ((Y) & 3) * 0x55); \
-            v_horPred = _mm_unpackhi_epi64(v_horPred, v_horPred); \
-            v_rightColumnN = _mm_shufflehi_epi16(v_rightColumn, ((Y) & 3) * 0x55); \
-            v_rightColumnN = _mm_unpackhi_epi64(v_rightColumnN, v_rightColumnN); \
-        } \
+        BROADCAST16(v_horPred4, (Y), v_horPred); \
+        BROADCAST16(v_rightColumn, (Y), v_rightColumnN); \
         v_rightColumnN = _mm_mullo_epi16(v_rightColumnN, v_multiL); \
         v_horPred = _mm_add_epi16(v_horPred, v_rightColumnN); \
         v_topRow = _mm_add_epi16(v_topRow, v_bottomRow); \
@@ -1148,7 +1137,7 @@ void intra_pred_planar8_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_
         v_im4_hi.store(&dst[X * dstStride + 8]); \
 }
 
-void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     int k;
     pixel bottomLeft, topRight;
@@ -1235,28 +1224,20 @@ void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t ds
         store_partial(const_int(16), &dst[X * dstStride], v_im5); \
 }
 
-void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
-    int k;
     pixel bottomLeft, topRight;
-    int16_t leftColumn[16];
 
     // Get left and above reference column and row
-    Vec16uc im0 = (Vec16uc)load_partial(const_int(16), &src[-srcStride]); // topRow
+    Vec16uc im0 = (Vec16uc)load_partial(const_int(16), above); // topRow
     Vec8s v_topRow_lo = extend_low(im0);
     Vec8s v_topRow_hi = extend_high(im0);
 
-    for (k = 0; k < 16; k++)
-    {
-        leftColumn[k] = src[k * srcStride - 1];
-    }
-
-    Vec8s v_leftColumn;
-    v_leftColumn.load(leftColumn);   // leftColumn
+    Vec8s v_leftColumn = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)left), _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[16 * srcStride - 1];
-    topRight   = src[16 - srcStride];
+    bottomLeft = left[16];
+    topRight   = above[16];
 
     Vec8s v_bottomLeft(bottomLeft);
     Vec8s v_topRight(topRight);
@@ -1286,7 +1267,8 @@ void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t ds
     COMP_PRED_PLANAR_ROW(6);
     COMP_PRED_PLANAR_ROW(7);     // row 7
 
-    v_leftColumn.load(leftColumn + 8);   // leftColumn lower 8 rows
+    // leftColumn lower 8 rows
+    v_leftColumn = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)(left + 8)), _mm_setzero_si128());
     v_rightColumn = v_topRight - v_leftColumn;
     v_leftColumn = v_leftColumn << (2 + shift);
     v_horPred4 = v_leftColumn + Vec8s(16);
@@ -1304,21 +1286,21 @@ void intra_pred_planar16(pixel* src, intptr_t srcStride, pixel* dst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 
 #if INSTRSET >= 5
-void intra_pred_planar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[2];
     __m128i v_bottomRow[2];
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_loadu_si128((__m128i*)&src[0 - srcStride]); // topRow
+    __m128i im0 = _mm_loadu_si128((__m128i*)above); // topRow
 
     v_topRow[0] = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
     v_topRow[1] = _mm_unpackhi_epi8(im0, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[16 * srcStride - 1];
-    topRight   = src[16 - srcStride];
+    bottomLeft = left[16];
+    topRight   = above[16];
 
     __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
 
@@ -1333,10 +1315,10 @@ void intra_pred_planar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
     __m128i v_im5;
 
 #define COMP_PRED_PLANAR_ROW(Y) { \
-        v_horPred = _mm_cvtsi32_si128((src[(Y)*srcStride - 1] << 4) + 16); \
+        v_horPred = _mm_cvtsi32_si128((left[(Y)] << 4) + 16); \
         v_horPred = _mm_shufflelo_epi16(v_horPred, 0); \
         v_horPred = _mm_shuffle_epi32(v_horPred, 0); \
-        __m128i _tmp = _mm_cvtsi32_si128(topRight - src[(Y)*srcStride - 1]); \
+        __m128i _tmp = _mm_cvtsi32_si128(topRight - left[(Y)]); \
         _tmp = _mm_shufflelo_epi16(_tmp, 0); \
         _tmp = _mm_shuffle_epi32(_tmp, 0); \
         v_rightColumnN[0] = _mm_mullo_epi16(_tmp, v_multiL); \
@@ -1374,15 +1356,15 @@ void intra_pred_planar16_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
 #endif // INSTRSET >= 5
 
 #if INSTRSET >= 5
-void intra_pred_planar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[4];
     __m128i v_bottomRow[4];
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_loadu_si128((__m128i*)&src[0 - srcStride]); // topRow
-    __m128i im1 = _mm_loadu_si128((__m128i*)&src[16 - srcStride]); // topRow
+    __m128i im0 = _mm_loadu_si128((__m128i*)&above[0]); // topRow
+    __m128i im1 = _mm_loadu_si128((__m128i*)&above[16]); // topRow
 
     v_topRow[0] = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
     v_topRow[1] = _mm_unpackhi_epi8(im0, _mm_setzero_si128());
@@ -1390,8 +1372,8 @@ void intra_pred_planar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
     v_topRow[3] = _mm_unpackhi_epi8(im1, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[32 * srcStride - 1];
-    topRight   = src[32 - srcStride];
+    bottomLeft = left[32];
+    topRight   = above[32];
 
     __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
 
@@ -1410,10 +1392,10 @@ void intra_pred_planar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
     __m128i v_im5[2];
 
 #define COMP_PRED_PLANAR_ROW(Y) { \
-        v_horPred = _mm_cvtsi32_si128((src[(Y)*srcStride - 1] << 5) + 32); \
+        v_horPred = _mm_cvtsi32_si128((left[(Y)] << 5) + 32); \
         v_horPred = _mm_shufflelo_epi16(v_horPred, 0); \
         v_horPred = _mm_shuffle_epi32(v_horPred, 0); \
-        __m128i _tmp = _mm_cvtsi32_si128(topRight - src[(Y)*srcStride - 1]); \
+        __m128i _tmp = _mm_cvtsi32_si128(topRight - left[(Y)]); \
         _tmp = _mm_shufflelo_epi16(_tmp, 0); \
         _tmp = _mm_shuffle_epi32(_tmp, 0); \
         v_rightColumnN[0] = _mm_mullo_epi16(_tmp, v_multiL); \
@@ -1451,17 +1433,17 @@ void intra_pred_planar32_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
 #endif // INSTRSET >= 5
 
 #if INSTRSET >= 5
-void intra_pred_planar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride)
+void intra_pred_planar64_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
     __m128i v_topRow[8];
     __m128i v_bottomRow[8];
 
     // Get left and above reference column and row
-    __m128i im0 = _mm_loadu_si128((__m128i*)&src[0 - srcStride]); // topRow
-    __m128i im1 = _mm_loadu_si128((__m128i*)&src[16 - srcStride]); // topRow
-    __m128i im2 = _mm_loadu_si128((__m128i*)&src[32 - srcStride]); // topRow
-    __m128i im3 = _mm_loadu_si128((__m128i*)&src[48 - srcStride]); // topRow
+    __m128i im0 = _mm_loadu_si128((__m128i*)&above[0]); // topRow
+    __m128i im1 = _mm_loadu_si128((__m128i*)&above[16]); // topRow
+    __m128i im2 = _mm_loadu_si128((__m128i*)&above[32]); // topRow
+    __m128i im3 = _mm_loadu_si128((__m128i*)&above[48]); // topRow
 
     v_topRow[0] = _mm_unpacklo_epi8(im0, _mm_setzero_si128());
     v_topRow[1] = _mm_unpackhi_epi8(im0, _mm_setzero_si128());
@@ -1473,8 +1455,8 @@ void intra_pred_planar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
     v_topRow[7] = _mm_unpackhi_epi8(im3, _mm_setzero_si128());
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = src[64 * srcStride - 1];
-    topRight   = src[64 - srcStride];
+    bottomLeft = left[64];
+    topRight   = above[64];
 
     __m128i v_bottomLeft = _mm_set1_epi16(bottomLeft);
 
@@ -1501,10 +1483,10 @@ void intra_pred_planar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
     __m128i v_im5[4];
 
 #define COMP_PRED_PLANAR_ROW(Y) { \
-        v_horPred = _mm_cvtsi32_si128((src[(Y)*srcStride - 1] << 6) + 64); \
+        v_horPred = _mm_cvtsi32_si128((left[(Y)] << 6) + 64); \
         v_horPred = _mm_shufflelo_epi16(v_horPred, 0); \
         v_horPred = _mm_shuffle_epi32(v_horPred, 0); \
-        __m128i _tmp = _mm_cvtsi32_si128(topRight - src[(Y)*srcStride - 1]); \
+        __m128i _tmp = _mm_cvtsi32_si128(topRight - left[(Y)]); \
         _tmp = _mm_shufflelo_epi16(_tmp, 0); \
         _tmp = _mm_shuffle_epi32(_tmp, 0); \
         v_rightColumnN[0] = _mm_mullo_epi16(_tmp, v_multiL); \
@@ -1563,7 +1545,7 @@ void intra_pred_planar64_sse4(pixel* src, intptr_t srcStride, pixel* dst, intptr
 
 #endif /* if HIGH_BIT_DEPTH */
 
-typedef void intra_pred_planar_t (pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride);
+typedef void intra_pred_planar_t (pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 intra_pred_planar_t *intraPlanarN[] =
 {
 #if !HIGH_BIT_DEPTH && INSTRSET >= 5
@@ -1579,18 +1561,18 @@ intra_pred_planar_t *intraPlanarN[] =
 #endif
 };
 
-void intra_pred_planar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width)
+void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width)
 {
     int nLog2Size = g_convertToBit[width] + 2;
 
 #if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5)
-    intraPlanarN[nLog2Size - 2](src, srcStride, dst, dstStride);
+    intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
     return;
 #else
     int k, l, bottomLeft, topRight;
     int horPred;
     // OPT_ME: when width is 64, the shift1D is 8, then the dynamic range is [-65280, 65280], so we have to use 32 bits here
-    int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
+    int32_t leftColumn[MAX_CU_SIZE], topRow[MAX_CU_SIZE];
     // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
     int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     int blkSize = width;
@@ -1600,20 +1582,20 @@ void intra_pred_planar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstS
 
     if (width < 32)
     {
-        intraPlanarN[nLog2Size - 2](src, srcStride, dst, dstStride);
+        intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
         return;
     }
 
     // Get left and above reference column and row
-    for (k = 0; k < blkSize + 1; k++)
+    for (k = 0; k < blkSize; k++)
     {
-        topRow[k] = src[k - srcStride];
-        leftColumn[k] = src[k * srcStride - 1];
+        topRow[k] = above[k];
+        leftColumn[k] = left[k];
     }
 
     // Prepare intermediate variables used in interpolation
-    bottomLeft = leftColumn[blkSize];
-    topRight   = topRow[blkSize];
+    bottomLeft = left[blkSize];
+    topRight   = above[blkSize];
     for (k = 0; k < blkSize; k++)
     {
         bottomRow[k]   = bottomLeft - topRow[k];
