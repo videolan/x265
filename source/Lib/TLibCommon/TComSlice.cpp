@@ -1034,12 +1034,12 @@ Void TComSlice::createExplicitReferencePictureSetFromReference(TComList<TComPic*
     {
         Int rIdx =  this->getRPSidx() - rps->getDeltaRIdxMinus1() - 1;
         Int deltaRPS = rps->getDeltaRPS();
-        refRPS = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
-        Int refPics = refRPS->getNumberOfPictures();
+        const TComReferencePictureSet *refRPSOther = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
+        Int refPics = refRPSOther->getNumberOfPictures();
         Int newIdc = 0;
         for (i = 0; i <= refPics; i++)
         {
-            Int deltaPOC = ((i != refPics) ? refRPS->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
+            Int deltaPOC = ((i != refPics) ? refRPSOther->getDeltaPOC(i) : 0); // check if the reference abs POC is >= 0
             Int refIdc = 0;
             for (j = 0; j < refRPS->getNumberOfPictures(); j++) // loop through the  pictures in the new RPS
             {
