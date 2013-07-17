@@ -88,8 +88,6 @@ bool IntraPredHarness::check_dc_primitive(x265::intra_dc_t ref, x265::intra_dc_t
         memset(pixel_out_c, 0xCD, out_size);
 #endif
 
-        //opt(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
-        //ref(pixel_buff + j, ADI_BUF_STRIDE, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
         ref(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_c,   FENC_STRIDE, rand_width, rand_filter);
         opt(pixel_buff + j - ADI_BUF_STRIDE, left + 1, pixel_out_vec, FENC_STRIDE, rand_width, rand_filter);
 
