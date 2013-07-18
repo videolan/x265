@@ -60,18 +60,10 @@ typedef       float               Float;
 
 #ifdef _MSC_VER
 typedef       __int64             Int64;
-
-#if _MSC_VER <= 1200 // MS VC6
-typedef       __int64             UInt64;   // MS VC6 does not support unsigned __int64 to double conversion
-#else
 typedef       unsigned __int64    UInt64;
-#endif
-
 #else
-
 typedef       long long           Int64;
 typedef       unsigned long long  UInt64;
-
 #endif // ifdef _MSC_VER
 
 // ====================================================================================================================
