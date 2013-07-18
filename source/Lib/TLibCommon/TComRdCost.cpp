@@ -225,7 +225,7 @@ UInt TComRdCost::xGetSAD(DistParam* distParam)
         cur += strideCur;
     }
 
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD4(DistParam* distParam)
@@ -256,7 +256,7 @@ UInt TComRdCost::xGetSAD4(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD8(DistParam* distParam)
@@ -291,7 +291,7 @@ UInt TComRdCost::xGetSAD8(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD16(DistParam* distParam)
@@ -334,7 +334,7 @@ UInt TComRdCost::xGetSAD16(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD12(DistParam* distparam)
@@ -374,7 +374,7 @@ UInt TComRdCost::xGetSAD12(DistParam* distparam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distparam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD16N(DistParam* distParam)
@@ -416,7 +416,7 @@ UInt TComRdCost::xGetSAD16N(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD32(DistParam* distParam)
@@ -475,7 +475,7 @@ UInt TComRdCost::xGetSAD32(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD24(DistParam* distParam)
@@ -526,7 +526,7 @@ UInt TComRdCost::xGetSAD24(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD64(DistParam* distParam)
@@ -618,7 +618,7 @@ UInt TComRdCost::xGetSAD64(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetSAD48(DistParam* distParam)
@@ -694,7 +694,7 @@ UInt TComRdCost::xGetSAD48(DistParam* distParam)
     }
 
     sum <<= shift;
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -735,7 +735,7 @@ UInt TComRdCost::xGetSSE(DistParam* distParam)
     Int  strideCur = distParam->frefstride;
 
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
     Pel* org   = distParam->fenc;
     Pel* cur   = distParam->fref;
 
@@ -798,7 +798,7 @@ UInt TComRdCost::xGetSSE4(DistParam* distParam)
     Int  strideOrg = distParam->fencstride;
     Int  strideCur = distParam->frefstride;
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     Pel* org = distParam->fenc;
     Pel* cur = distParam->fref;
@@ -872,7 +872,7 @@ UInt TComRdCost::xGetSSE8(DistParam* distParam)
     Int  strideOrg = distParam->fencstride;
     Int  strideCur = distParam->frefstride;
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
@@ -959,7 +959,7 @@ UInt TComRdCost::xGetSSE16(DistParam* distParam)
     Int  strideOrg = distParam->fencstride;
     Int  strideCur = distParam->frefstride;
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
@@ -1051,7 +1051,7 @@ UInt TComRdCost::xGetSSE16N(DistParam* distParam)
     Int  strideCur = distParam->frefstride;
 
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
@@ -1171,7 +1171,7 @@ UInt TComRdCost::xGetSSE32(DistParam* distParam)
     Int  strideCur = distParam->frefstride;
 
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
@@ -1356,7 +1356,7 @@ UInt TComRdCost::xGetSSE64(DistParam* distParam)
     Int  strideCur = distParam->frefstride;
 
     UInt sum = 0;
-    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((distParam->bitDepth - 8) << 1);
+    UInt shift = DISTORTION_PRECISION_ADJUSTMENT((X265_DEPTH - 8) << 1);
 
     if ((sizeof(Pel) == 2) || ((org != NULL) && (cur != NULL)))
     {
@@ -1602,7 +1602,7 @@ UInt TComRdCost::xGetHADs4(DistParam* distParam)
         cur += offsetCur;
     }
 
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetHADs8(DistParam* distParam)
@@ -1638,7 +1638,7 @@ UInt TComRdCost::xGetHADs8(DistParam* distParam)
         }
     }
 
-    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return uiSum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 UInt TComRdCost::xGetHADs(DistParam* distParam)
@@ -1694,7 +1694,7 @@ UInt TComRdCost::xGetHADs(DistParam* distParam)
         assert(false);
     }
 
-    return sum >> DISTORTION_PRECISION_ADJUSTMENT(distParam->bitDepth - 8);
+    return sum >> DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 }
 
 //! \}

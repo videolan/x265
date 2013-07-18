@@ -121,7 +121,6 @@ public:
     Int   cols;
     Int   step;
     FpDistFunc distFunc;
-    Int   bitDepth;
 
     Bool            applyWeight;   // whether weighted prediction is used or not
     wpScalingParam  *wpCur;         // weighted prediction scaling parameters for current ref
@@ -141,7 +140,6 @@ public:
         step = 1;
         distFunc = NULL;
         subShift = 0;
-        bitDepth = 0;
     }
 };
 

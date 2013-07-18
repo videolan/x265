@@ -237,7 +237,6 @@ inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct
     }
 
     // distortion
-    m_distParam.bitDepth = X265_DEPTH;
     UInt cost = m_distParam.distFunc(&m_distParam) + 
                 m_bc.mvcost(MV(searchX, searchY) << m_mvCostScale);
 
@@ -560,7 +559,6 @@ UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int f
     Int   stride = refPic->getStride();
 
     m_rdCost->setDistParam(patternKey, refPic->getLumaFilterBlock(0, 0, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + offset, stride, 1, m_distParam, true);
-    m_distParam.bitDepth = X265_DEPTH;
 
     const MV* mvRefine = (fracBits == 2 ? s_mvRefineHpel : s_mvRefineQPel);
     for (int i = 0; i < 9; i++)
@@ -3340,7 +3338,6 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     Int srchRngVerBottom = mvmax->y;
 
     m_rdCost->setDistParam(patternKey, refY, stride, m_distParam);
-    m_distParam.bitDepth = X265_DEPTH;
     refY += (srchRngVerTop * stride);
 
     // find min. distortion position
