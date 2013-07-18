@@ -199,38 +199,38 @@ Void TComPicYuv::destroyLuma()
     delete[] m_buOffsetY;
 }
 
-Void  TComPicYuv::copyToPic(TComPicYuv* pcPicYuvDst)
+Void  TComPicYuv::copyToPic(TComPicYuv* destPicYuv)
 {
-    assert(m_picWidth  == pcPicYuvDst->getWidth());
-    assert(m_picHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == destPicYuv->getWidth());
+    assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
-    ::memcpy(pcPicYuvDst->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicLuma(TComPicYuv* pcPicYuvDst)
+Void  TComPicYuv::copyToPicLuma(TComPicYuv* destPicYuv)
 {
-    assert(m_picWidth  == pcPicYuvDst->getWidth());
-    assert(m_picHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == destPicYuv->getWidth());
+    assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufY(), m_picBufY, sizeof(Pel) * (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicCb(TComPicYuv* pcPicYuvDst)
+Void  TComPicYuv::copyToPicCb(TComPicYuv* destPicYuv)
 {
-    assert(m_picWidth  == pcPicYuvDst->getWidth());
-    assert(m_picHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == destPicYuv->getWidth());
+    assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufU(), m_picBufU, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-Void  TComPicYuv::copyToPicCr(TComPicYuv* pcPicYuvDst)
+Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
 {
-    assert(m_picWidth  == pcPicYuvDst->getWidth());
-    assert(m_picHeight == pcPicYuvDst->getHeight());
+    assert(m_picWidth  == destPicYuv->getWidth());
+    assert(m_picHeight == destPicYuv->getHeight());
 
-    ::memcpy(pcPicYuvDst->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
 Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)

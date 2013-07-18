@@ -96,15 +96,15 @@ public:
     void    addClipLuma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
     void    addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
 
-    void    copyPartToPartYuv(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
+    void    copyPartToPartYuv(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
 
-    void    copyPartToPartYuv(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
+    void    copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
+    void    copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
 };
 
 #endif //end __TSHORTYUV__

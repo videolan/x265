@@ -183,22 +183,22 @@ void TShortYUV::addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsign
 #pragma warning (default: 4244)
 #endif
 
-void TShortYUV::copyPartToPartYuv(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+void TShortYUV::copyPartToPartYuv(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
-    copyPartToPartLuma(pcYuvDst, uiPartIdx, iWidth, iHeight);
-    copyPartToPartChroma(pcYuvDst, uiPartIdx, iWidth >> 1, iHeight >> 1);
+    copyPartToPartLuma(dstPicYuv, uiPartIdx, iWidth, iHeight);
+    copyPartToPartChroma(dstPicYuv, uiPartIdx, iWidth >> 1, iHeight >> 1);
 }
 
-void TShortYUV::copyPartToPartYuv(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+void TShortYUV::copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
-    copyPartToPartLuma(pcYuvDst, uiPartIdx, iWidth, iHeight);
-    copyPartToPartChroma(pcYuvDst, uiPartIdx, iWidth >> 1, iHeight >> 1);
+    copyPartToPartLuma(dstPicYuv, uiPartIdx, iWidth, iHeight);
+    copyPartToPartChroma(dstPicYuv, uiPartIdx, iWidth >> 1, iHeight >> 1);
 }
 
-Void TShortYUV::copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+Void TShortYUV::copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
     short* pSrc =           getLumaAddr(uiPartIdx);
-    short* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
+    short* pDst = dstPicYuv->getLumaAddr(uiPartIdx);
 
     if (pSrc == pDst)
     {
@@ -208,7 +208,7 @@ Void TShortYUV::copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, 
     }
 
     unsigned int  iSrcStride = width;
-    unsigned int  iDstStride = pcYuvDst->width;
+    unsigned int  iDstStride = dstPicYuv->width;
     for (unsigned int y = iHeight; y != 0; y--)
     {
         ::memcpy(pDst, pSrc, iWidth * sizeof(short));
@@ -217,13 +217,13 @@ Void TShortYUV::copyPartToPartLuma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, 
     }
 }
 
-Void TShortYUV::copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+Void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
     short* pSrc =           getLumaAddr(uiPartIdx);
-    Pel* pDst = pcYuvDst->getLumaAddr(uiPartIdx);
+    Pel* pDst = dstPicYuv->getLumaAddr(uiPartIdx);
 
     unsigned int  iSrcStride = width;
-    unsigned int  iDstStride = pcYuvDst->getStride();
+    unsigned int  iDstStride = dstPicYuv->getStride();
 
     for (unsigned int y = iHeight; y != 0; y--)
     {
@@ -237,12 +237,12 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* pcYuvDst, unsigned int uiPartIdx, un
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
     short*  pSrcU =           getCbAddr(uiPartIdx);
     short*  pSrcV =           getCrAddr(uiPartIdx);
-    short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-    short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+    short*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
+    short*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
 
     if (pSrcU == pDstU && pSrcV == pDstV)
     {
@@ -252,7 +252,7 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
     }
 
     unsigned int   iSrcStride = Cwidth;
-    unsigned int   iDstStride = pcYuvDst->Cwidth;
+    unsigned int   iDstStride = dstPicYuv->Cwidth;
     for (unsigned int y = iHeight; y != 0; y--)
     {
         ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -264,15 +264,15 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
+Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight)
 {
     short*  pSrcU =           getCbAddr(uiPartIdx);
     short*  pSrcV =           getCrAddr(uiPartIdx);
-    Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-    Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+    Pel*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
+    Pel*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
 
     unsigned int   iSrcStride = Cwidth;
-    unsigned int   iDstStride = pcYuvDst->getCStride();
+    unsigned int   iDstStride = dstPicYuv->getCStride();
 
     for (unsigned int y = iHeight; y != 0; y--)
     {
@@ -289,18 +289,18 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId)
+Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId)
 {
     if (chromaId == 0)
     {
         short*  pSrcU =           getCbAddr(uiPartIdx);
-        short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
+        short*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
         if (pSrcU == pDstU)
         {
             return;
         }
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->Cwidth;
+        unsigned int   iDstStride = dstPicYuv->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -311,13 +311,13 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
     else if (chromaId == 1)
     {
         short*  pSrcV =           getCrAddr(uiPartIdx);
-        short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+        short*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
         if (pSrcV == pDstV)
         {
             return;
         }
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->Cwidth;
+        unsigned int   iDstStride = dstPicYuv->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstV, pSrcV, iWidth * sizeof(short));
@@ -329,8 +329,8 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
     {
         short*  pSrcU =           getCbAddr(uiPartIdx);
         short*  pSrcV =           getCrAddr(uiPartIdx);
-        short*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-        short*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+        short*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
+        short*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
 
         if (pSrcU == pDstU && pSrcV == pDstV)
         {
@@ -339,7 +339,7 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
             return;
         }
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->Cwidth;
+        unsigned int   iDstStride = dstPicYuv->Cwidth;
         for (unsigned int y = iHeight; y != 0; y--)
         {
             ::memcpy(pDstU, pSrcU, iWidth * sizeof(short));
@@ -352,14 +352,14 @@ Void TShortYUV::copyPartToPartChroma(TShortYUV* pcYuvDst, unsigned int uiPartIdx
     }
 }
 
-Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId)
+Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId)
 {
     if (chromaId == 0)
     {
         short*  pSrcU =           getCbAddr(uiPartIdx);
-        Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
+        Pel*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iDstStride = dstPicYuv->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
             for (unsigned int x = 0; x < iWidth; x++)
@@ -374,9 +374,9 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     else if (chromaId == 1)
     {
         short*  pSrcV =           getCrAddr(uiPartIdx);
-        Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+        Pel*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iDstStride = dstPicYuv->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
             for (unsigned int x = 0; x < iWidth; x++)
@@ -392,11 +392,11 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* pcYuvDst, unsigned int uiPartIdx, 
     {
         short*  pSrcU =           getCbAddr(uiPartIdx);
         short*  pSrcV =           getCrAddr(uiPartIdx);
-        Pel*  pDstU = pcYuvDst->getCbAddr(uiPartIdx);
-        Pel*  pDstV = pcYuvDst->getCrAddr(uiPartIdx);
+        Pel*  pDstU = dstPicYuv->getCbAddr(uiPartIdx);
+        Pel*  pDstV = dstPicYuv->getCrAddr(uiPartIdx);
 
         unsigned int   iSrcStride = Cwidth;
-        unsigned int   iDstStride = pcYuvDst->getCStride();
+        unsigned int   iDstStride = dstPicYuv->getCStride();
         for (unsigned int y = iHeight; y != 0; y--)
         {
             for (unsigned int x = 0; x < iWidth; x++)
