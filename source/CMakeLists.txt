@@ -46,6 +46,13 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
+option(NO_RDO_EARLY_EXIT "Use 16bit pixels internally" OFF)
+if(NO_RDO_EARLY_EXIT)
+    add_definitions(-DNO_RDO_EARLY_EXIT=1)
+else(NO_RDO_EARLY_EXIT)
+    add_definitions(-DNO_RDO_EARLY_EXIT=0)
+endif(NO_RDO_EARLY_EXIT)
+
 option(ENABLE_PRIMITIVES_VEC "Enable use of SIMD vector class primitives" ON)
 find_package(Yasm)
 if(YASM_FOUND)
