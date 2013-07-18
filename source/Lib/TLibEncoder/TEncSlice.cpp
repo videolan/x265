@@ -177,14 +177,13 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     Int    SHIFT_QP = 12;
     Double lambda_scale = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
 #if FULL_NBIT
-    Int    bitdepth_luma_qp_scale = 6 * (g_bitDepth - 8);
+    Int    bitdepth_luma_qp_scale = 6 * (X265_DEPTH - 8);
+    Double qp_temp_orig = (Double)dQP - SHIFT_QP;
 #else
     Int    bitdepth_luma_qp_scale = 0;
 #endif
     Double qp_temp = (Double)qpdouble + bitdepth_luma_qp_scale - SHIFT_QP;
-#if FULL_NBIT
-    Double qp_temp_orig = (Double)dQP - SHIFT_QP;
-#endif
+
     // Case #1: I or P-slices (key-frame)
     Double qpFactor = m_cfg->getGOPEntry(gopID).m_QPFactor;
     if (sliceType == I_SLICE)
@@ -200,9 +199,9 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     if (depth > 0)
     {
 #if FULL_NBIT
-        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
+        lambda *= Clip3(2.00, 4.00, (qp_temp_orig / 6.0));
 #else
-        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0)); // (j == B_SLICE && p_cur_frm->layer != 0 )
+        lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0));
 #endif
     }
 #else // if 0
