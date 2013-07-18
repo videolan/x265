@@ -106,7 +106,7 @@ UInt g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 UInt g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 UInt g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
-UInt g_auiPUOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
+UInt g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
 Void initZscanToRaster(Int maxDepth, Int depth, UInt startVal, UInt*& curIdx)
 {

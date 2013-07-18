@@ -90,11 +90,11 @@ extern UInt g_addCUDepth;
 #define MAX_TS_WIDTH  4
 #define MAX_TS_HEIGHT 4
 
-extern UInt g_auiPUOffset[8];
+extern UInt g_puOffset[8];
 
 #define QUANT_IQUANT_SHIFT    20 // Q(QP%6) * IQ(QP%6) = 2^20
 #define QUANT_SHIFT           14 // Q(4) = 2^14
-#define SCALE_BITS            15 // Inherited from TMuC, pressumably for fractional bit estimates in RDOQ
+#define SCALE_BITS            15 // Inherited from TMuC, presumably for fractional bit estimates in RDOQ
 #define MAX_TR_DYNAMIC_RANGE  15 // Maximum transform dynamic range (excluding sign bit)
 
 #define SHIFT_INV_1ST          7 // Shift after first inverse transform stage
