@@ -45,7 +45,7 @@ extern "C" void x265_cpu_emms(void);
 // a fixed CPU arch, which we would like to avoid at the moment
 #define x265_emms() x265_cpu_emms()
 #else
-#define x265_emms()
+#define x265_emms() x265_cpu_emms()
 #endif
 
 #if defined(__GNUC__)
@@ -63,13 +63,11 @@ typedef uint16_t pixel;
 typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
-#define PIXEL_SPLAT_X4(x) ((x) * 0x0001000100010001ULL)
 #else
 typedef uint8_t pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
-#define PIXEL_SPLAT_X4(x) ((x) * 0x01010101U)
 #endif // if HIGH_BIT_DEPTH
 
 namespace x265 {
