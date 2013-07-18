@@ -220,8 +220,6 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
  * \param outTempCU
  * \returns Void
  */
- 
-
 
 Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt index, Bool bUseMRG)
 {
@@ -349,6 +347,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 
             m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
+#if CU_STAT_LOGFILE
+            fprintf(fp1, "\n N : %d ,  Best Inter : %d , ", outBestCU->getWidth(0) / 2, outBestCU->getTotalCost());
+#endif
 
             if (m_bestMergeCU[depth]->getTotalCost() < outBestCU->getTotalCost())
             {
@@ -422,7 +423,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #if CU_STAT_LOGFILE
     if (outBestCU)
     {
-        fprintf(fp1, "\n Width : %d ,Inter 2Nx2N_Merge : %d , 2Nx2N : %d , 2NxN : %d, Nx2N : %d , intra : %d", outBestCU->getWidth(0), m_bestMergeCU[depth]->getTotalCost(), m_interCU_2Nx2N[depth]->getTotalCost(), m_interCU_2NxN[depth]->getTotalCost(), m_interCU_Nx2N[depth]->getTotalCost(), m_intraInInterCU[depth]->getTotalCost());
+        fprintf(fp1, "Inter 2Nx2N_Merge : %d , Intra : %d",  m_bestMergeCU[depth]->getTotalCost(), m_intraInInterCU[depth]->getTotalCost());
+        if (outBestCU != m_bestMergeCU[depth] && outBestCU != m_intraInInterCU[depth])
+            fprintf(fp1, " , Best  Part Mode chosen :%d, Pred Mode : %d",  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
     }
 #endif
 
@@ -510,6 +513,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         {
             if (outBestCU->getTotalCost() < outTempCU->getTotalCost())
             {
+                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->getTotalCost(),  outTempCU->getPartitionSize(0), outTempCU->getPredictionMode(0));
                 if (outBestCU->getPredictionMode(0) == MODE_INTER)
                 {
                     cntInter[depth]++;
@@ -537,6 +541,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
             else
             {
+                fprintf(fp1, "\n  %d vs %d  : selected mode :N : %d , cost : %d  ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getTotalCost());
                 cntSplit[depth]++;
             }
         }

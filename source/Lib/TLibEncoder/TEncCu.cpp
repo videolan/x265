@@ -394,7 +394,7 @@ Void TEncCu::compressCU(TComDataCU* cu)
 #if CU_STAT_LOGFILE
     totalCU++;
     if (cu->getSlice()->getSliceType() != I_SLICE)
-        fprintf(fp1, "CU number : %d \n", totalCU);
+        fprintf(fp1, "\n CU number : %d ", totalCU);
 #endif
     //printf("compressCU[%2d]: Best=0x%08X, Temp=0x%08X\n", omp_get_thread_num(), m_ppcBestCU[0], m_ppcTempCU[0]);
 
@@ -1261,6 +1261,7 @@ Void TEncCu::finishCU(TComDataCU* cu, UInt absPartIdx, UInt depth)
 Int TEncCu::xComputeQP(TComDataCU* cu)
 {
     Int baseQP = cu->getSlice()->getSliceQp();
+
     return Clip3(-cu->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, baseQP);
 }
 
