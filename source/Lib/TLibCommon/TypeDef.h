@@ -59,11 +59,11 @@ typedef       float               Float;
 // ====================================================================================================================
 
 #ifdef _MSC_VER
-typedef       __int64             Int64;
-typedef       unsigned __int64    UInt64;
+typedef __int64             Int64;
+typedef unsigned __int64    UInt64;
 #else
-typedef       long long           Int64;
-typedef       unsigned long long  UInt64;
+typedef long long           Int64;
+typedef unsigned long long  UInt64;
 #endif // ifdef _MSC_VER
 
 // ====================================================================================================================
@@ -71,11 +71,11 @@ typedef       unsigned long long  UInt64;
 // ====================================================================================================================
 
 #if HIGH_BIT_DEPTH
-typedef       UShort          Pel;        ///< 16-bit pixel type
+typedef UShort Pel;        ///< 16-bit pixel type
 #else
-typedef       UChar           Pel;        ///< 8-bit pixel type
+typedef UChar  Pel;        ///< 8-bit pixel type
 #endif
-typedef       Int             TCoeff;     ///< transform coefficient
+typedef Int    TCoeff;     ///< transform coefficient
 
 // ====================================================================================================================
 // Enumeration
