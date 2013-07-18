@@ -240,7 +240,7 @@ void Encoder::configure(x265_param_t *param)
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
     //====== HM Settings not exposed for configuration ======
-    InitializeGOP(param);
+    initializeGOP(param);
     setGOPSize(m_gopSize);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
@@ -355,7 +355,7 @@ static inline int _confirm(bool bflag, const char* message)
 }
 
 // TODO: All of this junk should go away when we get a real lookahead
-bool Encoder::InitializeGOP(x265_param_t *param)
+bool Encoder::initializeGOP(x265_param_t *param)
 {
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
