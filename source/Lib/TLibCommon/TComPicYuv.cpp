@@ -315,7 +315,7 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         pelY += getStride();
     }
 
-    shift = g_bitDepthC - 8;
+    shift = g_bitDepthY - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
     for (y = 0; y < m_picHeight >> 1; y++)

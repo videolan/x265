@@ -275,7 +275,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
 
-    if (m_profile == Profile::MAIN10 && g_bitDepthY == 8 && g_bitDepthC == 8)
+    if (m_profile == Profile::MAIN10 && g_bitDepthY == 8)
     {
         /* The above constraint is equal to Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN, 1);
@@ -337,10 +337,10 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     }
 
     pcSPS->setBitDepthY(g_bitDepthY);
-    pcSPS->setBitDepthC(g_bitDepthC);
+    pcSPS->setBitDepthC(g_bitDepthY);
 
     pcSPS->setQpBDOffsetY(6 * (g_bitDepthY - 8));
-    pcSPS->setQpBDOffsetC(6 * (g_bitDepthC - 8));
+    pcSPS->setQpBDOffsetC(6 * (g_bitDepthY - 8));
 
     pcSPS->setUseSAO(m_bUseSAO);
 
@@ -354,7 +354,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     // TODO: it is recommended for this to match the input bit depth
     pcSPS->setPCMBitDepthLuma(g_bitDepthY);
-    pcSPS->setPCMBitDepthChroma(g_bitDepthC);
+    pcSPS->setPCMBitDepthChroma(g_bitDepthY);
 
     pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 

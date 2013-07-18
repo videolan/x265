@@ -152,14 +152,13 @@ extern const UChar g_intraModeNumFast[7];
 // ====================================================================================================================
 
 extern Int g_bitDepthY;
-extern Int g_bitDepthC;
 
 /** clip x, such that 0 <= x <= #g_maxLumaVal */
 template<typename T>
 inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x)); }
 
 template<typename T>
-inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC) - 1), std::max<T>(T(0), x)); }
+inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthY) - 1), std::max<T>(T(0), x)); }
 
 /** clip a, such that minVal <= a <= maxVal */
 template<typename T>

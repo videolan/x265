@@ -129,7 +129,7 @@ Void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt 
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
     offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
     w1      = wp1[1].w;
@@ -243,7 +243,7 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
     offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
     w1      = wp1[1].w;
@@ -347,7 +347,7 @@ Void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
     offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
@@ -428,7 +428,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
     offset  = wp0[1].offset;
-    shiftNum = IF_INTERNAL_PREC - g_bitDepthC;
+    shiftNum = IF_INTERNAL_PREC - g_bitDepthY;
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
@@ -438,7 +438,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     width  >>= 1;
     height >>= 1;
 
-    x265::primitives.weightpUni(srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
+    x265::primitives.weightpUni(srcU0, dstU, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthY);
 
     // Chroma V : --------------------------------------------
     w0      = wp0[2].w;
@@ -446,7 +446,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     shift   = wp0[2].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    x265::primitives.weightpUni(srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthC);
+    x265::primitives.weightpUni(srcV0, dstV, srcStride, dstStride, width, height, w0, round, shift, offset, g_bitDepthY);
 }
 
 //=======================================================
@@ -500,7 +500,7 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
     { // Bi-Dir case
         for (Int yuv = 0; yuv < 3; yuv++)
         {
-            Int bitDepth = yuv ? g_bitDepthC : g_bitDepthY;
+            Int bitDepth = g_bitDepthY;
             wp0[yuv].w      = wp0[yuv].inputWeight;
             wp0[yuv].o      = wp0[yuv].inputOffset * (1 << (bitDepth - 8));
             wp1[yuv].w      = wp1[yuv].inputWeight;
@@ -518,9 +518,8 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
         pwp = (refIdx0 >= 0) ? wp0 : wp1;
         for (Int yuv = 0; yuv < 3; yuv++)
         {
-            Int bitDepth = yuv ? g_bitDepthC : g_bitDepthY;
             pwp[yuv].w      = pwp[yuv].inputWeight;
-            pwp[yuv].offset = pwp[yuv].inputOffset * (1 << (bitDepth - 8));
+            pwp[yuv].offset = pwp[yuv].inputOffset * (1 << (g_bitDepthY - 8));
             pwp[yuv].shift  = pwp[yuv].log2WeightDenom;
             pwp[yuv].round  = (pwp[yuv].log2WeightDenom >= 1) ? (1 << (pwp[yuv].log2WeightDenom - 1)) : (0);
         }

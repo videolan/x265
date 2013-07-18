@@ -182,8 +182,8 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
         m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
     }
 
-    UInt pixelRangeC = 1 << g_bitDepthC;
-    UInt boRangeShiftC = g_bitDepthC - SAO_BO_BITS;
+    UInt pixelRangeC = 1 << g_bitDepthY;
+    UInt boRangeShiftC = g_bitDepthY - SAO_BO_BITS;
 
     m_chromaTableBo = new Pel[pixelRangeC];
     for (Int k2 = 0; k2 < pixelRangeC; k2++)
@@ -225,7 +225,7 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
-    UInt maxC = (1 << g_bitDepthC) - 1;
+    UInt maxC = (1 << g_bitDepthY) - 1;
     UInt minC = 0;
 
     Int rangeExtC = maxC >> 1;
@@ -1035,7 +1035,7 @@ Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
 {
     {
         m_saoBitIncreaseY = max(g_bitDepthY - 10, 0);
-        m_saoBitIncreaseC = max(g_bitDepthC - 10, 0);
+        m_saoBitIncreaseC = max(g_bitDepthY - 10, 0);
 
         if (m_saoLcuBasedOptimization)
         {
@@ -1190,8 +1190,7 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
                         lumaTable = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
                         clipTable = (yCbCr == 0) ? m_clipTable : m_chromaClipTable;
 
-                        Int bitDepth = (yCbCr == 0) ? g_bitDepthY : g_bitDepthC;
-                        for (i = 0; i < (1 << bitDepth); i++)
+                        for (i = 0; i < (1 << g_bitDepthY); i++)
                         {
                             offsetBo[i] = clipTable[i + offset[lumaTable[i]]];
                         }
@@ -1490,7 +1489,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOr
         }
         else
         {
-            pcmLeftShiftBit = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
+            pcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
         }
     }
 

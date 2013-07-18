@@ -2330,7 +2330,7 @@ Void TEncSearch::xEncPCM(TComDataCU* cu, UInt absPartIdx, Pel* fenc, Pel* pcm, P
         {
             reconPic = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + absPartIdx);
         }
-        shiftPcm = g_bitDepthC - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
+        shiftPcm = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
     }
 
     // zero prediction and residual

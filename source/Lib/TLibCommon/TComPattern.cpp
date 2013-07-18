@@ -357,14 +357,14 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
     roiOrigin = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf;
 
-    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+    fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
                          cuWidth, cuHeight, width, height, picStride);
 
     // get Cr pattern
     roiOrigin = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf + ADI_BUF_STRIDE * height;
 
-    fillReferenceSamples(g_bitDepthC, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+    fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
                          cuWidth, cuHeight, width, height, picStride);
 }
 

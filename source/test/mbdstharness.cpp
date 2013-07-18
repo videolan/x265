@@ -217,7 +217,7 @@ bool MBDstHarness::check_dequant_primitive(dequant_t ref, dequant_t opt)
 
         int cmp_size = sizeof(int) * height * width;
 
-        opt(8, mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);  // g_bitDepthY  = 8, g_bitDepthC = 8
+        opt(8, mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
         ref(8, mintbuf1 + j, mintbuf4, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))

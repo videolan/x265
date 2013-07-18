@@ -143,8 +143,8 @@ void calcCRC(TComPicYuv& pic, UChar digest[3][16])
     height >>= 1;
     stride = pic.getCStride();
 
-    compCRC(g_bitDepthC, pic.getCbAddr(), width, height, stride, digest[1]);
-    compCRC(g_bitDepthC, pic.getCrAddr(), width, height, stride, digest[2]);
+    compCRC(g_bitDepthY, pic.getCbAddr(), width, height, stride, digest[1]);
+    compCRC(g_bitDepthY, pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
 static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
@@ -184,8 +184,8 @@ void calcChecksum(TComPicYuv& pic, UChar digest[3][16])
     height >>= 1;
     stride = pic.getCStride();
 
-    compChecksum(g_bitDepthC, pic.getCbAddr(), width, height, stride, digest[1]);
-    compChecksum(g_bitDepthC, pic.getCrAddr(), width, height, stride, digest[2]);
+    compChecksum(g_bitDepthY, pic.getCbAddr(), width, height, stride, digest[1]);
+    compChecksum(g_bitDepthY, pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
 /**
@@ -210,7 +210,7 @@ void calcMD5(TComPicYuv& pic, UChar digest[3][16])
     md5_plane_func(md5Y, pic.getLumaAddr(), width, height, stride);
     md5Y.finalize(digest[0]);
 
-    md5_plane_func = g_bitDepthC <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
+    md5_plane_func = g_bitDepthY <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();

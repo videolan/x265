@@ -962,7 +962,7 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
                 && outTempCU->getWidth(0) <= (1 << pic->getSlice()->getSPS()->getPCMLog2MaxSize())
                 && outTempCU->getWidth(0) >= (1 << pic->getSlice()->getSPS()->getPCMLog2MinSize()))
             {
-                UInt rawbits = (2 * g_bitDepthY + g_bitDepthC) * outBestCU->getWidth(0) * outBestCU->getHeight(0) / 2;
+                UInt rawbits = (2 * g_bitDepthY + g_bitDepthY) * outBestCU->getWidth(0) * outBestCU->getHeight(0) / 2;
                 UInt bestbits = outBestCU->getTotalBits();
                 if ((bestbits > rawbits) || (outBestCU->getTotalCost() > m_rdCost->calcRdCost(0, rawbits)))
                 {
