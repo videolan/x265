@@ -206,7 +206,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
 #endif
     }
 #else // if 0
-    if (slice->getSliceType() != I_SLICE) lambda *= 1.55;
+    if (slice->getSliceType() != I_SLICE) lambda *= 2.4;
 #endif // if 0
 
     qp = max(-sps->getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
