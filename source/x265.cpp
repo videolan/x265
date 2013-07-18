@@ -551,8 +551,8 @@ int main(int argc, char **argv)
         // CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR
         for (int i = 1; i < argc; i++)
         {
-            if (i) fprintf(cliopt.csvfp, " ");
-            fprintf(cliopt.csvfp, argv[i]);
+            if (i) fputc(' ', cliopt.csvfp);
+            fputs(argv[i], cliopt.csvfp);
         }
 
         time_t now;
