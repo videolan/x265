@@ -1969,7 +1969,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             candNum = 0;
             UInt modeCosts[35];
             Bool bFilter = (width <= 16);
-            pixel* predSrc = m_predBuf;
 
             Pel *pAbove0 = refAbove    + width - 1;
             Pel *pAbove1 = refAboveFlt + width - 1;
@@ -1985,7 +1984,6 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             // 0
             if (width >= 8 && width <= 32)
             {
-                predSrc += ADI_BUF_STRIDE * (2 * width + 1);
                 above = pAbove1;
                 left  = pLeft1;
             }
