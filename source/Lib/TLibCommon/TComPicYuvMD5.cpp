@@ -89,7 +89,7 @@ static void md5_plane(MD5& md5, const Pel* plane, UInt width, UInt height, UInt 
     }
 }
 
-static void compCRC(Int bitdepth, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
+static void compCRC(const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
 {
     UInt crcMsb;
     UInt bitVal;
@@ -109,7 +109,7 @@ static void compCRC(Int bitdepth, const Pel* plane, UInt width, UInt height, UIn
             }
 
             // take CRC of second pictureData byte if bit depth is greater than 8-bits
-            if (bitdepth > 8)
+            if (X265_DEPTH > 8)
             {
                 for (bitIdx = 0; bitIdx < 8; bitIdx++)
                 {
@@ -137,17 +137,17 @@ void calcCRC(TComPicYuv& pic, UChar digest[3][16])
     UInt height = pic.getHeight();
     UInt stride = pic.getStride();
 
-    compCRC(X265_DEPTH, pic.getLumaAddr(), width, height, stride, digest[0]);
+    compCRC(pic.getLumaAddr(), width, height, stride, digest[0]);
 
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();
 
-    compCRC(X265_DEPTH, pic.getCbAddr(), width, height, stride, digest[1]);
-    compCRC(X265_DEPTH, pic.getCrAddr(), width, height, stride, digest[2]);
+    compCRC(pic.getCbAddr(), width, height, stride, digest[1]);
+    compCRC(pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
-static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
+static void compChecksum(const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
 {
     UInt checksum = 0;
     UChar xor_mask;
@@ -159,7 +159,7 @@ static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height
             xor_mask = (x & 0xff) ^ (y & 0xff) ^ (x >> 8) ^ (y >> 8);
             checksum = (checksum + ((plane[y * stride + x] & 0xff) ^ xor_mask)) & 0xffffffff;
 
-            if (bitdepth > 8)
+            if (X265_DEPTH > 8)
             {
                 checksum = (checksum + ((plane[y * stride + x] >> 7 >> 1) ^ xor_mask)) & 0xffffffff;
             }
@@ -178,14 +178,14 @@ void calcChecksum(TComPicYuv& pic, UChar digest[3][16])
     UInt height = pic.getHeight();
     UInt stride = pic.getStride();
 
-    compChecksum(X265_DEPTH, pic.getLumaAddr(), width, height, stride, digest[0]);
+    compChecksum(pic.getLumaAddr(), width, height, stride, digest[0]);
 
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();
 
-    compChecksum(X265_DEPTH, pic.getCbAddr(), width, height, stride, digest[1]);
-    compChecksum(X265_DEPTH, pic.getCrAddr(), width, height, stride, digest[2]);
+    compChecksum(pic.getCbAddr(), width, height, stride, digest[1]);
+    compChecksum(pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
 /**
