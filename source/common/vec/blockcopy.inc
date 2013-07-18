@@ -23,6 +23,12 @@
 
 // Vector class versions of block copy performance primitives
 
+#include "primitives.h"
+#include <string.h>
+#include "utils.h"
+
+namespace {
+
 #if HIGH_BIT_DEPTH
 
 void blockcopy_p_p(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
@@ -291,8 +297,10 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
         }
     }
 }
+}
 
-void Setup_Vec_BlockCopyPrimitives(EncoderPrimitives &p)
+namespace x265 {
+void NAME(Setup_Vec_BlockCopyPrimitives)(EncoderPrimitives &p)
 {
 #if HIGH_BIT_DEPTH
     // At high bit depth, a pixel is a short
@@ -307,4 +315,5 @@ void Setup_Vec_BlockCopyPrimitives(EncoderPrimitives &p)
     p.blockcpy_sc = blockcopy_s_p;
     p.pixelsub_sp = pixelsub_sp;
 #endif
+}
 }

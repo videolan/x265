@@ -18,29 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at licensing@multicorewareinc.com
  *****************************************************************************/
 
-#include "primitives.h"
-#include "utils.h"
+/* this file instantiates AVX2 versions of the vectorized primitives */
 
-namespace x265 {
-// private x265 namespace
+#define INSTRSET 8
+#include "vectorclass.h"
 
-void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives&);      // pixel-ARCH.cpp
-void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives&);      // intra-ARCH.cpp
-void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives&);   // ipfilter-ARCH.cpp
-void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives&);        // dct-ARCH.cpp
-void NAME(Setup_Vec_BlockCopyPrimitives)(EncoderPrimitives&);  // blockcopy-ARCH.cpp
-
-/* initialize function table with functions compiled for this vector
- * architecture.  This is the only symbol exported from each file. */
-void NAME(Setup_Vec_Primitives) (EncoderPrimitives &p)
-{
-    NAME(Setup_Vec_PixelPrimitives)(p);
-    NAME(Setup_Vec_IPredPrimitives)(p);
-    NAME(Setup_Vec_IPFilterPrimitives)(p);
-    NAME(Setup_Vec_DCTPrimitives)(p);
-    NAME(Setup_Vec_BlockCopyPrimitives)(p);
-}
-}
+#define ARCH avx2
+#include "blockcopy.inc"

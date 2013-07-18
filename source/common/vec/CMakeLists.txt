@@ -2,6 +2,7 @@ if (MSVC)
     add_definitions(/wd4127) # conditional expression is constant
     add_definitions(/wd4244) # 'argument' : conversion from 'int' to 'char', possible loss of data
     set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+        blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp
         ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
@@ -9,6 +10,7 @@ if (MSVC)
     if (NOT X64)
         # x64 implies SSE4, so this flag would have no effect (and it issues a warning)
         set_source_files_properties(sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+            blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp
             pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
             dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp
             ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
@@ -17,11 +19,13 @@ if (MSVC)
     endif()
     if (MSVC_VERSION EQUAL 1700) # VC11
         set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp
+            blockcopy-avx.cpp blockcopy-avx2.cpp
             pixel-avx.cpp pixel-avx2.cpp
             dct-avx.cpp dct-avx2.cpp
             ipfilter-avx.cpp ipfilter-avx2.cpp
             intra-avx.cpp intra-avx2.cpp)
         set_source_files_properties(avx.cpp avx2.cpp
+            blockcopy-avx.cpp blockcopy-avx2.cpp
             pixel-avx.cpp pixel-avx2.cpp
             dct-avx.cpp dct-avx2.cpp
             ipfilter-avx.cpp ipfilter-avx2.cpp
@@ -31,23 +35,28 @@ if (MSVC)
 endif()
 if(GCC)
     set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp
+        blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp blockcopy-avx.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp pixel-avx.cpp
         ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp ipfilter-avx.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp dct-avx.cpp
         intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp intra-avx.cpp)
     set_source_files_properties(sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
+        blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
         ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp
         intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp
         PROPERTIES COMPILE_FLAGS "-msse4 -Wno-unused-parameter")
-    set_source_files_properties(avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp
+    set_source_files_properties(
+        blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
         PROPERTIES COMPILE_FLAGS "-mavx -Wno-unused-parameter")
     if("$ENV{CXX}" STREQUAL "icpc")
-		set(PRIMITIVES ${PRIMITIVES} avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp)
-		set_source_files_properties(avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp
-			PROPERTIES COMPILE_FLAGS "-march=core-avx2 -Wno-unused-parameter")
-	endif()
+        set(PRIMITIVES ${PRIMITIVES}
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp)
+        set_source_files_properties(
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp
+            PROPERTIES COMPILE_FLAGS "-march=core-avx2 -Wno-unused-parameter")
+    endif()
 endif(GCC)
 
 file(GLOB VECTORCLASS ../../VectorClass/*.h ../../VectorClass/special/*.h)
