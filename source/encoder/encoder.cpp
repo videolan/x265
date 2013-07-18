@@ -789,7 +789,8 @@ x265_t *x265_encoder_open(x265_param_t *param)
     if (x265_check_params(param))
         return NULL;
 
-    x265_set_globals(param);
+    if (x265_set_globals(param))
+        return NULL;
 
     x265_t *encoder = new x265_t;
     if (encoder)

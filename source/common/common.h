@@ -116,7 +116,7 @@
 void x265_log(x265_param_t *param, int level, const char *fmt, ...);
 int  x265_check_params(x265_param_t *param);
 void x265_print_params(x265_param_t *param);
-void x265_set_globals(x265_param_t *param);
+int x265_set_globals(x265_param_t *param);
 int64_t x265_mdate(void);
 
 /* defined in primitives.cpp */

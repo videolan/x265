@@ -219,36 +219,54 @@ int x265_check_params(x265_param_t *param)
     return check_failed;
 }
 
-void x265_set_globals(x265_param_t *param)
+int x265_set_globals(x265_param_t *param)
 {
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
-    // set max CU width & height
-    g_maxCUWidth  = param->maxCUSize;
-    g_maxCUHeight = param->maxCUSize;
-
-    // compute actual CU depth with respect to config depth and max transform size
-    g_addCUDepth  = 0;
-    while ((param->maxCUSize >> maxCUDepth) > (1u << (tuQTMinLog2Size + g_addCUDepth)))
+    static int once /* = 0 */;
+    if (once)
     {
-        g_addCUDepth++;
+        if (param->maxCUSize != g_maxCUWidth)
+        {
+            x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
+            return -1;
+        }
+        if (param->internalBitDepth != g_bitDepth)
+        {
+            x265_log(param, X265_LOG_ERROR, "internalBitDepth must be the same for all encoders in a single process");
+            return -1;
+        }
     }
+    else
+    {
+        once = 1;
 
-    maxCUDepth += g_addCUDepth;
-    g_addCUDepth++;
-    g_maxCUDepth = maxCUDepth;
+        // set max CU width & height
+        g_maxCUWidth  = param->maxCUSize;
+        g_maxCUHeight = param->maxCUSize;
+        g_bitDepth = param->internalBitDepth;
 
-    // set internal bit-depth and constants
-    g_bitDepth = param->internalBitDepth;
+        // compute actual CU depth with respect to config depth and max transform size
+        g_addCUDepth = 0;
+        while ((param->maxCUSize >> maxCUDepth) > (1u << (tuQTMinLog2Size + g_addCUDepth)))
+        {
+            g_addCUDepth++;
+        }
 
-    // initialize partition order
-    UInt* tmp = &g_zscanToRaster[0];
-    initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
-    initRasterToZscan(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+        maxCUDepth += g_addCUDepth;
+        g_addCUDepth++;
+        g_maxCUDepth = maxCUDepth;
 
-    // initialize conversion matrix from partition index to pel
-    initRasterToPelXY(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+        // initialize partition order
+        UInt* tmp = &g_zscanToRaster[0];
+        initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
+        initRasterToZscan(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+
+        // initialize conversion matrix from partition index to pel
+        initRasterToPelXY(g_maxCUWidth, g_maxCUHeight, g_maxCUDepth + 1);
+    }
+    return 0;
 }
 
 void x265_print_params(x265_param_t *param)
