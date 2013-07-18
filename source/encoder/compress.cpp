@@ -220,7 +220,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
  */
 Void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTempCU, Bool* earlyDetectionSkip, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv)
 {
-    assert(rpcTempCU->getSlice()->getSliceType() != I_SLICE);
+    assert(outTempCU->getSlice()->getSliceType() != I_SLICE);
     TComMvField  cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
     UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
