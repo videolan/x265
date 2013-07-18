@@ -216,8 +216,8 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
     Int round   = shift ? (1 << (shift - 1)) * bRound : 0;
     Int w1      = wp1[0].w;
 
-    UInt  src0Stride = srcYuv0->width;
-    UInt  src1Stride = srcYuv1->width;
+    UInt  src0Stride = srcYuv0->m_width;
+    UInt  src1Stride = srcYuv1->m_width;
     UInt  dststride  = outDstYuv->getStride();
 
     for (y = height - 1; y >= 0; y--)
@@ -248,8 +248,8 @@ Void TComWeightPrediction::addWeightBi(TShortYUV* srcYuv0, TShortYUV* srcYuv1, U
     round   = shift ? (1 << (shift - 1)) : 0;
     w1      = wp1[1].w;
 
-    src0Stride = srcYuv0->Cwidth;
-    src1Stride = srcYuv1->Cwidth;
+    src0Stride = srcYuv0->m_cwidth;
+    src1Stride = srcYuv1->m_cwidth;
     dststride  = outDstYuv->getCStride();
 
     width  >>= 1;
@@ -420,7 +420,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
     Int shift   = wp0[0].shift + shiftNum;
     Int round   = shift ? (1 << (shift - 1)) : 0;
-    UInt srcStride = srcYuv0->width;
+    UInt srcStride = srcYuv0->m_width;
     UInt dstStride  = outDstYuv->getStride();
 
    x265::primitives.weightpUni(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
@@ -432,7 +432,7 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     shift   = wp0[1].shift + shiftNum;
     round   = shift ? (1 << (shift - 1)) : 0;
 
-    srcStride = srcYuv0->Cwidth;
+    srcStride = srcYuv0->m_cwidth;
     dstStride  = outDstYuv->getCStride();
 
     width  >>= 1;

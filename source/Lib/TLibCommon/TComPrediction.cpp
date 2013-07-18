@@ -469,7 +469,7 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
     Pel *ref      =  refPic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
 
-    Int dstStride = dstPic->width;
+    Int dstStride = dstPic->m_width;
     Short *dst    = dstPic->getLumaAddr(partAddr);
 
     Int xFrac = mv->x & 0x3;
@@ -575,7 +575,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
 Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TShortYUV *dstPic)
 {
     Int refStride = refPic->getCStride();
-    Int dstStride = dstPic->Cwidth;
+    Int dstStride = dstPic->m_cwidth;
 
     Int refOffset = (mv->x >> 3) + (mv->y >> 3) * refStride;
 

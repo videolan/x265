@@ -34,77 +34,77 @@ class TShortYUV
 {
 private:
 
-    static int getAddrOffset(unsigned int partUnitIdx, unsigned int width)
+    static int getAddrOffset(unsigned int idx, unsigned int width)
     {
-        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
-        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
+        int blkX = g_rasterToPelX[g_zscanToRaster[idx]];
+        int blkY = g_rasterToPelY[g_zscanToRaster[idx]];
 
         return blkX + blkY * width;
     }
 
-    static int getAddrOffset(unsigned int iTransUnitIdx, unsigned int iBlkSize, unsigned int width)
+    static int getAddrOffset(unsigned int idx, unsigned int size, unsigned int width)
     {
-        Int blkX = (iTransUnitIdx * iBlkSize) &  (width - 1);
-        Int blkY = (iTransUnitIdx * iBlkSize) & ~(width - 1);
+        Int blkX = (idx * size) &  (width - 1);
+        Int blkY = (idx * size) & ~(width - 1);
 
-        return blkX + blkY * iBlkSize;
+        return blkX + blkY * size;
     }
 
 public:
 
-    short* YBuf;
-    short* CbBuf;
-    short* CrBuf;
+    short* m_bufY;
+    short* m_bufCb;
+    short* m_bufCr;
 
-    unsigned int width;
-    unsigned int height;
-    unsigned int Cwidth;
-    unsigned int Cheight;
+    unsigned int m_width;
+    unsigned int m_height;
+    unsigned int m_cwidth;
+    unsigned int m_cheight;
 
     TShortYUV();
     virtual ~TShortYUV();
 
-    void create(unsigned int Width, unsigned int Height);
+    void create(unsigned int width, unsigned int height);
     void destroy();
     void clear();
 
-    short*    getLumaAddr()    { return YBuf; }
+    short*    getLumaAddr()  { return m_bufY; }
 
-    short*    getCbAddr()    { return CbBuf; }
+    short*    getCbAddr()    { return m_bufCb; }
 
-    short*    getCrAddr()    { return CrBuf; }
+    short*    getCrAddr()    { return m_bufCr; }
 
     //  Access starting position of YUV partition unit buffer
-    short* getLumaAddr(unsigned int partUnitIdx) { return YBuf + getAddrOffset(partUnitIdx, width); }
+    short* getLumaAddr(unsigned int partUnitIdx) { return m_bufY + getAddrOffset(partUnitIdx, m_width); }
 
-    short* getCbAddr(unsigned int partUnitIdx) { return CbBuf + (getAddrOffset(partUnitIdx, Cwidth) >> 1); }
+    short* getCbAddr(unsigned int partUnitIdx) { return m_bufCb + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
 
-    short* getCrAddr(unsigned int partUnitIdx) { return CrBuf + (getAddrOffset(partUnitIdx, Cwidth) >> 1); }
+    short* getCrAddr(unsigned int partUnitIdx) { return m_bufCr + (getAddrOffset(partUnitIdx, m_cwidth) >> 1); }
 
     //  Access starting position of YUV transform unit buffer
-    short* getLumaAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return YBuf + getAddrOffset(iTransUnitIdx, iBlkSize, width); }
+    short* getLumaAddr(unsigned int partIdx, unsigned int size) { return m_bufY + getAddrOffset(partIdx, size, m_width); }
 
-    short* getCbAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return CbBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    short* getCbAddr(unsigned int partIdx, unsigned int size) { return m_bufCb + getAddrOffset(partIdx, size, m_cwidth); }
 
-    short* getCrAddr(unsigned int iTransUnitIdx, unsigned int iBlkSize) { return CrBuf + getAddrOffset(iTransUnitIdx, iBlkSize, Cwidth); }
+    short* getCrAddr(unsigned int partIdx, unsigned int size) { return m_bufCr + getAddrOffset(partIdx, size, m_cwidth); }
 
-    void subtractLuma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
-    void subtractChroma(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
-    void subtract(TComYuv* pcYuvSrc0, TComYuv* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void subtractLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
+    void subtractChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
+    void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
 
-    void    addClip(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
-    void    addClipLuma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
-    void    addClipChroma(TShortYUV* pcYuvSrc0, TShortYUV* pcYuvSrc1, unsigned int uiTrUnitIdx, unsigned int uiPartSize);
+    void addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
+    void addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
+    void addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize);
 
-    void    copyPartToPartYuv(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
+    void copyPartToPartYuv(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartLuma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
 
-    void    copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int uiWidth, unsigned int uiHeight);
-    void    copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int uiPartIdx, unsigned int iWidth, unsigned int iHeight, unsigned int chromaId);
+    void copyPartToPartYuv(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height);
+    void copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId);
 };
 
 #endif //end __TSHORTYUV__
