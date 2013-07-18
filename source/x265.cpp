@@ -90,6 +90,7 @@ struct CLIOptions
     x265::Input*  input;
     x265::Output* recon;
     fstream bitstreamFile;
+    FILE *csvfp;
     int bProgress;
     int cli_log_level;
 
@@ -106,6 +107,7 @@ struct CLIOptions
     {
         input = NULL;
         recon = NULL;
+        csvfp = NULL;
         framesToBeEncoded = frameSkip = 0;
         essentialBytes = 0;
         totalBytes = 0;
@@ -123,6 +125,9 @@ struct CLIOptions
         if (recon)
             recon->release();
         recon = NULL;
+        if (csvfp)
+            fclose(csvfp);
+        csvfp = NULL;
     }
 
     void rateStatsAccum(NalUnitType nalUnitType, uint32_t annexBsize)
@@ -277,7 +282,7 @@ struct CLIOptions
         int cpuid = 0;
         uint32_t inputBitDepth = 8;
         uint32_t outputBitDepth = 8;
-        const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL;
+        const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL, *csvfn = NULL;
 
         x265_param_default(param);
 
@@ -419,6 +424,25 @@ struct CLIOptions
             return true;
         }
 
+        if (csvfn)
+        {
+            csvfp = fopen(csvfn, "r");
+            if (csvfp)
+            {
+                // file already exists, re-open for append
+                fclose(csvfp);
+                csvfp = fopen(csvfn, "ab");
+            }
+            else
+            {
+                // new CSV file, write header
+                csvfp = fopen(csvfn, "wb");
+                if (csvfp)
+                {
+                    fprintf(csvfp, "CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR\n");
+                }
+            }
+        }
         x265_setup_primitives(param, cpuid);
 
         return false;
@@ -436,6 +460,7 @@ int main(int argc, char **argv)
     fp = fopen("Log_CU_stats.txt", "w");
     fp1 = fopen("LOG_CU_COST.txt", "w");
 #endif
+
     x265_param_t param;
     CLIOptions   cliopt;
 
@@ -506,7 +531,8 @@ int main(int argc, char **argv)
     /* clear progress report */
     fprintf(stderr, "                                                                               \r");
 
-    x265_encoder_close(encoder);
+    double PSNR = 0.0;
+    x265_encoder_close(encoder, &PSNR);
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
@@ -514,10 +540,29 @@ int main(int argc, char **argv)
 
     double elapsed = (double)(x265_mdate() - cliopt.i_start) / 1000000;
     double vidtime = (double)inFrameCount / param.frameRate;
+    double bitrate = (0.008f * cliopt.totalBytes) / vidtime;
     printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s\n",
-           outFrameCount, elapsed, outFrameCount / elapsed, (0.008f * cliopt.totalBytes) / vidtime);
+           outFrameCount, elapsed, outFrameCount / elapsed, bitrate);
 
     x265_cleanup(); /* Free library singletons */
+
+    if (cliopt.csvfp)
+    {
+        // CLI arguments, date/time, elapsed time, fps, bitrate, global PSNR
+        for (int i = 1; i < argc; i++)
+        {
+            if (i) fprintf(cliopt.csvfp, " ");
+            fprintf(cliopt.csvfp, argv[i]);
+        }
+
+        time_t now;
+        struct tm* timeinfo;
+        time(&now);
+        timeinfo = localtime(&now);
+        char buffer[128];
+        strftime(buffer, 128, "%c", timeinfo);
+        fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f", buffer, elapsed, bitrate, PSNR);
+    }
 
     cliopt.destroy();
 

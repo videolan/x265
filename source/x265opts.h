@@ -6,6 +6,7 @@ OPT("cpuid",           cpuid,                     required_argument, 0, "Limit S
 OPT("threads",         param->poolNumThreads,     required_argument, 0, "Number of threads for thread pool (default:CPU core count)")
 OPT("gops",            param->gopNumThreads,      required_argument, 0, "Number of GOPS to encode in parallel (default:1)")
 OPT("log",             param->logLevel,           required_argument, 0, "Logging level 0:ERROR 1:WARNING 2:INFO(default) 3:DEBUG -1:NONE")
+STROPT("csv",          csvfn,                     required_argument, 0, "`Comma separated value' log file, appends one line per run")
 OPT("no-progress",     this->bProgress,                 no_argument, 0, "Disable progress reports")
 STROPT("output",       bitstreamfn,               required_argument, 'o', "Bitstream output file name")
 #if HIGH_BIT_DEPTH

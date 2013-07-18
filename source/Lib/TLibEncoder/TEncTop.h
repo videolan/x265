@@ -110,7 +110,7 @@ public:
 
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
-    void printSummary();
+    Double printSummary();
 
 protected:
 
