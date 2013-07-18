@@ -218,10 +218,10 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
 
 Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
 {
-    m_me.setQP(QP, lambdaLuma);
-    m_bc.setQP(QP, lambdaLuma);
     m_rdCost->setLambda(lambdaLuma);
     m_trQuant->setLambda(lambdaLuma, lambdaChroma);
+    m_me.setQP(QP, m_rdCost->getSADLambda());
+    m_bc.setQP(QP, m_rdCost->getSADLambda());
 }
 
 inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance)

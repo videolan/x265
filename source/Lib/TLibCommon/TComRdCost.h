@@ -192,6 +192,8 @@ public:
 
     inline UInt    scaleChromaDistCr(UInt dist)           { return ((dist * m_crDistortionWeight) + 128) >> 8; }
 
+    inline Double  getSADLambda() const                   { return m_lambda; }
+
     // Distortion Functions
     Void    init();
 
