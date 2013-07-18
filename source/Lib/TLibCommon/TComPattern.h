@@ -138,10 +138,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    Void  fillReferenceSamples(Int bitDepth, Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags,
-                               Int numIntraNeighbor, Int unitSize, Int numUnitsInCU,
-                               Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width,
-                               UInt height, Int picStride);
+    Void fillReferenceSamples(Pel* roiOrigin, Pel* adiTemp, Bool* bNeighborFlags, Int numIntraNeighbor, Int unitSize, Int numUnitsInCU, Int totalUnits, UInt cuWidth, UInt cuHeight, UInt width, UInt height, Int picStride);
 
     /// constrained intra prediction
     Bool  isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT);
