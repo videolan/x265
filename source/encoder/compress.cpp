@@ -123,23 +123,25 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
         CandNum = 0;
         UInt modeCosts[35];
         Bool bFilter = (width <= 16);
-        Pel *src = m_search->getPredicBuf();
 
         Pel *pAbove0 = m_search->refAbove    + width - 1;
         Pel *pAbove1 = m_search->refAboveFlt + width - 1;
         Pel *pLeft0  = m_search->refLeft     + width - 1;
         Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
+        Pel *pAbove  = pAbove0;
+        Pel *pLeft   = pLeft0;
 
         // 1
-        primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, bFilter);
+        primitives.intra_pred_dc((pixel*)pAbove0 + 1, (pixel*)pLeft0 + 1, pred, stride, width, bFilter);
         modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
 
         // 0
         if (width >= 8 && width <= 32)
         {
-            src += ADI_BUF_STRIDE * (2 * width + 1);
+            pAbove = pAbove1;
+            pLeft  = pLeft1;
         }
-        primitives.intra_pred_planar(src + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, pred, stride, width);
+        primitives.intra_pred_planar(pAbove + 1, pLeft + 1, pred, stride, width);
         modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
         // 33 Angle modes once

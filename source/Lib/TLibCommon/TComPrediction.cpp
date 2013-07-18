@@ -177,17 +177,16 @@ Void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, Int s
     }
 
     // get starting pixel in block
-    Int sw = ADI_BUF_STRIDE;
     Bool bFilter = (size <= 16);
 
     // Create the prediction
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar(src + sw + 1, sw, dst, stride, size);
+        primitives.intra_pred_planar((pixel*)refAbv + 1, (pixel*)refLft + 1, (pixel*)dst, stride, size);
     }
     else if (dirMode == DC_IDX)
     {
-        primitives.intra_pred_dc(refAbv + 1, refLft + 1, dst, stride, size, bFilter);
+        primitives.intra_pred_dc((pixel*)refAbv + 1, (pixel*)refLft + 1, (pixel*)dst, stride, size, bFilter);
     }
     else
     {
@@ -198,33 +197,28 @@ Void TComPrediction::predIntraLumaAng(UInt dirMode, Pel* dst, UInt stride, Int s
 // Angular chroma
 Void TComPrediction::predIntraChromaAng(Pel* src, UInt dirMode, Pel* dst, UInt stride, Int width)
 {
-    // get starting pixel in block
-    Int sw = ADI_BUF_STRIDE;
+    // Create the prediction
+    Pel refAbv[3 * MAX_CU_SIZE];
+    Pel refLft[3 * MAX_CU_SIZE];
+    int limit = (dirMode <= 25 && dirMode >= 11) ? (width + 1 + 1) : (2 * width + 1);
+    memcpy(refAbv + width - 1, src, (limit) * sizeof(Pel));
+    for (int k = 0; k < limit; k++)
+    {
+        refLft[k + width - 1] = src[k * ADI_BUF_STRIDE];
+    }
 
+    // get starting pixel in block
     if (dirMode == PLANAR_IDX)
     {
-        primitives.intra_pred_planar(src + sw + 1, sw, dst, stride, width);
+        primitives.intra_pred_planar((pixel*)refAbv + width - 1 + 1, (pixel*)refLft + width - 1 + 1, (pixel*)dst, stride, width);
+    }
+    else if (dirMode == DC_IDX)
+    {
+        primitives.intra_pred_dc(refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, width, false);
     }
     else
     {
-        // Create the prediction
-        Pel refAbv[3 * MAX_CU_SIZE];
-        Pel refLft[3 * MAX_CU_SIZE];
-        int limit = (dirMode <= 25 && dirMode >= 11) ? (width + 1) : (2 * width + 1);
-        memcpy(refAbv + width - 1, src, (limit) * sizeof(Pel));
-        for (int k = 0; k < limit; k++)
-        {
-            refLft[k + width - 1] = src[k * sw];
-        }
-
-        if (dirMode == DC_IDX)
-        {
-            primitives.intra_pred_dc(refAbv + width - 1 + 1, refLft + width - 1 + 1, dst, stride, width, false);
-        }
-        else
-        {
-            primitives.intra_pred_ang(dst, stride, width, dirMode, false, refLft + width - 1, refAbv + width - 1);
-        }
+        primitives.intra_pred_ang(dst, stride, width, dirMode, false, refLft + width - 1, refAbv + width - 1);
     }
 }
 

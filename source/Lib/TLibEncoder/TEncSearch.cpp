@@ -1975,6 +1975,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             Pel *pAbove1 = refAboveFlt + width - 1;
             Pel *pLeft0  = refLeft     + width - 1;
             Pel *pLeft1  = refLeftFlt  + width - 1;
+            Pel *above   = pAbove0;
+            Pel *left    = pLeft0;
 
             // 1
             primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, bFilter);
@@ -1984,8 +1986,10 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             if (width >= 8 && width <= 32)
             {
                 predSrc += ADI_BUF_STRIDE * (2 * width + 1);
+                above = pAbove1;
+                left  = pLeft1;
             }
-            primitives.intra_pred_planar(predSrc + ADI_BUF_STRIDE + 1, ADI_BUF_STRIDE, pred, stride, width);
+            primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, pred, stride, width);
             modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
             // 33 Angle modes once
