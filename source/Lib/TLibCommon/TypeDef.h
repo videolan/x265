@@ -73,6 +73,7 @@ typedef unsigned long long  UInt64;
 #if HIGH_BIT_DEPTH
 typedef UShort Pel;            // 16-bit pixel type
 #define X265_DEPTH g_bitDepth  // runtime configurable bit depth
+extern Int g_bitDepth;
 #else
 typedef UChar  Pel;            // 8-bit pixel type
 #define X265_DEPTH 8           // compile time configurable bit depth
