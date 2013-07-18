@@ -36,7 +36,7 @@ class Encoder : public TEncTop
 {
 protected:
 
-    bool InitializeGOP(x265_param_t *param);
+    bool initializeGOP(x265_param_t *param);
     void determineLevelAndProfile(x265_param_t *param);
 
 public:

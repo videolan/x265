@@ -242,7 +242,7 @@ int TEncTop::flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& acc
     return 0;
 }
 
-Void TEncTop::printSummary()
+Double TEncTop::printSummary()
 {
     if (getLogLevel() >= X265_LOG_INFO)
     {
@@ -260,6 +260,8 @@ Void TEncTop::printSummary()
     m_gcAnalyzeP.printSummary('P');
     m_gcAnalyzeB.printSummary('B');
 #endif
+
+    return (m_gcAnalyzeAll.getPsnrY() * 6 + m_gcAnalyzeAll.getPsnrU() + m_gcAnalyzeAll.getPsnrV()) / (8 * m_gcAnalyzeAll.getNumPic());
 }
 
 Void TEncTop::xInitSPS(TComSPS *pcSPS)
