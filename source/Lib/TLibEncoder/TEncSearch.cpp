@@ -879,7 +879,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     {
         Int scalingListType = 0 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);
-        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip);
+        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), cu->getLumaIntraDir(absPartIdx), residual, stride, coeff, width, height, scalingListType, useTransformSkip);
     }
     else
     {
@@ -1016,7 +1016,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         {
             Int scalingListType = 0 + g_eTTable[(Int)ttype];
             assert(scalingListType < 6);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, residual, stride, coeff, width, height, scalingListType, useTransformSkipChroma);
+            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, residual, stride, coeff, width, height, scalingListType, useTransformSkipChroma);
         }
         else
         {
@@ -3807,7 +3807,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
             Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
             assert(scalingListType < 6);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_qtTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType); //this is for inter mode only
+            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, m_qtTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType); //this is for inter mode only
 
             const UInt nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width, m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
                                                                   m_qtTempTComYuv[qtlayer].width);
@@ -3881,7 +3881,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_U];
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, pcResiCurrU, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, pcResiCurrU, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
@@ -3949,7 +3949,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_V];
                 assert(scalingListType < 6);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),
@@ -4056,7 +4056,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
                 assert(scalingListType < 6);
 
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_LUMA, REG_DCT, curResiY, m_qtTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType, true);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiY, m_qtTempTComYuv[qtlayer].width,  coeffCurY, trWidth, trHeight, scalingListType, true);
 
                 nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absTUPartIdx), resiYuv->width,
                                                            m_qtTempTComYuv[qtlayer].getLumaAddr(absTUPartIdx),
@@ -4145,7 +4145,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_U];
                 assert(scalingListType < 6);
 
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiU, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiU, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurU, trWidthC, trHeightC, scalingListType, true);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCbAddr(absTUPartIdxC),
@@ -4183,7 +4183,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
                 Int scalingListType = 3 + g_eTTable[(Int)TEXT_CHROMA_V];
                 assert(scalingListType < 6);
 
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), TEXT_CHROMA, REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true);
+                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, curResiV, m_qtTempTComYuv[qtlayer].Cwidth, coeffCurV, trWidthC, trHeightC, scalingListType, true);
 
                 UInt dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absTUPartIdxC), resiYuv->Cwidth,
                                                          m_qtTempTComYuv[qtlayer].getCrAddr(absTUPartIdxC),

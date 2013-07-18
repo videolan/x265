@@ -444,7 +444,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     return xQuant(cu, m_tmpCoeff, coeff, width, height, ttype, absPartIdx);
 }
 
-Void TComTrQuant::invtransformNxN(Bool transQuantBypass, TextType eText, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,  Int scalingListType, Bool useTransformSkip)
+Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height, Int scalingListType, Bool useTransformSkip /*= false*/ )
 {
     if (transQuantBypass)
     {
@@ -506,7 +506,7 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
         Short* resi = residual + addr;
         Int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
         assert(scalingListType < 6);
-        invtransformNxN(cu->getCUTransquantBypass(absPartIdx), eTxt, REG_DCT, resi, stride, coeff, width, height, scalingListType, cu->getTransformSkip(absPartIdx, eTxt));
+        invtransformNxN(cu->getCUTransquantBypass(absPartIdx), REG_DCT, resi, stride, coeff, width, height, scalingListType, cu->getTransformSkip(absPartIdx, eTxt));
     }
     else
     {
