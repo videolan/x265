@@ -199,7 +199,7 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
     roiOrigin = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf;
 
-    fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits, cuWidth, cuHeight, width, height, picStride);
+    fillReferenceSamples(X265_DEPTH, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits, cuWidth, cuHeight, width, height, picStride);
 
     // generate filtered intra prediction samples
     // left and left above border + above and above right border + top left corner = length of 3. filter buffer
@@ -230,7 +230,7 @@ Void TComPattern::initAdiPattern(TComDataCU* cu, UInt zOrderIdxInPart, UInt part
         Int bottomLeft = filterBuf[0];
         Int topLeft = filterBuf[cuHeight2];
         Int topRight = filterBuf[bufSize - 1];
-        Int threshold = 1 << (g_bitDepthY - 5);
+        Int threshold = 1 << (X265_DEPTH - 5);
         Bool bilinearLeft = abs(bottomLeft + topLeft - 2 * filterBuf[cuHeight]) < threshold;
         Bool bilinearAbove  = abs(topLeft + topRight - 2 * filterBuf[cuHeight2 + cuHeight]) < threshold;
 
@@ -357,14 +357,14 @@ Void TComPattern::initAdiPatternChroma(TComDataCU* cu, UInt zOrderIdxInPart, UIn
     roiOrigin = cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf;
 
-    fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+    fillReferenceSamples(X265_DEPTH, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
                          cuWidth, cuHeight, width, height, picStride);
 
     // get Cr pattern
     roiOrigin = cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf + ADI_BUF_STRIDE * height;
 
-    fillReferenceSamples(g_bitDepthY, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
+    fillReferenceSamples(X265_DEPTH, roiOrigin, adiTemp, bNeighborFlags, numIntraNeighbor, unitSize, numUnitsInCU, totalUnits,
                          cuWidth, cuHeight, width, height, picStride);
 }
 

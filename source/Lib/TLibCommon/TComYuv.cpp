@@ -599,7 +599,7 @@ Void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt 
     UInt  iSrc0Stride = srcYuv0->getStride();
     UInt  iSrc1Stride = srcYuv1->getStride();
     UInt  dststride  = getStride();
-    Int shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
+    Int shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
     Int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
     for (y = 0; y < height; y++)
@@ -617,7 +617,7 @@ Void TComYuv::addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt partUnitIdx, UInt 
         pDstY  += dststride;
     }
 
-    shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
+    shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
     offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
     iSrc0Stride = srcYuv0->getCStride();
@@ -668,7 +668,7 @@ Void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, U
     UInt  iSrc0Stride = srcYuv0->width;
     UInt  iSrc1Stride = srcYuv1->width;
     UInt  dststride  = getStride();
-    Int shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
+    Int shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
     Int offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
     for (y = 0; y < height; y++)
@@ -686,7 +686,7 @@ Void TComYuv::addAvg(TShortYUV* srcYuv0, TShortYUV* srcYuv1, UInt partUnitIdx, U
         pDstY  += dststride;
     }
 
-    shiftNum = IF_INTERNAL_PREC + 1 - g_bitDepthY;
+    shiftNum = IF_INTERNAL_PREC + 1 - X265_DEPTH;
     offset = (1 << (shiftNum - 1)) + 2 * IF_INTERNAL_OFFS;
 
     iSrc0Stride = srcYuv0->Cwidth;

@@ -626,7 +626,7 @@ Void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, UInt compIdx)
         {
             saoLcuParam->subTypeIdx = saoLcuParam->typeIdx;
         }
-        Int bitDepth = g_bitDepthY;
+        Int bitDepth = X265_DEPTH;
         Int offsetTh = 1 << min(bitDepth - 5, 5);
         if (saoLcuParam->typeIdx == SAO_BO)
         {

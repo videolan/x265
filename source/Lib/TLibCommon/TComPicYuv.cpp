@@ -293,7 +293,7 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         pFile = fopen(pFileName, "ab");
     }
 
-    Int shift = g_bitDepthY - 8;
+    Int shift = X265_DEPTH - 8;
     Int offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
     Int   x, y;
@@ -315,7 +315,7 @@ Void TComPicYuv::dump(Char* pFileName, Bool bAdd)
         pelY += getStride();
     }
 
-    shift = g_bitDepthY - 8;
+    shift = X265_DEPTH - 8;
     offset = (shift > 0) ? (1 << (shift - 1)) : 0;
 
     for (y = 0; y < m_picHeight >> 1; y++)

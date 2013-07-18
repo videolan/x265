@@ -104,7 +104,7 @@ Void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, Int partIdx, D
 
     Int64 estDist;
     Int classIdx;
-    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthY - 8);
+    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
     UInt depth = onePart->partLevel;
 
     m_distOrg[partIdx] =  0;
@@ -1584,10 +1584,10 @@ Void TEncSampleAdaptiveOffset::resetStats()
  */
 Void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam, Double lambdaLuma, Double lambdaChroma, Int depth)
 {
-    m_saoBitIncreaseY = max(g_bitDepthY - 10, 0);
-    m_saoBitIncreaseC = max(g_bitDepthY - 10, 0);
-    m_offsetThY = 1 << min(g_bitDepthY - 5, 5);
-    m_offsetThC = 1 << min(g_bitDepthY - 5, 5);
+    m_saoBitIncreaseY = max(X265_DEPTH - 10, 0);
+    m_saoBitIncreaseC = max(X265_DEPTH - 10, 0);
+    m_offsetThY = 1 << min(X265_DEPTH - 5, 5);
+    m_offsetThC = 1 << min(X265_DEPTH - 5, 5);
     resetSAOParam(saoParam);
     if (!m_saoLcuBasedOptimization || !m_saoLcuBoundary)
     {
@@ -1955,7 +1955,7 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(Int compIdx, Int typeIdx, 
 {
     Int64 estDist = 0;
     Int classIdx;
-    Int bitDepth = g_bitDepthY;
+    Int bitDepth = X265_DEPTH;
     Int saoBitIncrease = (compIdx == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
     Int saoOffsetTh = (compIdx == 0) ? m_offsetThY : m_offsetThC;
 
@@ -2047,7 +2047,7 @@ Void TEncSampleAdaptiveOffset::saoComponentParamDist(Int allowMergeLeft, Int all
 
     Int64 estDist;
     Int classIdx;
-    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthY - 8);
+    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
     Int64 bestDist;
 
     SaoLcuParam*  saoLcuParam = &(saoParam->saoLcuParam[yCbCr][addr]);
@@ -2187,7 +2187,7 @@ Void TEncSampleAdaptiveOffset::sao2ChromaParamDist(Int allowMergeLeft, Int allow
 
     Int64 estDist[2];
     Int classIdx;
-    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepthY - 8);
+    Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
     Int64 bestDist = 0;
 
     SaoLcuParam*  saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };

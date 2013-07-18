@@ -275,7 +275,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
 
-    if (m_profile == Profile::MAIN10 && g_bitDepthY == 8)
+    if (m_profile == Profile::MAIN10 && X265_DEPTH == 8)
     {
         /* The above constraint is equal to Profile::MAIN */
         profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN, 1);
@@ -336,11 +336,11 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
         pcSPS->setAMPAcc(i, 0);
     }
 
-    pcSPS->setBitDepthY(g_bitDepthY);
-    pcSPS->setBitDepthC(g_bitDepthY);
+    pcSPS->setBitDepthY(X265_DEPTH);
+    pcSPS->setBitDepthC(X265_DEPTH);
 
-    pcSPS->setQpBDOffsetY(6 * (g_bitDepthY - 8));
-    pcSPS->setQpBDOffsetC(6 * (g_bitDepthY - 8));
+    pcSPS->setQpBDOffsetY(6 * (X265_DEPTH - 8));
+    pcSPS->setQpBDOffsetC(6 * (X265_DEPTH - 8));
 
     pcSPS->setUseSAO(m_bUseSAO);
 
@@ -353,8 +353,8 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     }
 
     // TODO: it is recommended for this to match the input bit depth
-    pcSPS->setPCMBitDepthLuma(g_bitDepthY);
-    pcSPS->setPCMBitDepthChroma(g_bitDepthY);
+    pcSPS->setPCMBitDepthLuma(X265_DEPTH);
+    pcSPS->setPCMBitDepthChroma(X265_DEPTH);
 
     pcSPS->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
 
@@ -408,7 +408,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setConstrainedIntraPred(m_bUseConstrainedIntraPred);
     Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
-    Int lowestQP = -(6 * (g_bitDepthY - 8)); //m_cSPS.getQpBDOffsetY();
+    Int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
 
     if (getUseLossless())
     {

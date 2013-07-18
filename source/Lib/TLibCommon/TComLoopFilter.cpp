@@ -579,7 +579,7 @@ Void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, UInt absZOrderIdx, UInt dep
 
             iQP_P = pcCUP->getQP(uiPartPIdx);
             qp = (iQP_P + iQP_Q + 1) >> 1;
-            Int iBitdepthScale = 1 << (g_bitDepthY - 8);
+            Int iBitdepthScale = 1 << (X265_DEPTH - 8);
 
             Int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, Int(qp + DEFAULT_INTRA_TC_OFFSET * (uiBs - 1) + (tcOffsetDiv2 << 1)));
             Int iIndexB = Clip3(0, MAX_QP, qp + (betaOffsetDiv2 << 1));
@@ -729,7 +729,7 @@ Void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, UInt absZOrderIdx, UInt d
                 Pel* piTmpSrcChroma = (chromaIdx == 0) ? piTmpSrcCb : piTmpSrcCr;
 
                 qp = QpUV(((iQP_P + iQP_Q + 1) >> 1) + chromaQPOffset);
-                Int iBitdepthScale = 1 << (g_bitDepthY - 8);
+                Int iBitdepthScale = 1 << (X265_DEPTH - 8);
 
                 Int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (ucBs - 1) + (tcOffsetDiv2 << 1));
                 Int iTc =  sm_tcTable[iIndexTC] * iBitdepthScale;

@@ -223,7 +223,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, Int log2Denom)
 
             for (Int comp = 0; comp < 3; comp++)
             {
-                Int bitDepth = g_bitDepthY;
+                Int bitDepth = X265_DEPTH;
                 Int realLog2Denom = log2Denom + bitDepth - 8;
                 Int realOffset = ((Int)1 << (realLog2Denom - 1));
 
@@ -295,8 +295,8 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             Int   iRefStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getStride();
 
             // calculate SAD costs with/without wp for luma
-            iSADWP   = this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width, height, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][0].inputWeight, weightPredTable[refList][refIdxTmp][0].inputOffset);
-            iSADnoWP = this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width, height, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
+            iSADWP   = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][0].inputWeight, weightPredTable[refList][refIdxTmp][0].inputOffset);
+            iSADnoWP = this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width, height, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
 
             fenc = pPic->getCbAddr();
             fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCbAddr();
@@ -304,15 +304,15 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
             iRefStride = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCStride();
 
             // calculate SAD costs with/without wp for chroma cb
-            iSADWP   += this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][1].inputWeight, weightPredTable[refList][refIdxTmp][1].inputOffset);
-            iSADnoWP += this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
+            iSADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][1].inputWeight, weightPredTable[refList][refIdxTmp][1].inputOffset);
+            iSADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
 
             fenc = pPic->getCrAddr();
             fref = slice->getRefPic(picList, refIdxTmp)->getPicYuvRec()->getCrAddr();
 
             // calculate SAD costs with/without wp for chroma cr
-            iSADWP   += this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][2].inputWeight, weightPredTable[refList][refIdxTmp][2].inputOffset);
-            iSADnoWP += this->xCalcSADvalueWP(g_bitDepthY, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
+            iSADWP   += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, weightPredTable[refList][refIdxTmp][2].inputWeight, weightPredTable[refList][refIdxTmp][2].inputOffset);
+            iSADnoWP += this->xCalcSADvalueWP(X265_DEPTH, fenc, fref, width >> 1, height >> 1, iOrgStride, iRefStride, iDenom, iDefaultWeight, 0);
 
             Double dRatio = ((Double)iSADWP / (Double)iSADnoWP);
             if (dRatio >= (Double)DTHRESH)

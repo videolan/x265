@@ -173,8 +173,8 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
      * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
     m_numTotalParts  = max(3, m_numCulPartsLevel[m_maxSplitLevel]);
 
-    UInt pixelRangeY = 1 << g_bitDepthY;
-    UInt boRangeShiftY = g_bitDepthY - SAO_BO_BITS;
+    UInt pixelRangeY = 1 << X265_DEPTH;
+    UInt boRangeShiftY = X265_DEPTH - SAO_BO_BITS;
 
     m_lumaTableBo = new Pel[pixelRangeY];
     for (Int k2 = 0; k2 < pixelRangeY; k2++)
@@ -182,8 +182,8 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
         m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
     }
 
-    UInt pixelRangeC = 1 << g_bitDepthY;
-    UInt boRangeShiftC = g_bitDepthY - SAO_BO_BITS;
+    UInt pixelRangeC = 1 << X265_DEPTH;
+    UInt boRangeShiftC = X265_DEPTH - SAO_BO_BITS;
 
     m_chromaTableBo = new Pel[pixelRangeC];
     for (Int k2 = 0; k2 < pixelRangeC; k2++)
@@ -200,7 +200,7 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
     m_upBufft++;
     Short i;
 
-    UInt maxY  = (1 << g_bitDepthY) - 1;
+    UInt maxY  = (1 << X265_DEPTH) - 1;
     UInt minY  = 0;
 
     Int rangeExt = maxY >> 1;
@@ -225,7 +225,7 @@ Void TComSampleAdaptiveOffset::create(UInt sourceWidth, UInt sourceHeight, UInt 
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
-    UInt maxC = (1 << g_bitDepthY) - 1;
+    UInt maxC = (1 << X265_DEPTH) - 1;
     UInt minC = 0;
 
     Int rangeExtC = maxC >> 1;
@@ -1034,8 +1034,8 @@ Void TComSampleAdaptiveOffset::processSaoCuOrg(Int addr, Int saoType, Int yCbCr)
 Void TComSampleAdaptiveOffset::SAOProcess(SAOParam* saoParam)
 {
     {
-        m_saoBitIncreaseY = max(g_bitDepthY - 10, 0);
-        m_saoBitIncreaseC = max(g_bitDepthY - 10, 0);
+        m_saoBitIncreaseY = max(X265_DEPTH - 10, 0);
+        m_saoBitIncreaseC = max(X265_DEPTH - 10, 0);
 
         if (m_saoLcuBasedOptimization)
         {
@@ -1190,7 +1190,7 @@ Void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool 
                         lumaTable = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
                         clipTable = (yCbCr == 0) ? m_clipTable : m_chromaClipTable;
 
-                        for (i = 0; i < (1 << g_bitDepthY); i++)
+                        for (i = 0; i < (1 << X265_DEPTH); i++)
                         {
                             offsetBo[i] = clipTable[i + offset[lumaTable[i]]];
                         }
@@ -1464,7 +1464,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOr
         }
         else
         {
-            pcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
+            pcmLeftShiftBit = X265_DEPTH - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
         }
     }
     else
@@ -1489,7 +1489,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration(TComDataCU* cu, UInt absZOr
         }
         else
         {
-            pcmLeftShiftBit = g_bitDepthY - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
+            pcmLeftShiftBit = X265_DEPTH - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
         }
     }
 

@@ -1794,8 +1794,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
     UInt64 ssdU = computeSSD(pic->getPicYuvOrg()->getCbAddr(), recon->getCbAddr(), stride, width, height);
     UInt64 ssdV = computeSSD(pic->getPicYuvOrg()->getCrAddr(), recon->getCrAddr(), stride, width, height);
 
-    Int maxvalY = 255 << (g_bitDepthY - 8);
-    Int maxvalC = 255 << (g_bitDepthY - 8);
+    Int maxvalY = 255 << (X265_DEPTH - 8);
+    Int maxvalC = 255 << (X265_DEPTH - 8);
     Double refValueY = (Double)maxvalY * maxvalY * size;
     Double refValueC = (Double)maxvalC * maxvalC * size / 4.0;
     Double psnrY = (ssdY ? 10.0 * log10(refValueY / (Double)ssdY) : 99.99);

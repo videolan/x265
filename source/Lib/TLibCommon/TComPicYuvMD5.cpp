@@ -137,14 +137,14 @@ void calcCRC(TComPicYuv& pic, UChar digest[3][16])
     UInt height = pic.getHeight();
     UInt stride = pic.getStride();
 
-    compCRC(g_bitDepthY, pic.getLumaAddr(), width, height, stride, digest[0]);
+    compCRC(X265_DEPTH, pic.getLumaAddr(), width, height, stride, digest[0]);
 
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();
 
-    compCRC(g_bitDepthY, pic.getCbAddr(), width, height, stride, digest[1]);
-    compCRC(g_bitDepthY, pic.getCrAddr(), width, height, stride, digest[2]);
+    compCRC(X265_DEPTH, pic.getCbAddr(), width, height, stride, digest[1]);
+    compCRC(X265_DEPTH, pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
 static void compChecksum(Int bitdepth, const Pel* plane, UInt width, UInt height, UInt stride, UChar digest[16])
@@ -178,14 +178,14 @@ void calcChecksum(TComPicYuv& pic, UChar digest[3][16])
     UInt height = pic.getHeight();
     UInt stride = pic.getStride();
 
-    compChecksum(g_bitDepthY, pic.getLumaAddr(), width, height, stride, digest[0]);
+    compChecksum(X265_DEPTH, pic.getLumaAddr(), width, height, stride, digest[0]);
 
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();
 
-    compChecksum(g_bitDepthY, pic.getCbAddr(), width, height, stride, digest[1]);
-    compChecksum(g_bitDepthY, pic.getCrAddr(), width, height, stride, digest[2]);
+    compChecksum(X265_DEPTH, pic.getCbAddr(), width, height, stride, digest[1]);
+    compChecksum(X265_DEPTH, pic.getCrAddr(), width, height, stride, digest[2]);
 }
 
 /**
@@ -200,7 +200,7 @@ void calcMD5(TComPicYuv& pic, UChar digest[3][16])
     /* choose an md5_plane packing function based on the system bitdepth */
     typedef void (*MD5PlaneFunc)(MD5&, const Pel*, UInt, UInt, UInt);
     MD5PlaneFunc md5_plane_func;
-    md5_plane_func = g_bitDepthY <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
+    md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
 
     MD5 md5Y, md5U, md5V;
     UInt width = pic.getWidth();
@@ -210,7 +210,7 @@ void calcMD5(TComPicYuv& pic, UChar digest[3][16])
     md5_plane_func(md5Y, pic.getLumaAddr(), width, height, stride);
     md5Y.finalize(digest[0]);
 
-    md5_plane_func = g_bitDepthY <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
+    md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
     width >>= 1;
     height >>= 1;
     stride = pic.getCStride();

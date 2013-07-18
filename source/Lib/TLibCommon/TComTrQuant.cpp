@@ -315,7 +315,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
         Int *quantCoeff = 0;
         quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
-        Int transformShift = MAX_TR_DYNAMIC_RANGE - g_bitDepthY - log2TrSize; // Represents scaling through forward transform
+        Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
         Int qbits = QUANT_SHIFT + cQpBase.m_per + transformShift;
         add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
@@ -433,7 +433,7 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     assert((cu->getSlice()->getSPS()->getMaxTrSize() >= width));
     if (useTransformSkip)
     {
-        xTransformSkip(g_bitDepthY, residual, stride, m_tmpCoeff, width, height);
+        xTransformSkip(X265_DEPTH, residual, stride, m_tmpCoeff, width, height);
     }
     else
     {
@@ -459,7 +459,7 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
         return;
     }
 
-    Int bitDepth = g_bitDepthY;
+    Int bitDepth = X265_DEPTH;
 
     // Values need to pass as input parameter in dequant
     Int per = m_qpParam.m_per;
@@ -636,7 +636,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
 {
     UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
-    UInt bitDepth = g_bitDepthY;
+    UInt bitDepth = X265_DEPTH;
     Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
     UInt       goRiceParam      = 0;
     Double     blockUncodedCost = 0;
@@ -1503,7 +1503,7 @@ Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
 Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
     UInt log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
-    Int bitDepth = g_bitDepthY;
+    Int bitDepth = X265_DEPTH;
     Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
 
     UInt i, maxNumCoeff = g_scalingListSize[size];
