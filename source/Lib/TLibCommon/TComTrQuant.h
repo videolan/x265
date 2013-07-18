@@ -191,7 +191,7 @@ protected:
 
 private:
 
-    Void xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
+    Void xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height);
 
     Void signBitHidingHDQ(TCoeff* qcoeff, TCoeff* coeff, const UInt* scan, Int* deltaU, Int width, Int height);
 
@@ -218,11 +218,11 @@ private:
 
     inline Double xGetIEPRate() const          { return 32768; }            ///< Get the cost of an equal probable bit
 
-    Void xDeQuant(Int bitDepth, const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
+    Void xDeQuant(const TCoeff* src, Int* dst, Int width, Int height, Int scalingListType);
 
-    Void xIT(Int bitDepth, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    Void xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int height);
 
-    Void xITransformSkip(Int bitDepth, Int* coeff, Short* residual, UInt stride, Int width, Int height);
+    Void xITransformSkip(Int* coeff, Short* residual, UInt stride, Int width, Int height);
 };
 
 //! \}

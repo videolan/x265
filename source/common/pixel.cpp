@@ -501,7 +501,7 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
     }
 }
 
-void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset, int bitDepth)
+void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
     for (y = height - 1; y >= 0; y--)
@@ -509,9 +509,9 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
         for (x = width - 1; x >= 0; )
         {
             // note: luma min width is 4
-            dst[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
-            dst[x] = (pixel) Clip3(0, ((1 << bitDepth) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel) Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
         }
 

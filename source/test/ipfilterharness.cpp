@@ -89,14 +89,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_pp_t ref, x265::ip
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(8, pixel_buff + 3 * rand_srcStride,
+        opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
             rand_height, g_lumaFilter[rand_val]
             );
-        ref(8, pixel_buff + 3 * rand_srcStride,
+        ref(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
@@ -126,14 +126,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_ps_t ref, x265::ip
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(8, pixel_buff + 3 * rand_srcStride,
+        opt(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_s,
             rand_dstStride,
             rand_width,
             rand_height, g_lumaFilter[rand_val]
             );
-        ref(8, pixel_buff + 3 * rand_srcStride,
+        ref(pixel_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_s,
             rand_dstStride,
@@ -163,14 +163,14 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_sp_t ref, x265::ip
         rand_srcStride = rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand() % 100;              // Randomly generated dstStride
 
-        opt(8, short_buff + 3 * rand_srcStride,
+        opt(short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
             rand_height, g_lumaFilter[rand_val]
             );
-        ref(8, short_buff + 3 * rand_srcStride,
+        ref(short_buff + 3 * rand_srcStride,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
@@ -199,13 +199,13 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_p2s_t ref, x265::i
         rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
 
-        opt(8, pixel_buff,
+        opt(pixel_buff,
             rand_srcStride,
             IPF_vec_output_s,
             rand_dstStride,
             rand_width,
             rand_height);
-        ref(8, pixel_buff,
+        ref(pixel_buff,
             rand_srcStride,
             IPF_C_output_s,
             rand_dstStride,
@@ -233,13 +233,13 @@ bool IPFilterHarness::check_IPFilter_primitive(x265::ipfilter_s2p_t ref, x265::i
         rand_srcStride = rand_width + rand() % 100;              // Randomly generated srcStride
         rand_dstStride = rand_width + rand() % 100;              // Randomly generated dstStride
 
-        opt(8, short_buff,
+        opt(short_buff,
             rand_srcStride,
             IPF_vec_output_p,
             rand_dstStride,
             rand_width,
             rand_height);
-        ref(8, short_buff,
+        ref(short_buff,
             rand_srcStride,
             IPF_C_output_p,
             rand_dstStride,
@@ -281,12 +281,12 @@ bool IPFilterHarness::check_filterVMultiplane(x265::filterVmulti_t ref, x265::fi
         rand_srcStride = 200;               // Can be randomly generated
         rand_dstStride = 200;
 
-        opt(8, short_buff + 8 * rand_srcStride, rand_srcStride,
+        opt(short_buff + 8 * rand_srcStride, rand_srcStride,
             dstEvec + marginY * rand_dstStride + marginX,
             dstIvec + marginY * rand_dstStride + marginX,
             dstPvec + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
-        ref(8, short_buff + 8 * rand_srcStride, rand_srcStride,
+        ref(short_buff + 8 * rand_srcStride, rand_srcStride,
             dstEref + marginY * rand_dstStride + marginX,
             dstIref + marginY * rand_dstStride + marginX,
             dstPref + marginY * rand_dstStride + marginX, rand_dstStride,
@@ -348,13 +348,13 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
         marginY = (rand() % 16) + 16;
         rand_srcStride = rand_width;               // Can be randomly generated
         rand_dstStride = rand_width + 2 * marginX;
-        opt(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
+        opt(pixel_buff + 8 * rand_srcStride, rand_srcStride,
             dstAvec, dstEvec, dstIvec, dstPvec, rand_dstStride,
             pDstAvec + marginY * rand_dstStride + marginX,
             pDstBvec + marginY * rand_dstStride + marginX,
             pDstCvec + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY);
-        ref(8, pixel_buff + 8 * rand_srcStride, rand_srcStride,
+        ref(pixel_buff + 8 * rand_srcStride, rand_srcStride,
             dstAref, dstEref, dstIref, dstPref, rand_dstStride,
             pDstAref + marginY * rand_dstStride + marginX,
             pDstBref + marginY * rand_dstStride + marginX,
@@ -464,7 +464,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("%s\t", IPFilterPPNames[value]);
             REPORT_SPEEDUP(opt.ipfilter_pp[value], ref.ipfilter_pp[value],
-                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -474,7 +474,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_ps %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_ps[value], ref.ipfilter_ps[value],
-                           8, pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
+                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_s, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -484,7 +484,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("ipfilter_sp %d\t", 8 / (value + 1));
             REPORT_SPEEDUP(opt.ipfilter_sp[value], ref.ipfilter_sp[value],
-                           8, short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
+                           short_buff + 3 * srcStride, srcStride, IPF_vec_output_p, dstStride, width, height, g_lumaFilter[val]);
         }
     }
 
@@ -492,27 +492,27 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     {
         printf("ipfilter_p2s\t");
         REPORT_SPEEDUP(opt.ipfilter_p2s, ref.ipfilter_p2s,
-                       8, pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
+                       pixel_buff, srcStride, IPF_vec_output_s, dstStride, width, height);
     }
 
     if (opt.ipfilter_s2p)
     {
         printf("ipfilter_s2p\t");
         REPORT_SPEEDUP(opt.ipfilter_s2p, ref.ipfilter_s2p,
-                       8, short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
+                       short_buff, srcStride, IPF_vec_output_p, dstStride, width, height);
     }
 
     if (opt.filterVmulti)
     {
         printf("Filter-V-multiplane");
         REPORT_SPEEDUP(opt.filterVmulti, ref.filterVmulti,
-                       8, short_buff + 8 * srcStride, srcStride, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
+                       short_buff + 8 * srcStride, srcStride, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
     }
 
     if (opt.filterHmulti)
     {
         printf("Filter-H-multiplane");
         REPORT_SPEEDUP(opt.filterHmulti, ref.filterHmulti,
-                       8, pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
+                       pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s, IPF_C_output_s, dstStride, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64);
     }
 }

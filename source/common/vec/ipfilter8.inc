@@ -25,20 +25,21 @@
  *****************************************************************************/
 
 template<int N>
-void filterVertical_s_p(int bitDepth, short *src, int srcStride,
-                        pixel *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterVertical_s_p(short *src, int srcStride,
+                        pixel *dst, int dstStride, int block_width,
+                        int block_height, const short *coeff)
 {
     int row, col;
 
     src -= (N / 2 - 1) * srcStride;
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC;
     shift += headRoom;
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
-    maxVal = (1 << bitDepth) - 1;
+    maxVal = (1 << X265_DEPTH) - 1;
     Vec4i cm0(coeff[0]), cm1(coeff[1]), cm2(coeff[2]), cm3(coeff[3]), cm4(coeff[4]), cm5(coeff[5]), cm6(coeff[6]), cm7(coeff[7]);
     Vec16uc sum_uc;
     Vec8s vec_zero(0);
@@ -324,15 +325,14 @@ void filterVertical_s_p(int bitDepth, short *src, int srcStride,
 }
 #endif /* if INSTRSET >= 5 */
 
-void filterVerticalMultiplaneExtend(int /*bitDepth*/,
-                                    short *src, int srcStride,
+void filterVerticalMultiplaneExtend(short *src, int srcStride,
                                     pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
                                     int block_width, int block_height,
                                     int marginX, int marginY)
 {
     int row, col;
     int offset;
-    int headRoom = IF_INTERNAL_PREC - 8;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
 
     offset = 1 << (shift - 1);
@@ -384,7 +384,7 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/,
 
     col += 4;
 
-    for ( /*col = 0*/; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
+    for ( ; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
     {
         tmp = _mm_loadu_si128((__m128i const*)(src + col));
         a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
@@ -482,8 +482,7 @@ void filterVerticalMultiplaneExtend(int /*bitDepth*/,
 }
 
 template<int N>
-void filterVertical_p_p(int bitDepth,
-                        pixel *src, int srcStride,
+void filterVertical_p_p(pixel *src, int srcStride,
                         pixel *dst, int dstStride,
                         int block_width, int block_height,
                         const short *coeff)
@@ -495,7 +494,7 @@ void filterVertical_p_p(int bitDepth,
 
     src -= (N / 2 - 1) * srcStride;
     offset = 1 << (shift - 1);
-    maxVal = (1 << bitDepth) - 1;
+    maxVal = (1 << X265_DEPTH) - 1;
 
     Vec8s im0;
     im0.load(coeff);
@@ -687,8 +686,7 @@ void filterVertical_p_p(int bitDepth,
 }
 
 template<int N>
-void filterHorizontal_p_p(int bitDepth,
-                          pixel *src, int srcStride,
+void filterHorizontal_p_p(pixel *src, int srcStride,
                           pixel *dst, int dstStride,
                           int block_width, int block_height,
                           const short *coeff)
@@ -696,10 +694,10 @@ void filterHorizontal_p_p(int bitDepth,
     int row, col;
     int offset;
     short maxVal;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
 
     offset =  (1 << (headRoom - 1));
-    maxVal = (1 << bitDepth) - 1;
+    maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
 
     Vec8s vec_sum_low, vec_zero(0);
@@ -774,15 +772,14 @@ void filterHorizontal_p_p(int bitDepth,
 }
 
 #if INSTRSET > 4
-void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
-                                      pixel *src, int srcStride,
+void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
                                       short *intF, short* intA, short* intB, short* intC, int intStride,
                                       pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
                                       int block_width, int block_height,
                                       int marginX, int marginY)
 {
     int row, col;
-    int headRoom = IF_INTERNAL_PREC - 8;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
 
@@ -1096,13 +1093,13 @@ void filterHorizontalMultiplaneExtend(int /*bitDepth*/,
 #endif /* if INSTRSET > 4 */
 
 template<int N>
-void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, const short *coeff)
+void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, const short *coeff)
 {
     int row, col;
 
     src -= (N / 2 - 1);
     int offset;
-    int headRoom = IF_INTERNAL_PREC - bitDepth;
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC;
     shift -= headRoom;
     offset = -IF_INTERNAL_OFFS << shift;
@@ -1172,12 +1169,11 @@ void filterHorizontal_p_s(int bitDepth, pixel *src, int srcStride, short *dst, i
     }
 }
 
-void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride,
-                             short *dst, int dstStride, int width, int height)
+void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {
     pixel* srcOrg = src;
     short* dstOrg = dst;
-    int shift = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
     Vec16uc src_v;
     Vec8s dst_v, val_v;
@@ -1213,16 +1209,15 @@ void filterConvertPelToShort(int bitDepth, pixel *src, int srcStride,
     }
 }
 
-void filterConvertShortToPel(int bitDepth, short *src, int srcStride,
-                             pixel *dst, int dstStride, int width, int height)
+void filterConvertShortToPel(short *src, int srcStride, pixel *dst, int dstStride, int width, int height)
 {
     short* srcOrg = src;
     pixel* dstOrg = dst;
-    int shift = IF_INTERNAL_PREC - bitDepth;
+    int shift = IF_INTERNAL_PREC - X265_DEPTH;
     short offset = IF_INTERNAL_OFFS;
 
     offset += shift ? (1 << (shift - 1)) : 0;
-    short maxVal = (1 << bitDepth) - 1;
+    short maxVal = (1 << X265_DEPTH) - 1;
     Vec8s minVal(0);
     int row, col;
     Vec8s src_c, val_c, val_zero(0);

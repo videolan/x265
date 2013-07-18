@@ -163,8 +163,8 @@ bool IntraPredHarness::check_angular_primitive(x265::intra_ang_t ref, x265::intr
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
 
-                opt(BIT_DEPTH, pixel_out_vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
-                ref(BIT_DEPTH, pixel_out_c, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+                opt(pixel_out_vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+                ref(pixel_out_c, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
 
                 for (int k = 0; k < width; k++)
                 {
@@ -309,7 +309,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 int pmode = p;  //(rand()%33)+2;
                 printf("intra_ang%dx%d[%02d]", ii, ii, pmode);
                 REPORT_SPEEDUP(opt.intra_pred_ang, ref.intra_pred_ang,
-                               BIT_DEPTH, pixel_out_vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
+                               pixel_out_vec, FENC_STRIDE, width, pmode, bFilter, refAbove, refLeft);
             }
         }
     }

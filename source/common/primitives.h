@@ -181,42 +181,49 @@ typedef int  (*pixelcmp_ss_t)(short *fenc, intptr_t fencstride, short *fref, int
 typedef int  (*pixelcmp_sp_t)(short *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int *res);
-typedef void (*ipfilter_t)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height, int bitDepth);
-typedef void (*ipfilter_pp_t)(int bitDepth, pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_ps_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_sp_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_ss_t)(int bitDepth, short *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
-typedef void (*ipfilter_p2s_t)(int bitDepth, pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
-typedef void (*ipfilter_s2p_t)(int bitDepth, short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
+typedef void (*ipfilter_t)(const short *coeff, short *src, int srcStride, short *dst, int dstStride, int block_width, int block_height);
+typedef void (*ipfilter_pp_t)(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ps_t)(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_sp_t)(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_ss_t)(short *src, int srcStride, short *dst, int dstStride, int width, int height, const short *coeff);
+typedef void (*ipfilter_p2s_t)(pixel *src, int srcStride, short *dst, int dstStride, int width, int height);
+typedef void (*ipfilter_s2p_t)(short *src, int srcStride, pixel *dst, int dstStride, int width, int height);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, short *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sc_t)(int bx, int by, short *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
+typedef void (*pixelsub_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1); 
+
 typedef void (*intra_dc_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int width, int bFilter);
 typedef void (*intra_planar_t)(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width);
-typedef void (*intra_ang_t)(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
+typedef void (*intra_ang_t)(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool bLuma);
+
 typedef void (*cvt16to32_t)(short *src, int *dst, int);
 typedef void (*cvt16to32_shl_t)(int *dst, short *src, intptr_t, int, int);
 typedef void (*cvt16to16_shl_t)(short *dst, short *src, int, int, intptr_t, int);
 typedef void (*cvt32to16_t)(int *src, short *dst, int);
 typedef void (*cvt32to16_shr_t)(short *dst, int *src, int, int);
+
 typedef void (*dct_t)(short *src, int *dst, intptr_t stride);
 typedef void (*idct_t)(int *src, short *dst, intptr_t stride);
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, short *residual, int stride);
 typedef void (*calcrecon_t)(pixel* pred, short* residual, pixel* recon, short* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef void (*filterVmulti_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
-                               int block_width, int block_height, int marginX, int marginY);
-typedef void (*filterVwghtd_t)(int bitDepth, short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width, int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*filterHmulti_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                               pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
-typedef void (*filterHwghtd_t)(int bitDepth, pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride, pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height,
-                               int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
-typedef void (*dequant_t)(int bitDepth, const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList, unsigned int trSizeLog2, int *dequantCoef);
 typedef uint32_t (*quant_t)(int *coef, int *quantCoeff, int *deltaU, int *qCoef, int qBits, int add, int numCoeff);
-typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset, int bitDepth);
-typedef void (*pixelsub_sp_t)(int bx, int by, short *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1); 
+typedef void (*dequant_t)(const int* src, int* dst, int width, int height, int mcqp_miper, int mcqp_mirem, bool useScalingList,
+                          unsigned int trSizeLog2, int *dequantCoef);
+
+typedef void (*filterVmulti_t)(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
+                               int block_width, int block_height, int marginX, int marginY);
+typedef void (*filterVwghtd_t)(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP, int dstStride, int block_width,
+                               int block_height, int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
+typedef void (*filterHmulti_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
+                               pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
+typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
+                               pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height,
+                               int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
+typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,

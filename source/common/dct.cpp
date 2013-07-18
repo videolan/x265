@@ -714,7 +714,7 @@ void idct32_c(int *src, short *dst, intptr_t stride)
     }
 }
 
-void dequant_c(int bitDepth, const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoef)
+void dequant_c(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *dequantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -724,11 +724,9 @@ void dequant_c(int bitDepth, const int* quantCoef, int* coef, int width, int hei
         height = 32;
     }
 
-    int shift, add, coeffQ;
-
-    int transformShift = 15 - bitDepth - log2TrSize;
-
-    shift = 20 - 14 - transformShift;
+    int add, coeffQ;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
     int clipQCoef;
 
@@ -771,13 +769,7 @@ void dequant_c(int bitDepth, const int* quantCoef, int* coef, int width, int hei
     }
 }
 
-uint32_t quant_c(int* coef,
-                 int* quantCoeff,
-                 int* deltaU,
-                 int* qCoef,
-                 int  qBits,
-                 int  add,
-                 int  numCoeff)
+uint32_t quant_c(int* coef, int* quantCoeff, int* deltaU, int* qCoef, int qBits, int add, int numCoeff)
 {
     int qBits8 = qBits - 8;
     uint32_t acSum = 0;

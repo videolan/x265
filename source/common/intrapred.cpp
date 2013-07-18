@@ -145,7 +145,7 @@ void PredIntraPlanar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStr
     }
 }
 
-void PredIntraAngBufRef(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void PredIntraAngBufRef(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
     int k, l;
     int blkSize  = width;
@@ -204,7 +204,7 @@ void PredIntraAngBufRef(int bitDepth, pixel* dst, int dstStride, int width, int 
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                    dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << X265_DEPTH) - 1), static_cast<short>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
                 }
             }
         }
@@ -269,7 +269,7 @@ void PredIntraAngs_C(pixel *Dst0, pixel *pAbove0, pixel *pLeft0, pixel *pAbove1,
         pixel *pAbove = (IntraFilterType[(int)g_convertToBit[size]][iMode] ? pAbove1 : pAbove0);
         pixel *dst = Dst0 + (iMode - 2) * (size * size);
 
-        PredIntraAngBufRef(8, dst, size, size, iMode, bLuma, pLeft, pAbove);
+        PredIntraAngBufRef(dst, size, size, iMode, bLuma, pLeft, pAbove);
 
         // Optimize code don't flip buffer
         bool modeHor = (iMode < 18);

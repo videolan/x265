@@ -1638,7 +1638,7 @@ void intra_pred_planar(pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstS
 }
 
 #if HIGH_BIT_DEPTH
-void xPredIntraAng4x4(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int blkSize        = width;
 
@@ -1708,7 +1708,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* dst, int dstStride, int width, int di
             v_side -= v_side_0;
             v_side = v_side >> 1;
             row0 = tmp2 + v_side;
-            row0 = min(max(0, row0), (1 << bitDepth) - 1);
+            row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
 
             store_partial(const_int(8), dst, row0);                //row0
             store_partial(const_int(8), dst + (2 * dstStride), tmp1); //row2
@@ -1730,7 +1730,7 @@ void xPredIntraAng4x4(int bitDepth, pixel* dst, int dstStride, int width, int di
 
             for (int k = 0; k < 4; k++)
             {
-                dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << bitDepth) - 1), static_cast<short>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
+                dst[k * dstStride] = (pixel)Clip3((short)0, (short)((1 << X265_DEPTH) - 1), static_cast<short>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
             }
         }
     }
@@ -2307,7 +2307,7 @@ PredIntraAng4x4_table PredIntraAng4[] =
     PredIntraAng4_26,
     PredIntraAng4_32
 };
-void xPredIntraAng4x4(int /*bitDepth*/, pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void xPredIntraAng4x4(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     assert(dirMode > 1); //no planar and dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -2741,10 +2741,10 @@ PredIntraAng8x8_table PredIntraAng8[] =
     PredIntraAng8_32
 };
 
-void xPredIntraAng8x8(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void xPredIntraAng8x8(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
-    int blkSize        = width;
+    int blkSize= width;
 
     assert(dirMode > 1); //no planar and dc
     static const int mode_to_angle_table[] = { 32, 26, 21, 17, 13, 9, 5, 2, 0, -2, -5, -9, -13, -17, -21, -26, -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
@@ -2801,7 +2801,7 @@ void xPredIntraAng8x8(int bitDepth, pixel* dst, int dstStride, int width, int di
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
 
                 tmp1 = compress(row0, row0);
                 store_partial(const_int(8), dst, tmp1);            //row0
@@ -2860,7 +2860,7 @@ void xPredIntraAng8x8(int bitDepth, pixel* dst, int dstStride, int width, int di
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row0 = row0 + v_side;
-                row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
 
                 dst[0 * dstStride] = row0[0];
                 dst[1 * dstStride] = row0[1];
@@ -3008,7 +3008,7 @@ void xPredIntraAng8x8(int bitDepth, pixel* dst, int dstStride, int width, int di
         BLND2_4(R4, R8); \
 }
 
-void xPredIntraAng16x16(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
+void xPredIntraAng16x16(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove, bool bFilter = true)
 {
     int k;
     int blkSize        = width;
@@ -3076,13 +3076,13 @@ void xPredIntraAng16x16(int bitDepth, pixel* dst, int dstStride, int width, int 
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row01 = ref + v_side;
-                row01 = min(max(0, row01), (1 << bitDepth) - 1);
+                row01 = min(max(0, row01), (1 << X265_DEPTH) - 1);
 
                 v_side = extend_high(v_temp16);
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row02 = ref + v_side;
-                row02 = min(max(0, row02), (1 << bitDepth) - 1);
+                row02 = min(max(0, row02), (1 << X265_DEPTH) - 1);
 
                 tmp1 = compress_unsafe(row01, row02);
                 tmp1.store(dst);            //row0
@@ -3174,7 +3174,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* dst, int dstStride, int width, int 
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row0 = ref + v_side;
-                row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
 
                 dst[0 * dstStride] = row0[0];
                 dst[1 * dstStride] = row0[1];
@@ -3189,7 +3189,7 @@ void xPredIntraAng16x16(int bitDepth, pixel* dst, int dstStride, int width, int 
                 v_side -= v_side_0;
                 v_side = v_side >> 1;
                 row0 = ref + v_side;
-                row0 = min(max(0, row0), (1 << bitDepth) - 1);
+                row0 = min(max(0, row0), (1 << X265_DEPTH) - 1);
                 dst[8 * dstStride] = row0[0];
                 dst[9 * dstStride] = row0[1];
                 dst[10 * dstStride] = row0[2];
@@ -3636,10 +3636,10 @@ void xPredIntraAng16x16(int bitDepth, pixel* dst, int dstStride, int width, int 
         PREDANG_CALCROW_HOR_MODE2(R7) \
 }
 
-void xPredIntraAng32x32(int /*bitDepth*/, pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
+void xPredIntraAng32x32(pixel* dst, int dstStride, int width, int dirMode, pixel *refLeft, pixel *refAbove)
 {
     int k;
-    int blkSize        = width;
+    int blkSize = width;
 
     // Map the mode index to main prediction direction and angle
     assert(dirMode > 1); //no planar and dc
@@ -4739,23 +4739,23 @@ void xPredIntraAng32x32(int /*bitDepth*/, pixel* dst, int dstStride, int width, 
 
 #endif /* if HIGH_BIT_DEPTH */
 
-void intra_pred_ang(int bitDepth, pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
+void intra_pred_ang(pixel* dst, int dstStride, int width, int dirMode, bool bFilter, pixel *refLeft, pixel *refAbove)
 {
 #if HIGH_BIT_DEPTH
 #else
     switch (width)
     {
     case 4:
-        xPredIntraAng4x4(bitDepth, dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        xPredIntraAng4x4(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 8:
-        xPredIntraAng8x8(bitDepth, dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        xPredIntraAng8x8(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 16:
-        xPredIntraAng16x16(bitDepth, dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
+        xPredIntraAng16x16(dst, dstStride, width, dirMode, refLeft, refAbove, bFilter);
         return;
     case 32:
-        xPredIntraAng32x32(bitDepth, dst, dstStride, width, dirMode, refLeft, refAbove);
+        xPredIntraAng32x32(dst, dstStride, width, dirMode, refLeft, refAbove);
         return;
     }
 
@@ -4818,7 +4818,7 @@ void intra_pred_ang(int bitDepth, pixel* dst, int dstStride, int width, int dirM
             {
                 for (k = 0; k < blkSize; k++)
                 {
-                    dst[k * dstStride] = (pixel)Clip3(0, (1 << bitDepth) - 1, static_cast<short>(dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
+                    dst[k * dstStride] = (pixel)Clip3(0, (1 << X265_DEPTH) - 1, static_cast<short>(dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1));
                 }
             }
         }

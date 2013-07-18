@@ -330,7 +330,7 @@ UInt TComTrQuant::xQuant(TComDataCU* cu, Int* coef, TCoeff* qCoef, Int width, In
     return acSum;
 }
 
-Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
+Void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height, Int scalingListType)
 {
     if (width > (Int)m_maxTrSize)
     {
@@ -341,7 +341,7 @@ Void TComTrQuant::xDeQuant(Int bitDepth, const TCoeff* qCoef, Int* coef, Int wid
     Int shift, add, coeffQ;
     UInt log2TrSize = g_convertToBit[width] + 2;
 
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
+    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
 
     shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
@@ -433,11 +433,11 @@ UInt TComTrQuant::transformNxN(TComDataCU* cu,
     assert((cu->getSlice()->getSPS()->getMaxTrSize() >= width));
     if (useTransformSkip)
     {
-        xTransformSkip(X265_DEPTH, residual, stride, m_tmpCoeff, width, height);
+        xTransformSkip(residual, stride, m_tmpCoeff, width, height);
     }
     else
     {
-        // TODO: this may need larger data types for bitDepth > 8
+        // TODO: this may need larger data types for X265_DEPTH > 8
         const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.dct[x265::DCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](residual, m_tmpCoeff, stride);
     }
@@ -459,23 +459,21 @@ Void TComTrQuant::invtransformNxN( Bool transQuantBypass, UInt mode, Short* resi
         return;
     }
 
-    Int bitDepth = X265_DEPTH;
-
     // Values need to pass as input parameter in dequant
     Int per = m_qpParam.m_per;
     Int rem = m_qpParam.m_rem;
     Bool useScalingList = getUseScalingList();
     UInt log2TrSize = g_convertToBit[width] + 2;
     Int *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-    x265::primitives.dequant(bitDepth, coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
+    x265::primitives.dequant(coeff, m_tmpCoeff, width, height, per, rem, useScalingList, log2TrSize, dequantCoef);
 
     if (useTransformSkip == true)
     {
-        xITransformSkip(bitDepth, m_tmpCoeff, residual, stride, width, height);
+        xITransformSkip(m_tmpCoeff, residual, stride, width, height);
     }
     else
     {
-        // TODO: this may need larger data types for bitDepth > 8
+        // TODO: this may need larger data types for X265_DEPTH > 8
         const UInt log2BlockSize = g_convertToBit[width];
         x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](m_tmpCoeff, residual, stride);
     }
@@ -543,9 +541,9 @@ Void TComTrQuant::invRecurTransformNxN(TComDataCU* cu, UInt absPartIdx, TextType
  *  \param size transform size (size x size)
  *  \param mode is Intra Prediction mode used in Mode-Dependent DCT/DST only
  */
-Void TComTrQuant::xIT(Int /*bitDepth*/, UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
+Void TComTrQuant::xIT(UInt mode, Int* coeff, Short* residual, UInt stride, Int width, Int /*height*/)
 {
-    // TODO: this may need larger data types for bitDepth > 8
+    // TODO: this may need larger data types for X265_DEPTH > 8
     const UInt log2BlockSize = g_convertToBit[width];
     x265::primitives.idct[x265::IDCT_4x4 + log2BlockSize - ((width == 4) && (mode != REG_DCT))](coeff, residual, stride);
 }
@@ -556,11 +554,11 @@ Void TComTrQuant::xIT(Int /*bitDepth*/, UInt mode, Int* coeff, Short* residual, 
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-Void TComTrQuant::xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
+Void TComTrQuant::xTransformSkip(Short* resiBlock, UInt stride, Int* coeff, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
+    Int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     UInt transformSkipShift;
     Int  j, k;
     if (shift >= 0)
@@ -569,7 +567,7 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, In
     }
     else
     {
-        //The case when uiBitDepth > 13
+        //The case when X265_DEPTH > 13
         Int offset;
         transformSkipShift = -shift;
         offset = (1 << (transformSkipShift - 1));
@@ -589,11 +587,11 @@ Void TComTrQuant::xTransformSkip(Int bitDepth, Short* resiBlock, UInt stride, In
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt stride, Int width, Int height)
+Void TComTrQuant::xITransformSkip(Int* coef, Short* residual, UInt stride, Int width, Int height)
 {
     assert(width == height);
     UInt log2TrSize = g_convertToBit[width] + 2;
-    Int  shift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize;
+    Int  shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     UInt transformSkipShift;
     Int  j, k;
     if (shift > 0)
@@ -606,7 +604,7 @@ Void TComTrQuant::xITransformSkip(Int bitDepth, Int* coef, Short* residual, UInt
     }
     else
     {
-        //The case when uiBitDepth >= 13
+        //The case when X265_DEPTH >= 13
         transformSkipShift = -shift;
         for (j = 0; j < height; j++)
         {
@@ -636,8 +634,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
 {
     UInt log2TrSize = g_convertToBit[width] + 2;
     UInt absSum = 0;
-    UInt bitDepth = X265_DEPTH;
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
+    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     UInt       goRiceParam      = 0;
     Double     blockUncodedCost = 0;
     const UInt log2BlkSize      = g_convertToBit[width] + 2;
@@ -991,7 +988,7 @@ UInt TComTrQuant::xRateDistOptQuant(TComDataCU* cu, Int* srcCoeff, TCoeff* dstCo
     {
         Int64 rdFactor = (Int64)(
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
-                / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)))
+                / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)))
                 + 0.5);
         Int lastCG = -1;
         Int tmpSum = 0;
@@ -1503,8 +1500,7 @@ Void TComTrQuant::setScalingListDec(TComScalingList *scalingList)
 Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
 {
     UInt log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
-    Int bitDepth = X265_DEPTH;
-    Int transformShift = MAX_TR_DYNAMIC_RANGE - bitDepth - log2TrSize; // Represents scaling through forward transform
+    Int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
     UInt i, maxNumCoeff = g_scalingListSize[size];
     Int *quantCoeff;
@@ -1517,7 +1513,7 @@ Void TComTrQuant::setErrScaleCoeff(UInt list, UInt size, UInt qp)
     scalingBits = scalingBits * pow(2.0, -2.0 * transformShift);              // Compensate for scaling through forward transform
     for (i = 0; i < maxNumCoeff; i++)
     {
-        errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (bitDepth - 8)));
+        errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)));
     }
 }
 

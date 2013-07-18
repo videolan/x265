@@ -39,7 +39,7 @@
 
 namespace {
 
-void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
+void dequant(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
 
@@ -49,11 +49,9 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
         height = 32;
     }
 
-    int shift, valueToAdd;
-
-    int transformShift = 15 - bitDepth - log2TrSize;
-
-    shift = 6 - transformShift;
+    int valueToAdd;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
     if (useScalingList)
     {
@@ -132,8 +130,8 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
         valueToAdd = 1 << (shift - 1);
         int scale = invQuantScales[rem] << per;
 
-        Vec4i Scale(scale);
-        Vec4i IAdd(valueToAdd);
+        Vec4i vScale(scale);
+        Vec4i vAdd(valueToAdd);
 
         for (int n = 0; n < width * height; n = n + 8)
         {
@@ -146,8 +144,8 @@ void dequant(int bitDepth, const int* quantCoef, int* coef, int width, int heigh
             quantCoef1 = extend_low(quantCoef12);
             quantCoef2 = extend_high(quantCoef12);
 
-            quantCoef1 = (quantCoef1 * Scale + IAdd) >> shift;
-            quantCoef2 = (quantCoef2 * Scale + IAdd) >> shift;
+            quantCoef1 = (quantCoef1 * vScale + vAdd) >> shift;
+            quantCoef2 = (quantCoef2 * vScale + vAdd) >> shift;
 
             quantCoef12 = compress_saturated(quantCoef1, quantCoef2);
 

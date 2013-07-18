@@ -105,7 +105,7 @@ void MotionReference::generateReferencePlanes()
         /* This one function call generates the four intermediate (short) planes for each
          * QPEL offset in the horizontal direction.  At the same time it outputs the three
          * Y=0 output (padded pixel) planes since they require no vertical interpolation */
-        primitives.filterHmulti(X265_DEPTH, srcPtr, m_lumaStride,               // source buffer
+        primitives.filterHmulti(srcPtr, m_lumaStride,                            // source buffer
                                 intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
                                 m_lumaPlane[1][0] + bufOffset,
                                 m_lumaPlane[2][0] + bufOffset,
@@ -173,5 +173,5 @@ void MotionReference::generateReferencePlane(int x)
     pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
 
-    primitives.filterVmulti(X265_DEPTH, intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
+    primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
 }

@@ -217,8 +217,8 @@ bool MBDstHarness::check_dequant_primitive(dequant_t ref, dequant_t opt)
 
         int cmp_size = sizeof(int) * height * width;
 
-        opt(8, mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
-        ref(8, mintbuf1 + j, mintbuf4, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
+        opt(mintbuf1 + j, mintbuf3, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
+        ref(mintbuf1 + j, mintbuf4, width, height, per, rem, useScalingList, log2TrSize, mintbuf2 + j);
 
         if (memcmp(mintbuf3, mintbuf4, cmp_size))
             return false;
@@ -350,7 +350,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.dequant)
     {
         printf("dequant\t\t");
-        REPORT_SPEEDUP(opt.dequant, ref.dequant, 8, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
+        REPORT_SPEEDUP(opt.dequant, ref.dequant, mintbuf1, mintbuf3, 32, 32, 5, 2, false, 5, mintbuf2);
     }
 
     if (opt.quant)
