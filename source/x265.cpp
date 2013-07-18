@@ -561,7 +561,7 @@ int main(int argc, char **argv)
         timeinfo = localtime(&now);
         char buffer[128];
         strftime(buffer, 128, "%c", timeinfo);
-        fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f", buffer, elapsed, bitrate, PSNR);
+        fprintf(cliopt.csvfp, ", %s, %.2f, %.2f, %.2f, %.2f\n", buffer, elapsed, outFrameCount / elapsed, bitrate, PSNR);
     }
 
     cliopt.destroy();
