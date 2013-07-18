@@ -80,17 +80,23 @@ TEncSampleAdaptiveOffset::~TEncSampleAdaptiveOffset()
 // Tables
 // ====================================================================================================================
 
-inline Double xRoundIbdi2(Int bitDepth, Double x)
+#if HIGH_BIT_DEPTH
+inline Double xRoundIbdi2(Double x)
 {
-    return ((x) > 0) ? (Int)(((Int)(x) + (1 << (bitDepth - 8 - 1))) / (1 << (bitDepth - 8))) : ((Int)(((Int)(x) - (1 << (bitDepth - 8 - 1))) / (1 << (bitDepth - 8))));
+    return ((x) > 0) ? (Int)(((Int)(x) + (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))) : ((Int)(((Int)(x) - (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))));
 }
+#endif
 
 /** rounding with IBDI
  * \param  x
  */
-inline Double xRoundIbdi(Int bitDepth, Double x)
+inline Double xRoundIbdi(Double x)
 {
-    return bitDepth > 8 ? xRoundIbdi2(bitDepth, (x)) : ((x) >= 0 ? ((Int)((x) + 0.5)) : ((Int)((x) - 0.5)));
+#if HIGH_BIT_DEPTH
+    return X265_DEPTH > 8 ? xRoundIbdi2(x) : ((x) >= 0 ? ((Int)((x) + 0.5)) : ((Int)((x) - 0.5)));
+#else
+    return ((x) >= 0 ? ((Int)((x) + 0.5)) : ((Int)((x) - 0.5)));
+#endif
 }
 
 /** process SAO for one partition
@@ -1955,7 +1961,6 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(Int compIdx, Int typeIdx, 
 {
     Int64 estDist = 0;
     Int classIdx;
-    Int bitDepth = X265_DEPTH;
     Int saoBitIncrease = (compIdx == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
     Int saoOffsetTh = (compIdx == 0) ? m_offsetThY : m_offsetThC;
 
@@ -1968,7 +1973,7 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(Int compIdx, Int typeIdx, 
         }
         if (m_count[compIdx][typeIdx][classIdx])
         {
-            m_offset[compIdx][typeIdx][classIdx] = (Int64)xRoundIbdi(bitDepth, (Double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (bitDepth - 8)) / (Double)(m_count[compIdx][typeIdx][classIdx] << saoBitIncrease));
+            m_offset[compIdx][typeIdx][classIdx] = (Int64)xRoundIbdi((Double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (X265_DEPTH - 8)) / (Double)(m_count[compIdx][typeIdx][classIdx] << saoBitIncrease));
             m_offset[compIdx][typeIdx][classIdx] = Clip3(-saoOffsetTh + 1, saoOffsetTh - 1, (Int)m_offset[compIdx][typeIdx][classIdx]);
             if (typeIdx < 4)
             {
@@ -1990,7 +1995,7 @@ inline Int64 TEncSampleAdaptiveOffset::estSaoTypeDist(Int compIdx, Int typeIdx, 
         }
         if (typeIdx != SAO_BO)
         {
-            estDist   += estSaoDist(m_count[compIdx][typeIdx][classIdx], m_offset[compIdx][typeIdx][classIdx] << saoBitIncrease, m_offsetOrg[compIdx][typeIdx][classIdx], shift);
+            estDist += estSaoDist(m_count[compIdx][typeIdx][classIdx], m_offset[compIdx][typeIdx][classIdx] << saoBitIncrease, m_offsetOrg[compIdx][typeIdx][classIdx], shift);
         }
     }
 

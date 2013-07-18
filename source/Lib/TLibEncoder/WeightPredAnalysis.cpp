@@ -223,8 +223,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, Int log2Denom)
 
             for (Int comp = 0; comp < 3; comp++)
             {
-                Int bitDepth = X265_DEPTH;
-                Int realLog2Denom = log2Denom + bitDepth - 8;
+                Int realLog2Denom = log2Denom + X265_DEPTH - 8;
                 Int realOffset = ((Int)1 << (realLog2Denom - 1));
 
                 // current frame

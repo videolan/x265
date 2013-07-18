@@ -500,11 +500,10 @@ Void TComWeightPrediction::getWpScaling(TComDataCU* cu, Int refIdx0, Int refIdx1
     { // Bi-Dir case
         for (Int yuv = 0; yuv < 3; yuv++)
         {
-            Int bitDepth = X265_DEPTH;
             wp0[yuv].w      = wp0[yuv].inputWeight;
-            wp0[yuv].o      = wp0[yuv].inputOffset * (1 << (bitDepth - 8));
+            wp0[yuv].o      = wp0[yuv].inputOffset * (1 << (X265_DEPTH - 8));
             wp1[yuv].w      = wp1[yuv].inputWeight;
-            wp1[yuv].o      = wp1[yuv].inputOffset * (1 << (bitDepth - 8));
+            wp1[yuv].o      = wp1[yuv].inputOffset * (1 << (X265_DEPTH - 8));
             wp0[yuv].offset = wp0[yuv].o + wp1[yuv].o;
             wp0[yuv].shift  = wp0[yuv].log2WeightDenom + 1;
             wp0[yuv].round  = (1 << wp0[yuv].log2WeightDenom);
