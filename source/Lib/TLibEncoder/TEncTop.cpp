@@ -261,7 +261,7 @@ Double TEncTop::printSummary()
     m_gcAnalyzeB.printSummary('B');
 #endif
 
-    return (m_gcAnalyzeAll.getPsnrY() * 6 + m_gcAnalyzeAll.getPsnrU() + m_gcAnalyzeAll.getPsnrV()) / 10;
+    return (m_gcAnalyzeAll.getPsnrY() * 6 + m_gcAnalyzeAll.getPsnrU() + m_gcAnalyzeAll.getPsnrV()) / (8 * m_gcAnalyzeAll.getNumPic());
 }
 
 Void TEncTop::xInitSPS(TComSPS *pcSPS)
