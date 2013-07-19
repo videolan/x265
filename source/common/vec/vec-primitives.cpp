@@ -55,8 +55,7 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 5) Setup_Vec_Primitives_sse42(p);
 #endif
 #if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__GNUC__)
-    if (cpuid > 6) Setup_Vec_Primitives_avx(p);
-    if (hasXOP())  Setup_Vec_Primitives_xop(p);
+    if (cpuid > 6) hasXOP() ? Setup_Vec_Primitives_xop(p) : Setup_Vec_Primitives_avx(p);
 #endif
 #if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__INTEL_COMPILER)
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
