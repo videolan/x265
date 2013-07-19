@@ -541,8 +541,6 @@ public:
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    UInt&         getTotalDistortion()            { return m_totalDistortion; }
-
     UInt&         getTotalBits()                  { return m_totalBits; }
 
     UInt&         getTotalNumPart()               { return m_numPartitions; }

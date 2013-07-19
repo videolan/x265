@@ -2223,7 +2223,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
     //===== set distortion (rate and r-d costs are determined later) =====
     outDistC                 = overallDistC;
-    cu->getTotalDistortion() = overallDistY + overallDistC;
+    cu->m_totalDistortion = overallDistY + overallDistC;
 }
 
 Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
@@ -2285,7 +2285,7 @@ Void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
     ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U), m_qtTempTransformSkipFlag[1], qpn * sizeof(UChar));
     ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V), m_qtTempTransformSkipFlag[2], qpn * sizeof(UChar));
     cu->setChromIntraDirSubParts(bestMode, 0, depth);
-    cu->getTotalDistortion() += bestDist - preCalcDistC;
+    cu->m_totalDistortion += bestDist - preCalcDistC;
 
     //----- restore context models -----
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
@@ -2436,7 +2436,7 @@ Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
     cu->getTotalBits()       = bits;
     cu->m_totalCost       = cost;
-    cu->getTotalDistortion() = distortion;
+    cu->m_totalDistortion = distortion;
 
     cu->copyToPic(depth, 0, 0);
 }
@@ -3533,7 +3533,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
 
         cu->getTotalBits()       = bits;
-        cu->getTotalDistortion() = distortion;
+        cu->m_totalDistortion = distortion;
         cu->m_totalCost       = m_rdCost->calcRdCost(distortion, bits);
 
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
@@ -3642,7 +3642,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     bcost = m_rdCost->calcRdCost(bdist, bestBits);
 
     cu->getTotalBits()       = bestBits;
-    cu->getTotalDistortion() = bdist;
+    cu->m_totalDistortion = bdist;
     cu->m_totalCost       = bcost;
 
     if (cu->isSkipped(0))

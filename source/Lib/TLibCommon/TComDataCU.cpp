@@ -673,7 +673,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
     if (isRDObasedAnalysis)
         m_totalCost += cu->m_totalCost;
 
-    m_totalDistortion  += cu->getTotalDistortion();
+    m_totalDistortion  += cu->m_totalDistortion;
     m_totalBits        += cu->getTotalBits();
 
     UInt offset         = cu->getTotalNumPart() * partUnitIdx;
@@ -745,7 +745,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
 
     rpcCU->m_totalCost       = m_totalCost;
-    rpcCU->getTotalDistortion() = m_totalDistortion;
+    rpcCU->m_totalDistortion = m_totalDistortion;
     rpcCU->getTotalBits()       = m_totalBits;
 
     Int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
@@ -811,7 +811,7 @@ Void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     UInt partOffset  = m_absIdxInLCU + uiPartStart;
 
     cu->m_totalCost       = m_totalCost;
-    cu->getTotalDistortion() = m_totalDistortion;
+    cu->m_totalDistortion = m_totalDistortion;
     cu->getTotalBits()       = m_totalBits;
 
     Int sizeInUchar = sizeof(UChar) * qNumPart;
