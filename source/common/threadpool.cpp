@@ -34,7 +34,7 @@
 #include <sys/sysctl.h>
 #endif
 
-#ifdef __GNUC__         /* GCCs builtin atomics */
+#ifdef __GNUC__          /* GCCs builtin atomics */
 
 #include <unistd.h>
 #include <limits.h>
