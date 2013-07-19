@@ -48,6 +48,8 @@ protected:
     bool check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt);
     bool check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t opt);
     bool check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_t opt);
+    bool check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_t opt);
+    bool check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_t opt);
 
 public:
 

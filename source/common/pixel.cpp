@@ -535,6 +535,36 @@ void pixelsub_sp_c(int bx, int by, short *a, intptr_t dstride, pixel *b0, pixel 
     }
 }
 
+void pixeladd_ss_c(int bx, int by, short *a, intptr_t dstride, short *b0, short *b1, intptr_t sstride0, intptr_t sstride1)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (short)ClipY(b0[x] + b1[x]);
+        }
+
+        b0 += sstride0;
+        b1 += sstride1;
+        a += dstride;
+    }
+}
+
+void pixeladd_pp_c(int bx, int by, pixel *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
+{
+    for (int y = 0; y < by; y++)
+    {
+        for (int x = 0; x < bx; x++)
+        {
+            a[x] = (pixel)ClipY(b0[x] + b1[x]);
+        }
+
+        b0 += sstride0;
+        b1 += sstride1;
+        a += dstride;
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -738,5 +768,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.weightpUni = weightUnidir;
 
     p.pixelsub_sp = pixelsub_sp_c;
+    p.pixeladd_pp = pixeladd_pp_c;
+    p.pixeladd_ss = pixeladd_ss_c;
 }
 }

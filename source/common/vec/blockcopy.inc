@@ -27,6 +27,9 @@
 #include <string.h>
 #include "utils.h"
 
+#include "TLibCommon/TComRom.h"
+#include "TLibCommon/TypeDef.h"
+
 namespace {
 
 #if HIGH_BIT_DEPTH
@@ -237,7 +240,6 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
     if (!(aligncheck & 31))
     {
         // fast path, multiples of 32 pixel wide blocks
-        // fast path, multiples of 16 pixel wide blocks
         for (int y = 0; y < by; y++)
         {
             for (int x = 0; x < bx; x += 32)
@@ -297,6 +299,206 @@ void pixelsub_sp(int bx, int by, short *dst, intptr_t dstride, uint8_t *src0, ui
         }
     }
 }
+
+void pixeladd_ss(int bx, int by, short *dst, intptr_t dstride, short *src0, short *src1, intptr_t sstride0, intptr_t sstride1)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | dstride;
+
+#if INSTRSET >= 8 && 0
+    if (!(aligncheck & 31) && !(bx & 15))
+    {
+        Vec16s zero(0), maxval((1 << X265_DEPTH) - 1); 
+        // fast path, multiples of 16 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16s vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load_a(src0 + x);
+                vecsrc1.load_a(src1 + x);
+
+                vecsum = vecsrc0 + vecsrc1;
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else
+#endif /* if INSTRSET >= 8 && 0 */
+    if ( !(aligncheck & 15) && !(bx & 7))
+    {
+        Vec8s zero(0), maxval((1 << X265_DEPTH) - 1);
+        // fast path, multiples of 8 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 8)
+            {
+                Vec8s vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load_a(src0 + x);
+                vecsrc1.load_a(src1 + x);
+
+                vecsum = add_saturated(vecsrc0, vecsrc1);
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else if (!(bx & 7))
+    {
+        Vec8s zero(0), maxval((1 << X265_DEPTH) - 1);
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 8)
+            {
+                Vec8s vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load(src0 + x);
+                vecsrc1.load(src1 + x);
+
+                vecsum = add_saturated(vecsrc0, vecsrc1);
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        int tmp;
+        int max = (1 << X265_DEPTH) - 1;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+            {
+                tmp = src0[x] + src1[x];
+                tmp = tmp < 0 ? 0 : tmp;
+                tmp = tmp > max ? max : tmp;
+                dst[x] = (short)tmp;
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+}
+
+#if !HIGH_BIT_DEPTH
+void pixeladd_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1)
+{
+    size_t aligncheck = (size_t)dst | (size_t)src0 | bx | sstride0 | dstride;
+
+#if INSTRSET >= 8 && 0
+    if (!(aligncheck & 31))
+    {
+         Vec32uc zero(0), maxval((1 << X265_DEPTH) - 1); 
+        // fast path, multiples of 32 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 32)
+            {
+                Vec32uc vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load_a(src0 + x);
+                vecsrc1.load_a(src1 + x);
+                vecsum = vecsrc0 + vecsrc1;
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else
+#endif /* if INSTRSET >= 8 && 0 */
+    if (!(aligncheck & 15))
+    {
+        Vec16uc zero(0), maxval((1 << X265_DEPTH) - 1); 
+        // fast path, multiples of 16 pixel wide blocks
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16uc vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load_a(src0 + x);
+                vecsrc1.load_a(src1 + x);
+                vecsum = add_saturated(vecsrc0, vecsrc1);
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else if (!(bx & 15))
+    {
+        Vec16uc zero(0), maxval((1 << X265_DEPTH) - 1); 
+        // fast path, multiples of 16 pixel wide blocks but pointers/strides require unaligned accesses
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x += 16)
+            {
+                Vec16uc vecsrc0, vecsrc1, vecsum;
+                vecsrc0.load(src0 + x);
+                vecsrc1.load(src1 + x);
+                vecsum = add_saturated(vecsrc0, vecsrc1);
+                vecsum = max(vecsum, zero);
+                vecsum = min(vecsum, maxval);
+
+                vecsum.store(dst + x);
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+    else
+    {
+        int tmp;
+        int max = (1 << X265_DEPTH) - 1;
+        // slow path, irregular memory alignments or sizes
+        for (int y = 0; y < by; y++)
+        {
+            for (int x = 0; x < bx; x++)
+            {
+                tmp = src0[x] + src1[x];
+                tmp = tmp < 0 ? 0 : tmp;
+                tmp = tmp > max ? max : tmp;
+                dst[x] = (pixel)tmp;
+            }
+
+            src0 += sstride0;
+            src1 += sstride1;
+            dst += dstride;
+        }
+    }
+}
+#endif
 }
 
 namespace x265 {
@@ -308,12 +510,16 @@ void NAME(Setup_Vec_BlockCopyPrimitives)(EncoderPrimitives &p)
     p.blockcpy_ps = (x265::blockcpy_ps_t)blockcopy_p_p;
     p.blockcpy_sp = (x265::blockcpy_sp_t)blockcopy_p_p;
     p.blockcpy_sc = (x265::blockcpy_sc_t)blockcopy_s_p;
+    p.pixeladd_pp = (x265::pixeladd_pp_t)pixeladd_ss;
+    p.pixeladd_ss = pixeladd_ss;
 #else
     p.blockcpy_pp = blockcopy_p_p;
     p.blockcpy_ps = blockcopy_p_s;
     p.blockcpy_sp = blockcopy_s_p;
     p.blockcpy_sc = blockcopy_s_p;
     p.pixelsub_sp = pixelsub_sp;
+    p.pixeladd_ss = pixeladd_ss;
+    p.pixeladd_pp = pixeladd_pp;
 #endif
 }
 }
