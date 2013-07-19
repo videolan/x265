@@ -674,7 +674,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
         m_totalCost += cu->m_totalCost;
 
     m_totalDistortion  += cu->m_totalDistortion;
-    m_totalBits        += cu->getTotalBits();
+    m_totalBits        += cu->m_totalBits;
 
     UInt offset         = cu->getTotalNumPart() * partUnitIdx;
 
@@ -746,7 +746,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
 
     rpcCU->m_totalCost       = m_totalCost;
     rpcCU->m_totalDistortion = m_totalDistortion;
-    rpcCU->getTotalBits()       = m_totalBits;
+    rpcCU->m_totalBits       = m_totalBits;
 
     Int iSizeInUchar  = sizeof(UChar) * m_numPartitions;
     Int iSizeInBool   = sizeof(Bool) * m_numPartitions;
@@ -812,7 +812,7 @@ Void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
 
     cu->m_totalCost       = m_totalCost;
     cu->m_totalDistortion = m_totalDistortion;
-    cu->getTotalBits()       = m_totalBits;
+    cu->m_totalBits       = m_totalBits;
 
     Int sizeInUchar = sizeof(UChar) * qNumPart;
     Int sizeInBool  = sizeof(Bool) * qNumPart;

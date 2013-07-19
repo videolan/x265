@@ -246,7 +246,7 @@ void FrameEncoder::processRow(int row)
         codeRow.processCU(cu, m_slice, bufSbac, m_enableWpp && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
-        // cu->getTotalBits();
+        // cu->m_totalBits;
         // cu->m_totalCost;
         // cu->m_totalDistortion;
 

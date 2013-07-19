@@ -541,8 +541,6 @@ public:
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    UInt&         getTotalBits()                  { return m_totalBits; }
-
     UInt&         getTotalNumPart()               { return m_numPartitions; }
 
     UInt          getCoefScanIdx(UInt absPartIdx, UInt width, Bool bIsLuma, Bool bIsIntra);
