@@ -110,9 +110,12 @@ void x265_setup_primitives(x265_param_t *param, int cpuid)
                 fprintf(stderr, "%s ", CpuType[i]);
             }
 
-            if (hasXOP()) fprintf(stderr, "XOP ");
-            if (hasFMA3()) fprintf(stderr, "FMA3 ");
-            if (hasFMA4()) fprintf(stderr, "FMA4 ");
+            if (cpuid >= 7)
+            {
+                if (hasXOP()) fprintf(stderr, "XOP ");
+                if (hasFMA3()) fprintf(stderr, "FMA3 ");
+                if (hasFMA4()) fprintf(stderr, "FMA4 ");
+            }
             fprintf(stderr, "\n");
         }
     }
