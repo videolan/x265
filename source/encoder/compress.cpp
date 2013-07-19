@@ -513,7 +513,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         {
             if (outBestCU->getTotalCost() < outTempCU->getTotalCost())
             {
-                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->getTotalCost(),  outTempCU->getPartitionSize(0), outTempCU->getPredictionMode(0));
+                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->getTotalCost(),  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
                 if (outBestCU->getPredictionMode(0) == MODE_INTER)
                 {
                     cntInter[depth]++;
