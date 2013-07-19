@@ -78,7 +78,7 @@ Void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 
     cu->getTotalBits() = m_entropyCoder->getNumberOfWrittenBits();
     cu->getTotalBins() = ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-    cu->getTotalCost() = m_rdCost->calcRdCost(cu->getTotalDistortion(), cu->getTotalBits());
+    cu->m_totalCost = m_rdCost->calcRdCost(cu->getTotalDistortion(), cu->getTotalBits());
 }
 
 Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
@@ -237,7 +237,7 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt in
 
     m_search->predInterSearch(outTempCU, m_origYuv[depth], m_modePredYuv[index][depth], bUseMRG);
     int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-    outTempCU->getTotalCost() = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+    outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                         m_modePredYuv[index][depth]->getLumaAddr(), m_modePredYuv[index][depth]->getStride());
 }
 
@@ -329,7 +329,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             m_modePredYuv[0][depth] = m_bestPredYuv[depth];
             m_bestPredYuv[depth] = tempYuv;
 
-            if (m_interCU_Nx2N[depth]->getTotalCost() < outBestCU->getTotalCost())
+            if (m_interCU_Nx2N[depth]->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = m_interCU_Nx2N[depth];
 
@@ -337,7 +337,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_modePredYuv[1][depth] = m_bestPredYuv[depth];
                 m_bestPredYuv[depth] = tempYuv;
             }
-            if (m_interCU_2NxN[depth]->getTotalCost() < outBestCU->getTotalCost())
+            if (m_interCU_2NxN[depth]->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = m_interCU_2NxN[depth];
 
@@ -348,10 +348,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
 #if CU_STAT_LOGFILE
-            fprintf(fp1, "\n N : %d ,  Best Inter : %d , ", outBestCU->getWidth(0) / 2, outBestCU->getTotalCost());
+            fprintf(fp1, "\n N : %d ,  Best Inter : %d , ", outBestCU->getWidth(0) / 2, outBestCU->m_totalCost);
 #endif
 
-            if (m_bestMergeCU[depth]->getTotalCost() < outBestCU->getTotalCost())
+            if (m_bestMergeCU[depth]->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = m_bestMergeCU[depth];
                 tempYuv = m_modePredYuv[3][depth];
@@ -371,7 +371,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
                 xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
 
-                if (m_intraInInterCU[depth]->getTotalCost() < outBestCU->getTotalCost())
+                if (m_intraInInterCU[depth]->m_totalCost < outBestCU->m_totalCost)
                 {
                     outBestCU = m_intraInInterCU[depth];
                     tempYuv = m_modePredYuv[5][depth];
@@ -413,7 +413,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
         outBestCU->getTotalBits() += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         outBestCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-        outBestCU->getTotalCost()  = m_rdCost->calcRdCost(outBestCU->getTotalDistortion(), outBestCU->getTotalBits());
+        outBestCU->m_totalCost  = m_rdCost->calcRdCost(outBestCU->getTotalDistortion(), outBestCU->getTotalBits());
     }
     else if (!(bSliceEnd && bInsidePicture))
     {
@@ -423,7 +423,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #if CU_STAT_LOGFILE
     if (outBestCU)
     {
-        fprintf(fp1, "Inter 2Nx2N_Merge : %d , Intra : %d",  m_bestMergeCU[depth]->getTotalCost(), m_intraInInterCU[depth]->getTotalCost());
+        fprintf(fp1, "Inter 2Nx2N_Merge : %d , Intra : %d",  m_bestMergeCU[depth]->m_totalCost, m_intraInInterCU[depth]->m_totalCost);
         if (outBestCU != m_bestMergeCU[depth] && outBestCU != m_intraInInterCU[depth])
             fprintf(fp1, " , Best  Part Mode chosen :%d, Pred Mode : %d",  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
     }
@@ -478,7 +478,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             outTempCU->getTotalBins() += ((TEncBinCABAC*)((TEncSbac*)m_entropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
         }
 
-        outTempCU->getTotalCost() = m_rdCost->calcRdCost(outTempCU->getTotalDistortion(), outTempCU->getTotalBits());
+        outTempCU->m_totalCost = m_rdCost->calcRdCost(outTempCU->getTotalDistortion(), outTempCU->getTotalBits());
 
         if ((g_maxCUWidth >> depth) == outTempCU->getSlice()->getPPS()->getMinCuDQPSize() && outTempCU->getSlice()->getPPS()->getUseDQP())
         {
@@ -511,9 +511,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #if  CU_STAT_LOGFILE
         if (outBestCU != 0)
         {
-            if (outBestCU->getTotalCost() < outTempCU->getTotalCost())
+            if (outBestCU->m_totalCost < outTempCU->m_totalCost)
             {
-                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->getTotalCost(),  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
+                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->m_totalCost,  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
                 if (outBestCU->getPredictionMode(0) == MODE_INTER)
                 {
                     cntInter[depth]++;
@@ -541,7 +541,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
             else
             {
-                fprintf(fp1, "\n  %d vs %d  : selected mode :N : %d , cost : %d  ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getTotalCost());
+                fprintf(fp1, "\n  %d vs %d  : selected mode :N : %d , cost : %d  ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->m_totalCost);
                 cntSplit[depth]++;
             }
         }
@@ -551,7 +551,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         Copy Recon data from Temp structure to Best structure*/
         if (outBestCU)
         {
-            if (outTempCU->getTotalCost() < outBestCU->getTotalCost())
+            if (outTempCU->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = outTempCU;
                 tempYuv = m_tmpRecoYuv[depth];
@@ -623,5 +623,5 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
      Selected mode's RD-cost must be not MAX_DOUBLE.*/
     assert(outBestCU->getPartitionSize(0) != SIZE_NONE);
     assert(outBestCU->getPredictionMode(0) != MODE_NONE);
-    assert(outBestCU->getTotalCost() != MAX_DOUBLE);
+    assert(outBestCU->m_totalCost != MAX_DOUBLE);
 }

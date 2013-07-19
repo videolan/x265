@@ -2435,7 +2435,7 @@ Void TEncSearch::IPCMSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     cu->getTotalBits()       = bits;
-    cu->getTotalCost()       = cost;
+    cu->m_totalCost       = cost;
     cu->getTotalDistortion() = distortion;
 
     cu->copyToPic(depth, 0, 0);
@@ -2598,7 +2598,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     Int numValidMergeCand = 0;
 
     if (!m_cfg->getUseRDO())
-        cu->getTotalCost() = 0;
+        cu->m_totalCost = 0;
 
     for (Int partIdx = 0; partIdx < numPart; partIdx++)
     {
@@ -3006,7 +3006,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                 meCost += mrgCost;
 #endif
                 if (!m_cfg->getUseRDO())
-                    cu->getTotalCost() += mrgCost;
+                    cu->m_totalCost += mrgCost;
             }
             else
             {
@@ -3021,13 +3021,13 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                 meCost += meCost;
 #endif
                 if (!m_cfg->getUseRDO())
-                    cu->getTotalCost() += meCost;
+                    cu->m_totalCost += meCost;
             }
         }
         else
         {
             if (!m_cfg->getUseRDO())
-                cu->getTotalCost() += costTemp;
+                cu->m_totalCost += costTemp;
         }
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx);
     }
@@ -3534,7 +3534,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         cu->getTotalBits()       = bits;
         cu->getTotalDistortion() = distortion;
-        cu->getTotalCost()       = m_rdCost->calcRdCost(distortion, bits);
+        cu->m_totalCost       = m_rdCost->calcRdCost(distortion, bits);
 
         m_rdGoOnSbacCoder->store(m_rdSbacCoders[cu->getDepth(0)][CI_TEMP_BEST]);
 
@@ -3643,7 +3643,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     cu->getTotalBits()       = bestBits;
     cu->getTotalDistortion() = bdist;
-    cu->getTotalCost()       = bcost;
+    cu->m_totalCost       = bcost;
 
     if (cu->isSkipped(0))
     {

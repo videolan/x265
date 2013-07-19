@@ -247,7 +247,7 @@ void FrameEncoder::processRow(int row)
 
         // TODO: Keep atomic running totals for rate control?
         // cu->getTotalBits();
-        // cu->getTotalCost();
+        // cu->m_totalCost;
         // cu->getTotalDistortion();
 
         // Completed CU processing
