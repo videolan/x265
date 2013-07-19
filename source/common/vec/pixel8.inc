@@ -80,7 +80,7 @@ ALWAYSINLINE void unrollFunc_8(pixel *fenc, intptr_t fencstride, pixel *fref, in
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_8<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us& sad)
+ALWAYSINLINE void unrollFunc_8<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us& sad)
 {
     Vec16uc m1, n1;
 
@@ -174,7 +174,7 @@ ALWAYSINLINE void unrollFunc_16(pixel *fenc, intptr_t fencstride, pixel *fref, i
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_16<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us& sad)
+ALWAYSINLINE void unrollFunc_16<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us& sad)
 {
     Vec16uc m1, n1;
 
@@ -275,7 +275,7 @@ ALWAYSINLINE void unrollFunc_32(pixel *fenc, intptr_t fencstride, pixel *fref, i
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_32<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us& sad)
+ALWAYSINLINE void unrollFunc_32<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us& sad)
 {
     Vec16uc m1, n1;
 
@@ -322,7 +322,7 @@ ALWAYSINLINE void unrollFunc_48(pixel *fenc, intptr_t fencstride, pixel *fref, i
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_48<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us *sad)
+ALWAYSINLINE void unrollFunc_48<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us *sad)
 {
     Vec16uc m1, n1;
 
@@ -377,7 +377,7 @@ ALWAYSINLINE void unrollFunc_64(pixel *fenc, intptr_t fencstride, pixel *fref, i
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_64<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec8us& sad)
+ALWAYSINLINE void unrollFunc_64<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec8us& sad)
 {
     Vec16uc m1, n1;
 
