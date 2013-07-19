@@ -175,13 +175,6 @@ private:
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
-
-    UInt64        m_totalCost;       ///< sum of partition RD costs
-    UInt          m_totalDistortion; ///< sum of partition distortion
-    UInt          m_totalBits;       ///< sum of partition signal bits
-    UInt          m_totalBins;       ///< sum of partition bins
-    Char          m_codedQP;
-
 protected:
 
     /// add possible motion vector predictor candidates
@@ -202,6 +195,12 @@ public:
 
     TComDataCU();
     virtual ~TComDataCU();
+
+    UInt64        m_totalCost;       ///< sum of partition RD costs
+    UInt          m_totalDistortion; ///< sum of partition distortion
+    UInt          m_totalBits;       ///< sum of partition signal bits
+    UInt          m_totalBins;       ///< sum of partition bins
+    Char          m_codedQP;
 
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
