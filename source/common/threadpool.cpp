@@ -152,6 +152,12 @@ public:
 
 void PoolThread::threadMain()
 {
+#if _WIN32
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+#else
+    int nice_ret = nice(10);
+#endif
+
     while (m_pool.IsValid())
     {
         /* Walk list of job providers, looking for work */
