@@ -735,7 +735,7 @@ Void TComDataCU::copyPartFrom(TComDataCU* cu, UInt partUnitIdx, UInt depth, Bool
     memcpy(m_trCoeffCr + uiTmp2, cu->getCoeffCr(), sizeof(TCoeff) * uiTmp);
     memcpy(m_iPCMSampleCb + uiTmp2, cu->getPCMSampleCb(), sizeof(Pel) * uiTmp);
     memcpy(m_iPCMSampleCr + uiTmp2, cu->getPCMSampleCr(), sizeof(Pel) * uiTmp);
-    m_totalBins += cu->getTotalBins();
+    m_totalBins += cu->m_totalBins;
 }
 
 // Copy current predicted part to a CU in picture.
@@ -799,7 +799,7 @@ Void TComDataCU::copyToPic(UChar uhDepth)
     memcpy(rpcCU->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
     memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
-    rpcCU->getTotalBins() = m_totalBins;
+    rpcCU->m_totalBins = m_totalBins;
 }
 
 Void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
@@ -861,7 +861,7 @@ Void TComDataCU::copyToPic(UChar depth, UInt partIdx, UInt partDepth)
     memcpy(cu->getCoeffCr() + tmp2, m_trCoeffCr, sizeof(TCoeff) * tmp);
     memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(Pel) * tmp);
     memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(Pel) * tmp);
-    cu->getTotalBins() = m_totalBins;
+    cu->m_totalBins = m_totalBins;
 }
 
 // --------------------------------------------------------------------------------------------------------------------

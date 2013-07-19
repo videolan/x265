@@ -535,8 +535,6 @@ public:
     UInt          getCtxSkipFlag(UInt absPartIdx);
     UInt          getCtxInterDir(UInt absPartIdx);
 
-    UInt&         getTotalBins()                            { return m_totalBins; }
-
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
