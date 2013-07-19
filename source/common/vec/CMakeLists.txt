@@ -34,7 +34,7 @@ if (MSVC)
     endif()
 endif()
 if(GCC)
-    set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp xop.cpp
+    set(PRIMITIVES sse3.cpp ssse3.cpp sse41.cpp sse42.cpp avx.cpp
         blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp blockcopy-avx.cpp
         pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp pixel-avx.cpp
         ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp ipfilter-avx.cpp
@@ -49,7 +49,6 @@ if(GCC)
         PROPERTIES COMPILE_FLAGS "-msse4")
     set_source_files_properties(
         blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
-        blockcopy-xop.cpp pixel-xop.cpp ipfilter-xop.cpp intra-xop.cpp dct-xop.cpp xop.cpp
         PROPERTIES COMPILE_FLAGS "-mavx")
     if("$ENV{CXX}" STREQUAL "icpc")
         set(PRIMITIVES ${PRIMITIVES}
