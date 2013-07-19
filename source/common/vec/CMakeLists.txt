@@ -52,9 +52,9 @@ if(GCC)
         PROPERTIES COMPILE_FLAGS "-mavx")
     if("$ENV{CXX}" STREQUAL "icpc")
         set(PRIMITIVES ${PRIMITIVES}
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp)
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp avx2.cpp)
         set_source_files_properties(
-            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp
+            blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp avx2.cpp
             PROPERTIES COMPILE_FLAGS "-march=core-avx2")
     endif()
 endif(GCC)
