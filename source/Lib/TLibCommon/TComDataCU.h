@@ -200,8 +200,7 @@ public:
     UInt          m_totalDistortion; ///< sum of partition distortion
     UInt          m_totalBits;       ///< sum of partition signal bits
     UInt          m_totalBins;       ///< sum of partition bins
-    Char          m_codedQP;
-
+    
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
@@ -308,10 +307,7 @@ public:
     Int           getLastValidPartIdx(Int iAbsPartIdx);
     Char          getLastCodedQP(UInt absPartIdx);
     Void          setQPSubCUs(Int qp, TComDataCU* cu, UInt absPartIdx, UInt depth, Bool &foundNonZeroCbf);
-    Void          setCodedQP(Char qp)               { m_codedQP = qp; }
-
-    Char          getCodedQP()                        { return m_codedQP; }
-
+  
     Bool          isLosslessCoded(UInt absPartIdx);
 
     UChar*        getTransformIdx()                        { return m_trIdx; }
