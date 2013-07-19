@@ -155,7 +155,7 @@ void PoolThread::threadMain()
 #if _WIN32
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 #else
-    int nice_ret = nice(10);
+    __attribute__((unused)) int val = nice(10);
 #endif
 
     while (m_pool.IsValid())
