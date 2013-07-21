@@ -122,36 +122,36 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 
         CandNum = 0;
         UInt modeCosts[35];
-        Bool bFilter = (width <= 16);
 
+        // CHM: TODO - The code isn't copy from TEncSearch::estIntraPredQT by me, I sync it, please check its logic
         Pel *pAbove0 = m_search->refAbove    + width - 1;
         Pel *pAbove1 = m_search->refAboveFlt + width - 1;
         Pel *pLeft0  = m_search->refLeft     + width - 1;
         Pel *pLeft1  = m_search->refLeftFlt  + width - 1;
-        Pel *pAbove  = pAbove0;
-        Pel *pLeft   = pLeft0;
-
-        // 1
-        primitives.intra_pred_dc((pixel*)pAbove0 + 1, (pixel*)pLeft0 + 1, pred, stride, width, bFilter);
-        modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
-
-        // 0
-        if (width >= 8 && width <= 32)
-        {
-            pAbove = pAbove1;
-            pLeft  = pLeft1;
-        }
-        primitives.intra_pred_planar(pAbove + 1, pLeft + 1, pred, stride, width);
-        modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
         // 33 Angle modes once
-        if (width <= 16)
+        ALIGN_VAR_32(Pel, buf_trans[32 * 32]);
+        ALIGN_VAR_32(Pel, tmp[33 * 32 * 32]);
+
+        if (width <= 32)
         {
-            ALIGN_VAR_32(Pel, buf1[MAX_CU_SIZE * MAX_CU_SIZE]);
-            ALIGN_VAR_32(Pel, tmp[33 * MAX_CU_SIZE * MAX_CU_SIZE]);
+            // 1
+            primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, (width <= 16));
+            modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
+
+            // 0
+            Pel *above   = pAbove0;
+            Pel *left    = pLeft0;
+            if (width >= 8 && width <= 32)
+            {
+                above = pAbove1;
+                left  = pLeft1;
+            }
+            primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, pred, stride, width);
+            modeCosts[PLANAR_IDX] = sa8d(fenc, stride, pred, stride);
 
             // Transpose NxN
-            x265::primitives.transpose[nLog2SizeMinus2](buf1, fenc, stride);
+            x265::primitives.transpose[nLog2SizeMinus2](buf_trans, (pixel*)fenc, stride);
 
             x265::primitives.intra_pred_allangs[nLog2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (width <= 16));
 
@@ -159,17 +159,40 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
             for (UInt mode = 2; mode < numModesAvailable; mode++)
             {
                 bool modeHor = (mode < 18);
-                Pel *src2 = (modeHor ? buf1 : fenc);
+                Pel *cmp = (modeHor ? buf_trans : fenc);
                 intptr_t srcStride = (modeHor ? width : stride);
-                modeCosts[mode] = sa8d(src2, srcStride, &tmp[(mode - 2) * (width * width)], width);
+                modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (width * width)], width);
             }
         }
         else
         {
+            ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
+            x265::primitives.scale2D_64to32(buf_scale, fenc, stride);
+            x265::primitives.transpose[3](buf_trans, buf_scale, 32);
+
+            Pel above[2 * 32 + 1];
+            Pel left[2 * 32 + 1];
+
+            above[0] = left[0] = pAbove0[0];
+            x265::primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
+            x265::primitives.scale1D_128to64(left + 1, pLeft0 + 1, 0);
+
+            // 1
+            primitives.intra_pred_dc(above + 1, left + 1, tmp, 32, 32, false);
+            modeCosts[DC_IDX] = 4 * x265::primitives.sa8d[3](buf_scale, 32, tmp, 32);
+
+            // 0
+            primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, 32, 32);
+            modeCosts[PLANAR_IDX] = 4 * x265::primitives.sa8d[3](buf_scale, 32, tmp, 32);
+
+            x265::primitives.intra_pred_allangs[3](tmp, above, left, above, left, false);
+
+            // TODO: I use 4 of SATD32x32 to replace real 64x64
             for (UInt mode = 2; mode < numModesAvailable; mode++)
             {
-                m_search->predIntraLumaAng(mode, pred, stride, width);
-                modeCosts[mode] = sa8d(fenc, stride, pred, stride);
+                bool modeHor = (mode < 18);
+                Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
+                modeCosts[mode] = 4 * x265::primitives.sa8d[3]((pixel*)cmp_buf, 32, (pixel*)&tmp[(mode - 2) * (32 * 32)], 32);
             }
         }
 

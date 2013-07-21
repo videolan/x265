@@ -391,5 +391,10 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.transpose[4] = transpose<64>;
     p.weightpUni = weightUnidir;
 #endif
+
+#if !HIGH_BIT_DEPTH && (INSTRSET >= 4)
+    p.scale1D_128to64 = scale1D_128to64;
+    p.scale2D_64to32 = scale2D_64to32;
+#endif
 }
 }

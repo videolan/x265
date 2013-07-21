@@ -565,6 +565,39 @@ void pixeladd_pp_c(int bx, int by, pixel *a, intptr_t dstride, pixel *b0, pixel 
     }
 }
 
+void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
+{
+    int x;
+
+    for (x = 0; x < 64; x += 2)
+    {
+        pixel pix0 = src[(x + 0)];
+        pixel pix1 = src[(x + 1)];
+        int sum = pix0 + pix1;
+
+        dst[x >> 1] = (pixel)((sum + 1) >> 1);
+    }
+}
+
+void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
+{
+    int x, y;
+
+    for (y = 0; y < 64; y += 2)
+    {
+        for (x = 0; x < 64; x += 2)
+        {
+            pixel pix0 = src[(y + 0) * stride + (x + 0)];
+            pixel pix1 = src[(y + 0) * stride + (x + 1)];
+            pixel pix2 = src[(y + 1) * stride + (x + 0)];
+            pixel pix3 = src[(y + 1) * stride + (x + 1)];
+            int sum = pix0 + pix1 + pix2 + pix3;
+
+            dst[y / 2 * 32 + x / 2] = (pixel)((sum + 2) >> 2);
+        }
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -770,5 +803,8 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.pixelsub_sp = pixelsub_sp_c;
     p.pixeladd_pp = pixeladd_pp_c;
     p.pixeladd_ss = pixeladd_ss_c;
+
+    p.scale1D_128to64 = scale1D_128to64;
+    p.scale2D_64to32 = scale2D_64to32;
 }
 }

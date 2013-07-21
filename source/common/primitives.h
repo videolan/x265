@@ -226,6 +226,7 @@ typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* mi
                                pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height,
                                int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
 typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
@@ -282,6 +283,9 @@ struct EncoderPrimitives
 
     filterVwghtd_t  filterVwghtd;
     filterHwghtd_t  filterHwghtd;
+
+    scale_t         scale1D_128to64;
+    scale_t         scale2D_64to32;
 };
 
 /* This copy of the table is what gets used by the encoder.
