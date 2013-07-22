@@ -90,6 +90,7 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
     for(int j = 0; j < 4; j++)
     {
         m_bestRecoYuvNxN[j] = new TComYuv*[m_totalDepth - 1];
+        m_interCU_NxN[j]  = new TComDataCU*[m_totalDepth - 1];
     }
 
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
