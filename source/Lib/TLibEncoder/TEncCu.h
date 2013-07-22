@@ -75,6 +75,7 @@ private:
     TComDataCU** m_intraInInterCU;
     TComDataCU** m_mergeCU;
     TComDataCU** m_bestMergeCU;
+    TComDataCU** m_interCU_NxN[4];
     TComDataCU** m_bestCU;      ///< Best CUs at each depth
     TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
 

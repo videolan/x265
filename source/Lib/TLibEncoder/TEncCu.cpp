@@ -114,6 +114,12 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
         m_tempCU[i] = new TComDataCU;
         m_tempCU[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
 
+        for(int j = 0; j < 4; j++)
+        {
+            m_interCU_NxN[j][i] = new TComDataCU;
+            m_interCU_NxN[j][i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
+        }
+                                
         m_interCU_2Nx2N[i] = new TComDataCU;
         m_interCU_2Nx2N[i]->create(numPartitions, width, height, maxWidth >> (m_totalDepth - 1));
         m_interCU_2NxN[i] = new TComDataCU;
@@ -213,6 +219,17 @@ Void TEncCu::destroy()
             delete m_tempCU[i];
             m_tempCU[i] = NULL;
         }
+
+        for(int j = 0; j < 4; j++)
+        {
+            if (m_interCU_NxN[j][i])
+            {
+                m_interCU_NxN[j][i]->destroy();
+                delete m_interCU_NxN[j][i];
+                m_interCU_NxN[j][i] = NULL;
+            }
+        }
+
         if (m_bestPredYuv[i])
         {
             m_bestPredYuv[i]->destroy();
@@ -310,6 +327,15 @@ Void TEncCu::destroy()
     {
         delete [] m_tempCU;
         m_tempCU = NULL;
+    }
+
+    for(int j = 0; j < 4; j++)
+    {
+        if (m_interCU_NxN[j])
+        {
+            delete [] m_interCU_NxN[j];
+            m_interCU_NxN[j] = NULL;
+        }
     }
 
     if (m_bestPredYuv)
