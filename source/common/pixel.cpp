@@ -569,7 +569,7 @@ void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
 {
     int x;
 
-    for (x = 0; x < 64; x += 2)
+    for (x = 0; x < 128; x += 2)
     {
         pixel pix0 = src[(x + 0)];
         pixel pix1 = src[(x + 1)];
