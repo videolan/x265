@@ -87,6 +87,11 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
     m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
     m_bestResiYuv = new TShortYUV*[m_totalDepth - 1];
     m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
+    for(int j = 0; j < 4; j++)
+    {
+        m_bestRecoYuvNxN[j] = new TComYuv*[m_totalDepth - 1];
+    }
+
     m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
 
     m_modePredYuv[0] = new TComYuv*[m_totalDepth - 1];
@@ -138,6 +143,12 @@ Void TEncCu::create(UChar totalDepth, UInt maxWidth)
         m_bestResiYuv[i]->create(width, height);
         m_bestRecoYuv[i] = new TComYuv;
         m_bestRecoYuv[i]->create(width, height);
+
+        for(int j = 0; j < 4; j++)
+        {
+            m_bestRecoYuvNxN[j][i] = new TComYuv;
+            m_bestRecoYuvNxN[j][i]->create(width, height);
+        }
 
         m_tmpPredYuv[i] = new TComYuv;
         m_tmpPredYuv[i]->create(width, height);
@@ -248,6 +259,15 @@ Void TEncCu::destroy()
             delete m_bestRecoYuv[i];
             m_bestRecoYuv[i] = NULL;
         }
+        for(int j = 0; j < 4; j++)
+        {
+            if (m_bestRecoYuvNxN[j][i])
+            {
+                m_bestRecoYuvNxN[j][i]->destroy();
+                delete m_bestRecoYuvNxN[j][i];
+                m_bestRecoYuvNxN[j][i] = NULL;
+            }
+        }
         if (m_tmpPredYuv[i])
         {
             m_tmpPredYuv[i]->destroy();
@@ -352,6 +372,14 @@ Void TEncCu::destroy()
     {
         delete [] m_bestRecoYuv;
         m_bestRecoYuv = NULL;
+    }
+    for(int j = 0; j < 4; j++)
+    {
+        if (m_bestRecoYuvNxN[j])
+        {
+            delete [] m_bestRecoYuvNxN[j];
+            m_bestRecoYuvNxN[j] = NULL;
+        }
     }
     if (m_bestMergeRecoYuv)
     {
