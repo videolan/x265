@@ -244,7 +244,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
  * \returns Void
  */
 
-Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt index, Bool bUseMRG)
+Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, Bool bUseMRG)
 {
     UChar depth = outTempCU->getDepth(0);
 
@@ -258,10 +258,10 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, PartSize partSize, UInt in
     m_tmpRecoYuv[depth]->clear();
     m_tmpResiYuv[depth]->clear();
 
-    m_search->predInterSearch(outTempCU, m_origYuv[depth], m_modePredYuv[index][depth], bUseMRG);
+    m_search->predInterSearch(outTempCU, m_origYuv[depth], outPredYuv, bUseMRG);
     int part = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
     outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                                        m_modePredYuv[index][depth]->getLumaAddr(), m_modePredYuv[index][depth]->getStride());
+                                                        outPredYuv->getLumaAddr(), outPredYuv->getStride());
 }
 
 Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
@@ -329,7 +329,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         {
             
             /*Compute 2Nx2N mode costs*/
-            xComputeCostInter(m_interCU_2Nx2N[depth], SIZE_2Nx2N, 0);
+            xComputeCostInter(m_interCU_2Nx2N[depth], m_modePredYuv[0][depth], SIZE_2Nx2N);
             /*Choose best mode; initialise outBestCU to 2Nx2N*/
             outBestCU = m_interCU_2Nx2N[depth];
             tempYuv = m_modePredYuv[0][depth];
@@ -347,8 +347,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             /*Compute Rect costs*/
             if (m_cfg->getUseRectInter())
             {
-                xComputeCostInter(m_interCU_Nx2N[depth], SIZE_Nx2N, 1);
-                xComputeCostInter(m_interCU_2NxN[depth], SIZE_2NxN, 2);
+                xComputeCostInter(m_interCU_Nx2N[depth], m_modePredYuv[1][depth], SIZE_Nx2N);
+                xComputeCostInter(m_interCU_2NxN[depth], m_modePredYuv[2][depth], SIZE_2NxN);
             }
 
             
@@ -473,7 +473,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             if (bInSlice && (subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
                 (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
             {
-                xComputeCostInter(subTempPartCU, SIZE_2Nx2N, 0);
+                xComputeCostInter(subTempPartCU, m_bestPredYuvNxN[partUnitIdx][depth], SIZE_2Nx2N, 0);
                 _NxNCost += subTempPartCU->m_totalCost;
             }
             else if (bInSlice)
