@@ -327,6 +327,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
         if (!earlyDetectionSkip)
         {
+            
             /*Compute 2Nx2N mode costs*/
             xComputeCostInter(m_interCU_2Nx2N[depth], SIZE_2Nx2N, 0);
             /*Choose best mode; initialise outBestCU to 2Nx2N*/
@@ -334,8 +335,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             tempYuv = m_modePredYuv[0][depth];
             m_modePredYuv[0][depth] = m_bestPredYuv[depth];
             m_bestPredYuv[depth] = tempYuv;
-
-
+            
             bTrySplitDQP = bTrySplit;
 
             if ((Int)depth <= m_addSADDepth)
@@ -460,8 +460,30 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         /*Best CU initialised to NULL; */
         TComDataCU* subBestPartCU = NULL;
         /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
-        TComDataCU* subTempPartCU = m_tempCU[nextDepth];
+        TComDataCU* subTempPartCU;
+        UInt64 _NxNCost = 0;
+        for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
+        {
+            subTempPartCU = m_interCU_NxN[partUnitIdx][nextDepth];
+            subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
+            TComPic* subPic = subTempPartCU->getPic();
+            m_origYuv[nextDepth]->copyFromPicYuv(subPic->getPicYuvOrg(), subTempPartCU->getAddr(), subTempPartCU->getZorderIdxInCU());
+            
+            Bool bInSlice = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr();
+            if (bInSlice && (subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
+                (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
+            {
+                xComputeCostInter(subTempPartCU, SIZE_2Nx2N, 0);
+                _NxNCost += subTempPartCU->m_totalCost;
+            }
+            else if (bInSlice)
+            {
+                subTempPartCU->copyToPic((UChar)nextDepth);
+                outTempCU->copyPartFrom(subTempPartCU, partUnitIdx, nextDepth, false);
+            }
+        }
 
+        subTempPartCU = m_tempCU[nextDepth];
         for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             subBestPartCU = NULL;
