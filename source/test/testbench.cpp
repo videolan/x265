@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     Setup_Assembly_Primitives(optprim, cpuid);
 #endif
 
-    fprintf(stderr, "\nTest performance improvement with full optimizations\n");
+    printf("\nTest performance improvement with full optimizations\n");
 
     for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
     {

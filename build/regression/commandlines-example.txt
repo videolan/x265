@@ -1,0 +1,15 @@
+--wpp --tu-intra-depth 1 --tu-inter-depth 2 --no-tskip --max-merge 1 --threads 4
+--wpp --rect --max-merge 1 --no-rdoq
+--wpp --tu-intra-depth 1 --tu-inter-depth 2 --no-tskip --max-merge 1 --threads 4 --no-rdoq
+--rect --max-merge 1
+--wpp --rect --max-merge 1
+--rect --max-merge 1 --cpuid 1
+--wpp --rect --max-merge 1 --cpuid 1
+--no-rect --no-amp
+--no-rect --no-amp --max-merge 1
+--wpp --no-rect --no-amp --max-merge 1
+--max-merge 1 --wpp --no-rdoq
+--rect --amp
+--sao
+--keyint 1
+--bframes 1
