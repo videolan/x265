@@ -2013,7 +2013,7 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             {
                 // origin is 64x64, we scale to 32x32
                 // TODO: option
-#if 1
+#if 0
                 ALIGN_VAR_32(Pel, buf_scale[32 * 32]);
                 x265::primitives.scale2D_64to32(buf_scale, fenc, stride);
                 x265::primitives.transpose[3](buf_trans, buf_scale, 32);
