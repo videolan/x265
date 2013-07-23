@@ -329,6 +329,12 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         {
             /*Compute 2Nx2N mode costs*/
             xComputeCostInter(m_interCU_2Nx2N[depth], SIZE_2Nx2N, 0);
+            /*Choose best mode; initialise outBestCU to 2Nx2N*/
+            outBestCU = m_interCU_2Nx2N[depth];
+            tempYuv = m_modePredYuv[0][depth];
+            m_modePredYuv[0][depth] = m_bestPredYuv[depth];
+            m_bestPredYuv[depth] = tempYuv;
+
 
             bTrySplitDQP = bTrySplit;
 
@@ -345,13 +351,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 xComputeCostInter(m_interCU_2NxN[depth], SIZE_2NxN, 2);
             }
 
-            /*Choose best mode; initialise outBestCU to 2Nx2N*/
-            outBestCU = m_interCU_2Nx2N[depth];
-
-            tempYuv = m_modePredYuv[0][depth];
-            m_modePredYuv[0][depth] = m_bestPredYuv[depth];
-            m_bestPredYuv[depth] = tempYuv;
-
+            
             if (m_interCU_Nx2N[depth]->m_totalCost < outBestCU->m_totalCost)
             {
                 outBestCU = m_interCU_Nx2N[depth];
