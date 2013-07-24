@@ -73,14 +73,14 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {}
 
-Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth)
+Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
 {
-    m_picWidth  = iPicWidth;
-    m_picHeight = iPicHeight;
+    m_picWidth  = picWidth;
+    m_picHeight = picHeight;
 
     // --> After config finished!
-    m_cuWidth  = uiMaxCUWidth;
-    m_cuHeight = uiMaxCUHeight;
+    m_cuWidth  = maxCUWidth;
+    m_cuHeight = maxCUHeight;
 
     Int numCuInWidth  = m_picWidth  / m_cuWidth  + (m_picWidth  % m_cuWidth  != 0);
     Int numCuInHeight = m_picHeight / m_cuHeight + (m_picHeight % m_cuHeight != 0);
@@ -112,14 +112,14 @@ Void TComPicYuv::create(Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt u
         }
     }
 
-    m_buOffsetY = new Int[(size_t)1 << (2 * uiMaxCUDepth)];
-    m_buOffsetC = new Int[(size_t)1 << (2 * uiMaxCUDepth)];
-    for (Int buRow = 0; buRow < (1 << uiMaxCUDepth); buRow++)
+    m_buOffsetY = new Int[(size_t)1 << (2 * maxCUDepth)];
+    m_buOffsetC = new Int[(size_t)1 << (2 * maxCUDepth)];
+    for (Int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
     {
-        for (Int buCol = 0; buCol < (1 << uiMaxCUDepth); buCol++)
+        for (Int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
         {
-            m_buOffsetY[(buRow << uiMaxCUDepth) + buCol] = getStride() * buRow * (uiMaxCUHeight >> uiMaxCUDepth) + buCol * (uiMaxCUWidth  >> uiMaxCUDepth);
-            m_buOffsetC[(buRow << uiMaxCUDepth) + buCol] = getCStride() * buRow * (uiMaxCUHeight / 2 >> uiMaxCUDepth) + buCol * (uiMaxCUWidth / 2 >> uiMaxCUDepth);
+            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUHeight >> maxCUDepth) + buCol * (maxCUWidth  >> maxCUDepth);
+            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUHeight / 2 >> maxCUDepth) + buCol * (maxCUWidth / 2 >> maxCUDepth);
         }
     }
 }
