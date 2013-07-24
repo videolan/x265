@@ -13,7 +13,7 @@ set LOG=perflog.txt
 if exist %LOG% del %LOG%
 
 FOR /F "delims=EOF" %%i IN (commandlines.txt) do (
-  echo Running videos with options: %%i
+  echo Encoding videos with options: %%i
   call:encoder %video1% "%%i"
   call:encoder %video2% "%%i"
   call:encoder %video3% "%%i"
