@@ -61,7 +61,7 @@ protected:
 
 public:
 
-    _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } }
+    _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } else m_id = 0; }
 
     ~_PPAScope()     { if (ppabase) ppabase->triggerEndEvent(m_id); }
 };
