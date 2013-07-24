@@ -21,6 +21,6 @@ FOR /F "delims=EOF" %%i IN (commandlines.txt) do (
 EXIT /B
 
 :encoder
-@echo x265.exe %1 %~2 -o hevc.out --hash 1 >> %LOG%
-vc11-x86_64\8bpp\Release\x265.exe %1 %~2 -o hevc.out --csv %CSV% --hash 1 >> %LOG% 2>&1
+@echo x265.exe %1 %~2 -f %perfframes% -o hevc.out --hash 1 >> %LOG%
+vc11-x86_64\8bpp\Release\x265.exe %1 %~2 -f %perfframes% -o hevc.out --csv %CSV% --hash 1 >> %LOG% 2>&1
 %decoder% -b hevc.out >> %LOG%
