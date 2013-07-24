@@ -15,6 +15,7 @@ for /f "tokens=1,2,3,4,5,6,7,8 delims==" %%a in (config.txt) do (
   if %%a==repository set repository=%%b
   if %%a==testframes set testframes=%%b
   if %%a==perfframes set perfframes=%%b
+  if %%a==msys set msys=%%b
   if %%a==decoder set decoder=%%b
   if %%a==video1 set video1=%%b
   if %%a==video2 set video2=%%b
@@ -33,6 +34,7 @@ if %errorlevel% equ 1 (
 hg summary >> "%LOG%"
 hg summary
 
+call:buildconfigs "%msys%" msys "MSYS Makefiles"
 call:buildconfigs "%VS110COMNTOOLS%" vc11-x86_64 "Visual Studio 11 Win64"
 call:buildconfigs "%VS110COMNTOOLS%" vc11-x86 "Visual Studio 11"
 call:buildconfigs "%VS100COMNTOOLS%" vc10-x86_64 "Visual Studio 10 Win64"
@@ -48,8 +50,7 @@ set compiler=%~1
 set buildconfig=%2
 set generator=%~3
 
-set vcvars="%compiler%\..\..\VC\vcvarsall.bat"
-if exist %vcvars% (
+if exist %compiler% (
   echo Detected %generator%, building >> "%LOG%"
   cmd /c 01build-and-smoke-test.bat
 )

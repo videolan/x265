@@ -1,7 +1,8 @@
 repository=https://bitbucket.org/multicoreware/x265
 testframes=10
 perfframes=100
-decoder=D:\\TAppDecoder.exe
-video1=D:\\BasketballDrive_1920x1080_50.y4m
-video2=D:\\Kimono1_1920x1080_24.y4m
-video3=D:\\FourPeople_1280x720_60.y4m
+decoder=D:\TAppDecoder.exe
+msys=C:\MinGW\bin\sh.exe
+video1=D:\BasketballDrive_1920x1080_50.y4m
+video2=D:\Kimono1_1920x1080_24.y4m
+video3=D:\FourPeople_1280x720_60.y4m

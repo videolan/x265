@@ -15,29 +15,49 @@ mkdir %depth%
 cd %depth%
 set name=%generator%-%depth%
 
-call %vcvars%
 echo Running cmake for %name%
-cmake -D ENABLE_TESTS:BOOL=ON %~2 -G "%generator%" ..\..\..\..\source >> ..\cmake%depth%.txt
-if not exist x265.sln (
-  echo %name% solution was not created >> "%LOG%"
-  cd ..
-  exit /b 1
-)
+if "%buildconfig%" == "msys" (
 
-echo Compiling for release...
-MSBuild /property:Configuration="Release" x265.sln >> ..\build%depth%_release.txt
-if %errorlevel% equ 1 (
-  echo Release %name% build failed, refer the build log >> "%LOG%"
-  cd ..
-  exit /b 1
-)
- 
-echo Compiling for debug...
-MSBuild /property:Configuration="Debug" x265.sln >> ..\build%depth%_debug.txt
-if %errorlevel% equ 1 (
-  echo Debug %name% build failed, refer the build log >> "%LOG%"
-  cd ..
-  exit /b 1
+  echo cd "%CD%" > buildscript.sh
+  echo cmake -D ENABLE_TESTS:BOOL=ON %~2 -G "%generator%" ../../../../source >> buildscript.sh
+  echo make -j4 >> buildscript.sh
+
+  %msys% -l "%CD%\buildscript.sh"
+  if exist x265.exe (
+    rem We cannot test MSYS x265 without running in MSYS environment
+    cd ..
+    exit /b 0
+  ) else (
+    echo %name% could not create an x265.exe >> "%LOG%"
+    cd ..
+    exit /b 1
+  )
+
+) else (
+
+  call "%compiler%\..\..\VC\vcvarsall.bat"
+  cmake -D ENABLE_TESTS:BOOL=ON %~2 -G "%generator%" ..\..\..\..\source >> ..\cmake%depth%.txt
+  if not exist x265.sln (
+    echo %name% solution was not created >> "%LOG%"
+    cd ..
+    exit /b 1
+  )
+
+  echo Compiling for release...
+  MSBuild /property:Configuration="Release" x265.sln >> ..\build%depth%_release.txt
+  if %errorlevel% equ 1 (
+    echo Release %name% build failed, refer the build log >> "%LOG%"
+    cd ..
+    exit /b 1
+  )
+  
+  echo Compiling for debug...
+  MSBuild /property:Configuration="Debug" x265.sln >> ..\build%depth%_debug.txt
+  if %errorlevel% equ 1 (
+    echo Debug %name% build failed, refer the build log >> "%LOG%"
+    cd ..
+    exit /b 1
+  )
 )
 
 echo Smoke tests...
@@ -66,5 +86,8 @@ if exist Debug\x265.exe (
 echo Testbench...
 if exist test\Release\TestBench.exe (
   test\Release\TestBench.exe >> ..\testbench.txt 2>&1 || echo %name% testbench failed >> "%LOG%"
+)
+if exist test\TestBench.exe (
+  test\TestBench.exe >> ..\testbench.txt 2>&1 || echo %name% testbench failed >> "%LOG%"
 )
 cd ..
