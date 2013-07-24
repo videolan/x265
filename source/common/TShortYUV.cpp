@@ -124,32 +124,19 @@ void TShortYUV::addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trU
 
 void TShortYUV::addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    int x, y;
+    short* Src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
+    short* Src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
+    short* Dst  = getLumaAddr(trUnitIdx, partSize);
 
-    short* pSrc0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    short* pSrc1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    short* pDst  = getLumaAddr(trUnitIdx, partSize);
+    unsigned int Src0Stride = srcYuv0->m_width;
+    unsigned int Src1Stride = srcYuv1->m_width;
+    unsigned int DstStride  = m_width;
 
-    unsigned int iSrc0Stride = srcYuv0->m_width;
-    unsigned int iSrc1Stride = srcYuv1->m_width;
-    unsigned int iDstStride  = m_width;
-
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            pDst[x] = ClipY(pSrc0[x] + pSrc1[x]);
-        }
-
-        pSrc0 += iSrc0Stride;
-        pSrc1 += iSrc1Stride;
-        pDst  += iDstStride;
-    }
+    primitives.pixeladd_ss(partSize, partSize, Dst, DstStride, Src0, Src1, Src0Stride, Src1Stride);
 }
 
 void TShortYUV::addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    int x, y;
 
     short* srcU0 = srcYuv0->getCbAddr(trUnitIdx, partSize);
     short* srcU1 = srcYuv1->getCbAddr(trUnitIdx, partSize);
@@ -162,21 +149,8 @@ void TShortYUV::addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned i
     unsigned int src1Stride = srcYuv1->m_cwidth;
     unsigned int dstStride  = m_cwidth;
 
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            dstU[x] = ClipC(srcU0[x] + srcU1[x]);
-            dstV[x] = ClipC(srcV0[x] + srcV1[x]);
-        }
-
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstU  += dstStride;
-        dstV  += dstStride;
-    }
+    primitives.pixeladd_ss(partSize, partSize, dstU, dstStride, srcU0, srcU1, src0Stride, src1Stride);
+    primitives.pixeladd_ss(partSize, partSize, dstV, dstStride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 #if _MSC_VER
@@ -219,16 +193,7 @@ Void TShortYUV::copyPartToPartLuma(TComYuv* dstPicYuv, unsigned int partIdx, uns
     unsigned int srcStride = m_width;
     unsigned int dstStride = dstPicYuv->getStride();
 
-    for (unsigned int y = height; y != 0; y--)
-    {
-        for (unsigned int x = 0; x < width; x++)
-        {
-            dst[x] = (Pel)(src[x]);
-        }
-
-        src += srcStride;
-        dst += dstStride;
-    }
+    primitives.blockcpy_ps(width, height, dst, dstStride, src, srcStride);
 }
 
 Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height)
@@ -262,19 +227,8 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
     unsigned int srcStride = m_cwidth;
     unsigned int dstStride = dstPicYuv->getCStride();
 
-    for (unsigned int y = height; y != 0; y--)
-    {
-        for (unsigned int x = 0; x < width; x++)
-        {
-            dstU[x] = (Pel)(srcU[x]);
-            dstV[x] = (Pel)(srcV[x]);
-        }
-
-        srcU += srcStride;
-        srcV += srcStride;
-        dstU += dstStride;
-        dstV += dstStride;
-    }
+    primitives.blockcpy_ps(width, height, dstU, dstStride, srcU, srcStride);
+    primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
 }
 
 Void TShortYUV::copyPartToPartChroma(TShortYUV* dstPicYuv, unsigned int partIdx, unsigned int width, unsigned int height, unsigned int chromaId)
@@ -339,16 +293,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
         Pel* dstU = dstPicYuv->getCbAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        for (unsigned int y = height; y != 0; y--)
-        {
-            for (unsigned int x = 0; x < width; x++)
-            {
-                dstU[x] = (Pel)(srcU[x]);
-            }
-
-            srcU += srcStride;
-            dstU += dstStride;
-        }
+        primitives.blockcpy_ps(width, height, dstU, dstStride, srcU, srcStride);
     }
     else if (chromaId == 1)
     {
@@ -356,16 +301,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
         Pel* dstV = dstPicYuv->getCrAddr(partIdx);
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        for (unsigned int y = height; y != 0; y--)
-        {
-            for (unsigned int x = 0; x < width; x++)
-            {
-                dstV[x] = (Pel)(srcV[x]);
-            }
-
-            srcV += srcStride;
-            dstV += dstStride;
-        }
+        primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
     }
     else
     {
@@ -376,18 +312,7 @@ Void TShortYUV::copyPartToPartChroma(TComYuv* dstPicYuv, unsigned int partIdx, u
 
         unsigned int srcStride = m_cwidth;
         unsigned int dstStride = dstPicYuv->getCStride();
-        for (unsigned int y = height; y != 0; y--)
-        {
-            for (unsigned int x = 0; x < width; x++)
-            {
-                dstU[x] = (Pel)(srcU[x]);
-                dstV[x] = (Pel)(srcV[x]);
-            }
-
-            srcU += srcStride;
-            srcV += srcStride;
-            dstU += dstStride;
-            dstV += dstStride;
-        }
+        primitives.blockcpy_ps(width, height, dstU, dstStride, srcU, srcStride);
+        primitives.blockcpy_ps(width, height, dstV, dstStride, srcV, srcStride);
     }
 }
