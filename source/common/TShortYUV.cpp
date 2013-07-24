@@ -124,15 +124,15 @@ void TShortYUV::addClip(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trU
 
 void TShortYUV::addClipLuma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
 {
-    short* Src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
-    short* Src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
-    short* Dst  = getLumaAddr(trUnitIdx, partSize);
+    short* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
+    short* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
+    short* dst  = getLumaAddr(trUnitIdx, partSize);
 
-    unsigned int Src0Stride = srcYuv0->m_width;
-    unsigned int Src1Stride = srcYuv1->m_width;
-    unsigned int DstStride  = m_width;
+    unsigned int src0Stride = srcYuv0->m_width;
+    unsigned int src1Stride = srcYuv1->m_width;
+    unsigned int dstStride  = m_width;
 
-    primitives.pixeladd_ss(partSize, partSize, Dst, DstStride, Src0, Src1, Src0Stride, Src1Stride);
+    primitives.pixeladd_ss(partSize, partSize, dst, dstStride, src0, src1, src0Stride, src1Stride);
 }
 
 void TShortYUV::addClipChroma(TShortYUV* srcYuv0, TShortYUV* srcYuv1, unsigned int trUnitIdx, unsigned int partSize)
