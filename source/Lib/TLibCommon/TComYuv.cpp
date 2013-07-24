@@ -381,27 +381,14 @@ Void TComYuv::addClip(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt
 
 Void TComYuv::addClipLuma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, UInt partSize)
 {
-    Int x, y;
-
     Pel* src0 = srcYuv0->getLumaAddr(trUnitIdx, partSize);
     Pel* src1 = srcYuv1->getLumaAddr(trUnitIdx, partSize);
     Pel* dst  = getLumaAddr(trUnitIdx, partSize);
 
-    UInt iSrc0Stride = srcYuv0->getStride();
-    UInt iSrc1Stride = srcYuv1->getStride();
+    UInt Src0Stride = srcYuv0->getStride();
+    UInt Src1Stride = srcYuv1->getStride();
     UInt dststride = getStride();
-
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            dst[x] = ClipY(static_cast<Short>(src0[x]) + static_cast<Short>(src1[x]));
-        }
-
-        src0 += iSrc0Stride;
-        src1 += iSrc1Stride;
-        dst  += dststride;
-    }
+    x265::primitives.pixeladd_pp(partSize, partSize, dst, dststride, src0, src1, Src0Stride, Src1Stride);
 }
 
 Void TComYuv::addClipLuma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize)
@@ -443,22 +430,8 @@ Void TComYuv::addClipChroma(TComYuv* srcYuv0, TComYuv* srcYuv1, UInt trUnitIdx, 
     UInt src0Stride = srcYuv0->getCStride();
     UInt src1Stride = srcYuv1->getCStride();
     UInt dststride  = getCStride();
-
-    for (y = partSize - 1; y >= 0; y--)
-    {
-        for (x = partSize - 1; x >= 0; x--)
-        {
-            dstU[x] = ClipC(static_cast<Short>(srcU0[x]) + srcU1[x]);
-            dstV[x] = ClipC(static_cast<Short>(srcV0[x]) + srcV1[x]);
-        }
-
-        srcU0 += src0Stride;
-        srcU1 += src1Stride;
-        srcV0 += src0Stride;
-        srcV1 += src1Stride;
-        dstU  += dststride;
-        dstV  += dststride;
-    }
+    x265::primitives.pixeladd_pp(partSize, partSize, dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
+    x265::primitives.pixeladd_pp(partSize, partSize, dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 Void TComYuv::addClipChroma(TComYuv* srcYuv0, TShortYUV* srcYuv1, UInt trUnitIdx, UInt partSize)
