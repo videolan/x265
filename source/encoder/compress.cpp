@@ -264,6 +264,9 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
                                                         outPredYuv->getLumaAddr(), outPredYuv->getStride());
 }
 
+/*Temporary macro for development only. Will be removed once the early exit is fully tested and profiled*/
+#define EARLY_EXIT_NO_RDO 0
+
 Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
 {
 #if CU_STAT_LOGFILE
@@ -461,6 +464,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         TComDataCU* subBestPartCU = NULL;
         /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
         TComDataCU* subTempPartCU;
+
+#if EARLY_EXIT_NO_RDO
         UInt64 _NxNCost = 0;
         for (UInt nextDepth_partIndex = 0; nextDepth_partIndex < 4; nextDepth_partIndex++)
         {
@@ -482,7 +487,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 outTempCU->copyPartFrom(subTempPartCU, nextDepth_partIndex, nextDepth, false);
             }
         }
-
+#endif
         subTempPartCU = m_tempCU[nextDepth];
         for (UInt nextDepth_partIndex = 0; nextDepth_partIndex < 4; nextDepth_partIndex++)
         {
