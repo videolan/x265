@@ -3135,8 +3135,8 @@ static inline Vec32c permute32c(Vec32c const & a) {
         && i8 ==((i0+8 )&31) && i9 ==((i0+9 )&31) && i10==((i0+10)&31) && i11==((i0+11)&31) && i12==((i0+12)&31) && i13==((i0+13)&31) && i14==((i0+14)&31) && i15==((i0+15)&31)
         && i16==((i0+16)&31) && i17==((i0+17)&31) && i18==((i0+18)&31) && i19==((i0+19)&31) && i20==((i0+20)&31) && i21==((i0+21)&31) && i22==((i0+22)&31) && i23==((i0+23)&31)
         && i24==((i0+24)&31) && i25==((i0+25)&31) && i26==((i0+26)&31) && i27==((i0+27)&31) && i28==((i0+28)&31) && i29==((i0+29)&31) && i30==((i0+30)&31) && i31==((i0+31)&31)) {
-        __m256i t1 = _mm256_permute4x64_epi64(a, 0x4E);
-        return _mm256_alignr_epi8(a, t1, i0 & 15);
+        __m256i t2 = _mm256_permute4x64_epi64(a, 0x4E);
+        return _mm256_alignr_epi8(a, t2, i0 & 15);
     }
 
     // Check if we can use 16-bit permute. Even numbered indexes must be even and odd numbered
@@ -3328,7 +3328,6 @@ static inline Vec4q blend4q(Vec4q const & a, Vec4q const & b) {
         const int j0 = i0 >= 0 ? i0 / 2 : i1 >= 0 ? i1 / 2 : 4;  // index for low 128 bits
         const int j1 = i2 >= 0 ? i2 / 2 : i3 >= 0 ? i3 / 2 : 4;  // index for high 128 bits
         const bool partialzero = int((i0 ^ i1) | (i2 ^ i3)) < 0; // part of a 128-bit block is zeroed
-        __m256i t1;
 
         switch (j0 | j1 << 4) {
         case 0x00:
