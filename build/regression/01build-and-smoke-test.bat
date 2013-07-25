@@ -20,7 +20,7 @@ if "%buildconfig%" == "msys" (
 
   echo cd "%CD%" > buildscript.sh
   echo cmake -D ENABLE_TESTS:BOOL=ON %~2 -G "%generator%" ../../../../source >> buildscript.sh
-  echo make -j4 >> buildscript.sh
+  echo make >> buildscript.sh
 
   %msys% -l "%CD%\buildscript.sh"
   if exist x265.exe (
