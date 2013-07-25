@@ -91,14 +91,15 @@ namespace x265 {
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
 #if !HIGH_BIT_DEPTH
-    if (cpuid >= 1)
+    if (cpuid >= 2)
     {
         INIT8_NAME( sse_pp, ssd, _mmx );
         INIT8( sad, _mmx2 );
         INIT7( sad_x3, _mmx2 );
         INIT7( sad_x4, _mmx2 );
         INIT8( satd, _mmx2 );
-        p.sa8d[BLOCK_4x4]   = x265_pixel_satd_4x4_mmx2;
+
+        p.sa8d[BLOCK_4x4] = x265_pixel_satd_4x4_mmx2;
 
         p.satd[PARTITION_4x12] = cmp<4, 12, 4, 4, x265_pixel_satd_4x4_mmx2>;
         p.satd[PARTITION_4x24] = cmp<4, 24, 4, 8, x265_pixel_satd_4x8_mmx2>;
@@ -163,9 +164,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_64x32] = cmp<64, 32, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_mmx2>;
-    }
-    if (cpuid >= 2)
-    {
+
         INIT2( sad, _sse2 );
         INIT2( sad_x3, _sse2 );
         INIT2( sad_x4, _sse2 );
@@ -298,7 +297,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sse_pp[PARTITION_64x48] = cmp<64, 48, 32, 48, x265_pixel_ssd_32x48_sse2>;
         p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_sse2>;
     }
-    if (cpuid >= 3)
+    if (cpuid >= 4)
     {
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_ssse3;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_ssse3;
@@ -341,7 +340,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.sse_pp[PARTITION_64x64] = cmp<64, 64, 32, 64, x265_pixel_ssd_32x64_ssse3>;
 
     }
-    if (cpuid >= 4)
+    if (cpuid >= 5)
     {
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse4;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse4;
