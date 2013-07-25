@@ -1,8 +1,8 @@
 @echo off
 
-if exist %buildconfig% rd /s /q %buildconfig%
-mkdir %buildconfig%
+if not exist %buildconfig% mkdir %buildconfig%
 cd %buildconfig%
+if exist *.txt del *.txt
 
 call:makesolution 8bpp "-D ENABLE_PPA:BOOL=ON"
 call:makesolution 16bpp "-D HIGH_BIT_DEPTH:BOOL=ON"
@@ -10,10 +10,14 @@ exit /B
 
 :makesolution
 set depth=%~1
-if exist %depth% rd /s /q %depth%
-mkdir %depth%
+if not exist %depth% mkdir %depth%
 cd %depth%
 set name=%generator%-%depth%
+
+:: nuke existing cmake cache
+if exist CMakeFiles rd /s /q CMakeFiles
+if exist CMakeCache.txt del CMakeCache.txt
+if exist cmake_install.cmake del cmake_install.cmake
 
 echo Running cmake for %name%
 if "%buildconfig%" == "msys" (
