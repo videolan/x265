@@ -62,9 +62,9 @@ if "%buildconfig%" == "msys" (
 
 echo Smoke tests...
 if exist Release\x265.exe (
-  Release\x265.exe %video1% -f %testframes% --wpp --hash 1 -o str1.out -r rec1.yuv >> ..\encoder_%depth%.txt 2>&1
-  Release\x265.exe %video2% -f %testframes% --wpp --hash 1 -o str2.out -r rec2.yuv >> ..\encoder_%depth%.txt 2>&1
-  Release\x265.exe %video3% -f %testframes% --wpp --hash 1 -o str3.out -r rec3.yuv >> ..\encoder_%depth%.txt 2>&1
+  Release\x265.exe %video1% -f %testframes% --wpp --hash 1 -o str1.out -r rec1.yuv --no-progress >> ..\encoder_%depth%.txt 2>&1
+  Release\x265.exe %video2% -f %testframes% --wpp --hash 1 -o str2.out -r rec2.yuv --no-progress >> ..\encoder_%depth%.txt 2>&1
+  Release\x265.exe %video3% -f %testframes% --wpp --hash 1 -o str3.out -r rec3.yuv --no-progress >> ..\encoder_%depth%.txt 2>&1
 
   %decoder% -b str1.out -o str1.yuv >> ..\decoder_%depth%.txt
   %decoder% -b str2.out -o str2.yuv >> ..\decoder_%depth%.txt
@@ -78,7 +78,7 @@ if exist Release\x265.exe (
 echo Leak test...
 if exist Debug\x265.exe (
 :: hopefully you have VLD installed so this will check for leaks
-  Debug\x265.exe %video1% -f %testframes% --wpp -o str4.out -r rec4.yuv >> ..\encoder_%depth%.txt 2>&1
+  Debug\x265.exe %video1% -f %testframes% --wpp -o str4.out -r rec4.yuv --no-progress >> ..\encoder_%depth%.txt 2>&1
   %decoder% -b str4.out -o str4.yuv >> ..\decoder_%depth%.txt
   FC /b rec4.yuv str4.yuv > NUL || echo Reconstructed frames mismatch for debug %name% >> ..\..\DiffBin.txt
 )
