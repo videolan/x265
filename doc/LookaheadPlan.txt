@@ -1,0 +1,148 @@
+= Lookahead Planning Document =
+
+Author: Steve Borho (For those who do not know me, I tend to think in
+VIM and write long winded text files)
+
+This document will attempt to describe the up-to-date working plan on
+how to port x264's slice decision capability to x265.
+
+Like most good construction plans, it begins with demolition, and this
+one will not disappoint.
+
+Phase 1:  Blow up TEncGOP
+
+* Move PPS and SPS header generation from TEncGOP to TEncTOP and make it
+  accessible from a public API x265_encoder_headers().
+
+  This makes GOP parallelism more feasible from the API level.  All you
+  would have to do is instantiate multiple x265 encoders, pass them all
+  the same x265_param_t, generate headers for one of them and write that
+  into the first file, then have each encoder run in parallel on a
+  different part of the input stream.  If CRA refresh is in use (which
+  will soon be the default), you will have to mark the first frame of
+  the remaining substreams as a BLA.  Concatenate those streams, done!
+
+  It would be hugely more memory efficient to do GOP parallelism this
+  way over the current approach, but my goal is to make GOP parallelism
+  redundant and uninteresting.
+
+* Kill the current GOP parallelism
+  1. Remove --gops CLI flag and gopThreads param
+  2. Singleton TEncGOP in TEncTOP, remove GOP round robin logic
+  3. Remove keyframe interval hacks and --bframe 1 hacks
+  4. Recover the HM's lambda calculations back to their "factory" state,
+     since it would no longer be a non-determinism issue.  Replacing
+     HM's lambda logic with QP->lambda tables is an orthogonal task.
+  5. Remove TEncGOP thread members and methods, shrink frame list
+  6. make decoder refresh type an x265_param_t and CLI option, it no
+     longer needs to be hard-coded to IDR.
+
+* Move small TComPic list and recon pics back into TEncTOP.
+
+* Apply C4 to TEncGOP class, reuse fragments in different places:
+  1. TEncTOP gains an array of FrameEncoder instances
+     (we're building scaffolding for frame parallelism, but no guts yet)
+  2. The bulk of the TEncGOP functionality goes into FrameEncoder
+  3. SEI messages we do not currently use are left on the floor,
+     along with busted RC code, etc.
+  4. A stub Lookahead class gains all the m_GOPList knowledge to make
+     slice type, QP, and RPS decisions.  It will use the HM's current
+     hack-tastic mini-GOP cadence to feed frames to the FrameEncoder(s).
+     TEncGOP's large for-loop is replaced by state in this object.
+  5. All RPS/DPB/Reference manipulation needs to be completed before the
+     FrameEncoder gets going, so that logic should be pulled together
+     into one location as much as possible.  Perhaps a DPB object in
+     TEncTOP
+
+At the end of this step, we should be able to output the same exact
+bitstreams as before (assuming decoder refresh is kept the same) but the
+encoder cadence would now be per-frame.  So progress reports could
+update once per frame or once per refresh-interval, whichever is slower.
+
+
+
+Phase 2: New Lookahead structure
+
+This work can begin right away
+
+* New params / CLI options: --rc-lookahead --bframes --b-adapt
+* Take arguments directly from x265_param_t, do not add these to TEncCfg
+* Accept input pictures from public API, downscale and enqueue them
+* Needs worker thread, gets triggered every time the queue fills:
+* performs cost analysis and makes slice decisions, pushes decided frames
+  into an output queue in encode order.
+* FrameEncoders consume a frame from the output queue, determine RPS and
+  manipulate the DPB, configure reference weights, etc.  Then they enter
+  their main encode loop.
+* TEncTOP consumes completed frames and their NAL packets/recon pictures
+  and returns them via the public API
+
+Moar Details:
+
+* Re-use x264's downscale and hpel generation.
+* Storage for downscaled planes and intermediate outputs need to be
+  added to TComPic
+* Lookahead will analyze blocks that are half the dimensions of the
+  requested max-cu-size (typically will be 32x32).
+* Lookahead will derive from WaveFront and use thread pool for analysis
+* borrow x264's reverse MB scan order and reverse MVP references
+* borrow x264's vitterbi and --b-adapt 1 algorithms
+* not sure about bidir in lookahead, probably requires experimentation
+* use 33-intra-angs primitive, could benefit from bulk satd
+* intra analysis could be re-used by main encode if max-cu-size is 64x64
+* final MVs found during lookahead can be used as motion candidates in
+  main encode (scaled up by 1 bit, of course).
+* use DIA ME, and faked qpel
+* weightp, aq, and mbtree are later efforts
+* Until we have mbtree, the lookahead queue might as well be small
+
+At the end of this phase, we should have real scene detection and good
+B frame scheduling and a head start on decent rate control.
+
+
+Phase 3: Frame parallelism
+
+This work can begin after Phase 1 is complete
+
+1. Need TComPic reference counting and re-use pool
+2. Multiple FrameEncoder instances each with its own worker thread
+3. DPB object with global busy lock, perhaps associated with lookahead
+   output queue so only one frame at a time can update it, and it
+   happens in proper encode order.  The frame must be enqueued in the
+   thread pool before releasing the output queue lock, to ensure correct
+   enqueue order
+4. Each TComPic will have an x265::Event instance that is triggered each
+   time it completes encoding a row, and an int lastCompletedRow
+   indicator
+5. FrameEncoder threads will block on their reference frame's events
+   until those frames are far enough ahead that their own analysis can
+   continue safely (the distance will be dependent on merange).
+6. The referring FrameEncoder will then acquire a lock on the
+   MotionReference instance of that TComPic with their weight parameters
+   and it will generate the 16 subpel planes up to the completed
+   reconstructed row.  If multiple FrameEncoders are using the same
+   MotionReference with the same weight, one will block while the other
+   calculates the subpel pixels.
+7. Once the subpel pixels are generated, the FrameEncoder allows its
+   newly ready row to be enqueued for processing by the thread pool.
+   *at no point does a pool worker thread ever block*
+
+Note that if the FrameEncoder wasn't blocking on the reference frames,
+it would have been blocking on the WaveFront completion event anyway.
+So we lose nothing by making it block on references and then computing
+subpel pixels so the wave-front can then progress on the thread pool.
+
+Also note that the frames will be enqueued into the thread pool in
+encode order, so the earlier encode frames will have priority over the
+later threads for worker thread cycles, ensuring the dependencies are
+resolved in proper order.
+
+On a desktop PC two FrameEncoders should be enough to saturate the CPU,
+provided WPP and the lookahead are keeping the thread pool occupied, and
+depending on the number of CTU rows you have. On a dual socket 16 core
+server it will likely require 4-5 FrameEncoders for HD video.  Using
+more than that many FrameEncoders will probably reduce efficiency.
+
+At the end of this phase, GOP parallelism should be just a bad memory
+and perhaps we can make WPP + light frame parallelism the default
+behavior.
