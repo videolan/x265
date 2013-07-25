@@ -533,7 +533,8 @@ int main(int argc, char **argv)
     }
 
     /* clear progress report */
-    fprintf(stderr, "                                                                               \r");
+    if (cliopt.bProgress)
+        fprintf(stderr, "                                                                               \r");
 
     double PSNR = 0.0;
     x265_encoder_close(encoder, &PSNR);
