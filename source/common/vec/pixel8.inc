@@ -1970,7 +1970,7 @@ ALWAYSINLINE void unrollFunc_32_avx2(pixel *fenc, intptr_t fencstride, pixel *fr
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_32_avx2<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
+ALWAYSINLINE void unrollFunc_32_avx2<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec16us& sad)
 {
     Vec32uc m1, n1;
 
@@ -2020,7 +2020,7 @@ ALWAYSINLINE void unrollFunc_64_avx2(pixel *fenc, intptr_t fencstride, pixel *fr
 }
 
 template<>
-ALWAYSINLINE void unrollFunc_64_avx2<1>(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16s& sad)
+ALWAYSINLINE void unrollFunc_64_avx2<1>(pixel *fenc, intptr_t, pixel *fref, intptr_t, Vec16s& sad)
 {
     Vec32uc m1, n1;
 
