@@ -374,13 +374,13 @@ struct CLIOptions
         else if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
         {
             log(X265_LOG_ERROR, "YUV input requires source width, height, and rate to be specified\n");
+            return true;
         }
         else
         {
             this->input->setDimensions(param->sourceWidth, param->sourceHeight);
             this->input->setBitDepth(inputBitDepth);
         }
-        assert(param->sourceHeight && param->sourceWidth);
 
         /* rules for input, output and internal bitdepths as per help text */
         if (!param->internalBitDepth) { param->internalBitDepth = inputBitDepth; }
