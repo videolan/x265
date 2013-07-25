@@ -27,7 +27,9 @@
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
 #include <assert.h>
+#if INSTRSET > 4
 #include <smmintrin.h>
+#endif
 
 extern char g_convertToBit[];
 extern unsigned char IntraFilterType[][35];
@@ -883,7 +885,7 @@ void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
 #undef COMP_PRED_PLANAR4_ROW
 }
 
-#if INSTRSET >= 5
+#if INSTRSET > 4
 void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -4924,6 +4926,8 @@ ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
 
 #undef MAKE_COEF8
 };
+
+#if INSTRSET >= 5
 
 void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
@@ -12901,6 +12905,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
+#endif // INSTRSET > 4
 }
 
 #include "utils.h"

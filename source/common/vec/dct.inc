@@ -34,8 +34,10 @@
 
 #include <assert.h>
 #include <string.h>
-#include <smmintrin.h>
 #include <algorithm>
+#if INSTRSET > 4
+#include <smmintrin.h>
+#endif
 
 namespace {
 
