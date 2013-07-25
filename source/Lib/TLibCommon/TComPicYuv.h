@@ -92,6 +92,8 @@ private:
     Int   m_lumaMarginY;
     Int   m_chromaMarginX;
     Int   m_chromaMarginY;
+    Int   m_stride;
+    Int   m_strideC;
 
     Bool  m_bIsBorderExtended;
 
@@ -120,13 +122,13 @@ public:
     //  Get information of picture
     // ------------------------------------------------------------------------------------------------
 
-    Int   getWidth()     { return m_picWidth; }
+    Int   getWidth()      { return m_picWidth; }
 
     Int   getHeight()     { return m_picHeight; }
 
-    Int   getStride()     { return (m_picWidth) + (m_lumaMarginX << 1); }
+    Int   getStride()     { return m_stride; }
 
-    Int   getCStride()     { return (m_picWidth >> 1) + (m_chromaMarginX << 1); }
+    Int   getCStride()    { return m_strideC; }
 
     Int   getLumaMargin() { return m_lumaMarginX; }
 

@@ -81,9 +81,11 @@ Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
 
     m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
     m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
+    m_stride = m_picWidth + (m_lumaMarginX << 1);
 
     m_chromaMarginX = m_lumaMarginX;       // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> 1;
+    m_strideC = (m_picWidth >> 1) + (m_chromaMarginX << 1);
 
     m_picBufY = (Pel*)xMalloc(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
     m_picBufU = (Pel*)xMalloc(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
