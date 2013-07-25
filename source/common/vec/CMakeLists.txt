@@ -40,13 +40,18 @@ if(GCC)
         ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp ipfilter-avx.cpp
         dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp dct-avx.cpp
         intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp intra-avx.cpp)
-    set_source_files_properties(sse3.cpp ssse3.cpp sse41.cpp sse42.cpp
-        blockcopy-sse3.cpp blockcopy-ssse3.cpp blockcopy-sse41.cpp blockcopy-sse42.cpp
-        pixel-sse3.cpp pixel-ssse3.cpp pixel-sse41.cpp pixel-sse42.cpp
-        ipfilter-sse3.cpp ipfilter-ssse3.cpp ipfilter-sse41.cpp ipfilter-sse42.cpp
-        dct-sse3.cpp dct-ssse3.cpp dct-sse41.cpp dct-sse42.cpp
-        intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp intra-sse42.cpp
-        PROPERTIES COMPILE_FLAGS "-msse4")
+    set_source_files_properties(
+        sse3.cpp blockcopy-sse3.cpp pixel-sse3.cpp ipfilter-sse3.cpp dct-sse3.cpp intra-sse3.cpp
+        PROPERTIES COMPILE_FLAGS "-msse3")
+    set_source_files_properties(
+        ssse3.cpp blockcopy-ssse3.cpp pixel-ssse3.cpp ipfilter-ssse3.cpp dct-ssse3.cpp intra-ssse3.cpp
+        PROPERTIES COMPILE_FLAGS "-mssse3")
+    set_source_files_properties(
+        sse41.cpp blockcopy-sse41.cpp pixel-sse41.cpp ipfilter-sse41.cpp dct-sse41.cpp intra-sse41.cpp
+        PROPERTIES COMPILE_FLAGS "-msse4.1")
+    set_source_files_properties(
+        sse42.cpp blockcopy-sse42.cpp pixel-sse42.cpp ipfilter-sse42.cpp dct-sse42.cpp intra-sse42.cpp
+        PROPERTIES COMPILE_FLAGS "-msse4.2")
     set_source_files_properties(
         blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
         PROPERTIES COMPILE_FLAGS "-mavx")
