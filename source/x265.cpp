@@ -456,7 +456,8 @@ struct CLIOptions
 int main(int argc, char **argv)
 {
 #if HAVE_VLD
-    VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER, NULL);
+    // This uses Microsoft's proprietary WCHAR type, but this only builds on Windows to start with
+    VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER | VLD_OPT_REPORT_TO_FILE, L"x265_leaks.txt");
 #endif
     PPA_INIT();
 
