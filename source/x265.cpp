@@ -290,7 +290,11 @@ struct CLIOptions
         int cpuid = 0;
         uint32_t inputBitDepth = 8;
         uint32_t outputBitDepth = 8;
-        const char *inputfn = NULL, *reconfn = NULL, *bitstreamfn = NULL, *csvfn = NULL;
+        const char *inputfn = NULL;
+        const char *reconfn = NULL;
+        const char *bitstreamfn = NULL;
+        const char *csvfn = NULL;
+        const char *inputRes = NULL;
 
         x265_param_default(param);
 
@@ -378,6 +382,12 @@ struct CLIOptions
             param->sourceHeight = this->input->getHeight();
             param->frameRate = (int)this->input->getRate();
             inputBitDepth = 8;
+        }
+        else if (inputRes)
+        {
+            sscanf(inputRes, "%dx%d", &param->sourceWidth, &param->sourceHeight);
+            this->input->setDimensions(param->sourceWidth, param->sourceHeight);
+            this->input->setBitDepth(inputBitDepth);
         }
         else if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
         {
