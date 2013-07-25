@@ -65,7 +65,10 @@ if(YASM_FOUND)
 endif(YASM_FOUND)
 
 if(UNIX)
-    SET(PLATFORM_LIBS pthread rt m)
+    SET(PLATFORM_LIBS pthread m)
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
+    endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(UNIX)
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
