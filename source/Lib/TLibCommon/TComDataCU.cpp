@@ -112,10 +112,10 @@ Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     m_numPartitions = numPartition;
     m_unitSize = unitSize;
 
-    m_qp     = (Char*)xMalloc(Char,   numPartition);
-    m_depth  = (UChar*)xMalloc(UChar, numPartition);
-    m_width  = (UChar*)xMalloc(UChar, numPartition);
-    m_height = (UChar*)xMalloc(UChar, numPartition);
+    m_qp     = (Char*)X265_MALLOC(Char,   numPartition);
+    m_depth  = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_width  = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_height = (UChar*)X265_MALLOC(UChar, numPartition);
 
     m_skipFlag = new Bool[numPartition];
 
@@ -124,20 +124,20 @@ Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     m_predModes = new Char[numPartition];
     m_cuTransquantBypass = new Bool[numPartition];
 
-    m_bMergeFlags     = (Bool*)xMalloc(Bool,  numPartition);
-    m_mergeIndex      = (UChar*)xMalloc(UChar, numPartition);
-    m_lumaIntraDir    = (UChar*)xMalloc(UChar, numPartition);
-    m_chromaIntraDir  = (UChar*)xMalloc(UChar, numPartition);
-    m_interDir        = (UChar*)xMalloc(UChar, numPartition);
+    m_bMergeFlags     = (Bool*)X265_MALLOC(Bool,  numPartition);
+    m_mergeIndex      = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_lumaIntraDir    = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_chromaIntraDir  = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_interDir        = (UChar*)X265_MALLOC(UChar, numPartition);
 
-    m_trIdx            = (UChar*)xMalloc(UChar, numPartition);
-    m_transformSkip[0] = (UChar*)xMalloc(UChar, numPartition);
-    m_transformSkip[1] = (UChar*)xMalloc(UChar, numPartition);
-    m_transformSkip[2] = (UChar*)xMalloc(UChar, numPartition);
+    m_trIdx            = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_transformSkip[0] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_transformSkip[1] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_transformSkip[2] = (UChar*)X265_MALLOC(UChar, numPartition);
 
-    m_cbf[0] = (UChar*)xMalloc(UChar, numPartition);
-    m_cbf[1] = (UChar*)xMalloc(UChar, numPartition);
-    m_cbf[2] = (UChar*)xMalloc(UChar, numPartition);
+    m_cbf[0] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_cbf[1] = (UChar*)X265_MALLOC(UChar, numPartition);
+    m_cbf[2] = (UChar*)X265_MALLOC(UChar, numPartition);
 
     m_mvpIdx[0] = new Char[numPartition];
     m_mvpIdx[1] = new Char[numPartition];
@@ -146,55 +146,55 @@ Void TComDataCU::create(UInt numPartition, UInt width, UInt height, Int unitSize
     memset(m_mvpIdx[0], -1, numPartition * sizeof(Char));
     memset(m_mvpIdx[1], -1, numPartition * sizeof(Char));
 
-    m_trCoeffY  = (TCoeff*)xMalloc(TCoeff, width * height);
-    m_trCoeffCb = (TCoeff*)xMalloc(TCoeff, width * height / 4);
-    m_trCoeffCr = (TCoeff*)xMalloc(TCoeff, width * height / 4);
+    m_trCoeffY  = (TCoeff*)X265_MALLOC(TCoeff, width * height);
+    m_trCoeffCb = (TCoeff*)X265_MALLOC(TCoeff, width * height / 4);
+    m_trCoeffCr = (TCoeff*)X265_MALLOC(TCoeff, width * height / 4);
     memset(m_trCoeffY, 0, width * height * sizeof(TCoeff));
     memset(m_trCoeffCb, 0, width * height / 4 * sizeof(TCoeff));
     memset(m_trCoeffCr, 0, width * height / 4 * sizeof(TCoeff));
 
-    m_iPCMFlags   = (Bool*)xMalloc(Bool, numPartition);
-    m_iPCMSampleY  = (Pel*)xMalloc(Pel, width * height);
-    m_iPCMSampleCb = (Pel*)xMalloc(Pel, width * height / 4);
-    m_iPCMSampleCr = (Pel*)xMalloc(Pel, width * height / 4);
+    m_iPCMFlags   = (Bool*)X265_MALLOC(Bool, numPartition);
+    m_iPCMSampleY  = (Pel*)X265_MALLOC(Pel, width * height);
+    m_iPCMSampleCb = (Pel*)X265_MALLOC(Pel, width * height / 4);
+    m_iPCMSampleCr = (Pel*)X265_MALLOC(Pel, width * height / 4);
 
     m_cuMvField[0].create(numPartition);
     m_cuMvField[1].create(numPartition);
 
     // create pattern memory
-    m_pattern = (TComPattern*)xMalloc(TComPattern, 1);
+    m_pattern = (TComPattern*)X265_MALLOC(TComPattern, 1);
 }
 
 Void TComDataCU::destroy()
 {
-    if (m_pattern) { xFree(m_pattern); m_pattern = NULL; }
-    if (m_qp) { xFree(m_qp); m_qp = NULL; }
-    if (m_depth) { xFree(m_depth); m_depth = NULL; }
-    if (m_width) { xFree(m_width); m_width = NULL; }
-    if (m_height) { xFree(m_height); m_height = NULL; }
+    if (m_pattern) { X265_FREE(m_pattern); m_pattern = NULL; }
+    if (m_qp) { X265_FREE(m_qp); m_qp = NULL; }
+    if (m_depth) { X265_FREE(m_depth); m_depth = NULL; }
+    if (m_width) { X265_FREE(m_width); m_width = NULL; }
+    if (m_height) { X265_FREE(m_height); m_height = NULL; }
     if (m_skipFlag) { delete[] m_skipFlag; m_skipFlag = NULL; }
     if (m_partSizes) { delete[] m_partSizes; m_partSizes = NULL; }
     if (m_predModes) { delete[] m_predModes; m_predModes = NULL; }
     if (m_cuTransquantBypass) { delete[] m_cuTransquantBypass; m_cuTransquantBypass = NULL; }
-    if (m_cbf[0]) { xFree(m_cbf[0]); m_cbf[0] = NULL; }
-    if (m_cbf[1]) { xFree(m_cbf[1]); m_cbf[1] = NULL; }
-    if (m_cbf[2]) { xFree(m_cbf[2]); m_cbf[2] = NULL; }
-    if (m_interDir) { xFree(m_interDir); m_interDir = NULL; }
-    if (m_bMergeFlags) { xFree(m_bMergeFlags); m_bMergeFlags = NULL; }
-    if (m_mergeIndex) { xFree(m_mergeIndex); m_mergeIndex = NULL; }
-    if (m_lumaIntraDir) { xFree(m_lumaIntraDir); m_lumaIntraDir = NULL; }
-    if (m_chromaIntraDir) { xFree(m_chromaIntraDir); m_chromaIntraDir = NULL; }
-    if (m_trIdx) { xFree(m_trIdx); m_trIdx = NULL; }
-    if (m_transformSkip[0]) { xFree(m_transformSkip[0]); m_transformSkip[0] = NULL; }
-    if (m_transformSkip[1]) { xFree(m_transformSkip[1]); m_transformSkip[1] = NULL; }
-    if (m_transformSkip[2]) { xFree(m_transformSkip[2]); m_transformSkip[2] = NULL; }
-    if (m_trCoeffY) { xFree(m_trCoeffY); m_trCoeffY = NULL; }
-    if (m_trCoeffCb) { xFree(m_trCoeffCb); m_trCoeffCb = NULL; }
-    if (m_trCoeffCr) { xFree(m_trCoeffCr); m_trCoeffCr = NULL; }
-    if (m_iPCMFlags) { xFree(m_iPCMFlags); m_iPCMFlags = NULL; }
-    if (m_iPCMSampleY) { xFree(m_iPCMSampleY); m_iPCMSampleY = NULL; }
-    if (m_iPCMSampleCb) { xFree(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
-    if (m_iPCMSampleCr) { xFree(m_iPCMSampleCr); m_iPCMSampleCr = NULL; }
+    if (m_cbf[0]) { X265_FREE(m_cbf[0]); m_cbf[0] = NULL; }
+    if (m_cbf[1]) { X265_FREE(m_cbf[1]); m_cbf[1] = NULL; }
+    if (m_cbf[2]) { X265_FREE(m_cbf[2]); m_cbf[2] = NULL; }
+    if (m_interDir) { X265_FREE(m_interDir); m_interDir = NULL; }
+    if (m_bMergeFlags) { X265_FREE(m_bMergeFlags); m_bMergeFlags = NULL; }
+    if (m_mergeIndex) { X265_FREE(m_mergeIndex); m_mergeIndex = NULL; }
+    if (m_lumaIntraDir) { X265_FREE(m_lumaIntraDir); m_lumaIntraDir = NULL; }
+    if (m_chromaIntraDir) { X265_FREE(m_chromaIntraDir); m_chromaIntraDir = NULL; }
+    if (m_trIdx) { X265_FREE(m_trIdx); m_trIdx = NULL; }
+    if (m_transformSkip[0]) { X265_FREE(m_transformSkip[0]); m_transformSkip[0] = NULL; }
+    if (m_transformSkip[1]) { X265_FREE(m_transformSkip[1]); m_transformSkip[1] = NULL; }
+    if (m_transformSkip[2]) { X265_FREE(m_transformSkip[2]); m_transformSkip[2] = NULL; }
+    if (m_trCoeffY) { X265_FREE(m_trCoeffY); m_trCoeffY = NULL; }
+    if (m_trCoeffCb) { X265_FREE(m_trCoeffCb); m_trCoeffCb = NULL; }
+    if (m_trCoeffCr) { X265_FREE(m_trCoeffCr); m_trCoeffCr = NULL; }
+    if (m_iPCMFlags) { X265_FREE(m_iPCMFlags); m_iPCMFlags = NULL; }
+    if (m_iPCMSampleY) { X265_FREE(m_iPCMSampleY); m_iPCMSampleY = NULL; }
+    if (m_iPCMSampleCb) { X265_FREE(m_iPCMSampleCb); m_iPCMSampleCb = NULL; }
+    if (m_iPCMSampleCr) { X265_FREE(m_iPCMSampleCr); m_iPCMSampleCr = NULL; }
     if (m_mvpIdx[0]) { delete[] m_mvpIdx[0]; m_mvpIdx[0] = NULL; }
     if (m_mvpIdx[1]) { delete[] m_mvpIdx[1]; m_mvpIdx[1] = NULL; }
     if (m_mvpNum[0]) { delete[] m_mvpNum[0]; m_mvpNum[0] = NULL; }

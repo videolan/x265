@@ -87,9 +87,9 @@ Void TComPicYuv::create(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCU
     m_chromaMarginY = m_lumaMarginY >> 1;
     m_strideC = (m_picWidth >> 1) + (m_chromaMarginX << 1);
 
-    m_picBufY = (Pel*)xMalloc(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
-    m_picBufU = (Pel*)xMalloc(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
-    m_picBufV = (Pel*)xMalloc(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufY = (Pel*)X265_MALLOC(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    m_picBufU = (Pel*)X265_MALLOC(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
+    m_picBufV = (Pel*)X265_MALLOC(Pel, ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 
     m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
     m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
@@ -126,9 +126,9 @@ Void TComPicYuv::destroy()
     m_picOrgU = NULL;
     m_picOrgV = NULL;
 
-    if (m_picBufY) { xFree(m_picBufY); m_picBufY = NULL; }
-    if (m_picBufU) { xFree(m_picBufU); m_picBufU = NULL; }
-    if (m_picBufV) { xFree(m_picBufV); m_picBufV = NULL; }
+    if (m_picBufY) { X265_FREE(m_picBufY); m_picBufY = NULL; }
+    if (m_picBufU) { X265_FREE(m_picBufU); m_picBufU = NULL; }
+    if (m_picBufV) { X265_FREE(m_picBufV); m_picBufV = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_cuOffsetC;
@@ -161,7 +161,7 @@ Void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt m
     m_lumaMarginX = g_maxCUWidth  + 16; // for 16-byte alignment
     m_lumaMarginY = g_maxCUHeight + 16; // margin for 8-tap filter and infinite padding
 
-    m_picBufY = (Pel*)xMalloc(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
+    m_picBufY = (Pel*)X265_MALLOC(Pel, (m_picWidth + (m_lumaMarginX << 1)) * (m_picHeight + (m_lumaMarginY << 1)));
     m_picOrgY = m_picBufY + m_lumaMarginY * getStride() + m_lumaMarginX;
 
     m_cuOffsetY = new Int[numCuInWidth * numCuInHeight];
@@ -189,7 +189,7 @@ Void TComPicYuv::destroyLuma()
 {
     m_picOrgY = NULL;
 
-    if (m_picBufY) { xFree(m_picBufY); m_picBufY = NULL; }
+    if (m_picBufY) { X265_FREE(m_picBufY); m_picBufY = NULL; }
 
     delete[] m_cuOffsetY;
     delete[] m_buOffsetY;

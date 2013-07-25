@@ -39,7 +39,6 @@
 #define __COMMONDEF__
 
 #include <algorithm>
-#include <malloc.h>
 #include <stdlib.h>
 #include "TypeDef.h"
 
@@ -147,21 +146,13 @@
 
 #define NOT_VALID                  -1
 
-// ====================================================================================================================
-// Macro functions
-// ====================================================================================================================
+// for use in HM, replaces old xMalloc/xFree macros
+#define X265_MALLOC(type, count)    x265_malloc(sizeof(type) * (count))
+#define X265_FREE(ptr)              x265_free(ptr)
 
-#if _WIN32
-#define xMalloc(type, len)        _aligned_malloc(sizeof(type) * (len), 32)
-#define xFree(ptr)                _aligned_free(ptr)
-#if __MINGW32__
-#define _aligned_malloc           __mingw_aligned_malloc
-#define _aligned_free             __mingw_aligned_free
-#endif
-#else
-#define xMalloc(type, len)        memalign(32, sizeof(type) * (len))
-#define xFree(ptr)                free(ptr)
-#endif
+// new code can use these functions directly
+extern void  x265_free(void *);
+extern void *x265_malloc(size_t size);
 
 // ====================================================================================================================
 // Coding tool configuration

@@ -63,9 +63,9 @@ TComYuv::~TComYuv()
 Void TComYuv::create(UInt width, UInt height)
 {
     // memory allocation
-    m_bufY = (Pel*)xMalloc(Pel, width * height);
-    m_bufU = (Pel*)xMalloc(Pel, width * height >> 2);
-    m_bufV = (Pel*)xMalloc(Pel, width * height >> 2);
+    m_bufY = (Pel*)X265_MALLOC(Pel, width * height);
+    m_bufU = (Pel*)X265_MALLOC(Pel, width * height >> 2);
+    m_bufV = (Pel*)X265_MALLOC(Pel, width * height >> 2);
 
     // set width and height
     m_width   = width;
@@ -77,11 +77,11 @@ Void TComYuv::create(UInt width, UInt height)
 Void TComYuv::destroy()
 {
     // memory free
-    xFree(m_bufY);
+    X265_FREE(m_bufY);
     m_bufY = NULL;
-    xFree(m_bufU);
+    X265_FREE(m_bufU);
     m_bufU = NULL;
-    xFree(m_bufV);
+    X265_FREE(m_bufV);
     m_bufV = NULL;
 }
 

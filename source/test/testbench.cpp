@@ -33,14 +33,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <malloc.h>
-
-using namespace x265;
 
 #ifdef __MINGW32__
 #define _aligned_malloc __mingw_aligned_malloc
-#define _aligned_free  __mingw_aligned_free
+#define _aligned_free   __mingw_aligned_free
+#include "malloc.h"
 #endif
+
+using namespace x265;
 
 void *TestHarness::alignedMalloc(size_t size, int count, int alignment)
 {

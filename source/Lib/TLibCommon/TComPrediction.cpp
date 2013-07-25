@@ -67,12 +67,12 @@ TComPrediction::TComPrediction()
 TComPrediction::~TComPrediction()
 {
     delete[] m_predBuf;
-    xFree(m_predAllAngsBuf);
+    X265_FREE(m_predAllAngsBuf);
 
-    xFree(refAbove);
-    xFree(refAboveFlt);
-    xFree(refLeft);
-    xFree(refLeftFlt);
+    X265_FREE(refAbove);
+    X265_FREE(refAboveFlt);
+    X265_FREE(refLeft);
+    X265_FREE(refLeftFlt);
 
     m_predYuv[0].destroy();
     m_predYuv[1].destroy();
@@ -117,12 +117,12 @@ Void TComPrediction::initTempBuff()
         m_predBufHeight  = ((MAX_CU_SIZE + 2) << 4);
         m_predBufStride = ((MAX_CU_SIZE  + 8) << 4);
         m_predBuf = new Pel[m_predBufStride * m_predBufHeight];
-        m_predAllAngsBuf = (Pel*)xMalloc(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
+        m_predAllAngsBuf = (Pel*)X265_MALLOC(Pel, 33 * MAX_CU_SIZE * MAX_CU_SIZE);
 
-        refAbove = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refAboveFlt = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refLeft = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
-        refLeftFlt = (Pel*)xMalloc(Pel, 3 * MAX_CU_SIZE);
+        refAbove = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refAboveFlt = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refLeft = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
+        refLeftFlt = (Pel*)X265_MALLOC(Pel, 3 * MAX_CU_SIZE);
 
         // new structure
         m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE);
@@ -489,12 +489,12 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
         Int tmpStride = width;
         Int filterSize = NTAPS_LUMA;
         Int halfFilterSize = (filterSize >> 1);
-        Short *tmp = (Short*)xMalloc(Short, width * (height + filterSize - 1));
+        Short *tmp = (Short*)X265_MALLOC(Short, width * (height + filterSize - 1));
 
         x265::primitives.ipfilter_ps[FILTER_H_P_S_8](ref - (halfFilterSize - 1) * refStride, refStride, tmp, tmpStride, width, height + filterSize - 1, g_lumaFilter[xFrac]);
         x265::primitives.ipfilter_ss[FILTER_V_S_S_8](tmp + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, width, height, g_lumaFilter[yFrac]);
 
-        xFree(tmp);
+        X265_FREE(tmp);
     }
 }
 
@@ -553,7 +553,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else
     {
         Int     extStride = cxWidth;
-        Short*  extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
+        Short*  extY      = (Short*)X265_MALLOC(Short, cxWidth * (cxHeight + filterSize - 1));
 
         primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         primitives.ipfilter_sp[FILTER_V_S_P_4](extY + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
@@ -561,7 +561,7 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
         primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, extY, extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         primitives.ipfilter_sp[FILTER_V_S_P_4](extY + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
 
-        xFree(extY);
+        X265_FREE(extY);
     }
 }
 
@@ -609,12 +609,12 @@ Void TComPrediction::xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UIn
     else
     {
         Int    extStride = cxWidth;
-        Short* extY      = (Short*)xMalloc(Short, cxWidth * (cxHeight + filterSize - 1));
+        Short* extY      = (Short*)X265_MALLOC(Short, cxWidth * (cxHeight + filterSize - 1));
         x265::primitives.ipfilter_ps[FILTER_H_P_S_4](refCb - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         x265::primitives.ipfilter_ss[FILTER_V_S_S_4](extY  + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
         x265::primitives.ipfilter_ps[FILTER_H_P_S_4](refCr - (halfFilterSize - 1) * refStride, refStride, extY,  extStride, cxWidth, cxHeight + filterSize - 1, g_chromaFilter[xFrac]);
         x265::primitives.ipfilter_ss[FILTER_V_S_S_4](extY  + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, cxWidth, cxHeight, g_chromaFilter[yFrac]);
-        xFree(extY);
+        X265_FREE(extY);
     }
 }
 

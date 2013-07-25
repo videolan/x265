@@ -21,6 +21,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComSlice.h"
 #include "x265.h"
@@ -43,6 +44,39 @@ const int x265_bit_depth = 10;
 #else
 const int x265_bit_depth = 8;
 #endif
+
+#define ALIGNBYTES 32
+
+#if _WIN32
+#ifdef __MINGW32__
+#define _aligned_malloc __mingw_aligned_malloc
+#define _aligned_free   __mingw_aligned_free
+#include "malloc.h"
+#endif
+
+void *x265_malloc(size_t size)
+{
+    return _aligned_malloc(size, ALIGNBYTES);
+}
+void x265_free(void *ptr)
+{
+    if (ptr) _aligned_free(ptr);
+}
+#else
+void *x265_malloc(size_t size)
+{
+    void *ptr;
+    if (posix_memalign((void**)&ptr, ALIGNBYTES, size) == 0)
+        return ptr;
+    else
+        return NULL;
+}
+void x265_free(void *ptr)
+{
+    if (ptr) free(ptr);
+}
+#endif
+
 
 void x265_log(x265_param_t *param, int level, const char *fmt, ...)
 {

@@ -44,9 +44,9 @@ TShortYUV::~TShortYUV()
 
 void TShortYUV::create(unsigned int width, unsigned int height)
 {
-    m_bufY  = (short*)xMalloc(short, width * height);
-    m_bufCb = (short*)xMalloc(short, width * height >> 2);
-    m_bufCr = (short*)xMalloc(short, width * height >> 2);
+    m_bufY  = (short*)X265_MALLOC(short, width * height);
+    m_bufCb = (short*)X265_MALLOC(short, width * height >> 2);
+    m_bufCr = (short*)X265_MALLOC(short, width * height >> 2);
 
     // set width and height
     m_width   = width;
@@ -57,11 +57,11 @@ void TShortYUV::create(unsigned int width, unsigned int height)
 
 void TShortYUV::destroy()
 {
-    xFree(m_bufY);
+    X265_FREE(m_bufY);
     m_bufY = NULL;
-    xFree(m_bufCb);
+    X265_FREE(m_bufCb);
     m_bufCb = NULL;
-    xFree(m_bufCr);
+    X265_FREE(m_bufCr);
     m_bufCr = NULL;
 }
 

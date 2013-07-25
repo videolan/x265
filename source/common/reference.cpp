@@ -65,7 +65,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
         {
             if (i == 0 && j == 0)
                 continue;
-            m_lumaPlane[i][j] = (pixel*)xMalloc(pixel,  padwidth * padheight) + m_startPad;
+            m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
         }
     }
 }
@@ -82,7 +82,7 @@ MotionReference::~MotionReference()
                 continue;
             if (m_lumaPlane[i][j])
             {
-                xFree(m_lumaPlane[i][j] - m_startPad);
+                X265_FREE(m_lumaPlane[i][j] - m_startPad);
             }
         }
     }
@@ -92,7 +92,7 @@ void MotionReference::generateReferencePlanes()
 {
     {
         PPAScopeEvent(GenerateIntermediates);
-        m_intermediateValues = (short*)xMalloc(short, 4 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
+        m_intermediateValues = (short*)X265_MALLOC(short, 4 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4));
 
         short* intPtrF = m_intermediateValues;
         short* intPtrA = m_intermediateValues + 1 * m_intStride * (m_reconPic->getHeight() + s_tmpMarginY * 4);
@@ -138,7 +138,7 @@ void MotionReference::generateReferencePlanes()
         m_completionEvent.wait();
         JobProvider::dequeue();
     }
-    xFree(m_intermediateValues);
+    X265_FREE(m_intermediateValues);
 }
 
 bool MotionReference::findJob()

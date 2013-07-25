@@ -534,9 +534,9 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
     short* intI, *intE, *intP;    
     int intStride = block_width;
 
-    intI = (short*)xMalloc(short, block_height * block_width);
-    intE = (short*)xMalloc(short, block_height * block_width);
-    intP = (short*)xMalloc(short, block_height * block_width);
+    intI = (short*)X265_MALLOC(short, block_height * block_width);
+    intE = (short*)X265_MALLOC(short, block_height * block_width);
+    intP = (short*)X265_MALLOC(short, block_height * block_width);
 
     filterVertical_s_s<8>(src, srcStride, intI, intStride, block_width, block_height, g_lumaFilter[2]);
     filterVertical_s_s<8>(src, srcStride, intE, intStride, block_width, block_height, g_lumaFilter[1]);
@@ -550,9 +550,9 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
     extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstP, dstStride, block_width, block_height, marginX, marginY);
 
-    xFree(intI);
-    xFree(intE);
-    xFree(intP);
+    X265_FREE(intI);
+    X265_FREE(intE);
+    X265_FREE(intP);
 
 }
 
