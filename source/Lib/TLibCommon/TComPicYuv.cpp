@@ -39,12 +39,6 @@
 #include "TComPrediction.h"
 #include "primitives.h"
 
-#ifdef __APPLE__
-#include <malloc/malloc.h>
-#else
-#include <malloc.h>
-#endif
-
 #include <cstdlib>
 #include <assert.h>
 #include <memory.h>
