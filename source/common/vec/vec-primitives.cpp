@@ -37,15 +37,27 @@ extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
 #endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1600)
+
+#if defined(__INTEL_COMPILER)
+extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
+extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
+
+#elif defined(__GNUC__)
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
+#endif
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
+extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
+#endif
+
+#elif defined(_MSC_VER)
+#if _MSC_VER >= 1600  // VC10
 extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_xop(EncoderPrimitives&);
 #endif
-#if defined(__GNUC__)
-extern void Setup_Vec_Primitives_avx(EncoderPrimitives&);
-#endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__INTEL_COMPILER)
+#if _MSC_VER >= 1700  // VC11
 extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
+#endif
 #endif
 
 /* Use primitives for the best available vector architecture */
@@ -57,14 +69,30 @@ void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
     if (cpuid > 5) Setup_Vec_Primitives_sse42(p);
 #endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1700)
-    if (cpuid > 6) hasXOP() ? Setup_Vec_Primitives_xop(p) : Setup_Vec_Primitives_avx(p);
-#endif
-#if defined(__GNUC__)
+
+#if defined(__INTEL_COMPILER)
+
+    if (cpuid > 6) Setup_Vec_Primitives_avx(p);
+    if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
+
+#elif defined(__GNUC__)
+    // TODO: Cannot get XOP intrinsics to build with GCC or icpc
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
     if (cpuid > 6) Setup_Vec_Primitives_avx(p);
 #endif
-#if (defined(_MSC_VER) && _MSC_VER >= 1700) || defined(__INTEL_COMPILER)
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 7
     if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
+#endif
+
+#elif defined(_MSC_VER)
+
+#if _MSC_VER >= 1700 // VC10
+    if (cpuid > 6) hasXOP() ? Setup_Vec_Primitives_xop(p) : Setup_Vec_Primitives_avx(p);
+#endif
+#if _MSC_VER >= 1700 // VC11
+    if (cpuid > 7) Setup_Vec_Primitives_avx2(p);
+#endif
+
 #endif
 }
 }
