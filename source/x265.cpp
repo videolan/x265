@@ -371,6 +371,10 @@ struct CLIOptions
             param->frameRate = (int)this->input->getRate();
             inputBitDepth = 8;
         }
+        else if (param->sourceHeight <= 0 || param->sourceWidth <= 0 || param->frameRate <= 0)
+        {
+            log(X265_LOG_ERROR, "YUV input requires source width, height, and rate to be specified\n");
+        }
         else
         {
             this->input->setDimensions(param->sourceWidth, param->sourceHeight);
