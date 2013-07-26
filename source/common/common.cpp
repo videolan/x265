@@ -48,7 +48,7 @@ const int x265_bit_depth = 8;
 #define ALIGNBYTES 32
 
 #if _WIN32
-#ifdef __MINGW32__
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 #define _aligned_malloc __mingw_aligned_malloc
 #define _aligned_free   __mingw_aligned_free
 #include "malloc.h"
