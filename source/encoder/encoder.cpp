@@ -239,6 +239,14 @@ void Encoder::configure(x265_param_t *param)
     setSignHideFlag(param->bEnableSignHiding);
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
 
+    //====== Enforce these hard coded settings before initializeGOP() to
+    //       avoid a valgrind warning
+    setLoopFilterDisable(0);
+    setLoopFilterOffsetInPPS(0);
+    setLoopFilterBetaOffset(0);
+    setLoopFilterTcOffset(0);
+    setDeblockingFilterControlPresent(0);
+
     //====== HM Settings not exposed for configuration ======
     initializeGOP(param);
     setGOPSize(m_gopSize);
@@ -334,12 +342,6 @@ void Encoder::configure(x265_param_t *param)
     setForceIntraQP(0);
 
     setUseLossless(0); // x264 configures this via --qp=0
-
-    setLoopFilterDisable(0);
-    setLoopFilterOffsetInPPS(0);
-    setLoopFilterBetaOffset(0);
-    setLoopFilterTcOffset(0);
-    setDeblockingFilterControlPresent(0);
 
     setTransquantBypassEnableFlag(0);
     setCUTransquantBypassFlagValue(0);
