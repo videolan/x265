@@ -23,6 +23,8 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/CommonDef.h"
+
 #include "primitives.h"
 #include "pixelharness.h"
 #include "mbdstharness.h"
@@ -34,34 +36,16 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef __MINGW32__
-#define _aligned_malloc __mingw_aligned_malloc
-#define _aligned_free   __mingw_aligned_free
-#include "malloc.h"
-#endif
-
 using namespace x265;
 
-void *TestHarness::alignedMalloc(size_t size, int count, int alignment)
+void *TestHarness::alignedMalloc(size_t size, int count, int)
 {
-#if _WIN32
-    return _aligned_malloc(count * size, alignment);
-#else
-    void *ptr;
-    if (posix_memalign((void**)&ptr, alignment, count * size) == 0)
-        return ptr;
-    else
-        return NULL;
-#endif
+    return x265_malloc(size * count);
 }
 
 void TestHarness::alignedFree(void *ptr)
 {
-#if _WIN32
-    _aligned_free(ptr);
-#else
-    free(ptr);
-#endif
+    x265_free(ptr);
 }
 
 static const char *CpuType[] =
