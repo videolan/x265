@@ -245,6 +245,7 @@ void Encoder::configure(x265_param_t *param)
     setLoopFilterOffsetInPPS(0);
     setLoopFilterBetaOffset(0);
     setLoopFilterTcOffset(0);
+    setLFCrossTileBoundaryFlag(1);
     setDeblockingFilterControlPresent(0);
 
     //====== HM Settings not exposed for configuration ======
