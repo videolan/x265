@@ -2018,15 +2018,12 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                 x265::primitives.scale2D_64to32(buf_scale, fenc, stride);
                 x265::primitives.transpose[3](buf_trans, buf_scale, 32);
 
-#if HIGH_BIT_DEPTH
+                // reserve space in case primitives need to store data in above
+                // or left buffers
                 Pel _above[4 * 32 + 1];
                 Pel _left[4 * 32 + 1];
                 Pel *const above = _above + 2 * 32;
                 Pel *const left = _left + 2 * 32;
-#else
-                Pel above[2 * 32 + 1];
-                Pel left[2 * 32 + 1];
-#endif
 
                 above[0] = left[0] = pAbove0[0];
                 x265::primitives.scale1D_128to64(above + 1, pAbove0 + 1, 0);
