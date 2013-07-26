@@ -31,8 +31,8 @@ class PixelHarness : public TestHarness
 {
 protected:
 
-    pixel *pbuf1, *pbuf2;
-
+    pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4;
+    
     short *sbuf1, *sbuf2;
 
     bool check_pixelcmp(x265::pixelcmp_t ref, x265::pixelcmp_t opt);
@@ -50,6 +50,7 @@ protected:
     bool check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_t opt);
     bool check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_t opt);
     bool check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_t opt);
+    bool check_downscale_t(x265::downscale_t ref, x265::downscale_t opt);
 
 public:
 

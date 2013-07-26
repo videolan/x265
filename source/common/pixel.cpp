@@ -598,6 +598,31 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
     }
 }
 
+void frame_init_lowres_core( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,
+                                    intptr_t src_stride, intptr_t dst_stride, int width, int height )
+{
+    for( int y = 0; y < height; y++ )
+    {
+        pixel *src1 = src0+src_stride;
+        pixel *src2 = src1+src_stride;
+        for( int x = 0; x<width; x++ )
+        {
+            // slower than naive bilinear, but matches asm
+#define FILTER(a,b,c,d) ((((a+b+1)>>1)+((c+d+1)>>1)+1)>>1)
+            dst0[x] = FILTER(src0[2*x  ], src1[2*x  ], src0[2*x+1], src1[2*x+1]);
+            dsth[x] = FILTER(src0[2*x+1], src1[2*x+1], src0[2*x+2], src1[2*x+2]);
+            dstv[x] = FILTER(src1[2*x  ], src2[2*x  ], src1[2*x+1], src2[2*x+1]);
+            dstc[x] = FILTER(src1[2*x+1], src2[2*x+1], src1[2*x+2], src2[2*x+2]);
+#undef FILTER
+        }
+        src0 += src_stride*2;
+        dst0 += dst_stride;
+        dsth += dst_stride;
+        dstv += dst_stride;
+        dstc += dst_stride;
+    }
+}
+
 }  // end anonymous namespace
 
 namespace x265 {
@@ -806,5 +831,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
+    p.frame_init_lowres_core = frame_init_lowres_core;
 }
 }

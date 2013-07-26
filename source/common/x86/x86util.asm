@@ -341,7 +341,18 @@
 %endmacro
 
 %macro PALIGNR 4-5 ; [dst,] src1, src2, imm, tmp
-%if cpuflag(ssse3)
+; AVX2 version uses a precalculated extra input that
+; can be re-used across calls
+%if sizeof%1==32
+                                 ; %3 = abcdefgh ijklmnop (lower address)
+                                 ; %2 = ABCDEFGH IJKLMNOP (higher address)
+;   vperm2i128 %5, %2, %3, q0003 ; %5 = ijklmnop ABCDEFGH
+%if %4 < 16
+    palignr    %1, %5, %3, %4    ; %1 = bcdefghi jklmnopA
+%else
+    palignr    %1, %2, %5, %4-16 ; %1 = pABCDEFG HIJKLMNO
+%endif
+%elif cpuflag(ssse3)
     %if %0==5
         palignr %1, %2, %3, %4
     %else
