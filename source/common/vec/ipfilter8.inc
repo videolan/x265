@@ -686,10 +686,7 @@ void filterVertical_p_p(pixel *src, int srcStride,
 }
 
 template<int N>
-void filterHorizontal_p_p(pixel *src, int srcStride,
-                          pixel *dst, int dstStride,
-                          int block_width, int block_height,
-                          const short *coeff)
+void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
     int row, col;
     int offset;
@@ -700,55 +697,73 @@ void filterHorizontal_p_p(pixel *src, int srcStride,
     maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
 
-    Vec8s vec_sum_low, vec_zero(0);
-    Vec16uc vec_src0, vec_sum;
-    Vec8s vec_c;
-    vec_c.load(coeff);
-    Vec8s vec_c0(coeff[0]), vec_c1(coeff[1]), vec_c2(coeff[2]), vec_c3(coeff[3]), vec_c4(coeff[4]), vec_c5(coeff[5]), vec_c6(coeff[6]), vec_c7(coeff[7]);
-    Vec8s vec_offset(offset);
-    Vec8s vec_maxVal(maxVal);
-    for (row = 0; row < block_height; row++)
+    __m128i a = _mm_load_si128((__m128i*)coeff);
+    __m128i T10 = _mm_packs_epi16(a, a);
+
+    __m128i S1 = _mm_slli_si128(T10, 12);
+    __m128i S2 = _mm_srli_si128(S1, 4);
+    __m128i S3 = _mm_srli_si128(S2, 4);
+    __m128i S4 = _mm_srli_si128(S3, 4);
+    __m128i S = _mm_add_epi8(S1, _mm_add_epi8(S2, S3));
+    S =  _mm_add_epi8(S, S4);
+
+    __m128i Tm1 = _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8);
+    __m128i Tm2 = _mm_setr_epi8(2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10);
+    __m128i Tm3 = _mm_setr_epi8(4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12);
+    __m128i Tm4 = _mm_setr_epi8(6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14);
+    __m128i Tm5 = _mm_setr_epi8(0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6);
+    __m128i Tm6 = _mm_setr_epi8(4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10);
+
+    for (row = 0; row < height; row++)
     {
         col = 0;
-        for (; col < (block_width - 7); col += 8)               // Iterations multiple of 8
+        for (; col < (width - 7); col += 8)
         {
-            vec_src0.load(src + col);                           // Load the 8 elements
-            vec_sum_low = extend_low(vec_src0) * vec_c0;        // Multiply by c[0]
+            __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
 
-            vec_src0.load(src + col + 1);                       // Load the 8 elements
-            vec_sum_low += extend_low(vec_src0) * vec_c1;       // Multiply by c[1]
+            __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm5);
+            __m128i T20 = _mm_maddubs_epi16(T00, S);
 
-            vec_src0.load(src + col + 2);                       // Load the 8 elements
-            vec_sum_low += extend_low(vec_src0) * vec_c2;       // Multiply by c[2]
+            __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm6);
+            __m128i T40 = _mm_maddubs_epi16(T30, S);
 
-            vec_src0.load(src + col + 3);                       // Load the 8 elements
-            vec_sum_low += extend_low(vec_src0) * vec_c3;       // Multiply by c[3]
+            __m128i sum = _mm_hadd_epi16(T20, T40);
 
             if (N == 8)
             {
-                vec_src0.load(src + col + 4);                   // Load the 8/16 elements
-                vec_sum_low += extend_low(vec_src0) * vec_c4;   // Multiply by c[4]
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
+                __m128i T20 = _mm_maddubs_epi16(T00, T10);
 
-                vec_src0.load(src + col + 5);                   // Load the 8/16 elements
-                vec_sum_low += extend_low(vec_src0) * vec_c5;   // Multiply by c[5]
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
+                __m128i T40 = _mm_maddubs_epi16(T30, T10);
 
-                vec_src0.load(src + col + 6);                   // Load the 8/16 elements
-                vec_sum_low += extend_low(vec_src0) * vec_c6;   // Multiply by c[6]
+                __m128i T50 = _mm_shuffle_epi8(srcCoeff, Tm3);
+                __m128i T60 = _mm_maddubs_epi16(T50, T10);
 
-                vec_src0.load(src + col + 7);                   // Load the 8/16 elements
-                vec_sum_low += extend_low(vec_src0) * vec_c7;   // Multiply by c[7]
+                __m128i T70 = _mm_shuffle_epi8(srcCoeff, Tm4);
+                __m128i T80 = _mm_maddubs_epi16(T70, T10);
+
+                __m128i s1 = _mm_hadd_epi16(T20, T40);
+                __m128i s2 = _mm_hadd_epi16(T60, T80);
+                sum = _mm_hadd_epi16(s1, s2);
             }
 
-            vec_sum_low = (vec_sum_low + vec_offset);           // Add offset(value copied into all short vector elements) to sum_low
-            vec_sum_low = vec_sum_low >> headRoom;
-            vec_sum_low = max(vec_sum_low, 0);                  // (val < 0) ? 0 : val;
-            vec_sum_low = min(vec_sum_low, vec_maxVal);         // (val > maxVal) ? maxVal : val;
-            vec_sum = compress(vec_sum_low, vec_zero);          // Save two short vectors(Vec8s, Vec8s(0)) to single short vector(Vec8s)
-            vec_sum.store_partial(8, dst + col);                // Store vector
+            __m128i sumOffset = _mm_set1_epi16(offset);
+            __m128i zero = _mm_set1_epi16(0);
+            __m128i val = _mm_add_epi16(sum, sumOffset);
+
+            val = _mm_srai_epi16(val, headRoom);
+            val = _mm_packus_epi16(val, zero);
+            _mm_storel_epi64((__m128i*)&dst[col], val);
         }
 
-        for (; col < block_width; col++)                        // Remaining iterations
+        for (; col < width; col++)                        // Remaining iterations
         {
+            Vec8s vec_sum_low, vec_zero(0);
+            Vec16uc vec_src0, vec_sum;
+            Vec8s vec_c;
+            vec_c.load(coeff);
+
             if (N == 8)
             {
                 vec_src0.load(src + col);
@@ -759,7 +774,7 @@ void filterHorizontal_p_p(pixel *src, int srcStride,
             }
             // Assuming that there is no overflow (Everywhere in this function!)
             vec_sum_low = extend_low(vec_src0) * vec_c;
-            int sum = horizontal_add(vec_sum_low);
+            short sum = horizontal_add(vec_sum_low);
             short val = (short)(sum + offset) >> headRoom;
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
