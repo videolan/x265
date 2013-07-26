@@ -25,6 +25,9 @@
 #include <math.h>
 #include <common.h>
 
+/* Temporary macro for development only. Will be removed once the early exit is fully tested and profiled */
+#define EARLY_EXIT_NO_RDO 0
+
 using namespace x265;
 
 #if CU_STAT_LOGFILE
@@ -268,9 +271,6 @@ Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
     outTempCU->m_totalCost = primitives.sse_pp[part](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                         outPredYuv->getLumaAddr(), outPredYuv->getStride());
 }
-
-/*Temporary macro for development only. Will be removed once the early exit is fully tested and profiled*/
-#define EARLY_EXIT_NO_RDO 0
 
 Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, UInt depth, UInt PartitionIndex)
 {
