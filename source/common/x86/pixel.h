@@ -202,9 +202,6 @@ uint64_t x265_pixel_sa8d_satd_16x16_avx       ( pixel *pix1, intptr_t stride1, p
 uint64_t x265_pixel_sa8d_satd_16x16_xop       ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
 uint64_t x265_pixel_sa8d_satd_16x16_avx2      ( pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2 );
 
-void x265_frame_init_lowres_core_mmx2( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,\
-                                        intptr_t src_stride, intptr_t dst_stride, int width, int height );
-
 #define DECL_SSD(width,suffix)\
     int x265_pixel_ssd_##width##x64_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \
     int x265_pixel_ssd_##width##x48_##suffix( pixel *, intptr_t, pixel *, intptr_t ); \

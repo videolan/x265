@@ -25,12 +25,24 @@
 
 extern "C" {
 #include "pixel.h"
+
 void x265_intel_cpu_indicator_init( void ) {}
+
+#define LOWRES(cpu)\
+    void x265_frame_init_lowres_core_##cpu( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,\
+    intptr_t src_stride, intptr_t dst_stride, int width, int height );
+LOWRES(mmx2)
+LOWRES(cache32_mmx2)
+LOWRES(sse2)
+LOWRES(ssse3)
+LOWRES(avx)
+LOWRES(xop)
 }
 
 bool hasXOP(void); // instr_detect.cpp
 
 namespace {
+// file private anonymous namespace
 
 /* template for building arbitrary partition sizes from full optimized primitives */
 template<int lx, int ly, int dx, int dy, x265::pixelcmp_t compare>
@@ -105,6 +117,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         INIT7( sad_x4, _mmx2 );
         INIT8( satd, _mmx2 );
 
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
+
         p.sa8d[BLOCK_4x4] = x265_pixel_satd_4x4_mmx2;
 
         p.satd[PARTITION_4x12] = cmp<4, 12, 4, 4, x265_pixel_satd_4x4_mmx2>;
@@ -171,12 +185,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_mmx2>;
 
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
-
         INIT2( sad, _sse2 );
         INIT2( sad_x3, _sse2 );
         INIT2( sad_x4, _sse2 );
         INIT6( satd, _sse2 );
+
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
 
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_sse2;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_sse2;
@@ -307,6 +321,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 4)
     {
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_ssse3;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_ssse3;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_ssse3;
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_ssse3>;
@@ -365,6 +380,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 7)
     {
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_avx;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_avx;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_avx;
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_avx>;
@@ -454,6 +470,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
     }
     if (cpuid >= 7 && hasXOP())
     {
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_xop;
         p.sa8d[BLOCK_16x16] = x265_pixel_sa8d_16x16_xop;
         p.sa8d[BLOCK_32x32] = cmp<32, 32, 16, 16, x265_pixel_sa8d_16x16_xop>;
