@@ -698,7 +698,7 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
     maxVal = (1 << X265_DEPTH) - 1;
     src -= (N / 2 - 1);
 
-    __m128i a = _mm_load_si128((__m128i*)coeff);
+    __m128i a = _mm_loadu_si128((__m128i*)coeff);
     __m128i T10 = _mm_packs_epi16(a, a);
 
     __m128i S1 = _mm_slli_si128(T10, 12);
