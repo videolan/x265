@@ -431,8 +431,8 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
 
 bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest0[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest0[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_destf[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_destf[64 * 64]);
 
     ALIGN_VAR_16(pixel, ref_desth[64 * 64]);
     ALIGN_VAR_16(pixel, opt_desth[64 * 64]);
@@ -446,12 +446,12 @@ bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t op
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i <= 32; i++)
     {
-        ref(pbuf2 + j, ref_dest0, ref_desth, ref_destv, ref_destc, 64, 64, bx, by);
-        opt(pbuf2 + j, opt_dest0, opt_desth, opt_destv, opt_destc, 64, 64, bx, by);
+        ref(pbuf2 + j, ref_destf, ref_desth, ref_destv, ref_destc, 64, 64, bx, by);
+        opt(pbuf2 + j, opt_destf, opt_desth, opt_destv, opt_destc, 64, 64, bx, by);
 
-        if (memcmp(ref_dest0, opt_dest0, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_destf, opt_destf, 64 * 64 * sizeof(pixel)))
             return false;
         if (memcmp(ref_desth, opt_desth, 64 * 64 * sizeof(pixel)))
             return false;
@@ -460,9 +460,7 @@ bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t op
         if (memcmp(ref_destc, opt_destc, 64 * 64 * sizeof(pixel)))
             return false;
 
-        j += 4;
-        bx = 8 * ((rand() & 7) + 1);
-        by = 8 * ((rand() & 7) + 1);
+        j += 16;
     }
 
     return true;
