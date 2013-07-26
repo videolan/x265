@@ -85,12 +85,18 @@ namespace x265 {
     p.sse_##type[PARTITION_##width##x8] = (pixelcmp_t) x265_pixel_ssd_##width##x8_##suffix; \
     p.sse_##type[PARTITION_##width##x4] = (pixelcmp_t) x265_pixel_ssd_##width##x4_##suffix; \
 
-#if _MSC_VER
-#pragma warning(disable: 4100) // unused param, temporary issue until alignment problems are resolved
-#endif
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if !HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
+    // only minimal 16bpp assembly hooked up, to prevent compiler warnings
+    if (cpuid >= 2)
+    {
+        INIT8( sad, _mmx2 );
+        INIT7( sad_x3, _mmx2 );
+        INIT7( sad_x4, _mmx2 );
+        INIT8( satd, _mmx2 );
+    }
+#else
     if (cpuid >= 2)
     {
         INIT8_NAME( sse_pp, ssd, _mmx );
