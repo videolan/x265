@@ -4575,7 +4575,7 @@ cglobal intra_sad_x9_8x8, 5,7,8
 
     mov         r6, rsp
     and        rsp, ~31
-    SUB        rsp, 0x240
+    sub        rsp, 0x240
     movu        m5, [r0+0*FENC_STRIDE]
     movu        m6, [r0+4*FENC_STRIDE]
     punpcklqdq  m5, [r0+2*FENC_STRIDE]
