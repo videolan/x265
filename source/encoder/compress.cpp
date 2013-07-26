@@ -33,14 +33,14 @@ using namespace x265;
 #if CU_STAT_LOGFILE
 extern int totalCU;
 extern int cntInter[4], cntIntra[4], cntSplit[4], cntIntraNxN;
-extern  int cuInterDistribution[4][4], cuIntraDistribution[4][3];
-extern  int cntSkipCu[4],  cntTotalCu[4];
+extern int cuInterDistribution[4][4], cuIntraDistribution[4][3];
+extern int cntSkipCu[4],  cntTotalCu[4];
 extern FILE* fp1;
 #endif
 
 Void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  TShortYUV* outResiYuv, TComYuv* outReconYuv)
 {
-    UInt64 dPUCost = 0;
+    UInt64 puCost = 0;
     UInt puDistY = 0;
     UInt puDistC = 0;
     UInt depth = cu->getDepth(0);
@@ -49,7 +49,7 @@ Void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     // set context models
     m_search->m_rdGoOnSbacCoder->load(m_search->m_rdSbacCoders[depth][CI_CURR_BEST]);
 
-    m_search->xRecurIntraCodingQT(cu, initTrDepth, 0, true, fencYuv, predYuv, outResiYuv, puDistY, puDistC, false, dPUCost);
+    m_search->xRecurIntraCodingQT(cu, initTrDepth, 0, true, fencYuv, predYuv, outResiYuv, puDistY, puDistC, false, puCost);
     m_search->xSetIntraResultQT(cu, initTrDepth, 0, true, outReconYuv);
 
     //=== update PU data ====
@@ -95,7 +95,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
 
     UInt initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
     UInt width       = cu->getWidth(0) >> initTrDepth;
-    UInt uiWidthBit  = cu->getIntraSizeIdx(0);
+    UInt widthBits   = cu->getIntraSizeIdx(0);
     UInt64 CandCostList[FAST_UDI_MAX_RDMODE_NUM];
     UInt CandNum;
     UInt partOffset = 0;
@@ -111,7 +111,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
     Pel* pred   = m_modePredYuv[5][depth]->getLumaAddr(0, width);
     UInt stride = m_modePredYuv[5][depth]->getStride();
     UInt rdModeList[FAST_UDI_MAX_RDMODE_NUM];
-    UInt numModesForFullRD = g_intraModeNumFast[uiWidthBit];
+    UInt numModesForFullRD = g_intraModeNumFast[widthBits];
     Int nLog2SizeMinus2 = g_convertToBit[width];
     x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
 
@@ -143,8 +143,8 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
             modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
 
             // 0
-            Pel *above   = pAbove0;
-            Pel *left    = pLeft0;
+            Pel *above = pAbove0;
+            Pel *left  = pLeft0;
             if (width >= 8 && width <= 32)
             {
                 above = pAbove1;
@@ -247,11 +247,7 @@ Void TEncCu::xComputeCostIntraInInter(TComDataCU*& cu, PartSize partSize)
     m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 }
 
-/** check RD costs for a CU block encoded with merge
- * \param outTempCU
- * \returns Void
- */
-
+/** check RD costs for a CU block encoded with merge */
 Void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartSize partSize, Bool bUseMRG)
 {
     UChar depth = outTempCU->getDepth(0);
@@ -289,7 +285,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     Bool bSubBranch = true;
     Bool bTrySplitDQP = true;
     Bool bBoundary = false;
-    UInt64 _NxNCost = 0, Inter2Nx2NCost = 0;
+    UInt64 nxnCost = 0, inter2Nx2NCost = 0;
     UInt lpelx = outTempCU->getCUPelX();
     UInt rpelx = lpelx + outTempCU->getWidth(0)  - 1;
     UInt tpely = outTempCU->getCUPelY();
@@ -299,8 +295,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
-    Bool bSliceEnd = (slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() && slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart());
-    Bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
+    Bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
+                     slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart();
+    Bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
+                          (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
@@ -353,7 +351,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_bestPredYuvNxN[PartitionIndex][depth] = m_bestPredYuv[depth];
                 m_bestPredYuv[depth] = tempYuv;
             }*/
-            Inter2Nx2NCost = outBestCU->m_totalCost;
+            inter2Nx2NCost = outBestCU->m_totalCost;
             bTrySplitDQP = bTrySplit;
 
             if ((Int)depth <= m_addSADDepth)
@@ -371,7 +369,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 subBestPartCU = NULL;
                 /*The temp structure is used for boundary analysis, and to copy Best SubCU mode data on return*/
                 subTempPartCU;
-                _NxNCost = 0;
+                nxnCost = 0;
                 for (UInt partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
                 {
                     subTempPartCU = m_interCU_NxN[partUnitIdx][nextDepth];
@@ -384,14 +382,14 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
                     {
                         xComputeCostInter(subTempPartCU, m_bestPredYuvNxN[partUnitIdx][nextDepth], SIZE_2Nx2N, 0);
-                        _NxNCost += subTempPartCU->m_totalCost;
+                        nxnCost += subTempPartCU->m_totalCost;
                     }
                    
                 }
             }
 #endif // if EARLY_EXIT_NO_RDO
 
-            if (outBestCU->m_totalCost >  _NxNCost)
+            if (outBestCU->m_totalCost >  nxnCost)
             {
                 /*Compute Rect costs*/
                 if (m_cfg->getUseRectInter())
@@ -418,7 +416,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
             }
 
-            m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
+            m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
+                                                m_bestResiYuv[depth], m_bestRecoYuv[depth], false);
 #if CU_STAT_LOGFILE
             fprintf(fp1, "\n N : %d ,  Best Inter : %d , ", outBestCU->getWidth(0) / 2, outBestCU->m_totalCost);
 #endif
@@ -458,7 +457,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
             // further split
 #if EARLY_EXIT_NO_RDO
-            if (Inter2Nx2NCost < _NxNCost && depth < g_maxCUDepth - g_addCUDepth)
+            if (inter2Nx2NCost < nxnCost && depth < g_maxCUDepth - g_addCUDepth)
             {
                 m_entropyCoder->resetBits();
                 m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth, true);
@@ -474,7 +473,6 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 #endif // if EARLY_EXIT_NO_RDO
         }
-
         else
         {
             outBestCU = m_bestMergeCU[depth];
@@ -600,7 +598,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         {
             if (outBestCU->m_totalCost < outTempCU->m_totalCost)
             {
-                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->m_totalCost,  outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
+                fprintf(fp1, "\n%d vs %d  : selected mode :N : %d , cost : %d , Part mode : %d , Pred Mode : %d ",
+                        outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outBestCU->getWidth(0) / 2, outBestCU->m_totalCost,
+                        outBestCU->getPartitionSize(0), outBestCU->getPredictionMode(0));
                 if (outBestCU->getPredictionMode(0) == MODE_INTER)
                 {
                     cntInter[depth]++;
@@ -628,14 +628,15 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
             else
             {
-                fprintf(fp1, "\n  %d vs %d  : selected mode :N : %d , cost : %d  ", outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->m_totalCost);
+                fprintf(fp1, "\n  %d vs %d  : selected mode :N : %d , cost : %d  ",
+                        outBestCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->getWidth(0) / 2, outTempCU->m_totalCost);
                 cntSplit[depth]++;
             }
         }
 #endif // if  LOGGING
 
-        /*If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
-        Copy Recon data from Temp structure to Best structure*/
+        /* If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
+         * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
         {
             if (outTempCU->m_totalCost < outBestCU->m_totalCost)
