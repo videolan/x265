@@ -685,6 +685,7 @@ void filterVertical_p_p(pixel *src, int srcStride,
     }
 }
 
+#if INSTRSET > 3
 template<int N>
 void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
@@ -785,6 +786,7 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
         dst += dstStride;
     }
 }
+#endif
 
 #if INSTRSET > 4
 void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
