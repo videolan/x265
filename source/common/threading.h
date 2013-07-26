@@ -27,7 +27,7 @@
 #define _THREADING_H_
 
 #ifdef _WIN32
-#include "Windows.h"
+#include <windows.h>
 #else
 #include <pthread.h>
 #include <semaphore.h>

@@ -50,7 +50,7 @@ static void _ppaReleaseAtExit()
 }
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 
 #if defined(_M_X64) || defined(__x86_64__) || defined(__amd64__)
 # ifdef UNICODE
