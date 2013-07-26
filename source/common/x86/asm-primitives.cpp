@@ -165,6 +165,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         p.satd[PARTITION_64x48] = cmp<64, 48, 16, 16, x265_pixel_satd_16x16_mmx2>;
         p.satd[PARTITION_64x64] = cmp<64, 64, 16, 16, x265_pixel_satd_16x16_mmx2>;
 
+        p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
+
         INIT2( sad, _sse2 );
         INIT2( sad_x3, _sse2 );
         INIT2( sad_x4, _sse2 );

@@ -54,11 +54,13 @@ PixelHarness::PixelHarness()
 {
     pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
     pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
+    pbuf3 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
+    pbuf4 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
 
     sbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), 64 * 64 * 32, 32);
     sbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), 64 * 64 * 32, 32);
 
-    if (!pbuf1 || !pbuf2)
+    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 )
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
@@ -69,6 +71,8 @@ PixelHarness::PixelHarness()
         //Generate the Random Buffer for Testing
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
+        pbuf3[i] = rand() & PIXEL_MAX;
+        pbuf4[i] = rand() & PIXEL_MAX;
 
         sbuf1[i] = rand() & PIXEL_MAX;
         sbuf2[i] = rand() & PIXEL_MAX;
@@ -79,6 +83,8 @@ PixelHarness::~PixelHarness()
 {
     TestHarness::alignedFree(pbuf1);
     TestHarness::alignedFree(pbuf2);
+    TestHarness::alignedFree(pbuf3);
+    TestHarness::alignedFree(pbuf4);
     TestHarness::alignedFree(sbuf1);
     TestHarness::alignedFree(sbuf2);
 }
@@ -423,6 +429,45 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
     return true;
 }
 
+bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest0[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest0[64 * 64]);
+
+    ALIGN_VAR_16(pixel, ref_desth[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_desth[64 * 64]);
+
+    ALIGN_VAR_16(pixel, ref_destv[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_destv[64 * 64]);
+
+    ALIGN_VAR_16(pixel, ref_destc[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_destc[64 * 64]);
+
+    int bx = 64;
+    int by = 64;
+    int j = 0;
+    for (int i = 0; i <= 100; i++)
+    {
+        ref(pbuf2 + j, ref_dest0, ref_desth, ref_destv, ref_destc, 64, 64, bx, by);
+        opt(pbuf2 + j, opt_dest0, opt_desth, opt_destv, opt_destc, 64, 64, bx, by);
+
+        if (memcmp(ref_dest0, opt_dest0, 64 * 64 * sizeof(pixel)))
+            return false;
+        if (memcmp(ref_desth, opt_desth, 64 * 64 * sizeof(pixel)))
+            return false;
+        if (memcmp(ref_destv, opt_destv, 64 * 64 * sizeof(pixel)))
+            return false;
+        if (memcmp(ref_destc, opt_destc, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        j += 4;
+        bx = 8 * ((rand() & 7) + 1);
+        by = 8 * ((rand() & 7) + 1);
+    }
+
+    return true;
+}
+
 bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (uint16_t curpar = 0; curpar < NUM_PARTITIONS; curpar++)
@@ -600,6 +645,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.frame_init_lowres_core)
+    {
+        if (!check_downscale_t(ref.frame_init_lowres_core, opt.frame_init_lowres_core))
+        {
+            printf("downscale failed!\n");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -725,5 +778,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         printf("pixel_pp add");
         REPORT_SPEEDUP(opt.pixeladd_pp, ref.pixeladd_pp, 64, 64, pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+    }
+
+    if (opt.frame_init_lowres_core)
+    {
+        printf("downscale");
+        REPORT_SPEEDUP(opt.frame_init_lowres_core, ref.frame_init_lowres_core, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
     }
 }
