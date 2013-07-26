@@ -240,12 +240,14 @@ static const char * const x265_profile_names[] = { "main", "main10", "mainstillp
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 int x265_param_apply_profile(x265_param_t *, const char *profile);
 
-/* x265_bit_depth:
- *      Specifies the number of bits per pixel that x265 uses. This is also the
- *      max bit depth that x265 encodes in. x265 will accept pixel bit depths up
- *      to x265_bit_depth. param.internalBitDepth can be either 8 or x265_bit_depth.
- *      x265_picture_t.bitDepth may be 8 or x265_bit_depth */
-extern const int x265_bit_depth;
+/* x265_max_bit_depth:
+ *      Specifies the maximum number of bits per pixel that x265 can input. This
+ *      is also the max bit depth that x265 encodes in.  When x265_max_bit_depth
+ *      is 8, the internal and input bit depths must be 8.  When
+ *      x265_max_bit_depth is 12, the internal and input bit depths can be
+ *      either 8, 10, or 12. Note that the internal bit depth must be the same
+ *      for all encoders allocated in the same process. */
+extern const int x265_max_bit_depth;
 
 /* x265_encoder_open:
  *      create a new encoder handler, all parameters from x265_param_t are copied */

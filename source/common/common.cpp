@@ -40,9 +40,9 @@
 #include <time.h>
 
 #if HIGH_BIT_DEPTH
-const int x265_bit_depth = 10;
+const int x265_max_bit_depth = 8; // 12;
 #else
-const int x265_bit_depth = 8;
+const int x265_max_bit_depth = 8;
 #endif
 
 #define ALIGNBYTES 32
@@ -183,10 +183,8 @@ int x265_check_params(x265_param_t *param)
     uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
-#if !HIGH_BIT_DEPTH
-    CONFIRM(param->internalBitDepth != 8,
-            "InternalBitDepth must be 8");
-#endif
+    CONFIRM(param->internalBitDepth > x265_max_bit_depth,
+            "InternalBitDepth must be <= x265_max_bit_depth");
     CONFIRM(param->gopNumThreads < 1 || param->gopNumThreads > 32,
             "Number of GOP threads must be between 1 and 32");
     CONFIRM(param->qp < -6 * (param->internalBitDepth - 8) || param->qp > 51,
