@@ -79,6 +79,8 @@ PixelHarness::~PixelHarness()
 {
     TestHarness::alignedFree(pbuf1);
     TestHarness::alignedFree(pbuf2);
+    TestHarness::alignedFree(sbuf1);
+    TestHarness::alignedFree(sbuf2);
 }
 
 #define INCR 16
