@@ -488,6 +488,11 @@ int main(int argc, char **argv)
     x265_nal_t *p_nal;
     int nal;
 
+    if (!x265_encoder_headers(encoder, &p_nal, &nal))
+    {
+        cliopt.writeNALs(p_nal, nal);
+    }
+
     // main encoder loop
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;

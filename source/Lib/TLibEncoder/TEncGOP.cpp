@@ -311,6 +311,82 @@ void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames)
     m_inputLock.release();
 }
 
+int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
+{
+    x265::FrameEncoder* frameEncoder = &m_frameEncoders[0];
+    TEncEntropy*        entropyCoder = frameEncoder->getEntropyCoder(0);
+    TEncCavlc*          cavlcCoder   = frameEncoder->getCavlcCoder();
+
+    accessUnits.push_back(AccessUnit());
+    AccessUnit& accessUnit = accessUnits.back();
+
+    // TODO: this code should probably be in init()
+    m_sps.setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
+    for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
+    {
+        m_sps.setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
+        m_sps.setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
+    }
+    if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
+    {
+        m_sps.getVuiParameters()->getHrdParameters()->setNumDU(0);
+        m_sps.setHrdParameters(m_cfg->getFrameRate(), 0, m_cfg->getTargetBitrate(), m_cfg->getIntraPeriod() > 0);
+    }
+    if (m_cfg->getBufferingPeriodSEIEnabled() || m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
+    {
+        m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
+    }
+    // TODO: these are hacks
+    m_sps.setScalingListPresentFlag(false);
+    m_sps.setTMVPFlagsPresent(1);
+    m_pps.setScalingListPresentFlag(false);
+
+    entropyCoder->setEntropyCoder(cavlcCoder, NULL);
+
+    /* headers for start of bitstream */
+    OutputNALUnit nalu(NAL_UNIT_VPS);
+    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->encodeVPS(m_top->getVPS());
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+
+    nalu = NALUnit(NAL_UNIT_SPS);
+    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->encodeSPS(&m_sps);
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+
+    nalu = NALUnit(NAL_UNIT_PPS);
+    entropyCoder->setBitstream(&nalu.m_Bitstream);
+    entropyCoder->encodePPS(&m_pps);
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+
+    if (m_cfg->getActiveParameterSetsSEIEnabled())
+    {
+        SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets(&m_sps);
+
+        entropyCoder->setBitstream(&nalu.m_Bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, &m_sps);
+        writeRBSPTrailingBits(nalu.m_Bitstream);
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+        delete sei;
+    }
+
+    if (m_cfg->getDisplayOrientationSEIAngle())
+    {
+        SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
+
+        nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
+        entropyCoder->setBitstream(&nalu.m_Bitstream);
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, &m_sps);
+        writeRBSPTrailingBits(nalu.m_Bitstream);
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+        delete sei;
+    }
+    return 0;
+}
+
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -333,7 +409,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
     TComLoopFilter*       loopFilter   = frameEncoder->getLoopFilter();
     TComBitCounter*       bitCounter   = frameEncoder->getBitCounter();
     TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
-    Bool bActiveParameterSetSEIPresentInAU = false;
     Bool bBufferingPeriodSEIPresentInAU = false;
     Bool bPictureTimingSEIPresentInAU = false;
     Bool bNestedBufferingPeriodSEIPresentInAU = false;
@@ -800,78 +875,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
 
         /* write various header sets. */
 
-        if (pocLast == 0)
-        {
-            /* headers for start of bitstream */
-            OutputNALUnit nalu(NAL_UNIT_VPS);
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
-            entropyCoder->encodeVPS(m_top->getVPS());
-            writeRBSPTrailingBits(nalu.m_Bitstream);
-            accessUnit.push_back(new NALUnitEBSP(nalu));
-            actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-
-            nalu = NALUnit(NAL_UNIT_SPS);
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
-            m_sps.setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
-            for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
-            {
-                m_sps.setLtRefPicPocLsbSps(k, m_ltRefPicPocLsbSps[k]);
-                m_sps.setUsedByCurrPicLtSPSFlag(k, m_ltRefPicUsedByCurrPicFlag[k]);
-            }
-
-            if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
-            {
-                // CHECK_ME: maybe HM's bug
-                UInt maxCU = 1500 >> (m_sps.getMaxCUDepth() << 1);
-                UInt numDU = 0;
-                if (pic->getNumCUsInFrame() % maxCU != 0 || numDU == 0)
-                {
-                    numDU++;
-                }
-                m_sps.getVuiParameters()->getHrdParameters()->setNumDU(numDU);
-                m_sps.setHrdParameters(m_cfg->getFrameRate(), numDU, m_cfg->getTargetBitrate(), (m_cfg->getIntraPeriod() > 0));
-            }
-            if (m_cfg->getBufferingPeriodSEIEnabled() || m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
-            {
-                m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
-            }
-            entropyCoder->encodeSPS(slice->getSPS());
-            writeRBSPTrailingBits(nalu.m_Bitstream);
-            accessUnit.push_back(new NALUnitEBSP(nalu));
-            actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-
-            nalu = NALUnit(NAL_UNIT_PPS);
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
-            entropyCoder->encodePPS(slice->getPPS());
-            writeRBSPTrailingBits(nalu.m_Bitstream);
-            accessUnit.push_back(new NALUnitEBSP(nalu));
-            actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-
-            if (m_cfg->getActiveParameterSetsSEIEnabled())
-            {
-                SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets(slice->getSPS());
-
-                entropyCoder->setBitstream(&nalu.m_Bitstream);
-                m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, slice->getSPS());
-                writeRBSPTrailingBits(nalu.m_Bitstream);
-                accessUnit.push_back(new NALUnitEBSP(nalu));
-                delete sei;
-                bActiveParameterSetSEIPresentInAU = true;
-            }
-
-            if (m_cfg->getDisplayOrientationSEIAngle())
-            {
-                SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
-
-                nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-                entropyCoder->setBitstream(&nalu.m_Bitstream);
-                m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, slice->getSPS());
-                writeRBSPTrailingBits(nalu.m_Bitstream);
-                accessUnit.push_back(new NALUnitEBSP(nalu));
-                delete sei;
-            }
-        }
-
         if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP
         {
             writeSOP = false;
@@ -985,7 +988,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             writeRBSPTrailingBits(nalu.m_Bitstream);
             {
                 UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                UInt offsetPosition = bActiveParameterSetSEIPresentInAU; // Insert BP SEI after APS SEI
+                UInt offsetPosition = 0;
                 AccessUnit::iterator it = accessUnit.begin();
                 for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                 {
@@ -1006,7 +1009,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 m_seiWriter.writeSEImessage(naluTmp.m_Bitstream, scalableNestingSEI, slice->getSPS());
                 writeRBSPTrailingBits(naluTmp.m_Bitstream);
                 UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
+                UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
                 AccessUnit::iterator it = accessUnit.begin();
                 for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                 {
@@ -1424,7 +1427,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
                     // Insert PT SEI after APS and BP SEI
-                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU + bBufferingPeriodSEIPresentInAU;
+                    UInt offsetPosition = bBufferingPeriodSEIPresentInAU;
                     AccessUnit::iterator it = accessUnit.begin();
                     for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                     {
@@ -1444,10 +1447,8 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     writeRBSPTrailingBits(onalu.m_Bitstream);
                     UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
                     // Insert PT SEI after APS and BP SEI
-                    UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
-                        bBufferingPeriodSEIPresentInAU +
-                        bPictureTimingSEIPresentInAU +
-                        bNestedBufferingPeriodSEIPresentInAU;
+                    UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU +
+                                          bNestedBufferingPeriodSEIPresentInAU;
                     AccessUnit::iterator it = accessUnit.begin();
                     for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                     {
@@ -1479,9 +1480,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                         writeRBSPTrailingBits(onalu.m_Bitstream);
                         UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
                         // Insert DU info SEI after APS, BP and PT SEI
-                        UInt offsetPosition = bActiveParameterSetSEIPresentInAU +
-                            bBufferingPeriodSEIPresentInAU +
-                            bPictureTimingSEIPresentInAU;
+                        UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU;
                         for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                         {
                             it++;
@@ -1514,7 +1513,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             }
         }
 
-        bActiveParameterSetSEIPresentInAU = false;
         bBufferingPeriodSEIPresentInAU    = false;
         bPictureTimingSEIPresentInAU      = false;
         bNestedBufferingPeriodSEIPresentInAU = false;

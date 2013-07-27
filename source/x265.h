@@ -253,6 +253,13 @@ extern const int x265_max_bit_depth;
  *      create a new encoder handler, all parameters from x265_param_t are copied */
 x265_t *x265_encoder_open(x265_param_t *);
 
+/* x265_encoder_headers:
+ *      return the SPS and PPS that will be used for the whole stream.
+ *      *pi_nal is the number of NAL units outputted in pp_nal.
+ *      returns negative on error.
+ *      the payloads of all output NALs are guaranteed to be sequential in memory. */
+int     x265_encoder_headers(x265_t *, x265_nal_t **pp_nal, int *pi_nal);
+
 /* x265_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.

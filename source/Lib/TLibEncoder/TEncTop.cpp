@@ -217,6 +217,11 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     return ret;
 }
 
+int TEncTop::getStreamHeaders(std::list<AccessUnit>& accessUnitsOut)
+{
+    return m_GOPEncoders->getStreamHeaders(accessUnitsOut);
+}
+
 int TEncTop::flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut)
 {
     /* The encoder is being flushed. iterate through GOP coders, starting at the current encoder,

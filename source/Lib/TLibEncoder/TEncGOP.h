@@ -118,6 +118,8 @@ public:
     // returns count of returned pictures
     int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
 
+    int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
+
 protected:
 
     void threadMain();

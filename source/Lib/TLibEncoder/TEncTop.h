@@ -110,6 +110,8 @@ public:
 
     int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 
+    int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
+
     Double printSummary();
 
 protected:

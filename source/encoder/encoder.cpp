@@ -807,6 +807,75 @@ x265_t *x265_encoder_open(x265_param_t *param)
     return encoder;
 }
 
+int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
+{
+    // there is a lot of duplicated code here, see x265_encoder_encode()
+    list<AccessUnit> outputAccessUnits;
+
+    int ret = encoder->getStreamHeaders(outputAccessUnits);
+    if (pp_nal && !outputAccessUnits.empty())
+    {
+        encoder->m_nals.clear();
+        encoder->m_packetData.clear();
+
+        /* Copy NAL output packets into x265_nal_t structures */
+        list<AccessUnit>::const_iterator iterBitstream = outputAccessUnits.begin();
+        for (size_t i = 0; i < outputAccessUnits.size(); i++)
+        {
+            const AccessUnit &au = *(iterBitstream++);
+
+            for (AccessUnit::const_iterator it = au.begin(); it != au.end(); it++)
+            {
+                const NALUnitEBSP& nalu = **it;
+                int size = 0; /* size of annexB unit in bytes */
+
+                static const Char start_code_prefix[] = { 0, 0, 0, 1 };
+                if (it == au.begin() || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
+                {
+                    /* From AVC, When any of the following conditions are fulfilled, the
+                     * zero_byte syntax element shall be present:
+                     *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
+                     *    parameter set) or 8 (picture parameter set),
+                     *  - the byte stream NAL unit syntax structure contains the first NAL
+                     *    unit of an access unit in decoding order, as specified by subclause
+                     *    7.4.1.2.3.
+                     */
+                    encoder->m_packetData.append(start_code_prefix, 4);
+                    size += 4;
+                }
+                else
+                {
+                    encoder->m_packetData.append(start_code_prefix + 1, 3);
+                    size += 3;
+                }
+                size_t nalSize = nalu.m_nalUnitData.str().size();
+                encoder->m_packetData.append(nalu.m_nalUnitData.str().c_str(), nalSize);
+                size += (int)nalSize;
+
+                x265_nal_t nal;
+                nal.i_type = nalu.m_nalUnitType;
+                nal.i_payload = size;
+                encoder->m_nals.push_back(nal);
+            }
+        }
+
+        /* Setup payload pointers, now that we're done adding content to m_packetData */
+        size_t offset = 0;
+        for (size_t i = 0; i < encoder->m_nals.size(); i++)
+        {
+            x265_nal_t& nal = encoder->m_nals[i];
+            nal.p_payload = (uint8_t*)encoder->m_packetData.c_str() + offset;
+            offset += nal.i_payload;
+        }
+
+        *pp_nal = &encoder->m_nals[0];
+        if (pi_nal) *pi_nal = (int)encoder->m_nals.size();
+    }
+
+    return ret;
+}
+
+
 extern "C"
 int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t **pic_out)
 {
