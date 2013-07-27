@@ -732,11 +732,11 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
 
             if (N == 8)
             {
-                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
-                __m128i T20 = _mm_maddubs_epi16(T00, T10);
+                T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
+                T20 = _mm_maddubs_epi16(T00, T10);
 
-                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
-                __m128i T40 = _mm_maddubs_epi16(T30, T10);
+                T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
+                T40 = _mm_maddubs_epi16(T30, T10);
 
                 __m128i T50 = _mm_shuffle_epi8(srcCoeff, Tm3);
                 __m128i T60 = _mm_maddubs_epi16(T50, T10);
