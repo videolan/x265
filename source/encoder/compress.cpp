@@ -285,7 +285,10 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     Bool bSubBranch = true;
     Bool bTrySplitDQP = true;
     Bool bBoundary = false;
-    UInt64 nxnCost = 0, inter2Nx2NCost = 0;
+    UInt64 nxnCost = 0;
+#if EARLY_EXIT_NO_RDO
+    UInt64 inter2Nx2NCost = 0;
+#endif
     UInt lpelx = outTempCU->getCUPelX();
     UInt rpelx = lpelx + outTempCU->getWidth(0)  - 1;
     UInt tpely = outTempCU->getCUPelY();
@@ -351,7 +354,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_bestPredYuvNxN[PartitionIndex][depth] = m_bestPredYuv[depth];
                 m_bestPredYuv[depth] = tempYuv;
             }*/
+#if EARLY_EXIT_NO_RDO
             inter2Nx2NCost = outBestCU->m_totalCost;
+#endif
             bTrySplitDQP = bTrySplit;
 
             if ((Int)depth <= m_addSADDepth)
