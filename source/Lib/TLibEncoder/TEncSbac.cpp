@@ -1043,8 +1043,9 @@ Void TEncSbac::codeLastSignificantXY(UInt posx, UInt posy, Int width, Int height
     }
 }
 
-Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt /*depth*/, TextType eTType)
+Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UInt width, UInt height, UInt depth, TextType eTType)
 {
+#if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
     DTRACE_CABAC_V(eTType)
@@ -1069,6 +1070,9 @@ Void TEncSbac::codeCoeffNxN(TComDataCU* cu, TCoeff* pcCoef, UInt absPartIdx, UIn
     DTRACE_CABAC_T("\tpredmode=")
     DTRACE_CABAC_V(cu->getPredictionMode(absPartIdx))
     DTRACE_CABAC_T("\n")
+#else
+    (void)depth;
+#endif
 
     if (width > m_pcSlice->getSPS()->getMaxTrSize())
     {

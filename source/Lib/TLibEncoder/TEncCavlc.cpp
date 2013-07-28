@@ -54,7 +54,7 @@ Void  xTracePPSHeader(TComPPS *pPPS)
     fprintf(g_hTrace, "=========== Picture Parameter Set ID: %d ===========\n", pPPS->getPPSId());
 }
 
-Void  xTraceSliceHeader(TComSlice *pSlice)
+Void  xTraceSliceHeader(TComSlice *)
 {
     fprintf(g_hTrace, "=========== Slice ===========\n");
 }
