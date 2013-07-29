@@ -134,13 +134,6 @@ Void  TEncGOP::create()
 
 Void TEncGOP::destroy()
 {
-    // release and join the worker thread
-    m_threadActive = false;
-    m_batchSize = 0;
-    m_startPOC = 0;
-    m_inputLock.release();
-    Thread::stop();
-
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     Int size = Int(m_picList.size());
     for (Int i = 0; i < size; i++)
@@ -168,12 +161,6 @@ Void TEncGOP::init(TEncTop* top)
     m_cfg = top;
     m_rateControl = top->getRateCtrl();
 
-    m_threadActive = true;
-    m_inputLock.acquire();
-    m_batchSize = 0;
-    m_startPOC = 0;
-    Thread::start();
-
     // initialize SPS
     top->xInitSPS(&m_sps);
 
@@ -184,11 +171,10 @@ Void TEncGOP::init(TEncTop* top)
     top->xInitRPS(&m_sps);
 
     int numRows = (m_cfg->getSourceHeight() + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
-    m_frameEncoders = new x265::FrameEncoder(top->getThreadPool());
+    m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
     m_frameEncoders->init(top, numRows);
 
-    int maxGOP = m_cfg->getNumGOPThreads() > 1 ? m_cfg->getIntraPeriod() : 1;
-    maxGOP = X265_MAX(maxGOP, m_cfg->getGOPSize()) + m_cfg->getGOPSize();
+    int maxGOP = X265_MAX(1, m_cfg->getGOPSize()) + m_cfg->getGOPSize();
     m_recon = new x265_picture_t[maxGOP];
 
     // pre-allocate a full keyframe interval of TComPic
@@ -204,48 +190,6 @@ Void TEncGOP::init(TEncTop* top)
         pic->getSlice()->setPOC(MAX_INT);
         m_picList.pushBack(pic);
     }
-}
-
-int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessUnitsOut)
-{
-    while (1)
-    {
-        m_outputLock.acquire();
-        if (!m_accessUnits.empty())
-            break;
-        m_outputLock.release();
-    }
-
-    m_inputLock.acquire();
-
-    // move access units from member variable list to end of user's container
-    accessUnitsOut.splice(accessUnitsOut.end(), m_accessUnits);
-
-    if (pic_out)
-    {
-        for (Int i = 0; i < m_batchSize; i++)
-        {
-            TComList<TComPic*>::iterator iterPic = m_picList.begin();
-            while (iterPic != m_picList.end() && (*iterPic)->getPOC() != (m_startPOC + i))
-            {
-                iterPic++;
-            }
-
-            TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
-            x265_picture_t& recon = m_recon[i];
-            recon.planes[0] = recpic->getLumaAddr();
-            recon.stride[0] = recpic->getStride();
-            recon.planes[1] = recpic->getCbAddr();
-            recon.stride[1] = recpic->getCStride();
-            recon.planes[2] = recpic->getCrAddr();
-            recon.stride[2] = recpic->getCStride();
-            recon.bitDepth = sizeof(Pel) * 8;
-        }
-
-        *pic_out = m_recon;
-    }
-    m_outputLock.release();
-    return m_batchSize;
 }
 
 void TEncGOP::addPicture(Int poc, const x265_picture_t *picture)
@@ -267,48 +211,6 @@ void TEncGOP::addPicture(Int poc, const x265_picture_t *picture)
     }
 
     assert(!"No room for added picture");
-}
-
-void TEncGOP::threadMain()
-{
-    int lastPOC = -1;
-
-    while (m_threadActive)
-    {
-        m_inputLock.acquire();
-
-        if (m_batchSize > 0 && m_startPOC != lastPOC)
-        {
-            m_outputLock.acquire();
-
-            lastPOC = m_startPOC;
-            int poc = m_totalCoded;
-            int numEncoded = 0;
-            while (numEncoded < m_batchSize)
-            {
-                int gopSize = (poc == 0) ? 1 : m_cfg->getGOPSize();
-                gopSize = X265_MIN(gopSize, m_batchSize - numEncoded);
-                compressGOP(poc + gopSize - 1, gopSize);
-                numEncoded += gopSize;
-                poc += gopSize;
-            }
-
-            m_inputLock.release();
-            m_outputLock.release();
-        }
-        else
-            m_inputLock.release();
-    }
-}
-
-void TEncGOP::processKeyframeInterval(Int POCLast, Int numFrames)
-{
-    // TEncTOP has queued an entire keyframe interval of frames in our picture list
-    // Encode them in batches of m_pcCfg->getGOPSize()
-    m_totalCoded = POCLast - numFrames + 1;
-    m_startPOC = m_totalCoded;
-    m_batchSize = numFrames;
-    m_inputLock.release();
 }
 
 int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
@@ -387,6 +289,37 @@ int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
     return 0;
 }
 
+int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessUnitsOut)
+{
+    // move access units from member variable list to end of user's container
+    accessUnitsOut.splice(accessUnitsOut.end(), m_accessUnits);
+
+    if (pic_out)
+    {
+        for (Int i = 0; i < m_batchSize; i++)
+        {
+            TComList<TComPic*>::iterator iterPic = m_picList.begin();
+            while (iterPic != m_picList.end() && (*iterPic)->getPOC() != (m_startPOC + i))
+            {
+                iterPic++;
+            }
+
+            TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
+            x265_picture_t& recon = m_recon[i];
+            recon.planes[0] = recpic->getLumaAddr();
+            recon.stride[0] = recpic->getStride();
+            recon.planes[1] = recpic->getCbAddr();
+            recon.stride[1] = recpic->getCStride();
+            recon.planes[2] = recpic->getCrAddr();
+            recon.stride[2] = recpic->getCStride();
+            recon.bitDepth = sizeof(Pel) * 8;
+        }
+
+        *pic_out = m_recon;
+    }
+    return m_batchSize;
+}
+
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -412,6 +345,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
     Bool bBufferingPeriodSEIPresentInAU = false;
     Bool bPictureTimingSEIPresentInAU = false;
     Bool bNestedBufferingPeriodSEIPresentInAU = false;
+
+    m_batchSize = numPicRecvd;
+    m_startPOC = pocLast;
 
     if (m_cfg->getUseRateCtrl())
     {

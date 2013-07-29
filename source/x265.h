@@ -163,7 +163,6 @@ typedef struct x265_param_t
     int       logLevel;
     int       bEnableWavefront;                ///< enable wavefront parallel processing
     int       poolNumThreads;                  ///< number of threads to allocate for thread pool
-    int       gopNumThreads;                   ///< amount of GOP parallelism to use for this encode.  GOP encoders share the thread pool
 
     int       internalBitDepth;                ///< bit-depth the codec operates at
 

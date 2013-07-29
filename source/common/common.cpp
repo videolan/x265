@@ -115,7 +115,6 @@ void x265_param_default(x265_param_t *param)
     memset(param, 0, sizeof(x265_param_t));
     param->logLevel = X265_LOG_INFO;
     param->searchMethod = X265_STAR_SEARCH;
-    param->gopNumThreads = 1;
     param->searchRange = 64;
     param->bipredSearchRange = 4;
     param->internalBitDepth = 8;
@@ -185,8 +184,6 @@ int x265_check_params(x265_param_t *param)
 
     CONFIRM(param->internalBitDepth > x265_max_bit_depth,
             "InternalBitDepth must be <= x265_max_bit_depth");
-    CONFIRM(param->gopNumThreads < 1 || param->gopNumThreads > 32,
-            "Number of GOP threads must be between 1 and 32");
     CONFIRM(param->qp < -6 * (param->internalBitDepth - 8) || param->qp > 51,
             "QP exceeds supported range (-QpBDOffsety to 51)");
     CONFIRM(param->frameRate <= 0,

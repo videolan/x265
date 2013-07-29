@@ -65,7 +65,7 @@ class TEncTop;
 // ====================================================================================================================
 
 /// GOP encoder class
-class TEncGOP : public x265::Thread
+class TEncGOP
 {
 private:
 
@@ -78,9 +78,6 @@ private:
     std::list<AccessUnit>   m_accessUnits;
     Int                     m_startPOC;
     Int                     m_batchSize;
-    Bool                    m_threadActive;
-    x265::Lock              m_inputLock;
-    x265::Lock              m_outputLock;
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;
@@ -107,13 +104,13 @@ public:
 
     virtual ~TEncGOP();
 
-    Void  create();
-    Void  destroy();
-    Void  init(TEncTop* top);
+    Void create();
+    Void destroy();
+    Void init(TEncTop* top);
 
     void addPicture(Int poc, const x265_picture_t *pic);
 
-    void processKeyframeInterval(Int pocLast, Int numFrames);
+    Void compressGOP(Int pocLast, Int numPicRcvd);
 
     // returns count of returned pictures
     int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
@@ -121,10 +118,6 @@ public:
     int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
 
 protected:
-
-    void threadMain();
-
-    Void compressGOP(Int pocLast, Int numPicRcvd);
 
     Void selectReferencePictureSet(TComSlice* slice, Int curPoc, Int gopID);
 
@@ -135,6 +128,7 @@ protected:
     Void xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUnit&);
 
     SEIActiveParameterSets* xCreateSEIActiveParameterSets(TComSPS *sps);
+
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
     Void arrangeLongtermPicturesInRPS(TComSlice *);

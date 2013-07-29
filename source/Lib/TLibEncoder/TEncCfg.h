@@ -121,7 +121,6 @@ protected:
     Int       m_extraRPSs;
     Int       m_maxDecPicBuffering[MAX_TLAYER];
     Int       m_numReorderPics[MAX_TLAYER];
-    Int       m_gopThreads;                     // number of TEncGOP instances
     Int       m_qp;                            //  if (AdaptiveQP == OFF)
 
     Int       m_pad[2];
@@ -272,8 +271,6 @@ public:
 
     Int       getLogLevel() const      { return m_logLevel; }
 
-    Void      setGopThreads(Int i)     { m_gopThreads = i; }
-
     Void      setFrameRate(Int i)      { m_frameRate = i; }
 
     Void      setSourceWidth(Int i)      { m_sourceWidth = i; }
@@ -379,8 +376,6 @@ public:
     UInt      getIntraPeriod()      { return m_intraPeriod; }
 
     UInt      getDecodingRefreshType()      { return m_decodingRefreshType; }
-
-    Int       getNumGOPThreads() { return m_gopThreads; }
 
     Int       getGOPSize()      { return m_gopSize; }
 

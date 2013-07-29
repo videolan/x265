@@ -65,16 +65,13 @@ private:
     Int                     m_pocLast;          ///< time index (POC)
     Int                     m_picsQueued;       ///< number of received pictures
     Int                     m_picsEncoded;      ///< number of coded pictures
-    Bool                    m_openGOP;
-    uint32_t                m_busyGOPs;
 
     // quality control
     TComScalingList         m_scalingList;      ///< quantization matrix information
 
     TEncRateCtrl            m_cRateCtrl;        ///< Rate control class
 
-    TEncGOP*                m_GOPEncoders;
-    TEncGOP*                m_curGOPEncoder;
+    TEncGOP*                m_GOPEncoder;
     x265::ThreadPool*       m_threadPool;
 
 public:
@@ -96,13 +93,11 @@ public:
     Void destroy();
     Void init();
 
-    TComScalingList*        getScalingList()   { return &m_scalingList; }
+    TComScalingList* getScalingList()   { return &m_scalingList; }
 
-    TEncRateCtrl*           getRateCtrl()      { return &m_cRateCtrl; }
+    TEncRateCtrl* getRateCtrl()      { return &m_cRateCtrl; }
 
-    x265::ThreadPool*       getThreadPool()    { return m_threadPool; }
-
-    void                    setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
+    void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 
     Void xInitSPS(TComSPS *pcSPS);
     Void xInitPPS(TComPPS *pcPPS);
@@ -113,10 +108,6 @@ public:
     int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
 
     Double printSummary();
-
-protected:
-
-    int flushGopCoders(x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
 };
 
 //! \}

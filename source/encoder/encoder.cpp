@@ -162,31 +162,23 @@ void Encoder::configure(x265_param_t *param)
 {
     determineLevelAndProfile(param);
 
-    if (param->keyframeInterval == -1 && param->gopNumThreads > 1)
-    {
-        x265_log(param, X265_LOG_WARNING, "GOP parallelism not compatible with open-GOP, using --gops 1\n");
-        param->gopNumThreads = 1;
-    }
-
-    // Trim the thread pool if no parallelism features enabled
-    if (param->bEnableWavefront == 0 && param->gopNumThreads <= 1)
+    // Trim the thread pool if WPP is disabled
+    if (param->bEnableWavefront == 0)
         param->poolNumThreads = 1;
 
     setThreadPool(ThreadPool::allocThreadPool(param->poolNumThreads));
-
-    // Disable parallelism features if one thread was instantiated
-    if (getThreadPool()->getThreadCount() <= 1 && (param->bEnableWavefront || param->gopNumThreads > 1))
+    int actual = ThreadPool::getThreadPool()->getThreadCount();
+    if (actual > 1)
     {
-        param->bEnableWavefront = 0;
-        param->gopNumThreads = 1;
+        x265_log(param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled\n", actual);
     }
-    if (getThreadPool()->getThreadCount() > 1)
-        x265_log(param, X265_LOG_INFO, "thread pool initialized with %d threads, GOPs:%d WPP:%d\n",
-                 getThreadPool()->getThreadCount(), param->gopNumThreads, param->bEnableWavefront);
     else
+    {
         x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
+        param->bEnableWavefront = 0;
+    }
+
     setEnableWaveFront(param->bEnableWavefront);
-    setGopThreads(param->gopNumThreads);
 
     m_gopSize = 4;
     setLogLevel(param->logLevel);
