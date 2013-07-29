@@ -99,16 +99,7 @@ namespace x265 {
 
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if HIGH_BIT_DEPTH
-    // only minimal 16bpp assembly hooked up, to prevent compiler warnings
-    if (cpuid >= 2)
-    {
-        INIT8( sad, _mmx2 );
-        INIT7( sad_x3, _mmx2 );
-        INIT7( sad_x4, _mmx2 );
-        INIT8( satd, _mmx2 );
-    }
-#else
+#if !HIGH_BIT_DEPTH
     if (cpuid >= 2)
     {
         INIT8_NAME( sse_pp, ssd, _mmx );
@@ -589,36 +580,39 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuid)
         INIT2_NAME( sse_pp, ssd, _avx2 );
         p.sa8d[BLOCK_8x8]   = x265_pixel_sa8d_8x8_avx2;
     }
-    // SA8D devolves to SATD for blocks not even multiples of 8x8
-    p.sa8d_inter[PARTITION_4x4]   = p.satd[PARTITION_4x4];
-    p.sa8d_inter[PARTITION_4x8]   = p.satd[PARTITION_4x8];
-    p.sa8d_inter[PARTITION_4x12]  = p.satd[PARTITION_4x12];
-    p.sa8d_inter[PARTITION_4x16]  = p.satd[PARTITION_4x16];
-    p.sa8d_inter[PARTITION_4x24]  = p.satd[PARTITION_4x24];
-    p.sa8d_inter[PARTITION_4x32]  = p.satd[PARTITION_4x32];
-    p.sa8d_inter[PARTITION_4x48]  = p.satd[PARTITION_4x48];
-    p.sa8d_inter[PARTITION_4x64]  = p.satd[PARTITION_4x64];
-    p.sa8d_inter[PARTITION_8x4]   = p.satd[PARTITION_8x4];
-    p.sa8d_inter[PARTITION_8x12]  = p.satd[PARTITION_8x12];
-    p.sa8d_inter[PARTITION_12x4]  = p.satd[PARTITION_12x4];
-    p.sa8d_inter[PARTITION_12x8]  = p.satd[PARTITION_12x8];
-    p.sa8d_inter[PARTITION_12x12] = p.satd[PARTITION_12x12];
-    p.sa8d_inter[PARTITION_12x16] = p.satd[PARTITION_12x16];
-    p.sa8d_inter[PARTITION_12x24] = p.satd[PARTITION_12x24];
-    p.sa8d_inter[PARTITION_12x32] = p.satd[PARTITION_12x32];
-    p.sa8d_inter[PARTITION_12x48] = p.satd[PARTITION_12x48];
-    p.sa8d_inter[PARTITION_12x64] = p.satd[PARTITION_12x64];
-    p.sa8d_inter[PARTITION_16x4]  = p.satd[PARTITION_16x4];
-    p.sa8d_inter[PARTITION_16x12] = p.satd[PARTITION_16x12];
-    p.sa8d_inter[PARTITION_24x4]  = p.satd[PARTITION_24x4];
-    p.sa8d_inter[PARTITION_24x12] = p.satd[PARTITION_24x12];
-    p.sa8d_inter[PARTITION_32x4]  = p.satd[PARTITION_32x4];
-    p.sa8d_inter[PARTITION_32x12] = p.satd[PARTITION_32x12];
-    p.sa8d_inter[PARTITION_48x4]  = p.satd[PARTITION_48x4];
-    p.sa8d_inter[PARTITION_48x12] = p.satd[PARTITION_48x12];
-    p.sa8d_inter[PARTITION_64x4]  = p.satd[PARTITION_64x4];
-    p.sa8d_inter[PARTITION_64x12] = p.satd[PARTITION_64x12];
 #endif
+    if (cpuid > 1)
+    {
+        // SA8D devolves to SATD for blocks not even multiples of 8x8
+        p.sa8d_inter[PARTITION_4x4]   = p.satd[PARTITION_4x4];
+        p.sa8d_inter[PARTITION_4x8]   = p.satd[PARTITION_4x8];
+        p.sa8d_inter[PARTITION_4x12]  = p.satd[PARTITION_4x12];
+        p.sa8d_inter[PARTITION_4x16]  = p.satd[PARTITION_4x16];
+        p.sa8d_inter[PARTITION_4x24]  = p.satd[PARTITION_4x24];
+        p.sa8d_inter[PARTITION_4x32]  = p.satd[PARTITION_4x32];
+        p.sa8d_inter[PARTITION_4x48]  = p.satd[PARTITION_4x48];
+        p.sa8d_inter[PARTITION_4x64]  = p.satd[PARTITION_4x64];
+        p.sa8d_inter[PARTITION_8x4]   = p.satd[PARTITION_8x4];
+        p.sa8d_inter[PARTITION_8x12]  = p.satd[PARTITION_8x12];
+        p.sa8d_inter[PARTITION_12x4]  = p.satd[PARTITION_12x4];
+        p.sa8d_inter[PARTITION_12x8]  = p.satd[PARTITION_12x8];
+        p.sa8d_inter[PARTITION_12x12] = p.satd[PARTITION_12x12];
+        p.sa8d_inter[PARTITION_12x16] = p.satd[PARTITION_12x16];
+        p.sa8d_inter[PARTITION_12x24] = p.satd[PARTITION_12x24];
+        p.sa8d_inter[PARTITION_12x32] = p.satd[PARTITION_12x32];
+        p.sa8d_inter[PARTITION_12x48] = p.satd[PARTITION_12x48];
+        p.sa8d_inter[PARTITION_12x64] = p.satd[PARTITION_12x64];
+        p.sa8d_inter[PARTITION_16x4]  = p.satd[PARTITION_16x4];
+        p.sa8d_inter[PARTITION_16x12] = p.satd[PARTITION_16x12];
+        p.sa8d_inter[PARTITION_24x4]  = p.satd[PARTITION_24x4];
+        p.sa8d_inter[PARTITION_24x12] = p.satd[PARTITION_24x12];
+        p.sa8d_inter[PARTITION_32x4]  = p.satd[PARTITION_32x4];
+        p.sa8d_inter[PARTITION_32x12] = p.satd[PARTITION_32x12];
+        p.sa8d_inter[PARTITION_48x4]  = p.satd[PARTITION_48x4];
+        p.sa8d_inter[PARTITION_48x12] = p.satd[PARTITION_48x12];
+        p.sa8d_inter[PARTITION_64x4]  = p.satd[PARTITION_64x4];
+        p.sa8d_inter[PARTITION_64x12] = p.satd[PARTITION_64x12];
+    }
 }
 
 }
