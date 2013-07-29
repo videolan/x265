@@ -192,10 +192,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
     lambda = qpFactor * pow(2.0, qp_temp / 3.0);
 
-#if 0
-    // SJB - This logic causes the HM to use different lambdas for the same QP between the first
-    // and later GOPs because the cadence changes (the very first I frame is handled specially, throwing
-    // off the sequence).
     if (depth > 0)
     {
 #if FULL_NBIT
@@ -204,9 +200,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
         lambda *= Clip3(2.00, 4.00, (qp_temp / 6.0));
 #endif
     }
-#else // if 0
-    if (slice->getSliceType() != I_SLICE) lambda *= 2.4;
-#endif // if 0
 
     qp = max(-sps->getQpBDOffsetY(), min(MAX_QP, (Int)floor(qpdouble + 0.5)));
 
