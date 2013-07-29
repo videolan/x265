@@ -44,15 +44,14 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 #if INSTRSET > 3
     p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_p_p<4>;
     p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
+    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
+    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
 #endif
 
     p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
     p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
 
-    p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
     p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_s_p<4>;
-    
-    p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
     p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_s_p<8>;
 
     p.ipfilter_p2s = filterConvertPelToShort;
