@@ -318,7 +318,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
 {
     PPAScopeEvent(TEncGOP_compressGOP);
 
-    AccessUnit::iterator  itLocationToPushSliceHeaderNALU; // used to store location where NALU containing slice header is to be inserted
     Int                   picSptDpbOutputDuDelay = 0;
     UInt*                 accumBitsDU = NULL;
     UInt*                 accumNalsDU = NULL;
