@@ -122,7 +122,7 @@ void x265_param_default(x265_param_t *param)
     param->maxCUSize = 64;
     param->tuQTMaxInterDepth = 3;
     param->tuQTMaxIntraDepth = 3;
-    param->bEnableAMP = 0;
+    param->bEnableAMP = 1;
     param->bEnableRectInter = 1;
     param->bEnableRDO = 1;
     param->qp = 32;
