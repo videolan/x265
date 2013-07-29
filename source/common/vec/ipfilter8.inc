@@ -760,22 +760,16 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
 
         for (; col < width; col++)                        // Remaining iterations
         {
-            Vec8s vec_sum_low, vec_zero(0);
-            Vec16uc vec_src0, vec_sum;
-            Vec8s vec_c;
-            vec_c.load(coeff);
+            __m128i NewSrc = _mm_loadl_epi64((__m128i*)(src + col));
+            __m128i T00 = _mm_maddubs_epi16(NewSrc, T10);
+            __m128i add = _mm_hadd_epi16(T00, T00);
+            short sum = _mm_extract_epi16(add, 0);
 
             if (N == 8)
             {
-                vec_src0.load(src + col);
+                add = _mm_hadd_epi16(add, add);
+                sum = _mm_extract_epi16(add, 0);
             }
-            else
-            {
-                vec_src0 = load_partial_by_i<4>(src + col);
-            }
-            // Assuming that there is no overflow (Everywhere in this function!)
-            vec_sum_low = extend_low(vec_src0) * vec_c;
-            short sum = horizontal_add(vec_sum_low);
             short val = (short)(sum + offset) >> headRoom;
             val = (val < 0) ? 0 : val;
             val = (val > maxVal) ? maxVal : val;
