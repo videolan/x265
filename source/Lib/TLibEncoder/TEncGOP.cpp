@@ -129,7 +129,7 @@ TEncGOP::~TEncGOP()
 
 /** Create list to contain pointers to LCU start addresses of slice.
  */
-Void  TEncGOP::create()
+Void TEncGOP::create()
 {}
 
 Void TEncGOP::destroy()
