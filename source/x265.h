@@ -178,7 +178,8 @@ typedef struct x265_param_t
     uint32_t  tuQTMaxIntraDepth;               ///< amount the TU is allow to recurse beyond the intra PU depth
 
     // coding structure
-    int       keyframeInterval;                ///< period of I-slice (random access period)
+    int       decodingRefreshType;             ///< Intra refresh type (0:none, 1:CDR, 2:IDR) default: 1
+    int       keyframeInterval;                ///< Intra period in frames, (-1: only first frame)
     int       bframes;                         ///< Max number of consecutive B-frames (for now it only enables B-frame fixed GOP profile)
 
     // Intra coding tools

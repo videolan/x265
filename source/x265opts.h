@@ -60,6 +60,7 @@ OPT("constrained-intra", param->bEnableConstrainedIntra,    no_argument, 0, "Con
 OPT("no-constrained-intra", param->bEnableConstrainedIntra, no_argument, 0, "Disable constrained intra prediction (use only intra coded reference pixels)")
 
 HELP("Slice decision options:")
+OPT("refresh",         param->decodingRefreshType,    required_argument, 0, "Intra refresh type - 0:none, 1:CDR, 2:IDR (default: CDR)")
 OPT("keyint",          param->keyframeInterval,       required_argument, 'i', "Intra period in frames, (-1: only first frame)")
 OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
 OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")

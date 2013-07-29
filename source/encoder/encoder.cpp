@@ -185,6 +185,7 @@ void Encoder::configure(x265_param_t *param)
     setFrameRate(param->frameRate);
     setSourceWidth(param->sourceWidth);
     setSourceHeight(param->sourceHeight);
+    setDecodingRefreshType(param->decodingRefreshType);
     setQP(param->qp);
 
     //====== Motion search ========
@@ -267,14 +268,15 @@ void Encoder::configure(x265_param_t *param)
     setMaxNumOffsetsPerPic(2048);
     setLog2ParallelMergeLevelMinus2(0);
     setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto
+
     setConformanceWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
+
     setProgressiveSourceFlag(1);
     setInterlacedSourceFlag(0);
     setNonPackedConstraintFlag(0);
     setFrameOnlyConstraintFlag(0);
-    setDecodingRefreshType(2); // 1 == CRA, 2 == IDR
     setUseASR(0);   // adapt search range based on temporal distances
     setdQPs(NULL);
     setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);

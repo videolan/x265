@@ -118,6 +118,7 @@ void x265_param_default(x265_param_t *param)
     param->searchRange = 64;
     param->bipredSearchRange = 4;
     param->internalBitDepth = 8;
+    param->decodingRefreshType = 1;
     param->maxCUSize = 64;
     param->tuQTMaxInterDepth = 3;
     param->tuQTMaxIntraDepth = 3;
