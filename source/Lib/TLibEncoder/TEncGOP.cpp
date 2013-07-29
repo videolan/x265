@@ -366,7 +366,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
     {
         UInt colDir = 1;
 
-        //select uiColDir
+        // select colDir
         Int closeLeft = 1, closeRight = -1;
         for (Int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
         {
@@ -411,7 +411,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             colDir = 0;
         }
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////// Initial to start encoding
+        // start encoding
         Int pocCurr = pocLast - numPicRecvd + m_cfg->getGOPEntry(gopIdx).m_POC;
         if (pocLast == 0)
         {
@@ -456,7 +456,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         slice = sliceEncoder->initEncSlice(pic, frameEncoder, gopSize <= 1, pocLast, pocCurr, gopIdx, &m_sps, &m_pps);
         slice->setLastIDR(m_lastIDR);
 
-        //set default slice level flag to the same as SPS level flag
+        // set default slice level flag to the same as SPS level flag
         slice->setScalingList(m_top->getScalingList());
         slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
         if (m_top->getUseScalingListId() == SCALING_LIST_OFF)
@@ -488,7 +488,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         }
         else
         {
-            printf("error : ScalingList == %d no support\n", m_top->getUseScalingListId());
+            printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
             assert(0);
         }
 
@@ -796,6 +796,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             pic->createNonDBFilterInfo(slice->getSliceCurEndCUAddr(), 0);
             sao->createPicSaoInfo(pic);
         }
+
         entropyCoder->setEntropyCoder(cavlcCoder, slice);
 
         /* write various header sets. */
