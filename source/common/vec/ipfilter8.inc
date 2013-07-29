@@ -384,7 +384,7 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
 
     col += 4;
 
-    for ( ; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
+    for (; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
     {
         tmp = _mm_loadu_si128((__m128i const*)(src + col));
         a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
@@ -786,7 +786,8 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
         dst += dstStride;
     }
 }
-#endif
+
+#endif /* if INSTRSET > 3 */
 
 #if INSTRSET > 4
 void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
