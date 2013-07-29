@@ -72,10 +72,6 @@ private:
     TEncTop*                m_top;
     TEncCfg*                m_cfg;
     TEncRateCtrl*           m_rateControl;
-    x265::FrameEncoder*     m_frameEncoders;
-    TComList<TComPic*>      m_picList;         ///< dynamic list of input pictures
-    x265_picture_t         *m_recon;
-    std::list<AccessUnit>   m_accessUnits;
     Int                     m_startPOC;
     Int                     m_batchSize;
 
@@ -100,6 +96,8 @@ private:
 
 public:
 
+    x265::FrameEncoder*     m_frameEncoders;
+
     TEncGOP();
 
     virtual ~TEncGOP();
@@ -108,9 +106,7 @@ public:
     Void destroy();
     Void init(TEncTop* top);
 
-    void addPicture(Int poc, const x265_picture_t *pic);
-
-    Void compressGOP(Int pocLast, Int numPicRcvd);
+    Void compressGOP(Int pocLast, Int numPicRcvd, TComList<TComPic*> picList, std::list<AccessUnit>& accessUnitsOut);
 
     // returns count of returned pictures
     int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
@@ -131,7 +127,7 @@ protected:
 
     SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-    Void arrangeLongtermPicturesInRPS(TComSlice *);
+    Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*> picList);
 
     Void xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit& nalu, TComOutputBitstream*& outBitstreamRedirect);
 

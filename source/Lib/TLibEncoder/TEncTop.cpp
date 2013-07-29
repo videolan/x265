@@ -39,6 +39,7 @@
 #include "TLibCommon/ContextModel.h"
 #include "TEncTop.h"
 #include "primitives.h"
+#include "common.h"
 
 #include <limits.h>
 #include <math.h> // sqrt
@@ -103,10 +104,25 @@ Void TEncTop::destroy()
         m_GOPEncoder->destroy();
         delete [] m_GOPEncoder;
     }
+
     m_cRateCtrl.destroy();
 
     if (m_threadPool)
         m_threadPool->release();
+
+    TComList<TComPic*>::iterator iterPic = m_picList.begin();
+    Int size = Int(m_picList.size());
+    for (Int i = 0; i < size; i++)
+    {
+        TComPic* pic = *(iterPic++);
+
+        pic->destroy();
+        delete pic;
+        pic = NULL;
+    }
+
+    if (m_recon)
+        delete [] m_recon;
 }
 
 Void TEncTop::init()
@@ -116,15 +132,50 @@ Void TEncTop::init()
         m_GOPEncoder->init(this);
     }
 
+    int maxGOP = X265_MAX(1, getGOPSize()) + getGOPSize();
+    m_recon = new x265_picture_t[maxGOP];
+
+    // pre-allocate a full keyframe interval of TComPic
+    for (int i = 0; i < maxGOP; i++)
+    {
+        TComPic *pic = new TComPic;
+        pic->create(getSourceWidth(), getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+            getConformanceWindow(), getDefaultDisplayWindow());
+        if (getUseSAO())
+        {
+            // TODO: we shouldn't need a frame encoder to do this
+            pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
+        }
+        pic->getSlice()->setPOC(MAX_INT);
+        m_picList.pushBack(pic);
+    }
+
     m_gcAnalyzeI.setFrmRate(getFrameRate());
     m_gcAnalyzeP.setFrmRate(getFrameRate());
     m_gcAnalyzeB.setFrmRate(getFrameRate());
     m_gcAnalyzeAll.setFrmRate(getFrameRate());
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
+void TEncTop::addPicture(const x265_picture_t *picture)
+{
+    TComSlice::sortPicList(m_picList);
+
+    TComList<TComPic*>::iterator iterPic = m_picList.begin();
+    while (iterPic != m_picList.end())
+    {
+        TComPic *pic = *(iterPic++);
+        if (pic->getSlice()->isReferenced() == false)
+        {
+            pic->getSlice()->setPOC(++m_pocLast);
+            pic->getPicYuvOrg()->copyFromPicture(*picture);
+            pic->getPicYuvRec()->setBorderExtension(false);
+            pic->getSlice()->setReferenced(true);
+            return;
+        }
+    }
+
+    assert(!"No room for added picture");
+}
 
 /**
  \param   flush               force encoder to encode a partial GOP
@@ -137,8 +188,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
 {
     if (pic)
     {
+        addPicture(pic);
         m_picsQueued++;
-        m_GOPEncoder->addPicture(++m_pocLast, pic);
     }
 
     int batchSize = m_picsEncoded == 0 ? 1 : getGOPSize();
@@ -152,8 +203,33 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     if (flush)
         m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
 
-    m_GOPEncoder->compressGOP(m_pocLast, m_picsQueued);
-    int ret = m_GOPEncoder->getOutputs(pic_out, accessUnitsOut);
+    m_GOPEncoder->compressGOP(m_pocLast, m_picsQueued, m_picList, accessUnitsOut);
+
+    if (pic_out)
+    {
+        for (Int i = 0; i < m_picsQueued; i++)
+        {
+            TComList<TComPic*>::iterator iterPic = m_picList.begin();
+            while (iterPic != m_picList.end() && (*iterPic)->getPOC() != (m_picsEncoded + i))
+            {
+                iterPic++;
+            }
+
+            TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
+            x265_picture_t& recon = m_recon[i];
+            recon.planes[0] = recpic->getLumaAddr();
+            recon.stride[0] = recpic->getStride();
+            recon.planes[1] = recpic->getCbAddr();
+            recon.stride[1] = recpic->getCStride();
+            recon.planes[2] = recpic->getCrAddr();
+            recon.stride[2] = recpic->getCStride();
+            recon.bitDepth = sizeof(Pel) * 8;
+        }
+
+        *pic_out = m_recon;
+    }
+
+    int ret = m_picsQueued;
     m_picsEncoded += m_picsQueued;
     m_picsQueued = 0;
 

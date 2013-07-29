@@ -134,25 +134,11 @@ Void TEncGOP::create()
 
 Void TEncGOP::destroy()
 {
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    Int size = Int(m_picList.size());
-    for (Int i = 0; i < size; i++)
-    {
-        TComPic* pic = *(iterPic++);
-
-        pic->destroy();
-        delete pic;
-        pic = NULL;
-    }
-
     if (m_frameEncoders)
     {
         m_frameEncoders->destroy();
         delete m_frameEncoders;
     }
-
-    if (m_recon)
-        delete [] m_recon;
 }
 
 Void TEncGOP::init(TEncTop* top)
@@ -173,44 +159,6 @@ Void TEncGOP::init(TEncTop* top)
     int numRows = (m_cfg->getSourceHeight() + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
     m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
     m_frameEncoders->init(top, numRows);
-
-    int maxGOP = X265_MAX(1, m_cfg->getGOPSize()) + m_cfg->getGOPSize();
-    m_recon = new x265_picture_t[maxGOP];
-
-    // pre-allocate a full keyframe interval of TComPic
-    for (int i = 0; i < maxGOP; i++)
-    {
-        TComPic *pic = new TComPic;
-        pic->create(m_cfg->getSourceWidth(), m_cfg->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                    m_cfg->getConformanceWindow(), m_cfg->getDefaultDisplayWindow());
-        if (m_cfg->getUseSAO())
-        {
-            pic->getPicSym()->allocSaoParam(m_frameEncoders->getSAO());
-        }
-        pic->getSlice()->setPOC(MAX_INT);
-        m_picList.pushBack(pic);
-    }
-}
-
-void TEncGOP::addPicture(Int poc, const x265_picture_t *picture)
-{
-    TComSlice::sortPicList(m_picList);
-
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    while (iterPic != m_picList.end())
-    {
-        TComPic *pic = *(iterPic++);
-        if (pic->getSlice()->isReferenced() == false)
-        {
-            pic->getSlice()->setPOC(poc);
-            pic->getPicYuvOrg()->copyFromPicture(*picture);
-            pic->getPicYuvRec()->setBorderExtension(false);
-            pic->getSlice()->setReferenced(true);
-            return;
-        }
-    }
-
-    assert(!"No room for added picture");
 }
 
 int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
@@ -289,41 +237,10 @@ int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
     return 0;
 }
 
-int TEncGOP::getOutputs(x265_picture_t** pic_out, std::list<AccessUnit>& accessUnitsOut)
-{
-    // move access units from member variable list to end of user's container
-    accessUnitsOut.splice(accessUnitsOut.end(), m_accessUnits);
-
-    if (pic_out)
-    {
-        for (Int i = 0; i < m_batchSize; i++)
-        {
-            TComList<TComPic*>::iterator iterPic = m_picList.begin();
-            while (iterPic != m_picList.end() && (*iterPic)->getPOC() != (m_startPOC + i))
-            {
-                iterPic++;
-            }
-
-            TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
-            x265_picture_t& recon = m_recon[i];
-            recon.planes[0] = recpic->getLumaAddr();
-            recon.stride[0] = recpic->getStride();
-            recon.planes[1] = recpic->getCbAddr();
-            recon.stride[1] = recpic->getCStride();
-            recon.planes[2] = recpic->getCrAddr();
-            recon.stride[2] = recpic->getCStride();
-            recon.bitDepth = sizeof(Pel) * 8;
-        }
-
-        *pic_out = m_recon;
-    }
-    return m_batchSize;
-}
-
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
-Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
+Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picList, std::list<AccessUnit>& accessUnitsOut)
 {
     PPAScopeEvent(TEncGOP_compressGOP);
 
@@ -437,16 +354,16 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
             m_lastIDR = pocCurr;
         }
         // start a new access unit: create an entry in the list of output access units
-        m_accessUnits.push_back(AccessUnit());
-        AccessUnit& accessUnit = m_accessUnits.back();
+        accessUnitsOut.push_back(AccessUnit());
+        AccessUnit& accessUnit = accessUnitsOut.back();
 
         TComPic*   pic = NULL;
         TComSlice* slice;
         {
             // Locate input picture with the correct POC (makes no assumption on
             // input picture ordering because list is often re-ordered)
-            TComList<TComPic*>::iterator iterPic = m_picList.begin();
-            while (iterPic != m_picList.end())
+            TComList<TComPic*>::iterator iterPic = picList.begin();
+            while (iterPic != picList.end())
             {
                 pic = *(iterPic++);
                 if (pic->getPOC() == pocCurr)
@@ -525,19 +442,19 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         }
 
         // Do decoding refresh marking if any
-        slice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_picList);
+        slice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, picList);
         selectReferencePictureSet(slice, pocCurr, gopIdx);
         slice->getRPS()->setNumberOfLongtermPictures(0);
 
-        if ((slice->checkThatAllRefPicsAreAvailable(m_picList, slice->getRPS(), false) != 0) || (slice->isIRAP()))
+        if ((slice->checkThatAllRefPicsAreAvailable(picList, slice->getRPS(), false) != 0) || (slice->isIRAP()))
         {
-            slice->createExplicitReferencePictureSetFromReference(m_picList, slice->getRPS(), slice->isIRAP());
+            slice->createExplicitReferencePictureSetFromReference(picList, slice->getRPS(), slice->isIRAP());
         }
-        slice->applyReferencePictureSet(m_picList, slice->getRPS());
+        slice->applyReferencePictureSet(picList, slice->getRPS());
 
         if (slice->getTLayer() > 0)
         {
-            if (slice->isTemporalLayerSwitchingPoint(m_picList) || m_sps.getTemporalIdNestingFlag())
+            if (slice->isTemporalLayerSwitchingPoint(picList) || m_sps.getTemporalIdNestingFlag())
             {
                 if (slice->getTemporalLayerNonReferenceFlag())
                 {
@@ -548,7 +465,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                     slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R);
                 }
             }
-            else if (slice->isStepwiseTemporalLayerSwitchingPointCandidate(m_picList))
+            else if (slice->isStepwiseTemporalLayerSwitchingPointCandidate(picList))
             {
                 Bool isSTSA = true;
                 for (Int ii = gopIdx + 1; (ii < m_cfg->getGOPSize() && isSTSA == true); ii++)
@@ -593,7 +510,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
                 }
             }
         }
-        arrangeLongtermPicturesInRPS(slice);
+        arrangeLongtermPicturesInRPS(slice, picList);
         TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
         refPicListModification->setRefPicListModificationFlagL0(false);
         refPicListModification->setRefPicListModificationFlagL1(false);
@@ -601,7 +518,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd)
         slice->setNumRefIdx(REF_PIC_LIST_1, min(m_cfg->getGOPEntry(gopIdx).m_numRefPicsActive, slice->getRPS()->getNumberOfPictures()));
 
         //  Set reference list
-        slice->setRefPicList(m_picList);
+        slice->setRefPicList(picList);
 
         //  Slice info. refinement
         if ((slice->getSliceType() == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
@@ -1865,7 +1782,7 @@ Void TEncGOP::xAttachSliceDataToNalUnit(TEncEntropy* entropyCoder, OutputNALUnit
 
 // Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
-Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice)
+Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice, TComList<TComPic*> picList)
 {
     TComReferencePictureSet *rps = slice->getRPS();
 
@@ -1919,9 +1836,9 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *slice)
     {
         // Check if MSB present flag should be enabled.
         // Check if the buffer contains any pictures that have the same LSB.
-        TComList<TComPic*>::iterator iterPic = m_picList.begin();
+        TComList<TComPic*>::iterator iterPic = picList.begin();
         TComPic* pic;
-        while (iterPic != m_picList.end())
+        while (iterPic != picList.end())
         {
             pic = *iterPic;
             if ((getLSB(pic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
