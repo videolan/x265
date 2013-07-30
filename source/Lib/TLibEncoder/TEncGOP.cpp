@@ -279,11 +279,25 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
     scalableNestingSEI.m_callerOwnsSEIs                = true;
 
     SEIDecodingUnitInfo decodingUnitInfoSEI;
+
     for (Int gopIdx = 0; gopIdx < gopSize; gopIdx++)
     {
-        UInt colDir = 1;
+        Int pocCurr = pocLast - numPicRecvd + m_cfg->getGOPEntry(gopIdx).m_POC;
+        if (pocLast == 0)
+        {
+            pocCurr = 0;
+        }
+        if (pocCurr >= m_cfg->getFramesToBeEncoded())
+        {
+            continue;
+        }
+        if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
+        {
+            m_lastIDR = pocCurr;
+        }
 
         // select colDir
+        UInt colDir = 1;
         Int closeLeft = 1, closeRight = -1;
         for (Int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
         {
@@ -328,21 +342,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             colDir = 0;
         }
 
-        // start encoding
-        Int pocCurr = pocLast - numPicRecvd + m_cfg->getGOPEntry(gopIdx).m_POC;
-        if (pocLast == 0)
-        {
-            pocCurr = 0;
-        }
-        if (pocCurr >= m_cfg->getFramesToBeEncoded())
-        {
-            continue;
-        }
-
-        if (getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_lastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
-        {
-            m_lastIDR = pocCurr;
-        }
         // start a new access unit: create an entry in the list of output access units
         accessUnitsOut.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsOut.back();
@@ -369,7 +368,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             return;
         }
 
-        //  Slice data initialization
+        // Slice data initialization
         slice = sliceEncoder->initEncSlice(pic, frameEncoder, gopSize <= 1, pocLast, pocCurr, gopIdx, &m_sps, &m_pps);
         slice->setLastIDR(m_lastIDR);
 
