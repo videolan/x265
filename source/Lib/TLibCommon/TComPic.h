@@ -62,7 +62,6 @@ private:
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    UInt                  m_tlayer;               // Temporal layer
     Bool                  m_bUsedByCurr;          // Used by current picture
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
@@ -75,10 +74,6 @@ public:
     Void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
 
     virtual Void  destroy();
-
-    UInt          getTLayer()               { return m_tlayer; }
-
-    Void          setTLayer(UInt tlayer)    { m_tlayer = tlayer; }
 
     Bool          getUsedByCurr()           { return m_bUsedByCurr; }
 

@@ -1404,8 +1404,6 @@ private:
     Double      m_chromaLambda;
 
     Bool        m_bEqualRef[2][MAX_NUM_REF][MAX_NUM_REF];
-    UInt        m_tlayer;
-    Bool        m_bTLayerSwitchingFlag;
 
     UInt        m_sliceCurEndCUAddr;
     Bool        m_nextSlice;
@@ -1620,15 +1618,9 @@ public:
 
     Void setList1IdxToList0Idx();
 
-    UInt getTLayer()                          { return m_tlayer; }
-
-    Void setTLayer(UInt tlayer)               { m_tlayer = tlayer; }
-
     Void setTLayerInfo(UInt tlayer);
     Void decodingMarking(TComList<TComPic*>& picList, Int gopSize, Int& maxRefPicNum);
     Void applyReferencePictureSet(TComList<TComPic*>& picList, TComReferencePictureSet *rps);
-    Bool isTemporalLayerSwitchingPoint(TComList<TComPic*>& picList);
-    Bool isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*>& picList);
     Int  checkThatAllRefPicsAreAvailable(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool printErrors, Int pocRandomAccess = 0);
     Void createExplicitReferencePictureSetFromReference(TComList<TComPic*>& picList, TComReferencePictureSet *rps, Bool isRAP);
 

@@ -205,7 +205,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
 
     if (slice->getSliceType() != I_SLICE)
     {
-        lambda *= m_cfg->getLambdaModifier(m_cfg->getGOPEntry(gopID).m_temporalId);
+        lambda *= m_cfg->getLambdaModifier(0); // temporal layer 0
     }
 
     // for RDO
@@ -284,14 +284,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     slice->setDepth(depth);
-
-    pic->setTLayer(m_cfg->getGOPEntry(gopID).m_temporalId);
-    if (sliceType == I_SLICE)
-    {
-        pic->setTLayer(0);
-    }
-    slice->setTLayer(pic->getTLayer());
-
     slice->setMaxNumMergeCand(m_cfg->getMaxNumMergeCand());
     xStoreWPparam(pps->getUseWP(), pps->getWPBiPred());
     return slice;

@@ -70,8 +70,6 @@ TComSlice::TComSlice()
     , m_colRefIdx(0)
     , m_lumaLambda(0.0)
     , m_chromaLambda(0.0)
-    , m_tlayer(0)
-    , m_bTLayerSwitchingFlag(false)
     , m_sliceCurEndCUAddr(0)
     , m_nextSlice(false)
     , m_sliceBits(0)
@@ -674,9 +672,6 @@ Void TComSlice::copySliceInfo(TComSlice *src)
         }
     }
 
-    m_tlayer = src->m_tlayer;
-    m_bTLayerSwitchingFlag = src->m_bTLayerSwitchingFlag;
-
     m_sliceCurEndCUAddr = src->m_sliceCurEndCUAddr;
     m_nextSlice = src->m_nextSlice;
     for (Int e = 0; e < 2; e++)
@@ -695,60 +690,6 @@ Void TComSlice::copySliceInfo(TComSlice *src)
     m_bLMvdL1Zero = src->m_bLMvdL1Zero;
     m_enableTMVPFlag = src->m_enableTMVPFlag;
     m_maxNumMergeCand = src->m_maxNumMergeCand;
-}
-
-/** Function for setting the slice's temporal layer ID and corresponding temporal_layer_switching_point_flag.
- * \param uiTLayer Temporal layer ID of the current slice
- * The decoder calls this function to set temporal_layer_switching_point_flag for each temporal layer based on
- * the SPS's temporal_id_nesting_flag and the parsed PPS.  Then, current slice's temporal layer ID and
- * temporal_layer_switching_point_flag is set accordingly.
- */
-Void TComSlice::setTLayerInfo(UInt layer)
-{
-    m_tlayer = layer;
-}
-
-/** Function for checking if this is a switching-point */
-Bool TComSlice::isTemporalLayerSwitchingPoint(TComList<TComPic*>& picList)
-{
-    TComPic* outPic;
-
-    // loop through all pictures in the reference picture buffer
-    TComList<TComPic*>::iterator iterPic = picList.begin();
-    while (iterPic != picList.end())
-    {
-        outPic = *(iterPic++);
-        if (outPic->getSlice()->isReferenced() && outPic->getPOC() != getPOC())
-        {
-            if (outPic->getTLayer() >= getTLayer())
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-/** Function for checking if this is a STSA candidate */
-Bool TComSlice::isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*>& picList)
-{
-    TComPic* outPic;
-
-    TComList<TComPic*>::iterator iterPic = picList.begin();
-    while (iterPic != picList.end())
-    {
-        outPic = *(iterPic++);
-        if (outPic->getSlice()->isReferenced() &&  (outPic->getUsedByCurr() == true) && outPic->getPOC() != getPOC())
-        {
-            if (outPic->getTLayer() >= getTLayer())
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
 }
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet */
@@ -811,18 +752,10 @@ Void TComSlice::applyReferencePictureSet(TComList<TComPic*>& picList, TComRefere
             outPic->setUsedByCurr(0);
             outPic->setIsLongTerm(0);
         }
-        //check that pictures of higher temporal layers are not used
-        assert(outPic->getSlice()->isReferenced() == 0 || outPic->getUsedByCurr() == 0 || outPic->getTLayer() <= this->getTLayer());
-        //check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
+        // check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
         if (this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
         {
-            assert(outPic->getSlice()->isReferenced() == 0 || outPic->getTLayer() < this->getTLayer());
-        }
-        //check that pictures marked as temporal layer non-reference pictures are not used for reference
-        if (outPic->getPicSym()->getSlice()->getPOC() != this->getPOC() && outPic->getTLayer() == this->getTLayer())
-        {
-            assert(outPic->getSlice()->isReferenced() == 0 || outPic->getUsedByCurr() == 0 ||
-                   outPic->getSlice()->getTemporalLayerNonReferenceFlag() == false);
+            assert(outPic->getSlice()->isReferenced() == 0);
         }
     }
 }

@@ -337,8 +337,9 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     pcSPS->setUseSAO(m_bUseSAO);
 
-    pcSPS->setMaxTLayers(m_maxTempLayer);
-    pcSPS->setTemporalIdNestingFlag((m_maxTempLayer == 1) ? true : false);
+    // TODO: hard-code these values in SPS code
+    pcSPS->setMaxTLayers(1);
+    pcSPS->setTemporalIdNestingFlag(true);
     for (i = 0; i < pcSPS->getMaxTLayers(); i++)
     {
         pcSPS->setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);

@@ -49,7 +49,6 @@ struct GOPEntry
     Double m_QPFactor;
     Int m_tcOffsetDiv2;
     Int m_betaOffsetDiv2;
-    Int m_temporalId;
     Bool m_refPic;
     Int m_numRefPicsActive;
     Char m_sliceType;
@@ -66,7 +65,6 @@ struct GOPEntry
         , m_QPFactor(0)
         , m_tcOffsetDiv2(0)
         , m_betaOffsetDiv2(0)
-        , m_temporalId(0)
         , m_refPic(false)
         , m_numRefPicsActive(0)
         , m_sliceType('P')
@@ -128,7 +126,6 @@ protected:
     Int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
                                                  // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
-    Int       m_maxTempLayer;                    ///< Max temporal layer
     Bool      m_useAMP;
     Bool      m_useRectInter;
 
@@ -298,10 +295,6 @@ public:
     Int       getMaxRefPicNum()                              { return m_maxRefPicNum;           }
 
     Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_maxRefPicNum = iMaxRefPicNum;  }
-
-    Bool      getMaxTempLayer()                            { return m_maxTempLayer > 0;        }
-
-    Void      setMaxTempLayer(Int maxTempLayer)            { m_maxTempLayer = maxTempLayer;    }
 
     //======== Transform =============
     Void      setQuadtreeTULog2MaxSize(UInt u)      { m_quadtreeTULog2MaxSize = u; }

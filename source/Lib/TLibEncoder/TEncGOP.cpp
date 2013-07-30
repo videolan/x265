@@ -441,64 +441,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
         slice->applyReferencePictureSet(picList, slice->getRPS());
 
-        if (slice->getTLayer() > 0)
-        {
-            if (slice->isTemporalLayerSwitchingPoint(picList) || m_sps.getTemporalIdNestingFlag())
-            {
-                if (slice->getTemporalLayerNonReferenceFlag())
-                {
-                    slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_N);
-                }
-                else
-                {
-                    slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R);
-                }
-            }
-            else if (slice->isStepwiseTemporalLayerSwitchingPointCandidate(picList))
-            {
-                Bool isSTSA = true;
-                for (Int ii = gopIdx + 1; (ii < m_cfg->getGOPSize() && isSTSA == true); ii++)
-                {
-                    Int lTid = m_cfg->getGOPEntry(ii).m_temporalId;
-                    if (lTid == slice->getTLayer())
-                    {
-                        TComReferencePictureSet* nRPS = m_sps.getRPSList()->getReferencePictureSet(ii);
-                        for (Int jj = 0; jj < nRPS->getNumberOfPictures(); jj++)
-                        {
-                            if (nRPS->getUsed(jj))
-                            {
-                                Int tPoc = m_cfg->getGOPEntry(ii).m_POC + nRPS->getDeltaPOC(jj);
-                                Int kk = 0;
-                                for (kk = 0; kk < m_cfg->getGOPSize(); kk++)
-                                {
-                                    if (m_cfg->getGOPEntry(kk).m_POC == tPoc)
-                                        break;
-                                }
-
-                                Int tTid = m_cfg->getGOPEntry(kk).m_temporalId;
-                                if (tTid >= slice->getTLayer())
-                                {
-                                    isSTSA = false;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (isSTSA == true)
-                {
-                    if (slice->getTemporalLayerNonReferenceFlag())
-                    {
-                        slice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
-                    }
-                    else
-                    {
-                        slice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
-                    }
-                }
-            }
-        }
         arrangeLongtermPicturesInRPS(slice, picList);
         TComRefPicListModification* refPicListModification = slice->getRefPicListModification();
         refPicListModification->setRefPicListModificationFlagL0(false);
@@ -680,7 +622,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 {
                     SOPcurrPOC += deltaPOC;
                     SOPDescriptionSEI.m_sopDescVclNaluType[i] = getNalUnitType(SOPcurrPOC, m_lastIDR);
-                    SOPDescriptionSEI.m_sopDescTemporalId[i] = m_cfg->getGOPEntry(j).m_temporalId;
+                    SOPDescriptionSEI.m_sopDescTemporalId[i] = 0;
                     SOPDescriptionSEI.m_sopDescStRpsIdx[i] = getReferencePictureSetIdxForSOP(SOPcurrPOC, j);
                     SOPDescriptionSEI.m_sopDescPocDelta[i] = deltaPOC;
 
@@ -901,8 +843,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         entropyCoder->setEntropyCoder(cavlcCoder, slice);
         entropyCoder->resetEntropy();
+
         /* start slice NALunit */
-        OutputNALUnit nalu(slice->getNalUnitType(), slice->getTLayer());
+        OutputNALUnit nalu(slice->getNalUnitType(), 0);
         Bool sliceSegment = (!slice->isNextSlice());
         if (!sliceSegment)
         {
@@ -1052,7 +995,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 calcChecksum(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
                 digestStr = digestToString(sei_recon_picture_digest.digest, 4);
             }
-            OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, slice->getTLayer());
+            OutputNALUnit onalu(NAL_UNIT_SUFFIX_SEI, 0);
 
             /* write the SEI messages */
             entropyCoder->setEntropyCoder(cavlcCoder, slice);
@@ -1071,7 +1014,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             }
             else
             {
-                m_tl0Idx = (m_tl0Idx + (slice->getTLayer() ? 0 : 1)) & 0xFF;
+                m_tl0Idx = m_tl0Idx & 0xFF;
             }
             sei_temporal_level0_index.tl0Idx = m_tl0Idx;
             sei_temporal_level0_index.rapIdx = m_rapIdx;
@@ -1182,7 +1125,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             if (m_cfg->getPictureTimingSEIEnabled())
             {
                 {
-                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, slice->getTLayer());
+                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
                     entropyCoder->setEntropyCoder(cavlcCoder, slice);
                     m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, slice->getSPS());
                     writeRBSPTrailingBits(onalu.m_Bitstream);
@@ -1200,7 +1143,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 }
                 if (m_cfg->getScalableNestingSEIEnabled()) // put picture timing SEI into scalable nesting SEI
                 {
-                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, slice->getTLayer());
+                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
                     entropyCoder->setEntropyCoder(cavlcCoder, slice);
                     scalableNestingSEI.m_nestedSEIs.clear();
                     scalableNestingSEI.m_nestedSEIs.push_back(&pictureTimingSEI);
@@ -1224,7 +1167,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 entropyCoder->setEntropyCoder(cavlcCoder, slice);
                 for (Int i = 0; i < (pictureTimingSEI.m_numDecodingUnitsMinus1 + 1); i++)
                 {
-                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, slice->getTLayer());
+                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
 
                     SEIDecodingUnitInfo tempSEI;
                     tempSEI.m_decodingUnitIdx = i;
@@ -1593,9 +1536,8 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
     if (!slice->isReferenced())
         c += 32; // lower case if unreferenced
 
-    printf("\rPOC %4d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
+    printf("\rPOC %4d ( %c-SLICE, nQP %d QP %d ) %10d bits",
            slice->getPOC(),
-           slice->getTLayer(),
            c,
            slice->getSliceQpBase(),
            slice->getSliceQp(),
