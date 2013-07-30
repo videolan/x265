@@ -70,8 +70,6 @@ private:
 
     TEncTop*                m_top;
     TEncCfg*                m_cfg;
-    Int                     m_startPOC;
-    Int                     m_batchSize;
 
     //  Data
     UInt                    m_numLongTermRefPicSPS;

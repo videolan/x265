@@ -261,9 +261,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
     Bool bPictureTimingSEIPresentInAU = false;
     Bool bNestedBufferingPeriodSEIPresentInAU = false;
 
-    m_batchSize = numPicRecvd;
-    m_startPOC = pocLast;
-
     Int gopSize = pocLast == 0 ? 1 : m_cfg->getGOPSize();
     Int numPicCoded = 0;
     Bool writeSOP = m_cfg->getSOPDescriptionSEIEnabled();
