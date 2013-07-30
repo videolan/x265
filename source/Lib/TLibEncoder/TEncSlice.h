@@ -45,7 +45,6 @@
 #include "TLibCommon/TComPicYuv.h"
 #include "TEncCu.h"
 #include "WeightPredAnalysis.h"
-#include "TEncRateCtrl.h"
 
 //! \ingroup TLibEncoder
 //! \{

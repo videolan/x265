@@ -209,15 +209,6 @@ protected:
     Int       m_TMVPModeId;
     Int       m_signHideFlag;
 
-    // DEATH ROW
-    Bool      m_RCEnableRateControl;
-    Int       m_RCTargetBitrate;
-    Bool      m_RCKeepHierarchicalBit;
-    Bool      m_RCLCULevelRC;
-    Bool      m_RCUseLCUSeparateModel;
-    Int       m_RCInitialQP;
-    Bool      m_RCForceIntraQP;
-
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
     TComVPS   m_vps;
@@ -577,33 +568,6 @@ public:
 
     Int       getSignHideFlag()                    { return m_signHideFlag; }
 
-    Bool      getUseRateCtrl()              { return m_RCEnableRateControl;   }
-
-    Void      setUseRateCtrl(Bool b)      { m_RCEnableRateControl = b;      }
-
-    Int       getTargetBitrate()              { return m_RCTargetBitrate;       }
-
-    Void      setTargetBitrate(Int bitrate) { m_RCTargetBitrate  = bitrate;   }
-
-    Bool      getKeepHierBit()              { return m_RCKeepHierarchicalBit; }
-
-    Void      setKeepHierBit(Bool b)      { m_RCKeepHierarchicalBit = b;    }
-
-    Bool      getLCULevelRC()              { return m_RCLCULevelRC; }
-
-    Void      setLCULevelRC(Bool b)      { m_RCLCULevelRC = b; }
-
-    Bool      getUseLCUSeparateModel()              { return m_RCUseLCUSeparateModel; }
-
-    Void      setUseLCUSeparateModel(Bool b)      { m_RCUseLCUSeparateModel = b;    }
-
-    Int       getInitialQP()              { return m_RCInitialQP;           }
-
-    Void      setInitialQP(Int QP)      { m_RCInitialQP = QP;             }
-
-    Bool      getForceIntraQP()              { return m_RCForceIntraQP;        }
-
-    Void      setForceIntraQP(Bool b)      { m_RCForceIntraQP = b;           }
 
     Bool      getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
 
@@ -617,11 +581,11 @@ public:
 
     TComVPS *getVPS() { return &m_vps; }
 
-    Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b;    }
+    Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b; }
 
-    Bool      getUseRecalculateQPAccordingToLambda()         { return m_recalculateQPAccordingToLambda; }
+    Bool      getUseRecalculateQPAccordingToLambda() { return m_recalculateQPAccordingToLambda; }
 
-    Void      setUseStrongIntraSmoothing(Bool b) { m_useStrongIntraSmoothing = b;    }
+    Void      setUseStrongIntraSmoothing(Bool b) { m_useStrongIntraSmoothing = b; }
 
     Bool      getUseStrongIntraSmoothing()         { return m_useStrongIntraSmoothing; }
 

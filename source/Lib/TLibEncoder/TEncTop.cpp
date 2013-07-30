@@ -88,12 +88,6 @@ Void TEncTop::create()
     {
         m_GOPEncoder->create();
     }
-
-    if (m_RCEnableRateControl)
-    {
-        m_cRateCtrl.init(m_framesToBeEncoded, m_RCTargetBitrate, m_frameRate, m_gopSize, m_sourceWidth, m_sourceHeight,
-                         g_maxCUWidth, g_maxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_gopList);
-    }
 }
 
 Void TEncTop::destroy()
@@ -104,8 +98,6 @@ Void TEncTop::destroy()
         m_GOPEncoder->destroy();
         delete [] m_GOPEncoder;
     }
-
-    m_cRateCtrl.destroy();
 
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     Int size = Int(m_picList.size());
@@ -432,13 +424,6 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     else
     {
         pcPPS->setUseDQP(false);
-        pcPPS->setMaxCuDQPDepth(0);
-        pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
-    }
-
-    if (m_RCEnableRateControl)
-    {
-        pcPPS->setUseDQP(true);
         pcPPS->setMaxCuDQPDepth(0);
         pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }

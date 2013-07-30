@@ -328,14 +328,6 @@ void Encoder::configure(x265_param_t *param)
     setPCMInputBitDepthFlag(1);
     setPCMFilterDisableFlag(0);
 
-    setUseRateCtrl(0);
-    setTargetBitrate(0);
-    setKeepHierBit(0);
-    setLCULevelRC(0);
-    setUseLCUSeparateModel(0);
-    setInitialQP(0);
-    setForceIntraQP(0);
-
     setUseLossless(0); // x264 configures this via --qp=0
 
     setTransquantBypassEnableFlag(0);

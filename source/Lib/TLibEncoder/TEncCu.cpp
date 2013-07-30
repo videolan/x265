@@ -423,7 +423,6 @@ Void TEncCu::destroy()
 Void TEncCu::init(TEncTop* top)
 {
     m_cfg         = top;
-    m_rateControl = top->getRateCtrl();
 }
 
 // ====================================================================================================================
@@ -593,7 +592,7 @@ Void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UI
     UInt rpelx = lpelx + outBestCU->getWidth(0)  - 1;
     UInt tpelx = outBestCU->getCUPelY();
     UInt bpely = tpelx + outBestCU->getHeight(0) - 1;
-    Int qp = m_cfg->getUseRateCtrl() ? m_rateControl->getRCQP() : outTempCU->getQP(0);
+    Int qp = outTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
@@ -807,7 +806,7 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
     UInt tpely = outBestCU->getCUPelY();
     UInt bpely = tpely + outBestCU->getHeight(0) - 1;
 
-    Int qp = m_cfg->getUseRateCtrl() ? m_rateControl->getRCQP() : outTempCU->getQP(0);
+    Int qp = outTempCU->getQP(0);
 
     // If slice start or slice end is within this cu...
     TComSlice* slice = outTempCU->getPic()->getSlice();
@@ -1570,17 +1569,6 @@ Void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     m_tmpRecoYuv[depth]->clear();
     m_tmpResiYuv[depth]->clear();
     m_search->predInterSearch(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], bUseMRG);
-
-    if (m_cfg->getUseRateCtrl() && m_cfg->getLCULevelRC() && partSize == SIZE_2Nx2N && depth <= m_addSADDepth)
-    {
-        /* TODO: this needs to be tested with RC enabled, currently RC enabled x265 is not working */
-        UInt partEnum = PartitionFromSizes(outTempCU->getWidth(0), outTempCU->getHeight(0));
-        UInt SAD = primitives.sad[partEnum](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
-                                            m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
-        m_temporalSAD = (Int)SAD;
-        x265_emms();
-    }
-
     m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false);
 
     xCheckDQP(outTempCU);

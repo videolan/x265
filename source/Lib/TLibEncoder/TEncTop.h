@@ -44,7 +44,6 @@
 #include "TLibCommon/AccessUnit.h"
 #include "TEncCfg.h"
 #include "TEncGOP.h"
-#include "TEncRateCtrl.h"
 #include "TEncAnalyze.h"
 #include "threading.h"
 #include "threadpool.h"
@@ -71,8 +70,6 @@ private:
     // quality control
     TComScalingList         m_scalingList;      ///< quantization matrix information
 
-    TEncRateCtrl            m_cRateCtrl;        ///< Rate control class
-
     TEncGOP*                m_GOPEncoder;
     x265::ThreadPool*       m_threadPool;
 
@@ -96,8 +93,6 @@ public:
     Void init();
 
     TComScalingList* getScalingList()   { return &m_scalingList; }
-
-    TEncRateCtrl* getRateCtrl()      { return &m_cRateCtrl; }
 
     void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 

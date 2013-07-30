@@ -51,7 +51,6 @@
 #include "SEIwrite.h"
 
 #include "TEncAnalyze.h"
-#include "TEncRateCtrl.h"
 #include "threading.h"
 #include "frameencoder.h"
 
@@ -71,7 +70,6 @@ private:
 
     TEncTop*                m_top;
     TEncCfg*                m_cfg;
-    TEncRateCtrl*           m_rateControl;
     Int                     m_startPOC;
     Int                     m_batchSize;
 

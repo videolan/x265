@@ -113,7 +113,6 @@ TEncGOP::TEncGOP()
     m_cfg           = NULL;
     m_frameEncoders = NULL;
     m_top           = NULL;
-    m_rateControl   = NULL;
     m_lastIDR       = 0;
     m_totalCoded    = 0;
     m_bRefreshPending      = 0;
@@ -145,7 +144,6 @@ Void TEncGOP::init(TEncTop* top)
 {
     m_top = top;
     m_cfg = top;
-    m_rateControl = top->getRateCtrl();
 
     // initialize SPS
     top->xInitSPS(&m_sps);
@@ -180,7 +178,7 @@ int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
         m_sps.getVuiParameters()->getHrdParameters()->setNumDU(0);
-        m_sps.setHrdParameters(m_cfg->getFrameRate(), 0, m_cfg->getTargetBitrate(), m_cfg->getIntraPeriod() > 0);
+        m_sps.setHrdParameters(m_cfg->getFrameRate(), 0, 1000 /* m_cfg->getTargetBitrate() */, m_cfg->getIntraPeriod() > 0);
     }
     if (m_cfg->getBufferingPeriodSEIEnabled() || m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
@@ -265,11 +263,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
     m_batchSize = numPicRecvd;
     m_startPOC = pocLast;
-
-    if (m_cfg->getUseRateCtrl())
-    {
-        m_rateControl->initRCGOP(numPicRecvd);
-    }
 
     Int gopSize = pocLast == 0 ? 1 : m_cfg->getGOPSize();
     Int numPicCoded = 0;
@@ -619,63 +612,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
         pic->getSlice()->setMvdL1ZeroFlag(slice->getMvdL1ZeroFlag());
 
-        Double lambda            = 0.0;
-        Int actualHeadBits       = 0;
-        Int actualTotalBits      = 0;
-        Int estimatedBits        = 0;
-        Int tmpBitsBeforeWriting = 0;
-
-        if (m_cfg->getUseRateCtrl())
-        {
-            Int frameLevel = m_rateControl->getRCSeq()->getGOPID2Level(gopIdx);
-            if (pic->getSlice()->getSliceType() == I_SLICE)
-            {
-                frameLevel = 0;
-            }
-            m_rateControl->initRCPic(frameLevel);
-            estimatedBits = m_rateControl->getRCPic()->getTargetBits();
-
-            Int sliceQP = m_cfg->getInitialQP();
-            if ((slice->getPOC() == 0 && m_cfg->getInitialQP() > 0) || (frameLevel == 0 && m_cfg->getForceIntraQP())) // QP is specified
-            {
-                Int    NumberBFrames = (m_cfg->getGOPSize() - 1);
-                Double scale         = 1.0 - Clip3(0.0, 0.5, 0.05 * (Double)NumberBFrames);
-                Double qpFactor      = 0.57 * scale;
-                Int    SHIFT_QP      = 12;
-                Int    bitdepth_luma_qp_scale = 0;
-                Double qp_temp = (Double)sliceQP + bitdepth_luma_qp_scale - SHIFT_QP;
-                lambda = qpFactor * pow(2.0, qp_temp / 3.0);
-            }
-            else if (frameLevel == 0) // intra case, but use the model
-            {
-                if (m_cfg->getIntraPeriod() != 1) // do not refine allocated bits for all intra case
-                {
-                    Int bits = m_rateControl->getRCSeq()->getLeftAverageBits();
-                    bits = m_rateControl->getRCSeq()->getRefineBitsForIntra(bits);
-                    if (bits < 200)
-                    {
-                        bits = 200;
-                    }
-                    m_rateControl->getRCPic()->setTargetBits(bits);
-                }
-
-                list<TEncRCPic*> listPreviousPicture = m_rateControl->getPicList();
-                lambda  = m_rateControl->getRCPic()->estimatePicLambda(listPreviousPicture);
-                sliceQP = m_rateControl->getRCPic()->estimatePicQP(lambda, listPreviousPicture);
-            }
-            else // normal case
-            {
-                list<TEncRCPic*> listPreviousPicture = m_rateControl->getPicList();
-                lambda  = m_rateControl->getRCPic()->estimatePicLambda(listPreviousPicture);
-                sliceQP = m_rateControl->getRCPic()->estimatePicQP(lambda, listPreviousPicture);
-            }
-
-            sliceQP = Clip3(-m_sps.getQpBDOffsetY(), MAX_QP, sliceQP);
-            m_rateControl->getRCPic()->setPicEstQP(sliceQP);
-
-            sliceEncoder->resetQP(pic, frameEncoder, sliceQP, lambda);
-        }
-
         UInt internalAddress = pic->getNumPartInCU() - 4;
         UInt externalAddress = pic->getPicSym()->getNumberOfCUsInFrame() - 1;
         UInt posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[internalAddress]];
@@ -977,9 +913,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             oneBitstreamPerSliceLength = 0; // start of a new slice
         }
         entropyCoder->setBitstream(&nalu.m_Bitstream);
-        tmpBitsBeforeWriting = entropyCoder->getNumberOfWrittenBits();
         entropyCoder->encodeSliceHeader(slice);
-        actualHeadBits += (entropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting);
 
         // is it needed?
         if (!sliceSegment)
@@ -1064,7 +998,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
         xAttachSliceDataToNalUnit(entropyCoder, nalu, bitstreamRedirect);
         accessUnit.push_back(new NALUnitEBSP(nalu));
-        actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
         oneBitstreamPerSliceLength += nalu.m_Bitstream.getNumberOfWrittenBits(); // length of bitstream after byte-alignment
 
         if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
@@ -1176,28 +1109,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 fprintf(stderr, " [Checksum:%s]", digestStr);
             }
         }
-        if (m_cfg->getUseRateCtrl())
-        {
-            Double effectivePercentage = m_rateControl->getRCPic()->getEffectivePercentage();
-            Double avgQP     = m_rateControl->getRCPic()->calAverageQP();
-            Double avgLambda = m_rateControl->getRCPic()->calAverageLambda();
-            if (avgLambda < 0.0)
-            {
-                avgLambda = lambda;
-            }
-            m_rateControl->getRCPic()->updateAfterPicture(actualHeadBits, actualTotalBits, avgQP, avgLambda, effectivePercentage);
-            m_rateControl->getRCPic()->addToPictureLsit(m_rateControl->getPicList());
-
-            m_rateControl->getRCSeq()->updateAfterPic(actualTotalBits);
-            if (slice->getSliceType() != I_SLICE)
-            {
-                m_rateControl->getRCGOP()->updateAfterPicture(actualTotalBits);
-            }
-            else // for intra picture, the estimated bits are used to update the current status in the GOP
-            {
-                m_rateControl->getRCGOP()->updateAfterPicture(estimatedBits);
-            }
-        }
 
         if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
             (m_sps.getVuiParametersPresentFlag()) &&
@@ -1230,10 +1141,11 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                     pCRD[numDU - 1] = 0; /* by definition */
                     UInt tmp = 0;
                     UInt accum = 0;
+                    int bitrate = 1000;
 
                     for (i = (numDU - 2); i >= 0; i--)
                     {
-                        tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_cfg->getTargetBitrate()));
+                        tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / bitrate);
                         if ((UInt)tmp64 > maxDiff)
                         {
                             tmp++;
@@ -1246,7 +1158,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                     for (i = (numDU - 2); i >= 0; i--)
                     {
                         flag = 0;
-                        tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / (m_cfg->getTargetBitrate()));
+                        tmp64 = (((accumBitsDU[numDU - 1] - accumBitsDU[i]) * (vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick()) * (hrd->getTickDivisorMinus2() + 2)) / bitrate);
 
                         if ((UInt)tmp64 > maxDiff)
                         {
@@ -1388,11 +1300,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
     if (accumBitsDU != NULL) delete [] accumBitsDU;
     if (accumNalsDU != NULL) delete [] accumNalsDU;
-
-    if (m_cfg->getUseRateCtrl())
-    {
-        m_rateControl->destroyRCGOP();
-    }
 
     assert(numPicCoded == numPicRecvd);
 }

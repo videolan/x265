@@ -48,7 +48,6 @@
 
 #include "TEncEntropy.h"
 #include "TEncSearch.h"
-#include "TEncRateCtrl.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -101,7 +100,6 @@ private:
     // SBAC RD
     TEncSbac***  m_rdSbacCoders;
     TEncSbac*    m_rdGoOnSbacCoder;
-    TEncRateCtrl* m_rateControl;
 
     UInt         m_LCUPredictionSAD;
     Int          m_addSADDepth;
