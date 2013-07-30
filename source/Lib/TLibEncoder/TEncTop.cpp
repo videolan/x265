@@ -107,9 +107,6 @@ Void TEncTop::destroy()
 
     m_cRateCtrl.destroy();
 
-    if (m_threadPool)
-        m_threadPool->release();
-
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     Int size = Int(m_picList.size());
     for (Int i = 0; i < size; i++)
@@ -123,6 +120,9 @@ Void TEncTop::destroy()
 
     if (m_recon)
         delete [] m_recon;
+
+    if (m_threadPool)
+        m_threadPool->release();
 }
 
 Void TEncTop::init()
