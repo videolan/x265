@@ -30,7 +30,6 @@
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(disable: 4100) // unreferenced formal parameter
 #endif
 
 namespace {
@@ -488,17 +487,21 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride, short *midF, sh
     extendPicCompBorder(pDstC, pDstStride, block_width, block_height, marginX, marginY);
 }
 
-void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int scale, int round, int shift, int offset)
 {
+    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    shift = shift + shiftNum;
+    round = shift ? (1 << (shift - 1)) : 0;
+
     int x, y;
     for (y = height - 1; y >= 0; y--)
     {
         for (x = width - 1; x >= 0; )
         {
             // note: luma min width is 4
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((scale * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((scale * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x--;
         }
 
@@ -509,18 +512,20 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
 
 // filterHorizontal, Multiplane, Weighted
 void filterHorizontalWeighted(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                              pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
-                              int marginX, int marginY, int w, int roundw, int shiftw, int offsetw)
+                              pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
+                              int marginX, int marginY, int scale, int round, int shift, int offset)
 {
     filterConvertPelToShort(src, srcStride, midF, midStride, block_width, block_height);
     filterHorizontal_p_s<8>(src, srcStride, midB, midStride, block_width, block_height, g_lumaFilter[2]);
     filterHorizontal_p_s<8>(src, srcStride, midA, midStride, block_width, block_height, g_lumaFilter[1]);
     filterHorizontal_p_s<8>(src, srcStride, midC, midStride, block_width, block_height, g_lumaFilter[3]);
 
-    weightUnidir(midA, dstA, midStride, dstStride, block_width, block_height, w, roundw, shiftw, offsetw);
-    weightUnidir(midB, dstB, midStride, dstStride, block_width, block_height, w, roundw, shiftw, offsetw);
-    weightUnidir(midC, dstC, midStride, dstStride, block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(midF, dstF, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
+    weightUnidir(midA, dstA, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
+    weightUnidir(midB, dstB, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
+    weightUnidir(midC, dstC, midStride, dstStride, block_width, block_height, scale, round, shift, offset);
 
+    extendPicCompBorder(dstF, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstA, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstB, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstC, dstStride, block_width, block_height, marginX, marginY);
@@ -529,7 +534,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride, short *midF, short* mid
 // filterVertical, Multiplane, Weighted
 void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI, pixel *dstP,
                             int dstStride, int block_width, int block_height, int marginX, int marginY,
-                            int w, int roundw, int shiftw, int offsetw)
+                            int scale, int round, int shift, int offset)
 {
     short* intI, *intE, *intP;    
     int intStride = block_width;
@@ -542,9 +547,9 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
     filterVertical_s_s<8>(src, srcStride, intE, intStride, block_width, block_height, g_lumaFilter[1]);
     filterVertical_s_s<8>(src, srcStride, intP, intStride, block_width, block_height, g_lumaFilter[3]);
 
-    weightUnidir(intI, dstI, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
-    weightUnidir(intE, dstE, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
-    weightUnidir(intP, dstP, intStride, dstStride,block_width, block_height, w, roundw, shiftw, offsetw);
+    weightUnidir(intI, dstI, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
+    weightUnidir(intE, dstE, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
+    weightUnidir(intP, dstP, intStride, dstStride,block_width, block_height, scale, round, shift, offset);
 
     extendPicCompBorder(dstE, dstStride, block_width, block_height, marginX, marginY);
     extendPicCompBorder(dstI, dstStride, block_width, block_height, marginX, marginY);
@@ -553,15 +558,8 @@ void filterVerticalWeighted(short *src, int srcStride, pixel *dstE, pixel *dstI,
     X265_FREE(intI);
     X265_FREE(intE);
     X265_FREE(intP);
-
 }
-
 }
-
-#if _MSC_VER
-#pragma warning(default: 4127) // conditional expression is constant, typical for templated functions
-#pragma warning(default: 4100)
-#endif
 
 namespace x265 {
 // x265 private namespace

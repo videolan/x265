@@ -223,7 +223,7 @@ typedef void (*filterVwghtd_t)(short *src, int srcStride, pixel *dstE, pixel *ds
 typedef void (*filterHmulti_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
                                pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height, int marginX, int marginY);
 typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* midA, short* midB, short* midC, int midStride,
-                               pixel *pDstA, pixel *pDstB, pixel *pDstC, int pDstStride, int block_width, int block_height,
+                               pixel *dstF, pixel *dstA, pixel *dstB, pixel *dstC, int dstStride, int block_width, int block_height,
                                int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
 typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
