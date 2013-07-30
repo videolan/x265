@@ -38,7 +38,7 @@ using namespace x265;
 #error "Must define atomic operations for this compiler"
 #endif
 
-MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
+MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingParam *w)
     : JobProvider(pool)
 {
     m_reconPic = pic;
@@ -53,20 +53,44 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool)
     m_filterHeight = height + s_tmpMarginY * 2;
     m_next = NULL;
 
-    /* directly reference the pre-extended integer pel plane */
-    m_lumaPlane[0][0] = pic->m_picBufY + m_startPad;
-
     /* Create buffers for Hpel/Qpel Planes */
     size_t padwidth = width + pic->m_lumaMarginX * 2;
     size_t padheight = height + pic->m_lumaMarginY * 2;
-    for (int i = 0; i < 4; i++)
+
+    if (w) 
     {
-        for (int j = 0; j < 4; j++)
+        for (int i = 0; i < 4; i++)
         {
-            if (i == 0 && j == 0)
-                continue;
-            m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+            for (int j = 0; j < 4; j++)
+            {
+                m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+            }
         }
+
+        // Initialization of weight parameters
+        m_weight = w->inputWeight;
+        m_offset = w->inputOffset * (1 << (g_bitDepth - 8));
+        m_shift  = w->log2WeightDenom;
+        m_round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
+        m_isWeighted = true;
+    }
+    else
+    {
+        /* directly reference the pre-extended integer pel plane */
+        m_lumaPlane[0][0] = pic->m_picBufY + m_startPad;
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (i == 0 && j == 0)
+                    continue;
+                m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
+            }
+        }
+
+        m_isWeighted = false;
+        m_weight = 0;
     }
 }
 
@@ -78,7 +102,7 @@ MotionReference::~MotionReference()
     {
         for (int j = 0; j < 4; j++)
         {
-            if (i == 0 && j == 0)
+            if (i == 0 && j == 0 && !m_isWeighted)
                 continue;
             if (m_lumaPlane[i][j])
             {
@@ -105,7 +129,23 @@ void MotionReference::generateReferencePlanes()
         /* This one function call generates the four intermediate (short) planes for each
          * QPEL offset in the horizontal direction.  At the same time it outputs the three
          * Y=0 output (padded pixel) planes since they require no vertical interpolation */
-        primitives.filterHmulti(srcPtr, m_lumaStride,                            // source buffer
+        if (m_isWeighted)
+        {
+            primitives.filterHwghtd(srcPtr, m_lumaStride,                            // source buffer
+                                    intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
+                                    m_lumaPlane[0][0] + bufOffset,
+                                    m_lumaPlane[1][0] + bufOffset,
+                                    m_lumaPlane[2][0] + bufOffset,
+                                    m_lumaPlane[3][0] + bufOffset, m_lumaStride,     // 3 (x=n, y=0) output buffers (no V interp)
+                                    m_filterWidth + (2 * s_intMarginX),              // filter dimensions with margins
+                                    m_filterHeight + (2 * s_intMarginY),
+                                    m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
+                                    m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY,
+                                    m_weight, m_round, m_shift, m_offset);
+       }
+       else
+       {
+            primitives.filterHmulti(srcPtr, m_lumaStride,                        // source buffer
                                 intPtrF, intPtrA, intPtrB, intPtrC, m_intStride, // 4 intermediate HPEL buffers
                                 m_lumaPlane[1][0] + bufOffset,
                                 m_lumaPlane[2][0] + bufOffset,
@@ -114,6 +154,7 @@ void MotionReference::generateReferencePlanes()
                                 m_filterHeight + (2 * s_intMarginY),
                                 m_reconPic->m_lumaMarginX - s_tmpMarginX - s_intMarginX, // pixel extension margins
                                 m_reconPic->m_lumaMarginY - s_tmpMarginY - s_intMarginY);
+        }
     }
 
     if (!m_pool)
@@ -173,5 +214,15 @@ void MotionReference::generateReferencePlane(int x)
     pixel *dstPtr2 = m_lumaPlane[x][2] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
     pixel *dstPtr3 = m_lumaPlane[x][3] - s_tmpMarginY * m_lumaStride - s_tmpMarginX;
 
-    primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight, m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
+    if (m_isWeighted)
+    {
+        primitives.filterVwghtd(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight,
+                                m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY,
+                                m_weight, m_round, m_shift, m_offset);
+    }
+    else
+    {
+        primitives.filterVmulti(intPtr, m_intStride, dstPtr1, dstPtr2, dstPtr3, m_lumaStride, m_filterWidth, m_filterHeight,
+                                m_reconPic->m_lumaMarginX - s_tmpMarginX, m_reconPic->m_lumaMarginY - s_tmpMarginY);
+    }
 }

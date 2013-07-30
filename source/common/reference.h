@@ -27,6 +27,7 @@
 #include "primitives.h"
 #include "threading.h"
 #include "threadpool.h"
+#include "TLibCommon/TComSlice.h"
 
 class TComPicYuv;
 
@@ -37,7 +38,7 @@ class MotionReference : public JobProvider
 {
 public:
 
-    MotionReference(TComPicYuv*, ThreadPool *);
+    MotionReference(TComPicYuv*, ThreadPool *, wpScalingParam* w = NULL);
 
     ~MotionReference();
 
@@ -46,7 +47,9 @@ public:
     /* indexed by [hpelx|qpelx][hpely|qpely] */
     pixel* m_lumaPlane[4][4];
 
-    int m_lumaStride;
+    int  m_lumaStride;
+    int  m_weight;
+    bool m_isWeighted;
 
     MotionReference *m_next;
 
@@ -74,6 +77,10 @@ protected:
     int         m_filterWidth;
     int         m_filterHeight;
     short      *m_intermediateValues;
+
+    int         m_offset;
+    int         m_shift;
+    int         m_round;
 
     MotionReference& operator =(const MotionReference&);
 };
