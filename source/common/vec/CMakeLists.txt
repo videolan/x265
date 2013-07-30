@@ -52,14 +52,14 @@ if(GCC)
     set_source_files_properties(
         sse42.cpp blockcopy-sse42.cpp pixel-sse42.cpp ipfilter-sse42.cpp dct-sse42.cpp intra-sse42.cpp
         PROPERTIES COMPILE_FLAGS "-msse4.2")
-	if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
+    if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.6)
         set(PRIMITIVES ${PRIMITIVES}
             blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp)
         set_source_files_properties(
             blockcopy-avx.cpp pixel-avx.cpp ipfilter-avx.cpp intra-avx.cpp dct-avx.cpp avx.cpp
             PROPERTIES COMPILE_FLAGS "-mavx")
     endif()
-	if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
+    if("$ENV{CXX}" STREQUAL "icpc" OR NOT GCC_VERSION VERSION_LESS 4.7)
         set(PRIMITIVES ${PRIMITIVES}
             blockcopy-avx2.cpp pixel-avx2.cpp ipfilter-avx2.cpp intra-avx2.cpp dct-avx2.cpp avx2.cpp)
         set_source_files_properties(

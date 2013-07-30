@@ -38,12 +38,12 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
     set(GCC 1)
     add_definitions(-Wall -Wextra -Werror -Wshadow -mstackrealign)
-	if(NOT GCC_VERSION VERSION_LESS 4.7)
-		# this is necessary to avoid name conflicts in vector class
-		# library.  if vector classes are removed/replaced this can
-		# likely be removed as well.
+    if(NOT GCC_VERSION VERSION_LESS 4.7)
+        # this is necessary to avoid name conflicts in vector class
+        # library.  if vector classes are removed/replaced this can
+        # likely be removed as well.
         add_definitions(-fabi-version=6)
-	endif()
+    endif()
 endif()
 
 option(HIGH_BIT_DEPTH "Use 16bit pixels internally" OFF)
