@@ -154,21 +154,6 @@ Void TEncGOP::init(TEncTop* top)
     top->xInitPPS(&m_pps);
     top->xInitRPS(&m_sps);
 
-    int numRows = (m_cfg->getSourceHeight() + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
-    m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
-    m_frameEncoders->init(top, numRows);
-}
-
-int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
-{
-    x265::FrameEncoder* frameEncoder = &m_frameEncoders[0];
-    TEncEntropy*        entropyCoder = frameEncoder->getEntropyCoder(0);
-    TEncCavlc*          cavlcCoder   = frameEncoder->getCavlcCoder();
-
-    accessUnits.push_back(AccessUnit());
-    AccessUnit& accessUnit = accessUnits.back();
-
-    // TODO: this code should probably be in init()
     m_sps.setNumLongTermRefPicSPS(m_numLongTermRefPicSPS);
     for (Int k = 0; k < m_numLongTermRefPicSPS; k++)
     {
@@ -184,10 +169,25 @@ int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
     {
         m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
     }
+
     // TODO: these are hacks
-    m_sps.setScalingListPresentFlag(false);
     m_sps.setTMVPFlagsPresent(1);
+    m_sps.setScalingListPresentFlag(false);
     m_pps.setScalingListPresentFlag(false);
+
+    int numRows = (m_cfg->getSourceHeight() + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
+    m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
+    m_frameEncoders->init(top, numRows);
+}
+
+int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
+{
+    x265::FrameEncoder* frameEncoder = &m_frameEncoders[0];
+    TEncEntropy*        entropyCoder = frameEncoder->getEntropyCoder(0);
+    TEncCavlc*          cavlcCoder   = frameEncoder->getCavlcCoder();
+
+    accessUnits.push_back(AccessUnit());
+    AccessUnit& accessUnit = accessUnits.back();
 
     entropyCoder->setEntropyCoder(cavlcCoder, NULL);
 
