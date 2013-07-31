@@ -128,9 +128,6 @@ Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
     case SEI::DISPLAY_ORIENTATION:
         xWriteSEIDisplayOrientation(*static_cast<const SEIDisplayOrientation*>(&sei));
         break;
-    case SEI::TEMPORAL_LEVEL0_INDEX:
-        xWriteSEITemporalLevel0Index(*static_cast<const SEITemporalLevel0Index*>(&sei));
-        break;
     case SEI::REGION_REFRESH_INFO:
         xWriteSEIGradualDecodingRefreshInfo(*static_cast<const SEIGradualDecodingRefreshInfo*>(&sei));
         break;
@@ -140,6 +137,7 @@ Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
     case SEI::TONE_MAPPING_INFO:
     case SEI::SCALABLE_NESTING:
     case SEI::FRAME_PACKING:
+    case SEI::TEMPORAL_LEVEL0_INDEX:
     default:
         assert(!"Unhandled SEI message");
     }
@@ -395,13 +393,6 @@ Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
         WRITE_CODE(sei.anticlockwiseRotation, 16, "anticlockwise_rotation");
         WRITE_FLAG(sei.persistenceFlag,           "display_orientation_persistence_flag");
     }
-    xWriteByteAlign();
-}
-
-Void SEIWriter::xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei)
-{
-    WRITE_CODE(sei.tl0Idx, 8, "tl0_idx");
-    WRITE_CODE(sei.rapIdx, 8, "rap_idx");
     xWriteByteAlign();
 }
 

@@ -283,7 +283,6 @@ void Encoder::configure(x265_param_t *param)
     setBufferingPeriodSEIEnabled(0);
     setPictureTimingSEIEnabled(0);
     setDisplayOrientationSEIAngle(0);
-    setTemporalLevel0IndexSEIEnabled(0);
     setGradualDecodingRefreshInfoEnabled(0);
     setDecodingUnitInfoSEIEnabled(0);
     setSOPDescriptionSEIEnabled(0);

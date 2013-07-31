@@ -190,7 +190,6 @@ protected:
     Int       m_pictureTimingSEIEnabled;
     Int       m_recoveryPointSEIEnabled;
     Int       m_displayOrientationSEIAngle;
-    Int       m_temporalLevel0IndexSEIEnabled;
     Int       m_gradualDecodingRefreshInfoEnabled;
     Int       m_decodingUnitInfoSEIEnabled;
     Int       m_SOPDescriptionSEIEnabled;
@@ -507,10 +506,6 @@ public:
     Void  setDisplayOrientationSEIAngle(Int b)             { m_displayOrientationSEIAngle = b; }
 
     Int   getDisplayOrientationSEIAngle()                  { return m_displayOrientationSEIAngle; }
-
-    Void  setTemporalLevel0IndexSEIEnabled(Int b)          { m_temporalLevel0IndexSEIEnabled = b; }
-
-    Int   getTemporalLevel0IndexSEIEnabled()               { return m_temporalLevel0IndexSEIEnabled; }
 
     Void  setGradualDecodingRefreshInfoEnabled(Int b)      { m_gradualDecodingRefreshInfoEnabled = b;    }
 

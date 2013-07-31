@@ -959,32 +959,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
             accessUnit.insert(accessUnit.end(), new NALUnitEBSP(onalu));
         }
-        if (m_cfg->getTemporalLevel0IndexSEIEnabled())
-        {
-            SEITemporalLevel0Index sei_temporal_level0_index;
-            if (slice->getRapPicFlag())
-            {
-                m_tl0Idx = 0;
-                m_rapIdx = (m_rapIdx + 1) & 0xFF;
-            }
-            else
-            {
-                m_tl0Idx = m_tl0Idx & 0xFF;
-            }
-            sei_temporal_level0_index.tl0Idx = m_tl0Idx;
-            sei_temporal_level0_index.rapIdx = m_rapIdx;
-
-            OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI);
-
-            /* write the SEI messages */
-            entropyCoder->setEntropyCoder(cavlcCoder, slice);
-            m_seiWriter.writeSEImessage(onalu.m_Bitstream, sei_temporal_level0_index, slice->getSPS());
-            writeRBSPTrailingBits(onalu.m_Bitstream);
-
-            /* insert the SEI message NALUnit before any Slice NALUnits */
-            AccessUnit::iterator it = find_if(accessUnit.begin(), accessUnit.end(), mem_fun(&NALUnit::isSlice));
-            accessUnit.insert(it, new NALUnitEBSP(onalu));
-        }
 
         xCalculateAddPSNR(pic, pic->getPicYuvRec(), accessUnit);
 

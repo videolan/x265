@@ -278,23 +278,6 @@ public:
     Bool extensionFlag;
 };
 
-class SEITemporalLevel0Index : public SEI
-{
-public:
-
-    PayloadType payloadType() const { return TEMPORAL_LEVEL0_INDEX; }
-
-    SEITemporalLevel0Index()
-        : tl0Idx(0)
-        , rapIdx(0)
-    {}
-
-    virtual ~SEITemporalLevel0Index() {}
-
-    UInt tl0Idx;
-    UInt rapIdx;
-};
-
 class SEIGradualDecodingRefreshInfo : public SEI
 {
 public:

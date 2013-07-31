@@ -64,7 +64,6 @@ protected:
     Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
     Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
     Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
-    Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
     Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
     Void xWriteSEISOPDescription(const SEISOPDescription& sei);
     Void xWriteByteAlign();
