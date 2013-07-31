@@ -135,16 +135,22 @@ Void TComPicYuv::destroy()
     delete[] m_buOffsetY;
     delete[] m_buOffsetC;
 
-    if (m_refList)
+    while (m_refList)
+    {
+        MotionReference *mref = m_refList->m_next;
         delete m_refList;
+        m_refList = mref;
+    }
 }
 
 Void  TComPicYuv::clearReferences()
 {
-    // TODO: reclaim these into a GOP encoder pool
-    if (m_refList)
+    while (m_refList)
+    {
+        MotionReference *mref = m_refList->m_next;
         delete m_refList;
-    m_refList = NULL;
+        m_refList = mref;
+    }
 }
 
 Void TComPicYuv::createLuma(Int picWidth, Int picHeight, UInt maxCUWidth, UInt maxCUHeight, UInt maxCUDepth)
