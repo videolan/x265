@@ -42,6 +42,7 @@
 #include "TComRom.h"
 #include "TComList.h"
 #include "x265.h"  // NAL type enums
+#include "reference.h"
 
 #include <cstring>
 #include <map>
@@ -1328,7 +1329,7 @@ public:
     Void setSliceHeaderExtensionPresentFlag(Bool val)  { m_sliceHeaderExtensionPresentFlag = val; }
 };
 
-typedef struct
+struct WpScalingParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
@@ -1339,7 +1340,9 @@ typedef struct
 
     // Weighted prediction scaling values built from above parameters (bitdepth scaled):
     Int         w, o, offset, shift, round;
-} wpScalingParam;
+};
+
+typedef WpScalingParam wpScalingParam;
 
 typedef struct
 {
@@ -1428,6 +1431,8 @@ private:
     Bool       m_enableTMVPFlag;
 
 public:
+
+    x265::MotionReference * m_mref[2][MAX_NUM_REF + 1];
 
     TComSlice();
     virtual ~TComSlice();

@@ -27,9 +27,10 @@
 #include "primitives.h"
 #include "threading.h"
 #include "threadpool.h"
-#include "TLibCommon/TComSlice.h"
 
 class TComPicYuv;
+struct WpScalingParam;
+typedef WpScalingParam wpScalingParam;
 
 namespace x265 {
 // private x265 namespace

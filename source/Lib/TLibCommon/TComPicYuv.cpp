@@ -247,7 +247,7 @@ x265::MotionReference * TComPicYuv::getMotionReference(wpScalingParam *w)
     return NULL;
 }
 
-Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w)
+x265::MotionReference* TComPicYuv::extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w)
 {
     if (!m_bIsBorderExtended)
     {
@@ -258,13 +258,15 @@ Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w)
         m_bIsBorderExtended = true;
     }
 
-    if (!getMotionReference(w))
+    MotionReference* mref = getMotionReference(w);
+    if (!mref)
     {
-        MotionReference *temp = new x265::MotionReference(this, pool, w);
-        temp->generateReferencePlanes();
-        temp->m_next = m_refList;
-        m_refList = temp;
+        mref = new x265::MotionReference(this, pool, w);
+        mref->generateReferencePlanes();
+        mref->m_next = m_refList;
+        m_refList = mref;
     }
+    return mref;
 }
 
 Void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)

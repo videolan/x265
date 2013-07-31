@@ -24,6 +24,7 @@
 
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
+#include "TLibCommon/TComSlice.h"
 #include "PPA/ppa.h"
 #include "primitives.h"
 #include "reference.h"
