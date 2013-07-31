@@ -231,6 +231,7 @@ void Encoder::configure(x265_param_t *param)
 
     setSignHideFlag(param->bEnableSignHiding);
     setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
+    setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);
 
     //====== Enforce these hard coded settings before initializeGOP() to
     //       avoid a valgrind warning
@@ -278,7 +279,6 @@ void Encoder::configure(x265_param_t *param)
     setFrameOnlyConstraintFlag(0);
     setUseASR(0);   // adapt search range based on temporal distances
     setdQPs(NULL);
-    setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);
     setRecoveryPointSEIEnabled(0);
     setBufferingPeriodSEIEnabled(0);
     setPictureTimingSEIEnabled(0);
@@ -287,7 +287,6 @@ void Encoder::configure(x265_param_t *param)
     setGradualDecodingRefreshInfoEnabled(0);
     setDecodingUnitInfoSEIEnabled(0);
     setSOPDescriptionSEIEnabled(0);
-    setScalableNestingSEIEnabled(0);
     setUseScalingListId(0);
     setScalingListFile(NULL);
     setUseRecalculateQPAccordingToLambda(0);

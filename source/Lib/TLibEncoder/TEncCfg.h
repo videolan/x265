@@ -194,7 +194,6 @@ protected:
     Int       m_gradualDecodingRefreshInfoEnabled;
     Int       m_decodingUnitInfoSEIEnabled;
     Int       m_SOPDescriptionSEIEnabled;
-    Int       m_scalableNestingSEIEnabled;
 
     //====== Weighted Prediction ========
     Bool      m_useWeightedPred;     //< Use of Weighting Prediction (P_SLICE)
@@ -524,10 +523,6 @@ public:
     Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
 
     Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
-
-    Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
-
-    Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
 
     Void      setUseWP(Bool b)    { m_useWeightedPred   = b;    }
 

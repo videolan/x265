@@ -266,18 +266,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
     Bool writeSOP = m_cfg->getSOPDescriptionSEIEnabled();
 
     SEIPictureTiming pictureTimingSEI;
-
-    // Initialize Scalable Nesting SEI with single layer values
-    SEIScalableNesting scalableNestingSEI;
-    scalableNestingSEI.m_bitStreamSubsetFlag           = 1;     // If the nested SEI messages are picture buffering SEI messages, picture timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
-    scalableNestingSEI.m_nestingOpFlag                 = 0;
-    scalableNestingSEI.m_nestingNumOpsMinus1           = 0;     // nesting_num_ops_minus1
-    scalableNestingSEI.m_allLayersFlag                 = 0;
-    scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1; // nesting_no_op_max_temporal_id_plus1
-    scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1; // nesting_num_layers_minus1
-    scalableNestingSEI.m_nestingLayerId[0]             = 0;
-    scalableNestingSEI.m_callerOwnsSEIs                = true;
-
     SEIDecodingUnitInfo decodingUnitInfoSEI;
 
     for (Int gopIdx = 0; gopIdx < gopSize; gopIdx++)
@@ -726,27 +714,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 bBufferingPeriodSEIPresentInAU = true;
             }
 
-            if (m_cfg->getScalableNestingSEIEnabled())
-            {
-                OutputNALUnit naluTmp(NAL_UNIT_PREFIX_SEI);
-                entropyCoder->setEntropyCoder(cavlcCoder, slice);
-                entropyCoder->setBitstream(&naluTmp.m_Bitstream);
-                scalableNestingSEI.m_nestedSEIs.clear();
-                scalableNestingSEI.m_nestedSEIs.push_back(&sei_buffering_period);
-                m_seiWriter.writeSEImessage(naluTmp.m_Bitstream, scalableNestingSEI, slice->getSPS());
-                writeRBSPTrailingBits(naluTmp.m_Bitstream);
-                UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU; // Insert BP SEI after non-nested APS, BP and PT SEIs
-                AccessUnit::iterator it = accessUnit.begin();
-                for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-                {
-                    it++;
-                }
-
-                accessUnit.insert(it, new NALUnitEBSP(naluTmp));
-                bNestedBufferingPeriodSEIPresentInAU = true;
-            }
-
             m_lastBPSEI = m_totalCoded;
         }
         if ((m_top->getRecoveryPointSEIEnabled()) && (slice->getSliceType() == I_SLICE))
@@ -787,6 +754,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             // set entropy coder for RD
             entropyCoder->setEntropyCoder(sbacCoder, slice);
+
             if (m_sps.getUseSAO())
             {
                 entropyCoder->resetEntropy();
@@ -1140,26 +1108,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
                     accessUnit.insert(it, new NALUnitEBSP(onalu));
                     bPictureTimingSEIPresentInAU = true;
-                }
-                if (m_cfg->getScalableNestingSEIEnabled()) // put picture timing SEI into scalable nesting SEI
-                {
-                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
-                    entropyCoder->setEntropyCoder(cavlcCoder, slice);
-                    scalableNestingSEI.m_nestedSEIs.clear();
-                    scalableNestingSEI.m_nestedSEIs.push_back(&pictureTimingSEI);
-                    m_seiWriter.writeSEImessage(onalu.m_Bitstream, scalableNestingSEI, slice->getSPS());
-                    writeRBSPTrailingBits(onalu.m_Bitstream);
-                    UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    // Insert PT SEI after APS and BP SEI
-                    UInt offsetPosition = bBufferingPeriodSEIPresentInAU + bPictureTimingSEIPresentInAU +
-                                          bNestedBufferingPeriodSEIPresentInAU;
-                    AccessUnit::iterator it = accessUnit.begin();
-                    for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-                    {
-                        it++;
-                    }
-
-                    accessUnit.insert(it, new NALUnitEBSP(onalu));
                 }
             }
             if (m_cfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())

@@ -55,7 +55,7 @@ protected:
 
     TComSPS *m_pSPS;
 
-    Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+    Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
     Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
     Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
     Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
@@ -67,7 +67,6 @@ protected:
     Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
     Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
     Void xWriteSEISOPDescription(const SEISOPDescription& sei);
-    Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
     Void xWriteByteAlign();
 };
 

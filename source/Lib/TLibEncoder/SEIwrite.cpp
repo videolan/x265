@@ -100,7 +100,7 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 
 #endif // if ENC_DEC_TRACE
 
-void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps)
+Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
 {
     switch (sei.payloadType())
     {
@@ -125,9 +125,6 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
     case SEI::RECOVERY_POINT:
         xWriteSEIRecoveryPoint(*static_cast<const SEIRecoveryPoint*>(&sei));
         break;
-    case SEI::FRAME_PACKING:
-        /*xWriteSEIFramePacking(*static_cast<const SEIFramePacking*>(&sei));*/
-        break;
     case SEI::DISPLAY_ORIENTATION:
         xWriteSEIDisplayOrientation(*static_cast<const SEIDisplayOrientation*>(&sei));
         break;
@@ -137,15 +134,12 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
     case SEI::REGION_REFRESH_INFO:
         xWriteSEIGradualDecodingRefreshInfo(*static_cast<const SEIGradualDecodingRefreshInfo*>(&sei));
         break;
-    case SEI::TONE_MAPPING_INFO:
-        /*xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));*/
-        break;
     case SEI::SOP_DESCRIPTION:
         xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
         break;
+    case SEI::TONE_MAPPING_INFO:
     case SEI::SCALABLE_NESTING:
-        xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
-        break;
+    case SEI::FRAME_PACKING:
     default:
         assert(!"Unhandled SEI message");
     }
@@ -169,7 +163,7 @@ Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
     Bool traceEnable = g_HLSTraceEnable;
     g_HLSTraceEnable = false;
 #endif
-    xWriteSEIpayloadData(bs_count, sei, sps);
+    xWriteSEIpayloadData(sei, sps);
 #if ENC_DEC_TRACE
     g_HLSTraceEnable = traceEnable;
 #endif
@@ -206,7 +200,7 @@ Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
         xTraceSEIMessageType(sei.payloadType());
 #endif
 
-    xWriteSEIpayloadData(bs, sei, sps);
+    xWriteSEIpayloadData(sei, sps);
 }
 
 /**
@@ -436,48 +430,6 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
     }
 
     xWriteByteAlign();
-}
-
-Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
-{
-    WRITE_FLAG(sei.m_bitStreamSubsetFlag,             "bitstream_subset_flag");
-    WRITE_FLAG(sei.m_nestingOpFlag,                   "nesting_op_flag      ");
-    if (sei.m_nestingOpFlag)
-    {
-        WRITE_FLAG(sei.m_defaultOpFlag,                 "default_op_flag");
-        WRITE_UVLC(sei.m_nestingNumOpsMinus1,           "nesting_num_ops");
-        for (UInt i = (sei.m_defaultOpFlag ? 1 : 0); i <= sei.m_nestingNumOpsMinus1; i++)
-        {
-            WRITE_CODE(sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id");
-            WRITE_CODE(sei.m_nestingMaxTemporalIdPlus1[i], 3,  "nesting_max_temporal_id");
-            WRITE_UVLC(sei.m_nestingOpIdx[i],                  "nesting_op_idx");
-        }
-    }
-    else
-    {
-        WRITE_FLAG(sei.m_allLayersFlag,                      "all_layers_flag");
-        if (!sei.m_allLayersFlag)
-        {
-            WRITE_CODE(sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id");
-            WRITE_UVLC(sei.m_nestingNumLayersMinus1,           "nesting_num_layers");
-            for (UInt i = 0; i <= sei.m_nestingNumLayersMinus1; i++)
-            {
-                WRITE_CODE(sei.m_nestingLayerId[i], 6,           "nesting_layer_id");
-            }
-        }
-    }
-
-    // byte alignment
-    while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
-    {
-        WRITE_FLAG(0, "nesting_zero_bit");
-    }
-
-    // write nested SEI messages
-    for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
-    {
-        writeSEImessage(bs, *(*it), sps);
-    }
 }
 
 Void SEIWriter::xWriteByteAlign()

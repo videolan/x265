@@ -340,38 +340,6 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 /// delete list of SEI messages (freeing the referenced objects)
 Void deleteSEIs(SEIMessages &seiList);
 
-class SEIScalableNesting : public SEI
-{
-public:
-
-    PayloadType payloadType() const { return SCALABLE_NESTING; }
-
-    SEIScalableNesting() {}
-
-    virtual ~SEIScalableNesting()
-    {
-        if (!m_callerOwnsSEIs)
-        {
-            deleteSEIs(m_nestedSEIs);
-        }
-    }
-
-    Bool  m_bitStreamSubsetFlag;
-    Bool  m_nestingOpFlag;
-    Bool  m_defaultOpFlag;                           //value valid if m_nestingOpFlag != 0
-    UInt  m_nestingNumOpsMinus1;                     // -"-
-    UInt  m_nestingMaxTemporalIdPlus1[MAX_TLAYER];   // -"-
-    UInt  m_nestingOpIdx[MAX_NESTING_NUM_OPS];       // -"-
-
-    Bool  m_allLayersFlag;                           //value valid if m_nestingOpFlag == 0
-    UInt  m_nestingNoOpMaxTemporalIdPlus1;           //value valid if m_nestingOpFlag == 0 and m_allLayersFlag == 0
-    UInt  m_nestingNumLayersMinus1;                  //value valid if m_nestingOpFlag == 0 and m_allLayersFlag == 0
-    UChar m_nestingLayerId[MAX_NESTING_NUM_LAYER];   //value valid if m_nestingOpFlag == 0 and m_allLayersFlag == 0. This can e.g. be a static array of 64 unsigned char values
-
-    Bool  m_callerOwnsSEIs;
-    SEIMessages m_nestedSEIs;
-};
-
 //! \}
 
 #endif // ifndef _SEI_
