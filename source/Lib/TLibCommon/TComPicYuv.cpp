@@ -229,7 +229,7 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-x265::MotionReference* TComPicYuv::extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w)
+x265::MotionReference* TComPicYuv::generateMotionReference(x265::ThreadPool *pool, wpScalingParam *w)
 {
     if (!m_bIsBorderExtended)
     {

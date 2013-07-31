@@ -414,7 +414,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
         for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
         {
             // To do: Call the merged IP + weighted frames if weighted prediction enabled
-            slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->extendPicBorder(x265::ThreadPool::getThreadPool()); 
+            slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL); 
         }
     }
 

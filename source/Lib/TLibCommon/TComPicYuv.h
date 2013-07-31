@@ -181,8 +181,7 @@ public:
     Void  copyToPicCr(TComPicYuv* destYuv);
     Void  copyFromPicture(const x265_picture_t&);
 
-    //  Extend function of picture buffer
-    x265::MotionReference*  extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w=NULL);
+    x265::MotionReference* generateMotionReference(x265::ThreadPool *pool, wpScalingParam *w);
 
     //  Dump picture
     Void  dump(Char* pFileName, Bool bAdd = false);
