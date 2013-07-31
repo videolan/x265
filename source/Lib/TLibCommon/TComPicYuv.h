@@ -152,8 +152,7 @@ public:
 
     Pel*  getCrAddr()     { return m_picOrgV; }
 
-    /* Actual weight handling TBD: this is just a placeholder.  Always pass 0 */
-    x265::MotionReference *getMotionReference(Int weightIdx) { return &m_refList[weightIdx]; }
+    x265::MotionReference *getMotionReference(wpScalingParam *w); 
 
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
     Pel*  getLumaAddr(Int cuAddr) { return m_picOrgY + m_cuOffsetY[cuAddr]; }
@@ -185,7 +184,7 @@ public:
     Void  copyFromPicture(const x265_picture_t&);
 
     //  Extend function of picture buffer
-    Void  extendPicBorder(x265::ThreadPool *pool);
+    Void  extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w=NULL);
 
     //  Dump picture
     Void  dump(Char* pFileName, Bool bAdd = false);

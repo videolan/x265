@@ -50,6 +50,9 @@ public:
     int  m_lumaStride;
     int  m_weight;
     bool m_isWeighted;
+    int  m_offset;
+    int  m_shift;
+    int  m_round;
 
     MotionReference *m_next;
 
@@ -77,10 +80,6 @@ protected:
     int         m_filterWidth;
     int         m_filterHeight;
     short      *m_intermediateValues;
-
-    int         m_offset;
-    int         m_shift;
-    int         m_round;
 
     MotionReference& operator =(const MotionReference&);
 };

@@ -229,27 +229,47 @@ Void  TComPicYuv::copyToPicCr(TComPicYuv* destPicYuv)
     ::memcpy(destPicYuv->getBufV(), m_picBufV, sizeof(Pel) * ((m_picWidth >> 1) + (m_chromaMarginX << 1)) * ((m_picHeight >> 1) + (m_chromaMarginY << 1)));
 }
 
-Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool)
+x265::MotionReference * TComPicYuv::getMotionReference(wpScalingParam *w)
 {
-    if (m_bIsBorderExtended)
-        return;
+    for(MotionReference *temp = m_refList; temp != NULL; temp = temp->m_next)
+    {
+        if (w)
+        {   
+            if ((temp->m_weight == w->inputWeight) && (temp->m_offset == (w->inputOffset * (1 << (X265_DEPTH - 8)))) &&
+                (temp->m_shift == w->log2WeightDenom))
+            {
+                return temp;
+            }
+        }
+        else if (temp->m_isWeighted == false)
+            return(temp);
+    }
+    return NULL;
+}
 
-    /* HPEL generation requires luma integer plane to already be extended */
-    xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(), getHeight(), m_lumaMarginX, m_lumaMarginY);
+Void TComPicYuv::extendPicBorder(x265::ThreadPool *pool, wpScalingParam *w)
+{
+    if (!m_bIsBorderExtended)
+    {
+        /* HPEL generation requires luma integer plane to already be extended */
+        xExtendPicCompBorder(getLumaAddr(), getStride(), getWidth(), getHeight(), m_lumaMarginX, m_lumaMarginY);
+        xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
+        xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
+        m_bIsBorderExtended = true;
+    }
 
-    xExtendPicCompBorder(getCbAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
-    xExtendPicCompBorder(getCrAddr(), getCStride(), getWidth() >> 1, getHeight() >> 1, m_chromaMarginX, m_chromaMarginY);
-
-    if (m_refList == NULL)
-        m_refList = new x265::MotionReference(this, pool);
-    m_refList->generateReferencePlanes();
-
-    m_bIsBorderExtended = true;
+    if (!getMotionReference(w))
+    {
+        MotionReference *temp = new x265::MotionReference(this, pool, w);
+        temp->generateReferencePlanes();
+        temp->m_next = m_refList;
+        m_refList = temp;
+    }
 }
 
 Void TComPicYuv::xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int iMarginX, Int iMarginY)
 {
-    Int   x, y;
+    Int x, y;
 
     /* TODO: this should become a performance primitive */
     for (y = 0; y < height; y++)
