@@ -2734,8 +2734,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                                 MV& mvp = mvPred[refList][refIdxTmp];
                                 MV& outmv = mvTemp[refList][refIdxTmp];
                                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                                TComPicYuv *refRecon = cu->getSlice()->getRefPic(picList, refIdxTmp)->getPicYuvRec();
-                                int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
+                                int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
                                                                    mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                                 /* Get total cost of partition, but only include MV bit cost once */
@@ -2756,8 +2755,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                             MV& mvp = mvPred[refList][refIdxTmp];
                             MV& outmv = mvTemp[refList][refIdxTmp];
                             xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                            TComPicYuv *refRecon = cu->getSlice()->getRefPic(picList, refIdxTmp)->getPicYuvRec();
-                            int satdCost = m_me.motionEstimate(refRecon->getMotionReference(0),
+                            int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
                                                                mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                             /* Get total cost of partition, but only include MV bit cost once */
