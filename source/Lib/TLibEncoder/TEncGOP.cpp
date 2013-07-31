@@ -754,26 +754,18 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             // set entropy coder for RD
             entropyCoder->setEntropyCoder(sbacCoder, slice);
+            entropyCoder->resetEntropy();
+            entropyCoder->setBitstream(bitCounter);
 
-            if (m_sps.getUseSAO())
-            {
-                entropyCoder->resetEntropy();
-                entropyCoder->setBitstream(bitCounter);
+            // CHECK_ME: I think the SAO uses a temp Sbac only, so I always use [0], am I right?
+            sao->startSaoEnc(pic, entropyCoder, frameEncoder->getRDGoOnSbacCoder(0));
 
-                // CHECK_ME: I think the SAO is use a temp Sbac only, so I always use [0], am I right?
-                sao->startSaoEnc(pic, entropyCoder, frameEncoder->getRDGoOnSbacCoder(0));
+            SAOParam& saoParam = *slice->getPic()->getPicSym()->getSaoParam();
+            sao->SAOProcess(&saoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
+            sao->endSaoEnc();
+            sao->PCMLFDisableProcess(pic);
 
-                SAOParam& cSaoParam = *slice->getPic()->getPicSym()->getSaoParam();
-
-                sao->SAOProcess(&cSaoParam, pic->getSlice()->getLambdaLuma(), pic->getSlice()->getLambdaChroma(), pic->getSlice()->getDepth());
-                sao->endSaoEnc();
-                sao->PCMLFDisableProcess(pic);
-            }
-
-            if (m_sps.getUseSAO())
-            {
-                pic->getSlice()->setSaoEnabledFlag((slice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0] == 1) ? true : false);
-            }
+            pic->getSlice()->setSaoEnabledFlag((saoParam.bSaoFlag[0] == 1) ? true : false);
         }
 
         slice->setNextSlice(false);
