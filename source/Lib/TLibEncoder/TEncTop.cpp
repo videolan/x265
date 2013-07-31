@@ -160,7 +160,7 @@ void TEncTop::addPicture(const x265_picture_t *picture)
         {
             pic->getSlice()->setPOC(++m_pocLast);
             pic->getPicYuvOrg()->copyFromPicture(*picture);
-            pic->getPicYuvRec()->setBorderExtension(false);
+            pic->getPicYuvRec()->clearExtendedFlag();
             pic->getSlice()->setReferenced(true);
             return;
         }

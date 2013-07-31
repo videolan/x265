@@ -187,7 +187,7 @@ public:
     Void  dump(Char* pFileName, Bool bAdd = false);
 
     // Set border extension flag
-    Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
+    Void  clearExtendedFlag() { m_bIsBorderExtended = false; }
 
     friend class x265::MotionReference;
 }; // END CLASS DEFINITION TComPicYuv
