@@ -259,7 +259,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
     TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
     Bool bBufferingPeriodSEIPresentInAU = false;
     Bool bPictureTimingSEIPresentInAU = false;
-    Bool bNestedBufferingPeriodSEIPresentInAU = false;
 
     Int gopSize = pocLast == 0 ? 1 : m_cfg->getGOPSize();
     Int numPicCoded = 0;
@@ -1126,7 +1125,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         bBufferingPeriodSEIPresentInAU    = false;
         bPictureTimingSEIPresentInAU      = false;
-        bNestedBufferingPeriodSEIPresentInAU = false;
         numPicCoded++;
         m_totalCoded++;
 
