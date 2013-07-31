@@ -152,8 +152,6 @@ public:
 
     Pel*  getCrAddr()     { return m_picOrgV; }
 
-    x265::MotionReference *getMotionReference(wpScalingParam *w); 
-
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
     Pel*  getLumaAddr(Int cuAddr) { return m_picOrgY + m_cuOffsetY[cuAddr]; }
 
