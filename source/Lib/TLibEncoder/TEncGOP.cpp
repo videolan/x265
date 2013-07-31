@@ -830,12 +830,12 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             // set entropy coder for writing
             sbacCoder->init((TEncBinIf*)binCABAC);
-            {
-                frameEncoder->resetEntropy(slice);
-                frameEncoder->getSbacCoder(0)->load(sbacCoder);
-                entropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(0), slice); //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
-            }
+            frameEncoder->resetEntropy(slice);
+            frameEncoder->getSbacCoder(0)->load(sbacCoder);
+            //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
+            entropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(0), slice); 
             entropyCoder->resetEntropy();
+
             // File writing
             if (!sliceSegment)
             {
@@ -845,6 +845,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             {
                 entropyCoder->setBitstream(&nalu.m_Bitstream);
             }
+
             // for now, override the TILES_DECODER setting in order to write substreams.
             entropyCoder->setBitstream(&outStreams[0]);
         }
@@ -859,22 +860,22 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             // Construct the final bitstream by flushing and concatenating substreams.
             // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
-            UInt* puiSubstreamSizes = slice->getSubstreamSizes();
-            for (UInt ui = 0; ui < numSubstreams; ui++)
+            UInt* substreamSizes = slice->getSubstreamSizes();
+            for (UInt i = 0; i < numSubstreams; i++)
             {
                 // Flush all substreams -- this includes empty ones.
                 // Terminating bit and flush.
-                entropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(ui), slice);
-                entropyCoder->setBitstream(&outStreams[ui]);
+                entropyCoder->setEntropyCoder(frameEncoder->getSbacCoder(i), slice);
+                entropyCoder->setBitstream(&outStreams[i]);
                 entropyCoder->encodeTerminatingBit(1);
                 entropyCoder->encodeSliceFinish();
 
-                outStreams[ui].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
+                outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
 
                 // Byte alignment is necessary between tiles when tiles are independent.
-                if (ui + 1 < numSubstreams)
+                if (i + 1 < numSubstreams)
                 {
-                    puiSubstreamSizes[ui] = outStreams[ui].getNumberOfWrittenBits() + (outStreams[ui].countStartCodeEmulations() << 3);
+                    substreamSizes[i] = outStreams[i].getNumberOfWrittenBits() + (outStreams[i].countStartCodeEmulations() << 3);
                 }
             }
 
@@ -921,22 +922,18 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         if (m_sps.getUseSAO())
         {
-            if (m_sps.getUseSAO())
-            {
-                sao->destroyPicSaoInfo();
-            }
+            sao->destroyPicSaoInfo();
             pic->destroyNonDBFilterInfo();
         }
-
         pic->compressMotion();
 
         const Char* digestStr = NULL;
         if (m_cfg->getDecodedPictureHashSEIEnabled())
         {
-            /* calculate MD5sum for entire reconstructed picture */
             SEIDecodedPictureHash sei_recon_picture_digest;
             if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
             {
+                /* calculate MD5sum for entire reconstructed picture */
                 sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
                 calcMD5(*pic->getPicYuvRec(), sei_recon_picture_digest.digest);
                 digestStr = digestToString(sei_recon_picture_digest.digest, 16);
