@@ -768,8 +768,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             pic->getSlice()->setSaoEnabledFlag((saoParam.bSaoFlag[0] == 1) ? true : false);
         }
 
-        slice->setNextSlice(false);
-
         // Reconstruction slice
         slice->setNextSlice(true);
         slice->setRPS(pic->getSlice()->getRPS());
