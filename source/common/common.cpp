@@ -191,7 +191,7 @@ int x265_check_params(x265_param_t *param)
     CONFIRM(param->frameRate <= 0,
             "Frame rate must be more than 1");
     CONFIRM(param->searchMethod<0 || param->searchMethod> X265_FULL_SEARCH,
-            "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:ORIG 5:FULL)");
+            "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 5:FULL)");
     CONFIRM(param->searchRange < 0,
             "Search Range must be more than 0");
     CONFIRM(param->searchRange >= 32768,
