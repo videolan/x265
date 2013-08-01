@@ -45,6 +45,7 @@
 #include "TComTrQuant.h"
 #include "TComWeightPrediction.h"
 #include "TShortYUV.h"
+#include "reference.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -80,7 +81,7 @@ protected:
     // motion compensation functions
     Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv);
     Void xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv);
-    Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
+    Void xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
     Void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);
     Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TComYuv *dstPic);
     Void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, x265::MV *mv, Int width, Int height, TShortYUV *dstPic);

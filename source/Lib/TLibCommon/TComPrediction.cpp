@@ -318,7 +318,8 @@ Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int
     MV mv = cu->getCUMvField(picList)->getMv(partAddr);
     cu->clipMv(mv);
 
-    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
+    xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refIdx], partAddr, &mv, width, height, outPredYuv);
+
     xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refIdx)->getPicYuvRec(), partAddr, &mv, width, height, outPredYuv);
 }
 
@@ -437,11 +438,10 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
  * \param dstPic   Pointer to destination picture
  * \param bi       Flag indicating whether bipred is used
  */
-Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
+Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, x265::MotionReference *ref, UInt partAddr, MV *mv, Int width, Int height, TComYuv *dstPic)
 {
     //assert(bi == false);
-
-    Int refStride = refPic->getStride();
+    Int refStride = ref->m_lumaStride;
     Int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
 
     Int dstStride = dstPic->getStride();
@@ -449,9 +449,10 @@ Void TComPrediction::xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, UInt 
 
     Int xFrac = mv->x & 0x3;
     Int yFrac = mv->y & 0x3;
-
-    Pel* src = refPic->getLumaFilterBlock(yFrac, xFrac, cu->getAddr(), cu->getZorderIdxInCU() + partAddr) + refOffset;
-    Int srcStride = refPic->getStride();
+    TComPicYuv* pic = cu->getSlice()->getPic()->getPicYuvOrg();
+    Int blkOffset = pic->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr) - pic->getLumaAddr();
+    Pel* src = ref->m_lumaPlane[xFrac][yFrac] + blkOffset + refOffset;
+    Int srcStride = refStride;
 
     x265::primitives.blockcpy_pp(width, height, dst, dstStride, src, srcStride);
 }
