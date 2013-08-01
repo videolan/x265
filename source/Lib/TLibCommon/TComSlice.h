@@ -1414,7 +1414,6 @@ private:
     UInt        m_sliceSegmentBits;
     Bool        m_bFinalized;
 
-    wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
     wpACDCParam     m_weightACDCParam[3];                 // [0:Y, 1:U, 2:V]
 
     std::vector<UInt> m_tileByteLocation;
@@ -1433,6 +1432,7 @@ private:
 public:
 
     x265::MotionReference * m_mref[2][MAX_NUM_REF + 1];
+    wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     TComSlice();
     virtual ~TComSlice();

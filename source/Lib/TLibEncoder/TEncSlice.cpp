@@ -408,13 +408,28 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
 
     Int numPredDir = slice->isInterP() ? 1 : 2;
 
-    for (Int refList = 0; refList < numPredDir; refList++)
+    if((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()))
     {
-        RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-        for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+        for (Int refList = 0; refList < numPredDir; refList++)
         {
-            // To do: Call the merged IP + weighted frames if weighted prediction enabled
-            slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL); 
+            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+            {
+                //Generate weighted motionreference
+                wpScalingParam *w = &(slice->m_weightPredTable[picList][refIdxTemp][0]);
+                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), w); 
+            }
+        }
+    }
+    else
+    {
+        for (Int refList = 0; refList < numPredDir; refList++)
+        {
+            RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
+            for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
+            {
+               slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL); 
+            }
         }
     }
 

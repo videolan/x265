@@ -189,7 +189,7 @@ void Encoder::configure(x265_param_t *param)
     setQP(param->qp);
 
     //====== Motion search ========
-    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedPred || param->bEnableWeightedBiPred))
+    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedBiPred))
     {
         x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
         param->searchMethod = X265_ORIG_SEARCH;
@@ -838,7 +838,6 @@ int x265_encoder_headers(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal)
     return ret;
 }
 
-
 extern "C"
 int x265_encoder_encode(x265_t *encoder, x265_nal_t **pp_nal, int *pi_nal, x265_picture_t *pic_in, x265_picture_t **pic_out)
 {
@@ -915,6 +914,7 @@ extern "C"
 void x265_encoder_close(x265_t *encoder, double *outPsnr)
 {
     Double globalPsnr = encoder->printSummary();
+
     if (outPsnr)
         *outPsnr = globalPsnr;
 
