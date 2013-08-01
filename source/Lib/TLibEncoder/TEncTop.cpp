@@ -142,10 +142,10 @@ Void TEncTop::init()
         m_picList.pushBack(pic);
     }
 
-    m_gcAnalyzeI.setFrmRate(getFrameRate());
-    m_gcAnalyzeP.setFrmRate(getFrameRate());
-    m_gcAnalyzeB.setFrmRate(getFrameRate());
-    m_gcAnalyzeAll.setFrmRate(getFrameRate());
+    m_gcAnalyzeI.setFrmRate(param.frameRate);
+    m_gcAnalyzeP.setFrmRate(param.frameRate);
+    m_gcAnalyzeB.setFrmRate(param.frameRate);
+    m_gcAnalyzeAll.setFrmRate(param.frameRate);
 }
 
 void TEncTop::addPicture(const x265_picture_t *picture)
