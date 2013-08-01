@@ -243,7 +243,7 @@ static inline int x265_predictor_difference(const MV *mvc, intptr_t numCandidate
         } \
     }
 
-int MotionEstimate::motionEstimate(MotionReference *ref,
+int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV &       mvmin,
                                    const MV &       mvmax,
                                    const MV &       qmvp,
@@ -750,7 +750,7 @@ me_hex2:
     return bcost;
 }
 
-void MotionEstimate::StarPatternSearch(MotionReference *ref,
+void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
                                        const MV &       mvmin,
                                        const MV &       mvmax,
                                        MV &             bmv,

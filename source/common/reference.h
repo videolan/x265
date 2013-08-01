@@ -35,7 +35,22 @@ typedef WpScalingParam wpScalingParam;
 namespace x265 {
 // private x265 namespace
 
-class MotionReference : public JobProvider
+class ReferencePlanes
+{
+public:
+    ReferencePlanes() : m_isWeighted(false) {}
+
+    /* indexed by [hpelx|qpelx][hpely|qpely] */
+    pixel* m_lumaPlane[4][4];
+    int  m_lumaStride;
+    int  m_weight;
+    int  m_offset;
+    int  m_shift;
+    int  m_round;
+    bool m_isWeighted;
+};
+
+class MotionReference : public ReferencePlanes, public JobProvider
 {
 public:
 
@@ -44,16 +59,6 @@ public:
     ~MotionReference();
 
     void generateReferencePlanes();
-
-    /* indexed by [hpelx|qpelx][hpely|qpely] */
-    pixel* m_lumaPlane[4][4];
-
-    int  m_lumaStride;
-    int  m_weight;
-    bool m_isWeighted;
-    int  m_offset;
-    int  m_shift;
-    int  m_round;
 
     MotionReference *m_next;
 
