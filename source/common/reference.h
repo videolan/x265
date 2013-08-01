@@ -40,6 +40,9 @@ class ReferencePlanes
 public:
     ReferencePlanes() : m_isWeighted(false) {}
 
+    void setWeight(const wpScalingParam&);
+    bool matchesWeight(const wpScalingParam&);
+
     /* indexed by [hpelx|qpelx][hpely|qpely] */
     pixel* m_lumaPlane[4][4];
     int  m_lumaStride;

@@ -39,6 +39,27 @@ using namespace x265;
 #error "Must define atomic operations for this compiler"
 #endif
 
+void ReferencePlanes::setWeight(const wpScalingParam& w)
+{
+    m_weight = w.inputWeight;
+    m_offset = w.inputOffset * (1 << (X265_DEPTH - 8));
+    m_shift  = w.log2WeightDenom;
+    m_round  = (w.log2WeightDenom >= 1) ? (1 << (w.log2WeightDenom - 1)) : (0);
+    m_isWeighted = true;
+}
+
+bool ReferencePlanes::matchesWeight(const wpScalingParam& w)
+{
+    if (!m_isWeighted)
+        return false;
+
+    if ((m_weight == w.inputWeight) && (m_shift == (int)w.log2WeightDenom) &&
+        (m_offset == w.inputOffset * (1 << (X265_DEPTH - 8))))
+        return true;
+
+    return false;
+}
+
 MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingParam *w)
     : JobProvider(pool)
 {
@@ -60,6 +81,7 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
 
     if (w) 
     {
+        setWeight(*w);
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
@@ -67,13 +89,6 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
                 m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
             }
         }
-
-        // Initialization of weight parameters
-        m_weight = w->inputWeight;
-        m_offset = w->inputOffset * (1 << (g_bitDepth - 8));
-        m_shift  = w->log2WeightDenom;
-        m_round  = (w->log2WeightDenom >= 1) ? (1 << (w->log2WeightDenom - 1)) : (0);
-        m_isWeighted = true;
     }
     else
     {
@@ -89,9 +104,6 @@ MotionReference::MotionReference(TComPicYuv* pic, ThreadPool *pool, wpScalingPar
                 m_lumaPlane[i][j] = (pixel*)X265_MALLOC(pixel,  padwidth * padheight) + m_startPad;
             }
         }
-
-        m_isWeighted = false;
-        m_weight = 0;
     }
 }
 
