@@ -441,7 +441,6 @@ bool Encoder::initializeGOP(x265_param_t *param)
         if (remain)
             param->keyframeInterval += m_gopSize - remain;
     }
-    setIntraPeriod(param->keyframeInterval);
 
     bool verifiedGOP = false;
     bool errorGOP = false;

@@ -101,13 +101,13 @@ protected:
     Profile::Name m_profile;
     Level::Tier   m_levelTier;
     Level::Name   m_level;
+
     Bool m_progressiveSourceFlag;
     Bool m_interlacedSourceFlag;
     Bool m_nonPackedConstraintFlag;
     Bool m_frameOnlyConstraintFlag;
 
     //====== Coding Structure ========
-    UInt      m_intraPeriod;
     UInt      m_decodingRefreshType;          ///< the type of decoding refresh employed for the random access.
     Int       m_gopSize;
     GOPEntry  m_gopList[MAX_GOP];
@@ -254,8 +254,6 @@ public:
     Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
 
     //====== Coding Structure ========
-    Void      setIntraPeriod(Int i)      { m_intraPeriod = (UInt)i; }
-
     Void      setDecodingRefreshType(Int i)      { m_decodingRefreshType = (UInt)i; }
 
     Void      setGOPSize(Int i)      { m_gopSize = i; }
@@ -335,8 +333,6 @@ public:
     Double    getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
-    UInt      getIntraPeriod()      { return m_intraPeriod; }
-
     UInt      getDecodingRefreshType()      { return m_decodingRefreshType; }
 
     Int       getGOPSize()      { return m_gopSize; }

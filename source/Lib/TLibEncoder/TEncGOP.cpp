@@ -163,7 +163,7 @@ Void TEncGOP::init(TEncTop* top)
     if (m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
         m_sps.getVuiParameters()->getHrdParameters()->setNumDU(0);
-        m_sps.setHrdParameters(m_cfg->param.frameRate, 0, 1000 /* m_cfg->getTargetBitrate() */, m_cfg->getIntraPeriod() > 0);
+        m_sps.setHrdParameters(m_cfg->param.frameRate, 0, 1000 /* m_cfg->getTargetBitrate() */, m_cfg->param.keyframeInterval > 0);
     }
     if (m_cfg->getBufferingPeriodSEIEnabled() || m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled())
     {
@@ -1178,7 +1178,7 @@ SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
 Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
 {
     slice->setRPSidx(gopID);
-    UInt intraPeriod = m_cfg->getIntraPeriod();
+    UInt intraPeriod = m_cfg->param.keyframeInterval;
     Int gopSize = m_cfg->getGOPSize();
 
     for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
@@ -1211,7 +1211,7 @@ Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
 Int TEncGOP::getReferencePictureSetIdxForSOP(Int curPOC, Int gopID)
 {
     int rpsIdx = gopID;
-    UInt intraPeriod = m_cfg->getIntraPeriod();
+    UInt intraPeriod = m_cfg->param.keyframeInterval;
     Int gopSize = m_cfg->getGOPSize();
 
     for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
@@ -1476,7 +1476,7 @@ NalUnitType TEncGOP::getNalUnitType(Int curPOC, Int lastIDR)
     {
         return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
-    if (curPOC % m_cfg->getIntraPeriod() == 0)
+    if (curPOC % m_cfg->param.keyframeInterval == 0)
     {
         if (m_cfg->getDecodingRefreshType() == 1)
         {
