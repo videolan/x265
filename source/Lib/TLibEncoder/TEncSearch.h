@@ -133,24 +133,6 @@ public:
 
 protected:
 
-    // integer motion search
-    typedef struct
-    {
-        Pel*  fref;
-        Int   lumaStride;
-        Int   bestx;
-        Int   besty;
-        UInt  bestRound;
-        UInt  bestDistance;
-        UInt  bcost;
-        UChar bestPointDir;
-    } IntTZSearchStruct;
-
-    inline Void xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance);
-    inline Void xTZ2PointSearch(TComPattern* patternKey, IntTZSearchStruct& data, x265::MV* mvmin, x265::MV* mvmax);
-    inline Void xTZ8PointDiamondSearch(TComPattern* patternKey, IntTZSearchStruct& data, x265::MV* mvmin, x265::MV* mvmax,
-                                       Int startX, Int startY, Int distance);
-
     /// motion vector refinement used in fractional-pel accuracy
     UInt xPatternRefinement(TComPattern* patternKey, x265::MV baseRefMv, Int fracBits, x265::MV& outFracMv, TComPicYuv* refPic, Int offset,
                             TComDataCU* cu, UInt partAddr);

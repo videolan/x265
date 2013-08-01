@@ -224,332 +224,6 @@ Void TEncSearch::setQPLambda(Int QP, Double lambdaLuma, Double lambdaChroma)
     m_bc.setQP(QP, m_rdCost->getSADLambda());
 }
 
-inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct& data, Int searchX, Int searchY, UChar pointDir, UInt distance)
-{
-    Pel* fref = data.fref + searchY * data.lumaStride + searchX;
-
-    m_rdCost->setDistParam(patternKey, fref, data.lumaStride, m_distParam);
-
-    if (m_distParam.rows > 12)
-    {
-        // fast encoder decision: use subsampled SAD when rows > 12 for integer ME
-        m_distParam.subShift = 1;
-    }
-
-    // distortion
-    UInt cost = m_distParam.distFunc(&m_distParam) +
-        m_bc.mvcost(MV(searchX, searchY) << m_mvCostScale);
-
-    if (cost < data.bcost)
-    {
-        data.bcost        = cost;
-        data.bestx        = searchX;
-        data.besty        = searchY;
-        data.bestDistance = distance;
-        data.bestRound    = 0;
-        data.bestPointDir = pointDir;
-    }
-}
-
-inline Void TEncSearch::xTZ2PointSearch(TComPattern* patternKey, IntTZSearchStruct& data, MV* mvmin, MV* mvmax)
-{
-    Int srchRngHorLeft   = mvmin->x;
-    Int srchRngHorRight  = mvmax->x;
-    Int srchRngVerTop    = mvmin->y;
-    Int srchRngVerBottom = mvmax->y;
-
-    // 2 point search,                   //   1 2 3
-    // check only the 2 untested points  //   4 0 5
-    // around the start point            //   6 7 8
-    Int startX = data.bestx;
-    Int startY = data.besty;
-
-    switch (data.bestPointDir)
-    {
-    case 1:
-    {
-        if ((startX - 1) >= srchRngHorLeft)
-        {
-            xTZSearchHelp(patternKey, data, startX - 1, startY, 0, 2);
-        }
-        if ((startY - 1) >= srchRngVerTop)
-        {
-            xTZSearchHelp(patternKey, data, startX, startY - 1, 0, 2);
-        }
-    }
-    break;
-    case 2:
-    {
-        if ((startY - 1) >= srchRngVerTop)
-        {
-            if ((startX - 1) >= srchRngHorLeft)
-            {
-                xTZSearchHelp(patternKey, data, startX - 1, startY - 1, 0, 2);
-            }
-            if ((startX + 1) <= srchRngHorRight)
-            {
-                xTZSearchHelp(patternKey, data, startX + 1, startY - 1, 0, 2);
-            }
-        }
-    }
-    break;
-    case 3:
-    {
-        if ((startY - 1) >= srchRngVerTop)
-        {
-            xTZSearchHelp(patternKey, data, startX, startY - 1, 0, 2);
-        }
-        if ((startX + 1) <= srchRngHorRight)
-        {
-            xTZSearchHelp(patternKey, data, startX + 1, startY, 0, 2);
-        }
-    }
-    break;
-    case 4:
-    {
-        if ((startX - 1) >= srchRngHorLeft)
-        {
-            if ((startY + 1) <= srchRngVerBottom)
-            {
-                xTZSearchHelp(patternKey, data, startX - 1, startY + 1, 0, 2);
-            }
-            if ((startY - 1) >= srchRngVerTop)
-            {
-                xTZSearchHelp(patternKey, data, startX - 1, startY - 1, 0, 2);
-            }
-        }
-    }
-    break;
-    case 5:
-    {
-        if ((startX + 1) <= srchRngHorRight)
-        {
-            if ((startY - 1) >= srchRngVerTop)
-            {
-                xTZSearchHelp(patternKey, data, startX + 1, startY - 1, 0, 2);
-            }
-            if ((startY + 1) <= srchRngVerBottom)
-            {
-                xTZSearchHelp(patternKey, data, startX + 1, startY + 1, 0, 2);
-            }
-        }
-    }
-    break;
-    case 6:
-    {
-        if ((startX - 1) >= srchRngHorLeft)
-        {
-            xTZSearchHelp(patternKey, data, startX - 1, startY, 0, 2);
-        }
-        if ((startY + 1) <= srchRngVerBottom)
-        {
-            xTZSearchHelp(patternKey, data, startX, startY + 1, 0, 2);
-        }
-    }
-    break;
-    case 7:
-    {
-        if ((startY + 1) <= srchRngVerBottom)
-        {
-            if ((startX - 1) >= srchRngHorLeft)
-            {
-                xTZSearchHelp(patternKey, data, startX - 1, startY + 1, 0, 2);
-            }
-            if ((startX + 1) <= srchRngHorRight)
-            {
-                xTZSearchHelp(patternKey, data, startX + 1, startY + 1, 0, 2);
-            }
-        }
-    }
-    break;
-    case 8:
-    {
-        if ((startX + 1) <= srchRngHorRight)
-        {
-            xTZSearchHelp(patternKey, data, startX + 1, startY, 0, 2);
-        }
-        if ((startY + 1) <= srchRngVerBottom)
-        {
-            xTZSearchHelp(patternKey, data, startX, startY + 1, 0, 2);
-        }
-    }
-    break;
-    default:
-    {
-        assert(false);
-    }
-    break;
-    } // switch( rcStruct.ucPointNr )
-}
-
-inline Void TEncSearch::xTZ8PointDiamondSearch(TComPattern* patternKey, IntTZSearchStruct& data, MV* mvmin, MV* mvmax, Int startX, Int startY, Int distance)
-{
-    assert(distance != 0);
-    Int srchRngHorLeft   = mvmin->x;
-    Int srchRngHorRight  = mvmax->x;
-    Int srchRngVerTop    = mvmin->y;
-    Int srchRngVerBottom = mvmax->y;
-    const Int top        = startY - distance;
-    const Int bottom     = startY + distance;
-    const Int left       = startX - distance;
-    const Int right      = startX + distance;
-    data.bestRound += 1;
-
-    if (distance == 1) // iDist == 1
-    {
-        if (top >= srchRngVerTop) // check top
-        {
-            xTZSearchHelp(patternKey, data, startX, top, 2, distance);
-        }
-        if (left >= srchRngHorLeft) // check middle left
-        {
-            xTZSearchHelp(patternKey, data, left, startY, 4, distance);
-        }
-        if (right <= srchRngHorRight) // check middle right
-        {
-            xTZSearchHelp(patternKey, data, right, startY, 5, distance);
-        }
-        if (bottom <= srchRngVerBottom) // check bottom
-        {
-            xTZSearchHelp(patternKey, data, startX, bottom, 7, distance);
-        }
-    }
-    else if (distance <= 8)
-    {
-        const Int top2      = startY - (distance >> 1);
-        const Int bot2   = startY + (distance >> 1);
-        const Int left2     = startX - (distance >> 1);
-        const Int right2    = startX + (distance >> 1);
-
-        if (top >= srchRngVerTop && left >= srchRngHorLeft &&
-            right <= srchRngHorRight && bottom <= srchRngVerBottom) // check border
-        {
-            xTZSearchHelp(patternKey, data, startX,   top, 2, distance);
-            xTZSearchHelp(patternKey, data, left2,   top2, 1, distance >> 1);
-            xTZSearchHelp(patternKey, data, right2,  top2, 3, distance >> 1);
-            xTZSearchHelp(patternKey, data, left,  startY, 4, distance);
-            xTZSearchHelp(patternKey, data, right, startY, 5, distance);
-            xTZSearchHelp(patternKey, data, left2,   bot2, 6, distance >> 1);
-            xTZSearchHelp(patternKey, data, right2,  bot2, 8, distance >> 1);
-            xTZSearchHelp(patternKey, data, startX, bottom, 7, distance);
-        }
-        else // check border for each mv
-        {
-            if (top >= srchRngVerTop) // check top
-            {
-                xTZSearchHelp(patternKey, data, startX, top, 2, distance);
-            }
-            if (top2 >= srchRngVerTop) // check half top
-            {
-                if (left2 >= srchRngHorLeft) // check half left
-                {
-                    xTZSearchHelp(patternKey, data, left2, top2, 1, (distance >> 1));
-                }
-                if (right2 <= srchRngHorRight) // check half right
-                {
-                    xTZSearchHelp(patternKey, data, right2, top2, 3, (distance >> 1));
-                }
-            } // check half top
-            if (left >= srchRngHorLeft) // check left
-            {
-                xTZSearchHelp(patternKey, data, left, startY, 4, distance);
-            }
-            if (right <= srchRngHorRight) // check right
-            {
-                xTZSearchHelp(patternKey, data, right, startY, 5, distance);
-            }
-            if (bot2 <= srchRngVerBottom) // check half bottom
-            {
-                if (left2 >= srchRngHorLeft) // check half left
-                {
-                    xTZSearchHelp(patternKey, data, left2, bot2, 6, (distance >> 1));
-                }
-                if (right2 <= srchRngHorRight) // check half right
-                {
-                    xTZSearchHelp(patternKey, data, right2, bot2, 8, (distance >> 1));
-                }
-            } // check half bottom
-            if (bottom <= srchRngVerBottom) // check bottom
-            {
-                xTZSearchHelp(patternKey, data, startX, bottom, 7, distance);
-            }
-        } // check border for each mv
-    }
-    else // iDist > 8
-    {
-        if (top >= srchRngVerTop && left >= srchRngHorLeft &&
-            right <= srchRngHorRight && bottom <= srchRngVerBottom) // check border
-        {
-            xTZSearchHelp(patternKey, data, startX, top,    0, distance);
-            xTZSearchHelp(patternKey, data, left,   startY, 0, distance);
-            xTZSearchHelp(patternKey, data, right,  startY, 0, distance);
-            xTZSearchHelp(patternKey, data, startX, bottom, 0, distance);
-            for (Int index = 1; index < 4; index++)
-            {
-                Int posYT = top    + ((distance >> 2) * index);
-                Int posYB = bottom - ((distance >> 2) * index);
-                Int posXL = startX - ((distance >> 2) * index);
-                Int PosXR = startX + ((distance >> 2) * index);
-                xTZSearchHelp(patternKey, data, posXL, posYT, 0, distance);
-                xTZSearchHelp(patternKey, data, PosXR, posYT, 0, distance);
-                xTZSearchHelp(patternKey, data, posXL, posYB, 0, distance);
-                xTZSearchHelp(patternKey, data, PosXR, posYB, 0, distance);
-            }
-        }
-        else // check border for each mv
-        {
-            if (top >= srchRngVerTop) // check top
-            {
-                xTZSearchHelp(patternKey, data, startX, top, 0, distance);
-            }
-            if (left >= srchRngHorLeft) // check left
-            {
-                xTZSearchHelp(patternKey, data, left, startY, 0, distance);
-            }
-            if (right <= srchRngHorRight) // check right
-            {
-                xTZSearchHelp(patternKey, data, right, startY, 0, distance);
-            }
-            if (bottom <= srchRngVerBottom) // check bottom
-            {
-                xTZSearchHelp(patternKey, data, startX, bottom, 0, distance);
-            }
-            for (Int index = 1; index < 4; index++)
-            {
-                Int posYT = top    + ((distance >> 2) * index);
-                Int posYB = bottom - ((distance >> 2) * index);
-                Int posXL = startX - ((distance >> 2) * index);
-                Int posXR = startX + ((distance >> 2) * index);
-
-                if (posYT >= srchRngVerTop) // check top
-                {
-                    if (posXL >= srchRngHorLeft) // check left
-                    {
-                        xTZSearchHelp(patternKey, data, posXL, posYT, 0, distance);
-                    }
-                    if (posXR <= srchRngHorRight) // check right
-                    {
-                        xTZSearchHelp(patternKey, data, posXR, posYT, 0, distance);
-                    }
-                } // check top
-                if (posYB <= srchRngVerBottom) // check bottom
-                {
-                    if (posXL >= srchRngHorLeft) // check left
-                    {
-                        xTZSearchHelp(patternKey, data, posXL, posYB, 0, distance);
-                    }
-                    if (posXR <= srchRngHorRight) // check right
-                    {
-                        xTZSearchHelp(patternKey, data, posXR, posYB, 0, distance);
-                    }
-                } // check bottom
-            } // for ...
-        } // check border for each mv
-    } // iDist > 8
-}
-
-//<--
-
 UInt TEncSearch::xPatternRefinement(TComPattern* patternKey, MV baseRefMv, Int fracBits, MV& outFracMv, TComPicYuv* refPic, Int offset, TComDataCU* cu, UInt partAddr)
 {
     UInt  cost;
@@ -2734,7 +2408,10 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                         }
                         else
                         {
-                            if (m_searchMethod < X265_ORIG_SEARCH)
+                            if (m_searchMethod == X265_FULL_SEARCH)
+                                xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp,
+                                                  mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
+                            else
                             {
                                 CYCLE_COUNTER_START(ME);
                                 int merange = m_adaptiveRange[picList][refIdxTmp];
@@ -2749,13 +2426,14 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                                 costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
                                 CYCLE_COUNTER_STOP(ME);
                             }
-                            else
-                                xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
                         }
                     }
                     else
                     {
-                        if (m_searchMethod < X265_ORIG_SEARCH)
+                        if (m_searchMethod == X265_FULL_SEARCH)
+                            xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp,
+                                              mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
+                        else
                         {
                             CYCLE_COUNTER_START(ME);
                             int merange = m_adaptiveRange[picList][refIdxTmp];
@@ -2770,8 +2448,6 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                             costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
                             CYCLE_COUNTER_STOP(ME);
                         }
-                        else
-                            xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
                     }
                     xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[refList][refIdxTmp]); // must always be done ( also when AMVP_MODE = AM_NONE )
                     xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPred[refList][refIdxTmp], mvpIdx[refList][refIdxTmp], bitsTemp, costTemp);
@@ -2889,9 +2565,11 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                     }
                     bitsTemp += m_mvpIdxCost[mvpIdxBi[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
                     // call bidir ME
-                    xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPredBi[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp], bitsTemp, costTemp, true);
+                    xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPredBi[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp],
+                                      bitsTemp, costTemp, true);
                     xCopyAMVPInfo(&amvpInfo[refList][refIdxTmp], cu->getCUMvField(picList)->getAMVPInfo());
-                    xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPredBi[refList][refIdxTmp], mvpIdxBi[refList][refIdxTmp], bitsTemp, costTemp);
+                    xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPredBi[refList][refIdxTmp], mvpIdxBi[refList][refIdxTmp],
+                                  bitsTemp, costTemp);
 
                     if (costTemp < costbi)
                     {
@@ -3287,7 +2965,8 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
     return m_rdCost->calcRdSADCost(cost, m_mvpIdxCost[mvpIdx][mvpCandCount]);
 }
 
-Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred, MV& outmv, UInt& outBits, UInt& outCost, Bool bi)
+Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred,
+                                   MV& outmv, UInt& outBits, UInt& outCost, Bool bi)
 {
     CYCLE_COUNTER_START(ME);
 
@@ -3332,15 +3011,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
 
     // Do integer search
     m_mvCostScale = 2;
-    if (bi || m_searchMethod == X265_FULL_SEARCH)
-    {
-        xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
-    }
-    else
-    {
-        outmv = *mvp;
-        xPatternSearchFast(cu, patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
-    }
+    xPatternSearch(patternKey, fref, stride, &mvmin, &mvmax, outmv, outCost);
 
     TComPicYuv* refPic = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec(); //For new xPatternSearchFracDiff
     MV mvHpel, mvQpel;
@@ -3403,97 +3074,6 @@ Void TEncSearch::xPatternSearch(TComPattern* patternKey, Pel* refY, Int stride, 
     }
 
     outcost = bcost - m_bc.mvcost(outmv << 2);
-}
-
-Void TEncSearch::xPatternSearchFast(TComDataCU* cu, TComPattern* patternKey, Pel* refY, Int stride, MV* mvmin, MV* mvmax, MV& outmv, UInt& outcost)
-{
-    const Int  rasterThreshold = 5;
-    const Bool firstSearchStop = 1;
-    const UInt firstSearchRounds = 3; /* first search stop X rounds after best match (must be >=1) */
-
-    Int srchRngHorLeft   = mvmin->x;
-    Int srchRngHorRight  = mvmax->x;
-    Int srchRngVerTop    = mvmin->y;
-    Int srchRngVerBottom = mvmax->y;
-    UInt merange = m_searchRange;
-
-    cu->clipMv(outmv);
-    outmv >>= 2;
-
-    // init TZSearchStruct
-    IntTZSearchStruct data;
-    data.lumaStride = stride;
-    data.fref       = refY;
-    data.bcost      = MAX_UINT;
-
-    // set outmv (Median predictor) as start point and as best point
-    xTZSearchHelp(patternKey, data, outmv.x, outmv.y, 0, 0);
-
-    // test whether zero Mv is better start point than Median predictor
-    xTZSearchHelp(patternKey, data, 0, 0, 0, 0);
-
-    // start search
-    Int distance = 0;
-    Int startx = data.bestx;
-    Int starty = data.besty;
-
-    // first search
-    for (distance = 1; distance <= (Int)merange; distance *= 2)
-    {
-        xTZ8PointDiamondSearch(patternKey, data, mvmin, mvmax, startx, starty, distance);
-
-        if (firstSearchStop && (data.bestRound >= firstSearchRounds)) // stop criterion
-        {
-            break;
-        }
-    }
-
-    // calculate only 2 missing points instead 8 points if cStruct.uiBestDistance == 1
-    if (data.bestDistance == 1)
-    {
-        data.bestDistance = 0;
-        xTZ2PointSearch(patternKey, data, mvmin, mvmax);
-    }
-
-    // raster search if distance is too big
-    if ((Int)(data.bestDistance) > rasterThreshold)
-    {
-        data.bestDistance = rasterThreshold;
-        for (starty = srchRngVerTop; starty <= srchRngVerBottom; starty += rasterThreshold)
-        {
-            for (startx = srchRngHorLeft; startx <= srchRngHorRight; startx += rasterThreshold)
-            {
-                xTZSearchHelp(patternKey, data, startx, starty, 0, rasterThreshold);
-            }
-        }
-    }
-
-    // star refinement
-    while (data.bestDistance > 0)
-    {
-        startx = data.bestx;
-        starty = data.besty;
-        data.bestDistance = 0;
-        data.bestPointDir = 0;
-        for (distance = 1; distance < (Int)merange + 1; distance *= 2)
-        {
-            xTZ8PointDiamondSearch(patternKey, data, mvmin, mvmax, startx, starty, distance);
-        }
-
-        // calculate only 2 missing points instead 8 points if cStrukt.uiBestDistance == 1
-        if (data.bestDistance == 1)
-        {
-            data.bestDistance = 0;
-            if (data.bestPointDir != 0)
-            {
-                xTZ2PointSearch(patternKey, data, mvmin, mvmax);
-            }
-        }
-    }
-
-    // write out best match
-    outmv = MV(data.bestx, data.besty);
-    outcost = data.bcost - m_bc.mvcost(outmv << 2);
 }
 
 Void TEncSearch::xPatternSearchFracDIF(TComDataCU* cu, TComPattern* patternKey, Int stride, MV* mvfpel, MV& outMvHPel,

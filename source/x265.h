@@ -143,13 +143,12 @@ typedef enum
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
     X265_STAR_SEARCH,
-    X265_ORIG_SEARCH, // original HM functions (deprecated)
     X265_FULL_SEARCH
 }
 
 X265_ME_METHODS;
 
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "orig", "full", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
 
 /* Log level */
 #define X265_LOG_NONE          (-1)
@@ -187,7 +186,7 @@ typedef struct x265_param_t
     int       bEnableStrongIntraSmoothing;     ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
 
     // Inter coding tools
-    int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, HM, FULL)
+    int       searchMethod;                    ///< ME search method (DIA, HEX, UMH, STAR, FULL)
     int       searchRange;                     ///< ME search range
     int       bipredSearchRange;               ///< ME search range for bipred refinement
     uint32_t  maxNumMergeCand;                 ///< Max number of merge candidates
