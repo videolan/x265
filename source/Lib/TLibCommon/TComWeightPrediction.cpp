@@ -404,7 +404,7 @@ Void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, UInt partUnitIdx, UInt
  * \returns Void
  */
 
-Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv)
+Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UInt width, UInt height, wpScalingParam *wp0, TComYuv* outDstYuv, bool justChroma)
 {
     Short* srcY0  = srcYuv0->getLumaAddr(partUnitIdx);
     Short* srcU0  = srcYuv0->getCbAddr(partUnitIdx);
@@ -414,16 +414,23 @@ Void TComWeightPrediction::addWeightUni(TShortYUV* srcYuv0, UInt partUnitIdx, UI
     Pel* dstU   = outDstYuv->getCbAddr(partUnitIdx);
     Pel* dstV   = outDstYuv->getCrAddr(partUnitIdx);
 
-    // Luma : --------------------------------------------
-    Int w0      = wp0[0].w;
-    Int offset  = wp0[0].offset;
-    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-    Int shift   = wp0[0].shift + shiftNum;
-    Int round   = shift ? (1 << (shift - 1)) : 0;
-    UInt srcStride = srcYuv0->m_width;
-    UInt dstStride  = outDstYuv->getStride();
 
-   x265::primitives.weightpUni(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+    Int w0, offset, shiftNum, shift, round;
+    UInt srcStride, dstStride;
+
+    if(!justChroma)
+    {
+        // Luma : --------------------------------------------
+        w0      = wp0[0].w;
+        offset  = wp0[0].offset;
+        shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+        shift   = wp0[0].shift + shiftNum;
+        round   = shift ? (1 << (shift - 1)) : 0;
+        srcStride = srcYuv0->m_width;
+        dstStride  = outDstYuv->getStride();
+
+        x265::primitives.weightpUni(srcY0, dstY, srcStride, dstStride, width, height, w0, round, shift, offset);
+    }
 
     // Chroma U : --------------------------------------------
     w0      = wp0[1].w;
@@ -660,5 +667,5 @@ Void TComWeightPrediction::xWeightedPredictionUni(TComDataCU* cu, TShortYUV* src
     {
         getWpScaling(cu, -1, refIdx, pwpTmp, pwp);
     }
-    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv);
+    addWeightUni(srcYuv, partAddr, width, height, pwp, outPredYuv, true);
 }

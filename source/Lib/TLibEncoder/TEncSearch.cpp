@@ -3272,17 +3272,8 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
 
     // prediction pattern
     MotionReference* ref = cu->getSlice()->m_mref[picList][refIfx];
-    if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
-    {
-        TShortYUV *mbYuv = &m_predShortYuv[0];
-        xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(picList, refIfx)->getPicYuvRec(), partAddr, &mvCand, sizex, sizey, mbYuv);
-        xWeightedPredictionUni(cu, mbYuv, partAddr, sizex, sizey, picList, templateCand, refIfx);
-    }
-    else
-    {
-        xPredInterLumaBlk(cu, ref, partAddr, &mvCand, sizex, sizey, templateCand);
-    }
-
+    xPredInterLumaBlk(cu, ref, partAddr, &mvCand, sizex, sizey, templateCand);
+    
     // calc distortion
     UInt cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
     x265_emms();

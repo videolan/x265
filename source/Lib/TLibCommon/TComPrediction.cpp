@@ -257,7 +257,15 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
             if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_predShortYuv[0];
-                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
+                Int refId = cu->getCUMvField(picList)->getRefIdx(partAddr);
+                assert(refId >= 0);
+
+                MV mv = cu->getCUMvField(picList)->getMv(partAddr);
+                cu->clipMv(mv);
+
+                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, predYuv);
+                xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
+
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
             }
             else
@@ -288,7 +296,16 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
             if (cu->getSlice()->getPPS()->getUseWP())
             {
                 TShortYUV* pcMbYuv = &m_predShortYuv[0];
-                xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
+
+                Int refId = cu->getCUMvField(picList)->getRefIdx(partAddr);
+                assert(refId >= 0);
+
+                MV mv = cu->getCUMvField(picList)->getMv(partAddr);
+                cu->clipMv(mv);
+
+                xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, predYuv);
+                xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
+
                 xWeightedPredictionUni(cu, pcMbYuv, partAddr, width, height, picList, predYuv);
             }
             else
@@ -386,23 +403,26 @@ Void TComPrediction::xPredInterBi(TComDataCU* cu, UInt partAddr, Int width, Int 
     else if (cu->getSlice()->getPPS()->getUseWP() && cu->getSlice()->getSliceType() == P_SLICE)
     {
         TShortYUV* pcMbYuv;
-        for (Int refList = 0; refList < 2; refList++)
+
+        RefPicList picList = REF_PIC_LIST_0;
+        refIdx[0] = cu->getCUMvField(picList)->getRefIdx(partAddr);
+
+        if (!(refIdx[0] < 0))
         {
-            RefPicList picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
-            refIdx[refList] = cu->getCUMvField(picList)->getRefIdx(partAddr);
+            assert(refIdx[0] < cu->getSlice()->getNumRefIdx(picList));
 
-            if (refIdx[refList] < 0)
-            {
-                continue;
-            }
+            pcMbYuv = &m_predShortYuv[0];
+            Int refId = cu->getCUMvField(picList)->getRefIdx(partAddr);
+            assert(refId >= 0);
 
-            assert(refIdx[refList] < cu->getSlice()->getNumRefIdx(picList));
+            MV mv = cu->getCUMvField(picList)->getMv(partAddr);
+            cu->clipMv(mv);
 
-            pcMbYuv = &m_predShortYuv[refList];
-            xPredInterUni(cu, partAddr, width, height, picList, pcMbYuv);
+            xPredInterLumaBlk(cu, cu->getSlice()->m_mref[picList][refId], partAddr, &mv, width, height, outPredYuv);
+            xPredInterChromaBlk(cu, cu->getSlice()->getRefPic(picList, refId)->getPicYuvRec(), partAddr, &mv, width, height, pcMbYuv);
+
+            xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv);
         }
-
-        xWeightedPredictionUni(cu, &m_predShortYuv[0], partAddr, width, height, REF_PIC_LIST_0, outPredYuv);
     }
     else
     {
