@@ -285,8 +285,8 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     Bool bSubBranch = true;
     Bool bTrySplitDQP = true;
     Bool bBoundary = false;
-    UInt64 nxnCost = 0;
 #if EARLY_EXIT_NO_RDO
+    UInt64 nxnCost = 0;
     UInt64 inter2Nx2NCost = 0;
 #endif
     UInt lpelx = outTempCU->getCUPelX();
@@ -299,9 +299,9 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // If slice start or slice end is within this cu...
     TComSlice * slice = outTempCU->getPic()->getSlice();
     Bool bSliceEnd = slice->getSliceCurEndCUAddr() > outTempCU->getSCUAddr() &&
-                     slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart();
+        slice->getSliceCurEndCUAddr() < outTempCU->getSCUAddr() + outTempCU->getTotalNumPart();
     Bool bInsidePicture = (rpelx < outTempCU->getSlice()->getSPS()->getPicWidthInLumaSamples()) &&
-                          (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
+        (bpely < outTempCU->getSlice()->getSPS()->getPicHeightInLumaSamples());
 
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
@@ -347,6 +347,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_bestPredYuv[depth] = tempYuv;
             }
             //reusing the buffer gives md5 hash error - need to look into it. suspect it happens when inSlice condition is false.
+
             /*else
             {
                 outBestCU = m_interCU_NxN[PartitionIndex][depth];
@@ -382,14 +383,13 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     TComPic* subPic = subTempPartCU->getPic();
                     m_origYuv[nextDepth]->copyFromPicYuv(subPic->getPicYuvOrg(), subTempPartCU->getAddr(), subTempPartCU->getZorderIdxInCU());
 
-                    Bool bInSlice = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr() ;
+                    Bool bInSlice = subTempPartCU->getSCUAddr() < slice->getSliceCurEndCUAddr();
                     if (bInSlice && (subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
                         (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples()))
                     {
                         xComputeCostInter(subTempPartCU, m_bestPredYuvNxN[partUnitIdx][nextDepth], SIZE_2Nx2N, 0);
                         nxnCost += subTempPartCU->m_totalCost;
                     }
-                   
                 }
             }
 #endif // if EARLY_EXIT_NO_RDO
