@@ -92,7 +92,6 @@ class TEncCfg
 protected:
 
     //==== File I/O ========
-    Int       m_sourceWidth;
     Int       m_sourceHeight;
     Int       m_conformanceMode;
     Window    m_conformanceWindow;
@@ -251,8 +250,6 @@ public:
 
     Void      setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
 
-    Void      setSourceWidth(Int i)      { m_sourceWidth = i; }
-
     Void      setSourceHeight(Int i)      { m_sourceHeight = i; }
 
     Window   &getConformanceWindow()      { return m_conformanceWindow; }
@@ -334,8 +331,6 @@ public:
     Void      setUseLossless(Bool b)        { m_useLossless = b;  }
 
     //====== Sequence ========
-    Int       getSourceWidth()      { return m_sourceWidth; }
-
     Int       getSourceHeight()      { return m_sourceHeight; }
 
     Int       getFramesToBeEncoded()      { return m_framesToBeEncoded; }

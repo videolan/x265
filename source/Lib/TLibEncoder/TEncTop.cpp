@@ -131,7 +131,7 @@ Void TEncTop::init()
     for (int i = 0; i < maxGOP; i++)
     {
         TComPic *pic = new TComPic;
-        pic->create(getSourceWidth(), getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+        pic->create(param.sourceWidth, getSourceHeight(), g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
             getConformanceWindow(), getDefaultDisplayWindow());
         if (getUseSAO())
         {
@@ -283,7 +283,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     /* XXX: may be a good idea to refactor the above into a function
      * that chooses the actual compatibility based upon options */
 
-    pcSPS->setPicWidthInLumaSamples(m_sourceWidth);
+    pcSPS->setPicWidthInLumaSamples(param.sourceWidth);
     pcSPS->setPicHeightInLumaSamples(m_sourceHeight);
     pcSPS->setConformanceWindow(m_conformanceWindow);
     pcSPS->setMaxCUWidth(g_maxCUWidth);
