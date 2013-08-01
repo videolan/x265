@@ -24,7 +24,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#if INSTRSET >= 4
+#if INSTRSET > 4
 template<int N>
 void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
