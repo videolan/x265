@@ -164,13 +164,13 @@ void FrameEncoder::init(TEncTop *top, int numRows)
     m_numRows = numRows;
 
     m_sliceEncoder.init(top);
-    m_sliceEncoder.create(top->param.sourceWidth, top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
+    m_sliceEncoder.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
     if (top->getUseSAO())
     {
         m_sao.setSaoLcuBoundary(top->getSaoLcuBoundary());
         m_sao.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
-        m_sao.create(top->param.sourceWidth, top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight);
+        m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
         m_sao.createEncBuffer();
     }
     m_loopFilter.create(g_maxCUDepth);

@@ -175,7 +175,7 @@ Void TEncGOP::init(TEncTop* top)
     m_sps.setScalingListPresentFlag(false);
     m_pps.setScalingListPresentFlag(false);
 
-    int numRows = (m_cfg->getSourceHeight() + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
+    int numRows = (m_cfg->param.sourceHeight + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
     m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
     m_frameEncoders->init(top, numRows);
 }

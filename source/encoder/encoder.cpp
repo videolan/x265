@@ -181,7 +181,6 @@ void Encoder::configure(x265_param_t *param)
     }
 
     m_gopSize = 4;
-    setSourceHeight(param->sourceHeight);
     setDecodingRefreshType(param->decodingRefreshType);
     setQP(param->qp);
 
