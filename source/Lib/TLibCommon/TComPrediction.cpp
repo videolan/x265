@@ -201,6 +201,7 @@ Void TComPrediction::predIntraChromaAng(Pel* src, UInt dirMode, Pel* dst, UInt s
     Pel refAbv[3 * MAX_CU_SIZE];
     Pel refLft[3 * MAX_CU_SIZE];
     int limit = (dirMode <= 25 && dirMode >= 11) ? (width + 1 + 1) : (2 * width + 1);
+
     memcpy(refAbv + width - 1, src, (limit) * sizeof(Pel));
     for (int k = 0; k < limit; k++)
     {
@@ -330,6 +331,7 @@ Void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, RefPic
 Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TComYuv* outPredYuv)
 {
     Int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
+
     assert(refIdx >= 0);
 
     MV mv = cu->getCUMvField(picList)->getMv(partAddr);
@@ -343,6 +345,7 @@ Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int
 Void TComPrediction::xPredInterUni(TComDataCU* cu, UInt partAddr, Int width, Int height, RefPicList picList, TShortYUV* outPredYuv)
 {
     Int refIdx = cu->getCUMvField(picList)->getRefIdx(partAddr);
+
     assert(refIdx >= 0);
 
     MV mv = cu->getCUMvField(picList)->getMv(partAddr);

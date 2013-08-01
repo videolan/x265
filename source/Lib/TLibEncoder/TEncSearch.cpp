@@ -237,8 +237,8 @@ inline Void TEncSearch::xTZSearchHelp(TComPattern* patternKey, IntTZSearchStruct
     }
 
     // distortion
-    UInt cost = m_distParam.distFunc(&m_distParam) + 
-                m_bc.mvcost(MV(searchX, searchY) << m_mvCostScale);
+    UInt cost = m_distParam.distFunc(&m_distParam) +
+        m_bc.mvcost(MV(searchX, searchY) << m_mvCostScale);
 
     if (cost < data.bcost)
     {
@@ -691,9 +691,12 @@ Void TEncSearch::xEncCoeffQT(TComDataCU* cu, UInt trDepth, UInt absPartIdx, Text
     TCoeff* coeff = 0;
     switch (ttype)
     {
-    case TEXT_LUMA:     coeff = m_qtTempCoeffY[qtLayer];  break;
-    case TEXT_CHROMA_U: coeff = m_qtTempCoeffCb[qtLayer]; break;
-    case TEXT_CHROMA_V: coeff = m_qtTempCoeffCr[qtLayer]; break;
+    case TEXT_LUMA:     coeff = m_qtTempCoeffY[qtLayer];
+        break;
+    case TEXT_CHROMA_U: coeff = m_qtTempCoeffCb[qtLayer];
+        break;
+    case TEXT_CHROMA_V: coeff = m_qtTempCoeffCr[qtLayer];
+        break;
     default: assert(0);
     }
 
@@ -1440,6 +1443,7 @@ Void TEncSearch::xStoreIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartI
 
     Bool bSkipChroma  = false;
     Bool bChromaSame  = false;
+
     if (!bLumaOnly && trSizeLog2 == 2)
     {
         assert(trDepth > 0);
@@ -1486,6 +1490,7 @@ Void TEncSearch::xLoadIntraResultQT(TComDataCU* cu, UInt trDepth, UInt absPartId
 
     Bool bSkipChroma = false;
     Bool bChromaSame = false;
+
     if (!bLumaOnly && trSizeLog2 == 2)
     {
         assert(trDepth > 0);
@@ -2046,7 +2051,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                     Pel *cmp_buf = (modeHor ? buf_trans : buf_scale);
                     modeCosts[mode] = 4 * x265::primitives.sa8d[3]((pixel*)cmp_buf, 32, (pixel*)&tmp[(mode - 2) * (32 * 32)], 32);
                 }
-#else
+
+#else // if 1
                 // 1
                 primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, pred, stride, width, false);
                 modeCosts[DC_IDX] = sa8d(fenc, stride, pred, stride);
@@ -2060,7 +2066,8 @@ Void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
                     predIntraLumaAng(mode, pred, stride, width);
                     modeCosts[mode] = sa8d(fenc, stride, pred, stride);
                 }
-#endif
+
+#endif // if 1
             }
 
             // Find N least cost modes. N = numModesForFullRD
@@ -3273,7 +3280,7 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
     // prediction pattern
     MotionReference* ref = cu->getSlice()->m_mref[picList][refIfx];
     xPredInterLumaBlk(cu, ref, partAddr, &mvCand, sizex, sizey, templateCand);
-    
+
     // calc distortion
     UInt cost = m_me.bufSAD(templateCand->getLumaAddr(partAddr), templateCand->getStride());
     x265_emms();

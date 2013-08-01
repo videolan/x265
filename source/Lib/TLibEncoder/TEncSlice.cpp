@@ -392,7 +392,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
     }
 
     Bool wpexplicit = (slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
-                        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred());
 
     if (wpexplicit)
     {
@@ -408,7 +408,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
 
     Int numPredDir = slice->isInterP() ? 1 : 2;
 
-    if((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()))
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()))
     {
         for (Int refList = 0; refList < numPredDir; refList++)
         {
@@ -417,7 +417,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
             {
                 //Generate weighted motionreference
                 wpScalingParam *w = &(slice->m_weightPredTable[picList][refIdxTemp][0]);
-                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), w); 
+                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), w);
             }
         }
     }
@@ -428,7 +428,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
             RefPicList  picList = (refList ? REF_PIC_LIST_1 : REF_PIC_LIST_0);
             for (Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(picList); refIdxTemp++)
             {
-               slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL); 
+                slice->m_mref[picList][refIdxTemp] = slice->getRefPic(picList, refIdxTemp)->getPicYuvRec()->generateMotionReference(x265::ThreadPool::getThreadPool(), NULL);
             }
         }
     }
