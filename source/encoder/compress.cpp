@@ -23,10 +23,12 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include <math.h>
-#include <common.h>
 
 /* Temporary macro for development only. Will be removed once the early exit is fully tested and profiled */
 #define EARLY_EXIT_NO_RDO 0
+
+/* Lambda Partition Select adjusts the threshold value for Early Exit in No-RDO flow */
+#define LAMBDA_PARTITION_SELECT     0.9
 
 using namespace x265;
 
