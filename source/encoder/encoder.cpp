@@ -189,11 +189,6 @@ void Encoder::configure(x265_param_t *param)
     setQP(param->qp);
 
     //====== Motion search ========
-    if (param->searchMethod != X265_ORIG_SEARCH && (param->bEnableWeightedBiPred))
-    {
-        x265_log(param, X265_LOG_WARNING, "Weighted prediction only supported by HM ME, forcing --me 4\n");
-        param->searchMethod = X265_ORIG_SEARCH;
-    }
     setSearchMethod(param->searchMethod);
     setSearchRange(param->searchRange);
     setBipredSearchRange(param->bipredSearchRange);
