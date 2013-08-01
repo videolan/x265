@@ -31,13 +31,11 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
     src -= (N / 2 - 1) * srcStride;
 
     int offset;
-    short maxVal;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC;
     shift += headRoom;
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
-    maxVal = (1 << X265_DEPTH) - 1;
 
     __m128i filterCoeff0 = _mm_set1_epi32(coeff[0]);
     __m128i filterCoeff1 = _mm_set1_epi32(coeff[1]);
