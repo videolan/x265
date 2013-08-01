@@ -2408,46 +2408,34 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                         }
                         else
                         {
-                            if (m_searchMethod == X265_FULL_SEARCH)
-                                xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp,
-                                                  mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
-                            else
-                            {
-                                CYCLE_COUNTER_START(ME);
-                                int merange = m_adaptiveRange[picList][refIdxTmp];
-                                MV& mvp = mvPred[refList][refIdxTmp];
-                                MV& outmv = mvTemp[refList][refIdxTmp];
-                                xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                                int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
-                                                                   mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
-
-                                /* Get total cost of partition, but only include MV bit cost once */
-                                bitsTemp += m_me.bitcost(outmv);
-                                costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
-                                CYCLE_COUNTER_STOP(ME);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (m_searchMethod == X265_FULL_SEARCH)
-                            xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPred[refList][refIdxTmp], refIdxTmp,
-                                              mvTemp[refList][refIdxTmp], bitsTemp, costTemp);
-                        else
-                        {
                             CYCLE_COUNTER_START(ME);
                             int merange = m_adaptiveRange[picList][refIdxTmp];
                             MV& mvp = mvPred[refList][refIdxTmp];
                             MV& outmv = mvTemp[refList][refIdxTmp];
                             xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                             int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
-                                                               mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
+                                                                mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
 
                             /* Get total cost of partition, but only include MV bit cost once */
                             bitsTemp += m_me.bitcost(outmv);
                             costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
                             CYCLE_COUNTER_STOP(ME);
                         }
+                    }
+                    else
+                    {
+                        CYCLE_COUNTER_START(ME);
+                        int merange = m_adaptiveRange[picList][refIdxTmp];
+                        MV& mvp = mvPred[refList][refIdxTmp];
+                        MV& outmv = mvTemp[refList][refIdxTmp];
+                        xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
+                        int satdCost = m_me.motionEstimate(cu->getSlice()->m_mref[picList][refIdxTmp],
+                                                            mvmin, mvmax, mvp, 3, m_mvPredictors, merange, outmv);
+
+                        /* Get total cost of partition, but only include MV bit cost once */
+                        bitsTemp += m_me.bitcost(outmv);
+                        costTemp = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bitsTemp);
+                        CYCLE_COUNTER_STOP(ME);
                     }
                     xCopyAMVPInfo(cu->getCUMvField(picList)->getAMVPInfo(), &amvpInfo[refList][refIdxTmp]); // must always be done ( also when AMVP_MODE = AM_NONE )
                     xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPred[refList][refIdxTmp], mvpIdx[refList][refIdxTmp], bitsTemp, costTemp);
@@ -2566,7 +2554,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
                     bitsTemp += m_mvpIdxCost[mvpIdxBi[refList][refIdxTmp]][AMVP_MAX_NUM_CANDS];
                     // call bidir ME
                     xMotionEstimation(cu, fencYuv, partIdx, picList, &mvPredBi[refList][refIdxTmp], refIdxTmp, mvTemp[refList][refIdxTmp],
-                                      bitsTemp, costTemp, true);
+                                      bitsTemp, costTemp);
                     xCopyAMVPInfo(&amvpInfo[refList][refIdxTmp], cu->getCUMvField(picList)->getAMVPInfo());
                     xCheckBestMVP(cu, picList, mvTemp[refList][refIdxTmp], mvPredBi[refList][refIdxTmp], mvpIdxBi[refList][refIdxTmp],
                                   bitsTemp, costTemp);
@@ -2966,45 +2954,31 @@ UInt TEncSearch::xGetTemplateCost(TComDataCU* cu, UInt partAddr, TComYuv* templa
 }
 
 Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, MV* mvp, Int refIdxPred,
-                                   MV& outmv, UInt& outBits, UInt& outCost, Bool bi)
+                                   MV& outmv, UInt& outBits, UInt& outCost)
 {
-    CYCLE_COUNTER_START(ME);
-
-    m_searchRange = m_adaptiveRange[picList][refIdxPred];
-
-    Int merange = (bi ? m_bipredSearchRange : m_searchRange);
-
+    /* This function only performs bidirectional search */
+    Int merange = m_bipredSearchRange;
     UInt partAddr;
     Int width, height;
     cu->getPartIndexAndSize(partIdx, partAddr, width, height);
 
     TComYuv* yuv = fencYuv;
-    int cost_shift = 0;
-    if (bi)
-    {
-        TComYuv* yuvOther = &m_predYuv[1 - (Int)picList];
-        yuv = &m_predTempYuv;
-        fencYuv->copyPartToPartYuv(yuv, partAddr, width, height);
-        yuv->removeHighFreq(yuvOther, partAddr, width, height);
-        cost_shift = 1;
-    }
+    TComYuv* yuvOther = &m_predYuv[1 - (Int)picList];
+    yuv = &m_predTempYuv;
+    fencYuv->copyPartToPartYuv(yuv, partAddr, width, height);
+    yuv->removeHighFreq(yuvOther, partAddr, width, height);
 
     // Search key pattern initialization
     TComPattern* patternKey = cu->getPattern();
     patternKey->initPattern(yuv->getLumaAddr(partAddr), yuv->getCbAddr(partAddr), yuv->getCrAddr(partAddr), width, height, yuv->getStride(), 0, 0);
 
-    MV cMvPred = *mvp;
     MV mvmin, mvmax;
 
-    if (bi)
-        xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
-    else
-        xSetSearchRange(cu, cMvPred, merange, mvmin, mvmax);
-
+    xSetSearchRange(cu, outmv, merange, mvmin, mvmax);
     setWpScalingDistParam(cu, refIdxPred, picList);
 
     Pel* fref = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
-    Int  stride  = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getStride();
+    Int  stride = cu->getSlice()->getRefPic(picList, refIdxPred)->getPicYuvRec()->getStride();
 
     // Configure the MV bit cost calculator
     m_bc.setMVP(*mvp);
@@ -3023,9 +2997,7 @@ Void TEncSearch::xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx
 
     UInt mvbits = m_bc.bitcost(outmv);
     outBits += mvbits;
-    outCost = ((outCost - m_rdCost->getCost(mvbits)) >> cost_shift) + m_rdCost->getCost(outBits);
-
-    CYCLE_COUNTER_STOP(ME);
+    outCost = ((outCost - m_rdCost->getCost(mvbits)) >> 1) + m_rdCost->getCost(outBits);
 }
 
 Void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, Int merange, MV& mvmin, MV& mvmax)

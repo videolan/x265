@@ -230,7 +230,7 @@ protected:
     // -------------------------------------------------------------------------------------------------------------------
 
     Void xMotionEstimation(TComDataCU* cu, TComYuv* fencYuv, Int partIdx, RefPicList picList, x265::MV* mvp,
-                           Int refIdxPred, x265::MV& outmv, UInt& outBits, UInt& outCost, Bool bBi = false);
+                           Int refIdxPred, x265::MV& outmv, UInt& outBits, UInt& outCost);
 
     Void xSetSearchRange(TComDataCU* cu, x265::MV mvp, Int merange, x265::MV& mvmin, x265::MV& mvmax);
 

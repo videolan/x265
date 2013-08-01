@@ -707,6 +707,40 @@ me_hex2:
         }
     }
     break;
+    case X265_FULL_SEARCH:
+    {
+        // dead slow exhaustive search, but at least it uses sad_x4()
+        MV tmv;
+        for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y++)
+        {
+            for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x++)
+            {
+                if (tmv.x + 3 <= mvmax.x)
+                {
+                    pixel *pix_base = fref + tmv.y * stride + tmv.x;
+                    sad_x4(fenc,
+                        pix_base,
+                        pix_base + 1,
+                        pix_base + 2,
+                        pix_base + 3,
+                        stride, costs);
+                    costs[0] += mvcost(tmv << 2);
+                    COPY2_IF_LT(bcost, costs[0], bmv, tmv);
+                    tmv.x++;
+                    costs[1] += mvcost(tmv << 2);
+                    COPY2_IF_LT(bcost, costs[1], bmv, tmv);
+                    tmv.x++;
+                    costs[2] += mvcost(tmv << 2);
+                    COPY2_IF_LT(bcost, costs[2], bmv, tmv);
+                    tmv.x++;
+                    costs[3] += mvcost(tmv << 3);
+                    COPY2_IF_LT(bcost, costs[3], bmv, tmv);
+                }
+                else
+                    COST_MV(tmv.x, tmv.y);
+            }
+        }
+    }
 
     default:
         assert(0);
