@@ -82,6 +82,9 @@ public:
     TEncAnalyze m_gcAnalyzeP;
     TEncAnalyze m_gcAnalyzeB;
 
+    /* copy of parameters used to create encoder */
+    x265_param_t param;
+
 public:
 
     TEncTop();

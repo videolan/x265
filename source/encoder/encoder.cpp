@@ -759,6 +759,7 @@ x265_t *x265_encoder_open(x265_param_t *param)
     if (encoder)
     {
         encoder->configure(param); // this may change params for auto-detect, etc
+        memcpy(&encoder->param, param, sizeof(*param));
         x265_print_params(param);
         encoder->create();
         encoder->init();

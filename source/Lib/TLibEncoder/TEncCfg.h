@@ -183,8 +183,6 @@ protected:
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
 
-    Bool      m_enableWpp;
-
     Int       m_decodedPictureHashSEIEnabled; ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     Int       m_bufferingPeriodSEIEnabled;
     Int       m_pictureTimingSEIEnabled;
@@ -242,6 +240,9 @@ protected:
     Bool      m_useStrongIntraSmoothing;                      ///< enable the use of strong intra smoothing (bi_linear interpolation) for 32x32 blocks when reference samples are flat.
 
 public:
+
+    /* copy of parameters used to create encoder */
+    x265_param_t param;
 
     TEncCfg()
     {}
@@ -482,10 +483,6 @@ public:
     Void  setLFCrossTileBoundaryFlag(Bool val)       { m_loopFilterAcrossTilesEnabledFlag = val; }
 
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
-
-    Void  setEnableWaveFront(Bool b)                       { m_enableWpp = b; }
-
-    Bool  getEnableWaveFront()                             { return m_enableWpp; }
 
     Void  setDecodedPictureHashSEIEnabled(Int b)           { m_decodedPictureHashSEIEnabled = b; }
 
