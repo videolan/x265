@@ -959,7 +959,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         xCalculateAddPSNR(pic, pic->getPicYuvRec(), accessUnit);
 
-        if (digestStr && m_cfg->getLogLevel() >= X265_LOG_DEBUG)
+        if (digestStr && m_cfg->param.logLevel >= X265_LOG_DEBUG)
         {
             if (m_cfg->getDecodedPictureHashSEIEnabled() == 1)
             {
@@ -1128,7 +1128,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         numPicCoded++;
         m_totalCoded++;
 
-        if (m_cfg->getLogLevel() >= X265_LOG_DEBUG)
+        if (m_cfg->param.logLevel >= X265_LOG_DEBUG)
         {
             /* logging: insert a newline at end of picture period */
             fprintf(stderr, "\n");
@@ -1433,7 +1433,7 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
         m_top->m_gcAnalyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
 
-    if (m_cfg->getLogLevel() < X265_LOG_DEBUG)
+    if (m_cfg->param.logLevel < X265_LOG_DEBUG)
         return;
 
     Char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');

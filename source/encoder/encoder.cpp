@@ -181,7 +181,6 @@ void Encoder::configure(x265_param_t *param)
     }
 
     m_gopSize = 4;
-    setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);
     setSourceWidth(param->sourceWidth);
     setSourceHeight(param->sourceHeight);

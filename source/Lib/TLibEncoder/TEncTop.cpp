@@ -235,7 +235,7 @@ int TEncTop::getStreamHeaders(std::list<AccessUnit>& accessUnitsOut)
 
 Double TEncTop::printSummary()
 {
-    if (getLogLevel() >= X265_LOG_INFO)
+    if (param.logLevel >= X265_LOG_INFO)
     {
         m_gcAnalyzeI.printOut('i');
         m_gcAnalyzeP.printOut('p');
