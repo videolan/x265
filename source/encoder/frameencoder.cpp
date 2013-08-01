@@ -162,7 +162,6 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 {
     m_cfg = top;
     m_numRows = numRows;
-    m_enableWpp = top->getEnableWaveFront();
 
     m_sliceEncoder.init(top);
     m_sliceEncoder.create(top->getSourceWidth(), top->getSourceHeight(), g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
@@ -204,7 +203,7 @@ void FrameEncoder::encode(TComPic *pic, TComSlice *slice)
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
     }
 
-    if (!m_pool || !m_enableWpp)
+    if (!m_pool || !m_cfg->param.bEnableWavefront)
     {
         for (int i = 0; i < this->m_numRows; i++)
         {
@@ -229,7 +228,7 @@ void FrameEncoder::processRow(int row)
 
     // Called by worker threads
     CTURow& curRow  = m_rows[row];
-    CTURow& codeRow = m_rows[m_enableWpp ? row : 0];
+    CTURow& codeRow = m_rows[m_cfg->param.bEnableWavefront ? row : 0];
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -242,8 +241,8 @@ void FrameEncoder::processRow(int row)
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_slice);
         codeRow.m_entropyCoder.resetEntropy();
 
-        TEncSbac *bufSbac = (m_enableWpp && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        codeRow.processCU(cu, m_slice, bufSbac, m_enableWpp && col == 1);
+        TEncSbac *bufSbac = (m_cfg->param.bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        codeRow.processCU(cu, m_slice, bufSbac, m_cfg->param.bEnableWavefront && col == 1);
 
         // TODO: Keep atomic running totals for rate control?
         // cu->m_totalBits;

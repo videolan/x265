@@ -435,7 +435,7 @@ Void TEncSlice::compressSlice(TComPic* pic, FrameEncoder* frameEncoder)
 
     frameEncoder->encode(pic, slice);
 
-    if (m_cfg->getEnableWaveFront())
+    if (m_cfg->param.bEnableWavefront)
     {
         slice->setNextSlice(true);
     }
@@ -500,7 +500,7 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-    const Bool bWaveFrontsynchro = m_cfg->getEnableWaveFront();
+    const Bool bWaveFrontsynchro = m_cfg->param.bEnableWavefront;
     const UInt heightInLCUs = pic->getPicSym()->getFrameHeightInCU();
     const Int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
     UInt bitsOriginallyInSubstreams = 0;
@@ -513,15 +513,14 @@ Void TEncSlice::encodeSlice(TComPic* pic, TComOutputBitstream* substreams, Frame
 
     UInt widthInLCUs  = pic->getPicSym()->getFrameWidthInCU();
     UInt col = 0, lin = 0, subStrm = 0;
-    cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
-                                                              an encoding order index, so we need to convert the index (uiStartCUAddr)
-                                                              into the real raster scan address (cuAddr) via the CUOrderMap */
+    cuAddr = (startCUAddr / pic->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
+                                                       an encoding order index, so we need to convert the index (startCUAddr)
+                                                       into the real raster scan address (cuAddr) via the CUOrderMap */
     UInt encCUOrder;
     for (encCUOrder = startCUAddr / pic->getNumPartInCU();
          encCUOrder < (boundingCUAddr + pic->getNumPartInCU() - 1) / pic->getNumPartInCU();
          cuAddr = (++encCUOrder))
     {
-        //UInt uiSliceStartLCU = slice->getSliceCurStartCUAddr();
         col     = cuAddr % widthInLCUs;
         lin     = cuAddr / widthInLCUs;
         subStrm = lin % numSubstreams;

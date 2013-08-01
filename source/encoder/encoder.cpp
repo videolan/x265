@@ -180,8 +180,6 @@ void Encoder::configure(x265_param_t *param)
         param->bEnableWavefront = 0;
     }
 
-    setEnableWaveFront(param->bEnableWavefront);
-
     m_gopSize = 4;
     setLogLevel(param->logLevel);
     setFrameRate(param->frameRate);

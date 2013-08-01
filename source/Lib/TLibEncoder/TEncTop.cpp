@@ -432,7 +432,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setChromaCbQpOffset(m_chromaCbQpOffset);
     pcPPS->setChromaCrQpOffset(m_chromaCrQpOffset);
 
-    pcPPS->setEntropyCodingSyncEnabledFlag(m_enableWpp);
+    pcPPS->setEntropyCodingSyncEnabledFlag(param.bEnableWavefront);
     pcPPS->setUseWP(m_useWeightedPred);
     pcPPS->setWPBiPred(m_useWeightedBiPred);
     pcPPS->setOutputFlagPresentFlag(false);

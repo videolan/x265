@@ -558,7 +558,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
 
         // Allocate some coders, now we know how many tiles there are.
-        Int numSubstreams = (m_cfg->getEnableWaveFront() ? pic->getPicSym()->getFrameHeightInCU() : 1);
+        Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
 
         // Allocate some coders, now we know how many tiles there are.
         outStreams = new TComOutputBitstream[numSubstreams];

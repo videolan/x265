@@ -207,7 +207,6 @@ protected:
     TComPic*                 m_pic;
 
     int                      m_numRows;
-    bool                     m_enableWpp;
     CTURow*                  m_rows;
     Event                    m_completionEvent;
 };
