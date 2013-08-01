@@ -51,8 +51,10 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
     p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
     p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
 
+#if INSTRSET >= 4
     p.ipfilter_sp[FILTER_V_S_P_4] = filterVertical_s_p<4>;
     p.ipfilter_sp[FILTER_V_S_P_8] = filterVertical_s_p<8>;
+#endif
 
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;

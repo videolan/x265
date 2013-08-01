@@ -24,14 +24,12 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#if INSTRSET >= 4
 template<int N>
-void filterVertical_s_p(short *src, int srcStride,
-                        pixel *dst, int dstStride, int block_width,
-                        int block_height, const short *coeff)
+void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
-    int row, col;
-
     src -= (N / 2 - 1) * srcStride;
+
     int offset;
     short maxVal;
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
@@ -40,172 +38,196 @@ void filterVertical_s_p(short *src, int srcStride,
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
     maxVal = (1 << X265_DEPTH) - 1;
-    Vec4i cm0(coeff[0]), cm1(coeff[1]), cm2(coeff[2]), cm3(coeff[3]), cm4(coeff[4]), cm5(coeff[5]), cm6(coeff[6]), cm7(coeff[7]);
-    Vec16uc sum_uc;
-    Vec8s vec_zero(0);
 
-    for (row = 0; row < block_height; row++)
+    __m128i filterCoeff0 = _mm_set1_epi32(coeff[0]);
+    __m128i filterCoeff1 = _mm_set1_epi32(coeff[1]);
+    __m128i filterCoeff2 = _mm_set1_epi32(coeff[2]);
+    __m128i filterCoeff3 = _mm_set1_epi32(coeff[3]);
+    __m128i filterCoeff4 = _mm_set1_epi32(coeff[4]);
+    __m128i filterCoeff5 = _mm_set1_epi32(coeff[5]);
+    __m128i filterCoeff6 = _mm_set1_epi32(coeff[6]);
+    __m128i filterCoeff7 = _mm_set1_epi32(coeff[7]);
+
+    int row, col;
+
+    for (row = 0; row < height; row++)
     {
-        for (col = 0; col < block_width - 7; col += 8)
+        col = 0;
+        for (; col < (width - 7); col += 8)
         {
-            Vec8s row0, row1, row2, row3, row4, row5, row6, row7, sum;
-            Vec4i row0_first, row0_last, row1_first, row1_last, sum_first, sum_last;
-            Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
+            __m128i srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col]));
+            __m128i srcCoeffTemp1 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T00 = _mm_mullo_epi32(srcCoeffTemp1, filterCoeff0);
+            srcCoeff = _mm_srli_si128(srcCoeff, 8);
+            srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T01 = _mm_mullo_epi32(srcCoeff, filterCoeff0);
 
-            row0.load(&src[col]);
-            row1.load(&src[col + srcStride]);
+            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + srcStride]));
+            __m128i srcCoeffTemp2 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T10 = _mm_mullo_epi32(srcCoeffTemp2, filterCoeff1);
+            srcCoeff = _mm_srli_si128(srcCoeff, 8);
+            srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T11 = _mm_mullo_epi32(srcCoeff, filterCoeff1);
 
-            c0 = cm0;
-            c1 = cm1;
+            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 2 * srcStride]));
+            __m128i srcCoeffTemp3 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T20 = _mm_mullo_epi32(srcCoeffTemp3, filterCoeff2);
+            srcCoeff = _mm_srli_si128(srcCoeff, 8);
+            srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T21 = _mm_mullo_epi32(srcCoeff, filterCoeff2);
 
-            row0_first = extend_low(row0);
-            row1_first = extend_low(row1);
-            row0_last = extend_high(row0);
-            row1_last = extend_high(row1);
+            srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 3 * srcStride]));
+            __m128i srcCoeffTemp4 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T30 = _mm_mullo_epi32(srcCoeffTemp4, filterCoeff3);
+            srcCoeff = _mm_srli_si128(srcCoeff, 8);
+            srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T31 = _mm_mullo_epi32(srcCoeff, filterCoeff3);
 
-            row0_first = row0_first * c0;
-            row1_first = row1_first * c1;
-            row0_last = row0_last * c0;
-            row1_last = row1_last * c1;
+            __m128i sum01 = _mm_add_epi32(T00, T10);
+            __m128i sum23 = _mm_add_epi32(T20, T30);
+            __m128i sumlo0123 = _mm_add_epi32(sum01, sum23);
 
-            sum_first = row0_first + row1_first;
-            sum_last = row0_last + row1_last;
-
-            row2.load(&src[col + 2 * srcStride]);
-            row3.load(&src[col + 3 * srcStride]);
-
-            c2 = cm2;
-            c3 = cm3;
-
-            row0_first = extend_low(row2);
-            row0_last = extend_high(row2);
-            row0_first = row0_first * c2;
-            row0_last = row0_last * c2;
-            row1_first = extend_low(row3);
-            row1_last = extend_high(row3);
-            row1_first = row1_first * c3;
-            row1_last = row1_last * c3;
-            sum_first += row0_first + row1_first;
-            sum_last += row0_last + row1_last;
+            __m128i sum45 = _mm_add_epi32(T01, T11);
+            __m128i sum67 = _mm_add_epi32(T21, T31);
+            __m128i sumhi0123 = _mm_add_epi32(sum45, sum67);
 
             if (N == 8)
             {
-                row4.load(&src[col + 4 * srcStride]);
-                row5.load(&src[col + 5 * srcStride]);
+                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 4 * srcStride]));
+                srcCoeffTemp1 = _mm_cvtepi16_epi32(srcCoeff);
+                T00 = _mm_mullo_epi32(srcCoeffTemp1, filterCoeff4);
+                srcCoeff = _mm_srli_si128(srcCoeff, 8);
+                srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+                T01 = _mm_mullo_epi32(srcCoeff, filterCoeff4);
 
-                c4 = cm4;
-                c5 = cm5;
+                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 5 * srcStride]));
+                srcCoeffTemp2 = _mm_cvtepi16_epi32(srcCoeff);
+                T10 = _mm_mullo_epi32(srcCoeffTemp2, filterCoeff5);
+                srcCoeff = _mm_srli_si128(srcCoeff, 8);
+                srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+                T11 = _mm_mullo_epi32(srcCoeff, filterCoeff5);
 
-                row0_first = extend_low(row4);
-                row0_last = extend_high(row4);
-                row0_first = row0_first * c4;
-                row0_last = row0_last * c4;
-                row1_first = extend_low(row5);
-                row1_last = extend_high(row5);
-                row1_first = row1_first * c5;
-                row1_last = row1_last * c5;
-                sum_first += row0_first + row1_first;
-                sum_last += row0_last + row1_last;
+                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 6 * srcStride]));
+                srcCoeffTemp3 = _mm_cvtepi16_epi32(srcCoeff);
+                T20 = _mm_mullo_epi32(srcCoeffTemp3, filterCoeff6);
+                srcCoeff = _mm_srli_si128(srcCoeff, 8);
+                srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+                T21 = _mm_mullo_epi32(srcCoeff, filterCoeff6);
 
-                row6.load(&src[col + 6 * srcStride]);
-                row7.load(&src[col + 7 * srcStride]);
+                srcCoeff = _mm_loadu_si128((__m128i const*)(&src[col + 7 * srcStride]));
+                srcCoeffTemp4 = _mm_cvtepi16_epi32(srcCoeff);
+                T30 = _mm_mullo_epi32(srcCoeffTemp4, filterCoeff7);
+                srcCoeff = _mm_srli_si128(srcCoeff, 8);
+                srcCoeff = _mm_cvtepi16_epi32(srcCoeff);
+                T31 = _mm_mullo_epi32(srcCoeff, filterCoeff7);
 
-                c6 = cm6;
-                c7 = cm7;
+                sum01 = _mm_add_epi32(T00, T10);
+                sum23 = _mm_add_epi32(T20, T30);
+                sumlo0123 = _mm_add_epi32(sumlo0123, _mm_add_epi32(sum01, sum23));
 
-                row0_first = extend_low(row6);
-                row0_last = extend_high(row6);
-                row0_first = row0_first * c6;
-                row0_last = row0_last * c6;
-                row1_first = extend_low(row7);
-                row1_last = extend_high(row7);
-                row1_first = row1_first * c7;
-                row1_last = row1_last * c7;
-                sum_first += row0_first + row1_first;
-                sum_last += row0_last + row1_last;
+                sum45 = _mm_add_epi32(T01, T11);
+                sum67 = _mm_add_epi32(T21, T31);
+                sumhi0123 = _mm_add_epi32(sumhi0123, _mm_add_epi32(sum45, sum67));
             }
-            sum_first = (sum_first + offset)  >> shift;
-            sum_last = (sum_last + offset)  >> shift;
-            Vec4i zero(0);
-            sum = compress(sum_first, sum_last);
-            sum = max(sum, 0);
-            Vec8s maxVal_v(maxVal);
-            sum = min(sum, maxVal_v);
-            sum_uc = compress(sum, vec_zero);
-            sum_uc.store_partial(8, dst + col);
+            __m128i zero = _mm_set1_epi16(0);
+            __m128i sumOffset = _mm_set1_epi32(offset);
+
+            __m128i val1 = _mm_add_epi32(sumlo0123, sumOffset);
+            val1 = _mm_srai_epi32(val1, shift);
+
+            __m128i val2 = _mm_add_epi32(sumhi0123, sumOffset);
+            val2 = _mm_srai_epi32(val2, shift);
+
+            __m128i val = _mm_packs_epi32(val1, val2);
+            __m128i res = _mm_packus_epi16(val, zero);
+            _mm_storel_epi64((__m128i*)&dst[col], res);
         }
 
-        //Handle the case when block_width is not multiple of 8
-        for (; col < block_width; col += 4)
+        for (; col < width; col += 4)
         {
-            Vec8s row0, row1, row2, row3, row4, row5, row6, row7, sum;
-            Vec4i row0_first, row0_last, row1_first, row1_last, sum_first, sum_last;
-            Vec4i c0, c1, c2, c3, c4, c5, c6, c7;
+            __m128i srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col]));
+            __m128i srcCoeffTemp1 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T00 = _mm_mullo_epi32(srcCoeffTemp1, filterCoeff0);
 
-            row0.load(&src[col]);
-            row1.load(&src[col + srcStride]);
+            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + srcStride]));
+            __m128i srcCoeffTemp2 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T10 = _mm_mullo_epi32(srcCoeffTemp2, filterCoeff1);
 
-            c0 = cm0;
-            c1 = cm1;
+            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 2 * srcStride]));
+            __m128i srcCoeffTemp3 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T20 = _mm_mullo_epi32(srcCoeffTemp3, filterCoeff2);
 
-            row0_first = extend_low(row0);
-            row1_first = extend_low(row1);
-            row0_first = row0_first * c0;
-            row1_first = row1_first * c1;
+            srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 3 * srcStride]));
+            __m128i srcCoeffTemp4 = _mm_cvtepi16_epi32(srcCoeff);
+            __m128i T30 = _mm_mullo_epi32(srcCoeffTemp4, filterCoeff3);
 
-            sum_first = row0_first + row1_first;
+            __m128i sum01 = _mm_add_epi32(T00, T10);
+            __m128i sum23 = _mm_add_epi32(T20, T30);
+            __m128i sumlo0123 = _mm_add_epi32(sum01, sum23);
 
-            row2.load(&src[col + 2 * srcStride]);
-            row3.load(&src[col + 3 * srcStride]);
-
-            c2 = cm2;
-            c3 = cm3;
-
-            row0_first = extend_low(row2);
-            row0_first = row0_first * c2;
-            row1_first = extend_low(row3);
-            row1_first = row1_first * c3;
-            sum_first += row0_first + row1_first;
             if (N == 8)
             {
-                row4.load(&src[col + 4 * srcStride]);
-                row5.load(&src[col + 5 * srcStride]);
+                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 4 * srcStride]));
+                srcCoeffTemp1 = _mm_cvtepi16_epi32(srcCoeff);
+                T00 = _mm_mullo_epi32(srcCoeffTemp1, filterCoeff4);
 
-                c4 = cm4;
-                c5 = cm5;
+                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 5 * srcStride]));
+                srcCoeffTemp2 = _mm_cvtepi16_epi32(srcCoeff);
+                T10 = _mm_mullo_epi32(srcCoeffTemp2, filterCoeff5);
 
-                row0_first = extend_low(row4);
-                row0_first = row0_first * c4;
-                row1_first = extend_low(row5);
-                row1_first = row1_first * c5;
-                sum_first += row0_first + row1_first;
+                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 6 * srcStride]));
+                srcCoeffTemp3 = _mm_cvtepi16_epi32(srcCoeff);
+                T20 = _mm_mullo_epi32(srcCoeffTemp3, filterCoeff6);
 
-                row6.load(&src[col + 6 * srcStride]);
-                row7.load(&src[col + 7 * srcStride]);
+                srcCoeff = _mm_loadl_epi64((__m128i const*)(&src[col + 7 * srcStride]));
+                srcCoeffTemp4 = _mm_cvtepi16_epi32(srcCoeff);
+                T30 = _mm_mullo_epi32(srcCoeffTemp4, filterCoeff7);
 
-                c6 = cm6;
-                c7 = cm7;
-
-                row0_first = extend_low(row6);
-                row0_first = row0_first * c6;
-                row1_first = extend_low(row7);
-                row1_first = row1_first * c7;
-                sum_first += row0_first + row1_first;
+                sum01 = _mm_add_epi32(T00, T10);
+                sum23 = _mm_add_epi32(T20, T30);
+                sumlo0123 = _mm_add_epi32(sumlo0123, _mm_add_epi32(sum01, sum23));
             }
-            sum_first = (sum_first + offset)  >> shift;
-            Vec4i zero(0);
-            sum = compress(sum_first, zero);
-            sum = max(sum, 0);
-            Vec8s maxVal_v(maxVal);
-            sum = min(sum, maxVal_v);
-            sum_uc = compress(sum, vec_zero);
-            sum_uc.store_partial(block_width - col, dst + col);
+
+            __m128i zero16 = _mm_set1_epi16(0);
+            __m128i zero32 = _mm_set1_epi32(0);
+            __m128i sumOffset = _mm_set1_epi32(offset);
+
+            __m128i val1 = _mm_add_epi32(sumlo0123, sumOffset);
+            val1 = _mm_srai_epi32(val1, shift);
+
+            __m128i val = _mm_packs_epi32(val1, zero32);
+            __m128i res = _mm_packus_epi16(val, zero16);
+
+            int n = width - col;
+
+            switch (n)   // store either 1, 2, 3 or 4 8-bit results in dst
+            {
+            case 1: dst[col] = _mm_extract_epi8(res, 0);
+                break;
+
+            case 2: dst[col] = _mm_extract_epi8(res, 0);
+                dst[col + 1] = _mm_extract_epi8(res, 1);
+                break;
+
+            case 3: dst[col] = _mm_extract_epi8(res, 0);
+                dst[col + 1] = _mm_extract_epi8(res, 1);
+                dst[col + 2] = _mm_extract_epi8(res, 2);
+                break;
+
+            default:  dst[col] = _mm_extract_epi8(res, 0);
+                dst[col + 1] = _mm_extract_epi8(res, 1);
+                dst[col + 2] = _mm_extract_epi8(res, 2);
+                dst[col + 3] = _mm_extract_epi8(res, 3);
+                break;
+            }
         }
 
         src += srcStride;
         dst += dstStride;
     }
 }
+
+#endif /* if INSTRSET >= 4 */
 
 /*
     Please refer Fig 7 in HEVC Overview document to familiarize with variables' naming convention
