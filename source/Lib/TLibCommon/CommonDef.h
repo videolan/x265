@@ -126,7 +126,7 @@
 #define REG_DCT                     65535
 
 #define CABAC_INIT_PRESENT_FLAG     1
-#define LAMBDA_PARTITION_SELECT     0.6
+#define LAMBDA_PARTITION_SELECT     0.9
 
 #define _SUMMARY_OUT_               0           ///< print-out PSNR results of all slices to summary.txt
 #define _SUMMARY_PIC_               0           ///< print-out PSNR results for each slice type to summary.txt
