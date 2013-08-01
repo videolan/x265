@@ -45,6 +45,8 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
     // this is all based on the table at on Wikipedia at
     // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
 
+    // TODO: there are minimum CTU sizes for higher levels, needs to be enforced
+
     uint32_t lumaSamples = param->sourceWidth * param->sourceHeight;
     uint32_t samplesPerSec = lumaSamples * param->frameRate;
     uint32_t bitrate = 100; // in kbps TODO: ABR
