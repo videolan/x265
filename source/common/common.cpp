@@ -127,6 +127,7 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRDO = 1;
     param->qp = 32;
     param->bEnableSAO = 1;
+    param->bEnableWavefront = 1;
     param->saoLcuBasedOptimization = 1;
     param->maxNumMergeCand = 5u;
     param->bEnableSignHiding = 1;
