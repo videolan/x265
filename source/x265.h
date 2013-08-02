@@ -37,7 +37,7 @@ typedef struct x265_t x265_t;
 // TODO: Existing names used for the different NAL unit types can be altered to better reflect the names in the spec.
 //       However, the names in the spec are not yet stable at this point. Once the names are stable, a cleanup
 //       effort can be done without use of macros to alter the names used to indicate the different NAL unit types.
-enum NalUnitType
+typedef enum
 {
     NAL_UNIT_CODED_SLICE_TRAIL_N = 0, // 0
     NAL_UNIT_CODED_SLICE_TRAIL_R,   // 1
@@ -112,7 +112,8 @@ enum NalUnitType
     NAL_UNIT_UNSPECIFIED_62,
     NAL_UNIT_UNSPECIFIED_63,
     NAL_UNIT_INVALID,
-};
+}
+NalUnitType;
 
 /* The data within the payload is already NAL-encapsulated; the type
  * is merely in the struct for easy access by the calling application.
@@ -125,7 +126,6 @@ typedef struct
     int     i_payload;   /* size in bytes */
     uint8_t *p_payload;
 }
-
 x265_nal_t;
 
 typedef struct x265_picture_t
@@ -134,7 +134,6 @@ typedef struct x265_picture_t
     int   stride[3];
     int   bitDepth;
 }
-
 x265_picture_t;
 
 typedef enum
@@ -145,7 +144,6 @@ typedef enum
     X265_STAR_SEARCH,
     X265_FULL_SEARCH
 }
-
 X265_ME_METHODS;
 
 static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
@@ -218,7 +216,6 @@ typedef struct x265_param_t
     // debugging
     int       bEnableDecodedPictureHashSEI;    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 }
-
 x265_param_t;
 
 /***
