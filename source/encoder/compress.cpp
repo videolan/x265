@@ -367,7 +367,7 @@ Void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
 
             /*Compute Rect costs*/
-            if (m_cfg->getUseRectInter())
+            if (m_cfg->param.bEnableRectInter)
             {
                 xComputeCostInter(m_interCU_Nx2N[depth], m_modePredYuv[1][depth], SIZE_Nx2N);
                 xComputeCostInter(m_interCU_2NxN[depth], m_modePredYuv[2][depth], SIZE_2NxN);

@@ -879,7 +879,7 @@ Void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, UInt de
                     }
                 }
 
-                if (m_cfg->getUseRectInter())
+                if (m_cfg->param.bEnableRectInter)
                 {
                     // 2NxN, Nx2N
                     if (doNotBlockPu)

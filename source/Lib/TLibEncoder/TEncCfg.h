@@ -245,90 +245,24 @@ public:
     virtual ~TEncCfg()
     {}
 
-    Void      setProfile(Profile::Name profile) { m_profile = profile; }
+    Window   &getConformanceWindow()  { return m_conformanceWindow; }
 
-    Void      setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
-
-    Window   &getConformanceWindow()      { return m_conformanceWindow; }
-
-    Void      setConformanceWindow(Int confLeft, Int confRight, Int confTop, Int confBottom) { m_conformanceWindow.setWindow(confLeft, confRight, confTop, confBottom); }
+    Void      setPad(Int* iPad)       { for (Int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
 
     //====== Coding Structure ========
-    Void      setDecodingRefreshType(Int i)      { m_decodingRefreshType = (UInt)i; }
-
-    Void      setGOPSize(Int i)      { m_gopSize = i; }
-
-    Void      setGopList(GOPEntry* GOPList) {  for (Int i = 0; i < MAX_GOP; i++) { m_gopList[i] = GOPList[i]; } }
-
-    Void      setExtraRPSs(Int i)      { m_extraRPSs = i; }
 
     Int       getExtraRPSs()          { return m_extraRPSs; }
 
     GOPEntry  getGOPEntry(Int i)      { return m_gopList[i]; }
 
-    Void      setMaxDecPicBuffering(UInt u, UInt tlayer) { m_maxDecPicBuffering[tlayer] = u;    }
-
-    Void      setNumReorderPics(Int i, UInt tlayer) { m_numReorderPics[tlayer] = i;    }
-
-    Void      setQP(Int i)      { m_qp = i; }
-
-    Void      setPad(Int* iPad)      { for (Int i = 0; i < 2; i++) { m_pad[i] = iPad[i]; } }
-
-    Int       getMaxRefPicNum()                              { return m_maxRefPicNum;           }
-
-    Void      setMaxRefPicNum(Int iMaxRefPicNum)           { m_maxRefPicNum = iMaxRefPicNum;  }
+    Int       getMaxRefPicNum()       { return m_maxRefPicNum;           }
 
     //======== Transform =============
-    Void      setQuadtreeTULog2MaxSize(UInt u)      { m_quadtreeTULog2MaxSize = u; }
-
-    Void      setQuadtreeTULog2MinSize(UInt u)      { m_quadtreeTULog2MinSize = u; }
-
-    Void      setQuadtreeTUMaxDepthInter(UInt u)      { m_quadtreeTUMaxDepthInter = u; }
-
-    Void      setQuadtreeTUMaxDepthIntra(UInt u)      { m_quadtreeTUMaxDepthIntra = u; }
-
-    //====== Loop/Deblock Filter ========
-    Void      setLoopFilterDisable(Bool b)      { m_bLoopFilterDisable       = b; }
-
-    Void      setLoopFilterOffsetInPPS(Bool b)      { m_loopFilterOffsetInPPS      = b; }
-
-    Void      setLoopFilterBetaOffset(Int i)      { m_loopFilterBetaOffsetDiv2  = i; }
-
-    Void      setLoopFilterTcOffset(Int i)      { m_loopFilterTcOffsetDiv2    = i; }
-
-    Void      setDeblockingFilterControlPresent(Bool b) { m_deblockingFilterControlPresent = b; }
-
-    //====== Motion search ========
-    Void      setSearchMethod(Int i)     { m_searchMethod = i; }
-
-    Void      setSearchRange(Int i)      { m_searchRange = i; }
-
-    Void      setBipredSearchRange(Int i) { m_bipredSearchRange = i; }
-
-    Void      setUseRectInter(Bool b)    { m_useRectInter = b; }
-
-    Bool      getUseRectInter() const    { return m_useRectInter; }
-
-    Void      setUseAMP(Bool b)          { m_useAMP = b; }
-
-    //====== Quality control ========
-    Void      setUseRDO(Bool b)         { m_useRDO = b; }
 
     Bool      getUseRDO() const         { return m_useRDO; }
 
-    Void      setMaxCuDQPDepth(Int i)      { m_maxCuDQPDepth = i; }
-
-    Void      setChromaCbQpOffset(Int i)      { m_chromaCbQpOffset = i; }
-
-    Void      setChromaCrQpOffset(Int i)      { m_chromaCrQpOffset = i; }
-
-    //====== Lossless ========
-    Void      setUseLossless(Bool b)        { m_useLossless = b;  }
-
     //====== Sequence ========
-    Int       getFramesToBeEncoded()      { return m_framesToBeEncoded; }
-
-    void      setLambdaModifier(UInt uiIndex, Double dValue) { m_adLambdaModifier[uiIndex] = dValue; }
+    Int       getFramesToBeEncoded()    { return m_framesToBeEncoded; }
 
     Double    getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
@@ -379,32 +313,6 @@ public:
     Bool      getUseLossless()      { return m_useLossless;  }
 
     //==== Tool list ========
-    Void      setUseASR(Bool b)     { m_bUseASR     = b; }
-
-    Void      setUseRDOQ(Bool b)     { m_useRDOQ    = b; }
-
-    Void      setUseRDOQTS(Bool b)     { m_useRDOQTS  = b; }
-
-    Void      setRDpenalty(UInt b)     { m_rdPenalty  = b; }
-
-    Void      setUseCbfFastMode(Bool b)     { m_bUseCbfFastMode = b; }
-
-    Void      setUseEarlySkipDetection(Bool b)     { m_useEarlySkipDetection = b; }
-
-    Void      setUseConstrainedIntraPred(Bool b)     { m_bUseConstrainedIntraPred = b; }
-
-    Void      setPCMInputBitDepthFlag(Bool b)     { m_bPCMInputBitDepthFlag = b; }
-
-    Void      setPCMFilterDisableFlag(Bool b)     {  m_bPCMFilterDisableFlag = b; }
-
-    Void      setUsePCM(Bool b)     {  m_usePCM = b;               }
-
-    Void      setPCMLog2MaxSize(UInt u)      { m_pcmLog2MaxSize = u;      }
-
-    Void      setPCMLog2MinSize(UInt u)     { m_pcmLog2MinSize = u;      }
-
-    Void      setdQPs(Int* p)     { m_dqpTable       = p; }
-
     Bool      getUseASR()      { return m_bUseASR;     }
 
     Bool      getUseRDOQ()       { return m_useRDOQ;    }
@@ -431,254 +339,130 @@ public:
 
     Bool      getUseTransformSkip()      { return m_useTransformSkip;        }
 
-    Void      setUseTransformSkip(Bool b) { m_useTransformSkip  = b;       }
-
     Bool      getUseTransformSkipFast()      { return m_useTransformSkipFast;    }
-
-    Void      setUseTransformSkipFast(Bool b) { m_useTransformSkipFast  = b;   }
 
     Int*      getdQPs()      { return m_dqpTable;       }
 
-    Void      setUseSAO(Bool bVal)     { m_bUseSAO = bVal; }
-
     Bool      getUseSAO()              { return m_bUseSAO; }
-
-    Void  setMaxNumOffsetsPerPic(Int val)            { m_maxNumOffsetsPerPic = val; }
 
     Int   getMaxNumOffsetsPerPic()                    { return m_maxNumOffsetsPerPic; }
 
-    Void  setSaoLcuBoundary(Bool val)      { m_saoLcuBoundary = val; }
-
     Bool  getSaoLcuBoundary()              { return m_saoLcuBoundary; }
-
-    Void  setSaoLcuBasedOptimization(Bool val)            { m_saoLcuBasedOptimization = val; }
 
     Bool  getSaoLcuBasedOptimization()                    { return m_saoLcuBasedOptimization; }
 
-    Void  setLFCrossTileBoundaryFlag(Bool val)       { m_loopFilterAcrossTilesEnabledFlag = val; }
-
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
-
-    Void  setDecodedPictureHashSEIEnabled(Int b)           { m_decodedPictureHashSEIEnabled = b; }
 
     Int   getDecodedPictureHashSEIEnabled()                { return m_decodedPictureHashSEIEnabled; }
 
-    Void  setBufferingPeriodSEIEnabled(Int b)              { m_bufferingPeriodSEIEnabled = b; }
-
     Int   getBufferingPeriodSEIEnabled()                   { return m_bufferingPeriodSEIEnabled; }
-
-    Void  setPictureTimingSEIEnabled(Int b)                { m_pictureTimingSEIEnabled = b; }
 
     Int   getPictureTimingSEIEnabled()                     { return m_pictureTimingSEIEnabled; }
 
-    Void  setRecoveryPointSEIEnabled(Int b)                { m_recoveryPointSEIEnabled = b; }
-
     Int   getRecoveryPointSEIEnabled()                     { return m_recoveryPointSEIEnabled; }
-
-    Void  setDisplayOrientationSEIAngle(Int b)             { m_displayOrientationSEIAngle = b; }
 
     Int   getDisplayOrientationSEIAngle()                  { return m_displayOrientationSEIAngle; }
 
-    Void  setGradualDecodingRefreshInfoEnabled(Int b)      { m_gradualDecodingRefreshInfoEnabled = b;    }
-
     Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
-
-    Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b;    }
 
     Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
 
-    Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
-
     Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
 
-    Void      setUseWP(Bool b)    { m_useWeightedPred   = b;    }
+    Bool getUseWP()            { return m_useWeightedPred;   }
 
-    Void      setWPBiPred(Bool b)    { m_useWeightedBiPred = b;    }
+    Bool getWPBiPred()            { return m_useWeightedBiPred; }
 
-    Bool      getUseWP()            { return m_useWeightedPred;   }
+    UInt getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2;       }
 
-    Bool      getWPBiPred()            { return m_useWeightedBiPred; }
+    UInt getMaxNumMergeCand()            { return m_maxNumMergeCand;   }
 
-    Void      setLog2ParallelMergeLevelMinus2(UInt u)    { m_log2ParallelMergeLevelMinus2       = u;    }
+    Int  getUseScalingListId()            { return m_useScalingListId;      }
 
-    UInt      getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2;       }
+    Char* getScalingListFile()            { return m_scalingListFile;    }
 
-    Void      setMaxNumMergeCand(UInt u)    { m_maxNumMergeCand = u;      }
+    Int   getTMVPModeId()         { return m_TMVPModeId; }
 
-    UInt      getMaxNumMergeCand()            { return m_maxNumMergeCand;   }
-
-    Void      setUseScalingListId(Int u)    { m_useScalingListId       = u;   }
-
-    Int       getUseScalingListId()            { return m_useScalingListId;      }
-
-    Void      setScalingListFile(Char* pch) { m_scalingListFile     = pch; }
-
-    Char*     getScalingListFile()            { return m_scalingListFile;    }
-
-    Void      setTMVPModeId(Int u) { m_TMVPModeId = u;    }
-
-    Int       getTMVPModeId()         { return m_TMVPModeId; }
-
-    Void      setSignHideFlag(Int signHideFlag) { m_signHideFlag = signHideFlag; }
-
-    Int       getSignHideFlag()                    { return m_signHideFlag; }
+    Int   getSignHideFlag()                    { return m_signHideFlag; }
 
 
-    Bool      getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
+    Bool getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
 
-    Void      setTransquantBypassEnableFlag(Bool flag)  { m_TransquantBypassEnableFlag = flag; }
-
-    Bool      getCUTransquantBypassFlagValue()          { return m_CUTransquantBypassFlagValue; }
-
-    Void      setCUTransquantBypassFlagValue(Bool flag) { m_CUTransquantBypassFlagValue = flag; }
-
-    Void setVPS(TComVPS *p) { m_vps = *p; }
+    Bool getCUTransquantBypassFlagValue()          { return m_CUTransquantBypassFlagValue; }
 
     TComVPS *getVPS() { return &m_vps; }
 
-    Void      setUseRecalculateQPAccordingToLambda(Bool b) { m_recalculateQPAccordingToLambda = b; }
-
     Bool      getUseRecalculateQPAccordingToLambda() { return m_recalculateQPAccordingToLambda; }
 
-    Void      setUseStrongIntraSmoothing(Bool b) { m_useStrongIntraSmoothing = b; }
-
     Bool      getUseStrongIntraSmoothing()         { return m_useStrongIntraSmoothing; }
-
-    Void      setActiveParameterSetsSEIEnabled(Int b)  { m_activeParameterSetsSEIEnabled = b; }
 
     Int       getActiveParameterSetsSEIEnabled()         { return m_activeParameterSetsSEIEnabled; }
 
     Bool      getVuiParametersPresentFlag()                 { return m_vuiParametersPresentFlag; }
 
-    Void      setVuiParametersPresentFlag(Bool i)           { m_vuiParametersPresentFlag = i; }
-
     Bool      getAspectRatioInfoPresentFlag()               { return m_aspectRatioInfoPresentFlag; }
-
-    Void      setAspectRatioInfoPresentFlag(Bool i)         { m_aspectRatioInfoPresentFlag = i; }
 
     Int       getAspectRatioIdc()                           { return m_aspectRatioIdc; }
 
-    Void      setAspectRatioIdc(Int i)                      { m_aspectRatioIdc = i; }
-
     Int       getSarWidth()                                 { return m_sarWidth; }
-
-    Void      setSarWidth(Int i)                            { m_sarWidth = i; }
 
     Int       getSarHeight()                                { return m_sarHeight; }
 
-    Void      setSarHeight(Int i)                           { m_sarHeight = i; }
-
     Bool      getOverscanInfoPresentFlag()                  { return m_overscanInfoPresentFlag; }
-
-    Void      setOverscanInfoPresentFlag(Bool i)            { m_overscanInfoPresentFlag = i; }
 
     Bool      getOverscanAppropriateFlag()                  { return m_overscanAppropriateFlag; }
 
-    Void      setOverscanAppropriateFlag(Bool i)            { m_overscanAppropriateFlag = i; }
-
     Bool      getVideoSignalTypePresentFlag()               { return m_videoSignalTypePresentFlag; }
-
-    Void      setVideoSignalTypePresentFlag(Bool i)         { m_videoSignalTypePresentFlag = i; }
 
     Int       getVideoFormat()                              { return m_videoFormat; }
 
-    Void      setVideoFormat(Int i)                         { m_videoFormat = i; }
-
     Bool      getVideoFullRangeFlag()                       { return m_videoFullRangeFlag; }
-
-    Void      setVideoFullRangeFlag(Bool i)                 { m_videoFullRangeFlag = i; }
 
     Bool      getColourDescriptionPresentFlag()             { return m_colourDescriptionPresentFlag; }
 
-    Void      setColourDescriptionPresentFlag(Bool i)       { m_colourDescriptionPresentFlag = i; }
-
     Int       getColourPrimaries()                          { return m_colourPrimaries; }
-
-    Void      setColourPrimaries(Int i)                     { m_colourPrimaries = i; }
 
     Int       getTransferCharacteristics()                  { return m_transferCharacteristics; }
 
-    Void      setTransferCharacteristics(Int i)             { m_transferCharacteristics = i; }
-
     Int       getMatrixCoefficients()                       { return m_matrixCoefficients; }
-
-    Void      setMatrixCoefficients(Int i)                  { m_matrixCoefficients = i; }
 
     Bool      getChromaLocInfoPresentFlag()                 { return m_chromaLocInfoPresentFlag; }
 
-    Void      setChromaLocInfoPresentFlag(Bool i)           { m_chromaLocInfoPresentFlag = i; }
-
     Int       getChromaSampleLocTypeTopField()              { return m_chromaSampleLocTypeTopField; }
-
-    Void      setChromaSampleLocTypeTopField(Int i)         { m_chromaSampleLocTypeTopField = i; }
 
     Int       getChromaSampleLocTypeBottomField()           { return m_chromaSampleLocTypeBottomField; }
 
-    Void      setChromaSampleLocTypeBottomField(Int i)      { m_chromaSampleLocTypeBottomField = i; }
-
     Bool      getNeutralChromaIndicationFlag()              { return m_neutralChromaIndicationFlag; }
-
-    Void      setNeutralChromaIndicationFlag(Bool i)        { m_neutralChromaIndicationFlag = i; }
 
     Window   &getDefaultDisplayWindow()                     { return m_defaultDisplayWindow; }
 
-    Void      setDefaultDisplayWindow(Int offsetLeft, Int offsetRight, Int offsetTop, Int offsetBottom) { m_defaultDisplayWindow.setWindow(offsetLeft, offsetRight, offsetTop, offsetBottom); }
-
     Bool      getFrameFieldInfoPresentFlag()                { return m_frameFieldInfoPresentFlag; }
-
-    Void      setFrameFieldInfoPresentFlag(Bool i)          { m_frameFieldInfoPresentFlag = i; }
 
     Bool      getPocProportionalToTimingFlag()              { return m_pocProportionalToTimingFlag; }
 
-    Void      setPocProportionalToTimingFlag(Bool x)        { m_pocProportionalToTimingFlag = x;    }
-
     Int       getNumTicksPocDiffOneMinus1()                 { return m_numTicksPocDiffOneMinus1;    }
-
-    Void      setNumTicksPocDiffOneMinus1(Int x)            { m_numTicksPocDiffOneMinus1 = x;       }
 
     Bool      getBitstreamRestrictionFlag()                 { return m_bitstreamRestrictionFlag; }
 
-    Void      setBitstreamRestrictionFlag(Bool i)           { m_bitstreamRestrictionFlag = i; }
-
     Bool      getMotionVectorsOverPicBoundariesFlag()       { return m_motionVectorsOverPicBoundariesFlag; }
-
-    Void      setMotionVectorsOverPicBoundariesFlag(Bool i) { m_motionVectorsOverPicBoundariesFlag = i; }
 
     Int       getMinSpatialSegmentationIdc()                { return m_minSpatialSegmentationIdc; }
 
-    Void      setMinSpatialSegmentationIdc(Int i)           { m_minSpatialSegmentationIdc = i; }
-
     Int       getMaxBytesPerPicDenom()                      { return m_maxBytesPerPicDenom; }
-
-    Void      setMaxBytesPerPicDenom(Int i)                 { m_maxBytesPerPicDenom = i; }
 
     Int       getMaxBitsPerMinCuDenom()                     { return m_maxBitsPerMinCuDenom; }
 
-    Void      setMaxBitsPerMinCuDenom(Int i)                { m_maxBitsPerMinCuDenom = i; }
-
     Int       getLog2MaxMvLengthHorizontal()                { return m_log2MaxMvLengthHorizontal; }
-
-    Void      setLog2MaxMvLengthHorizontal(Int i)           { m_log2MaxMvLengthHorizontal = i; }
 
     Int       getLog2MaxMvLengthVertical()                  { return m_log2MaxMvLengthVertical; }
 
-    Void      setLog2MaxMvLengthVertical(Int i)             { m_log2MaxMvLengthVertical = i; }
-
     Bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
-
-    Void setProgressiveSourceFlag(Bool b) { m_progressiveSourceFlag = b; }
 
     Bool getInterlacedSourceFlag() const { return m_interlacedSourceFlag; }
 
-    Void setInterlacedSourceFlag(Bool b) { m_interlacedSourceFlag = b; }
-
     Bool getNonPackedConstraintFlag() const { return m_nonPackedConstraintFlag; }
 
-    Void setNonPackedConstraintFlag(Bool b) { m_nonPackedConstraintFlag = b; }
-
     Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
-
-    Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
 };
 
 //! \}
