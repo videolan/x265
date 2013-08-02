@@ -37,14 +37,25 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
     offset = 1 << (shift - 1);
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
 
-    __m128i filterCoeff0 = _mm_set1_epi32(coeff[0]);
-    __m128i filterCoeff1 = _mm_set1_epi32(coeff[1]);
-    __m128i filterCoeff2 = _mm_set1_epi32(coeff[2]);
-    __m128i filterCoeff3 = _mm_set1_epi32(coeff[3]);
-    __m128i filterCoeff4 = _mm_set1_epi32(coeff[4]);
-    __m128i filterCoeff5 = _mm_set1_epi32(coeff[5]);
-    __m128i filterCoeff6 = _mm_set1_epi32(coeff[6]);
-    __m128i filterCoeff7 = _mm_set1_epi32(coeff[7]);
+    __m128i coeffTemp = _mm_loadu_si128((__m128i const*)coeff);
+    __m128i coeffTempLow = _mm_cvtepi16_epi32(coeffTemp);
+    coeffTemp = _mm_srli_si128(coeffTemp, 8);
+    __m128i coeffTempHigh = _mm_cvtepi16_epi32(coeffTemp);
+
+    __m128i vm0 = _mm_setr_epi8(0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3);
+    __m128i vm1 = _mm_setr_epi8(4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7);
+    __m128i vm2 = _mm_setr_epi8(8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11);
+    __m128i vm3 = _mm_setr_epi8(12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15);
+
+    __m128i filterCoeff0 = _mm_shuffle_epi8(coeffTempLow, vm0);
+    __m128i filterCoeff1 = _mm_shuffle_epi8(coeffTempLow, vm1);
+    __m128i filterCoeff2 = _mm_shuffle_epi8(coeffTempLow, vm2);
+    __m128i filterCoeff3 = _mm_shuffle_epi8(coeffTempLow, vm3);
+
+    __m128i filterCoeff4 = _mm_shuffle_epi8(coeffTempHigh, vm0);
+    __m128i filterCoeff5 = _mm_shuffle_epi8(coeffTempHigh, vm1);
+    __m128i filterCoeff6 = _mm_shuffle_epi8(coeffTempHigh, vm2);
+    __m128i filterCoeff7 = _mm_shuffle_epi8(coeffTempHigh, vm3);
 
     __m128i mask4 = _mm_setr_epi8(-1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
