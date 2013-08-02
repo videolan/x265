@@ -181,66 +181,63 @@ void Encoder::configure(x265_param_t *param)
     }
 
     m_gopSize = 4;
-    setDecodingRefreshType(param->decodingRefreshType);
-    setQP(param->qp);
+    m_decodingRefreshType = param->decodingRefreshType;
+    m_qp = param->qp;
 
     //====== Motion search ========
-    setSearchMethod(param->searchMethod);
-    setSearchRange(param->searchRange);
-    setBipredSearchRange(param->bipredSearchRange);
-    setUseAMP(param->bEnableAMP);
-    setUseRectInter(param->bEnableRectInter);
+    m_searchMethod = param->searchMethod;
+    m_searchRange = param->searchRange;
+    m_bipredSearchRange = param->bipredSearchRange;
+    m_useAMP = param->bEnableAMP;
+    m_useRectInter = param->bEnableRectInter;
 
     //====== Quality control ========
-    setUseRDO(param->bEnableRDO);
-    setChromaCbQpOffset(param->cbQpOffset);
-    setChromaCrQpOffset(param->crQpOffset);
+    m_useRDO = param->bEnableRDO;
+    m_chromaCbQpOffset = param->cbQpOffset;
+    m_chromaCrQpOffset = param->crQpOffset;
 
     //====== Coding Tools ========
-    setUseRDOQ(param->bEnableRDOQ);
-    setUseRDOQTS(param->bEnableRDOQTS);
-    setRDpenalty(param->rdPenalty);
+    m_useRDOQ = param->bEnableRDOQ;
+    m_useRDOQTS = param->bEnableRDOQTS;
+    m_rdPenalty = param->rdPenalty;
     uint32_t tuQTMaxLog2Size = g_convertToBit[param->maxCUSize] + 2 - 1;
-    setQuadtreeTULog2MaxSize(tuQTMaxLog2Size);
+    m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
-    setQuadtreeTULog2MinSize(tuQTMinLog2Size);
-    setQuadtreeTUMaxDepthInter(param->tuQTMaxInterDepth);
-    setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
-    setUseCbfFastMode(param->bEnableCbfFastMode);
-    setUseEarlySkipDetection(param->bEnableEarlySkip);
-    setUseTransformSkip(param->bEnableTransformSkip);
-    setUseTransformSkipFast(param->bEnableTSkipFast);
-    setUseConstrainedIntraPred(param->bEnableConstrainedIntra);
-    setMaxNumMergeCand(param->maxNumMergeCand);
-    setUseSAO(param->bEnableSAO);
-    setSaoLcuBoundary(param->saoLcuBoundary);
-    setSaoLcuBasedOptimization(param->saoLcuBasedOptimization);
+    m_quadtreeTULog2MinSize = tuQTMinLog2Size;
+    m_quadtreeTUMaxDepthInter = param->tuQTMaxInterDepth;
+    m_quadtreeTUMaxDepthIntra = param->tuQTMaxIntraDepth;
+    m_bUseCbfFastMode = param->bEnableCbfFastMode;
+    m_useEarlySkipDetection = param->bEnableEarlySkip;
+    m_useTransformSkip = param->bEnableTransformSkip;
+    m_useTransformSkipFast = param->bEnableTSkipFast;
+    m_bUseConstrainedIntraPred = param->bEnableConstrainedIntra;
+    m_maxNumMergeCand = param->maxNumMergeCand;
+    m_bUseSAO = param->bEnableSAO;
+    m_saoLcuBoundary = param->saoLcuBoundary;
+    m_saoLcuBasedOptimization = param->saoLcuBasedOptimization;
 
     //====== Weighted Prediction ========
-    setUseWP(param->bEnableWeightedPred);
-    setWPBiPred(param->bEnableWeightedBiPred);
+    m_useWeightedPred = param->bEnableWeightedPred;
+    m_useWeightedBiPred = param->bEnableWeightedBiPred;
 
-    setSignHideFlag(param->bEnableSignHiding);
-    setUseStrongIntraSmoothing(param->bEnableStrongIntraSmoothing);
-    setDecodedPictureHashSEIEnabled(param->bEnableDecodedPictureHashSEI);
+    m_signHideFlag = param->bEnableSignHiding;
+    m_useStrongIntraSmoothing = param->bEnableStrongIntraSmoothing;
+    m_decodedPictureHashSEIEnabled = param->bEnableDecodedPictureHashSEI;
 
     //====== Enforce these hard coded settings before initializeGOP() to
     //       avoid a valgrind warning
-    setLoopFilterDisable(0);
-    setLoopFilterOffsetInPPS(0);
-    setLoopFilterBetaOffset(0);
-    setLoopFilterTcOffset(0);
-    setLFCrossTileBoundaryFlag(1);
-    setDeblockingFilterControlPresent(0);
+    m_bLoopFilterDisable = 0;
+    m_loopFilterOffsetInPPS = 0;
+    m_loopFilterBetaOffsetDiv2 = 0;
+    m_loopFilterTcOffsetDiv2 = 0;
+    m_loopFilterAcrossTilesEnabledFlag = 1;
+    m_deblockingFilterControlPresent = 0;
 
     //====== HM Settings not exposed for configuration ======
     initializeGOP(param);
-    setGOPSize(m_gopSize);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
-        setNumReorderPics(m_numReorderPics[i], i);
-        setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        setLambdaModifier(i, 1.0);
+        m_adLambdaModifier[i] = 1.0;
     }
 
     TComVPS vps;
@@ -253,73 +250,69 @@ void Encoder::configure(x265_param_t *param)
         vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     }
 
-    setVPS(&vps);
-
-    setMaxCuDQPDepth(0);
-    setMaxNumOffsetsPerPic(2048);
-    setLog2ParallelMergeLevelMinus2(0);
-    setTMVPModeId(1);  // 0 disabled, 1: enabled, 2: auto
-
-    setConformanceWindow(0, 0, 0, 0);
+    m_vps = vps;
+    m_maxCuDQPDepth = 0;
+    m_maxNumOffsetsPerPic = 2048;
+    m_log2ParallelMergeLevelMinus2 = 0;
+    m_TMVPModeId = 1; // 0 disabled, 1: enabled, 2: auto
+    m_conformanceWindow.setWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
 
-    setProgressiveSourceFlag(1);
-    setInterlacedSourceFlag(0);
-    setNonPackedConstraintFlag(0);
-    setFrameOnlyConstraintFlag(0);
-    setUseASR(0);   // adapt search range based on temporal distances
-    setdQPs(NULL);
-    setRecoveryPointSEIEnabled(0);
-    setBufferingPeriodSEIEnabled(0);
-    setPictureTimingSEIEnabled(0);
-    setDisplayOrientationSEIAngle(0);
-    setGradualDecodingRefreshInfoEnabled(0);
-    setDecodingUnitInfoSEIEnabled(0);
-    setSOPDescriptionSEIEnabled(0);
-    setUseScalingListId(0);
-    setScalingListFile(NULL);
-    setUseRecalculateQPAccordingToLambda(0);
-    setActiveParameterSetsSEIEnabled(0);
-    setVuiParametersPresentFlag(0);
-    setMinSpatialSegmentationIdc(0);
-    setAspectRatioIdc(0);
-    setSarWidth(0);
-    setSarHeight(0);
-    setOverscanInfoPresentFlag(0);
-    setOverscanAppropriateFlag(0);
-    setVideoSignalTypePresentFlag(0);
-    setVideoFormat(5);
-    setVideoFullRangeFlag(0);
-    setColourDescriptionPresentFlag(0);
-    setColourPrimaries(2);
-    setTransferCharacteristics(2);
-    setMatrixCoefficients(2);
-    setChromaLocInfoPresentFlag(0);
-    setChromaSampleLocTypeTopField(0);
-    setChromaSampleLocTypeBottomField(0);
-    setNeutralChromaIndicationFlag(0);
-    setDefaultDisplayWindow(0, 0, 0, 0);
-    setFrameFieldInfoPresentFlag(0);
-    setPocProportionalToTimingFlag(0);
-    setNumTicksPocDiffOneMinus1(0);
-    setBitstreamRestrictionFlag(0);
-    setMotionVectorsOverPicBoundariesFlag(0);
-    setMaxBytesPerPicDenom(2);
-    setMaxBitsPerMinCuDenom(1);
-    setLog2MaxMvLengthHorizontal(15);
-    setLog2MaxMvLengthVertical(15);
+    m_progressiveSourceFlag = 1;
+    m_interlacedSourceFlag = 0;
+    m_nonPackedConstraintFlag = 0;
+    m_frameOnlyConstraintFlag = 0;
+    m_bUseASR = 0;    // adapt search range based on temporal distances
+    m_dqpTable = NULL;
+    m_recoveryPointSEIEnabled = 0;
+    m_bufferingPeriodSEIEnabled = 0;
+    m_pictureTimingSEIEnabled = 0;
+    m_displayOrientationSEIAngle = 0;
+    m_gradualDecodingRefreshInfoEnabled = 0;
+    m_decodingUnitInfoSEIEnabled = 0;
+    m_SOPDescriptionSEIEnabled = 0;
+    m_useScalingListId = 0;
+    m_scalingListFile = NULL;
+    m_recalculateQPAccordingToLambda = 0;
+    m_activeParameterSetsSEIEnabled = 0;
+    m_vuiParametersPresentFlag = 0;
+    m_minSpatialSegmentationIdc = 0;
+    m_aspectRatioIdc = 0;
+    m_sarWidth = 0;
+    m_sarHeight = 0;
+    m_overscanInfoPresentFlag = 0;
+    m_overscanAppropriateFlag = 0;
+    m_videoSignalTypePresentFlag = 0;
+    m_videoFormat = 5;
+    m_videoFullRangeFlag = 0;
+    m_colourDescriptionPresentFlag = 0;
+    m_colourPrimaries = 2;
+    m_transferCharacteristics = 2;
+    m_matrixCoefficients = 2;
+    m_chromaLocInfoPresentFlag = 0;
+    m_chromaSampleLocTypeTopField = 0;
+    m_chromaSampleLocTypeBottomField = 0;
+    m_neutralChromaIndicationFlag = 0;
+    m_defaultDisplayWindow.setWindow(0, 0, 0, 0);
+    m_frameFieldInfoPresentFlag = 0;
+    m_pocProportionalToTimingFlag = 0;
+    m_numTicksPocDiffOneMinus1 = 0;
+    m_bitstreamRestrictionFlag = 0;
+    m_motionVectorsOverPicBoundariesFlag = 0;
+    m_maxBytesPerPicDenom = 2;
+    m_maxBitsPerMinCuDenom = 1;
+    m_log2MaxMvLengthHorizontal = 15;
+    m_log2MaxMvLengthVertical = 15;
+    m_usePCM = 0;
+    m_pcmLog2MinSize = 3;
+    m_pcmLog2MaxSize = 5;
+    m_bPCMInputBitDepthFlag = 1; 
+    m_bPCMFilterDisableFlag = 0;
 
-    setUsePCM(0);
-    setPCMLog2MinSize(3);
-    setPCMLog2MaxSize(5);
-    setPCMInputBitDepthFlag(1);
-    setPCMFilterDisableFlag(0);
-
-    setUseLossless(0); // x264 configures this via --qp=0
-
-    setTransquantBypassEnableFlag(0);
-    setCUTransquantBypassFlagValue(0);
+    m_useLossless = 0;  // x264 configures this via --qp=0
+    m_TransquantBypassEnableFlag = 0;
+    m_CUTransquantBypassFlagValue = 0;
 }
 
 static inline int _confirm(bool bflag, const char* message)
