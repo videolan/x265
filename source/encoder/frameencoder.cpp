@@ -269,7 +269,7 @@ void FrameEncoder::processRow(int row)
             curRow.m_active = false;
             return;
         }
-        if (checkHigherPriorityRow(row))
+        if (m_cfg->param.bEnableWavefront && checkHigherPriorityRow(row))
         {
             curRow.m_active = false;
             return;
