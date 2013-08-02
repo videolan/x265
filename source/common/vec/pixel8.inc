@@ -1961,7 +1961,7 @@ void weightUnidir(short *src, pixel *dst, int srcStride, int dstStride, int widt
     }
 }
 
-#if INSTRSET >= 8
+#if INSTRSET >= X265_CPU_LEVEL_AVX2
 template<int size>
 ALWAYSINLINE void unrollFunc_32_avx2(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride, Vec16us& sad)
 {
@@ -2371,9 +2371,9 @@ void sad_avx2_x4_64(pixel *fenc, pixel *fref1, pixel *fref2, pixel *fref3, pixel
     res[2] = horizontal_add(sum3);
     res[3] = horizontal_add(sum4);
 }
-#endif /* if INSTRSET >= 8 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_AVX2 */
 
-#if INSTRSET >= 4
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
 void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
 {
     const __m128i mask = _mm_setr_epi32(0x06040200, 0x0E0C0A08, 0x07050301, 0x0F0D0B09);
@@ -2442,4 +2442,4 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
         _mm_storeu_si128((__m128i*)&dst[(i >> 1) * 32 + 16], _mm_packus_epi16(S22, S23));
     }
 }
-#endif /* if INSTRSET >= 4 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */

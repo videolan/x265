@@ -344,7 +344,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE(sad_x3, sad_x3_, pixelcmp_x3_t)
     SET_FUNC_PRIMITIVE_TABLE(sad_x4, sad_x4_, pixelcmp_x4_t)
 
-#if !HIGH_BIT_DEPTH && INSTRSET >= 8 // AVX2
+#if !HIGH_BIT_DEPTH && INSTRSET >= X265_CPU_LEVEL_AVX2
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad, sad_avx2_, pixelcmp_t)
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(64, sad, sad_avx2_, pixelcmp_t)
     SET_FUNC_PRIMITIVE_TABLE_WIDTH(32, sad_x3, sad_avx2_x3_, pixelcmp_x3_t)
@@ -392,7 +392,7 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.weightpUni = weightUnidir;
 #endif
 
-#if !HIGH_BIT_DEPTH && (INSTRSET >= 4)
+#if !HIGH_BIT_DEPTH && (INSTRSET >= X265_CPU_LEVEL_SSSE3)
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
 #endif

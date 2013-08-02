@@ -218,24 +218,20 @@ typedef struct x265_param_t
 }
 x265_param_t;
 
-typedef enum
-{
-    X265_CPU_LEVEL_AUTO  = 0,
-    X265_CPU_LEVEL_NONE  = 1, // C code only, no SIMD
-    X265_CPU_LEVEL_SSE2  = 2,
-    X265_CPU_LEVEL_SSE3  = 3,
-    X265_CPU_LEVEL_SSSE3 = 4,
-    X265_CPU_LEVEL_SSE41 = 5,
-    X265_CPU_LEVEL_SSE42 = 6,
-    X265_CPU_LEVEL_AVX   = 7,
-    X265_CPU_LEVEL_AVX2  = 8
-}
-X265_CPU_LEVELS;
+#define X265_CPU_LEVEL_AUTO  0
+#define X265_CPU_LEVEL_NONE  1 // C code only, no SIMD
+#define X265_CPU_LEVEL_SSE2  2
+#define X265_CPU_LEVEL_SSE3  3
+#define X265_CPU_LEVEL_SSSE3 4
+#define X265_CPU_LEVEL_SSE41 5
+#define X265_CPU_LEVEL_SSE42 6
+#define X265_CPU_LEVEL_AVX   7
+#define X265_CPU_LEVEL_AVX2  8
 
-/***
- * pass a X265_CPU_LEVELS value for cpuid. If not called, first encoder allocated will
- * auto-detect the CPU and initialize performance primitives, which are process global */
-void x265_setup_primitives(x265_param_t *param, int cpuid);
+/*** 
+ * If not called, first encoder allocated will auto-detect the CPU and
+ * initialize performance primitives, which are process global */
+void x265_setup_primitives(x265_param_t *param, int cpulevel);
 
 /***
  * Initialize an x265_param_t structure to default values
