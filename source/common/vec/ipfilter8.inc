@@ -46,6 +46,8 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
     __m128i filterCoeff6 = _mm_set1_epi32(coeff[6]);
     __m128i filterCoeff7 = _mm_set1_epi32(coeff[7]);
 
+    __m128i mask4 = _mm_setr_epi8(-1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
     int row, col;
 
     for (row = 0; row < height; row++)
@@ -197,25 +199,23 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
             __m128i res = _mm_packus_epi16(val, zero16);
 
             int n = width - col;
+            __m128i mask1, mask2, mask3;
 
             switch (n)   // store either 1, 2, 3 or 4 8-bit results in dst
             {
-            case 1: dst[col] = _mm_extract_epi8(res, 0);
+            case 1: mask1 = _mm_srli_si128(mask4, 3);
+                _mm_maskmoveu_si128(res, mask1, (char*)&dst[col]);
                 break;
 
-            case 2: dst[col] = _mm_extract_epi8(res, 0);
-                dst[col + 1] = _mm_extract_epi8(res, 1);
+            case 2:  mask2 = _mm_srli_si128(mask4, 2);
+                _mm_maskmoveu_si128(res, mask2, (char*)&dst[col]);
                 break;
 
-            case 3: dst[col] = _mm_extract_epi8(res, 0);
-                dst[col + 1] = _mm_extract_epi8(res, 1);
-                dst[col + 2] = _mm_extract_epi8(res, 2);
+            case 3: mask3 = _mm_srli_si128(mask4, 1);
+                _mm_maskmoveu_si128(res, mask3, (char*)&dst[col]);
                 break;
 
-            default:  dst[col] = _mm_extract_epi8(res, 0);
-                dst[col + 1] = _mm_extract_epi8(res, 1);
-                dst[col + 2] = _mm_extract_epi8(res, 2);
-                dst[col + 3] = _mm_extract_epi8(res, 3);
+            default: _mm_maskmoveu_si128(res, mask4, (char*)&dst[col]);
                 break;
             }
         }
