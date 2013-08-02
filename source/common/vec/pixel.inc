@@ -36,6 +36,7 @@ namespace {
 #else
 #include "pixel8.inc"
 #endif
+#include "sse.inc"
 
 void convert16to32(short *org, int *dst, int num)
 {
@@ -312,7 +313,6 @@ void transpose32(pixel* dst, pixel* src, intptr_t srcstride)
 #endif // !HIGH_BIT_DEPTH
 }  // end anonymous namespace
 
-#include "sse.inc"
 #include "utils.h"
 
 namespace x265 {
