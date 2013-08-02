@@ -132,6 +132,21 @@ void WaveFront::enqueueRow(int row)
     m_pool->pokeIdleThread();
 }
 
+bool WaveFront::checkHigherPriorityRow(int curRow)
+{
+    int fullwords = curRow >> 6;
+    uint64_t mask = (1LL << (curRow & 63)) - 1;
+
+    // Check full bitmap words before curRow
+    for (int i = 0; i < fullwords; i++)
+        if (m_queuedBitmap[i])
+            return true;
+    // check the partially masked bitmap word of curRow
+    if (m_queuedBitmap[fullwords] & mask)
+        return true;
+    return false;
+}
+
 bool WaveFront::findJob()
 {
     unsigned long id;

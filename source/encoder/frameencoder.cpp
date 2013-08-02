@@ -269,6 +269,11 @@ void FrameEncoder::processRow(int row)
             curRow.m_active = false;
             return;
         }
+        if (checkHigherPriorityRow(row))
+        {
+            curRow.m_active = false;
+            return;
+        }
     }
 
     // this row of CTUs has been encoded

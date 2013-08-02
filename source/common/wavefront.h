@@ -64,6 +64,10 @@ public:
     // This provider must be enqueued in the pool before enqueuing a row
     void enqueueRow(int row);
 
+    // Returns true if a row above curRow is available for processing.  The processRow()
+    // method may call this function periodically and voluntarily exit
+    bool checkHigherPriorityRow(int curRow);
+
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
     virtual void processRow(int row) = 0;
