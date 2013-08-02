@@ -227,8 +227,8 @@ typedef void (*filterHwghtd_t)(pixel *src, int srcStride, short *midF, short* mi
                                int marginX, int marginY, int w, int roundw, int shiftw, int offsetw);
 typedef void (*weightpUni_t)(short *src, pixel *dst, int srcStride, int dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
-typedef void (*downscale_t)( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,
-                                    intptr_t src_stride, intptr_t dst_stride, int width, int height );
+typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
+                            intptr_t src_stride, intptr_t dst_stride, int width, int height);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,
