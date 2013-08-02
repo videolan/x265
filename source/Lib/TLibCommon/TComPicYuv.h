@@ -97,15 +97,12 @@ private:
 
     Bool  m_bIsBorderExtended;
 
-protected:
-
-    Void xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int marginX, Int marginY);
-
 public:
 
     TComPicYuv();
     virtual ~TComPicYuv();
 
+    Void xExtendPicCompBorder(Pel* recon, Int stride, Int width, Int height, Int marginX, Int marginY);
     // ------------------------------------------------------------------------------------------------
     //  Memory management
     // ------------------------------------------------------------------------------------------------
@@ -130,7 +127,9 @@ public:
 
     Int   getCStride()    { return m_strideC; }
 
-    Int   getLumaMargin() { return m_lumaMarginX; }
+    Int   getLumaMarginX() { return m_lumaMarginX; }
+
+    Int   getLumaMarginY() { return m_lumaMarginY; }
 
     Int   getChromaMargin() { return m_chromaMarginX; }
 

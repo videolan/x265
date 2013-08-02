@@ -42,6 +42,7 @@
 #include "CommonDef.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
+#include "lookahead.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -67,6 +68,8 @@ private:
     Bool                  m_bCheckLTMSB;
 
 public:
+
+    x265::LookaheadFrame  m_lowres;
 
     TComPic();
     virtual ~TComPic();
