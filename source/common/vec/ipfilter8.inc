@@ -24,7 +24,7 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#if INSTRSET > 4
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
 void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
@@ -236,15 +236,12 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
     }
 }
 
-#endif /* if INSTRSET >= 4 */
-
 /*
     Please refer Fig 7 in HEVC Overview document to familiarize with variables' naming convention
     Input: Subpel from the Horizontal filter - 'src'
     Output: All planes in the corresponding column - 'dst<A|E|I|P>'
 */
 
-#if INSTRSET >= 5
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
         tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
         a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
@@ -284,7 +281,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
         *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
-#else /* if INSTRSET >= 5 */
+#else /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 #define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
         tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
         a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
@@ -322,9 +319,9 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
         *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
-#endif /* if INSTRSET >= 5 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 #define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
         tmp16e = _mm_shuffle_epi8(sume, _mm_set1_epi8(Y)); \
         tmp16i = _mm_shuffle_epi8(sumi, _mm_set1_epi8(Y)); \
@@ -339,7 +336,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X - 16), tmp16i); \
         _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X - 16), tmp16p); \
 }
-#else /* if INSTRSET >= 5 */
+#else /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 #define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
         tmp16e = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sume); \
         tmp16i = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sumi); \
@@ -354,7 +351,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         tmp16i.store(dstI + row * dstStride + X - 16);      \
         tmp16p.store(dstP + row * dstStride + X - 16);      \
 }
-#endif /* if INSTRSET >= 5 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 void filterVerticalMultiplaneExtend(short *src, int srcStride,
                                     pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
@@ -370,7 +367,7 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
     src -= (8 / 2 - 1) * srcStride;
 
-#if INSTRSET < 5
+#if INSTRSET < X265_CPU_LEVEL_SSE41
     Vec16uc tmp16e, tmp16i, tmp16p;
     Vec4i a0, a1, a2, a3, a4, a5, a6, a7, sum;
     Vec8s tmp;
@@ -382,7 +379,7 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     __m128i tmp;
     __m128i sume, sumi, sump;
     __m128i exp1, exp2, exp3, exp4, exp5, exp6;
-#endif /* if INSTRSET < 5 */
+#endif /* if INSTRSET < X265_CPU_LEVEL_SSE41 */
 
     col = 0;
 
@@ -512,7 +509,7 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     }
 }
 
-#if INSTRSET > 4
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
 void filterVertical_p_p(pixel *src, int srcStride,
                         pixel *dst, int dstStride,
@@ -785,9 +782,9 @@ void filterVertical_p_p(pixel *src, int srcStride,
     }
 }
 
-#endif /* if INSTRSET >= 4 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
-#if INSTRSET > 3
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
 template<int N>
 void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
@@ -883,9 +880,9 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
     }
 }
 
-#endif /* if INSTRSET > 3 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
-#if INSTRSET > 4
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
                                       short *intF, short* intA, short* intB, short* intC, int intStride,
                                       pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
@@ -1204,9 +1201,9 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
     }
 }
 
-#endif /* if INSTRSET > 4 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
-#if INSTRSET > 3
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
 template<int N>
 void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, int width, int height, short const *coeff)
 {
@@ -1298,7 +1295,7 @@ void filterHorizontal_p_s(pixel *src, int srcStride, short *dst, int dstStride, 
     }
 }
 
-#endif /* if INSTRSET > 3 */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
 void filterConvertPelToShort(pixel *src, int srcStride, short *dst, int dstStride, int width, int height)
 {

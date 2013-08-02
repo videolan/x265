@@ -35,7 +35,7 @@
 #include <assert.h>
 #include <string.h>
 #include <algorithm>
-#if INSTRSET > 4
+#if INSTRSET > X265_CPU_LEVEL_SSSE3
 #include <smmintrin.h>
 #endif
 
@@ -159,7 +159,7 @@ void dequant(const int* quantCoef, int* coef, int width, int height, int per, in
     }
 }
 
-#if INSTRSET >= 4
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
 ALIGN_VAR_32(static const short, tab_dst_4[][8]) =
 {
     { 29, 55, 74, 84, 29, 55, 74, 84 },
@@ -227,7 +227,7 @@ void dst4(short *src, int *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[3 * 4], T61);
 }
 
-#endif // INSTRSET >=4
+#endif // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
 ALIGN_VAR_32(static const short, tab_dct_4[][8]) =
 {
@@ -310,7 +310,7 @@ void dct4(short *src, int *dst, intptr_t stride)
     _mm_storeu_si128((__m128i*)&dst[3 * 4], T73);
 }
 
-#if INSTRSET < 4
+#if INSTRSET < X265_CPU_LEVEL_SSSE3
 inline void partialButterfly8(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -395,7 +395,7 @@ void dct8(short *src, int *dst, intptr_t stride)
 #undef N
 }
 
-#else // INSTRSET >= 4
+#else // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
 ALIGN_VAR_32(static const short, tab_dct_8[][8]) =
 {
@@ -596,9 +596,9 @@ void dct8(short *src, int *dst, intptr_t stride)
 #undef MAKE_ODD
 }
 
-#endif // INSTRSET >= 4
+#endif // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
-#if INSTRSET < 4
+#if INSTRSET < X265_CPU_LEVEL_SSSE3
 inline void partialButterfly16(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -774,7 +774,7 @@ void dct16(short *src, int *dst, intptr_t stride)
 #undef N
 }
 
-#else //INSTRSET >= 4
+#else //INSTRSET >= X265_CPU_LEVEL_SSSE3
 
 ALIGN_VAR_32(static const short, tab_dct_16_0[][8]) =
 {
@@ -1224,9 +1224,9 @@ void dct16(short *src, int *dst, intptr_t stride)
     }
 }
 
-#endif // INSTRSET >= 4
+#endif // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
-#if INSTRSET < 4
+#if INSTRSET < X265_CPU_LEVEL_SSSE3
 void partialButterfly32(short *src, short *dst, int shift, int line)
 {
     int j;
@@ -1532,7 +1532,7 @@ void dct32(short *src, int *dst, intptr_t stride)
 #undef N
 }
 
-#else // INSTRSET >= 4
+#else // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
 ALIGN_VAR_32(static const short, tab_dct_32_0[][8]) =
 {
@@ -2119,9 +2119,9 @@ void dct32(short *src, int *dst, intptr_t stride)
     }
 }
 
-#endif // INSTRSET >= 4
+#endif // INSTRSET >= X265_CPU_LEVEL_SSSE3
 
-#if INSTRSET < 5
+#if INSTRSET < X265_CPU_LEVEL_SSE41
 inline void inversedst(short *tmp, short *block, int shift)  // input tmp, output block
 {
     int rnd_factor = 1 << (shift - 1);
@@ -2180,7 +2180,7 @@ void idst4(int *src, short *dst, intptr_t stride)
     }
 }
 
-#else // INSTRSET >= 5
+#else // INSTRSET >= X265_CPU_LEVEL_SSE41
 
 ALIGN_VAR_32(static const short, tab_idst_4x4[8][8]) =
 {
@@ -2290,7 +2290,7 @@ void idst4(int *src, short *dst, intptr_t stride)
     _mm_storeh_pi((__m64*)&dst[3 * stride], _mm_castsi128_ps(m128iBD));
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
 ALIGN_VAR_32(static const short, tab_idct_4x4[4][8]) =
 {
@@ -3976,7 +3976,7 @@ void NAME(Setup_Vec_DCTPrimitives)(EncoderPrimitives &p)
     p.dequant = dequant;
     p.quant = quant;
 
-#if !HIGH_BIT_DEPTH && INSTRSET > 4
+#if !HIGH_BIT_DEPTH && INSTRSET > X265_CPU_LEVEL_SSSE3
     p.dct[DST_4x4] = dst4;
     p.dct[DCT_4x4] = dct4;
     p.dct[DCT_8x8] = dct8;

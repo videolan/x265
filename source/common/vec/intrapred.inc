@@ -27,7 +27,7 @@
 #include "primitives.h"
 #include "TLibCommon/TComRom.h"
 #include <assert.h>
-#if INSTRSET > 4
+#if INSTRSET > X265_CPU_LEVEL_SSSE3
 #include <smmintrin.h>
 #endif
 
@@ -748,7 +748,7 @@ void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, in
 #endif // if HIGH_BIT_DEPTH
 }
 
-#if INSTRSET >= 4  // SSSE3
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
     #define BROADCAST16(a, d, x) { \
         const __m128i mask = _mm_set1_epi16( (((d) * 2) | ((d) * 2 + 1) << 8) ); \
         (x) = _mm_shuffle_epi8((a), mask); \
@@ -885,7 +885,7 @@ void intra_pred_planar4(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
 #undef COMP_PRED_PLANAR4_ROW
 }
 
-#if INSTRSET > 4
+#if INSTRSET > X265_CPU_LEVEL_SSSE3
 void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -940,7 +940,7 @@ void intra_pred_planar4_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dst
 #undef COMP_PRED_PLANAR4_ROW
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
 #endif /* if HIGH_BIT_DEPTH */
 
@@ -1048,7 +1048,7 @@ void intra_pred_planar8(pixel* above, pixel* left, pixel* dst, intptr_t dstStrid
 
 #undef COMP_PRED_PLANAR_ROW
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -1099,7 +1099,7 @@ void intra_pred_planar8_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dst
 #undef COMP_PRED_PLANAR_ROW
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
 #endif /* if HIGH_BIT_DEPTH */
 
@@ -1262,7 +1262,7 @@ void intra_pred_planar16(pixel* above, pixel* left, pixel* dst, intptr_t dstStri
 
 #undef COMP_PRED_PLANAR_ROW
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -1330,9 +1330,9 @@ void intra_pred_planar16_sse4(pixel* above, pixel* left, pixel* dst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -1407,9 +1407,9 @@ void intra_pred_planar32_sse4(pixel* above, pixel* left, pixel* dst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void intra_pred_planar64_sse4(pixel* above, pixel* left, pixel* dst, intptr_t dstStride)
 {
     pixel bottomLeft, topRight;
@@ -1518,14 +1518,14 @@ void intra_pred_planar64_sse4(pixel* above, pixel* left, pixel* dst, intptr_t ds
 #undef COMP_PRED_PLANAR_ROW
 }
 
-#endif // INSTRSET >= 5
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 
 #endif /* if HIGH_BIT_DEPTH */
 
 typedef void intra_pred_planar_t (pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 intra_pred_planar_t *intraPlanarN[] =
 {
-#if !HIGH_BIT_DEPTH && INSTRSET >= 5
+#if !HIGH_BIT_DEPTH && INSTRSET >= X265_CPU_LEVEL_SSE41
     intra_pred_planar4_sse4,
     intra_pred_planar8_sse4,
     intra_pred_planar16_sse4,
@@ -1542,7 +1542,7 @@ void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride
 {
     int nLog2Size = g_convertToBit[width] + 2;
 
-#if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5)
+#if (!HIGH_BIT_DEPTH) && (INSTRSET >= X265_CPU_LEVEL_SSE41)
     intraPlanarN[nLog2Size - 2](above, left, dst, dstStride);
     return;
 #else
@@ -1593,7 +1593,7 @@ void intra_pred_planar(pixel* above, pixel* left, pixel* dst, intptr_t dstStride
         }
     }
 
-#endif /* if (!HIGH_BIT_DEPTH) && (INSTRSET >= 5) */
+#endif /* if (!HIGH_BIT_DEPTH) && (INSTRSET >= X265_CPU_LEVEL_SSE41) */
 }
 
 #if HIGH_BIT_DEPTH
@@ -4927,7 +4927,7 @@ ALIGN_VAR_32(static const char, tab_angle_1[][16]) =
 #undef MAKE_COEF8
 };
 
-#if INSTRSET >= 5
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 
 void predIntraAngs4(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, bool filter)
 {
@@ -12905,7 +12905,7 @@ void predIntraAngs32(pixel *dst0, pixel *above0, pixel *left0, pixel *above1, pi
 #undef HALF
 #undef N
 }
-#endif // INSTRSET > 4
+#endif // INSTRSET >= X265_CPU_LEVEL_SSE41
 }
 
 #include "utils.h"
@@ -12918,7 +12918,7 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.intra_pred_planar = intra_pred_planar;
     p.intra_pred_ang = intra_pred_ang;
 
-#if INSTRSET > 4 && !HIGH_BIT_DEPTH
+#if INSTRSET >= X265_CPU_LEVEL_SSE41 && !HIGH_BIT_DEPTH
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER == 1500))
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
@@ -12932,6 +12932,6 @@ void NAME(Setup_Vec_IPredPrimitives)(EncoderPrimitives& p)
     p.intra_pred_allangs[0] = predIntraAngs4;
     p.intra_pred_allangs[1] = predIntraAngs8;
 #endif
-#endif /* if INSTRSET > 4 && !HIGH_BIT_DEPTH */
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 && !HIGH_BIT_DEPTH */
 }
 }

@@ -41,14 +41,14 @@ namespace {
 namespace x265 {
 void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 {
-#if INSTRSET > 3
+#if INSTRSET >= X265_CPU_LEVEL_SSSE3
     p.ipfilter_pp[FILTER_H_P_P_4] = filterHorizontal_p_p<4>;
     p.ipfilter_pp[FILTER_H_P_P_8] = filterHorizontal_p_p<8>;
     p.ipfilter_ps[FILTER_H_P_S_4] = filterHorizontal_p_s<4>;
     p.ipfilter_ps[FILTER_H_P_S_8] = filterHorizontal_p_s<8>;
 #endif
 
-#if INSTRSET > 4
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
     p.ipfilter_pp[FILTER_V_P_P_4] = filterVertical_p_p<4>;
     p.ipfilter_pp[FILTER_V_P_P_8] = filterVertical_p_p<8>;
 
@@ -61,7 +61,7 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
 
 #if !HIGH_BIT_DEPTH
     p.filterVmulti = filterVerticalMultiplaneExtend;
-#if INSTRSET > 4 && !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
+#if INSTRSET >= X265_CPU_LEVEL_SSE41 && !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
     p.filterHmulti = filterHorizontalMultiplaneExtend;
 #endif
 #endif
