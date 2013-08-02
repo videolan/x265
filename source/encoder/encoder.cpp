@@ -40,15 +40,15 @@ using namespace x265;
 #pragma warning(disable: 4800) // 'int' : forcing value to bool 'true' or 'false' (performance warning)
 #endif
 
-void Encoder::determineLevelAndProfile(x265_param_t *param)
+void Encoder::determineLevelAndProfile(x265_param_t *_param)
 {
     // this is all based on the table at on Wikipedia at
     // http://en.wikipedia.org/wiki/High_Efficiency_Video_Coding#Profiles
 
     // TODO: there are minimum CTU sizes for higher levels, needs to be enforced
 
-    uint32_t lumaSamples = param->sourceWidth * param->sourceHeight;
-    uint32_t samplesPerSec = lumaSamples * param->frameRate;
+    uint32_t lumaSamples = _param->sourceWidth * _param->sourceHeight;
+    uint32_t samplesPerSec = lumaSamples * _param->frameRate;
     uint32_t bitrate = 100; // in kbps TODO: ABR
 
     m_level = Level::LEVEL1;
@@ -114,7 +114,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
         level = "6.2";
     }
     if (samplesPerSec > 4278190080U || lumaSamples > 35651584 || bitrate > 800000)
-        x265_log(param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
+        x265_log(_param, X265_LOG_WARNING, "video size or bitrate out of scope for HEVC\n");
 
     /* Within a given level, we might be at a high tier, depending on bitrate */
     m_levelTier = Level::MAIN;
@@ -148,81 +148,81 @@ void Encoder::determineLevelAndProfile(x265_param_t *param)
         break;
     }
 
-    if (param->internalBitDepth == 10)
+    if (_param->internalBitDepth == 10)
         m_profile = Profile::MAIN10;
-    else if (param->keyframeInterval == 1)
+    else if (_param->keyframeInterval == 1)
         m_profile = Profile::MAINSTILLPICTURE;
     else
         m_profile = Profile::MAIN;
 
     static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
     static const char *tiers[]    = { "Main", "High" };
-    x265_log(param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
+    x265_log(_param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[m_profile], level, tiers[m_levelTier]);
 }
 
-void Encoder::configure(x265_param_t *param)
+void Encoder::configure(x265_param_t *_param)
 {
-    determineLevelAndProfile(param);
+    determineLevelAndProfile(_param);
 
     // Trim the thread pool if WPP is disabled
-    if (param->bEnableWavefront == 0)
-        param->poolNumThreads = 1;
+    if (_param->bEnableWavefront == 0)
+        _param->poolNumThreads = 1;
 
-    setThreadPool(ThreadPool::allocThreadPool(param->poolNumThreads));
+    setThreadPool(ThreadPool::allocThreadPool(_param->poolNumThreads));
     int actual = ThreadPool::getThreadPool()->getThreadCount();
     if (actual > 1)
     {
-        x265_log(param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled\n", actual);
+        x265_log(_param, X265_LOG_INFO, "thread pool with %d threads, WPP enabled\n", actual);
     }
     else
     {
-        x265_log(param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
-        param->bEnableWavefront = 0;
+        x265_log(_param, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
+        _param->bEnableWavefront = 0;
     }
 
     m_gopSize = 4;
-    m_decodingRefreshType = param->decodingRefreshType;
-    m_qp = param->qp;
+    m_decodingRefreshType = _param->decodingRefreshType;
+    m_qp = _param->qp;
 
     //====== Motion search ========
-    m_searchMethod = param->searchMethod;
-    m_searchRange = param->searchRange;
-    m_bipredSearchRange = param->bipredSearchRange;
-    m_useAMP = param->bEnableAMP;
-    m_useRectInter = param->bEnableRectInter;
+    m_searchMethod = _param->searchMethod;
+    m_searchRange = _param->searchRange;
+    m_bipredSearchRange = _param->bipredSearchRange;
+    m_useAMP = _param->bEnableAMP;
+    m_useRectInter = _param->bEnableRectInter;
 
     //====== Quality control ========
-    m_useRDO = param->bEnableRDO;
-    m_chromaCbQpOffset = param->cbQpOffset;
-    m_chromaCrQpOffset = param->crQpOffset;
+    m_useRDO = _param->bEnableRDO;
+    m_chromaCbQpOffset = _param->cbQpOffset;
+    m_chromaCrQpOffset = _param->crQpOffset;
 
     //====== Coding Tools ========
-    m_useRDOQ = param->bEnableRDOQ;
-    m_useRDOQTS = param->bEnableRDOQTS;
-    m_rdPenalty = param->rdPenalty;
-    uint32_t tuQTMaxLog2Size = g_convertToBit[param->maxCUSize] + 2 - 1;
+    m_useRDOQ = _param->bEnableRDOQ;
+    m_useRDOQTS = _param->bEnableRDOQTS;
+    m_rdPenalty = _param->rdPenalty;
+    uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
-    m_quadtreeTUMaxDepthInter = param->tuQTMaxInterDepth;
-    m_quadtreeTUMaxDepthIntra = param->tuQTMaxIntraDepth;
-    m_bUseCbfFastMode = param->bEnableCbfFastMode;
-    m_useEarlySkipDetection = param->bEnableEarlySkip;
-    m_useTransformSkip = param->bEnableTransformSkip;
-    m_useTransformSkipFast = param->bEnableTSkipFast;
-    m_bUseConstrainedIntraPred = param->bEnableConstrainedIntra;
-    m_maxNumMergeCand = param->maxNumMergeCand;
-    m_bUseSAO = param->bEnableSAO;
-    m_saoLcuBoundary = param->saoLcuBoundary;
-    m_saoLcuBasedOptimization = param->saoLcuBasedOptimization;
+    m_quadtreeTUMaxDepthInter = _param->tuQTMaxInterDepth;
+    m_quadtreeTUMaxDepthIntra = _param->tuQTMaxIntraDepth;
+    m_bUseCbfFastMode = _param->bEnableCbfFastMode;
+    m_useEarlySkipDetection = _param->bEnableEarlySkip;
+    m_useTransformSkip = _param->bEnableTransformSkip;
+    m_useTransformSkipFast = _param->bEnableTSkipFast;
+    m_bUseConstrainedIntraPred = _param->bEnableConstrainedIntra;
+    m_maxNumMergeCand = _param->maxNumMergeCand;
+    m_bUseSAO = _param->bEnableSAO;
+    m_saoLcuBoundary = _param->saoLcuBoundary;
+    m_saoLcuBasedOptimization = _param->saoLcuBasedOptimization;
 
     //====== Weighted Prediction ========
-    m_useWeightedPred = param->bEnableWeightedPred;
-    m_useWeightedBiPred = param->bEnableWeightedBiPred;
+    m_useWeightedPred = _param->bEnableWeightedPred;
+    m_useWeightedBiPred = _param->bEnableWeightedBiPred;
 
-    m_signHideFlag = param->bEnableSignHiding;
-    m_useStrongIntraSmoothing = param->bEnableStrongIntraSmoothing;
-    m_decodedPictureHashSEIEnabled = param->bEnableDecodedPictureHashSEI;
+    m_signHideFlag = _param->bEnableSignHiding;
+    m_useStrongIntraSmoothing = _param->bEnableStrongIntraSmoothing;
+    m_decodedPictureHashSEIEnabled = _param->bEnableDecodedPictureHashSEI;
 
     //====== Enforce these hard coded settings before initializeGOP() to
     //       avoid a valgrind warning
@@ -234,7 +234,7 @@ void Encoder::configure(x265_param_t *param)
     m_deblockingFilterControlPresent = 0;
 
     //====== HM Settings not exposed for configuration ======
-    initializeGOP(param);
+    initializeGOP(_param);
     for (int i = 0; i < MAX_TLAYER; i++)
     {
         m_adLambdaModifier[i] = 1.0;
@@ -325,12 +325,12 @@ static inline int _confirm(bool bflag, const char* message)
 }
 
 // TODO: All of this junk should go away when we get a real lookahead
-bool Encoder::initializeGOP(x265_param_t *param)
+bool Encoder::initializeGOP(x265_param_t *_param)
 {
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (param->keyframeInterval == 1)
+    if (_param->keyframeInterval == 1)
     {
         /* encoder_all_I */
         m_gopList[0] = GOPEntry();
@@ -340,7 +340,7 @@ bool Encoder::initializeGOP(x265_param_t *param)
         m_gopList[0].m_POC = 1;
         m_gopList[0].m_numRefPicsActive = 4;
     }
-    else if (param->bframes > 0) // hacky temporary way to select random access
+    else if (_param->bframes > 0) // hacky temporary way to select random access
     {
         /* encoder_randomaccess_main */
         int offsets[] = { 1, 2, 3, 4, 4, 3, 4, 4 };
@@ -409,30 +409,30 @@ bool Encoder::initializeGOP(x265_param_t *param)
         m_gopList[3].m_QPFactor = 0.578;
     }
 
-    if (param->keyframeInterval > 0)
+    if (_param->keyframeInterval > 0)
     {
-        m_gopSize = X265_MIN(param->keyframeInterval, m_gopSize);
+        m_gopSize = X265_MIN(_param->keyframeInterval, m_gopSize);
         m_gopSize = X265_MAX(1, m_gopSize);
-        int remain = param->keyframeInterval % m_gopSize;
+        int remain = _param->keyframeInterval % m_gopSize;
         if (remain)
         {
-            param->keyframeInterval += m_gopSize - remain;
-            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                     m_gopSize, param->keyframeInterval);
+            _param->keyframeInterval += m_gopSize - remain;
+            x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
+                     m_gopSize, _param->keyframeInterval);
         }
-        if (param->bframes && param->keyframeInterval < 16)
+        if (_param->bframes && _param->keyframeInterval < 16)
         {
-            param->keyframeInterval = 16;
-            x265_log(param, X265_LOG_WARNING, "Keyframe interval must be at least 16 for B GOP structure\n");
+            _param->keyframeInterval = 16;
+            x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be at least 16 for B GOP structure\n");
         }
     }
-    else if (param->keyframeInterval == 0)
+    else if (_param->keyframeInterval == 0)
     {
         // default keyframe interval of 1 second
-        param->keyframeInterval = param->frameRate;
-        int remain = param->keyframeInterval % m_gopSize;
+        _param->keyframeInterval = _param->frameRate;
+        int remain = _param->keyframeInterval % m_gopSize;
         if (remain)
-            param->keyframeInterval += m_gopSize - remain;
+            _param->keyframeInterval += m_gopSize - remain;
     }
 
     bool verifiedGOP = false;
@@ -449,9 +449,9 @@ bool Encoder::initializeGOP(x265_param_t *param)
     }
 
     int numOK = 0;
-    CONFIRM(param->keyframeInterval >= 0 && (param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
+    CONFIRM(_param->keyframeInterval >= 0 && (_param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
 
-    if ((param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_deblockingFilterControlPresent && (!m_bLoopFilterDisable))
+    if ((_param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_deblockingFilterControlPresent && (!m_bLoopFilterDisable))
     {
         for (Int i = 0; i < m_gopSize; i++)
         {
