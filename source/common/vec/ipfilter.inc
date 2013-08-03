@@ -59,9 +59,9 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
     p.ipfilter_p2s = filterConvertPelToShort;
     p.ipfilter_s2p = filterConvertShortToPel;
 
-#if !HIGH_BIT_DEPTH
+#if !HIGH_BIT_DEPTH && INSTRSET >= X265_CPU_LEVEL_SSE41
     p.filterVmulti = filterVerticalMultiplaneExtend;
-#if INSTRSET >= X265_CPU_LEVEL_SSE41 && !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
+#if !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
     p.filterHmulti = filterHorizontalMultiplaneExtend;
 #endif
 #endif

@@ -281,47 +281,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
         *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
 }
-#else /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
-#define PROCESSROW(a0, a1, a2, a3, a4, a5, a6, a7) { \
-        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
-        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
-        /*  calculation
 
-            The coefficients for different planes are :
-            e:    { -1, 4, -10, 58, 17,  -5, 1,  0 },
-            i:    { -1, 4, -11, 40, 40, -11, 4, -1 },
-            p:    {  0, 1,  -5, 17, 58, -10, 4, -1 }
-            Thus the expressions are:
-            sume = 4*a1 -a0 - 10*a2 + 58*a3 + 17*a4 -  5*a5 +   a6     ;
-            sumi = 4*a1 -a0 - 11*a2 + 40*a3 + 40*a4 - 11*a5 + 4*a6  -a7;
-            sump =   a1      - 5*a2 + 17*a3 + 58*a4 - 10*a5 + 4*a6  -a7;
-            */                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
-        exp1 = (a1 << 2) - a0 - 10 * a2; \
-        exp2 = 40 * a3; \
-        exp3 = 17 * a3; \
-        exp4 = 17 * a4; \
-        exp5 = 40 * a4; \
-        exp6 = (a6 << 2) - a7 - 10 * a5; \
-        sume = exp1 + exp2 + exp3 + a3 + exp4 - 5 * a5 +   a6; \
-        sumi = exp1 - a2 + exp2 + exp5 + exp6 -   a5; \
-        sump = a1 - 5 * a2 + exp3 + exp4 + exp5 + a4 + exp6; \
-        /* store results */ \
-        sumi = _mm_sra_epi32(_mm_add_epi32(sumi, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
-        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
-        sume = _mm_sra_epi32(_mm_add_epi32(sume, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
-        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
-        sump = _mm_sra_epi32(_mm_add_epi32(sump, _mm_set1_epi32(offset)), _mm_cvtsi32_si128(12)); \
-        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
-        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
-        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
-}
-#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
-
-#if INSTRSET >= X265_CPU_LEVEL_SSE41
 #define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
         tmp16e = _mm_shuffle_epi8(sume, _mm_set1_epi8(Y)); \
         tmp16i = _mm_shuffle_epi8(sumi, _mm_set1_epi8(Y)); \
@@ -336,22 +296,6 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
         _mm_storeu_si128((__m128i*)(dstI + row * dstStride + X - 16), tmp16i); \
         _mm_storeu_si128((__m128i*)(dstP + row * dstStride + X - 16), tmp16p); \
 }
-#else /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
-#define EXTENDCOL(X, Y) { /*X=0 for leftmost column, X=block_width+marginX for rightmost column*/ \
-        tmp16e = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sume); \
-        tmp16i = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sumi); \
-        tmp16p = permute16uc<Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y>((Vec16uc)sump); \
-        for (int i = -marginX; i < -16; i += 16) \
-        { \
-            tmp16e.store(dstE + row * dstStride + X + i); \
-            tmp16i.store(dstI + row * dstStride + X + i); \
-            tmp16p.store(dstP + row * dstStride + X + i); \
-        } \
-        tmp16e.store(dstE + row * dstStride + X - 16);      /*Assuming marginX > 16*/ \
-        tmp16i.store(dstI + row * dstStride + X - 16);      \
-        tmp16p.store(dstP + row * dstStride + X - 16);      \
-}
-#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 void filterVerticalMultiplaneExtend(short *src, int srcStride,
                                     pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
@@ -367,19 +311,11 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
     src -= (8 / 2 - 1) * srcStride;
 
-#if INSTRSET < X265_CPU_LEVEL_SSE41
-    Vec16uc tmp16e, tmp16i, tmp16p;
-    Vec4i a0, a1, a2, a3, a4, a5, a6, a7, sum;
-    Vec8s tmp;
-    Vec4i val, sume, sumi, sump;
-    Vec4i exp1, exp2, exp3, exp4, exp5, exp6;
-#else
     __m128i tmp16e, tmp16i, tmp16p;
     __m128i a0, a1, a2, a3, a4, a5, a6, a7;
     __m128i tmp;
     __m128i sume, sumi, sump;
     __m128i exp1, exp2, exp3, exp4, exp5, exp6;
-#endif /* if INSTRSET < X265_CPU_LEVEL_SSE41 */
 
     col = 0;
 
@@ -509,7 +445,6 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     }
 }
 
-#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
 void filterVertical_p_p(pixel *src, int srcStride,
                         pixel *dst, int dstStride,
@@ -880,9 +815,6 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
     }
 }
 
-#endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
-
-#if INSTRSET >= X265_CPU_LEVEL_SSE41
 void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
                                       short *intF, short* intA, short* intB, short* intC, int intStride,
                                       pixel *dstA, pixel *dstB, pixel *dstC, int dstStride,
@@ -991,7 +923,7 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
         tmp16c = _mm_packus_epi16(sumcL, sumcL);
         _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col), tmp16c);
 
-        //Extend First column
+        // Extend First column
         __m128i ma, mb, mc;
         ma = _mm_shuffle_epi8(tmp16a, _mm_set1_epi8(0));
         mb = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(0));
@@ -1142,7 +1074,7 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
             tmp16b = _mm_shuffle_epi8(tmp16b, _mm_set1_epi8(15));
             tmp16c = _mm_shuffle_epi8(tmp16c, _mm_set1_epi8(15));
         }
-        //Extend last column
+        // Extend last column
         for (int i = -marginX; i < -16; i += 16)
         {
             _mm_storeu_si128((__m128i*)(dstA + row * dstStride + block_width + marginX + i), tmp16a);
@@ -1200,7 +1132,6 @@ void filterHorizontalMultiplaneExtend(pixel *src, int srcStride,
         memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
     }
 }
-
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 #if INSTRSET >= X265_CPU_LEVEL_SSSE3
