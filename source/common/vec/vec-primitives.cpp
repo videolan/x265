@@ -35,7 +35,6 @@ namespace x265 {
 extern void Setup_Vec_Primitives_sse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_ssse3(EncoderPrimitives&);
 extern void Setup_Vec_Primitives_sse41(EncoderPrimitives&);
-extern void Setup_Vec_Primitives_sse42(EncoderPrimitives&);
 #endif
 
 #if defined(__INTEL_COMPILER)
@@ -63,11 +62,10 @@ extern void Setup_Vec_Primitives_avx2(EncoderPrimitives&);
 /* Use primitives for the best available vector architecture */
 void Setup_Vector_Primitives(EncoderPrimitives &p, int cpuid)
 {
-#if defined(__GNUC__) || defined(_MSC_VER)
+#if defined(__GNUC__) || defined(_MSC_VER) || defined(__INTEL_COMPILER)
     if (cpuid > 2) Setup_Vec_Primitives_sse3(p);
     if (cpuid > 3) Setup_Vec_Primitives_ssse3(p);
     if (cpuid > 4) Setup_Vec_Primitives_sse41(p);
-    if (cpuid > 5) Setup_Vec_Primitives_sse42(p);
 #endif
 
 #if defined(__INTEL_COMPILER)
