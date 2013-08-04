@@ -132,8 +132,8 @@ Void TEncTop::init()
     {
         TComPic *pic = new TComPic;
         pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-            getConformanceWindow(), getDefaultDisplayWindow());
-        if (getUseSAO())
+                    getConformanceWindow(), getDefaultDisplayWindow());
+        if (param.bEnableSAO)
         {
             // TODO: we shouldn't need a frame encoder to do this
             pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
@@ -322,8 +322,8 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     pcSPS->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
     pcSPS->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
-    pcSPS->setQuadtreeTUMaxDepthInter(m_quadtreeTUMaxDepthInter);
-    pcSPS->setQuadtreeTUMaxDepthIntra(m_quadtreeTUMaxDepthIntra);
+    pcSPS->setQuadtreeTUMaxDepthInter(param.tuQTMaxInterDepth);
+    pcSPS->setQuadtreeTUMaxDepthIntra(param.tuQTMaxIntraDepth);
 
     pcSPS->setTMVPFlagsPresent(false);
     pcSPS->setUseLossless(m_useLossless);
@@ -334,10 +334,10 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     for (i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
-        pcSPS->setAMPAcc(i, m_useAMP);
+        pcSPS->setAMPAcc(i, param.bEnableAMP);
     }
 
-    pcSPS->setUseAMP(m_useAMP);
+    pcSPS->setUseAMP(param.bEnableAMP);
 
     for (i = g_maxCUDepth - g_addCUDepth; i < g_maxCUDepth; i++)
     {
@@ -350,7 +350,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
     pcSPS->setQpBDOffsetY(6 * (X265_DEPTH - 8));
     pcSPS->setQpBDOffsetC(6 * (X265_DEPTH - 8));
 
-    pcSPS->setUseSAO(m_bUseSAO);
+    pcSPS->setUseSAO(param.bEnableSAO);
 
     // TODO: hard-code these values in SPS code
     pcSPS->setMaxTLayers(1);
@@ -369,7 +369,7 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
     pcSPS->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
 
-    pcSPS->setUseStrongIntraSmoothing(m_useStrongIntraSmoothing);
+    pcSPS->setUseStrongIntraSmoothing(param.bEnableStrongIntraSmoothing);
 
     pcSPS->setVuiParametersPresentFlag(getVuiParametersPresentFlag());
     if (pcSPS->getVuiParametersPresentFlag())
@@ -414,14 +414,14 @@ Void TEncTop::xInitSPS(TComSPS *pcSPS)
 
 Void TEncTop::xInitPPS(TComPPS *pcPPS)
 {
-    pcPPS->setConstrainedIntraPred(m_bUseConstrainedIntraPred);
+    pcPPS->setConstrainedIntraPred(param.bEnableConstrainedIntra);
     Bool bUseDQP = (getMaxCuDQPDepth() > 0) ? true : false;
 
     Int lowestQP = -(6 * (X265_DEPTH - 8)); //m_cSPS.getQpBDOffsetY();
 
     if (getUseLossless())
     {
-        if ((getMaxCuDQPDepth() == 0) && (getQP() == lowestQP))
+        if ((getMaxCuDQPDepth() == 0) && (param.qp == lowestQP))
         {
             bUseDQP = false;
         }
@@ -444,14 +444,14 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
         pcPPS->setMinCuDQPSize(pcPPS->getSPS()->getMaxCUWidth() >> (pcPPS->getMaxCuDQPDepth()));
     }
 
-    pcPPS->setChromaCbQpOffset(m_chromaCbQpOffset);
-    pcPPS->setChromaCrQpOffset(m_chromaCrQpOffset);
+    pcPPS->setChromaCbQpOffset(param.cbQpOffset);
+    pcPPS->setChromaCrQpOffset(param.crQpOffset);
 
     pcPPS->setEntropyCodingSyncEnabledFlag(param.bEnableWavefront);
-    pcPPS->setUseWP(m_useWeightedPred);
-    pcPPS->setWPBiPred(m_useWeightedBiPred);
+    pcPPS->setUseWP(param.bEnableWeightedPred);
+    pcPPS->setWPBiPred(param.bEnableWeightedBiPred);
     pcPPS->setOutputFlagPresentFlag(false);
-    pcPPS->setSignHideFlag(getSignHideFlag());
+    pcPPS->setSignHideFlag(param.bEnableSignHiding);
     pcPPS->setDeblockingFilterControlPresentFlag(m_deblockingFilterControlPresent);
     pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
@@ -482,7 +482,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setNumRefIdxL0DefaultActive(bestPos);
     pcPPS->setNumRefIdxL1DefaultActive(bestPos);
     pcPPS->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
-    pcPPS->setUseTransformSkip(m_useTransformSkip);
+    pcPPS->setUseTransformSkip(param.bEnableTransformSkip);
     pcPPS->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 

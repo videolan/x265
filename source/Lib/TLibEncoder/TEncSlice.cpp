@@ -150,7 +150,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     // QP setting
     // ------------------------------------------------------------------------------------------------------------------
 
-    qpdouble = m_cfg->getQP();
+    qpdouble = m_cfg->param.qp;
     if (sliceType != I_SLICE)
     {
         if (!((qpdouble == -slice->getSPS()->getQpBDOffsetY()) && (slice->getSPS()->getUseLossless())))
@@ -284,7 +284,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     slice->setDepth(depth);
-    slice->setMaxNumMergeCand(m_cfg->getMaxNumMergeCand());
+    slice->setMaxNumMergeCand(m_cfg->param.maxNumMergeCand);
     xStoreWPparam(pps->getUseWP(), pps->getWPBiPred());
     return slice;
 }
@@ -329,7 +329,7 @@ Void TEncSlice::setSearchRange(TComSlice* slice, FrameEncoder *frameEncoder)
     Int currPOC = slice->getPOC();
     Int gopSize = m_cfg->getGOPSize();
     Int offset = (gopSize >> 1);
-    Int maxSR = m_cfg->getSearchRange();
+    Int maxSR = m_cfg->param.searchRange;
     Int numPredDir = slice->isInterP() ? 1 : 2;
 
     for (Int dir = 0; dir <= numPredDir; dir++)

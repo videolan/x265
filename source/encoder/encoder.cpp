@@ -181,48 +181,13 @@ void Encoder::configure(x265_param_t *_param)
     }
 
     m_gopSize = 4;
-    m_decodingRefreshType = _param->decodingRefreshType;
-    m_qp = _param->qp;
-
-    //====== Motion search ========
-    m_searchMethod = _param->searchMethod;
-    m_searchRange = _param->searchRange;
-    m_bipredSearchRange = _param->bipredSearchRange;
-    m_useAMP = _param->bEnableAMP;
-    m_useRectInter = _param->bEnableRectInter;
-
-    //====== Quality control ========
-    m_useRDO = _param->bEnableRDO;
-    m_chromaCbQpOffset = _param->cbQpOffset;
-    m_chromaCrQpOffset = _param->crQpOffset;
 
     //====== Coding Tools ========
-    m_useRDOQ = _param->bEnableRDOQ;
-    m_useRDOQTS = _param->bEnableRDOQTS;
-    m_rdPenalty = _param->rdPenalty;
+
     uint32_t tuQTMaxLog2Size = g_convertToBit[_param->maxCUSize] + 2 - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
-    m_quadtreeTUMaxDepthInter = _param->tuQTMaxInterDepth;
-    m_quadtreeTUMaxDepthIntra = _param->tuQTMaxIntraDepth;
-    m_bUseCbfFastMode = _param->bEnableCbfFastMode;
-    m_useEarlySkipDetection = _param->bEnableEarlySkip;
-    m_useTransformSkip = _param->bEnableTransformSkip;
-    m_useTransformSkipFast = _param->bEnableTSkipFast;
-    m_bUseConstrainedIntraPred = _param->bEnableConstrainedIntra;
-    m_maxNumMergeCand = _param->maxNumMergeCand;
-    m_bUseSAO = _param->bEnableSAO;
-    m_saoLcuBoundary = _param->saoLcuBoundary;
-    m_saoLcuBasedOptimization = _param->saoLcuBasedOptimization;
-
-    //====== Weighted Prediction ========
-    m_useWeightedPred = _param->bEnableWeightedPred;
-    m_useWeightedBiPred = _param->bEnableWeightedBiPred;
-
-    m_signHideFlag = _param->bEnableSignHiding;
-    m_useStrongIntraSmoothing = _param->bEnableStrongIntraSmoothing;
-    m_decodedPictureHashSEIEnabled = _param->bEnableDecodedPictureHashSEI;
 
     //====== Enforce these hard coded settings before initializeGOP() to
     //       avoid a valgrind warning
@@ -307,7 +272,7 @@ void Encoder::configure(x265_param_t *_param)
     m_usePCM = 0;
     m_pcmLog2MinSize = 3;
     m_pcmLog2MaxSize = 5;
-    m_bPCMInputBitDepthFlag = 1; 
+    m_bPCMInputBitDepthFlag = 1;
     m_bPCMFilterDisableFlag = 0;
 
     m_useLossless = 0;  // x264 configures this via --qp=0

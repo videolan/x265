@@ -153,9 +153,9 @@ Void TEncSearch::init(TEncCfg* cfg, TComRdCost* rdCost, TComTrQuant* trQuant)
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
 
-    m_searchRange       = cfg->getSearchRange();
-    m_searchMethod      = cfg->getSearchMethod();
-    m_bipredSearchRange = cfg->getBipredSearchRange();
+    m_searchRange       = cfg->param.searchRange;
+    m_searchMethod      = cfg->param.searchMethod;
+    m_bipredSearchRange = cfg->param.bipredSearchRange;
     m_me.setSearchMethod(m_searchMethod);
 
     // default to no adaptive range
@@ -532,7 +532,7 @@ Void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
-    if (useTransformSkip ? m_cfg->getUseRDOQTS() : m_cfg->getUseRDOQ())
+    if (useTransformSkip ? m_cfg->param.bEnableRDOQTS : m_cfg->param.bEnableRDOQ)
     {
         m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, width, TEXT_LUMA);
     }
@@ -661,7 +661,7 @@ Void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     //===== transform and quantization =====
     {
         //--- init rate estimation arrays for RDOQ ---
-        if (useTransformSkipChroma ? m_cfg->getUseRDOQTS() : m_cfg->getUseRDOQ())
+        if (useTransformSkipChroma ? m_cfg->param.bEnableRDOQTS : m_cfg->param.bEnableRDOQ)
         {
             m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, width, width, ttype);
         }
@@ -748,13 +748,13 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     // don't check split if TU size is less or equal to max TU size
     Bool noSplitIntraMaxTuSize = bCheckFull;
 
-    if (m_cfg->getRDpenalty() && !isIntraSlice)
+    if (m_cfg->param.rdPenalty && !isIntraSlice)
     {
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (trSizeLog2  <= min(maxTuSize, 4));
 
         // if maximum RD-penalty don't check TU size 32x32
-        if (m_cfg->getRDpenalty() == 2)
+        if (m_cfg->param.rdPenalty == 2)
         {
             bCheckFull = (trSizeLog2  <= min(maxTuSize, 4));
         }
@@ -779,7 +779,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     checkTransformSkip &= (widthTransformSkip == 4 && heightTransformSkip == 4);
     checkTransformSkip &= (!cu->getCUTransquantBypass(0));
     checkTransformSkip &= (!((cu->getQP(0) == 0) && (cu->getSlice()->getSPS()->getUseLossless())));
-    if (m_cfg->getUseTransformSkipFast())
+    if (m_cfg->param.bEnableTSkipFast)
     {
         checkTransformSkip &= (cu->getPartitionSize(absPartIdx) == SIZE_NxN);
     }
@@ -930,7 +930,7 @@ Void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             }
             //----- determine rate and r-d cost -----
             UInt singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, true, !bLumaOnly);
-            if (m_cfg->getRDpenalty() && (trSizeLog2 == 5) && !isIntraSlice)
+            if (m_cfg->param.rdPenalty && (trSizeLog2 == 5) && !isIntraSlice)
             {
                 singleBits = singleBits * 4;
             }
@@ -1374,7 +1374,7 @@ Void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         }
 
         checkTransformSkip &= (trSizeLog2 <= 3);
-        if (m_cfg->getUseTransformSkipFast())
+        if (m_cfg->param.bEnableTSkipFast)
         {
             checkTransformSkip &= (trSizeLog2 < 3);
             if (checkTransformSkip)
@@ -2228,7 +2228,7 @@ Void TEncSearch::xMergeEstimation(TComDataCU* cu, Int puIdx, UInt& interDir, TCo
 
         costCand = xGetInterPredictionError(cu, puIdx);
         bitsCand = mergeCand + 1;
-        if (mergeCand == m_cfg->getMaxNumMergeCand() - 1)
+        if (mergeCand == m_cfg->param.maxNumMergeCand - 1)
         {
             bitsCand--;
         }
@@ -2322,7 +2322,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     UChar interDirNeighbours[MRG_MAX_NUM_CANDS];
     Int numValidMergeCand = 0;
 
-    if (!m_cfg->getUseRDO())
+    if (!m_cfg->param.bEnableRDO)
         cu->m_totalCost = 0;
 
     for (Int partIdx = 0; partIdx < numPart; partIdx++)
@@ -2720,7 +2720,7 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 #if CU_STAT_LOGFILE
                 meCost += mrgCost;
 #endif
-                if (!m_cfg->getUseRDO())
+                if (!m_cfg->param.bEnableRDO)
                     cu->m_totalCost += mrgCost;
             }
             else
@@ -2735,13 +2735,13 @@ Void TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
 #if CU_STAT_LOGFILE
                 meCost += meCost;
 #endif
-                if (!m_cfg->getUseRDO())
+                if (!m_cfg->param.bEnableRDO)
                     cu->m_totalCost += meCost;
             }
         }
         else
         {
-            if (!m_cfg->getUseRDO())
+            if (!m_cfg->param.bEnableRDO)
                 cu->m_totalCost += costTemp;
         }
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx);
@@ -3323,7 +3323,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             cu->setTransformSkipSubParts(0, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
         }
 
-        if (m_cfg->getUseRDOQ())
+        if (m_cfg->param.bEnableRDOQ)
         {
             m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
         }
@@ -3338,7 +3338,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
         if (bCodeChroma)
         {
-            if (m_cfg->getUseRDOQ())
+            if (m_cfg->param.bEnableRDOQ)
             {
                 m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
             }
@@ -3623,7 +3623,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
 
             cu->setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
-            if (m_cfg->getUseRDOQTS())
+            if (m_cfg->param.bEnableRDOQTS)
             {
                 m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidth, trHeight, TEXT_LUMA);
             }
@@ -3701,7 +3701,7 @@ Void TEncSearch::xEstimateResidualQT(TComDataCU* cu,
             cu->setTransformSkipSubParts(1, TEXT_CHROMA_U, absPartIdx, cu->getDepth(0) + trModeC);
             cu->setTransformSkipSubParts(1, TEXT_CHROMA_V, absPartIdx, cu->getDepth(0) + trModeC);
 
-            if (m_cfg->getUseRDOQTS())
+            if (m_cfg->param.bEnableRDOQTS)
             {
                 m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trWidthC, trHeightC, TEXT_CHROMA);
             }

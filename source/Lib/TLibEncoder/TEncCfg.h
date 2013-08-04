@@ -108,27 +108,20 @@ protected:
     Bool m_frameOnlyConstraintFlag;
 
     //====== Coding Structure ========
-    UInt      m_decodingRefreshType;          ///< the type of decoding refresh employed for the random access.
+
     Int       m_gopSize;
     GOPEntry  m_gopList[MAX_GOP];
     Int       m_extraRPSs;
     Int       m_maxDecPicBuffering[MAX_TLAYER];
     Int       m_numReorderPics[MAX_TLAYER];
-    Int       m_qp;                            //  if (AdaptiveQP == OFF)
-
     Int       m_pad[2];
 
     Int       m_maxRefPicNum;                   ///< this is used to mimic the sliding mechanism used by the decoder
-                                                 // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
-
-    Bool      m_useAMP;
-    Bool      m_useRectInter;
+                                                // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
     //======= Transform =============
     UInt      m_quadtreeTULog2MaxSize;
     UInt      m_quadtreeTULog2MinSize;
-    UInt      m_quadtreeTUMaxDepthInter;
-    UInt      m_quadtreeTUMaxDepthIntra;
 
     //====== Loop/Deblock Filter ========
     Bool      m_bLoopFilterDisable;
@@ -136,38 +129,18 @@ protected:
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
     Bool      m_deblockingFilterControlPresent;
-    Bool      m_bUseSAO;
     Int       m_maxNumOffsetsPerPic;
-    Bool      m_saoLcuBoundary;
-    Bool      m_saoLcuBasedOptimization;
 
     //====== Lossless ========
     Bool      m_useLossless;
 
-    //====== Motion search ========
-    Int       m_searchMethod;
-    Int       m_searchRange;                   //  0:Full frame
-    Int       m_bipredSearchRange;
-
     //====== Quality control ========
-    Bool      m_useRDO;
 
     Int       m_maxCuDQPDepth;                  //  Max. depth for a minimum CuDQP (0:default)
-    Int       m_chromaCbQpOffset;               //  Chroma Cb QP Offset (0:default)
-    Int       m_chromaCrQpOffset;               //  Chroma Cr Qp Offset (0:default)
 
     //====== Tool list ========
     Bool      m_bUseASR;
-    Bool      m_useRDOQ;
-    Bool      m_useRDOQTS;
-    UInt      m_rdPenalty;
-    Bool      m_bUseCbfFastMode;
-    Bool      m_useEarlySkipDetection;
-    Bool      m_useTransformSkip;
-    Bool      m_useTransformSkipFast;
     Int*      m_dqpTable;
-
-    Bool      m_bUseConstrainedIntraPred;
     Bool      m_usePCM;
     UInt      m_pcmLog2MaxSize;
     UInt      m_pcmLog2MinSize;
@@ -178,7 +151,6 @@ protected:
     Bool      m_bPCMFilterDisableFlag;
     Bool      m_loopFilterAcrossTilesEnabledFlag;
 
-    Int       m_decodedPictureHashSEIEnabled; ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
     Int       m_bufferingPeriodSEIEnabled;
     Int       m_pictureTimingSEIEnabled;
     Int       m_recoveryPointSEIEnabled;
@@ -188,14 +160,12 @@ protected:
     Int       m_SOPDescriptionSEIEnabled;
 
     //====== Weighted Prediction ========
-    Bool      m_useWeightedPred;     //< Use of Weighting Prediction (P_SLICE)
-    Bool      m_useWeightedBiPred;   //< Use of Bi-directional Weighting Prediction (B_SLICE)
+
     UInt      m_log2ParallelMergeLevelMinus2;     ///< Parallel merge estimation region
-    UInt      m_maxNumMergeCand;                  ///< Maximum number of merge candidates
+
     Int       m_useScalingListId;          ///< Using quantization matrix i.e. 0=off, 1=default, 2=file.
     Char*     m_scalingListFile;        ///< quantization matrix file name
     Int       m_TMVPModeId;
-    Int       m_signHideFlag;
 
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
@@ -232,8 +202,6 @@ protected:
     Int       m_log2MaxMvLengthHorizontal;                    ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
     Int       m_log2MaxMvLengthVertical;                      ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
-    Bool      m_useStrongIntraSmoothing;                      ///< enable the use of strong intra smoothing (bi_linear interpolation) for 32x32 blocks when reference samples are flat.
-
 public:
 
     /* copy of parameters used to create encoder */
@@ -257,17 +225,12 @@ public:
 
     Int       getMaxRefPicNum()       { return m_maxRefPicNum;           }
 
-    //======== Transform =============
-
-    Bool      getUseRDO() const         { return m_useRDO; }
-
     //====== Sequence ========
     Int       getFramesToBeEncoded()    { return m_framesToBeEncoded; }
 
     Double    getLambdaModifier(UInt uiIndex) const { return m_adLambdaModifier[uiIndex]; }
 
     //==== Coding Structure ========
-    UInt      getDecodingRefreshType()      { return m_decodingRefreshType; }
 
     Int       getGOPSize()      { return m_gopSize; }
 
@@ -275,18 +238,12 @@ public:
 
     Int       getNumReorderPics(UInt tlayer) { return m_numReorderPics[tlayer]; }
 
-    Int       getQP()      { return m_qp; }
-
     Int       getPad(Int i)      { assert(i < 2);                      return m_pad[i]; }
 
     //======== Transform =============
     UInt      getQuadtreeTULog2MaxSize()      const { return m_quadtreeTULog2MaxSize; }
 
     UInt      getQuadtreeTULog2MinSize()      const { return m_quadtreeTULog2MinSize; }
-
-    UInt      getQuadtreeTUMaxDepthInter()      const { return m_quadtreeTUMaxDepthInter; }
-
-    UInt      getQuadtreeTUMaxDepthIntra()      const { return m_quadtreeTUMaxDepthIntra; }
 
     //==== Loop/Deblock Filter ========
     Bool      getLoopFilterDisable()      { return m_bLoopFilterDisable;       }
@@ -299,13 +256,6 @@ public:
 
     Bool      getDeblockingFilterControlPresent()  { return m_deblockingFilterControlPresent; }
 
-    //==== Motion search ========
-    Int       getSearchMethod()      { return m_searchMethod; }
-
-    Int       getSearchRange()       { return m_searchRange; }
-
-    Int       getBipredSearchRange() { return m_bipredSearchRange; }
-
     //==== Quality control ========
     Int       getMaxCuDQPDepth()      { return m_maxCuDQPDepth; }
 
@@ -314,18 +264,6 @@ public:
 
     //==== Tool list ========
     Bool      getUseASR()      { return m_bUseASR;     }
-
-    Bool      getUseRDOQ()       { return m_useRDOQ;    }
-
-    Bool      getUseRDOQTS()      { return m_useRDOQTS;  }
-
-    Int       getRDpenalty()      { return m_rdPenalty;  }
-
-    Bool      getUseCbfFastMode()      { return m_bUseCbfFastMode; }
-
-    Bool      getUseEarlySkipDetection()      { return m_useEarlySkipDetection; }
-
-    Bool      getUseConstrainedIntraPred()      { return m_bUseConstrainedIntraPred; }
 
     Bool      getPCMInputBitDepthFlag()      { return m_bPCMInputBitDepthFlag;   }
 
@@ -337,23 +275,13 @@ public:
 
     UInt      getPCMLog2MinSize()      { return m_pcmLog2MinSize;  }
 
-    Bool      getUseTransformSkip()      { return m_useTransformSkip;        }
-
-    Bool      getUseTransformSkipFast()      { return m_useTransformSkipFast;    }
-
     Int*      getdQPs()      { return m_dqpTable;       }
-
-    Bool      getUseSAO()              { return m_bUseSAO; }
 
     Int   getMaxNumOffsetsPerPic()                    { return m_maxNumOffsetsPerPic; }
 
-    Bool  getSaoLcuBoundary()              { return m_saoLcuBoundary; }
-
-    Bool  getSaoLcuBasedOptimization()                    { return m_saoLcuBasedOptimization; }
-
     Bool  getLFCrossTileBoundaryFlag()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
 
-    Int   getDecodedPictureHashSEIEnabled()                { return m_decodedPictureHashSEIEnabled; }
+    Int   getDecodedPictureHashSEIEnabled()                { return param.bEnableDecodedPictureHashSEI; }
 
     Int   getBufferingPeriodSEIEnabled()                   { return m_bufferingPeriodSEIEnabled; }
 
@@ -369,22 +297,13 @@ public:
 
     Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
 
-    Bool getUseWP()            { return m_useWeightedPred;   }
-
-    Bool getWPBiPred()            { return m_useWeightedBiPred; }
-
     UInt getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2;       }
-
-    UInt getMaxNumMergeCand()            { return m_maxNumMergeCand;   }
 
     Int  getUseScalingListId()            { return m_useScalingListId;      }
 
     Char* getScalingListFile()            { return m_scalingListFile;    }
 
     Int   getTMVPModeId()         { return m_TMVPModeId; }
-
-    Int   getSignHideFlag()                    { return m_signHideFlag; }
-
 
     Bool getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
 
@@ -393,8 +312,6 @@ public:
     TComVPS *getVPS() { return &m_vps; }
 
     Bool      getUseRecalculateQPAccordingToLambda() { return m_recalculateQPAccordingToLambda; }
-
-    Bool      getUseStrongIntraSmoothing()         { return m_useStrongIntraSmoothing; }
 
     Int       getActiveParameterSetsSEIEnabled()         { return m_activeParameterSetsSEIEnabled; }
 

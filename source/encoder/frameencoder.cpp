@@ -33,7 +33,7 @@ void CTURow::create(TEncTop* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->getUseRDOQ(), top->getUseRDOQTS(), top->getUseTransformSkipFast());
+    m_trQuant.init(1 << top->getQuadtreeTULog2MaxSize(), top->param.bEnableRDOQ, top->param.bEnableRDOQTS, top->param.bEnableTSkipFast);
 
     m_rdSbacCoders = new TEncSbac **[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABACCounter **[g_maxCUDepth + 1];
@@ -150,7 +150,7 @@ void FrameEncoder::destroy()
     }
 
     m_sliceEncoder.destroy();
-    if (m_cfg->getUseSAO())
+    if (m_cfg->param.bEnableSAO)
     {
         m_sao.destroy();
         m_sao.destroyEncBuffer();
@@ -165,10 +165,10 @@ void FrameEncoder::init(TEncTop *top, int numRows)
 
     m_sliceEncoder.init(top);
     m_sliceEncoder.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight, (UChar)g_maxCUDepth);
-    if (top->getUseSAO())
+    if (top->param.bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(top->getSaoLcuBoundary());
-        m_sao.setSaoLcuBasedOptimization(top->getSaoLcuBasedOptimization());
+        m_sao.setSaoLcuBoundary(top->param.saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(top->param.saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->getMaxNumOffsetsPerPic());
         m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
         m_sao.createEncBuffer();

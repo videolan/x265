@@ -567,7 +567,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         sliceEncoder->compressSlice(pic, frameEncoder);  // The bulk of the real work
 
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-        if (m_cfg->getSaoLcuBasedOptimization() && m_cfg->getSaoLcuBoundary())
+        if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
         {
             sao->resetStats();
             sao->calcSaoStatsCu_BeforeDblk(pic);
@@ -1183,7 +1183,7 @@ Void TEncGOP::selectReferencePictureSet(TComSlice* slice, Int curPOC, Int gopID)
 
     for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
     {
-        if (intraPeriod > 0 && m_cfg->getDecodingRefreshType() > 0)
+        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
         {
             Int POCIndex = curPOC % intraPeriod;
             if (POCIndex == 0)
@@ -1216,7 +1216,7 @@ Int TEncGOP::getReferencePictureSetIdxForSOP(Int curPOC, Int gopID)
 
     for (Int extraNum = gopSize; extraNum < m_cfg->getExtraRPSs() + gopSize; extraNum++)
     {
-        if (intraPeriod > 0 && m_cfg->getDecodingRefreshType() > 0)
+        if (intraPeriod > 0 && m_cfg->param.decodingRefreshType > 0)
         {
             Int POCIndex = curPOC % intraPeriod;
             if (POCIndex == 0)
@@ -1478,11 +1478,11 @@ NalUnitType TEncGOP::getNalUnitType(Int curPOC, Int lastIDR)
     }
     if (curPOC % m_cfg->param.keyframeInterval == 0)
     {
-        if (m_cfg->getDecodingRefreshType() == 1)
+        if (m_cfg->param.decodingRefreshType == 1)
         {
             return NAL_UNIT_CODED_SLICE_CRA;
         }
-        else if (m_cfg->getDecodingRefreshType() == 2)
+        else if (m_cfg->param.decodingRefreshType == 2)
         {
             return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
         }

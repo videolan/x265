@@ -387,7 +387,7 @@ Void TComTrQuant::xDeQuant(const TCoeff* qCoef, Int* coef, Int width, Int height
     }
 }
 
-Void TComTrQuant::init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast)
+Void TComTrQuant::init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast)
 {
     m_maxTrSize            = maxTrSize;
     m_useRDOQ              = useRDOQ;

@@ -121,7 +121,7 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    Void init(UInt maxTrSize, Bool useRDOQ, Bool useRDOQTS, Bool useTransformSkipFast);
+    Void init(UInt maxTrSize, int useRDOQ, int useRDOQTS, int useTransformSkipFast);
 
     // transform & inverse transform functions
     UInt transformNxN(TComDataCU* cu, Short* residual, UInt stride, TCoeff* coeff, UInt width, UInt height,

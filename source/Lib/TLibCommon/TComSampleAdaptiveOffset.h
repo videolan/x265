@@ -210,11 +210,11 @@ public:
     Void convertQT2SaoUnit(SAOParam* saoParam, UInt partIdx, Int yCbCr);
     Void convertOnePart2SaoUnit(SAOParam *saoParam, UInt partIdx, Int yCbCr);
     Void processSaoUnitAll(SaoLcuParam* saoLcuParam, Bool oneUnitFlag, Int yCbCr);
-    Void setSaoLcuBoundary(Bool bVal)  { m_saoLcuBoundary = bVal; }
+    Void setSaoLcuBoundary(int bVal)  { m_saoLcuBoundary = bVal != 0; }
 
     Bool getSaoLcuBoundary()           { return m_saoLcuBoundary; }
 
-    Void setSaoLcuBasedOptimization(Bool bVal)  { m_saoLcuBasedOptimization = bVal; }
+    Void setSaoLcuBasedOptimization(int bVal)  { m_saoLcuBasedOptimization = bVal != 0; }
 
     Bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
