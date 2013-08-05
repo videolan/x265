@@ -155,7 +155,6 @@ protected:
     Int       m_displayOrientationSEIAngle;
     Int       m_gradualDecodingRefreshInfoEnabled;
     Int       m_decodingUnitInfoSEIEnabled;
-    Int       m_SOPDescriptionSEIEnabled;
 
     //====== Weighted Prediction ========
 
@@ -288,8 +287,6 @@ public:
     Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
 
     Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
-
-    Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
 
     UInt getLog2ParallelMergeLevelMinus2()            { return m_log2ParallelMergeLevelMinus2;       }
 

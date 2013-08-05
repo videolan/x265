@@ -65,7 +65,6 @@ protected:
     Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
     Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
     Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
-    Void xWriteSEISOPDescription(const SEISOPDescription& sei);
     Void xWriteByteAlign();
 };
 

@@ -293,25 +293,6 @@ public:
     Bool m_gdrForegroundFlag;
 };
 
-class SEISOPDescription : public SEI
-{
-public:
-
-    PayloadType payloadType() const { return SOP_DESCRIPTION; }
-
-    SEISOPDescription() {}
-
-    virtual ~SEISOPDescription() {}
-
-    UInt m_sopSeqParameterSetId;
-    UInt m_numPicsInSopMinus1;
-
-    UInt m_sopDescVclNaluType[MAX_NUM_PICS_IN_SOP];
-    UInt m_sopDescTemporalId[MAX_NUM_PICS_IN_SOP];
-    UInt m_sopDescStRpsIdx[MAX_NUM_PICS_IN_SOP];
-    Int m_sopDescPocDelta[MAX_NUM_PICS_IN_SOP];
-};
-
 typedef std::list<SEI*> SEIMessages;
 
 /// output a selection of SEI messages by payload type. Ownership stays in original message list.

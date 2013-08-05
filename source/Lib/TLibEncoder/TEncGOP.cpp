@@ -262,7 +262,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
     Int gopSize = pocLast == 0 ? 1 : m_cfg->getGOPSize();
     Int numPicCoded = 0;
-    Bool writeSOP = m_cfg->getSOPDescriptionSEIEnabled();
 
     SEIPictureTiming pictureTimingSEI;
     SEIDecodingUnitInfo decodingUnitInfoSEI;
@@ -567,42 +566,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         entropyCoder->setEntropyCoder(cavlcCoder, slice);
 
         /* write various header sets. */
-
-        if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP
-        {
-            writeSOP = false;
-            OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-            entropyCoder->setEntropyCoder(cavlcCoder, slice);
-            entropyCoder->setBitstream(&nalu.m_Bitstream);
-
-            SEISOPDescription SOPDescriptionSEI;
-            SOPDescriptionSEI.m_sopSeqParameterSetId = m_sps.getSPSId();
-
-            UInt i = 0;
-            UInt prevEntryId = gopIdx;
-            Int SOPcurrPOC = pocCurr;
-            for (int j = gopIdx; j < gopSize; j++)
-            {
-                Int deltaPOC = m_cfg->getGOPEntry(j).m_POC - m_cfg->getGOPEntry(prevEntryId).m_POC;
-                if ((SOPcurrPOC + deltaPOC) < m_cfg->getFramesToBeEncoded())
-                {
-                    SOPcurrPOC += deltaPOC;
-                    SOPDescriptionSEI.m_sopDescVclNaluType[i] = getNalUnitType(SOPcurrPOC, m_lastIDR);
-                    SOPDescriptionSEI.m_sopDescTemporalId[i] = 0;
-                    SOPDescriptionSEI.m_sopDescStRpsIdx[i] = getReferencePictureSetIdxForSOP(SOPcurrPOC, j);
-                    SOPDescriptionSEI.m_sopDescPocDelta[i] = deltaPOC;
-
-                    prevEntryId = j;
-                    i++;
-                }
-            }
-
-            SOPDescriptionSEI.m_numPicsInSopMinus1 = i - 1;
-
-            m_seiWriter.writeSEImessage(nalu.m_Bitstream, SOPDescriptionSEI, slice->getSPS());
-            writeRBSPTrailingBits(nalu.m_Bitstream);
-            accessUnit.push_back(new NALUnitEBSP(nalu));
-        }
 
         if ((m_cfg->getPictureTimingSEIEnabled() || m_cfg->getDecodingUnitInfoSEIEnabled()) &&
             (m_sps.getVuiParametersPresentFlag()) &&

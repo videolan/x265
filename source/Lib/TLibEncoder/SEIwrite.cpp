@@ -132,8 +132,6 @@ Void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
         xWriteSEIGradualDecodingRefreshInfo(*static_cast<const SEIGradualDecodingRefreshInfo*>(&sei));
         break;
     case SEI::SOP_DESCRIPTION:
-        xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
-        break;
     case SEI::TONE_MAPPING_INFO:
     case SEI::SCALABLE_NESTING:
     case SEI::FRAME_PACKING:
@@ -399,27 +397,6 @@ Void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
 Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei)
 {
     WRITE_FLAG(sei.m_gdrForegroundFlag, "gdr_foreground_flag");
-    xWriteByteAlign();
-}
-
-Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
-{
-    WRITE_UVLC(sei.m_sopSeqParameterSetId,           "sop_seq_parameter_set_id");
-    WRITE_UVLC(sei.m_numPicsInSopMinus1,             "num_pics_in_sop_minus1");
-    for (UInt i = 0; i <= sei.m_numPicsInSopMinus1; i++)
-    {
-        WRITE_CODE(sei.m_sopDescVclNaluType[i], 6, "sop_desc_vcl_nalu_type");
-        WRITE_CODE(sei.m_sopDescTemporalId[i],  3, "sop_desc_temporal_id");
-        if (sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR_W_RADL && sei.m_sopDescVclNaluType[i] != NAL_UNIT_CODED_SLICE_IDR_N_LP)
-        {
-            WRITE_UVLC(sei.m_sopDescStRpsIdx[i],           "sop_desc_st_rps_idx");
-        }
-        if (i > 0)
-        {
-            WRITE_SVLC(sei.m_sopDescPocDelta[i],           "sop_desc_poc_delta");
-        }
-    }
-
     xWriteByteAlign();
 }
 
