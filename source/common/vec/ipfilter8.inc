@@ -749,6 +749,8 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
     __m128i Tm5 = _mm_setr_epi8(0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6);
     __m128i Tm6 = _mm_setr_epi8(4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10);
 
+    __m128i sum;
+
     for (row = 0; row < height; row++)
     {
         col = 0;
@@ -756,21 +758,24 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
         {
             __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
 
-            __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm5);
-            __m128i T20 = _mm_maddubs_epi16(T00, S);
-
-            __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm6);
-            __m128i T40 = _mm_maddubs_epi16(T30, S);
-
-            __m128i sum = _mm_hadd_epi16(T20, T40);
-
-            if (N == 8)
+            if (N == 4)
             {
-                T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
-                T20 = _mm_maddubs_epi16(T00, T10);
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm5);
+                __m128i T20 = _mm_maddubs_epi16(T00, S);
 
-                T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
-                T40 = _mm_maddubs_epi16(T30, T10);
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm6);
+                __m128i T40 = _mm_maddubs_epi16(T30, S);
+
+                sum = _mm_hadd_epi16(T20, T40);
+            }
+
+            else // (N == 8)
+            {
+                __m128i T00 = _mm_shuffle_epi8(srcCoeff, Tm1);
+                __m128i T20 = _mm_maddubs_epi16(T00, T10);
+
+                __m128i T30 = _mm_shuffle_epi8(srcCoeff, Tm2);
+                __m128i T40 = _mm_maddubs_epi16(T30, T10);
 
                 __m128i T50 = _mm_shuffle_epi8(srcCoeff, Tm3);
                 __m128i T60 = _mm_maddubs_epi16(T50, T10);
