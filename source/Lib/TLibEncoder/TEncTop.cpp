@@ -452,7 +452,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setWPBiPred(param.bEnableWeightedBiPred);
     pcPPS->setOutputFlagPresentFlag(false);
     pcPPS->setSignHideFlag(param.bEnableSignHiding);
-    pcPPS->setDeblockingFilterControlPresentFlag(m_deblockingFilterControlPresent);
+    pcPPS->setDeblockingFilterControlPresentFlag(!param.bEnableLoopFilter);
     pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
     Int histogram[MAX_NUM_REF + 1];

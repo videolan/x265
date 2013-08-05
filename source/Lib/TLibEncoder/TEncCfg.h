@@ -127,7 +127,6 @@ protected:
     Bool      m_loopFilterOffsetInPPS;
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
-    Bool      m_deblockingFilterControlPresent;
     Int       m_maxNumOffsetsPerPic;
 
     //====== Lossless ========
@@ -250,8 +249,6 @@ public:
     Int       getLoopFilterBetaOffset()      { return m_loopFilterBetaOffsetDiv2; }
 
     Int       getLoopFilterTcOffset()      { return m_loopFilterTcOffsetDiv2; }
-
-    Bool      getDeblockingFilterControlPresent()  { return m_deblockingFilterControlPresent; }
 
     //==== Quality control ========
     Int       getMaxCuDQPDepth()      { return m_maxCuDQPDepth; }

@@ -195,7 +195,6 @@ void Encoder::configure(x265_param_t *_param)
     m_loopFilterBetaOffsetDiv2 = 0;
     m_loopFilterTcOffsetDiv2 = 0;
     m_loopFilterAcrossTilesEnabledFlag = 1;
-    m_deblockingFilterControlPresent = !_param->bEnableLoopFilter;
 
     //====== HM Settings not exposed for configuration ======
     initializeGOP(_param);
@@ -415,7 +414,7 @@ bool Encoder::initializeGOP(x265_param_t *_param)
     int numOK = 0;
     CONFIRM(_param->keyframeInterval >= 0 && (_param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
 
-    if ((_param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && m_deblockingFilterControlPresent && _param->bEnableLoopFilter)
+    if ((_param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && _param->bEnableLoopFilter)
     {
         for (Int i = 0; i < m_gopSize; i++)
         {
