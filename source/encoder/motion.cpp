@@ -56,7 +56,6 @@ static void init_scales(void)
 
 MotionEstimate::MotionEstimate()
     : searchMethod(3)
-    , subsample(0)
 {
     if (size_scale[0] == 0)
         init_scales();

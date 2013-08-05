@@ -52,7 +52,6 @@ protected:
     intptr_t blockOffset;
     int partEnum;
     int searchMethod;
-    int subsample;
 
     MotionEstimate& operator =(const MotionEstimate&);
 
