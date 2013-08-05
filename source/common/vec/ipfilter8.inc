@@ -749,14 +749,13 @@ void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, 
     __m128i Tm5 = _mm_setr_epi8(0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6);
     __m128i Tm6 = _mm_setr_epi8(4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10);
 
-    __m128i sum;
-
     for (row = 0; row < height; row++)
     {
         col = 0;
         for (; col < (width - 7); col += 8)
         {
             __m128i srcCoeff = _mm_loadu_si128((__m128i*)(src + col));
+            __m128i sum;
 
             if (N == 4)
             {
