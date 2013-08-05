@@ -719,7 +719,7 @@ void filterVertical_p_p(pixel *src, int srcStride,
 
 #endif /* if INSTRSET >= X265_CPU_LEVEL_SSSE3 */
 
-#if INSTRSET >= X265_CPU_LEVEL_SSSE3
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int N>
 void filterHorizontal_p_p(pixel *src, int srcStride, pixel *dst, int dstStride, int width, int height, short const *coeff)
 {
