@@ -384,39 +384,39 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
     int round   = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
 
-    short dstAvec[100 * 100];
-    short dstEvec[100 * 100];
-    short dstIvec[100 * 100];
-    short dstPvec[100 * 100];
-    short dstAref[100 * 100];
-    short dstEref[100 * 100];
-    short dstIref[100 * 100];
-    short dstPref[100 * 100];
-    pixel pDstAvec[200 * 200];
-    pixel pDstAref[200 * 200];
-    pixel pDstBvec[200 * 200];
-    pixel pDstBref[200 * 200];
-    pixel pDstCvec[200 * 200];
-    pixel pDstCref[200 * 200];
-    pixel pDstFref[200 * 200];
-    pixel pDstFvec[200 * 200];
+    short intFvec[100 * 100];
+    short intAvec[100 * 100];
+    short intBvec[100 * 100];
+    short intCvec[100 * 100];
+    short intAref[100 * 100];
+    short intBref[100 * 100];
+    short intCref[100 * 100];
+    short intFref[100 * 100];
+    pixel dstAvec[200 * 200];
+    pixel dstAref[200 * 200];
+    pixel dstBvec[200 * 200];
+    pixel dstBref[200 * 200];
+    pixel dstCvec[200 * 200];
+    pixel dstCref[200 * 200];
+    pixel dstFref[200 * 200];
+    pixel dstFvec[200 * 200];
 
-    memset(dstAref, 0, 10000 * sizeof(short));
-    memset(dstEref, 0, 10000 * sizeof(short));
-    memset(dstIref, 0, 10000 * sizeof(short));
-    memset(dstPref, 0, 10000 * sizeof(short));
-    memset(dstAvec, 0, 10000 * sizeof(short));
-    memset(dstEvec, 0, 10000 * sizeof(short));
-    memset(dstIvec, 0, 10000 * sizeof(short));
-    memset(dstPvec, 0, 10000 * sizeof(short));
-    memset(pDstAvec, 0, 40000 * sizeof(pixel));
-    memset(pDstAref, 0, 40000 * sizeof(pixel));
-    memset(pDstBvec, 0, 40000 * sizeof(pixel));
-    memset(pDstBref, 0, 40000 * sizeof(pixel));
-    memset(pDstCvec, 0, 40000 * sizeof(pixel));
-    memset(pDstCref, 0, 40000 * sizeof(pixel));
-    memset(pDstFvec, 0, 40000 * sizeof(pixel));
-    memset(pDstFref, 0, 40000 * sizeof(pixel));
+    memset(intFref, 0, 10000 * sizeof(short));
+    memset(intAref, 0, 10000 * sizeof(short));
+    memset(intBref, 0, 10000 * sizeof(short));
+    memset(intCref, 0, 10000 * sizeof(short));
+    memset(intFvec, 0, 10000 * sizeof(short));
+    memset(intAvec, 0, 10000 * sizeof(short));
+    memset(intBvec, 0, 10000 * sizeof(short));
+    memset(intCvec, 0, 10000 * sizeof(short));
+    memset(dstAvec, 0, 40000 * sizeof(pixel));
+    memset(dstAref, 0, 40000 * sizeof(pixel));
+    memset(dstBvec, 0, 40000 * sizeof(pixel));
+    memset(dstBref, 0, 40000 * sizeof(pixel));
+    memset(dstCvec, 0, 40000 * sizeof(pixel));
+    memset(dstCref, 0, 40000 * sizeof(pixel));
+    memset(dstFvec, 0, 40000 * sizeof(pixel));
+    memset(dstFref, 0, 40000 * sizeof(pixel));
 
     for (int i = 0; i <= 100; i++)
     {
@@ -427,24 +427,24 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
         rand_srcStride = rand_width;               // Can be randomly generated
         rand_dstStride = rand_width + 2 * marginX;
         opt(pixel_buff + 8 * rand_srcStride, rand_srcStride,
-            dstAvec, dstEvec, dstIvec, dstPvec, rand_dstStride,
-            pDstFvec + marginY * rand_dstStride + marginX,
-            pDstAvec + marginY * rand_dstStride + marginX,
-            pDstBvec + marginY * rand_dstStride + marginX,
-            pDstCvec + marginY * rand_dstStride + marginX, rand_dstStride,
+            intFvec, intAvec, intBvec, intCvec, rand_dstStride,
+            dstFvec + marginY * rand_dstStride + marginX,
+            dstAvec + marginY * rand_dstStride + marginX,
+            dstBvec + marginY * rand_dstStride + marginX,
+            dstCvec + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY, w, round, shift, offset);
         ref(pixel_buff + 8 * rand_srcStride, rand_srcStride,
-            dstAref, dstEref, dstIref, dstPref, rand_dstStride,
-            pDstFref + marginY * rand_dstStride + marginX,
-            pDstAref + marginY * rand_dstStride + marginX,
-            pDstBref + marginY * rand_dstStride + marginX,
-            pDstCref + marginY * rand_dstStride + marginX, rand_dstStride,
+            intFref, intAref, intBref, intCref, rand_dstStride,
+            dstFref + marginY * rand_dstStride + marginX,
+            dstAref + marginY * rand_dstStride + marginX,
+            dstBref + marginY * rand_dstStride + marginX,
+            dstCref + marginY * rand_dstStride + marginX, rand_dstStride,
             rand_width, rand_height, marginX, marginY, w, round, shift, offset);
 
-        if (memcmp(dstAvec, dstAref, 100 * 100 * sizeof(short)) || memcmp(dstEvec, dstEref, 100 * 100 * sizeof(short)) ||
-            memcmp(dstIvec, dstIref, 100 * 100 * sizeof(short)) || memcmp(dstPvec, dstPref, 100 * 100 * sizeof(short)) ||
-            memcmp(pDstFvec, pDstFref, 200 * 200 * sizeof(pixel)) || memcmp(pDstAvec, pDstAref, 200 * 200 * sizeof(pixel)) ||
-            memcmp(pDstBvec, pDstBref, 200 * 200 * sizeof(pixel)) || memcmp(pDstCvec, pDstCref, 200 * 200 * sizeof(pixel))
+        if (memcmp(intFvec, intFref, 100 * 100 * sizeof(short)) || memcmp(intAvec, intAref, 100 * 100 * sizeof(short)) ||
+            memcmp(intBvec, intBref, 100 * 100 * sizeof(short)) || memcmp(intCvec, intCref, 100 * 100 * sizeof(short)) ||
+            memcmp(dstFvec, dstFref, 200 * 200 * sizeof(pixel)) || memcmp(dstAvec, dstAref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(dstBvec, dstBref, 200 * 200 * sizeof(pixel)) || memcmp(dstCvec, dstCref, 200 * 200 * sizeof(pixel))
             )
         {
             return false;
@@ -524,6 +524,15 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         if (!check_filterHMultiplane(ref.filterHmulti, opt.filterHmulti))
         {
             printf("Filter-H-multiplane failed\n");
+            return false;
+        }
+    }
+
+    if (opt.filterHwghtd)
+    {
+        if (!check_filterHMultiplaneWghtd(ref.filterHwghtd, opt.filterHwghtd))
+        {
+            printf("Filter-H-multiplane-weighted failed\n");
             return false;
         }
     }
