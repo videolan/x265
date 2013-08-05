@@ -66,6 +66,7 @@ private:
     Bool                  m_bUsedByCurr;          // Used by current picture
     Bool                  m_bIsLongTerm;          // IS long term picture
     Bool                  m_bCheckLTMSB;
+    Int                   m_bframes;              // number of bframes used to destroy the lookahead costs 
 
 public:
 
@@ -74,7 +75,7 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    Void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow);
+    Void          create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes);
 
     virtual Void  destroy();
 

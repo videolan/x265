@@ -37,6 +37,9 @@
 
 #include "TComPic.h"
 #include "SEI.h"
+#include "mv.h"
+
+using namespace x265;
 
 //! \ingroup TLibCommon
 //! \{
@@ -57,8 +60,9 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow)
+Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes)
 {
+    m_bframes = bframes;
     m_picSym = new TComPicSym;
     m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
 
@@ -95,6 +99,27 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
     m_lowres.m_lumaPlane[2][1] = m_lowres.m_lumaPlane[3][0] = m_lowres.m_lumaPlane[3][1] = m_lowres.m_lumaPlane[2][0];
     m_lowres.m_lumaPlane[0][3] = m_lowres.m_lumaPlane[1][2] = m_lowres.m_lumaPlane[1][3] = m_lowres.m_lumaPlane[0][2];
     m_lowres.m_lumaPlane[2][3] = m_lowres.m_lumaPlane[3][2] = m_lowres.m_lumaPlane[3][3] = m_lowres.m_lumaPlane[2][2];
+
+    for( int i = 0; i < bframes + 2; i++ )
+    {
+        for( int j = 0; j < bframes + 2; j++ )
+        {   
+            /* number of CU rows in frame */ 
+            m_lowres.rowSatds[i][j] = (int *)X265_MALLOC(int, m_picSym->getFrameHeightInCU());
+            /* number of CUs in frame */
+            m_lowres.lowresMvs[i][j] = (MV *) X265_MALLOC (MV, m_picSym->getNumberOfCUsInFrame());
+        }
+    }
+
+    memset( m_lowres.costEst, -1, sizeof(m_lowres.costEst) );   
+    for( int y = 0; y < bframes + 2; y++ )
+    {
+        for( int x = 0; x < bframes + 2; x++ )
+        {
+            m_lowres.rowSatds[y][x][0] = -1;
+            m_lowres.lowresMvs[y][x][0] = 0x7FFF;
+        }
+    }
 }
 
 Void TComPic::destroy()
@@ -124,6 +149,18 @@ Void TComPic::destroy()
     {
          if (m_lowres.buffer[i])
              X265_FREE(m_lowres.buffer[i]);
+    }
+
+    for( int i = 0; i < m_bframes + 2; i++ )
+    {
+        for( int j = 0; j < m_bframes + 2; j++ )
+        {
+            if(m_lowres.rowSatds[i][j])
+                X265_FREE(m_lowres.rowSatds[i][j]);
+
+            if(m_lowres.lowresMvs[i][j])
+                X265_FREE(m_lowres.lowresMvs[i][j]);
+        }
     }
 }
 

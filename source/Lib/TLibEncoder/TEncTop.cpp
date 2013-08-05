@@ -132,7 +132,7 @@ Void TEncTop::init()
     {
         TComPic *pic = new TComPic;
         pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
-                    getConformanceWindow(), getDefaultDisplayWindow());
+                    getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
         if (param.bEnableSAO)
         {
             // TODO: we shouldn't need a frame encoder to do this
