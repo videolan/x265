@@ -124,7 +124,6 @@ protected:
     UInt      m_quadtreeTULog2MinSize;
 
     //====== Loop/Deblock Filter ========
-    Bool      m_bLoopFilterDisable;
     Bool      m_loopFilterOffsetInPPS;
     Int       m_loopFilterBetaOffsetDiv2;
     Int       m_loopFilterTcOffsetDiv2;
@@ -246,8 +245,6 @@ public:
     UInt      getQuadtreeTULog2MinSize()      const { return m_quadtreeTULog2MinSize; }
 
     //==== Loop/Deblock Filter ========
-    Bool      getLoopFilterDisable()      { return m_bLoopFilterDisable;       }
-
     Bool      getLoopFilterOffsetInPPS()      { return m_loopFilterOffsetInPPS; }
 
     Int       getLoopFilterBetaOffset()      { return m_loopFilterBetaOffsetDiv2; }
