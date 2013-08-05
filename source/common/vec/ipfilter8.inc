@@ -1158,8 +1158,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
     wshift = wshift + shiftNum;
     wround = wshift ? (1 << (wshift - 1)) : 0;
 
-    __m128i iofs = _mm_set1_epi32(IF_INTERNAL_OFFS);
-    __m128i vround = _mm_set1_epi32(wround);
+    __m128i vround = _mm_set1_epi32(wround + scale*IF_INTERNAL_OFFS);
     __m128i ofs = _mm_set1_epi32(woffset);
     __m128i vscale = _mm_set1_epi32(scale);
 
@@ -1184,32 +1183,30 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         sumbL = _mm_sub_epi16(sumbL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
         sumcL = _mm_add_epi16(sumcL, tmp);
-        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
+        tmp = _mm_slli_epi16(tmp, 1);
         sumaL = _mm_add_epi16(sumaL, tmp);
         sumbL = _mm_add_epi16(sumbL, tmp);
 
         // a +=58*a3    b+=40*a3      c+=17*a3
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 3));
         tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-        tmp16f = _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS));
+        tmp16f = _mm_sub_epi16(_mm_slli_epi16(tmp,6), _mm_set1_epi16(IF_INTERNAL_OFFS));
         _mm_storeu_si128((__m128i*)(intF + col), tmp16f);
         //Apply weight on Full pel
         tmpwlo = _mm_unpacklo_epi16(tmp16f, _mm_srai_epi16(tmp16f, 15));
-        tmpwlo = _mm_add_epi32(tmpwlo, iofs);
         tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
         tmpwlo = _mm_add_epi32(tmpwlo, vround);
-        tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+        tmpwlo = _mm_srai_epi32(tmpwlo,wshift);
         tmpwlo = _mm_add_epi32(tmpwlo, ofs);
         tmpwhi = _mm_unpackhi_epi16(tmp16f, _mm_srai_epi16(tmp16f, 15));
-        tmpwhi = _mm_add_epi32(tmpwhi, iofs);
         tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
         tmpwhi = _mm_add_epi32(tmpwhi, vround);
-        tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+        tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
         tmpwhi = _mm_add_epi32(tmpwhi, ofs);
         tmp16f = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
         _mm_storel_epi64((__m128i*)(dstF + row * dstStride + col), tmp16f);
 
-        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
+        exp1 = _mm_add_epi16(tmp, _mm_slli_epi16(tmp, 4));
         sumcL = _mm_add_epi16(sumcL, exp1);
         sumaL = _mm_add_epi16(sumaL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
@@ -1219,7 +1216,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         // a +=17*a4    b+=40*a4      c+=58*a4
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 4));
         tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-        exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
+        exp1 = _mm_add_epi16(tmp, _mm_slli_epi16(tmp, 4));
         sumaL = _mm_add_epi16(sumaL, exp1);
         sumcL = _mm_add_epi16(sumcL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
@@ -1232,7 +1229,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         sumbL = _mm_sub_epi16(sumbL, tmp);
         tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
         sumaL = _mm_add_epi16(sumaL, tmp);
-        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
+        tmp = _mm_slli_epi16(tmp, 1);
         sumcL = _mm_add_epi16(sumcL, tmp);
         sumbL = _mm_add_epi16(sumbL, tmp);
 
@@ -1240,7 +1237,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 6));
         tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
         sumaL = _mm_add_epi16(sumaL, tmp);
-        tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(2));
+        tmp = _mm_slli_epi16(tmp, 2);
         sumbL = _mm_add_epi16(sumbL, tmp);
         sumcL = _mm_add_epi16(sumcL, tmp);
 
@@ -1256,16 +1253,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         _mm_storeu_si128((__m128i*)(intA + col), sumaL);
         //Apply weight
         tmpwlo = _mm_unpacklo_epi16(sumaL, _mm_srai_epi16(sumaL, 15));
-        tmpwlo = _mm_add_epi32(tmpwlo, iofs);
         tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
         tmpwlo = _mm_add_epi32(tmpwlo, vround);
-        tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+        tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
         tmpwlo = _mm_add_epi32(tmpwlo, ofs);
         tmpwhi = _mm_unpackhi_epi16(sumaL, _mm_srai_epi16(sumaL, 15));
-        tmpwhi = _mm_add_epi32(tmpwhi, iofs);
         tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
         tmpwhi = _mm_add_epi32(tmpwhi, vround);
-        tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+        tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
         tmpwhi = _mm_add_epi32(tmpwhi, ofs);
         tmp16a = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
         _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col), tmp16a);
@@ -1273,16 +1268,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         _mm_storeu_si128((__m128i*)(intB + col), sumbL);
         //Apply weight
         tmpwlo = _mm_unpacklo_epi16(sumbL, _mm_srai_epi16(sumbL, 15));
-        tmpwlo = _mm_add_epi32(tmpwlo, iofs);
         tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
         tmpwlo = _mm_add_epi32(tmpwlo, vround);
-        tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+        tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
         tmpwlo = _mm_add_epi32(tmpwlo, ofs);
         tmpwhi = _mm_unpackhi_epi16(sumbL, _mm_srai_epi16(sumbL, 15));
-        tmpwhi = _mm_add_epi32(tmpwhi, iofs);
         tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
         tmpwhi = _mm_add_epi32(tmpwhi, vround);
-        tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+        tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
         tmpwhi = _mm_add_epi32(tmpwhi, ofs);
         tmp16b = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
         _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col), tmp16b);
@@ -1290,16 +1283,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         _mm_storeu_si128((__m128i*)(intC + col), sumcL);
         //Apply weight
         tmpwlo = _mm_unpacklo_epi16(sumcL, _mm_srai_epi16(sumcL, 15));
-        tmpwlo = _mm_add_epi32(tmpwlo, iofs);
         tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
         tmpwlo = _mm_add_epi32(tmpwlo, vround);
-        tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+        tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
         tmpwlo = _mm_add_epi32(tmpwlo, ofs);
         tmpwhi = _mm_unpackhi_epi16(sumcL, _mm_srai_epi16(sumcL, 15));
-        tmpwhi = _mm_add_epi32(tmpwhi, iofs);
         tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
         tmpwhi = _mm_add_epi32(tmpwhi, vround);
-        tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+        tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
         tmpwhi = _mm_add_epi32(tmpwhi, ofs);
         tmp16c = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
         _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col), tmp16c);
@@ -1335,7 +1326,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             // a = b+=4*a1,  c+=1*a1
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 1));
             sumcL = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-            sumbL = _mm_add_epi16(sumbL, _mm_sll_epi16(sumcL, _mm_cvtsi32_si128(2)));
+            sumbL = _mm_add_epi16(sumbL, _mm_slli_epi16(sumcL,2));
             sumaL = sumbL;
 
             // a +=-10*a2    b+=-11*a2      c+=-5*a2
@@ -1344,32 +1335,30 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             sumbL = _mm_sub_epi16(sumbL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
             sumcL = _mm_add_epi16(sumcL, tmp);
-            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
+            tmp = _mm_slli_epi16(tmp, 1);
             sumaL = _mm_add_epi16(sumaL, tmp);
             sumbL = _mm_add_epi16(sumbL, tmp);
 
             // a +=58*a3    b+=40*a3      c+=17*a3
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 3));
             tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-            tmp16f = _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS));
+            tmp16f = _mm_sub_epi16(_mm_slli_epi16(tmp, 6), _mm_set1_epi16(IF_INTERNAL_OFFS));
             _mm_storeu_si128((__m128i*)(intF + col), tmp16f);
             //Apply weight
             tmpwlo = _mm_unpacklo_epi16(tmp16f, _mm_srai_epi16(tmp16f, 15));
-            tmpwlo = _mm_add_epi32(tmpwlo, iofs);
             tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
             tmpwlo = _mm_add_epi32(tmpwlo, vround);
-            tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+            tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
             tmpwlo = _mm_add_epi32(tmpwlo, ofs);
             tmpwhi = _mm_unpackhi_epi16(tmp16f, _mm_srai_epi16(tmp16f, 15));
-            tmpwhi = _mm_add_epi32(tmpwhi, iofs);
             tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
             tmpwhi = _mm_add_epi32(tmpwhi, vround);
-            tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+            tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
             tmpwhi = _mm_add_epi32(tmpwhi, ofs);
             tmp16f = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
             _mm_storel_epi64((__m128i*)(dstF + row * dstStride + col), tmp16f);
 
-            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
+            exp1 = _mm_add_epi16(tmp, _mm_slli_epi16(tmp, 4));
             sumcL = _mm_add_epi16(sumcL, exp1);
             sumaL = _mm_add_epi16(sumaL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
@@ -1379,7 +1368,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             // a +=17*a4    b+=40*a4      c+=58*a4
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 4));
             tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-            exp1 = _mm_add_epi16(tmp, _mm_sll_epi16(tmp, _mm_cvtsi32_si128(4)));
+            exp1 = _mm_add_epi16(tmp, _mm_slli_epi16(tmp, 4));
             sumaL = _mm_add_epi16(sumaL, exp1);
             sumcL = _mm_add_epi16(sumcL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(40));
@@ -1392,7 +1381,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             sumbL = _mm_sub_epi16(sumbL, tmp);
             tmp = _mm_mullo_epi16(tmp, _mm_set1_epi16(-5));
             sumaL = _mm_add_epi16(sumaL, tmp);
-            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(1));
+            tmp = _mm_slli_epi16(tmp, 1);
             sumcL = _mm_add_epi16(sumcL, tmp);
             sumbL = _mm_add_epi16(sumbL, tmp);
 
@@ -1400,7 +1389,7 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + col + 6));
             tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
             sumaL = _mm_add_epi16(sumaL, tmp);
-            tmp = _mm_sll_epi16(tmp, _mm_cvtsi32_si128(2));
+            tmp = _mm_slli_epi16(tmp, 2);
             sumbL = _mm_add_epi16(sumbL, tmp);
             sumcL = _mm_add_epi16(sumcL, tmp);
 
@@ -1416,16 +1405,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             _mm_storeu_si128((__m128i*)(intA + col), sumaL);
             //Apply weight
             tmpwlo = _mm_unpacklo_epi16(sumaL, _mm_srai_epi16(sumaL, 15));
-            tmpwlo = _mm_add_epi32(tmpwlo, iofs);
             tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
             tmpwlo = _mm_add_epi32(tmpwlo, vround);
-            tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+            tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
             tmpwlo = _mm_add_epi32(tmpwlo, ofs);
             tmpwhi = _mm_unpackhi_epi16(sumaL, _mm_srai_epi16(sumaL, 15));
-            tmpwhi = _mm_add_epi32(tmpwhi, iofs);
             tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
             tmpwhi = _mm_add_epi32(tmpwhi, vround);
-            tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+            tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
             tmpwhi = _mm_add_epi32(tmpwhi, ofs);
             tmp16a = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
             _mm_storel_epi64((__m128i*)(dstA + row * dstStride + col), tmp16a);
@@ -1433,16 +1420,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             _mm_storeu_si128((__m128i*)(intB + col), sumbL);
             //Apply weight
             tmpwlo = _mm_unpacklo_epi16(sumbL, _mm_srai_epi16(sumbL, 15));
-            tmpwlo = _mm_add_epi32(tmpwlo, iofs);
             tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
             tmpwlo = _mm_add_epi32(tmpwlo, vround);
-            tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+            tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
             tmpwlo = _mm_add_epi32(tmpwlo, ofs);
             tmpwhi = _mm_unpackhi_epi16(sumbL, _mm_srai_epi16(sumbL, 15));
-            tmpwhi = _mm_add_epi32(tmpwhi, iofs);
             tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
             tmpwhi = _mm_add_epi32(tmpwhi, vround);
-            tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+            tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
             tmpwhi = _mm_add_epi32(tmpwhi, ofs);
             tmp16b = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
             _mm_storel_epi64((__m128i*)(dstB + row * dstStride + col), tmp16b);
@@ -1450,16 +1435,14 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
             _mm_storeu_si128((__m128i*)(intC + col), sumcL);
             //Apply weight
             tmpwlo = _mm_unpacklo_epi16(sumcL, _mm_srai_epi16(sumcL, 15));
-            tmpwlo = _mm_add_epi32(tmpwlo, iofs);
             tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
             tmpwlo = _mm_add_epi32(tmpwlo, vround);
-            tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+            tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
             tmpwlo = _mm_add_epi32(tmpwlo, ofs);
             tmpwhi = _mm_unpackhi_epi16(sumcL, _mm_srai_epi16(sumcL, 15));
-            tmpwhi = _mm_add_epi32(tmpwhi, iofs);
             tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
             tmpwhi = _mm_add_epi32(tmpwhi, vround);
-            tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+            tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
             tmpwhi = _mm_add_epi32(tmpwhi, ofs);
             tmp16c = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
             _mm_storel_epi64((__m128i*)(dstC + row * dstStride + col), tmp16c);
@@ -1469,20 +1452,18 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
         {
             vec_src0 = _mm_loadu_si128((__m128i const*)(src + block_width - 5));
             tmp = _mm_unpacklo_epi8(vec_src0, _mm_setzero_si128());
-            tmp = _mm_sub_epi16(_mm_sll_epi16(tmp, _mm_cvtsi32_si128(6)), _mm_set1_epi16(IF_INTERNAL_OFFS));
+            tmp = _mm_sub_epi16(_mm_slli_epi16(tmp, 6), _mm_set1_epi16(IF_INTERNAL_OFFS));
             _mm_storeu_si128((__m128i*)(intF + block_width - 8), tmp);
             //Apply weight
             tmpwlo = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
-            tmpwlo = _mm_add_epi32(tmpwlo, iofs);
             tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
             tmpwlo = _mm_add_epi32(tmpwlo, vround);
-            tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+            tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
             tmpwlo = _mm_add_epi32(tmpwlo, ofs);
             tmpwhi = _mm_unpackhi_epi16(tmp, _mm_srai_epi16(tmp, 15));
-            tmpwhi = _mm_add_epi32(tmpwhi, iofs);
             tmpwhi = _mm_mullo_epi32(tmpwhi, vscale);
             tmpwhi = _mm_add_epi32(tmpwhi, vround);
-            tmpwhi = _mm_sra_epi32(tmpwhi, _mm_cvtsi32_si128(wshift));
+            tmpwhi = _mm_srai_epi32(tmpwhi, wshift);
             tmpwhi = _mm_add_epi32(tmpwhi, ofs);
             tmp = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwhi), _mm_setzero_si128());
             _mm_storel_epi64((__m128i*)(dstF + row * dstStride + block_width - 8), tmp);
@@ -1510,10 +1491,9 @@ void filterHorizontalWeighted(pixel *src, int srcStride,
                 intC[col] = _mm_extract_epi16(sum3, 2);
 
                 tmpwlo = _mm_unpacklo_epi16(sum3, _mm_srai_epi16(sum3, 15));
-                tmpwlo = _mm_add_epi32(tmpwlo, iofs);
                 tmpwlo = _mm_mullo_epi32(tmpwlo, vscale);
                 tmpwlo = _mm_add_epi32(tmpwlo, vround);
-                tmpwlo = _mm_sra_epi32(tmpwlo, _mm_cvtsi32_si128(wshift));
+                tmpwlo = _mm_srai_epi32(tmpwlo, wshift);
                 tmpwlo = _mm_add_epi32(tmpwlo, ofs);
                 sum3 = _mm_packus_epi16(_mm_packs_epi32(tmpwlo, tmpwlo), _mm_setzero_si128());
 
