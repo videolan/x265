@@ -64,6 +64,7 @@ void NAME(Setup_Vec_IPFilterPrimitives)(EncoderPrimitives& p)
     p.filterVmulti = filterVerticalMultiplaneExtend;
 #if !(defined(_MSC_VER) && _MSC_VER == 1500 && X86_64)
     p.filterHmulti = filterHorizontalMultiplaneExtend;
+    p.filterHwghtd = filterHorizontalWeighted;
 #endif
 #endif
 }
