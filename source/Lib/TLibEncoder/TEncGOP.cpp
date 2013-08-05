@@ -535,26 +535,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
         pic->getSlice()->setMvdL1ZeroFlag(slice->getMvdL1ZeroFlag());
 
-        UInt internalAddress = pic->getNumPartInCU() - 4;
-        UInt externalAddress = pic->getPicSym()->getNumberOfCUsInFrame() - 1;
-        UInt posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-        UInt posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-        UInt width = m_sps.getPicWidthInLumaSamples();
-        UInt height = m_sps.getPicHeightInLumaSamples();
-        while (posx >= width || posy >= height)
-        {
-            internalAddress--;
-            posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-            posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-        }
-
-        internalAddress++;
-        if (internalAddress == pic->getNumPartInCU())
-        {
-            internalAddress = 0;
-            externalAddress++;
-        }
-
         // Allocate some coders, now we know how many tiles there are.
         Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
 
@@ -772,25 +752,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         slice->setRPSidx(pic->getSlice()->getRPSidx());
         sliceEncoder->xDetermineStartAndBoundingCUAddr(pic, true);
 
-        internalAddress = (slice->getSliceCurEndCUAddr() - 1) % pic->getNumPartInCU();
-        externalAddress = (slice->getSliceCurEndCUAddr() - 1) / pic->getNumPartInCU();
-        posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-        posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-        width = m_sps.getPicWidthInLumaSamples();
-        height = m_sps.getPicHeightInLumaSamples();
-        while (posx >= width || posy >= height)
-        {
-            internalAddress--;
-            posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUWidth + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-            posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUHeight + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-        }
-
-        internalAddress++;
-        if (internalAddress == pic->getNumPartInCU())
-        {
-            internalAddress = 0;
-            externalAddress = (externalAddress + 1);
-        }
         slice->allocSubstreamSizes(numSubstreams);
         for (UInt ui = 0; ui < numSubstreams; ui++)
         {
