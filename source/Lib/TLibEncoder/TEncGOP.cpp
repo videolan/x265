@@ -283,52 +283,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             m_lastIDR = pocCurr;
         }
 
-        // select colDir
-        UInt colDir = 1;
-        Int closeLeft = 1, closeRight = -1;
-        for (Int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
-        {
-            Int iRef = m_cfg->getGOPEntry(gopIdx).m_referencePics[i];
-            if (iRef > 0 && (iRef < closeRight || closeRight == -1))
-            {
-                closeRight = iRef;
-            }
-            else if (iRef < 0 && (iRef > closeLeft || closeLeft == 1))
-            {
-                closeLeft = iRef;
-            }
-        }
-
-        if (closeRight > -1)
-        {
-            closeRight = closeRight + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
-        }
-        if (closeLeft < 1)
-        {
-            closeLeft = closeLeft + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
-            while (closeLeft < 0)
-            {
-                closeLeft += gopSize;
-            }
-        }
-        Int leftQP = 0, rightQP = 0;
-        for (Int i = 0; i < gopSize; i++)
-        {
-            if (m_cfg->getGOPEntry(i).m_POC == (closeLeft % gopSize) + 1)
-            {
-                leftQP = m_cfg->getGOPEntry(i).m_QPOffset;
-            }
-            if (m_cfg->getGOPEntry(i).m_POC == (closeRight % gopSize) + 1)
-            {
-                rightQP = m_cfg->getGOPEntry(i).m_QPOffset;
-            }
-        }
-
-        if (closeRight > -1 && rightQP < leftQP)
-        {
-            colDir = 0;
-        }
-
         // start a new access unit: create an entry in the list of output access units
         accessUnitsOut.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsOut.back();
@@ -446,6 +400,52 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         if (slice->getSliceType() == B_SLICE)
         {
+            // select colDir
+            UInt colDir = 1;
+            Int closeLeft = 1, closeRight = -1;
+            for (Int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
+            {
+                Int iRef = m_cfg->getGOPEntry(gopIdx).m_referencePics[i];
+                if (iRef > 0 && (iRef < closeRight || closeRight == -1))
+                {
+                    closeRight = iRef;
+                }
+                else if (iRef < 0 && (iRef > closeLeft || closeLeft == 1))
+                {
+                    closeLeft = iRef;
+                }
+            }
+
+            if (closeRight > -1)
+            {
+                closeRight = closeRight + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
+            }
+            if (closeLeft < 1)
+            {
+                closeLeft = closeLeft + m_cfg->getGOPEntry(gopIdx).m_POC - 1;
+                while (closeLeft < 0)
+                {
+                    closeLeft += gopSize;
+                }
+            }
+            Int leftQP = 0, rightQP = 0;
+            for (Int i = 0; i < gopSize; i++)
+            {
+                if (m_cfg->getGOPEntry(i).m_POC == (closeLeft % gopSize) + 1)
+                {
+                    leftQP = m_cfg->getGOPEntry(i).m_QPOffset;
+                }
+                if (m_cfg->getGOPEntry(i).m_POC == (closeRight % gopSize) + 1)
+                {
+                    rightQP = m_cfg->getGOPEntry(i).m_QPOffset;
+                }
+            }
+
+            if (closeRight > -1 && rightQP < leftQP)
+            {
+                colDir = 0;
+            }
+
             slice->setColFromL0Flag(1 - colDir);
             Bool bLowDelay = true;
             Int curPOC = slice->getPOC();
@@ -473,8 +473,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             slice->setCheckLDC(true);
         }
-
-        colDir = 1 - colDir;
 
         //-------------------------------------------------------------
         slice->setRefPOCList();
