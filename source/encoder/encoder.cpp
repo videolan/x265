@@ -191,12 +191,12 @@ void Encoder::configure(x265_param_t *_param)
 
     //====== Enforce these hard coded settings before initializeGOP() to
     //       avoid a valgrind warning
-    m_bLoopFilterDisable = 0;
+    m_bLoopFilterDisable = !_param->bEnableLoopFilter;
     m_loopFilterOffsetInPPS = 0;
     m_loopFilterBetaOffsetDiv2 = 0;
     m_loopFilterTcOffsetDiv2 = 0;
     m_loopFilterAcrossTilesEnabledFlag = 1;
-    m_deblockingFilterControlPresent = 0;
+    m_deblockingFilterControlPresent = m_bLoopFilterDisable;
 
     //====== HM Settings not exposed for configuration ======
     initializeGOP(_param);

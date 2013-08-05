@@ -155,7 +155,10 @@ void FrameEncoder::destroy()
         m_sao.destroy();
         m_sao.destroyEncBuffer();
     }
-    m_loopFilter.destroy();
+    if (m_cfg->param.bEnableLoopFilter)
+    {
+        m_loopFilter.destroy();
+    }
 }
 
 void FrameEncoder::init(TEncTop *top, int numRows)
@@ -173,7 +176,10 @@ void FrameEncoder::init(TEncTop *top, int numRows)
         m_sao.create(top->param.sourceWidth, top->param.sourceHeight, g_maxCUWidth, g_maxCUHeight);
         m_sao.createEncBuffer();
     }
-    m_loopFilter.create(g_maxCUDepth);
+    if (top->param.bEnableLoopFilter)
+    {
+        m_loopFilter.create(g_maxCUDepth);
+    }
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)

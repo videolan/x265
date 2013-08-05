@@ -255,8 +255,8 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     {
         slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_cfg->getLoopFilterOffsetInPPS());
         slice->setDeblockingFilterOverrideFlag(!m_cfg->getLoopFilterOffsetInPPS());
-        slice->getPPS()->setPicDisableDeblockingFilterFlag(m_cfg->getLoopFilterDisable());
-        slice->setDeblockingFilterDisable(m_cfg->getLoopFilterDisable());
+        slice->getPPS()->setPicDisableDeblockingFilterFlag(!m_cfg->param.bEnableLoopFilter);
+        slice->setDeblockingFilterDisable(!m_cfg->param.bEnableLoopFilter);
         if (!slice->getDeblockingFilterDisable())
         {
             if (!m_cfg->getLoopFilterOffsetInPPS() && sliceType != I_SLICE)

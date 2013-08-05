@@ -273,8 +273,8 @@ Void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, UInt absTUPartIdx, UInt ab
     UInt uiWidthInBaseUnits  = trWidth / (g_maxCUWidth >> g_maxCUDepth);
     UInt uiHeightInBaseUnits = trHeight / (g_maxCUWidth >> g_maxCUDepth);
 
-    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_VER, 0, m_stLFCUParam.bInternalEdge, uiWidthInBaseUnits, uiHeightInBaseUnits);
-    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_HOR, 0, m_stLFCUParam.bInternalEdge, uiWidthInBaseUnits, uiHeightInBaseUnits);
+    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_VER, 0, true, uiWidthInBaseUnits, uiHeightInBaseUnits);
+    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_HOR, 0, true, uiWidthInBaseUnits, uiHeightInBaseUnits);
 }
 
 Void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx)
@@ -298,38 +298,38 @@ Void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, UInt absZOrderIdx)
     }
     case SIZE_2NxN:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHHeightInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHHeightInBaseUnits, true);
         break;
     }
     case SIZE_Nx2N:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiHWidthInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiHWidthInBaseUnits, true);
         break;
     }
     case SIZE_NxN:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiHWidthInBaseUnits, m_stLFCUParam.bInternalEdge);
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHHeightInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiHWidthInBaseUnits, true);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHHeightInBaseUnits, true);
         break;
     }
     case SIZE_2NxnU:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiQHeightInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiQHeightInBaseUnits, true);
         break;
     }
     case SIZE_2NxnD:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHeightInBaseUnits - uiQHeightInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, uiHeightInBaseUnits - uiQHeightInBaseUnits, true);
         break;
     }
     case SIZE_nLx2N:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiQWidthInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiQWidthInBaseUnits, true);
         break;
     }
     case SIZE_nRx2N:
     {
-        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiWidthInBaseUnits - uiQWidthInBaseUnits, m_stLFCUParam.bInternalEdge);
+        xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, uiWidthInBaseUnits - uiQWidthInBaseUnits, true);
         break;
     }
     default:
@@ -347,7 +347,8 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
     TComDataCU* pcTempCU;
     UInt        uiTempPartIdx;
 
-    m_stLFCUParam.bInternalEdge = !cu->getSlice()->getDeblockingFilterDisable();
+    // We can't here when DeblockingDisable flag is true
+    assert(!cu->getSlice()->getDeblockingFilterDisable());
 
     if ((uiX == 0) || cu->getSlice()->getDeblockingFilterDisable())
     {

@@ -202,8 +202,11 @@ typedef struct x265_param_t
     int       bEnableTSkipFast;                ///< enable fast intra transform skipping
     int       bEnableRDOQTS;                   ///< enable RD optimized quantization when transform skip is selected
 
+    // loop filter
+    int       bEnableLoopFilter;               ///< enable Loop Filter
+
     // SAO loop filter
-    int       bEnableSAO;                      ///< Enable SAO filter
+    int       bEnableSAO;                      ///< enable SAO filter
     int       saoLcuBoundary;                  ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
     int       saoLcuBasedOptimization;         ///< SAO LCU-based optimization
 

@@ -126,6 +126,7 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRectInter = 1;
     param->bEnableRDO = 1;
     param->qp = 32;
+    param->bEnableLoopFilter = 1;
     param->bEnableSAO = 1;
     param->bEnableWavefront = 1;
     param->saoLcuBasedOptimization = 1;
@@ -338,6 +339,7 @@ void x265_print_params(x265_param_t *param)
     else
         fprintf(stderr, "no-rdo ");
     TOOLOPT(param->bEnableRDOQ, "rdoq");
+    TOOLOPT(param->bEnableLoopFilter, "lpf");
     if (param->bEnableSAO)
     {
         TOOLOPT(param->bEnableSAO, "sao");

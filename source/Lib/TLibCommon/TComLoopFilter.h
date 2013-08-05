@@ -49,7 +49,6 @@
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {
-    Bool bInternalEdge;                   ///< indicates internal edge
     Bool bLeftEdge;                       ///< indicates left edge
     Bool bTopEdge;                        ///< indicates top edge
 } LFCUParam;

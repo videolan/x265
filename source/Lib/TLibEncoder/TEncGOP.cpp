@@ -574,8 +574,11 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
 
         //-- Loop filter
-        loopFilter->setCfg(m_pps.getLoopFilterAcrossTilesEnabledFlag());
-        loopFilter->loopFilterPic(pic);
+        if (m_cfg->param.bEnableLoopFilter)
+        {
+            loopFilter->setCfg(m_pps.getLoopFilterAcrossTilesEnabledFlag());
+            loopFilter->loopFilterPic(pic);
+        }
 
         if (m_sps.getUseSAO())
         {
