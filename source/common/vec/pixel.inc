@@ -367,7 +367,9 @@ void NAME(Setup_Vec_PixelPrimitives)(EncoderPrimitives &p)
     p.satd[PARTITION_4x8] = satd<4, 8>;
     p.satd[PARTITION_16x4] = satd<16, 4>;
 #else
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
     SET_FUNC_PRIMITIVE_TABLE(sse_pp, sse_pp, pixelcmp_t)
+#endif
     SET_FUNC_PRIMITIVE_TABLE(sse_sp, sse_sp, pixelcmp_sp_t)
     SET_FUNC_PRIMITIVE_TABLE(sse_ss, sse_ss, pixelcmp_ss_t)
 

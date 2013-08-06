@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 // Vector class versions of pixel comparison performance primitives
-/* intrinsics for when pixel type is uint8_t */
 
 template<int ly>
 int sse_pp4(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
@@ -47,6 +46,7 @@ int sse_pp4(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
     return horizontal_add(sum);
 }
 
+#if INSTRSET >= X265_CPU_LEVEL_SSE41
 template<int ly>
 int sse_pp8(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
 {
@@ -142,6 +142,7 @@ int sse_pp16(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
     sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
     return _mm_cvtsi128_si32(sum);
 }
+#endif
 
 template<int ly>
 int sse_pp24(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
