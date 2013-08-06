@@ -454,6 +454,61 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
     return true;
 }
 
+bool IPFilterHarness::check_filterVMultiplaneWghtd(x265::filterVwghtd_t ref, x265::filterVwghtd_t opt)
+{
+    short rand_height = 32;                 // Can be randomly generated Height
+    short rand_width = 32;                  // Can be randomly generated Width
+    int marginX = 64;
+    int marginY = 64;
+    short rand_srcStride, rand_dstStride;
+
+    int w = rand() % 256;
+    int shift = rand() % 12;
+    int round   = shift ? (1 << (shift - 1)) : 0;
+    int offset = (rand() % 256) - 128;
+
+    pixel dstEvec[200 * 200];
+    pixel dstIvec[200 * 200];
+    pixel dstPvec[200 * 200];
+
+    pixel dstEref[200 * 200];
+    pixel dstIref[200 * 200];
+    pixel dstPref[200 * 200];
+
+    memset(dstEref, 0, 40000 * sizeof(pixel));
+    memset(dstIref, 0, 40000 * sizeof(pixel));
+    memset(dstPref, 0, 40000 * sizeof(pixel));
+
+    memset(dstEvec, 0, 40000 * sizeof(pixel));
+    memset(dstIvec, 0, 40000 * sizeof(pixel));
+    memset(dstPvec, 0, 40000 * sizeof(pixel));
+    for (int i = 0; i <= 100; i++)
+    {
+        rand_srcStride = 200;               // Can be randomly generated
+        rand_dstStride = 200;
+
+        opt(short_buff + 8 * rand_srcStride, rand_srcStride,
+            dstEvec + marginY * rand_dstStride + marginX,
+            dstIvec + marginY * rand_dstStride + marginX,
+            dstPvec + marginY * rand_dstStride + marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
+        ref(short_buff + 8 * rand_srcStride, rand_srcStride,
+            dstEref + marginY * rand_dstStride + marginX,
+            dstIref + marginY * rand_dstStride + marginX,
+            dstPref + marginY * rand_dstStride + marginX, rand_dstStride,
+            rand_width, rand_height, marginX, marginY, w, round, shift, offset);
+
+        if (memcmp(dstEvec, dstEref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(dstIvec, dstIref, 200 * 200 * sizeof(pixel)) ||
+            memcmp(dstPvec, dstPref, 200 * 200 * sizeof(pixel)))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int value = 0; value < NUM_IPFILTER_P_P; value++)
@@ -537,6 +592,15 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
+    if (opt.filterVwghtd)
+    {
+        if (!check_filterVMultiplaneWghtd(ref.filterVwghtd, opt.filterVwghtd))
+        {
+            printf("Filter-V-multiplane-weighted failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -616,5 +680,16 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        pixel_buff + 8 * srcStride, srcStride, IPF_vec_output_s, IPF_C_output_s, IPF_vec_output_s,
                        IPF_C_output_s, dstStride, IPF_vec_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64,
                        IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64, w, round, shift, offset);
+    }
+
+    if (opt.filterVwghtd)
+    {
+        int w = rand() % 256;
+        int shift = rand() % 12;
+        int round   = shift ? (1 << (shift - 1)) : 0;
+        int offset = (rand() % 256) - 128;
+        printf("Filter-V-multiplaneWeighted");
+        REPORT_SPEEDUP(opt.filterVwghtd, ref.filterVwghtd,
+                       short_buff + 8 * srcStride, srcStride, IPF_C_output_p + 64 * 200 + 64, IPF_vec_output_p + 64 * 200 + 64, IPF_C_output_p + 64 * 200 + 64, dstStride, width, height, 64, 64, w, round, shift, offset);
     }
 }
