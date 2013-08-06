@@ -445,6 +445,226 @@ void filterVerticalMultiplaneExtend(short *src, int srcStride,
     }
 }
 
+#define PROCESSROWWGHTD(a0, a1, a2, a3, a4, a5, a6, a7) { \
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + (row + 7) * srcStride)); \
+        a7 = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        exp1 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a1, _mm_cvtsi32_si128(2)), a0), _mm_mullo_epi32(a2, _mm_set1_epi32(10))); \
+        exp2 = _mm_mullo_epi32(a3, _mm_set1_epi32(40)); \
+        exp3 = _mm_mullo_epi32(a3, _mm_set1_epi32(17)); \
+        exp4 = _mm_mullo_epi32(a4, _mm_set1_epi32(17)); \
+        exp5 = _mm_mullo_epi32(a4, _mm_set1_epi32(40)); \
+        exp6 = _mm_sub_epi32(_mm_sub_epi32(_mm_sll_epi32(a6, _mm_cvtsi32_si128(2)), a7), _mm_mullo_epi32(a5, _mm_set1_epi32(10))); \
+        sume = _mm_add_epi32(exp1, _mm_add_epi32(_mm_add_epi32(exp2, exp3), \
+                                                 _mm_add_epi32(_mm_add_epi32(a3, exp4), \
+                                                               _mm_add_epi32(_mm_mullo_epi32(a5, _mm_set1_epi32(-5)), \
+                                                                             a6) \
+                                                               ) \
+                                                 ) \
+                             ); \
+        sumi = _mm_sub_epi32(_mm_add_epi32(_mm_add_epi32(exp1, exp2), _mm_add_epi32(exp5, exp6)), \
+                             _mm_add_epi32(a2, a5)); \
+        sump = _mm_add_epi32(a1, _mm_add_epi32(_mm_add_epi32(exp3, exp4), \
+                                               _mm_add_epi32(_mm_add_epi32(exp5, exp6), \
+                                                             _mm_add_epi32(_mm_mullo_epi32(a2, _mm_set1_epi32(-5)), \
+                                                                           a4) \
+                                                             ) \
+                                               ) \
+                             ); \
+        /* store results */ \
+        sumi = _mm_srai_epi32(sumi, IF_FILTER_PREC); \
+        tmp =  _mm_packus_epi32(_mm_and_si128(sumi, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
+        sumi = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        /*Apply weight*/    \
+        sumi = _mm_mullo_epi32(sumi, vscale);   \
+        sumi = _mm_add_epi32(sumi, vround); \
+        sumi = _mm_srai_epi32(sumi, wshift); \
+        sumi = _mm_add_epi32(sumi, ofs);    \
+        tmp  =  _mm_packs_epi32(sumi, _mm_setzero_si128()); \
+        sumi = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstI + row * dstStride + col) = _mm_cvtsi128_si32(sumi); \
+        sume = _mm_srai_epi32(sume, IF_FILTER_PREC); \
+        tmp =  _mm_packus_epi32(_mm_and_si128(sume, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
+        sume = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        /*Apply weight*/    \
+        sume = _mm_mullo_epi32(sume, vscale);   \
+        sume = _mm_add_epi32(sume, vround); \
+        sume = _mm_srai_epi32(sume, wshift); \
+        sume = _mm_add_epi32(sume, ofs);    \
+        tmp  =  _mm_packs_epi32(sume, _mm_setzero_si128()); \
+        sume = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstE + row * dstStride + col) = _mm_cvtsi128_si32(sume); \
+        sump = _mm_srai_epi32(sump, IF_FILTER_PREC); \
+        tmp =  _mm_packus_epi32(_mm_and_si128(sump, _mm_set1_epi32(0x0000FFFF)), _mm_set1_epi32(0)); \
+        sump = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15)); \
+        /*Apply weight*/    \
+        sump = _mm_mullo_epi32(sump, vscale);   \
+        sump = _mm_add_epi32(sump, vround); \
+        sump = _mm_srai_epi32(sump, wshift); \
+        sump = _mm_add_epi32(sump, ofs);    \
+        tmp  =  _mm_packs_epi32(sump, _mm_setzero_si128()); \
+        sump = _mm_packus_epi16(tmp, _mm_setzero_si128()); \
+        *(uint32_t*)(dstP + row * dstStride + col) = _mm_cvtsi128_si32(sump); \
+}
+
+void filterVerticalWeighted(short *src, int srcStride,
+                            pixel *dstE, pixel *dstI, pixel *dstP, int dstStride,
+                            int block_width, int block_height,
+                            int marginX, int marginY,
+                            int scale, int wround, int wshift, int woffset)
+{
+    int row, col;
+
+    int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
+    int shift = IF_FILTER_PREC + headRoom;
+
+    int offset = 1 << (shift - 1);
+
+    offset +=  IF_INTERNAL_OFFS << IF_FILTER_PREC;
+
+    src -= (8 / 2 - 1) * srcStride;
+
+    __m128i tmp16e, tmp16i, tmp16p;
+    __m128i a0, a1, a2, a3, a4, a5, a6, a7;
+    __m128i tmp;
+    __m128i sume, sumi, sump;
+    __m128i exp1, exp2, exp3, exp4, exp5, exp6;
+
+    Int shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
+    wshift = wshift + shiftNum;
+    wround = wshift ? (1 << (wshift - 1)) : 0;
+
+    __m128i vround = _mm_set1_epi32(wround + scale * IF_INTERNAL_OFFS);
+    __m128i ofs = _mm_set1_epi32(woffset);
+    __m128i vscale = _mm_set1_epi32(scale);
+
+    col = 0;
+
+    tmp = _mm_loadu_si128((__m128i const*)(src + col));
+    a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + srcStride));
+    a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * srcStride));
+    a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * srcStride));
+    a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * srcStride));
+    a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * srcStride));
+    a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * srcStride));
+    a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+
+    for (row = 0; row < block_height; row++)
+    {
+        PROCESSROWWGHTD(a0, a1, a2, a3, a4, a5, a6, a7) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a1, a2, a3, a4, a5, a6, a7, a0) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a2, a3, a4, a5, a6, a7, a0, a1) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a3, a4, a5, a6, a7, a0, a1, a2) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a4, a5, a6, a7, a0, a1, a2, a3) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a5, a6, a7, a0, a1, a2, a3, a4) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL(0, 0) row++;
+        PROCESSROWWGHTD(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL(0, 0)
+    }
+
+    col += 4;
+
+    for (; col < block_width - 4; col += 4)         // Considering block width is always a multiple of 4
+    {
+        tmp = _mm_loadu_si128((__m128i const*)(src + col));
+        a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + srcStride));
+        a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * srcStride));
+        a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * srcStride));
+        a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * srcStride));
+        a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * srcStride));
+        a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+        tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * srcStride));
+        a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+
+        for (row = 0; row < block_height; row++)
+        {
+            PROCESSROWWGHTD(a0, a1, a2, a3, a4, a5, a6, a7) row++;
+            PROCESSROWWGHTD(a1, a2, a3, a4, a5, a6, a7, a0) row++;
+            PROCESSROWWGHTD(a2, a3, a4, a5, a6, a7, a0, a1) row++;
+            PROCESSROWWGHTD(a3, a4, a5, a6, a7, a0, a1, a2) row++;
+            PROCESSROWWGHTD(a4, a5, a6, a7, a0, a1, a2, a3) row++;
+            PROCESSROWWGHTD(a5, a6, a7, a0, a1, a2, a3, a4) row++;
+            PROCESSROWWGHTD(a6, a7, a0, a1, a2, a3, a4, a5) row++;
+            PROCESSROWWGHTD(a7, a0, a1, a2, a3, a4, a5, a6)
+        }
+    }
+
+    tmp = _mm_loadu_si128((__m128i const*)(src + col));
+    a0  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + srcStride));
+    a1  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 2 * srcStride));
+    a2  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 3 * srcStride));
+    a3  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 4 * srcStride));
+    a4  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 5 * srcStride));
+    a5  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+    tmp = _mm_loadu_si128((__m128i const*)(src + col + 6 * srcStride));
+    a6  = _mm_unpacklo_epi16(tmp, _mm_srai_epi16(tmp, 15));
+
+    for (row = 0; row < block_height; row++)
+    {
+        PROCESSROWWGHTD(a0, a1, a2, a3, a4, a5, a6, a7) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a1, a2, a3, a4, a5, a6, a7, a0) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a2, a3, a4, a5, a6, a7, a0, a1) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a3, a4, a5, a6, a7, a0, a1, a2) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a4, a5, a6, a7, a0, a1, a2, a3) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a5, a6, a7, a0, a1, a2, a3, a4) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a6, a7, a0, a1, a2, a3, a4, a5) EXTENDCOL((block_width + marginX), 3) row++;
+        PROCESSROWWGHTD(a7, a0, a1, a2, a3, a4, a5, a6) EXTENDCOL((block_width + marginX), 3)
+    }
+
+    // Extending bottom rows
+    pixel *pe, *pi, *pp;
+    pe = dstE + (block_height - 1) * dstStride - marginX;
+    pi = dstI + (block_height - 1) * dstStride - marginX;
+    pp = dstP + (block_height - 1) * dstStride - marginX;
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pe + y * dstStride, pe, block_width + marginX * 2);
+    }
+
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pi + y * dstStride, pi, block_width + marginX * 2);
+    }
+
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pp + y * dstStride, pp, block_width + marginX * 2);
+    }
+
+    // Extending top rows
+    pe -= ((block_height - 1) * dstStride);
+    pi -= ((block_height - 1) * dstStride);
+    pp -= ((block_height - 1) * dstStride);
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pe - y * dstStride, pe, block_width + marginX * 2);
+    }
+
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pi - y * dstStride, pi, block_width + marginX * 2);
+    }
+
+    for (int y = 1; y <= marginY; y++)
+    {
+        memcpy(pp - y * dstStride, pp, block_width + marginX * 2);
+    }
+}
+
 template<int N>
 void filterVertical_p_p(pixel *src, int srcStride,
                         pixel *dst, int dstStride,
