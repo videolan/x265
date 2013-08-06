@@ -42,14 +42,6 @@ static const char *FuncNames[NUM_PARTITIONS] =
     " 64x4", " 64x8", "64x12", "64x16", "64x24", "64x32", "64x48", "64x64"
 };
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
-
 PixelHarness::PixelHarness()
 {
     pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
