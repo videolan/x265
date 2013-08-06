@@ -55,7 +55,10 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-{}
+    , m_bframes(0)
+{
+    memset(&m_lowres, 0, sizeof(m_lowres));
+}
 
 TComPic::~TComPic()
 {}
