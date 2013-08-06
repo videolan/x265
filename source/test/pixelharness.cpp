@@ -42,25 +42,33 @@ static const char *FuncNames[NUM_PARTITIONS] =
     " 64x4", " 64x8", "64x12", "64x16", "64x24", "64x32", "64x48", "64x64"
 };
 
+#define INCR   32
+#define STRIDE 64
+#define ITERS  100
+
 PixelHarness::PixelHarness()
 {
-    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
-    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
-    pbuf3 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
-    pbuf4 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), 64 * 64 * 32, 32);
+    int maxheight = 64;
+    int padrows = 16;
+    int bufsize = STRIDE * (maxheight + padrows) + INCR * ITERS;
 
-    sbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), 64 * 64 * 32, 32);
-    sbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), 64 * 64 * 32, 32);
+    /* 64 pixels wide, 2k deep */
+    pbuf1 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
+    pbuf2 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
+    pbuf3 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
+    pbuf4 = (pixel*)TestHarness::alignedMalloc(sizeof(pixel), bufsize, 32);
 
-    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 )
+    sbuf1 = (short*)TestHarness::alignedMalloc(sizeof(short), bufsize, 32);
+    sbuf2 = (short*)TestHarness::alignedMalloc(sizeof(short), bufsize, 32);
+
+    if (!pbuf1 || !pbuf2 || !pbuf3 || !pbuf4 || !sbuf1 || !sbuf2)
     {
         fprintf(stderr, "malloc failed, unable to initiate tests!\n");
         exit(1);
     }
 
-    for (int i = 0; i < 64 * 64 * 32; i++)
+    for (int i = 0; i < bufsize; i++)
     {
-        //Generate the Random Buffer for Testing
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
         pbuf3[i] = rand() & PIXEL_MAX;
@@ -81,14 +89,10 @@ PixelHarness::~PixelHarness()
     TestHarness::alignedFree(sbuf2);
 }
 
-#define INCR 16
-#define STRIDE 16
-
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
 {
     int j = 0;
-
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(pbuf1, STRIDE, pbuf2 + j, STRIDE);
         int cres = ref(pbuf1, STRIDE, pbuf2 + j, STRIDE);
@@ -104,8 +108,7 @@ bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
 bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
 {
     int j = 0;
-
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(sbuf1, STRIDE, pbuf2 + j, STRIDE);
         int cres = ref(sbuf1, STRIDE, pbuf2 + j, STRIDE);
@@ -121,8 +124,7 @@ bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
 bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
 {
     int j = 0;
-
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int vres = opt(sbuf1, STRIDE, sbuf2 + j, STRIDE);
         int cres = ref(sbuf1, STRIDE, sbuf2 + j, STRIDE);
@@ -137,11 +139,10 @@ bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
 
 bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt)
 {
-    int j = INCR;
-
     ALIGN_VAR_16(int, cres[16]);
     ALIGN_VAR_16(int, vres[16]);
-    for (int i = 0; i <= 100; i++)
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
     {
         opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &vres[0]);
         ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &cres[0]);
@@ -157,11 +158,10 @@ bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt)
 
 bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
 {
-    int j = INCR;
-
     ALIGN_VAR_16(int, cres[16]);
     ALIGN_VAR_16(int, vres[16]);
-    for (int i = 0; i <= 100; i++)
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
     {
         opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &vres[0]);
         ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &cres[0]);
@@ -182,7 +182,7 @@ bool PixelHarness::check_block_copy(x265::blockcpy_pp_t ref, x265::blockcpy_pp_t
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
         ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
@@ -205,7 +205,7 @@ bool PixelHarness::check_block_copy_s_p(x265::blockcpy_sp_t ref, x265::blockcpy_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, pbuf2 + j, 128);
         ref(bx, by, ref_dest, 64, pbuf2 + j, 128);
@@ -228,7 +228,7 @@ bool PixelHarness::check_block_copy_s_c(x265::blockcpy_sc_t ref, x265::blockcpy_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, (uint8_t*)pbuf2 + j, 128);
         ref(bx, by, ref_dest, 64, (uint8_t*)pbuf2 + j, 128);
@@ -251,7 +251,7 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, 128);
         ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, 128);
@@ -275,7 +275,7 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
     memset(opt_dest, 0, 64 * 64 * sizeof(short));
 
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int stride = 64;
         opt(pbuf1 + j, pbuf2 + j, opt_dest, stride);
@@ -284,7 +284,7 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
-        j += 16 * 5;
+        j += INCR;
     }
 
     return true;
@@ -309,16 +309,17 @@ bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
     memset(opt_pred, 0, 64 * 64 * sizeof(pixel));
 
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int stride = 64;
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
         ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
 
-        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)) || memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)) || memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)) || memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)) ||
+            memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
             return false;
 
-        j += 100;
+        j += INCR;
     }
 
     return true;
@@ -338,7 +339,7 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
     int shift = rand() % 12;
     int round   = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(sbuf1 + j, opt_dest, 64, 64, width, height, w0, round, shift, offset);
         ref(sbuf1 + j, ref_dest, 64, 64, width, height, w0, round, shift, offset);
@@ -346,7 +347,7 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
-        j += 4;
+        j += INCR;
     }
 
     return true;
@@ -359,7 +360,7 @@ bool PixelHarness::check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
         ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
@@ -367,7 +368,7 @@ bool PixelHarness::check_pixelsub_sp(x265::pixelsub_sp_t ref, x265::pixelsub_sp_
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
-        j += 4;
+        j += INCR;
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
@@ -382,7 +383,7 @@ bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, (short*)pbuf1 + j, 128, 128);
         ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, (short*)pbuf1 + j, 128, 128);
@@ -390,7 +391,7 @@ bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
-        j += 4;
+        j += ITERS;
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
@@ -405,7 +406,7 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
         ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
@@ -413,7 +414,7 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
-        j += 4;
+        j += INCR;
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
@@ -438,21 +439,21 @@ bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t op
     int bx = 64;
     int by = 64;
     int j = 0;
-    for (int i = 0; i <= 32; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         ref(pbuf2 + j, ref_destf, ref_desth, ref_destv, ref_destc, 64, 64, bx, by);
         opt(pbuf2 + j, opt_destf, opt_desth, opt_destv, opt_destc, 64, 64, bx, by);
 
-        if (memcmp(ref_destf, opt_destf, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_destf, opt_destf, bx * by * sizeof(pixel)))
             return false;
-        if (memcmp(ref_desth, opt_desth, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_desth, opt_desth, bx * by * sizeof(pixel)))
             return false;
-        if (memcmp(ref_destv, opt_destv, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_destv, opt_destv, bx * by * sizeof(pixel)))
             return false;
-        if (memcmp(ref_destc, opt_destc, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_destc, opt_destc, bx * by * sizeof(pixel)))
             return false;
 
-        j += 16;
+        j += INCR;
     }
 
     return true;
