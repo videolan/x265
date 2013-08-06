@@ -226,12 +226,12 @@ Void TComLoopFilter::xDeblockCU(TComDataCU* cu, UInt absZOrderIdx, UInt depth, I
 
     UInt sizeInPU = pic->getNumPartInWidth() >> (depth);
 
-    for (UInt edge = 0; edge < sizeInPU; edge += partIdxIncr)
+    for (UInt e = 0; e < sizeInPU; e += partIdxIncr)
     {
-        xEdgeFilterLuma(cu, absZOrderIdx, depth, dir, edge);
-        if ((pelsInPart > DEBLOCK_SMALLEST_BLOCK) || (edge % ((DEBLOCK_SMALLEST_BLOCK << 1) / pelsInPart)) == 0)
+        xEdgeFilterLuma(cu, absZOrderIdx, depth, dir, e);
+        if ((pelsInPart > DEBLOCK_SMALLEST_BLOCK) || (e % ((DEBLOCK_SMALLEST_BLOCK << 1) / pelsInPart)) == 0)
         {
-            xEdgeFilterChroma(cu, absZOrderIdx, depth, dir, edge);
+            xEdgeFilterChroma(cu, absZOrderIdx, depth, dir, e);
         }
     }
 }
