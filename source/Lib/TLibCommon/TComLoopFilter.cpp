@@ -350,15 +350,11 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
     // We can't here when DeblockingDisable flag is true
     assert(!cu->getSlice()->getDeblockingFilterDisable());
 
-    if ((uiX == 0) || cu->getSlice()->getDeblockingFilterDisable())
+    if (uiX == 0)
     {
         m_stLFCUParam.bLeftEdge = false;
     }
     else
-    {
-        m_stLFCUParam.bLeftEdge = true;
-    }
-    if (m_stLFCUParam.bLeftEdge)
     {
         pcTempCU = cu->getPULeft(uiTempPartIdx, absZOrderIdx, !true, !m_bLFCrossTileBoundary);
         if (pcTempCU)
@@ -371,18 +367,13 @@ Void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, UInt absZOrderIdx)
         }
     }
 
-    if ((uiY == 0) || cu->getSlice()->getDeblockingFilterDisable())
+    if (uiY == 0)
     {
         m_stLFCUParam.bTopEdge = false;
     }
     else
     {
-        m_stLFCUParam.bTopEdge = true;
-    }
-    if (m_stLFCUParam.bTopEdge)
-    {
         pcTempCU = cu->getPUAbove(uiTempPartIdx, absZOrderIdx, !true, false, !m_bLFCrossTileBoundary);
-
         if (pcTempCU)
         {
             m_stLFCUParam.bTopEdge = true;
