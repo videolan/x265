@@ -272,7 +272,7 @@ Void TEncSbac::codeSliceFinish()
     m_pcBinIf->finish();
 }
 
-Void TEncSbac::xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int iOffset)
+Void TEncSbac::xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset)
 {
     m_pcBinIf->encodeBin(uiSymbol ? 1 : 0, pcSCModel[0]);
 
@@ -283,11 +283,11 @@ Void TEncSbac::xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int iOf
 
     while (uiSymbol--)
     {
-        m_pcBinIf->encodeBin(uiSymbol ? 1 : 0, pcSCModel[iOffset]);
+        m_pcBinIf->encodeBin(uiSymbol ? 1 : 0, pcSCModel[offset]);
     }
 }
 
-Void TEncSbac::xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int iOffset, UInt uiMaxSymbol)
+Void TEncSbac::xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset, UInt uiMaxSymbol)
 {
     if (uiMaxSymbol == 0)
     {
@@ -305,12 +305,12 @@ Void TEncSbac::xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int 
 
     while (--uiSymbol)
     {
-        m_pcBinIf->encodeBin(1, pcSCModel[iOffset]);
+        m_pcBinIf->encodeBin(1, pcSCModel[offset]);
     }
 
     if (bCodeLast)
     {
-        m_pcBinIf->encodeBin(0, pcSCModel[iOffset]);
+        m_pcBinIf->encodeBin(0, pcSCModel[offset]);
     }
 }
 

@@ -106,8 +106,8 @@ public:
 
 private:
 
-    Void  xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int iOffset);
-    Void  xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int iOffset, UInt uiMaxSymbol);
+    Void  xWriteUnarySymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset);
+    Void  xWriteUnaryMaxSymbol(UInt uiSymbol, ContextModel* pcSCModel, Int offset, UInt uiMaxSymbol);
     Void  xWriteEpExGolomb(UInt uiSymbol, UInt uiCount);
     Void  xWriteCoefRemainExGolomb(UInt symbol, UInt &rParam);
 
