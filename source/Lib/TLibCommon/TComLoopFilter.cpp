@@ -129,6 +129,7 @@ Void TComLoopFilter::destroy()
  */
 Void TComLoopFilter::loopFilterPic(TComPic* pic)
 {
+    // TODO: Min, thread parallelism later
     // Horizontal filtering
     for (UInt cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
     {
@@ -139,17 +140,25 @@ Void TComLoopFilter::loopFilterPic(TComPic* pic)
 
         // CU-based deblocking
         xDeblockCU(cu, 0, 0, EDGE_VER);
+
+        // Vertical filtering
+        // NOTE: delay one CU to avoid conflict between V and H
+        if (cuAddr > 0)
+        {
+            cu = pic->getCU(cuAddr-1);
+            ::memset(m_aapucBS[EDGE_HOR], 0, sizeof(UChar) * m_uiNumPartitions);
+            ::memset(m_aapbEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_uiNumPartitions);
+
+            xDeblockCU(cu, 0, 0, EDGE_HOR);
+        }
     }
 
-    // Vertical filtering
-    for (UInt cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
+    // Last H-Filter
     {
-        TComDataCU* cu = pic->getCU(cuAddr);
-
+        TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame()-1);
         ::memset(m_aapucBS[EDGE_HOR], 0, sizeof(UChar) * m_uiNumPartitions);
         ::memset(m_aapbEdgeFilter[EDGE_HOR], 0, sizeof(Bool) * m_uiNumPartitions);
 
-        // CU-based deblocking
         xDeblockCU(cu, 0, 0, EDGE_HOR);
     }
 }
