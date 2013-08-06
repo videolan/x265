@@ -63,7 +63,6 @@ public:
     void init()
     {
         m_active = 0;
-        m_curCol = 0;
     }
 
     inline void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
@@ -71,7 +70,6 @@ public:
     /* Threading */
     Lock                m_lock;
     volatile bool       m_active;
-    volatile uint32_t   m_curCol;
 };
 
 // Manages the wave-front processing of a single encoding frame

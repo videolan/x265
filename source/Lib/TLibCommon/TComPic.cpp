@@ -56,6 +56,7 @@ TComPic::TComPic()
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
     , m_bframes(0)
+    , m_complete_enc(NULL)
 {
     memset(&m_lowres, 0, sizeof(m_lowres));
 }
@@ -123,6 +124,9 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
             m_lowres.lowresMvs[y][x][0] = 0x7FFF;
         }
     }
+
+    int numRows = (height + maxHeight - 1) / maxHeight;
+    m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()
 }
 
 Void TComPic::destroy()
@@ -164,6 +168,11 @@ Void TComPic::destroy()
             if(m_lowres.lowresMvs[i][j])
                 X265_FREE(m_lowres.lowresMvs[i][j]);
         }
+    }
+
+    if (m_complete_enc)
+    {
+        delete[] m_complete_enc;
     }
 }
 

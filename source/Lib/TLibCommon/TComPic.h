@@ -70,6 +70,7 @@ private:
 
 public:
 
+    volatile uint32_t     *m_complete_enc;       // Array of Col number that was finished stage encode
     x265::LookaheadFrame  m_lowres;
 
     TComPic();
