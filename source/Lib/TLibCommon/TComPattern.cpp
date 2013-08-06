@@ -554,7 +554,7 @@ Pel* TComPattern::getAdiCrBuf(Int /*cuWidth*/, Int cuHeight, Pel* adiBuf)
  */
 Pel* TComPattern::getPredictorPtr(UInt dirMode, UInt log2BlkSize, Pel* adiBuf)
 {
-    Pel* piSrc;
+    Pel* src;
 
     assert(log2BlkSize >= 2 && log2BlkSize < 7);
     Int diff = min<Int>(abs((Int)dirMode - HOR_IDX), abs((Int)dirMode - VER_IDX));
@@ -569,14 +569,14 @@ Pel* TComPattern::getPredictorPtr(UInt dirMode, UInt log2BlkSize, Pel* adiBuf)
     Int width  = 1 << log2BlkSize;
     Int height = 1 << log2BlkSize;
 
-    piSrc = getAdiOrgBuf(width, height, adiBuf);
+    src = getAdiOrgBuf(width, height, adiBuf);
 
     if (ucFiltIdx)
     {
-        piSrc += ADI_BUF_STRIDE * (2 * height + 1);
+        src += ADI_BUF_STRIDE * (2 * height + 1);
     }
 
-    return piSrc;
+    return src;
 }
 
 Bool TComPattern::isAboveLeftAvailable(TComDataCU* cu, UInt partIdxLT)
