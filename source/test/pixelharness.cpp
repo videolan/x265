@@ -144,8 +144,8 @@ bool PixelHarness::check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &vres[0]);
-        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, FENC_STRIDE + 5, &cres[0]);
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, FENC_STRIDE - 5, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, FENC_STRIDE - 5, &cres[0]);
 
         if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])))
             return false;
@@ -163,8 +163,8 @@ bool PixelHarness::check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &vres[0]);
-        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j - 1, pbuf2 + j - INCR, FENC_STRIDE + 5, &cres[0]);
+        opt(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j +3, FENC_STRIDE - 5, &vres[0]);
+        ref(pbuf1, pbuf2 + j, pbuf2 + j + 1, pbuf2 + j + 2, pbuf2 + j +3, FENC_STRIDE - 5, &cres[0]);
 
         if ((vres[0] != cres[0]) || ((vres[1] != cres[1])) || ((vres[2] != cres[2])) || ((vres[3] != cres[3])))
             return false;
@@ -385,13 +385,13 @@ bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, (short*)pbuf1 + j, 128, 128);
-        ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, (short*)pbuf1 + j, 128, 128);
+        opt(bx, by, opt_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
+        ref(bx, by, ref_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(short)))
             return false;
 
-        j += ITERS;
+        j += INCR;
         bx = 4 * ((rand() & 15) + 1);
         by = 4 * ((rand() & 15) + 1);
     }
@@ -408,10 +408,10 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
-        ref(bx, by, ref_dest, 64, pbuf2 + j, pbuf1 + j, 128, 128);
+        opt(bx, by, opt_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
+        ref(bx, by, ref_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(pixel)))
             return false;
 
         j += INCR;
