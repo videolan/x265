@@ -99,15 +99,11 @@ Void TEncTop::destroy()
         delete [] m_GOPEncoder;
     }
 
-    TComList<TComPic*>::iterator iterPic = m_picList.begin();
-    Int size = Int(m_picList.size());
-    for (Int i = 0; i < size; i++)
+    while (!m_picList.empty())
     {
-        TComPic* pic = *(iterPic++);
-
+        TComPic* pic = m_picList.popFront();
         pic->destroy();
         delete pic;
-        pic = NULL;
     }
 
     if (m_recon)
