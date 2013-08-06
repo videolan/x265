@@ -51,22 +51,25 @@ template<int ly>
 int sse_pp8(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
 {
     int rows = ly;
-    Vec16uc m1, n1;
+    __m128i sum = _mm_set1_epi32(0);
 
-    Vec8us diff(0);
-    Vec4i sum(0);
     for (; rows != 0; rows--)
     {
-        m1.load(Org);
-        n1.load(Cur);
-        diff = extend_low(m1) - extend_low(n1);
-        diff = diff * diff;
-        sum += (extend_low(diff) + (extend_high(diff)));
+        __m128i m1 = _mm_loadu_si128((__m128i const*)(Org));
+        m1 = _mm_cvtepu8_epi16(m1);
+        __m128i n1 = _mm_loadu_si128((__m128i const*)(Cur));
+        n1 = _mm_cvtepu8_epi16(n1);
+
+        __m128i diff = _mm_sub_epi16(m1, n1);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
         Org += strideOrg;
         Cur += strideCur;
     }
 
-    return horizontal_add(sum);
+    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
+    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
+    return _mm_cvtsi128_si32(sum);
 }
 
 template<int ly>
