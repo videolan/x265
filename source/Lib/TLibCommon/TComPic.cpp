@@ -109,11 +109,17 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
     {
         for (int j = 0; j < bframes + 2; j++)
         {   
-            /* number of CU rows in frame */ 
             m_lowres.rowSatds[i][j] = (int*)X265_MALLOC(int, m_picSym->getFrameHeightInCU());
-            /* number of CUs in frame */
-            m_lowres.lowresMvs[i][j] = (MV*)X265_MALLOC(MV, m_picSym->getNumberOfCUsInFrame());
+            m_lowres.lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, m_picSym->getNumberOfCUsInFrame());
         }
+    }
+
+    for (int i = 0; i < bframes + 1; i++)
+    {
+        m_lowres.lowresMvs[0][i] = (MV*)X265_MALLOC(MV, m_picSym->getNumberOfCUsInFrame());
+        m_lowres.lowresMvs[1][i] = (MV*)X265_MALLOC(MV, m_picSym->getNumberOfCUsInFrame());
+        m_lowres.lowresMvCosts[0][i] = (int*)X265_MALLOC(int, m_picSym->getNumberOfCUsInFrame());
+        m_lowres.lowresMvCosts[1][i] = (int*)X265_MALLOC(int, m_picSym->getNumberOfCUsInFrame());
     }
 
     memset(m_lowres.costEst, -1, sizeof(m_lowres.costEst));   
@@ -122,8 +128,12 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
         for (int x = 0; x < bframes + 2; x++)
         {
             m_lowres.rowSatds[y][x][0] = -1;
-            m_lowres.lowresMvs[y][x][0] = 0x7FFF;
         }
+    }
+    for (int i = 0; i < bframes + 1; i++)
+    {
+        m_lowres.lowresMvs[0][i]->x = 0x7fff;
+        m_lowres.lowresMvs[1][i]->x = 0x7fff;
     }
 
     int numRows = (height + maxHeight - 1) / maxHeight;
@@ -162,13 +172,18 @@ Void TComPic::destroy()
     for (int i = 0; i < m_bframes + 2; i++)
     {
         for (int j = 0; j < m_bframes + 2; j++)
-        {
-            if (m_lowres.rowSatds[i][j])
-                X265_FREE(m_lowres.rowSatds[i][j]);
-
-            if (m_lowres.lowresMvs[i][j])
-                X265_FREE(m_lowres.lowresMvs[i][j]);
+        {   
+            if (m_lowres.rowSatds[i][j]) X265_FREE(m_lowres.rowSatds[i][j]);
+            if (m_lowres.lowresCosts[i][j]) X265_FREE(m_lowres.lowresCosts[i][j]);
         }
+    }
+
+    for (int i = 0; i < m_bframes + 1; i++)
+    {
+        if (m_lowres.lowresMvs[0][i]) X265_FREE(m_lowres.lowresMvs[0][i]);
+        if (m_lowres.lowresMvs[1][i]) X265_FREE(m_lowres.lowresMvs[1][i]);
+        if (m_lowres.lowresMvCosts[0][i]) X265_FREE(m_lowres.lowresMvCosts[0][i]);
+        if (m_lowres.lowresMvCosts[1][i]) X265_FREE(m_lowres.lowresMvCosts[1][i]);
     }
 
     if (m_complete_enc)
