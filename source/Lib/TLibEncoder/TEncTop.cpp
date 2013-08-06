@@ -127,7 +127,7 @@ Void TEncTop::init()
     int maxGOP = X265_MAX(1, getGOPSize()) + getGOPSize();
     m_recon = new x265_picture_t[maxGOP];
 
-    // pre-allocate a full keyframe interval of TComPic
+    // pre-allocate a mini-GOP of TComPic
     for (int i = 0; i < maxGOP; i++)
     {
         TComPic *pic = new TComPic;
