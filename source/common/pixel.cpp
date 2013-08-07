@@ -598,14 +598,14 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
     }
 }
 
-void frame_init_lowres_core( pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,
-                                    intptr_t src_stride, intptr_t dst_stride, int width, int height )
+void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,
+                            intptr_t src_stride, intptr_t dst_stride, int width, int height)
 {
-    for( int y = 0; y < height; y++ )
+    for (int y = 0; y < height; y++)
     {
-        pixel *src1 = src0+src_stride;
-        pixel *src2 = src1+src_stride;
-        for( int x = 0; x<width; x++ )
+        pixel *src1 = src0 + src_stride;
+        pixel *src2 = src1 + src_stride;
+        for (int x = 0; x < width; x++)
         {
             // slower than naive bilinear, but matches asm
 #define FILTER(a,b,c,d) ((((a+b+1)>>1)+((c+d+1)>>1)+1)>>1)
