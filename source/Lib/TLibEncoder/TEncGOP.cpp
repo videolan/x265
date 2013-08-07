@@ -524,15 +524,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
                 }
             }
         }
-        if (bGPBcheck)
-        {
-            slice->setMvdL1ZeroFlag(true);
-        }
-        else
-        {
-            slice->setMvdL1ZeroFlag(false);
-        }
-        pic->getSlice()->setMvdL1ZeroFlag(slice->getMvdL1ZeroFlag());
+        slice->setMvdL1ZeroFlag(bGPBcheck);
 
         // Allocate some coders, now we know how many tiles there are.
         Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
