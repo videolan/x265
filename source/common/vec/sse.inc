@@ -304,59 +304,92 @@ int sse_pp48(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
     return _mm_cvtsi128_si32(sum);
 }
 
-#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
-
 template<int ly>
 int sse_pp64(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
 {
     int rows = ly;
-    Vec16uc m1, n1;
+    __m128i sum = _mm_set1_epi32(0);
 
-    Vec8us diff_low(0), diff_high(0);
-    Vec4i sum_low(0), sum_high(0);
     for (; rows != 0; rows--)
     {
-        m1.load(Org);
-        n1.load(Cur);
-        diff_low = extend_low(m1) - extend_low(n1);
-        diff_high = extend_high(m1) - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        __m128i m1 = _mm_loadu_si128((__m128i const*)(Org));
+        __m128i n1 = _mm_loadu_si128((__m128i const*)(Cur));
 
-        m1.load(Org + 16);
-        n1.load(Cur + 16);
-        diff_low = extend_low(m1) - extend_low(n1);
-        diff_high = extend_high(m1) - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        __m128i m1lo = _mm_cvtepu8_epi16(m1);
+        __m128i m1hi = _mm_srli_si128(m1, 8);
+        m1hi = _mm_cvtepu8_epi16(m1hi);
 
-        m1.load(Org + 32);
-        n1.load(Cur + 32);
-        diff_low = extend_low(m1) - extend_low(n1);
-        diff_high = extend_high(m1) - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        __m128i n1lo = _mm_cvtepu8_epi16(n1);
+        __m128i n1hi = _mm_srli_si128(n1, 8);
+        n1hi = _mm_cvtepu8_epi16(n1hi);
 
-        m1.load(Org + 48);
-        n1.load(Cur + 48);
-        diff_low = extend_low(m1) - extend_low(n1);
-        diff_high = extend_high(m1) - extend_high(n1);
-        diff_low = diff_low * diff_low;
-        diff_high = diff_high * diff_high;
-        sum_low += (extend_low(diff_low) + extend_low(diff_high));
-        sum_high += (extend_high(diff_low) + extend_high(diff_high));
+        __m128i diff = _mm_sub_epi16(m1lo, n1lo);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        diff = _mm_sub_epi16(m1hi, n1hi);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        m1 = _mm_loadu_si128((__m128i const*)(Org + 16));
+        n1 = _mm_loadu_si128((__m128i const*)(Cur + 16));
+
+        m1lo = _mm_cvtepu8_epi16(m1);
+        m1hi = _mm_srli_si128(m1, 8);
+        m1hi = _mm_cvtepu8_epi16(m1hi);
+
+        n1lo = _mm_cvtepu8_epi16(n1);
+        n1hi = _mm_srli_si128(n1, 8);
+        n1hi = _mm_cvtepu8_epi16(n1hi);
+
+        diff = _mm_sub_epi16(m1lo, n1lo);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        diff = _mm_sub_epi16(m1hi, n1hi);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        m1 = _mm_loadu_si128((__m128i const*)(Org + 32));
+        n1 = _mm_loadu_si128((__m128i const*)(Cur + 32));
+
+        m1lo = _mm_cvtepu8_epi16(m1);
+        m1hi = _mm_srli_si128(m1, 8);
+        m1hi = _mm_cvtepu8_epi16(m1hi);
+
+        n1lo = _mm_cvtepu8_epi16(n1);
+        n1hi = _mm_srli_si128(n1, 8);
+        n1hi = _mm_cvtepu8_epi16(n1hi);
+
+        diff = _mm_sub_epi16(m1lo, n1lo);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        diff = _mm_sub_epi16(m1hi, n1hi);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        m1 = _mm_loadu_si128((__m128i const*)(Org + 48));
+        n1 = _mm_loadu_si128((__m128i const*)(Cur + 48));
+
+        m1lo = _mm_cvtepu8_epi16(m1);
+        m1hi = _mm_srli_si128(m1, 8);
+        m1hi = _mm_cvtepu8_epi16(m1hi);
+
+        n1lo = _mm_cvtepu8_epi16(n1);
+        n1hi = _mm_srli_si128(n1, 8);
+        n1hi = _mm_cvtepu8_epi16(n1hi);
+
+        diff = _mm_sub_epi16(m1lo, n1lo);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
+        diff = _mm_sub_epi16(m1hi, n1hi);
+        sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
+
         Org += strideOrg;
         Cur += strideCur;
     }
 
-    return horizontal_add(sum_low) + horizontal_add(sum_high);
+    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
+    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
+    return _mm_cvtsi128_si32(sum);
 }
+
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 template<int ly>
 int sse_ss4(short* Org, intptr_t strideOrg, short* Cur, intptr_t strideCur)
