@@ -339,7 +339,7 @@ void x265_print_params(x265_param_t *param)
     else
         fprintf(stderr, "no-rdo ");
     TOOLOPT(param->bEnableRDOQ, "rdoq");
-    TOOLOPT(param->bEnableLoopFilter, "lpf");
+    TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
     {
         TOOLOPT(param->bEnableSAO, "sao");

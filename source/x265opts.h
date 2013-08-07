@@ -80,8 +80,8 @@ OPT("signhide",        param->bEnableSignHiding,            no_argument, 0, "Hid
 OPT("no-signhide",     param->bEnableSignHiding,            no_argument, 0, "Disable hide sign bit of one coeff per TU (rdo)")
 
 HELP("Loop filter:")
-OPT("lpf",             param->bEnableLoopFilter,            no_argument, 0, "Enable Loop Filter")
-OPT("no-lpf",          param->bEnableLoopFilter,            no_argument, 0, "Disable Loop Filter")
+OPT("lft",             param->bEnableLoopFilter,            no_argument, 0, "Enable Loop Filter")
+OPT("no-lft",          param->bEnableLoopFilter,            no_argument, 0, "Disable Loop Filter")
 
 HELP("Sample Adaptive Offset loop filter:")
 OPT("sao",             param->bEnableSAO,                   no_argument, 0, "Enable Sample Adaptive Offset")
