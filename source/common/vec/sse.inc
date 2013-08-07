@@ -142,7 +142,8 @@ int sse_pp16(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
     sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
     return _mm_cvtsi128_si32(sum);
 }
-#endif
+
+#endif /* if INSTRSET >= X265_CPU_LEVEL_SSE41 */
 
 template<int ly>
 int sse_pp24(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
