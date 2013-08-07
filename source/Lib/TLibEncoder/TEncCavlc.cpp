@@ -191,6 +191,7 @@ Void TEncCavlc::codePPS(TComPPS* pcPPS)
     WRITE_FLAG(0,                                                 "tiles_enabled_flag");
     WRITE_FLAG(pcPPS->getEntropyCodingSyncEnabledFlag() ? 1 : 0, "entropy_coding_sync_enabled_flag");
     WRITE_FLAG(1,                                                            "loop_filter_across_slices_enabled_flag");
+    // TODO: Here have some time sequence problem, we set below field in initEncSlice(), but use them in getStreamHeaders() early
     WRITE_FLAG(pcPPS->getDeblockingFilterControlPresentFlag() ? 1 : 0,       "deblocking_filter_control_present_flag");
     if (pcPPS->getDeblockingFilterControlPresentFlag())
     {
