@@ -253,10 +253,10 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, 128);
-        ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, 128);
+        opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, STRIDE);
+        ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(pixel)))
             return false;
 
         j += 4;
@@ -277,9 +277,8 @@ bool PixelHarness::check_calresidual(x265::calcresidual_t ref, x265::calcresidua
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        int stride = 64;
-        opt(pbuf1 + j, pbuf2 + j, opt_dest, stride);
-        ref(pbuf1 + j, pbuf2 + j, ref_dest, stride);
+        opt(pbuf1 + j, pbuf2 + j, opt_dest, STRIDE);
+        ref(pbuf1 + j, pbuf2 + j, ref_dest, STRIDE);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
@@ -311,7 +310,7 @@ bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        int stride = 64;
+        int stride = STRIDE;
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
         ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
 
@@ -337,7 +336,7 @@ bool PixelHarness::check_weightpUni(x265::weightpUni_t ref, x265::weightpUni_t o
     int height = 8;
     int w0 = rand() % 256;
     int shift = rand() % 12;
-    int round   = shift ? (1 << (shift - 1)) : 0;
+    int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     for (int i = 0; i < ITERS; i++)
     {
@@ -424,25 +423,27 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
 
 bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_destf[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_destf[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_destf[32 * 32]);
+    ALIGN_VAR_16(pixel, opt_destf[32 * 32]);
 
-    ALIGN_VAR_16(pixel, ref_desth[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_desth[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_desth[32 * 32]);
+    ALIGN_VAR_16(pixel, opt_desth[32 * 32]);
 
-    ALIGN_VAR_16(pixel, ref_destv[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_destv[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_destv[32 * 32]);
+    ALIGN_VAR_16(pixel, opt_destv[32 * 32]);
 
-    ALIGN_VAR_16(pixel, ref_destc[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_destc[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_destc[32 * 32]);
+    ALIGN_VAR_16(pixel, opt_destc[32 * 32]);
 
-    int bx = 64;
-    int by = 64;
+    intptr_t src_stride = 64;
+    intptr_t dst_stride = 32;
+    int bx = 32;
+    int by = 32;
     int j = 0;
     for (int i = 0; i < ITERS; i++)
     {
-        ref(pbuf2 + j, ref_destf, ref_desth, ref_destv, ref_destc, 64, 64, bx, by);
-        opt(pbuf2 + j, opt_destf, opt_desth, opt_destv, opt_destc, 64, 64, bx, by);
+        ref(pbuf2 + j, ref_destf, ref_desth, ref_destv, ref_destc, src_stride, dst_stride, bx, by);
+        opt(pbuf2 + j, opt_destf, opt_desth, opt_destv, opt_destc, src_stride, dst_stride, bx, by);
 
         if (memcmp(ref_destf, opt_destf, bx * by * sizeof(pixel)))
             return false;
