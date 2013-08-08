@@ -51,7 +51,7 @@ template<int ly>
 int sse_pp8(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
 {
     int rows = ly;
-    __m128i sum = _mm_set1_epi32(0);
+    __m128i sum = _mm_setzero_si128();
 
     for (; rows != 0; rows--)
     {
