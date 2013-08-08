@@ -17,7 +17,7 @@ if (MSVC)
             intra-sse3.cpp intra-ssse3.cpp intra-sse41.cpp
             PROPERTIES COMPILE_FLAGS /arch:SSE2)
     endif()
-    if (MSVC_VERSION EQUAL 1700) # VC11
+    if (MSVC_VERSION EQUAL 1700 OR "$ENV{CXX}" STREQUAL "icl")
         set(PRIMITIVES ${PRIMITIVES} avx.cpp avx2.cpp xop.cpp
             blockcopy-avx.cpp blockcopy-avx2.cpp blockcopy-xop.cpp
             pixel-avx.cpp pixel-avx2.cpp pixel-xop.cpp
