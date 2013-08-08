@@ -51,8 +51,8 @@ class TComCABACTables
 {
 public:
 
-    const static UChar  sm_aucLPSTable[64][4];
-    const static UChar  sm_aucRenormTable[32];
+    static const UChar sm_aucLPSTable[64][4];
+    static const UChar sm_aucRenormTable[32];
 };
 
 //! \}
