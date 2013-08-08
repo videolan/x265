@@ -365,7 +365,7 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
         }
     }
 
-	delete [] sbuf;
+    delete [] sbuf;
 
     return true;
 }
@@ -437,8 +437,8 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
         }
     }
 
-	delete [] sbuf;
-	delete [] pbuf;
+    delete [] sbuf;
+    delete [] pbuf;
 
     return true;
 }
