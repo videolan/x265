@@ -28,6 +28,7 @@ add_library(encoder ../../COPYING ../x265.h
     encoder.cpp encoder.h
     bitcost.cpp bitcost.h
     motion.cpp motion.h
+    slicetype.cpp
     frameencoder.cpp frameencoder.h
     compress.cpp)
 target_link_libraries(encoder common)
