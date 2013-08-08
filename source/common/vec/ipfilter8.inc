@@ -42,22 +42,17 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
     coeffTemp = _mm_srli_si128(coeffTemp, 8);
     __m128i coeffTempHigh = _mm_cvtepi16_epi32(coeffTemp);
 
-    __m128i vm0 = _mm_setr_epi8(0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3);
-    __m128i vm1 = _mm_setr_epi8(4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7);
-    __m128i vm2 = _mm_setr_epi8(8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11);
-    __m128i vm3 = _mm_setr_epi8(12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15);
+    __m128i filterCoeff0 = _mm_shuffle_epi32(coeffTempLow, 0x00);
+    __m128i filterCoeff1 = _mm_shuffle_epi32(coeffTempLow, 0x55);
+    __m128i filterCoeff2 = _mm_shuffle_epi32(coeffTempLow, 0xAA);
+    __m128i filterCoeff3 = _mm_shuffle_epi32(coeffTempLow, 0xFF);
 
-    __m128i filterCoeff0 = _mm_shuffle_epi8(coeffTempLow, vm0);
-    __m128i filterCoeff1 = _mm_shuffle_epi8(coeffTempLow, vm1);
-    __m128i filterCoeff2 = _mm_shuffle_epi8(coeffTempLow, vm2);
-    __m128i filterCoeff3 = _mm_shuffle_epi8(coeffTempLow, vm3);
+    __m128i filterCoeff4 = _mm_shuffle_epi32(coeffTempHigh, 0x00);
+    __m128i filterCoeff5 = _mm_shuffle_epi32(coeffTempHigh, 0x55);
+    __m128i filterCoeff6 = _mm_shuffle_epi32(coeffTempHigh, 0xAA);
+    __m128i filterCoeff7 = _mm_shuffle_epi32(coeffTempHigh, 0xFF);
 
-    __m128i filterCoeff4 = _mm_shuffle_epi8(coeffTempHigh, vm0);
-    __m128i filterCoeff5 = _mm_shuffle_epi8(coeffTempHigh, vm1);
-    __m128i filterCoeff6 = _mm_shuffle_epi8(coeffTempHigh, vm2);
-    __m128i filterCoeff7 = _mm_shuffle_epi8(coeffTempHigh, vm3);
-
-    __m128i mask4 = _mm_setr_epi8(-1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    __m128i mask4 = _mm_cvtsi32_si128(0xFFFFFFFF);
 
     int row, col;
 
@@ -140,7 +135,6 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
                 sum67 = _mm_add_epi32(T21, T31);
                 sumhi0123 = _mm_add_epi32(sumhi0123, _mm_add_epi32(sum45, sum67));
             }
-            __m128i zero = _mm_set1_epi16(0);
             __m128i sumOffset = _mm_set1_epi32(offset);
 
             __m128i val1 = _mm_add_epi32(sumlo0123, sumOffset);
@@ -150,7 +144,7 @@ void filterVertical_s_p(short *src, int srcStride, pixel *dst, int dstStride, in
             val2 = _mm_srai_epi32(val2, shift);
 
             __m128i val = _mm_packs_epi32(val1, val2);
-            __m128i res = _mm_packus_epi16(val, zero);
+            __m128i res = _mm_packus_epi16(val, val);
             _mm_storel_epi64((__m128i*)&dst[col], res);
         }
 
