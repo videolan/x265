@@ -138,6 +138,7 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
 
     int numRows = (height + maxHeight - 1) / maxHeight;
     m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()
+    m_complete_lft = new uint32_t[numRows]; // initial in FrameFilter::encode()
 }
 
 Void TComPic::destroy()
@@ -189,6 +190,11 @@ Void TComPic::destroy()
     if (m_complete_enc)
     {
         delete[] m_complete_enc;
+    }
+
+    if (m_complete_lft)
+    {
+        delete[] m_complete_lft;
     }
 }
 

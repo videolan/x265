@@ -254,7 +254,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
     TEncCavlc*            cavlcCoder   = frameEncoder->getCavlcCoder();
     TEncSbac*             sbacCoder    = frameEncoder->getSingletonSbac();
     TEncBinCABAC*         binCABAC     = frameEncoder->getBinCABAC();
-    TComLoopFilter*       loopFilter   = frameEncoder->getLoopFilter();
     TComBitCounter*       bitCounter   = frameEncoder->getBitCounter();
     TEncSampleAdaptiveOffset* sao      = frameEncoder->getSAO();
     Bool bBufferingPeriodSEIPresentInAU = false;
@@ -545,8 +544,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         //-- Loop filter
         if (m_cfg->param.bEnableLoopFilter)
         {
-            loopFilter->setCfg(m_pps.getLoopFilterAcrossTilesEnabledFlag());
-            loopFilter->loopFilterPic(pic);
+            frameEncoder->wait_lft();
         }
 
         if (m_sps.getUseSAO())

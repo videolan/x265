@@ -48,8 +48,6 @@ using namespace x265;
 // Constants
 // ====================================================================================================================
 
-#define   EDGE_VER    0
-#define   EDGE_HOR    1
 #define   QpUV(iQpY)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[(iQpY)]))
 
 #define DEFAULT_INTRA_TC_OFFSET 2 ///< Default intra TC offset
@@ -161,6 +159,15 @@ Void TComLoopFilter::loopFilterPic(TComPic* pic)
 
         xDeblockCU(cu, 0, 0, EDGE_HOR);
     }
+}
+
+Void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir)
+{
+    ::memset(m_blockingStrength[dir], 0, sizeof(UChar) * m_numPartitions);
+    ::memset(m_bEdgeFilter[dir], 0, sizeof(Bool) * m_numPartitions);
+
+    // CU-based deblocking
+    xDeblockCU(cu, 0, 0, dir);
 }
 
 // ====================================================================================================================

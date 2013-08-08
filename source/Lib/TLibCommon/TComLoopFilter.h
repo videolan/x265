@@ -45,6 +45,8 @@
 //! \{
 
 #define DEBLOCK_SMALLEST_BLOCK  8
+#define EDGE_VER                0
+#define EDGE_HOR                1
 
 /// parameters for deblocking filter
 typedef struct _LFCUParam
@@ -123,6 +125,8 @@ public:
 
     /// picture-level deblocking filter
     Void loopFilterPic(TComPic* pic);
+
+    Void loopFilterCU(TComDataCU* cu, int dir);
 
     static Int getBeta(Int qp)
     {

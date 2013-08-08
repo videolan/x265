@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Chung Shin Yee <shinyee@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,6 +71,42 @@ public:
     /* Threading */
     Lock                m_lock;
     volatile bool       m_active;
+};
+
+// Manages the wave-front processing of a single frame loopfilter
+class FrameFilter : public WaveFront
+{
+public:
+
+    FrameFilter(ThreadPool *);
+
+    virtual ~FrameFilter() {}
+
+    void init(TEncTop *top, int numRows);
+
+    void destroy();
+
+    void start(TComPic *pic, TComSlice* slice);
+    void wait();
+
+    void enqueueRow(int row);
+
+    void processRow(int row);
+
+protected:
+    TEncCfg*                 m_cfg;
+
+    TComSlice*               m_slice;
+    TComPic*                 m_pic;
+    volatile uint32_t*       m_complete_lftV;
+    volatile bool*           m_rows_active;
+    Lock*                    m_locks;
+
+public:
+    TComLoopFilter*          m_loopFilter;
+
+    int                      m_numRows;
+    Event                    m_completionEvent;
 };
 
 // Manages the wave-front processing of a single encoding frame
@@ -163,8 +200,6 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSbac*               getSingletonSbac() { return &m_sbacCoder; }
 
-    TComLoopFilter*         getLoopFilter()    { return &m_loopFilter; }
-
     TEncSampleAdaptiveOffset* getSAO()         { return &m_sao; }
 
     TEncCavlc*              getCavlcCoder()    { return &m_cavlcCoder; }
@@ -190,12 +225,21 @@ public:
         m_sbacCoder.init((TEncBinIf*)&m_binCoderCABAC);
     }
 
+    void wait_lft()
+    {
+        if (m_cfg->param.bEnableLoopFilter)
+        {
+            m_frameFilter.wait();
+            m_frameFilter.dequeue();
+        }
+    }
+
 protected:
 
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
     TEncCavlc                m_cavlcCoder;
-    TComLoopFilter           m_loopFilter;
+    FrameFilter              m_frameFilter;
     TEncSampleAdaptiveOffset m_sao;
     TComBitCounter           m_bitCounter;
     TEncSlice                m_sliceEncoder;
@@ -208,6 +252,7 @@ protected:
     CTURow*                  m_rows;
     Event                    m_completionEvent;
 };
+
 }
 
 #endif // ifndef __FRAMEENCODER__
