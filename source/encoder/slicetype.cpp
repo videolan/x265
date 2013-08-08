@@ -1,7 +1,5 @@
 /*****************************************************************************
- * slicetype.c: lookahead analysis
- *****************************************************************************
- * Copyright (C) 2005-2013 x264 project
+ * Copyright (C) 2013 x265 project
  *
  * Authors: Jason Garrett-Glaser <darkshikari@gmail.com>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -22,8 +20,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@x264.com.
+ * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
+
+#include "primitives.h"
+#include "lookahead.h"
+#include "mv.h"
+
+// Under Construction
+#if defined(_MSC_VER)
+#pragma warning(disable: 4100) // unused formal parameter
+#pragma warning(disable: 4189) // unused local variable
+#endif
+
+namespace x265 {
 
 // Short history:
 //
@@ -32,16 +42,109 @@
 // taking any of the threading changes because we will eventually use the x265
 // thread pool and wavefront processing.
 
-#include "common/common.h"
-#include "macroblock.h"
-#include "me.h"
+int slicetype_cu_cost(LookaheadFrame **frames, int p0, int p1, int b, int dist_scale_factor, int do_search[2]);
 
+int slicetype_frame_cost(LookaheadFrame **frames, int p0, int p1, int b, int bIntraPenalty)
+{
+    int score = 0;
+    int do_search[2];
+    LookaheadFrame *fenc;
+
+    fenc = frames[b];
+
+    /* Currently Default set as 0 this should be param->bframebias */
+    int bframe_bias = 0;
+
+    if (fenc->costEst[b - p0][p1 - b] >= 0 && fenc->rowSatds[b - p0][p1 - b][0] != -1)
+        score = fenc->costEst[b - p0][p1 - b];
+    else
+    {
+        int dist_scale_factor = 128;
+
+        /* For each list, check to see whether we have lowres motion-searched this reference frame before. */
+        do_search[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
+        do_search[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
+
+        if (do_search[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
+        if (do_search[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
+
+        if (p1 != p0)
+            dist_scale_factor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
+
+        fenc->costEst[b - p0][p1 - b] = 0;
+        fenc->costEst[b - p0][p1 - b] = 0;
+
+        /* Lowres lookahead goes backwards because the MVs are used as predictors in the main encode.
+         * This considerably improves MV prediction overall. */
+
+        /* The edge mbs seem to reduce the predictive quality of the
+         * whole frame's score, but are needed for a spatial distribution. */
+
+        for (int i = fenc->cuWidth - 1; i >= 0; i--)
+        {
+            for (int j = fenc->cuHeight - 1; j >= 0; j--)
+            {
+                slicetype_cu_cost(frames, p0, p1, b, dist_scale_factor, do_search);
+            }
+        }
+
+        score = fenc->costEst[b - p0][p1 - b];
+
+        if (b != p1) /* have to check use of 120 magical number but followed by x264 used here */
+            score = (uint64_t)score * 100 / (120) + bframe_bias;
+
+        fenc->costEst[b - p0][p1 - b] = score;
+    }
+
+    if (bIntraPenalty)
+    {
+        // arbitrary penalty for I-blocks after B-frames
+        int nmb = fenc->cuWidth * fenc->cuHeight;
+        score += (uint64_t)score * fenc->intraMbs[b - p0] / (nmb * 8);
+    }
+    x265_emms();
+    return score;
+}
+
+int slicetype_cu_cost(LookaheadFrame **frames, int p0, int p1, int b, int dist_scale_factor, int do_search[2])
+{
+    LookaheadFrame *fref0 = frames[p0];
+    LookaheadFrame *fref1 = frames[p1];
+    LookaheadFrame *fenc  = frames[b];
+
+    /* TODO : need clarifications how can be initialized motion vector in this function */
+    MV pmv;
+
+    const int b_bidir = (b < p1);
+    const int cu_x = 0;  // TODO: i, j must be passed in
+    const int cu_y = 0;
+
+    const int cu_stride = fenc->cuWidth;
+    const int cu_xy = cu_x + cu_y * cu_stride;
+    const int stride = fenc->stride;
+    const int pel_offset = 8 * (cu_x + cu_y * stride);
+
+    MV (*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy], &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
+    int (*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy], &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
+
+    int bcost = 0;
+    int list_used = 0;
+
+    if (p0 == p1)
+        goto lowres_intra_mb;
+
+    // TODO: call motionEstimate here for each do_search
+
+lowres_intra_mb:
+
+    // copy intra SATD cost analysis here (DC + planar + all-angs)
+
+    return 0;
+}
+
+#if 0
 // Indexed by pic_struct values
 static const uint8_t delta_tfi_divisor[10] = { 0, 2, 1, 1, 2, 2, 3, 3, 4, 6 };
-
-static int x264_slicetype_frame_cost(x264_t *h, x264_mb_analysis_t *a,
-                                     x264_frame_t **frames, int p0, int p1, int b,
-                                     int b_intra_penalty);
 
 static void x264_lowres_context_init(x264_t *h, x264_mb_analysis_t *a)
 {
@@ -676,103 +779,6 @@ lowres_intra_mb:
     (h->mb.i_mb_width > 2 && h->mb.i_mb_height > 2 ? \
      (h->mb.i_mb_width - 2) * (h->mb.i_mb_height - 2) : \
      h->mb.i_mb_width * h->mb.i_mb_height)
-
-static int x264_slicetype_frame_cost(x264_t *h, x264_mb_analysis_t *a,
-                                     x264_frame_t **frames, int p0, int p1, int b,
-                                     int b_intra_penalty)
-{
-    int i_score = 0;
-    int do_search[2];
-    const x264_weight_t *w = x264_weight_none;
-
-    /* Check whether we already evaluated this frame
-     * If we have tried this frame as P, then we have also tried
-     * the preceding frames as B. (is this still true?) */
-    /* Also check that we already calculated the row SATDs for the current frame. */
-    if (frames[b]->i_cost_est[b - p0][p1 - b] >= 0 && (!h->param.rc.i_vbv_buffer_size || frames[b]->i_row_satds[b - p0][p1 - b][0] != -1))
-        i_score = frames[b]->i_cost_est[b - p0][p1 - b];
-    else
-    {
-        int dist_scale_factor = 128;
-        int *row_satd = frames[b]->i_row_satds[b - p0][p1 - b];
-        int *row_satd_intra = frames[b]->i_row_satds[0][0];
-
-        /* For each list, check to see whether we have lowres motion-searched this reference frame before. */
-        do_search[0] = b != p0 && frames[b]->lowres_mvs[0][b - p0 - 1][0][0] == 0x7FFF;
-        do_search[1] = b != p1 && frames[b]->lowres_mvs[1][p1 - b - 1][0][0] == 0x7FFF;
-        if (do_search[0])
-        {
-            if (h->param.analyse.i_weighted_pred && b == p1)
-            {
-                x264_emms();
-                x264_weights_analyse(h, frames[b], frames[p0], 1);
-                w = frames[b]->weight[0];
-            }
-            frames[b]->lowres_mvs[0][b - p0 - 1][0][0] = 0;
-        }
-        if (do_search[1]) frames[b]->lowres_mvs[1][p1 - b - 1][0][0] = 0;
-
-        if (b == p1)
-            frames[b]->i_intra_mbs[b - p0] = 0;
-        if (!frames[b]->b_intra_calculated)
-        {
-            frames[b]->i_cost_est[0][0] = 0;
-            frames[b]->i_cost_est_aq[0][0] = 0;
-        }
-        if (p1 != p0)
-            dist_scale_factor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
-
-        frames[b]->i_cost_est[b - p0][p1 - b] = 0;
-        frames[b]->i_cost_est_aq[b - p0][p1 - b] = 0;
-
-        /* Lowres lookahead goes backwards because the MVs are used as predictors in the main encode.
-         * This considerably improves MV prediction overall. */
-
-        /* The edge mbs seem to reduce the predictive quality of the
-         * whole frame's score, but are needed for a spatial distribution. */
-        if (h->param.rc.b_mb_tree || h->param.rc.i_vbv_buffer_size ||
-            h->mb.i_mb_width <= 2 || h->mb.i_mb_height <= 2)
-        {
-            for (h->mb.i_mb_y = h->mb.i_mb_height - 1; h->mb.i_mb_y >= 0; h->mb.i_mb_y--)
-            {
-                row_satd[h->mb.i_mb_y] = 0;
-                if (!frames[b]->b_intra_calculated)
-                    row_satd_intra[h->mb.i_mb_y] = 0;
-                for (h->mb.i_mb_x = h->mb.i_mb_width - 1; h->mb.i_mb_x >= 0; h->mb.i_mb_x--)
-                {
-                    x264_slicetype_mb_cost(h, a, frames, p0, p1, b, dist_scale_factor, do_search, w);
-                }
-            }
-        }
-        else
-        {
-            for (h->mb.i_mb_y = h->mb.i_mb_height - 2; h->mb.i_mb_y >= 1; h->mb.i_mb_y--)
-            {
-                for (h->mb.i_mb_x = h->mb.i_mb_width - 2; h->mb.i_mb_x >= 1; h->mb.i_mb_x--)
-                {
-                    x264_slicetype_mb_cost(h, a, frames, p0, p1, b, dist_scale_factor, do_search, w);
-                }
-            }
-        }
-
-        i_score = frames[b]->i_cost_est[b - p0][p1 - b];
-        if (b != p1)
-            i_score = (uint64_t)i_score * 100 / (120 + h->param.i_bframe_bias);
-        else
-            frames[b]->b_intra_calculated = 1;
-
-        frames[b]->i_cost_est[b - p0][p1 - b] = i_score;
-        x264_emms();
-    }
-
-    if (b_intra_penalty)
-    {
-        // arbitrary penalty for I-blocks after B-frames
-        int nmb = NUM_MBS;
-        i_score += (uint64_t)i_score * frames[b]->i_intra_mbs[b - p0] / (nmb * 8);
-    }
-    return i_score;
-}
 
 static void x264_macroblock_tree_finish(x264_t *h, x264_frame_t *frame, float average_duration, int ref0_distance)
 {
@@ -1623,4 +1629,7 @@ void x264_slicetype_decide(x264_t *h)
         h->lookahead->next.list[0]->f_planned_cpb_duration[i] = (double)h->lookahead->next.list[i]->i_cpb_duration *
             h->sps->vui.i_num_units_in_tick / h->sps->vui.i_time_scale;
     }
+}
+
+#endif // if 0
 }

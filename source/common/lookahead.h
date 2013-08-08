@@ -21,14 +21,21 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
-#include "x265.h"
+#ifndef _LOOKAHEAD_H
+#define _LOOKAHEAD_H 1
+
+#include "TLibCommon/TComList.h"
+
 #include "common.h"
 #include "mv.h"
+#include "reference.h"
+
+class TComPic;
 
 namespace x265 {
-class ReferencePlanes;
 
 #define X265_BFRAME_MAX 16
+#define FDEC_STRIDE 32
 
 struct LookaheadFrame : public ReferencePlanes
 {
@@ -45,6 +52,8 @@ struct LookaheadFrame : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
+    int       cuWidth;
+    int       cuHeight;
 };
 
 struct Lookahead
@@ -57,5 +66,6 @@ struct Lookahead
     TComList<TComPic*> inputQueue;      // input pictures in order received
     TComList<TComPic*> outputQueue;     // pictures to be encoded, in encode order
 };
-
 }
+
+#endif // _LOOKAHEAD_H
