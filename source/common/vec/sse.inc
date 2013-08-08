@@ -144,7 +144,8 @@ template<int ly>
 int sse_pp24(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
 {
     int rows = ly;
-    __m128i sum = _mm_set1_epi32(0);
+    __m128i sum = _mm_setzero_si128();
+    __m128i zero = _mm_setzero_si128();
 
     for (; rows != 0; rows--)
     {
@@ -152,12 +153,10 @@ int sse_pp24(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
         __m128i n1 = _mm_loadu_si128((__m128i const*)(Cur));
 
         __m128i m1lo = _mm_cvtepu8_epi16(m1);
-        __m128i m1hi = _mm_srli_si128(m1, 8);
-        m1hi = _mm_cvtepu8_epi16(m1hi);
+        __m128i m1hi = _mm_unpackhi_epi8(m1, zero);
 
         __m128i n1lo = _mm_cvtepu8_epi16(n1);
-        __m128i n1hi = _mm_srli_si128(n1, 8);
-        n1hi = _mm_cvtepu8_epi16(n1hi);
+        __m128i n1hi = _mm_unpackhi_epi8(n1, zero);
 
         __m128i diff = _mm_sub_epi16(m1lo, n1lo);
         sum = _mm_add_epi32(sum, _mm_madd_epi16(diff, diff));
@@ -177,8 +176,8 @@ int sse_pp24(pixel* Org, intptr_t strideOrg, pixel* Cur, intptr_t strideCur)
         Cur += strideCur;
     }
 
-    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
-    sum = _mm_add_epi32(sum, _mm_srli_si128(sum, 4));
+    sum = _mm_hadd_epi32(sum, sum);
+    sum = _mm_hadd_epi32(sum, sum);
     return _mm_cvtsi128_si32(sum);
 }
 
