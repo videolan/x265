@@ -310,7 +310,7 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
     int rand_srcStride, rand_dstStride;
     int marginX, marginY;
 
-	short *sbuf = new short[100 * 100 * 8];
+    short *sbuf = new short[100 * 100 * 8];
     short *dstAvec = sbuf;
     short *dstEvec = dstAvec + 10000;
     short *dstIvec = dstEvec + 10000;
@@ -381,7 +381,7 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
 
-	short *sbuf = new short[100 * 100 * 8];
+    short *sbuf = new short[100 * 100 * 8];
     short *intFvec = sbuf;
     short *intAvec = intFvec + 10000;
     short *intBvec = intAvec + 10000;
@@ -391,7 +391,7 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
     short *intCref = intBref + 10000;
     short *intFref = intCref + 10000;
 
-	pixel *pbuf = new pixel[200 * 200 * 8];
+    pixel *pbuf = new pixel[200 * 200 * 8];
     pixel *dstAvec = pbuf;
     pixel *dstAref = dstAvec + 40000;
     pixel *dstBvec = dstAref + 40000;
