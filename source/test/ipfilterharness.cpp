@@ -310,14 +310,16 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
     int rand_srcStride, rand_dstStride;
     int marginX, marginY;
 
-    short dstAvec[100 * 100];
-    short dstEvec[100 * 100];
-    short dstIvec[100 * 100];
-    short dstPvec[100 * 100];
-    short dstAref[100 * 100];
-    short dstEref[100 * 100];
-    short dstIref[100 * 100];
-    short dstPref[100 * 100];
+	short *sbuf = new short[100 * 100 * 8];
+    short *dstAvec = sbuf;
+    short *dstEvec = dstAvec + 10000;
+    short *dstIvec = dstEvec + 10000;
+    short *dstPvec = dstIvec + 10000;
+    short *dstAref = dstPvec + 10000;
+    short *dstEref = dstAref + 10000;
+    short *dstIref = dstEref + 10000;
+    short *dstPref = dstIref + 10000;
+
     pixel pDstAvec[200 * 200];
     pixel pDstAref[200 * 200];
     pixel pDstBvec[200 * 200];
@@ -325,14 +327,7 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
     pixel pDstCvec[200 * 200];
     pixel pDstCref[200 * 200];
 
-    memset(dstAref, 0, 10000 * sizeof(short));
-    memset(dstEref, 0, 10000 * sizeof(short));
-    memset(dstIref, 0, 10000 * sizeof(short));
-    memset(dstPref, 0, 10000 * sizeof(short));
-    memset(dstAvec, 0, 10000 * sizeof(short));
-    memset(dstEvec, 0, 10000 * sizeof(short));
-    memset(dstIvec, 0, 10000 * sizeof(short));
-    memset(dstPvec, 0, 10000 * sizeof(short));
+    memset(sbuf, 0, 10000 * sizeof(short) * 8);
     memset(pDstAvec, 0, 40000 * sizeof(pixel));
     memset(pDstAref, 0, 40000 * sizeof(pixel));
     memset(pDstBvec, 0, 40000 * sizeof(pixel));
@@ -370,6 +365,8 @@ bool IPFilterHarness::check_filterHMultiplane(x265::filterHmulti_t ref, x265::fi
         }
     }
 
+	delete [] sbuf;
+
     return true;
 }
 
@@ -381,42 +378,31 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
     int marginX, marginY;
     int w = rand() % 256;
     int shift = rand() % 12;
-    int round   = shift ? (1 << (shift - 1)) : 0;
+    int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
 
-    short intFvec[100 * 100];
-    short intAvec[100 * 100];
-    short intBvec[100 * 100];
-    short intCvec[100 * 100];
-    short intAref[100 * 100];
-    short intBref[100 * 100];
-    short intCref[100 * 100];
-    short intFref[100 * 100];
-    pixel dstAvec[200 * 200];
-    pixel dstAref[200 * 200];
-    pixel dstBvec[200 * 200];
-    pixel dstBref[200 * 200];
-    pixel dstCvec[200 * 200];
-    pixel dstCref[200 * 200];
-    pixel dstFref[200 * 200];
-    pixel dstFvec[200 * 200];
+	short *sbuf = new short[100 * 100 * 8];
+    short *intFvec = sbuf;
+    short *intAvec = intFvec + 10000;
+    short *intBvec = intAvec + 10000;
+    short *intCvec = intBvec + 10000;
+    short *intAref = intCvec + 10000;
+    short *intBref = intAref + 10000;
+    short *intCref = intBref + 10000;
+    short *intFref = intCref + 10000;
 
-    memset(intFref, 0, 10000 * sizeof(short));
-    memset(intAref, 0, 10000 * sizeof(short));
-    memset(intBref, 0, 10000 * sizeof(short));
-    memset(intCref, 0, 10000 * sizeof(short));
-    memset(intFvec, 0, 10000 * sizeof(short));
-    memset(intAvec, 0, 10000 * sizeof(short));
-    memset(intBvec, 0, 10000 * sizeof(short));
-    memset(intCvec, 0, 10000 * sizeof(short));
-    memset(dstAvec, 0, 40000 * sizeof(pixel));
-    memset(dstAref, 0, 40000 * sizeof(pixel));
-    memset(dstBvec, 0, 40000 * sizeof(pixel));
-    memset(dstBref, 0, 40000 * sizeof(pixel));
-    memset(dstCvec, 0, 40000 * sizeof(pixel));
-    memset(dstCref, 0, 40000 * sizeof(pixel));
-    memset(dstFvec, 0, 40000 * sizeof(pixel));
-    memset(dstFref, 0, 40000 * sizeof(pixel));
+	pixel *pbuf = new pixel[200 * 200 * 8];
+    pixel *dstAvec = pbuf;
+    pixel *dstAref = dstAvec + 40000;
+    pixel *dstBvec = dstAref + 40000;
+    pixel *dstBref = dstBvec + 40000;
+    pixel *dstCvec = dstBref + 40000;
+    pixel *dstCref = dstCvec + 40000;
+    pixel *dstFref = dstCref + 40000;
+    pixel *dstFvec = dstFref + 40000;
+
+    memset(sbuf, 0, 10000 * sizeof(short) * 8);
+    memset(pbuf, 0, 40000 * sizeof(pixel) * 8);
 
     for (int i = 0; i <= 100; i++)
     {
@@ -450,6 +436,9 @@ bool IPFilterHarness::check_filterHMultiplaneWghtd(x265::filterHwghtd_t ref, x26
             return false;
         }
     }
+
+	delete [] sbuf;
+	delete [] pbuf;
 
     return true;
 }
