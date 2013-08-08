@@ -16,6 +16,9 @@ if ("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
 endif()
 
 # Enforce coding standards.  Full warnings and warnings as errors
+if("$ENV{CXX}" STREQUAL "icl")
+    set(MSVC 1)
+endif()
 if(MSVC)
     option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
     if (STATIC_LINK_CRT)
