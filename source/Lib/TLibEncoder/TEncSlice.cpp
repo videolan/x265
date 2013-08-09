@@ -263,21 +263,10 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
         slice->setDeblockingFilterDisable(!m_cfg->param.bEnableLoopFilter);
         if (!slice->getDeblockingFilterDisable())
         {
-            if (!m_cfg->getLoopFilterOffsetInPPS() && sliceType != I_SLICE)
-            {
-                /* TODO: remove? */
-                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(gopID).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());
-                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getGOPEntry(gopID).m_tcOffsetDiv2 + m_cfg->getLoopFilterTcOffset());
-                slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(gopID).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());
-                slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getGOPEntry(gopID).m_tcOffsetDiv2 + m_cfg->getLoopFilterTcOffset());
-            }
-            else
-            {
-                slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
-                slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
-                slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
-                slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
-            }
+            slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
+            slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getLoopFilterBetaOffset());
+            slice->setDeblockingFilterTcOffsetDiv2(m_cfg->getLoopFilterTcOffset());
         }
     }
     else

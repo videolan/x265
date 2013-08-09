@@ -297,8 +297,6 @@ bool Encoder::initializeGOP(x265_param_t *_param)
         /* encoder_all_I */
         m_gopList[0] = GOPEntry();
         m_gopList[0].m_QPFactor = 1;
-        m_gopList[0].m_betaOffsetDiv2 = 0;
-        m_gopList[0].m_tcOffsetDiv2 = 0;
         m_gopList[0].m_POC = 1;
         m_gopList[0].m_numRefPicsActive = 4;
     }
@@ -412,15 +410,6 @@ bool Encoder::initializeGOP(x265_param_t *_param)
 
     int numOK = 0;
     CONFIRM(_param->keyframeInterval >= 0 && (_param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
-
-    if ((_param->keyframeInterval != 1) && !m_loopFilterOffsetInPPS && _param->bEnableLoopFilter)
-    {
-        for (Int i = 0; i < m_gopSize; i++)
-        {
-            CONFIRM((m_gopList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_gopList[i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
-            CONFIRM((m_gopList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_gopList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)");
-        }
-    }
 
     m_extraRPSs = 0;
     //start looping through frames in coding order until we can verify that the GOP structure is correct.

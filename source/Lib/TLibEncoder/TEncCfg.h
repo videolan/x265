@@ -47,8 +47,6 @@ struct GOPEntry
     Int m_POC;
     Int m_QPOffset;
     Double m_QPFactor;
-    Int m_tcOffsetDiv2;
-    Int m_betaOffsetDiv2;
     Bool m_refPic;
     Int m_numRefPicsActive;
     Char m_sliceType;
@@ -63,8 +61,6 @@ struct GOPEntry
         : m_POC(-1)
         , m_QPOffset(0)
         , m_QPFactor(0)
-        , m_tcOffsetDiv2(0)
-        , m_betaOffsetDiv2(0)
         , m_refPic(false)
         , m_numRefPicsActive(0)
         , m_sliceType('P')
