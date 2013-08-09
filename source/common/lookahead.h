@@ -55,17 +55,6 @@ struct LookaheadFrame : public ReferencePlanes
     int       cuWidth;
     int       cuHeight;
 };
-
-struct Lookahead
-{
-    LookaheadFrame *frames;
-    int             bframes;            // from param->bframes
-    int             frameQueueSize;     // from param->rcLookahead (--rc-lookahead)
-    int             bAdaptMode;         // from param->bAdaptMode (--b-adapt 0-none, 1-simple, 2-trellis)
-
-    TComList<TComPic*> inputQueue;      // input pictures in order received
-    TComList<TComPic*> outputQueue;     // pictures to be encoded, in encode order
-};
 }
 
 #endif // _LOOKAHEAD_H

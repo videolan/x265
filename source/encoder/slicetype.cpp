@@ -23,9 +23,22 @@
  * For more information, contact us at licensing@multicorewareinc.com.
  *****************************************************************************/
 
+#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "lookahead.h"
+#include "motion.h"
 #include "mv.h"
+
+// Short history:
+//
+// This file was originally borrowed from x264 source tree circa Dec 4, 2012
+// with x264 bug fixes applied from Dec 11th and Jan 8th 2013.  But without
+// taking any of the threading changes because we will eventually use the x265
+// thread pool and wavefront processing.
+
+#define QP_BD_OFFSET (6*(X265_DEPTH-8))
+// arbitrary, but low because SATD scores are 1/4 normal
+#define X264_LOOKAHEAD_QP (12+QP_BD_OFFSET)
 
 // Under Construction
 #if defined(_MSC_VER)
@@ -35,16 +48,35 @@
 
 namespace x265 {
 
-// Short history:
-//
-// This file was originally borrowed from x264 source tree circa Dec 4, 2012
-// with x264 bug fixes applied from Dec 11th and Jan 8th 2013.  But without
-// taking any of the threading changes because we will eventually use the x265
-// thread pool and wavefront processing.
+struct Lookahead
+{
+    MotionEstimate   me;
+    LookaheadFrame **frames;
+    int              bframes;            // from param->bframes
+    int              frameQueueSize;     // from param->rcLookahead (--rc-lookahead)
+    int              bAdaptMode;         // from param->bAdaptMode (--b-adapt 0-none, 1-simple, 2-trellis)
 
-int slicetype_cu_cost(LookaheadFrame **frames, int p0, int p1, int b, int dist_scale_factor, int do_search[2]);
+    TComList<TComPic*> inputQueue;       // input pictures in order received
+    TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
+    
+    Lookahead(int _frameQueueSize)
+    {
+        me.setQP(X264_LOOKAHEAD_QP, 1.0);
+        me.setSearchMethod(X265_DIA_SEARCH);
+        frameQueueSize = _frameQueueSize;
+        frames = new LookaheadFrame*[frameQueueSize];
+    }
+    ~Lookahead()
+    {
+        if (frames)
+            delete [] frames;
+    }
 
-int slicetype_frame_cost(LookaheadFrame **frames, int p0, int p1, int b, int bIntraPenalty)
+    int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
+    int estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
+};
+
+int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 {
     int score = 0;
     int do_search[2];
@@ -59,17 +91,12 @@ int slicetype_frame_cost(LookaheadFrame **frames, int p0, int p1, int b, int bIn
         score = fenc->costEst[b - p0][p1 - b];
     else
     {
-        int dist_scale_factor = 128;
-
         /* For each list, check to see whether we have lowres motion-searched this reference frame before. */
         do_search[0] = b != p0 && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
         do_search[1] = b != p1 && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
 
         if (do_search[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0;
         if (do_search[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0;
-
-        if (p1 != p0)
-            dist_scale_factor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
 
         fenc->costEst[b - p0][p1 - b] = 0;
         fenc->costEst[b - p0][p1 - b] = 0;
@@ -80,11 +107,12 @@ int slicetype_frame_cost(LookaheadFrame **frames, int p0, int p1, int b, int bIn
         /* The edge mbs seem to reduce the predictive quality of the
          * whole frame's score, but are needed for a spatial distribution. */
 
+        me.setSourcePlane(fenc->m_lumaPlane[0][0], fenc->m_lumaStride);
         for (int i = fenc->cuWidth - 1; i >= 0; i--)
         {
             for (int j = fenc->cuHeight - 1; j >= 0; j--)
             {
-                slicetype_cu_cost(frames, p0, p1, b, dist_scale_factor, do_search);
+                estimateCUCost(j, i, p0, p1, b, do_search);
             }
         }
 
@@ -106,39 +134,62 @@ int slicetype_frame_cost(LookaheadFrame **frames, int p0, int p1, int b, int bIn
     return score;
 }
 
-int slicetype_cu_cost(LookaheadFrame **frames, int p0, int p1, int b, int dist_scale_factor, int do_search[2])
+int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2])
 {
     LookaheadFrame *fref0 = frames[p0];
     LookaheadFrame *fref1 = frames[p1];
     LookaheadFrame *fenc  = frames[b];
 
-    /* TODO : need clarifications how can be initialized motion vector in this function */
-    MV pmv;
-
     const int b_bidir = (b < p1);
-    const int cu_x = 0;  // TODO: i, j must be passed in
-    const int cu_y = 0;
-
     const int cu_stride = fenc->cuWidth;
-    const int cu_xy = cu_x + cu_y * cu_stride;
+    const int cu_xy = cux + cuy * cu_stride;
     const int stride = fenc->stride;
-    const int pel_offset = 8 * (cu_x + cu_y * stride);
+    const int cu_size = g_maxCUWidth / 2;
+    const int pel_offset = cu_size * cux + cu_size * cuy * stride;
+    const int merange = 16;
+    me.setSourcePU(pel_offset, cu_size, cu_size);
 
     MV (*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy], &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
     int (*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy], &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
 
-    int bcost = 0;
-    int list_used = 0;
+    MV mvmin, mvmax;
+    // TODO: calculate search extents
 
-    if (p0 == p1)
-        goto lowres_intra_mb;
+    for (int i = 0; i < 2; i++)
+    {
+        int numc = 0;
+        MV mvc[4], mvp;
+        MV *fenc_mv = fenc_mvs[i];
 
-    // TODO: call motionEstimate here for each do_search
+        /* Reverse-order MV prediction. */
+        mvc[0] = 0;
+        mvc[2] = 0;
+#define MVC(mv) mvc[numc++] = mv;
+        if (cux < fenc->cuWidth - 1)
+            MVC(fenc_mv[1]);
+        if (cuy < fenc->cuHeight - 1)
+        {
+            MVC(fenc_mv[fenc->cuWidth]);
+            if (cux > 0)
+                MVC(fenc_mv[fenc->cuWidth - 1]);
+            if (cux < fenc->cuWidth - 1)
+                MVC(fenc_mv[fenc->cuWidth + 1]);
+        }
+#undef MVC
+        if (numc <= 1)
+            mvp = mvc[0];
+        else
+            //TODO x265_median_mv(mvp, mvc[0], mvc[1], mvc[2])
+            ;
 
-lowres_intra_mb:
+        *fenc_costs[i] = me.motionEstimate(fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
+    }
+    if (b_bidir)
+    {
+        // TODO: add bidir
+    }
 
-    // copy intra SATD cost analysis here (DC + planar + all-angs)
-
+    // TODO: copy intra SATD cost analysis here (DC + planar + all-angs)
     return 0;
 }
 
