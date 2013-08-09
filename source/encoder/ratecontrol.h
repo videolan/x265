@@ -31,7 +31,6 @@
 #include "math.h"
 
 namespace x265 {
-// private x265 namespace
 
 struct RateControlEntry
 {

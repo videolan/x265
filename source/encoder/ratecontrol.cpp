@@ -48,8 +48,6 @@ void RateControl::rateControlStart(LookaheadFrame *lFrame)
     }
     q = Clip3(q, MIN_QP, MAX_QP);
 
-    //rc.qpa_rc = rc.qpa_rc_prev =
-    //rc.qpa_aq = rc.qpa_aq_prev = 0;
     qp = x265_clip3(q + 0.5f, 0, MAX_QP);
 
     qpm = q;
@@ -117,89 +115,86 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         double abr_buffer = 2 * rate_tolerance * bitrate;
 
         /* 1pass ABR */
+
+        /* Calculate the quantizer which would have produced the desired
+         * average bitrate if it had been applied to all frames so far.
+         * Then modulate that quant based on the current frame's complexity
+         * relative to the average complexity so far (using the 2pass RCEQ).
+         * Then bias the quant up or down if total size so far was far from
+         * the target.
+         * Result: Depending on the value of rate_tolerance, there is a
+         * tradeoff between quality and bitrate precision. But at large
+         * tolerances, the bit distribution approaches that of 2pass. */
+
+        double wanted_bits, overflow = 1;
+
+        last_satd = 0;     //need to get this from lookahead  //x264_rc_analyse_slice( h );
+        short_term_cplxsum *= 0.5;
+        short_term_cplxcount *= 0.5;
+        //TODO:need to get the duration for each frame
+        //short_term_cplxsum += last_satd / (CLIP_DURATION(h->fenc->f_duration) / BASE_FRAME_DURATION);
+        short_term_cplxcount++;
+
+        rce->p_count = ncu;
+
+        rce->pict_type = pict_type;
+
+        //TODO:wanted_bits_window, fps , h->fenc->i_reordered_pts, h->i_reordered_pts_delay, h->fref_nearest[0]->f_qp_avg_rc, h->param.rc.f_ip_factor, h->sh.i_type
+        //need to checked where it is initialized
+        q = getQScale(rce, wanted_bits_window / cplxr_sum, frameNum);
+
+        /* ABR code can potentially be counterproductive in CBR, so just don't bother.
+         * Don't run it if the frame complexity is zero either. */
+        if ( /*!rcc->b_vbv_min_rate && */ last_satd)
         {
-            /* Calculate the quantizer which would have produced the desired
-             * average bitrate if it had been applied to all frames so far.
-             * Then modulate that quant based on the current frame's complexity
-             * relative to the average complexity so far (using the 2pass RCEQ).
-             * Then bias the quant up or down if total size so far was far from
-             * the target.
-             * Result: Depending on the value of rate_tolerance, there is a
-             * tradeoff between quality and bitrate precision. But at large
-             * tolerances, the bit distribution approaches that of 2pass. */
-
-            double wanted_bits, overflow = 1;
-
-            last_satd = 0; //need to get this from lookahead  //x264_rc_analyse_slice( h );
-            short_term_cplxsum *= 0.5;
-            short_term_cplxcount *= 0.5;
-            //TODO:need to get the duration for each frame
-            //short_term_cplxsum += last_satd / (CLIP_DURATION(h->fenc->f_duration) / BASE_FRAME_DURATION);
-            short_term_cplxcount++;
-
-            rce->p_count = ncu;
-
-            rce->pict_type = pict_type;
-
+            // TODO: need to check the thread_frames
+            int i_frame_done = frameNum + 1 - h->i_thread_frames;
+            double time_done = i_frame_done / fps;
+            if (i_frame_done > 0)
             {
-                //TODO:wanted_bits_window, fps , h->fenc->i_reordered_pts, h->i_reordered_pts_delay, h->fref_nearest[0]->f_qp_avg_rc, h->param.rc.f_ip_factor, h->sh.i_type
-                //need to checked where it is initialized
-                q = getQScale(rce, wanted_bits_window / cplxr_sum, frameNum);
-
-                /* ABR code can potentially be counterproductive in CBR, so just don't bother.
-                 * Don't run it if the frame complexity is zero either. */
-                if ( /*!rcc->b_vbv_min_rate && */ last_satd)
-                {
-                    // TODO: need to check the thread_frames
-                    int i_frame_done = frameNum + 1 - h->i_thread_frames;
-                    double time_done = i_frame_done / fps;
-                    if (i_frame_done > 0)
-                    {
-                        //time_done = ((double)(h->fenc->i_reordered_pts - h->i_reordered_pts_delay)) * h->param.i_timebase_num / h->param.i_timebase_den;
-                        time_done = ((double)(h->fenc->i_reordered_pts - h->i_reordered_pts_delay)) * (1 / fps);
-                    }
-                    wanted_bits = time_done * bitrate;
-                    if (wanted_bits > 0)
-                    {
-                        abr_buffer *= X265_MAX(1, sqrt(time_done));
-                        overflow = x265_clip3f(1.0 + (total_bits - wanted_bits) / abr_buffer, .5, 2);
-                        q *= overflow;
-                    }
-                }
+                //time_done = ((double)(h->fenc->i_reordered_pts - h->i_reordered_pts_delay)) * h->param.i_timebase_num / h->param.i_timebase_den;
+                time_done = ((double)(h->fenc->i_reordered_pts - h->i_reordered_pts_delay)) * (1 / fps);
             }
-
-            if (pict_type == I_SLICE && keyFrameInterval > 1
-                /* should test _next_ pict type, but that isn't decided yet */
-                && last_non_b_pict_type != I_SLICE)
+            wanted_bits = time_done * bitrate;
+            if (wanted_bits > 0)
             {
-                q = qp2qScale(accum_p_qp / accum_p_norm);
-                q /= fabs(h->param.rc.f_ip_factor);
+                abr_buffer *= X265_MAX(1, sqrt(time_done));
+                overflow = x265_clip3f(1.0 + (total_bits - wanted_bits) / abr_buffer, .5, 2);
+                q *= overflow;
             }
-            else if (frameNum > 0)
-            {
-                if (1) //assume that for ABR this is always enabled h->param.rc.i_rc_method != X264_RC_CRF )
-                {
-                    /* Asymmetric clipping, because symmetric would prevent
-                     * overflow control in areas of rapidly oscillating complexity */
-                    double lmin = last_qscale_for[pict_type] / lstep;
-                    double lmax = last_qscale_for[pict_type] * lstep;
-                    if (overflow > 1.1 && frameNum > 3)
-                        lmax *= lstep;
-                    else if (overflow < 0.9)
-                        lmin /= lstep;
-
-                    q = x265_clip3f(q, lmin, lmax);
-                }
-            }
-
-            qp_novbv = qScale2qp(q);
-
-            //FIXME use get_diff_limited_q() ?
-            //q = clip_qscale( h, pict_type, q );
-            double lmin_1 = lmin[pict_type];
-            double lmax_1 = lmax[pict_type];
-            x265_clip3f(q, lmin_1, lmax_1);
         }
+
+        if (pict_type == I_SLICE && keyFrameInterval > 1
+            /* should test _next_ pict type, but that isn't decided yet */
+            && last_non_b_pict_type != I_SLICE)
+        {
+            q = qp2qScale(accum_p_qp / accum_p_norm);
+            q /= fabs(h->param.rc.f_ip_factor);
+        }
+        else if (frameNum > 0)
+        {
+            if (1)     //assume that for ABR this is always enabled h->param.rc.i_rc_method != X264_RC_CRF )
+            {
+                /* Asymmetric clipping, because symmetric would prevent
+                 * overflow control in areas of rapidly oscillating complexity */
+                double lmin = last_qscale_for[pict_type] / lstep;
+                double lmax = last_qscale_for[pict_type] * lstep;
+                if (overflow > 1.1 && frameNum > 3)
+                    lmax *= lstep;
+                else if (overflow < 0.9)
+                    lmin /= lstep;
+
+                q = x265_clip3f(q, lmin, lmax);
+            }
+        }
+
+        qp_novbv = qScale2qp(q);
+
+        //FIXME use get_diff_limited_q() ?
+        //q = clip_qscale( h, pict_type, q );
+        double lmin_1 = lmin[pict_type];
+        double lmax_1 = lmax[pict_type];
+        x265_clip3f(q, lmin_1, lmax_1);
 
         last_qscale_for[pict_type] =
             last_qscale = q;
