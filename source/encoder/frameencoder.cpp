@@ -129,11 +129,11 @@ void CTURow::destroy()
 
 FrameEncoder::FrameEncoder(ThreadPool* pool)
     : WaveFront(pool)
+    , m_frameFilter(pool)
     , m_cfg(NULL)
     , m_slice(NULL)
     , m_pic(NULL)
     , m_rows(NULL)
-    , m_frameFilter(pool)
 {}
 
 void FrameEncoder::destroy()
@@ -318,10 +318,10 @@ FrameFilter::FrameFilter(ThreadPool* pool)
     , m_cfg(NULL)
     , m_slice(NULL)
     , m_pic(NULL)
-    , m_loopFilter(NULL)
     , m_complete_lftV(NULL)
     , m_rows_active(NULL)
     , m_locks(NULL)
+    , m_loopFilter(NULL)
 {}
 
 void FrameFilter::destroy()
