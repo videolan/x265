@@ -7,6 +7,8 @@
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +42,6 @@
 #endif
 
 namespace {
-
 void dequant(const int* quantCoef, int* coef, int width, int height, int per, int rem, bool useScalingList, unsigned int log2TrSize, int *deQuantCoef)
 {
     int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
