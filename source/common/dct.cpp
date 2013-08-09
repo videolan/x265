@@ -6,6 +6,8 @@
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -462,6 +464,7 @@ void dst4_c(short *src, int *dst, intptr_t stride)
             dst[i * N + j] = block[i * N + j];
         }
     }
+
 #undef N
 }
 
