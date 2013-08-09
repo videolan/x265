@@ -142,6 +142,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
     else
     {
+        // TODO: figure out what this is all about, replace with something more accurate
         slice->setTemporalLayerNonReferenceFlag(!m_cfg->getGOPEntry(gopID).m_refPic);
     }
     slice->setReferenced(true);
@@ -150,6 +151,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     // QP setting
     // ------------------------------------------------------------------------------------------------------------------
 
+    // TODO: Real rate control here
     qpdouble = m_cfg->param.qp;
     if (sliceType != I_SLICE)
     {
@@ -159,6 +161,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
         }
     }
 
+    // TODO: Remove dQP?
     // modify QP
     Int* pdQPs = m_cfg->getdQPs();
     if (pdQPs)
@@ -248,6 +251,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     slice->setSliceQpDelta(0);
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
+    /* TODO: lookahead and DPB modeling should give us these values */
     slice->setNumRefIdx(REF_PIC_LIST_0, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
     slice->setNumRefIdx(REF_PIC_LIST_1, m_cfg->getGOPEntry(gopID).m_numRefPicsActive);
 
@@ -261,6 +265,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
         {
             if (!m_cfg->getLoopFilterOffsetInPPS() && sliceType != I_SLICE)
             {
+                /* TODO: remove? */
                 slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(gopID).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());
                 slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_cfg->getGOPEntry(gopID).m_tcOffsetDiv2 + m_cfg->getLoopFilterTcOffset());
                 slice->setDeblockingFilterBetaOffsetDiv2(m_cfg->getGOPEntry(gopID).m_betaOffsetDiv2 + m_cfg->getLoopFilterBetaOffset());

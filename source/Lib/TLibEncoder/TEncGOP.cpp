@@ -398,6 +398,9 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         if (slice->getSliceType() == B_SLICE)
         {
+            // TODO: figure out what this is doing, replace with something more accurate
+            //       what is setColFromL0Flag() for?
+
             // select colDir
             UInt colDir = 1;
             Int closeLeft = 1, closeRight = -1;
@@ -443,8 +446,8 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             {
                 colDir = 0;
             }
-
             slice->setColFromL0Flag(1 - colDir);
+
             Bool bLowDelay = true;
             Int curPOC = slice->getPOC();
             Int refIdx = 0;

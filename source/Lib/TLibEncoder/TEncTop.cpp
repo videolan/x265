@@ -453,18 +453,18 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
     pcPPS->setPicDisableDeblockingFilterFlag(!param.bEnableLoopFilter);
     pcPPS->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pcPPS->setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
+
+    /* TODO: this must be replaced with a user-parameter or hard-coded value */
     Int histogram[MAX_NUM_REF + 1];
     for (Int i = 0; i <= MAX_NUM_REF; i++)
     {
         histogram[i] = 0;
     }
-
     for (Int i = 0; i < getGOPSize(); i++)
     {
         assert(getGOPEntry(i).m_numRefPicsActive >= 0 && getGOPEntry(i).m_numRefPicsActive <= MAX_NUM_REF);
         histogram[getGOPEntry(i).m_numRefPicsActive]++;
     }
-
     Int maxHist = -1;
     Int bestPos = 0;
     for (Int i = 0; i <= MAX_NUM_REF; i++)
@@ -475,10 +475,10 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
             bestPos = i;
         }
     }
-
     assert(bestPos <= 15);
     pcPPS->setNumRefIdxL0DefaultActive(bestPos);
     pcPPS->setNumRefIdxL1DefaultActive(bestPos);
+
     pcPPS->setTransquantBypassEnableFlag(getTransquantBypassEnableFlag());
     pcPPS->setUseTransformSkip(param.bEnableTransformSkip);
     pcPPS->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
@@ -487,7 +487,7 @@ Void TEncTop::xInitPPS(TComPPS *pcPPS)
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
 Void TEncTop::xInitRPS(TComSPS *pcSPS)
 {
-    TComReferencePictureSet*      rps;
+    TComReferencePictureSet* rps;
 
     pcSPS->createRPSList(getGOPSize() + m_extraRPSs);
     TComRPSList* rpsList = pcSPS->getRPSList();
