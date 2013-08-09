@@ -157,6 +157,9 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
 
     for (int i = 0; i < 2; i++)
     {
+	if (!do_search[i])
+            continue;
+
         int numc = 0;
         MV mvc[4], mvp;
         MV *fenc_mv = fenc_mvs[i];
@@ -179,10 +182,12 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         if (numc <= 1)
             mvp = mvc[0];
         else
+        {
             //TODO x265_median_mv(mvp, mvc[0], mvc[1], mvc[2])
             ;
+        }
 
-        *fenc_costs[i] = me.motionEstimate(fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
+        *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
     }
     if (b_bidir)
     {
