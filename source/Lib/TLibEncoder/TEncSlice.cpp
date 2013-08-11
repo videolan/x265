@@ -131,20 +131,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     // slice type
     SliceType sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeInterval == 0 || bForceISlice) ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
-
-    // ------------------------------------------------------------------------------------------------------------------
-    // Non-referenced frame marking
-    // ------------------------------------------------------------------------------------------------------------------
-
-    if (pocLast == 0)
-    {
-        slice->setTemporalLayerNonReferenceFlag(false);
-    }
-    else
-    {
-        // TODO: figure out what this is all about, replace with something more accurate
-        slice->setTemporalLayerNonReferenceFlag(!m_cfg->getGOPEntry(gopID).m_refPic);
-    }
     slice->setReferenced(true);
 
     // ------------------------------------------------------------------------------------------------------------------

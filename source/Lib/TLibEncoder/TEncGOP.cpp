@@ -351,8 +351,20 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         {
             slice->setSliceType(P_SLICE);
         }
+        if (pocLast == 0)
+        {
+            slice->setTemporalLayerNonReferenceFlag(false);
+        }
+        else
+        {
+            // m_refPic is true if this frame is used as a motion reference
+            slice->setTemporalLayerNonReferenceFlag(!m_cfg->getGOPEntry(gopIdx).m_refPic);
+        }
+
         // Set the nal unit type
         slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR));
+
+        // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
         if (slice->getTemporalLayerNonReferenceFlag())
         {
             if (slice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_R)
