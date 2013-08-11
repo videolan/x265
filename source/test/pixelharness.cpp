@@ -256,7 +256,7 @@ bool PixelHarness::check_block_copy_p_s(x265::blockcpy_ps_t ref, x265::blockcpy_
         opt(bx, by, opt_dest, 64, (short*)pbuf2 + j, STRIDE);
         ref(bx, by, ref_dest, 64, (short*)pbuf2 + j, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += 4;
@@ -314,8 +314,11 @@ bool PixelHarness::check_calcrecon(x265::calcrecon_t ref, x265::calcrecon_t opt)
         opt(pbuf1 + j, sbuf1 + j, opt_reco, opt_recq, opt_pred, stride, stride, stride);
         ref(pbuf1 + j, sbuf1 + j, ref_reco, ref_recq, ref_pred, stride, stride, stride);
 
-        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)) || memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)) ||
-            memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
+        if (memcmp(ref_recq, opt_recq, 64 * 64 * sizeof(short)))
+            return false;
+        if (memcmp(ref_reco, opt_reco, 64 * 64 * sizeof(pixel)))
+            return false;
+        if (memcmp(ref_pred, opt_pred, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += INCR;
@@ -387,7 +390,7 @@ bool PixelHarness::check_pixeladd_ss(x265::pixeladd_ss_t ref, x265::pixeladd_ss_
         opt(bx, by, opt_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
         ref(bx, by, ref_dest, STRIDE, (short*)pbuf2 + j, (short*)pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(short)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(short)))
             return false;
 
         j += INCR;
@@ -410,7 +413,7 @@ bool PixelHarness::check_pixeladd_pp(x265::pixeladd_pp_t ref, x265::pixeladd_pp_
         opt(bx, by, opt_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
         ref(bx, by, ref_dest, STRIDE, pbuf2 + j, pbuf1 + j, STRIDE, STRIDE);
 
-        if (memcmp(ref_dest, opt_dest, bx * by * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         j += INCR;
@@ -445,13 +448,13 @@ bool PixelHarness::check_downscale_t(x265::downscale_t ref, x265::downscale_t op
         ref(pbuf2 + j, ref_destf, ref_desth, ref_destv, ref_destc, src_stride, dst_stride, bx, by);
         opt(pbuf2 + j, opt_destf, opt_desth, opt_destv, opt_destc, src_stride, dst_stride, bx, by);
 
-        if (memcmp(ref_destf, opt_destf, bx * by * sizeof(pixel)))
+        if (memcmp(ref_destf, opt_destf, 32 * 32 * sizeof(pixel)))
             return false;
-        if (memcmp(ref_desth, opt_desth, bx * by * sizeof(pixel)))
+        if (memcmp(ref_desth, opt_desth, 32 * 32 * sizeof(pixel)))
             return false;
-        if (memcmp(ref_destv, opt_destv, bx * by * sizeof(pixel)))
+        if (memcmp(ref_destv, opt_destv, 32 * 32 * sizeof(pixel)))
             return false;
-        if (memcmp(ref_destc, opt_destc, bx * by * sizeof(pixel)))
+        if (memcmp(ref_destc, opt_destc, 32 * 32 * sizeof(pixel)))
             return false;
 
         j += INCR;
