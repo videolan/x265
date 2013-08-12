@@ -480,12 +480,12 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         Bool bGPBcheck = false;
         if (slice->getSliceType() == B_SLICE)
         {
-            if (slice->getNumRefIdx(RefPicList(0)) == slice->getNumRefIdx(RefPicList(1)))
+            if (slice->getNumRefIdx(REF_PIC_LIST_0) == slice->getNumRefIdx(REF_PIC_LIST_1))
             {
                 bGPBcheck = true;
-                for (Int i = 0; i < slice->getNumRefIdx(RefPicList(1)); i++)
+                for (Int i = 0; i < slice->getNumRefIdx(REF_PIC_LIST_1); i++)
                 {
-                    if (slice->getRefPOC(RefPicList(1), i) != slice->getRefPOC(RefPicList(0), i))
+                    if (slice->getRefPOC(REF_PIC_LIST_1, i) != slice->getRefPOC(REF_PIC_LIST_0, i))
                     {
                         bGPBcheck = false;
                         break;
