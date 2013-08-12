@@ -96,7 +96,7 @@ Void TEncTop::destroy()
     if (m_GOPEncoder)
     {
         m_GOPEncoder->destroy();
-        delete [] m_GOPEncoder;
+        delete m_GOPEncoder;
     }
 
     while (!m_picList.empty())
