@@ -235,7 +235,6 @@ void Encoder::configure(x265_param_t *_param)
     m_gradualDecodingRefreshInfoEnabled = 0;
     m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
-    m_scalingListFile = NULL;
     m_recalculateQPAccordingToLambda = 0;
     m_activeParameterSetsSEIEnabled = 0;
     m_vuiParametersPresentFlag = 0;

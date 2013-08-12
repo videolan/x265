@@ -99,7 +99,6 @@ enum SCALING_LIST_PARAMETER
 {
     SCALING_LIST_OFF,
     SCALING_LIST_DEFAULT,
-    SCALING_LIST_FILE_READ
 };
 
 //! \ingroup TLibEncoder
@@ -170,14 +169,33 @@ Void TEncGOP::init(TEncTop* top)
         m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
     }
 
-    // TODO: these are hacks
+    // TODO: this is a hack
     m_sps.setTMVPFlagsPresent(1);
-    m_sps.setScalingListPresentFlag(false);
-    m_pps.setScalingListPresentFlag(false);
 
     int numRows = (m_cfg->param.sourceHeight + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
     m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
     m_frameEncoders->init(top, numRows);
+
+    // set default slice level flag to the same as SPS level flag
+    if (m_top->getUseScalingListId() == SCALING_LIST_OFF)
+    {
+        m_frameEncoders->setFlatScalingList();
+        m_frameEncoders->setUseScalingList(false);
+        m_sps.setScalingListPresentFlag(false);
+        m_pps.setScalingListPresentFlag(false);
+    }
+    else if (m_top->getUseScalingListId() == SCALING_LIST_DEFAULT)
+    {
+        m_sps.setScalingListPresentFlag(false);
+        m_pps.setScalingListPresentFlag(false);
+        m_frameEncoders->setScalingList(m_top->getScalingList());
+        m_frameEncoders->setUseScalingList(true);
+    }
+    else
+    {
+        printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
+        assert(0);
+    }
 }
 
 int TEncGOP::getStreamHeaders(std::list<AccessUnit>& accessUnits)
@@ -286,7 +304,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         AccessUnit& accessUnit = accessUnitsOut.back();
 
         TComPic*   pic = NULL;
-        TComSlice* slice;
         {
             // Locate input picture with the correct POC (makes no assumption on
             // input picture ordering because list is often re-ordered)
@@ -308,44 +325,10 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         }
 
         // Slice data initialization
-        slice = sliceEncoder->initEncSlice(pic, frameEncoder, gopSize <= 1, pocLast, pocCurr, gopIdx, &m_sps, &m_pps);
+        TComSlice* slice = sliceEncoder->initEncSlice(pic, frameEncoder, gopSize <= 1, pocLast, pocCurr, gopIdx, &m_sps, &m_pps);
         slice->setLastIDR(m_lastIDR);
-
-        // set default slice level flag to the same as SPS level flag
         slice->setScalingList(m_top->getScalingList());
         slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
-        if (m_top->getUseScalingListId() == SCALING_LIST_OFF)
-        {
-            frameEncoder->setFlatScalingList();
-            frameEncoder->setUseScalingList(false);
-            m_sps.setScalingListPresentFlag(false);
-            m_pps.setScalingListPresentFlag(false);
-        }
-        else if (m_top->getUseScalingListId() == SCALING_LIST_DEFAULT)
-        {
-            slice->setDefaultScalingList();
-            m_sps.setScalingListPresentFlag(false);
-            m_pps.setScalingListPresentFlag(false);
-            frameEncoder->setScalingList(slice->getScalingList());
-            frameEncoder->setUseScalingList(true);
-        }
-        else if (m_top->getUseScalingListId() == SCALING_LIST_FILE_READ)
-        {
-            if (slice->getScalingList()->xParseScalingList(m_cfg->getScalingListFile()))
-            {
-                slice->setDefaultScalingList();
-            }
-            slice->getScalingList()->checkDcOfMatrix();
-            m_sps.setScalingListPresentFlag(slice->checkDefaultScalingList());
-            m_pps.setScalingListPresentFlag(false);
-            frameEncoder->setScalingList(slice->getScalingList());
-            frameEncoder->setUseScalingList(true);
-        }
-        else
-        {
-            printf("error : ScalingList == %d not supported\n", m_top->getUseScalingListId());
-            assert(0);
-        }
 
         if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
         {

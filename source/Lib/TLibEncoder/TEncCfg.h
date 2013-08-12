@@ -157,8 +157,7 @@ protected:
 
     UInt      m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
 
-    Int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default, 2=file.
-    Char*     m_scalingListFile;                              ///< quantization matrix file name
+    Int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default.
     Int       m_TMVPModeId;
 
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
@@ -288,8 +287,6 @@ public:
     UInt getLog2ParallelMergeLevelMinus2() { return m_log2ParallelMergeLevelMinus2; }
 
     Int  getUseScalingListId() { return m_useScalingListId; }
-
-    Char* getScalingListFile() { return m_scalingListFile; }
 
     Int getTMVPModeId() { return m_TMVPModeId; }
 
