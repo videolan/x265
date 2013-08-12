@@ -169,8 +169,7 @@ Void TEncGOP::init(TEncTop* top)
         m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
     }
 
-    // TODO: this is a hack
-    m_sps.setTMVPFlagsPresent(1);
+    m_sps.setTMVPFlagsPresent(true);
 
     int numRows = (m_cfg->param.sourceHeight + m_sps.getMaxCUHeight() - 1) / m_sps.getMaxCUHeight();
     m_frameEncoders = new x265::FrameEncoder(ThreadPool::getThreadPool());
@@ -472,39 +471,15 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
 
         //-------------------------------------------------------------
         slice->setRefPOCList();
-
         slice->setList1IdxToList0Idx();
+        slice->setEnableTMVPFlag(1);
 
-        if (m_top->getTMVPModeId() == 2)
-        {
-            if (gopIdx == 0) // first picture in SOP (i.e. forward B)
-            {
-                slice->setEnableTMVPFlag(0);
-            }
-            else
-            {
-                // Note: slice->getColFromL0Flag() is assumed to be always 0 and getcolRefIdx() is always 0.
-                slice->setEnableTMVPFlag(1);
-            }
-            m_sps.setTMVPFlagsPresent(1);
-        }
-        else if (m_top->getTMVPModeId() == 1)
-        {
-            m_sps.setTMVPFlagsPresent(1);
-            slice->setEnableTMVPFlag(1);
-        }
-        else
-        {
-            m_sps.setTMVPFlagsPresent(0);
-            slice->setEnableTMVPFlag(0);
-        }
-
-        // Slice compression
         if (m_cfg->getUseASR())
         {
             sliceEncoder->setSearchRange(slice, frameEncoder);
         }
 
+        // Slice compression
         Bool bGPBcheck = false;
         if (slice->getSliceType() == B_SLICE)
         {

@@ -158,7 +158,6 @@ protected:
     UInt      m_log2ParallelMergeLevelMinus2;                 ///< Parallel merge estimation region
 
     Int       m_useScalingListId;                             ///< Using quantization matrix i.e. 0=off, 1=default.
-    Int       m_TMVPModeId;
 
     Bool      m_TransquantBypassEnableFlag;                   ///< transquant_bypass_enable_flag setting in PPS.
     Bool      m_CUTransquantBypassFlagValue;                  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
@@ -287,8 +286,6 @@ public:
     UInt getLog2ParallelMergeLevelMinus2() { return m_log2ParallelMergeLevelMinus2; }
 
     Int  getUseScalingListId() { return m_useScalingListId; }
-
-    Int getTMVPModeId() { return m_TMVPModeId; }
 
     Bool getTransquantBypassEnableFlag() { return m_TransquantBypassEnableFlag; }
 

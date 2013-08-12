@@ -217,7 +217,6 @@ void Encoder::configure(x265_param_t *_param)
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
-    m_TMVPModeId = 1; // 0 disabled, 1: enabled, 2: auto
     m_conformanceWindow.setWindow(0, 0, 0, 0);
     int nullpad[2] = { 0, 0 };
     setPad(nullpad);
