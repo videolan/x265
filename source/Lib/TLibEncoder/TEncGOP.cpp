@@ -400,14 +400,14 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             Int closeLeft = 1, closeRight = -1;
             for (Int i = 0; i < m_cfg->getGOPEntry(gopIdx).m_numRefPics; i++)
             {
-                Int iRef = m_cfg->getGOPEntry(gopIdx).m_referencePics[i];
-                if (iRef > 0 && (iRef < closeRight || closeRight == -1))
+                Int ref = m_cfg->getGOPEntry(gopIdx).m_referencePics[i];
+                if (ref > 0 && (ref < closeRight || closeRight == -1))
                 {
-                    closeRight = iRef;
+                    closeRight = ref;
                 }
-                else if (iRef < 0 && (iRef > closeLeft || closeLeft == 1))
+                else if (ref < 0 && (ref > closeLeft || closeLeft == 1))
                 {
-                    closeLeft = iRef;
+                    closeLeft = ref;
                 }
             }
 
