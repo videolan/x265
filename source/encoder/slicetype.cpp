@@ -36,9 +36,9 @@
 // taking any of the threading changes because we will eventually use the x265
 // thread pool and wavefront processing.
 
-#define QP_BD_OFFSET (6*(X265_DEPTH-8))
+#define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
 // arbitrary, but low because SATD scores are 1/4 normal
-#define X264_LOOKAHEAD_QP (12+QP_BD_OFFSET)
+#define X264_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
 
 // Under Construction
 #if defined(_MSC_VER)
@@ -47,7 +47,6 @@
 #endif
 
 namespace x265 {
-
 struct Lookahead
 {
     MotionEstimate   me;
@@ -58,7 +57,7 @@ struct Lookahead
 
     TComList<TComPic*> inputQueue;       // input pictures in order received
     TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
-    
+
     Lookahead(int _frameQueueSize)
     {
         me.setQP(X264_LOOKAHEAD_QP, 1.0);
@@ -66,6 +65,7 @@ struct Lookahead
         frameQueueSize = _frameQueueSize;
         frames = new LookaheadFrame*[frameQueueSize];
     }
+
     ~Lookahead()
     {
         if (frames)
@@ -76,20 +76,21 @@ struct Lookahead
     int estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
 };
 
-static inline int16_t x265_median( int16_t a, int16_t b, int16_t c )
+static inline int16_t x265_median(int16_t a, int16_t b, int16_t c)
 {
-    int16_t t = (a-b)&((a-b)>>31);
+    int16_t t = (a - b) & ((a - b) >> 31);
+
     a -= t;
     b += t;
-    b -= (b-c)&((b-c)>>31);
-    b += (a-b)&((a-b)>>31);
+    b -= (b - c) & ((b - c) >> 31);
+    b += (a - b) & ((a - b) >> 31);
     return b;
 }
 
-static inline void x265_median_mv( MV &dst, MV a, MV b, MV c )
+static inline void x265_median_mv(MV &dst, MV a, MV b, MV c)
 {
-    dst.x = x265_median( a.x, b.x, c.x );
-    dst.y = x265_median( a.y, b.y, c.y );
+    dst.x = x265_median(a.x, b.x, c.x);
+    dst.y = x265_median(a.y, b.y, c.y);
 }
 
 int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
@@ -163,17 +164,18 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
     const int cu_size = g_maxCUWidth / 2;
     const int pel_offset = cu_size * cux + cu_size * cuy * stride;
     const int merange = 16;
+
     me.setSourcePU(pel_offset, cu_size, cu_size);
 
-    MV (*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy], &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
-    int (*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy], &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
+    MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy], &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
+    int(*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy], &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
 
     MV mvmin, mvmax;
     // TODO: calculate search extents
 
     for (int i = 0; i < 2; i++)
     {
-	if (!do_search[i])
+        if (!do_search[i])
             continue;
 
         int numc = 0;
@@ -199,7 +201,7 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
             mvp = mvc[0];
         else
         {
-            x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);           
+            x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);
         }
 
         *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
@@ -622,6 +624,7 @@ static void x264_slicetype_mb_cost(x264_t *h, x264_mb_analysis_t *a,
         (dst)[2] = &(src)[2][i_pel_offset]; \
         (dst)[3] = &(src)[3][i_pel_offset]; \
     }
+
 #define LOAD_WPELS_LUMA(dst, src) \
     (dst) = &(src)[i_pel_offset];
 
