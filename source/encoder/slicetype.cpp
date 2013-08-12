@@ -61,7 +61,7 @@ struct Lookahead
     Lookahead(int _frameQueueSize)
     {
         me.setQP(X264_LOOKAHEAD_QP, 1.0);
-        me.setSearchMethod(X265_DIA_SEARCH);
+        me.setSearchMethod(X265_HEX_SEARCH);
         frameQueueSize = _frameQueueSize;
         frames = new LookaheadFrame*[frameQueueSize];
     }
