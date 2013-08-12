@@ -299,10 +299,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             m_lastIDR = pocCurr;
         }
 
-        // start a new access unit: create an entry in the list of output access units
-        accessUnitsOut.push_back(AccessUnit());
-        AccessUnit& accessUnit = accessUnitsOut.back();
-
         TComPic*   pic = NULL;
         {
             // Locate input picture with the correct POC (makes no assumption on
@@ -498,6 +494,10 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             }
         }
         slice->setMvdL1ZeroFlag(bGPBcheck);
+
+        // start a new access unit: create an entry in the list of output access units
+        accessUnitsOut.push_back(AccessUnit());
+        AccessUnit& accessUnit = accessUnitsOut.back();
 
         // Allocate some coders, now we know how many tiles there are.
         Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
