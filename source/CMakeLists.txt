@@ -94,8 +94,8 @@ if(ENABLE_TESTS)
     add_subdirectory(test)
 endif(ENABLE_TESTS)
 
-# Visual leak detector
 if (WIN32)
+    # Visual leak detector
     find_package(VLD)
     if(VLD_FOUND)
         add_definitions(-DHAVE_VLD)
@@ -103,6 +103,11 @@ if (WIN32)
         set(PLATFORM_LIBS ${PLATFORM_LIBS} ${VLD_LIBRARIES})
         link_directories(${VLD_LIBRARY_DIRS})
     endif()
+    option(WINXP_SUPPORT "Make binaries compatible with Windows XP" OFF)
+    if(WINXP_SUPPORT)
+        # force workarounds for atomic intrinsics introduced after XP
+        add_definitions(-D_WIN32_WINNT=0x501)
+    endif(WINXP_SUPPORT)
 endif()
 
 # Main CLI application
