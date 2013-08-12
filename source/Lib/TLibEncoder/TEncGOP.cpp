@@ -471,11 +471,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         slice->setList1IdxToList0Idx();
         slice->setEnableTMVPFlag(1);
 
-        if (m_cfg->getUseASR())
-        {
-            sliceEncoder->setSearchRange(slice, frameEncoder);
-        }
-
         // Slice compression
         Bool bGPBcheck = false;
         if (slice->getSliceType() == B_SLICE)
@@ -494,6 +489,11 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             }
         }
         slice->setMvdL1ZeroFlag(bGPBcheck);
+
+        if (m_cfg->getUseASR())
+        {
+            sliceEncoder->setSearchRange(slice, frameEncoder);
+        }
 
         // start a new access unit: create an entry in the list of output access units
         accessUnitsOut.push_back(AccessUnit());
