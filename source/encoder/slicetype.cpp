@@ -76,6 +76,22 @@ struct Lookahead
     int estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
 };
 
+static inline int16_t x265_median( int16_t a, int16_t b, int16_t c )
+{
+    int16_t t = (a-b)&((a-b)>>31);
+    a -= t;
+    b += t;
+    b -= (b-c)&((b-c)>>31);
+    b += (a-b)&((a-b)>>31);
+    return b;
+}
+
+static inline void x265_median_mv( MV &dst, MV a, MV b, MV c )
+{
+    dst.x = x265_median( a.x, b.x, c.x );
+    dst.y = x265_median( a.y, b.y, c.y );
+}
+
 int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 {
     int score = 0;
@@ -183,8 +199,7 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
             mvp = mvc[0];
         else
         {
-            //TODO x265_median_mv(mvp, mvc[0], mvc[1], mvc[2])
-            ;
+            x265_median_mv(mvp, mvc[0], mvc[1], mvc[2]);           
         }
 
         *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
