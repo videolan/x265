@@ -299,7 +299,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             m_lastIDR = pocCurr;
         }
 
-        TComPic*   pic = NULL;
+        TComPic* pic = NULL;
         {
             // Locate input picture with the correct POC (makes no assumption on
             // input picture ordering because list is often re-ordered)
@@ -471,7 +471,6 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         slice->setList1IdxToList0Idx();
         slice->setEnableTMVPFlag(1);
 
-        // Slice compression
         Bool bGPBcheck = false;
         if (slice->getSliceType() == B_SLICE)
         {
@@ -489,6 +488,7 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             }
         }
         slice->setMvdL1ZeroFlag(bGPBcheck);
+        slice->setNextSlice(false);
 
         if (m_cfg->getUseASR())
         {
@@ -499,14 +499,11 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
         accessUnitsOut.push_back(AccessUnit());
         AccessUnit& accessUnit = accessUnitsOut.back();
 
-        // Allocate some coders, now we know how many tiles there are.
         Int numSubstreams = m_top->param.bEnableWavefront ? pic->getPicSym()->getFrameHeightInCU() : 1;
-
-        // Allocate some coders, now we know how many tiles there are.
         outStreams = new TComOutputBitstream[numSubstreams];
 
-        slice->setNextSlice(false);
-        sliceEncoder->compressSlice(pic, frameEncoder);  // The bulk of the real work
+        // Slice compression, most of the hard work is done here
+        sliceEncoder->compressSlice(pic, frameEncoder);
 
         // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
         if (m_cfg->param.saoLcuBasedOptimization && m_cfg->param.saoLcuBoundary)
