@@ -176,14 +176,14 @@ Void TEncGOP::init(TEncTop* top)
     m_frameEncoders->init(top, numRows);
 
     // set default slice level flag to the same as SPS level flag
-    if (m_top->getUseScalingListId() == SCALING_LIST_OFF)
+    if (m_cfg->getUseScalingListId() == SCALING_LIST_OFF)
     {
         m_frameEncoders->setFlatScalingList();
         m_frameEncoders->setUseScalingList(false);
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
-    else if (m_top->getUseScalingListId() == SCALING_LIST_DEFAULT)
+    else if (m_cfg->getUseScalingListId() == SCALING_LIST_DEFAULT)
     {
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
