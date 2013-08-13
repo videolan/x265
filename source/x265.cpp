@@ -257,7 +257,11 @@ struct CLIOptions
 
     void do_help(x265_param_t *param)
     {
+        x265_param_default(param);
         print_version(param);
+        int cpuid = 0, inputBitDepth = 8, outputBitDepth = param->internalBitDepth;
+        char help = 'h';
+
         printf("\nSyntax: x265 [options] infile [-o] outfile\n");
         printf("    infile can be YUV or Y4M\n");
         printf("    outfile is raw HEVC bitstream\n");
@@ -266,8 +270,12 @@ struct CLIOptions
 #define HELP(message) printf("\n%s\n", message);
 #define OPT(longname, var, argreq, flag, helptext) \
     if (flag) printf("-%c/", flag); else printf("   "); \
-    printf("--%-20s\t%s\n", longname, helptext);
-#define STROPT OPT
+    printf("--%-20s\t%s\n", longname, helptext); \
+    if (argreq) printf("\t\t\t\tDefault: %d\n", var);  \
+    else if (!flag && strncmp(longname, "no-", 3)) printf("\t\t\t\tDefault: %s\n", var ? "Enabled" : "Disabled");
+#define STROPT(longname, var, argreq, flag, helptext) \
+    if (flag) printf("-%c/", flag); else printf("   "); \
+    printf("--%-20s\t%s\n", longname, helptext); 
 #include "x265opts.h"
 #undef OPT
 #undef STROPT
