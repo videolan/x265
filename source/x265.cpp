@@ -271,8 +271,8 @@ struct CLIOptions
 #define OPT(longname, var, argreq, flag, helptext) \
     if (flag) printf("-%c/", flag); else printf("   "); \
     printf("--%-20s\t%s\n", longname, helptext); \
-    if (argreq) printf("\t\t\t\tDefault: %d\n", var);  \
-    else if (!flag && strncmp(longname, "no-", 3)) printf("\t\t\t\tDefault: %s\n", var ? "Enabled" : "Disabled");
+    if (argreq == required_argument) printf("\t\t\t\tDefault: %d\n", var);  \
+    else if (strncmp(longname, "no-", 3)) printf("\t\t\t\tDefault: %s\n", var ? "Enabled" : "Disabled");
 #define STROPT(longname, var, argreq, flag, helptext) \
     if (flag) printf("-%c/", flag); else printf("   "); \
     printf("--%-20s\t%s\n", longname, helptext); 
