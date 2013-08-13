@@ -40,6 +40,8 @@ protected:
 
     std::ofstream ofs;
 
+    std::ofstream::pos_type header;
+
     char *buf;
 
     void writeHeader();

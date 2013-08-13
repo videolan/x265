@@ -223,6 +223,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
             recon.planes[2] = recpic->getCrAddr();
             recon.stride[2] = recpic->getCStride();
             recon.bitDepth = sizeof(Pel) * 8;
+            recon.poc = m_picsEncoded + i;
         }
 
         *pic_out = m_recon;

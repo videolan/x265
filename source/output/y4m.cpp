@@ -37,6 +37,7 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, int rate)
     if (ofs)
     {
         ofs << "YUV4MPEG2 W" << width << " H" << height << " F" << rate << ":1 Ip C420\n";
+        header = ofs.tellp();
     }
 }
 
@@ -49,6 +50,9 @@ Y4MOutput::~Y4MOutput()
 bool Y4MOutput::writePicture(const x265_picture_t& pic)
 {
     PPAStartCpuEventFunc(write_yuv);
+    std::ofstream::pos_type outPicPos = header;
+    outPicPos += pic.poc * (6 + 3 * (width * height) / 2);
+    ofs.seekp(outPicPos);
     ofs << "FRAME\n";
 
     if (pic.bitDepth > 8)

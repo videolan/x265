@@ -133,6 +133,7 @@ typedef struct x265_picture_t
     void *planes[3];
     int   stride[3];
     int   bitDepth;
+    int   poc;
 }
 x265_picture_t;
 
