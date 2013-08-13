@@ -24,11 +24,9 @@
 #ifndef _LOOKAHEAD_H
 #define _LOOKAHEAD_H 1
 
-#include "TLibCommon/TComList.h"
-
 #include "common.h"
-#include "mv.h"
 #include "reference.h"
+#include "mv.h"
 
 class TComPic;
 
@@ -45,6 +43,7 @@ struct LookaheadFrame : public ReferencePlanes
     int    lines;    // height of lowres frame in pixel lines
     int    cuWidth;  // width of lowres frame in downscale CUs
     int    cuHeight; // height of lowres frame in downscale CUs
+    int    bframes;
     bool   bIntraCalculated;
 
     /* lookahead output data */
@@ -55,8 +54,36 @@ struct LookaheadFrame : public ReferencePlanes
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
+    void create(TComPic *pic);
+
+    void destroy()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (buffer[i])
+                X265_FREE(buffer[i]);
+        }
+
+        for (int i = 0; i < bframes + 2; i++)
+        {
+            for (int j = 0; j < bframes + 2; j++)
+            {   
+                if (rowSatds[i][j]) X265_FREE(rowSatds[i][j]);
+                if (lowresCosts[i][j]) X265_FREE(lowresCosts[i][j]);
+            }
+        }
+
+        for (int i = 0; i < bframes + 1; i++)
+        {
+            if (lowresMvs[0][i]) X265_FREE(lowresMvs[0][i]);
+            if (lowresMvs[1][i]) X265_FREE(lowresMvs[1][i]);
+            if (lowresMvCosts[0][i]) X265_FREE(lowresMvCosts[0][i]);
+            if (lowresMvCosts[1][i]) X265_FREE(lowresMvCosts[1][i]);
+        }
+    }
+
     // (re) initialize lowres state
-    void init(int bframes)
+    void init()
     {
         bIntraCalculated = false;
         memset(costEst, -1, sizeof(costEst));

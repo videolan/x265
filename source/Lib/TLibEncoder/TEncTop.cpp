@@ -173,7 +173,7 @@ void TEncTop::addPicture(const x265_picture_t *picture)
             {
                 /* downscale and generate 4 HPEL planes for lookahead, extend the four planes */
                 x265::LookaheadFrame &l = pic->m_lowres;
-                l.init(param.bframes);
+                l.init();
                 x265::primitives.frame_init_lowres_core(pic->getPicYuvOrg()->getLumaAddr(),
                                                         l.m_lumaPlane[0][0], l.m_lumaPlane[2][0], l.m_lumaPlane[0][2], l.m_lumaPlane[2][2],
                                                         pic->getPicYuvOrg()->getStride(),

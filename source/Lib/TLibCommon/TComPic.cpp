@@ -55,7 +55,6 @@ TComPic::TComPic()
     , m_bUsedByCurr(false)
     , m_bIsLongTerm(false)
     , m_bCheckLTMSB(false)
-    , m_bframes(0)
     , m_complete_enc(NULL)
 {
     memset(&m_lowres, 0, sizeof(m_lowres));
@@ -66,7 +65,6 @@ TComPic::~TComPic()
 
 Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt maxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, Int bframes)
 {
-    m_bframes = bframes;
     m_picSym = new TComPicSym;
     m_picSym->create(width, height, maxWidth, maxHeight, maxDepth);
 
@@ -86,43 +84,7 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
     m_lowres.width = m_origPicYuv->getWidth() / 2;
     m_lowres.lines = m_origPicYuv->getHeight() / 2;
     m_lowres.stride = m_lowres.width + 2 * m_origPicYuv->getLumaMarginX();
-
-    /* allocate lowres buffers */
-    for (int i = 0; i < 4; i++)
-    {
-        m_lowres.buffer[i] = (Pel*)X265_MALLOC(Pel, m_lowres.stride * (m_lowres.lines + 2 * m_origPicYuv->getLumaMarginY()));
-    }
-
-    int padoffset = m_lowres.stride * m_origPicYuv->getLumaMarginY() + m_origPicYuv->getLumaMarginX();
-    m_lowres.m_lumaPlane[0][0] = m_lowres.buffer[0] + padoffset;
-    m_lowres.m_lumaPlane[2][0] = m_lowres.buffer[1] + padoffset;
-    m_lowres.m_lumaPlane[0][2] = m_lowres.buffer[2] + padoffset;
-    m_lowres.m_lumaPlane[2][2] = m_lowres.buffer[3] + padoffset;
-
-    /* for now, use HPEL planes for QPEL offsets */
-    m_lowres.m_lumaPlane[0][1] = m_lowres.m_lumaPlane[1][0] = m_lowres.m_lumaPlane[1][1] = m_lowres.m_lumaPlane[0][0];
-    m_lowres.m_lumaPlane[2][1] = m_lowres.m_lumaPlane[3][0] = m_lowres.m_lumaPlane[3][1] = m_lowres.m_lumaPlane[2][0];
-    m_lowres.m_lumaPlane[0][3] = m_lowres.m_lumaPlane[1][2] = m_lowres.m_lumaPlane[1][3] = m_lowres.m_lumaPlane[0][2];
-    m_lowres.m_lumaPlane[2][3] = m_lowres.m_lumaPlane[3][2] = m_lowres.m_lumaPlane[3][3] = m_lowres.m_lumaPlane[2][2];
-
-    for (int i = 0; i < bframes + 2; i++)
-    {
-        for (int j = 0; j < bframes + 2; j++)
-        {   
-            m_lowres.rowSatds[i][j] = (int*)X265_MALLOC(int, m_picSym->getFrameHeightInCU());
-            m_lowres.lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, m_picSym->getNumberOfCUsInFrame());
-        }
-    }
-
-    for (int i = 0; i < bframes + 1; i++)
-    {
-        m_lowres.lowresMvs[0][i] = (MV*)X265_MALLOC(MV, m_picSym->getNumberOfCUsInFrame());
-        m_lowres.lowresMvs[1][i] = (MV*)X265_MALLOC(MV, m_picSym->getNumberOfCUsInFrame());
-        m_lowres.lowresMvCosts[0][i] = (int*)X265_MALLOC(int, m_picSym->getNumberOfCUsInFrame());
-        m_lowres.lowresMvCosts[1][i] = (int*)X265_MALLOC(int, m_picSym->getNumberOfCUsInFrame());
-    }
-
-    m_lowres.init(bframes);
+    m_lowres.bframes = bframes;
 
     int numRows = (height + maxHeight - 1) / maxHeight;
     m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()
@@ -152,29 +114,6 @@ Void TComPic::destroy()
         m_reconPicYuv = NULL;
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-         if (m_lowres.buffer[i])
-             X265_FREE(m_lowres.buffer[i]);
-    }
-
-    for (int i = 0; i < m_bframes + 2; i++)
-    {
-        for (int j = 0; j < m_bframes + 2; j++)
-        {   
-            if (m_lowres.rowSatds[i][j]) X265_FREE(m_lowres.rowSatds[i][j]);
-            if (m_lowres.lowresCosts[i][j]) X265_FREE(m_lowres.lowresCosts[i][j]);
-        }
-    }
-
-    for (int i = 0; i < m_bframes + 1; i++)
-    {
-        if (m_lowres.lowresMvs[0][i]) X265_FREE(m_lowres.lowresMvs[0][i]);
-        if (m_lowres.lowresMvs[1][i]) X265_FREE(m_lowres.lowresMvs[1][i]);
-        if (m_lowres.lowresMvCosts[0][i]) X265_FREE(m_lowres.lowresMvCosts[0][i]);
-        if (m_lowres.lowresMvCosts[1][i]) X265_FREE(m_lowres.lowresMvCosts[1][i]);
-    }
-
     if (m_complete_enc)
     {
         delete[] m_complete_enc;
@@ -184,6 +123,8 @@ Void TComPic::destroy()
     {
         delete[] m_complete_lft;
     }
+
+    m_lowres.destroy();
 }
 
 Void TComPic::compressMotion()

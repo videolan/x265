@@ -45,7 +45,8 @@ add_library(common
     md5.cpp md5.h
     TShortYUV.cpp TShortYUV.h mv.h
     reference.cpp reference.h
-    common.cpp common.h lookahead.h)
+    common.cpp common.h
+    lookahead.cpp lookahead.h)
     
 if(ENABLE_PRIMITIVES_VEC)
     add_subdirectory(vec)
