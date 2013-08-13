@@ -369,7 +369,7 @@ bool Encoder::initializeGOP(x265_param_t *_param)
 
     if (_param->bOpenGOP)
     {
-        _param->keyframeMax = -1;
+        _param->keyframeMax = MAX_INT;
     }
     else if (_param->keyframeMax > 0)
     {
