@@ -936,23 +936,21 @@ Void TEncGOP::compressGOP(Int pocLast, Int numPicRecvd, TComList<TComPic*> picLi
             }
             if (m_cfg->getPictureTimingSEIEnabled())
             {
+                OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
+                entropyCoder->setEntropyCoder(cavlcCoder, slice);
+                m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, slice->getSPS());
+                writeRBSPTrailingBits(onalu.m_Bitstream);
+                UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
+                // Insert PT SEI after APS and BP SEI
+                UInt offsetPosition = bBufferingPeriodSEIPresentInAU;
+                AccessUnit::iterator it = accessUnit.begin();
+                for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
                 {
-                    OutputNALUnit onalu(NAL_UNIT_PREFIX_SEI, 0);
-                    entropyCoder->setEntropyCoder(cavlcCoder, slice);
-                    m_seiWriter.writeSEImessage(onalu.m_Bitstream, pictureTimingSEI, slice->getSPS());
-                    writeRBSPTrailingBits(onalu.m_Bitstream);
-                    UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-                    // Insert PT SEI after APS and BP SEI
-                    UInt offsetPosition = bBufferingPeriodSEIPresentInAU;
-                    AccessUnit::iterator it = accessUnit.begin();
-                    for (int j = 0; j < seiPositionInAu + offsetPosition; j++)
-                    {
-                        it++;
-                    }
-
-                    accessUnit.insert(it, new NALUnitEBSP(onalu));
-                    bPictureTimingSEIPresentInAU = true;
+                    it++;
                 }
+
+                accessUnit.insert(it, new NALUnitEBSP(onalu));
+                bPictureTimingSEIPresentInAU = true;
             }
             if (m_cfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag())
             {
