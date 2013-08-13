@@ -79,10 +79,10 @@ public:
 
     /* Collect statistics globally */
     x265::Lock  m_statLock;
-    TEncAnalyze m_gcAnalyzeAll;
-    TEncAnalyze m_gcAnalyzeI;
-    TEncAnalyze m_gcAnalyzeP;
-    TEncAnalyze m_gcAnalyzeB;
+    TEncAnalyze m_analyzeAll;
+    TEncAnalyze m_analyzeI;
+    TEncAnalyze m_analyzeP;
+    TEncAnalyze m_analyzeB;
 
 public:
 

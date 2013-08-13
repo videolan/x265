@@ -138,10 +138,10 @@ Void TEncTop::init()
         m_picList.pushBack(pic);
     }
 
-    m_gcAnalyzeI.setFrmRate(param.frameRate);
-    m_gcAnalyzeP.setFrmRate(param.frameRate);
-    m_gcAnalyzeB.setFrmRate(param.frameRate);
-    m_gcAnalyzeAll.setFrmRate(param.frameRate);
+    m_analyzeI.setFrmRate(param.frameRate);
+    m_analyzeP.setFrmRate(param.frameRate);
+    m_analyzeB.setFrmRate(param.frameRate);
+    m_analyzeAll.setFrmRate(param.frameRate);
 }
 
 void TEncTop::addPicture(const x265_picture_t *picture)
@@ -249,22 +249,22 @@ Double TEncTop::printSummary()
 {
     if (param.logLevel >= X265_LOG_INFO)
     {
-        m_gcAnalyzeI.printOut('i');
-        m_gcAnalyzeP.printOut('p');
-        m_gcAnalyzeB.printOut('b');
-        m_gcAnalyzeAll.printOut('a');
+        m_analyzeI.printOut('i');
+        m_analyzeP.printOut('p');
+        m_analyzeB.printOut('b');
+        m_analyzeAll.printOut('a');
     }
 
 #if _SUMMARY_OUT_
-    m_gcAnalyzeAll.printSummaryOut();
+    m_analyzeAll.printSummaryOut();
 #endif
 #if _SUMMARY_PIC_
-    m_gcAnalyzeI.printSummary('I');
-    m_gcAnalyzeP.printSummary('P');
-    m_gcAnalyzeB.printSummary('B');
+    m_analyzeI.printSummary('I');
+    m_analyzeP.printSummary('P');
+    m_analyzeB.printSummary('B');
 #endif
 
-    return (m_gcAnalyzeAll.getPsnrY() * 6 + m_gcAnalyzeAll.getPsnrU() + m_gcAnalyzeAll.getPsnrV()) / (8 * m_gcAnalyzeAll.getNumPic());
+    return (m_analyzeAll.getPsnrY() * 6 + m_analyzeAll.getPsnrU() + m_analyzeAll.getPsnrV()) / (8 * m_analyzeAll.getNumPic());
 }
 
 Void TEncTop::xInitSPS(TComSPS *pcSPS)

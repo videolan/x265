@@ -1302,19 +1302,19 @@ Void TEncGOP::xCalculateAddPSNR(TComPic* pic, TComPicYuv* recon, const AccessUni
     x265::ScopedLock(m_top->m_statLock);
 
     //===== add PSNR =====
-    m_top->m_gcAnalyzeAll.addResult(psnrY, psnrU, psnrV, (Double)bits);
+    m_top->m_analyzeAll.addResult(psnrY, psnrU, psnrV, (Double)bits);
     TComSlice*  slice = pic->getSlice();
     if (slice->isIntra())
     {
-        m_top->m_gcAnalyzeI.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_top->m_analyzeI.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
     if (slice->isInterP())
     {
-        m_top->m_gcAnalyzeP.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_top->m_analyzeP.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
     if (slice->isInterB())
     {
-        m_top->m_gcAnalyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
+        m_top->m_analyzeB.addResult(psnrY, psnrU, psnrV, (Double)bits);
     }
 
     if (m_cfg->param.logLevel < X265_LOG_DEBUG)
