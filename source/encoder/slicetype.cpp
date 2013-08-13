@@ -38,7 +38,7 @@
 
 #define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
 // arbitrary, but low because SATD scores are 1/4 normal
-#define X264_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
+#define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
 
 // Under Construction
 #if defined(_MSC_VER)
@@ -60,7 +60,7 @@ struct Lookahead
 
     Lookahead(int _frameQueueSize)
     {
-        me.setQP(X264_LOOKAHEAD_QP, 1.0);
+        me.setQP(X265_LOOKAHEAD_QP, 1.0);
         me.setSearchMethod(X265_HEX_SEARCH);
         frameQueueSize = _frameQueueSize;
         frames = new LookaheadFrame*[frameQueueSize];
