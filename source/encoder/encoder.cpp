@@ -412,7 +412,8 @@ bool Encoder::initializeGOP(x265_param_t *_param)
     }
 
     int numOK = 0;
-    CONFIRM(_param->keyframeMax >= 0 && (_param->keyframeMax % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
+    if (_param->bOpenGOP == false)
+        CONFIRM(_param->keyframeMax % m_gopSize != 0, "Intra period must be a multiple of GOPSize");
 
     m_extraRPSs = 0;
     // start looping through frames in coding order until we can verify that the GOP structure is correct.
