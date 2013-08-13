@@ -46,7 +46,8 @@
 #include "TEncGOP.h"
 #include "TEncAnalyze.h"
 #include "threading.h"
-#include "threadpool.h"
+
+namespace x265 { class Lookahead; class ThreadPool; }
 
 //! \ingroup TLibEncoder
 //! \{
@@ -72,6 +73,7 @@ private:
 
     TEncGOP*                m_GOPEncoder;
     x265::ThreadPool*       m_threadPool;
+    x265::Lookahead*        m_lookahead;
 
 public:
 
