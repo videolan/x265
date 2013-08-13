@@ -35,7 +35,6 @@ class TComPic;
 namespace x265 {
 
 #define X265_BFRAME_MAX 16
-#define FDEC_STRIDE 32
 
 struct LookaheadFrame : public ReferencePlanes
 {
