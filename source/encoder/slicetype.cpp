@@ -26,6 +26,8 @@
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
 #include "lookahead.h"
+
+#include "slicetype.h"
 #include "motion.h"
 #include "mv.h"
 
@@ -36,47 +38,13 @@
 // taking any of the threading changes because we will eventually use the x265
 // thread pool and wavefront processing.
 
-#define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
-// arbitrary, but low because SATD scores are 1/4 normal
-#define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
-
 // Under Construction
 #if defined(_MSC_VER)
 #pragma warning(disable: 4100) // unused formal parameter
 #pragma warning(disable: 4189) // unused local variable
 #endif
 
-namespace x265 {
-// private namespace
-
-struct Lookahead
-{
-    MotionEstimate   me;
-    LookaheadFrame **frames;
-    int              bframes;            // from param->bframes
-    int              frameQueueSize;     // from param->rcLookahead (--rc-lookahead)
-    int              bAdaptMode;         // from param->bAdaptMode (--b-adapt 0-none, 1-simple, 2-trellis)
-
-    TComList<TComPic*> inputQueue;       // input pictures in order received
-    TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
-
-    Lookahead(int _frameQueueSize)
-    {
-        me.setQP(X265_LOOKAHEAD_QP, 1.0);
-        me.setSearchMethod(X265_HEX_SEARCH);
-        frameQueueSize = _frameQueueSize;
-        frames = new LookaheadFrame*[frameQueueSize];
-    }
-
-    ~Lookahead()
-    {
-        if (frames)
-            delete [] frames;
-    }
-
-    int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
-    int estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
-};
+using namespace x265;
 
 static inline int16_t x265_median(int16_t a, int16_t b, int16_t c)
 {
@@ -93,6 +61,22 @@ static inline void x265_median_mv(MV &dst, MV a, MV b, MV c)
 {
     dst.x = x265_median(a.x, b.x, c.x);
     dst.y = x265_median(a.y, b.y, c.y);
+}
+
+Lookahead::Lookahead(x265_param_t *param)
+{
+    me.setQP(X265_LOOKAHEAD_QP, 1.0);
+    me.setSearchMethod(X265_HEX_SEARCH);
+    frameQueueSize = param->lookaheadDepth;
+    bframes = param->bframes;
+    bAdaptMode = param->bFrameAdaptive;
+    frames = new LookaheadFrame*[param->lookaheadDepth];
+}
+
+Lookahead::~Lookahead()
+{
+    if (frames)
+        delete [] frames;
 }
 
 int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
@@ -1750,4 +1734,3 @@ void x264_slicetype_decide(x264_t *h)
 }
 
 #endif // if 0
-}

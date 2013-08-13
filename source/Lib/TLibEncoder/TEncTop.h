@@ -47,7 +47,7 @@
 #include "TEncAnalyze.h"
 #include "threading.h"
 
-namespace x265 { class Lookahead; class ThreadPool; }
+namespace x265 { struct Lookahead; class ThreadPool; }
 
 //! \ingroup TLibEncoder
 //! \{

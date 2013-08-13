@@ -39,6 +39,7 @@
 #include "TLibCommon/ContextModel.h"
 #include "TEncTop.h"
 #include "primitives.h"
+#include "slicetype.h"
 #include "common.h"
 
 #include <limits.h>
@@ -58,6 +59,8 @@ TEncTop::TEncTop()
     m_picsQueued = 0;
     m_picsEncoded = 0;
     m_maxRefPicNum = 0;
+    m_lookahead = NULL;
+    m_GOPEncoder = NULL;
     ContextModel::buildNextStateTable();
 
 #if ENC_DEC_TRACE
@@ -79,6 +82,8 @@ Void TEncTop::create()
     if (!x265::primitives.sad[0])
     {
         printf("Primitives must be initialized before encoder is created\n");
+        // we call exit() here because this should be an impossible condition when
+        // using our public API, and indicates a serious bug.
         exit(1);
     }
 
@@ -88,6 +93,8 @@ Void TEncTop::create()
     {
         m_GOPEncoder->create();
     }
+
+    m_lookahead = new x265::Lookahead(&param);
 }
 
 Void TEncTop::destroy()
@@ -108,6 +115,9 @@ Void TEncTop::destroy()
 
     if (m_recon)
         delete [] m_recon;
+
+    if (m_lookahead)
+        delete m_lookahead;
 
     if (m_threadPool)
         m_threadPool->release();
@@ -131,7 +141,7 @@ Void TEncTop::init()
                     getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
         if (param.bEnableSAO)
         {
-            // TODO: we shouldn't need a frame encoder to do this
+            // TODO: these should be allocated on demand within the encoder
             pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
         }
         pic->getSlice()->setPOC(MAX_INT);
