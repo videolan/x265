@@ -155,6 +155,10 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_LOG_INFO           2
 #define X265_LOG_DEBUG          3
 
+#define X265_B_ADAPT_NONE       0
+#define X265_B_ADAPT_FAST       1
+#define X265_B_ADAPT_TRELLIS    2
+
 typedef struct x265_param_t
 {
     int       logLevel;
@@ -176,8 +180,13 @@ typedef struct x265_param_t
 
     // coding structure
     int       decodingRefreshType;             ///< Intra refresh type (0:none, 1:CDR, 2:IDR) default: 1
-    int       keyframeInterval;                ///< Intra period in frames, (-1: only first frame)
-    int       bframes;                         ///< Max number of consecutive B-frames (for now it only enables B-frame fixed GOP profile)
+    int       keyframeMin;                     ///< Minimum intra period in frames
+    int       keyframeMax;                     ///< Maximum intra period in frames
+    int       bOpenGOP;                        ///< Only use I for first frame
+    int       bframes;                         ///< Max number of consecutive B-frames
+    int       lookaheadDepth;                  ///< Number of frames to use for lookahead, determines encoder latency
+    int       bFrameAdaptive;                  ///< 0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling
+    int       bFrameBias;
 
     // Intra coding tools
     int       bEnableConstrainedIntra;         ///< enable constrained intra prediction (ignore inter predicted reference samples)

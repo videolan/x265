@@ -129,7 +129,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     // slice type
-    SliceType sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeInterval == 0 || bForceISlice) ? I_SLICE : B_SLICE;
+    SliceType sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
 
@@ -221,7 +221,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
-    sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeInterval == 0 || bForceISlice) ? I_SLICE : sliceType;
+    sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : sliceType;
 
     slice->setSliceType(sliceType);
 #endif

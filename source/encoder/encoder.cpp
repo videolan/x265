@@ -150,7 +150,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *_param)
 
     if (_param->internalBitDepth == 10)
         m_profile = Profile::MAIN10;
-    else if (_param->keyframeInterval == 1)
+    else if (_param->keyframeMax == 1)
         m_profile = Profile::MAINSTILLPICTURE;
     else
         m_profile = Profile::MAIN;
@@ -290,7 +290,7 @@ bool Encoder::initializeGOP(x265_param_t *_param)
 #define CONFIRM(expr, msg) check_failed |= _confirm(expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
-    if (_param->keyframeInterval == 1)
+    if (_param->keyframeMax == 1)
     {
         /* encoder_all_I */
         m_gopList[0] = GOPEntry();
@@ -367,31 +367,36 @@ bool Encoder::initializeGOP(x265_param_t *_param)
         m_gopList[3].m_QPFactor = 0.578;
     }
 
-    if (_param->keyframeInterval > 0)
+    if (_param->bOpenGOP)
     {
-        m_gopSize = X265_MIN(_param->keyframeInterval, m_gopSize);
+        _param->keyframeMax = -1;
+    }
+    else if (_param->keyframeMax > 0)
+    {
+        m_gopSize = X265_MIN(_param->keyframeMax, m_gopSize);
         m_gopSize = X265_MAX(1, m_gopSize);
-        int remain = _param->keyframeInterval % m_gopSize;
+        int remain = _param->keyframeMax % m_gopSize;
         if (remain)
         {
-            _param->keyframeInterval += m_gopSize - remain;
+            _param->keyframeMax += m_gopSize - remain;
             x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be multiple of %d, forcing --keyint %d\n",
-                     m_gopSize, _param->keyframeInterval);
+                     m_gopSize, _param->keyframeMax);
         }
-        if (_param->bframes && _param->keyframeInterval < 16)
+        if (_param->bframes && _param->keyframeMax < 16)
         {
-            _param->keyframeInterval = 16;
+            _param->keyframeMax = 16;
             x265_log(_param, X265_LOG_WARNING, "Keyframe interval must be at least 16 for B GOP structure\n");
         }
     }
-    else if (_param->keyframeInterval == 0)
+    else if (_param->keyframeMax == 0)
     {
         // default keyframe interval of 1 second
-        _param->keyframeInterval = _param->frameRate;
-        int remain = _param->keyframeInterval % m_gopSize;
+        _param->keyframeMax = _param->frameRate;
+        int remain = _param->keyframeMax % m_gopSize;
         if (remain)
-            _param->keyframeInterval += m_gopSize - remain;
+            _param->keyframeMax += m_gopSize - remain;
     }
+    _param->keyframeMin = _param->keyframeMax;
 
     bool verifiedGOP = false;
     bool errorGOP = false;
@@ -407,7 +412,7 @@ bool Encoder::initializeGOP(x265_param_t *_param)
     }
 
     int numOK = 0;
-    CONFIRM(_param->keyframeInterval >= 0 && (_param->keyframeInterval % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
+    CONFIRM(_param->keyframeMax >= 0 && (_param->keyframeMax % m_gopSize != 0), "Intra period must be a multiple of GOPSize, or -1");
 
     m_extraRPSs = 0;
     // start looping through frames in coding order until we can verify that the GOP structure is correct.

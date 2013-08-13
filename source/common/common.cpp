@@ -137,6 +137,8 @@ void x265_param_default(x265_param_t *param)
     param->bEnableRDOQTS = 1;
     param->bEnableTransformSkip = 1;
     param->bEnableTSkipFast = 1;
+    param->bFrameAdaptive = X265_B_ADAPT_FAST;
+    param->lookaheadDepth = 10;
 }
 
 extern "C"
@@ -145,7 +147,8 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     if (!profile)
         return 0;
     if (!strcmp(profile, "main"))
-    {}
+    {
+    }
     else if (!strcmp(profile, "main10"))
     {
 #if HIGH_BIT_DEPTH
@@ -157,7 +160,8 @@ int x265_param_apply_profile(x265_param_t *param, const char *profile)
     }
     else if (!strcmp(profile, "mainstillpicture"))
     {
-        param->keyframeInterval = 1;
+        param->keyframeMax = 1;
+        param->bOpenGOP = 0;
     }
     else
     {
@@ -199,8 +203,8 @@ int x265_check_params(x265_param_t *param)
             "Search Range must be less than 32768");
     CONFIRM(param->bipredSearchRange < 0,
             "Search Range must be more than 0");
-    CONFIRM(param->keyframeInterval < -1,
-            "Keyframe interval must be -1 (open-GOP) 0 (auto) 1 (intra-only) or greater than 1");
+    CONFIRM(param->keyframeMax < 0 && !param->bOpenGOP,
+            "Keyframe interval must be 0 (auto) 1 (intra-only) or greater than 1");
 
     CONFIRM(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CONFIRM(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
@@ -313,7 +317,7 @@ void x265_print_params(x265_param_t *param)
 
     x265_log(param, X265_LOG_INFO, "ME method / range / maxmerge : %s / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->maxNumMergeCand);
-    x265_log(param, X265_LOG_INFO, "Keyframe Interval            : %d\n", param->keyframeInterval);
+    x265_log(param, X265_LOG_INFO, "Keyframe min / max           : %d / %d\n", param->keyframeMin, param->keyframeMax);
     if (param->bEnableWavefront)
     {
         x265_log(param, X265_LOG_INFO, "WaveFrontSubstreams          : %d\n", (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize);
