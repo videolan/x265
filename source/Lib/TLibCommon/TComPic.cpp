@@ -81,11 +81,7 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
     m_defaultDisplayWindow = defaultDisplayWindow;
 
     /* configure lowres dimensions */
-    m_lowres.width = m_origPicYuv->getWidth() / 2;
-    m_lowres.lines = m_origPicYuv->getHeight() / 2;
-    m_lowres.stride = m_lowres.width + 2 * m_origPicYuv->getLumaMarginX();
-    m_lowres.bframes = bframes;
-    m_lowres.create(this);
+    m_lowres.create(this, bframes);
 
     int numRows = (height + maxHeight - 1) / maxHeight;
     m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()

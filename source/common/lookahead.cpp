@@ -27,10 +27,15 @@
 
 using namespace x265;
 
-void LookaheadFrame::create(TComPic *pic)
+void LookaheadFrame::create(TComPic *pic, int _bframes)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
     TComPicSym *sym = pic->getPicSym();
+
+    width = orig->getWidth() / 2;
+    lines = orig->getHeight() / 2;
+    stride = width + 2 * orig->getLumaMarginX();
+    bframes = _bframes;
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)

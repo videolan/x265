@@ -55,7 +55,7 @@ struct LookaheadFrame : public ReferencePlanes
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
 
-    void create(TComPic *pic);
+    void create(TComPic *pic, int bframes);
 
     void destroy()
     {
