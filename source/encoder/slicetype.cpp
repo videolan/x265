@@ -47,6 +47,8 @@
 #endif
 
 namespace x265 {
+// private namespace
+
 struct Lookahead
 {
     MotionEstimate   me;
