@@ -41,9 +41,11 @@ struct LookaheadFrame : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
     pixel *buffer[4];
-    int    stride;
-    int    width;
-    int    lines;
+    int    stride;   // distance to below pixel
+    int    width;    // width of lowres frame in pixels
+    int    lines;    // height of lowres frame in pixel lines
+    int    cuWidth;  // width of lowres frame in downscale CUs
+    int    cuHeight; // height of lowres frame in downscale CUs
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
@@ -52,8 +54,6 @@ struct LookaheadFrame : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
-    int       cuWidth;
-    int       cuHeight;
 };
 }
 
