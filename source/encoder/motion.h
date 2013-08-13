@@ -56,7 +56,10 @@ protected:
 
 public:
 
+    static const int COST_MAX = 1 << 28;
+
     pixel *fenc;
+
     MotionEstimate();
 
     ~MotionEstimate() {}
@@ -85,8 +88,6 @@ public:
     int motionEstimate(ReferencePlanes *ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
 
 protected:
-
-    static const int COST_MAX = 1 << 28;
 
     inline void StarPatternSearch(ReferencePlanes *ref,
                                   const MV &       mvmin,
