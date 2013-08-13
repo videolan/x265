@@ -221,7 +221,7 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
     pixel *pLeft0  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->m_lumaStride;
     pixel *pLeft1  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->cuWidth;
 
-    ALIGN_VAR_32(pixel, tmp[35 * 32 * 32]);
+    ALIGN_VAR_32(pixel, predictions[35 * 32 * 32]);
     int predsize = cu_size * cu_size;
 
     // generate 35 intra predictions into tmp
@@ -232,9 +232,9 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         above = pAbove1;
         left  = pLeft1;
     }
-    primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, tmp, cu_size, cu_size, (cu_size <= 16));
-    primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp + predsize, cu_size, cu_size);
-    x265::primitives.intra_pred_allangs[nLog2SizeMinus2](tmp + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cu_size <= 16));
+    primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, predictions, cu_size, cu_size, (cu_size <= 16));
+    primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, predictions + predsize, cu_size, cu_size);
+    x265::primitives.intra_pred_allangs[nLog2SizeMinus2](predictions + 2 * predsize, pAbove0, pLeft0, pAbove1, pLeft1, (cu_size <= 16));
 
     // calculate 35 satd costs, keep least cost
     ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
@@ -245,7 +245,7 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         bool transpose = (mode >= 2) && (mode < 18);
         pixel *cmp = (transpose ? buf_trans : me.fenc);
         intptr_t srcStride = (transpose ? cu_size : FENC_STRIDE);
-        cost = sa8d(cmp, srcStride, &tmp[mode * predsize], cu_size);
+        cost = sa8d(cmp, srcStride, &predictions[mode * predsize], cu_size);
         if (cost < bcost)
             bcost = cost;
     }
