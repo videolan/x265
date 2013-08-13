@@ -65,7 +65,7 @@ OPT("keyint",          param->keyframeMax,            required_argument, 'i', "M
 OPT("open-gop",        param->bOpenGOP,                     no_argument, 0, "Only use intra for very first picture")
 OPT("rc-lookahead",    param->lookaheadDepth,         required_argument, 0, "Number of frames for frame-type lookahead (determines encoder latency)")
 OPT("bframes",         param->bframes,                required_argument, 'b', "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
-OPT("bframeBias",      param->bFrameBias,             required_argument, 0, "Maximum number of consecutive b-frames (now it only enables B GOP structure)")
+OPT("bframeBias",      param->bFrameBias,             required_argument, 0, "Bias towards B slice decisions")
 OPT("no-weightp",      param->bEnableWeightedPred,          no_argument, 0, "Disable weighted prediction in P slices")
 OPT("weightp",         param->bEnableWeightedPred,          no_argument, 'w', "Enable weighted prediction in P slices")
 OPT("no-weightbp",     param->bEnableWeightedBiPred,        no_argument, 0, "Disable weighted (bidirectional) prediction in B slices")
