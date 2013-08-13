@@ -168,22 +168,7 @@ void TEncTop::addPicture(const x265_picture_t *picture)
             pic->getPicYuvOrg()->copyFromPicture(*picture);
             pic->getPicYuvRec()->clearExtendedFlag();
             pic->getSlice()->setReferenced(true);
-
-            if (!true)
-            {
-                /* downscale and generate 4 HPEL planes for lookahead, extend the four planes */
-                x265::LookaheadFrame &l = pic->m_lowres;
-                l.init();
-                x265::primitives.frame_init_lowres_core(pic->getPicYuvOrg()->getLumaAddr(),
-                                                        l.m_lumaPlane[0][0], l.m_lumaPlane[2][0], l.m_lumaPlane[0][2], l.m_lumaPlane[2][2],
-                                                        pic->getPicYuvOrg()->getStride(),
-                                                        l.stride, l.width, l.lines);
-
-                pic->getPicYuvOrg()->xExtendPicCompBorder(l.m_lumaPlane[0][0], l.stride, l.width, l.lines, pic->getPicYuvOrg()->getLumaMarginX(), pic->getPicYuvOrg()->getLumaMarginY());
-                pic->getPicYuvOrg()->xExtendPicCompBorder(l.m_lumaPlane[2][0], l.stride, l.width, l.lines, pic->getPicYuvOrg()->getLumaMarginX(), pic->getPicYuvOrg()->getLumaMarginY());
-                pic->getPicYuvOrg()->xExtendPicCompBorder(l.m_lumaPlane[0][2], l.stride, l.width, l.lines, pic->getPicYuvOrg()->getLumaMarginX(), pic->getPicYuvOrg()->getLumaMarginY());
-                pic->getPicYuvOrg()->xExtendPicCompBorder(l.m_lumaPlane[2][2], l.stride, l.width, l.lines, pic->getPicYuvOrg()->getLumaMarginX(), pic->getPicYuvOrg()->getLumaMarginY());
-            }
+            pic->m_lowres.init(pic->getPicYuvOrg());
             return;
         }
     }

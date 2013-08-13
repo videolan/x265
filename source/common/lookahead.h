@@ -24,6 +24,7 @@
 #ifndef _LOOKAHEAD_H
 #define _LOOKAHEAD_H 1
 
+#include "TLibCommon/TComPicYuv.h"
 #include "common.h"
 #include "reference.h"
 #include "mv.h"
@@ -83,7 +84,7 @@ struct LookaheadFrame : public ReferencePlanes
     }
 
     // (re) initialize lowres state
-    void init()
+    void init(TComPicYuv *orig)
     {
         bIntraCalculated = false;
         memset(costEst, -1, sizeof(costEst));
@@ -99,6 +100,17 @@ struct LookaheadFrame : public ReferencePlanes
             lowresMvs[0][i]->x = 0x7fff;
             lowresMvs[1][i]->x = 0x7fff;
         }
+
+        /* downscale and generate 4 HPEL planes for lookahead */
+        x265::primitives.frame_init_lowres_core(orig->getLumaAddr(),
+            m_lumaPlane[0][0], m_lumaPlane[2][0], m_lumaPlane[0][2], m_lumaPlane[2][2],
+            orig->getStride(), stride, width, lines);
+
+        /* extend hpel planes for motion search */
+        orig->xExtendPicCompBorder(m_lumaPlane[0][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+        orig->xExtendPicCompBorder(m_lumaPlane[2][0], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+        orig->xExtendPicCompBorder(m_lumaPlane[0][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+        orig->xExtendPicCompBorder(m_lumaPlane[2][2], stride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
     }
 };
 }
