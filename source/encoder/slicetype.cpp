@@ -106,10 +106,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
 
         /* Lowres lookahead goes backwards because the MVs are used as predictors in the main encode.
          * This considerably improves MV prediction overall. */
-
-        /* The edge mbs seem to reduce the predictive quality of the
-         * whole frame's score, but are needed for a spatial distribution. */
-
+        // TODO: use lowres MVs as motion candidates in full-res search
         me.setSourcePlane(fenc->m_lumaPlane[0][0], fenc->m_lumaStride);
         for (int i = fenc->cuWidth - 1; i >= 0; i--)
         {
