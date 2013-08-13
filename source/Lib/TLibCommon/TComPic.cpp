@@ -122,19 +122,7 @@ Void TComPic::create(Int width, Int height, UInt maxWidth, UInt maxHeight, UInt 
         m_lowres.lowresMvCosts[1][i] = (int*)X265_MALLOC(int, m_picSym->getNumberOfCUsInFrame());
     }
 
-    memset(m_lowres.costEst, -1, sizeof(m_lowres.costEst));   
-    for (int y = 0; y < bframes + 2; y++)
-    {
-        for (int x = 0; x < bframes + 2; x++)
-        {
-            m_lowres.rowSatds[y][x][0] = -1;
-        }
-    }
-    for (int i = 0; i < bframes + 1; i++)
-    {
-        m_lowres.lowresMvs[0][i]->x = 0x7fff;
-        m_lowres.lowresMvs[1][i]->x = 0x7fff;
-    }
+    m_lowres.init(bframes);
 
     int numRows = (height + maxHeight - 1) / maxHeight;
     m_complete_enc = new uint32_t[numRows]; // initial in FrameEncoder::encode()

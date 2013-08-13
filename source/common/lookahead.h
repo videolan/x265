@@ -45,6 +45,7 @@ struct LookaheadFrame : public ReferencePlanes
     int    lines;    // height of lowres frame in pixel lines
     int    cuWidth;  // width of lowres frame in downscale CUs
     int    cuHeight; // height of lowres frame in downscale CUs
+    bool   bIntraCalculated;
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
@@ -53,6 +54,25 @@ struct LookaheadFrame : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
+
+    // (re) initialize lowres state
+    void init(int bframes)
+    {
+        bIntraCalculated = false;
+        memset(costEst, -1, sizeof(costEst));
+        for (int y = 0; y < bframes + 2; y++)
+        {
+            for (int x = 0; x < bframes + 2; x++)
+            {
+                rowSatds[y][x][0] = -1;
+            }
+        }
+        for (int i = 0; i < bframes + 1; i++)
+        {
+            lowresMvs[0][i]->x = 0x7fff;
+            lowresMvs[1][i]->x = 0x7fff;
+        }
+    }
 };
 }
 
