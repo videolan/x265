@@ -213,7 +213,55 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         // TODO: add bidir
     }
 
-    // TODO: copy intra SATD cost analysis here (DC + planar + all-angs)
+    UInt numModesAvailable = 35; //total number of Intra modes
+    Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
+    x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2]; // get the Primitive function
+    UInt bcost = 0, cost = 0;
+
+    /* need review on this buffer */
+    pixel *pAbove0 = fenc->m_lumaPlane[0][0] + pel_offset - fenc->m_lumaStride;
+    pixel *pAbove1 = fenc->m_lumaPlane[0][0] + pel_offset - fenc->cuHeight;
+    pixel *pLeft0  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->m_lumaStride;
+    pixel *pLeft1  = fenc->m_lumaPlane[0][0] + pel_offset + fenc->cuWidth;
+
+    // 33 Angle modes once
+    ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
+    ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
+
+    // 1
+    primitives.intra_pred_dc(pAbove0 + 1, pLeft0 + 1, tmp, stride, cu_size, (cu_size <= 16));
+    bcost = sa8d(fenc->m_lumaPlane[0][0], fenc->m_lumaStride, tmp, fenc->stride);
+
+    // 0
+    pixel *above = pAbove0;
+    pixel *left  = pLeft0;
+    if (cu_size >= 8 && cu_size <= 32)
+    {
+        above = pAbove1;
+        left  = pLeft1;
+    }
+    primitives.intra_pred_planar((pixel*)above + 1, (pixel*)left + 1, tmp, fenc->stride, cu_size);
+    cost = sa8d(fenc->m_lumaPlane[0][0], fenc->m_lumaStride, tmp, fenc->stride);
+    if (cost < bcost)
+        bcost = cost;
+
+    // Transpose NxN
+    x265::primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, stride);
+
+    x265::primitives.intra_pred_allangs[nLog2SizeMinus2](tmp, pAbove0, pLeft0, pAbove1, pLeft1, (cu_size <= 16));
+
+    for (UInt mode = 2; mode < numModesAvailable; mode++)
+    {
+        bool modeHor = (mode < 18);
+        pixel *cmp = (modeHor ? buf_trans : me.fenc);
+        intptr_t srcStride = (modeHor ? cu_size : stride);
+        cost = sa8d(cmp, srcStride, &tmp[(mode - 2) * (cu_size * cu_size)], cu_size);
+        if (cost < bcost)
+            bcost = cost;
+    }
+
+    fenc->lowresMvCosts[0][0][cu_size] = bcost;
+
     return 0;
 }
 

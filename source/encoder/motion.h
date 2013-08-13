@@ -38,7 +38,6 @@ protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
     pixel  fenc_buf[64 * FENC_STRIDE + 32];
-    pixel *fenc;
 
     pixel *fencplane;
     intptr_t fencLumaStride;
@@ -57,6 +56,7 @@ protected:
 
 public:
 
+    pixel *fenc;
     MotionEstimate();
 
     ~MotionEstimate() {}
