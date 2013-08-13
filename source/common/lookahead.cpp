@@ -30,6 +30,7 @@ using namespace x265;
 void LookaheadFrame::create(TComPic *pic)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
+    TComPicSym *sym = pic->getPicSym();
 
     /* allocate lowres buffers */
     for (int i = 0; i < 4; i++)
@@ -53,16 +54,16 @@ void LookaheadFrame::create(TComPic *pic)
     {
         for (int j = 0; j < bframes + 2; j++)
         {   
-            rowSatds[i][j] = (int*)X265_MALLOC(int, pic->getPicSym()->getFrameHeightInCU());
-            lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, pic->getPicSym()->getNumberOfCUsInFrame());
+            rowSatds[i][j] = (int*)X265_MALLOC(int, sym->getFrameHeightInCU());
+            lowresCosts[i][j] = (uint16_t*)X265_MALLOC(uint16_t, sym->getNumberOfCUsInFrame());
         }
     }
 
     for (int i = 0; i < bframes + 1; i++)
     {
-        lowresMvs[0][i] = (MV*)X265_MALLOC(MV, pic->getPicSym()->getNumberOfCUsInFrame());
-        lowresMvs[1][i] = (MV*)X265_MALLOC(MV, pic->getPicSym()->getNumberOfCUsInFrame());
-        lowresMvCosts[0][i] = (int*)X265_MALLOC(int, pic->getPicSym()->getNumberOfCUsInFrame());
-        lowresMvCosts[1][i] = (int*)X265_MALLOC(int, pic->getPicSym()->getNumberOfCUsInFrame());
+        lowresMvs[0][i] = (MV*)X265_MALLOC(MV, sym->getNumberOfCUsInFrame());
+        lowresMvs[1][i] = (MV*)X265_MALLOC(MV, sym->getNumberOfCUsInFrame());
+        lowresMvCosts[0][i] = (int*)X265_MALLOC(int, sym->getNumberOfCUsInFrame());
+        lowresMvCosts[1][i] = (int*)X265_MALLOC(int, sym->getNumberOfCUsInFrame());
     }
 }
