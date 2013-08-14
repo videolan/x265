@@ -33,7 +33,7 @@ RateControl::RateControl(x265_param_t * param)
     bframes = param->bframes;
     rateTolerance = param->rc.rateTolerance;
     bitrate = param->rc.bitrate * 1000;
-    frameDuration = 1/param->frameRate;
+    frameDuration = 1 / param->frameRate;
     rateControlMode = param->rc.rateControlMode;
     ncu = (param->sourceHeight * param->sourceWidth) / pow(2, param->maxCUSize);
     lastNonBPictType = -1;
@@ -43,9 +43,9 @@ RateControl::RateControl(x265_param_t * param)
     totalBits = 0;
     if (rateControlMode == X265_RC_ABR)
     {
-        //TODO : confirm this value. obtained it from x264 when crf is disabled , abr enabled. 
+        //TODO : confirm this value. obtained it from x264 when crf is disabled , abr enabled.
         //h->param.rc.i_rc_method == X264_RC_CRF ? h->param.rc.f_rf_constant : 24
-#define ABR_INIT_QP (24  + QP_BD_OFFSET)    
+#define ABR_INIT_QP (24  + QP_BD_OFFSET)
         accumPNorm = .01;
         accumPQp = (ABR_INIT_QP)*accumPNorm;
         /* estimated ratio that produces a reasonable QP for the first I-frame */
@@ -53,15 +53,16 @@ RateControl::RateControl(x265_param_t * param)
         wantedBitsWindow = 1.0 * bitrate / fps;
         lastNonBPictType = I_SLICE;
     }
-    ipOffset = 6.0 * log( param->rc.ipFactor );
-    pbOffset = 6.0 * log( param->rc.pbFactor );
-    for( int i = 0; i < 3; i++ )
+    ipOffset = 6.0 * log(param->rc.ipFactor);
+    pbOffset = 6.0 * log(param->rc.pbFactor);
+    for (int i = 0; i < 3; i++)
     {
-        lastQScaleFor[i] = qp2qScale( ABR_INIT_QP );
-        lmin[i] = qp2qScale( MIN_QP);
-        lmax[i] = qp2qScale( MAX_QP );
+        lastQScaleFor[i] = qp2qScale(ABR_INIT_QP);
+        lmin[i] = qp2qScale(MIN_QP);
+        lmax[i] = qp2qScale(MAX_QP);
     }
-    lstep = pow( 2, param->rc.qpStep / 6.0 );
+
+    lstep = pow(2, param->rc.qpStep / 6.0);
     cbrDecay = 1.0;
 }
 
@@ -121,8 +122,8 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         int dt1 = abs(curFrame->getPOC() - curFrame->getRefPic(REF_PIC_LIST_1, 0)->getPOC());
 
         //TODO:need to figure out this
-        float q0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceQp();  
-        float q1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceQp();  
+        float q0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceQp();
+        float q1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceQp();
 
         if (i0 && i1)
             q = (q0 + q1) / 2 + ipOffset;
@@ -132,8 +133,8 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
             q = q0;
         else
             q = (q0 * dt1 + q1 * dt0) / (dt0 + dt1);
-    
-        if (curFrame->isReferenced())    
+
+        if (curFrame->isReferenced())
             q += pbOffset / 2;
         else
             q += pbOffset;
@@ -163,7 +164,7 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         shortTermCplxSum *= 0.5;
         shortTermCplxCount *= 0.5;
         shortTermCplxSum += lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
-        shortTermCplxCount ++;
+        shortTermCplxCount++;
         rce->texBits = lastSatd;
         rce->blurredComplexity = shortTermCplxSum / shortTermCplxCount;
         rce->mvBits = 0;
@@ -173,7 +174,7 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
 
         /* ABR code can potentially be counterproductive in CBR, so just don't bother.
          * Don't run it if the frame complexity is zero either. */
-        if ( lastSatd)       
+        if (lastSatd)
         {
             // TODO: need to check the thread_frames  - add after min chen plugs in frame parallelism.
             int iFrameDone = fps + 1 - 0;   //h->i_thread_frames;
@@ -196,7 +197,7 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         }
         else if (fps > 0)
         {
-            if (rateControlMode != X265_RC_CRF)     
+            if (rateControlMode != X265_RC_CRF)
             {
                 /* Asymmetric clipping, because symmetric would prevent
                  * overflow control in areas of rapidly oscillating complexity */
@@ -214,7 +215,7 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         //FIXME use get_diff_limited_q() ?
         float lmin1 = lmin[pictType];
         float lmax1 = lmax[pictType];
-        q= Clip3(q, lmin1, lmax1);
+        q = Clip3(q, lmin1, lmax1);
         lastQScaleFor[pictType] =
             lastQScale = q;
 
@@ -231,6 +232,7 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
 double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 {
     double q;
+
     q = pow(rce->blurredComplexity, 1 - qCompress);
 
     // avoid NaN's in the rc_eq
@@ -248,22 +250,20 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
 /* After encoding one frame, save stats and update ratecontrol state */
 int RateControl::rateControlEnd(int64_t bits)
 {
-    if( rateControlMode ==  X265_RC_ABR)
+    if (rateControlMode ==  X265_RC_ABR)
     {
-        if( frameType != B_SLICE)
-            cplxrSum += bits * qp2qScale( qpaRc ) / lastRceq;
+        if (frameType != B_SLICE)
+            cplxrSum += bits * qp2qScale(qpaRc) / lastRceq;
         else
         {
             /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
              * Not perfectly accurate with B-refs, but good enough. */
-            cplxrSum += bits * qp2qScale( qpaRc ) / (lastRceq * fabs( pbFactor ));         
+            cplxrSum += bits * qp2qScale(qpaRc) / (lastRceq * fabs(pbFactor));
         }
         cplxrSum *= cbrDecay;
         wantedBitsWindow += frameDuration * bitrate;
-        wantedBitsWindow *= cbrDecay; 
+        wantedBitsWindow *= cbrDecay;
     }
-    totalBits += bits;  
+    totalBits += bits;
     return 0;
 }
-
-

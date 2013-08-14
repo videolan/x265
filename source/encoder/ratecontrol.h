@@ -34,10 +34,9 @@
 #define MAX_FRAME_DURATION 1.00f
 #define MIN_FRAME_DURATION 0.01f
 
-#define CLIP_DURATION(f) Clip3(f,MIN_FRAME_DURATION,MAX_FRAME_DURATION)
+#define CLIP_DURATION(f) Clip3(f, MIN_FRAME_DURATION, MAX_FRAME_DURATION)
 
 namespace x265 {
-
 struct RateControlEntry
 {
     int pictType;
