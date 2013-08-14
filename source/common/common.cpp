@@ -142,8 +142,8 @@ void x265_param_default(x265_param_t *param)
     param->rc.bitrate = 1000;
     param->rc.rateTolerance = 1;
     param->rc.qCompress = 0.6;
-    param->rc.ipFactor = 1.4;
-    param->rc.pbFactor = 1.3;
+    param->rc.ipFactor = 1.4f;
+    param->rc.pbFactor = 1.3f;
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_ABR;
 }
