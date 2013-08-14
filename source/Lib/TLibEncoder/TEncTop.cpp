@@ -188,7 +188,7 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pi
     {
         TComPicYuv *recpic = fenc->getPicYuvRec();
         pic_out->poc = fenc->getSlice()->getPOC();
-        pic_out->bitDepth = X265_DEPTH;
+        pic_out->bitDepth = sizeof(Pel) * 8;
         pic_out->planes[0] = recpic->getLumaAddr();
         pic_out->stride[0] = recpic->getStride();
         pic_out->planes[1] = recpic->getCbAddr();
