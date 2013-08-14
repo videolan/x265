@@ -24,9 +24,11 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
+#include "TLibCommon/TComPic.h"
 #include "primitives.h"
 #include "lookahead.h"
 
+#include "TLibEncoder/TEncCfg.h"
 #include "slicetype.h"
 #include "motion.h"
 #include "mv.h"
@@ -63,8 +65,11 @@ static inline void x265_median_mv(MV &dst, MV a, MV b, MV c)
     dst.y = x265_median(a.y, b.y, c.y);
 }
 
-Lookahead::Lookahead(x265_param_t *param)
+Lookahead::Lookahead(TEncCfg *_cfg)
 {
+    this->cfg = _cfg;
+    x265_param_t *param = &_cfg->param;
+    numDecided = 0;
     me.setQP(X265_LOOKAHEAD_QP, 1.0);
     me.setSearchMethod(X265_HEX_SEARCH);
     frameQueueSize = param->lookaheadDepth;
@@ -77,6 +82,59 @@ Lookahead::~Lookahead()
 {
     if (frames)
         delete [] frames;
+}
+
+void Lookahead::addPicture(TComPic *pic)
+{
+    pic->m_lowres.init(pic->getPicYuvOrg());
+
+    inputQueue.pushBack(pic);
+    if (inputQueue.size() == (size_t)frameQueueSize)
+        slicetypeDecide();
+}
+
+void Lookahead::flush()
+{
+    if (!inputQueue.empty())
+        slicetypeDecide();
+}
+
+void Lookahead::slicetypeDecide()
+{
+    // Fake lookahead using HM's fixed GOP structure
+
+    // Special case for POC 0, send directly to output queue as I slice
+    if (numDecided == 0)
+    {
+        TComPic *pic = inputQueue.popFront();
+        pic->m_lowres.sliceType = X265_SLICE_TYPE_I;
+        pic->m_lowres.gopIdx = 0;
+        outputQueue.pushBack(pic);
+        numDecided++;
+        return;
+    }
+
+    int batchSize = cfg->getGOPSize();
+    for (int i = 0; i < batchSize; i++)
+    {
+        int idx = cfg->getGOPEntry(i).m_POC - 1;
+        if ((size_t)idx >= inputQueue.size())
+            continue;
+
+        TComList<TComPic*>::iterator iterPic = inputQueue.begin();
+        for (int j = 0; j < idx; j++) iterPic++;
+
+        TComPic *pic = *iterPic;
+        pic->m_lowres.sliceType = cfg->getGOPEntry(i).m_sliceType;
+        pic->m_lowres.gopIdx = i;
+        outputQueue.pushBack(pic);
+        numDecided++;
+    }
+
+    if ((size_t)batchSize >= inputQueue.size())
+        inputQueue.clear();
+    else
+        for (int i = 0; i < batchSize; i++) inputQueue.popFront();
 }
 
 int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)

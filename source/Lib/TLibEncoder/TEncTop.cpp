@@ -55,8 +55,6 @@
 TEncTop::TEncTop()
 {
     m_pocLast = -1;
-    m_framesToBeEncoded = INT_MAX;
-    m_picsQueued = 0;
     m_picsEncoded = 0;
     m_maxRefPicNum = 0;
     m_lookahead = NULL;
@@ -94,7 +92,7 @@ Void TEncTop::create()
         m_GOPEncoder->create();
     }
 
-    m_lookahead = new x265::Lookahead(&param);
+    m_lookahead = new x265::Lookahead(this);
 }
 
 Void TEncTop::destroy()
@@ -120,9 +118,6 @@ Void TEncTop::destroy()
         delete pic;
     }
 
-    if (m_recon)
-        delete [] m_recon;
-
     if (m_lookahead)
         delete m_lookahead;
 
@@ -138,8 +133,6 @@ Void TEncTop::init()
         m_GOPEncoder->init(this);
     }
 
-    m_recon = new x265_picture_t[X265_MAX(1, getGOPSize()) + getGOPSize()];
-
     m_analyzeI.setFrmRate(param.frameRate);
     m_analyzeP.setFrmRate(param.frameRate);
     m_analyzeB.setFrmRate(param.frameRate);
@@ -148,79 +141,60 @@ Void TEncTop::init()
 
 /**
  \param   flush               force encoder to encode a partial GOP
- \param   pic                 input original YUV picture or NULL
- \param   pic_out             pointer to list of reconstructed pictures
+ \param   pic_in              input original YUV picture or NULL
+ \param   pic_out             pointer to reconstructed picture struct
  \param   accessUnitsOut      list of output bitstreams
  \retval                      number of returned recon pictures
  */
-int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut)
+int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, AccessUnit& accessUnitOut)
 {
-    if (pic)
+    if (pic_in)
     {
-        /* Copy input picture into a TComPic, prepare for lookahead */
-        TComPic *epic;
+        TComPic *pic;
         if (m_freeList.empty())
         {
-            epic = new TComPic;
-            epic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
+            pic = new TComPic;
+            pic->create(param.sourceWidth, param.sourceHeight, g_maxCUWidth, g_maxCUHeight, g_maxCUDepth,
                          getConformanceWindow(), getDefaultDisplayWindow(), param.bframes);
             if (param.bEnableSAO)
             {
                 // TODO: these should be allocated on demand within the encoder
-                epic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
+                pic->getPicSym()->allocSaoParam(m_GOPEncoder->m_frameEncoders->getSAO());
             }
-            epic->getSlice()->setPOC(MAX_INT);
+            pic->getSlice()->setPOC(MAX_INT);
         }
         else
-            epic = m_freeList.popBack();
+            pic = m_freeList.popBack();
 
-        epic->getSlice()->setPOC(++m_pocLast);
-        epic->getPicYuvOrg()->copyFromPicture(*pic);
-        epic->getPicYuvRec()->clearExtendedFlag();
-        epic->getSlice()->setReferenced(true);
-        epic->m_lowres.init(epic->getPicYuvOrg());
-
-        // to be replaced with lookahead logic
-        m_picList.pushBack(epic);
-        m_picsQueued++;
+        /* Copy input picture into a TComPic, send to lookahead */
+        pic->getSlice()->setPOC(++m_pocLast);
+        pic->getPicYuvOrg()->copyFromPicture(*pic_in);
+        m_lookahead->addPicture(pic);
     }
 
-    int batchSize = m_picsEncoded == 0 ? 1 : getGOPSize();
-
-    if (!flush && m_picsQueued < batchSize)
-        // Wait until we have a full batch of pictures
-        return 0;
-    else if (m_picsQueued == 0)
-        // nothing to flush
-        return 0;
     if (flush)
-        m_framesToBeEncoded = m_picsEncoded + m_picsQueued;
+        m_lookahead->flush();
 
-    m_GOPEncoder->compressGOP(m_pocLast, m_picsQueued, m_picList, accessUnitsOut);
+    if (m_lookahead->outputQueue.empty())
+        return 0;
+
+    // pop a single frame from decided list, encode and return AU and recon
+    TComPic *fenc = m_lookahead->outputQueue.popFront();
+    m_picList.pushBack(fenc);
+
+    m_GOPEncoder->compressFrame(fenc, m_picList, accessUnitOut);
 
     if (pic_out)
     {
-        for (Int i = 0; i < m_picsQueued; i++)
-        {
-            TComList<TComPic*>::iterator iterPic = m_picList.begin();
-            while (iterPic != m_picList.end() && (*iterPic)->getPOC() != (m_picsEncoded + i))
-            {
-                iterPic++;
-            }
-
-            TComPicYuv *recpic = (*iterPic)->getPicYuvRec();
-            x265_picture_t& recon = m_recon[i];
-            recon.planes[0] = recpic->getLumaAddr();
-            recon.stride[0] = recpic->getStride();
-            recon.planes[1] = recpic->getCbAddr();
-            recon.stride[1] = recpic->getCStride();
-            recon.planes[2] = recpic->getCrAddr();
-            recon.stride[2] = recpic->getCStride();
-            recon.bitDepth = sizeof(Pel) * 8;
-            recon.poc = m_picsEncoded + i;
-        }
-
-        *pic_out = m_recon;
+        TComPicYuv *recpic = fenc->getPicYuvRec();
+        pic_out->poc = fenc->getSlice()->getPOC();
+        pic_out->bitDepth = X265_DEPTH;
+        pic_out->planes[0] = recpic->getLumaAddr();
+        pic_out->stride[0] = recpic->getStride();
+        pic_out->planes[1] = recpic->getCbAddr();
+        pic_out->stride[1] = recpic->getCStride();
+        pic_out->planes[2] = recpic->getCrAddr();
+        pic_out->stride[2] = recpic->getCStride();
     }
 
     // move unreferenced pictures from picList to freeList for recycle
@@ -228,23 +202,19 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
     TComList<TComPic*>::iterator iterPic = m_picList.begin();
     while (iterPic != m_picList.end())
     {
-        TComPic *epic = *(iterPic++);
-        if (epic->getSlice()->isReferenced() == false)
+        TComPic *pic = *(iterPic++);
+        if (pic->getSlice()->isReferenced() == false)
         {
-            m_picList.remove(epic);
-            m_freeList.pushBack(epic);
-            epic->getPicYuvRec()->clearReferences();
+            m_picList.remove(pic);
+            m_freeList.pushBack(pic);
+            pic->getPicYuvRec()->clearReferences();
+            pic->getPicYuvRec()->clearExtendedFlag();
 
             // iterator is invalidated by remove, restart scan
             iterPic = m_picList.begin();
         }
     }
-
-    int ret = m_picsQueued;
-    m_picsEncoded += m_picsQueued;
-    m_picsQueued = 0;
-
-    return ret;
+    return 1;
 }
 
 int TEncTop::getStreamHeaders(std::list<AccessUnit>& accessUnitsOut)

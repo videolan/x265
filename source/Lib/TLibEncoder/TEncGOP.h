@@ -102,10 +102,7 @@ public:
     Void destroy();
     Void init(TEncTop* top);
 
-    Void compressGOP(Int pocLast, Int numPicRcvd, TComList<TComPic*> picList, std::list<AccessUnit>& accessUnitsOut);
-
-    // returns count of returned pictures
-    int getOutputs(x265_picture_t**, std::list<AccessUnit>& accessUnitsOut);
+    Void compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit& accessUnitOut);
 
     int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
 

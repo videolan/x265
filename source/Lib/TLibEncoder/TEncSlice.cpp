@@ -77,14 +77,13 @@ Void TEncSlice::init(TEncTop* top)
  - set temporal layer ID and the parameter sets
  .
  \param pcPic         picture class
- \param pocLast       POC of last picture
  \param pocCurr       current POC
  \param iTimeOffset   POC offset for hierarchical structure
  \param iDepth        temporal layer depth
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
-TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int pocLast, Int pocCurr,
+TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int pocCurr,
                                    Int gopID, TComSPS* sps, TComPPS *pps)
 {
     Double qpdouble;
@@ -97,7 +96,6 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     slice->setPic(pic);
     slice->initSlice();
     slice->setPicOutputFlag(true);
-    slice->setPOC(pocCurr);
 
     // depth computation based on GOP size
     Int depth;
@@ -129,7 +127,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
     }
 
     // slice type
-    SliceType sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : B_SLICE;
+    SliceType sliceType = (pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : B_SLICE;
     slice->setSliceType(sliceType);
     slice->setReferenced(true);
 
@@ -221,8 +219,7 @@ TComSlice* TEncSlice::initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncode
 
 #if HB_LAMBDA_FOR_LDC
     // restore original slice type
-    sliceType = (pocLast == 0 || pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : sliceType;
-
+    sliceType = (pocCurr % m_cfg->param.keyframeMax == 0 || bForceISlice) ? I_SLICE : sliceType;
     slice->setSliceType(sliceType);
 #endif
 

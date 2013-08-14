@@ -63,11 +63,9 @@ private:
 
     // picture
     Int                     m_pocLast;          ///< time index (POC)
-    Int                     m_picsQueued;       ///< number of received pictures
-    Int                     m_picsEncoded;      ///< number of coded pictures
+    Int                     m_picsEncoded;
     TComList<TComPic*>      m_picList;
     TComList<TComPic*>      m_freeList;
-    x265_picture_t         *m_recon;
 
     // quality control
     TComScalingList         m_scalingList;      ///< quantization matrix information
@@ -95,19 +93,19 @@ public:
     Void destroy();
     Void init();
 
-    TComScalingList* getScalingList()   { return &m_scalingList; }
+    Void xInitSPS(TComSPS *sps);
+    Void xInitPPS(TComPPS *pps);
+    Void xInitRPS(TComSPS *sps);
 
-    void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
-
-    Void xInitSPS(TComSPS *pcSPS);
-    Void xInitPPS(TComPPS *pcPPS);
-    Void xInitRPS(TComSPS *pcSPS);
-
-    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t **pic_out, std::list<AccessUnit>& accessUnitsOut);
+    int encode(Bool bEos, const x265_picture_t* pic, x265_picture_t *pic_out, AccessUnit& accessUnitOut);
 
     int getStreamHeaders(std::list<AccessUnit>& accessUnitsOut);
 
     Double printSummary();
+
+    TComScalingList* getScalingList()       { return &m_scalingList; }
+
+    void setThreadPool(x265::ThreadPool* p) { m_threadPool = p; }
 };
 
 //! \}

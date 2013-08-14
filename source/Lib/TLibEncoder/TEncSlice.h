@@ -76,7 +76,7 @@ public:
     Void init(TEncTop* top);
 
     /// preparation of slice encoding (reference marking, QP and lambda)
-    TComSlice *initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int pocLast, Int pocCurr,
+    TComSlice *initEncSlice(TComPic* pic, x265::FrameEncoder *frameEncoder, Bool bForceISlice, Int pocCurr,
                             Int gopID, TComSPS* sps, TComPPS *pps);
 
     Void resetQP(TComPic* pic, x265::FrameEncoder *frameEncoder, Int sliceQP, Double lambda);

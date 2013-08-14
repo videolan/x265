@@ -490,9 +490,9 @@ int main(int argc, char **argv)
     /* Control-C handler */
     signal(SIGINT, sigint_handler);
 
-    x265_picture_t pic_orig;
+    x265_picture_t pic_orig, pic_out;
     x265_picture_t *pic_in = &pic_orig;
-    x265_picture_t *pic_recon = NULL;
+    x265_picture_t *pic_recon = cliopt.recon ? &pic_out : NULL;
     x265_nal_t *p_nal;
     int nal;
 
@@ -512,16 +512,16 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        int numRecon = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, cliopt.recon ? &pic_recon : NULL);
-        outFrameCount += numRecon;
-        while (numRecon && cliopt.recon)
+        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
+        outFrameCount += numEncoded;
+        if (numEncoded && pic_recon)
         {
-            cliopt.recon->writePicture(*pic_recon++);
-            numRecon--;
+            cliopt.recon->writePicture(pic_out);
         }
 
         if (nal)
             cliopt.writeNALs(p_nal, nal);
+
         // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
         cliopt.printStatus(outFrameCount, &param);
     }
@@ -529,20 +529,19 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int numRecon = x265_encoder_encode(encoder, &p_nal, &nal, NULL, cliopt.recon ? &pic_recon : NULL);
-        int recon = numRecon;
-        outFrameCount += numRecon;
-        while (numRecon && cliopt.recon)
+        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
+        outFrameCount += numEncoded;
+        if (numEncoded && pic_recon)
         {
-            cliopt.recon->writePicture(*pic_recon++);
-            numRecon--;
+            cliopt.recon->writePicture(pic_out);
         }
 
         if (nal)
             cliopt.writeNALs(p_nal, nal);
+
         cliopt.printStatus(outFrameCount, &param);
 
-        if (nal == 0 && recon == 0)
+        if (!numEncoded)
             break;
     }
 

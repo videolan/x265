@@ -28,6 +28,7 @@
 #include "motion.h"
 
 class TComPic;
+class TEncCfg;
 
 #define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
 // arbitrary, but low because SATD scores are 1/4 normal
@@ -40,17 +41,23 @@ struct LookaheadFrame;
 
 struct Lookahead
 {
+    TEncCfg         *cfg;
     MotionEstimate   me;
     LookaheadFrame **frames;
     int              bframes;
     int              frameQueueSize;
     int              bAdaptMode;
+    int              numDecided;
 
     TComList<TComPic*> inputQueue;       // input pictures in order received
     TComList<TComPic*> outputQueue;      // pictures to be encoded, in encode order
 
-    Lookahead(x265_param_t *param);
+    Lookahead(TEncCfg *);
     ~Lookahead();
+
+    void addPicture(TComPic*);
+    void flush();
+    void slicetypeDecide();
 
     int estimateFrameCost(int p0, int p1, int b, int bIntraPenalty);
     int estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2]);
