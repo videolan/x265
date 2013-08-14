@@ -133,13 +133,6 @@ Void TComSlice::initSlice()
     m_enableTMVPFlag = true;
 }
 
-Void TComSlice::setReferenced(Bool b)
-{
-    m_bReferenced = b;
-    if (!b && m_pic)
-        m_pic->getPicYuvRec()->clearReferences();
-}
-
 Bool TComSlice::getRapPicFlag()
 {
     return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL

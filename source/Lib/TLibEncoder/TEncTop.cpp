@@ -233,6 +233,8 @@ int TEncTop::encode(Bool flush, const x265_picture_t* pic, x265_picture_t **pic_
         {
             m_picList.remove(epic);
             m_freeList.pushBack(epic);
+            epic->getPicYuvRec()->clearReferences();
+
             // iterator is invalidated by remove, restart scan
             iterPic = m_picList.begin();
         }

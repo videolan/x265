@@ -1532,7 +1532,7 @@ public:
 
     Int       getList1IdxToList0Idx(Int list1Idx) { return m_list1IdxToList0Idx[list1Idx]; }
 
-    Void      setReferenced(Bool b);
+    Void      setReferenced(Bool b)            { m_bReferenced = b; }
 
     Bool      isReferenced()                   { return m_bReferenced; }
 
