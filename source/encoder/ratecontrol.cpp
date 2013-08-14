@@ -35,7 +35,7 @@ RateControl::RateControl(x265_param_t * param)
     bitrate = param->rc.bitrate * 1000;
     frameDuration = 1.0 / param->frameRate;
     rateControlMode = param->rc.rateControlMode;
-    ncu = (int)((param->sourceHeight * param->sourceWidth) / pow(2, param->maxCUSize));
+    ncu = (int)((param->sourceHeight * param->sourceWidth) / pow(2.0, (int)param->maxCUSize));
     lastNonBPictType = -1;
     qCompress = param->rc.qCompress;
     ipFactor = param->rc.ipFactor;
