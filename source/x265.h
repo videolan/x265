@@ -160,6 +160,16 @@ static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
+/* rate tolerance method */
+typedef enum RcMethod
+{
+    X265_RC_ABR,
+    X265_RC_CQP,
+    X265_RC_CRF
+}
+X265_RC_METHODS;
+
+
 typedef struct x265_param_t
 {
     int       logLevel;
@@ -228,6 +238,16 @@ typedef struct x265_param_t
 
     // debugging
     int       bEnableDecodedPictureHashSEI;    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+   struct 
+    {
+        int       bitrate;
+        double    rateTolerance;
+        double    qCompress;
+        float     ipFactor;
+        float     pbFactor;
+        int       qpStep;
+        RcMethod  rateControlMode;
+    } rc;
 }
 x265_param_t;
 

@@ -30,7 +30,6 @@
 class TComPic;
 class TEncCfg;
 
-#define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
 

@@ -28,9 +28,18 @@
 #include <stdint.h>
 #include "TLibEncoder/TEncTop.h"
 #include "TLibCommon/TComRom.h"
-#include "math.h"
+
+
+
+#define BASE_FRAME_DURATION 0.04f
+/* Arbitrary limitations as a sanity check. */
+#define MAX_FRAME_DURATION 1.00f
+#define MIN_FRAME_DURATION 0.01f
+
+#define CLIP_DURATION(f) Clip3(f,MIN_FRAME_DURATION,MAX_FRAME_DURATION)
 
 namespace x265 {
+
 struct RateControlEntry
 {
     int pictType;
@@ -41,67 +50,49 @@ struct RateControlEntry
     float blurredComplexity;
 };
 
-struct Predictor
-{
-    float coeff;
-    float count;
-    float decay;
-    float offset;
-
-    float predictSize(float q, float var)
-    {
-        return (coeff * var + offset) / (q * count);
-    }
-};
-
 struct RateControl
 {
     int ncu;                    /* number of CUs in a frame */
     TComSlice *curFrame;        /* all info abt the current frame */
     SliceType frameType;        /* Current frame type */
     float frameDuration;        /* current frame duration in seconds */
-    int fps;          /* current frame number TODO: need to initaialize in init */
+    int fps;                    /* current frame rate TODO: need to initaialize in init */
     int keyFrameInterval;       /* TODO: need to initialize in init */
-    bool isAbrEnabled;
-
-    /* current frame */
     RateControlEntry *rce;
     int qp;                     /* updated qp for current frame */
     float qpm;                  /* qp for current macroblock: precise float for AQ */
-
+    float qpaRc;                /* average of macroblocks' qp before aq */
     double bitrate;
     double rateTolerance;
     double qCompress;
     int bframes;
-    /* ABR stuff */
     int    lastSatd;
-    double lastRceq;
     double cplxrSum;           /* sum of bits*qscale/rceq */
-    double expectedBitsSum;   /* sum of qscale2bits after rceq, ratefactor, and overflow, only includes finished frames */
-    int64_t fillerBitsSum;    /* sum in bits of finished frames' filler data */
     double wantedBitsWindow;  /* target bitrate * window */
-    double cbrDecay;
-    double shortTermCplxSum;
-    double shortTermCplxCount;
-    double rateFactorConstant;
     double ipOffset;
     double pbOffset;
-
+    float ipFactor;
+    float pbFactor;
     int lastNonBPictType;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
     double lastQScale;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
-
     double lstep;
     float qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
+    double lastRceq;
+    double cbrDecay;
     double lmin[3];             /* min qscale by frame type */
     double lmax[3];
-    double frameSizePlanned;
+    double shortTermCplxSum;
+    double shortTermCplxCount;
+    RcMethod rateControlMode;
+    int64_t totalBits;   /* totalbits used for already encoded frames */
 
     RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
     void rateControlInit(TComSlice* frame);   // to be called for each frame to set the reqired parameters for rateControl.
     void rateControlStart(LookaheadFrame* lframe);                          // to be called for each frame to process RateCOntrol and set QP
+    int rateControlEnd(int64_t bits );
     float rateEstimateQscale(LookaheadFrame* lframe);                       // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(RateControlEntry *rce, double rateFactor);
