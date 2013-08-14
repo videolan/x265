@@ -293,8 +293,6 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
     Bool forceIntra = m_cfg->param.keyframeMax == 1 || pocCurr == 0;
     TComSlice* slice = sliceEncoder->initEncSlice(pic, frameEncoder, forceIntra, pocCurr, gopIdx, &m_sps, &m_pps);
     slice->setLastIDR(m_lastIDR);
-    slice->setScalingList(m_top->getScalingList());
-    slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 
     if (slice->getSliceType() == B_SLICE && m_cfg->getGOPEntry(gopIdx).m_sliceType == 'P')
     {
@@ -459,6 +457,8 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
     }
     slice->setMvdL1ZeroFlag(bGPBcheck);
     slice->setNextSlice(false);
+    slice->setScalingList(m_top->getScalingList());
+    slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 
     if (m_cfg->getUseASR())
     {
