@@ -220,7 +220,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     int listused = 0;
 
     // TODO: calculate search extents
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 1 + bidir; i++)
     {
         if (!do_search[i])
             continue;
@@ -313,7 +313,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     if (p0 != p1)
     {
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-        fenc->costEst[b - p0][p1 - b] += bcost;      
+        fenc->costEst[b - p0][p1 - b] += bcost;
     }
     fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
