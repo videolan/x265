@@ -244,8 +244,8 @@ typedef struct x265_param_t
         int       bitrate;
         double    rateTolerance;
         double    qCompress;
-        float     ipFactor;
-        float     pbFactor;
+        double    ipFactor;
+        double    pbFactor;
         int       qpStep;
         RcMethod  rateControlMode;
     } rc;

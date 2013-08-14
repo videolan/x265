@@ -33,9 +33,9 @@ RateControl::RateControl(x265_param_t * param)
     bframes = param->bframes;
     rateTolerance = param->rc.rateTolerance;
     bitrate = param->rc.bitrate * 1000;
-    frameDuration = 1 / param->frameRate;
+    frameDuration = 1.0 / param->frameRate;
     rateControlMode = param->rc.rateControlMode;
-    ncu = (param->sourceHeight * param->sourceWidth) / pow(2, param->maxCUSize);
+    ncu = (int)((param->sourceHeight * param->sourceWidth) / pow(2, param->maxCUSize));
     lastNonBPictType = -1;
     qCompress = param->rc.qCompress;
     ipFactor = param->rc.ipFactor;
@@ -68,20 +68,22 @@ RateControl::RateControl(x265_param_t * param)
 
 void RateControl::rateControlInit(TComSlice* frame)
 {
-    curFrame = curFrame;
-    frameType = curFrame->getSliceType();
+    curFrame = frame;
+    frameType = frame->getSliceType();
 }
 
 void RateControl::rateControlStart(LookaheadFrame *lFrame)
 {
     RateControlEntry *rce = new RateControlEntry();
-    float q;
+    double q;
 
     //Always enabling ABR
     if (rateControlMode == X265_RC_ABR)
     {
         q = qScale2qp(rateEstimateQscale(lFrame));
     }
+    else
+        q = 0; // TODO
     q = Clip3((int)q, MIN_QP, MAX_QP);
     qp = Clip3((int)(q + 0.5f), 0, MAX_QP);
     qpaRc = qpm = q;    // qpaRc is set in the rate_control_mb call in x264. we are updating here itself.
@@ -105,9 +107,9 @@ void RateControl::accumPQpUpdate()
         accumPQp += qpm;
 }
 
-float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
+double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
 {
-    float q;
+    double q;
     // ratecontrol_entry_t rce = UNINIT(rce);
     int pictType = frameType;
 
@@ -122,8 +124,8 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         int dt1 = abs(curFrame->getPOC() - curFrame->getRefPic(REF_PIC_LIST_1, 0)->getPOC());
 
         //TODO:need to figure out this
-        float q0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceQp();
-        float q1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceQp();
+        double q0 = curFrame->getRefPic(REF_PIC_LIST_0, 0)->getSlice()->getSliceQp();
+        double q1 = curFrame->getRefPic(REF_PIC_LIST_1, 0)->getSlice()->getSliceQp();
 
         if (i0 && i1)
             q = (q0 + q1) / 2 + ipOffset;
@@ -201,8 +203,8 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
             {
                 /* Asymmetric clipping, because symmetric would prevent
                  * overflow control in areas of rapidly oscillating complexity */
-                float lmin = lastQScaleFor[pictType] / lstep;
-                float lmax = lastQScaleFor[pictType] * lstep;
+                double lmin = lastQScaleFor[pictType] / lstep;
+                double lmax = lastQScaleFor[pictType] * lstep;
                 if (overflow > 1.1 && fps > 3)
                     lmax *= lstep;
                 else if (overflow < 0.9)
@@ -213,8 +215,8 @@ float RateControl::rateEstimateQscale(LookaheadFrame *lframe)
         }
 
         //FIXME use get_diff_limited_q() ?
-        float lmin1 = lmin[pictType];
-        float lmax1 = lmax[pictType];
+        double lmin1 = lmin[pictType];
+        double lmax1 = lmax[pictType];
         q = Clip3(q, lmin1, lmax1);
         lastQScaleFor[pictType] =
             lastQScale = q;

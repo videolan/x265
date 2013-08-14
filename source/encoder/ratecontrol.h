@@ -29,10 +29,11 @@
 #include "TLibEncoder/TEncTop.h"
 #include "TLibCommon/TComRom.h"
 
-#define BASE_FRAME_DURATION 0.04f
+#define BASE_FRAME_DURATION 0.04
+
 /* Arbitrary limitations as a sanity check. */
-#define MAX_FRAME_DURATION 1.00f
-#define MIN_FRAME_DURATION 0.01f
+#define MAX_FRAME_DURATION 1.00
+#define MIN_FRAME_DURATION 0.01
 
 #define CLIP_DURATION(f) Clip3(f, MIN_FRAME_DURATION, MAX_FRAME_DURATION)
 
@@ -44,7 +45,7 @@ struct RateControlEntry
     int newQp;
     int texBits;
     int mvBits;
-    float blurredComplexity;
+    double blurredComplexity;
 };
 
 struct RateControl
@@ -52,13 +53,13 @@ struct RateControl
     int ncu;                    /* number of CUs in a frame */
     TComSlice *curFrame;        /* all info abt the current frame */
     SliceType frameType;        /* Current frame type */
-    float frameDuration;        /* current frame duration in seconds */
+    double frameDuration;        /* current frame duration in seconds */
     int fps;                    /* current frame rate TODO: need to initaialize in init */
     int keyFrameInterval;       /* TODO: need to initialize in init */
     RateControlEntry *rce;
     int qp;                     /* updated qp for current frame */
-    float qpm;                  /* qp for current macroblock: precise float for AQ */
-    float qpaRc;                /* average of macroblocks' qp before aq */
+    double qpm;                  /* qp for current macroblock: precise double for AQ */
+    double qpaRc;                /* average of macroblocks' qp before aq */
     double bitrate;
     double rateTolerance;
     double qCompress;
@@ -68,15 +69,15 @@ struct RateControl
     double wantedBitsWindow;  /* target bitrate * window */
     double ipOffset;
     double pbOffset;
-    float ipFactor;
-    float pbFactor;
+    double ipFactor;
+    double pbFactor;
     int lastNonBPictType;
     double accumPQp;          /* for determining I-frame quant */
     double accumPNorm;
     double lastQScale;
     double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double lstep;
-    float qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
+    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
     double lastRceq;
     double cbrDecay;
     double lmin[3];             /* min qscale by frame type */
@@ -90,18 +91,18 @@ struct RateControl
     void rateControlInit(TComSlice* frame);   // to be called for each frame to set the reqired parameters for rateControl.
     void rateControlStart(LookaheadFrame* lframe);                          // to be called for each frame to process RateCOntrol and set QP
     int rateControlEnd(int64_t bits);
-    float rateEstimateQscale(LookaheadFrame* lframe);                       // main logic for calculating QP based on ABR
+    double rateEstimateQscale(LookaheadFrame* lframe);                       // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(RateControlEntry *rce, double rateFactor);
 
-    float qScale2qp(float qScale)
+    double qScale2qp(double qScale)
     {
-        return 12.0f + 6.0f * logf(qScale / 0.85f);
+        return 12.0 + 6.0 * log(qScale / 0.85);
     }
 
-    float qp2qScale(float qp)
+    double qp2qScale(double qp)
     {
-        return 0.85f * powf(2.0f, (qp - 12.0f) / 6.0f);
+        return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
     }
 };
 }
