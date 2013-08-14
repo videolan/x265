@@ -33,6 +33,9 @@
 #include "motion.h"
 #include "mv.h"
 
+#define LOWRES_COST_MASK  ((1<<14)-1)
+#define LOWRES_COST_SHIFT 14
+
 // Short history:
 //
 // This file was originally borrowed from x264 source tree circa Dec 4, 2012
@@ -198,7 +201,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
     LookaheadFrame *fref1 = frames[p1];
     LookaheadFrame *fenc  = frames[b];
 
-    const int b_bidir = (b < p1);
+    const int bidir = (b < p1);
     const int cu_xy = cux + cuy * fenc->cuWidth;
     const int stride = fenc->stride;
     const int cu_size = g_maxCUWidth / 2;
@@ -213,8 +216,10 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
                             &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
 
     MV mvmin, mvmax;
-    // TODO: calculate search extents
+    int bcost = me.COST_MAX;
+    int listused = 0;
 
+    // TODO: calculate search extents
     for (int i = 0; i < 2; i++)
     {
         if (!do_search[i])
@@ -247,18 +252,14 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         }
 
         *fenc_costs[i] = me.motionEstimate(i ? fref1 : fref0, mvmin, mvmax, mvp, numc, mvc, merange, *fenc_mvs[i]);
-    }
-    if (b_bidir)
-    {
-        // TODO: add bidir
+        COPY2_IF_LT(bcost, *fenc_costs[i], listused, i+1);
     }
 
-    int bcost = me.COST_MAX, cost;
     if (!fenc->bIntraCalculated)
     {
-        Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
-
         fenc->bIntraCalculated = true;
+
+        Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
 
         /* TODO: These need to be declared on stack and copied into */
         pixel *pAbove0 = fenc->m_lumaPlane[0][0] + pel_offset - fenc->m_lumaStride;
@@ -285,30 +286,27 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         x265::primitives.transpose[nLog2SizeMinus2](buf_trans, me.fenc, FENC_STRIDE);
         x265::pixelcmp_t sa8d = x265::primitives.sa8d[nLog2SizeMinus2];
+        int icost = me.COST_MAX;
         for (UInt mode = 0; mode < 35; mode++)
         {
             bool transpose = (mode >= 2) && (mode < 18);
             pixel *cmp = (transpose ? buf_trans : me.fenc);
             intptr_t srcStride = (transpose ? cu_size : FENC_STRIDE);
-            cost = sa8d(cmp, srcStride, &predictions[mode * predsize], cu_size);
-            if (cost < bcost)
-                bcost = cost;
+            int cost = sa8d(cmp, srcStride, &predictions[mode * predsize], cu_size);
+            if (cost < icost)
+                icost = cost;
         }
 
         // TOOD: i_icost += intra_penalty + lowres_penalty;
-        fenc->intraCost[cu_xy] = bcost;
-        fenc->rowSatds[0][0][cuy] += bcost;
-        fenc->costEst[0][0] += bcost;      
+        fenc->intraCost[cu_xy] = icost;
+        fenc->rowSatds[0][0][cuy] += icost;
+        fenc->costEst[0][0] += icost;
     }
     
-    int bestIntraCost = fenc->intraCost[cu_xy];
-    int bestInterCost = X265_MIN(*fenc_costs[0], *fenc_costs[1]);
-    if (b_bidir)
-        bcost = bestInterCost;
-    else
+    if (!bidir)
     {
-        fenc->intraMbs[b - p0] += bestIntraCost < bestInterCost;
-        bcost = X265_MIN(bestInterCost, bestIntraCost);
+        fenc->intraMbs[b - p0] += fenc->intraCost[cu_xy] < bcost;
+        COPY2_IF_LT(bcost, fenc->intraCost[cu_xy], listused, 0);
     }
     
     /* For I frames these costs were accumulated earlier */
@@ -317,7 +315,7 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
         fenc->costEst[b - p0][p1 - b] += bcost;      
     }
-    fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)X265_MIN(bcost, 0x7fff);
+    fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
 }
 
 #if 0
