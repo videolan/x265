@@ -35,6 +35,11 @@ namespace x265 {
 
 #define X265_BFRAME_MAX 16
 
+#define X265_SLICE_TYPE_AUTO -1
+#define X265_SLICE_TYPE_I     0
+#define X265_SLICE_TYPE_P     1
+#define X265_SLICE_TYPE_B     2
+
 struct LookaheadFrame : public ReferencePlanes
 {
     /* lowres buffers, sizes and strides */
@@ -46,6 +51,9 @@ struct LookaheadFrame : public ReferencePlanes
     int    cuHeight; // height of lowres frame in downscale CUs
     int    bframes;
     bool   bIntraCalculated;
+
+    int    sliceType; // Slice type decided by lookahead
+    int    gopIdx;    // temp output for fixed-GOP pseudo-lookahead
 
     /* lookahead output data */
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
