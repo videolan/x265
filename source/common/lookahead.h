@@ -59,6 +59,7 @@ struct LookaheadFrame : public ReferencePlanes
     int       costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int      *rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
+    int      *intraCost;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int      *lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV       *lowresMvs[2][X265_BFRAME_MAX + 1];
