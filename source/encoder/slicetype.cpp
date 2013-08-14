@@ -207,8 +207,10 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
 
     me.setSourcePU(pel_offset, cu_size, cu_size);
 
-    MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy], &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
-    int(*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy], &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
+    MV(*fenc_mvs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cu_xy],
+                         &fenc->lowresMvs[1][p1 - b - 1][cu_xy] };
+    int(*fenc_costs[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cu_xy],
+                            &fenc->lowresMvCosts[1][p1 - b - 1][cu_xy] };
 
     MV mvmin, mvmax;
     // TODO: calculate search extents
@@ -292,10 +294,14 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
             if (cost < bcost)
                 bcost = cost;
         }
-        fenc->lowresCosts[0][0][cu_xy] = (int16_t)bcost;
+
+        // TOOD: i_icost += intra_penalty + lowres_penalty;
+        fenc->intraCost[cu_xy] = bcost;
+        fenc->rowSatds[0][0][cuy] += bcost;
+        fenc->costEst[0][0] += bcost;      
     }
     
-    int bestIntraCost = fenc->lowresCosts[0][0][cu_xy];
+    int bestIntraCost = fenc->intraCost[cu_xy];
     int bestInterCost = X265_MIN(*fenc_costs[0], *fenc_costs[1]);
     if (b_bidir)
         bcost = bestInterCost;
@@ -305,9 +311,13 @@ void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_s
         bcost = X265_MIN(bestInterCost, bestIntraCost);
     }
     
-    fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
-    fenc->costEst[b - p0][p1 - b] += bcost;      
-    fenc->lowresCosts[b - p0][p1 -b][cu_xy] = (uint16_t) bcost;
+    /* For I frames these costs were accumulated earlier */
+    if (p0 != p1)
+    {
+        fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
+        fenc->costEst[b - p0][p1 - b] += bcost;      
+    }
+    fenc->lowresCosts[b - p0][p1 - b][cu_xy] = (uint16_t)X265_MIN(bcost, 0x7fff);
 }
 
 #if 0
