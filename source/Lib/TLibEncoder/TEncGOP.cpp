@@ -858,7 +858,7 @@ Void TEncGOP::compressFrame(TComPic *pic, TComList<TComPic*> picList, AccessUnit
                 pCRD[numDU - 1] = 0; /* by definition */
                 UInt tmp = 0;
                 UInt accum = 0;
-                int bitrate = 1000;
+                int bitrate = m_cfg->param.rc.bitrate;
 
                 for (i = (numDU - 2); i >= 0; i--)
                 {

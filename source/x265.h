@@ -238,7 +238,8 @@ typedef struct x265_param_t
 
     // debugging
     int       bEnableDecodedPictureHashSEI;    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
-   struct 
+
+    struct 
     {
         int       bitrate;
         double    rateTolerance;

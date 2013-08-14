@@ -29,8 +29,6 @@
 #include "TLibEncoder/TEncTop.h"
 #include "TLibCommon/TComRom.h"
 
-
-
 #define BASE_FRAME_DURATION 0.04f
 /* Arbitrary limitations as a sanity check. */
 #define MAX_FRAME_DURATION 1.00f
@@ -92,7 +90,7 @@ struct RateControl
     RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
     void rateControlInit(TComSlice* frame);   // to be called for each frame to set the reqired parameters for rateControl.
     void rateControlStart(LookaheadFrame* lframe);                          // to be called for each frame to process RateCOntrol and set QP
-    int rateControlEnd(int64_t bits );
+    int rateControlEnd(int64_t bits);
     float rateEstimateQscale(LookaheadFrame* lframe);                       // main logic for calculating QP based on ABR
     void accumPQpUpdate();
     double getQScale(RateControlEntry *rce, double rateFactor);

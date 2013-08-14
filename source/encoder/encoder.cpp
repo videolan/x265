@@ -49,7 +49,7 @@ void Encoder::determineLevelAndProfile(x265_param_t *_param)
 
     uint32_t lumaSamples = _param->sourceWidth * _param->sourceHeight;
     uint32_t samplesPerSec = lumaSamples * _param->frameRate;
-    uint32_t bitrate = 100; // in kbps TODO: ABR
+    uint32_t bitrate = _param->rc.bitrate;
 
     m_level = Level::LEVEL1;
     const char *level = "1";

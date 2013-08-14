@@ -139,14 +139,13 @@ void x265_param_default(x265_param_t *param)
     param->bEnableTSkipFast = 1;
     param->bFrameAdaptive = X265_B_ADAPT_FAST;
     param->lookaheadDepth = 10;
-    param->rc.bitrate = 1000;//TODO:take from CLI
+    param->rc.bitrate = 1000;
     param->rc.rateTolerance = 1;
     param->rc.qCompress = 0.6;
     param->rc.ipFactor = 1.4;
     param->rc.pbFactor = 1.3;
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_ABR;
-
 }
 
 extern "C"
