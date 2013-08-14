@@ -192,7 +192,7 @@ int Lookahead::estimateFrameCost(int p0, int p1, int b, int bIntraPenalty)
     return score;
 }
 
-int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2])
+void Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_search[2])
 {
     LookaheadFrame *fref0 = frames[p0];
     LookaheadFrame *fref1 = frames[p1];
@@ -251,10 +251,10 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         // TODO: add bidir
     }
 
+    int bcost = me.COST_MAX, cost;
     if (!fenc->bIntraCalculated)
     {
         Int nLog2SizeMinus2 = g_convertToBit[cu_size]; // partition size
-        int bcost = me.COST_MAX, cost;
 
         fenc->bIntraCalculated = true;
 
@@ -294,8 +294,28 @@ int Lookahead::estimateCUCost(int cux, int cuy, int p0, int p1, int b, int do_se
         }
         fenc->lowresMvCosts[0][0][cu_xy] = bcost;
     }
-
-    return 0;
+    
+    /* bcost is the BestIntraCost now */
+    int bestInterCost = X265_MIN(*fenc_costs[0], *fenc_costs[1]);
+    if (!b_bidir)
+    {
+        int intra = bcost < bestInterCost;
+        if (!intra)
+        {
+            bcost = bestInterCost;
+        }
+        fenc->intraMbs[b - p0] += intra;
+    }
+    else
+        bcost = bestInterCost; // if not bidir then bestInterCost is the best cost 
+    
+    if (p0 != p1)
+    {
+        fenc->rowSatds[b - p0][p1 - b][cuy] += bcost;
+        fenc->costEst[b - p0][p1 - b] += bcost;      
+    }
+    fenc->lowresCosts[b - p0][p1 -b][cu_xy] = (uint16_t) bcost;
+    
 }
 
 #if 0
