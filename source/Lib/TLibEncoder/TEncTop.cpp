@@ -140,11 +140,11 @@ Void TEncTop::init()
 }
 
 /**
- \param   flush               force encoder to encode a partial GOP
+ \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
  \param   pic_out             pointer to reconstructed picture struct
- \param   accessUnitsOut      list of output bitstreams
- \retval                      number of returned recon pictures
+ \param   accessUnitsOut      output bitstream
+ \retval                      number of encoded pictures
  */
 int TEncTop::encode(Bool flush, const x265_picture_t* pic_in, x265_picture_t *pic_out, AccessUnit& accessUnitOut)
 {
