@@ -25,9 +25,10 @@
 #ifndef __RATECONTROL__
 #define __RATECONTROL__
 
-#include <stdint.h>
 #include "TLibEncoder/TEncTop.h"
 #include "TLibCommon/TComRom.h"
+#include <stdint.h>
+#include <math.h>
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -50,20 +51,20 @@ struct RateControlEntry
 
 struct RateControl
 {
-    int ncu;                    /* number of CUs in a frame */
+    RateControlEntry *rce;
     TComSlice *curFrame;        /* all info abt the current frame */
     SliceType frameType;        /* Current frame type */
-    double frameDuration;        /* current frame duration in seconds */
+    int ncu;                    /* number of CUs in a frame */
     int fps;                    /* current frame rate TODO: need to initaialize in init */
     int keyFrameInterval;       /* TODO: need to initialize in init */
-    RateControlEntry *rce;
     int qp;                     /* updated qp for current frame */
+    double frameDuration;        /* current frame duration in seconds */
     double qpm;                  /* qp for current macroblock: precise double for AQ */
     double qpaRc;                /* average of macroblocks' qp before aq */
     double bitrate;
     double rateTolerance;
     double qCompress;
-    int bframes;
+    int    bframes;
     int    lastSatd;
     double cplxrSum;           /* sum of bits*qscale/rceq */
     double wantedBitsWindow;  /* target bitrate * window */
@@ -88,21 +89,21 @@ struct RateControl
     int64_t totalBits;   /* totalbits used for already encoded frames */
 
     RateControl(x265_param_t * param);    // constructor for initializing values for ratecontrol vars
-    void rateControlInit(TComSlice* frame);   // to be called for each frame to set the reqired parameters for rateControl.
-    void rateControlStart(LookaheadFrame* lframe);                          // to be called for each frame to process RateCOntrol and set QP
+    void rateControlInit(TComSlice* frame);   // to be called for each frame to set the required parameters for rateControl.
+    void rateControlStart(LookaheadFrame* lframe); // to be called for each frame to process RateCOntrol and set QP
     int rateControlEnd(int64_t bits);
-    double rateEstimateQscale(LookaheadFrame* lframe);                       // main logic for calculating QP based on ABR
+    double rateEstimateQscale(LookaheadFrame* lframe); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
-    double getQScale(RateControlEntry *rce, double rateFactor);
+    double getQScale(double rateFactor);
 
     double qScale2qp(double qScale)
     {
         return 12.0 + 6.0 * log(qScale / 0.85);
     }
 
-    double qp2qScale(double qp)
+    double qp2qScale(double _qp)
     {
-        return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
+        return 0.85 * pow(2.0, (_qp - 12.0) / 6.0);
     }
 };
 }

@@ -74,7 +74,7 @@ void RateControl::rateControlInit(TComSlice* frame)
 
 void RateControl::rateControlStart(LookaheadFrame *lFrame)
 {
-    RateControlEntry *rce = new RateControlEntry();
+    rce = new RateControlEntry();
     double q;
 
     //Always enabling ABR
@@ -172,7 +172,7 @@ double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
         rce->mvBits = 0;
         rce->pictType = pictType;
         //need to checked where it is initialized
-        q = getQScale(rce, wantedBitsWindow / cplxrSum);
+        q = getQScale(wantedBitsWindow / cplxrSum);
 
         /* ABR code can potentially be counterproductive in CBR, so just don't bother.
          * Don't run it if the frame complexity is zero either. */
@@ -203,14 +203,14 @@ double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
             {
                 /* Asymmetric clipping, because symmetric would prevent
                  * overflow control in areas of rapidly oscillating complexity */
-                double lmin = lastQScaleFor[pictType] / lstep;
-                double lmax = lastQScaleFor[pictType] * lstep;
+                double lqmin = lastQScaleFor[pictType] / lstep;
+                double lqmax = lastQScaleFor[pictType] * lstep;
                 if (overflow > 1.1 && fps > 3)
-                    lmax *= lstep;
+                    lqmax *= lstep;
                 else if (overflow < 0.9)
-                    lmin /= lstep;
+                    lqmin /= lstep;
 
-                q = Clip3(q, lmin, lmax);
+                q = Clip3(q, lqmin, lqmax);
             }
         }
 
@@ -231,7 +231,7 @@ double RateControl::rateEstimateQscale(LookaheadFrame * /*lframe*/)
 /**
  * modify the bitrate curve from pass1 for one frame
  */
-double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
+double RateControl::getQScale(double rateFactor)
 {
     double q;
 
@@ -267,5 +267,7 @@ int RateControl::rateControlEnd(int64_t bits)
         wantedBitsWindow *= cbrDecay;
     }
     totalBits += bits;
+    delete rce;
+    rce = NULL;
     return 0;
 }
